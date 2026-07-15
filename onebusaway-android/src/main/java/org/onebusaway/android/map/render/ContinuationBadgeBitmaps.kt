@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -22,6 +23,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
+import com.google.android.material.color.utilities.Hct
 
 /**
  * Bitmaps for the route-continuation overlay (#1691): the tappable pill badge showing a route short
@@ -33,10 +35,12 @@ import androidx.core.graphics.createBitmap
 object ContinuationBadgeBitmaps {
 
     private const val TEXT_SIZE_PX = 38f
-    private const val HORIZONTAL_PADDING_PX = 26f
-    private const val VERTICAL_PADDING_PX = 16f
+    private const val HORIZONTAL_PADDING_PX = 20f
+    private const val VERTICAL_PADDING_PX = 12f
     private const val CORNER_RADIUS_PX = 22f
-    private const val BACKGROUND_ALPHA = 230
+    private const val OUTLINE_WIDTH_DP = 2f
+    private const val OUTLINE_TONE_LIGHT = 35.0
+    private const val OUTLINE_TONE_DARK = 85.0
 
     private const val ARROW_WIDTH_PX = 56f
     private const val ARROW_HEIGHT_PX = 60f
@@ -47,7 +51,7 @@ object ContinuationBadgeBitmaps {
      * [color] (the continuation line's own color). Text is black or white, whichever contrasts better
      * with [color], so the badge stays legible across the full range of GTFS route colors.
      */
-    fun badge(routeShortName: String, color: Int): Bitmap {
+    fun badge(routeShortName: String, color: Int, density: Float, darkMode: Boolean): Bitmap {
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.color = legibleTextColor(color)
             textSize = TEXT_SIZE_PX
@@ -61,13 +65,30 @@ object ContinuationBadgeBitmaps {
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
         val canvas = Canvas(bitmap)
+        val outlineWidth = OUTLINE_WIDTH_DP * density
+        val badgeBounds = RectF(
+            outlineWidth / 2f,
+            outlineWidth / 2f,
+            width - outlineWidth / 2f,
+            height - outlineWidth / 2f,
+        )
         canvas.drawRoundRect(
-            RectF(0f, 0f, width, height),
+            badgeBounds,
             CORNER_RADIUS_PX,
             CORNER_RADIUS_PX,
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                this.color = Color.argb(BACKGROUND_ALPHA, Color.red(color), Color.green(color), Color.blue(color))
+                this.color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color))
                 style = Paint.Style.FILL
+            },
+        )
+        canvas.drawRoundRect(
+            badgeBounds,
+            CORNER_RADIUS_PX,
+            CORNER_RADIUS_PX,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = routeBadgeOutlineColor(color, darkMode)
+                style = Paint.Style.STROKE
+                strokeWidth = outlineWidth
             },
         )
         val baseline = height / 2f - (metrics.ascent + metrics.descent) / 2f
@@ -107,5 +128,13 @@ object ContinuationBadgeBitmaps {
             },
         )
         return bitmap
+    }
+
+    /** Theme-aware casing that retains the badge color's HCT hue/chroma and shifts only its tone. */
+    @SuppressLint("RestrictedApi") // Material Components' vendored color-science utility.
+    internal fun routeBadgeOutlineColor(color: Int, darkMode: Boolean): Int {
+        val source = Hct.fromInt(color or 0xFF000000.toInt())
+        val tone = if (darkMode) OUTLINE_TONE_DARK else OUTLINE_TONE_LIGHT
+        return Hct.from(source.hue, source.chroma, tone).toInt()
     }
 }

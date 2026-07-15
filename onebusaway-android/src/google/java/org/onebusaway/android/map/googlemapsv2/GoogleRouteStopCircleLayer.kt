@@ -36,7 +36,7 @@ import org.onebusaway.android.map.render.stopZIndex
 internal class GoogleRouteStopCircleLayer(
     private val map: GoogleMap,
     choreographer: Choreographer = Choreographer.getInstance(),
-) {
+) : GoogleRouteStopLayer {
     private data class RouteStopCircle(
         val outer: Circle,
         var inner: Circle? = null,
@@ -52,7 +52,7 @@ internal class GoogleRouteStopCircleLayer(
         scheduleNextFrame = { callback -> choreographer.postFrameCallback { callback() } },
     )
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?, zoom: Float) {
+    override fun render(stops: List<StopMarker>, focusedStopId: String?, zoom: Float) {
         val routeStops = stops.filter(StopMarker::routeStop)
         if (routeStops == renderedStops && focusedStopId == renderedFocusedStopId) return
         renderedStops = routeStops
@@ -97,7 +97,7 @@ internal class GoogleRouteStopCircleLayer(
         onCameraSettled(zoom)
     }
 
-    fun onCameraSettled(zoom: Float) {
+    override fun onCameraSettled(zoom: Float) {
         if (renderedZoom == zoom) return
         renderedZoom = zoom
         val stopFocusScale = if (renderedFocusedStopId == null) 1f else focusedRouteStopScale(zoom)
@@ -109,14 +109,14 @@ internal class GoogleRouteStopCircleLayer(
         }
     }
 
-    fun onCameraMoveStarted() {
+    override fun onCameraMoveStarted() {
         if (resizeBatcher.cancel()) renderedZoom = null
     }
 
-    fun stopForCircle(circle: Circle): StopMarker? =
+    override fun stopForCircle(circle: Circle): StopMarker? =
         (circle.tag as? String)?.let(circlesByStopId::get)?.stop
 
-    fun dispose() {
+    override fun dispose() {
         resizeBatcher.cancel()
         circlesByStopId.values.forEach(::remove)
         circlesByStopId.clear()

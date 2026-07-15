@@ -68,6 +68,7 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 import java.util.concurrent.TimeUnit
 
@@ -97,7 +98,9 @@ class GoogleMapRenderer(
     private val renderState: MapRenderState,
 ) : PingTarget {
     private val stopMarkerLayer = GoogleStopMarkerLayer(map, context)
-    private val routeStopCircleLayer = GoogleRouteStopCircleLayer(map)
+    // Swap this one construction line to GoogleRouteStopCircleLayer(map) for native circles + batching.
+    private val routeStopLayer: GoogleRouteStopLayer =
+        GoogleRouteStopBitmapLayer(map, context.resources.displayMetrics.density)
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -237,7 +240,7 @@ class GoogleMapRenderer(
         clearStatic()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
-        routeStopCircleLayer.render(snapshot.stops, snapshot.focusedStopId, map.cameraPosition.zoom)
+        routeStopLayer.render(snapshot.stops, snapshot.focusedStopId, map.cameraPosition.zoom)
 
         if (snapshot.bikeshareVisible) {
             val band = bikeZoomBand(map.cameraPosition.zoom)
@@ -357,7 +360,12 @@ class GoogleMapRenderer(
 
     private fun routeBadgeIcon(routeShortName: String, color: Int): BitmapDescriptor =
         descriptorCache.get("route-badge:$routeShortName:$color") {
-            ContinuationBadgeBitmaps.badge(routeShortName, color)
+            ContinuationBadgeBitmaps.badge(
+                routeShortName,
+                color,
+                density,
+                darkMode = ThemeUtils.isInDarkMode(context),
+            )
         }
 
     private fun continuationArrowIcon(color: Int): BitmapDescriptor =
@@ -390,7 +398,7 @@ class GoogleMapRenderer(
     fun dispose() {
         vehicleSmoother.retainOnly(emptySet())
         dotSmoother.retainOnly(emptySet())
-        routeStopCircleLayer.dispose()
+        routeStopLayer.dispose()
 
         clearStatic()
         routePolylines.forEach { it.remove() }
@@ -728,13 +736,14 @@ class GoogleMapRenderer(
             TripMarkerBitmaps.circle(context, drawableRes, tintColor)
         }
 
-    fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker)
+    fun stopForMarker(marker: Marker): StopMarker? =
+        stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
 
-    fun stopForCircle(circle: Circle): StopMarker? = routeStopCircleLayer.stopForCircle(circle)
+    fun stopForCircle(circle: Circle): StopMarker? = routeStopLayer.stopForCircle(circle)
 
-    fun onCameraMoveStarted() = routeStopCircleLayer.onCameraMoveStarted()
+    fun onCameraMoveStarted() = routeStopLayer.onCameraMoveStarted()
 
-    fun onCameraSettled(zoom: Float) = routeStopCircleLayer.onCameraSettled(zoom)
+    fun onCameraSettled(zoom: Float) = routeStopLayer.onCameraSettled(zoom)
 
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
 

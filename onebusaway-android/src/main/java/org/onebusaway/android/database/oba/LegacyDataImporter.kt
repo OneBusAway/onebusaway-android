@@ -289,7 +289,7 @@ class LegacyDataImporter(
  * [map]; a null return from [map] drops that row. Returns an empty list for a missing table so a
  * legacy file at any historical schema version imports cleanly.
  */
-private inline fun <T> SQLiteDatabase.read(table: String, map: Cursor.() -> T?): List<T> {
+internal inline fun <T> SQLiteDatabase.read(table: String, map: Cursor.() -> T?): List<T> {
     if (!tableExists(table)) return emptyList()
     return query(table, null, null, null, null, null, null).use { c ->
         buildList { while (c.moveToNext()) c.map()?.let { add(it) } }
@@ -300,16 +300,16 @@ private fun SQLiteDatabase.tableExists(table: String): Boolean =
     rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
         .use { it.moveToFirst() }
 
-private fun Cursor.str(name: String): String? =
+internal fun Cursor.str(name: String): String? =
     columnIndex(name)?.takeIf { !isNull(it) }?.let { getString(it) }
 
-private fun Cursor.int(name: String): Int? =
+internal fun Cursor.int(name: String): Int? =
     columnIndex(name)?.takeIf { !isNull(it) }?.let { getInt(it) }
 
-private fun Cursor.long(name: String): Long? =
+internal fun Cursor.long(name: String): Long? =
     columnIndex(name)?.takeIf { !isNull(it) }?.let { getLong(it) }
 
-private fun Cursor.dbl(name: String): Double? =
+internal fun Cursor.dbl(name: String): Double? =
     columnIndex(name)?.takeIf { !isNull(it) }?.let { getDouble(it) }
 
 /** The column's index, or null when the legacy file's schema version predates that column. */

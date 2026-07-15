@@ -119,7 +119,7 @@ public class NavigationUploadWorker extends Worker {
         }
     }
 
-    private void logFeedback(String feedbackText, String userResponse, String fileName) {
+    void logFeedback(String feedbackText, String userResponse, String fileName) {
         Boolean wasGoodReminder;
         if (userResponse.equals(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes))) {
             wasGoodReminder = true;

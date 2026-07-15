@@ -79,7 +79,7 @@ public class UmamiAnalytics {
         });
     }
 
-    private void post(String payload) {
+    void post(String payload) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(mSendUrl).openConnection();

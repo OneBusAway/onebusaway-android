@@ -66,7 +66,7 @@ private fun routeTripsOf(
  * double-record). Keying the dedup on `activeTripId` at this one wire→model seam fixes every consumer
  * at once; fall back to `tripId` when a status is absent, and preserve first-seen order.
  */
-private fun List<TripDetailsEntry>.dedupeByActiveTripKeepingBestFix(): List<TripDetailsEntry> {
+internal fun List<TripDetailsEntry>.dedupeByActiveTripKeepingBestFix(): List<TripDetailsEntry> {
     if (size < 2) return this
     val byKey = LinkedHashMap<String, TripDetailsEntry>(size)
     for (entry in this) {

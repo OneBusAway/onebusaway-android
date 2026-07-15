@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.seconds
  * one-DTO-implements-the-interface pattern the map boundary uses for stops/routes.
  */
 
-private fun Position.toLocation(): Location = locationOf(lat, lon)
+internal fun Position.toLocation(): Location = locationOf(lat, lon)
 
 /** Presents a [TripStatus] DTO as an [ObaTripStatus]. */
 internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {

@@ -358,7 +358,7 @@ fun Context.startHomeActivity(route: String) {
  * when it carries no usable stop — an id plus a real (non-zero) location. A plain launch carries
  * neither, so focus stays null. Parsing lives here with the intent contract, off HomeModels.
  */
-private fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
+internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
     val lat = extras.getDouble(MapParams.CENTER_LAT)

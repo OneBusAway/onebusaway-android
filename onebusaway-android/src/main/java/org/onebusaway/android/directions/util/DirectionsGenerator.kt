@@ -356,7 +356,7 @@ class DirectionsGenerator(
 
         private const val TAG = "DirectionsGenerator"
 
-        private fun getOrdinal(number: Int, resources: Resources): String? {
+        internal fun getOrdinal(number: Int, resources: Resources): String? {
             return when (number) {
                 1 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_first)
                 2 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_second)

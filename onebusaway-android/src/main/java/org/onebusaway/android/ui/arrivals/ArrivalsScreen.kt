@@ -415,7 +415,7 @@ internal fun ArrivalsList(
 private fun LoadMoreFooter(windowEnd: ServerTime, loading: Boolean, onClick: () -> Unit) {
     val context = LocalContext.current
     // Formatting hits DateUtils; key it to windowEnd so the spinner toggling on each tap doesn't reformat.
-    val untilTime = remember(windowEnd) { DisplayFormat.formatTime(context, windowEnd.epochMs) }
+    val untilTime = remember(windowEnd, context) { DisplayFormat.formatTime(context, windowEnd.epochMs) }
     Row(
         modifier = Modifier
             .fillMaxWidth()

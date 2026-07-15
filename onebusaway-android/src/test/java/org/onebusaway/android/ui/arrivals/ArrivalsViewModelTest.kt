@@ -165,6 +165,8 @@ class ArrivalsViewModelTest {
         val state = viewModel.state.value
         assertTrue(state is ArrivalsUiState.Content)
         assertEquals("Pine St & 3rd Ave", (state as ArrivalsUiState.Content).header.name)
+        // The window-end instant rides through unchanged from ArrivalsData into the Content state.
+        assertEquals(ServerTime(65 * 60_000L), state.windowEnd)
     }
 
     @Test

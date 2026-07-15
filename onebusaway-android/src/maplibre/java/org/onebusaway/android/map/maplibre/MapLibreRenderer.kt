@@ -120,6 +120,7 @@ class MapLibreRenderer(
     // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
     // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
     private val vehicleIconDirection = HashMap<String, Int>()
+    private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
     // doesn't pop. Route vehicles keyed by trip id; the trip-focus estimate markers keyed by role.
@@ -226,12 +227,14 @@ class MapLibreRenderer(
     }
 
     fun onCameraSettled(zoom: Float) {
-        val widthScale = routeLineWidthScale(zoom)
-        if (widthScale == renderedRouteWidthScale) return
-        renderedRouteWidthScale = widthScale
-        for (index in routePolylines.indices) {
-            routePolylines[index].width = baseRouteWidth(renderedRoutePolylines[index]) * widthScale
+        val detailScale = routeLineWidthScale(zoom)
+        if (detailScale != renderedRouteWidthScale) {
+            renderedRouteWidthScale = detailScale
+            for (index in routePolylines.indices) {
+                routePolylines[index].width = baseRouteWidth(renderedRoutePolylines[index]) * detailScale
+            }
         }
+        updateVehicleScale(detailScale)
     }
 
     private fun baseRouteWidth(polyline: RoutePolyline): Float = polyline.widthDp ?: ROUTE_WIDTH_DP
@@ -456,7 +459,17 @@ class MapLibreRenderer(
     // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
     // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon =
-        iconFactory.fromBitmap(VehicleBitmaps.vehicleBitmap(context, vehicle, response))
+        iconFactory.fromBitmap(
+            VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
+        )
+
+    /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
+    private fun updateVehicleScale(scale: Float) {
+        if (scale == renderedVehicleScale) return
+        renderedVehicleScale = scale
+        val response = lastVehicleResponse ?: return
+        for ((marker, vehicle) in vehicleByMarker) marker.icon = vehicleIcon(vehicle, response)
+    }
 
     /**
      * Move this marker to [latLng] and, if its info window is open, reposition it to follow — maplibre

@@ -26,6 +26,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.DEFAULT_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
@@ -37,7 +38,6 @@ import kotlin.math.abs
 
 // The same constants the imperative GoogleMapHost used for these camera moves.
 private const val CAMERA_DEFAULT_ZOOM = 16.0f
-private const val DEFAULT_MAP_PADDING_DP = 20.0f
 
 /**
  * Applies one transient [CameraCommand] gesture to the imperative [GoogleMap] — a faithful port of the
@@ -111,10 +111,16 @@ fun applyFramingIntent(
             if (bounds == null) {
                 Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
             } else {
+                // Framing and padding are collected independently; apply the current obstruction here
+                // so an initial route frame cannot race the route header's padding update.
+                map.applyMapPadding(renderState.padding.value)
                 // animateCamera (not moveCamera) so UI-driven route framing eases in, matching the
                 // maplibre adapter's applyFramingIntent (#1719).
                 map.animateCamera(
-                    CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP))
+                    CameraUpdateFactory.newLatLngBounds(
+                        bounds,
+                        ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP),
+                    )
                 )
             }
         }
@@ -126,7 +132,7 @@ fun applyFramingIntent(
             map.animateCamera(
                 CameraUpdateFactory.newLatLngBounds(
                     bounds, dm.widthPixels, dm.heightPixels,
-                    ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP)
+                    ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP)
                 )
             )
         }

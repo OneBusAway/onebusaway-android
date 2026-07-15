@@ -24,7 +24,9 @@ import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.maplibre.MapHelpMapLibre
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.DEFAULT_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.RoutePolyline
@@ -79,15 +81,16 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
 /**
  * Applies the map's retained [FramingIntent] to the maplibre [MapLibreMap] — the counterpart of the
- * Google adapter's `applyFramingIntent`. As on the old host, route/itinerary framing both just frame the
- * route shape (the screen-dimension padding was a Google-only refinement); the bounds are re-read from
- * [renderState]/the region live, so it's safe to re-apply when a re-created adapter replays the framing.
+ * Google adapter's `applyFramingIntent`. Route framing folds the live overlay obstruction into its fit;
+ * itinerary framing retains the old shape-only behavior. Bounds are re-read from [renderState]/the region
+ * live, so it's safe to re-apply when a re-created adapter replays the framing.
  */
 fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState, context: Context) {
     when (intent) {
         FramingIntent.Route -> {
             val bounds = routePolylineBounds(renderState.routeFramingPolylines) ?: return
-            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
+            val pad = ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP)
+            map.animateBounds(bounds, pad, renderState.padding.value)
         }
 
         FramingIntent.Itinerary -> {
@@ -116,12 +119,22 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
             // insets have to be folded into the fit explicitly, on top of the symmetric breathing room,
             // or the vehicle+stop pair lands under one of the two overlays that are open after an ETA tap.
             val pad = ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP)
-            val overlay = renderState.padding.value
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(bounds, pad, overlay.topPx + pad, pad, overlay.bottomPx + pad)
-            )
+            map.animateBounds(bounds, pad, renderState.padding.value)
         }
     }
+}
+
+/** Fit [bounds] inside the current top/bottom overlay obstruction plus symmetric breathing room. */
+private fun MapLibreMap.animateBounds(bounds: LatLngBounds, pad: Int, overlay: MapPadding) {
+    animateCamera(
+        CameraUpdateFactory.newLatLngBounds(
+            bounds,
+            pad,
+            overlay.topPx + pad,
+            pad,
+            overlay.bottomPx + pad,
+        )
+    )
 }
 
 /** Bounds enclosing [polylines], or null if there are no points. */

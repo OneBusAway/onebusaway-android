@@ -54,6 +54,9 @@ sealed interface FramingIntent {
     data class Points(val points: List<GeoPoint>) : FramingIntent
 }
 
+/** Default breathing room between route/itinerary bounds and the unobstructed map viewport. */
+const val DEFAULT_FRAMING_PADDING_DP: Float = 20.0f
+
 /** The smallest lat/lon span a [FramingIntent.Points] box is fit to, so near-coincident points don't over-zoom. */
 const val MIN_FRAMING_SPAN_DEG: Double = 0.004
 

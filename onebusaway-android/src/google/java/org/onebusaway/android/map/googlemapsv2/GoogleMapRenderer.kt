@@ -142,6 +142,7 @@ class GoogleMapRenderer(
     // re-stamp the direction arrow as a vehicle glides (its bearing tracks the route shape) without
     // doing icon work every frame — only when the discrete heading octant actually changes.
     private val vehicleIconDirection = HashMap<String, Int>()
+    private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom)
 
     // Smooths each moving route vehicle across a fresh-AVL jump (a decaying correction layered on the
     // dead-reckon glide), then tracks the live target between fixes. Keyed by trip id.
@@ -647,9 +648,17 @@ class GoogleMapRenderer(
     }
 
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor =
-        descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response)) {
-            VehicleBitmaps.vehicleBitmap(context, vehicle, response)
+        descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response, renderedVehicleScale)) {
+            VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
         }
+
+    /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
+    private fun updateVehicleScale(scale: Float) {
+        if (scale == renderedVehicleScale) return
+        renderedVehicleScale = scale
+        val response = _vehicleResponse.value ?: return
+        for ((marker, vehicle) in vehicleByMarker) marker.setIcon(vehicleIcon(vehicle, response))
+    }
 
     private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
         val trip = response.trip(vehicle.status.activeTripId) ?: return ""
@@ -750,12 +759,14 @@ class GoogleMapRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routeStopLayer.onCameraSettled(zoom)
-        val widthScale = routeLineWidthScale(zoom)
-        if (widthScale == renderedRouteWidthScale) return
-        renderedRouteWidthScale = widthScale
-        for (index in routePolylines.indices) {
-            routePolylines[index].width = widthPx(renderedRoutePolylines[index]) * widthScale
+        val detailScale = routeLineWidthScale(zoom)
+        if (detailScale != renderedRouteWidthScale) {
+            renderedRouteWidthScale = detailScale
+            for (index in routePolylines.indices) {
+                routePolylines[index].width = widthPx(renderedRoutePolylines[index]) * detailScale
+            }
         }
+        updateVehicleScale(detailScale)
     }
 
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]

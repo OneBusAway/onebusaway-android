@@ -204,7 +204,7 @@ class MapViewModel @Inject constructor(
     )
 
     // Keeps vehicle markers from being hidden under the route-mode header (was RoutePopup's logic):
-    // added to the reported header height to derive the map's top padding in [setRouteHeaderHeight].
+    // added to the reported header edge to derive the map's top padding in [setRouteHeaderBottom].
     private val routeHeaderMarkerPaddingPx =
         context.resources.getDimensionPixelSize(R.dimen.map_route_vehicle_markers_padding)
 
@@ -221,13 +221,9 @@ class MapViewModel @Inject constructor(
             .map { it?.toRouteHeader() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /**
-     * The route header reported its measured height; report its contribution to the map's top padding
-     * (0 clears it). Stacks on the always-present floating-chrome inset set from
-     * [org.onebusaway.android.ui.home.map.MapFeature].
-     */
-    fun setRouteHeaderHeight(heightPx: Int) {
-        mapHost.setRouteHeaderPadding(if (heightPx > 0) heightPx + routeHeaderMarkerPaddingPx else 0)
+    /** The route header reported its bottom edge in map coordinates; derive top padding (0 clears it). */
+    fun setRouteHeaderBottom(bottomPx: Int) {
+        mapHost.setRouteFocusTopEdge(if (bottomPx > 0) bottomPx + routeHeaderMarkerPaddingPx else 0)
     }
 
     // Map the controller's raw load into the display header: blank-but-loading until the route resolves,

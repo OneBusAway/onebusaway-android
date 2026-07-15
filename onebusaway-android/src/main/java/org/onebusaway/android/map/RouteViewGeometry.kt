@@ -23,11 +23,12 @@ internal val ROUTE_VIEW_TRANSFORMS = setOf(
 )
 
 internal const val ROUTE_DEEMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.275f
+internal const val ROUTE_EMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 1.5f
 
 /**
  * Convert exact trip shapes into uniform-width directional route lines. When [emphasizedRouteId] is
- * set, sibling routes use a thin, plain stroke and render first so the emphasized route remains
- * visually on top at shared segments.
+ * set, that route uses a 1.5x stroke while siblings use a thin, plain stroke and render first, keeping
+ * the emphasized route visually on top at shared segments.
  */
 internal fun FocusedTripGeometry.toRoutePolylines(
     emphasizedRouteId: String? = null,
@@ -40,13 +41,18 @@ internal fun FocusedTripGeometry.toRoutePolylines(
     }
     orderedShapes.forEach { shape ->
         if (shape.points.size < 2) return@forEach
-        val deemphasized = emphasizedRouteId != null && shape.routeId != emphasizedRouteId
+        val emphasized = emphasizedRouteId == shape.routeId
+        val widthDp = when {
+            emphasizedRouteId == null -> ROUTE_LINE_WIDTH_DP
+            emphasized -> ROUTE_EMPHASIZED_LINE_WIDTH_DP
+            else -> ROUTE_DEEMPHASIZED_LINE_WIDTH_DP
+        }
         add(
             RoutePolyline(
                 routeColors[shape.routeId] ?: shape.routeColor,
                 shape.points,
-                if (deemphasized) ROUTE_DEEMPHASIZED_LINE_WIDTH_DP else ROUTE_LINE_WIDTH_DP,
-                directional = !deemphasized,
+                widthDp,
+                directional = emphasizedRouteId == null || emphasized,
                 transforms = ROUTE_VIEW_TRANSFORMS,
             )
         )

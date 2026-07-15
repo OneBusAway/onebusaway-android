@@ -46,7 +46,7 @@ class RouteViewGeometryTest {
     }
 
     @Test
-    fun `selected route stays prominent while sibling routes become thin and render underneath`() {
+    fun `selected route is one and a half times normal while siblings render thin underneath`() {
         val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0))
         val geometry = FocusedTripGeometry(
             linkedMapOf(
@@ -64,7 +64,7 @@ class RouteViewGeometryTest {
         assertEquals(
             listOf(
                 ROUTE_DEEMPHASIZED_LINE_WIDTH_DP,
-                ROUTE_LINE_WIDTH_DP,
+                ROUTE_LINE_WIDTH_DP * 1.5f,
             ),
             lines.map { it.widthDp },
         )

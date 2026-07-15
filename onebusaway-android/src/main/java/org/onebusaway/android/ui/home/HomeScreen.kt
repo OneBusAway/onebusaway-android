@@ -20,9 +20,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -201,6 +203,10 @@ fun HomeScreen(
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
+        // Compute before entering mapTopChromeOverlayInset(), whose statusBarsPadding consumes this inset
+        // for descendants. This is the route card's absolute top edge in map coordinates.
+        val routeHeaderTopPx = WindowInsets.statusBars.getTop(density) +
+            with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
         val snackbarHostState = remember { SnackbarHostState() }
         // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
         // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
@@ -486,9 +492,10 @@ fun HomeScreen(
                                     onFrameRoute = mapViewModel::frameRoute,
                                     onLearnMore = onLearnMore,
                                     onOpenSurvey = onOpenSurvey,
-                                    // The route header reports its height straight to the map VM (which owns the
-                                    // padding derivation), so the host isn't a relay between the two features.
-                                    onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
+                                    routeHeaderTopPx = routeHeaderTopPx,
+                                    // This layer converts measured card height to its map-space bottom edge;
+                                    // the map VM adds marker clearance and owns the resulting content padding.
+                                    onRouteHeaderBottom = mapViewModel::setRouteHeaderBottom,
                                 )
                             }
                             // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
@@ -603,7 +610,8 @@ private fun BoxScope.HomeMapOverlays(
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
-    onRouteHeaderHeight: (Int) -> Unit,
+    routeHeaderTopPx: Int,
+    onRouteHeaderBottom: (Int) -> Unit,
 ) {
     // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
     // overlays only carry their own side margins here.
@@ -635,24 +643,22 @@ private fun BoxScope.HomeMapOverlays(
     // The route-mode header, now a floating card centered below the top chrome (so the menu + search
     // FABs stay clear and tappable in route mode). Drawn last of the overlays so it sits above the
     // weather / donation / survey cards when a route is active. The layer is already offset by the
-    // clearance, but the map's top-padding derivation needs the full obstruction, so add the clearance
-    // back onto the reported card height; clears it when dismissed.
+    // clearance, but the map's top-padding derivation needs the card's bottom edge in map coordinates,
+    // so add both the status-bar inset and chrome clearance back onto its reported height.
     if (routeHeader != null) {
-        val density = LocalDensity.current
-        val clearancePx = remember(density) { with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() } }
         RouteHeaderOverlay(
             header = routeHeader,
             onCancel = onCancelRouteMode,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
-            onHeight = { h -> onRouteHeaderHeight(h + clearancePx) },
+            onHeight = { h -> onRouteHeaderBottom(h + routeHeaderTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp),
         )
     } else {
-        LaunchedEffect(Unit) { onRouteHeaderHeight(0) }
+        LaunchedEffect(Unit) { onRouteHeaderBottom(0) }
     }
 }
 

@@ -87,18 +87,33 @@ object VehicleBitmaps {
      * extrapolation glide — and falls back to the status's reported orientation off-shape (NaN bearing).
      */
     @JvmStatic
-    fun vehicleBitmap(context: Context, vehicle: VehicleMarker, response: RouteTrips): Bitmap =
-        getBitmap(context, vehicleType(vehicle, response), colorResource(vehicle), directionIndex(vehicle))
+    fun vehicleBitmap(
+        context: Context,
+        vehicle: VehicleMarker,
+        response: RouteTrips,
+        sizeScale: Float = 1f,
+    ): Bitmap = getBitmap(
+        context,
+        vehicleType(vehicle, response),
+        colorResource(vehicle),
+        directionIndex(vehicle),
+        sizeScale,
+    )
 
     /**
      * A stable key identifying the icon [vehicleBitmap] returns for this vehicle — its type, heading
-     * octant, and schedule-deviation color, the only inputs that change the bitmap. A renderer caches
-     * one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames even when the
-     * bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
+     * octant, schedule-deviation color, and size scale, the only inputs that change the bitmap. A
+     * renderer caches one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames
+     * even when the bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
      */
     @JvmStatic
-    fun iconKey(vehicle: VehicleMarker, response: RouteTrips): String =
-        "veh:" + createBitmapCacheKey(vehicleType(vehicle, response), directionIndex(vehicle), colorResource(vehicle))
+    fun iconKey(vehicle: VehicleMarker, response: RouteTrips, sizeScale: Float = 1f): String =
+        "veh:" + createBitmapCacheKey(
+            vehicleType(vehicle, response),
+            directionIndex(vehicle),
+            colorResource(vehicle),
+            sizeScale,
+        )
 
     /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
     private fun vehicleType(vehicle: VehicleMarker, response: RouteTrips): Int {
@@ -141,16 +156,28 @@ object VehicleBitmaps {
         return MathUtils.getHalfWindIndex(direction.toFloat(), UNDIRECTED)
     }
 
-    private fun getBitmap(context: Context, vehicleType: Int, colorResource: Int, halfWind: Int): Bitmap {
+    private fun getBitmap(
+        context: Context,
+        vehicleType: Int,
+        colorResource: Int,
+        halfWind: Int,
+        sizeScale: Float,
+    ): Bitmap {
         val color = ContextCompat.getColor(context, colorResource)
-        val key = createBitmapCacheKey(vehicleType, halfWind, colorResource)
+        val key = createBitmapCacheKey(vehicleType, halfWind, colorResource, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, halfWind, color).also { sColoredIconCache.put(key, it) }
+            ?: renderMarker(context, vehicleType, halfWind, color, sizeScale)
+                .also { sColoredIconCache.put(key, it) }
     }
 
-    private fun createBitmapCacheKey(vehicleType: Int, halfWind: Int, colorResource: Int): String {
+    private fun createBitmapCacheKey(
+        vehicleType: Int,
+        halfWind: Int,
+        colorResource: Int,
+        sizeScale: Float,
+    ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        return "$type $halfWind $colorResource"
+        return "$type $halfWind $colorResource ${sizeScale.toBits()}"
     }
 
     /**
@@ -159,7 +186,7 @@ object VehicleBitmaps {
      */
     @VisibleForTesting
     fun previewBitmap(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap =
-        renderMarker(context, vehicleType, halfWind, color)
+        renderMarker(context, vehicleType, halfWind, color, 1f)
 
     /**
      * Composites the colored disc, white mode glyph, and (unless undirected) white heading arrow — each
@@ -167,9 +194,16 @@ object VehicleBitmaps {
      * offsets, then the fill on top) so the disc, glyph, and arrow read distinctly against each other
      * and the map. The disc is centered in the padded bitmap, so consumers anchor it at its center.
      */
-    private fun renderMarker(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap {
+    private fun renderMarker(
+        context: Context,
+        vehicleType: Int,
+        halfWind: Int,
+        color: Int,
+        sizeScale: Float,
+    ): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        val scale = context.resources.displayMetrics.density * MARKER_SIZE_DP / MarkerRendering.GRID
+        val scale = context.resources.displayMetrics.density * MARKER_SIZE_DP * sizeScale /
+            MarkerRendering.GRID
         val pad = PAD_GRID * scale
         val contentPx = (MarkerRendering.GRID * scale).toInt()
         val sizePx = (MarkerRendering.GRID * scale + 2f * pad).toInt()

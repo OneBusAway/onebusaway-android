@@ -187,13 +187,13 @@ class MapHost(
 
     // ----- Padding + camera commands -----
 
-    // Map content padding: the floating top chrome (status bar + FAB-row clearance) and the route-mode
-    // header both set the top; the arrivals sheet sets the bottom. Declarative state the renderer applies
-    // (Google: GoogleMap contentPadding), replacing the old imperative mapView.setPadding(...) relay
-    // through HomeActivity.
+    // Map content padding: the floating top chrome (status bar + FAB-row clearance) supplies a baseline;
+    // route focus may extend that edge farther down; the arrivals sheet sets the bottom. Declarative state
+    // the renderer applies (Google: GoogleMap contentPadding), replacing the old imperative
+    // mapView.setPadding(...) relay through HomeActivity.
     fun setTopChromeInset(px: Int) = renderState.setTopChromeInset(px)
 
-    fun setRouteHeaderPadding(px: Int) = renderState.setRouteHeaderPadding(px)
+    fun setRouteFocusTopEdge(px: Int) = renderState.setRouteFocusTopEdge(px)
 
     fun setBottomPadding(px: Int) = renderState.setBottomPadding(px)
 

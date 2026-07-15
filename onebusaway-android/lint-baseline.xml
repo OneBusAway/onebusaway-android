@@ -2,49 +2,6 @@
 <issues format="6" by="lint 9.3.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.3.0)" variant="all" version="9.3.0">
 
     <issue
-        id="InvalidPackage"
-        message="Invalid package reference in library; not included in Android: `javax.naming.directory`. Referenced from `io.grpc.internal.JndiResourceResolverFactory.JndiRecordFetcher`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.grpc/grpc-core/1.62.2/5808049a5e33eba6f248a68d58e75399a68f2784/grpc-core-1.62.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in library; not included in Android: `javax.naming`. Referenced from `io.grpc.internal.JndiResourceResolverFactory.JndiRecordFetcher`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.grpc/grpc-core/1.62.2/5808049a5e33eba6f248a68d58e75399a68f2784/grpc-core-1.62.2.jar"/>
-    </issue>
-
-    <issue
-        id="MemberExtensionConflict"
-        message="`isActive` is defined both as a member in class `kotlinx.coroutines.Job` and an extension in package `kotlinx.coroutines`. The defined behavior for this is to use the member, but since the extension is explicitly imported into this file, there&apos;s a chance that this was not expected. (One common way this happens is for members to be added to a class after code was already written to use an extension)."
-        errorLine1="        if (routeId != null &amp;&amp; vehicleJob?.isActive != true) {"
-        errorLine2="                                           ~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/map/RouteMapController.kt"
-            line="434"
-            column="44"/>
-    </issue>
-
-    <issue
-        id="PermissionNamingConvention"
-        message="`${applicationId}.permission.TRIP_SERVICE does not follow recommended naming convention`"
-        errorLine1="        android:name=&quot;${applicationId}.permission.TRIP_SERVICE&quot;"
-        errorLine2="                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="22"
-            column="23"/>
-    </issue>
-
-    <issue
-        id="ConvertToWebp"
-        message="One or more images in this project can be converted to the WebP format which typically results in smaller file sizes, even for lossless conversion">
-        <location
-            file="src/main/res/drawable-nodpi/wmata.jpg"/>
-    </issue>
-
-    <issue
         id="UnknownNullness"
         message="Unknown nullability; explicitly declare as `@Nullable` or `@NonNull` to improve Kotlin interoperability; see https://developer.android.com/kotlin/interop#nullability_annotations"
         errorLine1="    public static int findFirstNonNegativeArrival(ArrayList&lt;ArrivalInfo> infoList) {"

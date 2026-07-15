@@ -177,10 +177,26 @@ android {
         // intentional — the keys are semantically separate and may diverge per-context or per-language —
         // so consolidating them is unwanted, and the ~140 hits are pure noise. Opt out rather than
         // baseline them.
+        //
+        // The next four are the tail of the lint-baseline cleanup (the goal being to delete the baseline
+        // entirely): each is a single/handful of findings that is either not our code to fix or not worth
+        // fixing, so we opt out of the check rather than carry a baseline entry for it:
+        //  - InvalidPackage: emitted from grpc-core.jar, which references javax.naming[.directory] (JNDI)
+        //    — packages absent on Android — on a name-resolution path the app never exercises. It's
+        //    third-party library bytecode, not fixable here.
+        //  - PermissionNamingConvention: the app's `${applicationId}.permission.TRIP_SERVICE` custom
+        //    permission predates the convention; renaming a shipped permission is a compatibility break,
+        //    so the name stays.
+        //  - MemberExtensionConflict: kotlinx.coroutines exposes both `Job.isActive` (member) and
+        //    `CoroutineContext.isActive` (extension); on a `Job` receiver the member wins and is correct
+        //    (RouteMapController's `vehicleJob?.isActive`). The one hit is benign and has no cleaner call.
+        //  - ConvertToWebp: an advisory "this image could be smaller as WebP" nudge (wmata.jpg), not a
+        //    correctness signal. Declined.
         disable += setOf(
             "MissingTranslation", "ExtraTranslation", "LogNotTimber",
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion",
-            "OldTargetApi", "DuplicateStrings"
+            "OldTargetApi", "DuplicateStrings",
+            "InvalidPackage", "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp"
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed

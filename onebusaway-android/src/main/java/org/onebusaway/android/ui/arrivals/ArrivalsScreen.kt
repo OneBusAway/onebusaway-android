@@ -341,6 +341,8 @@ internal fun ArrivalsList(
     loadingMore: StateFlow<Boolean>,
     /** Stop-focus map colors keyed by route id. Empty for arrivals shown outside the home drawer. */
     mapRouteColors: Map<String, Int> = emptyMap(),
+    /** Exact route-direction row selected over the home map's stop focus; null outside that state. */
+    selectedRowKey: String? = null,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
@@ -356,6 +358,24 @@ internal fun ArrivalsList(
      *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
     etaAnchor: Modifier = Modifier
 ) {
+    val routeGroups = remember(content.routeGroups, selectedRowKey) {
+        promoteSelectedRouteGroup(content.routeGroups, selectedRowKey)
+    }
+    var hadSelection by remember { mutableStateOf(false) }
+    LaunchedEffect(selectedRowKey) {
+        // Stable item keys preserve the old viewport across reordering. Explicitly return to the head
+        // of the route rows so the promoted row is visible in the peek, and the original head is
+        // visible again when route mode clears.
+        val wasSelected = hadSelection
+        hadSelection = selectedRowKey != null
+        if (selectedRowKey != null || wasSelected) {
+            val alertsBeforeRoutes = content.hasAlerts && showAlerts
+            val directionBeforeRoutes = showDirection && content.header.direction != null
+            val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
+                (if (directionBeforeRoutes) 1 else 0)
+            listState.scrollToItem(firstRouteIndex)
+        }
+    }
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (content.hasAlerts && showAlerts) {
             // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
@@ -386,13 +406,14 @@ internal fun ArrivalsList(
         if (content.routeGroups.isEmpty()) {
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
-            itemsIndexed(content.routeGroups, key = { _, group -> group.key }) { index, group ->
+            itemsIndexed(routeGroups, key = { _, group -> group.key }) { index, group ->
                 RouteArrivalRow(
                     group = group,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
                     mapRouteColor = mapRouteColors[group.routeId],
+                    selected = group.key == selectedRowKey,
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     // Glide up/down as the alert section above is toggled in/out.

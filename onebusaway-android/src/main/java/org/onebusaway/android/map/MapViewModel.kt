@@ -61,12 +61,18 @@ data class RouteHeader(
     val shortName: String,
     val longName: String,
     val agency: String,
+    /** Stable identity of the route represented by this header, including while it is loading. */
+    val routeId: String? = null,
     /** The route's GTFS color (ARGB), or null when the agency didn't set one — the header's route
      *  badge chip takes its hue, matching the arrival rows. */
     val routeColor: Int? = null,
     val directions: List<RouteMapDirection> = emptyList(),
     val currentDirectionId: Int? = null,
-)
+) {
+    /** The direction currently shown by the map, or null while loading / showing the whole route. */
+    val currentDirection: RouteMapDirection?
+        get() = directions.firstOrNull { it.directionId == currentDirectionId }
+}
 
 /**
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
@@ -229,12 +235,19 @@ class MapViewModel @Inject constructor(
     // Map the controller's raw load into the display header: blank-but-loading until the route resolves,
     // then the formatted short/long name + agency. This is the display policy the controller is free of.
     private fun LoadedRoute.toRouteHeader(): RouteHeader = when (this) {
-        LoadedRoute.Loading -> RouteHeader(loading = true, shortName = "", longName = "", agency = "")
+        LoadedRoute.Loading -> RouteHeader(
+            loading = true,
+            shortName = "",
+            longName = "",
+            agency = "",
+            routeId = routeController.routeId,
+        )
         is LoadedRoute.Loaded -> RouteHeader(
             loading = false,
             shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route))!!,
             longName = MyTextUtils.formatDisplayText(getRouteDescription(route))!!,
             agency = agencyName ?: "",
+            routeId = route.id,
             routeColor = route.color,
             directions = directions,
             currentDirectionId = currentDirectionId,

@@ -427,6 +427,7 @@ fun HomeScreen(
                         ArrivalsSheetHost(
                             focusedStop = state.focusedStop,
                             sheetVisible = sheetShown,
+                            routeHeader = routeHeader,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
                             // Showing vehicles on the map drags the sheet down to peek so the route is

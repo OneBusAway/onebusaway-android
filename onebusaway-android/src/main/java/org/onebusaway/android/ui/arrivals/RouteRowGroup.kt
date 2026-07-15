@@ -92,11 +92,15 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
     val headsign: String? get() = representative.headsign
 
     /** A stable LazyColumn key; NUL-separated so a route id and headsign can't collide across rows. */
-    val key: String get() = "$routeId\u0000${headsign.orEmpty()}"
+    val key: String get() = routeRowKey(routeId, headsign)
 }
 
+/** Stable identity shared by grouping, LazyColumn, and the home drawer's reactive row selection. */
+internal fun routeRowKey(routeId: String, headsign: String?): String =
+    "$routeId\u0000${headsign.orEmpty()}"
+
 /** The grouping key for a (route, direction): a blank headsign and a null headsign group together. */
-private fun RouteDirectionItem.groupKey(): String = "$routeId\u0000${headsign.orEmpty()}"
+private fun RouteDirectionItem.groupKey(): String = routeRowKey(routeId, headsign)
 
 /**
  * Groups [items] into (route, direction) rows, then orders the rows by the **stable** (agency, line,
@@ -152,3 +156,20 @@ fun orderRouteGroupsByFavorite(
     groups: List<RouteRowGroup>,
     favoriteRouteIds: Set<String>
 ): List<RouteRowGroup> = orderGroupsByFavorite(groups, favoriteRouteIds) { it.routeId }
+
+/**
+ * Reactively promotes [selectedKey] without changing [groups]. Clearing selection returns the original
+ * list instance, restoring its favorite/agency/line/direction order without maintaining a second order.
+ */
+internal fun promoteSelectedRouteGroup(
+    groups: List<RouteRowGroup>,
+    selectedKey: String?,
+): List<RouteRowGroup> {
+    val index = groups.indexOfFirst { it.key == selectedKey }
+    if (index <= 0) return groups
+    return buildList(groups.size) {
+        add(groups[index])
+        addAll(groups.subList(0, index))
+        addAll(groups.subList(index + 1, groups.size))
+    }
+}

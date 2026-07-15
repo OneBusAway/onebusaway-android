@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,6 +104,7 @@ class ArrivalRowCallbacks(
 internal fun ArrivalCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    border: BorderStroke? = null,
     content: @Composable () -> Unit
 ) {
     val base = modifier
@@ -111,9 +113,16 @@ internal fun ArrivalCard(
     val shape = MaterialTheme.shapes.medium
     val color = MaterialTheme.colorScheme.surfaceContainer
     if (onClick != null) {
-        Surface(onClick = onClick, modifier = base, shape = shape, color = color, content = content)
+        Surface(
+            onClick = onClick,
+            modifier = base,
+            shape = shape,
+            color = color,
+            border = border,
+            content = content,
+        )
     } else {
-        Surface(modifier = base, shape = shape, color = color, content = content)
+        Surface(modifier = base, shape = shape, color = color, border = border, content = content)
     }
 }
 
@@ -250,6 +259,7 @@ fun RouteArrivalRow(
     isFavorite: Boolean,
     callbacks: ArrivalRowCallbacks,
     mapRouteColor: Int? = null,
+    selected: Boolean = false,
     modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
 ) {
@@ -260,7 +270,11 @@ fun RouteArrivalRow(
     // Fall back to the route's long name when the feed gives no headsign for this direction.
     val direction = group.headsign?.takeIf { it.isNotBlank() } ?: routeActions?.routeLongName.orEmpty()
     val onAlertClick = alertClick(group, actionsFor, callbacks)
-    ArrivalCard(modifier) {
+    val selectionColor = mapRouteColor ?: routeActions?.routeColor
+    val selectionBorder = selectionColor
+        ?.takeIf { selected }
+        ?.let { BorderStroke(2.dp, Color(it)) }
+    ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier

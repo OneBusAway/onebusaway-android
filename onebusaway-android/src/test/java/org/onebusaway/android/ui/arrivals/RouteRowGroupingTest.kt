@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 
@@ -261,6 +262,38 @@ class RouteRowGroupingTest {
             FakeItem("B", "East", 5),
         )
         assertEquals(listOf("A", "B"), order(items, setOf("A", "B")))
+    }
+
+    // Selected-row promotion ----------------------------------------------------------------------
+
+    @Test
+    fun selectedRow_movesExactRouteDirectionToTop_withoutMutatingSourceOrder() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
+            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
+            RouteRowGroup(listOf(previewArrival("A", "South", etaMinutes = 8, routeId = "A"))),
+        )
+        val originalKeys = groups.map(RouteRowGroup::key)
+
+        val promoted = promoteSelectedRouteGroup(groups, routeRowKey("A", "South"))
+
+        assertEquals(
+            listOf(routeRowKey("A", "South"), routeRowKey("A", "North"), routeRowKey("B", "East")),
+            promoted.map(RouteRowGroup::key),
+        )
+        assertEquals(originalKeys, groups.map(RouteRowGroup::key))
+    }
+
+    @Test
+    fun noActiveSelection_returnsOriginalOrderingInstance() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
+            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
+        )
+
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = null))
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = "missing"))
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = groups.first().key))
     }
 
     // Group-level active-alert resolution ---------------------------------------------------------

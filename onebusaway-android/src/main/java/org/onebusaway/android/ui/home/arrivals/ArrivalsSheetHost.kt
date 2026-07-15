@@ -37,19 +37,21 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.adjacencyRouteColors
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
-import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.ui.nav.ReminderEditorArgs
-import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
+import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
+import org.onebusaway.android.ui.arrivals.routeRowKey
+import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
 import org.onebusaway.android.ui.tutorial.TutorialState
@@ -73,6 +75,9 @@ internal fun ArrivalsSheetHost(
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
+    // Hoisted map route focus; the selected drawer row is derived from its route + resolved direction,
+    // regardless of whether the focus originated from a drawer row or an adjacency route badge.
+    routeHeader: RouteHeader?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
     onShowRouteOnMap: (ShowRouteRequest) -> Unit,
@@ -133,6 +138,7 @@ internal fun ArrivalsSheetHost(
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
                     mapRouteColors = mapRouteColors,
+                    selectedRowKey = routeHeader?.selectedArrivalRowKey(),
                     onContentHeight = onContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
@@ -163,6 +169,13 @@ internal fun ArrivalsSheetHost(
             }
         }
     }
+}
+
+/** Maps the map's resolved route direction back to the same route+headsign identity as the drawer. */
+internal fun RouteHeader.selectedArrivalRowKey(): String? {
+    val id = routeId ?: return null
+    val headsign = currentDirection?.label ?: return null
+    return routeRowKey(id, headsign)
 }
 
 /**

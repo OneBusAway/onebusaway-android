@@ -93,281 +93,6 @@
     </issue>
 
     <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;Database backup saved successfully to: $uri&quot;)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/backup/Backup.kt"
-            line="65"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                    Log.d(TAG, &quot;No icon for mode: $mode&quot;)"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/directions/util/DirectionsGenerator.kt"
-            line="507"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                    Log.d(TAG, &quot;No icon for mode: $mode&quot;)"
-        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/directions/util/DirectionsGenerator.kt"
-            line="507"
-            column="21"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(FeedbackLauncher.TAG, &quot;Log deleted $deleted&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/ui/feedback/Feedback.kt"
-            line="171"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;sourceLocation: &quot; + lFile);"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/FeedbackReceiver.java"
-            line="140"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;targetLocation: &quot; + destFolder);"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/FeedbackReceiver.java"
-            line="141"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.v(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.v(TAG, &quot;Log deleted &quot; + deleted);"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/FeedbackReceiver.java"
-            line="163"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;User feedback logged to Firebase Analytics :: wasGoodReminder - &quot;"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/FeedbackReceiver.java"
-            line="191"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;fetchAlerts for region: &quot; + regionId);"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="53"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;Alert: &quot; + id + &quot; - &quot; + title + &quot; - &quot; + description + &quot; - &quot; + url);"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="93"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;Received reminder for stopId: $stopId&quot;)"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/tripservice/MyFirebaseMessagingService.kt"
-            line="55"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;Directory - &quot; + getApplicationContext()"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationCleanupWorker.java"
-            line="56"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;Time threshold - &quot; + time.getTime().toString());"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationCleanupWorker.java"
-            line="60"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;:&quot; + file.absolutePath)"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationService.kt"
-            line="313"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;Number of path links: &quot; + mPath.getPathLinks().size());"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="166"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;Detecting stop. distance_d=&quot; +"
-        errorLine2="            ^">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="438"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                        Log.d(TAG, logFileName + &quot; uploaded successful&quot;);"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="106"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                        Log.d(TAG, &quot;Response - &quot; + userResponse);"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="110"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                        Log.d(TAG, &quot;FeedbackText - &quot; + feedbackText);"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="111"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                        Log.d(TAG, &quot;Download URL - &quot; + fileURL);"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="112"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.v(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                        Log.v(TAG, logFileName + &quot; deleted : &quot; + deleted);"
-        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="115"
-            column="25"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;User feedback logged to Firebase Analytics :: wasGoodReminder - &quot;"
-        errorLine2="        ^">
-        <location
-            file="src/main/java/org/onebusaway/android/nav/NavigationUploadWorker.java"
-            line="131"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="        Log.d(TAG, &quot;Finding region closest to &quot; + loc.getLatitude() + &quot;,&quot; + loc.getLongitude());"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/util/RegionUtils.java"
-            line="86"
-            column="9"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="            Log.d(TAG, &quot;Region &apos;&quot; + region.getName() + &quot;&apos; is &quot; + fmt.format(miles) + &quot; miles away&quot;);"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/util/RegionUtils.java"
-            line="101"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="LogConditional"
-        message="The log call Log.d(...) should be conditional: surround with `if (Log.isLoggable(...))` or `if (BuildConfig.DEBUG) { ... }`"
-        errorLine1="                .onFailure { Log.d(TAG, &quot;Delete request failed: $it&quot;) }"
-        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/org/onebusaway/android/api/bridge/ReminderClient.kt"
-            line="52"
-            column="30"/>
-    </issue>
-
-    <issue
         id="UnusedIds"
         message="The resource `R.id.listContainer` appears to be unused"
         errorLine1="    &lt;item name=&quot;listContainer&quot; type=&quot;id&quot; />"
@@ -4618,7 +4343,7 @@
         errorLine2="                                          ~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="34"
+            line="35"
             column="43"/>
     </issue>
 
@@ -4629,7 +4354,7 @@
         errorLine2="                            ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="44"
+            line="45"
             column="29"/>
     </issue>
 
@@ -4640,7 +4365,7 @@
         errorLine2="                                             ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="44"
+            line="45"
             column="46"/>
     </issue>
 
@@ -4651,7 +4376,7 @@
         errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="82"
+            line="83"
             column="31"/>
     </issue>
 
@@ -4662,7 +4387,7 @@
         errorLine2="                                                                                ~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="82"
+            line="83"
             column="81"/>
     </issue>
 
@@ -4673,7 +4398,7 @@
         errorLine2="           ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="107"
+            line="108"
             column="12"/>
     </issue>
 
@@ -4684,7 +4409,7 @@
         errorLine2="                                   ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/widealerts/GtfsAlerts.java"
-            line="107"
+            line="108"
             column="36"/>
     </issue>
 
@@ -5080,7 +4805,7 @@
         errorLine2="                  ~~~~~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="94"
+            line="95"
             column="19"/>
     </issue>
 
@@ -5091,7 +4816,7 @@
         errorLine2="                                     ~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="103"
+            line="104"
             column="38"/>
     </issue>
 
@@ -5102,7 +4827,7 @@
         errorLine2="                                                      ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="103"
+            line="104"
             column="55"/>
     </issue>
 
@@ -5113,7 +4838,7 @@
         errorLine2="                                                                     ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="103"
+            line="104"
             column="70"/>
     </issue>
 
@@ -5124,7 +4849,7 @@
         errorLine2="                                     ~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="114"
+            line="115"
             column="38"/>
     </issue>
 
@@ -5135,7 +4860,7 @@
         errorLine2="                                                      ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="114"
+            line="115"
             column="55"/>
     </issue>
 
@@ -5146,7 +4871,7 @@
         errorLine2="                                                                     ~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="114"
+            line="115"
             column="70"/>
     </issue>
 
@@ -5157,7 +4882,7 @@
         errorLine2="                         ~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="159"
+            line="160"
             column="26"/>
     </issue>
 
@@ -5168,7 +4893,7 @@
         errorLine2="                                ~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="248"
+            line="249"
             column="33"/>
     </issue>
 
@@ -5179,7 +4904,7 @@
         errorLine2="           ~~~~~~~~~~~~">
         <location
             file="src/main/java/org/onebusaway/android/nav/NavigationServiceProvider.java"
-            line="561"
+            line="562"
             column="12"/>
     </issue>
 

@@ -44,6 +44,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.apache.commons.io.FileUtils
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.LocationEntryPoint
@@ -310,7 +311,7 @@ class NavigationService : Service() {
             val file = File(subFolder, "$counter-$readableDate.csv")
             logFile = file
 
-            Log.d(TAG, ":" + file.absolutePath)
+            if (BuildConfig.DEBUG) Log.d(TAG, ":" + file.absolutePath)
 
             val header = String.format(
                 Locale.US, "%s,%s,%f,%f,%s,%f,%f\n", tripId, destinationStopId,

@@ -83,7 +83,7 @@ public class RegionUtils {
         }
         double miles;
 
-        Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
+        if (BuildConfig.DEBUG) Log.d(TAG, "Finding region closest to " + loc.getLatitude() + "," + loc.getLongitude());
 
         for (Region region : regions) {
             if (!isRegionUsable(context, region)) {
@@ -98,7 +98,7 @@ public class RegionUtils {
                 continue;
             }
             miles = distToRegion * METERS_TO_MILES;
-            Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away");
+            if (BuildConfig.DEBUG) Log.d(TAG, "Region '" + region.getName() + "' is " + fmt.format(miles) + " miles away");
             if (distToRegion < minDist) {
                 closestRegion = region;
                 minDist = distToRegion;

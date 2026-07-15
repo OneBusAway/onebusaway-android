@@ -18,6 +18,7 @@ package org.onebusaway.android.nav;
 import static android.app.PendingIntent.*;
 
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
@@ -163,7 +164,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         lazyProxInitialization();
         mPath = path;
         mPathLinkIndex = 0;
-        Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
+        if (BuildConfig.DEBUG) Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
 
         // Create new coordinate object using the "Ring" coordinates
         Location firstLocation = mPath.getPathLinks().get(mPathLinkIndex).getOriginLocation();
@@ -435,7 +436,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             } else */
             float lastToSecDistance = lastCoords.distanceTo(secondToLastCoords);
-            Log.d(TAG, "Detecting stop. distance_d=" +
+            if (BuildConfig.DEBUG) Log.d(TAG, "Detecting stop. distance_d=" +
                     distance_d + ". stop_type=" + stop_type + " speed=" + speed);
             if (stop_type == 1) {
                 /* Check if the bus is on the second to last stop */

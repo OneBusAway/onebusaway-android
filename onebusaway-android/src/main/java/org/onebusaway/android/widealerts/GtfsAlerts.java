@@ -2,6 +2,7 @@ package org.onebusaway.android.widealerts;
 
 import com.google.transit.realtime.GtfsRealtime;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.Region;
@@ -50,7 +51,7 @@ public class GtfsAlerts {
         if (pathUrl == null) {
             return;
         }
-        Log.d(TAG, "fetchAlerts for region: " + regionId);
+        if (BuildConfig.DEBUG) Log.d(TAG, "fetchAlerts for region: " + regionId);
         new Thread(() -> {
             try {
                 URL url = new URL(pathUrl);
@@ -90,7 +91,7 @@ public class GtfsAlerts {
             String description = GtfsAlertsHelper.getAlertDescription(alert);
             String url = GtfsAlertsHelper.getAlertUrl(alert);
 
-            Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
+            if (BuildConfig.DEBUG) Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
             GtfsAlertsHelper.markAlertAsRead(mContext, entity);
             callback.onAlert(title, description, url);
             // Only trigger the callback for one alert.

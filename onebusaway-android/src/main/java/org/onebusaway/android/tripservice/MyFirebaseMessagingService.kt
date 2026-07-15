@@ -13,6 +13,7 @@ import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -52,7 +53,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
 
         val message = remoteMessage.notification?.body ?: remoteMessage.data["message"] ?: "No message content"
-        Log.d(TAG, "Received reminder for stopId: $stopId")
+        if (BuildConfig.DEBUG) Log.d(TAG, "Received reminder for stopId: $stopId")
 
         val context = applicationContext
         reminderRepository.deleteReminderFromPayload(arrivalJson)

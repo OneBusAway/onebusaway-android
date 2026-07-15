@@ -99,6 +99,9 @@ import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
+// Temporary calibration aid; retain the implementation so it can be restored with a one-line toggle.
+private const val SHOW_DEBUG_ZOOM_INDICATOR = false
+
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue
  * in HomeActivity — the tap callbacks (focus -> the map view model + the home focused stop +
@@ -345,7 +348,7 @@ fun MapFeature(
             banner = stopsBanner,
             modifier = Modifier.align(Alignment.TopCenter),
         )
-        if (BuildConfig.DEBUG) {
+        if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
             val zoom = camera?.zoom?.toFloat() ?: seed.zoom
             Text(
                 text = String.format(

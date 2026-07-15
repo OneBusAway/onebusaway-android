@@ -54,6 +54,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
 import org.onebusaway.android.R
@@ -148,7 +149,7 @@ class FeedbackSubmitter(
         )
         try {
             val file = File(logFilePath)
-            FileUtils.write(file, System.lineSeparator() + feedback, true)
+            FileUtils.write(file, System.lineSeparator() + feedback, StandardCharsets.UTF_8, true)
             val destFolder = File(
                 context.filesDir.absolutePath
                         + File.separator + NavigationService.LOG_DIRECTORY + File.separator + response

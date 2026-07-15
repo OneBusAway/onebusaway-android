@@ -38,61 +38,6 @@
     </issue>
 
     <issue
-        id="UnusedIds"
-        message="The resource `R.id.listContainer` appears to be unused"
-        errorLine1="    &lt;item name=&quot;listContainer&quot; type=&quot;id&quot; />"
-        errorLine2="          ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/ids.xml"
-            line="21"
-            column="11"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.internalEmpty` appears to be unused"
-        errorLine1="    &lt;item name=&quot;internalEmpty&quot; type=&quot;id&quot; />"
-        errorLine2="          ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/ids.xml"
-            line="22"
-            column="11"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.loading` appears to be unused"
-        errorLine1="    &lt;item name=&quot;loading&quot; type=&quot;id&quot; />"
-        errorLine2="          ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/ids.xml"
-            line="23"
-            column="11"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.refresh_loading` appears to be unused"
-        errorLine1="    &lt;item name=&quot;refresh_loading&quot; type=&quot;id&quot; />"
-        errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/ids.xml"
-            line="24"
-            column="11"/>
-    </issue>
-
-    <issue
-        id="UnusedIds"
-        message="The resource `R.id.refresh_progress_small` appears to be unused"
-        errorLine1="    &lt;item name=&quot;refresh_progress_small&quot; type=&quot;id&quot; />"
-        errorLine2="          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/ids.xml"
-            line="25"
-            column="11"/>
-    </issue>
-
-    <issue
         id="DuplicateStrings"
         message="Duplicate string value `Settings`, used in `analytics_label_button_press_settings` and `navdrawer_item_settings`. Use `android:inputType` or `android:capitalize` to treat these as the same and avoid string duplication."
         errorLine1="    &lt;string name=&quot;analytics_label_button_press_settings&quot;>settings&lt;/string>"

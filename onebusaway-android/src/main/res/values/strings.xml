@@ -21,7 +21,6 @@
     <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
-    <string name="navdrawer_item_nearby">Nearby</string>
     <string name="navdrawer_item_starred_stops">Starred stops</string>
     <string name="navdrawer_item_starred_routes">Starred routes</string>
     <string name="navdrawer_item_my_reminders">My reminders</string>

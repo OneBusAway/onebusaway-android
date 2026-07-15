@@ -62,6 +62,7 @@ import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.PreferenceUtils
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -317,7 +318,7 @@ class NavigationService : Service() {
                 last?.latitude ?: 0.0, last?.longitude ?: 0.0
             )
 
-            FileUtils.write(file, header, false)
+            FileUtils.write(file, header, StandardCharsets.UTF_8, false)
         } catch (e: IOException) {
             Log.e(TAG, "File write failed: $e")
         }
@@ -346,7 +347,7 @@ class NavigationService : Service() {
 
             val file = logFile
             if (file != null && file.canWrite()) {
-                FileUtils.write(file, log, true)
+                FileUtils.write(file, log, StandardCharsets.UTF_8, true)
             } else {
                 Log.e(TAG, "Failed to write to file")
             }

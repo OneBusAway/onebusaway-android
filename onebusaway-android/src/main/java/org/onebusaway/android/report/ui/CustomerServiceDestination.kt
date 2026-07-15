@@ -19,7 +19,7 @@ package org.onebusaway.android.report.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint

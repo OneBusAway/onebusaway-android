@@ -23,6 +23,7 @@ import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -111,6 +112,9 @@ data class ArrivalsData(
     val header: StopHeader,
     /** The effective time window after the loader's empty-result expansion. */
     val minutesAfter: Int,
+    /** The server-clock instant the shown arrivals window ends at (the response's `currentTime` plus
+     *  [minutesAfter]) — the "Showing arrivals until HH:MM" footnote formats this. */
+    val windowEnd: ServerTime,
     val isStale: Boolean,
     val actions: Map<String, ArrivalActions>,
     /** Every active, de-duplicated alert for the stop — *including* hidden ones. The ViewModel
@@ -336,6 +340,9 @@ class DefaultArrivalsRepository @Inject constructor(
             routeGroups = groupArrivalsByRouteDirection(arrivals) { agencyNameFor(snapshot, it.routeId) },
             header = header,
             minutesAfter = snapshot.minutesAfter,
+            // The window ends [minutesAfter] past the response's own server clock — not the projected
+            // `now` — so the footnote names the true boundary of the data actually shown.
+            windowEnd = ServerTime(snapshot.currentTime) + snapshot.minutesAfter.minutes,
             isStale = isStale,
             actions = buildActions(snapshot, arrivals, activeSituationIds),
             activeAlerts = activeAlerts,

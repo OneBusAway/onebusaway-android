@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import org.onebusaway.android.time.ServerTime
+
 
 /** The stop being viewed, for the arrivals screen header. */
 data class StopHeader(
@@ -87,6 +89,9 @@ sealed interface ArrivalsUiState {
         val arrivals: List<ArrivalInfo>,
         val routeGroups: List<RouteRowGroup>,
         val minutesAfter: Int,
+        /** Server-clock instant the shown arrivals window ends at — formatted for the "Showing
+         *  arrivals until HH:MM" footnote beside the load-more button. */
+        val windowEnd: ServerTime,
         val isStale: Boolean,
         val actions: Map<String, ArrivalActions> = emptyMap(),
         /** The starred route ids, live — a row's star + the drawer-header promotion read from this, so a

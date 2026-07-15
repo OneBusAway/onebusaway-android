@@ -310,7 +310,8 @@
         <item quantity="many"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_load_more_arrivals">Cargar más llegadas</string>
+    <string name="stop_info_showing_trips_until">Mostrando viajes hasta %1$s</string>
+    <string name="stop_info_load_more">Cargar más</string>
     <string name="stop_info_item_options_title">Opciones de bus</string>
     <string name="stop_info_clear">Limpiar</string>
     <string name="stop_info_favorite">Parada Favorita</string>

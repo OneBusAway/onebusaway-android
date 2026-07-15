@@ -52,6 +52,15 @@ class StopZoomBandTest {
     }
 
     @Test
+    fun `stop-focus route circles ramp linearly from 30 percent at zoom 12 to full size at 15`() {
+        assertEquals(0.3f, focusedRouteStopScale(10f), 0f)
+        assertEquals(0.3f, focusedRouteStopScale(12f), 0f)
+        assertEquals(0.65f, focusedRouteStopScale(13.5f), 0.0001f)
+        assertEquals(1f, focusedRouteStopScale(15f), 0f)
+        assertEquals(1f, focusedRouteStopScale(18f), 0f)
+    }
+
+    @Test
     fun `at the dot band the focused stop gets the accent dot, others the plain dot`() {
         assertEquals(StopIconKind.DOT, stopIconKind(focused = false, band = StopBand.DOT))
         assertEquals(StopIconKind.DOT_FOCUSED, stopIconKind(focused = true, band = StopBand.DOT))
@@ -87,40 +96,5 @@ class StopZoomBandTest {
     fun `favorite defaults to false so a non-starred stop keeps its plain icon`() {
         assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.FULL))
         assertEquals(StopIconKind.DOT, stopIconKind(focused = false, band = StopBand.DOT))
-    }
-
-    @Test
-    fun `a route stop gets the centerline circle, focus filling its center`() {
-        assertEquals(
-            StopIconKind.ROUTE_CIRCLE,
-            stopIconKind(focused = false, band = StopBand.FULL, routeStop = true)
-        )
-        assertEquals(
-            StopIconKind.ROUTE_CIRCLE_FOCUSED,
-            stopIconKind(focused = true, band = StopBand.FULL, routeStop = true)
-        )
-    }
-
-    @Test
-    fun `a route stop stays a circle regardless of zoom band or favorite`() {
-        // routeStop wins over both, so a route's stops read uniformly at every zoom and a starred
-        // route stop isn't singled out with the star while the route is shown.
-        assertEquals(
-            StopIconKind.ROUTE_CIRCLE,
-            stopIconKind(focused = false, band = StopBand.DOT, routeStop = true)
-        )
-        assertEquals(
-            StopIconKind.ROUTE_CIRCLE,
-            stopIconKind(focused = false, band = StopBand.DOT, favorite = true, routeStop = true)
-        )
-        assertEquals(
-            StopIconKind.ROUTE_CIRCLE_FOCUSED,
-            stopIconKind(
-                focused = true,
-                band = StopBand.FULL,
-                favorite = true,
-                routeStop = true,
-            )
-        )
     }
 }

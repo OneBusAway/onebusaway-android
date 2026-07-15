@@ -534,7 +534,11 @@ class RouteMapController(
         val emphasizedRouteId = routeId
         val visibleStopIds = focusedStops.stopIdsForRoute(focus.trips, emphasizedRouteId)
         renderState.setRoutePolylines(
-            focusedGeometry.toRoutePolylines(emphasizedRouteId, focusedRouteColors)
+            polylines = focusedGeometry.toRoutePolylines(emphasizedRouteId, focusedRouteColors),
+            // Adjacency remains visible underneath route mode, but the active route's fully loaded
+            // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
+            // fit the union of every route serving the focused stop.
+            framingPolylines = if (isActive) basePolylines else emptyList(),
         )
         renderState.setRouteBadges(
             if (emphasizedRouteId == null) {

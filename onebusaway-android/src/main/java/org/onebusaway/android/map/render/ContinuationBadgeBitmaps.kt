@@ -26,7 +26,7 @@ import androidx.core.graphics.createBitmap
 /**
  * Bitmaps for the route-continuation overlay (#1691): the tappable pill badge showing a route short
  * name, and the arrowhead terminating the continuation line. Resource-free and flavor-neutral (like
- * [TripStopBitmaps]/[BikeBitmaps]), so a flavor renderer just wraps the [Bitmap] as a marker icon.
+ * [BikeBitmaps], so a flavor renderer just wraps the [Bitmap] as a marker icon.
  *
  * A prototype-quality first pass: legible + tappable, not a final visual design.
  */

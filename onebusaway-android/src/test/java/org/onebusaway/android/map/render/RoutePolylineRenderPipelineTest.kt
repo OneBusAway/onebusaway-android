@@ -35,14 +35,6 @@ class RoutePolylineRenderPipelineTest {
     )
 
     @Test
-    fun `route outline is opaque 90 percent contrast and stays point 75 dp on each side`() {
-        assertEquals(0xFFE6E6E6.toInt(), routeOutlineColor(darkMode = true))
-        assertEquals(0xFF1A1A1A.toInt(), routeOutlineColor(darkMode = false))
-        assertEquals(11.5f, routeOutlineWidthPx(innerWidthPx = 10f, density = 1f), 0f)
-        assertEquals(14.5f, routeOutlineWidthPx(innerWidthPx = 10f, density = 3f), 0f)
-    }
-
-    @Test
     fun `unmarked lines pass through with their list identity`() {
         val line = RoutePolyline(0xFF123456.toInt(), listOf(point(0.0, 0.0), point(0.0, 1.0)))
         val lines = listOf(line)

@@ -167,6 +167,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 wireClicks(map, r, windows, cb)
 
                 map.setOnCameraMoveStartedListener { reason ->
+                    r.onCameraMoveStarted()
                     // A user gesture (pan/fling/pinch) started: gate the stop/bike loaders until it settles.
                     // Programmatic camera animations (recenter, zoom-to-route) don't gate — they emit only
                     // their terminating idle, so there's nothing mid-move to suppress.
@@ -174,7 +175,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                         host.onCameraGestureStarted()
                     }
                 }
-                map.setOnCameraIdleListener { host.onCameraIdle(snapshot(map)) }
+                map.setOnCameraIdleListener {
+                    r.onCameraSettled(map.cameraPosition.zoom)
+                    host.onCameraIdle(snapshot(map))
+                }
 
                 r.renderStatic()
                 createdRenderer = r
@@ -320,6 +324,13 @@ internal fun wireClicks(
     }
 
     map.setOnMarkerClickListener { marker -> routeMarkerTap(marker, renderer, infoWindows, cb) }
+
+    map.setOnCircleClickListener { circle ->
+        renderer.stopForCircle(circle)?.let { stop ->
+            infoWindows.clear()
+            cb.onStopClick(stop.stop)
+        }
+    }
 
     map.setOnInfoWindowClickListener { marker ->
         val vehicle = renderer.vehicleForMarker(marker)

@@ -30,6 +30,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
@@ -106,7 +107,7 @@ fun applyFramingIntent(
 ) {
     when (intent) {
         FramingIntent.Route -> {
-            val bounds = routePolylineBounds(renderState)
+            val bounds = routePolylineBounds(renderState.routeFramingPolylines)
             if (bounds == null) {
                 Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
             } else {
@@ -119,7 +120,7 @@ fun applyFramingIntent(
         }
 
         FramingIntent.Itinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
+            val bounds = routePolylineBounds(renderState.getRoutePolylines()) ?: return
             val dm = context.resources.displayMetrics
             // animateCamera to match the maplibre adapter (#1719); see Route above.
             map.animateCamera(
@@ -167,11 +168,11 @@ fun applyFramingIntent(
  */
 internal fun GoogleMap.applyMapPadding(padding: MapPadding) = setPadding(0, padding.topPx, 0, padding.bottomPx)
 
-/** Bounds enclosing the current route/itinerary polylines, or null if there are no points. */
-private fun routePolylineBounds(renderState: MapRenderState): LatLngBounds? {
+/** Bounds enclosing [polylines], or null if there are no points. */
+private fun routePolylineBounds(polylines: Iterable<RoutePolyline>): LatLngBounds? {
     val builder = LatLngBounds.Builder()
     var any = false
-    for (polyline in renderState.snapshot.value.routePolylines) {
+    for (polyline in polylines) {
         for (point in polyline.points) {
             builder.include(LatLng(point.latitude, point.longitude))
             any = true

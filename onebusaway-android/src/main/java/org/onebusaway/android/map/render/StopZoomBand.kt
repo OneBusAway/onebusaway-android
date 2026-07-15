@@ -22,6 +22,12 @@ package org.onebusaway.android.map.render
  */
 const val STOP_DOT_ZOOM_THRESHOLD = 15f
 
+/** Stop-focus route circles reach their smallest size at or below this zoom. */
+const val STOP_FOCUS_ROUTE_MIN_ZOOM = 12f
+
+/** Smallest stop-focus route-circle scale; zoom 15+ uses the normal trip-stop size. */
+const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
+
 /**
  * Marker-group ordering. Native map SDKs always place markers above route polylines, but adjacent
  * route stops must still win every marker overlap; favorites remain above ordinary nearby stops.
@@ -40,33 +46,37 @@ fun stopZoomBand(zoom: Float): StopBand =
     if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
 
 /**
+ * Linear stop-focus route-circle scale: compact at distant zoom, normal-sized once full stop icons
+ * return. The renderer applies it only when a stop is focused; ordinary single-route mode stays 1x.
+ */
+fun focusedRouteStopScale(zoom: Float): Float {
+    val progress = ((zoom - STOP_FOCUS_ROUTE_MIN_ZOOM) /
+        (STOP_DOT_ZOOM_THRESHOLD - STOP_FOCUS_ROUTE_MIN_ZOOM)).coerceIn(0f, 1f)
+    return STOP_FOCUS_ROUTE_MIN_SCALE + (1f - STOP_FOCUS_ROUTE_MIN_SCALE) * progress
+}
+
+/**
  * The icon variants a stop marker can show: the full directional icon or the far-zoom dot (each
  * normal/focused), the distinctive star a starred (favorite) stop gets in place of either (#1680),
- * likewise normal/focused, and — while a route is shown — the on-centerline circle that matches the
- * trip map's stop styling (#1752), normal/focused.
+ * likewise normal/focused. Route stops are native circles owned by the flavor-specific circle layer.
  */
 enum class StopIconKind {
     FULL, FULL_FOCUSED, DOT, DOT_FOCUSED,
     FAVORITE, FAVORITE_FOCUSED, FAVORITE_DOT, FAVORITE_DOT_FOCUSED,
-    ROUTE_CIRCLE, ROUTE_CIRCLE_FOCUSED,
 }
 
 /**
  * The icon a stop marker should show given whether it's the [focused] stop, whether it's a
- * [favorite] (starred) stop, whether it's a [routeStop] on the shown route, and the current zoom
- * [band]. A [routeStop] always draws the on-centerline circle (matching the trip map, #1752) — it
- * ignores the star and zoom band so single-route mode's stops read uniformly. Otherwise a starred
- * stop gets its distinctive star instead of the directional icon/dot (#1680). The focused stop always
- * gets the matching focused variant so a selection stays visible. Pure, so renderer icon-change
- * decisions are unit-testable and identical across both map flavors.
+ * [favorite] (starred) stop, and the current zoom [band]. A starred stop gets its distinctive star
+ * instead of the directional icon/dot (#1680). The focused stop always gets the matching focused
+ * variant so a selection stays visible. Pure, so renderer icon-change decisions are unit-testable and
+ * identical across both map flavors.
  */
 fun stopIconKind(
     focused: Boolean,
     band: StopBand,
     favorite: Boolean = false,
-    routeStop: Boolean = false,
 ): StopIconKind = when {
-    routeStop -> if (focused) StopIconKind.ROUTE_CIRCLE_FOCUSED else StopIconKind.ROUTE_CIRCLE
     favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT
     favorite -> if (focused) StopIconKind.FAVORITE_FOCUSED else StopIconKind.FAVORITE

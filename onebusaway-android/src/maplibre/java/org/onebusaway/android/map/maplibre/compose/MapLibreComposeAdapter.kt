@@ -137,6 +137,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         var loadedStyle by remember { mutableStateOf<Style?>(null) }
 
         DisposableEffect(mapView) {
+            var createdRenderer: MapLibreRenderer? = null
             mapView.getMapAsync { map ->
                 mapLibreMap = map
                 if (initialLatitude != 0.0 || initialLongitude != 0.0) {
@@ -149,7 +150,8 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 val styleUrl = if (ThemeUtils.isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
                 map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
                     loadedStyle = style
-                    val r = MapLibreRenderer(map, context, renderState)
+                    val r = MapLibreRenderer(map, style, context, renderState)
+                    createdRenderer = r
                     renderer = r
                     val container = activity.findViewById<ViewGroup>(android.R.id.content)
                     val windows = MapLibreInfoWindows(activity, container, map)
@@ -173,7 +175,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                     r.renderStatic()
                 }
             }
-            onDispose { }
+            onDispose { createdRenderer?.dispose() }
         }
 
         // Re-render the maplibre annotations, and enable the blue dot from the view model's permission flag.
@@ -276,7 +278,12 @@ private fun wireClicks(
     infoWindows: MapLibreInfoWindows,
     callbacks: ObaMapCallbacks,
 ) {
-    map.addOnMapClickListener {
+    map.addOnMapClickListener { point ->
+        renderer.routeStopAt(point)?.let { stop ->
+            infoWindows.clear()
+            callbacks.onStopClick(stop.stop)
+            return@addOnMapClickListener true
+        }
         infoWindows.clear()
         callbacks.onMapClick(null)
         false

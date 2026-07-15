@@ -27,6 +27,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
@@ -84,9 +85,13 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
  */
 fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState, context: Context) {
     when (intent) {
-        FramingIntent.Route,
+        FramingIntent.Route -> {
+            val bounds = routePolylineBounds(renderState.routeFramingPolylines) ?: return
+            map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
+        }
+
         FramingIntent.Itinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
+            val bounds = routePolylineBounds(renderState.getRoutePolylines()) ?: return
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
         }
 
@@ -119,11 +124,11 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
     }
 }
 
-/** Bounds enclosing the current route/itinerary polylines, or null if there are no points. */
-private fun routePolylineBounds(renderState: MapRenderState): LatLngBounds? {
+/** Bounds enclosing [polylines], or null if there are no points. */
+private fun routePolylineBounds(polylines: Iterable<RoutePolyline>): LatLngBounds? {
     val builder = LatLngBounds.Builder()
     var any = false
-    for (polyline in renderState.snapshot.value.routePolylines) {
+    for (polyline in polylines) {
         for (point in polyline.points) {
             builder.include(LatLng(point.latitude, point.longitude))
             any = true

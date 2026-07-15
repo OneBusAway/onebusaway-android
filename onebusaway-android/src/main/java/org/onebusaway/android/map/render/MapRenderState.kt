@@ -64,17 +64,6 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
  */
 const val ROUTE_LINE_WIDTH_DP: Float = 10f
 
-/** Contrast casing drawn on each side of every route line. */
-const val ROUTE_OUTLINE_WIDTH_DP: Float = 0.75f
-
-/** Opaque 90%-white against dark maps; opaque 90%-black against light maps. */
-fun routeOutlineColor(darkMode: Boolean): Int =
-    if (darkMode) 0xFFE6E6E6.toInt() else 0xFF1A1A1A.toInt()
-
-/** Native backing-stroke width that leaves [ROUTE_OUTLINE_WIDTH_DP] visible on both sides. */
-fun routeOutlineWidthPx(innerWidthPx: Float, density: Float): Float =
-    innerWidthPx + 2f * ROUTE_OUTLINE_WIDTH_DP * density
-
 /** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
 enum class RoutePolylineTransform {
     VIEWPORT_CLIP,
@@ -383,7 +372,17 @@ class MapRenderState {
 
     fun getRoutePolylines(): List<RoutePolyline> = _snapshot.value.routePolylines
 
-    fun setRoutePolylines(polylines: List<RoutePolyline>) {
+    // The active single route's canonical geometry for FramingIntent.Route. This is camera state, not
+    // rendered state: focused-stop adjacency keeps sibling routes visible, but they must not widen the
+    // selected route's camera box to their union. Like the other mutators, this is main-thread confined.
+    internal var routeFramingPolylines: List<RoutePolyline> = emptyList()
+        private set
+
+    fun setRoutePolylines(
+        polylines: List<RoutePolyline>,
+        framingPolylines: List<RoutePolyline> = polylines,
+    ) {
+        routeFramingPolylines = framingPolylines
         _snapshot.update { it.copy(routePolylines = polylines) }
     }
 

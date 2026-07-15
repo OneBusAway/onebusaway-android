@@ -22,7 +22,6 @@
     <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
-    <string name="navdrawer_item_nearby">Cerca</string>
     <string name="navdrawer_item_starred_stops">Paradas favoritas</string>
     <string name="navdrawer_item_starred_routes">Rutas favoritas</string>
     <string name="navdrawer_item_my_reminders">Mis recordatorios</string>

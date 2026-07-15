@@ -20,7 +20,6 @@
     <string name="app_name">OneBusAway</string>
 
     <!-- Navigation Drawer -->
-    <string name="navdrawer_item_nearby">Lähistöllä</string>
     <string name="navdrawer_item_starred_stops">Suosikkipysäkit</string>
     <string name="navdrawer_item_my_reminders">Muistutukseni</string>
     <string name="navdrawer_item_settings">Asetukset</string>

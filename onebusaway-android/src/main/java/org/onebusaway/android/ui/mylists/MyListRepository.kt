@@ -84,7 +84,7 @@ private val RECENT_WINDOW_MS = 7 * DateUtils.DAY_IN_MILLIS
 
 // Device-clock recent-window cutoff, compared against locally-stamped access times (same clock).
 @Suppress("RawClockArithmetic")
-private fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
+internal fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
 
 private fun StopListRow.toStopItem(context: Context): StopListItem {
     val directionText = direction?.takeIf { it.isNotEmpty() }
@@ -110,10 +110,10 @@ private fun RouteListRow.toRouteItem() = RouteListItem(
 
 // The recent-row variants embed the list row + access_time, so reuse the exact list-row mappers on the
 // embedded [row] and keep the display formatting in one place.
-private fun StopRecentRow.toRecentItem(context: Context) =
+internal fun StopRecentRow.toRecentItem(context: Context) =
     RecentItem.Stop(row.toStopItem(context), accessTime)
 
-private fun RouteRecentRow.toRecentItem() =
+internal fun RouteRecentRow.toRecentItem() =
     RecentItem.Route(row.toRouteItem(), accessTime)
 
 /** How many recents the search dropdown holds; ~4 are visible, the rest scroll (matches the list caps). */

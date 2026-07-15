@@ -1,6 +1,6 @@
 # OneBusAway for Android [![Android CI Build](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml/badge.svg)](https://github.com/OneBusAway/onebusaway-android/actions/workflows/android.yml)
 
-This is the official Android / Fire Phone app for [OneBusAway](https://onebusaway.org/), a project of the non-profit [Open Transit Software Foundation](https://opentransitsoftwarefoundation.org/)!
+This is the official Android app for [OneBusAway](https://onebusaway.org/), a project of the non-profit [Open Transit Software Foundation](https://opentransitsoftwarefoundation.org/)!
 
 [<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
       alt="Get it on Google Play"
@@ -15,8 +15,8 @@ OneBusAway for Android provides:
 3. A list of favorite bus stops
 4. Reminders to notify you when your bus is arriving or departing
 5. The ability to search for nearby stops or routes
-6. Real-time multimodal trip planning, using real-time transit and bike share information (requires a regional [OpenTripPlanner](http://www.opentripplanner.org/) server)
-7. Bike share map layer, which includes real-time availability information for floating bikes and bike rack capacity (requires a regional [OpenTripPlanner](http://www.opentripplanner.org/) server)
+6. Real-time multimodal trip planning, using real-time transit and bike share information (requires a regional [OpenTripPlanner](https://www.opentripplanner.org/) server)
+7. Bike share map layer, which includes real-time availability information for floating bikes and bike rack capacity (requires a regional [OpenTripPlanner](https://www.opentripplanner.org/) server)
 8. Issue reporting to any Open311-compliant issue management system (see [this page](ISSUE_REPORTING.md) for details)
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
@@ -46,7 +46,7 @@ There are two ways to deploy OneBusAway Android in your city:
 
 ## Testing Your Own OneBusAway/OpenTripPlanner servers
 
-Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and/or [OpenTripPlanner](http://www.opentripplanner.org/) server?  You can test both in this app without compiling any Android code.  Just download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot), and see our [Custom Server Setup Guide](CUSTOM_SERVERS.md) for details.
+Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and/or [OpenTripPlanner](https://www.opentripplanner.org/) server?  You can test both in this app without compiling any Android code.  Just download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot), and see our [Custom Server Setup Guide](CUSTOM_SERVERS.md) for details.
 
 ## Permissions
 

@@ -138,7 +138,7 @@ android {
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-project.txt")
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-project.txt")
         }
     }
 
@@ -169,12 +169,12 @@ android {
         //    comments); currency is Dependabot/Renovate's job, not a build-failing check.
         //  - OldTargetApi: targetSdk (36) trails compileSdk (37). Bumping targetSdk is a deliberate,
         //    separately-tested change — an explicit #1819 non-goal (no version bumps ride along).
-        //  - ProguardAndroidTxtUsage: prefers proguard-android-optimize.txt. Switching changes release
-        //    R8 behavior, which #1819 requires stay byte-identical (assembleObaGoogleRelease unchanged).
+        // (ProguardAndroidTxtUsage was disabled here for #1819; the release build now uses
+        // proguard-android-optimize.txt, so that check passes on its own and is no longer suppressed.)
         disable += setOf(
             "MissingTranslation", "ExtraTranslation", "LogNotTimber",
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion",
-            "OldTargetApi", "ProguardAndroidTxtUsage"
+            "OldTargetApi"
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed

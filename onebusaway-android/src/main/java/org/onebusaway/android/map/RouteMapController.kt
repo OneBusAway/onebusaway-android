@@ -133,6 +133,7 @@ class RouteMapController(
     private var focusedGeometry = FocusedTripGeometry(emptyMap())
     private var focusedStops = FocusedTripStops(emptyMap(), emptyMap())
     private var focusedRoutes: List<ObaRoute> = emptyList()
+    private var focusedRouteColors: Map<String, Int> = emptyMap()
 
     val focusedStopId: String? get() = stopFocusSession?.stopId
 
@@ -475,6 +476,7 @@ class RouteMapController(
         }
         stopFocusJob?.cancel()
         stopFocusSession = next
+        focusedRouteColors = adjacencyRouteColors(next.trips.map(FocusedTrip::routeId))
         focusedGeometry = FocusedTripGeometry(emptyMap())
         focusedStops = FocusedTripStops(emptyMap(), emptyMap())
         stopsController.start()
@@ -516,6 +518,7 @@ class RouteMapController(
         focusedGeometry = FocusedTripGeometry(emptyMap())
         focusedStops = FocusedTripStops(emptyMap(), emptyMap())
         focusedRoutes = emptyList()
+        focusedRouteColors = emptyMap()
         if (isActive) stopsController.stop() else stopsController.start()
         publishMapPresentation()
     }
@@ -531,10 +534,12 @@ class RouteMapController(
         val emphasizedRouteId = routeId
         val visibleStopIds = focusedStops.stopIdsForRoute(focus.trips, emphasizedRouteId)
         renderState.setRoutePolylines(
-            focusedGeometry.toRoutePolylines(emphasizedRouteId)
+            focusedGeometry.toRoutePolylines(emphasizedRouteId, focusedRouteColors)
         )
         renderState.setRouteBadges(
-            if (emphasizedRouteId == null) focusedGeometry.toRouteBadges(focusedRoutes)
+            if (emphasizedRouteId == null) {
+                focusedGeometry.toRouteBadges(focusedRoutes, focusedRouteColors)
+            }
             else emptyList()
         )
         stopsController.setRoutePresentation(

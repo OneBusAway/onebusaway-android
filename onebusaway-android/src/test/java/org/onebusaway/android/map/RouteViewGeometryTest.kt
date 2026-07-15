@@ -55,9 +55,12 @@ class RouteViewGeometryTest {
             )
         )
 
-        val lines = geometry.toRoutePolylines("selected")
+        val lines = geometry.toRoutePolylines(
+            emphasizedRouteId = "selected",
+            routeColors = mapOf("selected" to 10, "other" to 20),
+        )
 
-        assertEquals(listOf(2, 1), lines.map { it.color })
+        assertEquals(listOf(20, 10), lines.map { it.color })
         assertEquals(
             listOf(
                 ROUTE_DEEMPHASIZED_LINE_WIDTH_DP,
@@ -103,13 +106,17 @@ class RouteViewGeometryTest {
         )
 
         val badges = geometry.toRouteBadges(
-            listOf(route("route-a", "A", 0xFF654321.toInt()), route("route-b", "B", 0xFFABCDEF.toInt()))
+            routes = listOf(
+                route("route-a", "A", 0xFF654321.toInt()),
+                route("route-b", "B", 0xFFABCDEF.toInt()),
+            ),
+            routeColors = mapOf("route-a" to 10, "route-b" to 20),
         )
 
         assertEquals(listOf("route-b", "route-a"), badges.map { it.routeId })
         assertEquals(listOf("B", "A"), badges.map { it.routeShortName })
-        assertEquals(0xFFABCDEF.toInt(), badges[0].color)
-        assertEquals(0xFF123456.toInt(), badges[1].color)
+        assertEquals(20, badges[0].color)
+        assertEquals(10, badges[1].color)
         assertEquals(listOf(1, 0), badges.map { it.directionId })
         assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
         assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)

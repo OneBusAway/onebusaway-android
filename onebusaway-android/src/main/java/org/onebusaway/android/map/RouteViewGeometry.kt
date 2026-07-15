@@ -31,6 +31,7 @@ internal const val ROUTE_DEEMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.27
  */
 internal fun FocusedTripGeometry.toRoutePolylines(
     emphasizedRouteId: String? = null,
+    routeColors: Map<String, Int> = emptyMap(),
 ): List<RoutePolyline> = buildList {
     val orderedShapes = if (emphasizedRouteId == null) {
         shapes.values
@@ -42,7 +43,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
         val deemphasized = emphasizedRouteId != null && shape.routeId != emphasizedRouteId
         add(
             RoutePolyline(
-                shape.routeColor,
+                routeColors[shape.routeId] ?: shape.routeColor,
                 shape.points,
                 if (deemphasized) ROUTE_DEEMPHASIZED_LINE_WIDTH_DP else ROUTE_LINE_WIDTH_DP,
                 directional = !deemphasized,
@@ -57,7 +58,10 @@ internal fun FocusedTripGeometry.toRoutePolylines(
  * that mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
  * flavor renderers only draw them.
  */
-internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<RouteBadge> {
+internal fun FocusedTripGeometry.toRouteBadges(
+    routes: List<ObaRoute>,
+    routeColors: Map<String, Int> = emptyMap(),
+): List<RouteBadge> {
     val metadata = routes.associateBy(ObaRoute::id)
     val shapesByRoute = shapes.values.groupBy(FocusedTripShape::routeId)
     val specs = shapesByRoute.mapNotNull { (routeId, routeShapes) ->
@@ -80,7 +84,8 @@ internal fun FocusedTripGeometry.toRouteBadges(routes: List<ObaRoute>): List<Rou
                 RouteBadge(
                     routeId = spec.route.id,
                     routeShortName = spec.name,
-                    color = spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
+                    color = routeColors[spec.route.id]
+                        ?: spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
                         ?: spec.route.color
                         ?: DEFAULT_ROUTE_LINE_COLOR,
                     point = placement.point,

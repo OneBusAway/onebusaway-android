@@ -32,10 +32,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -50,12 +52,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -66,6 +70,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -83,6 +88,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
+import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
@@ -194,6 +200,17 @@ fun MapFeature(
     // Compose state) so a padding change doesn't recompose this — the map — composable.
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.mapBottomPadding.collect { mapViewModel.host.setBottomPadding(it) }
+    }
+    // Publish the floating top chrome's footprint (status-bar inset + FAB-row clearance) as the map's
+    // baseline top inset, so the Google compass and centered content clear the FABs instead of drawing at
+    // topPx=0 behind them. The status-bar inset read is confined to a snapshotFlow (not composition), so
+    // inset churn feeds the VM without recomposing the map — same discipline as the bottom-padding wiring.
+    val statusBars = WindowInsets.statusBars
+    val density = LocalDensity.current
+    LaunchedEffect(mapViewModel, statusBars, density) {
+        snapshotFlow { mapTopChromeInsetPx(statusBars.getTop(density), density) }
+            .distinctUntilChanged()
+            .collect { mapViewModel.host.setTopChromeInset(it) }
     }
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.mapDirectives.collect { directive ->

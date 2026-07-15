@@ -44,8 +44,10 @@ fun interface MapProjector {
 }
 
 /**
- * The map's content padding, in pixels. [topPx] keeps content (vehicle markers) below the route-mode
- * header; [bottomPx] keeps the focused stop above the arrivals sheet. Held as declarative state and
+ * The map's content padding, in pixels. [topPx] keeps content (the Google compass, vehicle markers)
+ * below the floating top chrome — the status-bar inset + menu/search FAB-row clearance, plus the
+ * route-mode header when a route is shown; [bottomPx] keeps the focused stop above the arrivals sheet.
+ * Held as declarative state and
  * applied by the renderer (the Google adapter's `GoogleMap(contentPadding=…)`) instead of an
  * imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
  * padding change doesn't recompose the overlay content.
@@ -255,7 +257,26 @@ class MapRenderState {
 
     val padding: StateFlow<MapPadding> = _padding.asStateFlow()
 
-    fun setTopPadding(px: Int) = _padding.update { it.copy(topPx = px) }
+    // Top padding is the sum of two producer-owned contributions — the always-present floating-chrome
+    // inset (status bar + FAB-row clearance) and the route-mode header height (0 when no route) — held
+    // separately so each producer updates only its own without clobbering the other.
+    private var topChromeInsetPx = 0
+    private var routeHeaderPaddingPx = 0
+
+    private fun applyTopPadding() =
+        _padding.update { it.copy(topPx = topChromeInsetPx + routeHeaderPaddingPx) }
+
+    /** The floating top-chrome inset (status bar + FAB-row clearance); keeps the compass below the FABs. */
+    fun setTopChromeInset(px: Int) {
+        topChromeInsetPx = px
+        applyTopPadding()
+    }
+
+    /** The route-mode header's contribution to the top padding (0 clears it when no route is shown). */
+    fun setRouteHeaderPadding(px: Int) {
+        routeHeaderPaddingPx = px
+        applyTopPadding()
+    }
 
     fun setBottomPadding(px: Int) = _padding.update { it.copy(bottomPx = px) }
 

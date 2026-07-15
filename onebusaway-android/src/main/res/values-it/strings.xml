@@ -215,7 +215,8 @@
         <item quantity="many"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_load_more_arrivals">Carica più arrivi</string>
+    <string name="stop_info_showing_trips_until">Corse mostrate fino alle %1$s</string>
+    <string name="stop_info_load_more">Carica altri</string>
     <string name="stop_info_item_options_title">Opzioni</string>
     <string name="stop_info_clear">Cancella</string>
     <string name="stop_info_favorite">La mia fermata</string>

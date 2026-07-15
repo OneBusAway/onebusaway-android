@@ -20,6 +20,7 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -86,6 +87,7 @@ import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
@@ -397,31 +399,48 @@ internal fun ArrivalsList(
         }
         item(key = "load_more") {
             val loading by loadingMore.collectAsStateWithLifecycle()
-            LoadMoreButton(loading = loading, onClick = onLoadMore)
+            LoadMoreFooter(windowEnd = content.windowEnd, loading = loading, onClick = onLoadMore)
         }
     }
 }
 
 /**
- * The list's "load more trips" footer button: widens the stop's arrivals time window and reloads —
- * replaces the old per-strip pull-to-reload gesture, which was scoped to the whole stop (not just the
- * route the gesture was fired from) and so surprised riders when it pulled in other routes' trips
- * too. Shown below the arrivals (or the empty-list message) so it's always reachable.
+ * The list's "load more trips" footer: a muted "Showing arrivals until HH:MM" note giving the rider
+ * the window's current far edge, followed by the clickable "load more" affordance that widens the
+ * stop's arrivals time window and reloads. Shown below the arrivals (or the empty-list message) so
+ * it's always reachable. (Replaces the old per-strip pull-to-reload gesture, which surprised riders by
+ * pulling in other routes' trips too.)
  */
 @Composable
-private fun LoadMoreButton(loading: Boolean, onClick: () -> Unit) {
-    TextButton(
-        onClick = onClick,
-        enabled = !loading,
+private fun LoadMoreFooter(windowEnd: ServerTime, loading: Boolean, onClick: () -> Unit) {
+    val context = LocalContext.current
+    // Formatting hits DateUtils; key it to windowEnd so the spinner toggling on each tap doesn't reformat.
+    val untilTime = remember(windowEnd) { DisplayFormat.formatTime(context, windowEnd.epochMs) }
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        // Center the pair as a unit, with a gap just wider than a space between them.
+        horizontalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Text(
+            text = stringResource(R.string.stop_info_showing_trips_until, untilTime),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         if (loading) {
             CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-            Spacer(Modifier.width(8.dp))
         }
-        Text(stringResource(R.string.stop_info_load_more_arrivals))
+        // The clickable "load more" retains the old button's TextButton styling (primary-colored text);
+        // trimmed content padding keeps the gap to the note tight rather than the default 12dp inset.
+        TextButton(
+            onClick = onClick,
+            enabled = !loading,
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+        ) {
+            Text(stringResource(R.string.stop_info_load_more))
+        }
     }
 }
 

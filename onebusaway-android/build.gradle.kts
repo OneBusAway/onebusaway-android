@@ -200,20 +200,18 @@ android {
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed
-        // lint, not just its (drifting) default-enabled subset. Pre-existing hits are grandfathered by
-        // the baseline below; only NEW issues are reported.
-        checkAllWarnings = true
-        // Checked-in record of the issues present when it was generated. New issues aren't in it, so
-        // they're reported (and, under -PwarningsAsErrors, fail the build). After an AGP/lint bump that
-        // adds/changes checks, regenerate it: delete the file and re-run lint (it recreates + passes).
-        baseline = file("lint-baseline.xml")
+        // lint, not just its (drifting) default-enabled subset. The codebase is kept lint-clean under
+        // this full catalog, so there is NO baseline: every finding was either fixed in code or, where
+        // fixing wasn't warranted, its check opted out above (the lint-busting campaign). Any NEW issue
+        // is therefore reported and — under -PwarningsAsErrors — fails the build, with nothing
+        // grandfathered. (If an AGP/lint bump adds checks with unavoidable pre-existing hits, prefer
+        // fixing or a scoped opt-out over reintroducing a whole-project baseline.)
         // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
         // which compile + API-33 instrumented tests can't catch.
         abortOnError = true
         // Under -PwarningsAsErrors=true (CI passes it; see .github/workflows/android.yml), promote lint
         // warnings to errors too, matching the Kotlin-compiler gate below. Local builds default to off so
-        // an AGP/lint bump that adds new (non-baselined) warnings surfaces in CI rather than blocking
-        // day-to-day work.
+        // an AGP/lint bump that adds new warnings surfaces in CI rather than blocking day-to-day work.
         warningsAsErrors = project.hasProperty("warningsAsErrors") &&
             project.property("warningsAsErrors") == "true"
     }

@@ -67,6 +67,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.reconcileEqualItems
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -296,31 +297,38 @@ class GoogleMapRenderer(
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
         if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
 
-        routePolylines.forEach { it.remove() }
-        routePolylines.clear()
+        val previousNative = routePolylines.toList()
+        val reconciliation = reconcileEqualItems(renderedRoutePolylines, next)
+        reconciliation.removedPreviousIndices.forEach { previousNative[it].remove() }
         renderedRoutePolylines = next
         val widthScale = routeLineWidthScale(map.cameraPosition.zoom)
         renderedRouteWidthScale = widthScale
-
-        for (polyline in next) {
-            val options = PolylineOptions()
-                .width(widthPx(polyline) * widthScale)
-                .addPoints(polyline.points)
-                .applyDashPattern(polyline)
-            if (polyline.directional) {
-                // Advanced spans are substantially more expensive for Maps to retessellate while
-                // zooming. Reserve that path for the lines that actually need repeated chevrons.
-                val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
-                    .stamp(arrowStamp)
-                    .build()
-                options.addSpan(StyleSpan(stroke))
-            } else {
-                // Adjacency focus uses undirected whole-route shapes. The classic solid-color path is
-                // both the exact requested appearance and cheaper than an equivalent one-color span.
-                options.color(polyline.resolvedColor)
-            }
-            routePolylines.add(map.addPolyline(options))
+        val reconciled = next.mapIndexed { index, polyline ->
+            reconciliation.previousIndexForNext[index]?.let(previousNative::get)
+                ?: addRoutePolyline(polyline, widthScale)
         }
+        routePolylines.clear()
+        routePolylines.addAll(reconciled)
+    }
+
+    private fun addRoutePolyline(polyline: RoutePolyline, widthScale: Float): Polyline {
+        val options = PolylineOptions()
+            .width(widthPx(polyline) * widthScale)
+            .addPoints(polyline.points)
+            .applyDashPattern(polyline)
+        if (polyline.directional) {
+            // Advanced spans are substantially more expensive for Maps to retessellate while
+            // zooming. Reserve that path for the lines that actually need repeated chevrons.
+            val stroke = StrokeStyle.colorBuilder(polyline.resolvedColor)
+                .stamp(arrowStamp)
+                .build()
+            options.addSpan(StyleSpan(stroke))
+        } else {
+            // Adjacency focus uses undirected whole-route shapes. The classic solid-color path is
+            // both the exact requested appearance and cheaper than an equivalent one-color span.
+            options.color(polyline.resolvedColor)
+        }
+        return map.addPolyline(options)
     }
 
     /**

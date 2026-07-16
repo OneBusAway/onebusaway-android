@@ -166,7 +166,8 @@ fun InfrastructureIssueDestination(
     // tapped point (manual pin). Both update the map's render focus + recenter via the map VM.
     val mapCallbacks = remember(viewModel, mapViewModel) {
         object : ObaMapCallbacks {
-            override fun onStopClick(stop: ObaStop) {
+            override fun onStopClick(marker: org.onebusaway.android.map.render.StopMarker) {
+                val stop = marker.stop
                 mapViewModel.onStopTapped(stop)
                 val loc = stop.location
                 viewModel.onMapFocusChanged(stop, loc.latitude, loc.longitude)

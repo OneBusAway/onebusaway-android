@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.StopMarker
 
 /**
  * A do-nothing [ObaMapCallbacks] for map screens that don't react to taps (the trip-plan location
@@ -26,7 +26,7 @@ import org.onebusaway.android.map.render.GeoPoint
  * screens pass this instead of building an empty object each.
  */
 object NoOpObaMapCallbacks : ObaMapCallbacks {
-    override fun onStopClick(stop: ObaStop) {}
+    override fun onStopClick(marker: StopMarker) {}
 
     override fun onMapClick(point: GeoPoint?) {}
 

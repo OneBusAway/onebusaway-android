@@ -19,6 +19,7 @@ import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -458,8 +459,9 @@ class RouteMapController(
     }
 
     /**
-     * Show the exact trips currently displayed for a stop. Shape and schedule loading are deliberately
-     * independent: either result is useful on its own, and an empty trip set is a valid focused-stop-only view.
+     * Show the exact trips currently displayed for a stop. A first focus publishes shape and schedule
+     * results independently; a handoff from an existing stop stages both and swaps them atomically so
+     * the complete old presentation remains visible during loading. An empty trip set is still valid.
      */
     fun focusStop(
         stopId: String,
@@ -467,46 +469,79 @@ class RouteMapController(
         routes: List<ObaRoute>,
     ) {
         val next = StopFocusSession(stopId, LinkedHashSet(trips))
-        focusedRoutes = routes
         if (stopFocusSession == next) {
             // Route wrappers may be recreated on every arrivals poll; refresh marker metadata without
             // restarting unchanged shape/schedule work.
+            focusedRoutes = routes
             publishMapPresentation()
             return
         }
         stopFocusJob?.cancel()
-        stopFocusSession = next
-        focusedRouteColors = adjacencyRouteColors(next.trips.map(FocusedTrip::routeId))
-        focusedGeometry = FocusedTripGeometry(emptyMap())
-        focusedStops = FocusedTripStops(emptyMap(), emptyMap())
-        stopsController.start()
-        publishMapPresentation()
+        val retainCurrentPresentation = stopFocusSession != null
+        if (!retainCurrentPresentation) {
+            applyStopFocus(
+                next,
+                routes,
+                FocusedTripGeometry(emptyMap()),
+                FocusedTripStops(emptyMap(), emptyMap()),
+            )
+        }
         stopFocusJob = scope.launch {
             supervisorScope {
-                launch {
-                    val geometry = runCatching { focusedTripRepository.getGeometry(next.trips) }
+                val geometry = async {
+                    runCatching { focusedTripRepository.getGeometry(next.trips) }
                         .getOrElse {
                             if (it is CancellationException) throw it
                             FocusedTripGeometry(emptyMap())
                         }
-                    if (stopFocusSession == next) {
-                        focusedGeometry = geometry
-                        publishMapPresentation()
-                    }
+                        .also {
+                            if (!retainCurrentPresentation && stopFocusSession == next) {
+                                focusedGeometry = it
+                                publishMapPresentation()
+                            }
+                        }
                 }
-                launch {
-                    val stops = runCatching { focusedTripRepository.getStops(next.trips) }
+                val stops = async {
+                    runCatching { focusedTripRepository.getStops(next.trips) }
                         .getOrElse {
                             if (it is CancellationException) throw it
                             FocusedTripStops(emptyMap(), emptyMap())
                         }
-                    if (stopFocusSession == next) {
-                        focusedStops = stops
-                        publishMapPresentation()
-                    }
+                        .also {
+                            if (!retainCurrentPresentation && stopFocusSession == next) {
+                                focusedStops = it
+                                publishMapPresentation()
+                            }
+                        }
+                }
+                val nextGeometry = geometry.await()
+                val nextStops = stops.await()
+                if (retainCurrentPresentation) {
+                    // A stop-to-stop handoff keeps the old complete presentation visible until both
+                    // halves of the replacement are ready, then swaps once. Unrelated focus changes
+                    // clear the old session before reaching here and retain the eager first-load path.
+                    applyStopFocus(next, routes, nextGeometry, nextStops)
                 }
             }
         }
+    }
+
+    private fun applyStopFocus(
+        session: StopFocusSession,
+        routes: List<ObaRoute>,
+        geometry: FocusedTripGeometry,
+        stops: FocusedTripStops,
+    ) {
+        stopFocusSession = session
+        focusedRoutes = routes
+        focusedRouteColors = adjacencyRouteColors(
+            session.trips.map(FocusedTrip::routeId),
+            retained = focusedRouteColors,
+        )
+        focusedGeometry = geometry
+        focusedStops = stops
+        stopsController.start()
+        publishMapPresentation()
     }
 
     /** Clear focused-stop trips and reveal the base route (or ordinary nearby stops). */

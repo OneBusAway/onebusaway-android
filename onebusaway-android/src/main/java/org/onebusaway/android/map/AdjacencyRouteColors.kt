@@ -19,18 +19,28 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 
 /**
- * Assigns the focused-stop routes evenly spaced HCT hues at a common chroma and tone. Input order is
- * identity order; duplicate route ids retain their first position. A session computes this once so
- * colors remain stable while its independently loaded shapes and route metadata arrive.
+ * Assigns the focused-stop routes HCT hues at a common chroma and tone. Input order is identity order;
+ * duplicate route ids retain their first position. Colors in [retained] survive a presentation
+ * handoff by route id; only newly introduced routes receive open slots from the new evenly-spaced
+ * palette. This keeps a continuing route visually stable when the next stop introduces more routes.
  */
 @SuppressLint("RestrictedApi") // Material Components' vendored color-science utility.
-internal fun adjacencyRouteColors(routeIds: Iterable<String>): Map<String, Int> {
+internal fun adjacencyRouteColors(
+    routeIds: Iterable<String>,
+    retained: Map<String, Int> = emptyMap(),
+): Map<String, Int> {
     val ids = routeIds.distinct()
     if (ids.isEmpty()) return emptyMap()
     val hueStep = HUE_CIRCLE_DEGREES / ids.size
-    return ids.mapIndexed { index, routeId ->
-        routeId to Hct.from(index * hueStep, ADJACENCY_ROUTE_CHROMA, ADJACENCY_ROUTE_TONE).toInt()
-    }.toMap(LinkedHashMap())
+    val candidates = ids.indices.map { index ->
+        Hct.from(index * hueStep, ADJACENCY_ROUTE_CHROMA, ADJACENCY_ROUTE_TONE).toInt()
+    }
+    val assigned = ids.mapNotNull { id -> retained[id]?.let { id to it } }.toMap(LinkedHashMap())
+    val unused = candidates.filterNotTo(ArrayDeque()) { it in assigned.values }
+    ids.filterNot(assigned::containsKey).forEach { id ->
+        assigned[id] = unused.removeFirst()
+    }
+    return ids.associateWithTo(LinkedHashMap(), assigned::getValue)
 }
 
 private const val HUE_CIRCLE_DEGREES = 360.0

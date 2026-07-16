@@ -57,6 +57,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.reconcileEqualItems
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -206,19 +207,24 @@ class MapLibreRenderer(
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
         if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
 
-        if (routePolylines.isNotEmpty()) map.removeAnnotations(routePolylines)
-        routePolylines.clear()
+        val previousNative = routePolylines.toList()
+        val reconciliation = reconcileEqualItems(renderedRoutePolylines, next)
+        val removed = reconciliation.removedPreviousIndices.map(previousNative::get)
+        if (removed.isNotEmpty()) map.removeAnnotations(removed)
         renderedRoutePolylines = next
         val widthScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
         renderedRouteWidthScale = widthScale
-
-        for (polyline in next) {
-            val options = PolylineOptions()
-                .color(polyline.resolvedColor)
-                .width(baseRouteWidth(polyline) * widthScale)
-                .addPoints(polyline.points)
-            routePolylines.add(map.addPolyline(options))
+        val reconciled = next.mapIndexed { index, polyline ->
+            reconciliation.previousIndexForNext[index]?.let(previousNative::get)
+                ?: map.addPolyline(
+                    PolylineOptions()
+                        .color(polyline.resolvedColor)
+                        .width(baseRouteWidth(polyline) * widthScale)
+                        .addPoints(polyline.points)
+                )
         }
+        routePolylines.clear()
+        routePolylines.addAll(reconciled)
     }
 
     private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {

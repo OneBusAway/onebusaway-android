@@ -328,7 +328,7 @@ internal fun wireClicks(
     map.setOnCircleClickListener { circle ->
         renderer.stopForCircle(circle)?.let { stop ->
             infoWindows.clear()
-            cb.onStopClick(stop.stop)
+            cb.onStopClick(stop)
         }
     }
 
@@ -356,7 +356,7 @@ private fun routeMarkerTap(
     val stop = renderer.stopForMarker(marker)
     if (stop != null) {
         infoWindows.clear() // the open bubble (if any) is dismissed by tapping the stop
-        cb.onStopClick(stop.stop)
+        cb.onStopClick(stop)
         return true
     }
     val vehicle = renderer.vehicleForMarker(marker)

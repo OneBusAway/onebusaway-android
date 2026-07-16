@@ -282,7 +282,7 @@ private fun wireClicks(
     map.addOnMapClickListener { point ->
         renderer.routeStopAt(point)?.let { stop ->
             infoWindows.clear()
-            callbacks.onStopClick(stop.stop)
+            callbacks.onStopClick(stop)
             return@addOnMapClickListener true
         }
         infoWindows.clear()
@@ -296,7 +296,7 @@ private fun wireClicks(
         val stop = renderer.stopForMarker(marker)
         if (stop != null) {
             infoWindows.clear()
-            callbacks.onStopClick(stop.stop)
+            callbacks.onStopClick(stop)
             return@setOnMarkerClickListener true
         }
         val vehicle = renderer.vehicleForMarker(marker)

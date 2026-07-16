@@ -38,6 +38,13 @@ import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
 
+/** How a tapped stop changes the map presentation already visible beneath the arrivals drawer. */
+internal enum class StopFocusTransition {
+    Unchanged,
+    ContinuePresentation,
+    ReplacePresentation,
+}
+
 /**
  * Owns the home screen's genuine coordination state — the focused stop/bike-station (persisted via
  * [SavedStateHandle]) — as a single [CurrentFocus], replaced through one focus transition, and drives
@@ -141,17 +148,33 @@ class HomeViewModel @Inject constructor(
     /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
     var focusedTrips: Set<FocusedTrip> = emptySet()
         private set
+    private var presentedRouteIds: Set<String> = emptySet()
 
-    /** A map stop gained focus. Persists across process death. */
-    fun onStopFocused(stop: FocusedStop) {
+    /**
+     * A map stop gained focus. When the tapped stop is served by the one route already presented for
+     * a plain stop focus, keep that presentation alive while the new arrivals replace it.
+     */
+    internal fun onStopFocused(
+        stop: FocusedStop,
+        continuesPresentedRoute: Boolean = false,
+    ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
-        if (sameStop) return
-        // Clear the prior stop's route-view session immediately; a fresh arrivals load starts the new
-        // one. A same-stop re-selection is a no-op so it cannot discard a completed view.
+        if (sameStop) return StopFocusTransition.Unchanged
+        val current = _currentFocus.value as? CurrentFocus.Stop
+        val continuePresentation = current?.selectedRoute == null &&
+            presentedRouteIds.size == 1 && continuesPresentedRoute
         focusedTrips = emptySet()
-        emitMapDirective(MapDirective.ClearStopRoutes)
+        if (!continuePresentation) {
+            presentedRouteIds = emptySet()
+            emitMapDirective(MapDirective.ClearStopRoutes)
+        }
         pushFocus(CurrentFocus.Stop(stop))
+        return if (continuePresentation) {
+            StopFocusTransition.ContinuePresentation
+        } else {
+            StopFocusTransition.ReplacePresentation
+        }
     }
 
     /** A stop opened from navigation replaces any standalone route/bike view before it restores. */
@@ -259,6 +282,10 @@ class HomeViewModel @Inject constructor(
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
         focusedTrips = trips
+        presentedRouteIds = buildSet {
+            routes.orEmpty().mapTo(this) { it.id }
+            trips.mapTo(this, FocusedTrip::routeId)
+        }
         val preserveViewport = pendingMapFocus && preserveViewportForPendingMapFocus
         if (pendingMapFocus) {
             pendingMapFocus = false
@@ -428,6 +455,7 @@ class HomeViewModel @Inject constructor(
             emitMapDirective(MapDirective.ClearSelectedRoute)
         } else {
             focusedTrips = emptySet()
+            presentedRouteIds = emptySet()
             emitMapDirective(MapDirective.ClearFocus)
         }
     }

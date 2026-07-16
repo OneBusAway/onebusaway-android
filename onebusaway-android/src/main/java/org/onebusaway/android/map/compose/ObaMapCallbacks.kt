@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.StopMarker
 
 /**
  * Map interaction a flavor's [ObaComposeMapAdapter] reports back to its host. Flavor-neutral (no
@@ -30,7 +30,7 @@ import org.onebusaway.android.map.render.GeoPoint
  * listeners on the raw map) may ignore this and receive null instead.
  */
 interface ObaMapCallbacks {
-    fun onStopClick(stop: ObaStop)
+    fun onStopClick(marker: StopMarker)
 
     fun onMapClick(point: GeoPoint?)
 

@@ -76,7 +76,6 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
@@ -86,14 +85,16 @@ import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
-import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
+import org.onebusaway.android.ui.home.StopFocusTransition
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
+import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
@@ -141,20 +142,18 @@ fun MapFeature(
 
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
-            override fun onStopClick(stop: ObaStop) {
-                val currentStop = homeViewModel.currentFocus.value as? CurrentFocus.Stop
-                if (currentStop == null || !currentStop.stop.id.equals(stop.id, ignoreCase = true)) {
+            override fun onStopClick(marker: StopMarker) {
+                val stop = marker.stop
+                val transition = homeViewModel.onStopFocused(
+                    FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude),
+                    continuesPresentedRoute = marker.routeStop,
+                )
+                if (transition == StopFocusTransition.ReplacePresentation) {
                     mapViewModel.clearAllFocus()
                 }
                 mapViewModel.onStopTapped(stop)
                 // Already focused on this stop? Then don't re-fire the home focus + analytics.
-                val focusedId = homeViewModel.currentFocus.value.focusedStop?.id
-                if (focusedId != null && focusedId.equals(stop.id, ignoreCase = true)) {
-                    return
-                }
-                homeViewModel.onStopFocused(
-                    FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude)
-                )
+                if (transition == StopFocusTransition.Unchanged) return
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),

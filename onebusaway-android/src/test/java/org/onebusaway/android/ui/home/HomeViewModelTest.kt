@@ -652,6 +652,63 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `adjacent stop on the sole presented route continues the map presentation`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(FocusedTrip("trip", "40", "shape", null)),
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        val transition = vm.onStopFocused(
+            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            continuesPresentedRoute = true,
+        )
+        advanceUntilIdle()
+
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
+        assertEquals("2", vm.currentFocus.value.focusedStop?.id)
+        assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
+        assertEquals(0, map.clearStopRoutesCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `multiple presented routes replace the map presentation on another stop`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(
+                FocusedTrip("trip-40", "40", "shape-40", null),
+                FocusedTrip("trip-44", "44", "shape-44", null),
+            ),
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        val transition = vm.onStopFocused(
+            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            continuesPresentedRoute = true,
+        )
+        advanceUntilIdle()
+
+        assertEquals(StopFocusTransition.ReplacePresentation, transition)
+        assertEquals(1, map.clearStopRoutesCount)
+        job.cancel()
+    }
+
+    @Test
     fun `map unfocus resets exact trips`() = runTest {
         val vm = viewModel()
         vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))

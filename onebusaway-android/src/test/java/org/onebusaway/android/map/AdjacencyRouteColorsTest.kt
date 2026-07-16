@@ -28,4 +28,17 @@ class AdjacencyRouteColorsTest {
         assertEquals(Hct.from(0.0, 75.0, 55.0).toInt(), colors.getValue("a"))
         assertEquals(Hct.from(180.0, 75.0, 55.0).toInt(), colors.getValue("b"))
     }
+
+    @Test
+    fun `continuing route keeps its color when a stop introduces more routes`() {
+        val route62 = adjacencyRouteColors(listOf("62")).getValue("62")
+
+        val colors = adjacencyRouteColors(
+            listOf("31", "32", "62", "E Line"),
+            retained = mapOf("62" to route62),
+        )
+
+        assertEquals(route62, colors.getValue("62"))
+        assertEquals(4, colors.values.toSet().size)
+    }
 }

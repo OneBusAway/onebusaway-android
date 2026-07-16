@@ -373,17 +373,11 @@ class RouteMapController(
         if (tripId != null) {
             val state = tripObservationRepository.lookupTripState(tripId)
             val shapeId = state?.shapeId ?: latestPoll?.response?.trip(tripId)?.shapeId
+            // Warm both resources concurrently; supervisorScope joins them and keeps one failing
+            // fetch from cancelling the other. selectedTripPresentation() re-reads the results.
             supervisorScope {
-                val shape = async {
-                    state?.polyline ?: shapeId?.let {
-                        tripObservationRepository.ensureShape(tripId, it)
-                    }
-                }
-                val schedule = async {
-                    state?.schedule ?: tripObservationRepository.ensureSchedule(tripId)
-                }
-                shape.await()
-                schedule.await()
+                launch { shapeId?.let { tripObservationRepository.ensureShape(tripId, it) } }
+                launch { tripObservationRepository.ensureSchedule(tripId) }
             }
         }
         publishMapPresentation()
@@ -598,61 +592,57 @@ class RouteMapController(
 
     private fun publishMapPresentation() {
         val focus = stopFocusSession
+        val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
+        val routeColors = _focusedRouteColors.value
+        val badges = if (emphasizedRoute == null) {
+            focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
+        } else emptyList()
         val selected = selectedTripPresentation()
         val selectedTrip = selected?.points
             ?.takeIf { it.size >= 2 }
             ?.let { points ->
                 focusedRoutePolyline(currentRouteColor(), points, directional = true)
             }
-        val selectedTripStops = selected?.let(::selectedTripStopPresentation)
-        val selectedRouteUnderlay = if (selectedTrip == null) {
-            emptyList()
-        } else selectedDirectionUnderlay(selected.routeDirection.directionId)
-        if (focus == null) {
+        // A selected vehicle shows its exact trip everywhere: the trip line over its thin
+        // same-direction underlay (with any focused-stop siblings beneath), framed to that trip,
+        // and only its scheduled stops. In whole-route mode the empty [focusedGeometry] collapses
+        // toTripFocusedRoutePolylines to just the underlay + trip.
+        if (selected != null && selectedTrip != null) {
             renderState.setRoutePolylines(
-                polylines = if (selectedTrip == null) {
-                    basePolylines
-                } else selectedRouteUnderlay + selectedTrip,
-                framingPolylines = selectedTrip?.let(::listOf) ?: basePolylines,
+                polylines = focusedGeometry.toTripFocusedRoutePolylines(
+                    selected.routeDirection,
+                    routeColors,
+                    selectedDirectionUnderlay(selected.routeDirection.directionId),
+                    selectedTrip,
+                ),
+                framingPolylines = listOf(selectedTrip),
                 routeModeScalesStopsWithZoom = isActive,
             )
-            renderState.setRouteBadges(emptyList())
-            stopsController.setRoutePresentation(selectedTripStops ?: baseStopPresentation)
+            renderState.setRouteBadges(badges)
+            stopsController.setRoutePresentation(selectedTripStopPresentation(selected))
             return
         }
-        val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
+        if (focus == null) {
+            renderState.setRoutePolylines(basePolylines, routeModeScalesStopsWithZoom = isActive)
+            renderState.setRouteBadges(emptyList())
+            stopsController.setRoutePresentation(baseStopPresentation)
+            return
+        }
         val showBaseRoute = isActive && emphasizedRoute != null &&
             focus.trips.none { it.routeDirection == emphasizedRoute }
         val routesByStopId = focusedStops.routeDirectionsByStopId(focus.trips, emphasizedRoute)
-        val routeColors = _focusedRouteColors.value
         renderState.setRoutePolylines(
-            polylines = if (selected != null && selectedTrip != null) {
-                focusedGeometry.toTripFocusedRoutePolylines(
-                    selected.routeDirection,
-                    routeColors,
-                    selectedRouteUnderlay,
-                    selectedTrip,
-                )
-            } else {
-                focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
-                    if (showBaseRoute) basePolylines else emptyList()
-            },
+            polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
+                if (showBaseRoute) basePolylines else emptyList(),
             // Adjacency remains visible underneath route mode, but the active route's fully loaded
             // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
             // fit the union of every route serving the focused stop.
-            framingPolylines = if (isActive) {
-                selectedTrip?.let(::listOf) ?: basePolylines
-            } else emptyList(),
+            framingPolylines = if (isActive) basePolylines else emptyList(),
             routeModeScalesStopsWithZoom = isActive,
         )
-        renderState.setRouteBadges(
-            if (emphasizedRoute == null) {
-                focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
-            }
-            else emptyList()
-        )
+        renderState.setRouteBadges(badges)
         stopsController.setRoutePresentation(
-            selectedTripStops ?: if (showBaseRoute) {
+            if (showBaseRoute) {
                 baseStopPresentation
             } else {
                 RouteStopPresentation(
@@ -691,17 +681,8 @@ class RouteMapController(
      * whole-route mode [basePolylines] is the merged both-directions geometry, so drawing that as
      * the underlay would surface the opposite direction; resolve the direction shape instead.
      */
-    private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> {
-        val route = routeShape ?: return emptyList()
-        val shape = route.shapeForDirection(directionId)
-        return shape.polylines.map { points ->
-            focusedRoutePolyline(
-                color = route.route?.color,
-                points = points,
-                directional = shape.directional,
-            )
-        }.asDeemphasizedRouteUnderlay()
-    }
+    private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> =
+        directionPolylines(directionId).asDeemphasizedRouteUnderlay()
 
     /** The selected trip's scheduled stops, projected onto its exact shape in schedule order. */
     private fun selectedTripStopPresentation(selected: SelectedTripPresentation): RouteStopPresentation {
@@ -850,25 +831,30 @@ class RouteMapController(
     }
 
     /**
-     * Re-draw the route shape for [currentDirectionId]: the selected direction's own travel-ordered
-     * shape (with direction arrows), or the whole-route merged shape drawn undirected when none is
-     * selected. Passes the route's raw GTFS color through; the render layer picks the fallback when
-     * it's absent. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
-     * from focused-stop mode. Called on load and on every direction switch.
+     * The drawn lines for [directionId]'s shape: the selected direction's own travel-ordered shape
+     * (with direction arrows), or the whole-route merged shape drawn undirected when [directionId] is
+     * null. Passes the route's raw GTFS color through; the render layer picks the fallback when it's
+     * absent. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
+     * from focused-stop mode. shapeForDirection pairs the drawn shape with its directionality, so
+     * arrows are stamped only when the direction's own travel-ordered shape is used — never on the
+     * whole-route merged fallback (a direction that carried no shape on the wire).
      */
-    private fun showDirectionPolylines() {
-        val route = routeShape ?: return
-        // shapeForDirection pairs the drawn shape with its directionality, so arrows are stamped only
-        // when the selected direction's own travel-ordered shape is used — never on the whole-route
-        // merged fallback (a direction that carried no shape on the wire).
-        val shape = route.shapeForDirection(currentDirectionId)
-        basePolylines = shape.polylines.map { points ->
+    private fun directionPolylines(directionId: Int?): List<RoutePolyline> {
+        val route = routeShape ?: return emptyList()
+        val shape = route.shapeForDirection(directionId)
+        return shape.polylines.map { points ->
             focusedRoutePolyline(
                 color = route.route?.color,
                 points = points,
                 directional = shape.directional,
             )
         }
+    }
+
+    /** Re-draw the base route for [currentDirectionId]. Called on load and on every direction switch. */
+    private fun showDirectionPolylines() {
+        if (routeShape == null) return
+        basePolylines = directionPolylines(currentDirectionId)
         publishMapPresentation()
     }
 

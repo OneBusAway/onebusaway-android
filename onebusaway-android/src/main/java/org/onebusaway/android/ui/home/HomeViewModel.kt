@@ -476,6 +476,10 @@ class HomeViewModel @Inject constructor(
         pushFocus(CurrentFocus.None)
         focusedTrips = emptySet()
         presentedRoutes = emptySet()
+        // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
+        // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
+        pendingMapFocus = false
+        preserveViewportForPendingMapFocus = false
         emitMapDirective(MapDirective.ClearFocus)
     }
 

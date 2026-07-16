@@ -19,9 +19,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.map.RouteHeader
@@ -32,12 +35,33 @@ class FocusBannerViewModel @Inject constructor(
     private val routeFavorites: RouteFavoritesRepository,
 ) : ViewModel() {
 
-    val favoriteRouteIds: StateFlow<Set<String>> = routeFavorites.favoriteRouteIds()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+    // Optimistic overrides applied synchronously on tap so back-to-back toggles each build on the last
+    // intent instead of the store's (still-lagging) snapshot. Each entry is dropped once the store's
+    // flow catches up to it, so a favorite changed on another surface is never masked.
+    private val optimisticFavorites = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+
+    val favoriteRouteIds: StateFlow<Set<String>> =
+        combine(routeFavorites.favoriteRouteIds(), optimisticFavorites) { stored, overrides ->
+            stored.toMutableSet().apply {
+                overrides.forEach { (routeId, favorite) -> if (favorite) add(routeId) else remove(routeId) }
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    init {
+        // Reconcile: once the store reflects an override, drop it so it stops shadowing the store.
+        viewModelScope.launch {
+            routeFavorites.favoriteRouteIds().collect { stored ->
+                optimisticFavorites.update { overrides ->
+                    overrides.filterNot { (routeId, favorite) -> (routeId in stored) == favorite }
+                }
+            }
+        }
+    }
 
     fun toggleRouteFavorite(header: RouteHeader) {
         val routeId = header.routeId ?: return
         val favorite = routeId !in favoriteRouteIds.value
+        optimisticFavorites.update { it + (routeId to favorite) }
         viewModelScope.launch {
             routeFavorites.setFavorite(
                 routeId = routeId,

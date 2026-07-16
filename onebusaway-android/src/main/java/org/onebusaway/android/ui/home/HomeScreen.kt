@@ -213,7 +213,10 @@ fun HomeScreen(
         // for descendants. This is the route card's absolute top edge in map coordinates.
         val focusBannerTopPx = WindowInsets.statusBars.getTop(density) +
             with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
-        var focusBannerBottomPx by remember(currentFocus) { mutableIntStateOf(0) }
+        // Unkeyed: FocusBanner only reports height via onSizeChanged (fires on size *change*), so keying
+        // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
+        // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
+        var focusBannerBottomPx by remember { mutableIntStateOf(0) }
         val focusTopEdgePx = focusBannerTopEdge(
             currentFocus,
             focusBannerBottomPx,

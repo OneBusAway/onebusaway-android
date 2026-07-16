@@ -25,6 +25,7 @@ import org.onebusaway.android.time.ServerTime
 
 class ServiceAlertsDialogTest {
 
+    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
     @Suppress("DEPRECATION")
     @get:Rule
     val composeRule = createComposeRule()

@@ -148,6 +148,9 @@ public class LocationHelper implements android.location.LocationListener {
         }
     }
 
+    // Deprecated (no-op) since API 29, but still abstract on our minSdk-23 floor (it only gained a
+    // default implementation in API 30), so the override must stay to avoid an AbstractMethodError.
+    @SuppressWarnings("deprecation")
     @Override
     public void onStatusChanged(String provider, int status, Bundle extras) {
 

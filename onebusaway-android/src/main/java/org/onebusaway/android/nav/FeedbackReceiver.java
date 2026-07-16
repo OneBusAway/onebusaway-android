@@ -32,6 +32,7 @@ import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 import androidx.core.app.NotificationCompat;
@@ -131,7 +132,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
     private void moveLog(Context context, String feedback, String userResponse, String logFile) {
         try {
             File lFile = new File(logFile);
-            FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, true);
+            FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, StandardCharsets.UTF_8, true);
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(context.getFilesDir()
@@ -149,7 +150,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
                 Log.d(TAG, "File move failed");
             }
 
-            setupLogUploadTask();
+            setupLogUploadTask(context);
 
         } catch (IOException e) {
             Log.e(TAG, "File write failed: " + e.toString());
@@ -163,7 +164,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
         if (BuildConfig.DEBUG) Log.v(TAG, "Log deleted " + deleted);
     }
 
-    private void setupLogUploadTask() {
+    private void setupLogUploadTask(Context context) {
         PeriodicWorkRequest.Builder uploadLogsBuilder =
                 new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
                         TimeUnit.HOURS);
@@ -173,7 +174,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
 
         // Then enqueue the recurring task under a unique name so repeated feedback submissions keep
         // a single upload chain instead of stacking one each time:
-        WorkManager.getInstance().enqueueUniquePeriodicWork(
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 NavigationUploadWorker.UNIQUE_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
                 uploadCheckWork);

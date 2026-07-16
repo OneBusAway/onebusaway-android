@@ -32,8 +32,10 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -81,8 +83,11 @@ public class NavigationUploadWorker extends Worker {
                 Log.d(TAG, "Location : " + response + logFileName);
 
                 String sCurrentLine, feedbackText = "";
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(lFile.getAbsolutePath()));
+                // Read as UTF-8 to match how FeedbackReceiver writes the log (FileReader would use the
+                // platform-default charset). FileReader(File, Charset) is API 33+, so wrap a
+                // FileInputStream to stay minSdk-23 safe.
+                try (BufferedReader br = new BufferedReader(
+                        new InputStreamReader(new FileInputStream(lFile), StandardCharsets.UTF_8))) {
                     while ((sCurrentLine = br.readLine()) != null) {
                         feedbackText = sCurrentLine;
                     }

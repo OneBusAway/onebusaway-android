@@ -126,12 +126,6 @@ class RouteMapController(
     private var basePolylines: List<RoutePolyline> = emptyList()
     private var baseStopPresentation: RouteStopPresentation? = null
 
-    private data class SelectedTripPresentation(
-        val points: List<GeoPoint>,
-        val stopIds: List<String>,
-        val routeDirection: RouteDirectionKey,
-    )
-
     private data class StopFocusSession(
         val stopId: String,
         val trips: Set<FocusedTrip>,
@@ -590,73 +584,48 @@ class RouteMapController(
         publishMapPresentation()
     }
 
+    // Assemble the render plan from the current controller state (pure — see
+    // [assembleRouteMapPresentation]) and forward each field to the render/stop layers. IO/retained
+    // state is resolved into plain data first ([selectedTripRenderInput]); the mode-merging policy lives
+    // in the pure function, so this stays a plumb-through.
     private fun publishMapPresentation() {
-        val focus = stopFocusSession
-        val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
-        val routeColors = _focusedRouteColors.value
-        val selected = selectedTripPresentation()
-        if (selected != null) {
-            // See selectedTripStyle: stop focus alone gates the underlay, not whether an adjacency
-            // color happened to be found for this exact direction (#1902).
-            val style = selectedTripStyle(focus != null, selected.routeDirection, routeColors, currentRouteColor())
-            val selectedTrip = selected.points
-                .takeIf { it.size >= 2 }
-                ?.let { points -> focusedRoutePolyline(style.color, points, directional = true) }
-            // A selected vehicle shows its exact trip everywhere: the trip line, framed to that trip,
-            // over its scheduled stops.
-            if (selectedTrip != null) {
-                renderState.setRoutePolylines(
-                    polylines = focusedGeometry.toTripFocusedRoutePolylines(
-                        selected.routeDirection,
-                        routeColors,
-                        if (style.includeUnderlay) {
-                            selectedDirectionUnderlay(selected.routeDirection.directionId)
-                        } else emptyList(),
-                        selectedTrip,
-                    ),
-                    framingPolylines = listOf(selectedTrip),
-                    routeModeScalesStopsWithZoom = isActive,
-                )
-                // A selected trip is only reachable in single-route mode, where emphasizedRoute is
-                // always non-null too — the badges below are always suppressed here regardless.
-                renderState.setRouteBadges(emptyList())
-                stopsController.setRoutePresentation(selectedTripStopPresentation(selected))
-                return
-            }
-        }
-        val badges = if (emphasizedRoute == null) {
-            focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
-        } else emptyList()
-        if (focus == null) {
-            renderState.setRoutePolylines(basePolylines, routeModeScalesStopsWithZoom = isActive)
-            renderState.setRouteBadges(emptyList())
-            stopsController.setRoutePresentation(baseStopPresentation)
-            return
-        }
-        val showBaseRoute = isActive && emphasizedRoute != null &&
-            focus.trips.none { it.routeDirection == emphasizedRoute }
-        val routesByStopId = focusedStops.routeDirectionsByStopId(focus.trips, emphasizedRoute)
-        renderState.setRoutePolylines(
-            polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
-                if (showBaseRoute) basePolylines else emptyList(),
-            // Adjacency remains visible underneath route mode, but the active route's fully loaded
-            // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
-            // fit the union of every route serving the focused stop.
-            framingPolylines = if (isActive) basePolylines else emptyList(),
-            routeModeScalesStopsWithZoom = isActive,
+        val plan = assembleRouteMapPresentation(
+            isActive = isActive,
+            emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) },
+            basePolylines = basePolylines,
+            baseStopPresentation = baseStopPresentation,
+            focusTrips = stopFocusSession?.trips,
+            focusedGeometry = focusedGeometry,
+            focusedStops = focusedStops,
+            focusedRoutes = focusedRoutes,
+            routeColors = _focusedRouteColors.value,
+            selected = selectedTripRenderInput(),
+            projectedFocusStops = {
+                stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
+            },
         )
-        renderState.setRouteBadges(badges)
-        stopsController.setRoutePresentation(
-            if (showBaseRoute) {
-                baseStopPresentation
-            } else {
-                RouteStopPresentation(
-                    stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
-                    routes = focusedRoutes,
-                    routeDirectionsByStopId = routesByStopId,
-                    projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
-                )
-            }
+        renderState.setRoutePolylines(
+            polylines = plan.polylines,
+            framingPolylines = plan.framingPolylines,
+            routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom,
+        )
+        renderState.setRouteBadges(plan.badges)
+        stopsController.setRoutePresentation(plan.stopPresentation)
+    }
+
+    /**
+     * The selected vehicle's render inputs, or null when no vehicle is selected or its exact shape +
+     * schedule haven't both resolved yet. Resolves the IO-backed pieces ([selectedTripPresentation],
+     * the GTFS colour fallback, the direction underlay, the projected stop presentation) so the pure
+     * assembler gets plain data.
+     */
+    private fun selectedTripRenderInput(): SelectedTripRenderInput? {
+        val selected = selectedTripPresentation() ?: return null
+        return SelectedTripRenderInput(
+            presentation = selected,
+            routeColorFallback = currentRouteColor(),
+            directionUnderlay = selectedDirectionUnderlay(selected.routeDirection.directionId),
+            stopPresentation = selectedTripStopPresentation(selected),
         )
     }
 
@@ -698,32 +667,6 @@ class RouteMapController(
             routeDirectionsByStopId = stops.associate { it.id to setOf(selected.routeDirection) },
             projectedPoints = projectStopsOntoPolylines(stops, listOf(selected.points)),
         )
-    }
-
-    /** Snap each exact scheduled stop to the closest successful shape of a trip that serves it. */
-    private fun projectFocusedStops(
-        trips: Set<FocusedTrip>,
-        geometry: FocusedTripGeometry,
-        stops: FocusedTripStops,
-    ): Map<String, GeoPoint> {
-        val tripById = trips.associateBy(FocusedTrip::tripId)
-        val candidates = LinkedHashMap<String, MutableList<Polyline>>()
-        for ((tripId, stopIds) in stops.stopIdsByTripId) {
-            val shapeId = tripById[tripId]?.shapeId ?: continue
-            val points = geometry.shapes.firstOrNull { it.shapeId == shapeId }?.points ?: continue
-            if (points.size < 2) continue
-            val polyline = Polyline(points.map(GeoPoint::toLocation))
-            stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
-        }
-        return buildMap {
-            for ((stopId, shapes) in candidates) {
-                val stop = stops.stopsById[stopId] ?: continue
-                val location = stop.location
-                val point = shapes.mapNotNull { it.nearestPoint(location.latitude, location.longitude) }
-                    .minByOrNull(location::distanceTo)
-                if (point != null) put(stopId, point.toGeoPoint())
-            }
-        }
     }
 
     /** Restart the vehicle poll if a route is shown and the poll isn't running (the host's onResume). */
@@ -816,23 +759,6 @@ class RouteMapController(
     private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
         val route = routeShape ?: return emptyMap()
         return projectStopsOntoPolylines(stops, route.shapeForDirection(currentDirectionId).polylines)
-    }
-
-    private fun projectStopsOntoPolylines(
-        stops: List<ObaStop>,
-        points: List<List<GeoPoint>>,
-    ): Map<String, GeoPoint> {
-        val shapes = points
-            .filter { it.size >= 2 }
-            .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
-        if (shapes.isEmpty()) return emptyMap()
-        return stops.associate { stop ->
-            val loc = stop.location
-            val nearest = shapes
-                .mapNotNull { it.nearestPoint(loc.latitude, loc.longitude) }
-                .minByOrNull { loc.distanceTo(it) }
-            stop.id to (nearest?.toGeoPoint() ?: loc.toGeoPoint())
-        }
     }
 
     /**

@@ -350,6 +350,7 @@ fun MapFeature(
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
+    val currentFocus by homeViewModel.currentFocus.collectAsStateWithLifecycle()
     // The map is now edge-to-edge (no solid top bar), so this notice floats as a pill at the top-center,
     // below the floating top chrome — the same shared inset (status bar + clearance) the HomeScreen
     // overlays use, so the pill lines up with them and can't drift from the FAB-row height.
@@ -360,7 +361,7 @@ fun MapFeature(
             .mapTopChromeOverlayInset()
     ) {
         StopsInfoBanner(
-            banner = stopsBanner,
+            banner = stopsBanner.forFocus(currentFocus),
             modifier = Modifier.align(Alignment.TopCenter),
         )
         if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
@@ -439,6 +440,10 @@ fun MapFeature(
         },
     )
 }
+
+/** A truncated nearby-stop load is irrelevant while the user is already focused on one stop. */
+internal fun StopsBanner.forFocus(focus: CurrentFocus): StopsBanner =
+    if (this == StopsBanner.MoreStopsAvailable && focus is CurrentFocus.Stop) StopsBanner.None else this
 
 /**
  * The nearby-stops info notice: an extended-FAB-style pill (leading icon + text) at the top-center of the

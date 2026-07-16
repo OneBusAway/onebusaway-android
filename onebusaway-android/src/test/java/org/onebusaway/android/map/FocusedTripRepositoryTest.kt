@@ -129,7 +129,11 @@ class FocusedTripRepositoryTest {
     }
 
     @Test
-    fun `shape cache is keyed by shape rather than trip`() = runTest {
+    fun `repeat focus re-delegates shape decode to the shared polyline cache`() = runTest {
+        // FocusedTripRepository holds no shape cache of its own: retention and fetch dedup live in
+        // the shared Polyline cache inside TripObservationRepository.ensureShape (keyed by shapeId,
+        // no TTL). So a later focus on the same shape re-queries ensureShape — cheap in production,
+        // where the polyline is already cached there — rather than memoizing decoded points here.
         val observations = Observations().apply { shapes["shared"] = Polyline(emptyList()) }
         val repository = DefaultFocusedTripRepository(
             observations, RouteStops(), backgroundScope, now = { ElapsedTime(0L) }
@@ -138,7 +142,10 @@ class FocusedTripRepositoryTest {
         repository.getGeometry(setOf(FocusedTrip("older-trip", "route", "shared", null)))
         repository.getGeometry(setOf(FocusedTrip("newer-trip", "route", "shared", null)))
 
-        assertEquals(listOf("older-trip" to "shared"), observations.shapeRequests)
+        assertEquals(
+            listOf("older-trip" to "shared", "newer-trip" to "shared"),
+            observations.shapeRequests,
+        )
     }
 
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)

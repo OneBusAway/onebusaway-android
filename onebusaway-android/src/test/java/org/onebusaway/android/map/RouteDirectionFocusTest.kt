@@ -26,9 +26,10 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.models.RouteMapStop
 
 /**
- * [anchorDirectionId] (resolve the launch anchor stop → its direction) and [stopsForDirection]
- * (narrow a route's stops to a direction) — the pure repository/controller direction helpers, plus
- * [RouteMap.shapeForDirection] (pick the drawn shape + its directionality, with the whole-route fallback).
+ * [anchorDirectionId] (resolve the launch anchor stop → its direction), [stopsForDirection]
+ * (narrow a route's stops to a direction), and [stopsForTrip] (narrow them to one schedule) — the
+ * pure repository/controller helpers, plus [RouteMap.shapeForDirection] (pick the drawn shape + its
+ * directionality, with the whole-route fallback).
  */
 class RouteDirectionFocusTest {
 
@@ -94,6 +95,16 @@ class RouteDirectionFocusTest {
         // A stop serving both directions shows for the selected one (not dropped).
         val withShared = stops + stop("s", 0, 1)
         assertEquals(listOf("a", "b", "s"), withShared.stopsForDirection(0).map { it.id })
+    }
+
+    // ----- stopsForTrip -----
+
+    @Test
+    fun tripStopsFollowScheduleRatherThanRouteDirection() {
+        assertEquals(
+            listOf("b", "d"),
+            stops.stopsForTrip(listOf("b", "missing", "d", "b")).map { it.id },
+        )
     }
 
     // ----- shapeForDirection -----

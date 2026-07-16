@@ -5,10 +5,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.FocusedTrip
@@ -87,6 +88,49 @@ class RouteViewGeometryTest {
             lines.map { it.widthProfile },
         )
         assertEquals(listOf(false, true), lines.map { it.directional })
+    }
+
+    @Test
+    fun `selected vehicle trip replaces every shape in its route direction`() {
+        val sibling = listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0))
+        val firstDirectionVariant = listOf(GeoPoint(2.0, 0.0), GeoPoint(2.0, 1.0))
+        val secondDirectionVariant = listOf(GeoPoint(3.0, 0.0), GeoPoint(3.0, 1.0))
+        val exactTrip = listOf(GeoPoint(4.0, 0.0), GeoPoint(4.0, 1.0))
+        val geometry = FocusedTripGeometry(
+            listOf(
+                FocusedTripShape("sibling", "other", 1, sibling, directionId = 1),
+                FocusedTripShape("variant-a", "selected", 2, firstDirectionVariant, directionId = 0),
+                FocusedTripShape("variant-b", "selected", 2, secondDirectionVariant, directionId = 0),
+            )
+        )
+        val selectedTrip = RoutePolyline(
+            color = 2,
+            points = exactTrip,
+            widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            directional = true,
+        )
+        val underlay = listOf(
+            RoutePolyline(2, secondDirectionVariant, widthProfile = ROUTE_LINE_WIDTH_PROFILE, directional = true)
+        ).asDeemphasizedRouteUnderlay()
+
+        val lines = geometry.toTripFocusedRoutePolylines(
+            selectedRoute = RouteDirectionKey("selected", 0),
+            routeColors = emptyMap(),
+            selectedRouteUnderlay = underlay,
+            selectedTrip = selectedTrip,
+        )
+
+        assertEquals(listOf(sibling, secondDirectionVariant, exactTrip), lines.map { it.points })
+        assertEquals(
+            listOf(
+                DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
+                DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
+                FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            ),
+            lines.map { it.widthProfile },
+        )
+        assertEquals(listOf(false, false, true), lines.map { it.directional })
+        assertSame(selectedTrip, lines.last())
     }
 
     @Test

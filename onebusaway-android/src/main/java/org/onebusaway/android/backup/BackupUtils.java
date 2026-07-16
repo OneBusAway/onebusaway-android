@@ -33,6 +33,8 @@ import org.onebusaway.android.analytics.PlausibleAnalytics;
 import java.io.IOException;
 import java.util.Objects;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 public class BackupUtils {
@@ -44,7 +46,7 @@ public class BackupUtils {
      * @param uri URI to the backup file, as returned by the system UI picker. Following targeting
      *      Android 11 we can't access this directory and need to rely on the system UI picker.
      */
-    public static void restore(Context activityContext, Uri uri, Runnable onRestored) {
+    public static void restore(@NonNull Context activityContext, @NonNull Uri uri, @Nullable Runnable onRestored) {
         //
         // Because this is a destructive operation, we should warn the user.
         //
@@ -98,7 +100,7 @@ public class BackupUtils {
      * @param uri The URI representing the location where the backup file should be saved.
      * @param activityContext context of the calling activity (used to check permissions)
      */
-    public static void save(Context activityContext,Uri uri) {
+    public static void save(@NonNull Context activityContext, @NonNull Uri uri) {
         Context context = activityContext.getApplicationContext();
         AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_BACKUP_EVENT_URL,
@@ -112,6 +114,7 @@ public class BackupUtils {
      * default file name). Launched via an {@code ActivityResultLauncher}; the picked save URI is
      * passed back to {@link #save(Context, Uri)}.
      */
+    @NonNull
     public static Intent buildCreateBackupFileIntent() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -131,6 +134,7 @@ public class BackupUtils {
      * Builds the intent that lets the user select a backup file to restore. Launched via an
      * {@code ActivityResultLauncher}; the picked URI is passed back to {@link #restore(Context, Uri)}.
      */
+    @NonNull
     public static Intent buildSelectBackupFileIntent() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);

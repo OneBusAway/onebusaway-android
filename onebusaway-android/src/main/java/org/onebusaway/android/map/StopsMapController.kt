@@ -391,20 +391,22 @@ class StopsMapController(
     /**
      * Programmatic focus for a restored/deep-linked stop once its arrivals load (driven by
      * `MapDirective.FocusStop`): ensure the stop is on the map + render-focused, and center on it
-     * (route-header bias only when [routeActive] and the sheet settled expanded).
+     * (route-header bias only when [routeActive] and the sheet settled expanded). [animate] pans the
+     * camera over to the stop (an in-session reveal) rather than jumping to it (a cold-start restore).
      */
     fun focusStop(
         stop: ObaStop,
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
+        animate: Boolean = false,
     ) {
         if (recenter) {
             val loc = stop.location
             host.dispatchGesture(
                 CameraCommand.Recenter(
                     loc.latitude, loc.longitude,
-                    animate = false,
+                    animate = animate,
                     applyRouteBias = routeActive() && overlayExpanded,
                 )
             )

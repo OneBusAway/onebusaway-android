@@ -15,33 +15,23 @@
  */
 package org.onebusaway.android.ui.search
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
-import org.onebusaway.android.ui.compose.components.MenuHeader
 import org.onebusaway.android.ui.compose.components.StopRowContent
 
-/** The stop search tab: search box + results, with a long-press menu per row. */
+/** The stop search tab: search box + results. Tapping a row reveals that stop on the map. */
 @Composable
 fun StopSearchContent(
     viewModel: SearchViewModel<StopSearchResult>,
     onStopClick: (StopSearchResult) -> Unit,
-    onShowOnMap: (StopSearchResult) -> Unit
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -53,54 +43,14 @@ fun StopSearchContent(
         state = state,
         itemKey = { it.id }
     ) { stop ->
-        StopSearchRow(
-            stop = stop,
-            onStopClick = onStopClick,
-            onShowOnMap = onShowOnMap
-        )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun StopSearchRow(
-    stop: StopSearchResult,
-    onStopClick: (StopSearchResult) -> Unit,
-    onShowOnMap: (StopSearchResult) -> Unit
-) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    Box {
         StopRowContent(
             name = stop.name,
             direction = stop.direction,
             isFavorite = stop.isFavorite,
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(
-                    onClick = { onStopClick(stop) },
-                    onLongClick = { menuExpanded = true }
-                )
+                .clickable { onStopClick(stop) }
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         )
-        CenteredLongPressMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
-        ) {
-            MenuHeader(stop.name)
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.my_context_get_stop_info)) },
-                onClick = {
-                    menuExpanded = false
-                    onStopClick(stop)
-                }
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.my_context_showonmap)) },
-                onClick = {
-                    menuExpanded = false
-                    onShowOnMap(stop)
-                }
-            )
-        }
     }
 }

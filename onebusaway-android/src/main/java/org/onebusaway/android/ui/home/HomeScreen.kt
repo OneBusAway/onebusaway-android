@@ -132,8 +132,8 @@ class HomeCallbacks(
     val onSettings: () -> Unit,
     val onSearch: (String) -> Unit,
     val onRecentStopsRoutes: () -> Unit,
-    // Search-box recents dropdown: tapping a stop opens its arrivals; tapping a route reveals it on the map.
-    val onRecentStop: (id: String, name: String?) -> Unit,
+    // Search-box recents dropdown: tapping a stop or a route reveals it on the map.
+    val onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
     val onRecentRoute: (routeId: String) -> Unit,
     // Wraps [HomeActivityActions.onHelpActionExternal] with the one branch that's a navigation (AGENCIES).
     val onHelpAction: (HelpAction) -> Unit,

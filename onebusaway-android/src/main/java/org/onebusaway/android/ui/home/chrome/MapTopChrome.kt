@@ -94,7 +94,7 @@ fun MapTopChrome(
     onSearch: (String) -> Unit,
     // The unified recent stops+routes list for the search dropdown, and the row-tap handlers.
     recents: List<RecentItem>,
-    onRecentStop: (id: String, name: String?) -> Unit,
+    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     // Opaque anchor a host may attach to the menu (☰) FAB (e.g. for an onboarding spotlight).
     menuModifier: Modifier = Modifier,
@@ -146,9 +146,9 @@ fun MapTopChrome(
                     focusManager.clearFocus()
                     onSearch(query)
                 },
-                onRecentStop = { id, name ->
+                onRecentStop = { id, lat, lon ->
                     focusManager.clearFocus()
-                    onRecentStop(id, name)
+                    onRecentStop(id, lat, lon)
                 },
                 onRecentRoute = { routeId ->
                     focusManager.clearFocus()
@@ -179,7 +179,7 @@ private fun SearchField(
     focused: Boolean,
     onFocusChange: (Boolean) -> Unit,
     onSubmit: (String) -> Unit,
-    onRecentStop: (id: String, name: String?) -> Unit,
+    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,

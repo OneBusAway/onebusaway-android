@@ -374,7 +374,6 @@
     <string name="my_option_clear_starred_stops">Remove all starred stops</string>
     <!-- <string name="my_option_clear_starred_routes">Remove all starred routes</string>-->
 
-    <string name="my_context_get_stop_info">Show arrival information</string>
     <string name="my_context_get_route_info">Show route information</string>
     <string name="my_context_create_shortcut">Create shortcut on home screen</string>
     <string name="my_context_showonmap">Show on map</string>

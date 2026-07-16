@@ -54,8 +54,8 @@ private val DROPDOWN_MAX_HEIGHT = 224.dp
  * clear these are recent shortcuts and submitting the field runs a full, separate search) over a
  * scrollable, height-capped list of the unified recent stops+routes. Each row carries a leading type icon
  * (stop_flag / ic_route — the glyphs the Recent tabs use) so the mixed list scans at a glance, then reuses
- * [StopRowContent] / [RouteRowContent] for the body. Tapping fires [onRecentStop] (→ arrivals) or
- * [onRecentRoute] (→ reveal on map).
+ * [StopRowContent] / [RouteRowContent] for the body. Tapping fires [onRecentStop] or
+ * [onRecentRoute] — both reveal the stop / route on the map.
  *
  * Renders no surface of its own — the caller ([MapTopChrome]'s search field) provides the connected
  * container so the field + dropdown read as one expanded surface.
@@ -63,7 +63,7 @@ private val DROPDOWN_MAX_HEIGHT = 224.dp
 @Composable
 fun SearchRecentsDropdown(
     recents: List<RecentItem>,
-    onRecentStop: (id: String, name: String?) -> Unit,
+    onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
@@ -82,7 +82,7 @@ fun SearchRecentsDropdown(
                 when (item) {
                     is RecentItem.Stop -> RecentRow(
                         icon = R.drawable.stop_flag,
-                        onClick = { onRecentStop(item.stop.id, item.stop.name) },
+                        onClick = { onRecentStop(item.stop.id, item.stop.lat, item.stop.lon) },
                     ) {
                         StopRowContent(
                             name = item.stop.name,

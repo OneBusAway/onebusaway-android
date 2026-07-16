@@ -324,7 +324,6 @@
     <string name="my_option_clear_starred_routes_title">Usunąć wszystkie trasy oznaczone gwiazdką?</string>
     <string name="my_option_clear_starred_routes_confirm">Spowoduje to trwałe usunięcie wszystkich tras oznaczonych gwiazdką.</string>
 
-    <string name="my_context_get_stop_info">Pokaż informację o przyjazdach</string>
     <string name="my_context_get_route_info">Pokaż informację o trasie</string>
     <string name="my_context_create_shortcut">Utwórz skrót</string>
     <string name="my_context_showonmap">Pokaż na mapie</string>

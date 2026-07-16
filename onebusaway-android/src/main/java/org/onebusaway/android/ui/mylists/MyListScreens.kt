@@ -136,13 +136,12 @@ internal fun AppCompatActivity.recentRoutesTab(
 internal fun stopSearchTab(
     viewModel: SearchViewModel<StopSearchResult>,
     onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit,
 ): MyTab = MyTab(
     tag = MyTabs.SEARCH,
     titleRes = R.string.my_search_title,
     iconRes = R.drawable.search,
 ) {
-    StopSearchDestination(viewModel, onShowOnMap, onOpenStop)
+    StopSearchDestination(viewModel, onShowOnMap)
 }
 
 internal fun routeSearchTab(
@@ -209,7 +208,7 @@ fun MyStopsDestination(
                 onShowStopOnMap, onOpenStop,
             ),
             activity.starredStopsTab(starred, onShowStopOnMap, onOpenStop),
-            stopSearchTab(search, onShowStopOnMap, onOpenStop),
+            stopSearchTab(search, onShowStopOnMap),
         ),
     )
 }

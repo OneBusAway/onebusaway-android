@@ -260,14 +260,14 @@ class RouteMapController(
      * call [start] (no network reload, no vehicle-poll reset). [selectDirection]'s no-op guard is fine
      * here since reframing the already-shown direction is exactly the "not a real switch" case it exists
      * to skip. [requestFocus] falls through into the same FIT/DROP resolution ([tryFocusVehicle]) the
-     * initial-load tail ([onRouteLoaded]) uses; absent a focus, reframes now via [MapHost.frameRoute] —
-     * the same call that tail makes when it isn't deferring to a focus. Takes the whole [request] rather
-     * than picking fields, so a new [ShowRouteRequest] field is at least reachable here — though [start]'s
-     * own parameter list still needs a matching update (#1797).
+     * initial-load tail ([onRouteLoaded]) uses; absent a focus, [frameRoute] controls whether to reframe
+     * now via [MapHost.frameRoute]. Undo restoration passes false before applying its captured viewport.
+     * Takes the whole [request] rather than picking fields, so a new [ShowRouteRequest] field is at least
+     * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
      */
-    fun reframe(request: ShowRouteRequest) {
+    fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
         request.initialDirectionId?.let { selectDirection(it) }
-        request.focusTripId?.let { requestFocus(it) } ?: host.frameRoute()
+        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) host.frameRoute() else Unit
     }
 
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path

@@ -29,6 +29,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
@@ -59,6 +61,7 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val clearStopRoutesCount get() = sent.count { it is MapDirective.ClearStopRoutes }
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
+    val viewportRestores get() = sent.filterIsInstance<MapDirective.RestoreViewport>()
     val lastBottomPadding get() = vm.mapBottomPadding.value
 
     suspend fun collect() {
@@ -357,22 +360,83 @@ class HomeViewModelTest {
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
         assertEquals(1, map.clearFocusCount)
         assertEquals(false, vm.navigateBackFocus())
-        assertEquals(false, vm.canUndoFocus.value)
+        assertEquals(false, vm.canUndoMapAction.value)
         mapJob.cancel()
     }
 
     @Test
     fun `switching selected routes can undo to the previous route`() = runTest {
         val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
         val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val viewport = MapViewport(GeoPoint(47.61, -122.31), 14.5)
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0, shortName = "65")
-        vm.requestShowFocusedStopRouteOnMap("75", directionId = 1, shortName = "75")
+        vm.requestShowFocusedStopRouteOnMap(
+            "75",
+            directionId = 1,
+            shortName = "75",
+            undoViewport = viewport,
+        )
+        advanceUntilIdle()
+        map.sent.clear()
 
         assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
 
         val restored = vm.currentFocus.value as CurrentFocus.Stop
         assertEquals("65", restored.selectedRoute?.currentLeg?.routeId)
+        assertEquals(false, map.routeCommands.single().frameRoute)
+        assertEquals(listOf(viewport), map.viewportRestores.map { it.viewport })
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `back restores viewport captured before selecting a stop route`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val viewport = MapViewport(GeoPoint(47.62, -122.32), 13.25)
+        vm.onStopFocused(stop)
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0, undoViewport = viewport)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        assertEquals(
+            listOf(MapDirective.ClearSelectedRoute, MapDirective.RestoreViewport(viewport)),
+            map.sent,
+        )
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `camera-only semantic action restores viewport without changing focus`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val viewport = MapViewport(GeoPoint(47.63, -122.33), 12.0)
+        vm.focusStandaloneRoute(ShowRouteRequest("65"))
+        advanceUntilIdle()
+        map.sent.clear()
+        vm.reframeFocusedRoute(viewport)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Route(RouteTarget("65")), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.RestoreViewport(viewport)), map.sent)
+        mapJob.cancel()
     }
 
     @Test
@@ -396,6 +460,28 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size)
         assertEquals(1, map.stopRoutes.size)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `restoring a prior stop viewport prevents delayed focus from recentering`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+        val viewport = MapViewport(GeoPoint(47.64, -122.34), 13.0)
+        vm.onStopFocused(stop)
+        vm.focusStandaloneRoute(ShowRouteRequest("65"), undoViewport = viewport)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        advanceUntilIdle()
+
+        assertEquals(listOf(viewport), map.viewportRestores.map { it.viewport })
+        assertEquals(false, map.focusStops.single().recenter)
         mapJob.cancel()
     }
 
@@ -434,7 +520,7 @@ class HomeViewModelTest {
         vm.unfocusMapOneLevel()
 
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
-        assertTrue(vm.canUndoFocus.value)
+        assertTrue(vm.canUndoMapAction.value)
     }
 
     @Test

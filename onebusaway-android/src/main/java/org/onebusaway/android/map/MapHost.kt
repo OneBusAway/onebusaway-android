@@ -35,6 +35,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.PermissionUtils
@@ -233,6 +234,12 @@ class MapHost(
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
         dispatchGesture(CameraCommand.Recenter(lat, lon, animate, applyRouteBias = false))
+    }
+
+    /** Drop retained framing and animate back to a viewport captured before a semantic action. */
+    fun restoreViewport(viewport: MapViewport) {
+        clearFraming()
+        dispatchGesture(CameraCommand.RestoreViewport(viewport))
     }
 
     fun zoomIn() = dispatchGesture(CameraCommand.ZoomIn)

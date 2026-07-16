@@ -392,15 +392,22 @@ class StopsMapController(
      * `MapDirective.FocusStop`): ensure the stop is on the map + render-focused, and center on it
      * (route-header bias only when [routeActive] and the sheet settled expanded).
      */
-    fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) {
-        val loc = stop.location
-        host.dispatchGesture(
-            CameraCommand.Recenter(
-                loc.latitude, loc.longitude,
-                animate = false,
-                applyRouteBias = routeActive() && overlayExpanded,
+    fun focusStop(
+        stop: ObaStop,
+        routes: List<ObaRoute>?,
+        overlayExpanded: Boolean,
+        recenter: Boolean = true,
+    ) {
+        if (recenter) {
+            val loc = stop.location
+            host.dispatchGesture(
+                CameraCommand.Recenter(
+                    loc.latitude, loc.longitude,
+                    animate = false,
+                    applyRouteBias = routeActive() && overlayExpanded,
+                )
             )
-        )
+        }
         setFocusStop(stop, routes)
     }
 

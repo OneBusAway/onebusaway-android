@@ -42,6 +42,8 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -166,6 +168,9 @@ class MapViewModel @Inject constructor(
 
     /** The live camera, published by the flavor adapter on each idle; the loaders react off it. */
     val camera: StateFlow<CameraSnapshot?> get() = mapHost.camera
+
+    /** The current center + zoom, suitable for attaching to one semantic undo entry. */
+    val viewport: MapViewport? get() = camera.value?.viewport
 
     fun onCameraIdle(snapshot: CameraSnapshot) = mapHost.onCameraIdle(snapshot)
 
@@ -353,8 +358,12 @@ class MapViewModel @Inject constructor(
      * directive): ensure it's on the map + render-focused and recenter on it (route-header bias only
      * when [overlayExpanded] in route mode). Delegated to the stops controller.
      */
-    fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) =
-        stopsController.focusStop(stop, routes, overlayExpanded)
+    fun focusStop(
+        stop: ObaStop,
+        routes: List<ObaRoute>?,
+        overlayExpanded: Boolean,
+        recenter: Boolean = true,
+    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter)
 
     /**
      * Draw the exact trips with upcoming arrivals at [stopId] without moving the camera. The stop must
@@ -390,7 +399,11 @@ class MapViewModel @Inject constructor(
      * raises the "vehicle isn't on the map" toast when no live vehicle is running that trip. A plain row
      * tap carries no [ShowRouteRequest.focusTripId] and just frames the whole route.
      */
-    fun toRoute(request: ShowRouteRequest, stopScoped: Boolean = false) {
+    fun toRoute(
+        request: ShowRouteRequest,
+        stopScoped: Boolean = false,
+        frameRoute: Boolean = true,
+    ) {
         // Same route AND same direction anchor: a plain re-tap (no focus) just reframes (the recent-routes
         // re-tap); an ETA-pill focus instead fits the vehicle+stop against the already-loaded vehicles (or
         // toasts, without reframing, when the vehicle isn't there). A different route, or the same route
@@ -402,11 +415,11 @@ class MapViewModel @Inject constructor(
             // Delegate the whole request to the controller (#1797) rather than hand-picking fields here,
             // so a field added later to ShowRouteRequest is visible at reframe()'s one call site instead
             // of silently unhandled by an independently-written branch.
-            routeController.reframe(request)
+            routeController.reframe(request, frameRoute)
         } else {
             enterRoute(
                 request.routeId,
-                zoomToRoute = true,
+                zoomToRoute = frameRoute,
                 directionStopId = request.directionStopId,
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
@@ -437,6 +450,9 @@ class MapViewModel @Inject constructor(
     fun frameRoute() {
         if (routeController.isActive) mapHost.frameRoute()
     }
+
+    /** Restore the camera paired with an undone semantic action. */
+    fun restoreViewport(viewport: MapViewport) = mapHost.restoreViewport(viewport)
 
     /**
      * Switch the shown route to another of its directions (one of the header's [RouteHeader.directions]

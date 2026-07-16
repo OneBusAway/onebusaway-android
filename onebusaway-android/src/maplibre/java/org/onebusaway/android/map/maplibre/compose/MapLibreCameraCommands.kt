@@ -70,6 +70,21 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom.toDouble()))
 
+        is CameraCommand.RestoreViewport -> {
+            val current = map.cameraPosition
+            val viewport = cmd.viewport
+            map.animateCamera(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.Builder()
+                        .target(LatLng(viewport.center.latitude, viewport.center.longitude))
+                        .zoom(viewport.zoom)
+                        .bearing(current.bearing)
+                        .tilt(current.tilt)
+                        .build()
+                )
+            )
+        }
+
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())
 
         CameraCommand.ZoomOut -> map.animateCamera(CameraUpdateFactory.zoomOut())

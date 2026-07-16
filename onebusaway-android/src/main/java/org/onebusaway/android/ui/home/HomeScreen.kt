@@ -199,7 +199,7 @@ fun HomeScreen(
     ObaTheme {
         val stopFocus = currentFocus as? CurrentFocus.Stop
         val standaloneRouteFocused = currentFocus is CurrentFocus.Route
-        val canUndoFocus by homeViewModel.canUndoFocus.collectAsStateWithLifecycle()
+        val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
@@ -386,9 +386,9 @@ fun HomeScreen(
             }
         }
 
-        // Focus has a HOME-local undo history. An expanded arrivals sheet still collapses first;
-        // every other back gesture restores the focus that preceded the latest focus transition.
-        BackHandler(enabled = canUndoFocus) {
+        // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
+        // collapses first; every other back gesture restores the preceding focus and viewport.
+        BackHandler(enabled = canUndoMapAction) {
             val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
                 sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
             } else {
@@ -452,13 +452,16 @@ fun HomeScreen(
                                     request = request,
                                     shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
                                     headsign = arrival.headsign,
+                                    undoViewport = mapViewModel.viewport,
                                 )
                                 collapseSheet()
                             },
                             onShowTrip = onShowTrip,
                             onEditReminder = onEditReminder,
                             onContentHeight = { px -> contentPx = px },
-                            onTitleClick = homeViewModel::recenterOnFocusedStop,
+                            onTitleClick = {
+                                homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
+                            },
                             showUndoSnackbar = { messageRes, actionRes, onAction ->
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
@@ -512,7 +515,9 @@ fun HomeScreen(
                                     },
                                     // Tapping the header body reframes the map to the route's full extent (VM
                                     // re-issues the retained route framing).
-                                    onFrameRoute = mapViewModel::frameRoute,
+                                    onFrameRoute = {
+                                        homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
+                                    },
                                     onLearnMore = onLearnMore,
                                     onOpenSurvey = onOpenSurvey,
                                     routeHeaderTopPx = routeHeaderTopPx,

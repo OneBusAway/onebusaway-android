@@ -19,6 +19,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 
+import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 
 
@@ -37,7 +38,7 @@ public class PermissionUtils {
      * @param requiredPermissions
      * @return true if all of the provided permissions in requiredPermissions have been granted, or false if they have not
      */
-    public static boolean hasGrantedAllPermissions(Context context, String[] requiredPermissions) {
+    public static boolean hasGrantedAllPermissions(@NonNull Context context, @NonNull String[] requiredPermissions) {
         for (String p : requiredPermissions) {
             if (!hasGrantedPermission(context, p)) {
                 return false;
@@ -52,7 +53,7 @@ public class PermissionUtils {
      * @param permissions
      * @return true if AT LEAST ONE of the provided permissions in permissions have been granted, or false if none of them have been granted
      */
-    public static boolean hasGrantedAtLeastOnePermission(Context context, String[] permissions) {
+    public static boolean hasGrantedAtLeastOnePermission(@NonNull Context context, @NonNull String[] permissions) {
         for (String p : permissions) {
             if (hasGrantedPermission(context, p)) {
                 return true;
@@ -67,7 +68,7 @@ public class PermissionUtils {
      * @param requiredPermission
      * @return true if the provided permission in requiredPermission has been granted, or false if it has not
      */
-    public static boolean hasGrantedPermission(Context context, String requiredPermission) {
+    public static boolean hasGrantedPermission(@NonNull Context context, @NonNull String requiredPermission) {
         return ContextCompat.checkSelfPermission(context, requiredPermission) == PackageManager.PERMISSION_GRANTED;
     }
 }

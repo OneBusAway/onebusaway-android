@@ -41,6 +41,8 @@ import android.util.Log;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 /**
@@ -92,6 +94,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public float mSectoCurDistance = -1;
 
+    @Nullable
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
 
     private String mTripId;             // Trip ID
@@ -101,7 +104,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     final Context mContext;
 
 
-    public NavigationServiceProvider(Context context, String tripId, String stopId) {
+    public NavigationServiceProvider(@NonNull Context context, @Nullable String tripId, @Nullable String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         mContext = context.getApplicationContext();
         if (mTTS == null) {
@@ -112,7 +115,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     }
 
-    public NavigationServiceProvider(Context context, String tripId, String stopId, int flag) {
+    public NavigationServiceProvider(@NonNull Context context, @Nullable String tripId, @Nullable String stopId, int flag) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         mContext = context.getApplicationContext();
         mResuming = flag == 1;
@@ -157,7 +160,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Navigates a navigation path which is composed of path links
      */
-    public void navigate(Path path) {
+    public void navigate(@NonNull Path path) {
         Log.d(TAG, "Starting navigation for service");
 
         // Create a new instance and rewrite the old one with a blank slate of ProximityListener
@@ -246,7 +249,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Called from LocationListener.locationUpdated() in order to supply the Navigation Provider with the most recent location
      */
-    public void locationUpdated(Location l) {
+    public void locationUpdated(@NonNull Location l) {
         mCurrentLocation = l;
         mProxCalculator.checkProximityAll(mCurrentLocation);
     }
@@ -559,6 +562,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      *
      * @return the notification to be used for starting a hosting service for the NavigationServiceProvider in the foreground
      */
+    @NonNull
     public Notification getForegroundStartingNotification() {
         return updateUi(EVENT_TYPE_INITIAL_STARTUP);
     }

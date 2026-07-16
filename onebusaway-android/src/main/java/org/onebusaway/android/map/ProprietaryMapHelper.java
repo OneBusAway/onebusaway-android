@@ -19,6 +19,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import org.onebusaway.android.BuildConfig;
@@ -35,16 +37,19 @@ public interface ProprietaryMapHelper {
     /**
      * Decode the result of an autocomplete Intent into a CustomAddress.
      */
-    CustomAddress getCustomAddressFromPlacesIntent(Context context, Intent intent);
+    @NonNull
+    CustomAddress getCustomAddressFromPlacesIntent(@NonNull Context context, @NonNull Intent intent);
 
     /**
      * Creates an OnClickListener that starts the places autocomplete flow.
      */
-    View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, Region region);
+    @NonNull
+    View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, @NonNull Fragment fragment, @Nullable Region region);
 
     /**
      * Returns a cached singleton instance for the current build flavor.
      */
+    @NonNull
     static ProprietaryMapHelper getInstance() {
         return Holder.INSTANCE;
     }

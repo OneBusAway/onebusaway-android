@@ -2,10 +2,13 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.GeoPoint
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.FocusedTrip
@@ -13,6 +16,17 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
 
 class RouteViewGeometryTest {
+
+    @Test
+    fun `single route view and focused-stop route share the focused width profile`() {
+        val line = focusedRoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            directional = true,
+        )
+
+        assertSame(FOCUSED_ROUTE_LINE_WIDTH_PROFILE, line.widthProfile)
+    }
 
     @Test
     fun `focused trip shape uses one uniform directional line`() {
@@ -27,7 +41,7 @@ class RouteViewGeometryTest {
 
         val lines = geometry.toRoutePolylines()
 
-        assertEquals(listOf(ROUTE_LINE_WIDTH_DP), lines.map { it.widthDp })
+        assertEquals(listOf(ROUTE_LINE_WIDTH_PROFILE), lines.map { it.widthProfile })
         assertEquals(
             listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0)),
             lines.single().points,
@@ -67,10 +81,10 @@ class RouteViewGeometryTest {
         assertEquals(listOf(20, 10), lines.map { it.color })
         assertEquals(
             listOf(
-                ROUTE_DEEMPHASIZED_LINE_WIDTH_DP,
-                ROUTE_LINE_WIDTH_DP * 1.5f,
+                DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
+                FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
             ),
-            lines.map { it.widthDp },
+            lines.map { it.widthProfile },
         )
         assertEquals(listOf(false, true), lines.map { it.directional })
     }

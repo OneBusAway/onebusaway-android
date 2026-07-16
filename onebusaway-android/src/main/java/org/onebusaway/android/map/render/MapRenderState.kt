@@ -57,16 +57,6 @@ data class MapPadding(val topPx: Int = 0, val bottomPx: Int = 0)
 /** The route line color a renderer falls back to when a [RoutePolyline] carries no color of its own. */
 const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
 
-/**
- * The width (dp) a route line draws at on the home map when a route is shown (#1752). Passed as
- * [RoutePolyline.widthDp]; lines that carry no width (a directions itinerary) keep the renderer's
- * thinner default.
- */
-const val ROUTE_LINE_WIDTH_DP: Float = 10f
-
-/** Route lines use the shared proportional route-detail scale. */
-fun routeLineWidthScale(zoom: Float): Float = routeDetailScale(zoom)
-
 /** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
 enum class RoutePolylineTransform {
     VIEWPORT_CLIP,
@@ -77,7 +67,8 @@ enum class RoutePolylineTransform {
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
- * [widthDp] overrides the renderer's default line width when set (the trip-focus map draws a thicker line).
+ * [widthProfile] overrides the renderer's default line width when set, including its zoom-dependent
+ * multiplier schedule.
  *
  * [directional] asks the flavor renderer to stamp travel-direction arrows/chevrons along the line — set
  * it only when [points] are ordered in the direction of travel and that orientation is meaningful (a
@@ -97,7 +88,7 @@ enum class RoutePolylineTransform {
 data class RoutePolyline(
     val color: Int?,
     val points: List<GeoPoint>,
-    val widthDp: Float? = null,
+    val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dashed: Boolean = false,
     val transforms: Set<RoutePolylineTransform> = emptySet(),
@@ -224,6 +215,9 @@ data class MapRenderSnapshot(
     val bikeStations: List<BikeMarker> = emptyList(),
     val bikeshareVisible: Boolean = false,
     val stops: List<StopMarker> = emptyList(),
+    // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
+    // individually focused stop.
+    val routeModeScalesStopsWithZoom: Boolean = false,
     // The currently focused stop id, couriered so the vehicle info-window's "more info" tap can deep
     // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
     val focusedStopId: String? = null,
@@ -235,7 +229,11 @@ data class MapRenderSnapshot(
     // annotation like the fields above, so it rides the same renderStatic() redraw path rather than
     // the 20Hz vehicle-motion sampler.
     val routeContinuation: RouteContinuation? = null,
-)
+) {
+    /** Focused-stop adjacency and route focus use the same route-stop zoom scale. */
+    val routeStopsScaleWithZoom: Boolean
+        get() = routeModeScalesStopsWithZoom || focusedStopId != null
+}
 
 /**
  * The route-mode vehicle **set**: which vehicles exist and the [response] their icons/info-windows
@@ -386,9 +384,15 @@ class MapRenderState {
     fun setRoutePolylines(
         polylines: List<RoutePolyline>,
         framingPolylines: List<RoutePolyline> = polylines,
+        routeModeScalesStopsWithZoom: Boolean = false,
     ) {
         routeFramingPolylines = framingPolylines
-        _snapshot.update { it.copy(routePolylines = polylines) }
+        _snapshot.update {
+            it.copy(
+                routePolylines = polylines,
+                routeModeScalesStopsWithZoom = routeModeScalesStopsWithZoom,
+            )
+        }
     }
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())

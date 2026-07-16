@@ -60,17 +60,28 @@ internal class GoogleRouteStopBitmapLayer(
     private val icons = HashMap<IconKey, BitmapDescriptor>()
     private var renderedStops: List<StopMarker> = emptyList()
     private var renderedFocusedStopId: String? = null
+    private var renderedScaleWithZoom = false
     private var renderedSizes: StampSizes? = null
 
-    override fun render(stops: List<StopMarker>, focusedStopId: String?, zoom: Float) {
+    override fun render(
+        stops: List<StopMarker>,
+        focusedStopId: String?,
+        scaleWithZoom: Boolean,
+        zoom: Float,
+    ) {
         val routeStops = stops.filter(StopMarker::routeStop)
-        if (routeStops == renderedStops && focusedStopId == renderedFocusedStopId) return
+        if (
+            routeStops == renderedStops &&
+            focusedStopId == renderedFocusedStopId &&
+            scaleWithZoom == renderedScaleWithZoom
+        ) return
         val previousFocusedStopId = renderedFocusedStopId
         val previousSizes = renderedSizes
         renderedStops = routeStops
         renderedFocusedStopId = focusedStopId
+        renderedScaleWithZoom = scaleWithZoom
 
-        val sizes = stampSizes(zoom, focusedStopId != null)
+        val sizes = stampSizes(zoom, scaleWithZoom)
         val liveIds = routeStops.mapTo(HashSet(), StopMarker::id)
         val gone = stopsById.iterator()
         while (gone.hasNext()) {
@@ -114,7 +125,7 @@ internal class GoogleRouteStopBitmapLayer(
     }
 
     override fun onCameraSettled(zoom: Float) {
-        val sizes = stampSizes(zoom, renderedFocusedStopId != null)
+        val sizes = stampSizes(zoom, renderedScaleWithZoom)
         if (sizes == renderedSizes) return
         renderedSizes = sizes
         stamp(sizes)
@@ -129,6 +140,7 @@ internal class GoogleRouteStopBitmapLayer(
         icons.clear()
         renderedStops = emptyList()
         renderedFocusedStopId = null
+        renderedScaleWithZoom = false
         renderedSizes = null
     }
 
@@ -159,19 +171,19 @@ internal class GoogleRouteStopBitmapLayer(
 
     private fun StampSizes.forSelection(selected: Boolean): Int = if (selected) this.selected else normal
 
-    private fun stampSizes(zoom: Float, stopFocused: Boolean): StampSizes = StampSizes(
-        normal = routeStopDiameterPx(zoom, stopFocused, selected = false, density),
-        selected = routeStopDiameterPx(zoom, stopFocused, selected = true, density),
+    private fun stampSizes(zoom: Float, scaleWithZoom: Boolean): StampSizes = StampSizes(
+        normal = routeStopDiameterPx(zoom, scaleWithZoom, selected = false, density),
+        selected = routeStopDiameterPx(zoom, scaleWithZoom, selected = true, density),
     )
 }
 
 internal fun routeStopDiameterPx(
     zoom: Float,
-    stopFocused: Boolean,
+    scaleWithZoom: Boolean,
     selected: Boolean,
     density: Float,
 ): Int {
-    val focusScale = if (stopFocused) focusedRouteStopScale(zoom) else 1f
+    val focusScale = if (scaleWithZoom) focusedRouteStopScale(zoom) else 1f
     val selectedScale = if (selected) RouteStopCircles.FOCUSED_SCALE else 1f
     return (2f * RouteStopCircles.RADIUS_PX * focusScale * selectedScale * density)
         .roundToInt()

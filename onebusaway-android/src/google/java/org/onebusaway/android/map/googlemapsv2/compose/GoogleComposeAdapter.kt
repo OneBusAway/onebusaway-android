@@ -192,9 +192,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         val activeRenderer = renderer
         val activeInfoWindows = infoWindows
         if (activeRenderer != null && activeInfoWindows != null) {
-            // Non-route static layer (stops / bikes / generics): strip route lines before distinctness
-            // so a route-only change never churns these annotations, and stop-only emissions cannot
-            // touch the independently collected native route layer below.
+            // Non-route static layer (stops / bikes / generics): strip route geometry before
+            // distinctness so geometry-only changes do not churn these annotations. The derived
+            // route-stop zoom-scale flag remains, allowing a route-focus change to restyle its stops;
+            // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
                     .map { it.copy(routePolylines = emptyList()) }

@@ -9,7 +9,10 @@ import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
@@ -23,8 +26,18 @@ internal val ROUTE_VIEW_TRANSFORMS = setOf(
     RoutePolylineTransform.ZOOM_SIMPLIFY,
 )
 
-internal const val ROUTE_DEEMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.275f
-internal const val ROUTE_EMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 1.5f
+/** The line presentation shared by single-route view and a selected route in focused-stop mode. */
+internal fun focusedRoutePolyline(
+    color: Int?,
+    points: List<GeoPoint>,
+    directional: Boolean,
+) = RoutePolyline(
+    color = color,
+    points = points,
+    widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+    directional = directional,
+    transforms = ROUTE_VIEW_TRANSFORMS,
+)
 
 /**
  * Convert exact trip shapes into uniform-width directional route lines. When [emphasizedRoute] is
@@ -43,20 +56,27 @@ internal fun FocusedTripGeometry.toRoutePolylines(
     orderedShapes.forEach { shape ->
         if (shape.points.size < 2) return@forEach
         val emphasized = emphasizedRoute == shape.routeDirection
-        val widthDp = when {
-            emphasizedRoute == null -> ROUTE_LINE_WIDTH_DP
-            emphasized -> ROUTE_EMPHASIZED_LINE_WIDTH_DP
-            else -> ROUTE_DEEMPHASIZED_LINE_WIDTH_DP
-        }
-        add(
+        val polyline = if (emphasized) {
+            focusedRoutePolyline(
+                routeColors[shape.routeDirection] ?: shape.routeColor,
+                shape.points,
+                directional = true,
+            )
+        } else {
+            val widthProfile = if (emphasizedRoute == null) {
+                ROUTE_LINE_WIDTH_PROFILE
+            } else {
+                DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
+            }
             RoutePolyline(
                 routeColors[shape.routeDirection] ?: shape.routeColor,
                 shape.points,
-                widthDp,
-                directional = emphasizedRoute == null || emphasized,
+                widthProfile,
+                directional = emphasizedRoute == null,
                 transforms = ROUTE_VIEW_TRANSFORMS,
             )
-        )
+        }
+        add(polyline)
     }
 }
 

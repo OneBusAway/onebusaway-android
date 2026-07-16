@@ -107,7 +107,7 @@ class MapLibreRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
-    private var renderedRouteWidthScale: Float? = null
+    private var renderedRouteWidths: List<Float> = emptyList()
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
@@ -166,7 +166,11 @@ class MapLibreRenderer(
         bikeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
-        routeStopCircleLayer.render(snapshot.stops, snapshot.focusedStopId)
+        routeStopCircleLayer.render(
+            snapshot.stops,
+            snapshot.focusedStopId,
+            snapshot.routeStopsScaleWithZoom,
+        )
 
         if (snapshot.bikeshareVisible) {
             val band = bikeZoomBand(map.cameraPosition.zoom.toFloat())
@@ -208,25 +212,28 @@ class MapLibreRenderer(
         if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
 
         val previousNative = routePolylines.toList()
+        val previousWidths = renderedRouteWidths
         val reconciliation = reconcileEqualItems(renderedRoutePolylines, next)
         val removed = reconciliation.removedPreviousIndices.map(previousNative::get)
         if (removed.isNotEmpty()) map.removeAnnotations(removed)
-        renderedRoutePolylines = next
-        val widthScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
-        // Retained natives carry the previously stamped scale; bring them to the new one before
-        // recording it, or a later onCameraSettled at this zoom would skip the resize they still need.
-        val retainedStale = renderedRouteWidthScale != widthScale
-        renderedRouteWidthScale = widthScale
+        val nextWidths = next.map { routeWidth(it, map.cameraPosition.zoom.toFloat()) }
         val reconciled = next.mapIndexed { index, polyline ->
-            reconciliation.previousIndexForNext[index]?.let(previousNative::get)
-                ?.also { if (retainedStale) it.width = baseRouteWidth(polyline) * widthScale }
+            val previousIndex = reconciliation.previousIndexForNext[index]
+            previousIndex?.let(previousNative::get)
+                ?.also {
+                    if (previousWidths.getOrNull(previousIndex) != nextWidths[index]) {
+                        it.width = nextWidths[index]
+                    }
+                }
                 ?: map.addPolyline(
                     PolylineOptions()
                         .color(polyline.resolvedColor)
-                        .width(baseRouteWidth(polyline) * widthScale)
+                        .width(nextWidths[index])
                         .addPoints(polyline.points)
                 )
         }
+        renderedRoutePolylines = next
+        renderedRouteWidths = nextWidths
         routePolylines.clear()
         routePolylines.addAll(reconciled)
     }
@@ -237,17 +244,19 @@ class MapLibreRenderer(
     }
 
     fun onCameraSettled(zoom: Float) {
-        val detailScale = routeLineWidthScale(zoom)
-        if (detailScale != renderedRouteWidthScale) {
-            renderedRouteWidthScale = detailScale
+        val nextWidths = renderedRoutePolylines.map { routeWidth(it, zoom) }
+        if (nextWidths != renderedRouteWidths) {
+            renderedRouteWidths = nextWidths
             for (index in routePolylines.indices) {
-                routePolylines[index].width = baseRouteWidth(renderedRoutePolylines[index]) * detailScale
+                routePolylines[index].width = nextWidths[index]
             }
         }
+        val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
     }
 
-    private fun baseRouteWidth(polyline: RoutePolyline): Float = polyline.widthDp ?: ROUTE_WIDTH_DP
+    private fun routeWidth(polyline: RoutePolyline, zoom: Float): Float =
+        polyline.widthProfile?.thicknessAt(zoom) ?: (ROUTE_WIDTH_DP * routeLineWidthScale(zoom))
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
@@ -272,7 +281,7 @@ class MapLibreRenderer(
         staticAnnotations.clear()
         routePolylines.clear()
         renderedRoutePolylines = emptyList()
-        renderedRouteWidthScale = null
+        renderedRouteWidths = emptyList()
         vehicleMarkersByTripId.clear()
         tripMarkersByRole.clear()
         bandPolylines.clear()

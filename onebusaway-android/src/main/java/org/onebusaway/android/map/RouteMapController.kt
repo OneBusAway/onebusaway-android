@@ -612,7 +612,7 @@ class RouteMapController(
         val selectedTripStops = selected?.let(::selectedTripStopPresentation)
         val selectedRouteUnderlay = if (selectedTrip == null) {
             emptyList()
-        } else basePolylines.asDeemphasizedRouteUnderlay()
+        } else selectedDirectionUnderlay(selected.routeDirection.directionId)
         if (focus == null) {
             renderState.setRoutePolylines(
                 polylines = if (selectedTrip == null) {
@@ -673,16 +673,39 @@ class RouteMapController(
         val tripId = renderState.selectedVehicleTripId.value ?: return null
         val currentRouteId = routeId ?: return null
         val state = tripObservationRepository.lookupTripState(tripId)
+        // Keep the base route visible until both the exact shape and schedule resolve; a
+        // half-loaded presentation would blank the base stops behind an empty selected trip.
+        val polyline = state?.polyline ?: return null
+        val schedule = state.schedule ?: return null
         // The marker is keyed by activeTripId, which resolves directly through the poll references.
         val activeTrip = latestPoll?.response?.trip(tripId)
         return SelectedTripPresentation(
-            points = state?.polyline?.points?.map { it.toGeoPoint() }.orEmpty(),
-            stopIds = state?.schedule?.stopTimes?.map { it.stopId }.orEmpty(),
+            points = polyline.points.map { it.toGeoPoint() },
+            stopIds = schedule.stopTimes.map { it.stopId },
             routeDirection = RouteDirectionKey(
                 currentRouteId,
                 activeTrip?.directionId ?: currentDirectionId,
             ),
         )
+    }
+
+    /**
+     * The selected trip's own direction shape, thinned to sit beneath its exact trip line. In
+     * whole-route mode [basePolylines] is the merged both-directions geometry, so drawing that as
+     * the underlay would surface the opposite direction; resolve the direction shape instead.
+     */
+    private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> {
+        val route = routeShape ?: return emptyList()
+        val shape = route.shapeForDirection(directionId)
+        return shape.polylines.map { points ->
+            RoutePolyline(
+                route.route?.color,
+                points,
+                widthDp = ROUTE_LINE_WIDTH_DP,
+                directional = shape.directional,
+                transforms = ROUTE_VIEW_TRANSFORMS,
+            )
+        }.asDeemphasizedRouteUnderlay()
     }
 
     /** The selected trip's scheduled stops, projected onto its exact shape in schedule order. */

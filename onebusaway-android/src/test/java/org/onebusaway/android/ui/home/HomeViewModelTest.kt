@@ -911,6 +911,20 @@ class HomeViewModelTest {
         assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
     }
 
+    @Test
+    fun `focused trips follow the current focus with no explicit reset`() = runTest {
+        // The set is derived from the current focus, not a manually-cleared field: leaving the stop
+        // for a standalone route empties it by construction (focusStandaloneRoute has no reset call),
+        // and the same load re-scoped to a different stop id never leaks across.
+        val vm = viewModel()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
+        assertTrue(vm.focusedTrips.isNotEmpty())
+
+        vm.focusStandaloneRoute(ShowRouteRequest("65"))
+        assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
+    }
+
     // --- focus + SavedStateHandle ---
 
     @Test

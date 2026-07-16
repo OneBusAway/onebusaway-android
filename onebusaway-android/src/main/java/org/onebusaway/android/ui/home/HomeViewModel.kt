@@ -147,13 +147,18 @@ class HomeViewModel @Inject constructor(
     /** The sheet's last resting position, for the activity's imperative map/tutorial side-effects. */
     val lastSettledSheet: ArrivalsSheetState get() = settledSheet
     // A restored/deep-linked focus the imperative map hasn't been told about yet (re-derived by the
-    // host on each create from the restored focusedStop, so it needn't be persisted).
-    private var pendingMapFocus: Boolean = false
-    private var preserveViewportForPendingMapFocus: Boolean = false
-    // Whether the pending focus should animate the camera over to the stop (an in-session reveal — a
-    // search/recents tap) rather than jump to it (a cold-start restore, where flying from a default
-    // camera position would look wrong).
-    private var animatePendingMapFocus: Boolean = false
+    // host on each create from the restored focusedStop, so it needn't be persisted). Null when no
+    // focus is pending. A single data class rather than a boolean pair (#1903): each mark atomically
+    // replaces the whole latch, so a fresh reveal can no longer inherit a stale preserveViewport left
+    // over from an earlier, still-loading restore.
+    private data class PendingFocus(
+        val preserveViewport: Boolean = false,
+        // Whether the pending focus should animate the camera over to the stop (an in-session reveal —
+        // a search/recents tap) rather than jump to it (a cold-start restore, where flying from a
+        // default camera position would look wrong).
+        val animate: Boolean = false,
+    )
+    private var pendingFocus: PendingFocus? = null
 
     /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
     var focusedTrips: Set<FocusedTrip> = emptySet()
@@ -269,11 +274,11 @@ class HomeViewModel @Inject constructor(
     /**
      * The host has a restored / deep-linked focus the imperative map hasn't been told about yet;
      * complete it once the arrivals load (see [onArrivalsLoaded]). A fresh map tap already centers the
-     * stop, so it does not call this.
+     * stop, so it does not call this. [preserveViewport] keeps the current camera instead of recentering
+     * on completion (a back-restore returning to a stop with no saved viewport of its own).
      */
-    fun markPendingMapFocus(animate: Boolean = false) {
-        pendingMapFocus = true
-        animatePendingMapFocus = animate
+    fun markPendingMapFocus(animate: Boolean = false, preserveViewport: Boolean = false) {
+        pendingFocus = PendingFocus(preserveViewport = preserveViewport, animate = animate)
     }
 
     /**
@@ -305,23 +310,21 @@ class HomeViewModel @Inject constructor(
         if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
         focusedTrips = trips
         presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
-        val preserveViewport = pendingMapFocus && preserveViewportForPendingMapFocus
+        val pending = pendingFocus
+        val preserveViewport = pending?.preserveViewport == true
         // Frame the selected route only when this load is the initial (restore/deep-link) focus
         // establishment; an ordinary arrivals poll must refresh the presentation without reframing the
         // camera to the whole route (#1895). A restore carrying a saved viewport already declines to frame.
-        val frameSelectedRoute = pendingMapFocus && !preserveViewportForPendingMapFocus
-        if (pendingMapFocus) {
-            val animate = animatePendingMapFocus
-            pendingMapFocus = false
-            preserveViewportForPendingMapFocus = false
-            animatePendingMapFocus = false
+        val frameSelectedRoute = pending != null && !preserveViewport
+        if (pending != null) {
+            pendingFocus = null
             emitMapDirective(
                 MapDirective.FocusStop(
                     stop,
                     routes,
                     settledSheet == ArrivalsSheetState.Expanded,
                     recenter = !preserveViewport,
-                    animate = animate,
+                    animate = pending.animate,
                 )
             )
         }
@@ -494,8 +497,7 @@ class HomeViewModel @Inject constructor(
         presentedRoutes = emptySet()
         // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
         // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
-        pendingMapFocus = false
-        preserveViewportForPendingMapFocus = false
+        pendingFocus = null
         emitMapDirective(MapDirective.ClearFocus)
     }
 
@@ -570,8 +572,7 @@ class HomeViewModel @Inject constructor(
             focusedTrips = emptySet()
             when (target) {
                 is CurrentFocus.Stop -> {
-                    markPendingMapFocus()
-                    preserveViewportForPendingMapFocus = !frameFocus
+                    markPendingMapFocus(preserveViewport = !frameFocus)
                     emitMapDirective(MapDirective.ClearFocus)
                 }
                 is CurrentFocus.Route -> {

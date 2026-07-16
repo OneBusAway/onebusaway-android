@@ -91,6 +91,9 @@ fun ArrivalsPanel(
     handler: ArrivalActionHandler,
     mapRouteColors: Map<String, Int> = emptyMap(),
     selectedRowKey: String? = null,
+    selectedRouteId: String? = null,
+    selectedRouteNames: List<String> = emptyList(),
+    onClearRouteSelection: (() -> Unit)? = null,
     // Reports the panel's total content height in px (pinned header + the fully-laid-out list) so the
     // host can fit the peek to short stops; not reported until the whole list is laid out.
     onContentHeight: (heightPx: Int) -> Unit,
@@ -169,6 +172,9 @@ fun ArrivalsPanel(
                     loadingMore = viewModel.loadingMore,
                     mapRouteColors = mapRouteColors,
                     selectedRowKey = selectedRowKey,
+                    selectedRouteId = selectedRouteId,
+                    selectedRouteNames = selectedRouteNames,
+                    onClearRouteSelection = onClearRouteSelection,
                     modifier = Modifier.weight(1f),
                     listState = listState,
                     // The drawer header already shows the direction as a "(N)" tag.

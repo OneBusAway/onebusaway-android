@@ -17,6 +17,7 @@ package org.onebusaway.android.api.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.contract.ArrivalDeparture
 import org.onebusaway.android.api.contract.ArrivalsForStop
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.References
@@ -62,10 +63,31 @@ class StopArrivalsTripPatternTest {
             setOf(
                 FocusedTrip("served-1", "route", "served-shape", null, directionId = 1),
                 FocusedTrip("served-2", "route", "served-shape", null, directionId = 1),
-                FocusedTrip("missing-shape", "route", null, null, directionId = 0),
+                FocusedTrip("missing-shape", "route", null, null),
                 FocusedTrip("unknown-trip", "route", null, null),
             ),
             trips,
         )
+    }
+
+    @Test
+    fun `arrivals retain trip reference direction id`() {
+        val snapshot = StopArrivals(
+            data = EntryWithReferences(
+                entry = ArrivalsForStop(
+                    stopId = "stop",
+                    arrivalsAndDepartures = listOf(
+                        ArrivalDeparture(routeId = "route", tripId = "trip", stopId = "stop")
+                    ),
+                ),
+                references = References(
+                    trips = listOf(TripReference(id = "trip", routeId = "route", directionId = "1"))
+                ),
+            ),
+            currentTime = 0L,
+            minutesAfter = 65,
+        )
+
+        assertEquals(1, snapshot.arrivals.single().directionId)
     }
 }

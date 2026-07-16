@@ -34,8 +34,22 @@ class HomeSheetLogicTest {
 
     @Test
     fun `sheet shows only with a focused stop`() {
-        assertTrue(shouldShowSheet(stop))
-        assertFalse(shouldShowSheet(null))
+        assertTrue(shouldShowSheet(CurrentFocus.Stop(stop)))
+        assertFalse(shouldShowSheet(CurrentFocus.Route(RouteTarget("route"))))
+        assertFalse(shouldShowSheet(CurrentFocus.BikeStation("bike")))
+        assertFalse(shouldShowSheet(CurrentFocus.None))
+    }
+
+    @Test
+    fun `stop route focus uses search bar while standalone route uses banner`() {
+        val stopRoute = StopRouteSelection(
+            originHeadsign = null,
+            legs = listOf(RouteLeg("route", "40")),
+        )
+        assertEquals(120, routeFocusTopEdge(CurrentFocus.Stop(stop, stopRoute), 120, 240))
+        assertEquals(240, routeFocusTopEdge(CurrentFocus.Route(RouteTarget("route")), 120, 240))
+        assertEquals(0, routeFocusTopEdge(CurrentFocus.Stop(stop), 120, 240))
+        assertEquals(0, routeFocusTopEdge(CurrentFocus.None, 120, 240))
     }
 
     // --- toggleSheetTarget ---

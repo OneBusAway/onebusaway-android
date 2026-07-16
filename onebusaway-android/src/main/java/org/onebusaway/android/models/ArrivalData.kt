@@ -26,6 +26,8 @@ import org.onebusaway.android.time.ServerTime
 interface ArrivalData {
     val routeId: String
     val tripId: String
+    /** GTFS direction id resolved from the trip reference, or null when the feed omits it. */
+    val directionId: Int? get() = null
     val stopId: String
     val headsign: String?
     val shortName: String?

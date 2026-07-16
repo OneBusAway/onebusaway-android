@@ -70,7 +70,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.findActivity
@@ -78,6 +77,7 @@ import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CONTROL_BOTTOM
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -156,14 +156,13 @@ class HomeActivityActions(
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
     val onClearFocus: () -> Unit,
     val onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    val onShowRouteOnMap: (ShowRouteRequest) -> Unit,
     val onCancelRouteMode: () -> Unit,
 )
 
 /**
  * The declarative home screen: a Compose `ModalNavigationDrawer` + an edge-to-edge Material3
  * `BottomSheetScaffold` (the map) with the floating [MapTopChrome] (menu + search FABs) over its top,
- * rendered from [HomeUiState] (state down) with taps dispatched through plain lambda callbacks +
+ * rendered from [CurrentFocus] (state down) with taps dispatched through plain lambda callbacks +
  * [HomeViewModel] events (up). Replaces the imperative `HomeShellHost` bridge.
  *
  * The arrivals sheet inverts to declarative: **visibility is business state** — the sheet peeks iff
@@ -171,7 +170,7 @@ class HomeActivityActions(
  * fights a user drag. The sheet has no `Hidden` drag anchor (`skipHiddenState = true`), so peek is the
  * hard floor of the drag; show/hide is instead an animated peek height (0 <-> real peek) that slides
  * the whole sheet in and out. **Expansion (peek<->full)** is the live `SheetState`, toggled by the drag
- * handle and collapsed as a declarative reaction to route mode activating (`routeHeader != null`;
+ * handle and collapsed as a declarative reaction to a route being selected inside stop focus;
  * the screen alone knows the live state), plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
  * the map ([MapFeature]), the route-mode header ([RouteHeaderOverlay]), and the survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
  * are all composables now — no map-related `AndroidView` / View seam remains.
@@ -179,7 +178,7 @@ class HomeActivityActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    state: HomeUiState,
+    currentFocus: CurrentFocus,
     // The map is a self-wiring [MapFeature]; it composes only while HOME is the current destination, so
     // SDK init is already lazy. The route-mode header and survey are Compose overlays over it.
     homeViewModel: HomeViewModel,
@@ -200,6 +199,8 @@ fun HomeScreen(
     with(callbacks) {
     with(activityActions) {
     ObaTheme {
+        val stopFocus = currentFocus as? CurrentFocus.Stop
+        val standaloneRouteFocused = currentFocus is CurrentFocus.Route
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
@@ -207,6 +208,17 @@ fun HomeScreen(
         // for descendants. This is the route card's absolute top edge in map coordinates.
         val routeHeaderTopPx = WindowInsets.statusBars.getTop(density) +
             with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
+        val searchBarBottomPx = WindowInsets.statusBars.getTop(density) +
+            with(density) { MAP_TOP_CHROME_CONTROL_BOTTOM.roundToPx() }
+        var routeHeaderBottomPx by remember(routeHeader?.routeId) { mutableIntStateOf(0) }
+        val routeFocusTopEdgePx = routeFocusTopEdge(
+            currentFocus,
+            searchBarBottomPx,
+            routeHeaderBottomPx,
+        )
+        LaunchedEffect(routeFocusTopEdgePx) {
+            mapViewModel.setRouteFocusTopEdge(routeFocusTopEdgePx)
+        }
         val snackbarHostState = remember { SnackbarHostState() }
         // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
         // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
@@ -287,8 +299,8 @@ fun HomeScreen(
         // height rather than a sheet drag state. The key is the focused stop id while shown (else null),
         // so the effect reacts to focus/tab changes but NOT to a user drag (same stop -> same key).
         var sheetShown by remember { mutableStateOf(false) }
-        val showSheet = shouldShowSheet(state.focusedStop)
-        val sheetKey = if (showSheet) state.focusedStop?.id else null
+        val showSheet = shouldShowSheet(currentFocus)
+        val sheetKey = if (showSheet) stopFocus?.stop?.id else null
         LaunchedEffect(sheetKey) {
             if (sheetKey == null) {
                 // Hide: an expanded sheet is first collapsed to peek (so it then slides straight down as
@@ -345,10 +357,9 @@ fun HomeScreen(
             }
         }
 
-        // Collapse the sheet to peek when the map enters route mode ("show vehicles on map"). A
-        // declarative reaction to route-mode state rather than a VM command — the screen holds the live
-        // SheetState, and route mode surfaces here as `routeHeader != null`.
-        val routeModeActive = routeHeader != null
+        // Collapse the sheet to peek when a route is selected within stop focus. This reacts to the
+        // durable focus state rather than to the map's asynchronously loaded route header.
+        val routeModeActive = stopFocus?.selectedRoute != null
         LaunchedEffect(routeModeActive) {
             if (routeModeActive) runCatching { sheetState.partialExpand() }
         }
@@ -425,15 +436,20 @@ fun HomeScreen(
                     },
                     sheetContent = {
                         ArrivalsSheetHost(
-                            focusedStop = state.focusedStop,
+                            focusedStop = stopFocus?.stop,
                             sheetVisible = sheetShown,
-                            routeHeader = routeHeader,
+                            selectedRoute = stopFocus?.selectedRoute,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
+                            onClearRouteSelection = homeViewModel::clearStopRouteSelection,
                             // Showing vehicles on the map drags the sheet down to peek so the route is
                             // visible, whether or not route mode was already active (see collapseSheet).
-                            onShowRouteOnMap = { request ->
-                                onShowRouteOnMap(request)
+                            onShowRouteOnMap = { arrival, request ->
+                                homeViewModel.selectArrivalRoute(
+                                    request = request,
+                                    shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
+                                    headsign = arrival.headsign,
+                                )
                                 collapseSheet()
                             },
                             onShowTrip = onShowTrip,
@@ -483,11 +499,14 @@ fun HomeScreen(
                                     weatherViewModel = weatherViewModel,
                                     donationViewModel = donationViewModel,
                                     surveyViewModel = surveyViewModel,
-                                    routeHeader = routeHeader,
+                                    routeHeader = routeHeader.takeIf { standaloneRouteFocused },
                                     onCancelRouteMode = onCancelRouteMode,
                                     // The switch-direction affordance calls straight into the map VM (which
                                     // re-filters stops/vehicles + persists the choice), like the height report below.
-                                    onSelectRouteDirection = mapViewModel::selectRouteDirection,
+                                    onSelectRouteDirection = { directionId ->
+                                        homeViewModel.selectStandaloneRouteDirection(directionId)
+                                        mapViewModel.selectRouteDirection(directionId)
+                                    },
                                     // Tapping the header body reframes the map to the route's full extent (VM
                                     // re-issues the retained route framing).
                                     onFrameRoute = mapViewModel::frameRoute,
@@ -496,7 +515,7 @@ fun HomeScreen(
                                     routeHeaderTopPx = routeHeaderTopPx,
                                     // This layer converts measured card height to its map-space bottom edge;
                                     // the map VM adds marker clearance and owns the resulting content padding.
-                                    onRouteHeaderBottom = mapViewModel::setRouteHeaderBottom,
+                                    onRouteHeaderBottom = { routeHeaderBottomPx = it },
                                 )
                             }
                             // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
@@ -564,7 +583,7 @@ private fun HomeDrawer(
 ) {
     val scope = rememberCoroutineScope()
     // The drawer's region/feature gating is a self-wired feature module (NavDrawerViewModel), collected
-    // here so the screen doesn't thread the booleans through HomeUiState.
+    // here so the screen doesn't thread unrelated booleans through the focus state.
     val availability by hiltViewModel<NavDrawerViewModel>().availability.collectAsStateWithLifecycle()
     // Every row closes the drawer before dispatching, matching the legacy single onSelect path.
     fun close() { scope.launch { drawerState.close() } }

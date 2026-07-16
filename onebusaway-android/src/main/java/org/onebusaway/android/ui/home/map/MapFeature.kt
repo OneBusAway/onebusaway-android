@@ -81,17 +81,19 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
 import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
+import org.onebusaway.android.ui.home.focusedBikeStationId
+import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.LayerUtils
@@ -140,9 +142,13 @@ fun MapFeature(
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
             override fun onStopClick(stop: ObaStop) {
+                val currentStop = homeViewModel.currentFocus.value as? CurrentFocus.Stop
+                if (currentStop == null || !currentStop.stop.id.equals(stop.id, ignoreCase = true)) {
+                    mapViewModel.clearAllFocus()
+                }
                 mapViewModel.onStopTapped(stop)
                 // Already focused on this stop? Then don't re-fire the home focus + analytics.
-                val focusedId = homeViewModel.uiState.value.focusedStop?.id
+                val focusedId = homeViewModel.currentFocus.value.focusedStop?.id
                 if (focusedId != null && focusedId.equals(stop.id, ignoreCase = true)) {
                     return
                 }
@@ -157,14 +163,13 @@ fun MapFeature(
             }
 
             override fun onMapClick(point: GeoPoint?) {
-                mapViewModel.onMapTapped()
-                homeViewModel.onStopFocused(null)
-                homeViewModel.onBikeStationFocused(null)
+                homeViewModel.requestClearMapFocus()
             }
 
             override fun onBikeClick(station: BikeStation) {
-                val bikeId = homeViewModel.uiState.value.focusedBikeStationId
+                val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+                    mapViewModel.clearAllFocus()
                     homeViewModel.onBikeStationFocused(station.id)
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
@@ -184,17 +189,25 @@ fun MapFeature(
                 mapViewModel.onVehicleTapped(status)
             }
 
-            override fun onRouteContinuationClick(routeId: String, directionId: Int?) {
-                mapViewModel.toRoute(ShowRouteRequest(routeId, initialDirectionId = directionId))
+            override fun onRouteContinuationClick(
+                routeId: String,
+                routeShortName: String,
+                directionId: Int?,
+            ) {
+                homeViewModel.advanceRouteContinuation(routeId, routeShortName, directionId)
             }
 
-            override fun onRouteBadgeClick(routeId: String, directionId: Int?) {
-                homeViewModel.requestShowFocusedStopRouteOnMap(routeId, directionId)
+            override fun onRouteBadgeClick(
+                routeId: String,
+                routeShortName: String,
+                directionId: Int?,
+            ) {
+                homeViewModel.requestShowFocusedStopRouteOnMap(routeId, directionId, routeShortName)
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
                 MapNavigation.openVehicleTripDetails(
-                    context, status, homeViewModel.uiState.value.focusedStop?.id
+                    context, status, homeViewModel.currentFocus.value.focusedStop?.id
                 )
             }
 
@@ -227,7 +240,8 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.lat, directive.lon)
-                is MapDirective.ShowRoute -> mapViewModel.toRoute(directive.request)
+                is MapDirective.ShowRoute ->
+                    mapViewModel.toRoute(directive.request, directive.stopScoped)
                 is MapDirective.ShowStopRoutes ->
                     mapViewModel.showStopRoutes(
                         directive.stopId,
@@ -235,7 +249,8 @@ fun MapFeature(
                         directive.trips,
                     )
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
-                MapDirective.ClearFocus -> mapViewModel.clearFocus()
+                MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
+                MapDirective.ClearFocus -> mapViewModel.clearAllFocus()
                 is MapDirective.FocusStop ->
                     mapViewModel.focusStop(directive.stop, directive.routes, directive.overlayExpanded)
             }

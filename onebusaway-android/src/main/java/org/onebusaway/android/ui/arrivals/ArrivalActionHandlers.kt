@@ -41,7 +41,7 @@ fun createArrivalActionHandler(
     viewModel: ArrivalsViewModel,
     currentContent: () -> ArrivalsUiState.Content?,
     // Carries the arrival's stop in the request, so route mode can narrow to the stop-relevant direction.
-    onShowRouteOnMap: (ShowRouteRequest) -> Unit,
+    onShowRouteOnMap: (ArrivalInfo, ShowRouteRequest) -> Unit,
     // How to show the alert hide/undo snackbar — supplied by the host so the dialog isn't tied to a
     // specific View (the standalone activity anchors to its root; Compose hosts use a SnackbarHost).
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
@@ -72,7 +72,14 @@ fun createArrivalActionHandler(
         // A row (or menu) tap always frames the whole route: pass the arrival's stop so route mode shows
         // only the direction (stops + vehicles) serving it, but no focusTripId — the vehicle+stop zoom is
         // the ETA pill's job ([onFocusVehicleOnMap]).
-        onShowRouteOnMap(ShowRouteRequest(arrival.routeId, arrival.stopId))
+        onShowRouteOnMap(
+            arrival,
+            ShowRouteRequest(
+                arrival.routeId,
+                arrival.stopId,
+                initialDirectionId = arrival.directionId,
+            )
+        )
     }
 
     override fun onFocusVehicleOnMap(arrival: ArrivalInfo) {
@@ -90,7 +97,15 @@ fun createArrivalActionHandler(
         if (tripId == null) {
             Toast.makeText(activity, R.string.stop_info_vehicle_not_on_map, Toast.LENGTH_SHORT).show()
         }
-        onShowRouteOnMap(ShowRouteRequest(arrival.routeId, arrival.stopId, focusTripId = tripId))
+        onShowRouteOnMap(
+            arrival,
+            ShowRouteRequest(
+                arrival.routeId,
+                arrival.stopId,
+                focusTripId = tripId,
+                initialDirectionId = arrival.directionId,
+            )
+        )
     }
 
     override fun onShowTripStatus(arrival: ArrivalInfo) {

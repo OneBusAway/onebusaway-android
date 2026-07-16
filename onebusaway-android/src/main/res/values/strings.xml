@@ -225,6 +225,7 @@
     </plurals>
     <string name="stop_info_eta_now">NOW</string>
     <string name="stop_info_option_showonmap">Show on map</string>
+    <string name="stop_info_unselect_route">Unselect route</string>
     <string name="menu_option_sort_by">Sort by</string>
     <string name="stop_info_option_refresh">Refresh</string>
     <string name="stop_info_option_show_details">Show stop details</string>

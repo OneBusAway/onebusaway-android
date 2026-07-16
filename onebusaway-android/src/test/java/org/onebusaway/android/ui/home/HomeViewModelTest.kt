@@ -53,6 +53,7 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
 
     val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.lat to it.lon }
     val routeRequests get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request }
+    val routeCommands get() = sent.filterIsInstance<MapDirective.ShowRoute>()
     val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }
     val stopRoutes get() = sent.filterIsInstance<MapDirective.ShowStopRoutes>()
     val clearStopRoutesCount get() = sent.count { it is MapDirective.ClearStopRoutes }
@@ -162,7 +163,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
         vm.applyInitialFocus(stop)
-        assertEquals(stop, vm.uiState.value.focusedStop)
+        assertEquals(stop, vm.currentFocus.value.focusedStop)
         vm.onArrivalsLoaded(obaStop, null, emptySet())
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size) // pending was marked -> focus dispatched to the map
@@ -179,8 +180,8 @@ class HomeViewModelTest {
         val job = launch { map.collect() }
         advanceUntilIdle()
         vm.applyInitialFocus(null) // intent carries no stop
-        assertEquals(restored, vm.uiState.value.focusedStop) // unchanged
-        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        assertEquals(restored, vm.currentFocus.value.focusedStop) // unchanged
+        vm.onArrivalsLoaded(ObaStopElement("42", 47.61, -122.34, "Pike St", "577"), null, emptySet())
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size) // pending was marked
         job.cancel()
@@ -193,7 +194,7 @@ class HomeViewModelTest {
         val job = launch { map.collect() }
         advanceUntilIdle()
         vm.applyInitialFocus(null)
-        assertNull(vm.uiState.value.focusedStop)
+        assertNull(vm.currentFocus.value.focusedStop)
         vm.onArrivalsLoaded(obaStop, null, emptySet())
         advanceUntilIdle()
         assertEquals(0, map.focusStops.size) // not pending -> nothing dispatched
@@ -208,6 +209,9 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        advanceUntilIdle()
+        map.sent.clear()
         vm.markPendingMapFocus()
         // Pending -> dispatch FocusStop (sheet not expanded -> overlayExpanded false); latch then clears.
         vm.onArrivalsLoaded(obaStop, null, emptySet())
@@ -250,18 +254,17 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `show route on map shows the route`() = runTest {
+    fun `standalone route focus shows the route`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
 
-        vm.requestShowRouteOnMap(ShowRouteRequest("42"))
+        vm.focusStandaloneRoute(ShowRouteRequest("42"))
         advanceUntilIdle()
 
-        // The sheet collapse is now a declarative UI reaction to route mode (routeHeader != null),
-        // not a VM command — so this covers only the route directive.
         assertEquals(listOf("42"), map.routesShown)
+        assertEquals(CurrentFocus.Route(RouteTarget("42")), vm.currentFocus.value)
         mapJob.cancel()
     }
 
@@ -280,7 +283,69 @@ class HomeViewModelTest {
             ShowRouteRequest(routeId = "42", directionStopId = "stop", initialDirectionId = 1),
             map.routeRequests.single(),
         )
+        assertTrue(map.routeCommands.single().stopScoped)
         mapJob.cancel()
+    }
+
+    @Test
+    fun `drawer route selection and continuation remain subordinate to stop focus`() = runTest {
+        val savedState = SavedStateHandle()
+        val vm = viewModel(savedState = savedState)
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        vm.onStopFocused(stop)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown",
+        )
+        vm.advanceRouteContinuation("75", "75", directionId = 1)
+        advanceUntilIdle()
+
+        val focus = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals(stop, focus.stop)
+        assertEquals("Downtown", focus.selectedRoute?.originHeadsign)
+        assertEquals(listOf("65", "75"), focus.selectedRoute?.legs?.map { it.shortName })
+        assertEquals(listOf(true, true), map.routeCommands.map { it.stopScoped })
+        val restored = viewModel(savedState = savedState).currentFocus.value as CurrentFocus.Stop
+        assertEquals(focus.selectedRoute, restored.selectedRoute)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `clearing a subordinate route retains stop focus`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        vm.onStopFocused(stop)
+        vm.requestShowFocusedStopRouteOnMap("65", null, "65")
+
+        vm.clearStopRouteSelection()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        assertEquals(1, map.sent.count { it is MapDirective.ClearSelectedRoute })
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `standalone route replaces stop focus and is restored`() = runTest {
+        val handle = SavedStateHandle()
+        val vm = viewModel(savedState = handle)
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+
+        vm.focusStandaloneRoute(ShowRouteRequest("65", initialDirectionId = 1))
+
+        val expected = CurrentFocus.Route(RouteTarget("65", directionId = 1))
+        assertEquals(expected, vm.currentFocus.value)
+        assertEquals(expected, viewModel(savedState = handle).currentFocus.value)
     }
 
     @Test
@@ -294,7 +359,7 @@ class HomeViewModelTest {
         vm.requestClearMapFocus()
         advanceUntilIdle()
 
-        assertNull(vm.uiState.value.focusedStop)
+        assertNull(vm.currentFocus.value.focusedStop)
         assertEquals(1, map.clearFocusCount)
         job.cancel()
     }
@@ -313,6 +378,9 @@ class HomeViewModelTest {
             FocusedTrip("trip-40", "40", "shape-40-express", 0xFF112233.toInt()),
             FocusedTrip("trip-44", "44", "shape-44-local", null),
         )
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        advanceUntilIdle()
+        map.sent.clear()
         vm.onArrivalsLoaded(obaStop, null, trips)
         advanceUntilIdle()
 
@@ -328,6 +396,9 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        advanceUntilIdle()
+        map.sent.clear()
         vm.markPendingMapFocus()
 
         val trips = setOf(FocusedTrip("trip-7", "7", "shape-7", null))
@@ -347,6 +418,9 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        advanceUntilIdle()
+        map.sent.clear()
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
@@ -360,6 +434,7 @@ class HomeViewModelTest {
     @Test
     fun `clearing map focus resets exact trips`() = runTest {
         val vm = viewModel()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
@@ -374,18 +449,18 @@ class HomeViewModelTest {
         val vm = viewModel()
         val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
         vm.onStopFocused(stop)
-        assertEquals(stop, vm.uiState.value.focusedStop)
+        assertEquals(stop, vm.currentFocus.value.focusedStop)
         vm.onStopFocused(null)
-        assertNull(vm.uiState.value.focusedStop)
+        assertNull(vm.currentFocus.value.focusedStop)
     }
 
     @Test
     fun `focusing a stop clears the focused bike station`() = runTest {
         val vm = viewModel()
         vm.onBikeStationFocused("bike-7")
-        assertEquals("bike-7", vm.uiState.value.focusedBikeStationId)
+        assertEquals("bike-7", vm.currentFocus.value.focusedBikeStationId)
         vm.onStopFocused(FocusedStop("1", null, null, 1.0, 2.0))
-        assertNull(vm.uiState.value.focusedBikeStationId)
+        assertNull(vm.currentFocus.value.focusedBikeStationId)
     }
 
     @Test
@@ -394,7 +469,7 @@ class HomeViewModelTest {
         val stop = FocusedStop("42", "Pike St", "577", 47.61, -122.34)
         viewModel(savedState = handle).onStopFocused(stop)
         // A fresh ViewModel over the same handle simulates process-death recreation.
-        assertEquals(stop, viewModel(savedState = handle).uiState.value.focusedStop)
+        assertEquals(stop, viewModel(savedState = handle).currentFocus.value.focusedStop)
     }
 
     // --- region refresh (events + manual-picker dialog) ---

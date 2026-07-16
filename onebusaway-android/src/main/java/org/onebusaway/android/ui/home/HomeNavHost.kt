@@ -122,8 +122,8 @@ fun HomeNavHost(
         composable(NavRoutes.HOME) { entry ->
             // Apply a one-shot "reveal on map" handed back by a pushed destination (route info, search,
             // the My* lists) via HOME's own SavedStateHandle, then consume it (set-null) so it neither
-            // re-fires on recomposition nor survives a later route-mode exit + process death (MapViewModel's
-            // persisted ROUTE_ID stays the restore authority). The map/home VMs are already in scope here.
+            // re-fires on recomposition nor survives a later route-focus exit + process death. The
+            // HomeViewModel adopts the result as the focus authority and directs the map VM from there.
             val handle = entry.savedStateHandle
             val revealRouteId by handle.getStateFlow<String?>(RESULT_MAP_ROUTE_ID, null)
                 .collectAsStateWithLifecycle()
@@ -134,7 +134,7 @@ fun HomeNavHost(
                 // Read + consume the route id and its optional direction anchor atomically via the typed
                 // helper (which owns both key names), mirroring the stop branch below.
                 val request = handle.consumeRouteReveal() ?: return@LaunchedEffect
-                home.mapViewModel.toRoute(request)
+                home.homeViewModel.focusStandaloneRoute(request)
             }
             LaunchedEffect(revealStopId) {
                 if (revealStopId == null) return@LaunchedEffect
@@ -143,10 +143,9 @@ fun HomeNavHost(
                 // was present but lat/lon were missing.
                 val reveal = handle.consumeStopReveal()
                 if (reveal != null) {
-                    home.homeViewModel.onStopFocused(
+                    home.homeViewModel.revealStop(
                         FocusedStop(reveal.stopId, null, null, reveal.lat, reveal.lon)
                     )
-                    home.homeViewModel.markPendingMapFocus()
                 } else {
                     // Keys already consumed; record the dropped focus so the latent path is findable
                     // (see consumeStopReveal for why this is only reachable on a corrupted handle).
@@ -156,7 +155,7 @@ fun HomeNavHost(
                     )
                 }
             }
-            val state by home.homeViewModel.uiState.collectAsStateWithLifecycle()
+            val currentFocus by home.homeViewModel.currentFocus.collectAsStateWithLifecycle()
             val routeHeader by home.mapViewModel.routeHeader.collectAsStateWithLifecycle()
             // The in-app navigation lambdas: built here, where the NavController is in scope (the rest of
             // the home callbacks — the Activity-bound ones — arrive via [home.activityActions]). Each pops
@@ -202,7 +201,7 @@ fun HomeNavHost(
                 )
             }
             HomeScreen(
-                state = state,
+                currentFocus = currentFocus,
                 homeViewModel = home.homeViewModel,
                 mapViewModel = home.mapViewModel,
                 routeHeader = routeHeader,

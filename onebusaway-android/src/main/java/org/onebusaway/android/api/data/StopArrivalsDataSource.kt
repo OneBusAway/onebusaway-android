@@ -61,7 +61,9 @@ class StopArrivals internal constructor(
      * "phantom" duplicates collapsed (see [collapseBlockIdPhantoms] / #1710).
      */
     val arrivals: List<ArrivalData>
-        get() = entry.arrivalsAndDepartures.map { it.asArrivalData() }
+        get() = entry.arrivalsAndDepartures.map {
+            it.asArrivalData(refs.trip(it.tripId)?.directionId?.toIntOrNull())
+        }
             .collapseBlockIdPhantoms { tripId -> refs.trip(tripId)?.blockId }
 
     /** Every referenced route (for the map overlay). */
@@ -88,7 +90,7 @@ class StopArrivals internal constructor(
                 routeId = routeId,
                 shapeId = trip?.shapeId?.takeIf(String::isNotBlank),
                 routeColor = route(routeId)?.color,
-                directionId = trip?.directionId,
+                directionId = refs.trip(tripId)?.directionId?.toIntOrNull(),
             )
         }
 

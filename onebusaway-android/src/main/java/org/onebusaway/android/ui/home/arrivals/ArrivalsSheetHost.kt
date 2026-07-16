@@ -37,12 +37,12 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.first
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.adjacencyRouteColors
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
+import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
@@ -51,6 +51,7 @@ import org.onebusaway.android.ui.arrivals.routeRowKey
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.home.StopRouteSelection
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -75,12 +76,11 @@ internal fun ArrivalsSheetHost(
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
-    // Hoisted map route focus; the selected drawer row is derived from its route + resolved direction,
-    // regardless of whether the focus originated from a drawer row or an adjacency route badge.
-    routeHeader: RouteHeader?,
+    selectedRoute: StopRouteSelection?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    onShowRouteOnMap: (ShowRouteRequest) -> Unit,
+    onClearRouteSelection: () -> Unit,
+    onShowRouteOnMap: (ArrivalInfo, ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
     onContentHeight: (heightPx: Int) -> Unit,
@@ -138,7 +138,10 @@ internal fun ArrivalsSheetHost(
                     initialTitle = stop.name.orEmpty(),
                     handler = handler,
                     mapRouteColors = mapRouteColors,
-                    selectedRowKey = routeHeader?.selectedArrivalRowKey(),
+                    selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
+                    selectedRouteId = selectedRoute?.originLeg?.routeId,
+                    selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
+                    onClearRouteSelection = onClearRouteSelection,
                     onContentHeight = onContentHeight,
                     onTitleClick = onTitleClick,
                     etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
@@ -171,12 +174,11 @@ internal fun ArrivalsSheetHost(
     }
 }
 
-/** Maps the map's resolved route direction back to the same route+headsign identity as the drawer. */
-internal fun RouteHeader.selectedArrivalRowKey(): String? {
-    val id = routeId ?: return null
-    val headsign = currentDirection?.label ?: return null
-    return routeRowKey(id, headsign)
-}
+/** Keep a continuation selected on the drawer row that originally launched it. */
+internal fun StopRouteSelection.selectedArrivalRowKey(): String =
+    originLeg.let { first ->
+        routeRowKey(first.routeId, first.directionId, originHeadsign)
+    }
 
 /**
  * Starts the [ArrivalTutorial] spotlight sequence the first time a focused stop's arrivals load, gated

@@ -25,6 +25,7 @@ import org.onebusaway.util.comparators.AlphanumComparator
  */
 interface RouteDirectionItem {
     val routeId: String
+    val directionId: Int? get() = null
     val headsign: String?
     val eta: Long
 
@@ -79,6 +80,7 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
     val firstUpcomingIndex: Int? get() = trips.indexOfFirst { it.eta >= 0 }.takeIf { it >= 0 }
 
     val routeId: String get() = representative.routeId
+    val directionId: Int? get() = representative.directionId
 
     /** The first active service-alert situation id affecting *any* trip in the group (scanned in ETA
      *  order, representative first), or null when none is affected — so a row flags an alert whenever
@@ -91,16 +93,20 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
     /** The direction name shown on top of the row (may be blank). */
     val headsign: String? get() = representative.headsign
 
-    /** A stable LazyColumn key; NUL-separated so a route id and headsign can't collide across rows. */
-    val key: String get() = routeRowKey(routeId, headsign)
+    /** A stable LazyColumn key: route + numeric direction, falling back to headsign when unavailable. */
+    val key: String get() = routeRowKey(routeId, directionId, headsign)
 }
 
 /** Stable identity shared by grouping, LazyColumn, and the home drawer's reactive row selection. */
 internal fun routeRowKey(routeId: String, headsign: String?): String =
-    "$routeId\u0000${headsign.orEmpty()}"
+    routeRowKey(routeId, null, headsign)
+
+/** Direction id is authoritative when available; headsign remains a legacy nullable fallback. */
+internal fun routeRowKey(routeId: String, directionId: Int?, headsign: String?): String =
+    "$routeId\u0000${directionId?.let { "direction:$it" } ?: headsign.orEmpty()}"
 
 /** The grouping key for a (route, direction): a blank headsign and a null headsign group together. */
-private fun RouteDirectionItem.groupKey(): String = routeRowKey(routeId, headsign)
+private fun RouteDirectionItem.groupKey(): String = routeRowKey(routeId, directionId, headsign)
 
 /**
  * Groups [items] into (route, direction) rows, then orders the rows by the **stable** (agency, line,
@@ -172,4 +178,19 @@ internal fun promoteSelectedRouteGroup(
         addAll(groups.subList(0, index))
         addAll(groups.subList(index + 1, groups.size))
     }
+}
+
+/**
+ * Resolve a map selection against the rows the arrivals response actually contains. Direction labels
+ * can differ between the route response and arrivals feed; in that case a sole row for the route is
+ * unambiguous. Multiple rows still require an exact direction match rather than guessing.
+ */
+internal fun resolveSelectedRouteGroupKey(
+    groups: List<RouteRowGroup>,
+    requestedKey: String?,
+    routeId: String?,
+): String? {
+    groups.firstOrNull { it.key.equals(requestedKey, ignoreCase = true) }?.let { return it.key }
+    if (routeId == null) return null
+    return groups.filter { it.routeId.equals(routeId, ignoreCase = true) }.singleOrNull()?.key
 }

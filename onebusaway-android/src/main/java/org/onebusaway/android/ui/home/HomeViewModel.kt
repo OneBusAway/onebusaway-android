@@ -21,27 +21,26 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.region.Region
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.FocusedTrip
-import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.region.RegionStatus
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.region.Region
+import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionStatus
 
 /**
  * Owns the home screen's genuine coordination state — the focused stop/bike-station (persisted via
- * [SavedStateHandle]) — as a single [HomeUiState], mutated via
- * `_uiState.update { it.copy(...) }`, and drives the startup region-resolve action through [viewModelScope]. The
+ * [SavedStateHandle]) — as a single [CurrentFocus], replaced through one focus transition, and drives
+ * the startup region-resolve action through [viewModelScope]. The
  * chrome gates, drawer gating, weather, donation, wide alert, regionReady, and the arrivals-sheet
  * measurement are each owned elsewhere now (a feature VM / a HomeScreen-local remember), not here.
  *
@@ -64,15 +63,10 @@ class HomeViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
 ) : ViewModel() {
 
-    // The single source of truth, mutated via _uiState.update { it.copy(...) }. Seeded from the
+    // The single source of truth, replaced atomically by setFocus(). Seeded from the
     // SavedStateHandle-restored focus so a recreation reflects the restore by construction.
-    private val _uiState = MutableStateFlow(
-        HomeUiState(
-            focusedStop = readFocusedStop(savedState),
-            focusedBikeStationId = savedState[KEY_BIKE_STATION],
-        )
-    )
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
+    val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
 
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
@@ -109,7 +103,7 @@ class HomeViewModel @Inject constructor(
 
     // The sheet's last resting position, reported up from the screen; drives the map padding/recenter
     // side-effects + the tutorial gate. Pure coordination state (no Compose reads it), so it's a plain
-    // property rather than a HomeUiState field — see [lastSettledSheet].
+    // property rather than focus state — see [lastSettledSheet].
     private var settledSheet: ArrivalsSheetState = ArrivalsSheetState.Hidden
 
     /** The sheet's last resting position, for the activity's imperative map/tutorial side-effects. */
@@ -124,7 +118,7 @@ class HomeViewModel @Inject constructor(
 
     /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
     fun onStopFocused(stop: FocusedStop?) {
-        val previousId = _uiState.value.focusedStop?.id
+        val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId?.equals(stop?.id, ignoreCase = true) ?: (stop == null)
         // Clear the prior stop's route-view session immediately; a fresh arrivals load starts the new
         // one. A same-stop re-selection is a no-op so it cannot discard a completed view.
@@ -134,21 +128,14 @@ class HomeViewModel @Inject constructor(
         if (!sameStop) {
             emitMapDirective(MapDirective.ClearStopRoutes)
         }
-        savedState[KEY_STOP_ID] = stop?.id
-        savedState[KEY_STOP_NAME] = stop?.name
-        savedState[KEY_STOP_CODE] = stop?.code
-        savedState[KEY_STOP_LAT] = stop?.lat
-        savedState[KEY_STOP_LON] = stop?.lon
-        if (stop != null) {
-            // Focusing a stop clears any bike-station focus (mirrors the legacy onFocusChanged).
-            savedState[KEY_BIKE_STATION] = null
-        }
-        _uiState.update {
-            it.copy(
-                focusedStop = stop,
-                focusedBikeStationId = if (stop != null) null else it.focusedBikeStationId,
-            )
-        }
+        setFocus(stop?.let { CurrentFocus.Stop(it) } ?: CurrentFocus.None)
+    }
+
+    /** A stop opened from navigation replaces any standalone route/bike view before it restores. */
+    fun revealStop(stop: FocusedStop) {
+        emitMapDirective(MapDirective.ClearFocus)
+        onStopFocused(stop)
+        markPendingMapFocus()
     }
 
     /**
@@ -157,7 +144,7 @@ class HomeViewModel @Inject constructor(
      * opens `ReportActivity` for whichever [ReportTarget] it gets.
      */
     fun reportTarget(): ReportTarget {
-        _uiState.value.focusedStop?.let { return ReportTarget.Stop(it) }
+        _currentFocus.value.focusedStop?.let { return ReportTarget.Stop(it) }
         return locationRepository.lastKnownLocation()
             ?.let { ReportTarget.Location(it.latitude, it.longitude) }
             ?: ReportTarget.Generic
@@ -185,8 +172,10 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onBikeStationFocused(id: String?) {
-        savedState[KEY_BIKE_STATION] = id
-        _uiState.update { it.copy(focusedBikeStationId = id) }
+        val next = id?.let { CurrentFocus.BikeStation(it) }
+            ?: if (_currentFocus.value is CurrentFocus.BikeStation) CurrentFocus.None
+            else _currentFocus.value
+        setFocus(next)
     }
 
     /**
@@ -228,10 +217,9 @@ class HomeViewModel @Inject constructor(
      * is marked pending so the map recenters + adds the marker once arrivals load. No focus → nothing.
      */
     fun applyInitialFocus(intentFocus: FocusedStop?) {
-        if (_uiState.value.focusedStop == null) {
-            intentFocus?.let { onStopFocused(it) }
-        }
-        if (_uiState.value.focusedStop != null) {
+        if (_currentFocus.value.focusedStop == null) {
+            intentFocus?.let(::revealStop)
+        } else {
             markPendingMapFocus()
         }
     }
@@ -248,6 +236,8 @@ class HomeViewModel @Inject constructor(
         routes: List<ObaRoute>?,
         trips: Set<FocusedTrip> = emptySet(),
     ) {
+        val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
         focusedTrips = trips
         if (pendingMapFocus) {
             pendingMapFocus = false
@@ -262,22 +252,68 @@ class HomeViewModel @Inject constructor(
                 trips = focusedTrips,
             )
         )
+        focus.selectedRoute?.let {
+            emitMapDirective(MapDirective.ShowRoute(it.target(focus.stop.id).toRequest(), stopScoped = true))
+        }
     }
 
     /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
     fun recenterOnFocusedStop() {
-        _uiState.value.focusedStop?.let {
+        _currentFocus.value.focusedStop?.let {
             emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
         }
     }
 
-    /**
-     * "Show vehicles on map" — switch the map to route mode. The [request] carries the route and (for
-     * the arrivals-row launch) the direction stop to focus on. The sheet collapse is a declarative
-     * reaction to route mode activating (see [HomeScreen]'s `routeModeActive` effect), not a command.
-     */
-    fun requestShowRouteOnMap(request: ShowRouteRequest) {
-        emitMapDirective(MapDirective.ShowRoute(request))
+    /** Select a drawer route and dispatch its map command as one atomic focus transition. */
+    fun selectArrivalRoute(request: ShowRouteRequest, shortName: String, headsign: String?) {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        selectStopRoute(
+            stopFocus = stopFocus,
+            request = request,
+            firstLeg = RouteLeg(request.routeId, shortName, request.initialDirectionId),
+            originHeadsign = headsign,
+        )
+    }
+
+    /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
+    fun focusStandaloneRoute(request: ShowRouteRequest) {
+        focusedTrips = emptySet()
+        setFocus(CurrentFocus.Route(request.toRouteTarget()))
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
+    }
+
+    /** Persist a direction chosen from the standalone route banner. */
+    fun selectStandaloneRouteDirection(directionId: Int) {
+        val focus = _currentFocus.value as? CurrentFocus.Route ?: return
+        setFocus(CurrentFocus.Route(focus.target.copy(directionId = directionId)))
+    }
+
+    /** Follow a block continuation while preserving the active focus kind. */
+    fun advanceRouteContinuation(routeId: String, shortName: String, directionId: Int?) {
+        when (val focus = _currentFocus.value) {
+            is CurrentFocus.Stop -> {
+                val selected = focus.selectedRoute ?: return
+                val next = selected.continueTo(RouteLeg(routeId, shortName, directionId))
+                setFocus(focus.copy(selectedRoute = next))
+                emitMapDirective(
+                    MapDirective.ShowRoute(next.target(focus.stop.id).toRequest(), stopScoped = true)
+                )
+            }
+            is CurrentFocus.Route -> {
+                val target = RouteTarget(routeId, directionId = directionId)
+                setFocus(CurrentFocus.Route(target))
+                emitMapDirective(MapDirective.ShowRoute(target.toRequest(), stopScoped = false))
+            }
+            else -> Unit
+        }
+    }
+
+    /** Clear only the route selected inside the current stop. */
+    fun clearStopRouteSelection() {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        if (stopFocus.selectedRoute == null) return
+        setFocus(stopFocus.copy(selectedRoute = null))
+        emitMapDirective(MapDirective.ClearSelectedRoute)
     }
 
     /**
@@ -285,12 +321,42 @@ class HomeViewModel @Inject constructor(
      * direction anchor so route mode preserves adjacency focus underneath it. The badge additionally
      * supplies the direction of the line it labels, which wins over stop-based direction resolution.
      */
-    fun requestShowFocusedStopRouteOnMap(routeId: String, directionId: Int?) {
-        requestShowRouteOnMap(
-            ShowRouteRequest(
+    fun requestShowFocusedStopRouteOnMap(
+        routeId: String,
+        directionId: Int?,
+        shortName: String = routeId,
+    ) {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        selectStopRoute(
+            stopFocus = stopFocus,
+            request = ShowRouteRequest(
                 routeId = routeId,
-                directionStopId = _uiState.value.focusedStop?.id,
+                directionStopId = stopFocus.stop.id,
                 initialDirectionId = directionId,
+            ),
+            firstLeg = RouteLeg(routeId, shortName, directionId),
+            originHeadsign = null,
+        )
+    }
+
+    private fun selectStopRoute(
+        stopFocus: CurrentFocus.Stop,
+        request: ShowRouteRequest,
+        firstLeg: RouteLeg,
+        originHeadsign: String?,
+    ) {
+        setFocus(
+            stopFocus.copy(
+                selectedRoute = StopRouteSelection(
+                    originHeadsign = originHeadsign,
+                    legs = listOf(firstLeg),
+                )
+            )
+        )
+        emitMapDirective(
+            MapDirective.ShowRoute(
+                request.copy(directionStopId = stopFocus.stop.id),
+                stopScoped = true,
             )
         )
     }
@@ -303,7 +369,8 @@ class HomeViewModel @Inject constructor(
      * declarative source of truth.)
      */
     fun requestClearMapFocus() {
-        onStopFocused(null)
+        focusedTrips = emptySet()
+        setFocus(CurrentFocus.None)
         emitMapDirective(MapDirective.ClearFocus)
     }
 
@@ -317,6 +384,11 @@ class HomeViewModel @Inject constructor(
     // one-shot directives, matching the codebase effect-flow idiom (MapViewModel etc.).
     private fun emitMapDirective(directive: MapDirective) {
         _mapDirectives.tryEmit(directive)
+    }
+
+    private fun setFocus(focus: CurrentFocus) {
+        _currentFocus.value = focus
+        CurrentFocusPersistence.write(savedState, focus)
     }
 
     /**
@@ -363,25 +435,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private companion object {
-        const val KEY_STOP_ID = "home.focusedStop.id"
-        const val KEY_STOP_NAME = "home.focusedStop.name"
-        const val KEY_STOP_CODE = "home.focusedStop.code"
-        const val KEY_STOP_LAT = "home.focusedStop.lat"
-        const val KEY_STOP_LON = "home.focusedStop.lon"
-        const val KEY_BIKE_STATION = "home.focusedBikeStation.id"
-
-        fun readFocusedStop(s: SavedStateHandle): FocusedStop? {
-            val id = s.get<String>(KEY_STOP_ID) ?: return null
-            return FocusedStop(
-                id = id,
-                name = s[KEY_STOP_NAME],
-                code = s[KEY_STOP_CODE],
-                lat = s.get<Double>(KEY_STOP_LAT) ?: 0.0,
-                lon = s.get<Double>(KEY_STOP_LON) ?: 0.0,
-            )
-        }
-    }
 }
 
 /**
@@ -390,12 +443,6 @@ class HomeViewModel @Inject constructor(
  * owned by a feature VM, a HomeScreen-local `remember`, or a one-shot event (see [HomeViewModel]'s KDoc for
  * what moved).
  */
-data class HomeUiState(
-    // Map focus — survives config change + process death via SavedStateHandle.
-    val focusedStop: FocusedStop? = null,
-    val focusedBikeStationId: String? = null,
-)
-
 /**
  * A telemetry event the ViewModel emits ([HomeViewModel.analyticsEvents]) for the host's single
  * [HomeAnalyticsEffect] to report — keeping the imperative `ObaAnalytics` calls out of the activity
@@ -422,7 +469,10 @@ sealed interface MapDirective {
     data class RecenterOnFocusedStop(val lat: Double, val lon: Double) : MapDirective
 
     /** Enter route mode for [request]'s route (the "show vehicles on map" action). */
-    data class ShowRoute(val request: ShowRouteRequest) : MapDirective
+    data class ShowRoute(
+        val request: ShowRouteRequest,
+        val stopScoped: Boolean,
+    ) : MapDirective
 
     /** Draw all upcoming routes for the currently focused stop, without reframing the camera. */
     data class ShowStopRoutes(
@@ -433,6 +483,9 @@ sealed interface MapDirective {
 
     /** Clear an active focused-stop route view when the focused stop changes or is removed. */
     object ClearStopRoutes : MapDirective
+
+    /** Leave route mode while retaining the focused stop's adjacency session. */
+    data object ClearSelectedRoute : MapDirective
 
     /** Clear the map's render focus (back-press from a peeking arrivals sheet). */
     object ClearFocus : MapDirective

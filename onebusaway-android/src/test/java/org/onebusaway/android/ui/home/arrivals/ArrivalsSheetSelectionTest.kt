@@ -16,42 +16,43 @@
 package org.onebusaway.android.ui.home.arrivals
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
-import org.onebusaway.android.map.RouteHeader
-import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.ui.arrivals.routeRowKey
+import org.onebusaway.android.ui.home.RouteLeg
+import org.onebusaway.android.ui.home.StopRouteSelection
 
 class ArrivalsSheetSelectionTest {
 
     @Test
-    fun routeFocus_selectsRowMatchingResolvedDirection() {
-        val header = RouteHeader(
-            loading = false,
-            shortName = "8",
-            longName = "",
-            agency = "Metro",
-            routeId = "route-8",
-            directions = listOf(
-                RouteMapDirection(0, "Downtown"),
-                RouteMapDirection(1, "Northgate"),
-            ),
-            currentDirectionId = 1,
+    fun routeFocus_selectsRowByDirectionId() {
+        val selection = StopRouteSelection(
+            originHeadsign = null,
+            legs = listOf(RouteLeg("route-8", "8", directionId = 1)),
         )
 
-        assertEquals(routeRowKey("route-8", "Northgate"), header.selectedArrivalRowKey())
+        assertEquals(routeRowKey("route-8", 1, null), selection.selectedArrivalRowKey())
     }
 
     @Test
-    fun routeFocus_withoutResolvedDirection_selectsNoRow() {
-        val header = RouteHeader(
-            loading = true,
-            shortName = "",
-            longName = "",
-            agency = "",
-            routeId = "route-8",
+    fun routeFocus_withoutDirectionId_fallsBackToOriginHeadsign() {
+        val selection = StopRouteSelection(
+            originHeadsign = "Northgate",
+            legs = listOf(RouteLeg("route-8", "8")),
         )
 
-        assertNull(header.selectedArrivalRowKey())
+        assertEquals(routeRowKey("route-8", "Northgate"), selection.selectedArrivalRowKey())
+    }
+
+    @Test
+    fun continuation_keepsOriginalDrawerRowSelected() {
+        val selection = StopRouteSelection(
+            originHeadsign = "Downtown",
+            legs = listOf(RouteLeg("route-65", "65"), RouteLeg("route-75", "75")),
+        )
+
+        assertEquals(
+            routeRowKey("route-65", "Downtown"),
+            selection.selectedArrivalRowKey(),
+        )
     }
 }

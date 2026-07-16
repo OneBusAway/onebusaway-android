@@ -184,8 +184,7 @@ class HomeActivity : AppCompatActivity() {
         onSheetSettled = viewModel::onSheetSettled,
         onClearFocus = viewModel::requestClearMapFocus,
         onArrivalsLoaded = ::onArrivalsLoaded,
-        onShowRouteOnMap = viewModel::requestShowRouteOnMap,
-        onCancelRouteMode = ::onCancelRouteMode,
+        onCancelRouteMode = viewModel::requestClearMapFocus,
     )
 
     /**
@@ -258,11 +257,6 @@ class HomeActivity : AppCompatActivity() {
     private fun onOpenSourceSelected() {
         ExternalIntents.goToUrl(this, getString(R.string.open_source_github))
         viewModel.reportMenuAnalytics(R.string.analytics_label_button_press_open_source)
-    }
-
-    /** The route header's cancel button: return to stop mode, preserving the current zoom + center. */
-    private fun onCancelRouteMode() {
-        mapViewModel.exitRouteMode()
     }
 
     // --- Help-menu actions that are Activity operations (the dialog-opening ones live in HelpFeature) ---

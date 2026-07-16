@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
+import androidx.annotation.NonNull;
+
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
@@ -34,12 +36,12 @@ public interface MarkerListeners {
      * for the camera to move to the marker and an info window to appear.  See
      * https://developers.google.com/android/reference/com/google/android/gms/maps/GoogleMap.OnMarkerClickListener
      */
-    boolean markerClicked(Marker marker);
+    boolean markerClicked(@NonNull Marker marker);
 
     /**
      * Triggered when the user taps on the map to hide a marker
      *
      * @param latLng the location on the map where the user tapped
      */
-    void removeMarkerClicked(LatLng latLng);
+    void removeMarkerClicked(@NonNull LatLng latLng);
 }

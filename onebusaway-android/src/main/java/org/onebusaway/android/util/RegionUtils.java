@@ -176,7 +176,7 @@ public class RegionUtils {
      *                results[2] == lat center of region
      *                results[3] == lon center of region
      */
-    public static void getRegionSpan(@Nullable Region region, @NonNull double[] results) {
+    public static void getRegionSpan(@NonNull Region region, @NonNull double[] results) {
         if (results.length < 4) {
             throw new IllegalArgumentException("Results array is < 4");
         }
@@ -234,8 +234,8 @@ public class RegionUtils {
      *                   regionSpan[3] == lon center of region
      * @return true if the location is within the region span, false if it is not
      */
-    public static boolean isLocationWithinRegion(@Nullable Location location,
-            @Nullable double[] regionSpan) {
+    public static boolean isLocationWithinRegion(@NonNull Location location,
+            @NonNull double[] regionSpan) {
         if (regionSpan == null || regionSpan.length < 4) {
             throw new IllegalArgumentException("regionSpan is null or has length < 4");
         }
@@ -265,8 +265,8 @@ public class RegionUtils {
      * @param region   provided region
      * @return true if the location is within the region, false if it is not
      */
-    public static boolean isLocationWithinRegion(@Nullable Location location,
-            @Nullable Region region) {
+    public static boolean isLocationWithinRegion(@NonNull Location location,
+            @NonNull Region region) {
         double[] regionSpan = new double[4];
         getRegionSpan(region, regionSpan);
         return isLocationWithinRegion(location, regionSpan);

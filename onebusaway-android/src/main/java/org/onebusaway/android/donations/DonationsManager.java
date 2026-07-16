@@ -38,8 +38,8 @@ public class DonationsManager {
     // launch count are read lazily at their use sites.
     @Inject
     public DonationsManager(
-            @ApplicationContext @NonNull Context context,
-            @NonNull PreferencesRepository preferences) {
+            @ApplicationContext @Nullable Context context,
+            @Nullable PreferencesRepository preferences) {
         this.mContext = context;
         this.mPreferences = preferences;
     }

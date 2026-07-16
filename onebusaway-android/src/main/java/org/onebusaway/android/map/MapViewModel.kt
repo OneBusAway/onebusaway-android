@@ -31,6 +31,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
@@ -39,7 +41,10 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -59,19 +64,26 @@ data class RouteHeader(
     val shortName: String,
     val longName: String,
     val agency: String,
+    /** Stable identity of the route represented by this header, including while it is loading. */
+    val routeId: String? = null,
     /** The route's GTFS color (ARGB), or null when the agency didn't set one — the header's route
      *  badge chip takes its hue, matching the arrival rows. */
     val routeColor: Int? = null,
     val directions: List<RouteMapDirection> = emptyList(),
     val currentDirectionId: Int? = null,
-)
+) {
+    /** The direction currently shown by the map, or null while loading / showing the whole route. */
+    val currentDirection: RouteMapDirection?
+        get() = directions.firstOrNull { it.directionId == currentDirectionId }
+}
 
 /**
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
  * map surface — render state, camera, padding, my-location/region framing) with the use-case
- * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController] (a route +
- * its vehicles), and [BikeLayerController] (the bikeshare overlay). [showNearbyStops] / [showRoute] start the
- * matching controller (the route controller is the single source of truth for whether a route is
+ * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController]
+ * (single-route and focused-stop route views), and [BikeLayerController] (the bikeshare overlay).
+ * [showNearbyStops] / [showStopRoutes] start the matching presentation (the
+ * route controller is the single source of truth for whether a route is
  * shown — there is no separate "mode" state); the controllers react to the live camera
  * ([MapHost.onCameraIdle]) on [viewModelScope], so there is no imperative host — a flavor adapter only
  * binds to the host.
@@ -97,6 +109,7 @@ class MapViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
+    private val focusedTripRepository: FocusedTripRepository,
     private val bikeStationsRepository: BikeStationsRepository,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
@@ -157,6 +170,9 @@ class MapViewModel @Inject constructor(
     /** The live camera, published by the flavor adapter on each idle; the loaders react off it. */
     val camera: StateFlow<CameraSnapshot?> get() = mapHost.camera
 
+    /** The current center + zoom, suitable for attaching to one semantic undo entry. */
+    val viewport: MapViewport? get() = camera.value?.viewport
+
     fun onCameraIdle(snapshot: CameraSnapshot) = mapHost.onCameraIdle(snapshot)
 
     /** Whether a viewport/route load is in flight (the old `Callback.showProgress`). */
@@ -195,11 +211,12 @@ class MapViewModel @Inject constructor(
         routeRepository = routeRepository,
         stopsController = stopsController,
         tripObservationRepository = tripObservationRepository,
+        focusedTripRepository = focusedTripRepository,
         scope = viewModelScope,
     )
 
-    // Keeps vehicle markers from being hidden under the route-mode header (was RoutePopup's logic):
-    // added to the reported header height to derive the map's top padding in [setRouteHeaderHeight].
+    // Keeps vehicle markers clear of whichever top control anchors route focus: the standalone route
+    // banner or, for a route selected within stop focus, the always-visible search field.
     private val routeHeaderMarkerPaddingPx =
         context.resources.getDimensionPixelSize(R.dimen.map_route_vehicle_markers_padding)
 
@@ -216,24 +233,30 @@ class MapViewModel @Inject constructor(
             .map { it?.toRouteHeader() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /**
-     * The route header reported its measured height; report its contribution to the map's top padding
-     * (0 clears it). Stacks on the always-present floating-chrome inset set from
-     * [org.onebusaway.android.ui.home.map.MapFeature].
-     */
-    fun setRouteHeaderHeight(heightPx: Int) {
-        mapHost.setRouteHeaderPadding(if (heightPx > 0) heightPx + routeHeaderMarkerPaddingPx else 0)
+    /** The actual palette used for routes around the focused stop. */
+    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
+
+    /** Apply the active route focus control's bottom edge in map coordinates; zero clears it. */
+    fun setRouteFocusTopEdge(bottomPx: Int) {
+        mapHost.setRouteFocusTopEdge(if (bottomPx > 0) bottomPx + routeHeaderMarkerPaddingPx else 0)
     }
 
     // Map the controller's raw load into the display header: blank-but-loading until the route resolves,
     // then the formatted short/long name + agency. This is the display policy the controller is free of.
     private fun LoadedRoute.toRouteHeader(): RouteHeader = when (this) {
-        LoadedRoute.Loading -> RouteHeader(loading = true, shortName = "", longName = "", agency = "")
+        LoadedRoute.Loading -> RouteHeader(
+            loading = true,
+            shortName = "",
+            longName = "",
+            agency = "",
+            routeId = routeController.routeId,
+        )
         is LoadedRoute.Loaded -> RouteHeader(
             loading = false,
             shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route))!!,
             longName = MyTextUtils.formatDisplayText(getRouteDescription(route))!!,
             agency = agencyName ?: "",
+            routeId = route.id,
             routeColor = route.color,
             directions = directions,
             currentDirectionId = currentDirectionId,
@@ -249,9 +272,11 @@ class MapViewModel @Inject constructor(
 
     /** Show nearby stops in the current viewport (the default home view). */
     fun showNearbyStops() {
-        leaveCurrentView()
+        leaveCurrentView(clearStopFocus = false)
         persistRoute(null)
-        stopsController.start()
+        // leaveCurrentView already restarted the stops loader when a focused stop was preserved;
+        // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
+        if (routeController.focusedStopId == null) stopsController.start()
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
@@ -266,8 +291,9 @@ class MapViewModel @Inject constructor(
         directionStopId: String?,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
+        preserveStopFocus: Boolean = false,
     ) {
-        leaveCurrentView()
+        leaveCurrentView(clearStopFocus = !preserveStopFocus)
         persistRoute(routeId, directionStopId, initialDirectionId)
         routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId, focusTripId)
         bikeController.start(directions = false, selectedBikeStationIds = null)
@@ -294,11 +320,17 @@ class MapViewModel @Inject constructor(
      * own overlays) and drops the accumulated stops (keeping the focused one). Shared by the transitions
      * above.
      */
-    private fun leaveCurrentView() {
+    private fun leaveCurrentView(clearStopFocus: Boolean) {
+        if (clearStopFocus) routeController.clearStopFocus()
         stopsController.stop()
         routeController.stop()
         bikeController.stop()
-        stopsController.clearStops(false)
+        if (routeController.focusedStopId != null) {
+            stopsController.start()
+        } else {
+            stopsController.setRoutePresentation(null)
+            stopsController.clearStops(false)
+        }
         mapHost.setProgress(false)
         mapHost.setStopsBanner(StopsBanner.None)
         // Drop any retained framing (route/itinerary/region fit) so it isn't replayed onto the next view
@@ -309,14 +341,8 @@ class MapViewModel @Inject constructor(
 
     // ----- Focus + taps (delegated to [stopsController], except the vehicle selection) -----
 
-    /** A stop marker was tapped: render-focus it + center on it (the old GoogleMapHost.onStopClick). */
+    /** A stop marker was tapped: render-focus it without disturbing the current viewport. */
     fun onStopTapped(stop: ObaStop) = stopsController.onStopTapped(stop)
-
-    /** A tap away from any marker clears the stop focus + deselects any vehicle (the old onMapClick). */
-    fun onMapTapped() {
-        stopsController.clearStopFocus()
-        renderState.setSelectedVehicle(null)
-    }
 
     /** Selects the tapped vehicle, so the renderer shows its most-recent-data marker. */
     fun onVehicleTapped(status: ObaTripStatus) {
@@ -338,11 +364,29 @@ class MapViewModel @Inject constructor(
      * directive): ensure it's on the map + render-focused and recenter on it (route-header bias only
      * when [overlayExpanded] in route mode). Delegated to the stops controller.
      */
-    fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) =
-        stopsController.focusStop(stop, routes, overlayExpanded)
+    fun focusStop(
+        stop: ObaStop,
+        routes: List<ObaRoute>?,
+        overlayExpanded: Boolean,
+        recenter: Boolean = true,
+    ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter)
 
-    /** Clear the map's render focus (back-press from a peeking arrivals sheet; a Home map directive). */
-    fun clearFocus() = stopsController.clearFocus()
+    /**
+     * Draw the exact trips with upcoming arrivals at [stopId] without moving the camera. The stop must
+     * still be the rendered focus so a stale arrivals result cannot restore a view after focus moved.
+     */
+    fun showStopRoutes(
+        stopId: String,
+        routes: List<ObaRoute>,
+        trips: Set<FocusedTrip>,
+    ) {
+        val focusedStopId = renderState.snapshot.value.focusedStopId
+        if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
+        routeController.focusStop(stopId, trips, routes)
+    }
+
+    /** Clear the focused-stop layer, revealing any active single route underneath. */
+    fun clearStopRoutes() = routeController.clearStopFocus()
 
     /** The map's initial camera, read live from the host each time the adapter (re)composes. */
     val cameraSeed: MapCameraSeed get() = mapHost.cameraSeed
@@ -361,31 +405,46 @@ class MapViewModel @Inject constructor(
      * raises the "vehicle isn't on the map" toast when no live vehicle is running that trip. A plain row
      * tap carries no [ShowRouteRequest.focusTripId] and just frames the whole route.
      */
-    fun toRoute(request: ShowRouteRequest) {
+    fun toRoute(
+        request: ShowRouteRequest,
+        stopScoped: Boolean = false,
+        frameRoute: Boolean = true,
+    ) {
         // Same route AND same direction anchor: a plain re-tap (no focus) just reframes (the recent-routes
         // re-tap); an ETA-pill focus instead fits the vehicle+stop against the already-loaded vehicles (or
         // toasts, without reframing, when the vehicle isn't there). A different route, or the same route
         // from a different-direction stop, re-enters with the new filter (which resolves the focus on first poll).
         if (routeController.routeId == request.routeId &&
-            routeController.directionStopId == request.directionStopId
+            routeController.directionStopId == request.directionStopId &&
+            (stopScoped || routeController.focusedStopId == null)
         ) {
             // Delegate the whole request to the controller (#1797) rather than hand-picking fields here,
             // so a field added later to ShowRouteRequest is visible at reframe()'s one call site instead
             // of silently unhandled by an independently-written branch.
-            routeController.reframe(request)
+            routeController.reframe(request, frameRoute)
         } else {
             enterRoute(
                 request.routeId,
-                zoomToRoute = true,
+                zoomToRoute = frameRoute,
                 directionStopId = request.directionStopId,
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
+                preserveStopFocus = stopScoped,
             )
         }
     }
 
-    /** Leave route mode back to nearby stops, preserving the current camera (the route header's cancel). */
-    fun exitRouteMode() = showNearbyStops()
+    /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */
+    fun clearSelectedRoute() = showNearbyStops()
+
+    /** Clear standalone/stop/bike focus and return to an ordinary nearby-stops map. */
+    fun clearAllFocus() {
+        leaveCurrentView(clearStopFocus = true)
+        persistRoute(null)
+        stopsController.clearFocus()
+        stopsController.start()
+        bikeController.start(directions = false, selectedBikeStationIds = null)
+    }
 
     /**
      * Reframe the map to the shown route's full extent — the route header's tap-the-banner affordance.
@@ -397,6 +456,9 @@ class MapViewModel @Inject constructor(
     fun frameRoute() {
         if (routeController.isActive) mapHost.frameRoute()
     }
+
+    /** Restore the camera paired with an undone semantic action. */
+    fun restoreViewport(viewport: MapViewport) = mapHost.restoreViewport(viewport)
 
     /**
      * Switch the shown route to another of its directions (one of the header's [RouteHeader.directions]
@@ -474,6 +536,7 @@ class MapViewModel @Inject constructor(
                 directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
                 // A user-selected direction persisted before process death wins over the anchor stop.
                 initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID],
+                preserveStopFocus = false,
             )
         } else {
             showNearbyStops()

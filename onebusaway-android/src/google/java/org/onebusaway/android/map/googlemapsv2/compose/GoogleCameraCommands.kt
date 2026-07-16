@@ -26,17 +26,18 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.DEFAULT_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
 
 // The same constants the imperative GoogleMapHost used for these camera moves.
 private const val CAMERA_DEFAULT_ZOOM = 16.0f
-private const val DEFAULT_MAP_PADDING_DP = 20.0f
 
 /**
  * Applies one transient [CameraCommand] gesture to the imperative [GoogleMap] — a faithful port of the
@@ -77,6 +78,21 @@ fun applyCameraCommand(
 
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom))
 
+        is CameraCommand.RestoreViewport -> {
+            val current = map.cameraPosition
+            val viewport = cmd.viewport
+            map.animateCamera(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.Builder()
+                        .target(LatLng(viewport.center.latitude, viewport.center.longitude))
+                        .zoom(viewport.zoom.toFloat())
+                        .bearing(current.bearing)
+                        .tilt(current.tilt)
+                        .build()
+                )
+            )
+        }
+
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())
 
         CameraCommand.ZoomOut -> map.animateCamera(CameraUpdateFactory.zoomOut())
@@ -106,26 +122,32 @@ fun applyFramingIntent(
 ) {
     when (intent) {
         FramingIntent.Route -> {
-            val bounds = routePolylineBounds(renderState)
+            val bounds = routePolylineBounds(renderState.routeFramingPolylines)
             if (bounds == null) {
                 Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
             } else {
+                // Framing and padding are collected independently; apply the current obstruction here
+                // so an initial route frame cannot race the route header's padding update.
+                map.applyMapPadding(renderState.padding.value)
                 // animateCamera (not moveCamera) so UI-driven route framing eases in, matching the
                 // maplibre adapter's applyFramingIntent (#1719).
                 map.animateCamera(
-                    CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP))
+                    CameraUpdateFactory.newLatLngBounds(
+                        bounds,
+                        ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP),
+                    )
                 )
             }
         }
 
         FramingIntent.Itinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
+            val bounds = routePolylineBounds(renderState.getRoutePolylines()) ?: return
             val dm = context.resources.displayMetrics
             // animateCamera to match the maplibre adapter (#1719); see Route above.
             map.animateCamera(
                 CameraUpdateFactory.newLatLngBounds(
                     bounds, dm.widthPixels, dm.heightPixels,
-                    ViewUtils.dpToPixels(context, DEFAULT_MAP_PADDING_DP)
+                    ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP)
                 )
             )
         }
@@ -167,11 +189,11 @@ fun applyFramingIntent(
  */
 internal fun GoogleMap.applyMapPadding(padding: MapPadding) = setPadding(0, padding.topPx, 0, padding.bottomPx)
 
-/** Bounds enclosing the current route/itinerary polylines, or null if there are no points. */
-private fun routePolylineBounds(renderState: MapRenderState): LatLngBounds? {
+/** Bounds enclosing [polylines], or null if there are no points. */
+private fun routePolylineBounds(polylines: Iterable<RoutePolyline>): LatLngBounds? {
     val builder = LatLngBounds.Builder()
     var any = false
-    for (polyline in renderState.snapshot.value.routePolylines) {
+    for (polyline in polylines) {
         for (point in polyline.points) {
             builder.include(LatLng(point.latitude, point.longitude))
             any = true

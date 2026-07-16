@@ -188,23 +188,21 @@ object MapLibreStopIcons {
         starStopIcons = stars(starLight, starDark, focused = false)
         starStopIconsFocused = stars(focusColor, focusColor, focused = true)
 
-        dotStopIcon = iconFactory.fromBitmap(StopBitmaps.dot(basePx, arrowTip))
-        dotStopIconFocused = iconFactory.fromBitmap(
-            StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE),
-        )
+        val dot = StopBitmaps.dot(basePx, arrowTip)
+        val focusedDot = StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE)
+        dotStopIcon = iconFactory.fromBitmap(dot)
+        dotStopIconFocused = iconFactory.fromBitmap(focusedDot)
 
         // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
         // when focused. Gold gradient normally, the selected color when focused; same thin outline.
         val starDotPx = (basePx * 0.5f * StopBitmaps.STAR_SIZE_SCALE).roundToInt()
-        starDotStopIcon = iconFactory.fromBitmap(
-            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx),
+        val starDot = StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx)
+        val focusedStarDot = StopBitmaps.star(
+            (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
+            focusColor, focusColor, starOutlinePx,
         )
-        starDotStopIconFocused = iconFactory.fromBitmap(
-            StopBitmaps.star(
-                (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
-                focusColor, focusColor, starOutlinePx,
-            ),
-        )
+        starDotStopIcon = iconFactory.fromBitmap(starDot)
+        starDotStopIconFocused = iconFactory.fromBitmap(focusedStarDot)
     }
 
     /** The shared circle + direction arrow, at this flavor's raw (non-glyph-scaled) icon size. */

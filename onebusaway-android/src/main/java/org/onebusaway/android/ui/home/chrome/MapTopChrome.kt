@@ -286,6 +286,9 @@ private val TOP_CHROME_TOP_MARGIN = 8.dp
 // top chrome sits a touch more compactly over the map.
 private val TOP_CHROME_HEIGHT = 50.dp
 
+/** Bottom edge of the menu/search row below the status-bar inset. */
+internal val MAP_TOP_CHROME_CONTROL_BOTTOM = TOP_CHROME_TOP_MARGIN + TOP_CHROME_HEIGHT
+
 // The search field's bottom-corner radius while expanded: squared off from the full pill so it connects
 // to the recents dropdown beneath it.
 private val EXPANDED_BOTTOM_RADIUS = 20.dp
@@ -295,7 +298,7 @@ private val EXPANDED_BOTTOM_RADIUS = 20.dp
  * height + a small gap. Top-of-map overlays (in HomeScreen and MapFeature) offset by this so they clear
  * the menu FAB / search field — the single source of truth, so resizing the row re-clears every overlay.
  */
-internal val MAP_TOP_CHROME_CLEARANCE = TOP_CHROME_TOP_MARGIN + TOP_CHROME_HEIGHT + 8.dp
+internal val MAP_TOP_CHROME_CLEARANCE = MAP_TOP_CHROME_CONTROL_BOTTOM + 8.dp
 
 /**
  * Insets a top-of-map overlay layer to sit below the floating chrome: the status-bar inset plus

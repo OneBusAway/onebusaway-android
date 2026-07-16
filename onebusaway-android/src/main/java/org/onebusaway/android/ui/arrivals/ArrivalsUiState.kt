@@ -76,8 +76,8 @@ sealed interface ArrivalsUiState {
 
     /**
      * @param arrivals the existing [ArrivalInfo] display model, already filtered and sorted
-     * @param routeGroups [arrivals] grouped into one row per (route, direction), ordered by earliest
-     *                    ETA — the unit the list and the drawer peek both render
+     * @param routeGroups [arrivals] grouped into one row per (route, direction), ordered by favorite,
+     *                    agency, line, and headsign — the unit the list and drawer peek both render
      * @param isStale true when showing the last good data after a refresh failed
      * @param actions per-arrival navigation/dialog data, keyed by trip id
      * @param alerts active, non-hidden service alerts for the stop

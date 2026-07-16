@@ -19,9 +19,9 @@ import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.api.data.StopArrivals
 
 import android.content.Context
-import android.os.SystemClock
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.Dispatchers
@@ -40,6 +40,8 @@ import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -107,7 +109,7 @@ data class AlertHideState(val decisions: Map<String, Boolean> = emptyMap()) {
 /** A loaded snapshot of a stop's arrivals plus the header, actions, and alerts. */
 data class ArrivalsData(
     val arrivals: List<ArrivalInfo>,
-    /** [arrivals] grouped into one row per (route, direction), ordered by earliest ETA. */
+    /** [arrivals] grouped into one row per (route, direction), ordered by agency, line, and headsign. */
     val routeGroups: List<RouteRowGroup>,
     val header: StopHeader,
     /** The effective time window after the loader's empty-result expansion. */
@@ -205,6 +207,8 @@ data class ArrivalsLoaded(
     val stop: ObaStop?,
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
+    /** Exact displayed trips; geometry and reachable stops resolve independently from this identity. */
+    val focusedTrips: Set<FocusedTrip>,
 )
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
@@ -237,15 +241,29 @@ class DefaultArrivalsRepository @Inject constructor(
     private val preferences: PreferencesRepository,
 ) : ArrivalsRepository {
 
-    /** The last good snapshot paired with the monotonic device time it was received, so the
-     *  stale-fallback path can project that server clock forward by elapsed device time (#1612). The
-     *  two must be read as a consistent pair; held in one `@Volatile` reference so a concurrent
-     *  getArrivals (e.g. a user refresh overlapping the poll loop) can't mix a new snapshot with an
-     *  old receipt time. */
-    private data class LastGood(val snapshot: StopArrivals, val elapsedMs: Long)
+    /**
+     * Everything derived from the last good load, held as one unit so all three readers
+     * ([alertDetails], [lastLoaded], and the stale-fallback path) see a mutually consistent set:
+     * - [snapshot] — the raw response, for situation lookups and stale re-projection.
+     * - [receivedAt] — the monotonic device time the snapshot was received, so the stale-fallback path
+     *   can project that server clock forward by elapsed device time (#1612).
+     * - [loaded] — the map-relevant snapshot prebuilt from the *computed* [ArrivalsData] so its
+     *   [ArrivalsLoaded.focusedTrips] exactly matches the drawer's displayed trips.
+     *
+     * Published through the single [AtomicReference] [lastGood] with one write per load, so a
+     * concurrent getArrivals (e.g. a user refresh overlapping the poll loop) can't publish a new
+     * snapshot while [lastLoaded] still reflects the old one, or mix a new snapshot with an old
+     * receipt time. A fresh load publishes unconditionally (new data always wins); the stale-fallback
+     * path publishes with `compareAndSet` against the holder it read, so it can never roll a
+     * concurrently-published fresh snapshot back to the old one.
+     */
+    private data class LastGood(
+        val snapshot: StopArrivals,
+        val receivedAt: ElapsedTime,
+        val loaded: ArrivalsLoaded,
+    )
 
-    @Volatile
-    private var lastGood: LastGood? = null
+    private val lastGood = AtomicReference<LastGood?>(null)
 
     // Whether the viewed stop has been recorded in the Stops table this session. Recording (a) creates
     // the row so the favorite toggle's UPDATE actually persists, and (b) marks it used so it appears in
@@ -268,24 +286,33 @@ class DefaultArrivalsRepository @Inject constructor(
 
         result.fold(
             onSuccess = { snapshot ->
-                lastGood = LastGood(snapshot, SystemClock.elapsedRealtime())
+                // Stamp the receipt time as close to the response as possible (before the DB reads in
+                // toData), then publish the whole consistent set with one write once [data] is built.
+                val receivedAt = ElapsedTime.now()
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
                     snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
                 }
-                Result.success(toData(snapshot, isStale = false, now = snapshot.currentTime))
+                val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
+                lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
+                Result.success(data)
             },
             // Refresh failed but we have prior data — keep showing it (legacy stale fallback).
             onFailure = { error ->
-                lastGood?.let { stale ->
+                lastGood.get()?.let { stale ->
                     // No fresh server time; project the last good server clock forward by the elapsed
                     // device time so stale ETAs/countdowns keep advancing (legacy behavior) without
-                    // reintroducing device clock skew (#1612).
-                    @Suppress("RawClockArithmetic") // both operands are ElapsedTime (monotonic); sanctioned skew-free crossing
-                    val now = stale.snapshot.currentTime +
-                        (SystemClock.elapsedRealtime() - stale.elapsedMs)
-                    Result.success(toData(stale.snapshot, isStale = true, now = now))
+                    // reintroducing device clock skew (#1612) — a same-domain ElapsedTime subtraction,
+                    // so the typed API allows it directly.
+                    val now = ServerTime(stale.snapshot.currentTime) +
+                        (ElapsedTime.now() - stale.receivedAt)
+                    val data = toData(stale.snapshot, isStale = true, now = now)
+                    // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
+                    // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent
+                    // successful load published while toData ran — if it did, its holder simply stands.
+                    lastGood.compareAndSet(stale, stale.copy(loaded = loadedSnapshot(stale.snapshot, data)))
+                    Result.success(data)
                 }
                     ?: Result.failure(
                         IOException(
@@ -304,7 +331,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // Server clock as "now" so ETAs/countdowns and alert active-window checks cancel any device
         // clock skew — the fresh response's currentTime, or (on the stale path) the last good server
         // clock projected forward by elapsed device time (#1612).
-        now: Long
+        now: ServerTime
     ): ArrivalsData {
         // The unified route row shows lateness via the ETA pill's color, not a verbose status label,
         // so we don't fold the arrival/departure word in. Every production caller now passes false
@@ -314,7 +341,7 @@ class DefaultArrivalsRepository @Inject constructor(
         // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
         val arrivals = convertArrivals(
-            context, snapshot.arrivals, ServerTime(now), includeArrivalDepartureLabel
+            context, snapshot.arrivals, now, includeArrivalDepartureLabel
         )
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
@@ -328,7 +355,9 @@ class DefaultArrivalsRepository @Inject constructor(
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]
         // plus [ArrivalsData.hideAlertsByDefault], so nothing on the load path can race the snapshot.
         val situations = snapshot.situations()
-        val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now) }
+        // .epochMs unwrap: isActiveWindowForSituation is a legacy Long-taking helper (its "now" is
+        // documented as the server clock); the domain is re-asserted right here at the hand-off.
+        val isActive = { s: ObaSituation -> SituationUtils.isActiveWindowForSituation(s, now.epochMs) }
         val activeAlerts = planActiveAlerts(situations, isActive)
         // The situation ids that are active right now, so a per-arrival alert indicator lights up
         // only for currently-active alerts — matching the banner's active set (issue #1687 Bug 2).
@@ -447,14 +476,20 @@ class DefaultArrivalsRepository @Inject constructor(
     }
 
     override fun alertDetails(id: String): AlertDetails? =
-        lastGood?.snapshot?.situation(id)?.let {
+        lastGood.get()?.snapshot?.situation(id)?.let {
             AlertDetails(it.id, it.summary, it.description, it.url)
         }
 
-    override fun lastLoaded(): ArrivalsLoaded? {
-        val snapshot = lastGood?.snapshot ?: return null
-        return ArrivalsLoaded(snapshot.stop, snapshot.routes, snapshot.hasArrivals)
-    }
+    override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
+
+    /** Pairs the response's map payload with the exact displayed trips. */
+    private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
+        ArrivalsLoaded(
+            stop = snapshot.stop,
+            routes = snapshot.routes,
+            hasArrivals = snapshot.hasArrivals,
+            focusedTrips = snapshot.focusedTrips(data.arrivals.map { it.tripId to it.routeId }),
+        )
 
     companion object {
 

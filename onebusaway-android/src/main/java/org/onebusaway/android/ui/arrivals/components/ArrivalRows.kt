@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -103,6 +104,7 @@ class ArrivalRowCallbacks(
 internal fun ArrivalCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    border: BorderStroke? = null,
     content: @Composable () -> Unit
 ) {
     val base = modifier
@@ -111,9 +113,16 @@ internal fun ArrivalCard(
     val shape = MaterialTheme.shapes.medium
     val color = MaterialTheme.colorScheme.surfaceContainer
     if (onClick != null) {
-        Surface(onClick = onClick, modifier = base, shape = shape, color = color, content = content)
+        Surface(
+            onClick = onClick,
+            modifier = base,
+            shape = shape,
+            color = color,
+            border = border,
+            content = content,
+        )
     } else {
-        Surface(modifier = base, shape = shape, color = color, content = content)
+        Surface(modifier = base, shape = shape, color = color, border = border, content = content)
     }
 }
 
@@ -249,6 +258,10 @@ fun RouteArrivalRow(
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     isFavorite: Boolean,
     callbacks: ArrivalRowCallbacks,
+    mapRouteColor: Int? = null,
+    selected: Boolean = false,
+    selectedRouteNames: List<String> = emptyList(),
+    onClearSelection: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
 ) {
@@ -259,7 +272,13 @@ fun RouteArrivalRow(
     // Fall back to the route's long name when the feed gives no headsign for this direction.
     val direction = group.headsign?.takeIf { it.isNotBlank() } ?: routeActions?.routeLongName.orEmpty()
     val onAlertClick = alertClick(group, actionsFor, callbacks)
-    ArrivalCard(modifier) {
+    val selectionColor = mapRouteColor ?: routeActions?.routeColor
+    val displayedRouteNames = selectedRouteNames.takeIf { selected }.orEmpty()
+    val compoundBadge = displayedRouteNames.size > 1
+    val selectionBorder = selectionColor
+        ?.takeIf { selected }
+        ?.let { BorderStroke(2.dp, Color(it)) }
+    ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
@@ -286,13 +305,19 @@ fun RouteArrivalRow(
                 // glyph footprint as the corner star.
                 Box(Modifier.fillMaxHeight()) {
                     LineBadge(
-                        text = representative.shortName.orEmpty(),
+                        text = continuationBadgeText(
+                            displayedRouteNames,
+                            representative.shortName.orEmpty(),
+                        ),
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
                         modifier = Modifier.align(Alignment.Center).padding(end = 10.dp),
                         maxFontSize = 32.sp,
+                        width = if (compoundBadge) 96.dp else 64.dp,
+                        maxLines = if (compoundBadge) 1 else 2,
                         color = badgeContent,
                         containerColor = badgeContainer,
+                        endContainerColor = mapRouteColor?.let(::Color) ?: Color.Unspecified,
                     )
                     if (onAlertClick != null) {
                         ArrivalAlertIndicator(
@@ -329,6 +354,19 @@ fun RouteArrivalRow(
                         // sorted by), so recent-past pills overflow left.
                         start = group.firstUpcomingIndex,
                         firstPillModifier = etaAnchor,
+                    )
+                }
+            }
+            if (selected && onClearSelection != null) {
+                // Own layer, like the corner star/alert/overflow icons, so toggling the selection
+                // never reflows the ETA strip (the pills' trailing chevron gutter gives it room).
+                Box(Modifier.align(Alignment.CenterEnd)) {
+                    CornerIcon(
+                        iconRes = R.drawable.ic_navigation_close,
+                        contentDescription = stringResource(R.string.stop_info_unselect_route),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        onClick = onClearSelection,
+                        iconSize = 22.dp,
                     )
                 }
             }
@@ -371,6 +409,12 @@ fun RouteArrivalRow(
     }
 }
 
+internal fun continuationBadgeText(routeNames: List<String>, fallback: String): String = when {
+    routeNames.size <= 1 -> routeNames.firstOrNull().orEmpty().ifBlank { fallback }
+    routeNames.size == 2 -> routeNames.joinToString(" › ")
+    else -> "${routeNames.first()} » ${routeNames.last()}"
+}
+
 /** The alert-indicator tap for a row: opens the first active alert affecting any trip in the group
  *  ([RouteRowGroup.activeAlertSituationId]), or null when none is affected. */
 internal fun alertClick(
@@ -390,23 +434,27 @@ private val OVERFLOW_ICON_CLEARANCE = 20.dp
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** A small tap target tucked into a card corner — the legacy overlaid star / overflow icons. */
+private val CORNER_ICON_HITBOX_SIZE = 26.dp
+
+/** A small fixed tap target tucked into a card corner — the legacy star / overflow / close icons. */
 @Composable
 private fun CornerIcon(
     iconRes: Int,
     contentDescription: String,
     tint: Color,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    iconSize: Dp = 18.dp,
 ) {
+    val contentPadding = (CORNER_ICON_HITBOX_SIZE - iconSize) / 2f
     Icon(
         painter = painterResource(iconRes),
         contentDescription = contentDescription,
         tint = tint,
         modifier = modifier
             .clickable(onClick = onClick)
-            .padding(4.dp)
-            .size(18.dp)
+            .size(CORNER_ICON_HITBOX_SIZE)
+            .padding(contentPadding)
     )
 }
 
@@ -557,6 +605,7 @@ internal fun etaAnnotatedString(
  */
 private data class PreviewArrivalData(
     override val routeId: String,
+    override val directionId: Int?,
     override val shortName: String?,
     override val headsign: String?,
     override val scheduledArrivalTime: ServerTime,
@@ -599,6 +648,7 @@ internal fun previewArrival(
     status: Status = Status.DEFAULT,
     routeId: String = "route_$shortName",
     routeLongName: String? = null,
+    directionId: Int? = null,
 ): ArrivalInfo {
     val predictedMs = etaMinutes * PREVIEW_MIN_MS
     val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
@@ -606,6 +656,7 @@ internal fun previewArrival(
         context = null,
         data = PreviewArrivalData(
             routeId = routeId,
+            directionId = directionId,
             shortName = shortName,
             headsign = headsign,
             scheduledArrivalTime = ServerTime(scheduledMs),

@@ -25,6 +25,20 @@ data class NearbyStops(
     val limitExceeded: Boolean,
 )
 
+/** Stable identity for one directional variant of a route. */
+data class RouteDirectionKey(val routeId: String, val directionId: Int?)
+
+/** One displayed trip contributing exact geometry and stop reachability to a focused stop. */
+data class FocusedTrip(
+    val tripId: String,
+    val routeId: String,
+    val shapeId: String?,
+    val routeColor: Int?,
+    val directionId: Int? = null,
+) {
+    val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
+}
+
 /**
  * A route's stops, the serving routes (for stop-marker icons), the route + agency name, and its
  * decoded shape. Polylines are [Location] points (the neutral geo type); the map layer turns them

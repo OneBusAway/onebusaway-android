@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
@@ -50,13 +49,13 @@ import org.onebusaway.android.map.render.StopMarker
 fun MapStopSpotlight(
     projector: MapProjector?,
     currentStops: () -> List<StopMarker>,
-    onFocusStop: (ObaStop) -> Unit,
+    onFocusStop: (StopMarker) -> Unit,
 ) {
     val tutorialState = LocalTutorialState.current ?: return
     val active = tutorialState.current?.id == WelcomeTutorial.KEY_MAP_STOP
     val windowSize = LocalWindowInfo.current.containerSize
     val markerRadiusPx = with(LocalDensity.current) { 20.dp.toPx() }
-    var chosenStop by remember { mutableStateOf<ObaStop?>(null) }
+    var chosenStop by remember { mutableStateOf<StopMarker?>(null) }
 
     LaunchedEffect(active, projector) {
         val proj = projector ?: return@LaunchedEffect
@@ -69,7 +68,7 @@ fun MapStopSpotlight(
             }
             if (nearest != null) {
                 val (marker, offset) = nearest
-                chosenStop = marker.stop
+                chosenStop = marker
                 tutorialState.reportBounds(
                     WelcomeTutorial.KEY_MAP_STOP,
                     Rect(

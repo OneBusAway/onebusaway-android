@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaTripStatus
 
 /** A geographic point, flavor-neutral (carries no Google/maplibre `LatLng` dependency). */
@@ -44,11 +45,10 @@ fun interface MapProjector {
 }
 
 /**
- * The map's content padding, in pixels. [topPx] keeps content (the Google compass, vehicle markers)
- * below the floating top chrome — the status-bar inset + menu/search FAB-row clearance, plus the
- * route-mode header when a route is shown; [bottomPx] keeps the focused stop above the arrivals sheet.
- * Held as declarative state and
- * applied by the renderer (the Google adapter's `GoogleMap(contentPadding=…)`) instead of an
+ * The map's content padding, in pixels. [topPx] keeps the compass, vehicle markers, and framed content
+ * below the floating top chrome or the active route-focus control, whichever extends farther down;
+ * [bottomPx] keeps the focused stop above the arrivals sheet. Held as declarative state and applied by
+ * the renderer (the Google adapter uses `GoogleMap.setPadding`) instead of an
  * imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
  * padding change doesn't recompose the overlay content.
  */
@@ -63,6 +63,15 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
  * thinner default.
  */
 const val ROUTE_LINE_WIDTH_DP: Float = 10f
+
+/** Route lines use the shared proportional route-detail scale. */
+fun routeLineWidthScale(zoom: Float): Float = routeDetailScale(zoom)
+
+/** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
+enum class RoutePolylineTransform {
+    VIEWPORT_CLIP,
+    ZOOM_SIMPLIFY,
+}
 
 /**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
@@ -80,6 +89,10 @@ const val ROUTE_LINE_WIDTH_DP: Float = 10f
  * [dashed] asks the renderer to draw a dashed stroke instead of solid — set it for a preview/hint line
  * that should read as distinct from the primary route shown (the route-continuation line, #1691), so it
  * doesn't blend into a busy basemap the way a plain solid stroke can.
+ *
+ * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
+ * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
+ * only to the list they render. An empty set is a strict pass-through.
  */
 data class RoutePolyline(
     val color: Int?,
@@ -87,6 +100,7 @@ data class RoutePolyline(
     val widthDp: Float? = null,
     val directional: Boolean = false,
     val dashed: Boolean = false,
+    val transforms: Set<RoutePolylineTransform> = emptySet(),
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR
@@ -142,10 +156,10 @@ data class BikeMarker(
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
  *
- * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
- * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
- * icon, so the overview map's route reads the same as the trip map (#1752). It stays a full tappable
- * [StopMarker] (unlike the trip map's non-interactive dots) so tapping still opens the stop's arrivals.
+ * [presentedRoutes] identifies the route-direction variants in the current presentation that serve
+ * this stop. A non-empty set makes [routeStop] true: [point] is projected onto the route centerline
+ * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
+ * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  */
 data class StopMarker(
     val id: String,
@@ -154,8 +168,10 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
-    val routeStop: Boolean = false,
-)
+    val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
+) {
+    val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
+}
 
 /**
  * A tappable badge marking where the selected vehicle's block continues onto a different route
@@ -168,6 +184,19 @@ data class ContinuationBadge(
     val point: GeoPoint,
     val routeId: String,
     val routeShortName: String,
+    val directionId: Int?,
+)
+
+/**
+ * A tappable label for one route in focused-stop adjacency view (#1827), anchored once in geographic
+ * space so the map SDK naturally carries it through pan and zoom. Google renders these in the first
+ * badge phase; MapLibre deliberately ignores the layer until its follow-up.
+ */
+data class RouteBadge(
+    val routeId: String,
+    val routeShortName: String,
+    val color: Int,
+    val point: GeoPoint,
     val directionId: Int?,
 )
 
@@ -190,6 +219,7 @@ data class RouteContinuation(val polyline: RoutePolyline, val arrow: Continuatio
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
+    val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val bikeStations: List<BikeMarker> = emptyList(),
     val bikeshareVisible: Boolean = false,
@@ -248,8 +278,8 @@ class MapRenderState {
 
     val snapshot: StateFlow<MapRenderSnapshot> = _snapshot.asStateFlow()
 
-    // Map content padding (route-header top + arrivals-sheet bottom), in its own flow so a padding
-    // change doesn't redraw the overlay content. The Google adapter applies it globally via
+    // Map content padding (top chrome/route focus + arrivals-sheet bottom), in its own flow so a
+    // padding change doesn't redraw the overlay content. The Google adapter applies it globally via
     // map.setPadding (which its newLatLngBounds framing then honors); maplibre's newLatLngBounds ignores
     // persistent padding, so its Points framing reads this value and folds the insets into the fit
     // directly (see MapLibreCameraCommands.applyFramingIntent).
@@ -257,14 +287,14 @@ class MapRenderState {
 
     val padding: StateFlow<MapPadding> = _padding.asStateFlow()
 
-    // Top padding is the sum of two producer-owned contributions — the always-present floating-chrome
-    // inset (status bar + FAB-row clearance) and the route-mode header height (0 when no route) — held
-    // separately so each producer updates only its own without clobbering the other.
+    // Top padding is the lower of two independently reported edges: the always-present floating-chrome
+    // inset (status bar + FAB-row clearance) and the active route-focus control's bottom edge. Keeping
+    // absolute edges avoids double-counting the chrome when the route header sits below it.
     private var topChromeInsetPx = 0
-    private var routeHeaderPaddingPx = 0
+    private var routeFocusTopEdgePx = 0
 
     private fun applyTopPadding() =
-        _padding.update { it.copy(topPx = topChromeInsetPx + routeHeaderPaddingPx) }
+        _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, routeFocusTopEdgePx)) }
 
     /** The floating top-chrome inset (status bar + FAB-row clearance); keeps the compass below the FABs. */
     fun setTopChromeInset(px: Int) {
@@ -272,9 +302,9 @@ class MapRenderState {
         applyTopPadding()
     }
 
-    /** The route-mode header's contribution to the top padding (0 clears it when no route is shown). */
-    fun setRouteHeaderPadding(px: Int) {
-        routeHeaderPaddingPx = px
+    /** The active route-focus control's absolute bottom edge (0 clears route-specific padding). */
+    fun setRouteFocusTopEdge(px: Int) {
+        routeFocusTopEdgePx = px
         applyTopPadding()
     }
 
@@ -347,11 +377,26 @@ class MapRenderState {
 
     fun getRoutePolylines(): List<RoutePolyline> = _snapshot.value.routePolylines
 
-    fun setRoutePolylines(polylines: List<RoutePolyline>) {
+    // The active single route's canonical geometry for FramingIntent.Route. This is camera state, not
+    // rendered state: focused-stop adjacency keeps sibling routes visible, but they must not widen the
+    // selected route's camera box to their union. Like the other mutators, this is main-thread confined.
+    internal var routeFramingPolylines: List<RoutePolyline> = emptyList()
+        private set
+
+    fun setRoutePolylines(
+        polylines: List<RoutePolyline>,
+        framingPolylines: List<RoutePolyline> = polylines,
+    ) {
+        routeFramingPolylines = framingPolylines
         _snapshot.update { it.copy(routePolylines = polylines) }
     }
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())
+
+    /** Sets the Google-first adjacency route badges (#1827); MapLibre currently ignores this layer. */
+    fun setRouteBadges(badges: List<RouteBadge>) {
+        _snapshot.update { it.copy(routeBadges = badges) }
+    }
 
     // --- Generic markers (the old SimpleMarkerOverlay): monotonic int IDs the caller keeps to ---
     // --- remove the marker later. Unlike the old overlay, these survive until the map renders, ---

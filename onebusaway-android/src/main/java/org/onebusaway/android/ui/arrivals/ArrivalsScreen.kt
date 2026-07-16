@@ -80,6 +80,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.MenuRow
@@ -339,6 +340,16 @@ internal fun ArrivalsList(
     /** Whether a load-more request is in flight, for the footer button's spinner. Collected only by
      *  the footer item below, so a toggle recomposes just that item, not the whole list. */
     loadingMore: StateFlow<Boolean>,
+    /** Stop-focus map colors keyed by route-direction. Empty outside the home drawer. */
+    mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    /** Exact route-direction row selected over the home map's stop focus; null outside that state. */
+    selectedRowKey: String? = null,
+    /** Origin route used to resolve an unambiguous row when map and arrivals headsign labels differ. */
+    selectedRouteId: String? = null,
+    /** Route names in the selected vehicle block, beginning with the route on this row. */
+    selectedRouteNames: List<String> = emptyList(),
+    /** Clears the map-owned route focus represented by [selectedRowKey]. */
+    onClearRouteSelection: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
@@ -354,6 +365,27 @@ internal fun ArrivalsList(
      *  onboarding spotlight); default is a no-op for hosts that don't spotlight. */
     etaAnchor: Modifier = Modifier
 ) {
+    val effectiveSelectedRowKey = remember(content.routeGroups, selectedRowKey, selectedRouteId) {
+        resolveSelectedRouteGroupKey(content.routeGroups, selectedRowKey, selectedRouteId)
+    }
+    val routeGroups = remember(content.routeGroups, effectiveSelectedRowKey) {
+        promoteSelectedRouteGroup(content.routeGroups, effectiveSelectedRowKey)
+    }
+    var hadSelection by remember { mutableStateOf(false) }
+    LaunchedEffect(effectiveSelectedRowKey) {
+        // Stable item keys preserve the old viewport across reordering. Explicitly return to the head
+        // of the route rows so the promoted row is visible in the peek, and the original head is
+        // visible again when route mode clears.
+        val wasSelected = hadSelection
+        hadSelection = effectiveSelectedRowKey != null
+        if (effectiveSelectedRowKey != null || wasSelected) {
+            val alertsBeforeRoutes = content.hasAlerts && showAlerts
+            val directionBeforeRoutes = showDirection && content.header.direction != null
+            val firstRouteIndex = (if (alertsBeforeRoutes) 1 else 0) +
+                (if (directionBeforeRoutes) 1 else 0)
+            listState.scrollToItem(firstRouteIndex)
+        }
+    }
     LazyColumn(state = listState, modifier = modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (content.hasAlerts && showAlerts) {
             // The whole alert section is one item, present only while [showAlerts] is set. Toggling the
@@ -384,12 +416,17 @@ internal fun ArrivalsList(
         if (content.routeGroups.isEmpty()) {
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
-            itemsIndexed(content.routeGroups, key = { _, group -> group.key }) { index, group ->
+            itemsIndexed(routeGroups, key = { _, group -> group.key }) { index, group ->
                 RouteArrivalRow(
                     group = group,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
+                    mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
+                    selected = group.key == effectiveSelectedRowKey,
+                    selectedRouteNames =
+                        if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
+                    onClearSelection = onClearRouteSelection,
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     // Glide up/down as the alert section above is toggled in/out.

@@ -24,9 +24,12 @@ import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.maplibre.MapHelpMapLibre
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.DEFAULT_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
 import kotlin.math.abs
@@ -67,6 +70,21 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
         is CameraCommand.SetZoom -> map.moveCamera(CameraUpdateFactory.zoomTo(cmd.zoom.toDouble()))
 
+        is CameraCommand.RestoreViewport -> {
+            val current = map.cameraPosition
+            val viewport = cmd.viewport
+            map.animateCamera(
+                CameraUpdateFactory.newCameraPosition(
+                    CameraPosition.Builder()
+                        .target(LatLng(viewport.center.latitude, viewport.center.longitude))
+                        .zoom(viewport.zoom)
+                        .bearing(current.bearing)
+                        .tilt(current.tilt)
+                        .build()
+                )
+            )
+        }
+
         CameraCommand.ZoomIn -> map.animateCamera(CameraUpdateFactory.zoomIn())
 
         CameraCommand.ZoomOut -> map.animateCamera(CameraUpdateFactory.zoomOut())
@@ -78,15 +96,20 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
 /**
  * Applies the map's retained [FramingIntent] to the maplibre [MapLibreMap] — the counterpart of the
- * Google adapter's `applyFramingIntent`. As on the old host, route/itinerary framing both just frame the
- * route shape (the screen-dimension padding was a Google-only refinement); the bounds are re-read from
- * [renderState]/the region live, so it's safe to re-apply when a re-created adapter replays the framing.
+ * Google adapter's `applyFramingIntent`. Route framing folds the live overlay obstruction into its fit;
+ * itinerary framing retains the old shape-only behavior. Bounds are re-read from [renderState]/the region
+ * live, so it's safe to re-apply when a re-created adapter replays the framing.
  */
 fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: MapRenderState, context: Context) {
     when (intent) {
-        FramingIntent.Route,
+        FramingIntent.Route -> {
+            val bounds = routePolylineBounds(renderState.routeFramingPolylines) ?: return
+            val pad = ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP)
+            map.animateBounds(bounds, pad, renderState.padding.value)
+        }
+
         FramingIntent.Itinerary -> {
-            val bounds = routePolylineBounds(renderState) ?: return
+            val bounds = routePolylineBounds(renderState.getRoutePolylines()) ?: return
             map.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, 0))
         }
 
@@ -111,19 +134,29 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
             // insets have to be folded into the fit explicitly, on top of the symmetric breathing room,
             // or the vehicle+stop pair lands under one of the two overlays that are open after an ETA tap.
             val pad = ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP)
-            val overlay = renderState.padding.value
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(bounds, pad, overlay.topPx + pad, pad, overlay.bottomPx + pad)
-            )
+            map.animateBounds(bounds, pad, renderState.padding.value)
         }
     }
 }
 
-/** Bounds enclosing the current route/itinerary polylines, or null if there are no points. */
-private fun routePolylineBounds(renderState: MapRenderState): LatLngBounds? {
+/** Fit [bounds] inside the current top/bottom overlay obstruction plus symmetric breathing room. */
+private fun MapLibreMap.animateBounds(bounds: LatLngBounds, pad: Int, overlay: MapPadding) {
+    animateCamera(
+        CameraUpdateFactory.newLatLngBounds(
+            bounds,
+            pad,
+            overlay.topPx + pad,
+            pad,
+            overlay.bottomPx + pad,
+        )
+    )
+}
+
+/** Bounds enclosing [polylines], or null if there are no points. */
+private fun routePolylineBounds(polylines: Iterable<RoutePolyline>): LatLngBounds? {
     val builder = LatLngBounds.Builder()
     var any = false
-    for (polyline in renderState.snapshot.value.routePolylines) {
+    for (polyline in polylines) {
         for (point in polyline.points) {
             builder.include(LatLng(point.latitude, point.longitude))
             any = true

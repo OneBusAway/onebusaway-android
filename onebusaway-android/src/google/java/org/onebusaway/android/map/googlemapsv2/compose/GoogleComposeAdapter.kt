@@ -48,7 +48,9 @@ import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.Marker
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.time.WallTime
@@ -62,6 +64,7 @@ import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -78,10 +81,10 @@ private const val FRAME_INTERVAL_NANOS = 50_000_000L
  * Google flavor's [ObaComposeMapAdapter]: hosts the classic [MapView] inside an [AndroidView] (no more
  * android-maps-compose), bridging the MapView's imperative lifecycle to Compose via a
  * [LifecycleEventObserver], and drives the shared [MapHost]. It sets the style, builds the
- * [GoogleMapRenderer] and re-renders on every render-state change, wires map/marker/info-window clicks
- * to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies the render state's camera
- * gestures + retained framing intent, and enables the location blue dot from the host's
- * permission-derived flag.
+ * [GoogleMapRenderer] and collects its static and route layers independently, wires
+ * map/marker/info-window clicks to [callbacks], reports camera idles to [MapHost.onCameraIdle], applies
+ * the render state's camera gestures + retained framing intent, and enables the location blue dot from
+ * the host's permission-derived flag.
  *
  * The live route vehicles + the trip-focus estimate markers are native [Marker]s moved in place at
  * ~20Hz (the [GoogleMapRenderer.renderDynamic] loop below), so they glide with the map — no Compose
@@ -164,6 +167,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 wireClicks(map, r, windows, cb)
 
                 map.setOnCameraMoveStartedListener { reason ->
+                    r.onCameraMoveStarted()
                     // A user gesture (pan/fling/pinch) started: gate the stop/bike loaders until it settles.
                     // Programmatic camera animations (recenter, zoom-to-route) don't gate — they emit only
                     // their terminating idle, so there's nothing mid-move to suppress.
@@ -171,7 +175,10 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                         host.onCameraGestureStarted()
                     }
                 }
-                map.setOnCameraIdleListener { host.onCameraIdle(snapshot(map)) }
+                map.setOnCameraIdleListener {
+                    r.onCameraSettled(map.cameraPosition.zoom)
+                    host.onCameraIdle(snapshot(map))
+                }
 
                 r.renderStatic()
                 createdRenderer = r
@@ -185,10 +192,21 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         val activeRenderer = renderer
         val activeInfoWindows = infoWindows
         if (activeRenderer != null && activeInfoWindows != null) {
-            // Static layer (stops / routes / bikes / generics): redraw only when the snapshot changes
-            // (viewport loads, the vehicle poll, focus) — a bounded cost.
+            // Non-route static layer (stops / bikes / generics): strip route lines before distinctness
+            // so a route-only change never churns these annotations, and stop-only emissions cannot
+            // touch the independently collected native route layer below.
             LaunchedEffect(activeRenderer) {
-                renderState.snapshot.collect { activeRenderer.renderStatic() }
+                renderState.snapshot
+                    .map { it.copy(routePolylines = emptyList()) }
+                    .distinctUntilChanged()
+                    .collect { activeRenderer.renderStatic(it) }
+            }
+            // Route lines have their own change boundary: viewport stop updates retain the native
+            // Google polylines instead of removing/recreating every long adjacency shape. Canonical
+            // route geometry stays in renderState for framing; only this renderer-bound copy is clipped.
+            LaunchedEffect(activeRenderer) {
+                routePolylineRenderFlow(renderState.snapshot, host.camera)
+                    .collect { activeRenderer.renderRoutePolylines(it) }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
@@ -331,7 +349,7 @@ private fun routeMarkerTap(
     val stop = renderer.stopForMarker(marker)
     if (stop != null) {
         infoWindows.clear() // the open bubble (if any) is dismissed by tapping the stop
-        cb.onStopClick(stop.stop)
+        cb.onStopClick(stop)
         return true
     }
     val vehicle = renderer.vehicleForMarker(marker)
@@ -352,7 +370,16 @@ private fun routeMarkerTap(
     }
     val continuationBadge = renderer.continuationBadgeForMarker(marker)
     if (continuationBadge != null) {
-        cb.onRouteContinuationClick(continuationBadge.routeId, continuationBadge.directionId)
+        cb.onRouteContinuationClick(
+            continuationBadge.routeId,
+            continuationBadge.routeShortName,
+            continuationBadge.directionId,
+        )
+        return true
+    }
+    val routeBadge = renderer.routeBadgeForMarker(marker)
+    if (routeBadge != null) {
+        cb.onRouteBadgeClick(routeBadge.routeId, routeBadge.routeShortName, routeBadge.directionId)
         return true
     }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default

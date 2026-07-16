@@ -35,6 +35,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.PermissionUtils
@@ -187,13 +188,13 @@ class MapHost(
 
     // ----- Padding + camera commands -----
 
-    // Map content padding: the floating top chrome (status bar + FAB-row clearance) and the route-mode
-    // header both set the top; the arrivals sheet sets the bottom. Declarative state the renderer applies
-    // (Google: GoogleMap contentPadding), replacing the old imperative mapView.setPadding(...) relay
-    // through HomeActivity.
+    // Map content padding: the floating top chrome (status bar + FAB-row clearance) supplies a baseline;
+    // route focus may extend that edge farther down; the arrivals sheet sets the bottom. Declarative state
+    // the renderer applies (Google: GoogleMap contentPadding), replacing the old imperative
+    // mapView.setPadding(...) relay through HomeActivity.
     fun setTopChromeInset(px: Int) = renderState.setTopChromeInset(px)
 
-    fun setRouteHeaderPadding(px: Int) = renderState.setRouteHeaderPadding(px)
+    fun setRouteFocusTopEdge(px: Int) = renderState.setRouteFocusTopEdge(px)
 
     fun setBottomPadding(px: Int) = renderState.setBottomPadding(px)
 
@@ -233,6 +234,12 @@ class MapHost(
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
         dispatchGesture(CameraCommand.Recenter(lat, lon, animate, applyRouteBias = false))
+    }
+
+    /** Drop retained framing and animate back to a viewport captured before a semantic action. */
+    fun restoreViewport(viewport: MapViewport) {
+        clearFraming()
+        dispatchGesture(CameraCommand.RestoreViewport(viewport))
     }
 
     fun zoomIn() = dispatchGesture(CameraCommand.ZoomIn)

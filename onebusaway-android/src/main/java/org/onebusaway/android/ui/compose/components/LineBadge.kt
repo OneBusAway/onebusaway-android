@@ -36,6 +36,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
@@ -64,6 +67,7 @@ private const val SHRINK_STEP = 0.9f
 private val CHIP_SHAPE = RoundedCornerShape(8.dp)
 private val CHIP_H_PADDING = 8.dp
 private val CHIP_V_PADDING = 2.dp
+private const val CHIP_END_COLOR_FRACTION = 0.2f
 
 // Route-badge color tokens. We take only the *hue* of the agency's GTFS color and re-derive the chip
 // in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
@@ -121,8 +125,10 @@ fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
  * Drop it anywhere a route short name sits in a constrained slot (list rows, headers, map callouts).
  * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color. Pass a
  * [containerColor] (e.g. from [rememberRouteBadgeColors]) to draw the name on a rounded colored chip
- * filling the fixed-width slot; leave it unspecified for the bare-text badge. Set [square] to make the
- * chip a [width]×[width] square tile (a route roundel) with the text shrunk to fit inside it.
+ * filling the fixed-width slot; leave it unspecified for the bare-text badge. [endContainerColor]
+ * optionally replaces the rightmost fifth of that background (the arrivals drawer uses this to key
+ * the GTFS-colored badge to its stop-focus map color). Set [square] to make the chip a [width]×[width]
+ * square tile (a route roundel) with the text shrunk to fit inside it.
  *
  * @param width the fixed width of the badge rectangle (also its height when [square])
  * @param maxHeight the height cap for the rectangle; the text also shrinks to fit it (in addition to
@@ -144,6 +150,7 @@ fun LineBadge(
     maxLines: Int = 2,
     color: Color = Color.Unspecified,
     containerColor: Color = Color.Unspecified,
+    endContainerColor: Color = Color.Unspecified,
     square: Boolean = false,
     textDecoration: TextDecoration = TextDecoration.None
 ) {
@@ -209,7 +216,19 @@ fun LineBadge(
             val chipModifier = if (square) Modifier.fillMaxSize() else Modifier.fillMaxWidth()
             Surface(color = containerColor, shape = CHIP_SHAPE, modifier = chipModifier) {
                 Box(
-                    Modifier.padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
+                    Modifier
+                        .drawWithContent {
+                            if (endContainerColor.isSpecified) {
+                                val endWidth = size.width * CHIP_END_COLOR_FRACTION
+                                drawRect(
+                                    color = endContainerColor,
+                                    topLeft = Offset(size.width - endWidth, 0f),
+                                    size = Size(endWidth, size.height),
+                                )
+                            }
+                            drawContent()
+                        }
+                        .padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
                     contentAlignment = Alignment.Center,
                 ) { label() }
             }

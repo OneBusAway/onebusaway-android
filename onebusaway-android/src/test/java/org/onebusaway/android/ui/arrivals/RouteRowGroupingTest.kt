@@ -16,8 +16,10 @@
 package org.onebusaway.android.ui.arrivals
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.previewArrival
+import org.onebusaway.android.ui.arrivals.components.continuationBadgeText
 
 /**
  * JVM unit tests for the pure route-row grouping/ordering functions. Grouping and the between-row
@@ -29,6 +31,16 @@ import org.onebusaway.android.ui.arrivals.components.previewArrival
  * recent-past first).
  */
 class RouteRowGroupingTest {
+
+    @Test
+    fun `continuation badge shows one two or collapsed route names`() {
+        assertEquals("65", continuationBadgeText(listOf("65"), "fallback"))
+        assertEquals("65 › 75", continuationBadgeText(listOf("65", "75"), "fallback"))
+        assertEquals(
+            "65 » 75",
+            continuationBadgeText(listOf("65", "67", "75"), "fallback"),
+        )
+    }
 
     private data class FakeItem(
         override val routeId: String,
@@ -261,6 +273,95 @@ class RouteRowGroupingTest {
             FakeItem("B", "East", 5),
         )
         assertEquals(listOf("A", "B"), order(items, setOf("A", "B")))
+    }
+
+    // Selected-row promotion ----------------------------------------------------------------------
+
+    @Test
+    fun selectedRow_movesExactRouteDirectionToTop_withoutMutatingSourceOrder() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
+            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
+            RouteRowGroup(listOf(previewArrival("A", "South", etaMinutes = 8, routeId = "A"))),
+        )
+        val originalKeys = groups.map(RouteRowGroup::key)
+
+        val promoted = promoteSelectedRouteGroup(groups, routeRowKey("A", "South"))
+
+        assertEquals(
+            listOf(routeRowKey("A", "South"), routeRowKey("A", "North"), routeRowKey("B", "East")),
+            promoted.map(RouteRowGroup::key),
+        )
+        assertEquals(originalKeys, groups.map(RouteRowGroup::key))
+    }
+
+    @Test
+    fun selectedRow_usesSoleRouteRow_whenMapAndArrivalHeadsignsDiffer() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
+            RouteRowGroup(listOf(previewArrival("12", "Downtown", 5, routeId = "12"))),
+        )
+
+        assertEquals(
+            routeRowKey("11", "Madison Park"),
+            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Madison Park via Pine"), "11"),
+        )
+    }
+
+    @Test
+    fun selectedRow_doesNotGuess_whenRouteHasMultipleDirectionRows() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11"))),
+        )
+
+        assertEquals(
+            null,
+            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Different label"), "11"),
+        )
+    }
+
+    @Test
+    fun selectedRow_matchesNumericDirection_whenHeadsignsDiffer() {
+        val groups = listOf(
+            RouteRowGroup(
+                listOf(previewArrival("11", "Madison Park", 2, routeId = "11", directionId = 0))
+            ),
+            RouteRowGroup(
+                listOf(previewArrival("11", "Downtown", 5, routeId = "11", directionId = 1))
+            ),
+        )
+
+        assertEquals(
+            routeRowKey("11", 1, "Downtown"),
+            resolveSelectedRouteGroupKey(
+                groups,
+                routeRowKey("11", 1, "A completely different label"),
+                "11",
+            ),
+        )
+    }
+
+    @Test
+    fun grouping_usesNumericDirectionRatherThanDisplayHeadsign() {
+        val arrivals = listOf(
+            previewArrival("11", "Same label", 2, routeId = "11", directionId = 0),
+            previewArrival("11", "Same label", 5, routeId = "11", directionId = 1),
+        )
+
+        assertEquals(2, groupArrivalsByRouteDirection(arrivals) { "Metro" }.size)
+    }
+
+    @Test
+    fun noActiveSelection_returnsOriginalOrderingInstance() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
+            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
+        )
+
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = null))
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = "missing"))
+        assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = groups.first().key))
     }
 
     // Group-level active-alert resolution ---------------------------------------------------------

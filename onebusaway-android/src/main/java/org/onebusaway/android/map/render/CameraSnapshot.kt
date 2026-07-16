@@ -34,3 +34,12 @@ data class CameraSnapshot(
     val southWest: GeoPoint,
     val northEast: GeoPoint,
 )
+
+/** The camera fields needed to restore a prior viewport after undoing one semantic map action. */
+data class MapViewport(
+    val center: GeoPoint,
+    val zoom: Double,
+)
+
+val CameraSnapshot.viewport: MapViewport
+    get() = MapViewport(center, zoom)

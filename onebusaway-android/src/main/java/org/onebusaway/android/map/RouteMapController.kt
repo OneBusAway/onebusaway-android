@@ -17,7 +17,9 @@ package org.onebusaway.android.map
 
 import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,6 +27,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.extrapolation.extrapolationFromState
@@ -35,8 +38,10 @@ import org.onebusaway.android.time.WallTime
 import java.net.HttpURLConnection
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.map.render.ContinuationArrow
 import org.onebusaway.android.map.render.ContinuationBadge
@@ -77,6 +82,7 @@ class RouteMapController(
     private val routeRepository: RouteMapRepository,
     private val stopsController: StopsMapController,
     private val tripObservationRepository: TripObservationRepository,
+    private val focusedTripRepository: FocusedTripRepository,
     private val scope: CoroutineScope,
 ) {
 
@@ -114,11 +120,37 @@ class RouteMapController(
     // retained so a direction switch re-narrows the drawn line without a reload. Null until first load.
     private var routeShape: RouteMap? = null
 
+    // The single-route presentation is retained even while a focused stop temporarily owns the
+    // geometry/stop layer, so closing the stop or changing directions restores it without a reload.
+    private var basePolylines: List<RoutePolyline> = emptyList()
+    private var baseStopPresentation: RouteStopPresentation? = null
+
+    private data class StopFocusSession(
+        val stopId: String,
+        val trips: Set<FocusedTrip>,
+    )
+
+    private var stopFocusSession: StopFocusSession? = null
+    private var stopFocusJob: Job? = null
+    private var focusedGeometry = FocusedTripGeometry(emptyList())
+    private var focusedStops = FocusedTripStops(emptyMap(), emptyMap())
+    private var focusedRoutes: List<ObaRoute> = emptyList()
+    private val _focusedRouteColors = MutableStateFlow<Map<RouteDirectionKey, Int>>(emptyMap())
+    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> = _focusedRouteColors.asStateFlow()
+
+    val focusedStopId: String? get() = stopFocusSession?.stopId
+
     // The direction shown now (null = whole route). Derived from [directionState] rather than stored
     // separately, so the stop filter and the vehicle filter can never disagree. Meaningful only once
     // resolved (it reads null during the Pending window, which no caller relies on).
     private val currentDirectionId: Int?
         get() = (directionState as? DirectionState.Resolved)?.directionId
+
+    private val presentationDirectionId: Int?
+        get() = when (val state = directionState) {
+            DirectionState.Pending -> initialDirectionOverride
+            is DirectionState.Resolved -> state.directionId
+        }
 
     // What direction the vehicle layer should show — the single source of truth the per-frame sampler
     // reads (so it's a field, not a captured value; the sampler is installed in start() before the route
@@ -166,8 +198,8 @@ class RouteMapController(
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
      * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
      * the single direction that serves that stop (the arrivals "show vehicles on map" launch); null
-     * shows the whole route. [initialDirectionId] is a restore override (the user-selected direction
-     * persisted across process death) that wins over the anchor stop when it's still a valid direction.
+     * shows the whole route. [initialDirectionId] is an explicit badge/restore override that wins over
+     * the anchor stop when it's still a valid direction.
      * [focusTripId], when non-null, asks the map to fit that trip's live vehicle together with the
      * originating [directionStopId] once the vehicle appears; the on-load framing is deferred until that
      * decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent, and a
@@ -190,6 +222,9 @@ class RouteMapController(
         this.directionState =
             if (directionStopId == null && initialDirectionId == null) DirectionState.Resolved(null)
             else DirectionState.Pending
+        // When stop focus survives an arrivals-row or route-badge tap, emphasize this route
+        // immediately from the already-loaded adjacency geometry instead of waiting for route load.
+        publishMapPresentation()
         _loadedRoute.value = LoadedRoute.Loading
         host.setProgress(true)
         // The live vehicle layer: the renderer pulls a frame from this sampler each display frame,
@@ -234,14 +269,14 @@ class RouteMapController(
      * call [start] (no network reload, no vehicle-poll reset). [selectDirection]'s no-op guard is fine
      * here since reframing the already-shown direction is exactly the "not a real switch" case it exists
      * to skip. [requestFocus] falls through into the same FIT/DROP resolution ([tryFocusVehicle]) the
-     * initial-load tail ([onRouteLoaded]) uses; absent a focus, reframes now via [MapHost.frameRoute] —
-     * the same call that tail makes when it isn't deferring to a focus. Takes the whole [request] rather
-     * than picking fields, so a new [ShowRouteRequest] field is at least reachable here — though [start]'s
-     * own parameter list still needs a matching update (#1797).
+     * initial-load tail ([onRouteLoaded]) uses; absent a focus, [frameRoute] controls whether to reframe
+     * now via [MapHost.frameRoute]. Undo restoration passes false before applying its captured viewport.
+     * Takes the whole [request] rather than picking fields, so a new [ShowRouteRequest] field is at least
+     * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
      */
-    fun reframe(request: ShowRouteRequest) {
+    fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
         request.initialDirectionId?.let { selectDirection(it) }
-        request.focusTripId?.let { requestFocus(it) } ?: host.frameRoute()
+        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) host.frameRoute() else Unit
     }
 
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
@@ -399,7 +434,7 @@ class RouteMapController(
         tryFocusVehicle(layer)
     }
 
-    /** Leave route mode: cancel the loads + poll and clear the route's shape, vehicle layer, and header. */
+    /** Leave single-route mode. A stop-focus layer, when present, remains visible. */
     fun stop() {
         routeJob?.cancel()
         vehicleJob?.cancel()
@@ -414,10 +449,12 @@ class RouteMapController(
         routeStopRoutes = emptyList()
         directions = emptyList()
         routeShape = null
+        basePolylines = emptyList()
+        baseStopPresentation = null
         directionState = DirectionState.Resolved(null)
         latestPoll = null
         pendingFocus = null
-        renderState.clearRoutePolylines()
+        publishMapPresentation()
         // setVehicleSet(null) is what clears the vehicle markers (the renderer reconciles the empty set);
         // it must be nulled together with the motion sampler, which only moves already-reconciled markers.
         renderState.setVehicleSet(null)
@@ -427,6 +464,173 @@ class RouteMapController(
         renderState.setTripOverlaySampler(null)
         renderState.setRouteContinuation(null)
         _loadedRoute.value = null
+    }
+
+    /**
+     * Show the exact trips currently displayed for a stop. A first focus publishes shape and schedule
+     * results independently; a handoff from an existing stop stages both and swaps them atomically so
+     * the complete old presentation remains visible during loading. An empty trip set is still valid.
+     */
+    fun focusStop(
+        stopId: String,
+        trips: Set<FocusedTrip>,
+        routes: List<ObaRoute>,
+    ) {
+        val next = StopFocusSession(stopId, LinkedHashSet(trips))
+        if (stopFocusSession == next) {
+            // Route wrappers may be recreated on every arrivals poll; refresh marker metadata without
+            // restarting unchanged shape/schedule work.
+            focusedRoutes = routes
+            publishMapPresentation()
+            return
+        }
+        stopFocusJob?.cancel()
+        val retainCurrentPresentation = stopFocusSession != null
+        if (!retainCurrentPresentation) {
+            applyStopFocus(
+                next,
+                routes,
+                FocusedTripGeometry(emptyList()),
+                FocusedTripStops(emptyMap(), emptyMap()),
+            )
+        }
+        stopFocusJob = scope.launch {
+            supervisorScope {
+                val geometry = async {
+                    runCatching { focusedTripRepository.getGeometry(next.trips) }
+                        .getOrElse {
+                            if (it is CancellationException) throw it
+                            FocusedTripGeometry(emptyList())
+                        }
+                        .also {
+                            if (!retainCurrentPresentation && stopFocusSession == next) {
+                                focusedGeometry = it
+                                publishMapPresentation()
+                            }
+                        }
+                }
+                val stops = async {
+                    runCatching { focusedTripRepository.getStops(next.trips) }
+                        .getOrElse {
+                            if (it is CancellationException) throw it
+                            FocusedTripStops(emptyMap(), emptyMap())
+                        }
+                        .also {
+                            if (!retainCurrentPresentation && stopFocusSession == next) {
+                                focusedStops = it
+                                publishMapPresentation()
+                            }
+                        }
+                }
+                val nextGeometry = geometry.await()
+                val nextStops = stops.await()
+                if (retainCurrentPresentation) {
+                    // A stop-to-stop handoff keeps the old complete presentation visible until both
+                    // halves of the replacement are ready, then swaps once. Unrelated focus changes
+                    // clear the old session before reaching here and retain the eager first-load path.
+                    applyStopFocus(next, routes, nextGeometry, nextStops)
+                }
+            }
+        }
+    }
+
+    private fun applyStopFocus(
+        session: StopFocusSession,
+        routes: List<ObaRoute>,
+        geometry: FocusedTripGeometry,
+        stops: FocusedTripStops,
+    ) {
+        stopFocusSession = session
+        focusedRoutes = routes
+        _focusedRouteColors.value = adjacencyRouteColors(
+            session.trips.map(FocusedTrip::routeDirection),
+            retained = _focusedRouteColors.value,
+        )
+        focusedGeometry = geometry
+        focusedStops = stops
+        stopsController.start()
+        publishMapPresentation()
+    }
+
+    /** Clear focused-stop trips and reveal the base route (or ordinary nearby stops). */
+    fun clearStopFocus() {
+        if (stopFocusSession == null) return
+        stopFocusSession = null
+        stopFocusJob?.cancel()
+        stopFocusJob = null
+        focusedGeometry = FocusedTripGeometry(emptyList())
+        focusedStops = FocusedTripStops(emptyMap(), emptyMap())
+        focusedRoutes = emptyList()
+        _focusedRouteColors.value = emptyMap()
+        if (isActive) stopsController.stop() else stopsController.start()
+        publishMapPresentation()
+    }
+
+    private fun publishMapPresentation() {
+        val focus = stopFocusSession
+        if (focus == null) {
+            renderState.setRoutePolylines(basePolylines)
+            renderState.setRouteBadges(emptyList())
+            stopsController.setRoutePresentation(baseStopPresentation)
+            return
+        }
+        val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
+        val showBaseRoute = isActive && emphasizedRoute != null &&
+            focus.trips.none { it.routeDirection == emphasizedRoute }
+        val routesByStopId = focusedStops.routeDirectionsByStopId(focus.trips, emphasizedRoute)
+        val routeColors = _focusedRouteColors.value
+        renderState.setRoutePolylines(
+            polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
+                if (showBaseRoute) basePolylines else emptyList(),
+            // Adjacency remains visible underneath route mode, but the active route's fully loaded
+            // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
+            // fit the union of every route serving the focused stop.
+            framingPolylines = if (isActive) basePolylines else emptyList(),
+        )
+        renderState.setRouteBadges(
+            if (emphasizedRoute == null) {
+                focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
+            }
+            else emptyList()
+        )
+        stopsController.setRoutePresentation(
+            if (showBaseRoute) {
+                baseStopPresentation
+            } else {
+                RouteStopPresentation(
+                    stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
+                    routes = focusedRoutes,
+                    routeDirectionsByStopId = routesByStopId,
+                    projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
+                )
+            }
+        )
+    }
+
+    /** Snap each exact scheduled stop to the closest successful shape of a trip that serves it. */
+    private fun projectFocusedStops(
+        trips: Set<FocusedTrip>,
+        geometry: FocusedTripGeometry,
+        stops: FocusedTripStops,
+    ): Map<String, GeoPoint> {
+        val tripById = trips.associateBy(FocusedTrip::tripId)
+        val candidates = LinkedHashMap<String, MutableList<Polyline>>()
+        for ((tripId, stopIds) in stops.stopIdsByTripId) {
+            val shapeId = tripById[tripId]?.shapeId ?: continue
+            val points = geometry.shapes.firstOrNull { it.shapeId == shapeId }?.points ?: continue
+            if (points.size < 2) continue
+            val polyline = Polyline(points.map(GeoPoint::toLocation))
+            stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
+        }
+        return buildMap {
+            for ((stopId, shapes) in candidates) {
+                val stop = stops.stopsById[stopId] ?: continue
+                val location = stop.location
+                val point = shapes.mapNotNull { it.nearestPoint(location.latitude, location.longitude) }
+                    .minByOrNull(location::distanceTo)
+                if (point != null) put(stopId, point.toGeoPoint())
+            }
+        }
     }
 
     /** Restart the vehicle poll if a route is shown and the poll isn't running (the host's onResume). */
@@ -496,15 +700,19 @@ class RouteMapController(
         }
     }
 
-    /** Re-render the route's stops narrowed to [currentDirectionId], replacing the prior direction's. */
+    /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
     private fun showDirectionStops() {
-        // showStops accumulates while a route is active, so drop the prior direction's route stops
-        // first — otherwise the map would show the union of both directions. (Keeps a focused stop.)
-        stopsController.clearStops(false)
+        val route = routeId ?: return
         val stops = routeStops.stopsForDirection(currentDirectionId)
-        // Project each stop onto the drawn shape so it sits on the route centerline as a trip-style
-        // circle (#1752); the stops stay tappable StopMarkers, so tapping one still opens its arrivals.
-        stopsController.showStops(stops, routeStopRoutes, projectStopsOntoShape(stops))
+        baseStopPresentation = RouteStopPresentation(
+            stops = stops,
+            routes = routeStopRoutes,
+            routeDirectionsByStopId = stops.associate {
+                it.id to setOf(RouteDirectionKey(route, currentDirectionId))
+            },
+            projectedPoints = projectStopsOntoShape(stops),
+        )
+        publishMapPresentation()
     }
 
     /**
@@ -540,11 +748,16 @@ class RouteMapController(
         // when the selected direction's own travel-ordered shape is used — never on the whole-route
         // merged fallback (a direction that carried no shape on the wire).
         val shape = route.shapeForDirection(currentDirectionId)
-        renderState.setRoutePolylines(
-            shape.polylines.map { points ->
-                RoutePolyline(route.route?.color, points, widthDp = ROUTE_LINE_WIDTH_DP, directional = shape.directional)
-            }
-        )
+        basePolylines = shape.polylines.map { points ->
+            RoutePolyline(
+                route.route?.color,
+                points,
+                widthDp = ROUTE_LINE_WIDTH_DP,
+                directional = shape.directional,
+                transforms = ROUTE_VIEW_TRANSFORMS,
+            )
+        }
+        publishMapPresentation()
     }
 
     /**

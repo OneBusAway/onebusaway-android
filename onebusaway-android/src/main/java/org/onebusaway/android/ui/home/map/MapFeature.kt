@@ -71,23 +71,29 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.distinctUntilChanged
+import java.util.Locale
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
+import org.onebusaway.android.ui.home.StopFocusTransition
+import org.onebusaway.android.ui.home.focusedBikeStationId
+import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
@@ -95,6 +101,9 @@ import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
+
+// Temporary calibration aid; retain the implementation so it can be restored with a one-line toggle.
+private const val SHOW_DEBUG_ZOOM_INDICATOR = false
 
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue
@@ -133,16 +142,18 @@ fun MapFeature(
 
     val callbacks = remember(mapViewModel, homeViewModel) {
         object : ObaMapCallbacks {
-            override fun onStopClick(stop: ObaStop) {
+            override fun onStopClick(marker: StopMarker) {
+                val stop = marker.stop
+                val transition = homeViewModel.onStopFocused(
+                    FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude),
+                    continuingRoutes = marker.presentedRoutes,
+                )
+                if (transition == StopFocusTransition.ReplacePresentation) {
+                    mapViewModel.clearAllFocus()
+                }
                 mapViewModel.onStopTapped(stop)
                 // Already focused on this stop? Then don't re-fire the home focus + analytics.
-                val focusedId = homeViewModel.uiState.value.focusedStop?.id
-                if (focusedId != null && focusedId.equals(stop.id, ignoreCase = true)) {
-                    return
-                }
-                homeViewModel.onStopFocused(
-                    FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude)
-                )
+                if (transition == StopFocusTransition.Unchanged) return
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),
@@ -151,14 +162,13 @@ fun MapFeature(
             }
 
             override fun onMapClick(point: GeoPoint?) {
-                mapViewModel.onMapTapped()
-                homeViewModel.onStopFocused(null)
-                homeViewModel.onBikeStationFocused(null)
+                homeViewModel.unfocusMapOneLevel()
             }
 
             override fun onBikeClick(station: BikeStation) {
-                val bikeId = homeViewModel.uiState.value.focusedBikeStationId
+                val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+                    mapViewModel.clearAllFocus()
                     homeViewModel.onBikeStationFocused(station.id)
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
@@ -178,13 +188,35 @@ fun MapFeature(
                 mapViewModel.onVehicleTapped(status)
             }
 
-            override fun onRouteContinuationClick(routeId: String, directionId: Int?) {
-                mapViewModel.toRoute(ShowRouteRequest(routeId, initialDirectionId = directionId))
+            override fun onRouteContinuationClick(
+                routeId: String,
+                routeShortName: String,
+                directionId: Int?,
+            ) {
+                homeViewModel.advanceRouteContinuation(
+                    routeId,
+                    routeShortName,
+                    directionId,
+                    undoViewport = mapViewModel.viewport,
+                )
+            }
+
+            override fun onRouteBadgeClick(
+                routeId: String,
+                routeShortName: String,
+                directionId: Int?,
+            ) {
+                homeViewModel.requestShowFocusedStopRouteOnMap(
+                    routeId,
+                    directionId,
+                    routeShortName,
+                    undoViewport = mapViewModel.viewport,
+                )
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
                 MapNavigation.openVehicleTripDetails(
-                    context, status, homeViewModel.uiState.value.focusedStop?.id
+                    context, status, homeViewModel.currentFocus.value.focusedStop?.id
                 )
             }
 
@@ -217,10 +249,31 @@ fun MapFeature(
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
                     mapViewModel.recenterOnFocusedStop(directive.lat, directive.lon)
-                is MapDirective.ShowRoute -> mapViewModel.toRoute(directive.request)
-                MapDirective.ClearFocus -> mapViewModel.clearFocus()
+                is MapDirective.ShowRoute ->
+                    mapViewModel.toRoute(
+                        directive.request,
+                        directive.stopScoped,
+                        directive.frameRoute,
+                    )
+                is MapDirective.RestoreViewport ->
+                    mapViewModel.restoreViewport(directive.viewport)
+                MapDirective.FrameRoute -> mapViewModel.frameRoute()
+                is MapDirective.ShowStopRoutes ->
+                    mapViewModel.showStopRoutes(
+                        directive.stopId,
+                        directive.routes,
+                        directive.trips,
+                    )
+                MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
+                MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
+                MapDirective.ClearFocus -> mapViewModel.clearAllFocus()
                 is MapDirective.FocusStop ->
-                    mapViewModel.focusStop(directive.stop, directive.routes, directive.overlayExpanded)
+                    mapViewModel.focusStop(
+                        directive.stop,
+                        directive.routes,
+                        directive.overlayExpanded,
+                        directive.recenter,
+                    )
             }
         }
     }
@@ -304,6 +357,7 @@ fun MapFeature(
     // persistence. remember()ed so cameraSeed's Bundle alloc doesn't re-run; a config change recreates
     // this composition, so MapLibre still re-reads the live camera.
     val seed = remember(mapViewModel) { mapViewModel.cameraSeed }
+    val camera by mapViewModel.camera.collectAsStateWithLifecycle()
     ObaMap(
         host = mapViewModel.host,
         callbacks = callbacks,
@@ -317,6 +371,7 @@ fun MapFeature(
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
+    val currentFocus by homeViewModel.currentFocus.collectAsStateWithLifecycle()
     // The map is now edge-to-edge (no solid top bar), so this notice floats as a pill at the top-center,
     // below the floating top chrome — the same shared inset (status bar + clearance) the HomeScreen
     // overlays use, so the pill lines up with them and can't drift from the FAB-row height.
@@ -327,9 +382,27 @@ fun MapFeature(
             .mapTopChromeOverlayInset()
     ) {
         StopsInfoBanner(
-            banner = stopsBanner,
+            banner = stopsBanner.forFocus(currentFocus),
             modifier = Modifier.align(Alignment.TopCenter),
         )
+        if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
+            val zoom = camera?.zoom?.toFloat() ?: seed.zoom
+            Text(
+                text = String.format(
+                    Locale.US,
+                    "Zoom %.2f · route %.2f×",
+                    zoom,
+                    routeLineWidthScale(zoom),
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.labelMedium,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+            )
+        }
     }
 
     // The welcome tutorial's map-stop spotlight, wired from the flavor-neutral map seam (the published
@@ -388,6 +461,10 @@ fun MapFeature(
         },
     )
 }
+
+/** A truncated nearby-stop load is irrelevant while the user is already focused on one stop. */
+internal fun StopsBanner.forFocus(focus: CurrentFocus): StopsBanner =
+    if (this == StopsBanner.MoreStopsAvailable && focus is CurrentFocus.Stop) StopsBanner.None else this
 
 /**
  * The nearby-stops info notice: an extended-FAB-style pill (leading icon + text) at the top-center of the

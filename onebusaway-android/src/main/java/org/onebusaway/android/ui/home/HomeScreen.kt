@@ -20,9 +20,11 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -68,7 +70,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.findActivity
@@ -76,6 +77,7 @@ import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
+import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CONTROL_BOTTOM
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -152,16 +154,13 @@ class HomeActivityActions(
     val onHelpActionExternal: (HelpAction) -> Unit,
     val onShowWelcomeTutorial: () -> Unit,
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
-    val onClearFocus: () -> Unit,
     val onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    val onShowRouteOnMap: (ShowRouteRequest) -> Unit,
-    val onCancelRouteMode: () -> Unit,
 )
 
 /**
  * The declarative home screen: a Compose `ModalNavigationDrawer` + an edge-to-edge Material3
  * `BottomSheetScaffold` (the map) with the floating [MapTopChrome] (menu + search FABs) over its top,
- * rendered from [HomeUiState] (state down) with taps dispatched through plain lambda callbacks +
+ * rendered from [CurrentFocus] (state down) with taps dispatched through plain lambda callbacks +
  * [HomeViewModel] events (up). Replaces the imperative `HomeShellHost` bridge.
  *
  * The arrivals sheet inverts to declarative: **visibility is business state** — the sheet peeks iff
@@ -169,7 +168,7 @@ class HomeActivityActions(
  * fights a user drag. The sheet has no `Hidden` drag anchor (`skipHiddenState = true`), so peek is the
  * hard floor of the drag; show/hide is instead an animated peek height (0 <-> real peek) that slides
  * the whole sheet in and out. **Expansion (peek<->full)** is the live `SheetState`, toggled by the drag
- * handle and collapsed as a declarative reaction to route mode activating (`routeHeader != null`;
+ * handle and collapsed as a declarative reaction to a route being selected inside stop focus;
  * the screen alone knows the live state), plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
  * the map ([MapFeature]), the route-mode header ([RouteHeaderOverlay]), and the survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
  * are all composables now — no map-related `AndroidView` / View seam remains.
@@ -177,7 +176,7 @@ class HomeActivityActions(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    state: HomeUiState,
+    currentFocus: CurrentFocus,
     // The map is a self-wiring [MapFeature]; it composes only while HOME is the current destination, so
     // SDK init is already lazy. The route-mode header and survey are Compose overlays over it.
     homeViewModel: HomeViewModel,
@@ -198,9 +197,28 @@ fun HomeScreen(
     with(callbacks) {
     with(activityActions) {
     ObaTheme {
+        val stopFocus = currentFocus as? CurrentFocus.Stop
+        val standaloneRouteFocused = currentFocus is CurrentFocus.Route
+        val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
+        val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
+        // Compute before entering mapTopChromeOverlayInset(), whose statusBarsPadding consumes this inset
+        // for descendants. This is the route card's absolute top edge in map coordinates.
+        val routeHeaderTopPx = WindowInsets.statusBars.getTop(density) +
+            with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
+        val searchBarBottomPx = WindowInsets.statusBars.getTop(density) +
+            with(density) { MAP_TOP_CHROME_CONTROL_BOTTOM.roundToPx() }
+        var routeHeaderBottomPx by remember(routeHeader?.routeId) { mutableIntStateOf(0) }
+        val routeFocusTopEdgePx = routeFocusTopEdge(
+            currentFocus,
+            searchBarBottomPx,
+            routeHeaderBottomPx,
+        )
+        LaunchedEffect(routeFocusTopEdgePx) {
+            mapViewModel.setRouteFocusTopEdge(routeFocusTopEdgePx)
+        }
         val snackbarHostState = remember { SnackbarHostState() }
         // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
         // My-tab lists, via rememberListVm) so MapTopChrome stays a pure, VM-free chrome composable;
@@ -281,8 +299,8 @@ fun HomeScreen(
         // height rather than a sheet drag state. The key is the focused stop id while shown (else null),
         // so the effect reacts to focus/tab changes but NOT to a user drag (same stop -> same key).
         var sheetShown by remember { mutableStateOf(false) }
-        val showSheet = shouldShowSheet(state.focusedStop)
-        val sheetKey = if (showSheet) state.focusedStop?.id else null
+        val showSheet = shouldShowSheet(currentFocus)
+        val sheetKey = if (showSheet) stopFocus?.stop?.id else null
         LaunchedEffect(sheetKey) {
             if (sheetKey == null) {
                 // Hide: an expanded sheet is first collapsed to peek (so it then slides straight down as
@@ -339,10 +357,9 @@ fun HomeScreen(
             }
         }
 
-        // Collapse the sheet to peek when the map enters route mode ("show vehicles on map"). A
-        // declarative reaction to route-mode state rather than a VM command — the screen holds the live
-        // SheetState, and route mode surfaces here as `routeHeader != null`.
-        val routeModeActive = routeHeader != null
+        // Collapse the sheet to peek when a route is selected within stop focus. This reacts to the
+        // durable focus state rather than to the map's asynchronously loaded route header.
+        val routeModeActive = stopFocus?.selectedRoute != null
         LaunchedEffect(routeModeActive) {
             if (routeModeActive) runCatching { sheetState.partialExpand() }
         }
@@ -370,14 +387,18 @@ fun HomeScreen(
             }
         }
 
-        // Back collapses an expanded sheet first, then (from peek) clears the focus, which hides it.
-        // A hidden sheet leaves back to the system (mirrors the legacy !isSheetHidden() gate). Gated on
-        // `sheetShown` since the sheet always rests at peek/expanded now (never a `Hidden` value).
-        BackHandler(enabled = sheetShown) {
-            when (sheetBackAction(sheetState.currentValue.toArrivalsSheetState())) {
+        // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
+        // collapses first; every other back gesture restores the preceding focus and viewport.
+        BackHandler(enabled = canUndoMapAction) {
+            val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
+                sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
+            } else {
+                SheetBackAction.NONE
+            }
+            when (sheetAction) {
                 SheetBackAction.COLLAPSE -> scope.launch { runCatching { sheetState.partialExpand() } }
-                SheetBackAction.CLEAR_FOCUS -> onClearFocus()
-                SheetBackAction.NONE -> {}
+                SheetBackAction.NAVIGATE_BACK, SheetBackAction.NONE ->
+                    homeViewModel.navigateBackFocus()
             }
         }
 
@@ -419,20 +440,30 @@ fun HomeScreen(
                     },
                     sheetContent = {
                         ArrivalsSheetHost(
-                            focusedStop = state.focusedStop,
+                            focusedStop = stopFocus?.stop,
                             sheetVisible = sheetShown,
+                            selectedRoute = stopFocus?.selectedRoute,
+                            mapRouteColors = mapRouteColors,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
+                            onClearRouteSelection = homeViewModel::clearStopRouteSelection,
                             // Showing vehicles on the map drags the sheet down to peek so the route is
                             // visible, whether or not route mode was already active (see collapseSheet).
-                            onShowRouteOnMap = { request ->
-                                onShowRouteOnMap(request)
+                            onShowRouteOnMap = { arrival, request ->
+                                homeViewModel.selectArrivalRoute(
+                                    request = request,
+                                    shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
+                                    headsign = arrival.headsign,
+                                    undoViewport = mapViewModel.viewport,
+                                )
                                 collapseSheet()
                             },
                             onShowTrip = onShowTrip,
                             onEditReminder = onEditReminder,
                             onContentHeight = { px -> contentPx = px },
-                            onTitleClick = homeViewModel::recenterOnFocusedStop,
+                            onTitleClick = {
+                                homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
+                            },
                             showUndoSnackbar = { messageRes, actionRes, onAction ->
                                 scope.launch {
                                     val result = snackbarHostState.showSnackbar(
@@ -476,19 +507,25 @@ fun HomeScreen(
                                     weatherViewModel = weatherViewModel,
                                     donationViewModel = donationViewModel,
                                     surveyViewModel = surveyViewModel,
-                                    routeHeader = routeHeader,
-                                    onCancelRouteMode = onCancelRouteMode,
+                                    routeHeader = routeHeader.takeIf { standaloneRouteFocused },
+                                    onCancelRouteMode = homeViewModel::unfocusMapOneLevel,
                                     // The switch-direction affordance calls straight into the map VM (which
                                     // re-filters stops/vehicles + persists the choice), like the height report below.
-                                    onSelectRouteDirection = mapViewModel::selectRouteDirection,
+                                    onSelectRouteDirection = { directionId ->
+                                        homeViewModel.selectStandaloneRouteDirection(directionId)
+                                        mapViewModel.selectRouteDirection(directionId)
+                                    },
                                     // Tapping the header body reframes the map to the route's full extent (VM
                                     // re-issues the retained route framing).
-                                    onFrameRoute = mapViewModel::frameRoute,
+                                    onFrameRoute = {
+                                        homeViewModel.reframeFocusedRoute(mapViewModel.viewport)
+                                    },
                                     onLearnMore = onLearnMore,
                                     onOpenSurvey = onOpenSurvey,
-                                    // The route header reports its height straight to the map VM (which owns the
-                                    // padding derivation), so the host isn't a relay between the two features.
-                                    onRouteHeaderHeight = mapViewModel::setRouteHeaderHeight,
+                                    routeHeaderTopPx = routeHeaderTopPx,
+                                    // This layer converts measured card height to its map-space bottom edge;
+                                    // the map VM adds marker clearance and owns the resulting content padding.
+                                    onRouteHeaderBottom = { routeHeaderBottomPx = it },
                                 )
                             }
                             // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
@@ -556,7 +593,7 @@ private fun HomeDrawer(
 ) {
     val scope = rememberCoroutineScope()
     // The drawer's region/feature gating is a self-wired feature module (NavDrawerViewModel), collected
-    // here so the screen doesn't thread the booleans through HomeUiState.
+    // here so the screen doesn't thread unrelated booleans through the focus state.
     val availability by hiltViewModel<NavDrawerViewModel>().availability.collectAsStateWithLifecycle()
     // Every row closes the drawer before dispatching, matching the legacy single onSelect path.
     fun close() { scope.launch { drawerState.close() } }
@@ -603,7 +640,8 @@ private fun BoxScope.HomeMapOverlays(
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
-    onRouteHeaderHeight: (Int) -> Unit,
+    routeHeaderTopPx: Int,
+    onRouteHeaderBottom: (Int) -> Unit,
 ) {
     // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
     // overlays only carry their own side margins here.
@@ -635,24 +673,22 @@ private fun BoxScope.HomeMapOverlays(
     // The route-mode header, now a floating card centered below the top chrome (so the menu + search
     // FABs stay clear and tappable in route mode). Drawn last of the overlays so it sits above the
     // weather / donation / survey cards when a route is active. The layer is already offset by the
-    // clearance, but the map's top-padding derivation needs the full obstruction, so add the clearance
-    // back onto the reported card height; clears it when dismissed.
+    // clearance, but the map's top-padding derivation needs the card's bottom edge in map coordinates,
+    // so add both the status-bar inset and chrome clearance back onto its reported height.
     if (routeHeader != null) {
-        val density = LocalDensity.current
-        val clearancePx = remember(density) { with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() } }
         RouteHeaderOverlay(
             header = routeHeader,
             onCancel = onCancelRouteMode,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
-            onHeight = { h -> onRouteHeaderHeight(h + clearancePx) },
+            onHeight = { h -> onRouteHeaderBottom(h + routeHeaderTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp),
         )
     } else {
-        LaunchedEffect(Unit) { onRouteHeaderHeight(0) }
+        LaunchedEffect(Unit) { onRouteHeaderBottom(0) }
     }
 }
 

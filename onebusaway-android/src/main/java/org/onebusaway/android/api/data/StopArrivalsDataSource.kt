@@ -33,6 +33,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.FocusedTrip
 
 /**
  * A resolved snapshot of a stop's arrivals-and-departures: the [arrivals] plus the references the
@@ -60,7 +61,9 @@ class StopArrivals internal constructor(
      * "phantom" duplicates collapsed (see [collapseBlockIdPhantoms] / #1710).
      */
     val arrivals: List<ArrivalData>
-        get() = entry.arrivalsAndDepartures.map { it.asArrivalData() }
+        get() = entry.arrivalsAndDepartures.map {
+            it.asArrivalData(refs.trip(it.tripId)?.directionId?.toIntOrNull())
+        }
             .collapseBlockIdPhantoms { tripId -> refs.trip(tripId)?.blockId }
 
     /** Every referenced route (for the map overlay). */
@@ -76,6 +79,20 @@ class StopArrivals internal constructor(
 
     /** Resolves a trip from the references pool by id (for its block id), or null. */
     fun trip(id: String): ObaTrip? = refs.trip(id)?.let(::DtoTrip)
+
+    /** Resolves the displayed arrivals to exact trips without expanding through route membership. */
+    fun focusedTrips(trips: Iterable<Pair<String, String>>): Set<FocusedTrip> =
+        trips.mapNotNullTo(LinkedHashSet()) { (rawTripId, routeId) ->
+            val tripId = rawTripId.takeIf(String::isNotBlank) ?: return@mapNotNullTo null
+            val trip = trip(tripId)
+            FocusedTrip(
+                tripId = tripId,
+                routeId = routeId,
+                shapeId = trip?.shapeId?.takeIf(String::isNotBlank),
+                routeColor = route(routeId)?.color,
+                directionId = refs.trip(tripId)?.directionId?.toIntOrNull(),
+            )
+        }
 
     /** Resolves a situation (service alert) from the references pool by id, or null. */
     fun situation(id: String): ObaSituation? = refs.situation(id)?.let(::DtoSituation)

@@ -38,6 +38,7 @@ import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.testing.testTripStatus
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.models.ObaTripSchedule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -62,6 +63,8 @@ class TripTrajectoryViewModelTest {
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
+
+        override suspend fun ensureSchedule(tripId: String): ObaTripSchedule? = null
 
         override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }
@@ -93,6 +96,8 @@ class TripTrajectoryViewModelTest {
             emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
+
+        override suspend fun ensureSchedule(tripId: String): ObaTripSchedule? = null
 
         override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }

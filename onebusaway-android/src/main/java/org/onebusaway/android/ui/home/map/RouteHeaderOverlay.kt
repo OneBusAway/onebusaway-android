@@ -108,9 +108,7 @@ fun RouteHeaderOverlay(
             // The current direction's headsign (blank falls back to a generic label); null when the
             // route is shown whole (no direction selected), so the subtitle is hidden.
             val unnamed = stringResource(R.string.route_direction_unnamed)
-            val directionLabel = header.directions
-                .firstOrNull { it.directionId == header.currentDirectionId }
-                ?.labelOr(unnamed)
+            val directionLabel = header.currentDirection?.labelOr(unnamed)
             Row(
                 Modifier
                     .fillMaxWidth()

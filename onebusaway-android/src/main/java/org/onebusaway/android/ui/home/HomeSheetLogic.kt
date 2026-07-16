@@ -32,17 +32,28 @@ enum class ArrivalsSheetState { Hidden, Collapsed, Expanded }
 /** The sheet is shown (peeking or full) iff a stop is focused. (HOME is always the map now — the
  *  list screens are their own destinations — so a focused stop is the only condition.) [HomeScreen]
  *  translates this into an animated peek height (the sheet has no `Hidden` drag anchor). */
-internal fun shouldShowSheet(focusedStop: FocusedStop?): Boolean = focusedStop != null
+internal fun shouldShowSheet(focus: CurrentFocus): Boolean = focus is CurrentFocus.Stop
+
+/** Bottom edge used to keep route framing below the active focus chrome. */
+internal fun routeFocusTopEdge(
+    focus: CurrentFocus,
+    searchBarBottomPx: Int,
+    routeHeaderBottomPx: Int,
+): Int = when (focus) {
+    is CurrentFocus.Route -> routeHeaderBottomPx
+    is CurrentFocus.Stop -> if (focus.selectedRoute != null) searchBarBottomPx else 0
+    CurrentFocus.None, is CurrentFocus.BikeStation -> 0
+}
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState =
     if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
 
-/** What a back-press does, given the sheet's resting state (mirrors the legacy back handling). */
-enum class SheetBackAction { COLLAPSE, CLEAR_FOCUS, NONE }
+/** Whether the sheet consumes back by collapsing before focus navigation proceeds. */
+enum class SheetBackAction { COLLAPSE, NAVIGATE_BACK, NONE }
 
 internal fun sheetBackAction(current: ArrivalsSheetState): SheetBackAction = when (current) {
     ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE      // full -> peek
-    ArrivalsSheetState.Collapsed -> SheetBackAction.CLEAR_FOCUS  // peek -> clear focus (then hides)
+    ArrivalsSheetState.Collapsed -> SheetBackAction.NAVIGATE_BACK
     ArrivalsSheetState.Hidden -> SheetBackAction.NONE            // let the system handle back
 }

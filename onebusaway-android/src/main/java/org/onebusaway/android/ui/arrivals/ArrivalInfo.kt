@@ -87,6 +87,7 @@ class ArrivalInfo(
     // modernized arrivals fetch, depending on which adapter produced the [data].
     override val routeId: String get() = data.routeId
     val tripId: String get() = data.tripId
+    override val directionId: Int? get() = data.directionId
     val stopId: String get() = data.stopId
     override val headsign: String? get() = data.headsign
     val shortName: String? get() = data.shortName

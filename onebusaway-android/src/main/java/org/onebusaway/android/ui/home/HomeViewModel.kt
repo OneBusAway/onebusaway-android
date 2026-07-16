@@ -21,26 +21,38 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.region.Region
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.region.RegionStatus
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.region.Region
+import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.region.RegionStatus
+
+/** How a tapped stop changes the map presentation already visible beneath the arrivals drawer. */
+internal enum class StopFocusTransition {
+    Unchanged,
+    ContinuePresentation,
+    ReplacePresentation,
+}
 
 /**
  * Owns the home screen's genuine coordination state — the focused stop/bike-station (persisted via
- * [SavedStateHandle]) — as a single [HomeUiState], mutated via
- * `_uiState.update { it.copy(...) }`, and drives the startup region-resolve action through [viewModelScope]. The
+ * [SavedStateHandle]) — as a single [CurrentFocus], replaced through one focus transition, and drives
+ * the startup region-resolve action through [viewModelScope]. The
  * chrome gates, drawer gating, weather, donation, wide alert, regionReady, and the arrivals-sheet
  * measurement are each owned elsewhere now (a feature VM / a HomeScreen-local remember), not here.
  *
@@ -63,27 +75,48 @@ class HomeViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
 ) : ViewModel() {
 
-    // The single source of truth, mutated via _uiState.update { it.copy(...) }. Seeded from the
+    // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
     // SavedStateHandle-restored focus so a recreation reflects the restore by construction.
-    private val _uiState = MutableStateFlow(
-        HomeUiState(
-            focusedStop = readFocusedStop(savedState),
-            focusedBikeStationId = savedState[KEY_BIKE_STATION],
-        )
+    private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
+    val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
+
+    // Semantic map actions live on HOME and keep a local undo history of their preceding focus and,
+    // when the action moved the camera, viewport. Only current focus is persisted, so reconstruct its
+    // natural predecessors without viewport snapshots after process recreation.
+    private data class MapUndoEntry(
+        val focus: CurrentFocus,
+        val viewport: MapViewport? = null,
     )
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private val mapUndoHistory = ArrayDeque<MapUndoEntry>().apply {
+        when (val restored = _currentFocus.value) {
+            CurrentFocus.None -> Unit
+            is CurrentFocus.Stop -> {
+                addLast(MapUndoEntry(CurrentFocus.None))
+                if (restored.selectedRoute != null) {
+                    addLast(MapUndoEntry(CurrentFocus.Stop(restored.stop)))
+                }
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation ->
+                addLast(MapUndoEntry(CurrentFocus.None))
+        }
+    }
+    private val _canUndoMapAction = MutableStateFlow(mapUndoHistory.isNotEmpty())
+    val canUndoMapAction: StateFlow<Boolean> = _canUndoMapAction.asStateFlow()
 
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
     private val _mapBottomPadding = MutableStateFlow(0)
     val mapBottomPadding: StateFlow<Int> = _mapBottomPadding.asStateFlow()
 
-    // One-shot outbound map interactions (recenter / show route / focus / clear focus) that can't be
+    // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered so a directive
-    // issued just before the collector is active isn't dropped.
-    private val _mapDirectives = MutableSharedFlow<MapDirective>(extraBufferCapacity = 8)
-    val mapDirectives: SharedFlow<MapDirective> = _mapDirectives.asSharedFlow()
+    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
+    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
+    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
+    // destination — must queue for the single consumer instead of vanishing.
+    private val _mapDirectives = Channel<MapDirective>(capacity = 16)
+    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
 
     // Telemetry events the host's single HomeAnalyticsEffect reports (region auto-selects, nav/help menu
     // selections) — so the imperative ObaAnalytics calls live in one Compose effect, not scattered here.
@@ -108,7 +141,7 @@ class HomeViewModel @Inject constructor(
 
     // The sheet's last resting position, reported up from the screen; drives the map padding/recenter
     // side-effects + the tutorial gate. Pure coordination state (no Compose reads it), so it's a plain
-    // property rather than a HomeUiState field — see [lastSettledSheet].
+    // property rather than focus state — see [lastSettledSheet].
     private var settledSheet: ArrivalsSheetState = ArrivalsSheetState.Hidden
 
     /** The sheet's last resting position, for the activity's imperative map/tutorial side-effects. */
@@ -116,24 +149,52 @@ class HomeViewModel @Inject constructor(
     // A restored/deep-linked focus the imperative map hasn't been told about yet (re-derived by the
     // host on each create from the restored focusedStop, so it needn't be persisted).
     private var pendingMapFocus: Boolean = false
+    private var preserveViewportForPendingMapFocus: Boolean = false
 
-    /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
-    fun onStopFocused(stop: FocusedStop?) {
-        savedState[KEY_STOP_ID] = stop?.id
-        savedState[KEY_STOP_NAME] = stop?.name
-        savedState[KEY_STOP_CODE] = stop?.code
-        savedState[KEY_STOP_LAT] = stop?.lat
-        savedState[KEY_STOP_LON] = stop?.lon
-        if (stop != null) {
-            // Focusing a stop clears any bike-station focus (mirrors the legacy onFocusChanged).
-            savedState[KEY_BIKE_STATION] = null
+    /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
+    var focusedTrips: Set<FocusedTrip> = emptySet()
+        private set
+    private var presentedRoutes: Set<RouteDirectionKey> = emptySet()
+
+    /**
+     * A map stop gained focus. When it shares any presented route-direction with the current stop,
+     * keep that presentation alive while the new arrivals replace it, including any selected route.
+     */
+    internal fun onStopFocused(
+        stop: FocusedStop,
+        continuingRoutes: Set<RouteDirectionKey> = emptySet(),
+    ): StopFocusTransition {
+        val previousId = _currentFocus.value.focusedStop?.id
+        val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
+        if (sameStop) return StopFocusTransition.Unchanged
+        val current = _currentFocus.value as? CurrentFocus.Stop
+        val continuePresentation = when (val selected = current?.selectedRoute) {
+            null -> current != null && presentedRoutes.any(continuingRoutes::contains)
+            else -> selected.currentLeg.routeDirection in continuingRoutes
         }
-        _uiState.update {
-            it.copy(
-                focusedStop = stop,
-                focusedBikeStationId = if (stop != null) null else it.focusedBikeStationId,
+        focusedTrips = emptySet()
+        if (!continuePresentation) {
+            presentedRoutes = emptySet()
+            emitMapDirective(MapDirective.ClearStopRoutes)
+        }
+        pushFocus(
+            CurrentFocus.Stop(
+                stop = stop,
+                selectedRoute = if (continuePresentation) current?.selectedRoute else null,
             )
+        )
+        return if (continuePresentation) {
+            StopFocusTransition.ContinuePresentation
+        } else {
+            StopFocusTransition.ReplacePresentation
         }
+    }
+
+    /** A stop opened from navigation replaces any standalone route/bike view before it restores. */
+    fun revealStop(stop: FocusedStop) {
+        emitMapDirective(MapDirective.ClearFocus)
+        onStopFocused(stop)
+        markPendingMapFocus()
     }
 
     /**
@@ -142,7 +203,7 @@ class HomeViewModel @Inject constructor(
      * opens `ReportActivity` for whichever [ReportTarget] it gets.
      */
     fun reportTarget(): ReportTarget {
-        _uiState.value.focusedStop?.let { return ReportTarget.Stop(it) }
+        _currentFocus.value.focusedStop?.let { return ReportTarget.Stop(it) }
         return locationRepository.lastKnownLocation()
             ?.let { ReportTarget.Location(it.latitude, it.longitude) }
             ?: ReportTarget.Generic
@@ -169,9 +230,8 @@ class HomeViewModel @Inject constructor(
         _showWelcomeTutorial.value = false
     }
 
-    fun onBikeStationFocused(id: String?) {
-        savedState[KEY_BIKE_STATION] = id
-        _uiState.update { it.copy(focusedBikeStationId = id) }
+    fun onBikeStationFocused(id: String) {
+        pushFocus(CurrentFocus.BikeStation(id))
     }
 
     /**
@@ -213,54 +273,226 @@ class HomeViewModel @Inject constructor(
      * is marked pending so the map recenters + adds the marker once arrivals load. No focus → nothing.
      */
     fun applyInitialFocus(intentFocus: FocusedStop?) {
-        if (_uiState.value.focusedStop == null) {
-            intentFocus?.let { onStopFocused(it) }
-        }
-        if (_uiState.value.focusedStop != null) {
+        if (_currentFocus.value.focusedStop == null) {
+            intentFocus?.let(::revealStop)
+        } else {
             markPendingMapFocus()
         }
     }
 
     /**
-     * Arrivals loaded for the focused [stop]. If a restore/deep-link focus is pending, consume the latch
-     * and tell the map to focus it (recenter + add the marker) via [mapDirectives] — so the map reacts
-     * to a directive rather than the activity relaying one VM's decision into another's method. A fresh
-     * map tap already centered the stop and set no pending focus, so this is then a no-op.
+     * Arrivals loaded for the focused [stop]. Records the drawer's exact [trips] on every load. Then,
+     * if a restore/deep-link focus is pending, consume the latch and tell
+     * the map to focus it (recenter + add the marker) via [mapDirectives]. Then activates adjacency for
+     * the loaded route set; a fresh map tap already established the render focus, while a restore emits
+     * [MapDirective.FocusStop] first so the map can validate the route-view request against that focus.
      */
-    fun onArrivalsLoaded(stop: ObaStop, routes: List<ObaRoute>?) {
-        if (!pendingMapFocus) {
-            return
+    fun onArrivalsLoaded(
+        stop: ObaStop,
+        routes: List<ObaRoute>?,
+        trips: Set<FocusedTrip> = emptySet(),
+    ) {
+        val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
+        focusedTrips = trips
+        presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
+        val preserveViewport = pendingMapFocus && preserveViewportForPendingMapFocus
+        if (pendingMapFocus) {
+            pendingMapFocus = false
+            preserveViewportForPendingMapFocus = false
+            emitMapDirective(
+                MapDirective.FocusStop(
+                    stop,
+                    routes,
+                    settledSheet == ArrivalsSheetState.Expanded,
+                    recenter = !preserveViewport,
+                )
+            )
         }
-        pendingMapFocus = false
-        emitMapDirective(MapDirective.FocusStop(stop, routes, settledSheet == ArrivalsSheetState.Expanded))
+        // FocusStop must be dispatched first on restore so the map can validate this stop as the
+        // current rendered focus before starting its adjacency session.
+        emitMapDirective(
+            MapDirective.ShowStopRoutes(
+                stopId = stop.id,
+                routes = routes.orEmpty(),
+                trips = focusedTrips,
+            )
+        )
+        focus.selectedRoute?.let {
+            emitMapDirective(
+                MapDirective.ShowRoute(
+                    it.target(focus.stop.id).toRequest(),
+                    stopScoped = true,
+                    frameRoute = !preserveViewport,
+                )
+            )
+        }
     }
 
     /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
-    fun recenterOnFocusedStop() {
-        _uiState.value.focusedStop?.let {
+    fun recenterOnFocusedStop(undoViewport: MapViewport? = null) {
+        _currentFocus.value.focusedStop?.let {
+            recordViewportUndo(undoViewport)
             emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
         }
     }
 
-    /**
-     * "Show vehicles on map" — switch the map to route mode. The [request] carries the route and (for
-     * the arrivals-row launch) the direction stop to focus on. The sheet collapse is a declarative
-     * reaction to route mode activating (see [HomeScreen]'s `routeModeActive` effect), not a command.
-     */
-    fun requestShowRouteOnMap(request: ShowRouteRequest) {
-        emitMapDirective(MapDirective.ShowRoute(request))
+    /** Select a drawer route and dispatch its map command as one atomic focus transition. */
+    fun selectArrivalRoute(
+        request: ShowRouteRequest,
+        shortName: String,
+        headsign: String?,
+        undoViewport: MapViewport? = null,
+    ) {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        selectStopRoute(
+            stopFocus = stopFocus,
+            request = request,
+            firstLeg = RouteLeg(request.routeId, shortName, request.initialDirectionId),
+            originHeadsign = headsign,
+            undoViewport = undoViewport,
+        )
+    }
+
+    /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
+    fun focusStandaloneRoute(request: ShowRouteRequest, undoViewport: MapViewport? = null) {
+        focusedTrips = emptySet()
+        pushFocus(CurrentFocus.Route(request.toRouteTarget()), undoViewport)
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
+    }
+
+    /** Persist a direction chosen from the standalone route banner. */
+    fun selectStandaloneRouteDirection(directionId: Int) {
+        val focus = _currentFocus.value as? CurrentFocus.Route ?: return
+        replaceFocus(CurrentFocus.Route(focus.target.copy(directionId = directionId)))
+    }
+
+    /** Follow a block continuation while preserving the active focus kind. */
+    fun advanceRouteContinuation(
+        routeId: String,
+        shortName: String,
+        directionId: Int?,
+        undoViewport: MapViewport? = null,
+    ) {
+        when (val focus = _currentFocus.value) {
+            is CurrentFocus.Stop -> {
+                val selected = focus.selectedRoute ?: return
+                val next = selected.continueTo(RouteLeg(routeId, shortName, directionId))
+                pushFocus(focus.copy(selectedRoute = next), undoViewport)
+                emitMapDirective(
+                    MapDirective.ShowRoute(next.target(focus.stop.id).toRequest(), stopScoped = true)
+                )
+            }
+            is CurrentFocus.Route -> {
+                val target = RouteTarget(routeId, directionId = directionId)
+                pushFocus(CurrentFocus.Route(target), undoViewport)
+                emitMapDirective(MapDirective.ShowRoute(target.toRequest(), stopScoped = false))
+            }
+            else -> Unit
+        }
+    }
+
+    /** Clear only the route selected inside the current stop. */
+    fun clearStopRouteSelection() {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        if (stopFocus.selectedRoute == null) return
+        unfocusMapOneLevel()
     }
 
     /**
-     * Back-press from a peeking sheet — clear the focus. The VM owns the focused stop, so clearing it
-     * here hides the sheet; the ClearFocus directive clears the map's render focus. (The old path
-     * only told the map, relying on a focus-listener round-trip the host's setFocusStop(null) doesn't
-     * make — so the sheet never hid; clearing the VM state directly is both correct and the
-     * declarative source of truth.)
+     * A focused-stop route badge behaves like its arrivals-drawer row: carry the focused stop as the
+     * direction anchor so route mode preserves adjacency focus underneath it. The badge additionally
+     * supplies the direction of the line it labels, which wins over stop-based direction resolution.
      */
-    fun requestClearMapFocus() {
-        onStopFocused(null)
-        emitMapDirective(MapDirective.ClearFocus)
+    fun requestShowFocusedStopRouteOnMap(
+        routeId: String,
+        directionId: Int?,
+        shortName: String = routeId,
+        undoViewport: MapViewport? = null,
+    ) {
+        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
+        selectStopRoute(
+            stopFocus = stopFocus,
+            request = ShowRouteRequest(
+                routeId = routeId,
+                directionStopId = stopFocus.stop.id,
+                initialDirectionId = directionId,
+            ),
+            firstLeg = RouteLeg(routeId, shortName, directionId),
+            originHeadsign = null,
+            undoViewport = undoViewport,
+        )
+    }
+
+    private fun selectStopRoute(
+        stopFocus: CurrentFocus.Stop,
+        request: ShowRouteRequest,
+        firstLeg: RouteLeg,
+        originHeadsign: String?,
+        undoViewport: MapViewport?,
+    ) {
+        val next = stopFocus.copy(
+            selectedRoute = StopRouteSelection(
+                originHeadsign = originHeadsign,
+                legs = listOf(firstLeg),
+            )
+        )
+        pushFocus(next, undoViewport)
+        emitMapDirective(
+            MapDirective.ShowRoute(
+                request.copy(directionStopId = stopFocus.stop.id),
+                stopScoped = true,
+            )
+        )
+    }
+
+    /**
+     * A background-map tap drops one attention layer: route-over-stop becomes the plain stop; any
+     * plain stop, standalone route, or bike focus returns to the unfocused root.
+     */
+    fun unfocusMapOneLevel() {
+        val target = when (val focus = _currentFocus.value) {
+            is CurrentFocus.Stop -> if (focus.selectedRoute == null) {
+                CurrentFocus.None
+            } else {
+                CurrentFocus.Stop(focus.stop)
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
+            CurrentFocus.None -> return
+        }
+        pushFocus(target)
+        if (target is CurrentFocus.Stop) {
+            emitMapDirective(MapDirective.ClearSelectedRoute)
+        } else {
+            focusedTrips = emptySet()
+            presentedRoutes = emptySet()
+            emitMapDirective(MapDirective.ClearFocus)
+        }
+    }
+
+    /** Reframe the focused route as one undoable camera action. */
+    fun reframeFocusedRoute(undoViewport: MapViewport?) {
+        if (_currentFocus.value !is CurrentFocus.Route) return
+        recordViewportUndo(undoViewport)
+        emitMapDirective(MapDirective.FrameRoute)
+    }
+
+    /** Record a semantic camera-only action without treating manual pan/zoom as navigation history. */
+    private fun recordViewportUndo(viewport: MapViewport?) {
+        viewport ?: return
+        mapUndoHistory.addLast(MapUndoEntry(_currentFocus.value, viewport))
+        _canUndoMapAction.value = true
+    }
+
+    /** Undo the most recent semantic map action, returning false when no history remains. */
+    fun navigateBackFocus(): Boolean {
+        val from = _currentFocus.value
+        if (mapUndoHistory.isEmpty()) return false
+        val entry = mapUndoHistory.removeLast()
+        _canUndoMapAction.value = mapUndoHistory.isNotEmpty()
+        replaceFocus(entry.focus)
+        restoreMapAfterBack(from, entry)
+        return true
     }
 
     /** Report a nav-drawer / help-menu selection to analytics (by its label res); fired by the host's
@@ -269,10 +501,64 @@ class HomeViewModel @Inject constructor(
         _analyticsEvents.tryEmit(HomeAnalyticsEvent.MenuItem(labelRes))
     }
 
-    // tryEmit (not a launched emit): the buffer (capacity 8, 0 replay) has room for these low-frequency
-    // one-shot directives, matching the codebase effect-flow idiom (MapViewModel etc.).
+    // trySend keeps these low-frequency one-shot directives synchronous with their semantic action.
     private fun emitMapDirective(directive: MapDirective) {
-        _mapDirectives.tryEmit(directive)
+        _mapDirectives.trySend(directive)
+    }
+
+    private fun pushFocus(focus: CurrentFocus, undoViewport: MapViewport? = null) {
+        if (focus == _currentFocus.value && undoViewport == null) return
+        mapUndoHistory.addLast(MapUndoEntry(_currentFocus.value, undoViewport))
+        _canUndoMapAction.value = true
+        if (focus != _currentFocus.value) replaceFocus(focus)
+    }
+
+    private fun replaceFocus(focus: CurrentFocus) {
+        _currentFocus.value = focus
+        CurrentFocusPersistence.write(savedState, focus)
+    }
+
+    private fun restoreMapAfterBack(from: CurrentFocus, entry: MapUndoEntry) {
+        val target = entry.focus
+        val frameFocus = entry.viewport == null
+        if (from == target) {
+            entry.viewport?.let { emitMapDirective(MapDirective.RestoreViewport(it)) }
+            return
+        }
+        val returnsToSameStop = from is CurrentFocus.Stop && target is CurrentFocus.Stop &&
+            from.stop.id.equals(target.stop.id, ignoreCase = true)
+        if (returnsToSameStop) {
+            val selected = target.selectedRoute
+            emitMapDirective(
+                if (selected == null) MapDirective.ClearSelectedRoute
+                else MapDirective.ShowRoute(
+                    selected.target(target.stop.id).toRequest(),
+                    stopScoped = true,
+                    frameRoute = frameFocus,
+                )
+            )
+        } else {
+            focusedTrips = emptySet()
+            when (target) {
+                is CurrentFocus.Stop -> {
+                    pendingMapFocus = true
+                    preserveViewportForPendingMapFocus = !frameFocus
+                    emitMapDirective(MapDirective.ClearFocus)
+                }
+                is CurrentFocus.Route -> {
+                    emitMapDirective(
+                        MapDirective.ShowRoute(
+                            target.target.toRequest(),
+                            stopScoped = false,
+                            frameRoute = frameFocus,
+                        )
+                    )
+                }
+                CurrentFocus.None, is CurrentFocus.BikeStation ->
+                    emitMapDirective(MapDirective.ClearFocus)
+            }
+        }
+        entry.viewport?.let { emitMapDirective(MapDirective.RestoreViewport(it)) }
     }
 
     /**
@@ -319,38 +605,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private companion object {
-        const val KEY_STOP_ID = "home.focusedStop.id"
-        const val KEY_STOP_NAME = "home.focusedStop.name"
-        const val KEY_STOP_CODE = "home.focusedStop.code"
-        const val KEY_STOP_LAT = "home.focusedStop.lat"
-        const val KEY_STOP_LON = "home.focusedStop.lon"
-        const val KEY_BIKE_STATION = "home.focusedBikeStation.id"
-
-        fun readFocusedStop(s: SavedStateHandle): FocusedStop? {
-            val id = s.get<String>(KEY_STOP_ID) ?: return null
-            return FocusedStop(
-                id = id,
-                name = s[KEY_STOP_NAME],
-                code = s[KEY_STOP_CODE],
-                lat = s.get<Double>(KEY_STOP_LAT) ?: 0.0,
-                lon = s.get<Double>(KEY_STOP_LON) ?: 0.0,
-            )
-        }
-    }
 }
-
-/**
- * The home screen's genuine coordination state: the focused stop/bike-station (the only retained domain
- * state, persisted via [SavedStateHandle]). Deliberately small — everything else the home screen renders is
- * owned by a feature VM, a HomeScreen-local `remember`, or a one-shot event (see [HomeViewModel]'s KDoc for
- * what moved).
- */
-data class HomeUiState(
-    // Map focus — survives config change + process death via SavedStateHandle.
-    val focusedStop: FocusedStop? = null,
-    val focusedBikeStationId: String? = null,
-)
 
 /**
  * A telemetry event the ViewModel emits ([HomeViewModel.analyticsEvents]) for the host's single
@@ -378,19 +633,42 @@ sealed interface MapDirective {
     data class RecenterOnFocusedStop(val lat: Double, val lon: Double) : MapDirective
 
     /** Enter route mode for [request]'s route (the "show vehicles on map" action). */
-    data class ShowRoute(val request: ShowRouteRequest) : MapDirective
+    data class ShowRoute(
+        val request: ShowRouteRequest,
+        val stopScoped: Boolean,
+        val frameRoute: Boolean = true,
+    ) : MapDirective
+
+    /** Restore the camera paired with an undone semantic action. */
+    data class RestoreViewport(val viewport: MapViewport) : MapDirective
+
+    /** Reframe the already-focused route without changing focus. */
+    data object FrameRoute : MapDirective
+
+    /** Draw all upcoming routes for the currently focused stop, without reframing the camera. */
+    data class ShowStopRoutes(
+        val stopId: String,
+        val routes: List<ObaRoute>,
+        val trips: Set<FocusedTrip> = emptySet(),
+    ) : MapDirective
+
+    /** Clear an active focused-stop route view when the focused stop changes or is removed. */
+    object ClearStopRoutes : MapDirective
+
+    /** Leave route mode while retaining the focused stop's adjacency session. */
+    data object ClearSelectedRoute : MapDirective
 
     /** Clear the map's render focus (back-press from a peeking arrivals sheet). */
     object ClearFocus : MapDirective
 
     /**
      * Focus a restored / deep-linked stop once its arrivals load: ensure it's on the map, render-focus
-     * it, and recenter (route-header bias only when [overlayExpanded] in route mode). A fresh map tap
-     * already centers the stop, so it doesn't issue this.
+     * it, and optionally recenter (route-header bias only when [overlayExpanded] in route mode).
      */
     data class FocusStop(
         val stop: ObaStop,
         val routes: List<ObaRoute>?,
         val overlayExpanded: Boolean,
+        val recenter: Boolean = true,
     ) : MapDirective
 }

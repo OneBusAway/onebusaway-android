@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.map.render.StopMarker
 
 /**
  * Map interaction a flavor's [ObaComposeMapAdapter] reports back to its host. Flavor-neutral (no
@@ -30,7 +30,7 @@ import org.onebusaway.android.map.render.GeoPoint
  * listeners on the raw map) may ignore this and receive null instead.
  */
 interface ObaMapCallbacks {
-    fun onStopClick(stop: ObaStop)
+    fun onStopClick(marker: StopMarker)
 
     fun onMapClick(point: GeoPoint?)
 
@@ -40,7 +40,10 @@ interface ObaMapCallbacks {
     fun onVehicleClick(status: ObaTripStatus) {}
 
     /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
-    fun onRouteContinuationClick(routeId: String, directionId: Int?) {}
+    fun onRouteContinuationClick(routeId: String, routeShortName: String, directionId: Int?) {}
+
+    /** An adjacency route badge tap (#1827) — enter route mode on the badge's line direction. */
+    fun onRouteBadgeClick(routeId: String, routeShortName: String, directionId: Int?) {}
 
     /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
     fun onVehicleInfoWindowClick(status: ObaTripStatus)

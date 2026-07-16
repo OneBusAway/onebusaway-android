@@ -48,15 +48,16 @@ import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.RegionUtils
 
 /**
  * The nearby-stops use case (the legacy `StopMapController`): loads + accumulates the bus stops in the
- * current viewport as the camera pans/zooms, and owns the stop **render focus** (the 1.5× icon + the
- * center-on-tap camera move). A cold driver over a [MapHost]: it reacts to [MapHost.camera] and writes
+ * current viewport as the camera pans/zooms, and owns the stop **render focus** (the 1.5× icon). A cold
+ * driver over a [MapHost]: it reacts to [MapHost.camera] and writes
  * [MapHost.renderState], so it carries no map-SDK dependency. [start] launches the loader on [scope];
- * [cancel] stops it.
+ * [stop] stops it.
  *
  * Shared by every map that shows nearby stops — the home map, the trip-results / report / location-picker
  * screens — and reused by the route map (which feeds the route's own stops in via [showStops]). The
@@ -105,6 +106,10 @@ class StopsMapController(
     // thread only (all mutators here run there), so a plain field is safe.
     private var favoriteIds: Set<String> = emptySet()
 
+    // Optional route-owned presentation over the canonical nearby-stop cache. A single route hides
+    // nearby stops; a focused stop combines them with exact scheduled trip stops and hides non-members.
+    private var routePresentation: RouteStopPresentation? = null
+
     private var loadJob: Job? = null
 
     init {
@@ -145,7 +150,15 @@ class StopsMapController(
         }
         if (updates.isEmpty()) return
         for ((id, marker) in updates) stopAccum[id] = marker
-        renderState.setStops(ArrayList(stopAccum.values))
+        publishStops()
+    }
+
+    /** Install a single-route or focused-trip stop presentation, or return to ordinary nearby stops. */
+    internal fun setRoutePresentation(presentation: RouteStopPresentation?) {
+        if (routePresentation == presentation) return
+        presentation?.routes?.let(::cacheRoutes)
+        routePresentation = presentation
+        publishStops()
     }
 
     /** (Re)start the viewport stop loader (the old StopMapController's camera watch). */
@@ -380,15 +393,22 @@ class StopsMapController(
      * `MapDirective.FocusStop`): ensure the stop is on the map + render-focused, and center on it
      * (route-header bias only when [routeActive] and the sheet settled expanded).
      */
-    fun focusStop(stop: ObaStop, routes: List<ObaRoute>?, overlayExpanded: Boolean) {
-        val loc = stop.location
-        host.dispatchGesture(
-            CameraCommand.Recenter(
-                loc.latitude, loc.longitude,
-                animate = false,
-                applyRouteBias = routeActive() && overlayExpanded,
+    fun focusStop(
+        stop: ObaStop,
+        routes: List<ObaRoute>?,
+        overlayExpanded: Boolean,
+        recenter: Boolean = true,
+    ) {
+        if (recenter) {
+            val loc = stop.location
+            host.dispatchGesture(
+                CameraCommand.Recenter(
+                    loc.latitude, loc.longitude,
+                    animate = false,
+                    applyRouteBias = routeActive() && overlayExpanded,
+                )
             )
-        )
+        }
         setFocusStop(stop, routes)
     }
 
@@ -399,22 +419,15 @@ class StopsMapController(
 
     // ----- Stops -----
 
-    /**
-     * Accumulate + publish [stops]. [projectedPoints], when non-null, marks these as **route stops**:
-     * each renders as the on-centerline trip-map-style circle (#1752) at its projected point (the route
-     * controller projects the stop onto the shown shape and passes the result here, keeping the route
-     * geometry out of this generic controller). Null (the nearby-stops loader) keeps the normal
-     * direction-anchored icons at the stop's own location.
-     */
+    /** Accumulate ordinary nearby [stops]; route styling is applied separately by [setRoutePresentation]. */
     fun showStops(
         stops: List<ObaStop>,
         routes: List<ObaRoute>,
-        projectedPoints: Map<String, GeoPoint>? = null,
         viewport: CameraSnapshot? = null,
         complete: Boolean = false,
     ) {
         cacheRoutes(routes)
-        accumulateAndPublish(stops, projectedPoints, viewport, complete)
+        accumulateAndPublish(stops, viewport, complete)
     }
 
     /**
@@ -422,32 +435,27 @@ class StopsMapController(
      * nearby-stops loader ([showStops]) and the cache render ([showCachedStops]); the caller seeds the
      * route lookup first.
      *
-     * [viewport], when non-null (the nearby-stops modes), bounds the accumulation to the stops nearest its
-     * centre. [complete] additionally marks an authoritative response: stops it omitted inside the viewport
-     * are cache-busted. Route mode passes `viewport = null` — the whole route's stops arrive in one batch
-     * and aren't capped against each other. (`complete` is a no-op without a viewport.)
+     * [viewport], when non-null, bounds the accumulation to the stops nearest its centre. [complete]
+     * additionally marks an authoritative response: stops it omitted inside the viewport are cache-busted.
      */
     private fun accumulateAndPublish(
         stops: List<ObaStop>,
-        projectedPoints: Map<String, GeoPoint>? = null,
         viewport: CameraSnapshot? = null,
         complete: Boolean = false,
     ) {
         for (stop in stops) {
-            val marker = toStopMarker(stop, projectedPoints)
+            val marker = toStopMarker(stop)
             val existing = stopAccum[stop.id]
-            // Reuse the existing instance when its style + position are unchanged, so a stationary re-poll
-            // of the same set yields an equal list the StateFlow conflates and the renderer never runs.
-            // Replace it when a mode switch flipped the stop's route-circle vs nearby style/point —
-            // otherwise a retained (focused) stop would keep its pre-switch icon. (Favorites are re-synced
-            // separately by applyFavorites, so they're not part of this reuse test.)
+            // Preserve referential stability when nothing the ordinary-stop renderer reads changed.
             stopAccum[stop.id] =
-                if (existing != null && existing.routeStop == marker.routeStop && existing.point == marker.point) existing
-                else marker
+                if (
+                    existing != null && existing.point == marker.point &&
+                    existing.direction == marker.direction && existing.routeType == marker.routeType &&
+                    existing.favorite == marker.favorite
+                ) existing else marker
         }
         if (viewport == null) {
-            // Route mode: the whole batch stays; just publish.
-            renderState.setStops(ArrayList(stopAccum.values))
+            publishStops()
             return
         }
         val focusedId = renderState.snapshot.value.focusedStopId
@@ -460,7 +468,7 @@ class StopsMapController(
         }
         // Bound to the nearest to centre (never evicting the centred core against an incomplete sample).
         trimToNearest(stopAccum, viewport.center, cacheSize(), focusedId)
-        renderState.setStops(ArrayList(stopAccum.values))
+        publishStops()
     }
 
     /** Clears accumulated stops; keeps the focused one unless [clearFocusedStop]. */
@@ -471,7 +479,7 @@ class StopsMapController(
         } else {
             retainOnlyFocusedStop(stopAccum, renderState.snapshot.value.focusedStopId)
         }
-        renderState.setStops(ArrayList(stopAccum.values))
+        publishStops()
     }
 
     /** Programmatic focus (intent/rotation): ensures the stop is on the map, then focuses it. */
@@ -480,12 +488,18 @@ class StopsMapController(
             renderState.setFocusedStopId(null)
             return
         }
-        if (!stopAccum.containsKey(stop.id)) {
+        val newlyAccumulated = !stopAccum.containsKey(stop.id)
+        if (newlyAccumulated) {
             routes?.let { cacheRoutes(it) }
             stopAccum[stop.id] = toStopMarker(stop)
-            renderState.setStops(ArrayList(stopAccum.values))
         }
+        // Focus before publishing (like clearStops): publishStops reads focusedStopId for the
+        // presentation's keep-the-focused-stop fallback. With a route presentation active the marker
+        // list keys off the focus even for an already-accumulated stop, so republish then too.
         renderState.setFocusedStopId(stop.id)
+        if (newlyAccumulated || routePresentation != null) {
+            publishStops()
+        }
     }
 
     fun setFocusedStopId(stopId: String?) = renderState.setFocusedStopId(stopId)
@@ -501,18 +515,30 @@ class StopsMapController(
         }
     }
 
-    private fun toStopMarker(stop: ObaStop, projectedPoints: Map<String, GeoPoint>? = null): StopMarker {
+    private fun toStopMarker(stop: ObaStop): StopMarker {
         val routeType = primaryRouteType(stop.routeIds, routeTypeById)
         // ObaStop.getDirection() is "N".."NW" or the literal "null" string for no direction.
         val direction = stop.direction ?: "null"
-        // A route stop sits on the route centerline (the projected point) and renders as the trip-style
-        // circle; a nearby stop keeps its own location and direction-anchored icon.
-        val routeStop = projectedPoints != null
-        val point = projectedPoints?.get(stop.id) ?: stop.location.toGeoPoint()
         return StopMarker(
-            stop.id, point, direction, routeType, stop,
+            stop.id, stop.location.toGeoPoint(), direction, routeType, stop,
             favorite = stop.id in favoriteIds,
-            routeStop = routeStop,
+        )
+    }
+
+    /** Rebuild the rendered marker list from canonical nearby data and the current route presentation. */
+    private fun publishStops() {
+        val presentation = routePresentation
+        if (presentation == null) {
+            renderState.setStops(ArrayList(stopAccum.values))
+            return
+        }
+        renderState.setStops(
+            applyRouteStopPresentation(
+                nearby = stopAccum.values,
+                focusedStopId = renderState.snapshot.value.focusedStopId,
+                presentation = presentation,
+                markerFor = ::toStopMarker,
+            )
         )
     }
 
@@ -521,5 +547,30 @@ class StopsMapController(
 
         /** Default in-memory stop cap (nearest-to-centre); overridable via the advanced cache-size option. */
         const val DEFAULT_STOP_CACHE_SIZE = 200
+    }
+}
+
+internal data class RouteStopPresentation(
+    val stops: List<ObaStop>,
+    val routes: List<ObaRoute>,
+    val routeDirectionsByStopId: Map<String, Set<RouteDirectionKey>>,
+    val projectedPoints: Map<String, GeoPoint>,
+)
+
+/** Pure marker merge/style policy shared by base-route and exact-trip stop presentations. */
+internal fun applyRouteStopPresentation(
+    nearby: Collection<StopMarker>,
+    focusedStopId: String?,
+    presentation: RouteStopPresentation,
+    markerFor: (ObaStop) -> StopMarker,
+): List<StopMarker> {
+    val source = LinkedHashMap<String, StopMarker>()
+    nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
+    presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
+    return source.values.map { marker ->
+        marker.copy(
+            point = presentation.projectedPoints[marker.id] ?: marker.point,
+            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+        )
     }
 }

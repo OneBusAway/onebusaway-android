@@ -41,6 +41,8 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
+import org.onebusaway.android.map.FocusedTripRepository
+import org.onebusaway.android.map.DefaultFocusedTripRepository
 import org.onebusaway.android.map.DefaultRouteMapRepository
 import org.onebusaway.android.map.RouteMapRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
@@ -236,4 +238,11 @@ abstract class RepositoryModule {
     abstract fun bindTripObservationFetcher(
         impl: DefaultTripObservationFetcher
     ): TripObservationFetcher
+
+    // Focused trips: shared caches and SingleFlight calls coalesce shape/schedule/route-stop fetches.
+    @Binds
+    @Singleton
+    abstract fun bindFocusedTripRepository(
+        impl: DefaultFocusedTripRepository
+    ): FocusedTripRepository
 }

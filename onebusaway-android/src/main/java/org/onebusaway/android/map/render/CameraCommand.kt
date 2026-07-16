@@ -54,6 +54,9 @@ sealed interface CameraCommand {
     /** Set the zoom level (preserving the current center). */
     data class SetZoom(val zoom: Float) : CameraCommand
 
+    /** Restore the center + zoom captured before a semantic action, preserving bearing and tilt. */
+    data class RestoreViewport(val viewport: MapViewport) : CameraCommand
+
     /** Step zoom in/out (the zoom FABs). */
     object ZoomIn : CameraCommand
 

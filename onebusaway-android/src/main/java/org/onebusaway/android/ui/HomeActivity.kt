@@ -182,10 +182,7 @@ class HomeActivity : AppCompatActivity() {
         // Stage the welcome sequence on the VM latch; HomeScreen starts it when the latch fires.
         onShowWelcomeTutorial = viewModel::requestWelcomeTutorial,
         onSheetSettled = viewModel::onSheetSettled,
-        onClearFocus = viewModel::requestClearMapFocus,
         onArrivalsLoaded = ::onArrivalsLoaded,
-        onShowRouteOnMap = viewModel::requestShowRouteOnMap,
-        onCancelRouteMode = ::onCancelRouteMode,
     )
 
     /**
@@ -260,11 +257,6 @@ class HomeActivity : AppCompatActivity() {
         viewModel.reportMenuAnalytics(R.string.analytics_label_button_press_open_source)
     }
 
-    /** The route header's cancel button: return to stop mode, preserving the current zoom + center. */
-    private fun onCancelRouteMode() {
-        mapViewModel.exitRouteMode()
-    }
-
     // --- Help-menu actions that are Activity operations (the dialog-opening ones live in HelpFeature) ---
 
     private fun onHelpAction(action: HelpAction) {
@@ -296,7 +288,7 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun onArrivalsLoaded(loaded: ArrivalsLoaded) {
         val stop = loaded.stop ?: return
-        viewModel.onArrivalsLoaded(stop, loaded.routes)
+        viewModel.onArrivalsLoaded(stop, loaded.routes, loaded.focusedTrips)
     }
 
     private fun goToSendFeedBack() {

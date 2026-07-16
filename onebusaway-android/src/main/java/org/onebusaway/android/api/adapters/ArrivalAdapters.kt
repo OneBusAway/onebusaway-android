@@ -24,7 +24,8 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 
 /** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
-internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this)
+internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData =
+    DtoArrivalData(this, directionId)
 
 /**
  * A closed (or otherwise suppressed) stop keeps `predicted:true` but replaces the near-term prediction
@@ -38,7 +39,10 @@ internal fun ArrivalDeparture.asArrivalData(): ArrivalData = DtoArrivalData(this
 internal fun predictedServerTimeOrNull(epochMs: Long): ServerTime? =
     epochMs.takeIf { it > 0L }?.let { ServerTime(it) }
 
-private class DtoArrivalData(private val d: ArrivalDeparture) : ArrivalData {
+private class DtoArrivalData(
+    private val d: ArrivalDeparture,
+    override val directionId: Int?,
+) : ArrivalData {
     override val routeId get() = d.routeId
     override val tripId get() = d.tripId
     override val stopId get() = d.stopId

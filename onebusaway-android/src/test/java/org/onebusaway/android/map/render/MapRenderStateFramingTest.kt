@@ -69,6 +69,27 @@ class MapRenderStateFramingTest {
     }
 
     @Test
+    fun `route framing geometry stays separate from contextual displayed routes`() {
+        val selected = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0)),
+        )
+        val sibling = RoutePolyline(
+            color = 2,
+            points = listOf(GeoPoint(10.0, 10.0), GeoPoint(11.0, 11.0)),
+        )
+        val state = MapRenderState()
+
+        state.setRoutePolylines(
+            polylines = listOf(sibling, selected),
+            framingPolylines = listOf(selected),
+        )
+
+        assertEquals(listOf(sibling, selected), state.snapshot.value.routePolylines)
+        assertEquals(listOf(selected), state.routeFramingPolylines)
+    }
+
+    @Test
     fun `a gesture dispatched with no subscriber is dropped`() = runTest {
         val state = MapRenderState()
         // No collector yet: this gesture has nowhere to go and must not be replayed.

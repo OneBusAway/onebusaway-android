@@ -48,15 +48,16 @@ import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.RegionUtils
 
 /**
  * The nearby-stops use case (the legacy `StopMapController`): loads + accumulates the bus stops in the
- * current viewport as the camera pans/zooms, and owns the stop **render focus** (the 1.5× icon + the
- * center-on-tap camera move). A cold driver over a [MapHost]: it reacts to [MapHost.camera] and writes
+ * current viewport as the camera pans/zooms, and owns the stop **render focus** (the 1.5× icon). A cold
+ * driver over a [MapHost]: it reacts to [MapHost.camera] and writes
  * [MapHost.renderState], so it carries no map-SDK dependency. [start] launches the loader on [scope];
- * [cancel] stops it.
+ * [stop] stops it.
  *
  * Shared by every map that shows nearby stops — the home map, the trip-results / report / location-picker
  * screens — and reused by the route map (which feeds the route's own stops in via [showStops]). The
@@ -445,14 +446,13 @@ class StopsMapController(
         for (stop in stops) {
             val marker = toStopMarker(stop)
             val existing = stopAccum[stop.id]
-            // Reuse the existing instance when its style + position are unchanged, so a stationary re-poll
-            // of the same set yields an equal list the StateFlow conflates and the renderer never runs.
-            // Replace it when a mode switch flipped the stop's route-circle vs nearby style/point —
-            // otherwise a retained (focused) stop would keep its pre-switch icon. (Favorites are re-synced
-            // separately by applyFavorites, so they're not part of this reuse test.)
+            // Preserve referential stability when nothing the ordinary-stop renderer reads changed.
             stopAccum[stop.id] =
-                if (existing != null && existing.routeStop == marker.routeStop && existing.point == marker.point) existing
-                else marker
+                if (
+                    existing != null && existing.point == marker.point &&
+                    existing.direction == marker.direction && existing.routeType == marker.routeType &&
+                    existing.favorite == marker.favorite
+                ) existing else marker
         }
         if (viewport == null) {
             publishStops()
@@ -547,7 +547,7 @@ class StopsMapController(
 internal data class RouteStopPresentation(
     val stops: List<ObaStop>,
     val routes: List<ObaRoute>,
-    val routeStopIds: Set<String>,
+    val routeDirectionsByStopId: Map<String, Set<RouteDirectionKey>>,
     val projectedPoints: Map<String, GeoPoint>,
 )
 
@@ -562,10 +562,9 @@ internal fun applyRouteStopPresentation(
     nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
     presentation.stops.forEach { source.putIfAbsent(it.id, markerFor(it)) }
     return source.values.map { marker ->
-        val routeStop = marker.id in presentation.routeStopIds
         marker.copy(
             point = presentation.projectedPoints[marker.id] ?: marker.point,
-            routeStop = routeStop,
+            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
         )
     }
 }

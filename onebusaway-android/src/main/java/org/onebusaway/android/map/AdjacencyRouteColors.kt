@@ -19,28 +19,45 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 
 /**
- * Assigns the focused-stop routes HCT hues at a common chroma and tone. Input order is identity order;
- * duplicate route ids retain their first position. Colors in [retained] survive a presentation
- * handoff by route id; only newly introduced routes receive open slots from the new evenly-spaced
- * palette. This keeps a continuing route visually stable when the next stop introduces more routes.
+ * Assigns focused-stop route identities HCT hues at a common chroma and tone. Duplicate identities
+ * retain their first position. Colors in [retained] survive a presentation handoff. Newly introduced
+ * identities take the hue farthest from every color already in
+ * use, successively filling the largest gaps around the circle. This keeps every continuing route
+ * visually stable while spreading the replacement stop's other routes as evenly as possible.
  */
 @SuppressLint("RestrictedApi") // Material Components' vendored color-science utility.
-internal fun adjacencyRouteColors(
-    routeIds: Iterable<String>,
-    retained: Map<String, Int> = emptyMap(),
-): Map<String, Int> {
-    val ids = routeIds.distinct()
-    if (ids.isEmpty()) return emptyMap()
-    val hueStep = HUE_CIRCLE_DEGREES / ids.size
-    val candidates = ids.indices.map { index ->
-        Hct.from(index * hueStep, ADJACENCY_ROUTE_CHROMA, ADJACENCY_ROUTE_TONE).toInt()
+internal fun <K : Any> adjacencyRouteColors(
+    identities: Iterable<K>,
+    retained: Map<K, Int> = emptyMap(),
+): Map<K, Int> {
+    val keys = identities.distinct()
+    if (keys.isEmpty()) return emptyMap()
+    val assigned = retained.filterKeys(keys::contains).toMutableMap()
+
+    if (assigned.isEmpty()) {
+        val hueStep = HUE_CIRCLE_DEGREES / keys.size
+        keys.forEachIndexed { index, key ->
+            assigned[key] = routeColor(index * hueStep)
+        }
+    } else {
+        val usedHues = assigned.values.mapTo(mutableListOf()) { Hct.fromInt(it).hue }
+        keys.filterNot(assigned::containsKey).forEach { key ->
+            val color = routeColor(widestHueGapMidpoint(usedHues))
+            assigned[key] = color
+            usedHues += Hct.fromInt(color).hue
+        }
     }
-    val assigned = ids.mapNotNull { id -> retained[id]?.let { id to it } }.toMap(LinkedHashMap())
-    val unused = candidates.filterNotTo(ArrayDeque()) { it in assigned.values }
-    ids.filterNot(assigned::containsKey).forEach { id ->
-        assigned[id] = unused.removeFirst()
-    }
-    return ids.associateWithTo(LinkedHashMap(), assigned::getValue)
+    return keys.associateWith(assigned::getValue)
+}
+
+private fun routeColor(hue: Double): Int =
+    Hct.from(hue, ADJACENCY_ROUTE_CHROMA, ADJACENCY_ROUTE_TONE).toInt()
+
+private fun widestHueGapMidpoint(hues: List<Double>): Double {
+    val sorted = hues.sorted()
+    val wrapped = sorted + (sorted.first() + HUE_CIRCLE_DEGREES)
+    val widestGap = wrapped.zipWithNext().maxBy { (start, end) -> end - start }
+    return (widestGap.first + widestGap.second) / 2 % HUE_CIRCLE_DEGREES
 }
 
 private const val HUE_CIRCLE_DEGREES = 360.0

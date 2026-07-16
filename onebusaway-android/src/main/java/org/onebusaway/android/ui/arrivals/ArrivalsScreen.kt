@@ -80,6 +80,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.MenuRow
@@ -339,8 +340,8 @@ internal fun ArrivalsList(
     /** Whether a load-more request is in flight, for the footer button's spinner. Collected only by
      *  the footer item below, so a toggle recomposes just that item, not the whole list. */
     loadingMore: StateFlow<Boolean>,
-    /** Stop-focus map colors keyed by route id. Empty for arrivals shown outside the home drawer. */
-    mapRouteColors: Map<String, Int> = emptyMap(),
+    /** Stop-focus map colors keyed by route-direction. Empty outside the home drawer. */
+    mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
     /** Exact route-direction row selected over the home map's stop focus; null outside that state. */
     selectedRowKey: String? = null,
     /** Origin route used to resolve an unambiguous row when map and arrivals headsign labels differ. */
@@ -421,7 +422,7 @@ internal fun ArrivalsList(
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
-                    mapRouteColor = mapRouteColors[group.routeId],
+                    mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
                     selected = group.key == effectiveSelectedRowKey,
                     selectedRouteNames =
                         if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),

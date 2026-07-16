@@ -17,37 +17,34 @@ package org.onebusaway.android.map.layout
 
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** One directional shape on which a route badge may be anchored. */
-data class RouteBadgePath(
-    val points: List<GeoPoint>,
-    val directionId: Int?,
-)
+/** One shape on which a route-direction badge may be anchored. */
+data class RouteBadgePath(val points: List<GeoPoint>)
 
-/** One route and the already-loaded geographic shapes on which its badge may be anchored. */
+/** One route-direction identity and the geographic shapes on which its badge may be anchored. */
 data class RouteBadgeLayoutInput(
-    val routeId: String,
+    val route: RouteDirectionKey,
     val paths: List<RouteBadgePath>,
 )
 
 /** A stable geographic badge anchor. Input order determines collision priority. */
 data class RouteBadgePlacement(
-    val routeId: String,
+    val route: RouteDirectionKey,
     val point: GeoPoint,
-    val directionId: Int?,
     val overlaps: Boolean,
 )
 
 /**
- * Places one badge per route in geographic space, following the line-center convention used for
- * road shields. The midpoint by distance of the route's longest shape is preferred. When that is
- * too close to an earlier route's badge, candidates alternate upstream and downstream by a fixed
- * geographic distance; if none clears [minimumSeparationMeters], the least-conflicting candidate
+ * Places one badge per route-direction identity in geographic space, following the line-center
+ * convention used for road shields. The midpoint by distance of the route's longest shape is
+ * preferred. When that is too close to an earlier route's badge, candidates alternate upstream and
+ * downstream by a fixed geographic distance; if none clears [minimumSeparationMeters], the least-conflicting candidate
  * wins. The result is computed only when route geometry changes and remains fixed across pan/zoom.
  */
 fun layoutRouteBadges(
@@ -74,7 +71,7 @@ fun layoutRouteBadges(
             }
             val overlaps = clear == null && occupied.isNotEmpty()
             occupied += point
-            add(RouteBadgePlacement(input.routeId, point, path.directionId, overlaps))
+            add(RouteBadgePlacement(input.route, point, overlaps))
         }
     }
 }
@@ -82,7 +79,6 @@ fun layoutRouteBadges(
 private data class MeasuredPath(
     val points: List<GeoPoint>,
     val cumulativeMeters: DoubleArray,
-    val directionId: Int?,
 ) {
     val lengthMeters: Double get() = cumulativeMeters.last()
 
@@ -106,7 +102,7 @@ private fun measurePath(path: RouteBadgePath): MeasuredPath? {
     for (index in 1..points.lastIndex) {
         cumulative[index] = cumulative[index - 1] + haversineMeters(points[index - 1], points[index])
     }
-    return MeasuredPath(points, cumulative, path.directionId).takeIf { it.lengthMeters > 0.0 }
+    return MeasuredPath(points, cumulative).takeIf { it.lengthMeters > 0.0 }
 }
 
 private fun candidateDistances(lengthMeters: Double, separationMeters: Double, maxSteps: Int): List<Double> {

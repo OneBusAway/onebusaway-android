@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaTripStatus
 
 /** A geographic point, flavor-neutral (carries no Google/maplibre `LatLng` dependency). */
@@ -44,11 +45,10 @@ fun interface MapProjector {
 }
 
 /**
- * The map's content padding, in pixels. [topPx] keeps content (the Google compass, vehicle markers)
- * below the floating top chrome — the status-bar inset + menu/search FAB-row clearance, plus the
- * route-mode header when a route is shown; [bottomPx] keeps the focused stop above the arrivals sheet.
- * Held as declarative state and
- * applied by the renderer (the Google adapter's `GoogleMap(contentPadding=…)`) instead of an
+ * The map's content padding, in pixels. [topPx] keeps the compass, vehicle markers, and framed content
+ * below the floating top chrome or the active route-focus control, whichever extends farther down;
+ * [bottomPx] keeps the focused stop above the arrivals sheet. Held as declarative state and applied by
+ * the renderer (the Google adapter uses `GoogleMap.setPadding`) instead of an
  * imperative `mapView.setPadding(...)` poke. Kept in its own flow (not [MapRenderSnapshot]) so a
  * padding change doesn't recompose the overlay content.
  */
@@ -156,10 +156,10 @@ data class BikeMarker(
  * [favorite] is stored here (it's a per-stop property that changes as the user stars/unstars), driving
  * the distinctive star icon + tap preference (#1680).
  *
- * [routeStop] marks a stop belonging to the route currently shown on the map: its [point] is projected
- * onto the route centerline and it renders as the trip-map-style circle instead of the direction-anchored
- * icon, so the overview map's route reads the same as the trip map (#1752). It stays a full tappable
- * [StopMarker] (unlike the trip map's non-interactive dots) so tapping still opens the stop's arrivals.
+ * [presentedRoutes] identifies the route-direction variants in the current presentation that serve
+ * this stop. A non-empty set makes [routeStop] true: [point] is projected onto the route centerline
+ * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
+ * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  */
 data class StopMarker(
     val id: String,
@@ -168,8 +168,10 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
-    val routeStop: Boolean = false,
-)
+    val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
+) {
+    val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
+}
 
 /**
  * A tappable badge marking where the selected vehicle's block continues onto a different route

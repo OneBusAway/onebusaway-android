@@ -109,7 +109,7 @@ data class AlertHideState(val decisions: Map<String, Boolean> = emptyMap()) {
 /** A loaded snapshot of a stop's arrivals plus the header, actions, and alerts. */
 data class ArrivalsData(
     val arrivals: List<ArrivalInfo>,
-    /** [arrivals] grouped into one row per (route, direction), ordered by earliest ETA. */
+    /** [arrivals] grouped into one row per (route, direction), ordered by agency, line, and headsign. */
     val routeGroups: List<RouteRowGroup>,
     val header: StopHeader,
     /** The effective time window after the loader's empty-result expansion. */

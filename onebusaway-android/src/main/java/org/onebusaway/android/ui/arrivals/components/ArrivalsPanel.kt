@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.ArrivalsList
 import org.onebusaway.android.ui.arrivals.ArrivalsPolling
@@ -89,7 +90,7 @@ fun ArrivalsPanel(
     listState: LazyListState,
     initialTitle: String,
     handler: ArrivalActionHandler,
-    mapRouteColors: Map<String, Int> = emptyMap(),
+    mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
     selectedRowKey: String? = null,
     selectedRouteId: String? = null,
     selectedRouteNames: List<String> = emptyList(),

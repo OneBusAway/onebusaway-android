@@ -32,6 +32,7 @@ import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
@@ -668,7 +669,7 @@ class HomeViewModelTest {
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
-            continuesPresentedRoute = true,
+            continuingRoutes = setOf(RouteDirectionKey("40", null)),
         )
         advanceUntilIdle()
 
@@ -680,7 +681,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `multiple presented routes replace the map presentation on another stop`() = runTest {
+    fun `any shared route continues a multiple-route map presentation`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
@@ -699,7 +700,148 @@ class HomeViewModelTest {
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
-            continuesPresentedRoute = true,
+            continuingRoutes = setOf(RouteDirectionKey("44", null)),
+        )
+        advanceUntilIdle()
+
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
+        assertEquals(0, map.clearStopRoutesCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `shared route continues from route focus and reanchors selection to the next stop`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(
+                FocusedTrip("trip-45", "45", "shape-45", null, directionId = 0),
+                FocusedTrip("trip-79", "79", "shape-79", null, directionId = 0),
+            ),
+        )
+        vm.requestShowFocusedStopRouteOnMap("79", directionId = 0)
+        advanceUntilIdle()
+        val selection = (vm.currentFocus.value as CurrentFocus.Stop).selectedRoute
+        map.sent.clear()
+
+        val nextStop = FocusedStop("2", "2nd Ave", "200", 47.61, -122.31)
+        val transition = vm.onStopFocused(
+            nextStop,
+            continuingRoutes = setOf(RouteDirectionKey("79", 0)),
+        )
+        advanceUntilIdle()
+
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
+        assertEquals(CurrentFocus.Stop(nextStop, selection), vm.currentFocus.value)
+        assertTrue(map.sent.isEmpty())
+
+        vm.onArrivalsLoaded(
+            ObaStopElement("2", 47.61, -122.31, "2nd Ave", "200"),
+            null,
+            setOf(FocusedTrip("next-trip-79", "79", "next-shape-79", null, directionId = 0)),
+        )
+        advanceUntilIdle()
+
+        assertEquals(listOf("79"), map.routesShown)
+        assertEquals("2", map.routeRequests.single().directionStopId)
+        assertTrue(map.routeCommands.single().stopScoped)
+        job.cancel()
+    }
+
+    @Test
+    fun `another direction of the selected route replaces route focus`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(FocusedTrip("trip-11", "11", "shape-11", null, directionId = 0)),
+        )
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("11", directionStopId = "1", initialDirectionId = 0),
+            shortName = "11",
+            headsign = "Downtown",
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        val transition = vm.onStopFocused(
+            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            continuingRoutes = setOf(RouteDirectionKey("11", 1)),
+        )
+        advanceUntilIdle()
+
+        assertEquals(StopFocusTransition.ReplacePresentation, transition)
+        assertNull((vm.currentFocus.value as CurrentFocus.Stop).selectedRoute)
+        assertEquals(1, map.clearStopRoutesCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `continued route focus warm hops using the current route leg`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(FocusedTrip("trip-65", "65", "shape-65", null, directionId = 0)),
+        )
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", directionStopId = "1", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown",
+        )
+        vm.advanceRouteContinuation("75", "75", directionId = 1)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        val nextStop = FocusedStop("2", "2nd Ave", "200", 47.61, -122.31)
+        val transition = vm.onStopFocused(
+            nextStop,
+            continuingRoutes = setOf(RouteDirectionKey("75", 1)),
+        )
+        advanceUntilIdle()
+
+        val focus = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals(StopFocusTransition.ContinuePresentation, transition)
+        assertEquals(nextStop, focus.stop)
+        assertEquals("75", focus.selectedRoute?.currentLeg?.routeId)
+        assertTrue(map.sent.isEmpty())
+        job.cancel()
+    }
+
+    @Test
+    fun `stop without a shared route replaces the map presentation`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onArrivalsLoaded(
+            obaStop,
+            null,
+            setOf(
+                FocusedTrip("trip-45", "45", "shape-45", null),
+                FocusedTrip("trip-79", "79", "shape-79", null),
+            ),
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        val transition = vm.onStopFocused(
+            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            continuingRoutes = setOf(RouteDirectionKey("62", null)),
         )
         advanceUntilIdle()
 

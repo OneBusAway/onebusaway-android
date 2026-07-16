@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.models.RouteDirectionKey
+import kotlin.math.abs
 
 @SuppressLint("RestrictedApi")
 class AdjacencyRouteColorsTest {
@@ -30,6 +32,17 @@ class AdjacencyRouteColorsTest {
     }
 
     @Test
+    fun `directions of one route receive distinct colors`() {
+        val outbound = RouteDirectionKey("11", 0)
+        val inbound = RouteDirectionKey("11", 1)
+
+        val colors = adjacencyRouteColors(listOf(outbound, inbound))
+
+        assertEquals(setOf(outbound, inbound), colors.keys)
+        assertEquals(2, colors.values.toSet().size)
+    }
+
+    @Test
     fun `continuing route keeps its color when a stop introduces more routes`() {
         val route62 = adjacencyRouteColors(listOf("62")).getValue("62")
 
@@ -39,6 +52,34 @@ class AdjacencyRouteColorsTest {
         )
 
         assertEquals(route62, colors.getValue("62"))
+        assertEquals(4, colors.values.toSet().size)
+    }
+
+    @Test
+    fun `continuing route keeps its color when the next stop has fewer routes`() {
+        val first = adjacencyRouteColors(listOf("45", "79"))
+
+        val next = adjacencyRouteColors(listOf("79"), retained = first)
+
+        assertEquals(first.getValue("79"), next.getValue("79"))
+        assertEquals(setOf("79"), next.keys)
+    }
+
+    @Test
+    fun `new routes fill the largest retained hue gaps`() {
+        val retained = mapOf("existing" to Hct.from(0.0, 75.0, 55.0).toInt())
+
+        val colors = adjacencyRouteColors(
+            listOf("existing", "opposite", "quarter", "three-quarter"),
+            retained,
+        )
+
+        assertEquals(retained.getValue("existing"), colors.getValue("existing"))
+        val hueDifference = abs(
+            Hct.fromInt(colors.getValue("opposite")).hue -
+                Hct.fromInt(colors.getValue("existing")).hue
+        )
+        assertEquals(180.0, minOf(hueDifference, 360.0 - hueDifference), 1.0)
         assertEquals(4, colors.values.toSet().size)
     }
 }

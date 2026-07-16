@@ -36,6 +36,7 @@ import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.SingleFlight
@@ -46,9 +47,11 @@ data class FocusedTripShape(
     val routeColor: Int?,
     val points: List<GeoPoint>,
     val directionId: Int? = null,
-)
+) {
+    val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
+}
 
-data class FocusedTripGeometry(val shapes: Map<String, FocusedTripShape>)
+data class FocusedTripGeometry(val shapes: List<FocusedTripShape>)
 
 data class FocusedTripStops(
     val stopIdsByTripId: Map<String, List<String>>,
@@ -119,34 +122,35 @@ class DefaultFocusedTripRepository internal constructor(
         ExpiringLruCache<String, List<GeoPoint>>(cacheSize, cacheTtl, now)
 
     override suspend fun getGeometry(trips: Set<FocusedTrip>): FocusedTripGeometry = coroutineScope {
-        val byShapeId = LinkedHashMap<String, FocusedTrip>()
+        val tripsWithShapes = ArrayList<FocusedTrip>()
+        val fetchTripByShapeId = LinkedHashMap<String, FocusedTrip>()
         for (trip in trips) {
-            trip.shapeId?.let { byShapeId.putIfAbsent(it, trip) }
+            trip.shapeId?.let { shapeId ->
+                tripsWithShapes += trip
+                fetchTripByShapeId.putIfAbsent(shapeId, trip)
+            }
         }
-        val resolved = byShapeId.values.map { trip ->
+        val pointsByShapeId = fetchTripByShapeId.values.map { trip ->
             async {
                 val shapeId = checkNotNull(trip.shapeId)
-                trip to fetchShape(trip.tripId, shapeId)
+                shapeId to fetchShape(trip.tripId, shapeId)
             }
-        }.awaitAll()
+        }.awaitAll().toMap()
         FocusedTripGeometry(
-            buildMap {
-                for ((trip, points) in resolved) {
-                    if (points != null) {
-                        val shapeId = checkNotNull(trip.shapeId)
-                        put(
+            tripsWithShapes
+                .distinctBy { checkNotNull(it.shapeId) to it.routeDirection }
+                .mapNotNull { trip ->
+                    val shapeId = checkNotNull(trip.shapeId)
+                    pointsByShapeId[shapeId]?.let { points ->
+                        FocusedTripShape(
                             shapeId,
-                            FocusedTripShape(
-                                shapeId,
-                                trip.routeId,
-                                trip.routeColor,
-                                points,
-                                trip.directionId,
-                            )
+                            trip.routeId,
+                            trip.routeColor,
+                            points,
+                            trip.directionId,
                         )
                     }
                 }
-            }
         )
     }
 

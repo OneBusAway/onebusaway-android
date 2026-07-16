@@ -10,14 +10,15 @@ import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.RouteDirectionKey
 
 class RouteViewGeometryTest {
 
     @Test
     fun `focused trip shape uses one uniform directional line`() {
         val geometry = FocusedTripGeometry(
-            mapOf(
-                "shape" to FocusedTripShape(
+            listOf(
+                FocusedTripShape(
                     "shape", "route", 0xFF123456.toInt(),
                     listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0)),
                 )
@@ -42,22 +43,25 @@ class RouteViewGeometryTest {
 
     @Test
     fun `empty focused geometry draws no route fallback`() {
-        assertEquals(emptyList<Any>(), FocusedTripGeometry(emptyMap()).toRoutePolylines())
+        assertEquals(emptyList<Any>(), FocusedTripGeometry(emptyList()).toRoutePolylines())
     }
 
     @Test
     fun `selected route is one and a half times normal while siblings render thin underneath`() {
         val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0))
         val geometry = FocusedTripGeometry(
-            linkedMapOf(
-                "selected-shape" to FocusedTripShape("selected-shape", "selected", 1, points),
-                "other-shape" to FocusedTripShape("other-shape", "other", 2, points),
+            listOf(
+                FocusedTripShape("selected-shape", "selected", 1, points, directionId = 0),
+                FocusedTripShape("other-shape", "other", 2, points, directionId = 1),
             )
         )
 
         val lines = geometry.toRoutePolylines(
-            emphasizedRouteId = "selected",
-            routeColors = mapOf("selected" to 10, "other" to 20),
+            emphasizedRoute = RouteDirectionKey("selected", 0),
+            routeColors = mapOf(
+                RouteDirectionKey("selected", 0) to 10,
+                RouteDirectionKey("other", 1) to 20,
+            ),
         )
 
         assertEquals(listOf(20, 10), lines.map { it.color })
@@ -72,21 +76,30 @@ class RouteViewGeometryTest {
     }
 
     @Test
-    fun `selected route exposes only stops from its focused trips`() {
+    fun `scheduled stops carry every presented route that serves them`() {
         val trips = setOf(
-            FocusedTrip("selected-trip", "selected", null, null),
-            FocusedTrip("other-trip", "other", null, null),
+            FocusedTrip("trip-45", "45", null, null, directionId = 0),
+            FocusedTrip("trip-79", "79", null, null, directionId = 1),
         )
         val stops = FocusedTripStops(
             stopIdsByTripId = mapOf(
-                "selected-trip" to listOf("focus", "selected-stop"),
-                "other-trip" to listOf("focus", "other-stop"),
+                "trip-45" to listOf("u-district"),
+                "trip-79" to listOf("u-district", "20th-and-50th"),
             ),
             stopsById = emptyMap(),
         )
 
-        assertEquals(setOf("focus", "selected-stop"), stops.stopIdsForRoute(trips, "selected"))
-        assertEquals(setOf("focus", "selected-stop", "other-stop"), stops.stopIdsForRoute(trips, null))
+        assertEquals(
+            mapOf(
+                "u-district" to setOf(RouteDirectionKey("45", 0), RouteDirectionKey("79", 1)),
+                "20th-and-50th" to setOf(RouteDirectionKey("79", 1)),
+            ),
+            stops.routeDirectionsByStopId(trips),
+        )
+        assertEquals(
+            mapOf("u-district" to setOf(RouteDirectionKey("45", 0))),
+            stops.routeDirectionsByStopId(trips, route = RouteDirectionKey("45", 0)),
+        )
     }
 
     @Test
@@ -94,12 +107,12 @@ class RouteViewGeometryTest {
         val firstPath = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
         val secondPath = listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0))
         val geometry = FocusedTripGeometry(
-            linkedMapOf(
-                "b-shape" to FocusedTripShape("b-shape", "route-b", null, firstPath, directionId = 1),
-                "a-shape-1" to FocusedTripShape(
+            listOf(
+                FocusedTripShape("b-shape", "route-b", null, firstPath, directionId = 1),
+                FocusedTripShape(
                     "a-shape-1", "route-a", 0xFF123456.toInt(), firstPath, directionId = 0,
                 ),
-                "a-shape-2" to FocusedTripShape(
+                FocusedTripShape(
                     "a-shape-2", "route-a", 0xFF123456.toInt(), secondPath, directionId = 1,
                 ),
             )
@@ -110,14 +123,17 @@ class RouteViewGeometryTest {
                 route("route-a", "A", 0xFF654321.toInt()),
                 route("route-b", "B", 0xFFABCDEF.toInt()),
             ),
-            routeColors = mapOf("route-a" to 10, "route-b" to 20),
+            routeColors = mapOf(
+                RouteDirectionKey("route-a", 0) to 10,
+                RouteDirectionKey("route-a", 1) to 30,
+                RouteDirectionKey("route-b", 1) to 20,
+            ),
         )
 
-        assertEquals(listOf("route-b", "route-a"), badges.map { it.routeId })
-        assertEquals(listOf("B", "A"), badges.map { it.routeShortName })
-        assertEquals(20, badges[0].color)
-        assertEquals(10, badges[1].color)
-        assertEquals(listOf(1, 0), badges.map { it.directionId })
+        assertEquals(listOf("route-b", "route-a", "route-a"), badges.map { it.routeId })
+        assertEquals(listOf("B", "A", "A"), badges.map { it.routeShortName })
+        assertEquals(listOf(20, 10, 30), badges.map { it.color })
+        assertEquals(listOf(1, 0, 1), badges.map { it.directionId })
         assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
         assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)
     }
@@ -126,10 +142,10 @@ class RouteViewGeometryTest {
     fun `route badge requires both drawable geometry and route metadata`() {
         val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
         val geometry = FocusedTripGeometry(
-            linkedMapOf(
-                "known" to FocusedTripShape("known", "known-route", 1, points),
-                "missing-metadata" to FocusedTripShape("missing-metadata", "missing-route", 2, points),
-                "degenerate" to FocusedTripShape("degenerate", "degenerate-route", 3, listOf(points.first())),
+            listOf(
+                FocusedTripShape("known", "known-route", 1, points),
+                FocusedTripShape("missing-metadata", "missing-route", 2, points),
+                FocusedTripShape("degenerate", "degenerate-route", 3, listOf(points.first())),
             )
         )
 

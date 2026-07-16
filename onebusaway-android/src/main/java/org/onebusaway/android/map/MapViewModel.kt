@@ -31,6 +31,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
@@ -232,6 +233,9 @@ class MapViewModel @Inject constructor(
             .map { it?.toRouteHeader() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /** The actual palette used for routes around the focused stop. */
+    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
+
     /** Apply the active route focus control's bottom edge in map coordinates; zero clears it. */
     fun setRouteFocusTopEdge(bottomPx: Int) {
         mapHost.setRouteFocusTopEdge(if (bottomPx > 0) bottomPx + routeHeaderMarkerPaddingPx else 0)
@@ -335,7 +339,7 @@ class MapViewModel @Inject constructor(
 
     // ----- Focus + taps (delegated to [stopsController], except the vehicle selection) -----
 
-    /** A stop marker was tapped: render-focus it + center on it (the old GoogleMapHost.onStopClick). */
+    /** A stop marker was tapped: render-focus it without disturbing the current viewport. */
     fun onStopTapped(stop: ObaStop) = stopsController.onStopTapped(stop)
 
     /** Selects the tapped vehicle, so the renderer shows its most-recent-data marker. */

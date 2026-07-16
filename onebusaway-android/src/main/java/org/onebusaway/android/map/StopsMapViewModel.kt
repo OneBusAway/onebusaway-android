@@ -84,7 +84,7 @@ class StopsMapViewModel @Inject constructor(
         stopsController.start()
     }
 
-    /** A stop marker was tapped: render-focus it + center on it. */
+    /** A stop marker was tapped: render-focus it without disturbing the viewport. */
     fun onStopTapped(stop: ObaStop) = stopsController.onStopTapped(stop)
 
     /** A tap away from any marker clears the stop render focus. */

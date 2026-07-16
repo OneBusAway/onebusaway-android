@@ -7,6 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.models.RouteDirectionKey
 
 class RouteBadgeLayoutTest {
 
@@ -26,10 +27,10 @@ class RouteBadgeLayoutTest {
         val placement = layoutRouteBadges(
             listOf(
                 RouteBadgeLayoutInput(
-                    "route",
+                    RouteDirectionKey("route", 1),
                     listOf(
-                        RouteBadgePath(path(0.0, 0.0, 0.01), 0),
-                        RouteBadgePath(path(1.0, 10.0, 14.0), 1),
+                        RouteBadgePath(path(0.0, 0.0, 0.01)),
+                        RouteBadgePath(path(1.0, 10.0, 14.0)),
                     ),
                 )
             )
@@ -37,7 +38,7 @@ class RouteBadgeLayoutTest {
 
         assertEquals(1.0, placement.point.latitude, 0.001)
         assertEquals(12.0, placement.point.longitude, 0.000001)
-        assertEquals(1, placement.directionId)
+        assertEquals(1, placement.route.directionId)
     }
 
     @Test
@@ -62,7 +63,7 @@ class RouteBadgeLayoutTest {
             minimumSeparationMeters = 1_000.0,
         )
 
-        assertEquals(listOf("priority", "later"), placements.map { it.routeId })
+        assertEquals(listOf("priority", "later"), placements.map { it.route.routeId })
         assertEquals(0.05, placements.first().point.longitude, 0.000001)
     }
 
@@ -84,11 +85,10 @@ class RouteBadgeLayoutTest {
         val placements = layoutRouteBadges(
             listOf(
                 RouteBadgeLayoutInput(
-                    "route",
+                    RouteDirectionKey("route", 1),
                     listOf(
                         RouteBadgePath(
                             listOf(GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0)),
-                            directionId = 1,
                         )
                     ),
                 )
@@ -99,7 +99,7 @@ class RouteBadgeLayoutTest {
     }
 
     private fun input(id: String, points: List<GeoPoint>, directionId: Int? = null) =
-        RouteBadgeLayoutInput(id, listOf(RouteBadgePath(points, directionId)))
+        RouteBadgeLayoutInput(RouteDirectionKey(id, directionId), listOf(RouteBadgePath(points)))
 
     private fun path(latitude: Double, vararg longitudes: Double) =
         longitudes.map { longitude -> GeoPoint(latitude, longitude) }

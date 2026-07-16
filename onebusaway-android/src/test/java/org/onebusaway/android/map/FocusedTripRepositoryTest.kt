@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.api.adapters.StopTimeData
@@ -75,7 +75,7 @@ class FocusedTripRepositoryTest {
     }
 
     @Test
-    fun `geometry deduplicates shared shape and keeps no fallback for a failed shape`() = runTest {
+    fun `geometry fetches a shared shape once but retains each route direction`() = runTest {
         val observations = Observations().apply {
             shapes["shared"] = Polyline(emptyList())
             shapes["missing"] = null
@@ -87,17 +87,17 @@ class FocusedTripRepositoryTest {
         val result = repository.getGeometry(
             setOf(
                 FocusedTrip("first", "route", "shared", 7, directionId = 1),
-                FocusedTrip("second", "route", "shared", 7, directionId = 1),
+                FocusedTrip("second", "route", "shared", 7, directionId = 0),
                 FocusedTrip("failed", "route", "missing", 8),
                 FocusedTrip("no-shape", "route", null, 9),
             )
         )
 
-        assertEquals(setOf("shared"), result.shapes.keys)
-        assertEquals(1, result.shapes.getValue("shared").directionId)
+        assertEquals(listOf(1, 0), result.shapes.map { it.directionId })
+        assertTrue(result.shapes.all { it.shapeId == "shared" })
         assertEquals(1, observations.shapeRequests.count { it.second == "shared" })
         assertEquals(1, observations.shapeRequests.count { it.second == "missing" })
-        assertNull(result.shapes["missing"])
+        assertTrue(result.shapes.none { it.shapeId == "missing" })
     }
 
     @Test

@@ -32,6 +32,7 @@ import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.region.Region
@@ -107,8 +108,8 @@ class HomeViewModel @Inject constructor(
 
     // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). Buffered so a directive
-    // issued just before the collector is active isn't dropped.
+    // reference to the map's VM (the seam the old MapInteractionBus filled). The extra capacity keeps
+    // these low-frequency events from suspending an active producer.
     private val _mapDirectives = MutableSharedFlow<MapDirective>(extraBufferCapacity = 8)
     val mapDirectives: SharedFlow<MapDirective> = _mapDirectives.asSharedFlow()
 
@@ -148,28 +149,35 @@ class HomeViewModel @Inject constructor(
     /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
     var focusedTrips: Set<FocusedTrip> = emptySet()
         private set
-    private var presentedRouteIds: Set<String> = emptySet()
+    private var presentedRoutes: Set<RouteDirectionKey> = emptySet()
 
     /**
-     * A map stop gained focus. When the tapped stop is served by the one route already presented for
-     * a plain stop focus, keep that presentation alive while the new arrivals replace it.
+     * A map stop gained focus. When it shares any presented route-direction with the current stop,
+     * keep that presentation alive while the new arrivals replace it, including any selected route.
      */
     internal fun onStopFocused(
         stop: FocusedStop,
-        continuesPresentedRoute: Boolean = false,
+        continuingRoutes: Set<RouteDirectionKey> = emptySet(),
     ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
         if (sameStop) return StopFocusTransition.Unchanged
         val current = _currentFocus.value as? CurrentFocus.Stop
-        val continuePresentation = current?.selectedRoute == null &&
-            presentedRouteIds.size == 1 && continuesPresentedRoute
+        val continuePresentation = when (val selected = current?.selectedRoute) {
+            null -> current != null && presentedRoutes.any(continuingRoutes::contains)
+            else -> selected.currentLeg.routeDirection in continuingRoutes
+        }
         focusedTrips = emptySet()
         if (!continuePresentation) {
-            presentedRouteIds = emptySet()
+            presentedRoutes = emptySet()
             emitMapDirective(MapDirective.ClearStopRoutes)
         }
-        pushFocus(CurrentFocus.Stop(stop))
+        pushFocus(
+            CurrentFocus.Stop(
+                stop = stop,
+                selectedRoute = if (continuePresentation) current?.selectedRoute else null,
+            )
+        )
         return if (continuePresentation) {
             StopFocusTransition.ContinuePresentation
         } else {
@@ -282,10 +290,7 @@ class HomeViewModel @Inject constructor(
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
         focusedTrips = trips
-        presentedRouteIds = buildSet {
-            routes.orEmpty().mapTo(this) { it.id }
-            trips.mapTo(this, FocusedTrip::routeId)
-        }
+        presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val preserveViewport = pendingMapFocus && preserveViewportForPendingMapFocus
         if (pendingMapFocus) {
             pendingMapFocus = false
@@ -455,7 +460,7 @@ class HomeViewModel @Inject constructor(
             emitMapDirective(MapDirective.ClearSelectedRoute)
         } else {
             focusedTrips = emptySet()
-            presentedRouteIds = emptySet()
+            presentedRoutes = emptySet()
             emitMapDirective(MapDirective.ClearFocus)
         }
     }
@@ -491,8 +496,7 @@ class HomeViewModel @Inject constructor(
         _analyticsEvents.tryEmit(HomeAnalyticsEvent.MenuItem(labelRes))
     }
 
-    // tryEmit (not a launched emit): the buffer (capacity 8, 0 replay) has room for these low-frequency
-    // one-shot directives, matching the codebase effect-flow idiom (MapViewModel etc.).
+    // tryEmit keeps these low-frequency one-shot directives synchronous with their semantic action.
     private fun emitMapDirective(directive: MapDirective) {
         _mapDirectives.tryEmit(directive)
     }
@@ -598,12 +602,6 @@ class HomeViewModel @Inject constructor(
 
 }
 
-/**
- * The home screen's genuine coordination state: the focused stop/bike-station (the only retained domain
- * state, persisted via [SavedStateHandle]). Deliberately small — everything else the home screen renders is
- * owned by a feature VM, a HomeScreen-local `remember`, or a one-shot event (see [HomeViewModel]'s KDoc for
- * what moved).
- */
 /**
  * A telemetry event the ViewModel emits ([HomeViewModel.analyticsEvents]) for the host's single
  * [HomeAnalyticsEffect] to report — keeping the imperative `ObaAnalytics` calls out of the activity

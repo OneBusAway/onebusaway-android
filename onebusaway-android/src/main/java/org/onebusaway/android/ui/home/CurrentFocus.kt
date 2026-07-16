@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home
 
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.models.RouteDirectionKey
 
 /** The one mutually-exclusive focus rendered by HOME. */
 sealed interface CurrentFocus {
@@ -59,7 +60,9 @@ data class RouteLeg(
     val routeId: String,
     val shortName: String,
     val directionId: Int? = null,
-)
+) {
+    val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
+}
 
 /** A route selected inside stop focus, anchored to its original arrivals row across continuations. */
 data class StopRouteSelection(

@@ -200,6 +200,7 @@ fun HomeScreen(
         val stopFocus = currentFocus as? CurrentFocus.Stop
         val standaloneRouteFocused = currentFocus is CurrentFocus.Route
         val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
+        val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
@@ -442,6 +443,7 @@ fun HomeScreen(
                             focusedStop = stopFocus?.stop,
                             sheetVisible = sheetShown,
                             selectedRoute = stopFocus?.selectedRoute,
+                            mapRouteColors = mapRouteColors,
                             arrivalsViewModelFactory = arrivalsViewModelFactory,
                             onArrivalsLoaded = onArrivalsLoaded,
                             onClearRouteSelection = homeViewModel::clearStopRouteSelection,

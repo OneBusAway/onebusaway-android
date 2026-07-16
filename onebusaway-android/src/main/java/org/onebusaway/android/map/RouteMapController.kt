@@ -41,6 +41,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.map.render.ContinuationArrow
 import org.onebusaway.android.map.render.ContinuationBadge
@@ -131,10 +132,11 @@ class RouteMapController(
 
     private var stopFocusSession: StopFocusSession? = null
     private var stopFocusJob: Job? = null
-    private var focusedGeometry = FocusedTripGeometry(emptyMap())
+    private var focusedGeometry = FocusedTripGeometry(emptyList())
     private var focusedStops = FocusedTripStops(emptyMap(), emptyMap())
     private var focusedRoutes: List<ObaRoute> = emptyList()
-    private var focusedRouteColors: Map<String, Int> = emptyMap()
+    private val _focusedRouteColors = MutableStateFlow<Map<RouteDirectionKey, Int>>(emptyMap())
+    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> = _focusedRouteColors.asStateFlow()
 
     val focusedStopId: String? get() = stopFocusSession?.stopId
 
@@ -143,6 +145,12 @@ class RouteMapController(
     // resolved (it reads null during the Pending window, which no caller relies on).
     private val currentDirectionId: Int?
         get() = (directionState as? DirectionState.Resolved)?.directionId
+
+    private val presentationDirectionId: Int?
+        get() = when (val state = directionState) {
+            DirectionState.Pending -> initialDirectionOverride
+            is DirectionState.Resolved -> state.directionId
+        }
 
     // What direction the vehicle layer should show — the single source of truth the per-frame sampler
     // reads (so it's a field, not a captured value; the sampler is installed in start() before the route
@@ -205,9 +213,6 @@ class RouteMapController(
         focusTripId: String? = null,
     ) {
         this.routeId = routeId
-        // When stop focus survives an arrivals-row or route-badge tap, emphasize this route
-        // immediately from the already-loaded adjacency geometry instead of waiting for route load.
-        publishMapPresentation()
         this.directionStopId = directionStopId
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
@@ -217,6 +222,9 @@ class RouteMapController(
         this.directionState =
             if (directionStopId == null && initialDirectionId == null) DirectionState.Resolved(null)
             else DirectionState.Pending
+        // When stop focus survives an arrivals-row or route-badge tap, emphasize this route
+        // immediately from the already-loaded adjacency geometry instead of waiting for route load.
+        publishMapPresentation()
         _loadedRoute.value = LoadedRoute.Loading
         host.setProgress(true)
         // The live vehicle layer: the renderer pulls a frame from this sampler each display frame,
@@ -482,7 +490,7 @@ class RouteMapController(
             applyStopFocus(
                 next,
                 routes,
-                FocusedTripGeometry(emptyMap()),
+                FocusedTripGeometry(emptyList()),
                 FocusedTripStops(emptyMap(), emptyMap()),
             )
         }
@@ -492,7 +500,7 @@ class RouteMapController(
                     runCatching { focusedTripRepository.getGeometry(next.trips) }
                         .getOrElse {
                             if (it is CancellationException) throw it
-                            FocusedTripGeometry(emptyMap())
+                            FocusedTripGeometry(emptyList())
                         }
                         .also {
                             if (!retainCurrentPresentation && stopFocusSession == next) {
@@ -534,9 +542,9 @@ class RouteMapController(
     ) {
         stopFocusSession = session
         focusedRoutes = routes
-        focusedRouteColors = adjacencyRouteColors(
-            session.trips.map(FocusedTrip::routeId),
-            retained = focusedRouteColors,
+        _focusedRouteColors.value = adjacencyRouteColors(
+            session.trips.map(FocusedTrip::routeDirection),
+            retained = _focusedRouteColors.value,
         )
         focusedGeometry = geometry
         focusedStops = stops
@@ -550,10 +558,10 @@ class RouteMapController(
         stopFocusSession = null
         stopFocusJob?.cancel()
         stopFocusJob = null
-        focusedGeometry = FocusedTripGeometry(emptyMap())
+        focusedGeometry = FocusedTripGeometry(emptyList())
         focusedStops = FocusedTripStops(emptyMap(), emptyMap())
         focusedRoutes = emptyList()
-        focusedRouteColors = emptyMap()
+        _focusedRouteColors.value = emptyMap()
         if (isActive) stopsController.stop() else stopsController.start()
         publishMapPresentation()
     }
@@ -566,12 +574,13 @@ class RouteMapController(
             stopsController.setRoutePresentation(baseStopPresentation)
             return
         }
-        val emphasizedRouteId = routeId
-        val showBaseRoute = isActive && emphasizedRouteId != null &&
-            focus.trips.none { it.routeId == emphasizedRouteId }
-        val visibleStopIds = focusedStops.stopIdsForRoute(focus.trips, emphasizedRouteId)
+        val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
+        val showBaseRoute = isActive && emphasizedRoute != null &&
+            focus.trips.none { it.routeDirection == emphasizedRoute }
+        val routesByStopId = focusedStops.routeDirectionsByStopId(focus.trips, emphasizedRoute)
+        val routeColors = _focusedRouteColors.value
         renderState.setRoutePolylines(
-            polylines = focusedGeometry.toRoutePolylines(emphasizedRouteId, focusedRouteColors) +
+            polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
                 if (showBaseRoute) basePolylines else emptyList(),
             // Adjacency remains visible underneath route mode, but the active route's fully loaded
             // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
@@ -579,8 +588,8 @@ class RouteMapController(
             framingPolylines = if (isActive) basePolylines else emptyList(),
         )
         renderState.setRouteBadges(
-            if (emphasizedRouteId == null) {
-                focusedGeometry.toRouteBadges(focusedRoutes, focusedRouteColors)
+            if (emphasizedRoute == null) {
+                focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
             }
             else emptyList()
         )
@@ -589,9 +598,9 @@ class RouteMapController(
                 baseStopPresentation
             } else {
                 RouteStopPresentation(
-                    stops = visibleStopIds.mapNotNull(focusedStops.stopsById::get),
+                    stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
                     routes = focusedRoutes,
-                    routeStopIds = visibleStopIds,
+                    routeDirectionsByStopId = routesByStopId,
                     projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
                 )
             }
@@ -608,7 +617,7 @@ class RouteMapController(
         val candidates = LinkedHashMap<String, MutableList<Polyline>>()
         for ((tripId, stopIds) in stops.stopIdsByTripId) {
             val shapeId = tripById[tripId]?.shapeId ?: continue
-            val points = geometry.shapes[shapeId]?.points ?: continue
+            val points = geometry.shapes.firstOrNull { it.shapeId == shapeId }?.points ?: continue
             if (points.size < 2) continue
             val polyline = Polyline(points.map(GeoPoint::toLocation))
             stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
@@ -693,11 +702,14 @@ class RouteMapController(
 
     /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
     private fun showDirectionStops() {
+        val route = routeId ?: return
         val stops = routeStops.stopsForDirection(currentDirectionId)
         baseStopPresentation = RouteStopPresentation(
             stops = stops,
             routes = routeStopRoutes,
-            routeStopIds = stops.mapTo(LinkedHashSet(), ObaStop::id),
+            routeDirectionsByStopId = stops.associate {
+                it.id to setOf(RouteDirectionKey(route, currentDirectionId))
+            },
             projectedPoints = projectStopsOntoShape(stops),
         )
         publishMapPresentation()

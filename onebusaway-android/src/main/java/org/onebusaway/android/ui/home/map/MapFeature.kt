@@ -146,7 +146,7 @@ fun MapFeature(
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, stop.latitude, stop.longitude),
-                    continuesPresentedRoute = marker.routeStop,
+                    continuingRoutes = marker.presentedRoutes,
                 )
                 if (transition == StopFocusTransition.ReplacePresentation) {
                     mapViewModel.clearAllFocus()

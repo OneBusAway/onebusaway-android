@@ -359,7 +359,7 @@ fun HomeScreen(
                     ?: currentFocus.stop.name.orEmpty(),
                 direction = arrivalsContent?.header?.direction,
                 isFavorite = arrivalsContent?.header?.isFavorite == true,
-                actionsAvailable = arrivalsContent != null,
+                favoriteEnabled = arrivalsContent != null,
                 hasAlerts = arrivalsContent?.hasAlerts == true,
                 subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
                     FocusBannerState.SubordinateRoute(

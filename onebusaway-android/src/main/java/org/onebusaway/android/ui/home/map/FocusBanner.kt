@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -79,6 +80,11 @@ private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
  * Presentation state for the map's shared focus banner.
  */
 sealed interface FocusBannerState {
+    val isFavorite: Boolean
+    val favoriteEnabled: Boolean
+    @get:DrawableRes val focusIconRes: Int
+    @get:StringRes val focusDescriptionRes: Int
+
     data class SubordinateRoute(
         val shortName: String,
         val color: Int? = null,
@@ -87,17 +93,24 @@ sealed interface FocusBannerState {
     data class Stop(
         val title: String,
         val direction: String?,
-        val isFavorite: Boolean,
-        val actionsAvailable: Boolean,
+        override val isFavorite: Boolean,
+        override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
         val subordinateRoutes: List<SubordinateRoute> = emptyList(),
         val subordinateHeadsign: String? = null,
-    ) : FocusBannerState
+    ) : FocusBannerState {
+        override val focusIconRes = R.drawable.stop_flag
+        override val focusDescriptionRes = R.string.stop_shortcut
+    }
 
     data class Route(
         val header: RouteHeader,
-        val isFavorite: Boolean,
-    ) : FocusBannerState
+        override val isFavorite: Boolean,
+    ) : FocusBannerState {
+        override val favoriteEnabled: Boolean get() = header.routeId != null
+        override val focusIconRes = R.drawable.ic_route
+        override val focusDescriptionRes = R.string.route_shortcut
+    }
 }
 
 /**
@@ -130,24 +143,10 @@ fun FocusBanner(
             modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
         ) {
             FocusIdentityRail(
-                iconRes = when (state) {
-                    is FocusBannerState.Stop -> R.drawable.stop_flag
-                    is FocusBannerState.Route -> R.drawable.ic_route
-                },
-                iconDescription = stringResource(
-                    when (state) {
-                        is FocusBannerState.Stop -> R.string.stop_shortcut
-                        is FocusBannerState.Route -> R.string.route_shortcut
-                    }
-                ),
-                isFavorite = when (state) {
-                    is FocusBannerState.Stop -> state.isFavorite
-                    is FocusBannerState.Route -> state.isFavorite
-                },
-                favoriteEnabled = when (state) {
-                    is FocusBannerState.Stop -> state.actionsAvailable
-                    is FocusBannerState.Route -> state.header.routeId != null
-                },
+                iconRes = state.focusIconRes,
+                iconDescription = stringResource(state.focusDescriptionRes),
+                isFavorite = state.isFavorite,
+                favoriteEnabled = state.favoriteEnabled,
                 onToggleFavorite = onToggleFavorite,
             )
             VerticalDivider(Modifier.fillMaxHeight())
@@ -319,91 +318,76 @@ private fun RouteFocusBanner(
     onClose: () -> Unit,
 ) {
     val header = state.header
-    if (header.loading) {
-        Row(
-            Modifier.fillMaxWidth().padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Row(
+        Modifier.fillMaxWidth().padding(if (header.loading) 8.dp else 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (header.loading) {
             CircularProgressIndicator(Modifier.size(48.dp))
             Spacer(Modifier.weight(1f))
-            HeaderIconButton(
-                iconRes = R.drawable.ic_navigation_close,
-                contentDescription = stringResource(android.R.string.cancel),
-                onClick = onClose,
-            )
-        }
-    } else {
+        } else {
             // The current direction's headsign (blank falls back to a generic label); null when the
             // route is shown whole (no direction selected), so the subtitle is hidden.
             val unnamed = stringResource(R.string.route_direction_unnamed)
             val directionLabel = header.currentDirection?.labelOr(unnamed)
             Row(
                 Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
+                    .weight(1f)
+                    .clickable(
+                        onClickLabel = stringResource(R.string.route_header_frame_route),
+                        role = Role.Button,
+                        onClick = onFrameRoute,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // The badge + name column is one tap target that reframes the map to the route's extent.
-                // Scoped to this inner Row (given the outer Row's remaining width via weight) so it doesn't
-                // overlap the switch-direction / cancel icons, which consume their own taps as separate
-                // nodes; the click semantics announce the action for accessibility.
-                Row(
-                    Modifier
-                        .weight(1f)
-                        .clickable(
-                            onClickLabel = stringResource(R.string.route_header_frame_route),
-                            role = Role.Button,
-                            onClick = onFrameRoute,
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // A square route roundel: the short name shrinks to fit inside the tile, on the same
-                    // HCT-normalized GTFS-color chip as the arrival rows.
-                    val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
-                    LineBadge(
-                        text = header.shortName,
-                        maxFontSize = 45.sp,
-                        width = 64.dp,
-                        square = true,
-                        color = badgeContent,
-                        containerColor = badgeContainer,
-                        modifier = Modifier.padding(horizontal = 10.dp),
-                    )
-                    Column(Modifier.weight(1f)) {
-                        if (header.longName.isNotEmpty()) {
-                            Text(
-                                text = header.longName,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        if (directionLabel != null) {
-                            // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
-                            // the headsign reads identically on both surfaces (#1823).
-                            DirectionHeadsign(directionLabel)
-                        }
-                        if (header.agency.isNotEmpty()) {
-                            // One type-scale step below the direction line so it recedes as secondary info.
-                            Text(text = header.agency, style = MaterialTheme.typography.bodySmall)
-                        }
+                // A square route roundel: the short name shrinks to fit inside the tile, on the same
+                // HCT-normalized GTFS-color chip as the arrival rows.
+                val (badgeContainer, badgeContent) = rememberRouteBadgeColors(header.routeColor)
+                LineBadge(
+                    text = header.shortName,
+                    maxFontSize = 45.sp,
+                    width = 64.dp,
+                    square = true,
+                    color = badgeContent,
+                    containerColor = badgeContainer,
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                )
+                Column(Modifier.weight(1f)) {
+                    if (header.longName.isNotEmpty()) {
+                        Text(
+                            text = header.longName,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (directionLabel != null) {
+                        // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
+                        // the headsign reads identically on both surfaces (#1823).
+                        DirectionHeadsign(directionLabel)
+                    }
+                    if (header.agency.isNotEmpty()) {
+                        // One type-scale step below the direction line so it recedes as secondary info.
+                        Text(text = header.agency, style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                // A route with a single direction has nothing to switch to — the affordance is hidden.
-                if (header.directions.size >= 2) {
-                    SwitchDirectionAction(
-                        directions = header.directions,
-                        currentDirectionId = header.currentDirectionId,
-                        onSelectDirection = onSelectDirection,
-                    )
-                }
-                HeaderIconButton(
-                    iconRes = R.drawable.ic_navigation_close,
-                    contentDescription = stringResource(android.R.string.cancel),
-                    onClick = onClose,
+            }
+            // A route with a single direction has nothing to switch to — the affordance is hidden.
+            if (header.directions.size >= 2) {
+                SwitchDirectionAction(
+                    directions = header.directions,
+                    currentDirectionId = header.currentDirectionId,
+                    onSelectDirection = onSelectDirection,
                 )
             }
+        }
+        HeaderIconButton(
+            iconRes = R.drawable.ic_navigation_close,
+            contentDescription = stringResource(android.R.string.cancel),
+            onClick = onClose,
+        )
     }
 }
 
@@ -525,7 +509,7 @@ private fun FocusBannerPreview() {
                     title = "Pine St & 3rd Ave",
                     direction = "N",
                     isFavorite = true,
-                    actionsAvailable = true,
+                    favoriteEnabled = true,
                     hasAlerts = true,
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65", 0xFF26823B.toInt()),

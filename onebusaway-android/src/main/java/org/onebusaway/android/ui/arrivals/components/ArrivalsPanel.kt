@@ -60,7 +60,6 @@ fun ArrivalsPanel(
     selectedRowKey: String? = null,
     selectedRouteId: String? = null,
     selectedRouteNames: List<String> = emptyList(),
-    onClearRouteSelection: (() -> Unit)? = null,
     // Reports the list's total content height in px so the host can fit the peek to short stops; not
     // reported until the whole list is laid out.
     onContentHeight: (heightPx: Int) -> Unit,
@@ -111,7 +110,6 @@ fun ArrivalsPanel(
                     selectedRowKey = selectedRowKey,
                     selectedRouteId = selectedRouteId,
                     selectedRouteNames = selectedRouteNames,
-                    onClearRouteSelection = onClearRouteSelection,
                     modifier = Modifier.weight(1f),
                     listState = listState,
                     // The focus banner already shows the direction as a "(N)" tag.

@@ -59,7 +59,6 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
  * The shared per-stop arrivals session used by both the home focus banner and bottom sheet.
  */
 internal data class ArrivalsSession(
-    val stop: FocusedStop,
     val viewModel: ArrivalsViewModel,
     val handler: ArrivalActionHandler,
     val listState: LazyListState,
@@ -140,8 +139,8 @@ internal fun rememberArrivalsSession(
             }
         }
 
-        remember(stop, viewModel, handler, listState) {
-            ArrivalsSession(stop, viewModel, handler, listState)
+        remember(viewModel, handler, listState) {
+            ArrivalsSession(viewModel, handler, listState)
         }
     }
 }

@@ -348,8 +348,6 @@ internal fun ArrivalsList(
     selectedRouteId: String? = null,
     /** Route names in the selected vehicle block, beginning with the route on this row. */
     selectedRouteNames: List<String> = emptyList(),
-    /** Clears the map-owned route focus represented by [selectedRowKey]. */
-    onClearRouteSelection: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
@@ -422,7 +420,6 @@ internal fun ArrivalsList(
                     selected = group.key == effectiveSelectedRowKey,
                     selectedRouteNames =
                         if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
-                    onClearSelection = onClearRouteSelection,
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     // Glide up/down as the alert section above is toggled in/out.

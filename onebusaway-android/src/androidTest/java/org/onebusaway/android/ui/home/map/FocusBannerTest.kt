@@ -48,7 +48,7 @@ class FocusBannerTest {
                     title = "Pine St & 3rd Ave",
                     direction = "N",
                     isFavorite = false,
-                    actionsAvailable = true,
+                    favoriteEnabled = true,
                     hasAlerts = hasAlerts,
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65"),
@@ -153,7 +153,7 @@ class FocusBannerTest {
                     title = "Pine St & 3rd Ave",
                     direction = null,
                     isFavorite = false,
-                    actionsAvailable = false,
+                    favoriteEnabled = false,
                     hasAlerts = false,
                 ),
                 onClose = {},

@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +73,8 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
+import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.SlideBox
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
@@ -313,7 +314,7 @@ private fun EtaPillWithMenu(
 }
 
 /** The per-trip menu opened by long-pressing a pill: trip details, a reminder, or a problem report
- *  for that specific trip. Route-wide actions live on the row's ⋮ menu ([RouteActionsMenu]). */
+ *  for that specific trip. Route-wide actions live on the row's long-press menu ([RouteActionsMenu]). */
 @Composable
 internal fun TripActionsMenu(
     expanded: Boolean,
@@ -322,15 +323,15 @@ internal fun TripActionsMenu(
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks
 ) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        MenuRow(R.string.bus_options_menu_show_trip_details) {
+    CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        MenuRow(R.string.bus_options_menu_show_trip_details, MaterialSymbols.TripStatus) {
             onDismiss(); callbacks.onShowTripStatus(arrival)
         }
-        MenuRow(R.string.bus_options_menu_set_reminder) {
+        MenuRow(R.string.bus_options_menu_set_reminder, MaterialSymbols.AddReminder) {
             onDismiss(); callbacks.onSetReminder(arrival)
         }
         if (actions != null) {
-            MenuRow(R.string.bus_options_menu_report_trip_problem) {
+            MenuRow(R.string.bus_options_menu_report_trip_problem, MaterialSymbols.Report) {
                 onDismiss(); callbacks.onReportArrivalProblem(actions)
             }
         }

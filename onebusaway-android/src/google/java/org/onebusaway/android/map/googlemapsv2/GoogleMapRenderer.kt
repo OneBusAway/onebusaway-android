@@ -52,6 +52,7 @@ import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
+import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
@@ -83,8 +84,8 @@ import java.util.concurrent.TimeUnit
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
- *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics / trip-stop
- *    dots); [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
+ *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
+ *    [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position/z-index writes.
  *  - [renderDynamic] (the live route vehicles + the selected vehicle's band/fast-estimate marker) is pulled at
  *    ~20Hz by the adapter's frame loop. It moves native markers **in place** to their freshly
@@ -225,8 +226,8 @@ class GoogleMapRenderer(
     private val descriptorCache =
         BitmapDescriptorCache(DESCRIPTOR_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
-    // Remove the redrawn non-route static annotations — continuation polylines, trip-stop dots, bikes,
-    // generic markers (not map.clear(), which would also wipe the retained route and per-frame dynamic
+    // Remove the redrawn non-route static annotations — continuation polylines, bikes, generic markers
+    // (not map.clear(), which would also wipe the retained route and per-frame dynamic
     // layers) — and clear their tap maps. Reconciled route/stop annotations deliberately survive.
     // Shared by [renderStatic] (before it redraws) and [dispose].
     private fun clearStatic() {
@@ -493,7 +494,8 @@ class GoogleMapRenderer(
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
         val metersPerPx =
-            156543.03392 * cos(Math.toRadians(center.latitude)) / 2.0.pow(map.cameraPosition.zoom.toDouble())
+            METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO * cos(Math.toRadians(center.latitude)) /
+                2.0.pow(map.cameraPosition.zoom.toDouble())
         val radiusMeters = radiusPx * metersPerPx
         val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
         val existing = pingCircle

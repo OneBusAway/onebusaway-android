@@ -325,8 +325,8 @@ private fun wireClicks(
             return@setOnMarkerClickListener true
         }
         // Titled markers (the trip-focus estimate markers + the most-recent-data dot) fall through to
-        // the SDK's default title window. Untitled decorations (trip-stop dots, generic start/end
-        // markers) have nothing to show, so consume the tap (return true) — a no-op, not an empty bubble.
+        // the SDK's default title window. Untitled decorations (generic start/end markers) have
+        // nothing to show, so consume the tap (return true) — a no-op, not an empty bubble.
         marker.title.isNullOrEmpty()
     }
     map.setOnInfoWindowClickListener { marker ->

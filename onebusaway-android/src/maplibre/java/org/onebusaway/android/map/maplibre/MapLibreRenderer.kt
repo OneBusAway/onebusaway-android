@@ -71,8 +71,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
- *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics / trip-stop
- *    dots); [MapLibreStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
+ *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
+ *    [MapLibreStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position writes.
  *  - [renderDynamic] (the live vehicle markers + the selected vehicle's band/fast-estimate marker) is pulled each
  *    display frame by the adapter's vsync loop. It updates marker positions **in place** (so an open

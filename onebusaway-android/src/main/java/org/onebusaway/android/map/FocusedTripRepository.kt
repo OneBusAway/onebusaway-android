@@ -57,10 +57,7 @@ data class FocusedTripGeometry(val shapes: List<FocusedTripShape>)
 data class FocusedTripStops(
     val stopIdsByTripId: Map<String, List<String>>,
     val stopsById: Map<String, ObaStop>,
-) {
-    val stopIds: Set<String>
-        get() = buildSet { stopIdsByTripId.values.forEach(::addAll) }
-}
+)
 
 /** Exact shape and scheduled-stop pass-throughs for the trips displayed at a focused stop. */
 interface FocusedTripRepository {

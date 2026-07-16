@@ -24,3 +24,10 @@ import org.onebusaway.android.util.haversineDistance
  */
 fun haversineMeters(a: GeoPoint, b: GeoPoint): Double =
     haversineDistance(a.latitude, a.longitude, b.latitude, b.longitude)
+
+/**
+ * Web-Mercator ground resolution at zoom 0 on the equator, in meters per pixel (256px tiles). Scale to
+ * a given zoom/latitude with `× cos(lat) / 2^zoom`. The single source for this constant, shared by the
+ * route-render pipeline and the map-ping radius math.
+ */
+internal const val METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO = 156543.03392804097

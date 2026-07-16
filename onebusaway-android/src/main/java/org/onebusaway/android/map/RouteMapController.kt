@@ -624,8 +624,11 @@ class RouteMapController(
         return SelectedTripRenderInput(
             presentation = selected,
             routeColorFallback = currentRouteColor(),
-            directionUnderlay = selectedDirectionUnderlay(selected.routeDirection.directionId),
-            stopPresentation = selectedTripStopPresentation(selected),
+            // Deferred: the assembler resolves the underlay only when selectedTripStyle keeps it (stop
+            // focus inactive) and the stop projection only for a drawable trip, so neither is computed on
+            // the branches that skip it.
+            directionUnderlay = { selectedDirectionUnderlay(selected.routeDirection.directionId) },
+            stopPresentation = { selectedTripStopPresentation(selected) },
         )
     }
 

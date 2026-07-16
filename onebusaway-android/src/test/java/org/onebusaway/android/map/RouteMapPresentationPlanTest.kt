@@ -140,8 +140,8 @@ class RouteMapPresentationPlanTest {
             selected = SelectedTripRenderInput(
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
-                directionUnderlay = underlay,
-                stopPresentation = selectedStops,
+                directionUnderlay = { underlay },
+                stopPresentation = { selectedStops },
             ),
         )
 
@@ -166,8 +166,8 @@ class RouteMapPresentationPlanTest {
             selected = SelectedTripRenderInput(
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
-                directionUnderlay = underlay,
-                stopPresentation = RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()),
+                directionUnderlay = { underlay },
+                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) },
             ),
         )
 
@@ -190,8 +190,8 @@ class RouteMapPresentationPlanTest {
             selected = SelectedTripRenderInput(
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
-                directionUnderlay = underlay,
-                stopPresentation = RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()),
+                directionUnderlay = { underlay },
+                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) },
             ),
         )
 
@@ -213,8 +213,8 @@ class RouteMapPresentationPlanTest {
                     routeDirection = RouteDirectionKey("45", 0),
                 ),
                 routeColorFallback = 0xFF00FF00.toInt(),
-                directionUnderlay = emptyList(),
-                stopPresentation = RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()),
+                directionUnderlay = { fail("an undrawable trip must not build the underlay") },
+                stopPresentation = { fail("an undrawable trip must not project its stops") },
             ),
         )
 
@@ -233,8 +233,8 @@ class RouteMapPresentationPlanTest {
             selected = SelectedTripRenderInput(
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
-                directionUnderlay = emptyList(),
-                stopPresentation = selectedStops,
+                directionUnderlay = { emptyList() },
+                stopPresentation = { selectedStops },
             ),
             projectedFocusStops = { fail("selection branch must not project focused stops") },
         )

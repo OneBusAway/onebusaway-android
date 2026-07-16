@@ -15,15 +15,12 @@
  */
 package org.onebusaway.android.map
 
-import android.location.Location
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.util.Polyline
 
 /**
  * The complete render plan for one publish of the route map's line/badge/stop layers — the pure output
@@ -49,16 +46,19 @@ internal data class SelectedTripPresentation(
 
 /**
  * Everything the selected-vehicle branch of [assembleRouteMapPresentation] needs that the controller
- * must resolve from IO/retained state first: the [presentation] itself (from the trip-observation
- * store), the GTFS-colour fallback ([routeColorFallback]) when the selected route carries no adjacency
- * colour, the selected direction's thinned [directionUnderlay], and the projected-onto-shape
- * [stopPresentation]. Bundled so the pure function stays a function of plain data.
+ * must resolve from IO/retained state: the [presentation] itself (from the trip-observation store) and
+ * the GTFS-colour fallback ([routeColorFallback]) when the selected route carries no adjacency colour,
+ * both cheap and always needed to decide drawability; plus the selected direction's thinned
+ * [directionUnderlay] and the projected-onto-shape [stopPresentation], each of which the assembler uses
+ * on only some branches — so they're deferred as thunks and computed only when that branch is taken
+ * (the underlay does a per-segment copy, the stop presentation a `Location` projection). Bundled so the
+ * pure function stays a function of plain data + lazily-resolved dependencies.
  */
 internal data class SelectedTripRenderInput(
     val presentation: SelectedTripPresentation,
     val routeColorFallback: Int,
-    val directionUnderlay: List<RoutePolyline>,
-    val stopPresentation: RouteStopPresentation,
+    val directionUnderlay: () -> List<RoutePolyline>,
+    val stopPresentation: () -> RouteStopPresentation,
 )
 
 /**
@@ -75,10 +75,10 @@ internal data class SelectedTripRenderInput(
  * 3. **Stop-focus session**: adjacency geometry for the focused stop's trips, drawn over the emphasized
  *    base route only when that route isn't itself one of the focused trips ([showBaseRoute]).
  *
- * Pure so the precedence table is unit-tested without standing up the controller. The focused-stop
- * projection is the one Location-dependent step, so it enters as a lazy [projectedFocusStops] thunk
- * (invoked only on the branch that draws focused-stop siblings) — the merge policy itself stays plain
- * data, JVM-testable across every branch. The projection geometry is covered by instrumented tests.
+ * Pure so the precedence table is unit-tested without standing up the controller. The `Location`-backed
+ * work enters lazily so the merge policy itself stays plain data, JVM-testable across every branch: the
+ * focused-stop projection as the [projectedFocusStops] thunk, the selected-trip underlay/stop projection
+ * as thunks on [SelectedTripRenderInput]. That projection geometry is covered by instrumented tests.
  */
 internal fun assembleRouteMapPresentation(
     isActive: Boolean,
@@ -91,7 +91,7 @@ internal fun assembleRouteMapPresentation(
     focusedRoutes: List<ObaRoute>,
     routeColors: Map<RouteDirectionKey, Int>,
     selected: SelectedTripRenderInput?,
-    projectedFocusStops: () -> Map<String, GeoPoint> = { emptyMap() },
+    projectedFocusStops: () -> Map<String, GeoPoint>,
 ): RouteMapPresentation {
     // Route badges accompany adjacency geometry; a whole-route emphasis has no adjacency entry to badge.
     val badges = if (emphasizedRoute == null) {
@@ -101,28 +101,28 @@ internal fun assembleRouteMapPresentation(
     // 1. Selected vehicle: draw its exact trip in place of the direction geometry. Stop focus alone
     // gates the underlay, not whether an adjacency color happened to be found for this exact
     // direction — see selectedTripStyle (#1902).
-    val selectedTrip = selected?.let { input ->
-        input.presentation.points.takeIf { it.size >= 2 }?.let { points ->
-            val style = selectedTripStyle(
-                focusTrips != null, input.presentation.routeDirection, routeColors, input.routeColorFallback,
-            )
-            focusedRoutePolyline(style.color, points, directional = true) to style
-        }
-    }
-    if (selected != null && selectedTrip != null) {
-        val (polyline, style) = selectedTrip
-        return RouteMapPresentation(
-            polylines = focusedGeometry.toTripFocusedRoutePolylines(
-                selected.presentation.routeDirection,
-                routeColors,
-                if (style.includeUnderlay) selected.directionUnderlay else emptyList(),
-                polyline,
-            ),
-            framingPolylines = listOf(polyline),
-            routeModeScalesStopsWithZoom = isActive,
-            badges = badges,
-            stopPresentation = selected.stopPresentation,
+    if (selected != null) {
+        val style = selectedTripStyle(
+            focusTrips != null, selected.presentation.routeDirection, routeColors, selected.routeColorFallback,
         )
+        val selectedTrip = selected.presentation.points
+            .takeIf { it.size >= 2 }
+            ?.let { points -> focusedRoutePolyline(style.color, points, directional = true) }
+        if (selectedTrip != null) {
+            return RouteMapPresentation(
+                polylines = focusedGeometry.toTripFocusedRoutePolylines(
+                    selected.presentation.routeDirection,
+                    routeColors,
+                    if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
+                    selectedTrip,
+                ),
+                framingPolylines = listOf(selectedTrip),
+                routeModeScalesStopsWithZoom = isActive,
+                badges = badges,
+                stopPresentation = selected.stopPresentation(),
+            )
+        }
+        // A resolved-but-undrawable (< 2-point) trip falls through to the base/focus branches.
     }
 
     // 2. No stop-focus session: the base route (or ordinary nearby stops when not in route mode).
@@ -161,59 +161,3 @@ internal fun assembleRouteMapPresentation(
         },
     )
 }
-
-/**
- * Snap each of a focused stop's exact scheduled stops to the closest successful shape of a trip that
- * serves it. A stop that can't be placed on any candidate shape is omitted (not carried at its raw
- * location — the caller keeps only stops it can draw on the focused geometry). Pure; unit-tested.
- */
-internal fun projectFocusedStops(
-    trips: Set<FocusedTrip>,
-    geometry: FocusedTripGeometry,
-    stops: FocusedTripStops,
-): Map<String, GeoPoint> {
-    val tripById = trips.associateBy(FocusedTrip::tripId)
-    val candidates = LinkedHashMap<String, MutableList<Polyline>>()
-    for ((tripId, stopIds) in stops.stopIdsByTripId) {
-        val shapeId = tripById[tripId]?.shapeId ?: continue
-        val points = geometry.shapes.firstOrNull { it.shapeId == shapeId }?.points ?: continue
-        if (points.size < 2) continue
-        val polyline = Polyline(points.map(GeoPoint::toLocation))
-        stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
-    }
-    return buildMap {
-        for ((stopId, shapes) in candidates) {
-            val stop = stops.stopsById[stopId] ?: continue
-            nearestPointAcross(shapes, stop.location)?.let { put(stopId, it) }
-        }
-    }
-}
-
-/**
- * Project [stops] onto the nearest point across [points]' drawable shapes (each candidate line needs
- * ≥2 points), keyed by stop id. A stop that can't be placed (no drawable shape) falls back to its own
- * location, so it still shows — just off the line. Pure; unit-tested.
- */
-internal fun projectStopsOntoPolylines(
-    stops: List<ObaStop>,
-    points: List<List<GeoPoint>>,
-): Map<String, GeoPoint> {
-    val shapes = points
-        .filter { it.size >= 2 }
-        .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
-    if (shapes.isEmpty()) return emptyMap()
-    return stops.associate { stop ->
-        val loc = stop.location
-        stop.id to (nearestPointAcross(shapes, loc) ?: loc.toGeoPoint())
-    }
-}
-
-/**
- * The nearest point to [location] across [shapes] (the shared nearest-point-across-polylines kernel of
- * [projectFocusedStops] and [projectStopsOntoPolylines]), or null when no shape yields a point.
- */
-private fun nearestPointAcross(shapes: List<Polyline>, location: Location): GeoPoint? =
-    shapes
-        .mapNotNull { it.nearestPoint(location.latitude, location.longitude) }
-        .minByOrNull(location::distanceTo)
-        ?.toGeoPoint()

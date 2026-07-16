@@ -82,7 +82,7 @@ fun PreferenceCategory(
 
 /**
  * The shared visual scaffold for a single preference row: a [title] with an optional [summary] in a
- * weighted column, an optional [trailing] control, and whole-row click (when [onClick] is non-null
+ * weighted column, an optional [content] control, and whole-row click (when [onClick] is non-null
  * and [enabled]). Matches the app's list-row metrics (16dp horizontal / 12dp vertical padding,
  * bodyLarge title, bodyMedium onSurfaceVariant summary).
  */
@@ -93,7 +93,7 @@ private fun PreferenceRow(
     enabled: Boolean,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    trailing: (@Composable () -> Unit)? = null,
+    content: (@Composable () -> Unit)? = null,
 ) {
     val clickable = onClick != null && enabled
     val rowModifier = modifier
@@ -116,9 +116,9 @@ private fun PreferenceRow(
                 )
             }
         }
-        if (trailing != null) {
+        if (content != null) {
             Spacer(Modifier.width(16.dp))
-            trailing()
+            content()
         }
     }
 }
@@ -139,7 +139,7 @@ fun SwitchPreferenceItem(
         enabled = enabled,
         onClick = { onCheckedChange(!checked) },
         modifier = modifier,
-        trailing = {
+        content = {
             Switch(
                 checked = checked,
                 onCheckedChange = { onCheckedChange(it) },

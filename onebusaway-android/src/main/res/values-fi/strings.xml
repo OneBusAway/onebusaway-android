@@ -44,25 +44,25 @@
         oli pikakuvake, niin linkkisi
         voi olla vanhentunut
         (Alueen valinta
-        \"Asetukset->Alue\").
+        “Asetukset->Alue”).
     </string>
     <string name="route_not_found_error_with_region_name">Reittiä ei löydy.
         Jos tämä oli pikakuvake, 
         niin linkkisi voi olla vanhentunut, tai olet valinnut väärän alueen (Nykyinen
         alueesi on
-        %1$s. Alueen valinta \"Asetukset->Alue\").
+        %1$s. Alueen valinta “Asetukset->Alue”).
     </string>
     <string name="stop_not_found_error_no_region">Pysäkkiä ei löydy. Jos
         tämä oli pikakuvake, niin
         linkkisi voi olla vanhentunut, tai
         aluetta ei ole vielä valittu.
-        (Alueen valinta \"Asetukset->Alue\").
+        (Alueen valinta “Asetukset->Alue”).
     </string>
     <string name="stop_not_found_error_with_region_name">Pysäkkiä ei löydy.
         Jos tämä oli pikakuvake,
         niin linkkisi voi olla vanhentunut, tai olet valinnut väärän alueen (Nykyinen 
         alueesi on 
-        %1$s. Alueen valinta \"Asetukset->Alue\").
+        %1$s. Alueen valinta “Asetukset->Alue”).
     </string>
     <string name="internal_error">Hups, jotakin odottamatonta tapahtui. Yritä myöhemmin uudestaan.</string>
     <string name="out_of_memory_error">Käytettävissä oleva muistin määrä ei riitä pyynnön
@@ -99,10 +99,10 @@
     <string name="main_help_whatsnew">• <b>Virheenkorjaukset</b> Useita ohjelmistovirheiden korjauksia ja viimeistelyparannuksia. - Katso https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Sulje</string>
     <string name="main_help_legend_title">Legenda</string>
-    <string name="main_help_legend_ontime">Vihreä tarkoittaa \"ajoissa\"</string>
-    <string name="main_help_legend_late">Sininen tarkoittaa \"Myöhässä\"</string>
-    <string name="main_help_legend_early">Punainen tarkoittaa \"juoksu aikaisin\"</string>
-    <string name="main_help_legend_scheduled">Harmaa tarkoittaa \"Suunniteltu saapuminen\" - Emme tiedä
+    <string name="main_help_legend_ontime">Vihreä tarkoittaa “ajoissa”</string>
+    <string name="main_help_legend_late">Sininen tarkoittaa “Myöhässä”</string>
+    <string name="main_help_legend_early">Punainen tarkoittaa “juoksu aikaisin”</string>
+    <string name="main_help_legend_scheduled">Harmaa tarkoittaa “Suunniteltu saapuminen” - Emme tiedä
         missä bussi on nyt, mutta aikataulussa sanotaan, että saapuminen on tulossa
     </string>
     <string name="main_help_legend_canceled">Harmaa yliviivauksella tarkoittaa, että matka on ollut
@@ -116,7 +116,7 @@
     <string name="main_never_ask_again">Älä kysy uudelleen</string>
     <string name="main_never_show_again">Älä näytä uudelleen</string>
     <string name="main_changelocationmode_title">Korkean tarkkuuden sijainti ei ole käytössä</string>
-    <string name="main_changelocationmode">Laitteesi nykyinen "Sijaintimenetelmä"-asetus ei välttämättä ilmoita sinulle määränpäähän lähestymisestä epätarkan sijaintitiedon vuoksi. Haluatko muuttaa laitteesi "Sijaintimenetelmän" asetukseksi "Korkea tarkkuus" nyt?</string>
+    <string name="main_changelocationmode">Laitteesi nykyinen “Sijaintimenetelmä”-asetus ei välttämättä ilmoita sinulle määränpäähän lähestymisestä epätarkan sijaintitiedon vuoksi. Haluatko muuttaa laitteesi “Sijaintimenetelmän” asetukseksi “Korkea tarkkuus” nyt?</string>
     <string name="no_location_permission">Sijaintiasi ei pystytty määrittämään.</string>
     <string name="main_outofrange_title">Ulkona alueelta</string>
     <string name="main_outofrange">Olet ulkona %1$s palvelualueelta.\n\nHaluatko siirtyä sinne?</string>
@@ -490,7 +490,7 @@
     <string name="preferences_save_title">Tallenna muistikortille</string>
     <string name="preferences_save_summary">Tallentaa suosikkisi ja aiemmat pysäkit ja reitit</string>
     <string name="preferences_restore_title">Palauta muistikortilta</string>
-    <string name="preferences_restore_summary">Palauttaa aiemmasta varmuuskopiosta. Vaihtoehdon valitsemisen jälkeen sinua pyydetään valitsemaan tiedosto. Valitse varmuuskopiotiedosto (esim. \"db.backup\" tai \"%1$s.backup\"), joka voi olla \"Tiedostot\"-kansiossasi tai missä tahansa tallensit varmuuskopion.</string>
+    <string name="preferences_restore_summary">Palauttaa aiemmasta varmuuskopiosta. Vaihtoehdon valitsemisen jälkeen sinua pyydetään valitsemaan tiedosto. Valitse varmuuskopiotiedosto (esim. “db.backup” tai “%1$s.backup”), joka voi olla “Tiedostot”-kansiossasi tai missä tahansa tallensit varmuuskopion.</string>
     <string name="preferences_db_saved">Tallennus onnistui!</string>
     <string name="preferences_db_save_error">Tallennus epäonnistui: %1$s</string>
     <string name="preferences_db_restore_warning">Kaikki tämänhetkiset tiedot pyyhitään! Jatketaanko?
@@ -544,7 +544,7 @@
     <string name="preferences_user_share_destination_logs_title">Sisällytä määränpäämuistutuslokit</string>
     <string name="preferences_user_share_destination_logs_summary">Anonyymit reaaliaikaiset sijaintitiedot laitteestasi jaetaan %1$sn kanssa määränpäämuistutusominaisuuden parantamiseksi.</string>
     <string name="preference_region_dialog_title">Tarkista alue</string>
-    <string name="preference_region_dialog_message">Alueeksesi on tällä hetkellä asetettu %1$s. Jos tämä on väärin, muuta sitä napauttamalla \'Alueesi\'!</string>
+    <string name="preference_region_dialog_message">Alueeksesi on tällä hetkellä asetettu %1$s. Jos tämä on väärin, muuta sitä napauttamalla ’Alueesi’!</string>
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -622,7 +622,7 @@
         bussi etuajassa (punainen) vai myöhässä (sininen). Ajallaan = vihreä taustaväri. Jos bussin 
         sijaintia ei tiedetä, näytetään aikataulun mukainen saapumisaika (harmaa taustaväri).
     </string>
-    <string name="tutorial_arrival_header_sliding_panel_title">Liu\'uta nähdäksesi lisää saapuvia
+    <string name="tutorial_arrival_header_sliding_panel_title">Liu’uta nähdäksesi lisää saapuvia
     </string>
     <string name="tutorial_arrival_header_sliding_panel_text">Napsauta nuolta tai liikuta paneelia ylöspäin
         nähdäksesi lisää tälle pysäkille saapuvia vuoroja.
@@ -694,7 +694,7 @@
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Meillä on suuria suunnitelmia %1$sn parantamiseksi, mutta emme voi tehdä sitä ilman apuasi. Tämä sovellus on tällä hetkellä rakennettu 100%% vapaaehtoistyöllä, ja tarvitsemme sinua auttamaan meitä rahoittamaan tulevan kehityksen.\n\nOpen Transit Software Foundationin, 501(c)(3) voittoa tavoittelemattoman järjestön, keskeisenä hankkeena me luotamme käyttäjien, kuten sinun, hyväntahtoisuuteen pysyäksemme toiminnassa ja tehdäksemme tästä ohjelmistosta paremman.\n\nJoka vuosi vain pieni osa käyttäjistämme lahjoittaa, mutta jokainen panos, suuri tai pieni, auttaa varmistamaan, että %1$s pysyy ilmaisena, päivitettynä ja kaikkien saavutettavissa. Pieni lahjoitus, vaikkapa vain yhden viikon työmatkakustannusten verran, 27,50 dollaria, voi tehdä suuren eron.\n\nVerovähennyskelpoinen panoksesi varmistaa, että %1$s pysyy vapaana ja kaikkien saavutettavissa. Muovataan yhdessä joukkoliikenteen tulevaisuutta!\n\nKiitos,\n%1$s-tiimi</string>
     <string name="preferences_reset_donation_timestamps_title">Nollaa Lahjoituksen Aikaleimat</string>
-    <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä \'Muistuta minua myöhemmin\' että \'Älä vaivaudu\' aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
+    <string name="preferences_reset_donation_timestamps_summary">Tämän vaihtoehdon napauttaminen poistaa sekä ’Muistuta minua myöhemmin’ että ’Älä vaivaudu’ aikaleimat, jotka liittyvät lahjoituspyyntöihin.</string>
     <string name="preferences_show_weather_view">Näytä säätönäkymä</string>
     <string name="preferences_preferred_maps_title">Ensisijainen Karttatyyppi</string>
     <string name="preferences_preferred_map_option_normal2d">Oletuskartta</string>
@@ -945,7 +945,7 @@
     <string name="feedback_msg">Saitko ilmoituksen oikeaan aikaan poistuaksesi pysäkilläsi?</string>
     <string name="feedback_freeText">Kirjoita palautteesi</string>
     <string name="feedback_checkbox_text">Sisällytä järjestelmäloki (valintasi tallennetaan tulevia matkoja varten)</string>
-    <string name="feedback_log_guide">Palautteesi lähetetään %1$slle. Jos valitset "Sisällytä järjestelmälokit", laitteestasi tallennettu reaaliaikainen sijaintitieto määränpääpysäkille lähestyttäessä jaetaan %1$sn kanssa, jotta kehittäjät voivat parantaa määränpäämuistutusominaisuutta.\n\nVoit muuttaa järjestelmälokien jakamisasetusta Asetuksissa.</string>
+    <string name="feedback_log_guide">Palautteesi lähetetään %1$slle. Jos valitset “Sisällytä järjestelmälokit”, laitteestasi tallennettu reaaliaikainen sijaintitieto määränpääpysäkille lähestyttäessä jaetaan %1$sn kanssa, jotta kehittäjät voivat parantaa määränpäämuistutusominaisuutta.\n\nVoit muuttaa järjestelmälokien jakamisasetusta Asetuksissa.</string>
     <string name="feedback_notify_title">Auta parantamaan määränpäämuistutuksia</string>
     <string name="feedback_notify_dialog_msg">Saitko ilmoituksen oikeaan aikaan?</string>
     <string name="feedback_notify_confirmation">Kiitos palautteesta!</string>

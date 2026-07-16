@@ -2,6 +2,7 @@ package org.onebusaway.android.widealerts;
 
 import com.google.transit.realtime.GtfsRealtime;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.Region;
@@ -9,6 +10,9 @@ import org.onebusaway.android.util.PreferenceUtils;
 
 import android.content.Context;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.URL;
 import java.util.HashSet;
@@ -31,7 +35,7 @@ public class GtfsAlerts {
     private final Context mContext;
 
     @Inject
-    public GtfsAlerts(@ApplicationContext Context context) {
+    public GtfsAlerts(@ApplicationContext @NonNull Context context) {
         mContext = context;
     }
 
@@ -41,7 +45,7 @@ public class GtfsAlerts {
      * @param regionId The current region ID.
      * @param callback The callback to handle the alert data.
      */
-    public void fetchAlerts(String regionId, GtfsAlertCallBack callback) {
+    public void fetchAlerts(@NonNull String regionId, @NonNull GtfsAlertCallBack callback) {
         if (fetchedRegions.contains(regionId)) {
             Log.d(TAG, "Alerts already fetched for region: " + regionId);
             return;
@@ -50,7 +54,7 @@ public class GtfsAlerts {
         if (pathUrl == null) {
             return;
         }
-        Log.d(TAG, "fetchAlerts for region: " + regionId);
+        if (BuildConfig.DEBUG) Log.d(TAG, "fetchAlerts for region: " + regionId);
         new Thread(() -> {
             try {
                 URL url = new URL(pathUrl);
@@ -79,7 +83,7 @@ public class GtfsAlerts {
      *                 the device clock when the feed carried no header timestamp (resolved by the caller).
      * @param callback The callback to handle each alert.
      */
-    public void processAlerts(List<GtfsRealtime.FeedEntity> alerts, long nowMs, GtfsAlertCallBack callback) {
+    public void processAlerts(@NonNull List<GtfsRealtime.FeedEntity> alerts, long nowMs, @NonNull GtfsAlertCallBack callback) {
         for (GtfsRealtime.FeedEntity entity : alerts) {
             if (!GtfsAlertsHelper.isValidEntity(mContext, entity, nowMs)) {
                 continue;
@@ -90,7 +94,7 @@ public class GtfsAlerts {
             String description = GtfsAlertsHelper.getAlertDescription(alert);
             String url = GtfsAlertsHelper.getAlertUrl(alert);
 
-            Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
+            if (BuildConfig.DEBUG) Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
             GtfsAlertsHelper.markAlertAsRead(mContext, entity);
             callback.onAlert(title, description, url);
             // Only trigger the callback for one alert.
@@ -104,7 +108,8 @@ public class GtfsAlerts {
      * @param regionId The ID of the region for which to fetch alerts.
      * @return The URL to fetch GTFS alerts.
      */
-    public String getGtfsAlertsUrl(String regionId) {
+    @Nullable
+    public String getGtfsAlertsUrl(@NonNull String regionId) {
         Region region = RegionEntryPoint.get(mContext).currentRegion();
         if (region == null) return null;
         String baseUrl = region.getSidecarBaseUrl();

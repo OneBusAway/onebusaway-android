@@ -38,39 +38,39 @@
     </string>
 
     <!-- Generic -->
-    <string name="generic_comm_error">Sorry, there was a communication error and we can\'t show this
+    <string name="generic_comm_error">Sorry, there was a communication error and we can’t show this
         information. Try again and it might work.
     </string>
-    <string name="route_not_found_error_no_region">Sorry, that particular route can\'t be found. If
+    <string name="route_not_found_error_no_region">Sorry, that particular route can’t be found. If
         this was a
-        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        shortcut, it’s possible your link is out of date, or a region hasn’t been selected yet
         (Change in
-        \"Preferences->Your region\").
+        “Preferences->Your region”).
     </string>
-    <string name="route_not_found_error_with_region_name">Sorry, that particular route can\'t be
+    <string name="route_not_found_error_with_region_name">Sorry, that particular route can’t be
         found. If this was a
-        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        shortcut, it’s possible your link is out of date, or the wrong region is selected (Your
         current region is
-        %1$s. Change in \"Preferences->Your region\").
+        %1$s. Change in “Preferences->Your region”).
     </string>
-    <string name="stop_not_found_error_no_region">Sorry, that particular stop can\'t be found. If
+    <string name="stop_not_found_error_no_region">Sorry, that particular stop can’t be found. If
         this was a
-        shortcut, it\'s possible your link is out of date, or a region hasn\'t been selected yet
+        shortcut, it’s possible your link is out of date, or a region hasn’t been selected yet
         (Change in
-        \"Preferences->Your region\").
+        “Preferences->Your region”).
     </string>
-    <string name="stop_not_found_error_with_region_name">Sorry, that particular stop can\'t be
+    <string name="stop_not_found_error_with_region_name">Sorry, that particular stop can’t be
         found. If this was a
-        shortcut, it\'s possible your link is out of date, or the wrong region is selected (Your
+        shortcut, it’s possible your link is out of date, or the wrong region is selected (Your
         current region is
-        %1$s. Change in \"Preferences->Your region\").
+        %1$s. Change in “Preferences->Your region”).
     </string>
     <string name="internal_error">Oops, something went wrong. Please check your Internet connection and try again.</string>
-    <string name="out_of_memory_error">Sorry, there isn\'t enough available memory to handle that
+    <string name="out_of_memory_error">Sorry, there isn’t enough available memory to handle that
         request.
     </string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="bad_gateway_error">%1$s\'s servers are overloaded. Please excuse us!</string>
+    <string name="bad_gateway_error">%1$s’s servers are overloaded. Please excuse us!</string>
     <string name="map_generic_error">Unable to get stops.</string>
     <!-- Shown when a stop load fails (e.g. offline) but cached stops are already on screen. -->
     <string name="map_showing_cached_stops">Showing saved stops</string>
@@ -100,14 +100,14 @@
     <string name="map_option_mylocation">My Location</string>
     <string name="map_option_search">Search</string>
     <string name="main_help_title">Help</string>
-    <string name="main_help_whatsnew_title">What\'s New?</string>
+    <string name="main_help_whatsnew_title">What’s New?</string>
     <string name="main_help_whatsnew">• <b>Bug fixes</b> Several bug fixes and fit and finish improvements. - See https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
-    <string name="main_help_legend_ontime">Green means \"On time\"</string>
-    <string name="main_help_legend_late">Blue means \"Running late\"</string>
-    <string name="main_help_legend_early">Red means \"Running early\"</string>
-    <string name="main_help_legend_scheduled">Gray means \"Scheduled arrival\" - We don\'t know
+    <string name="main_help_legend_ontime">Green means “On time”</string>
+    <string name="main_help_legend_late">Blue means “Running late”</string>
+    <string name="main_help_legend_early">Red means “Running early”</string>
+    <string name="main_help_legend_scheduled">Gray means “Scheduled arrival” - We don’t know
         where the bus is now, but the schedule says there is an upcoming arrival
     </string>
     <string name="main_help_legend_canceled">Gray with strikethrough means the trip has been
@@ -122,7 +122,7 @@
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="no_location_permission">Unable to get your location.  Please give app location permissions via system settings.</string>
     <string name="main_outofrange_title">Out of range</string>
-    <string name="main_outofrange">You\'re looking at a place outside the %1$s service area.\n\nMove
+    <string name="main_outofrange">You’re looking at a place outside the %1$s service area.\n\nMove
         map to %1$s now?
     </string>
     <string name="main_outofrange_yes">Take me there</string>
@@ -307,7 +307,7 @@
     <string name="feedback_like_button_description">Yes, I was notified at the right time</string>
     <string name="feedback_dislike_button_description">No, I was not notified at the right time</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="feedback_log_guide">Your feedback will be sent to %1$s. If you check \"Include system logs\", real-time location information from your device recorded as you approached your destination stop will be shared with %1$s so developers can improve the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
+    <string name="feedback_log_guide">Your feedback will be sent to %1$s. If you check “Include system logs”, real-time location information from your device recorded as you approached your destination stop will be shared with %1$s so developers can improve the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
 
     <!-- Destination reminder feedback Preferences -->
     <string name="preferences_category_user_logs">Share debugging information</string>
@@ -317,9 +317,9 @@
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">High accuracy location not enabled</string>
-    <string name="main_changelocationmode">Your current device "Location method" setting may fail to
+    <string name="main_changelocationmode">Your current device “Location method” setting may fail to
         notify you when approaching your destination due to inaccurate position information.
-        Would you like to change your device "Location method" to "High accuracy" now?
+        Would you like to change your device “Location method” to “High accuracy” now?
     </string>
 
     <!-- Stop Details -->
@@ -330,7 +330,7 @@
     <!-- Route Info  -->
     <string name="route_info_context_get_stop_info">Show arrival information</string>
     <string name="route_info_context_showonmap">Show on map</string>
-    <string name="route_info_no_shape_data">Sorry, map information isn\'t available for this route
+    <string name="route_info_no_shape_data">Sorry, map information isn’t available for this route
     </string>
     <!-- Route map header: switch which direction of the route is shown -->
     <string name="route_header_switch_direction">Switch direction</string>
@@ -443,7 +443,7 @@
 
 
     <!--  Trip list -->
-    <string name="trip_list_notrips">You don\'t have any reminders.\n\nYou can create reminders by
+    <string name="trip_list_notrips">You don’t have any reminders.\n\nYou can create reminders by
         tapping on an arriving bus at your stop.
     </string>
     <string name="trip_list_context_edit">Edit trip</string>
@@ -516,7 +516,7 @@
     <string name="region_selected_auto">selected automatically</string>
     <string name="region_selected_manually">selected manually</string>
     <string name="region_region_found">Found %1$s region</string>
-    <string name="region_load_failed_title">Couldn\'t load regions</string>
+    <string name="region_load_failed_title">Couldn’t load regions</string>
     <string name="region_load_failed_message">Check your connection and try again.</string>
 
     <!--  Bug report -->
@@ -557,7 +557,7 @@
     <!-- Android Maps v2 -->
     <string name="install_google_maps_positive_button">Install</string>
     <string name="please_install_google_maps_dialog_title">Please install Google Maps</string>
-    <string name="no_play_store">Your device doesn\'t have the Play Store installed. Please find
+    <string name="no_play_store">Your device doesn’t have the Play Store installed. Please find
         another way to install Google Maps.
     </string>
     <string name="ok">OK</string>
@@ -604,7 +604,7 @@
 
     <string name="preferences_show_header_arrivals_title">Show arrivals above stop name</string>
     <string name="preferences_show_header_arrivals_summary">When viewing starred stops,
-        show arrival info in the header at the top of the screen (doesn\'t affect map view)
+        show arrival info in the header at the top of the screen (doesn’t affect map view)
     </string>
 
     <string name="preferences_trip_plan_notifications_title">Trip plan notifications (beta)</string>
@@ -640,7 +640,7 @@
     <string name="preferences_save_summary">Saves your starred and recent stops and routes</string>
     <string name="preferences_restore_title">Restore from storage</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="preferences_restore_summary">Restores from a previous backup. After selecting this option, you\'ll be asked to pick a file. Please select the backup file (e.g., "db.backup" or "%1$s.backup"), which may be in your "Documents" folder or any location where you saved the backup.</string>
+    <string name="preferences_restore_summary">Restores from a previous backup. After selecting this option, you’ll be asked to pick a file. Please select the backup file (e.g., “db.backup” or “%1$s.backup”), which may be in your “Documents” folder or any location where you saved the backup.</string>
 
     <string name="preferences_db_saved">Saved successfully!</string>
     <string name="preferences_db_save_error">Unable to save: %1$s</string>
@@ -662,7 +662,7 @@
         unstable and without real-time info! Go ahead?
     </string>
     <string name="preferences_experimental_regions_disable_warning">Your current experimental region
-        won\'t be available! Go ahead?
+        won’t be available! Go ahead?
     </string>
     <string name="preferences_analytics_title">Send anonymous usage data</string>
     <string name="preferences_analytics_summary">Help us improve the app</string>
@@ -720,8 +720,8 @@
     <string name="ri_button_camera">Camera</string>
     <string name="ri_button_gallery">Gallery</string>
     <string name="ri_address_not_found">Address not found. Please check your address.</string>
-    <string name="ri_open_camera_problem">Camera couldn\'t be opened.</string>
-    <string name="ri_resize_image_problem">Image couldn\'t be resized - using full size.</string>
+    <string name="ri_open_camera_problem">Camera couldn’t be opened.</string>
+    <string name="ri_resize_image_problem">Image couldn’t be resized - using full size.</string>
     <string name="ri_service_default">Choose a Problem</string>
     <string name="ri_service_stop">Stop Problem</string>
     <string name="ri_service_trip">Arrival Time Problem</string>
@@ -799,7 +799,7 @@
     <!-- Night Light -->
     <string name="night_light_dialog_title">Never miss the bus at night again!</string>
     <string name="night_light_dialog_message">Tired of watching your bus fly by because the driver
-        couldn\'t see you in the dark? Hold up your flashing Night Light and make yourself visible!
+        couldn’t see you in the dark? Hold up your flashing Night Light and make yourself visible!
         \n\nWARNING: This feature may potentially trigger seizures for people with photosensitive epilepsy. User discretion is advised.
     </string>
     <string name="night_light_create_shortcut">Create shortcut</string>
@@ -818,7 +818,7 @@
     <string name="tutorial_arrival_header_arrival_info_title">How long until your bus arrives?
     </string>
     <string name="tutorial_arrival_header_arrival_info_text">This long! Colored background tells you
-        if the bus is early (red) or late (blue). On time = green background. If we don\'t know
+        if the bus is early (red) or late (blue). On time = green background. If we don’t know
         where the bus is, the scheduled time is shown (gray background). Gray with strikethrough text
         (a line through it) means the trip is canceled.
     </string>
@@ -828,14 +828,14 @@
         to see more arrivals for this stop.
     </string>
     <string name="tutorial_recent_stops_routes_title">Recent stops and routes</string>
-    <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you\'ve recently
+    <string name="tutorial_recent_stops_routes_text">Find the stops and routes that you’ve recently
         looked at in the menu.
     </string>
     <!-- Onboarding spotlight card: the corner close button's accessibility label + the final-step action -->
     <string name="tutorial_button_close">End tutorial</string>
     <string name="tutorial_button_finish">Finish</string>
     <!-- The welcome onboarding step that spotlights a real stop on the map -->
-    <string name="tutorial_welcome_map_stop_title">Here\'s a stop</string>
+    <string name="tutorial_welcome_map_stop_title">Here’s a stop</string>
     <string name="tutorial_welcome_map_stop_text">Tap a green dot like this one on the map to see its
         arrival times.
     </string>
@@ -854,7 +854,7 @@
     <string name="about_welcome_title">Welcome to %1$s!</string>
     <string name="about_intro">%1$s is made by a team of volunteers and relies upon the dedication, passion, and talents of its open source contributors.</string>
     <string name="about_contributors_header">Code Contributors:</string>
-    <string name="about_contributors_intro">Our dedicated contributors improve the app\'s functionality and user experience:</string>
+    <string name="about_contributors_intro">Our dedicated contributors improve the app’s functionality and user experience:</string>
     <string name="about_translations_header">Translations:</string>
     <string name="about_translations_intro">Thanks to our translators, %1$s is accessible worldwide:</string>
     <string name="about_image_credits_header">Image Credits:</string>
@@ -921,7 +921,7 @@
     <string name="tripplanner_error_system">Please check your Internet connection and try again.
     </string>
     <string name="tripplanner_error_outside_bounds">Origin or destination is outside transportation network coverage</string>
-    <string name="tripplanner_error_path_not_found">Couldn\'t find a matching route between origin and destination</string>
+    <string name="tripplanner_error_path_not_found">Couldn’t find a matching route between origin and destination</string>
     <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>
     <string name="tripplanner_error_outside_service_period">Selected date is outside the available
         transit schedule
@@ -1131,18 +1131,18 @@
     <string name="donation_view_body">This app is currently built with 100% volunteer labor, and we need you to help us fund future development.</string>
     <string name="donation_view_learn_more_button">Learn More</string>
     <string name="donation_view_donate_now_button">Donate Now</string>
-    <string name="donation_dismiss_dialog_title">Please don\'t dismiss this request</string>
+    <string name="donation_dismiss_dialog_title">Please don’t dismiss this request</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="donation_dismiss_dialog_body">%1$s is a volunteer-run organization with almost no funding. We need your help to keep this app running.</string>
-    <string name="donation_dismiss_dialog_dont_want_to_help_button">I Don\'t Want to Help</string>
+    <string name="donation_dismiss_dialog_dont_want_to_help_button">I Don’t Want to Help</string>
     <string name="donation_dismiss_dialog_remind_me_later_button">Remind Me Later</string>
     <string name="donation_dismiss_dialog_cancel_button">Cancel</string>
     <string name="title_activity_donation_learn_more">Why we need your help</string>
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
-    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">We have big plans to improve %1$s, but we can\'t do it without your help. This app is currently built with 100%% volunteer labor, and we need you to help us fund future development.\n\nAs a key project of the Open Transit Software Foundation, a 501(c)(3) non-profit, we rely on the goodwill of users like you to keep running and making this software better.\n\nEvery year, only a small fraction of our users donate, but every contribution, big or small, helps ensure that %1$s remains free, updated, and accessible to everyone. A small donation, even just the cost of one week of commuting, $27.50, can make all the difference.\n\nYour tax-deductible contribution ensures that %1$s remains free and accessible for everyone. Let\'s shape the future of transit together!\n\nThank you,\nThe %1$s Team</string>
+    <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">We have big plans to improve %1$s, but we can’t do it without your help. This app is currently built with 100%% volunteer labor, and we need you to help us fund future development.\n\nAs a key project of the Open Transit Software Foundation, a 501(c)(3) non-profit, we rely on the goodwill of users like you to keep running and making this software better.\n\nEvery year, only a small fraction of our users donate, but every contribution, big or small, helps ensure that %1$s remains free, updated, and accessible to everyone. A small donation, even just the cost of one week of commuting, $27.50, can make all the difference.\n\nYour tax-deductible contribution ensures that %1$s remains free and accessible for everyone. Let’s shape the future of transit together!\n\nThank you,\nThe %1$s Team</string>
     <string name="preferences_reset_donation_timestamps_title">Reset Donation Timestamps</string>
-    <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the \'Remind Me Later\' and \'Don\'t Bother Me\' timestamps associated with donation requests.</string>
+    <string name="preferences_reset_donation_timestamps_summary">Tapping this option will clear both the ’Remind Me Later’ and ’Don’t Bother Me’ timestamps associated with donation requests.</string>
     <string name="preferences_show_weather_view">Show weather view</string>
     <string name="preferences_preferred_maps_title">Preferred Map Type</string>
     <string name="preferences_preferred_map_option_normal2d">Default Map</string>

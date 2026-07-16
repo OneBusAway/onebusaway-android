@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.app.di.NetworkEntryPoint
 
 /**
@@ -49,7 +50,7 @@ object ReminderClient {
                         Log.d(TAG, "Delete request failed: HTTP ${response.code()}")
                     }
                 }
-                .onFailure { Log.d(TAG, "Delete request failed: $it") }
+                .onFailure { if (BuildConfig.DEBUG) Log.d(TAG, "Delete request failed: $it") }
         }
     }
 }

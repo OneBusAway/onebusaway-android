@@ -31,7 +31,7 @@ import org.onebusaway.android.R
 
 /**
  * The app's standard top bar for full-screen Compose hosts: a back arrow, the [title], optional
- * [actions], on the slightly-darker `surfaceContainerHighest` container that offsets the bar from
+ * [content] (e.g. action icons), on the slightly-darker `surfaceContainerHighest` container that offsets the bar from
  * the content below.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -39,7 +39,7 @@ import org.onebusaway.android.R
 fun ObaTopAppBar(
     title: String,
     onBack: () -> Unit,
-    actions: @Composable RowScope.() -> Unit = {}
+    content: @Composable RowScope.() -> Unit = {}
 ) {
     TopAppBar(
         title = { Text(title) },
@@ -54,6 +54,6 @@ fun ObaTopAppBar(
                 )
             }
         },
-        actions = actions
+        actions = content
     )
 }

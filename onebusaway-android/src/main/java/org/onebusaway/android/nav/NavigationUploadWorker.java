@@ -26,6 +26,7 @@ import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 
@@ -103,16 +104,16 @@ public class NavigationUploadWorker extends Worker {
                 }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        Log.d(TAG, logFileName + " uploaded successful");
+                        if (BuildConfig.DEBUG) Log.d(TAG, logFileName + " uploaded successful");
                         String userResponse = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_response));
                         String feedbackText = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_feedback));
                         String fileURL = taskSnapshot.getStorage().getDownloadUrl().toString();
-                        Log.d(TAG, "Response - " + userResponse);
-                        Log.d(TAG, "FeedbackText - " + feedbackText);
-                        Log.d(TAG, "Download URL - " + fileURL);
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Response - " + userResponse);
+                        if (BuildConfig.DEBUG) Log.d(TAG, "FeedbackText - " + feedbackText);
+                        if (BuildConfig.DEBUG) Log.d(TAG, "Download URL - " + fileURL);
                         logFeedback(feedbackText, userResponse, fileURL);
                         boolean deleted = lFile.delete();
-                        Log.v(TAG, logFileName + " deleted : " + deleted);
+                        if (BuildConfig.DEBUG) Log.v(TAG, logFileName + " deleted : " + deleted);
                     }
                 });
             }
@@ -128,7 +129,7 @@ public class NavigationUploadWorker extends Worker {
         }
         AnalyticsEntryPoint.get(getApplicationContext()).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
-        Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+        if (BuildConfig.DEBUG) Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null) + ", filename - " + fileName);
     }
 }

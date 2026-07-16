@@ -20,6 +20,7 @@ import android.content.res.Resources
 import android.text.SpannableString
 import android.text.TextUtils
 import android.util.Log
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
@@ -504,7 +505,7 @@ class DirectionsGenerator(
                 TripMode.WALK -> R.drawable.ic_directions_walk
                 TripMode.BICYCLE -> R.drawable.ic_directions_bike
                 else -> {
-                    Log.d(TAG, "No icon for mode: $mode")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "No icon for mode: $mode")
                     -1
                 }
             }

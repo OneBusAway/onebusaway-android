@@ -57,11 +57,11 @@
     </string-array>
     <string-array name="report_trip_problem_code_bus">
         <item>Seleziona un problema</item>
-        <item>L\'autobus non è passato</item>
+        <item>L’autobus non è passato</item>
         <item>È arrivato prima del previsto</item>
         <item>È arrivato più tardi del previsto</item>
         <item>La destinazione mostrata è errata</item>
-        <item>L\'autobus non ferma qui</item>
+        <item>L’autobus non ferma qui</item>
         <item>Altro</item>
     </string-array>
     <string-array name="preferred_units_options">

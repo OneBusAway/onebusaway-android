@@ -137,8 +137,8 @@ public class FeedbackReceiver extends BroadcastReceiver {
             File destFolder = new File(context.getFilesDir()
                     .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + userResponse);
 
-            Log.d(TAG, "sourceLocation: " + lFile);
-            Log.d(TAG, "targetLocation: " + destFolder);
+            if (BuildConfig.DEBUG) Log.d(TAG, "sourceLocation: " + lFile);
+            if (BuildConfig.DEBUG) Log.d(TAG, "targetLocation: " + destFolder);
 
             try {
                 FileUtils.moveFileToDirectory(
@@ -160,7 +160,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
     private void deleteLog(String logFile) {
         File lFile = new File(logFile);
         boolean deleted = lFile.delete();
-        Log.v(TAG, "Log deleted " + deleted);
+        if (BuildConfig.DEBUG) Log.v(TAG, "Log deleted " + deleted);
     }
 
     private void setupLogUploadTask() {
@@ -188,7 +188,7 @@ public class FeedbackReceiver extends BroadcastReceiver {
         }
         AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(wasGoodReminder
                 , ((!isEmpty(feedbackText)) ? feedbackText : null), null);
-        Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+        if (BuildConfig.DEBUG) Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
                 + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));
     }
 

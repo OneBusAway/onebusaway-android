@@ -81,14 +81,12 @@ android {
             dimension = "platform"
             isDefault = true
             buildConfigField("String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.compose.GoogleComposeAdapter\"")
-            buildConfigField("String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.googlemapsv2.GoogleProprietaryMapHelper\"")
         }
 
         create("maplibre") {
             // MapLibre-based build using OpenFreeMap tiles - see src/maplibre
             dimension = "platform"
             buildConfigField("String", "MAP_COMPOSE_ADAPTER_CLASS", "\"org.onebusaway.android.map.maplibre.compose.MapLibreComposeAdapter\"")
-            buildConfigField("String", "MAP_HELPER_CLASS", "\"org.onebusaway.android.map.maplibre.MapLibreProprietaryMapHelper\"")
         }
 
         // Brand flavors are loaded from separate files in flavors/ directory.
@@ -388,8 +386,6 @@ dependencies {
     "googleImplementation"(libs.play.services.maps)
     // MapLibre GL Native (only for MapLibre flavor)
     "maplibreImplementation"(libs.maplibre.android.sdk)
-    // Google Play Services Places is required by ProprietaryMapHelpV2 (only for Google flavor)
-    "googleImplementation"(libs.places.compat)
     // Autocomplete text views with clear button for trip planning
     implementation(libs.material)
     // Version pin: a transitive dependency pulls in Gson 2.8.5; this forces it up to 2.10.1.

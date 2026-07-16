@@ -22,34 +22,19 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.fragment.app.Fragment;
 
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.libraries.places.compat.Place;
-import com.google.android.libraries.places.compat.ui.PlaceAutocomplete;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import org.onebusaway.android.R;
-import org.onebusaway.android.directions.util.CustomAddress;
-import org.onebusaway.android.region.Region;
 
 /**
  * Helper methods specific to Google Maps API v2
  */
 public class ProprietaryMapHelpV2 {
-
-    private static final String TAG = "ProprietaryMapHelpV2";
-
-    private static final String PLACES_ADDRESS_SEPARATOR = ",";
 
     /**
      * Returns true if Android Maps V2 is installed, false if it is not
@@ -101,80 +86,6 @@ public class ProprietaryMapHelpV2 {
         );
         AlertDialog dialog = builder.create();
         dialog.show();
-    }
-
-    /**
-     * Decode the result of an Intent to Google Places Autocomplete into a CustomAddress.
-     * Here because of LatLng, Place which are specific to Google Places API.
-     */
-    @NonNull
-    public static CustomAddress getCustomAddressFromPlacesIntent(@NonNull Context context, @NonNull Intent intent) {
-        Place place = PlaceAutocomplete.getPlace(context, intent);
-
-        CustomAddress address = new CustomAddress();
-
-        String placeName = place.getName().toString();
-        address.setAddressLine(0, placeName);
-
-        String addressString = place.getAddress().toString();
-        String[] tokens = addressString.split(PLACES_ADDRESS_SEPARATOR);
-
-        // Posible that first line of address is place name.
-        int start = placeName.equals(tokens[0]) ? 1 : 0;
-
-        int j = 1; // address line index
-        for (int i = start; i < tokens.length; i++) {
-            address.setAddressLine(j++, tokens[i]);
-        }
-
-        LatLng loc = place.getLatLng();
-
-        address.setLatitude(loc.latitude);
-        address.setLongitude(loc.longitude);
-
-        return address;
-    }
-
-    /**
-     * Helper class to start Google Places Autocomplete when a field is clicked.
-     * Does not check that Google API is available.
-     * Here because of the use of LatLngBounds. Decode result with
-     * getCustomAddressFromPlacesIntent.
-     */
-    public static class StartPlacesAutocompleteOnClick implements View.OnClickListener {
-
-        int mRequestCode;
-        Fragment mFragment;
-        Region mRegion;
-
-        public StartPlacesAutocompleteOnClick(int requestCode, @NonNull Fragment fragment, @Nullable Region region) {
-            mRequestCode = requestCode;
-            mFragment = fragment;
-            mRegion = region;
-        }
-
-        @Override
-        public void onClick(View v) {
-            Intent intent = null;
-            PlaceAutocomplete.IntentBuilder builder =
-                    new PlaceAutocomplete.IntentBuilder(PlaceAutocomplete.MODE_OVERLAY);
-
-            if (mRegion != null) {
-                // Bias search results to region bounds
-                LatLngBounds bounds = MapHelpV2.getRegionBounds(mRegion);
-                builder.setBoundsBias(bounds);
-            }
-
-            try {
-                intent = builder.build(mFragment.getActivity());
-            } catch (GooglePlayServicesRepairableException e) {
-                e.printStackTrace();
-            } catch (GooglePlayServicesNotAvailableException e) {
-                e.printStackTrace();
-            }
-
-            mFragment.startActivityForResult(intent, mRequestCode);
-        }
     }
 
     /**

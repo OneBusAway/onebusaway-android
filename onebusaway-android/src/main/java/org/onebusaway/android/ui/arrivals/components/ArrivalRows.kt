@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -71,11 +71,13 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
-import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
 
@@ -389,17 +391,13 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            // Keep a top-end popup anchor without drawing or reserving an overflow button. The route
-            // body long press above owns the interaction; routes without a schedule expose no menu.
             if (scheduleUrl != null) {
-                Box(Modifier.align(Alignment.TopEnd).size(CORNER_ICON_HITBOX_SIZE)) {
-                    RouteActionsMenu(
-                        expanded = menuExpanded,
-                        onDismiss = { menuExpanded = false },
-                        scheduleUrl = scheduleUrl,
-                        callbacks = callbacks,
-                    )
-                }
+                RouteActionsMenu(
+                    expanded = menuExpanded,
+                    onDismiss = { menuExpanded = false },
+                    scheduleUrl = scheduleUrl,
+                    callbacks = callbacks,
+                )
             }
         }
     }
@@ -459,17 +457,21 @@ internal fun RouteActionsMenu(
     scheduleUrl: String,
     callbacks: ArrivalRowCallbacks
 ) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        MenuRow(R.string.bus_options_menu_show_route_schedule) {
+    CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
             onDismiss(); callbacks.onShowRouteSchedule(scheduleUrl)
         }
     }
 }
 
-/** A dropdown item that just shows a string resource; shared by the per-arrival and overflow menus. */
+/** A labelled menu item with an optional decorative leading [icon]. */
 @Composable
-internal fun MenuRow(textRes: Int, onClick: () -> Unit) {
-    DropdownMenuItem(text = { Text(stringResource(textRes)) }, onClick = onClick)
+internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = onClick,
+        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } },
+    )
 }
 
 private val PillShape = RoundedCornerShape(6.dp)

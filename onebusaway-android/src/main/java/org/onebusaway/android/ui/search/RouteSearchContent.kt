@@ -20,7 +20,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +32,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MenuHeader
 import org.onebusaway.android.ui.compose.components.RouteRowContent
 
@@ -88,7 +88,10 @@ private fun RouteSearchRow(
                 )
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         )
-        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+        CenteredLongPressMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+        ) {
             MenuHeader(stringResource(R.string.route_name, route.shortName))
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.my_context_get_route_info)) },

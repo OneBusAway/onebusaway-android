@@ -26,6 +26,14 @@ internal val ROUTE_VIEW_TRANSFORMS = setOf(
 internal const val ROUTE_DEEMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.275f
 internal const val ROUTE_EMPHASIZED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 1.5f
 
+/** The active route's broader geometry retained beneath an exact selected-trip line. */
+internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyline> = map { line ->
+    line.copy(
+        widthDp = ROUTE_DEEMPHASIZED_LINE_WIDTH_DP,
+        directional = false,
+    )
+}
+
 /**
  * Convert exact trip shapes into uniform-width directional route lines. When [emphasizedRoute] is
  * set, that route-direction uses a 1.5x stroke while siblings use a thin, plain stroke and render
@@ -59,6 +67,16 @@ internal fun FocusedTripGeometry.toRoutePolylines(
         )
     }
 }
+
+/** Sibling routes, then the selected route's thin underlay, then its exact trip shape. */
+internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
+    selectedRoute: RouteDirectionKey,
+    routeColors: Map<RouteDirectionKey, Int>,
+    selectedRouteUnderlay: List<RoutePolyline>,
+    selectedTrip: RoutePolyline,
+): List<RoutePolyline> =
+    FocusedTripGeometry(shapes.filterNot { it.routeDirection == selectedRoute })
+        .toRoutePolylines(selectedRoute, routeColors) + selectedRouteUnderlay + selectedTrip
 
 /**
  * One Google-first badge model per successfully drawn route-direction, preserving the focused-trip

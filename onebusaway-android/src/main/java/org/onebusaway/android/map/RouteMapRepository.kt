@@ -123,3 +123,9 @@ internal fun List<RouteMapStop>.anchorDirectionId(anchorStopId: String?): Int? {
 internal fun List<RouteMapStop>.stopsForDirection(directionId: Int?): List<ObaStop> =
     if (directionId == null) map { it.stop }
     else filter { directionId in it.directionIds }.map { it.stop }
+
+/** Narrows the route catalog to one trip's scheduled stop ids, preserving schedule order. */
+internal fun List<RouteMapStop>.stopsForTrip(stopIds: List<String>): List<ObaStop> {
+    val stopsById = associateBy { it.stop.id }
+    return stopIds.distinct().mapNotNull { stopsById[it]?.stop }
+}

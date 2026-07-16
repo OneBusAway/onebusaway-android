@@ -125,6 +125,12 @@ class RouteMapController(
     private var basePolylines: List<RoutePolyline> = emptyList()
     private var baseStopPresentation: RouteStopPresentation? = null
 
+    private data class SelectedTripPresentation(
+        val points: List<GeoPoint>,
+        val stopIds: List<String>,
+        val routeDirection: RouteDirectionKey,
+    )
+
     private data class StopFocusSession(
         val stopId: String,
         val trips: Set<FocusedTrip>,
@@ -174,8 +180,9 @@ class RouteMapController(
 
     private var vehicleJob: Job? = null
 
-    // Drives everything a tap-selected vehicle shows: the trip overlay (the uncertainty band +
-    // fast-estimate marker, [showSelectionOverlay]) and the route continuation (#1691, [showContinuation]).
+    // Drives everything a tap-selected vehicle shows: its exact shape + scheduled stops
+    // ([showSelectionPresentation]), the trip overlay (the uncertainty band + fast-estimate marker,
+    // [showSelectionOverlay]), and the route continuation (#1691, [showContinuation]).
     // A tap selects a vehicle (renderState.selectedVehicleTripId); collectLatest so a fast reselect
     // cancels an in-flight continuation resolution (a suspending network fetch) for the previous
     // selection instead of racing it — [showSelectionOverlay] has no suspension point, so it's unaffected
@@ -233,14 +240,15 @@ class RouteMapController(
         // route-id filter set is built once here, not per frame, since it's constant for this route;
         // directionState is read live since it's resolved only once the route loads.
         renderState.setVehiclesSampler { nowMs -> sampleVehicles(WallTime(nowMs)) }
-        // A tapped vehicle enters a focused state that shows its extrapolation band + fast-estimate
-        // marker, and resolves its route continuation (#1691); react to the selection state here (a tap
-        // sets it, a map/background tap clears it). Cancel any collector from a prior start() so a
+        // A tapped vehicle enters a focused state that shows its exact shape/stops, extrapolation band
+        // + fast-estimate marker, and route continuation (#1691); react to the selection state here (a
+        // tap sets it, a map/background tap clears it). Cancel any collector from a prior start() so a
         // re-entered session doesn't leak one that stop() can no longer reach.
         selectionJob?.cancel()
         selectionJob = scope.launch {
             renderState.selectedVehicleTripId.collectLatest { tripId ->
                 showSelectionOverlay(tripId)
+                showSelectionPresentation(tripId)
                 showContinuation(tripId)
             }
         }
@@ -357,6 +365,27 @@ class RouteMapController(
             extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs), includeMarkers = false)
                 ?.toTripOverlay(bandColor)
         }
+    }
+
+    /** Replace the direction line + stops with the selected vehicle's exact trip presentation. */
+    private suspend fun showSelectionPresentation(tripId: String?) {
+        if (tripId != null) {
+            val state = tripObservationRepository.lookupTripState(tripId)
+            val shapeId = state?.shapeId ?: latestPoll?.response?.trip(tripId)?.shapeId
+            supervisorScope {
+                val shape = async {
+                    state?.polyline ?: shapeId?.let {
+                        tripObservationRepository.ensureShape(tripId, it)
+                    }
+                }
+                val schedule = async {
+                    state?.schedule ?: tripObservationRepository.ensureSchedule(tripId)
+                }
+                shape.await()
+                schedule.await()
+            }
+        }
+        publishMapPresentation()
     }
 
     /** The shown route's GTFS color (the band tint's basis), or the default when it carries none. */
@@ -568,10 +597,31 @@ class RouteMapController(
 
     private fun publishMapPresentation() {
         val focus = stopFocusSession
+        val selected = selectedTripPresentation()
+        val selectedTrip = selected?.points
+            ?.takeIf { it.size >= 2 }
+            ?.let { points ->
+                RoutePolyline(
+                    currentRouteColor(),
+                    points,
+                    widthDp = ROUTE_EMPHASIZED_LINE_WIDTH_DP,
+                    directional = true,
+                    transforms = ROUTE_VIEW_TRANSFORMS,
+                )
+            }
+        val selectedTripStops = selected?.let(::selectedTripStopPresentation)
+        val selectedRouteUnderlay = if (selectedTrip == null) {
+            emptyList()
+        } else basePolylines.asDeemphasizedRouteUnderlay()
         if (focus == null) {
-            renderState.setRoutePolylines(basePolylines)
+            renderState.setRoutePolylines(
+                polylines = if (selectedTrip == null) {
+                    basePolylines
+                } else selectedRouteUnderlay + selectedTrip,
+                framingPolylines = selectedTrip?.let(::listOf) ?: basePolylines,
+            )
             renderState.setRouteBadges(emptyList())
-            stopsController.setRoutePresentation(baseStopPresentation)
+            stopsController.setRoutePresentation(selectedTripStops ?: baseStopPresentation)
             return
         }
         val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
@@ -580,12 +630,23 @@ class RouteMapController(
         val routesByStopId = focusedStops.routeDirectionsByStopId(focus.trips, emphasizedRoute)
         val routeColors = _focusedRouteColors.value
         renderState.setRoutePolylines(
-            polylines = focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
-                if (showBaseRoute) basePolylines else emptyList(),
+            polylines = if (selected != null && selectedTrip != null) {
+                focusedGeometry.toTripFocusedRoutePolylines(
+                    selected.routeDirection,
+                    routeColors,
+                    selectedRouteUnderlay,
+                    selectedTrip,
+                )
+            } else {
+                focusedGeometry.toRoutePolylines(emphasizedRoute, routeColors) +
+                    if (showBaseRoute) basePolylines else emptyList()
+            },
             // Adjacency remains visible underneath route mode, but the active route's fully loaded
             // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
             // fit the union of every route serving the focused stop.
-            framingPolylines = if (isActive) basePolylines else emptyList(),
+            framingPolylines = if (isActive) {
+                selectedTrip?.let(::listOf) ?: basePolylines
+            } else emptyList(),
         )
         renderState.setRouteBadges(
             if (emphasizedRoute == null) {
@@ -594,7 +655,7 @@ class RouteMapController(
             else emptyList()
         )
         stopsController.setRoutePresentation(
-            if (showBaseRoute) {
+            selectedTripStops ?: if (showBaseRoute) {
                 baseStopPresentation
             } else {
                 RouteStopPresentation(
@@ -604,6 +665,34 @@ class RouteMapController(
                     projectedPoints = projectFocusedStops(focus.trips, focusedGeometry, focusedStops),
                 )
             }
+        )
+    }
+
+    /** Current selected-trip data, read fresh after selection's shape/schedule activation. */
+    private fun selectedTripPresentation(): SelectedTripPresentation? {
+        val tripId = renderState.selectedVehicleTripId.value ?: return null
+        val currentRouteId = routeId ?: return null
+        val state = tripObservationRepository.lookupTripState(tripId)
+        // The marker is keyed by activeTripId, which resolves directly through the poll references.
+        val activeTrip = latestPoll?.response?.trip(tripId)
+        return SelectedTripPresentation(
+            points = state?.polyline?.points?.map { it.toGeoPoint() }.orEmpty(),
+            stopIds = state?.schedule?.stopTimes?.map { it.stopId }.orEmpty(),
+            routeDirection = RouteDirectionKey(
+                currentRouteId,
+                activeTrip?.directionId ?: currentDirectionId,
+            ),
+        )
+    }
+
+    /** The selected trip's scheduled stops, projected onto its exact shape in schedule order. */
+    private fun selectedTripStopPresentation(selected: SelectedTripPresentation): RouteStopPresentation {
+        val stops = routeStops.stopsForTrip(selected.stopIds)
+        return RouteStopPresentation(
+            stops = stops,
+            routes = routeStopRoutes,
+            routeDirectionsByStopId = stops.associate { it.id to setOf(selected.routeDirection) },
+            projectedPoints = projectStopsOntoPolylines(stops, listOf(selected.points)),
         )
     }
 
@@ -722,7 +811,14 @@ class RouteMapController(
      */
     private fun projectStopsOntoShape(stops: List<ObaStop>): Map<String, GeoPoint> {
         val route = routeShape ?: return emptyMap()
-        val shapes = route.shapeForDirection(currentDirectionId).polylines
+        return projectStopsOntoPolylines(stops, route.shapeForDirection(currentDirectionId).polylines)
+    }
+
+    private fun projectStopsOntoPolylines(
+        stops: List<ObaStop>,
+        points: List<List<GeoPoint>>,
+    ): Map<String, GeoPoint> {
+        val shapes = points
             .filter { it.size >= 2 }
             .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
         if (shapes.isEmpty()) return emptyMap()

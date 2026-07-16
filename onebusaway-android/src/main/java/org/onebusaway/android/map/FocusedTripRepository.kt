@@ -31,7 +31,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.onebusaway.android.api.data.RouteStopsDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.BoundedLruCache
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.GeoPoint
@@ -97,7 +97,7 @@ private class ExpiringLruCache<K : Any, V : Any>(
 @Singleton
 class DefaultFocusedTripRepository internal constructor(
     private val observations: TripObservationRepository,
-    private val routeStops: RouteStopsDataSource,
+    private val stopsForRoute: StopsForRouteRepository,
     fetchScope: CoroutineScope,
     cacheSize: Int = MAX_CACHED_FOCUS_DATA,
     cacheTtl: Duration = FOCUS_DATA_CACHE_TTL,
@@ -111,18 +111,15 @@ class DefaultFocusedTripRepository internal constructor(
     @Inject
     constructor(
         observations: TripObservationRepository,
-        routeStops: RouteStopsDataSource,
+        stopsForRoute: StopsForRouteRepository,
     ) : this(
         observations,
-        routeStops,
+        stopsForRoute,
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     )
 
-    private val routeStopFetches = SingleFlight<String, List<RouteStopGroup>>(fetchScope)
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
     private val shapePermits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
-    private val routeStopCache =
-        ExpiringLruCache<String, List<RouteStopGroup>>(cacheSize, cacheTtl, now)
     private val shapeCache =
         ExpiringLruCache<String, List<GeoPoint>>(cacheSize, cacheTtl, now)
 
@@ -187,11 +184,11 @@ class DefaultFocusedTripRepository internal constructor(
         FocusedTripStops(stopIdsByTripId, stopsById)
     }
 
+    // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the
+    // route overlay and route-info screen — a stop's routes are never fetched twice. A failure resolves
+    // to null here (swallowed via getOrNull), matching the prior behavior.
     private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup>? =
-        routeStopCache.get(routeId) ?: routeStopFetches.run(routeId) {
-            routeStopCache.get(routeId) ?: routeStops.stopsForRoute(routeId).getOrNull()
-                ?.also { routeStopCache.put(routeId, it) }
-        }
+        stopsForRoute.routeStopGroups(routeId).getOrNull()
 
     /**
      * A failed trip/route is omitted (logged, so it stays distinguishable from genuinely absent data)

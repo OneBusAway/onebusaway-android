@@ -11,11 +11,12 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
-import org.onebusaway.android.api.data.RouteStopsDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
@@ -45,10 +46,11 @@ class FocusedTripRepositoryTest {
         override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }
 
-    private class RouteStops : RouteStopsDataSource {
+    private class RouteStops : StopsForRouteRepository {
         val catalogs = mutableMapOf<String, Result<List<RouteStopGroup>>>()
-        override suspend fun stopsForRoute(routeId: String): Result<List<RouteStopGroup>> =
+        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> =
             catalogs[routeId] ?: Result.success(emptyList())
+        override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
     }
 
     @Test

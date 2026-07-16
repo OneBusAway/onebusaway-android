@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 
 import javax.inject.Inject
 import org.onebusaway.android.models.ObaRoute
@@ -65,10 +65,10 @@ data class DirectionShape(val polylines: List<List<GeoPoint>>, val directional: 
 
 /**
  * Loads a route's stops + shapes (one-shot, stops-for-route with polylines) for the route/stop
- * overlays, via the api [MapDataSource]. Turns the source's [android.location.Location] shape
- * points into the render [GeoPoint]s the overlay consumes, and — when the caller passes a
- * `directionStopId` — narrows the stops to that stop's direction. (Route-mode real-time vehicles are
- * polled via the trip-observation repository's `routeVehiclesStream`.)
+ * overlays, via the shared caching [StopsForRouteRepository]. Turns the source's
+ * [android.location.Location] shape points into the render [GeoPoint]s the overlay consumes, and —
+ * when the caller passes a `directionStopId` — narrows the stops to that stop's direction. (Route-mode
+ * real-time vehicles are polled via the trip-observation repository's `routeVehiclesStream`.)
  */
 interface RouteMapRepository {
     /**
@@ -82,11 +82,11 @@ interface RouteMapRepository {
 }
 
 class DefaultRouteMapRepository @Inject constructor(
-    private val mapDataSource: MapDataSource,
+    private val stopsForRoute: StopsForRouteRepository,
 ) : RouteMapRepository {
 
     override suspend fun getRoute(routeId: String, directionStopId: String?): Result<RouteMap?> =
-        mapDataSource.routeMap(routeId).map { data ->
+        stopsForRoute.routeMap(routeId).map { data ->
             data?.let {
                 RouteMap(
                     route = it.route,

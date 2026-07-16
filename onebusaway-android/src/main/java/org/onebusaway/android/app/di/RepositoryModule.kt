@@ -23,8 +23,8 @@ import org.onebusaway.android.api.data.DefaultAgenciesDataSource
 import org.onebusaway.android.api.data.AgenciesDataSource
 import org.onebusaway.android.api.data.DefaultRouteDataSource
 import org.onebusaway.android.api.data.RouteDataSource
-import org.onebusaway.android.api.data.DefaultRouteStopsDataSource
-import org.onebusaway.android.api.data.RouteStopsDataSource
+import org.onebusaway.android.api.data.DefaultStopsForRouteRepository
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.api.data.DefaultLocationSearchDataSource
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.api.data.DefaultSurveyDataSource
@@ -150,8 +150,14 @@ abstract class RepositoryModule {
     @Binds
     abstract fun bindTripDetailsRepository(impl: DefaultTripDetailsRepository): TripDetailsRepository
 
+    // Must be @Singleton: the impl owns the shared stops-for-route cache + SingleFlight coalescing
+    // that both the route map and route-info/focused-stop paths project from, so the whole app shares
+    // exactly one instance.
     @Binds
-    abstract fun bindRouteStopsDataSource(impl: DefaultRouteStopsDataSource): RouteStopsDataSource
+    @Singleton
+    abstract fun bindStopsForRouteRepository(
+        impl: DefaultStopsForRouteRepository
+    ): StopsForRouteRepository
 
     @Binds
     abstract fun bindRouteInfoRepository(impl: DefaultRouteInfoRepository): RouteInfoRepository

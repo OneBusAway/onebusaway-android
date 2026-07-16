@@ -594,40 +594,39 @@ class RouteMapController(
         val focus = stopFocusSession
         val emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) }
         val routeColors = _focusedRouteColors.value
+        val selected = selectedTripPresentation()
+        if (selected != null) {
+            // See selectedTripStyle: stop focus alone gates the underlay, not whether an adjacency
+            // color happened to be found for this exact direction (#1902).
+            val style = selectedTripStyle(focus != null, selected.routeDirection, routeColors, currentRouteColor())
+            val selectedTrip = selected.points
+                .takeIf { it.size >= 2 }
+                ?.let { points -> focusedRoutePolyline(style.color, points, directional = true) }
+            // A selected vehicle shows its exact trip everywhere: the trip line, framed to that trip,
+            // over its scheduled stops.
+            if (selectedTrip != null) {
+                renderState.setRoutePolylines(
+                    polylines = focusedGeometry.toTripFocusedRoutePolylines(
+                        selected.routeDirection,
+                        routeColors,
+                        if (style.includeUnderlay) {
+                            selectedDirectionUnderlay(selected.routeDirection.directionId)
+                        } else emptyList(),
+                        selectedTrip,
+                    ),
+                    framingPolylines = listOf(selectedTrip),
+                    routeModeScalesStopsWithZoom = isActive,
+                )
+                // A selected trip is only reachable in single-route mode, where emphasizedRoute is
+                // always non-null too — the badges below are always suppressed here regardless.
+                renderState.setRouteBadges(emptyList())
+                stopsController.setRoutePresentation(selectedTripStopPresentation(selected))
+                return
+            }
+        }
         val badges = if (emphasizedRoute == null) {
             focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
         } else emptyList()
-        val selected = selectedTripPresentation()
-        // A route emphasized inside stop focus carries an adjacency color (keyed on the focused stop's
-        // trips); the selected trip keeps that color so selecting a vehicle doesn't drop the route back
-        // to its GTFS hue. In whole-route mode there is no adjacency entry, so fall back to GTFS.
-        val selectedAdjacencyColor = selected?.let { routeColors[it.routeDirection] }
-        val selectedTrip = selected?.points
-            ?.takeIf { it.size >= 2 }
-            ?.let { points ->
-                focusedRoutePolyline(selectedAdjacencyColor ?: currentRouteColor(), points, directional = true)
-            }
-        // A selected vehicle shows its exact trip everywhere: the trip line, framed to that trip, over
-        // its scheduled stops. In whole-route mode it sits on a thin same-direction underlay; inside
-        // stop focus the emphasized route already reads via its adjacency color, so the generic
-        // direction underlay is dropped (it would otherwise look like standalone route mode) and only
-        // the focused-stop siblings remain beneath the exact trip.
-        if (selected != null && selectedTrip != null) {
-            renderState.setRoutePolylines(
-                polylines = focusedGeometry.toTripFocusedRoutePolylines(
-                    selected.routeDirection,
-                    routeColors,
-                    if (selectedAdjacencyColor != null) emptyList()
-                    else selectedDirectionUnderlay(selected.routeDirection.directionId),
-                    selectedTrip,
-                ),
-                framingPolylines = listOf(selectedTrip),
-                routeModeScalesStopsWithZoom = isActive,
-            )
-            renderState.setRouteBadges(badges)
-            stopsController.setRoutePresentation(selectedTripStopPresentation(selected))
-            return
-        }
         if (focus == null) {
             renderState.setRoutePolylines(basePolylines, routeModeScalesStopsWithZoom = isActive)
             renderState.setRouteBadges(emptyList())

@@ -147,6 +147,27 @@ private data class RouteBadgeSpec(
     val shapes: List<FocusedTripShape>,
 )
 
+/** The selected-trip line's color and whether the generic same-direction underlay stays beneath it. */
+internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boolean)
+
+/**
+ * [stopFocusActive] alone gates the underlay: inside stop focus the focused-stop's own siblings
+ * already carry the route's other geometry, so the underlay is dropped even when [selectedRouteDirection]
+ * isn't among the focused stop's own trips and [routeColors] carries no adjacency entry for it — that
+ * combination used to fall back to a whole-route-style underlay (the #1899 regression fixed by #1902),
+ * because the underlay decision was proxied off the color lookup instead of the real stop-focus state.
+ * A color miss still falls back to [gtfsColor]; only the underlay must not follow it.
+ */
+internal fun selectedTripStyle(
+    stopFocusActive: Boolean,
+    selectedRouteDirection: RouteDirectionKey,
+    routeColors: Map<RouteDirectionKey, Int>,
+    gtfsColor: Int,
+): SelectedTripStyle = SelectedTripStyle(
+    color = routeColors[selectedRouteDirection] ?: gtfsColor,
+    includeUnderlay = !stopFocusActive,
+)
+
 /** Presented route-direction identities at each scheduled stop, optionally narrowed to [route]. */
 internal fun FocusedTripStops.routeDirectionsByStopId(
     trips: Set<FocusedTrip>,

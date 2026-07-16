@@ -19,6 +19,9 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.Application;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
@@ -52,27 +55,27 @@ public class PreferenceUtils {
         return PreferencesEntryPoint.get(Application.get());
     }
 
-    public static void saveString(String key, String value) {
+    public static void saveString(@NonNull String key, @Nullable String value) {
         repo().setString(key, value);
     }
 
-    public static void saveInt(String key, int value) {
+    public static void saveInt(@NonNull String key, int value) {
         repo().setInt(key, value);
     }
 
-    public static void saveLong(String key, long value) {
+    public static void saveLong(@NonNull String key, long value) {
         repo().setLong(key, value);
     }
 
-    public static void saveBoolean(String key, boolean value) {
+    public static void saveBoolean(@NonNull String key, boolean value) {
         repo().setBoolean(key, value);
     }
 
-    public static void saveFloat(String key, float value) {
+    public static void saveFloat(@NonNull String key, float value) {
         repo().setFloat(key, value);
     }
 
-    public static void saveDouble(String key, double value) {
+    public static void saveDouble(@NonNull String key, double value) {
         repo().setLong(key, Double.doubleToRawLongBits(value));
     }
 
@@ -88,7 +91,7 @@ public class PreferenceUtils {
      * @param defaultValue the default value to return if the key doesn't have a value
      * @return a double from preferences, or the default value if it doesn't exist
      */
-    public static Double getDouble(String key, double defaultValue) {
+    public static @NonNull Double getDouble(@NonNull String key, double defaultValue) {
         long bits = repo().getLong(key, Double.doubleToRawLongBits(defaultValue));
         return Double.longBitsToDouble(bits);
     }
@@ -98,7 +101,7 @@ public class PreferenceUtils {
      *
      * @return the currently selected stop sort order as the index in R.array.sort_stops
      */
-    public static int getStopSortOrderFromPreferences(Context context) {
+    public static int getStopSortOrderFromPreferences(@NonNull Context context) {
         Resources r = context.getResources();
         String[] sortOptions = r.getStringArray(R.array.sort_stops);
         String sortPref = repo().getString(r.getString(
@@ -116,7 +119,7 @@ public class PreferenceUtils {
      *
      * @return the currently selected reminder sort order as the index in R.array.sort_stops
      */
-    public static int getReminderSortOrderFromPreferences(Context context){
+    public static int getReminderSortOrderFromPreferences(@NonNull Context context){
         Resources resources = context.getResources();
         String[] sortOptions = resources.getStringArray(R.array.sort_reminders);
         String sortPref = repo().getString(resources.getString(
@@ -148,7 +151,7 @@ public class PreferenceUtils {
      *
      * @param b bundle to store the map view center and zoom level in
      */
-    public static void maybeRestoreMapViewToBundle(Bundle b) {
+    public static void maybeRestoreMapViewToBundle(@NonNull Bundle b) {
         Double lat = PreferenceUtils.getDouble(MapParams.CENTER_LAT, 0.0d);
         Double lon = PreferenceUtils.getDouble(MapParams.CENTER_LON, 0.0d);
         float zoom = PreferenceUtils.getFloat(MapParams.ZOOM, MapParams.DEFAULT_ZOOM);
@@ -159,27 +162,27 @@ public class PreferenceUtils {
         }
     }
 
-    public static String getString(String key) {
+    public static @Nullable String getString(@NonNull String key) {
         return repo().getString(key, null);
     }
 
-    public static String getString(String key, String defaultValue) {
+    public static @Nullable String getString(@NonNull String key, @Nullable String defaultValue) {
         return repo().getString(key, defaultValue);
     }
 
-    public static long getLong(String key, long defaultValue) {
+    public static long getLong(@NonNull String key, long defaultValue) {
         return repo().getLong(key, defaultValue);
     }
 
-    public static float getFloat(String key, float defaultValue) {
+    public static float getFloat(@NonNull String key, float defaultValue) {
         return repo().getFloat(key, defaultValue);
     }
 
-    public static int getInt(String key, int defaultValue) {
+    public static int getInt(@NonNull String key, int defaultValue) {
         return repo().getInt(key, defaultValue);
     }
 
-    public static boolean getBoolean(String key, boolean defaultValue) {
+    public static boolean getBoolean(@NonNull String key, boolean defaultValue) {
         return repo().getBoolean(key, defaultValue);
     }
 
@@ -188,7 +191,7 @@ public class PreferenceUtils {
      * location permissions. Note that this means they haven't actually be prompted with the
      * system permission dialog.
      */
-    public static boolean userDeniedLocationPermission(Context context) {
+    public static boolean userDeniedLocationPermission(@NonNull Context context) {
         Resources r = context.getResources();
         return getBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), false);
     }
@@ -198,7 +201,7 @@ public class PreferenceUtils {
      * location permissions, or false if they have indicated that they want to be prompted with
      * the system permission dialog.
      */
-    public static void setUserDeniedLocationPermissions(Context context, boolean value) {
+    public static void setUserDeniedLocationPermissions(@NonNull Context context, boolean value) {
         Resources r = context.getResources();
         saveBoolean(r.getString(R.string.preferences_key_user_denied_location_permissions), value);
     }
@@ -210,7 +213,7 @@ public class PreferenceUtils {
      * @param context context to get string resources from
      * @return returns true if preferred units are metric, false if Imperial
      */
-    public static boolean getUnitsAreMetricFromPreferences(Context context) {
+    public static boolean getUnitsAreMetricFromPreferences(@NonNull Context context) {
 
         // This implementation taken from RegionsFragment
 

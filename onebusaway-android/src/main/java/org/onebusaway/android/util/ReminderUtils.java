@@ -20,6 +20,9 @@ import org.onebusaway.android.R;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,7 +51,7 @@ public class ReminderUtils {
      * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
      * @return the stop ID, or null if not present or unparseable
      */
-    public static String getStopIdFromPayload(String arrivalJson) {
+    public static @Nullable String getStopIdFromPayload(@Nullable String arrivalJson) {
         return stringFromPayload(arrivalJson, "stop_id");
     }
 
@@ -58,7 +61,7 @@ public class ReminderUtils {
      * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
      * @return the trip ID, or null if not present or unparseable
      */
-    public static String getTripIdFromPayload(String arrivalJson) {
+    public static @Nullable String getTripIdFromPayload(@Nullable String arrivalJson) {
         return stringFromPayload(arrivalJson, "trip_id");
     }
 
@@ -86,7 +89,7 @@ public class ReminderUtils {
      *                     clock itself, so the domain choice stays with the caller.
      * @return the valid reminder times
      */
-    public static String[] getReminderTimes(Context context, long departTimeMs, long nowMs) {
+    public static @NonNull String[] getReminderTimes(@NonNull Context context, long departTimeMs, long nowMs) {
         Integer[] times = {3, 5, 10, 15, 20, 25, 30};
         // Same-domain subtraction — both operands are epoch millis on the caller's chosen clock.
         long departTimeInMinutes = (long) Math.ceil((departTimeMs - nowMs) / 60000.0);

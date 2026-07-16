@@ -104,15 +104,16 @@ CLAUDE.md. The checks are a latch discipline, not a suggestion.
 
 ## Status: enforced
 
-Wired into the app via `lintChecks project(':lint-rules')` in `onebusaway-android/build.gradle`, so a
+Wired into the app via `lintChecks(project(":lint-rules"))` in `onebusaway-android/build.gradle.kts`, so a
 **new** violation of any of the four issues fails the build under the strict `-PwarningsAsErrors` gate
-(verified). The pre-existing sites present when each check landed are grandfathered in
-`onebusaway-android/lint-baseline.xml`:
+(verified). There is **no lint baseline** — the app is kept clean under the full catalog, so every
+sanctioned pre-existing site is handled *at the site*, not grandfathered in a file:
 
-- **13** `RawClockArithmetic` + **11** `UnwrappedClockValue` — nearly all same-domain / sanctioned
-  device-clock timers or conversion helpers; one, `ReminderUtils.java:86`
-  (`departTime − System.currentTimeMillis()`, a scheduled/predicted departure minus device now), is a
-  genuine #1612 candidate flagged for a dedicated fix (it needs a server clock threaded to the call site).
+- **0** `RawClockArithmetic` / `UnwrappedClockValue` baselined. The sites that once were: the genuine
+  #1612 candidate `ReminderUtils` (`departTime − System.currentTimeMillis()`) was fixed by threading the
+  clock to the call site (`getReminderTimes` now takes a same-domain `nowMs` param and reads no clock
+  itself); the remaining same-domain / sanctioned device-clock timers and conversion helpers carry an
+  inline `@Suppress("RawClockArithmetic")` / `@Suppress("UnwrappedClockValue")` with a one-line rationale.
 - **0** `PrematureUnwrap` — a skeptical pass retired every one of the 18 initial findings rather than
   baselining them: the `TypedTime` operators are now rule-exempt (the domain defining its own algebra);
   the `.epochMs > 0` "is this instant set / did the server predict" sentinels became **nullable**
@@ -123,7 +124,8 @@ Wired into the app via `lintChecks project(':lint-rules')` in `onebusaway-androi
 - **0** `WireTimeEscape` — the migration left no wire-field read in app logic; the check starts empty and
   exists to keep it that way.
 
-Drive the baseline down by minting each site; don't add new entries.
+Keep all four checks at zero: mint each new site (or inline-`@Suppress` a genuinely-sanctioned one with a
+rationale) — don't reintroduce a baseline.
 
 ## Develop
 

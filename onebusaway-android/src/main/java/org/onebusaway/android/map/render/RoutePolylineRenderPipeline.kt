@@ -39,7 +39,6 @@ private const val MAX_MERCATOR_LATITUDE = 85.05112878
 private const val VIEWPORT_MARGIN_MULTIPLIER = 1.0
 private const val SIMPLIFICATION_ERROR_PIXELS = 0.75
 private const val MIN_SIMPLIFICATION_METERS = 2.0
-private const val METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO = 156543.03392804097
 private const val COORDINATE_EPSILON = 1e-12
 
 internal data class RoutePolylineRenderContext(val camera: CameraSnapshot?)

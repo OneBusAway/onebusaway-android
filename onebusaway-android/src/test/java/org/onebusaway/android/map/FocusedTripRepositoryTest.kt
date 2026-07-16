@@ -70,7 +70,7 @@ class FocusedTripRepositoryTest {
         val result = repository.getStops(setOf(FocusedTrip("trip", "route", "shape", null)))
 
         assertEquals(listOf("a", "c"), result.stopIdsByTripId["trip"])
-        assertEquals(setOf("a", "c"), result.stopIds)
+        assertEquals(setOf("a", "c"), result.stopIdsByTripId.values.flatten().toSet())
         assertEquals(setOf("a", "b", "c"), result.stopsById.keys)
     }
 
@@ -122,7 +122,7 @@ class FocusedTripRepositoryTest {
             )
         )
 
-        assertEquals(setOf("served"), result.stopIds)
+        assertEquals(setOf("served"), result.stopIdsByTripId.values.flatten().toSet())
         assertEquals(setOf("good"), result.stopIdsByTripId.keys)
         // The omission leaves a log trail, so a fetch failure stays distinguishable from no data.
         assertEquals(listOf("Focused-trip schedule failed fetch failed"), loggedFailures)

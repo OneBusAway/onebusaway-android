@@ -250,6 +250,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             // the live favorite set, so a star toggle re-orders the list with no re-fetch (#1707/#1751).
             routeGroups = orderRouteGroupsByFavorite(routeGroups, favoriteRouteIds),
             minutesAfter = minutesAfter,
+            windowEnd = windowEnd,
             isStale = isStale,
             actions = actions,
             favoriteRouteIds = favoriteRouteIds,

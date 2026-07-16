@@ -235,7 +235,8 @@
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>godz. %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_load_more_arrivals">Wczytaj więcej przyjazdów</string>
+    <string name="stop_info_showing_trips_until">Pokazywanie kursów do %1$s</string>
+    <string name="stop_info_load_more">Wczytaj więcej</string>
     <string name="stop_info_item_options_title">Opcje</string>
     <string name="stop_info_clear">Wyczyść</string>
     <string name="stop_info_favorite">Ulubiony przystanek</string>

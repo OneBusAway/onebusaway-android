@@ -30,6 +30,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.time.ServerTime
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(
@@ -136,6 +137,7 @@ class ArrivalsViewModelTest {
             routeGroups = emptyList(),
             header = header(favorite),
             minutesAfter = minutesAfter,
+            windowEnd = ServerTime(minutesAfter * 60_000L),
             isStale = isStale,
             actions = emptyMap(),
             activeAlerts = emptyList(),
@@ -163,6 +165,8 @@ class ArrivalsViewModelTest {
         val state = viewModel.state.value
         assertTrue(state is ArrivalsUiState.Content)
         assertEquals("Pine St & 3rd Ave", (state as ArrivalsUiState.Content).header.name)
+        // The window-end instant rides through unchanged from ArrivalsData into the Content state.
+        assertEquals(ServerTime(65 * 60_000L), state.windowEnd)
     }
 
     @Test

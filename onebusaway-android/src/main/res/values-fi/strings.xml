@@ -260,7 +260,8 @@
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g> t %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_load_more_arrivals">Näytä lisää saapuvia</string>
+    <string name="stop_info_showing_trips_until">Näytetään vuorot %1$s asti</string>
+    <string name="stop_info_load_more">Näytä lisää</string>
     <string name="stop_info_item_options_title">Toiminnot</string>
     <string name="stop_info_clear">Tyhjennä</string>
     <string name="stop_info_favorite">Suosikkipysäkki</string>

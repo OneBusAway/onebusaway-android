@@ -268,7 +268,11 @@
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>h %1$d+ min
         </item>
     </plurals>
-    <string name="stop_info_load_more_arrivals">Load more arrivals</string>
+    <!-- Footnote below the arrivals list; %1$s is the clock time the shown window ends at, e.g. "3:45 PM".
+         "trips" is the umbrella term (each listed item is a trip, shown by its arrival or departure time). -->
+    <string name="stop_info_showing_trips_until">Showing trips until %1$s</string>
+    <!-- Clickable affordance beside the above footnote that widens the arrivals time window -->
+    <string name="stop_info_load_more">Load more</string>
     <string name="stop_info_eta_strip_scroll_earlier">Show earlier arrivals</string>
     <string name="stop_info_eta_strip_scroll_later">Show later arrivals</string>
     <string name="stop_info_item_options_title">Bus options</string>

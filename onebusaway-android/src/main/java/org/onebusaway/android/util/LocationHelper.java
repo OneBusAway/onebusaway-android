@@ -30,6 +30,8 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -48,7 +50,7 @@ public class LocationHelper implements android.location.LocationListener {
         /**
          * Called every time there is an update to the best location available
          */
-        void onLocationChanged(Location location);
+        void onLocationChanged(@NonNull Location location);
     }
 
     static final String TAG = "LocationHelper";
@@ -75,7 +77,7 @@ public class LocationHelper implements android.location.LocationListener {
      * @param context
      * @param interval Update interval in seconds.
      */
-    public LocationHelper(Context context, int interval) {
+    public LocationHelper(@NonNull Context context, int interval) {
         mContext = context;
         mLocationManager = (LocationManager) mContext
                 .getSystemService(Context.LOCATION_SERVICE);
@@ -96,7 +98,7 @@ public class LocationHelper implements android.location.LocationListener {
      * @return true if permissions have been granted and the listener was registered, false if
      * permissions have not been granted and no listener was registered
      */
-    public synchronized boolean registerListener(Listener listener) {
+    public synchronized boolean registerListener(@NonNull Listener listener) {
         if (!PermissionUtils.hasGrantedAtLeastOnePermission(mContext, LOCATION_PERMISSIONS)) {
             return false;
         }
@@ -113,7 +115,7 @@ public class LocationHelper implements android.location.LocationListener {
         return true;
     }
 
-    public synchronized void unregisterListener(Listener listener) {
+    public synchronized void unregisterListener(@NonNull Listener listener) {
         mListeners.remove(listener);
 
         if (mListeners.size() == 0) {
@@ -129,7 +131,7 @@ public class LocationHelper implements android.location.LocationListener {
     }
 
     @Override
-    public void onLocationChanged(Location location) {
+    public void onLocationChanged(@NonNull Location location) {
         // Offer this location to the centralized location store, it case its better than currently
         // stored location
         LocationEntryPoint.getSink(mContext).update(location);
@@ -152,12 +154,12 @@ public class LocationHelper implements android.location.LocationListener {
     }
 
     @Override
-    public void onProviderEnabled(String provider) {
+    public void onProviderEnabled(@NonNull String provider) {
 
     }
 
     @Override
-    public void onProviderDisabled(String provider) {
+    public void onProviderDisabled(@NonNull String provider) {
 
     }
 

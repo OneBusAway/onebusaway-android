@@ -17,6 +17,8 @@ package org.onebusaway.android.util;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
@@ -32,7 +34,7 @@ public class LayerUtils {
     /**
     * @return true if the bikeshare layer is active and visible
      */
-    public static boolean isBikeshareLayerVisible(Context context) {
+    public static boolean isBikeshareLayerVisible(@NonNull Context context) {
         return BikeshareAvailability.isEnabled(context) && PreferencesEntryPoint.get(context).getBoolean(
                 R.string.preference_key_layer_bikeshare_visible, true);
     }

@@ -16,10 +16,10 @@
 package org.onebusaway.android.ui.arrivals
 
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -34,6 +34,7 @@ import org.onebusaway.android.ui.arrivals.components.previewArrival
 
 class RouteArrivalRowLongPressTest {
 
+    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
     @Suppress("DEPRECATION")
     @get:Rule
     val composeRule = createComposeRule()
@@ -79,9 +80,15 @@ class RouteArrivalRowLongPressTest {
         ).assertCountEquals(0)
 
         composeRule.onNodeWithText("Northgate").performTouchInput { longClick() }
-        composeRule.onNodeWithText(
-            context.getString(R.string.bus_options_menu_show_route_schedule)
-        ).assertIsDisplayed().performClick()
+
+        // The centered menu opens in a Dialog (a separate window); on slower devices (e.g. the CI
+        // emulator) the main composition can report idle a frame before that window is laid out, so
+        // wait for the schedule item to appear before clicking it rather than asserting immediately.
+        val scheduleLabel = context.getString(R.string.bus_options_menu_show_route_schedule)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(scheduleLabel).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText(scheduleLabel).performClick()
 
         assertEquals(scheduleUrl, openedScheduleUrl)
     }

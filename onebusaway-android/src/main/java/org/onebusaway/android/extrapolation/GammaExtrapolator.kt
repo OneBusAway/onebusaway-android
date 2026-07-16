@@ -125,7 +125,7 @@ internal fun buildH34SpeedDistribution(schedSpeedMps: Double): ProbDistribution 
  * The scheduled segment speed (m/s) at a given distance along the trip, or null if the schedule has
  * too few stops or the distance is out of bounds. Only the gamma model conditions on schedule speed.
  */
-private fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? {
+internal fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? {
     if (stopTimes.size < 2) return null
 
     val segmentStart = try {

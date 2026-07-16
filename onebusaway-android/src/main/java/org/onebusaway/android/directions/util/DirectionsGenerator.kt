@@ -20,6 +20,7 @@ import android.content.res.Resources
 import android.text.SpannableString
 import android.text.TextUtils
 import android.util.Log
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
@@ -356,7 +357,7 @@ class DirectionsGenerator(
 
         private const val TAG = "DirectionsGenerator"
 
-        private fun getOrdinal(number: Int, resources: Resources): String? {
+        internal fun getOrdinal(number: Int, resources: Resources): String? {
             return when (number) {
                 1 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_first)
                 2 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_second)
@@ -504,7 +505,7 @@ class DirectionsGenerator(
                 TripMode.WALK -> R.drawable.ic_directions_walk
                 TripMode.BICYCLE -> R.drawable.ic_directions_bike
                 else -> {
-                    Log.d(TAG, "No icon for mode: $mode")
+                    if (BuildConfig.DEBUG) Log.d(TAG, "No icon for mode: $mode")
                     -1
                 }
             }

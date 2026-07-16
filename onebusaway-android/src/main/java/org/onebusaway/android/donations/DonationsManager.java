@@ -16,6 +16,9 @@ import java.util.Date;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import dagger.hilt.android.qualifiers.ApplicationContext;
 
 @Singleton
@@ -35,8 +38,8 @@ public class DonationsManager {
     // launch count are read lazily at their use sites.
     @Inject
     public DonationsManager(
-            @ApplicationContext Context context,
-            PreferencesRepository preferences) {
+            @ApplicationContext @Nullable Context context,
+            @Nullable PreferencesRepository preferences) {
         this.mContext = context;
         this.mPreferences = preferences;
     }
@@ -65,6 +68,7 @@ public class DonationsManager {
      * @return The date that donation requests were hidden by the user, either because they donated
      * or because they tapped the 'dismiss' button, or null if the date has not been set.
      */
+    @Nullable
     public Date getDonationRequestDismissedDate() {
         long timestamp = PreferenceUtils.getLong(donationRequestDismissedDateKey, -1);
         if (timestamp < 1) {
@@ -78,7 +82,7 @@ public class DonationsManager {
      * Sets the date that the donation request UI was dismissed on. Pass in null to 'reset' the UI.
      * @param date The dismissal date.
      */
-    public void setDonationRequestDismissedDate(Date date) {
+    public void setDonationRequestDismissedDate(@Nullable Date date) {
         PreferenceUtils.saveLong(
                 donationRequestDismissedDateKey,
                 date == null ? -1 : date.getTime()
@@ -99,6 +103,7 @@ public class DonationsManager {
     /**
      * @return Optional date at which the app should remind the user to donate.
      */
+    @Nullable
     public Date getDonationRequestReminderDate() {
         long timestamp = PreferenceUtils.getLong(donationRequestReminderDateKey, -1);
         if (timestamp < 1) {
@@ -108,7 +113,7 @@ public class DonationsManager {
         return new Date(timestamp);
     }
 
-    public void setDonationRequestReminderDate(Date date) {
+    public void setDonationRequestReminderDate(@Nullable Date date) {
         PreferenceUtils.saveLong(
                 donationRequestReminderDateKey,
                 date == null ? -1 : date.getTime()
@@ -165,6 +170,7 @@ public class DonationsManager {
     }
 
     /** The donations-page URL — the single source both the intent builder and the host (Compose) read. */
+    @NonNull
     public String donateUrl() {
         return mContext.getResources().getString(R.string.donate_url);
     }
@@ -174,6 +180,7 @@ public class DonationsManager {
      * ViewModel (the settings / learn-more nav destinations). ViewModel-backed UI reports via
      * {@link #reportDonateButtonPress()} and lets its host build the intent from {@link #donateUrl()}.
      */
+    @NonNull
     public Intent buildOpenDonationsPageIntent() {
         reportDonateButtonPress();
         return new Intent(Intent.ACTION_VIEW, Uri.parse(donateUrl()));

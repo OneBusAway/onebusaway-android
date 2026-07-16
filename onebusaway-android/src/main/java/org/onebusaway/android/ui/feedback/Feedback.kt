@@ -57,6 +57,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
 import org.apache.commons.io.FileUtils
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.nav.NavigationService
@@ -168,7 +169,7 @@ class FeedbackSubmitter(
     private fun deleteLog() {
         val logFilePath = logFile ?: return
         val deleted = File(logFilePath).delete()
-        Log.d(FeedbackLauncher.TAG, "Log deleted $deleted")
+        if (BuildConfig.DEBUG) Log.d(FeedbackLauncher.TAG, "Log deleted $deleted")
     }
 
     private fun setupLogUploadTask() {

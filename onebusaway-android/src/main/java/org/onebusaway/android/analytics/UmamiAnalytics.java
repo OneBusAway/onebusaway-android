@@ -3,6 +3,9 @@ package org.onebusaway.android.analytics;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.onebusaway.android.BuildConfig;
@@ -43,7 +46,7 @@ public class UmamiAnalytics {
 
     private volatile String mRegionName;
 
-    public UmamiAnalytics(String serverUrl, String websiteId, String hostname) {
+    public UmamiAnalytics(@Nullable String serverUrl, @Nullable String websiteId, @Nullable String hostname) {
         mSendUrl = joinUrl(serverUrl, "api/send");
         mWebsiteId = websiteId;
         mHostname = hostname;
@@ -51,15 +54,15 @@ public class UmamiAnalytics {
     }
 
     /** Persistent default data merged into every event (e.g. region name). */
-    public void setRegionName(String regionName) {
+    public void setRegionName(@Nullable String regionName) {
         mRegionName = regionName;
     }
 
-    public void pageView(String pageUrl, Map<String, Object> props) {
+    public void pageView(@Nullable String pageUrl, @Nullable Map<String, Object> props) {
         send(null, pageUrl, props);
     }
 
-    public void event(String name, String pageUrl, Map<String, Object> props) {
+    public void event(@Nullable String name, @Nullable String pageUrl, @Nullable Map<String, Object> props) {
         send(name, pageUrl, props);
     }
 
@@ -79,7 +82,7 @@ public class UmamiAnalytics {
         });
     }
 
-    private void post(String payload) {
+    void post(String payload) {
         HttpURLConnection conn = null;
         try {
             conn = (HttpURLConnection) new URL(mSendUrl).openConnection();
@@ -108,7 +111,7 @@ public class UmamiAnalytics {
         }
     }
 
-    public String buildPayload(String name, String path, Map<String, Object> props) throws JSONException {
+    public @NonNull String buildPayload(@Nullable String name, @Nullable String path, @Nullable Map<String, Object> props) throws JSONException {
         JSONObject payload = new JSONObject();
         payload.put("website", mWebsiteId);
         payload.put("hostname", mHostname);
@@ -132,7 +135,7 @@ public class UmamiAnalytics {
         return root.toString();
     }
 
-    public static String reducePath(String pageUrl) {
+    public static @NonNull String reducePath(@Nullable String pageUrl) {
         if (pageUrl == null) {
             return "/";
         }
@@ -151,7 +154,7 @@ public class UmamiAnalytics {
      * Umami returns HTTP 200 even when it silently drops a request (bot-like User-Agent or
      * bad config), replying with {@code {"beep":"boop"}}. Treat that as a failure.
      */
-    public static boolean isSuccessfulIngest(int httpCode, String body) {
+    public static boolean isSuccessfulIngest(int httpCode, @Nullable String body) {
         if (httpCode < 200 || httpCode >= 300) {
             return false;
         }
@@ -165,12 +168,12 @@ public class UmamiAnalytics {
         return !trimmed.contains("\"beep\"");
     }
 
-    public static String buildUserAgent() {
+    public static @NonNull String buildUserAgent() {
         return "OneBusAway/" + BuildConfig.VERSION_NAME
                 + " (Android " + Build.VERSION.RELEASE + "; " + Build.MODEL + ")";
     }
 
-    public static Map<String, Object> sanitizeProps(Map<String, Object> props) {
+    public static @NonNull Map<String, Object> sanitizeProps(@Nullable Map<String, Object> props) {
         Map<String, Object> out = new HashMap<>();
         if (props == null) {
             return out;

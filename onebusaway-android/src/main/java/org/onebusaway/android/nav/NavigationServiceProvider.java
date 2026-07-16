@@ -18,6 +18,7 @@ package org.onebusaway.android.nav;
 import static android.app.PendingIntent.*;
 
 
+import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.notifications.NotificationChannels;
 import org.onebusaway.android.app.di.AnalyticsEntryPoint;
@@ -40,6 +41,8 @@ import android.util.Log;
 import java.text.DecimalFormat;
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 /**
@@ -74,14 +77,14 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     private int mTimeout = 60;  //Timeout value for service provider action (default = 60 seconds);
 
     // Index that defines the current path link within the path (i.e. First link in a path will have index = 0, second link index = 1, etc.)
-    private int mPathLinkIndex = 0;
+    int mPathLinkIndex = 0;
 
     // Path links being navigated
-    private Path mPath;
+    Path mPath;
 
     private float mAlertDistance = -1;
 
-    private boolean mWaitingForConfirm = false;
+    boolean mWaitingForConfirm = false;
 
     private Location mCurrentLocation = null;
 
@@ -91,16 +94,17 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     public float mSectoCurDistance = -1;
 
+    @Nullable
     public static TextToSpeech mTTS;          // TextToSpeech for speaking commands.
 
     private String mTripId;             // Trip ID
     private String mStopId;             // Stop ID
 
     // Application context, threaded from the hosting NavigationService (replaces the Application static).
-    private final Context mContext;
+    final Context mContext;
 
 
-    public NavigationServiceProvider(Context context, String tripId, String stopId) {
+    public NavigationServiceProvider(@NonNull Context context, @Nullable String tripId, @Nullable String stopId) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         mContext = context.getApplicationContext();
         if (mTTS == null) {
@@ -111,7 +115,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
     }
 
-    public NavigationServiceProvider(Context context, String tripId, String stopId, int flag) {
+    public NavigationServiceProvider(@NonNull Context context, @Nullable String tripId, @Nullable String stopId, int flag) {
         Log.d(TAG, "Creating NavigationServiceProvider...");
         mContext = context.getApplicationContext();
         mResuming = flag == 1;
@@ -156,14 +160,14 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Navigates a navigation path which is composed of path links
      */
-    public void navigate(Path path) {
+    public void navigate(@NonNull Path path) {
         Log.d(TAG, "Starting navigation for service");
 
         // Create a new instance and rewrite the old one with a blank slate of ProximityListener
         lazyProxInitialization();
         mPath = path;
         mPathLinkIndex = 0;
-        Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
+        if (BuildConfig.DEBUG) Log.d(TAG, "Number of path links: " + mPath.getPathLinks().size());
 
         // Create new coordinate object using the "Ring" coordinates
         Location firstLocation = mPath.getPathLinks().get(mPathLinkIndex).getOriginLocation();
@@ -223,7 +227,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Tells the NavigationProvider to navigate the next PathLink in the Path
      */
-    private void navigateNextPathLink() {
+    void navigateNextPathLink() {
         Log.d(TAG, "Attempting to navigate next path link");
         if (mPath != null && mPathLinkIndex < mPath.getPathLinks().size()) {
             mPathLinkIndex++;
@@ -245,7 +249,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     /**
      * Called from LocationListener.locationUpdated() in order to supply the Navigation Provider with the most recent location
      */
-    public void locationUpdated(Location l) {
+    public void locationUpdated(@NonNull Location l) {
         mCurrentLocation = l;
         mProxCalculator.checkProximityAll(mCurrentLocation);
     }
@@ -278,7 +282,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private float readyRadius = 300;
         //Defines radius(in meters) for which the Proximity listener should trigger "Get Ready Alert"
 
-        private boolean mTrigger = false;
+        boolean mTrigger = false;
         //Defines whether the Proximity Listener has been triggered (true) or not (false)
 
         private Location secondToLastCoords = null;
@@ -293,10 +297,10 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         private float directDistance = -1;
         //Direct distance to second to last stop coords, used for radius detection
 
-        private float endDistance = -1;
+        float endDistance = -1;
         //Direct distance to last bus stop coords, used for link navigation
 
-        private boolean mReady = false; //Has get ready alert been played?
+        boolean mReady = false; //Has get ready alert been played?
 
         private boolean m100_a, m50_a, m20_a, m20_d, m50_d, m100_d = false;
         // Variables for handling arrival/departure from 2nd to last stop
@@ -435,7 +439,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
 
             } else */
             float lastToSecDistance = lastCoords.distanceTo(secondToLastCoords);
-            Log.d(TAG, "Detecting stop. distance_d=" +
+            if (BuildConfig.DEBUG) Log.d(TAG, "Detecting stop. distance_d=" +
                     distance_d + ". stop_type=" + stop_type + " speed=" + speed);
             if (stop_type == 1) {
                 /* Check if the bus is on the second to last stop */
@@ -483,7 +487,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
          *
          * @return the status update (EVENT_TYPE_*) that was triggered by the proximity to this location (if any).
          */
-        private int checkProximityAll(Location currentLocation) {
+        int checkProximityAll(Location currentLocation) {
             if (!mWaitingForConfirm) {
                 //re-calculate the distance to the final bus stop from the current location
                 endDistance = lastCoords.distanceTo(currentLocation);
@@ -558,6 +562,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      *
      * @return the notification to be used for starting a hosting service for the NavigationServiceProvider in the foreground
      */
+    @NonNull
     public Notification getForegroundStartingNotification() {
         return updateUi(EVENT_TYPE_INITIAL_STARTUP);
     }
@@ -569,7 +574,7 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
      * @param eventType EVENT_TYPE_* variable defining the eventType update to act upon
      * @return the notification to use for the foreground service if eventType == EVENT_TYPE_INITIAL_STARTUP, otherwise returns null
      */
-    private Notification updateUi(int eventType) {
+    Notification updateUi(int eventType) {
         TripDetailsLauncher.Builder bldr = new TripDetailsLauncher.Builder(
                 mContext, mTripId);
 

@@ -294,7 +294,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
  * routes through [routeMarkerTap] (reliable for every marker, static and dynamic, because the dynamic
  * markers move at only ~20Hz — see [FRAME_INTERVAL_NANOS]); an info-window tap deep links.
  */
-private fun wireClicks(
+internal fun wireClicks(
     map: GoogleMap,
     renderer: GoogleMapRenderer,
     infoWindows: GoogleInfoWindows,
@@ -367,7 +367,7 @@ private fun routeMarkerTap(
  * render, so the bubble reflects the latest poll (re-rendered via [GoogleInfoWindows.refresh]), not a
  * tap-time snapshot.
  */
-private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, marker: Marker) {
+internal fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, marker: Marker) {
     open(marker) {
         val live = renderer.vehicleForMarker(marker)
         // Deliberate snapshot read, not a reactive subscription: this content is rendered to a bitmap on
@@ -380,7 +380,7 @@ private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, mar
 }
 
 /** Builds a [CameraSnapshot] from the Google map's current camera + visible region. */
-private fun snapshot(map: GoogleMap): CameraSnapshot {
+internal fun snapshot(map: GoogleMap): CameraSnapshot {
     val pos = map.cameraPosition
     val bounds = map.projection.visibleRegion.latLngBounds
     val sw = bounds.southwest
@@ -396,13 +396,13 @@ private fun snapshot(map: GoogleMap): CameraSnapshot {
 }
 
 @SuppressLint("MissingPermission")
-private fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) {
+internal fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) {
     val granted = PermissionUtils.hasGrantedAtLeastOnePermission(context, PermissionUtils.LOCATION_PERMISSIONS)
     map.isMyLocationEnabled = enabled && granted
 }
 
 /** The map style for the current night-mode state: the dark theme, or POI removal in light mode. */
-private fun resolveMapStyle(context: Context): MapStyleOptions =
+internal fun resolveMapStyle(context: Context): MapStyleOptions =
     if (ThemeUtils.isInDarkMode(context)) {
         MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
     } else {

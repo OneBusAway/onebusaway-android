@@ -18,7 +18,7 @@
     <string-array name="main_help_options">
         <item>Show Tutorial</item>
         <item>Legend</item>
-        <item>What\'s New?</item>
+        <item>What’s New?</item>
         <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
         <item>Contact Us</item>
@@ -26,7 +26,7 @@
     <string-array name="main_help_options_no_contact_us">
         <item>Show Tutorial</item>
         <item>Legend</item>
-        <item>What\'s New?</item>
+        <item>What’s New?</item>
         <item>@string/agencies_title</item>
         <item>Twitter Feed</item>
     </string-array>
@@ -62,7 +62,7 @@
         <item>It came earlier than predicted</item>
         <item>It came later than predicted</item>
         <item>Wrong destination shown</item>
-        <item>The bus doesn\'t stop here</item>
+        <item>The bus doesn’t stop here</item>
         <item>Something else</item>
     </string-array>
     <string-array name="preferred_map_options">

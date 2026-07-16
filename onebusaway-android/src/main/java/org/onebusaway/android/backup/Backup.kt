@@ -24,6 +24,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import kotlinx.coroutines.runBlocking
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.database.AppDatabase
@@ -62,7 +63,7 @@ object Backup {
             Toast.makeText(
                 context, context.getString(R.string.preferences_db_saved), Toast.LENGTH_LONG
             ).show()
-            Log.d(TAG, "Database backup saved successfully to: $uri")
+            if (BuildConfig.DEBUG) Log.d(TAG, "Database backup saved successfully to: $uri")
         } catch (e: IOException) {
             Toast.makeText(
                 context,

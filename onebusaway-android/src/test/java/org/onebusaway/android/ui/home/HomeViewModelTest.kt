@@ -292,6 +292,32 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `an ordinary arrivals poll refreshes the selected route without reframing`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+        advanceUntilIdle()
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown",
+        )
+        advanceUntilIdle()
+        // Selecting the route frames it once.
+        assertEquals(true, map.routeCommands.single().frameRoute)
+        map.sent.clear()
+
+        // A subsequent arrivals poll (no pending focus) re-shows the selected route but must not reframe.
+        vm.onArrivalsLoaded(ObaStopElement("stop", 47.6, -122.3, "Main St", "100"), emptyList(), emptySet())
+        advanceUntilIdle()
+
+        assertEquals(false, map.routeCommands.single().frameRoute)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `drawer route selection and continuation remain subordinate to stop focus`() = runTest {
         val savedState = SavedStateHandle()
         val vm = viewModel(savedState = savedState)

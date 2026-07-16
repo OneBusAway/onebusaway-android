@@ -297,6 +297,10 @@ class HomeViewModel @Inject constructor(
         focusedTrips = trips
         presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val preserveViewport = pendingMapFocus && preserveViewportForPendingMapFocus
+        // Frame the selected route only when this load is the initial (restore/deep-link) focus
+        // establishment; an ordinary arrivals poll must refresh the presentation without reframing the
+        // camera to the whole route (#1895). A restore carrying a saved viewport already declines to frame.
+        val frameSelectedRoute = pendingMapFocus && !preserveViewportForPendingMapFocus
         if (pendingMapFocus) {
             pendingMapFocus = false
             preserveViewportForPendingMapFocus = false
@@ -323,7 +327,7 @@ class HomeViewModel @Inject constructor(
                 MapDirective.ShowRoute(
                     it.target(focus.stop.id).toRequest(),
                     stopScoped = true,
-                    frameRoute = !preserveViewport,
+                    frameRoute = frameSelectedRoute,
                 )
             )
         }

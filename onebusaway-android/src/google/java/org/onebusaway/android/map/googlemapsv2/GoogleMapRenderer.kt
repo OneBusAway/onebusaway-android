@@ -131,7 +131,7 @@ class GoogleMapRenderer(
     // making the common stop-only update an O(1) identity check; equal republished values are retained too.
     private val routePolylines = mutableListOf<Polyline>()
     private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
-    private var renderedRouteWidthScale: Float? = null
+    private var renderedRouteWidths: List<Float> = emptyList()
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
@@ -244,7 +244,12 @@ class GoogleMapRenderer(
         clearStatic()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
-        routeStopLayer.render(snapshot.stops, snapshot.focusedStopId, map.cameraPosition.zoom)
+        routeStopLayer.render(
+            snapshot.stops,
+            snapshot.focusedStopId,
+            snapshot.routeStopsScaleWithZoom,
+            map.cameraPosition.zoom,
+        )
 
         if (snapshot.bikeshareVisible) {
             val band = bikeZoomBand(map.cameraPosition.zoom)
@@ -298,26 +303,29 @@ class GoogleMapRenderer(
         if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
 
         val previousNative = routePolylines.toList()
+        val previousWidths = renderedRouteWidths
         val reconciliation = reconcileEqualItems(renderedRoutePolylines, next)
         reconciliation.removedPreviousIndices.forEach { previousNative[it].remove() }
-        renderedRoutePolylines = next
-        val widthScale = routeLineWidthScale(map.cameraPosition.zoom)
-        // Retained natives carry the previously stamped scale; bring them to the new one before
-        // recording it, or a later onCameraSettled at this zoom would skip the resize they still need.
-        val retainedStale = renderedRouteWidthScale != widthScale
-        renderedRouteWidthScale = widthScale
+        val nextWidths = next.map { routeWidthPx(it, map.cameraPosition.zoom) }
         val reconciled = next.mapIndexed { index, polyline ->
-            reconciliation.previousIndexForNext[index]?.let(previousNative::get)
-                ?.also { if (retainedStale) it.width = widthPx(polyline) * widthScale }
-                ?: addRoutePolyline(polyline, widthScale)
+            val previousIndex = reconciliation.previousIndexForNext[index]
+            previousIndex?.let(previousNative::get)
+                ?.also {
+                    if (previousWidths.getOrNull(previousIndex) != nextWidths[index]) {
+                        it.width = nextWidths[index]
+                    }
+                }
+                ?: addRoutePolyline(polyline, nextWidths[index])
         }
+        renderedRoutePolylines = next
+        renderedRouteWidths = nextWidths
         routePolylines.clear()
         routePolylines.addAll(reconciled)
     }
 
-    private fun addRoutePolyline(polyline: RoutePolyline, widthScale: Float): Polyline {
+    private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): Polyline {
         val options = PolylineOptions()
-            .width(widthPx(polyline) * widthScale)
+            .width(widthPx)
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
         if (polyline.directional) {
@@ -345,7 +353,7 @@ class GoogleMapRenderer(
         val polyline = continuation.polyline
         val line = PolylineOptions()
             .color(polyline.resolvedColor)
-            .width(widthPx(polyline))
+            .width(routeWidthPx(polyline, map.cameraPosition.zoom))
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
         staticPolylines.add(map.addPolyline(line))
@@ -390,9 +398,10 @@ class GoogleMapRenderer(
             ContinuationBadgeBitmaps.arrow(color)
         }
 
-    /** [RoutePolyline.widthDp] scaled to screen pixels, or the shared default when it carries none. */
-    private fun widthPx(polyline: RoutePolyline): Float =
-        polyline.widthDp?.let { it * density } ?: DEFAULT_ROUTE_WIDTH_PX
+    /** Resolve one line's complete width profile at [zoom]. */
+    private fun routeWidthPx(polyline: RoutePolyline, zoom: Float): Float = polyline.widthProfile
+        ?.let { it.thicknessAt(zoom) * density }
+        ?: (DEFAULT_ROUTE_WIDTH_PX * routeLineWidthScale(zoom))
 
     /** Appends [points] to the receiver, shared by every static polyline draw. */
     private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
@@ -421,7 +430,7 @@ class GoogleMapRenderer(
         routePolylines.forEach { it.remove() }
         routePolylines.clear()
         renderedRoutePolylines = emptyList()
-        renderedRouteWidthScale = null
+        renderedRouteWidths = emptyList()
 
         stopMarkerLayer.dispose()
 
@@ -769,13 +778,14 @@ class GoogleMapRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routeStopLayer.onCameraSettled(zoom)
-        val detailScale = routeLineWidthScale(zoom)
-        if (detailScale != renderedRouteWidthScale) {
-            renderedRouteWidthScale = detailScale
+        val nextWidths = renderedRoutePolylines.map { routeWidthPx(it, zoom) }
+        if (nextWidths != renderedRouteWidths) {
+            renderedRouteWidths = nextWidths
             for (index in routePolylines.indices) {
-                routePolylines[index].width = widthPx(renderedRoutePolylines[index]) * detailScale
+                routePolylines[index].width = nextWidths[index]
             }
         }
+        val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
     }
 

@@ -51,6 +51,7 @@ import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
+import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
@@ -412,7 +413,7 @@ class RouteMapController(
             polyline = RoutePolyline(
                 color = lineColor,
                 points = listOf(anchor) + tail.map { it.toGeoPoint() },
-                widthDp = CONTINUATION_LINE_WIDTH_DP,
+                widthProfile = CONTINUATION_LINE_WIDTH_PROFILE,
                 dashed = true,
             ),
             arrow = ContinuationArrow(arrowPoint.toGeoPoint(), neighborShape.bearingAt(endSeg)),
@@ -569,7 +570,10 @@ class RouteMapController(
     private fun publishMapPresentation() {
         val focus = stopFocusSession
         if (focus == null) {
-            renderState.setRoutePolylines(basePolylines)
+            renderState.setRoutePolylines(
+                basePolylines,
+                routeModeScalesStopsWithZoom = isActive,
+            )
             renderState.setRouteBadges(emptyList())
             stopsController.setRoutePresentation(baseStopPresentation)
             return
@@ -586,6 +590,7 @@ class RouteMapController(
             // shape alone defines FramingIntent.Route. Using the displayed adjacency lines here would
             // fit the union of every route serving the focused stop.
             framingPolylines = if (isActive) basePolylines else emptyList(),
+            routeModeScalesStopsWithZoom = isActive,
         )
         renderState.setRouteBadges(
             if (emphasizedRoute == null) {
@@ -739,8 +744,8 @@ class RouteMapController(
      * Re-draw the route shape for [currentDirectionId]: the selected direction's own travel-ordered
      * shape (with direction arrows), or the whole-route merged shape drawn undirected when none is
      * selected. Passes the route's raw GTFS color through; the render layer picks the fallback when
-     * it's absent. Drawn at the shared [ROUTE_LINE_WIDTH_DP] so the overview map's route reads the same
-     * as the trip-focus map (#1752). Called on load and on every direction switch.
+     * it's absent. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
+     * from focused-stop mode. Called on load and on every direction switch.
      */
     private fun showDirectionPolylines() {
         val route = routeShape ?: return
@@ -749,12 +754,10 @@ class RouteMapController(
         // merged fallback (a direction that carried no shape on the wire).
         val shape = route.shapeForDirection(currentDirectionId)
         basePolylines = shape.polylines.map { points ->
-            RoutePolyline(
-                route.route?.color,
-                points,
-                widthDp = ROUTE_LINE_WIDTH_DP,
+            focusedRoutePolyline(
+                color = route.route?.color,
+                points = points,
                 directional = shape.directional,
-                transforms = ROUTE_VIEW_TRANSFORMS,
             )
         }
         publishMapPresentation()
@@ -874,6 +877,10 @@ private const val CONTINUATION_LINE_LENGTH_METERS = 900.0
 // Drawn narrower than the shown route's own line ([ROUTE_LINE_WIDTH_DP]) so a continuation reads as a
 // preview/hint rather than as equally-weighted with the route the rider is actually looking at.
 private const val CONTINUATION_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.7f
+private val CONTINUATION_LINE_WIDTH_PROFILE = RouteLineWidthProfile(
+    thicknessDp = CONTINUATION_LINE_WIDTH_DP,
+    distantThicknessMultiplier = 1f,
+)
 
 // Used only when the neighbor route carries no GTFS color to draw the continuation line in its own
 // color with.

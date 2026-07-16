@@ -43,8 +43,9 @@ fun stopZoomBand(zoom: Float): StopBand =
     if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
 
 /**
- * Stop-circle-specific detail scale applied only while a stop is focused. Ordinary single-route mode
- * stays 1x; interpolation machinery and zoom bounds remain shared with route-line width.
+ * Stop-circle-specific detail scale applied while a route is focused, whether through focused-stop
+ * adjacency or the single-route view. Interpolation machinery and zoom bounds remain shared with
+ * route-line width.
  */
 fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
     zoom,

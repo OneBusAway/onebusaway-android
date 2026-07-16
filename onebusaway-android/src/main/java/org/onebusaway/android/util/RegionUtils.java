@@ -28,6 +28,9 @@ import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -68,7 +71,8 @@ public class RegionUtils {
      * enforceThreshold is true and the closest region exceeded DISTANCE_LIMITER threshold or a
      * region couldn't be found
      */
-    public static Region getClosestRegion(Context context, List<Region> regions, Location loc,
+    public static @Nullable Region getClosestRegion(@NonNull Context context,
+            @NonNull List<Region> regions, @Nullable Location loc,
             boolean enforceThreshold) {
         if (loc == null) {
             return null;
@@ -121,7 +125,7 @@ public class RegionUtils {
      *
      * @return regionName
      */
-    public static String getObaRegionName(Context context) {
+    public static @Nullable String getObaRegionName(@NonNull Context context) {
         String regionName = null;
         Region region = RegionEntryPoint.get(context).currentRegion();
         if (region != null && region.getName() != null) {
@@ -143,7 +147,7 @@ public class RegionUtils {
      * @return distance from the specified location to the center of the closest bound in this
      * region, in meters
      */
-    public static Float getDistanceAway(Region region, double lat, double lon) {
+    public static @Nullable Float getDistanceAway(@NonNull Region region, double lat, double lon) {
         Region.Bounds[] bounds = region.getBounds();
         if (bounds == null) {
             return null;
@@ -159,7 +163,7 @@ public class RegionUtils {
         return minDistance;
     }
 
-    public static Float getDistanceAway(Region region, Location loc) {
+    public static @Nullable Float getDistanceAway(@NonNull Region region, @NonNull Location loc) {
         return getDistanceAway(region, loc.getLatitude(), loc.getLongitude());
     }
 
@@ -172,7 +176,7 @@ public class RegionUtils {
      *                results[2] == lat center of region
      *                results[3] == lon center of region
      */
-    public static void getRegionSpan(Region region, double[] results) {
+    public static void getRegionSpan(@Nullable Region region, @NonNull double[] results) {
         if (results.length < 4) {
             throw new IllegalArgumentException("Results array is < 4");
         }
@@ -230,7 +234,8 @@ public class RegionUtils {
      *                   regionSpan[3] == lon center of region
      * @return true if the location is within the region span, false if it is not
      */
-    public static boolean isLocationWithinRegion(Location location, double[] regionSpan) {
+    public static boolean isLocationWithinRegion(@Nullable Location location,
+            @Nullable double[] regionSpan) {
         if (regionSpan == null || regionSpan.length < 4) {
             throw new IllegalArgumentException("regionSpan is null or has length < 4");
         }
@@ -260,7 +265,8 @@ public class RegionUtils {
      * @param region   provided region
      * @return true if the location is within the region, false if it is not
      */
-    public static boolean isLocationWithinRegion(Location location, Region region) {
+    public static boolean isLocationWithinRegion(@Nullable Location location,
+            @Nullable Region region) {
         double[] regionSpan = new double[4];
         getRegionSpan(region, regionSpan);
         return isLocationWithinRegion(location, regionSpan);
@@ -276,7 +282,7 @@ public class RegionUtils {
      * @param region region to be checked
      * @return true if the region is usable by this application, false if it is not
      */
-    public static boolean isRegionUsable(Context context, Region region) {
+    public static boolean isRegionUsable(@NonNull Context context, @NonNull Region region) {
         if (!region.getActive()) {
             Log.d(TAG, "Region '" + region.getName() + "' is not active.");
             return false;
@@ -305,13 +311,14 @@ public class RegionUtils {
      * @param baseUrl OpenTripPlanner base URL from the Region
      * @return OTP server URL with trailing slash trimmed.
      */
-    public static String formatOtpBaseUrl(String baseUrl) {
+    public static @NonNull String formatOtpBaseUrl(@NonNull String baseUrl) {
         return baseUrl.replaceFirst("/$", "");
     }
 
 
 
-    public synchronized static ArrayList<Region> getRegionsFromServer(Context context) {
+    public synchronized static @NonNull ArrayList<Region> getRegionsFromServer(
+            @NonNull Context context) {
         return new ArrayList<Region>(RegionsClient.fetchRegionsFromServer(context));
     }
 
@@ -329,7 +336,7 @@ public class RegionUtils {
      *
      * @return list of regions retrieved from the regions file in app resources
      */
-    public static ArrayList<Region> getRegionsFromResources(Context context) {
+    public static @NonNull ArrayList<Region> getRegionsFromResources(@NonNull Context context) {
         return new ArrayList<Region>(RegionsClient.parseBundledRegions(context));
     }
 
@@ -339,7 +346,7 @@ public class RegionUtils {
      *
      * @return hard-coded region information from the build flavor defined in build.gradle
      */
-    public static Region getRegionFromBuildFlavor() {
+    public static @NonNull Region getRegionFromBuildFlavor() {
         final int regionId = Integer.MAX_VALUE; // This doesn't get used, but needs to be positive
         Region.Bounds[] boundsArray = new Region.Bounds[1];
         Region.Bounds bounds = new Region.Bounds(

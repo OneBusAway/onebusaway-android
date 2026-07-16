@@ -46,25 +46,25 @@
         este era un
         atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
         (Cambialo en
-        \"Preferencias-> Tú región\").
+        “Preferencias-> Tú región”).
     </string>
     <string name="route_not_found_error_with_region_name">Lo sentimos, esa ruta especificada no puede ser
         encontrada. Si este era un
         atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
         región actual es
-        %1$s. Cambialo en \"Preferencias-> Tú región\").
+        %1$s. Cambialo en “Preferencias-> Tú región”).
     </string>
     <string name="stop_not_found_error_no_region">Lo sentimos, esa parada especificada no puede ser encontrada. Si
         este era un
         atajo, es probable que tú enlace este desactualizado, o una región no ha sido seleccionada aún
         (Cambialo en
-        \"Preferencias-> Tú región\").
+        “Preferencias-> Tú región”).
     </string>
     <string name="stop_not_found_error_with_region_name">Lo sentimos, esa parada especificada no puede ser
         encontrada. Si este era un
         atajo, es probable que tú enlace este desactualizado, o elegiste una región equivocada (Tú
         región actual es
-        %1$s. Cámbialo en \"Preferencias-> Tú región\").
+        %1$s. Cámbialo en “Preferencias-> Tú región”).
     </string>
     <string name="internal_error">Uy, algo salió mal. Por favor verifica tu conexión a Internet e intentalo de nuevo.</string>
     <string name="out_of_memory_error">Lo sentimos, no hay suficiente memoria disponible para manejar esta
@@ -103,13 +103,13 @@
     <string name="main_help_whatsnew">• <b>Correcciones de errores</b> Varias correcciones de errores y mejoras en el acabado. - Ver https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Cerrar</string>
     <string name="main_help_legend_title">Leyenda</string>
-    <string name="main_help_legend_ontime">Verde significa \"A tiempo\"</string>
-    <string name="main_help_legend_late">Azul significa \"Llegando tarde\"</string>
-    <string name="main_help_legend_early">Rojo significa \"Llegando antes\"</string>
-    <string name="main_help_legend_scheduled">Gris significa \"Llegada planificada\" - No sabemos
+    <string name="main_help_legend_ontime">Verde significa “A tiempo”</string>
+    <string name="main_help_legend_late">Azul significa “Llegando tarde”</string>
+    <string name="main_help_legend_early">Rojo significa “Llegando antes”</string>
+    <string name="main_help_legend_scheduled">Gris significa “Llegada planificada” - No sabemos
         donde esta tu bus ahora, pero la programación dice que hay una próxima llegada
     </string>
-    <string name="main_help_legend_canceled">Negro significa \"Cancelado\" - Este viaje ha sido cancelado</string>
+    <string name="main_help_legend_canceled">Negro significa “Cancelado” - Este viaje ha sido cancelado</string>
     <string name="main_nolocation_title">La ubicación no esta habilitada</string>
     <string name="main_nolocation">A %1$s le gustaría saber tú ubicación, ¿Quieres activarla
         ahora?
@@ -618,7 +618,7 @@
     <string name="preferences_save_title">Guardar al almacenamiento</string>
     <string name="preferences_save_summary">Guarda tus paradas y rutas favoritas y también las búsquedas recientes</string>
     <string name="preferences_restore_title">Restaurar desde el almacenamiento</string>
-    <string name="preferences_restore_summary">Restaura desde un respaldo anterior. Después de seleccionar esta opción, se te pedirá que elijas un archivo. Por favor selecciona el archivo de respaldo (por ejemplo, \"db.backup\" o \"%1$s.backup\"), que puede estar en tu carpeta \"Documentos\" o en cualquier ubicación donde guardaste el respaldo.</string>
+    <string name="preferences_restore_summary">Restaura desde un respaldo anterior. Después de seleccionar esta opción, se te pedirá que elijas un archivo. Por favor selecciona el archivo de respaldo (por ejemplo, “db.backup” o “%1$s.backup”), que puede estar en tu carpeta “Documentos” o en cualquier ubicación donde guardaste el respaldo.</string>
     <string name="preferences_db_saved">¡Guardado exitosamente!</string>
     <string name="preferences_db_save_error">No se puede guardar: %1$s</string>
     <string name="preferences_db_restore_warning">¡Esto borrará todos los datos existentes! ¿Continuar?
@@ -1065,7 +1065,7 @@
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Tenemos grandes planes para mejorar %1$s, pero no podemos hacerlo sin tu ayuda. Esta aplicación está actualmente desarrollada con un 100%% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.\n\nComo un proyecto clave de la Open Transit Software Foundation, una organización sin fines de lucro 501(c)(3), dependemos de la buena voluntad de usuarios como tú para seguir funcionando y mejorando este software.\n\nCada año, solo una pequeña fracción de nuestros usuarios dona, pero cada contribución, grande o pequeña, ayuda a asegurar que %1$s permanezca gratuito, actualizado y accesible para todos. Una pequeña donación, incluso solo el costo de una semana de viaje, $27.50, puede marcar la diferencia.\n\nTu contribución deducible de impuestos asegura que %1$s permanezca libre y accesible para todos. ¡Formemos juntos el futuro del transporte!\n\nGracias,\nEl equipo de %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Restablecer las marcas de tiempo de donación</string>
-    <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de \'Recuérdame más tarde\' y \'No me molestes\' asociadas con las solicitudes de donación.</string>
+    <string name="preferences_reset_donation_timestamps_summary">Al tocar esta opción se borrarán las marcas de tiempo de ’Recuérdame más tarde’ y ’No me molestes’ asociadas con las solicitudes de donación.</string>
     <string name="preferences_show_weather_view">Mostrar vista del clima</string>
     <string name="preferences_preferred_maps_title">Tipo de Mapa Preferido</string>
     <string name="preferences_preferred_map_option_normal2d">Mapa predeterminado</string>
@@ -1122,7 +1122,7 @@
     <string name="feedback_msg">Cuéntanos cómo estuvo tu experiencia</string>
     <string name="feedback_freeText">Escribe tus comentarios aquí</string>
     <string name="feedback_checkbox_text">Acepto compartir mis comentarios</string>
-    <string name="feedback_log_guide">Tus comentarios serán enviados a %1$s. Si marcas \"Incluir registros del sistema\", la información de ubicación en tiempo real de tu dispositivo registrada al acercarte a tu parada de destino será compartida con %1$s para que los desarrolladores puedan mejorar la función de recordatorio de destino.\n\nCambia tu preferencia para compartir registros del sistema en Configuración.</string>
+    <string name="feedback_log_guide">Tus comentarios serán enviados a %1$s. Si marcas “Incluir registros del sistema”, la información de ubicación en tiempo real de tu dispositivo registrada al acercarte a tu parada de destino será compartida con %1$s para que los desarrolladores puedan mejorar la función de recordatorio de destino.\n\nCambia tu preferencia para compartir registros del sistema en Configuración.</string>
     <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
     <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
     <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>

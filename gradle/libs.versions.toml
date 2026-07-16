@@ -46,7 +46,6 @@ firebaseCrashlytics = "20.1.0"
 firebaseMessaging = "25.1.1"
 playServicesLocation = "21.4.0"
 playServicesMaps = "20.0.0"
-placesCompat = "2.6.0"
 plausible = "3.3"
 open311 = "1.0.10"
 pelias = "v1.1.0"
@@ -101,7 +100,6 @@ firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", ve
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 play-services-maps = { module = "com.google.android.gms:play-services-maps", version.ref = "playServicesMaps" }
-places-compat = { module = "com.google.android.libraries.places:places-compat", version.ref = "placesCompat" }
 
 # --- OneBusAway / transit libraries ---
 plausible-android-sdk = { module = "com.github.OneBusAway:plausible-android-sdk", version.ref = "plausible" }

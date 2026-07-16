@@ -286,13 +286,13 @@ class MapRenderState {
     val padding: StateFlow<MapPadding> = _padding.asStateFlow()
 
     // Top padding is the lower of two independently reported edges: the always-present floating-chrome
-    // inset (status bar + FAB-row clearance) and the active route-focus control's bottom edge. Keeping
-    // absolute edges avoids double-counting the chrome when the route header sits below it.
+    // inset (status bar + FAB-row clearance) and the active focus banner's bottom edge. Keeping
+    // absolute edges avoids double-counting the chrome when the banner sits below it.
     private var topChromeInsetPx = 0
-    private var routeFocusTopEdgePx = 0
+    private var focusBannerBottomEdgePx = 0
 
     private fun applyTopPadding() =
-        _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, routeFocusTopEdgePx)) }
+        _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, focusBannerBottomEdgePx)) }
 
     /** The floating top-chrome inset (status bar + FAB-row clearance); keeps the compass below the FABs. */
     fun setTopChromeInset(px: Int) {
@@ -300,9 +300,9 @@ class MapRenderState {
         applyTopPadding()
     }
 
-    /** The active route-focus control's absolute bottom edge (0 clears route-specific padding). */
-    fun setRouteFocusTopEdge(px: Int) {
-        routeFocusTopEdgePx = px
+    /** The active focus banner's absolute bottom edge (0 clears banner-specific padding). */
+    fun setFocusBannerBottomEdge(px: Int) {
+        focusBannerBottomEdgePx = px
         applyTopPadding()
     }
 

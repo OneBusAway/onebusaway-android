@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
+import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
@@ -76,8 +77,9 @@ import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
+import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
+import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
-import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CONTROL_BOTTOM
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -92,7 +94,9 @@ import org.onebusaway.android.ui.home.map.MapFeature
 import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.SearchRecentsRepository
 import org.onebusaway.android.ui.mylists.rememberListVm
-import org.onebusaway.android.ui.home.map.RouteHeaderOverlay
+import org.onebusaway.android.ui.home.map.FocusBanner
+import org.onebusaway.android.ui.home.map.FocusBannerState
+import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -170,7 +174,7 @@ class HomeActivityActions(
  * the whole sheet in and out. **Expansion (peek<->full)** is the live `SheetState`, toggled by the drag
  * handle and collapsed as a declarative reaction to a route being selected inside stop focus;
  * the screen alone knows the live state), plus [BackHandler]. The arrivals panel is hosted directly per focused stop (see [ArrivalsSheetHost]);
- * the map ([MapFeature]), the route-mode header ([RouteHeaderOverlay]), and the survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
+ * the map ([MapFeature]), shared focus banner ([FocusBanner]), and survey ([org.onebusaway.android.ui.survey.SurveyOverlay])
  * are all composables now — no map-related `AndroidView` / View seam remains.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -198,26 +202,24 @@ fun HomeScreen(
     with(activityActions) {
     ObaTheme {
         val stopFocus = currentFocus as? CurrentFocus.Stop
-        val standaloneRouteFocused = currentFocus is CurrentFocus.Route
         val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
         val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
+        val focusBannerViewModel = hiltViewModel<FocusBannerViewModel>()
+        val favoriteRouteIds by focusBannerViewModel.favoriteRouteIds.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
         // Compute before entering mapTopChromeOverlayInset(), whose statusBarsPadding consumes this inset
         // for descendants. This is the route card's absolute top edge in map coordinates.
-        val routeHeaderTopPx = WindowInsets.statusBars.getTop(density) +
+        val focusBannerTopPx = WindowInsets.statusBars.getTop(density) +
             with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
-        val searchBarBottomPx = WindowInsets.statusBars.getTop(density) +
-            with(density) { MAP_TOP_CHROME_CONTROL_BOTTOM.roundToPx() }
-        var routeHeaderBottomPx by remember(routeHeader?.routeId) { mutableIntStateOf(0) }
-        val routeFocusTopEdgePx = routeFocusTopEdge(
+        var focusBannerBottomPx by remember(currentFocus) { mutableIntStateOf(0) }
+        val focusTopEdgePx = focusBannerTopEdge(
             currentFocus,
-            searchBarBottomPx,
-            routeHeaderBottomPx,
+            focusBannerBottomPx,
         )
-        LaunchedEffect(routeFocusTopEdgePx) {
-            mapViewModel.setRouteFocusTopEdge(routeFocusTopEdgePx)
+        LaunchedEffect(focusTopEdgePx) {
+            mapViewModel.setFocusBannerBottomEdge(focusTopEdgePx)
         }
         val snackbarHostState = remember { SnackbarHostState() }
         // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
@@ -286,7 +288,7 @@ fun HomeScreen(
             (LocalWindowInfo.current.containerSize.height * PEEK_HEIGHT_FRACTION).toDp()
         }
 
-        // The panel's total content height (px: pinned header + fully-laid-out list), reported once
+        // The panel's fully-laid-out list height in px, reported once
         // measured (0 until then). Used only to shrink the peek below the cap for short stops. Not reset
         // on focus change — the next stop's panel overwrites it once laid out, avoiding a cap-bounce.
         var contentPx by remember { mutableIntStateOf(0) }
@@ -315,6 +317,67 @@ fun HomeScreen(
                 // need to wait for arrivals; the peek shows a loading spinner until they land.
                 sheetShown = true
             }
+        }
+
+        // One keyed arrivals session feeds the focus banner, alert modal, and drawer body. Keeping it
+        // above the scaffold prevents duplicate polling while preserving the per-stop ViewModelStore.
+        val arrivalsSession = rememberArrivalsSession(
+            focusedStop = stopFocus?.stop,
+            sheetVisible = sheetShown,
+            arrivalsViewModelFactory = arrivalsViewModelFactory,
+            tutorialState = tutorialState,
+            onArrivalsLoaded = onArrivalsLoaded,
+            onShowRouteOnMap = { arrival, request ->
+                homeViewModel.selectArrivalRoute(
+                    request = request,
+                    shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
+                    headsign = arrival.headsign,
+                    undoViewport = mapViewModel.viewport,
+                )
+                collapseSheet()
+            },
+            onShowTrip = onShowTrip,
+            onEditReminder = onEditReminder,
+            showUndoSnackbar = { messageRes, actionRes, onAction ->
+                scope.launch {
+                    val result = snackbarHostState.showSnackbar(
+                        message = resources.getString(messageRes),
+                        actionLabel = actionRes?.let { resources.getString(it) },
+                        duration = SnackbarDuration.Short,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) onAction?.invoke()
+                }
+            },
+        )
+        val arrivalsState = arrivalsSession?.viewModel?.state
+            ?.collectAsStateWithLifecycle()?.value ?: ArrivalsUiState.Loading
+        val arrivalsContent = arrivalsState as? ArrivalsUiState.Content
+        var serviceAlertsVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
+        val focusBannerState: FocusBannerState? = when (currentFocus) {
+            is CurrentFocus.Stop -> FocusBannerState.Stop(
+                title = arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
+                    ?: currentFocus.stop.name.orEmpty(),
+                direction = arrivalsContent?.header?.direction,
+                isFavorite = arrivalsContent?.header?.isFavorite == true,
+                actionsAvailable = arrivalsContent != null,
+                hasAlerts = arrivalsContent?.hasAlerts == true,
+                subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
+                    FocusBannerState.SubordinateRoute(
+                        shortName = leg.shortName,
+                        color = arrivalsContent?.actions?.values
+                            ?.firstOrNull { it.routeId == leg.routeId }
+                            ?.routeColor,
+                    )
+                }.orEmpty(),
+                subordinateHeadsign = currentFocus.selectedRoute?.originHeadsign,
+            )
+            is CurrentFocus.Route -> routeHeader?.let { header ->
+                FocusBannerState.Route(
+                    header = header,
+                    isFavorite = header.routeId in favoriteRouteIds,
+                )
+            }
+            CurrentFocus.None, is CurrentFocus.BikeStation -> null
         }
 
         // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
@@ -440,40 +503,11 @@ fun HomeScreen(
                     },
                     sheetContent = {
                         ArrivalsSheetHost(
-                            focusedStop = stopFocus?.stop,
-                            sheetVisible = sheetShown,
+                            session = arrivalsSession,
+                            state = arrivalsState,
                             selectedRoute = stopFocus?.selectedRoute,
                             mapRouteColors = mapRouteColors,
-                            arrivalsViewModelFactory = arrivalsViewModelFactory,
-                            onArrivalsLoaded = onArrivalsLoaded,
-                            onClearRouteSelection = homeViewModel::clearStopRouteSelection,
-                            // Showing vehicles on the map drags the sheet down to peek so the route is
-                            // visible, whether or not route mode was already active (see collapseSheet).
-                            onShowRouteOnMap = { arrival, request ->
-                                homeViewModel.selectArrivalRoute(
-                                    request = request,
-                                    shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
-                                    headsign = arrival.headsign,
-                                    undoViewport = mapViewModel.viewport,
-                                )
-                                collapseSheet()
-                            },
-                            onShowTrip = onShowTrip,
-                            onEditReminder = onEditReminder,
                             onContentHeight = { px -> contentPx = px },
-                            onTitleClick = {
-                                homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
-                            },
-                            showUndoSnackbar = { messageRes, actionRes, onAction ->
-                                scope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = resources.getString(messageRes),
-                                        actionLabel = actionRes?.let { resources.getString(it) },
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) onAction?.invoke()
-                                }
-                            },
                         )
                     }
                 ) {
@@ -507,8 +541,24 @@ fun HomeScreen(
                                     weatherViewModel = weatherViewModel,
                                     donationViewModel = donationViewModel,
                                     surveyViewModel = surveyViewModel,
-                                    routeHeader = routeHeader.takeIf { standaloneRouteFocused },
-                                    onCancelRouteMode = homeViewModel::unfocusMapOneLevel,
+                                    focusBannerState = focusBannerState,
+                                    onCloseFocus = homeViewModel::clearMapFocus,
+                                    onToggleFavorite = {
+                                        when (focusBannerState) {
+                                            is FocusBannerState.Stop ->
+                                                arrivalsSession?.viewModel?.toggleFavorite()
+                                            is FocusBannerState.Route ->
+                                                focusBannerViewModel.toggleRouteFavorite(
+                                                    focusBannerState.header
+                                                )
+                                            null -> Unit
+                                        }
+                                    },
+                                    onShowAlerts = { serviceAlertsVisible = true },
+                                    onClearSubordinateRoute = homeViewModel::clearStopRouteSelection,
+                                    onRecenterStop = {
+                                        homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
+                                    },
                                     // The switch-direction affordance calls straight into the map VM (which
                                     // re-filters stops/vehicles + persists the choice), like the height report below.
                                     onSelectRouteDirection = { directionId ->
@@ -522,10 +572,10 @@ fun HomeScreen(
                                     },
                                     onLearnMore = onLearnMore,
                                     onOpenSurvey = onOpenSurvey,
-                                    routeHeaderTopPx = routeHeaderTopPx,
+                                    focusBannerTopPx = focusBannerTopPx,
                                     // This layer converts measured card height to its map-space bottom edge;
                                     // the map VM adds marker clearance and owns the resulting content padding.
-                                    onRouteHeaderBottom = { routeHeaderBottomPx = it },
+                                    onFocusBannerBottom = { focusBannerBottomPx = it },
                                 )
                             }
                             // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
@@ -545,6 +595,16 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        if (serviceAlertsVisible && arrivalsContent != null && arrivalsSession != null) {
+            ServiceAlertsDialog(
+                content = arrivalsContent,
+                onShowAlert = arrivalsSession.handler::onShowAlert,
+                onHideAlert = arrivalsSession.handler::onHideAlert,
+                onShowHiddenAlerts = arrivalsSession.viewModel::showHiddenAlerts,
+                onDismiss = { serviceAlertsVisible = false },
+            )
         }
 
         // The region-wide GTFS alert dialog — a self-wired feature module (WideAlertViewModel streams the
@@ -634,14 +694,18 @@ private fun BoxScope.HomeMapOverlays(
     weatherViewModel: WeatherViewModel,
     donationViewModel: DonationViewModel,
     surveyViewModel: SurveyViewModel,
-    routeHeader: RouteHeader?,
-    onCancelRouteMode: () -> Unit,
+    focusBannerState: FocusBannerState?,
+    onCloseFocus: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onShowAlerts: () -> Unit,
+    onClearSubordinateRoute: () -> Unit,
+    onRecenterStop: () -> Unit,
     onSelectRouteDirection: (Int) -> Unit,
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
-    routeHeaderTopPx: Int,
-    onRouteHeaderBottom: (Int) -> Unit,
+    focusBannerTopPx: Int,
+    onFocusBannerBottom: (Int) -> Unit,
 ) {
     // The caller offsets this whole overlay layer below the top chrome (one shared inset), so the
     // overlays only carry their own side margins here.
@@ -670,25 +734,28 @@ private fun BoxScope.HomeMapOverlays(
         onOpenSurvey = onOpenSurvey,
         modifier = Modifier.align(Alignment.TopCenter),
     )
-    // The route-mode header, now a floating card centered below the top chrome (so the menu + search
-    // FABs stay clear and tappable in route mode). Drawn last of the overlays so it sits above the
-    // weather / donation / survey cards when a route is active. The layer is already offset by the
+    // The focus banner is a floating card centered below the top chrome. Drawn last so it sits above
+    // weather / donation / survey cards while a stop or route is focused. The layer is already offset by the
     // clearance, but the map's top-padding derivation needs the card's bottom edge in map coordinates,
     // so add both the status-bar inset and chrome clearance back onto its reported height.
-    if (routeHeader != null) {
-        RouteHeaderOverlay(
-            header = routeHeader,
-            onCancel = onCancelRouteMode,
+    if (focusBannerState != null) {
+        FocusBanner(
+            state = focusBannerState,
+            onClose = onCloseFocus,
+            onToggleFavorite = onToggleFavorite,
+            onShowAlerts = onShowAlerts,
+            onClearSubordinateRoute = onClearSubordinateRoute,
+            onRecenterStop = onRecenterStop,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
-            onHeight = { h -> onRouteHeaderBottom(h + routeHeaderTopPx) },
+            onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp),
         )
     } else {
-        LaunchedEffect(Unit) { onRouteHeaderBottom(0) }
+        LaunchedEffect(Unit) { onFocusBannerBottom(0) }
     }
 }
 

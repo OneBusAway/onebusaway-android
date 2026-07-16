@@ -394,18 +394,14 @@ internal fun ArrivalsList(
             // stranded the section at zero height in the collapsed peek — the lazy layout didn't remeasure
             // it on toggle, so the alerts only appeared after a drag forced a relayout.)
             item(key = "alerts") {
-                Column(Modifier.animateItem()) {
-                    if (content.alerts.isNotEmpty()) {
-                        AlertList(
-                            alerts = content.alerts,
-                            onShowAlert = handler::onShowAlert,
-                            onHideAlert = handler::onHideAlert
-                        )
-                    }
-                    if (content.hiddenAlertCount > 0) {
-                        HiddenAlertsRow(content.hiddenAlertCount, onShowHiddenAlerts)
-                    }
-                }
+                ServiceAlertsContent(
+                    alerts = content.alerts,
+                    hiddenAlertCount = content.hiddenAlertCount,
+                    onShowAlert = handler::onShowAlert,
+                    onHideAlert = handler::onHideAlert,
+                    onShowHiddenAlerts = onShowHiddenAlerts,
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
         if (showDirection) {
@@ -516,6 +512,25 @@ private fun HiddenAlertsRow(count: Int, onShowHiddenAlerts: () -> Unit) {
  * can't crowd out the arrivals. Each row is right-swipe-to-hide. Paging state is local and persists
  * across the 60s refresh; it resets only when the list leaves composition.
  */
+@Composable
+internal fun ServiceAlertsContent(
+    alerts: List<AlertItem>,
+    hiddenAlertCount: Int,
+    onShowAlert: (String) -> Unit,
+    onHideAlert: (AlertItem) -> Unit,
+    onShowHiddenAlerts: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        if (alerts.isNotEmpty()) {
+            AlertList(alerts, onShowAlert, onHideAlert)
+        }
+        if (hiddenAlertCount > 0) {
+            HiddenAlertsRow(hiddenAlertCount, onShowHiddenAlerts)
+        }
+    }
+}
+
 @Composable
 private fun AlertList(
     alerts: List<AlertItem>,

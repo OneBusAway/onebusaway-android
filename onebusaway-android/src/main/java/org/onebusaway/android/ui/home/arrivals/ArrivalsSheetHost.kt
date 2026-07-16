@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.home.arrivals
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -27,7 +26,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -37,12 +35,15 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
+import org.onebusaway.android.ui.arrivals.ArrivalActionHandler
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
+import org.onebusaway.android.ui.arrivals.ArrivalsPolling
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.components.ArrivalsPanel
 import org.onebusaway.android.ui.arrivals.createArrivalActionHandler
+import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.routeRowKey
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberClearedViewModelStoreOwner
@@ -55,109 +56,120 @@ import org.onebusaway.android.ui.tutorial.TutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 
 /**
- * Hosts the [ArrivalsPanel] for the currently focused stop directly in the home bottom sheet,
- * replacing the old `ArrivalsPanelFragment`. Each focused stop gets its own [ArrivalsViewModel] in a
- * per-stop `ViewModelStore` that is **cleared when the stop changes or the sheet leaves composition**
+ * The shared per-stop arrivals session used by both the home focus banner and bottom sheet.
+ */
+internal data class ArrivalsSession(
+    val stop: FocusedStop,
+    val viewModel: ArrivalsViewModel,
+    val handler: ArrivalActionHandler,
+    val listState: LazyListState,
+)
+
+/**
+ * Creates the arrivals session for the currently focused stop. Each stop gets its own
+ * [ArrivalsViewModel] in a per-stop `ViewModelStore` that is **cleared when the stop changes or the
+ * session leaves composition**
  * (via [rememberClearedViewModelStoreOwner]) — so the VM's `viewModelScope`, and the refresh loop
- * `ArrivalsPanel` drives through it, are cancelled rather than accumulating in the activity's store.
+ * [ArrivalsPolling] drives through it, are cancelled rather than accumulating in the activity's store.
  *
- * Polling lifecycle is owned by `ArrivalsPanel` itself (`ArrivalsPolling` → `repeatOnLifecycle`), so
- * it also pauses with the screen. Loaded responses are forwarded to the host via [onArrivalsLoaded]
- * (the map recenter / focus marker / tutorials), and the panel's measured content height drives the
- * sheet peek fit via [onContentHeight]. Expand/collapse is driven by the sheet's drag handle (in the host scaffold).
+ * Polling and stop-detail dialogs live here so the banner and drawer share one lifecycle and one
+ * state source. Loaded responses are forwarded to the host for map focus and tutorials.
  */
 @Composable
-internal fun ArrivalsSheetHost(
+internal fun rememberArrivalsSession(
     focusedStop: FocusedStop?,
     // The sheet is actually on screen (not hidden) — gates the onboarding spotlight so it can't fire
     // over a hidden panel.
     sheetVisible: Boolean,
-    selectedRoute: StopRouteSelection?,
-    mapRouteColors: Map<RouteDirectionKey, Int>,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
+    tutorialState: TutorialState?,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    onClearRouteSelection: () -> Unit,
     onShowRouteOnMap: (ArrivalInfo, ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    onContentHeight: (heightPx: Int) -> Unit,
-    // Tapping the drawer's stop-name title — the host recenters the map on the focused stop.
-    onTitleClick: () -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
-) {
-    val stop = focusedStop ?: return
-    key(stop.id) {
-        CompositionLocalProvider(
-            LocalViewModelStoreOwner provides rememberClearedViewModelStoreOwner(stop.id)
-        ) {
-            val context = LocalContext.current
-            // Resolve the Hilt entry point once per stop rather than on each recomposition / each
-            // arrivals load (matches the remember { RegionEntryPoint.get(...) } pattern elsewhere).
-            val prefs = remember { PreferencesEntryPoint.get(context) }
-            val viewModel: ArrivalsViewModel = viewModel(
-                factory = viewModelFactory {
-                    initializer {
-                        arrivalsViewModelFactory.create(stop.id)
-                    }
+) : ArrivalsSession? {
+    val stop = focusedStop ?: return null
+    return key(stop.id) {
+        val viewModelStoreOwner = rememberClearedViewModelStoreOwner(stop.id)
+        val context = LocalContext.current
+        // Resolve the Hilt entry point once per stop rather than on each recomposition / each
+        // arrivals load (matches the remember { RegionEntryPoint.get(...) } pattern elsewhere).
+        val prefs = remember { PreferencesEntryPoint.get(context) }
+        val viewModel: ArrivalsViewModel = viewModel(
+            viewModelStoreOwner = viewModelStoreOwner,
+            factory = viewModelFactory {
+                initializer {
+                    arrivalsViewModelFactory.create(stop.id)
                 }
+            }
+        )
+        val activity = context.findActivity()
+        val showRouteState = rememberUpdatedState(onShowRouteOnMap)
+        val showTripState = rememberUpdatedState(onShowTrip)
+        val editReminderState = rememberUpdatedState(onEditReminder)
+        val undoSnackbarState = rememberUpdatedState(showUndoSnackbar)
+        val handler = remember(viewModel, activity) {
+            createArrivalActionHandler(
+                activity = activity,
+                viewModel = viewModel,
+                currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
+                onShowRouteOnMap = { arrival, request -> showRouteState.value(arrival, request) },
+                showUndoSnackbar = { messageRes, actionRes, onAction ->
+                    undoSnackbarState.value(messageRes, actionRes, onAction)
+                },
+                onShowTrip = { tripId, stopId -> showTripState.value(tripId, stopId) },
+                onEditReminder = { args -> editReminderState.value(args) },
             )
-            val activity = context.findActivity()
-            // The enclosing key(stop.id) gives this whole block a fresh identity per stop, so these
-            // remembers are already scoped to the stop — no per-element key needed.
-            val handler = remember {
-                createArrivalActionHandler(
-                    activity = activity,
-                    viewModel = viewModel,
-                    currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
-                    onShowRouteOnMap = onShowRouteOnMap,
-                    showUndoSnackbar = showUndoSnackbar,
-                    // The home host navigates the NavHost in-app (the handler's default launcher path is for
-                    // the standalone/external callers); keeps the shared handler ignorant of the concrete host.
-                    onShowTrip = onShowTrip,
-                    onEditReminder = onEditReminder,
-                )
-            }
-            val listState = remember { LazyListState() }
+        }
+        val listState = remember { LazyListState() }
 
-            // This host owns the arrivals-tutorial wiring so the reusable panel stays tutorial-ignorant:
-            // it maps the panel's opaque anchor slots to the spotlight targets and triggers the sequence.
-            val tutorialState = LocalTutorialState.current
+        ArrivalsPolling(viewModel)
+        StopDetailsHost(viewModel)
 
-            // The BottomSheetScaffold sheet container is transparent; keep the legacy panel background.
-            Surface(color = colorResource(R.color.trip_details_background)) {
-                ArrivalsPanel(
-                    viewModel = viewModel,
-                    listState = listState,
-                    initialTitle = stop.name.orEmpty(),
-                    handler = handler,
-                    mapRouteColors = mapRouteColors,
-                    selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
-                    selectedRouteId = selectedRoute?.originLeg?.routeId,
-                    selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
-                    onClearRouteSelection = onClearRouteSelection,
-                    onContentHeight = onContentHeight,
-                    onTitleClick = onTitleClick,
-                    etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
-                    // The onboarding "slide up to see more" spotlight (KEY_PANEL) anchors on the sheet's
-                    // drag handle in the host scaffold, not the panel — see ArrivalsDragHandle.
-                )
-            }
-
-            // Forward each completed load to the host (replaces the fragment's onViewCreated collector),
-            // and — the first time arrivals show — kick off the arrivals-panel onboarding spotlight.
-            val sheetVisibleState = rememberUpdatedState(sheetVisible)
-            LaunchedEffect(viewModel) {
-                viewModel.arrivalsLoaded.collect { loaded ->
-                    onArrivalsLoaded(loaded)
-                    if (tutorialState != null) {
-                        maybeStartArrivalTutorial(prefs, tutorialState, loaded.hasArrivals) {
-                            // Suspend until the sheet is actually on screen (see the helper KDoc).
-                            snapshotFlow { sheetVisibleState.value }.first { it }
-                        }
+        // Forward each completed load to the host and start onboarding after the sheet is visible.
+        val sheetVisibleState = rememberUpdatedState(sheetVisible)
+        LaunchedEffect(viewModel) {
+            viewModel.arrivalsLoaded.collect { loaded ->
+                onArrivalsLoaded(loaded)
+                if (tutorialState != null) {
+                    maybeStartArrivalTutorial(prefs, tutorialState, loaded.hasArrivals) {
+                        snapshotFlow { sheetVisibleState.value }.first { it }
                     }
                 }
             }
         }
+
+        remember(stop, viewModel, handler, listState) {
+            ArrivalsSession(stop, viewModel, handler, listState)
+        }
+    }
+}
+
+/** Renders only the drawer body; session lifecycle and state are owned above the scaffold. */
+@Composable
+internal fun ArrivalsSheetHost(
+    session: ArrivalsSession?,
+    state: ArrivalsUiState,
+    selectedRoute: StopRouteSelection?,
+    mapRouteColors: Map<RouteDirectionKey, Int>,
+    onContentHeight: (heightPx: Int) -> Unit,
+) {
+    session ?: return
+    val tutorialState = LocalTutorialState.current
+    Surface(color = colorResource(R.color.trip_details_background)) {
+        ArrivalsPanel(
+            viewModel = session.viewModel,
+            state = state,
+            listState = session.listState,
+            handler = session.handler,
+            mapRouteColors = mapRouteColors,
+            selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
+            selectedRouteId = selectedRoute?.originLeg?.routeId,
+            selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
+            onContentHeight = onContentHeight,
+            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
+        )
     }
 }
 

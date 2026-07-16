@@ -356,7 +356,11 @@ fun RouteArrivalRow(
                         firstPillModifier = etaAnchor,
                     )
                 }
-                if (selected && onClearSelection != null) {
+            }
+            if (selected && onClearSelection != null) {
+                // Own layer, like the corner star/alert/overflow icons, so toggling the selection
+                // never reflows the ETA strip (the pills' trailing chevron gutter gives it room).
+                Box(Modifier.align(Alignment.CenterEnd)) {
                     CornerIcon(
                         iconRes = R.drawable.ic_navigation_close,
                         contentDescription = stringResource(R.string.stop_info_unselect_route),

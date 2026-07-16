@@ -213,9 +213,13 @@ class MapLibreRenderer(
         if (removed.isNotEmpty()) map.removeAnnotations(removed)
         renderedRoutePolylines = next
         val widthScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
+        // Retained natives carry the previously stamped scale; bring them to the new one before
+        // recording it, or a later onCameraSettled at this zoom would skip the resize they still need.
+        val retainedStale = renderedRouteWidthScale != widthScale
         renderedRouteWidthScale = widthScale
         val reconciled = next.mapIndexed { index, polyline ->
             reconciliation.previousIndexForNext[index]?.let(previousNative::get)
+                ?.also { if (retainedStale) it.width = baseRouteWidth(polyline) * widthScale }
                 ?: map.addPolyline(
                     PolylineOptions()
                         .color(polyline.resolvedColor)

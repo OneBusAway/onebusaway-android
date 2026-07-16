@@ -109,8 +109,10 @@ class FocusedTripRepositoryTest {
         val routes = RouteStops().apply {
             catalogs["route"] = Result.success(listOf(RouteStopGroup(null, listOf(stop("served")))))
         }
+        val loggedFailures = mutableListOf<String>()
         val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope, now = { ElapsedTime(0L) }
+            observations, routes, backgroundScope, now = { ElapsedTime(0L) },
+            logFailure = { message, _ -> loggedFailures += message },
         )
 
         val result = repository.getStops(
@@ -122,6 +124,8 @@ class FocusedTripRepositoryTest {
 
         assertEquals(setOf("served"), result.stopIds)
         assertEquals(setOf("good"), result.stopIdsByTripId.keys)
+        // The omission leaves a log trail, so a fetch failure stays distinguishable from no data.
+        assertEquals(listOf("Focused-trip schedule failed fetch failed"), loggedFailures)
     }
 
     @Test

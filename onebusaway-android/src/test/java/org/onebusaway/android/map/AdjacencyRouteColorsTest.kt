@@ -8,7 +8,7 @@ import org.junit.Test
 import org.onebusaway.android.models.RouteDirectionKey
 import kotlin.math.abs
 
-@SuppressLint("RestrictedApi")
+@SuppressLint("RestrictedApi") // Hct, Material's vendored color-science util; see AdjacencyRouteColors.kt.
 class AdjacencyRouteColorsTest {
 
     @Test

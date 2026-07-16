@@ -325,13 +325,6 @@ internal fun wireClicks(
 
     map.setOnMarkerClickListener { marker -> routeMarkerTap(marker, renderer, infoWindows, cb) }
 
-    map.setOnCircleClickListener { circle ->
-        renderer.stopForCircle(circle)?.let { stop ->
-            infoWindows.clear()
-            cb.onStopClick(stop)
-        }
-    }
-
     map.setOnInfoWindowClickListener { marker ->
         val vehicle = renderer.vehicleForMarker(marker)
         if (vehicle != null) {

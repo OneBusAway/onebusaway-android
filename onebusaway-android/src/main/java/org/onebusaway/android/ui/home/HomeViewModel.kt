@@ -21,12 +21,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
@@ -108,10 +111,12 @@ class HomeViewModel @Inject constructor(
 
     // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
-    // reference to the map's VM (the seam the old MapInteractionBus filled). The extra capacity keeps
-    // these low-frequency events from suspending an active producer.
-    private val _mapDirectives = MutableSharedFlow<MapDirective>(extraBufferCapacity = 8)
-    val mapDirectives: SharedFlow<MapDirective> = _mapDirectives.asSharedFlow()
+    // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
+    // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
+    // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
+    // destination — must queue for the single consumer instead of vanishing.
+    private val _mapDirectives = Channel<MapDirective>(capacity = 16)
+    val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
 
     // Telemetry events the host's single HomeAnalyticsEffect reports (region auto-selects, nav/help menu
     // selections) — so the imperative ObaAnalytics calls live in one Compose effect, not scattered here.
@@ -496,9 +501,9 @@ class HomeViewModel @Inject constructor(
         _analyticsEvents.tryEmit(HomeAnalyticsEvent.MenuItem(labelRes))
     }
 
-    // tryEmit keeps these low-frequency one-shot directives synchronous with their semantic action.
+    // trySend keeps these low-frequency one-shot directives synchronous with their semantic action.
     private fun emitMapDirective(directive: MapDirective) {
-        _mapDirectives.tryEmit(directive)
+        _mapDirectives.trySend(directive)
     }
 
     private fun pushFocus(focus: CurrentFocus, undoViewport: MapViewport? = null) {

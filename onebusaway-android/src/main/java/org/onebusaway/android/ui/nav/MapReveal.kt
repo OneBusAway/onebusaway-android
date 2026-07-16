@@ -44,6 +44,8 @@ fun NavController.navigateFromHome(route: String) =
  */
 const val RESULT_MAP_ROUTE_ID = "mapReveal.routeId"
 const val RESULT_MAP_ROUTE_DIRECTION_STOP_ID = "mapReveal.routeDirectionStopId"
+const val RESULT_MAP_ROUTE_FOCUS_TRIP_ID = "mapReveal.routeFocusTripId"
+const val RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID = "mapReveal.routeInitialDirectionId"
 const val RESULT_MAP_STOP_ID = "mapReveal.stopId"
 const val RESULT_MAP_STOP_LAT = "mapReveal.stopLat"
 const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
@@ -53,10 +55,17 @@ const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
  * to the `RESULT_MAP_ROUTE_*` keys and read back by [consumeRouteReveal] — the one place field names live.
  */
 fun NavController.revealRouteOnMap(request: ShowRouteRequest) {
-    val handle = getBackStackEntry(NavRoutes.HOME).savedStateHandle
-    handle[RESULT_MAP_ROUTE_ID] = request.routeId
-    handle[RESULT_MAP_ROUTE_DIRECTION_STOP_ID] = request.directionStopId
+    getBackStackEntry(NavRoutes.HOME).savedStateHandle.putRouteReveal(request)
     popBackStack(NavRoutes.HOME, /* inclusive = */ false)
+}
+
+/** The write half of the route-reveal round trip — every [ShowRouteRequest] field, so a request
+ *  survives the navigation hop intact (verified against [consumeRouteReveal] by `MapRevealTest`). */
+internal fun SavedStateHandle.putRouteReveal(request: ShowRouteRequest) {
+    set(RESULT_MAP_ROUTE_ID, request.routeId)
+    set(RESULT_MAP_ROUTE_DIRECTION_STOP_ID, request.directionStopId)
+    set(RESULT_MAP_ROUTE_FOCUS_TRIP_ID, request.focusTripId)
+    set(RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID, request.initialDirectionId)
 }
 
 /** Reveal the whole route [routeId] on the map (no direction focus) — the plain-route launchers. */
@@ -71,9 +80,13 @@ fun NavController.revealRouteOnMap(routeId: String) = revealRouteOnMap(ShowRoute
 fun SavedStateHandle.consumeRouteReveal(): ShowRouteRequest? {
     val routeId = get<String>(RESULT_MAP_ROUTE_ID)
     val directionStopId = get<String>(RESULT_MAP_ROUTE_DIRECTION_STOP_ID)
+    val focusTripId = get<String>(RESULT_MAP_ROUTE_FOCUS_TRIP_ID)
+    val initialDirectionId = get<Int>(RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID)
     set(RESULT_MAP_ROUTE_ID, null)
     set(RESULT_MAP_ROUTE_DIRECTION_STOP_ID, null)
-    return routeId?.let { ShowRouteRequest(it, directionStopId) }
+    set(RESULT_MAP_ROUTE_FOCUS_TRIP_ID, null)
+    set(RESULT_MAP_ROUTE_INITIAL_DIRECTION_ID, null)
+    return routeId?.let { ShowRouteRequest(it, directionStopId, focusTripId, initialDirectionId) }
 }
 
 /** Reveal the map focused on [stopId] at [lat]/[lon], popping back to HOME. */

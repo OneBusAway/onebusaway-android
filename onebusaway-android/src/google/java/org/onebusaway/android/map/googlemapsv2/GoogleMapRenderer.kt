@@ -100,7 +100,7 @@ class GoogleMapRenderer(
     private val renderState: MapRenderState,
 ) : PingTarget {
     private val stopMarkerLayer = GoogleStopMarkerLayer(map, context)
-    // Swap this one construction line to GoogleRouteStopCircleLayer(map) for native circles + batching.
+    // The GoogleRouteStopLayer seam keeps route-stop drawing strategies swappable behind one line.
     private val routeStopLayer: GoogleRouteStopLayer =
         GoogleRouteStopBitmapLayer(map, context.resources.displayMetrics.density)
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
@@ -302,9 +302,13 @@ class GoogleMapRenderer(
         reconciliation.removedPreviousIndices.forEach { previousNative[it].remove() }
         renderedRoutePolylines = next
         val widthScale = routeLineWidthScale(map.cameraPosition.zoom)
+        // Retained natives carry the previously stamped scale; bring them to the new one before
+        // recording it, or a later onCameraSettled at this zoom would skip the resize they still need.
+        val retainedStale = renderedRouteWidthScale != widthScale
         renderedRouteWidthScale = widthScale
         val reconciled = next.mapIndexed { index, polyline ->
             reconciliation.previousIndexForNext[index]?.let(previousNative::get)
+                ?.also { if (retainedStale) it.width = widthPx(polyline) * widthScale }
                 ?: addRoutePolyline(polyline, widthScale)
         }
         routePolylines.clear()
@@ -760,8 +764,6 @@ class GoogleMapRenderer(
 
     fun stopForMarker(marker: Marker): StopMarker? =
         stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
-
-    fun stopForCircle(circle: Circle): StopMarker? = routeStopLayer.stopForCircle(circle)
 
     fun onCameraMoveStarted() = routeStopLayer.onCameraMoveStarted()
 

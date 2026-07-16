@@ -274,7 +274,9 @@ class MapViewModel @Inject constructor(
     fun showNearbyStops() {
         leaveCurrentView(clearStopFocus = false)
         persistRoute(null)
-        stopsController.start()
+        // leaveCurrentView already restarted the stops loader when a focused stop was preserved;
+        // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
+        if (routeController.focusedStopId == null) stopsController.start()
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 

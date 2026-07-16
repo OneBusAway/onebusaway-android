@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map.googlemapsv2
 
-import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.Marker
 import org.onebusaway.android.map.render.StopMarker
 
@@ -28,8 +27,6 @@ internal interface GoogleRouteStopLayer {
     fun onCameraSettled(zoom: Float)
 
     fun stopForMarker(marker: Marker): StopMarker? = null
-
-    fun stopForCircle(circle: Circle): StopMarker? = null
 
     fun dispose()
 }

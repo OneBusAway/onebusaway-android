@@ -25,7 +25,9 @@ import com.google.android.material.color.utilities.Hct
  * use, successively filling the largest gaps around the circle. This keeps every continuing route
  * visually stable while spreading the replacement stop's other routes as evenly as possible.
  */
-@SuppressLint("RestrictedApi") // Material Components' vendored color-science utility.
+// Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
+// exists, so this is deliberate long-term use, not a migration to track (same as LineBadge).
+@SuppressLint("RestrictedApi")
 internal fun <K : Any> adjacencyRouteColors(
     identities: Iterable<K>,
     retained: Map<K, Int> = emptyMap(),

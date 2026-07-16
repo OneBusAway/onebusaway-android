@@ -488,12 +488,18 @@ class StopsMapController(
             renderState.setFocusedStopId(null)
             return
         }
-        if (!stopAccum.containsKey(stop.id)) {
+        val newlyAccumulated = !stopAccum.containsKey(stop.id)
+        if (newlyAccumulated) {
             routes?.let { cacheRoutes(it) }
             stopAccum[stop.id] = toStopMarker(stop)
+        }
+        // Focus before publishing (like clearStops): publishStops reads focusedStopId for the
+        // presentation's keep-the-focused-stop fallback. With a route presentation active the marker
+        // list keys off the focus even for an already-accumulated stop, so republish then too.
+        renderState.setFocusedStopId(stop.id)
+        if (newlyAccumulated || routePresentation != null) {
             publishStops()
         }
-        renderState.setFocusedStopId(stop.id)
     }
 
     fun setFocusedStopId(stopId: String?) = renderState.setFocusedStopId(stopId)

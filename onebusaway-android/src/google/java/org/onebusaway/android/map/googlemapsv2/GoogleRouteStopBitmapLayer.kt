@@ -34,8 +34,8 @@ import org.onebusaway.android.map.render.focusedRouteStopScale
 import org.onebusaway.android.map.render.stopZIndex
 
 /**
- * Draws each size/style once and stamps the shared bitmap descriptor onto every route-stop marker.
- * Unlike [GoogleRouteStopCircleLayer], a settle applies the new size in one pass with no frame trickle.
+ * Draws each size/style once and stamps the shared bitmap descriptor onto every route-stop marker,
+ * so a zoom settle applies the new size in one pass with no per-annotation frame trickle.
  */
 internal class GoogleRouteStopBitmapLayer(
     private val map: GoogleMap,

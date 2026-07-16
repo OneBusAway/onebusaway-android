@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION") // classic Marker/Icon annotation API; SymbolManager migration tracked in #1728
 
 package org.onebusaway.android.map.maplibre
 

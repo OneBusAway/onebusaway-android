@@ -138,7 +138,11 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
 
         DisposableEffect(mapView) {
             var createdRenderer: MapLibreRenderer? = null
+            var disposed = false
             mapView.getMapAsync { map ->
+                // getMapAsync/setStyle callbacks can land after onDispose (the composable left
+                // composition mid-load); a renderer created then would never be disposed, so bail.
+                if (disposed) return@getMapAsync
                 mapLibreMap = map
                 if (initialLatitude != 0.0 || initialLongitude != 0.0) {
                     map.cameraPosition = CameraPosition.Builder()
@@ -149,6 +153,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 map.uiSettings.isCompassEnabled = false
                 val styleUrl = if (ThemeUtils.isInDarkMode(context)) STYLE_URL_DARK else STYLE_URL_LIGHT
                 map.setStyle(Style.Builder().fromUri(styleUrl)) { style ->
+                    if (disposed) return@setStyle
                     loadedStyle = style
                     val r = MapLibreRenderer(map, style, context, renderState)
                     createdRenderer = r
@@ -176,7 +181,10 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                     r.renderStatic()
                 }
             }
-            onDispose { createdRenderer?.dispose() }
+            onDispose {
+                disposed = true
+                createdRenderer?.dispose()
+            }
         }
 
         // Re-render the maplibre annotations, and enable the blue dot from the view model's permission flag.

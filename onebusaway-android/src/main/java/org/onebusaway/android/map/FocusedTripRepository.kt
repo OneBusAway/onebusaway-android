@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import android.location.Location
+import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
@@ -101,6 +102,10 @@ class DefaultFocusedTripRepository internal constructor(
     cacheSize: Int = MAX_CACHED_FOCUS_DATA,
     cacheTtl: Duration = FOCUS_DATA_CACHE_TTL,
     now: () -> ElapsedTime = ElapsedTime::now,
+    // Injectable so the JVM tests (which exercise the failure path) don't hit android.util.Log.
+    private val logFailure: (message: String, cause: Exception) -> Unit = { message, cause ->
+        Log.w(TAG, message, cause)
+    },
 ) : FocusedTripRepository {
 
     @Inject
@@ -158,7 +163,7 @@ class DefaultFocusedTripRepository internal constructor(
         val schedules = async {
             trips.map { trip ->
                 async {
-                    trip.tripId to resolveOrNull { observations.ensureSchedule(trip.tripId) }
+                    trip.tripId to resolveOrNull("schedule ${trip.tripId}") { observations.ensureSchedule(trip.tripId) }
                         ?.stopTimes
                         ?.map { it.stopId }
                 }
@@ -166,7 +171,7 @@ class DefaultFocusedTripRepository internal constructor(
         }
         val catalogs = async {
             trips.mapTo(LinkedHashSet()) { it.routeId }
-                .map { routeId -> async { resolveOrNull { fetchRouteStops(routeId) } } }
+                .map { routeId -> async { resolveOrNull("route stops $routeId") { fetchRouteStops(routeId) } } }
                 .awaitAll()
         }
         val stopIdsByTripId = buildMap {
@@ -188,11 +193,24 @@ class DefaultFocusedTripRepository internal constructor(
                 ?.also { routeStopCache.put(routeId, it) }
         }
 
+    /**
+     * A failed trip/route is omitted (logged, so it stays distinguishable from genuinely absent data)
+     * without cancelling successful siblings; cancellation still propagates.
+     */
+    private suspend fun <T> resolveOrNull(what: String, block: suspend () -> T?): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        logFailure("Focused-trip $what fetch failed", e)
+        null
+    }
+
     /** Shape-id cache avoids refetching one pattern merely because a later arrival has a new trip id. */
     private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? =
         shapeCache.get(shapeId) ?: shapeFetches.run(shapeId) {
             shapeCache.get(shapeId) ?: shapePermits.withPermit {
-                resolveOrNull { observations.ensureShape(tripId, shapeId) }
+                resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }
                     ?.let { polyline ->
                         withContext(Dispatchers.Default) { polyline.points.map(Location::toGeoPoint) }
                     }
@@ -201,11 +219,4 @@ class DefaultFocusedTripRepository internal constructor(
         }
 }
 
-/** A failed trip/route is omitted without cancelling successful siblings; cancellation still propagates. */
-private suspend fun <T> resolveOrNull(block: suspend () -> T?): T? = try {
-    block()
-} catch (e: CancellationException) {
-    throw e
-} catch (_: Exception) {
-    null
-}
+private const val TAG = "FocusedTripRepository"

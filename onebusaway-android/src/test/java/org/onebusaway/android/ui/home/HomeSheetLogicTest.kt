@@ -41,15 +41,16 @@ class HomeSheetLogicTest {
     }
 
     @Test
-    fun `stop route focus uses search bar while standalone route uses banner`() {
+    fun `stop and route focus use the measured focus banner edge`() {
         val stopRoute = StopRouteSelection(
             originHeadsign = null,
             legs = listOf(RouteLeg("route", "40")),
         )
-        assertEquals(120, routeFocusTopEdge(CurrentFocus.Stop(stop, stopRoute), 120, 240))
-        assertEquals(240, routeFocusTopEdge(CurrentFocus.Route(RouteTarget("route")), 120, 240))
-        assertEquals(0, routeFocusTopEdge(CurrentFocus.Stop(stop), 120, 240))
-        assertEquals(0, routeFocusTopEdge(CurrentFocus.None, 120, 240))
+        assertEquals(240, focusBannerTopEdge(CurrentFocus.Stop(stop, stopRoute), 240))
+        assertEquals(240, focusBannerTopEdge(CurrentFocus.Route(RouteTarget("route")), 240))
+        assertEquals(240, focusBannerTopEdge(CurrentFocus.Stop(stop), 240))
+        assertEquals(0, focusBannerTopEdge(CurrentFocus.None, 240))
+        assertEquals(0, focusBannerTopEdge(CurrentFocus.BikeStation("bike"), 240))
     }
 
     // --- toggleSheetTarget ---

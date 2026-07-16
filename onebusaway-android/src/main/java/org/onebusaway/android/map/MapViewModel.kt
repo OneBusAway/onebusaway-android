@@ -217,7 +217,7 @@ class MapViewModel @Inject constructor(
 
     // Keeps vehicle markers clear of whichever top control anchors route focus: the standalone route
     // banner or, for a route selected within stop focus, the always-visible search field.
-    private val routeHeaderMarkerPaddingPx =
+    private val focusBannerMarkerPaddingPx =
         context.resources.getDimensionPixelSize(R.dimen.map_route_vehicle_markers_padding)
 
     /**
@@ -236,9 +236,9 @@ class MapViewModel @Inject constructor(
     /** The actual palette used for routes around the focused stop. */
     val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
 
-    /** Apply the active route focus control's bottom edge in map coordinates; zero clears it. */
-    fun setRouteFocusTopEdge(bottomPx: Int) {
-        mapHost.setRouteFocusTopEdge(if (bottomPx > 0) bottomPx + routeHeaderMarkerPaddingPx else 0)
+    /** Apply the active focus banner's bottom edge in map coordinates; zero clears it. */
+    fun setFocusBannerBottomEdge(bottomPx: Int) {
+        mapHost.setFocusBannerBottomEdge(if (bottomPx > 0) bottomPx + focusBannerMarkerPaddingPx else 0)
     }
 
     // Map the controller's raw load into the display header: blank-but-loading until the route resolves,

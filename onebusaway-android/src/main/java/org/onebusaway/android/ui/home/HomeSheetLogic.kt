@@ -34,14 +34,12 @@ enum class ArrivalsSheetState { Hidden, Collapsed, Expanded }
  *  translates this into an animated peek height (the sheet has no `Hidden` drag anchor). */
 internal fun shouldShowSheet(focus: CurrentFocus): Boolean = focus is CurrentFocus.Stop
 
-/** Bottom edge used to keep route framing below the active focus chrome. */
-internal fun routeFocusTopEdge(
+/** Bottom edge used to keep map framing below the active stop/route focus banner. */
+internal fun focusBannerTopEdge(
     focus: CurrentFocus,
-    searchBarBottomPx: Int,
-    routeHeaderBottomPx: Int,
+    focusBannerBottomPx: Int,
 ): Int = when (focus) {
-    is CurrentFocus.Route -> routeHeaderBottomPx
-    is CurrentFocus.Stop -> if (focus.selectedRoute != null) searchBarBottomPx else 0
+    is CurrentFocus.Route, is CurrentFocus.Stop -> focusBannerBottomPx
     CurrentFocus.None, is CurrentFocus.BikeStation -> 0
 }
 

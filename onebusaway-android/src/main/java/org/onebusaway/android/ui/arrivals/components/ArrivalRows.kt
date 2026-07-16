@@ -263,7 +263,6 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    onClearSelection: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
 ) {
@@ -362,19 +361,6 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            if (selected && onClearSelection != null) {
-                // Own layer, like the corner star/alert/overflow icons, so toggling the selection
-                // never reflows the ETA strip (the pills' trailing chevron gutter gives it room).
-                Box(Modifier.align(Alignment.CenterEnd)) {
-                    CornerIcon(
-                        iconRes = R.drawable.ic_navigation_close,
-                        contentDescription = stringResource(R.string.stop_info_unselect_route),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        onClick = onClearSelection,
-                        iconSize = 22.dp,
-                    )
-                }
-            }
             if (routeActions != null) {
                 // Own layer, overlaid on top of the row rather than laid out inline, so the star can
                 // sit in the corner without shifting the badge/pills (mirrors the overflow icon below).
@@ -422,30 +408,6 @@ internal fun alertClick(
  *  it, so its top lines up with the favorite star (which floats above this padding at the card top);
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
-
-private val CORNER_ICON_HITBOX_SIZE = 26.dp
-
-/** A small fixed tap target tucked into a card corner — currently the selected-route close icon. */
-@Composable
-private fun CornerIcon(
-    iconRes: Int,
-    contentDescription: String,
-    tint: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    iconSize: Dp = 18.dp,
-) {
-    val contentPadding = (CORNER_ICON_HITBOX_SIZE - iconSize) / 2f
-    Icon(
-        painter = painterResource(iconRes),
-        contentDescription = contentDescription,
-        tint = tint,
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .size(CORNER_ICON_HITBOX_SIZE)
-            .padding(contentPadding)
-    )
-}
 
 /** The route-level long-press menu: open the route's schedule. The route's star lives as the row's own
  *  corner toggle ([FavoriteStarButton]); per-trip actions live on each pill's long-press menu

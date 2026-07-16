@@ -474,6 +474,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
+    fun clearMapFocus() {
+        if (_currentFocus.value == CurrentFocus.None) return
+        pushFocus(CurrentFocus.None)
+        focusedTrips = emptySet()
+        presentedRoutes = emptySet()
+        // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
+        // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
+        pendingMapFocus = false
+        preserveViewportForPendingMapFocus = false
+        emitMapDirective(MapDirective.ClearFocus)
+    }
+
     /** Reframe the focused route as one undoable camera action. */
     fun reframeFocusedRoute(undoViewport: MapViewport?) {
         if (_currentFocus.value !is CurrentFocus.Route) return

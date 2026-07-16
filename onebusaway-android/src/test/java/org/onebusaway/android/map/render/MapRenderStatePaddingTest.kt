@@ -25,7 +25,7 @@ class MapRenderStatePaddingTest {
         val state = MapRenderState()
 
         state.setTopChromeInset(100)
-        state.setRouteFocusTopEdge(180)
+        state.setFocusBannerBottomEdge(180)
 
         assertEquals(MapPadding(topPx = 180), state.padding.value)
     }
@@ -34,9 +34,9 @@ class MapRenderStatePaddingTest {
     fun `clearing route focus restores the top chrome baseline`() {
         val state = MapRenderState()
         state.setTopChromeInset(100)
-        state.setRouteFocusTopEdge(180)
+        state.setFocusBannerBottomEdge(180)
 
-        state.setRouteFocusTopEdge(0)
+        state.setFocusBannerBottomEdge(0)
 
         assertEquals(MapPadding(topPx = 100), state.padding.value)
     }

@@ -551,6 +551,30 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `focus banner close clears stop and subordinate route together`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        vm.onStopFocused(stop)
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.clearMapFocus()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertEquals(1, map.clearFocusCount)
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        val restored = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals("65", restored.selectedRoute?.currentLeg?.routeId)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `map tap from plain stop preserves older focus as undo history`() = runTest {
         val vm = viewModel()
         val first = FocusedStop("first", "1st Ave", "100", 47.6, -122.3)

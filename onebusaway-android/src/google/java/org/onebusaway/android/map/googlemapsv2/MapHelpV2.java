@@ -24,6 +24,8 @@ import android.content.Context;
 import android.location.Location;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 
 /**
  * Utilities to help process data for Android Maps API v1
@@ -39,6 +41,7 @@ public class MapHelpV2 {
      * @param lon The longitude.
      * @return A LatLng representing this latitude/longitude.
      */
+    @NonNull
     public static final LatLng makeLatLng(double lat, double lon) {
         return new LatLng(lat, lon);
     }
@@ -49,7 +52,8 @@ public class MapHelpV2 {
      * @param l Location to convert
      * @return A LatLng representing this LatLng.
      */
-    public static final LatLng makeLatLng(Location l) {
+    @NonNull
+    public static final LatLng makeLatLng(@NonNull Location l) {
         return makeLatLng(l.getLatitude(), l.getLongitude());
     }
 
@@ -59,7 +63,8 @@ public class MapHelpV2 {
      * @param latLng LatLng to convert
      * @return A Location representing this LatLng.
      */
-    public static final Location makeLocation(LatLng latLng) {
+    @NonNull
+    public static final Location makeLocation(@NonNull LatLng latLng) {
         Location l = new Location("FromLatLng");
         l.setLatitude(latLng.latitude);
         l.setLongitude(latLng.longitude);
@@ -71,7 +76,8 @@ public class MapHelpV2 {
      *
      * @return LatLngBounds for the region
      */
-    public static LatLngBounds getRegionBounds(Region region) {
+    @NonNull
+    public static LatLngBounds getRegionBounds(@NonNull Region region) {
         if (region == null) {
             throw new IllegalArgumentException("Region is null");
         }
@@ -116,14 +122,14 @@ public class MapHelpV2 {
     /**
      * Returns true if Android Maps V2 is installed, false if it is not
      */
-    public static boolean isMapsInstalled(Context context) {
+    public static boolean isMapsInstalled(@NonNull Context context) {
         return ProprietaryMapHelpV2.isMapsInstalled(context);
     }
 
     /**
      * Prompts the user to install Android Maps V2
      */
-    public static void promptUserInstallMaps(final Context context) {
+    public static void promptUserInstallMaps(@NonNull final Context context) {
         ProprietaryMapHelpV2.promptUserInstallMaps(context);
     }
 

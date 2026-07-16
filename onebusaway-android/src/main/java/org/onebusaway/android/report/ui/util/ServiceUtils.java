@@ -20,6 +20,9 @@ import org.onebusaway.android.report.constants.ReportConstants;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -36,7 +39,7 @@ public class ServiceUtils {
      * @return true if the services were determined to be via all transit-related via heuristics,
      * false if heuristics matching wasn't used
      */
-    public static boolean markTransitServices(Context context, List<Service> serviceList) {
+    public static boolean markTransitServices(@NonNull Context context, @NonNull List<Service> serviceList) {
         boolean stopProblemFound = false;
         boolean tripProblemFound = false;
 
@@ -133,7 +136,7 @@ public class ServiceUtils {
      * @param text    text to search for transit stop service match
      * @return true if the text is "transit stop-related"
      */
-    public static boolean isTransitStopServiceByText(Context context, String text) {
+    public static boolean isTransitStopServiceByText(@NonNull Context context, @Nullable String text) {
         String[] transitKeywords = context.getResources().
                 getStringArray(R.array.report_stop_transit_category_keywords);
         for (String keyword : transitKeywords) {
@@ -153,7 +156,7 @@ public class ServiceUtils {
      * @param text    text to search for transit trip service match
      * @return true if the text is "transit trip-related"
      */
-    public static boolean isTransitTripServiceByText(Context context, String text) {
+    public static boolean isTransitTripServiceByText(@NonNull Context context, @Nullable String text) {
         String[] transitKeywords = context.getResources().
                 getStringArray(R.array.report_trip_transit_category_keywords);
 
@@ -169,7 +172,7 @@ public class ServiceUtils {
      * @param type Service type
      * @return true if it is a transit stop service
      */
-    public static boolean isTransitStopServiceByType(String type) {
+    public static boolean isTransitStopServiceByType(@Nullable String type) {
         return ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP.equals(type)
                 || ReportConstants.STATIC_TRANSIT_SERVICE_STOP.equals(type);
     }
@@ -178,7 +181,7 @@ public class ServiceUtils {
      * @param type Service type
      * @return true if it is a transit trip service
      */
-    public static boolean isTransitTripServiceByType(String type) {
+    public static boolean isTransitTripServiceByType(@Nullable String type) {
         return ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(type)
                 || ReportConstants.STATIC_TRANSIT_SERVICE_TRIP.equals(type);
 
@@ -188,7 +191,7 @@ public class ServiceUtils {
      * @param type Service type
      * @return true if it is a transit service
      */
-    public static boolean isTransitServiceByType(String type) {
+    public static boolean isTransitServiceByType(@Nullable String type) {
         return isTransitStopServiceByType(type) || isTransitTripServiceByType(type);
     }
 
@@ -196,7 +199,7 @@ public class ServiceUtils {
      * @param type Service type
      * @return true if it is a transit service and it is coming from open311 endpoint
      */
-    public static boolean isTransitOpen311ServiceByType(String type) {
+    public static boolean isTransitOpen311ServiceByType(@Nullable String type) {
         return ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP.equals(type)
                 || ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP.equals(type);
     }
@@ -208,7 +211,7 @@ public class ServiceUtils {
      * @param desc    field description
      * @return true if the field description matches at least two keywords
      */
-    public static boolean isStopIdField(Context context, String desc) {
+    public static boolean isStopIdField(@NonNull Context context, @Nullable String desc) {
         String[] stopIdKeywords = context.getResources().
                 getStringArray(R.array.report_stop_id_field_keywords);
 

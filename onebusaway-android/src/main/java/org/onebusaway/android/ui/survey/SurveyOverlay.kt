@@ -321,16 +321,16 @@ private fun SurveyQuestionInput(
     }
 }
 
-/** A clickable option row: a leading [control] (radio button / checkbox) + its [text] label. */
+/** A clickable option row: a leading [content] (radio button / checkbox) + its [text] label. */
 @Composable
-private fun OptionRow(text: String, onClick: () -> Unit, control: @Composable () -> Unit) {
+private fun OptionRow(text: String, onClick: () -> Unit, content: @Composable () -> Unit) {
     Row(
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        control()
+        content()
         Text(text)
     }
 }

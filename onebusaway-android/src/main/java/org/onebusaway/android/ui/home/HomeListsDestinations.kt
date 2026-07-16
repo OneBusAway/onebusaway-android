@@ -124,7 +124,7 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
 
 /**
  * The shared chrome for a home starred-list destination: a [Scaffold] with a back arrow + sort + clear
- * top bar over the [body] list. The two starred lists differ only in their strings, VM/repo, and list
+ * top bar over the [content] list. The two starred lists differ only in their strings, VM/repo, and list
  * body — all supplied by the caller.
  */
 @Composable
@@ -134,7 +134,7 @@ private fun StarredListScaffold(
     onBack: () -> Unit,
     onSort: () -> Unit,
     onClear: () -> Unit,
-    body: @Composable () -> Unit,
+    content: @Composable () -> Unit,
 ) {
     ObaTheme {
         Scaffold(
@@ -155,7 +155,7 @@ private fun StarredListScaffold(
                 }
             }
         ) { padding ->
-            Box(Modifier.fillMaxSize().padding(padding)) { body() }
+            Box(Modifier.fillMaxSize().padding(padding)) { content() }
         }
     }
 }

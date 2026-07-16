@@ -273,6 +273,7 @@ fun MapFeature(
                         directive.routes,
                         directive.overlayExpanded,
                         directive.recenter,
+                        directive.animate,
                     )
             }
         }

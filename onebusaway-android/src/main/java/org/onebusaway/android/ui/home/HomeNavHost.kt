@@ -76,6 +76,7 @@ import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -143,8 +144,11 @@ fun HomeNavHost(
                 // was present but lat/lon were missing.
                 val reveal = handle.consumeStopReveal()
                 if (reveal != null) {
+                    // An in-session reveal (search result / recents / route-info tap): pan the camera
+                    // over to the stop rather than jump, since the map is already on screen.
                     home.homeViewModel.revealStop(
-                        FocusedStop(reveal.stopId, null, null, reveal.lat, reveal.lon)
+                        FocusedStop(reveal.stopId, null, null, reveal.lat, reveal.lon),
+                        animate = true,
                     )
                 } else {
                     // Keys already consumed; record the dropped focus so the latent path is findable
@@ -182,9 +186,9 @@ fun HomeNavHost(
                         PreferencesEntryPoint.get(context).setBoolean(ArrivalTutorial.KEY_MORE_MENU, true)
                         navController.navigateFromHome(NavRoutes.myRecent())
                     },
-                    // Recents dropdown taps mirror the My Recent screen: a stop opens its arrivals, a route
-                    // reveals on the map.
-                    onRecentStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
+                    // Recents dropdown taps reveal the stop / route on the map (the same stop-focus the
+                    // search results and map markers use).
+                    onRecentStop = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
                     onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
                     onHelpAction = { action ->
                         if (action == HelpAction.AGENCIES) navController.navigateFromHome(NavRoutes.AGENCIES)

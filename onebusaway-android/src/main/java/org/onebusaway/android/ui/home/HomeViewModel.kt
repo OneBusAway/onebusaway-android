@@ -150,6 +150,10 @@ class HomeViewModel @Inject constructor(
     // host on each create from the restored focusedStop, so it needn't be persisted).
     private var pendingMapFocus: Boolean = false
     private var preserveViewportForPendingMapFocus: Boolean = false
+    // Whether the pending focus should animate the camera over to the stop (an in-session reveal — a
+    // search/recents tap) rather than jump to it (a cold-start restore, where flying from a default
+    // camera position would look wrong).
+    private var animatePendingMapFocus: Boolean = false
 
     /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
     var focusedTrips: Set<FocusedTrip> = emptySet()
@@ -190,11 +194,15 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** A stop opened from navigation replaces any standalone route/bike view before it restores. */
-    fun revealStop(stop: FocusedStop) {
+    /**
+     * A stop opened from navigation replaces any standalone route/bike view before it restores. An
+     * in-session reveal (a search/recents tap while the map is already on screen) passes [animate] so
+     * the camera pans over to the stop instead of jumping; a cold-start restore leaves it false.
+     */
+    fun revealStop(stop: FocusedStop, animate: Boolean = false) {
         emitMapDirective(MapDirective.ClearFocus)
         onStopFocused(stop)
-        markPendingMapFocus()
+        markPendingMapFocus(animate)
     }
 
     /**
@@ -263,8 +271,9 @@ class HomeViewModel @Inject constructor(
      * complete it once the arrivals load (see [onArrivalsLoaded]). A fresh map tap already centers the
      * stop, so it does not call this.
      */
-    fun markPendingMapFocus() {
+    fun markPendingMapFocus(animate: Boolean = false) {
         pendingMapFocus = true
+        animatePendingMapFocus = animate
     }
 
     /**
@@ -302,14 +311,17 @@ class HomeViewModel @Inject constructor(
         // camera to the whole route (#1895). A restore carrying a saved viewport already declines to frame.
         val frameSelectedRoute = pendingMapFocus && !preserveViewportForPendingMapFocus
         if (pendingMapFocus) {
+            val animate = animatePendingMapFocus
             pendingMapFocus = false
             preserveViewportForPendingMapFocus = false
+            animatePendingMapFocus = false
             emitMapDirective(
                 MapDirective.FocusStop(
                     stop,
                     routes,
                     settledSheet == ArrivalsSheetState.Expanded,
                     recenter = !preserveViewport,
+                    animate = animate,
                 )
             )
         }
@@ -545,7 +557,7 @@ class HomeViewModel @Inject constructor(
             focusedTrips = emptySet()
             when (target) {
                 is CurrentFocus.Stop -> {
-                    pendingMapFocus = true
+                    markPendingMapFocus()
                     preserveViewportForPendingMapFocus = !frameFocus
                     emitMapDirective(MapDirective.ClearFocus)
                 }
@@ -668,11 +680,13 @@ sealed interface MapDirective {
     /**
      * Focus a restored / deep-linked stop once its arrivals load: ensure it's on the map, render-focus
      * it, and optionally recenter (route-header bias only when [overlayExpanded] in route mode).
+     * [animate] pans the camera over to the stop (an in-session reveal) instead of jumping (a restore).
      */
     data class FocusStop(
         val stop: ObaStop,
         val routes: List<ObaRoute>?,
         val overlayExpanded: Boolean,
         val recenter: Boolean = true,
+        val animate: Boolean = false,
     ) : MapDirective
 }

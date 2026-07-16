@@ -23,7 +23,6 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.search.RouteSearchResult
-import org.onebusaway.android.ui.search.StopSearchResult
 import org.onebusaway.android.util.ExternalIntents
 
 /**
@@ -113,10 +112,6 @@ internal fun AppCompatActivity.reminderActions(
         onShowRoute(reminder.routeId)
     }
 )
-
-/** Opens a search-result stop's arrivals via [onOpen] (a NavController-backed navigation). */
-internal fun openStopSearchResult(stop: StopSearchResult, onOpen: (stopId: String, stopName: String?) -> Unit) =
-    onOpen(stop.id, stop.serverName)
 
 /** Opens a search-result route via [onOpen] (a NavController-backed navigation). */
 internal fun openRouteSearchResult(route: RouteSearchResult, onOpen: (routeId: String) -> Unit) =

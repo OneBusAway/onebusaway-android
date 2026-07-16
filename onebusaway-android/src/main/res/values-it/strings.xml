@@ -289,7 +289,6 @@
     <string name="my_option_clear_starred_stops">Rimuovi tutte le fermate dai preferiti</string>
     <string name="my_option_clear_starred_routes">Rimuovi tutte le linee dai preferiti</string>
 
-    <string name="my_context_get_stop_info">Mostra informazioni sull’arrivo</string>
     <string name="my_context_get_route_info">Mostra informazioni sulla linea</string>
     <string name="my_context_create_shortcut">Crea scorciatoia nella schermata Home</string>
     <string name="my_context_showonmap">Mostra sulla mappa</string>

@@ -85,12 +85,10 @@ fun ReminderListDestination(
 fun StopSearchDestination(
     viewModel: SearchViewModel<StopSearchResult>,
     onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
-    onOpenStop: (stopId: String, stopName: String?) -> Unit,
 ) {
     StopSearchContent(
         viewModel = viewModel,
-        onStopClick = { openStopSearchResult(it, onOpenStop) },
-        onShowOnMap = { onShowOnMap(it.id, it.latitude, it.longitude) }
+        onStopClick = { onShowOnMap(it.id, it.latitude, it.longitude) },
     )
 }
 

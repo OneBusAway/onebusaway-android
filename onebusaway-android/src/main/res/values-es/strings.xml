@@ -347,7 +347,6 @@
     <string name="my_option_clear_starred_stops">Eliminar todas las paradas favoritas</string>
     <!-- <string name="my_option_clear_starred_routes">Eliminar todas las rutas favoritas</string>-->
 
-    <string name="my_context_get_stop_info">Mostrar información de llegadas</string>
     <string name="my_context_get_route_info">Mostrar información de la ruta</string>
     <string name="my_context_create_shortcut">Crear un acceso directo en la pantalla de inicio</string>
     <string name="my_context_showonmap">Mostrar sobre el mapa</string>

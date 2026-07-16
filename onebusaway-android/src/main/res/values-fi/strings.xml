@@ -309,7 +309,6 @@
     <string name="my_option_clear_starred_routes_title">Poistetaanko kaikki tähdellä merkityt reitit?</string>
     <string name="my_option_clear_starred_routes_confirm">Tämä poistaa pysyvästi kaikki tähdellä merkityt reitit.</string>
 
-    <string name="my_context_get_stop_info">Näytä saapuvien vuorojen tiedot</string>
     <string name="my_context_get_route_info">Näytä reittitiedot</string>
     <string name="my_context_create_shortcut">Luo pikakuvake</string>
     <string name="my_context_showonmap">Näytä kartalla</string>

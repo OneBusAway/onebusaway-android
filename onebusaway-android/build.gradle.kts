@@ -177,27 +177,41 @@ android {
         // intentional — the keys are semantically separate and may diverge per-context or per-language —
         // so consolidating them is unwanted, and the ~140 hits are pure noise. Opt out rather than
         // baseline them.
+        //
+        // The next four are the tail of the lint-baseline cleanup (the goal being to delete the baseline
+        // entirely): each is a single/handful of findings that is either not our code to fix or not worth
+        // fixing, so we opt out of the check rather than carry a baseline entry for it:
+        //  - InvalidPackage: emitted from grpc-core.jar, which references javax.naming[.directory] (JNDI)
+        //    — packages absent on Android — on a name-resolution path the app never exercises. It's
+        //    third-party library bytecode, not fixable here.
+        //  - PermissionNamingConvention: the app's `${applicationId}.permission.TRIP_SERVICE` custom
+        //    permission predates the convention; renaming a shipped permission is a compatibility break,
+        //    so the name stays.
+        //  - MemberExtensionConflict: kotlinx.coroutines exposes both `Job.isActive` (member) and
+        //    `CoroutineContext.isActive` (extension); on a `Job` receiver the member wins and is correct
+        //    (RouteMapController's `vehicleJob?.isActive`). The one hit is benign and has no cleaner call.
+        //  - ConvertToWebp: an advisory "this image could be smaller as WebP" nudge (wmata.jpg), not a
+        //    correctness signal. Declined.
         disable += setOf(
             "MissingTranslation", "ExtraTranslation", "LogNotTimber",
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion",
-            "OldTargetApi", "DuplicateStrings"
+            "OldTargetApi", "DuplicateStrings",
+            "InvalidPackage", "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp"
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed
-        // lint, not just its (drifting) default-enabled subset. Pre-existing hits are grandfathered by
-        // the baseline below; only NEW issues are reported.
-        checkAllWarnings = true
-        // Checked-in record of the issues present when it was generated. New issues aren't in it, so
-        // they're reported (and, under -PwarningsAsErrors, fail the build). After an AGP/lint bump that
-        // adds/changes checks, regenerate it: delete the file and re-run lint (it recreates + passes).
-        baseline = file("lint-baseline.xml")
+        // lint, not just its (drifting) default-enabled subset. The codebase is kept lint-clean under
+        // this full catalog, so there is NO baseline: every finding was either fixed in code or, where
+        // fixing wasn't warranted, its check opted out above (the lint-busting campaign). Any NEW issue
+        // is therefore reported and — under -PwarningsAsErrors — fails the build, with nothing
+        // grandfathered. (If an AGP/lint bump adds checks with unavoidable pre-existing hits, prefer
+        // fixing or a scoped opt-out over reintroducing a whole-project baseline.)
         // Fail the build (and CI, #1692) on any lint error — notably NewApi minSdk violations,
         // which compile + API-33 instrumented tests can't catch.
         abortOnError = true
         // Under -PwarningsAsErrors=true (CI passes it; see .github/workflows/android.yml), promote lint
         // warnings to errors too, matching the Kotlin-compiler gate below. Local builds default to off so
-        // an AGP/lint bump that adds new (non-baselined) warnings surfaces in CI rather than blocking
-        // day-to-day work.
+        // an AGP/lint bump that adds new warnings surfaces in CI rather than blocking day-to-day work.
         warningsAsErrors = project.hasProperty("warningsAsErrors") &&
             project.property("warningsAsErrors") == "true"
     }

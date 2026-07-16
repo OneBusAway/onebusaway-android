@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.res.Resources;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.arrivals.ArrivalInfo;
@@ -47,7 +48,7 @@ public class ArrivalInfoUtils {
      * @return the index in the provided infoList for the first non-negative arrival ETA in the
      * list, or -1 if no non-negative ETAs exist in the list
      */
-    public static int findFirstNonNegativeArrival(ArrayList<ArrivalInfo> infoList) {
+    public static int findFirstNonNegativeArrival(@NonNull ArrayList<ArrivalInfo> infoList) {
         for (int i = 0; i < infoList.size(); i++) {
             ArrivalInfo info = infoList.get(i);
             if (info.getEta() >= 0) {
@@ -71,8 +72,8 @@ public class ArrivalInfoUtils {
      * @return the indexes in the provided infoList for the preferred arrivals to be prioritized in the
      * header, or null if no non-negative ETAs exist in the list
      */
-    public static ArrayList<Integer> findPreferredArrivalIndexes(
-            ArrayList<ArrivalInfo> infoList, @NonNull Set<String> favoriteRouteIds) {
+    public static @Nullable ArrayList<Integer> findPreferredArrivalIndexes(
+            @NonNull ArrayList<ArrivalInfo> infoList, @NonNull Set<String> favoriteRouteIds) {
         // Start by getting the index of the first non-negative arrival time
         int firstIndex = findFirstNonNegativeArrival(infoList);
         if (firstIndex == -1) {
@@ -172,7 +173,7 @@ public class ArrivalInfoUtils {
      *              schedule
      * @return the arrival status label based on the deviation
      */
-    public static String computeArrivalLabelFromDelay(Resources res, long delay) {
+    public static @NonNull String computeArrivalLabelFromDelay(@NonNull Resources res, long delay) {
         if (delay > 0) {
             // Arriving delayed
             return res.getQuantityString(

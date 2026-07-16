@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,7 +32,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +48,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -70,11 +71,13 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
+import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
-import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
 
@@ -245,8 +248,7 @@ internal fun ArrivalRowContent(
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
- * - The top-right overflow ⋮ opens the route-level menu (schedule), shown only when the route has a
- *   schedule URL.
+ * - Long-pressing the row body opens the route-level menu (schedule) when the route has a schedule URL.
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
  * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
@@ -273,6 +275,10 @@ fun RouteArrivalRow(
     val direction = group.headsign?.takeIf { it.isNotBlank() } ?: routeActions?.routeLongName.orEmpty()
     val onAlertClick = alertClick(group, actionsFor, callbacks)
     val selectionColor = mapRouteColor ?: routeActions?.routeColor
+    val scheduleUrl = routeActions?.scheduleUrl?.takeIf { it.isNotBlank() }
+    val scheduleActionLabel = if (scheduleUrl != null) {
+        stringResource(R.string.bus_options_menu_show_route_schedule)
+    } else null
     val displayedRouteNames = selectedRouteNames.takeIf { selected }.orEmpty()
     val compoundBadge = displayedRouteNames.size > 1
     val selectionBorder = selectionColor
@@ -285,10 +291,13 @@ fun RouteArrivalRow(
                     .fillMaxWidth()
                     // Give the row a definite height (its tallest child) so the divider can fill it.
                     .height(IntrinsicSize.Min)
-                    // Tapping the row body frames the whole route on the map (the pills below focus
-                    // individual trips instead).
-                    .clickable { callbacks.onShowVehiclesOnMap(representative) }
-                    // A little top/end room so the badge and pills clear the overlaid overflow icon.
+                    // Tap frames the whole route; long press opens its schedule menu. The ETA pills
+                    // remain independent children with their own trip-specific tap/long-press actions.
+                    .combinedClickable(
+                        onClick = { callbacks.onShowVehiclesOnMap(representative) },
+                        onLongClickLabel = scheduleActionLabel,
+                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
+                    )
                     .padding(
                         start = 10.dp,
                         top = ROW_VERTICAL_PADDING,
@@ -339,11 +348,7 @@ fun RouteArrivalRow(
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     if (direction.isNotBlank()) {
-                        // Only the header needs its own clearance from the overlaid overflow icon
-                        // (it sits right under it); the ETA strip below reaches the row's true end —
-                        // its own trailing chevron gutter already reserves that room, and the pills
-                        // sit low enough in the row to clear the icon vertically.
-                        DirectionHeadsign(direction, modifier = Modifier.padding(end = OVERFLOW_ICON_CLEARANCE))
+                        DirectionHeadsign(direction)
                         Spacer(Modifier.height(6.dp))
                     }
                     EtaStrip(
@@ -386,24 +391,13 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            // The route-level overflow menu now offers only "show route schedule", so it appears only
-            // when the route has a schedule URL — no empty menu.
-            val scheduleUrl = routeActions?.scheduleUrl?.takeIf { it.isNotBlank() }
             if (scheduleUrl != null) {
-                Box(Modifier.align(Alignment.TopEnd)) {
-                    CornerIcon(
-                        iconRes = R.drawable.more_vert,
-                        contentDescription = stringResource(R.string.stop_info_item_options_title),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        onClick = { menuExpanded = true }
-                    )
-                    RouteActionsMenu(
-                        expanded = menuExpanded,
-                        onDismiss = { menuExpanded = false },
-                        scheduleUrl = scheduleUrl,
-                        callbacks = callbacks,
-                    )
-                }
+                RouteActionsMenu(
+                    expanded = menuExpanded,
+                    onDismiss = { menuExpanded = false },
+                    scheduleUrl = scheduleUrl,
+                    callbacks = callbacks,
+                )
             }
         }
     }
@@ -424,11 +418,6 @@ internal fun alertClick(
 ): (() -> Unit)? =
     group.activeAlertSituationId(actionsFor)?.let { id -> { callbacks.onShowAlert(id) } }
 
-/** Horizontal clearance [RouteArrivalRow] gives the direction header so it doesn't run under the
- *  overlaid corner icon below ([CornerIcon]'s own footprint is 18dp + 4dp padding on each side —
- *  this is a bit tighter, tuned by eye against a device screenshot rather than derived from it). */
-private val OVERFLOW_ICON_CLEARANCE = 20.dp
-
 /** The arrival row's top/bottom padding. The corner alert glyph offsets up by this amount to cancel
  *  it, so its top lines up with the favorite star (which floats above this padding at the card top);
  *  keep the two in sync via this single value rather than a bare literal on each side. */
@@ -436,7 +425,7 @@ private val ROW_VERTICAL_PADDING = 8.dp
 
 private val CORNER_ICON_HITBOX_SIZE = 26.dp
 
-/** A small fixed tap target tucked into a card corner — the legacy star / overflow / close icons. */
+/** A small fixed tap target tucked into a card corner — currently the selected-route close icon. */
 @Composable
 private fun CornerIcon(
     iconRes: Int,
@@ -458,9 +447,9 @@ private fun CornerIcon(
     )
 }
 
-/** The route-level overflow menu (the row's ⋮): open the route's schedule. The route's star lives as
- *  the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on each pill's long-press
- *  menu ([TripActionsMenu]). Shown only when the route has a [scheduleUrl]. */
+/** The route-level long-press menu: open the route's schedule. The route's star lives as the row's own
+ *  corner toggle ([FavoriteStarButton]); per-trip actions live on each pill's long-press menu
+ *  ([TripActionsMenu]). Shown only when the route has a [scheduleUrl]. */
 @Composable
 internal fun RouteActionsMenu(
     expanded: Boolean,
@@ -468,17 +457,21 @@ internal fun RouteActionsMenu(
     scheduleUrl: String,
     callbacks: ArrivalRowCallbacks
 ) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        MenuRow(R.string.bus_options_menu_show_route_schedule) {
+    CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
             onDismiss(); callbacks.onShowRouteSchedule(scheduleUrl)
         }
     }
 }
 
-/** A dropdown item that just shows a string resource; shared by the per-arrival and overflow menus. */
+/** A labelled menu item with an optional decorative leading [icon]. */
 @Composable
-internal fun MenuRow(textRes: Int, onClick: () -> Unit) {
-    DropdownMenuItem(text = { Text(stringResource(textRes)) }, onClick = onClick)
+internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = onClick,
+        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } },
+    )
 }
 
 private val PillShape = RoundedCornerShape(6.dp)

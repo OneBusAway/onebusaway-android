@@ -35,15 +35,6 @@ class RoutePolylineRenderPipelineTest {
     )
 
     @Test
-    fun `route width ramps proportionally from half at zoom 11 to full at 16`() {
-        assertEquals(0.5f, routeLineWidthScale(10f), 0f)
-        assertEquals(0.5f, routeLineWidthScale(11f), 0f)
-        assertEquals(0.75f, routeLineWidthScale(13.5f), 0f)
-        assertEquals(1f, routeLineWidthScale(16f), 0f)
-        assertEquals(1f, routeLineWidthScale(20f), 0f)
-    }
-
-    @Test
     fun `unmarked lines pass through with their list identity`() {
         val line = RoutePolyline(0xFF123456.toInt(), listOf(point(0.0, 0.0), point(0.0, 1.0)))
         val lines = listOf(line)
@@ -96,7 +87,7 @@ class RoutePolylineRenderPipelineTest {
         assertEquals(-3.0, result.points.first().longitude, 1e-8)
         assertEquals(3.0, result.points.last().longitude, 1e-8)
         assertEquals(line.color, result.color)
-        assertEquals(line.widthDp, result.widthDp)
+        assertEquals(line.widthProfile, result.widthProfile)
         assertEquals(line.transforms, result.transforms)
     }
 
@@ -163,7 +154,7 @@ class RoutePolylineRenderPipelineTest {
     private fun viewportLine(vararg points: GeoPoint) = RoutePolyline(
         color = 0xFF123456.toInt(),
         points = points.toList(),
-        widthDp = 10f,
+        widthProfile = ROUTE_LINE_WIDTH_PROFILE,
         transforms = setOf(
             RoutePolylineTransform.VIEWPORT_CLIP,
             RoutePolylineTransform.ZOOM_SIMPLIFY,

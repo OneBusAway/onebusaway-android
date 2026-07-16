@@ -46,7 +46,8 @@ import org.onebusaway.android.map.render.StopMarker
 
 /**
  * Owns MapLibre's GPU route-stop circle source, style expressions, and rendered-feature tap lookup.
- * Zoom interpolation stays entirely in the style layer; renderer snapshots update only stop data/focus.
+ * Zoom interpolation stays entirely in the style layer; renderer snapshots update stop data, selection,
+ * and whether the focused-route scale is active.
  */
 internal class MapLibreRouteStopCircleLayer(
     private val map: MapLibreMap,
@@ -60,6 +61,7 @@ internal class MapLibreRouteStopCircleLayer(
     private var stopById: Map<String, StopMarker> = emptyMap()
     private var renderedStops: List<StopMarker> = emptyList()
     private var renderedFocusedStopId: String? = null
+    private var renderedScaleWithZoom = false
 
     init {
         val radius = radiusExpression()
@@ -94,14 +96,19 @@ internal class MapLibreRouteStopCircleLayer(
         )
     }
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?) {
+    fun render(stops: List<StopMarker>, focusedStopId: String?, scaleWithZoom: Boolean) {
         val routeStops = stops.filter(StopMarker::routeStop)
-        if (routeStops == renderedStops && focusedStopId == renderedFocusedStopId) return
+        if (
+            routeStops == renderedStops &&
+            focusedStopId == renderedFocusedStopId &&
+            scaleWithZoom == renderedScaleWithZoom
+        ) return
         renderedStops = routeStops
         renderedFocusedStopId = focusedStopId
+        renderedScaleWithZoom = scaleWithZoom
         stopById = routeStops.associateBy(StopMarker::id)
 
-        val stopFocusMinScale = if (focusedStopId == null) 1f else STOP_FOCUS_ROUTE_MIN_SCALE
+        val stopFocusMinScale = if (scaleWithZoom) STOP_FOCUS_ROUTE_MIN_SCALE else 1f
         val features = routeStops.map { stop ->
             val selectedScale = if (stop.id == focusedStopId) RouteStopCircles.FOCUSED_SCALE else 1f
             Feature.fromGeometry(Point.fromLngLat(stop.point.longitude, stop.point.latitude)).apply {
@@ -137,6 +144,7 @@ internal class MapLibreRouteStopCircleLayer(
         stopById = emptyMap()
         renderedStops = emptyList()
         renderedFocusedStopId = null
+        renderedScaleWithZoom = false
     }
 
     private fun radiusExpression(): Expression = interpolate(

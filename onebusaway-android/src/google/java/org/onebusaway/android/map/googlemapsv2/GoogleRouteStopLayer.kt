@@ -20,7 +20,7 @@ import org.onebusaway.android.map.render.StopMarker
 
 /** Renderer-independent boundary for interchangeable Google route-stop drawing strategies. */
 internal interface GoogleRouteStopLayer {
-    fun render(stops: List<StopMarker>, focusedStopId: String?, zoom: Float)
+    fun render(stops: List<StopMarker>, focusedStopId: String?, scaleWithZoom: Boolean, zoom: Float)
 
     fun onCameraMoveStarted() = Unit
 

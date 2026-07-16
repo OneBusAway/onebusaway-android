@@ -33,7 +33,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.ListUiState
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -278,10 +278,10 @@ private fun FavoriteStarSlot(favorite: Boolean) {
     }
 }
 
-/** The dropdown of [actions], shared by the stop and route long-press menus. */
+/** The centered list of [actions], shared by the stop, route, and reminder long-press menus. */
 @Composable
 private fun RowActionsMenu(expanded: Boolean, actions: List<RowAction>, onDismiss: () -> Unit) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+    CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         actions.forEach { action ->
             DropdownMenuItem(
                 text = { Text(action.label) },

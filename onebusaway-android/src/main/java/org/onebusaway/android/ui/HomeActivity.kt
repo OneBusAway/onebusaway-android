@@ -182,9 +182,7 @@ class HomeActivity : AppCompatActivity() {
         // Stage the welcome sequence on the VM latch; HomeScreen starts it when the latch fires.
         onShowWelcomeTutorial = viewModel::requestWelcomeTutorial,
         onSheetSettled = viewModel::onSheetSettled,
-        onClearFocus = viewModel::requestClearMapFocus,
         onArrivalsLoaded = ::onArrivalsLoaded,
-        onCancelRouteMode = viewModel::requestClearMapFocus,
     )
 
     /**

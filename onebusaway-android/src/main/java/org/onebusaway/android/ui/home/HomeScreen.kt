@@ -154,9 +154,7 @@ class HomeActivityActions(
     val onHelpActionExternal: (HelpAction) -> Unit,
     val onShowWelcomeTutorial: () -> Unit,
     val onSheetSettled: (ArrivalsSheetState, Int) -> Unit,
-    val onClearFocus: () -> Unit,
     val onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    val onCancelRouteMode: () -> Unit,
 )
 
 /**
@@ -387,14 +385,18 @@ fun HomeScreen(
             }
         }
 
-        // Back collapses an expanded sheet first, then (from peek) clears the focus, which hides it.
-        // A hidden sheet leaves back to the system (mirrors the legacy !isSheetHidden() gate). Gated on
-        // `sheetShown` since the sheet always rests at peek/expanded now (never a `Hidden` value).
-        BackHandler(enabled = sheetShown) {
-            when (sheetBackAction(sheetState.currentValue.toArrivalsSheetState())) {
+        // Focus is a HOME-local back stack. An expanded arrivals sheet still collapses first; every
+        // other back gesture restores the previous map focus (route -> stop -> none, etc.).
+        BackHandler(enabled = currentFocus != CurrentFocus.None) {
+            val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
+                sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
+            } else {
+                SheetBackAction.NONE
+            }
+            when (sheetAction) {
                 SheetBackAction.COLLAPSE -> scope.launch { runCatching { sheetState.partialExpand() } }
-                SheetBackAction.CLEAR_FOCUS -> onClearFocus()
-                SheetBackAction.NONE -> {}
+                SheetBackAction.NAVIGATE_BACK, SheetBackAction.NONE ->
+                    homeViewModel.navigateBackFocus()
             }
         }
 
@@ -500,7 +502,7 @@ fun HomeScreen(
                                     donationViewModel = donationViewModel,
                                     surveyViewModel = surveyViewModel,
                                     routeHeader = routeHeader.takeIf { standaloneRouteFocused },
-                                    onCancelRouteMode = onCancelRouteMode,
+                                    onCancelRouteMode = { homeViewModel.navigateBackFocus() },
                                     // The switch-direction affordance calls straight into the map VM (which
                                     // re-filters stops/vehicles + persists the choice), like the height report below.
                                     onSelectRouteDirection = { directionId ->

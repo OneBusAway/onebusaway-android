@@ -49,11 +49,11 @@ internal fun routeFocusTopEdge(
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState =
     if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
 
-/** What a back-press does, given the sheet's resting state (mirrors the legacy back handling). */
-enum class SheetBackAction { COLLAPSE, CLEAR_FOCUS, NONE }
+/** Whether the sheet consumes back by collapsing before focus navigation proceeds. */
+enum class SheetBackAction { COLLAPSE, NAVIGATE_BACK, NONE }
 
 internal fun sheetBackAction(current: ArrivalsSheetState): SheetBackAction = when (current) {
     ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE      // full -> peek
-    ArrivalsSheetState.Collapsed -> SheetBackAction.CLEAR_FOCUS  // peek -> clear focus (then hides)
+    ArrivalsSheetState.Collapsed -> SheetBackAction.NAVIGATE_BACK
     ArrivalsSheetState.Hidden -> SheetBackAction.NONE            // let the system handle back
 }

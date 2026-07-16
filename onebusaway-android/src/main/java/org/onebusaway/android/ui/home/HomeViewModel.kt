@@ -63,10 +63,23 @@ class HomeViewModel @Inject constructor(
     private val locationRepository: LocationRepository,
 ) : ViewModel() {
 
-    // The single source of truth, replaced atomically by setFocus(). Seeded from the
+    // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
     // SavedStateHandle-restored focus so a recreation reflects the restore by construction.
     private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
     val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
+
+    // Map selections all live on HOME, but still form their own back stack. Reconstruct the implied
+    // parent(s) of a restored focus so route-over-stop -> stop -> none survives recreation.
+    private val focusBackStack = ArrayDeque<CurrentFocus>().apply {
+        when (val restored = _currentFocus.value) {
+            CurrentFocus.None -> Unit
+            is CurrentFocus.Stop -> {
+                addLast(CurrentFocus.None)
+                if (restored.selectedRoute != null) addLast(CurrentFocus.Stop(restored.stop))
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation -> addLast(CurrentFocus.None)
+        }
+    }
 
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
@@ -118,17 +131,20 @@ class HomeViewModel @Inject constructor(
 
     /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
     fun onStopFocused(stop: FocusedStop?) {
+        if (stop == null) {
+            focusedTrips = emptySet()
+            focusBackStack.clear()
+            replaceFocus(CurrentFocus.None)
+            return
+        }
         val previousId = _currentFocus.value.focusedStop?.id
-        val sameStop = previousId?.equals(stop?.id, ignoreCase = true) ?: (stop == null)
+        val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
+        if (sameStop) return
         // Clear the prior stop's route-view session immediately; a fresh arrivals load starts the new
         // one. A same-stop re-selection is a no-op so it cannot discard a completed view.
-        if (!sameStop || stop == null) {
-            focusedTrips = emptySet()
-        }
-        if (!sameStop) {
-            emitMapDirective(MapDirective.ClearStopRoutes)
-        }
-        setFocus(stop?.let { CurrentFocus.Stop(it) } ?: CurrentFocus.None)
+        focusedTrips = emptySet()
+        emitMapDirective(MapDirective.ClearStopRoutes)
+        pushFocus(CurrentFocus.Stop(stop))
     }
 
     /** A stop opened from navigation replaces any standalone route/bike view before it restores. */
@@ -172,10 +188,12 @@ class HomeViewModel @Inject constructor(
     }
 
     fun onBikeStationFocused(id: String?) {
-        val next = id?.let { CurrentFocus.BikeStation(it) }
-            ?: if (_currentFocus.value is CurrentFocus.BikeStation) CurrentFocus.None
-            else _currentFocus.value
-        setFocus(next)
+        if (id == null) {
+            if (_currentFocus.value is CurrentFocus.BikeStation) navigateBackFocus()
+            return
+        }
+        val next = CurrentFocus.BikeStation(id)
+        if (_currentFocus.value is CurrentFocus.BikeStation) replaceFocus(next) else pushFocus(next)
     }
 
     /**
@@ -278,14 +296,15 @@ class HomeViewModel @Inject constructor(
     /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
     fun focusStandaloneRoute(request: ShowRouteRequest) {
         focusedTrips = emptySet()
-        setFocus(CurrentFocus.Route(request.toRouteTarget()))
+        val next = CurrentFocus.Route(request.toRouteTarget())
+        if (_currentFocus.value is CurrentFocus.Route) replaceFocus(next) else pushFocus(next)
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
     }
 
     /** Persist a direction chosen from the standalone route banner. */
     fun selectStandaloneRouteDirection(directionId: Int) {
         val focus = _currentFocus.value as? CurrentFocus.Route ?: return
-        setFocus(CurrentFocus.Route(focus.target.copy(directionId = directionId)))
+        replaceFocus(CurrentFocus.Route(focus.target.copy(directionId = directionId)))
     }
 
     /** Follow a block continuation while preserving the active focus kind. */
@@ -294,14 +313,14 @@ class HomeViewModel @Inject constructor(
             is CurrentFocus.Stop -> {
                 val selected = focus.selectedRoute ?: return
                 val next = selected.continueTo(RouteLeg(routeId, shortName, directionId))
-                setFocus(focus.copy(selectedRoute = next))
+                replaceFocus(focus.copy(selectedRoute = next))
                 emitMapDirective(
                     MapDirective.ShowRoute(next.target(focus.stop.id).toRequest(), stopScoped = true)
                 )
             }
             is CurrentFocus.Route -> {
                 val target = RouteTarget(routeId, directionId = directionId)
-                setFocus(CurrentFocus.Route(target))
+                replaceFocus(CurrentFocus.Route(target))
                 emitMapDirective(MapDirective.ShowRoute(target.toRequest(), stopScoped = false))
             }
             else -> Unit
@@ -312,8 +331,7 @@ class HomeViewModel @Inject constructor(
     fun clearStopRouteSelection() {
         val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (stopFocus.selectedRoute == null) return
-        setFocus(stopFocus.copy(selectedRoute = null))
-        emitMapDirective(MapDirective.ClearSelectedRoute)
+        navigateBackFocus()
     }
 
     /**
@@ -345,14 +363,13 @@ class HomeViewModel @Inject constructor(
         firstLeg: RouteLeg,
         originHeadsign: String?,
     ) {
-        setFocus(
-            stopFocus.copy(
-                selectedRoute = StopRouteSelection(
-                    originHeadsign = originHeadsign,
-                    legs = listOf(firstLeg),
-                )
+        val next = stopFocus.copy(
+            selectedRoute = StopRouteSelection(
+                originHeadsign = originHeadsign,
+                legs = listOf(firstLeg),
             )
         )
+        if (stopFocus.selectedRoute == null) pushFocus(next) else replaceFocus(next)
         emitMapDirective(
             MapDirective.ShowRoute(
                 request.copy(directionStopId = stopFocus.stop.id),
@@ -361,17 +378,22 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Back-press from a peeking sheet — clear the focus. The VM owns the focused stop, so clearing it
-     * here hides the sheet; the ClearFocus directive clears the map's render focus. (The old path
-     * only told the map, relying on a focus-listener round-trip the host's setFocusStop(null) doesn't
-     * make — so the sheet never hid; clearing the VM state directly is both correct and the
-     * declarative source of truth.)
-     */
+    /** Reset focus history after an explicit map-background clear. */
     fun requestClearMapFocus() {
         focusedTrips = emptySet()
-        setFocus(CurrentFocus.None)
+        focusBackStack.clear()
+        replaceFocus(CurrentFocus.None)
         emitMapDirective(MapDirective.ClearFocus)
+    }
+
+    /** Navigate to the previous map focus, returning false only when already at the root. */
+    fun navigateBackFocus(): Boolean {
+        val from = _currentFocus.value
+        if (from == CurrentFocus.None) return false
+        val target = if (focusBackStack.isEmpty()) CurrentFocus.None else focusBackStack.removeLast()
+        replaceFocus(target)
+        restoreMapAfterBack(from, target)
+        return true
     }
 
     /** Report a nav-drawer / help-menu selection to analytics (by its label res); fired by the host's
@@ -386,9 +408,37 @@ class HomeViewModel @Inject constructor(
         _mapDirectives.tryEmit(directive)
     }
 
-    private fun setFocus(focus: CurrentFocus) {
+    private fun pushFocus(focus: CurrentFocus) {
+        if (focus == _currentFocus.value) return
+        focusBackStack.addLast(_currentFocus.value)
+        replaceFocus(focus)
+    }
+
+    private fun replaceFocus(focus: CurrentFocus) {
         _currentFocus.value = focus
         CurrentFocusPersistence.write(savedState, focus)
+    }
+
+    private fun restoreMapAfterBack(from: CurrentFocus, target: CurrentFocus) {
+        val returnsToSameStop = from is CurrentFocus.Stop && target is CurrentFocus.Stop &&
+            from.stop.id.equals(target.stop.id, ignoreCase = true)
+        when {
+            returnsToSameStop && from.selectedRoute != null && target.selectedRoute == null ->
+                emitMapDirective(MapDirective.ClearSelectedRoute)
+            target is CurrentFocus.Stop -> {
+                focusedTrips = emptySet()
+                pendingMapFocus = true
+                emitMapDirective(MapDirective.ClearFocus)
+            }
+            target is CurrentFocus.Route -> {
+                focusedTrips = emptySet()
+                emitMapDirective(MapDirective.ShowRoute(target.target.toRequest(), stopScoped = false))
+            }
+            else -> {
+                focusedTrips = emptySet()
+                emitMapDirective(MapDirective.ClearFocus)
+            }
+        }
     }
 
     /**

@@ -66,7 +66,7 @@ class HomeSheetLogicTest {
     @Test
     fun `back collapses a full sheet, clears focus from peek, and passes through when hidden`() {
         assertEquals(SheetBackAction.COLLAPSE, sheetBackAction(ArrivalsSheetState.Expanded))
-        assertEquals(SheetBackAction.CLEAR_FOCUS, sheetBackAction(ArrivalsSheetState.Collapsed))
+        assertEquals(SheetBackAction.NAVIGATE_BACK, sheetBackAction(ArrivalsSheetState.Collapsed))
         assertEquals(SheetBackAction.NONE, sheetBackAction(ArrivalsSheetState.Hidden))
     }
 }

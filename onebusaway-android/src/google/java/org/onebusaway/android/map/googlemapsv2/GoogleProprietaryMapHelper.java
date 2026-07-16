@@ -19,6 +19,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import org.onebusaway.android.directions.util.CustomAddress;
@@ -32,12 +34,14 @@ import org.onebusaway.android.map.ProprietaryMapHelper;
 public class GoogleProprietaryMapHelper implements ProprietaryMapHelper {
 
     @Override
-    public CustomAddress getCustomAddressFromPlacesIntent(Context context, Intent intent) {
+    @NonNull
+    public CustomAddress getCustomAddressFromPlacesIntent(@NonNull Context context, @NonNull Intent intent) {
         return ProprietaryMapHelpV2.getCustomAddressFromPlacesIntent(context, intent);
     }
 
     @Override
-    public View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, Fragment fragment, Region region) {
+    @NonNull
+    public View.OnClickListener createPlacesAutocompleteOnClick(int requestCode, @NonNull Fragment fragment, @Nullable Region region) {
         return new ProprietaryMapHelpV2.StartPlacesAutocompleteOnClick(requestCode, fragment, region);
     }
 }

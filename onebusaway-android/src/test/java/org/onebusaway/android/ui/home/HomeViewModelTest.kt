@@ -336,7 +336,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `focus back stack returns from stop route to stop to none`() = runTest {
+    fun `focus undo returns from stop route to stop to none`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
@@ -357,11 +357,12 @@ class HomeViewModelTest {
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
         assertEquals(1, map.clearFocusCount)
         assertEquals(false, vm.navigateBackFocus())
+        assertEquals(false, vm.canUndoFocus.value)
         mapJob.cancel()
     }
 
     @Test
-    fun `switching selected routes replaces one route focus layer`() = runTest {
+    fun `switching selected routes can undo to the previous route`() = runTest {
         val vm = viewModel()
         val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
         vm.onStopFocused(stop)
@@ -370,7 +371,8 @@ class HomeViewModelTest {
 
         assertTrue(vm.navigateBackFocus())
 
-        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        val restored = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals("65", restored.selectedRoute?.currentLeg?.routeId)
     }
 
     @Test
@@ -398,15 +400,57 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `explicit clear discards focus history`() = runTest {
+    fun `back restores a route removed by a map tap`() = runTest {
         val vm = viewModel()
-        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
 
-        vm.requestClearMapFocus()
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        val restored = vm.currentFocus.value as CurrentFocus.Stop
+        assertEquals("65", restored.selectedRoute?.currentLeg?.routeId)
+        assertEquals(listOf("65"), map.routesShown)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `map taps drop route attention then stop attention`() = runTest {
+        val vm = viewModel()
+        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        vm.onStopFocused(stop)
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
+
+        vm.unfocusMapOneLevel()
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        vm.unfocusMapOneLevel()
 
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
-        assertEquals(false, vm.navigateBackFocus())
+        assertTrue(vm.canUndoFocus.value)
+    }
+
+    @Test
+    fun `map tap from plain stop preserves older focus as undo history`() = runTest {
+        val vm = viewModel()
+        val first = FocusedStop("first", "1st Ave", "100", 47.6, -122.3)
+        val second = FocusedStop("second", "2nd Ave", "200", 47.61, -122.31)
+        vm.onStopFocused(first)
+        vm.onStopFocused(second)
+
+        vm.unfocusMapOneLevel()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.Stop(second), vm.currentFocus.value)
+        assertTrue(vm.navigateBackFocus())
+        assertEquals(CurrentFocus.Stop(first), vm.currentFocus.value)
     }
 
     @Test
@@ -439,14 +483,14 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `clear map focus clears the focused stop and the map focus`() = runTest {
+    fun `map unfocus clears the focused stop and the map focus`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
         vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
 
-        vm.requestClearMapFocus()
+        vm.unfocusMapOneLevel()
         advanceUntilIdle()
 
         assertNull(vm.currentFocus.value.focusedStop)
@@ -522,26 +566,24 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `clearing map focus resets exact trips`() = runTest {
+    fun `map unfocus resets exact trips`() = runTest {
         val vm = viewModel()
         vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
-        vm.requestClearMapFocus()
+        vm.unfocusMapOneLevel()
         assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
     }
 
     // --- focus + SavedStateHandle ---
 
     @Test
-    fun `onStopFocused sets and clears the focused stop`() = runTest {
+    fun `onStopFocused sets the focused stop`() = runTest {
         val vm = viewModel()
         val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
         vm.onStopFocused(stop)
         assertEquals(stop, vm.currentFocus.value.focusedStop)
-        vm.onStopFocused(null)
-        assertNull(vm.currentFocus.value.focusedStop)
     }
 
     @Test

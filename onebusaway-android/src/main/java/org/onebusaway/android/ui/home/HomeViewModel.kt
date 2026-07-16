@@ -68,9 +68,9 @@ class HomeViewModel @Inject constructor(
     private val _currentFocus = MutableStateFlow(CurrentFocusPersistence.read(savedState))
     val currentFocus: StateFlow<CurrentFocus> = _currentFocus.asStateFlow()
 
-    // Map selections all live on HOME, but still form their own back stack. Reconstruct the implied
-    // parent(s) of a restored focus so route-over-stop -> stop -> none survives recreation.
-    private val focusBackStack = ArrayDeque<CurrentFocus>().apply {
+    // Map selections all live on HOME and keep a local undo history. Only the current focus is
+    // persisted, so reconstruct its natural predecessors after process recreation.
+    private val focusUndoHistory = ArrayDeque<CurrentFocus>().apply {
         when (val restored = _currentFocus.value) {
             CurrentFocus.None -> Unit
             is CurrentFocus.Stop -> {
@@ -80,6 +80,8 @@ class HomeViewModel @Inject constructor(
             is CurrentFocus.Route, is CurrentFocus.BikeStation -> addLast(CurrentFocus.None)
         }
     }
+    private val _canUndoFocus = MutableStateFlow(focusUndoHistory.isNotEmpty())
+    val canUndoFocus: StateFlow<Boolean> = _canUndoFocus.asStateFlow()
 
     // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
     // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
@@ -129,14 +131,8 @@ class HomeViewModel @Inject constructor(
     var focusedTrips: Set<FocusedTrip> = emptySet()
         private set
 
-    /** A map stop gained focus (non-null) or focus was cleared (null). Persists across process death. */
-    fun onStopFocused(stop: FocusedStop?) {
-        if (stop == null) {
-            focusedTrips = emptySet()
-            focusBackStack.clear()
-            replaceFocus(CurrentFocus.None)
-            return
-        }
+    /** A map stop gained focus. Persists across process death. */
+    fun onStopFocused(stop: FocusedStop) {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
         if (sameStop) return
@@ -187,13 +183,8 @@ class HomeViewModel @Inject constructor(
         _showWelcomeTutorial.value = false
     }
 
-    fun onBikeStationFocused(id: String?) {
-        if (id == null) {
-            if (_currentFocus.value is CurrentFocus.BikeStation) navigateBackFocus()
-            return
-        }
-        val next = CurrentFocus.BikeStation(id)
-        if (_currentFocus.value is CurrentFocus.BikeStation) replaceFocus(next) else pushFocus(next)
+    fun onBikeStationFocused(id: String) {
+        pushFocus(CurrentFocus.BikeStation(id))
     }
 
     /**
@@ -296,8 +287,7 @@ class HomeViewModel @Inject constructor(
     /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
     fun focusStandaloneRoute(request: ShowRouteRequest) {
         focusedTrips = emptySet()
-        val next = CurrentFocus.Route(request.toRouteTarget())
-        if (_currentFocus.value is CurrentFocus.Route) replaceFocus(next) else pushFocus(next)
+        pushFocus(CurrentFocus.Route(request.toRouteTarget()))
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
     }
 
@@ -331,7 +321,7 @@ class HomeViewModel @Inject constructor(
     fun clearStopRouteSelection() {
         val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (stopFocus.selectedRoute == null) return
-        navigateBackFocus()
+        unfocusMapOneLevel()
     }
 
     /**
@@ -369,7 +359,7 @@ class HomeViewModel @Inject constructor(
                 legs = listOf(firstLeg),
             )
         )
-        if (stopFocus.selectedRoute == null) pushFocus(next) else replaceFocus(next)
+        pushFocus(next)
         emitMapDirective(
             MapDirective.ShowRoute(
                 request.copy(directionStopId = stopFocus.stop.id),
@@ -378,19 +368,35 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    /** Reset focus history after an explicit map-background clear. */
-    fun requestClearMapFocus() {
-        focusedTrips = emptySet()
-        focusBackStack.clear()
-        replaceFocus(CurrentFocus.None)
-        emitMapDirective(MapDirective.ClearFocus)
+    /**
+     * A background-map tap drops one attention layer: route-over-stop becomes the plain stop; any
+     * plain stop, standalone route, or bike focus returns to the unfocused root.
+     */
+    fun unfocusMapOneLevel() {
+        val target = when (val focus = _currentFocus.value) {
+            is CurrentFocus.Stop -> if (focus.selectedRoute == null) {
+                CurrentFocus.None
+            } else {
+                CurrentFocus.Stop(focus.stop)
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
+            CurrentFocus.None -> return
+        }
+        pushFocus(target)
+        if (target is CurrentFocus.Stop) {
+            emitMapDirective(MapDirective.ClearSelectedRoute)
+        } else {
+            focusedTrips = emptySet()
+            emitMapDirective(MapDirective.ClearFocus)
+        }
     }
 
-    /** Navigate to the previous map focus, returning false only when already at the root. */
+    /** Undo the most recent focus transition, returning false when no focus history remains. */
     fun navigateBackFocus(): Boolean {
         val from = _currentFocus.value
-        if (from == CurrentFocus.None) return false
-        val target = if (focusBackStack.isEmpty()) CurrentFocus.None else focusBackStack.removeLast()
+        if (focusUndoHistory.isEmpty()) return false
+        val target = focusUndoHistory.removeLast()
+        _canUndoFocus.value = focusUndoHistory.isNotEmpty()
         replaceFocus(target)
         restoreMapAfterBack(from, target)
         return true
@@ -410,7 +416,8 @@ class HomeViewModel @Inject constructor(
 
     private fun pushFocus(focus: CurrentFocus) {
         if (focus == _currentFocus.value) return
-        focusBackStack.addLast(_currentFocus.value)
+        focusUndoHistory.addLast(_currentFocus.value)
+        _canUndoFocus.value = true
         replaceFocus(focus)
     }
 
@@ -422,22 +429,24 @@ class HomeViewModel @Inject constructor(
     private fun restoreMapAfterBack(from: CurrentFocus, target: CurrentFocus) {
         val returnsToSameStop = from is CurrentFocus.Stop && target is CurrentFocus.Stop &&
             from.stop.id.equals(target.stop.id, ignoreCase = true)
-        when {
-            returnsToSameStop && from.selectedRoute != null && target.selectedRoute == null ->
-                emitMapDirective(MapDirective.ClearSelectedRoute)
-            target is CurrentFocus.Stop -> {
-                focusedTrips = emptySet()
+        if (returnsToSameStop) {
+            val selected = target.selectedRoute
+            emitMapDirective(
+                if (selected == null) MapDirective.ClearSelectedRoute
+                else MapDirective.ShowRoute(selected.target(target.stop.id).toRequest(), stopScoped = true)
+            )
+            return
+        }
+        focusedTrips = emptySet()
+        when (target) {
+            is CurrentFocus.Stop -> {
                 pendingMapFocus = true
                 emitMapDirective(MapDirective.ClearFocus)
             }
-            target is CurrentFocus.Route -> {
-                focusedTrips = emptySet()
+            is CurrentFocus.Route -> {
                 emitMapDirective(MapDirective.ShowRoute(target.target.toRequest(), stopScoped = false))
             }
-            else -> {
-                focusedTrips = emptySet()
-                emitMapDirective(MapDirective.ClearFocus)
-            }
+            CurrentFocus.None, is CurrentFocus.BikeStation -> emitMapDirective(MapDirective.ClearFocus)
         }
     }
 

@@ -199,6 +199,7 @@ fun HomeScreen(
     ObaTheme {
         val stopFocus = currentFocus as? CurrentFocus.Stop
         val standaloneRouteFocused = currentFocus is CurrentFocus.Route
+        val canUndoFocus by homeViewModel.canUndoFocus.collectAsStateWithLifecycle()
         val scope = rememberCoroutineScope()
         val density = LocalDensity.current
         val resources = LocalResources.current
@@ -385,9 +386,9 @@ fun HomeScreen(
             }
         }
 
-        // Focus is a HOME-local back stack. An expanded arrivals sheet still collapses first; every
-        // other back gesture restores the previous map focus (route -> stop -> none, etc.).
-        BackHandler(enabled = currentFocus != CurrentFocus.None) {
+        // Focus has a HOME-local undo history. An expanded arrivals sheet still collapses first;
+        // every other back gesture restores the focus that preceded the latest focus transition.
+        BackHandler(enabled = canUndoFocus) {
             val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
                 sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
             } else {
@@ -502,7 +503,7 @@ fun HomeScreen(
                                     donationViewModel = donationViewModel,
                                     surveyViewModel = surveyViewModel,
                                     routeHeader = routeHeader.takeIf { standaloneRouteFocused },
-                                    onCancelRouteMode = { homeViewModel.navigateBackFocus() },
+                                    onCancelRouteMode = homeViewModel::unfocusMapOneLevel,
                                     // The switch-direction affordance calls straight into the map VM (which
                                     // re-filters stops/vehicles + persists the choice), like the height report below.
                                     onSelectRouteDirection = { directionId ->

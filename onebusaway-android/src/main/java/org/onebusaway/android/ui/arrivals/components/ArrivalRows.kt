@@ -260,10 +260,10 @@ fun RouteArrivalRow(
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     isFavorite: Boolean,
     callbacks: ArrivalRowCallbacks,
+    modifier: Modifier = Modifier,
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    modifier: Modifier = Modifier,
     etaAnchor: Modifier = Modifier,
 ) {
     val representative = group.representative

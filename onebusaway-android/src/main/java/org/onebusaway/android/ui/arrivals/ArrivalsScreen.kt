@@ -340,6 +340,7 @@ internal fun ArrivalsList(
     /** Whether a load-more request is in flight, for the footer button's spinner. Collected only by
      *  the footer item below, so a toggle recomposes just that item, not the whole list. */
     loadingMore: StateFlow<Boolean>,
+    modifier: Modifier = Modifier,
     /** Stop-focus map colors keyed by route-direction. Empty outside the home drawer. */
     mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
     /** Exact route-direction row selected over the home map's stop focus; null outside that state. */
@@ -348,7 +349,6 @@ internal fun ArrivalsList(
     selectedRouteId: String? = null,
     /** Route names in the selected vehicle block, beginning with the route on this row. */
     selectedRouteNames: List<String> = emptyList(),
-    modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
      *  avoid duplicating it as a list item. */

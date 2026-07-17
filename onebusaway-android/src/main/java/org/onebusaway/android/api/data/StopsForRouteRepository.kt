@@ -18,6 +18,7 @@ package org.onebusaway.android.api.data
 import android.location.Location
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -110,7 +111,10 @@ class DefaultStopsForRouteRepository internal constructor(
         val fetched = entry(routeId).getOrElse { return Result.failure(it) }
             ?: return Result.success(null) // no endpoint — nothing to show
         // Decoding the route's shape polylines is the one bit of non-trivial CPU work in this layer.
+        // runCatching swallows everything, so rethrow a CancellationException (raised by withContext if
+        // the caller is cancelled mid-decode) rather than reporting the abandoned work as a failure.
         return runCatching { withContext(Dispatchers.Default) { fetched.toRouteMapData(routeId) } }
+            .onFailure { if (it is CancellationException) throw it }
     }
 
     /**
@@ -118,13 +122,15 @@ class DefaultStopsForRouteRepository internal constructor(
      * `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code. `SingleFlight` carries the
      * outcome as a [Result] value (not by throwing) so a failure's original exception — e.g. the OBA
      * code the route-info error string reads — survives the coalescing rather than collapsing to null.
+     * The block therefore always returns a non-null [Result]; a null back from [SingleFlight] means the
+     * block itself crashed unexpectedly, which is surfaced as a failure (not masked as no-endpoint).
      */
     private suspend fun entry(routeId: String): Result<EntryWithReferences<StopsForRoute>?> {
         cache.get(routeId)?.let { return Result.success(it) }
         return fetches.run(routeId) {
             cache.get(routeId)?.let { return@run Result.success(it) }
             fetch(routeId).onSuccess { fetched -> fetched?.let { cache.put(routeId, it) } }
-        } ?: Result.success(null)
+        } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
     }
 
     private fun noEndpoint() =

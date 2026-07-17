@@ -149,10 +149,11 @@ class DefaultFocusedTripRepository internal constructor(
     }
 
     // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the
-    // route overlay and route-info screen — a stop's routes are never fetched twice. A failure resolves
-    // to null here (swallowed via getOrNull), matching the prior behavior.
-    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup>? =
-        stopsForRoute.routeStopGroups(routeId).getOrNull()
+    // route overlay and route-info screen — a stop's routes are never fetched twice. A failure is
+    // rethrown here so resolveOrNull catches and logs it (keeping a real API failure distinguishable
+    // from genuinely empty data), like the schedule sibling above.
+    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup> =
+        stopsForRoute.routeStopGroups(routeId).getOrThrow()
 
     /**
      * A failed trip/route is omitted (logged, so it stays distinguishable from genuinely absent data)

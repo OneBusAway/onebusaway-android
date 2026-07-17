@@ -99,6 +99,12 @@ class StopsForRouteRepositoryTest {
         assertTrue(repository.routeStopGroups("r").isFailure)
     }
 
+    // Not covered here: an unexpected crash *inside* the fetch block (the fetch lambda throwing rather
+    // than returning Result.failure) coalesces to a null out of SingleFlight, which `entry` now surfaces
+    // as a Result.failure instead of masking it as the benign no-endpoint success(null). That path logs
+    // via android.util.Log.e inside SingleFlight, which is unmocked in plain JVM tests (this module
+    // avoids Robolectric/mocking), so — like the same branch in SingleFlightTest — it stays untested.
+
     private fun entryWith(stopIds: List<String>): EntryWithReferences<StopsForRoute> =
         EntryWithReferences(
             entry = StopsForRoute(

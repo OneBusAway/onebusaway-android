@@ -64,18 +64,14 @@ internal class MapLibreRouteStopCircleLayer(
     private var renderedScaleWithZoom = false
 
     init {
-        val radius = radiusExpression()
         style.addSource(source)
         style.addLayer(
             CircleLayer(OUTER_LAYER_ID, SOURCE_ID).withProperties(
-                circleRadius(radius),
+                circleRadius(radiusExpression()),
                 circleColor(RouteStopCircles.FILL_COLOR),
                 circleStrokeColor(RouteStopCircles.STROKE_COLOR),
                 circleStrokeWidth(
-                    product(
-                        radius,
-                        literal(RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX),
-                    )
+                    radiusExpression(RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX)
                 ),
                 circleSortKey(get(MAX_RADIUS_PROPERTY)),
             )
@@ -84,12 +80,7 @@ internal class MapLibreRouteStopCircleLayer(
             CircleLayer(INNER_LAYER_ID, SOURCE_ID)
                 .withFilter(eq(get(SELECTED_PROPERTY), true))
                 .withProperties(
-                    circleRadius(
-                        product(
-                            radius,
-                            literal(RouteStopCircles.INNER_RADIUS_SCALE),
-                        )
-                    ),
+                    circleRadius(radiusExpression(RouteStopCircles.INNER_RADIUS_SCALE)),
                     circleColor(RouteStopCircles.STROKE_COLOR),
                     circleSortKey(get(MAX_RADIUS_PROPERTY)),
                 )
@@ -147,12 +138,24 @@ internal class MapLibreRouteStopCircleLayer(
         renderedScaleWithZoom = false
     }
 
-    private fun radiusExpression(): Expression = interpolate(
+    /**
+     * A `zoom()`-driven radius interpolation, optionally scaled by [scale].
+     *
+     * The scale is folded into each interpolation stop's output rather than wrapping the whole
+     * interpolation in a `product()`. MapLibre 13 rejects a `zoom()` expression nested inside
+     * anything but a top-level step/interpolate ("zoom expression may only be used as input to a
+     * top-level step or interpolate expression"), so keeping `zoom()` at the top level is required;
+     * scaling the stop outputs is mathematically equivalent for a linear interpolation. (#1927)
+     */
+    private fun radiusExpression(scale: Float = 1f): Expression = interpolate(
         linear(),
         zoom(),
-        stop(DETAIL_RAMP_START_ZOOM, get(MIN_RADIUS_PROPERTY)),
-        stop(DETAIL_RAMP_END_ZOOM, get(MAX_RADIUS_PROPERTY)),
+        stop(DETAIL_RAMP_START_ZOOM, scaledRadius(MIN_RADIUS_PROPERTY, scale)),
+        stop(DETAIL_RAMP_END_ZOOM, scaledRadius(MAX_RADIUS_PROPERTY, scale)),
     )
+
+    private fun scaledRadius(property: String, scale: Float): Expression =
+        if (scale == 1f) get(property) else product(get(property), literal(scale))
 
     private companion object {
         const val SOURCE_ID = "oba-route-stops"

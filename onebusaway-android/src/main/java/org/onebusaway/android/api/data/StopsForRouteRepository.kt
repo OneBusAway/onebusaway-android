@@ -18,7 +18,6 @@ package org.onebusaway.android.api.data
 import android.location.Location
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +37,7 @@ import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.util.PolylineDecoder
 import org.onebusaway.android.util.SingleFlight
+import org.onebusaway.android.util.runCatchingCancellable
 import java.io.IOException
 
 /**
@@ -111,10 +111,9 @@ class DefaultStopsForRouteRepository internal constructor(
         val fetched = entry(routeId).getOrElse { return Result.failure(it) }
             ?: return Result.success(null) // no endpoint — nothing to show
         // Decoding the route's shape polylines is the one bit of non-trivial CPU work in this layer.
-        // runCatching swallows everything, so rethrow a CancellationException (raised by withContext if
-        // the caller is cancelled mid-decode) rather than reporting the abandoned work as a failure.
-        return runCatching { withContext(Dispatchers.Default) { fetched.toRouteMapData(routeId) } }
-            .onFailure { if (it is CancellationException) throw it }
+        // runCatchingCancellable rethrows a CancellationException (raised by withContext if the caller is
+        // cancelled mid-decode) rather than reporting the abandoned work as a failure.
+        return runCatchingCancellable { withContext(Dispatchers.Default) { fetched.toRouteMapData(routeId) } }
     }
 
     /**

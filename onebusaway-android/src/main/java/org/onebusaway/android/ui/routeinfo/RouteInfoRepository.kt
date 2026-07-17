@@ -23,7 +23,6 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -39,6 +38,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.routeDisplayNames
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** Loads a route's metadata and its stops grouped by direction. */
 interface RouteInfoRepository {
@@ -64,7 +64,7 @@ class DefaultRouteInfoRepository @Inject constructor(
 
     override suspend fun loadRouteInfo(routeId: String): Result<RouteInfo> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            runCatchingCancellable {
                 // Fetch route metadata and stops-for-route in parallel; both complete before unwrap.
                 val (routeResult, stopsResult) = coroutineScope {
                     val routeDeferred = async { routeRepository.getRoute(routeId) }
@@ -76,9 +76,8 @@ class DefaultRouteInfoRepository @Inject constructor(
                 registerRouteUsage(route)
                 toRouteInfo(route, directions)
             }
-                // Let a cancelled load unwind instead of logging it and disguising it (below) as a
-                // "route not found" error string.
-                .onFailure { if (it is CancellationException) throw it }
+                // runCatchingCancellable rethrows a cancelled load, so it isn't logged and disguised
+                // (below) as a "route not found" error string.
                 .onFailure { Log.e(TAG, "loadRouteInfo($routeId) failed", it) }
                 // The VM renders Result.failure's message, so surface a user-facing route error
                 // string. Preserve the OBA code when we have one (e.g. 404 -> "route not found");

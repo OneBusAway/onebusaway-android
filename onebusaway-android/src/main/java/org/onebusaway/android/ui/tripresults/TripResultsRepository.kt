@@ -28,6 +28,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * Projects [TripItinerary] objects onto the Compose results model. Reuses the legacy
@@ -49,7 +50,7 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
     override suspend fun summarize(
         itineraries: List<TripItinerary>
     ): Result<List<ItineraryOption>> = withContext(Dispatchers.IO) {
-        runCatching {
+        runCatchingCancellable {
             itineraries.map { itinerary ->
                 val durationSec = itinerary.duration.inWholeSeconds
                 ItineraryOption(
@@ -65,7 +66,7 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
     override suspend fun directionsFor(
         itinerary: TripItinerary
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
-        runCatching {
+        runCatchingCancellable {
             DirectionsGenerator(itinerary.legs, context).directions.map { it.toItem() }
         }
     }

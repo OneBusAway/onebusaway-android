@@ -218,6 +218,24 @@ follow that pattern when adding server-domain time math.
   mints into `WallTime`/`ElapsedTime` (domain made explicit) or carries an inline `@Suppress` with a
   one-line rationale (there is no lint baseline — these live at the site). See `lint-rules/README.md`.
 
+## Coroutines: never swallow CancellationException (#1908 / #1921)
+
+`kotlin.runCatching` catches **every** `Throwable`, and a broad `catch (Exception | Throwable |
+RuntimeException | IllegalStateException)` catches `CancellationException` too — it's a plain
+`java.util.concurrent.CancellationException`, i.e. an `IllegalStateException` subtype. So in coroutine code
+either one silently converts a cancelled coroutine's `CancellationException` into a `Result.failure` /
+caught value: the cancelled work keeps running and callers read the cancellation as an ordinary
+error/empty state (structured concurrency breaks). It passes compilation and review and only misbehaves
+under real cancellation.
+
+- **Use `runCatchingCancellable`** (`org.onebusaway.android.util`) instead of bare `runCatching` in any
+  `suspend`/coroutine code. It's behaviour-identical but rethrows `CancellationException`. The custom lint
+  check `SwallowedCancellation` (module `:lint-rules`, no baseline) fails the build on a bare `runCatching`
+  in a `suspend` function, so this is the enforced path.
+- For a broad `try/catch` in coroutine code, put a leading `catch (e: CancellationException) { throw e }`
+  before the broad catch (the lint check covers `runCatching` only). Narrow catches (`IOException`, …)
+  don't catch cancellation and are fine.
+
 ## No unsanctioned heuristics
 
 Do **not** introduce heuristics — magic thresholds, magnitude guesses, or "good enough" inference of

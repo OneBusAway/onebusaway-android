@@ -19,10 +19,10 @@ import org.onebusaway.android.api.data.LocationSearchDataSource
 
 import android.util.Log
 import java.io.IOException
-import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.routeDisplayNames
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * A route search match.
@@ -60,7 +60,7 @@ class DefaultRouteSearchRepository(
     private val search: LocationSearchDataSource,
 ) : RouteSearchRepository {
 
-    override suspend fun search(query: String): Result<List<RouteSearchResult>> = runCatching {
+    override suspend fun search(query: String): Result<List<RouteSearchResult>> = runCatchingCancellable {
         val center = searchCenter.current()
             ?: throw IOException("No search location available")
         var routes = search.routesNearOrEmpty(center.latitude, center.longitude, query, null)
@@ -74,12 +74,9 @@ class DefaultRouteSearchRepository(
             }
         }
         routes.map(::toResult)
-    }.onFailure {
-        // transformLatest cancels the in-flight search on each keystroke; let that cancellation
-        // propagate instead of reporting it to the UI as a search Error.
-        if (it is CancellationException) throw it
-        Log.e(TAG, "route search failed", it)
-    }
+        // runCatchingCancellable lets transformLatest's per-keystroke cancellation propagate instead of
+        // reporting it to the UI as a search Error.
+    }.onFailure { Log.e(TAG, "route search failed", it) }
 
     private fun toResult(route: ObaRoute): RouteSearchResult {
         val names = routeDisplayNames(route.shortName, route.longName, route.description)

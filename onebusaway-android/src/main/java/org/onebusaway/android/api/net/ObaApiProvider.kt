@@ -19,13 +19,13 @@ import android.net.Uri
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import org.onebusaway.android.api.contract.ObaWebService
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import org.onebusaway.android.util.runCatchingCancellable
 import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 /**
  * Builds — and rebuilds — the region-bound [ObaWebService]. The OBA host isn't known until a region
@@ -53,9 +53,7 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
         val service = service() ?: return Result.failure(noEndpoint())
-        // runCatching catches everything, so a cancelled coroutine's CancellationException would become
-        // a Result.failure and stop propagating; rethrow it so cancellation still unwinds normally.
-        return runCatching { block(service) }.onFailure { if (it is CancellationException) throw it }
+        return runCatchingCancellable { block(service) }
     }
 
     /**
@@ -64,7 +62,7 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
         val service = service() ?: return Result.success(null)
-        return runCatching { block(service) }.onFailure { if (it is CancellationException) throw it }
+        return runCatchingCancellable { block(service) }
     }
 
     /**

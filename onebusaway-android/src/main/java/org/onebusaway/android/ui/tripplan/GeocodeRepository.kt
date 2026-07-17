@@ -31,6 +31,7 @@ import org.onebusaway.android.region.span
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.RegionUtils
 import org.onebusaway.android.util.locationOf
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** Address-autocomplete suggestions for the trip-plan endpoints. */
 interface GeocodeRepository {
@@ -57,8 +58,8 @@ class DefaultGeocodeRepository @Inject constructor(
 
     override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                if (query.isBlank()) return@runCatching emptyList()
+            runCatchingCancellable {
+                if (query.isBlank()) return@runCatchingCancellable emptyList()
                 val region = regionRepository.region.value
                 val addresses = if (BuildFlavorUtils.isPeliasApiKeyDefined()) {
                     peliasSuggestions(query, region)

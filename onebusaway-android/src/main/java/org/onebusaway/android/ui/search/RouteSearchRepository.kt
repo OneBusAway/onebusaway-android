@@ -19,6 +19,7 @@ import org.onebusaway.android.api.data.LocationSearchDataSource
 
 import android.util.Log
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.routeDisplayNames
@@ -73,7 +74,12 @@ class DefaultRouteSearchRepository(
             }
         }
         routes.map(::toResult)
-    }.onFailure { Log.e(TAG, "route search failed", it) }
+    }.onFailure {
+        // transformLatest cancels the in-flight search on each keystroke; let that cancellation
+        // propagate instead of reporting it to the UI as a search Error.
+        if (it is CancellationException) throw it
+        Log.e(TAG, "route search failed", it)
+    }
 
     private fun toResult(route: ObaRoute): RouteSearchResult {
         val names = routeDisplayNames(route.shortName, route.longName, route.description)

@@ -19,6 +19,7 @@ import android.content.Context
 import android.text.format.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
@@ -270,7 +271,11 @@ class DefaultTripInfoRepository @Inject constructor(
                 secondsBefore = reminderSeconds,
                 vehicleId = data.vehicleId,
             ).url
-        }.getOrNull()
+        }.getOrElse {
+            // Don't let a cancelled save be reported to the UI as a save failure; propagate cancellation.
+            if (it is CancellationException) throw it
+            null
+        }
     }
 
     companion object {

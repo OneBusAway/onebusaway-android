@@ -23,6 +23,7 @@ import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -75,6 +76,9 @@ class DefaultRouteInfoRepository @Inject constructor(
                 registerRouteUsage(route)
                 toRouteInfo(route, directions)
             }
+                // Let a cancelled load unwind instead of logging it and disguising it (below) as a
+                // "route not found" error string.
+                .onFailure { if (it is CancellationException) throw it }
                 .onFailure { Log.e(TAG, "loadRouteInfo($routeId) failed", it) }
                 // The VM renders Result.failure's message, so surface a user-facing route error
                 // string. Preserve the OBA code when we have one (e.g. 404 -> "route not found");

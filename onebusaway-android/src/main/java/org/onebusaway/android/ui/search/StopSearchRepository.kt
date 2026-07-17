@@ -20,6 +20,7 @@ import org.onebusaway.android.api.data.LocationSearchDataSource
 import android.content.Context
 import android.util.Log
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.di.DatabaseEntryPoint
@@ -80,7 +81,10 @@ class DefaultStopSearchRepository(
                 db.importGate().awaitReady()
                 val userInfo = db.stopDao().userInfoMap().toStopUserInfoMap()
                 stops.map { it.toStopSearchResult(userInfo[it.id]) }
-            }.onFailure { Log.e(TAG, "stop search failed", it) }
+            }.onFailure {
+                if (it is CancellationException) throw it
+                Log.e(TAG, "stop search failed", it)
+            }
         }
 
     private companion object {

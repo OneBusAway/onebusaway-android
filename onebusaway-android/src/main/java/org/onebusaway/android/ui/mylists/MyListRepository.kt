@@ -20,6 +20,7 @@ import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -389,7 +390,10 @@ private suspend fun fetchStopBadges(context: Context, stopId: String): List<Arri
         convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
-    }.getOrDefault(emptyList())
+    }.getOrElse {
+        if (it is CancellationException) throw it
+        emptyList()
+    }
 
 private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
     val etaText = if (eta <= 0) {

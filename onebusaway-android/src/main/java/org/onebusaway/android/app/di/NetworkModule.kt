@@ -35,7 +35,7 @@ import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
 import org.onebusaway.android.api.contract.WeatherWebService
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.Retrofit
 
 /**

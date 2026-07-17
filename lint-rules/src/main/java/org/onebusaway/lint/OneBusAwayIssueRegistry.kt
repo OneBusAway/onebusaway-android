@@ -24,7 +24,7 @@ import com.android.tools.lint.detector.api.Issue
  * Registry that publishes onebusaway-android's custom lint checks. Discovered via the
  * `Lint-Registry-v2` manifest attribute set in this module's `build.gradle`.
  */
-class TimeDomainIssueRegistry : IssueRegistry() {
+class OneBusAwayIssueRegistry : IssueRegistry() {
 
     override val issues: List<Issue> =
         listOf(
@@ -32,6 +32,7 @@ class TimeDomainIssueRegistry : IssueRegistry() {
             RawTimeDetector.ISSUE_VALUE,
             PrematureUnwrapDetector.ISSUE,
             WireTimeEscapeDetector.ISSUE,
+            SwallowedCancellationDetector.ISSUE,
         )
 
     override val api: Int = CURRENT_API

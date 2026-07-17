@@ -81,6 +81,29 @@ is a property of the *endpoint* — the two same-named `StopTime` (seconds) and 
 millis) DTOs are the proof — so only the endpoint-aware adapter can mint correctly, and reading the raw
 field elsewhere, even to pass it straight on, is the escape.
 
+### `SwallowedCancellation` (warning)
+Fires when `kotlin.runCatching` is called inside a `suspend` function. `runCatching` catches every
+`Throwable`, so in a coroutine it also swallows the `CancellationException` a cancelled coroutine throws
+from a suspend call — converting cancellation into an ordinary `Result.failure`, so the cancelled work
+keeps running and callers read the cancellation as a normal error/empty state (structured concurrency
+breaks). `CancellationException` is a plain `IllegalStateException` subtype, so nothing at the type level
+catches this; it passes compilation and review and only misbehaves under real cancellation (screen closed,
+search superseded by a keystroke, poll tick outrun). This is the #1908 / #1921 bug class.
+
+Fix by using **`runCatchingCancellable`** (`org.onebusaway.android.util`) — behaviour-identical to
+`runCatching` but it rethrows `CancellationException` (a real failure still resolves to `Result.failure`).
+The wrapper is the single sanctioned path, so the check degrades to a symbol ban: any bare `runCatching`
+in a suspend function is flagged. For a broad `try/catch (Exception)` in a suspend function, add a leading
+`catch (e: CancellationException) { throw e }` — this check covers `runCatching` only.
+
+Scope is the **nearest enclosing named function** being `suspend` (matching detekt's
+`SuspendFunSwallowedCancellation`), detected via the `Continuation` parameter on its light method — so
+`async { runCatching { … } }` inside a suspend function is caught (lambdas are transparent), while a
+`runCatching` in a coroutine-builder lambda inside a *non-suspend* function is deliberately out of scope
+(the boundary isn't visible without heuristics; guard those by hand). A `runCatching` around purely
+non-suspending work in a suspend function is still flagged — the wrapper is a strict superset, so it's
+never wrong, and the rule stays a simple ban rather than a fragile "does this lambda suspend" analysis.
+
 ## Lifecycle
 
 Each check names its reason to exist and its reason to die. Regenerate the baseline after landing a
@@ -92,6 +115,7 @@ check, then only ever shrink it.
 | `UnwrappedClockValue` | foreign clock namespace, coming to rest   | never (can't forbid `Long`)                           |
 | `PrematureUnwrap`     | the elimination door of the typed region  | a real module boundary makes `.epochMs` cross-module  |
 | `WireTimeEscape`      | adapter-only consumption of wire DTOs     | `:api` becomes a Gradle module with `internal` DTOs   |
+| `SwallowedCancellation` | `runCatching` swallowing cancellation in suspend code | Kotlin/lint ships an equivalent built-in check |
 
 **Enrollment sweep — nothing left to enroll.** The plan anticipated adding the legacy Jackson
 `io/elements` getters (`ObaArrivalInfo#getScheduledArrivalTime`, …) to `CLOCK_SOURCES`. That surface has
@@ -105,7 +129,7 @@ CLAUDE.md. The checks are a latch discipline, not a suggestion.
 ## Status: enforced
 
 Wired into the app via `lintChecks(project(":lint-rules"))` in `onebusaway-android/build.gradle.kts`, so a
-**new** violation of any of the four issues fails the build under the strict `-PwarningsAsErrors` gate
+**new** violation of any of the five issues fails the build under the strict `-PwarningsAsErrors` gate
 (verified). There is **no lint baseline** — the app is kept clean under the full catalog, so every
 sanctioned pre-existing site is handled *at the site*, not grandfathered in a file:
 
@@ -123,8 +147,11 @@ sanctioned pre-existing site is handled *at the site*, not grandfathered in a fi
   visible at the site, not hidden in this file. Keep it empty.
 - **0** `WireTimeEscape` — the migration left no wire-field read in app logic; the check starts empty and
   exists to keep it that way.
+- **0** `SwallowedCancellation` — every bare `runCatching` in a suspend function was migrated to
+  `runCatchingCancellable` (#1908 / #1921 audit); the check starts empty and keeps new coroutine code on
+  the sanctioned wrapper.
 
-Keep all four checks at zero: mint each new site (or inline-`@Suppress` a genuinely-sanctioned one with a
+Keep all five checks at zero: mint each new site (or inline-`@Suppress` a genuinely-sanctioned one with a
 rationale) — don't reintroduce a baseline.
 
 ## Develop

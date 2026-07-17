@@ -24,6 +24,7 @@ import org.onebusaway.android.api.contract.BikeWebService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * Loads bike rental stations from OpenTripPlanner for a map bounding box. Replaces the
@@ -43,7 +44,7 @@ class DefaultBikeStationsRepository @Inject constructor(
 ) : BikeStationsRepository {
 
     override suspend fun getStations(southWest: Location, northEast: Location):
-            Result<List<BikeStation>> = runCatching {
+            Result<List<BikeStation>> = runCatchingCancellable {
         val base = otpBaseUrl() ?: error("No OTP base URL for the current region")
 
         // OTP servers differ in how their base URL is rooted (see TripPlanRepository): the "new"
@@ -63,7 +64,7 @@ class DefaultBikeStationsRepository @Inject constructor(
             fetch(base, useOldUrlStructure = true, southWest, northEast)
                 .also { prefs.setBoolean(R.string.preference_key_otp_api_url_version, true) }
         }
-    }.onFailure { if (it is CancellationException) throw it }
+    }
 
     private suspend fun fetch(
         base: String,

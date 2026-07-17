@@ -20,7 +20,6 @@ import org.onebusaway.android.api.data.LocationSearchDataSource
 import android.content.Context
 import android.util.Log
 import java.io.IOException
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.app.di.DatabaseEntryPoint
@@ -29,6 +28,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.database.oba.StopUserInfo
 import org.onebusaway.android.database.oba.stopDisplayName
 import org.onebusaway.android.database.oba.toStopUserInfoMap
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * A stop search match.
@@ -72,7 +72,7 @@ class DefaultStopSearchRepository(
 
     override suspend fun search(query: String): Result<List<StopSearchResult>> =
         withContext(Dispatchers.IO) {
-            runCatching {
+            runCatchingCancellable {
                 val center = searchCenter.current()
                     ?: throw IOException("No search location available")
                 val stops = search.stopsNearOrEmpty(center.latitude, center.longitude, query, null)
@@ -81,10 +81,7 @@ class DefaultStopSearchRepository(
                 db.importGate().awaitReady()
                 val userInfo = db.stopDao().userInfoMap().toStopUserInfoMap()
                 stops.map { it.toStopSearchResult(userInfo[it.id]) }
-            }.onFailure {
-                if (it is CancellationException) throw it
-                Log.e(TAG, "stop search failed", it)
-            }
+            }.onFailure { Log.e(TAG, "stop search failed", it) }
         }
 
     private companion object {

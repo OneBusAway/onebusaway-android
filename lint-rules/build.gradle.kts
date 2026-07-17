@@ -35,6 +35,6 @@ dependencies {
 // Lint discovers the registry through this manifest attribute when the jar is loaded via lintChecks.
 tasks.jar {
     manifest {
-        attributes(mapOf("Lint-Registry-v2" to "org.onebusaway.lint.TimeDomainIssueRegistry"))
+        attributes(mapOf("Lint-Registry-v2" to "org.onebusaway.lint.OneBusAwayIssueRegistry"))
     }
 }

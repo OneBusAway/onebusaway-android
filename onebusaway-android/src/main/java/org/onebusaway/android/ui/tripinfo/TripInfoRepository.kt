@@ -19,7 +19,6 @@ import android.content.Context
 import android.text.format.DateUtils
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
@@ -37,6 +36,7 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ReminderUtils
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** The reminder lead times (minutes) backing each spinner position, as stored in the Trips table. */
 internal val REMINDER_MINUTES = listOf(1, 3, 5, 10, 15, 20, 25, 30)
@@ -260,7 +260,8 @@ class DefaultTripInfoRepository @Inject constructor(
         if (userPushId.isEmpty()) return null
         val url = base + context.getString(R.string.arrivals_reminders_api_endpoint) +
             region.id + "/alarms"
-        return runCatching {
+        // runCatchingCancellable keeps a cancelled save from being reported to the UI as a save failure.
+        return runCatchingCancellable {
             reminderService.createAlarm(
                 url = url,
                 stopId = args.stopId,
@@ -271,11 +272,7 @@ class DefaultTripInfoRepository @Inject constructor(
                 secondsBefore = reminderSeconds,
                 vehicleId = data.vehicleId,
             ).url
-        }.getOrElse {
-            // Don't let a cancelled save be reported to the UI as a save failure; propagate cancellation.
-            if (it is CancellationException) throw it
-            null
-        }
+        }.getOrNull()
     }
 
     companion object {

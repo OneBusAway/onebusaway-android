@@ -20,7 +20,6 @@ import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -53,6 +52,7 @@ import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * A My-tab list backed by the unified Room database: [observe] re-emits whenever the underlying table
@@ -381,7 +381,7 @@ private suspend fun fetchArrivals(
 
 /** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
 private suspend fun fetchStopBadges(context: Context, stopId: String): List<ArrivalBadge> =
-    runCatching {
+    runCatchingCancellable {
         val snapshot = NetworkEntryPoint.getStopArrivals(context)
             .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
             .getOrThrow()
@@ -390,10 +390,7 @@ private suspend fun fetchStopBadges(context: Context, stopId: String): List<Arri
         convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
             .take(MAX_ARRIVALS_PER_STOP)
             .map { it.toBadge(context) }
-    }.getOrElse {
-        if (it is CancellationException) throw it
-        emptyList()
-    }
+    }.getOrDefault(emptyList())
 
 private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
     val etaText = if (eta <= 0) {

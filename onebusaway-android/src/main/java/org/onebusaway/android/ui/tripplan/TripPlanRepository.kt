@@ -36,6 +36,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.util.CustomAddress
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** Plans a trip against the region's OpenTripPlanner server. */
 interface TripPlanRepository {
@@ -68,7 +69,7 @@ class DefaultTripPlanRepository @Inject constructor(
 
     override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> =
         withContext(Dispatchers.IO) {
-            runCatching { planInternal(builderFor(params)) }
+            runCatchingCancellable { planInternal(builderFor(params)) }
         }
 
     @WorkerThread

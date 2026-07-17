@@ -17,7 +17,6 @@ package org.onebusaway.android.api.data
 
 import android.util.Log
 import javax.inject.Inject
-import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.api.contract.StudyResponse
 import org.onebusaway.android.api.contract.SurveyWebService
 import org.onebusaway.android.models.Survey
@@ -25,6 +24,7 @@ import org.onebusaway.android.models.SurveyContent
 import org.onebusaway.android.models.SurveyQuestion
 import org.onebusaway.android.models.SurveyStudy
 import org.onebusaway.android.models.SurveySubmitResult
+import org.onebusaway.android.util.runCatchingCancellable
 
 /**
  * Fetches/submits surveys via [SurveyWebService], adapting the wire [StudyResponse] /
@@ -52,12 +52,9 @@ class DefaultSurveyDataSource @Inject constructor(
     private val service: SurveyWebService,
 ) : SurveyDataSource {
 
-    override suspend fun studies(url: String, userId: String?): Result<List<Survey>> = runCatching {
+    override suspend fun studies(url: String, userId: String?): Result<List<Survey>> = runCatchingCancellable {
         service.getStudy(url, userId).toSurveys()
-    }.onFailure {
-        if (it is CancellationException) throw it
-        Log.e(TAG, "studies failed", it)
-    }
+    }.onFailure { Log.e(TAG, "studies failed", it) }
 
     override suspend fun submit(
         url: String,
@@ -67,7 +64,7 @@ class DefaultSurveyDataSource @Inject constructor(
         stopLatitude: Double,
         stopLongitude: Double,
         responses: String,
-    ): Result<SurveySubmitResult> = runCatching {
+    ): Result<SurveySubmitResult> = runCatchingCancellable {
         service.submitSurvey(
             url = url,
             userIdentifier = userIdentifier,
@@ -77,10 +74,7 @@ class DefaultSurveyDataSource @Inject constructor(
             stopLongitude = stopLongitude,
             responses = responses,
         ).let { SurveySubmitResult(it.surveyResponse?.id) }
-    }.onFailure {
-        if (it is CancellationException) throw it
-        Log.e(TAG, "submit failed", it)
-    }
+    }.onFailure { Log.e(TAG, "submit failed", it) }
 
     private companion object {
         const val TAG = "SurveyDataSource"

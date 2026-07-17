@@ -120,8 +120,6 @@ class DefaultFocusedTripRepository internal constructor(
     private val shapePermits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
     private val routeStopCache =
         ExpiringLruCache<String, List<RouteStopGroup>>(cacheSize, cacheTtl, now)
-    private val shapeCache =
-        ExpiringLruCache<String, List<GeoPoint>>(cacheSize, cacheTtl, now)
 
     override suspend fun getGeometry(trips: Set<FocusedTrip>): FocusedTripGeometry = coroutineScope {
         val tripsWithShapes = ArrayList<FocusedTrip>()
@@ -203,15 +201,20 @@ class DefaultFocusedTripRepository internal constructor(
         null
     }
 
-    /** Shape-id cache avoids refetching one pattern merely because a later arrival has a new trip id. */
+    /**
+     * Decoded points for a shape. Retention and fetch dedup are owned by the shared [Polyline] cache
+     * inside [TripObservationRepository.ensureShape] (keyed by shapeId, no TTL — GTFS shapes are
+     * immutable), so this holds no shape cache of its own: it coalesces concurrent decodes for one
+     * shape and re-decodes the (already-cached) polyline per focus. The map is cheap and runs on a
+     * focus change, not the per-frame path; the permit caps concurrent shape fetches.
+     */
     private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? =
-        shapeCache.get(shapeId) ?: shapeFetches.run(shapeId) {
-            shapeCache.get(shapeId) ?: shapePermits.withPermit {
+        shapeFetches.run(shapeId) {
+            shapePermits.withPermit {
                 resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }
                     ?.let { polyline ->
                         withContext(Dispatchers.Default) { polyline.points.map(Location::toGeoPoint) }
                     }
-                    ?.also { shapeCache.put(shapeId, it) }
             }
         }
 }

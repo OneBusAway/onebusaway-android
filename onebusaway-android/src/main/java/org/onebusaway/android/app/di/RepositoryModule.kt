@@ -51,7 +51,11 @@ import org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripObservationFetcher
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
+import org.onebusaway.android.database.oba.RouteFavorites
+import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.ui.arrivals.ArrivalsDisplay
 import org.onebusaway.android.ui.arrivals.ArrivalsRepository
+import org.onebusaway.android.ui.arrivals.DefaultArrivalsDisplay
 import org.onebusaway.android.ui.arrivals.DefaultArrivalsRepository
 import org.onebusaway.android.ui.home.drawer.DefaultNavItemsRepository
 import org.onebusaway.android.ui.home.DefaultStartupPreferencesRepository
@@ -228,6 +232,16 @@ abstract class RepositoryModule {
     // (assisted) ArrivalsViewModel, so each VM gets its own. Do NOT make this @Singleton.
     @Binds
     abstract fun bindArrivalsRepository(impl: DefaultArrivalsRepository): ArrivalsRepository
+
+    // The Android presentation edge of the arrivals load path — the seam that keeps Context out of
+    // DefaultArrivalsRepository so its stale-fallback/CAS logic is JVM-unit-testable (#1909).
+    @Binds
+    abstract fun bindArrivalsDisplay(impl: DefaultArrivalsDisplay): ArrivalsDisplay
+
+    // The narrow route-starring surface (interface segregation, #1909); the implementation is the
+    // @Singleton owner of the favorite bit, so this binding shares that one instance.
+    @Binds
+    abstract fun bindRouteFavorites(impl: RouteFavoritesRepository): RouteFavorites
 
     // Speed-estimation trip data layer: both @Singleton — the repository owns the process-wide trip
     // store (the LRU cache shared across screens), and the fetcher owns the SingleFlight dedup maps.

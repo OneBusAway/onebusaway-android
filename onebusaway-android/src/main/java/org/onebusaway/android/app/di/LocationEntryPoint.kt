@@ -52,7 +52,7 @@ interface LocationEntryPoint {
         fun getSink(context: Context): LocationSink =
             accessor(context).locationSink()
 
-        internal fun accessor(context: Context): LocationEntryPoint =
+        private fun accessor(context: Context): LocationEntryPoint =
             EntryPointAccessors.fromApplication(context, LocationEntryPoint::class.java)
     }
 }

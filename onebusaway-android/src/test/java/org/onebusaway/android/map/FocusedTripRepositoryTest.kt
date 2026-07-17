@@ -20,7 +20,6 @@ import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
-import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.Polyline
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -65,14 +64,12 @@ class FocusedTripRepositoryTest {
                 listOf(RouteStopGroup("outbound", listOf(stop("a"), stop("b"), stop("c"))))
             )
         }
-        val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, routes, backgroundScope)
 
         val result = repository.getStops(setOf(FocusedTrip("trip", "route", "shape", null)))
 
         assertEquals(listOf("a", "c"), result.stopIdsByTripId["trip"])
-        assertEquals(setOf("a", "c"), result.stopIds)
+        assertEquals(setOf("a", "c"), result.stopIdsByTripId.values.flatten().toSet())
         assertEquals(setOf("a", "b", "c"), result.stopsById.keys)
     }
 
@@ -82,9 +79,7 @@ class FocusedTripRepositoryTest {
             shapes["shared"] = Polyline(emptyList())
             shapes["missing"] = null
         }
-        val repository = DefaultFocusedTripRepository(
-            observations, RouteStops(), backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, RouteStops(), backgroundScope)
 
         val result = repository.getGeometry(
             setOf(
@@ -113,7 +108,7 @@ class FocusedTripRepositoryTest {
         }
         val loggedFailures = mutableListOf<String>()
         val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope, now = { ElapsedTime(0L) },
+            observations, routes, backgroundScope,
             logFailure = { message, _ -> loggedFailures += message },
         )
 
@@ -124,23 +119,28 @@ class FocusedTripRepositoryTest {
             )
         )
 
-        assertEquals(setOf("served"), result.stopIds)
+        assertEquals(setOf("served"), result.stopIdsByTripId.values.flatten().toSet())
         assertEquals(setOf("good"), result.stopIdsByTripId.keys)
         // The omission leaves a log trail, so a fetch failure stays distinguishable from no data.
         assertEquals(listOf("Focused-trip schedule failed fetch failed"), loggedFailures)
     }
 
     @Test
-    fun `shape cache is keyed by shape rather than trip`() = runTest {
+    fun `repeat focus re-delegates shape decode to the shared polyline cache`() = runTest {
+        // FocusedTripRepository holds no shape cache of its own: retention and fetch dedup live in
+        // the shared Polyline cache inside TripObservationRepository.ensureShape (keyed by shapeId,
+        // no TTL). So a later focus on the same shape re-queries ensureShape — cheap in production,
+        // where the polyline is already cached there — rather than memoizing decoded points here.
         val observations = Observations().apply { shapes["shared"] = Polyline(emptyList()) }
-        val repository = DefaultFocusedTripRepository(
-            observations, RouteStops(), backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, RouteStops(), backgroundScope)
 
         repository.getGeometry(setOf(FocusedTrip("older-trip", "route", "shared", null)))
         repository.getGeometry(setOf(FocusedTrip("newer-trip", "route", "shared", null)))
 
-        assertEquals(listOf("older-trip" to "shared"), observations.shapeRequests)
+        assertEquals(
+            listOf("older-trip" to "shared", "newer-trip" to "shared"),
+            observations.shapeRequests,
+        )
     }
 
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)

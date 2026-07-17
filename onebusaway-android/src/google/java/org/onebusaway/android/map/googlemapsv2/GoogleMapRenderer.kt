@@ -52,6 +52,7 @@ import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
+import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MarkerRendering
@@ -66,8 +67,8 @@ import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.routeLineWidthScale
-import org.onebusaway.android.map.render.reconcileEqualItems
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -83,8 +84,8 @@ import java.util.concurrent.TimeUnit
  * Three redraw paths split by update cadence:
  *  - [renderRoutePolylines] independently reconciles the infrequently-changing route layer, so
  *    stop-only viewport updates retain every long native line.
- *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics / trip-stop
- *    dots); [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
+ *  - [renderStatic] clear-and-redraws the remaining static annotations (bikes / generics);
+ *    [GoogleStopMarkerLayer] reconciles stops in place so unchanged stops neither blink nor
  *    receive redundant native position/z-index writes.
  *  - [renderDynamic] (the live route vehicles + the selected vehicle's band/fast-estimate marker) is pulled at
  *    ~20Hz by the adapter's frame loop. It moves native markers **in place** to their freshly
@@ -127,11 +128,15 @@ class GoogleMapRenderer(
     private val staticPolylines = mutableListOf<Polyline>()
 
     // Whole-route lines are reconciled independently from the combined static snapshot: stop list,
-    // focus, or bike changes retain these native polylines. Snapshot copies keep the same List instance,
-    // making the common stop-only update an O(1) identity check; equal republished values are retained too.
-    private val routePolylines = mutableListOf<Polyline>()
-    private var renderedRoutePolylines: List<RoutePolyline> = emptyList()
-    private var renderedRouteWidths: List<Float> = emptyList()
+    // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
+    // lives in the shared [RoutePolylineReconciler] (#1906); only the four gms-specific line operations
+    // below are supplied here.
+    private val routePolylineReconciler = RoutePolylineReconciler<Polyline>(
+        widthOf = ::routeWidthPx,
+        createLine = ::addRoutePolyline,
+        removeLines = { lines -> lines.forEach { it.remove() } },
+        setWidth = { line, width -> line.width = width },
+    )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
     // keyed by active trip id, and the band's (interaction-free) polylines re-added each frame. The
@@ -225,8 +230,8 @@ class GoogleMapRenderer(
     private val descriptorCache =
         BitmapDescriptorCache(DESCRIPTOR_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
-    // Remove the redrawn non-route static annotations — continuation polylines, trip-stop dots, bikes,
-    // generic markers (not map.clear(), which would also wipe the retained route and per-frame dynamic
+    // Remove the redrawn non-route static annotations — continuation polylines, bikes, generic markers
+    // (not map.clear(), which would also wipe the retained route and per-frame dynamic
     // layers) — and clear their tap maps. Reconciled route/stop annotations deliberately survive.
     // Shared by [renderStatic] (before it redraws) and [dispose].
     private fun clearStatic() {
@@ -300,27 +305,7 @@ class GoogleMapRenderer(
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
-        if (renderedRoutePolylines === next || renderedRoutePolylines == next) return
-
-        val previousNative = routePolylines.toList()
-        val previousWidths = renderedRouteWidths
-        val reconciliation = reconcileEqualItems(renderedRoutePolylines, next)
-        reconciliation.removedPreviousIndices.forEach { previousNative[it].remove() }
-        val nextWidths = next.map { routeWidthPx(it, map.cameraPosition.zoom) }
-        val reconciled = next.mapIndexed { index, polyline ->
-            val previousIndex = reconciliation.previousIndexForNext[index]
-            previousIndex?.let(previousNative::get)
-                ?.also {
-                    if (previousWidths.getOrNull(previousIndex) != nextWidths[index]) {
-                        it.width = nextWidths[index]
-                    }
-                }
-                ?: addRoutePolyline(polyline, nextWidths[index])
-        }
-        renderedRoutePolylines = next
-        renderedRouteWidths = nextWidths
-        routePolylines.clear()
-        routePolylines.addAll(reconciled)
+        routePolylineReconciler.reconcile(next, map.cameraPosition.zoom)
     }
 
     private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): Polyline {
@@ -427,10 +412,7 @@ class GoogleMapRenderer(
         routeStopLayer.dispose()
 
         clearStatic()
-        routePolylines.forEach { it.remove() }
-        routePolylines.clear()
-        renderedRoutePolylines = emptyList()
-        renderedRouteWidths = emptyList()
+        routePolylineReconciler.clear()
 
         stopMarkerLayer.dispose()
 
@@ -493,7 +475,8 @@ class GoogleMapRenderer(
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
         val metersPerPx =
-            156543.03392 * cos(Math.toRadians(center.latitude)) / 2.0.pow(map.cameraPosition.zoom.toDouble())
+            METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO * cos(Math.toRadians(center.latitude)) /
+                2.0.pow(map.cameraPosition.zoom.toDouble())
         val radiusMeters = radiusPx * metersPerPx
         val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
         val existing = pingCircle
@@ -778,13 +761,7 @@ class GoogleMapRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routeStopLayer.onCameraSettled(zoom)
-        val nextWidths = renderedRoutePolylines.map { routeWidthPx(it, zoom) }
-        if (nextWidths != renderedRouteWidths) {
-            renderedRouteWidths = nextWidths
-            for (index in routePolylines.indices) {
-                routePolylines[index].width = nextWidths[index]
-            }
-        }
+        routePolylineReconciler.resyncWidths(zoom)
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
     }

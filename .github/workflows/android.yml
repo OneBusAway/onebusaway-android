@@ -36,9 +36,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       # NOTE: Android Lint intentionally does NOT run on the PR/push path. lintObaGoogleDebug is
-      # heavyweight (~7-15 min) and dominates this job's wall-clock; it's being moved to a dedicated
-      # nightly heavyweight run instead. The "run tests" step below keeps `-x lint` so `check` doesn't
-      # pull lint back in. (Kotlin `-PwarningsAsErrors` compile gating still runs here via `check`.)
+      # heavyweight (~7-15 min) and dominates this job's wall-clock; it runs instead in the `lint` job
+      # in android-nightly.yml (no emulator needed there). The "run tests" step below keeps `-x lint`
+      # so `check` doesn't pull lint back in. (Kotlin `-PwarningsAsErrors` compile gating still runs
+      # here via `check`.)
 
       - name: AVD cache
         uses: actions/cache@v6

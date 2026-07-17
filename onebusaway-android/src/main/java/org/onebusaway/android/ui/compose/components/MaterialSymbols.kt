@@ -23,7 +23,13 @@ import androidx.compose.ui.graphics.vector.PathBuilder
 import androidx.compose.ui.graphics.vector.path
 import androidx.compose.ui.unit.dp
 
-/** Material Symbols used by secondary-action menus, generated at 24dp with outlined styling. */
+/**
+ * Material Symbols used by secondary-action menus. Each path is transcribed by hand from the Material
+ * Symbols set at **24dp, weight 400, grade 0, optical size 24, "outlined" style** — record any icon's
+ * source glyph + those axes here when adding one, so the paths can be regenerated or verified. Prefer a
+ * `baseline_*_24.xml` vector drawable (the mechanism used elsewhere in this module) for new icons; keep
+ * these inline `ImageVector`s only where a menu needs them without a drawable round-trip.
+ */
 internal object MaterialSymbols {
     val Schedule: ImageVector by lazy {
         symbol("schedule") {

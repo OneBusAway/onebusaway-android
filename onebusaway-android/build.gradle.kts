@@ -336,7 +336,6 @@ dependencies {
     // Core library desugaring: backports java.time.* to minSdk 23 (issue #1693)
     "coreLibraryDesugaring"(libs.desugar.jdk.libs)
     // Firebase Analytics
-    implementation(libs.firebase.core)
     implementation(libs.firebase.analytics)
     // Plausible Analytics
     implementation(libs.plausible.android.sdk)
@@ -406,10 +405,8 @@ dependencies {
     implementation(libs.androidx.concurrent.listenablefuture.callback)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.preference)
-    // Preferences DataStore — the backing store behind PreferencesRepository. 1.0.0 was the minSdk-21
-    // pin; now that minSdk is 23 a newer DataStore is eligible to be adopted as a follow-up.
+    // Preferences DataStore — the backing store behind PreferencesRepository.
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.kotlin.stdlib.jdk7)
     // RoomDB
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)

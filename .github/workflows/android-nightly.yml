@@ -15,6 +15,13 @@ name: Android Nightly
 #    suite (org.onebusaway.android.SmokeTest — see that annotation + issue #1818). Small and stable
 #    on purpose: it answers "does the app boot and do the core flows run on the floor?", not "re-run
 #    everything". Both instrumented suites otherwise remain oba-only in android.yml.
+#
+# 3. lint — every `./gradlew` invocation on the PR/push and other nightly legs passes `-x lint`
+#    because lintObaGoogleDebug is heavyweight (~7-15 min) and would dominate those jobs' wall-clock
+#    (see the NOTE in android.yml). This leg is the promised home for it: no emulator, so it's cheap
+#    to run nightly and catches lint regressions (including `abortOnError` NewApi/minSdk violations
+#    the Kotlin warnings gate can't see) that would otherwise sit invisible until someone runs lint
+#    by hand. See issue #1901.
 
 on:
   schedule:
@@ -50,6 +57,37 @@ jobs:
 
       - name: Full-grid tests + check (all brands)
         run: ./gradlew test check -PbuildAllBrands=true --build-cache -x lint -PwarningsAsErrors=true --stacktrace
+
+  lint:
+    # No emulator needed: lint is a static analysis task. Independent of the other legs, so it runs
+    # in parallel. See the header for why this exists.
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          # This job only runs lint; it never pushes, so don't leave the token in git config.
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Android Lint (obaGoogleDebug)
+        run: ./gradlew :onebusaway-android:lintObaGoogleDebug --build-cache -PwarningsAsErrors=true --stacktrace
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report-obaGoogleDebug
+          path: onebusaway-android/build/reports/lint-results-obaGoogleDebug.html
+          retention-days: 14
 
   smoke-api23:
     # Boot the minSdk floor: install obaGoogleDebug on an API 23 emulator and run the @SmokeTest
@@ -114,7 +152,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # Select only the @SmokeTest-annotated classes; -x lint keeps the ~10-min lint off this leg.
-          # (Lint no longer runs on the PR path either — it's slated for its own nightly heavyweight run.)
+          # (Lint runs separately in the `lint` job above, which needs no emulator.)
           script: >-
             ./gradlew connectedObaGoogleDebugAndroidTest
             -Pandroid.testInstrumentationRunnerArguments.annotation=org.onebusaway.android.SmokeTest

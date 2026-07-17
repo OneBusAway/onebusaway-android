@@ -181,7 +181,7 @@ data class ContinuationBadge(
 /**
  * A tappable label for one route in focused-stop adjacency view (#1827), anchored once in geographic
  * space so the map SDK naturally carries it through pan and zoom. Google renders these in the first
- * badge phase; MapLibre deliberately ignores the layer until its follow-up.
+ * badge phase; MapLibre deliberately ignores the layer until its follow-up (#1913).
  */
 data class RouteBadge(
     val routeId: String,
@@ -397,7 +397,7 @@ class MapRenderState {
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())
 
-    /** Sets the Google-first adjacency route badges (#1827); MapLibre currently ignores this layer. */
+    /** Sets the Google-first adjacency route badges (#1827); MapLibre currently ignores this layer (#1913). */
     fun setRouteBadges(badges: List<RouteBadge>) {
         _snapshot.update { it.copy(routeBadges = badges) }
     }

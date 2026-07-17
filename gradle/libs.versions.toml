@@ -20,10 +20,10 @@ jdk = "17"
 
 # --- Build tooling / plugins ---
 agp = "9.3.0"
-# Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track the Kotlin
-# version; kotlin-stdlib-jdk7 below pins to this too.
+# Kotlin Gradle plugin + its compiler plugins (serialization, compose) all track this version.
 kotlin = "2.4.10"
-# KSP version is Kotlin-version-coupled but published on its own cadence (kotlinVersion-kspVersion).
+# KSP2 is versioned independently of Kotlin — plain semver, not the old kotlinVersion-kspVersion
+# format. Bump on its own cadence against the compatibility range in the KSP release notes.
 ksp = "2.3.10"
 googleServices = "4.5.0"
 hilt = "2.60.1"
@@ -37,7 +37,6 @@ lint = "32.3.0"
 
 # --- Libraries ---
 desugar = "2.1.5"
-firebaseCore = "21.1.1"
 firebaseAnalytics = "23.2.0"
 firebaseFirestore = "26.4.1"
 firebaseAuth = "24.2.0"
@@ -91,7 +90,6 @@ junit = "4.13.2"
 desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar" }
 
 # --- Firebase / Google Play services ---
-firebase-core = { module = "com.google.firebase:firebase-core", version.ref = "firebaseCore" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
@@ -133,7 +131,6 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-kotlin-stdlib-jdk7 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk7", version.ref = "kotlin" }
 
 # --- Jetpack Compose (versions from the BOM unless noted) ---
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }

@@ -134,6 +134,38 @@ class RouteViewGeometryTest {
     }
 
     @Test
+    fun `selected trip style is gated on stop-focus state, not on an adjacency color hit`() {
+        val direction = RouteDirectionKey("45", 0)
+        val withColor = mapOf(direction to 10)
+
+        // Whole-route mode: always the thin underlay, and always the GTFS color since there's no
+        // adjacency map to begin with.
+        assertEquals(
+            SelectedTripStyle(color = 99, includeUnderlay = true),
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), gtfsColor = 99),
+        )
+        // Stop focus, no adjacency entry for this exact direction (e.g. an opposite-direction vehicle
+        // whose direction isn't among the focused stop's own trips, #1902): underlay still drops, but
+        // the color falls back to GTFS since there's no adjacency color to carry instead.
+        assertEquals(
+            SelectedTripStyle(color = 99, includeUnderlay = false),
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), gtfsColor = 99),
+        )
+        // Whole-route mode with a stray adjacency entry (shouldn't occur in practice, since routeColors
+        // is only ever populated during stop focus) still keeps the underlay — it is not proxied off
+        // the color lookup.
+        assertEquals(
+            SelectedTripStyle(color = 10, includeUnderlay = true),
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, gtfsColor = 99),
+        )
+        // Stop focus with a matching adjacency entry: the ordinary case — adjacency color, no underlay.
+        assertEquals(
+            SelectedTripStyle(color = 10, includeUnderlay = false),
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, gtfsColor = 99),
+        )
+    }
+
+    @Test
     fun `scheduled stops carry every presented route that serves them`() {
         val trips = setOf(
             FocusedTrip("trip-45", "45", null, null, directionId = 0),

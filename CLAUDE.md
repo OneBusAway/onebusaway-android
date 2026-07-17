@@ -253,7 +253,7 @@ domain model is unambiguously millis. See `situationEpochToMillis` and `Situatio
 - **Application ID**: `com.joulespersecond.seattlebusbot` (historical, must keep for Google Play)
 - **Namespace**: `org.onebusaway.android`
 - **Java compatibility**: 17
-- **Kotlin version**: see `kotlin` in `gradle/libs.versions.toml` (2.3.20)
+- **Kotlin version**: see `kotlin` in `gradle/libs.versions.toml` (2.4.10)
 
 ## Multi-Region Support
 

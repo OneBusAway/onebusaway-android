@@ -273,6 +273,25 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `directives emitted while no collector is subscribed all queue, past the old bound`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+
+        // Emit far more directives than the old Channel(capacity = 16) could hold, with NO collector
+        // subscribed yet — the exact situation #1904 flagged: a directive fired while HOME's collector
+        // is away (e.g. on a pushed search destination) must queue for it, not vanish on a full-channel
+        // trySend. An UNLIMITED channel buffers them all; the old bounded one dropped everything past 16.
+        val count = 40
+        repeat(count) { vm.focusStandaloneRoute(ShowRouteRequest("route-$it")) }
+
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+
+        assertEquals((0 until count).map { "route-$it" }, map.routesShown)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `focused stop route badge preserves stop focus and line direction`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

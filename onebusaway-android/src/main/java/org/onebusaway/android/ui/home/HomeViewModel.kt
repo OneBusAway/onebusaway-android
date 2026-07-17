@@ -160,10 +160,32 @@ class HomeViewModel @Inject constructor(
     )
     private var pendingFocus: PendingFocus? = null
 
-    /** Exact displayed trips for the focused stop; arrivals reload it after restore and refreshes. */
-    var focusedTrips: Set<FocusedTrip> = emptySet()
-        private set
+    // The last arrivals load's exact trips, paired with the stop they were loaded for. Set only by
+    // [onArrivalsLoaded]; never cleared imperatively. [focusedTrips] scopes it to the *current* focus,
+    // so any focus transition empties the exposed set by construction — no per-transition reset to
+    // forget (the "forgot to clear on transition X" bug class this replaces).
+    private var loadedTrips: LoadedTrips? = null
+
+    /**
+     * Exact displayed trips for the *currently focused* stop — the loaded set when it belongs to the
+     * focused stop, else empty. Derived from [currentFocus] rather than mirrored into a manually-reset
+     * field, so it can't outlive its stop: focusing another stop, a route, or nothing reads as empty
+     * until that stop's own arrivals load.
+     */
+    val focusedTrips: Set<FocusedTrip>
+        get() {
+            val stopId = (_currentFocus.value as? CurrentFocus.Stop)?.stop?.id ?: return emptySet()
+            val loaded = loadedTrips ?: return emptySet()
+            return if (loaded.stopId.equals(stopId, ignoreCase = true)) loaded.trips else emptySet()
+        }
+
+    // The route-directions currently drawn for the focused-stop presentation. Unlike [focusedTrips]
+    // this deliberately *persists* across a continuing stop-to-stop handoff (the old routes stay on the
+    // map until the new stop's arrivals replace them), so it stays an explicitly-managed field.
     private var presentedRoutes: Set<RouteDirectionKey> = emptySet()
+
+    /** An arrivals load's exact trips, tagged with the stop id they were loaded for. */
+    private data class LoadedTrips(val stopId: String, val trips: Set<FocusedTrip>)
 
     /**
      * A map stop gained focus. When it shares any presented route-direction with the current stop,
@@ -181,7 +203,6 @@ class HomeViewModel @Inject constructor(
             null -> current != null && presentedRoutes.any(continuingRoutes::contains)
             else -> selected.currentLeg.routeDirection in continuingRoutes
         }
-        focusedTrips = emptySet()
         if (!continuePresentation) {
             presentedRoutes = emptySet()
             emitMapDirective(MapDirective.ClearStopRoutes)
@@ -308,7 +329,7 @@ class HomeViewModel @Inject constructor(
     ) {
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
-        focusedTrips = trips
+        loadedTrips = LoadedTrips(focus.stop.id, trips)
         presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val pending = pendingFocus
         val preserveViewport = pending?.preserveViewport == true
@@ -375,7 +396,6 @@ class HomeViewModel @Inject constructor(
 
     /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
     fun focusStandaloneRoute(request: ShowRouteRequest, undoViewport: MapViewport? = null) {
-        focusedTrips = emptySet()
         pushFocus(CurrentFocus.Route(request.toRouteTarget()), undoViewport)
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
     }
@@ -483,7 +503,6 @@ class HomeViewModel @Inject constructor(
         if (target is CurrentFocus.Stop) {
             emitMapDirective(MapDirective.ClearSelectedRoute)
         } else {
-            focusedTrips = emptySet()
             presentedRoutes = emptySet()
             emitMapDirective(MapDirective.ClearFocus)
         }
@@ -493,7 +512,6 @@ class HomeViewModel @Inject constructor(
     fun clearMapFocus() {
         if (_currentFocus.value == CurrentFocus.None) return
         pushFocus(CurrentFocus.None)
-        focusedTrips = emptySet()
         presentedRoutes = emptySet()
         // Drop any pending restore/deep-link latch too; otherwise a stop closed before its arrivals
         // load leaves it set, and the next stop's onArrivalsLoaded would consume it and recenter.
@@ -569,7 +587,6 @@ class HomeViewModel @Inject constructor(
                 )
             )
         } else {
-            focusedTrips = emptySet()
             when (target) {
                 is CurrentFocus.Stop -> {
                     markPendingMapFocus(preserveViewport = !frameFocus)

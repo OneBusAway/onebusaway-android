@@ -56,7 +56,7 @@ class GammaDistribution(@JvmField val alpha: Double, @JvmField val scale: Double
         private const val MAX_ITERATIONS = 200
         private const val EPSILON = 1e-10
 
-        internal fun regularizedGammaP(a: Double, x: Double): Double {
+        private fun regularizedGammaP(a: Double, x: Double): Double {
             if (x <= 0) return 0.0
 
             return if (x < a + 1) {

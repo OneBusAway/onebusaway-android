@@ -86,7 +86,7 @@ private val RECENT_WINDOW_MS = 7 * DateUtils.DAY_IN_MILLIS
 @Suppress("RawClockArithmetic")
 internal fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
 
-internal fun StopListRow.toStopItem(context: Context): StopListItem {
+private fun StopListRow.toStopItem(context: Context): StopListItem {
     val directionText = direction?.takeIf { it.isNotEmpty() }
         ?.let { context.getString(DisplayFormat.getStopDirectionText(it)) }
         ?.takeIf { it.isNotEmpty() }
@@ -101,7 +101,7 @@ internal fun StopListRow.toStopItem(context: Context): StopListItem {
     )
 }
 
-internal fun RouteListRow.toRouteItem() = RouteListItem(
+private fun RouteListRow.toRouteItem() = RouteListItem(
     id = id,
     shortName = shortName,
     longName = longName?.takeIf { it.isNotEmpty() },
@@ -224,7 +224,7 @@ class RecentRoutesRepository(private val context: Context) : MyListRepository<Ro
 }
 
 /** Persists the chosen sort order as the matching [optionsRes] string under [prefKeyRes] (legacy format). */
-internal fun saveSortOrder(context: Context, order: Int, @ArrayRes optionsRes: Int, @StringRes prefKeyRes: Int) {
+private fun saveSortOrder(context: Context, order: Int, @ArrayRes optionsRes: Int, @StringRes prefKeyRes: Int) {
     val options = context.resources.getStringArray(optionsRes)
     PreferenceUtils.saveString(context.getString(prefKeyRes), options[order.coerceIn(options.indices)])
 }
@@ -340,7 +340,7 @@ class RemindersRepository(private val context: Context) : MyListRepository<Remin
             .flowOn(Dispatchers.IO)
 }
 
-internal fun ReminderRow.toReminderItem(context: Context): ReminderItem {
+private fun ReminderRow.toReminderItem(context: Context): ReminderItem {
     val departureMs = TripDepartureTime.toEpochMillis(departure)
     return ReminderItem(
         tripId = tripId,
@@ -360,7 +360,7 @@ private const val ARRIVALS_MINUTES_AFTER = 35
 private const val MAX_ARRIVALS_PER_STOP = 3
 
 /** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. */
-internal fun arrivalsPoll(context: Context, stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
+private fun arrivalsPoll(context: Context, stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
     while (true) {
         emit(fetchArrivals(context, stopIds))
         delay(ARRIVALS_REFRESH_MS)

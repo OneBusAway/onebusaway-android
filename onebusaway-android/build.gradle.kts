@@ -190,11 +190,20 @@ android {
         //    (RouteMapController's `vehicleJob?.isActive`). The one hit is benign and has no cleaner call.
         //  - ConvertToWebp: an advisory "this image could be smaller as WebP" nudge (wmata.jpg), not a
         //    correctness signal. Declined.
+        //  - SyntheticAccessor: flags a `private` member accessed across the class/file boundary, whose
+        //    only cost is a compiler-generated accessor method. Satisfying it forces widening real
+        //    encapsulation — file-`private` Kotlin helpers → `internal` (app-global in this single-module
+        //    app) and Java `private` → package-private — for a micro-optimization the toolchain already
+        //    erases: release enables R8 with `-allowaccessmodification` (#1868), which inlines/strips the
+        //    accessors, and in debug the cost is a handful of trivial methods. Leaving it enabled taxes
+        //    every future file-private helper called from a sibling class. #1875 widened 34 declarations
+        //    to clear it; #1912 restored their `private` and opts the check out here.
         disable += setOf(
             "MissingTranslation", "ExtraTranslation", "LogNotTimber",
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion",
             "OldTargetApi", "DuplicateStrings",
-            "InvalidPackage", "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp"
+            "InvalidPackage", "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp",
+            "SyntheticAccessor"
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
         // ones (Compose, UseKtx, …) — so the checked set is comprehensive and current for the installed

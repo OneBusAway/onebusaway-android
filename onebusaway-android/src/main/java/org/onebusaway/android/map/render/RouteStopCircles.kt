@@ -15,15 +15,15 @@
  */
 package org.onebusaway.android.map.render
 
-import android.graphics.Color
-
 /** Shared screen-space styling for GPU/native route-stop circles in both map flavors. */
 object RouteStopCircles {
     const val RADIUS_PX = 10f
-    const val STROKE_WIDTH_PX = 3f
-    const val FOCUSED_SCALE = 1.5f
-    const val INNER_RADIUS_SCALE = 0.4f
+    const val STROKE_WIDTH_PX = 2.7f
+    const val FOCUSED_SCALE = 1.8f
+    const val INNER_RADIUS_SCALE = 0.36f
 
-    const val FILL_COLOR = Color.WHITE
-    const val STROKE_COLOR: Int = TripMarkerBitmaps.STROKE_COLOR
+    // All three route-stop circle colors are theme-aware resources resolved by the flavor layers (this
+    // pure styling layer has no Context): the unselected fill `R.color.route_stop_fill`, the outline
+    // `R.color.route_stop_outline`, and the selected fill `R.color.map_stop_focus` (the shared
+    // selected-stop highlight — lighter in light mode, deeper in dark mode).
 }

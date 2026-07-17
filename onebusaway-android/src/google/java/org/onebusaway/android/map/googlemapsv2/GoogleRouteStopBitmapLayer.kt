@@ -17,7 +17,6 @@ package org.onebusaway.android.map.googlemapsv2
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import androidx.core.graphics.createBitmap
 import com.google.android.gms.maps.GoogleMap
@@ -40,6 +39,9 @@ import org.onebusaway.android.map.render.stopZIndex
 internal class GoogleRouteStopBitmapLayer(
     private val map: GoogleMap,
     private val density: Float,
+    private val fillColor: Int,
+    private val selectedFillColor: Int,
+    private val outlineColor: Int,
 ) : GoogleRouteStopLayer {
     private data class RenderedStop(
         val marker: Marker,
@@ -163,7 +165,14 @@ internal class GoogleRouteStopBitmapLayer(
 
     private fun icon(diameterPx: Int, selected: Boolean): BitmapDescriptor =
         icons.getOrPut(IconKey(diameterPx, selected)) {
-            BitmapDescriptorFactory.fromBitmap(drawRouteStopBitmap(diameterPx, selected))
+            BitmapDescriptorFactory.fromBitmap(
+                drawRouteStopBitmap(
+                    diameterPx,
+                    selected,
+                    if (selected) selectedFillColor else fillColor,
+                    outlineColor,
+                )
+            )
         }
 
     private fun zIndex(selected: Boolean): Float =
@@ -190,20 +199,28 @@ internal fun routeStopDiameterPx(
         .coerceAtLeast(1)
 }
 
-private fun drawRouteStopBitmap(diameterPx: Int, selected: Boolean): Bitmap {
+private fun drawRouteStopBitmap(
+    diameterPx: Int,
+    selected: Boolean,
+    fillColor: Int,
+    outlineColor: Int,
+): Bitmap {
     val bitmap = createBitmap(diameterPx, diameterPx)
     val canvas = Canvas(bitmap)
     val center = diameterPx / 2f
     val scale = diameterPx / (2f * RouteStopCircles.RADIUS_PX)
-    val strokeWidth = RouteStopCircles.STROKE_WIDTH_PX * scale
+    // The selected circle is drawn at FOCUSED_SCALE, but its ring keeps the same on-screen weight as
+    // every other stop — divide the selection scale back out of the stroke (not the diameter).
+    val selectedScale = if (selected) RouteStopCircles.FOCUSED_SCALE else 1f
+    val strokeWidth = RouteStopCircles.STROKE_WIDTH_PX * scale / selectedScale
     val radius = center - strokeWidth / 2f
     val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-    paint.color = Color.WHITE
+    paint.color = fillColor
     paint.style = Paint.Style.FILL
     canvas.drawCircle(center, center, radius, paint)
 
-    paint.color = RouteStopCircles.STROKE_COLOR
+    paint.color = outlineColor
     paint.style = Paint.Style.STROKE
     paint.strokeWidth = strokeWidth
     canvas.drawCircle(center, center, radius, paint)

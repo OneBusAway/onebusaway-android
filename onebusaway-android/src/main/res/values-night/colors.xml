@@ -24,6 +24,15 @@
     <color name="body_text_2">#8affffff</color>
     <color name="body_text_disabled">#44ffffff</color>
 
+    <!-- Route-stop circle outline is white in dark mode for contrast against the dark base map. -->
+    <color name="route_stop_outline">#FFFFFF</color>
+
+    <!-- Route-stop circle fill is a 70% gray in dark mode (paired with the white outline). -->
+    <color name="route_stop_fill">#4D4D4D</color>
+
+    <!-- The selected-stop highlight is a deeper orange in dark mode. -->
+    <color name="map_stop_focus">#FB8C00</color>
+
 
     <color name="stop_info_arrival_list_background">@android:color/black</color>
 

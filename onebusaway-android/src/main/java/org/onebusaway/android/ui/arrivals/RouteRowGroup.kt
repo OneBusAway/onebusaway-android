@@ -190,7 +190,7 @@ internal fun resolveSelectedRouteGroupKey(
     requestedKey: String?,
     routeId: String?,
 ): String? {
-    groups.firstOrNull { it.key.equals(requestedKey, ignoreCase = true) }?.let { return it.key }
+    groups.firstOrNull { it.key == requestedKey }?.let { return it.key }
     if (routeId == null) return null
-    return groups.filter { it.routeId.equals(routeId, ignoreCase = true) }.singleOrNull()?.key
+    return groups.filter { it.routeId == routeId }.singleOrNull()?.key
 }

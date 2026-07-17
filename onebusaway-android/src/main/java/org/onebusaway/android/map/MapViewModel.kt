@@ -382,7 +382,7 @@ class MapViewModel @Inject constructor(
         trips: Set<FocusedTrip>,
     ) {
         val focusedStopId = renderState.snapshot.value.focusedStopId
-        if (focusedStopId == null || !focusedStopId.equals(stopId, ignoreCase = true)) return
+        if (focusedStopId != stopId) return
         routeController.focusStop(stopId, trips, routes)
     }
 

@@ -26,8 +26,17 @@
     <color name="theme_primary_variant">@color/brand_color_dark</color>
     <color name="theme_accent">#5db53b</color>
 
-    <!-- The focused/selected map stop highlight: the selected_map_stop_icon.xml fill + the focused dot. -->
-    <color name="map_stop_focus">#FF9500</color>
+    <!-- The focused/selected map stop highlight: the selected_map_stop_icon.xml fill + the focused dot +
+         the selected route-stop circle fill. Lighter in light mode, deeper in dark mode (see values-night). -->
+    <color name="map_stop_focus">#FFA726</color>
+
+    <!-- Route-stop circle outline (ring + selected inner dot): dark in light mode, white in dark mode
+         (see values-night). Same for selected and unselected stops. -->
+    <color name="route_stop_outline">#616161</color>
+
+    <!-- Route-stop circle fill (unselected): white in light mode, black in dark mode (see values-night).
+         Selected stops override this with the orange focus fill. -->
+    <color name="route_stop_fill">#FFFFFF</color>
 
     <!-- The starred (favorite) stop marker's star: a gold gradient (light top, dark bottom), #1680. -->
     <color name="map_stop_favorite_light">#FFD54F</color>

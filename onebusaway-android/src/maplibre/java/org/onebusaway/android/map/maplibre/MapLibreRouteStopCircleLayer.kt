@@ -20,6 +20,7 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
+import org.maplibre.android.style.expressions.Expression.color
 import org.maplibre.android.style.expressions.Expression.eq
 import org.maplibre.android.style.expressions.Expression.get
 import org.maplibre.android.style.expressions.Expression.interpolate
@@ -27,6 +28,7 @@ import org.maplibre.android.style.expressions.Expression.linear
 import org.maplibre.android.style.expressions.Expression.literal
 import org.maplibre.android.style.expressions.Expression.product
 import org.maplibre.android.style.expressions.Expression.stop
+import org.maplibre.android.style.expressions.Expression.switchCase
 import org.maplibre.android.style.expressions.Expression.zoom
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.PropertyFactory.circleColor
@@ -53,6 +55,9 @@ internal class MapLibreRouteStopCircleLayer(
     private val map: MapLibreMap,
     private val style: Style,
     private val density: Float,
+    private val fillColor: Int,
+    private val selectedFillColor: Int,
+    private val outlineColor: Int,
 ) {
     private val source = GeoJsonSource(
         SOURCE_ID,
@@ -68,10 +73,22 @@ internal class MapLibreRouteStopCircleLayer(
         style.addLayer(
             CircleLayer(OUTER_LAYER_ID, SOURCE_ID).withProperties(
                 circleRadius(radiusExpression()),
-                circleColor(RouteStopCircles.FILL_COLOR),
-                circleStrokeColor(RouteStopCircles.STROKE_COLOR),
+                circleColor(
+                    switchCase(
+                        eq(get(SELECTED_PROPERTY), true),
+                        color(selectedFillColor),
+                        color(fillColor),
+                    )
+                ),
+                circleStrokeColor(outlineColor),
+                // Stroke width rides the base (non-selection-scaled) radius so the selected circle
+                // keeps the same ring weight as every other stop even though it's drawn larger.
                 circleStrokeWidth(
-                    radiusExpression(RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX)
+                    radiusExpression(
+                        STROKE_MIN_RADIUS_PROPERTY,
+                        STROKE_MAX_RADIUS_PROPERTY,
+                        RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX,
+                    )
                 ),
                 circleSortKey(get(MAX_RADIUS_PROPERTY)),
             )
@@ -80,8 +97,8 @@ internal class MapLibreRouteStopCircleLayer(
             CircleLayer(INNER_LAYER_ID, SOURCE_ID)
                 .withFilter(eq(get(SELECTED_PROPERTY), true))
                 .withProperties(
-                    circleRadius(radiusExpression(RouteStopCircles.INNER_RADIUS_SCALE)),
-                    circleColor(RouteStopCircles.STROKE_COLOR),
+                    circleRadius(radiusExpression(scale = RouteStopCircles.INNER_RADIUS_SCALE)),
+                    circleColor(outlineColor),
                     circleSortKey(get(MAX_RADIUS_PROPERTY)),
                 )
         )
@@ -110,6 +127,12 @@ internal class MapLibreRouteStopCircleLayer(
                     RouteStopCircles.RADIUS_PX * stopFocusMinScale * selectedScale,
                 )
                 addNumberProperty(MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX * selectedScale)
+                // Base radii without the selection scale, so the stroke-width ramp stays constant weight.
+                addNumberProperty(
+                    STROKE_MIN_RADIUS_PROPERTY,
+                    RouteStopCircles.RADIUS_PX * stopFocusMinScale,
+                )
+                addNumberProperty(STROKE_MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX)
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
@@ -147,11 +170,15 @@ internal class MapLibreRouteStopCircleLayer(
      * top-level step or interpolate expression"), so keeping `zoom()` at the top level is required;
      * scaling the stop outputs is mathematically equivalent for a linear interpolation. (#1927)
      */
-    private fun radiusExpression(scale: Float = 1f): Expression = interpolate(
+    private fun radiusExpression(
+        minProperty: String = MIN_RADIUS_PROPERTY,
+        maxProperty: String = MAX_RADIUS_PROPERTY,
+        scale: Float = 1f,
+    ): Expression = interpolate(
         linear(),
         zoom(),
-        stop(DETAIL_RAMP_START_ZOOM, scaledRadius(MIN_RADIUS_PROPERTY, scale)),
-        stop(DETAIL_RAMP_END_ZOOM, scaledRadius(MAX_RADIUS_PROPERTY, scale)),
+        stop(DETAIL_RAMP_START_ZOOM, scaledRadius(minProperty, scale)),
+        stop(DETAIL_RAMP_END_ZOOM, scaledRadius(maxProperty, scale)),
     )
 
     private fun scaledRadius(property: String, scale: Float): Expression =
@@ -165,6 +192,8 @@ internal class MapLibreRouteStopCircleLayer(
         const val SELECTED_PROPERTY = "selected"
         const val MIN_RADIUS_PROPERTY = "minRadius"
         const val MAX_RADIUS_PROPERTY = "maxRadius"
+        const val STROKE_MIN_RADIUS_PROPERTY = "strokeMinRadius"
+        const val STROKE_MAX_RADIUS_PROPERTY = "strokeMaxRadius"
         const val TAP_RADIUS_DP = 12f
     }
 }

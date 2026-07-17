@@ -103,7 +103,13 @@ class GoogleMapRenderer(
     private val stopMarkerLayer = GoogleStopMarkerLayer(map, context)
     // The GoogleRouteStopLayer seam keeps route-stop drawing strategies swappable behind one line.
     private val routeStopLayer: GoogleRouteStopLayer =
-        GoogleRouteStopBitmapLayer(map, context.resources.displayMetrics.density)
+        GoogleRouteStopBitmapLayer(
+            map,
+            context.resources.displayMetrics.density,
+            ContextCompat.getColor(context, R.color.route_stop_fill),
+            ContextCompat.getColor(context, R.color.map_stop_focus),
+            ContextCompat.getColor(context, R.color.route_stop_outline),
+        )
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()

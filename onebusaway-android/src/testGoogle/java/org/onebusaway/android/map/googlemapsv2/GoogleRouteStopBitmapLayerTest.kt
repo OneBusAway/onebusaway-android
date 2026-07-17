@@ -22,17 +22,17 @@ class GoogleRouteStopBitmapLayerTest {
     @Test
     fun `ordinary route mode keeps the normal fixed bitmap size`() {
         assertEquals(60, diameter(zoom = 10f, stopFocused = false, selected = false))
-        assertEquals(90, diameter(zoom = 18f, stopFocused = false, selected = true))
+        assertEquals(108, diameter(zoom = 18f, stopFocused = false, selected = true))
     }
 
     @Test
     fun `stop focus bitmap size follows the zoom ramp`() {
         assertEquals(18, diameter(zoom = 10f, stopFocused = true, selected = false))
-        assertEquals(27, diameter(zoom = 11f, stopFocused = true, selected = true))
+        assertEquals(32, diameter(zoom = 11f, stopFocused = true, selected = true))
         assertEquals(39, diameter(zoom = 13.5f, stopFocused = true, selected = false))
-        assertEquals(59, diameter(zoom = 13.5f, stopFocused = true, selected = true))
+        assertEquals(70, diameter(zoom = 13.5f, stopFocused = true, selected = true))
         assertEquals(60, diameter(zoom = 16f, stopFocused = true, selected = false))
-        assertEquals(90, diameter(zoom = 18f, stopFocused = true, selected = true))
+        assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true))
     }
 
     private fun diameter(zoom: Float, stopFocused: Boolean, selected: Boolean): Int =

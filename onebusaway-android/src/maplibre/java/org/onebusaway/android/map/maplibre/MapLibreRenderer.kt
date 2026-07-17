@@ -166,7 +166,14 @@ class MapLibreRenderer(
     private var pingStart: WallTime? = null
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
     private val density = context.resources.displayMetrics.density
-    private val routeStopCircleLayer = MapLibreRouteStopCircleLayer(map, mapStyle, density)
+    private val routeStopCircleLayer = MapLibreRouteStopCircleLayer(
+        map,
+        mapStyle,
+        density,
+        ContextCompat.getColor(context, R.color.route_stop_fill),
+        ContextCompat.getColor(context, R.color.map_stop_focus),
+        ContextCompat.getColor(context, R.color.route_stop_outline),
+    )
     // Reused across the ripple's frames — redrawn in place rather than reallocated each frame (the ring
     // is a bitmap because the classic annotation API has no circle). Freed with the ping in clearPing.
     private var pingBitmap: Bitmap? = null

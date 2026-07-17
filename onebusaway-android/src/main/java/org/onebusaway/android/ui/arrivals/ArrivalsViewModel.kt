@@ -101,17 +101,33 @@ class ArrivalsViewModel @AssistedInject constructor(
         private set
 
     /**
+     * Bumped at the start of every [refresh]; a refresh applies its result only while it's still the
+     * latest. The poll loop awaits its own `refresh()` sequentially, but [manualRefresh]/[loadMore]
+     * each launch one, so a user refresh can run concurrently with an in-flight poll and finish out of
+     * order — without this guard the older-started one's `loaded.value = data` would clobber the fresher
+     * result (a spurious stale flag / older arrivals). Confined to the ViewModel dispatcher (the only
+     * suspension in [refresh] is the fetch), so a plain `Int` needs no synchronization. See #1933.
+     */
+    private var refreshGeneration = 0
+
+    /**
      * Loads the arrivals once. Suspends until done so the screen's polling loop can measure the
      * 60s interval from completion. A failed refresh keeps any existing content (the repository
      * already returns the last good data as stale); it only surfaces [ArrivalsUiState.Error]
      * when there is nothing to show.
      *
-     * Returns true when a *fresh* network response landed — a stale fallback (the repository
-     * returns the last good data flagged `isStale` on failure-with-content) or a hard failure
-     * returns false. Consumed by [loadMore]; the poll loop ignores it.
+     * Returns true when a *fresh* network response landed and was applied — a stale fallback (the
+     * repository returns the last good data flagged `isStale` on failure-with-content), a hard failure,
+     * or a completion superseded by a newer refresh (#1933) returns false. Consumed by [loadMore]; the
+     * poll loop ignores it.
      */
     suspend fun refresh(): Boolean {
+        val generation = ++refreshGeneration
         val result = repository.getArrivals(stopId, minutesAfter)
+        // A newer refresh started while this one was in flight — drop this (now stale) completion so it
+        // can't overwrite the fresher state, emit an out-of-date map snapshot, or push the poll timer
+        // (measured against the *shown* data) past the fresher completion. See #1933.
+        if (generation != refreshGeneration) return false
         lastResponseTime = WallTime.now()
         return result.fold(
             onSuccess = { data ->

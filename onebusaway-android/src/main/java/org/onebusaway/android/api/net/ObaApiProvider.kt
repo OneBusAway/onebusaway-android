@@ -19,6 +19,7 @@ import android.net.Uri
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -52,7 +53,9 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> call(block: suspend (ObaWebService) -> T): Result<T> {
         val service = service() ?: return Result.failure(noEndpoint())
-        return runCatching { block(service) }
+        // runCatching catches everything, so a cancelled coroutine's CancellationException would become
+        // a Result.failure and stop propagating; rethrow it so cancellation still unwinds normally.
+        return runCatching { block(service) }.onFailure { if (it is CancellationException) throw it }
     }
 
     /**
@@ -61,7 +64,7 @@ class ObaApiProvider @Inject constructor(
      */
     suspend fun <T> callOrNull(block: suspend (ObaWebService) -> T): Result<T?> {
         val service = service() ?: return Result.success(null)
-        return runCatching { block(service) }
+        return runCatching { block(service) }.onFailure { if (it is CancellationException) throw it }
     }
 
     /**

@@ -17,6 +17,7 @@ package org.onebusaway.android.api.data
 
 import android.util.Log
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.api.contract.StudyResponse
 import org.onebusaway.android.api.contract.SurveyWebService
 import org.onebusaway.android.models.Survey
@@ -53,7 +54,10 @@ class DefaultSurveyDataSource @Inject constructor(
 
     override suspend fun studies(url: String, userId: String?): Result<List<Survey>> = runCatching {
         service.getStudy(url, userId).toSurveys()
-    }.onFailure { Log.e(TAG, "studies failed", it) }
+    }.onFailure {
+        if (it is CancellationException) throw it
+        Log.e(TAG, "studies failed", it)
+    }
 
     override suspend fun submit(
         url: String,
@@ -73,7 +77,10 @@ class DefaultSurveyDataSource @Inject constructor(
             stopLongitude = stopLongitude,
             responses = responses,
         ).let { SurveySubmitResult(it.surveyResponse?.id) }
-    }.onFailure { Log.e(TAG, "submit failed", it) }
+    }.onFailure {
+        if (it is CancellationException) throw it
+        Log.e(TAG, "submit failed", it)
+    }
 
     private companion object {
         const val TAG = "SurveyDataSource"

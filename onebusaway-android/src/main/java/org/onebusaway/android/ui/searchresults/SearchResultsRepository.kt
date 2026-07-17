@@ -21,6 +21,7 @@ import org.onebusaway.android.api.data.RoutesNearResult
 import javax.inject.Inject
 import android.location.Location
 import java.io.IOException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.database.oba.ImportGate
@@ -57,8 +58,14 @@ class DefaultSearchResultsRepository @Inject constructor(
             ?: return@coroutineScope Result.failure(IOException("No search location available"))
 
         // Each search resolves a non-OK code / transport failure to Result.failure (requireData).
-        val routes = async { runCatching { searchRoutes(query, center) } }
-        val stops = async { runCatching { searchStops(query, center) } }
+        // Keep a cancelled search from being coalesced into Result.failure here; rethrowing lets it
+        // propagate through await() and cancel the sibling search too.
+        val routes = async {
+            runCatching { searchRoutes(query, center) }.onFailure { if (it is CancellationException) throw it }
+        }
+        val stops = async {
+            runCatching { searchStops(query, center) }.onFailure { if (it is CancellationException) throw it }
+        }
         val routeResult = routes.await()
         val stopResult = stops.await()
 
@@ -73,7 +80,11 @@ class DefaultSearchResultsRepository @Inject constructor(
         // The favourite/custom-name enrichment is best-effort: a DB hiccup here must not fail a search
         // that already has route/stop results, so treat it as a soft miss (empty map) like the lookups.
         importGate.awaitReady()
-        val userInfo = runCatching { stopDao.userInfoMap().toStopUserInfoMap() }.getOrDefault(emptyMap())
+        val userInfo = runCatching { stopDao.userInfoMap().toStopUserInfoMap() }
+            .getOrElse {
+                if (it is CancellationException) throw it
+                emptyMap()
+            }
         val items = buildList {
             routeResult.getOrNull()?.let { result ->
                 result.routes.forEach { add(toRoute(it, result.agencyNames)) }

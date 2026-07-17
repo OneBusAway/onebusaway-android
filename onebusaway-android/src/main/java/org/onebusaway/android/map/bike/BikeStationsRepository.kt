@@ -17,6 +17,7 @@ package org.onebusaway.android.map.bike
 
 import javax.inject.Inject
 import android.location.Location
+import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toBikeStations
 import org.onebusaway.android.api.contract.BikeWebService
@@ -54,12 +55,15 @@ class DefaultBikeStationsRepository @Inject constructor(
         val useOld = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false)
         try {
             fetch(base, useOld, southWest, northEast)
+        } catch (e: CancellationException) {
+            // Don't treat a cancelled fetch as a "wrong URL structure" and retry it on the other path.
+            throw e
         } catch (e: Exception) {
             if (useOld) throw e
             fetch(base, useOldUrlStructure = true, southWest, northEast)
                 .also { prefs.setBoolean(R.string.preference_key_otp_api_url_version, true) }
         }
-    }
+    }.onFailure { if (it is CancellationException) throw it }
 
     private suspend fun fetch(
         base: String,

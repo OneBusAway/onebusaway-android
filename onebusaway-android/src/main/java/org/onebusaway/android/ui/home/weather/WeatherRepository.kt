@@ -19,6 +19,7 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.WeatherWebService
 import org.onebusaway.android.region.RegionRepository
@@ -56,5 +57,5 @@ class DefaultWeatherRepository @Inject constructor(
         val forecast = weatherService.getWeather(url).current_forecast
             ?: throw IOException("No weather forecast for region $regionId")
         WeatherData(forecast.icon ?: "", forecast.temperature, forecast.summary)
-    }
+    }.onFailure { if (it is CancellationException) throw it }
 }

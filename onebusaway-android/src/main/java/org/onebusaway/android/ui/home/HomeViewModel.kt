@@ -114,8 +114,11 @@ class HomeViewModel @Inject constructor(
     // reference to the map's VM (the seam the old MapInteractionBus filled). A Channel, not a
     // replay-0 SharedFlow: MapFeature's collector lives in HOME's composition, so a directive emitted
     // before it (re)subscribes — e.g. a route reveal consumed right after popping back from the search
-    // destination — must queue for the single consumer instead of vanishing.
-    private val _mapDirectives = Channel<MapDirective>(capacity = 16)
+    // destination — must queue for the single consumer instead of vanishing. UNLIMITED (not a fixed
+    // capacity): the whole point is to never drop a queued directive, and trySend on a bounded channel
+    // fails silently once it fills — reviving the very drop bug this Channel replaced. Directives are
+    // tiny and low-frequency, so an unbounded buffer costs nothing in practice.
+    private val _mapDirectives = Channel<MapDirective>(capacity = Channel.UNLIMITED)
     val mapDirectives: Flow<MapDirective> = _mapDirectives.receiveAsFlow()
 
     // Telemetry events the host's single HomeAnalyticsEffect reports (region auto-selects, nav/help menu
@@ -533,6 +536,8 @@ class HomeViewModel @Inject constructor(
     }
 
     // trySend keeps these low-frequency one-shot directives synchronous with their semantic action.
+    // On an UNLIMITED channel it can't fail on a full buffer (the drop bug that motivated #1904); it
+    // only returns failure once the channel is closed, which this VM never does.
     private fun emitMapDirective(directive: MapDirective) {
         _mapDirectives.trySend(directive)
     }

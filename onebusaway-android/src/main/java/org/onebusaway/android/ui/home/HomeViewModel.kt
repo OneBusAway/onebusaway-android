@@ -176,7 +176,7 @@ class HomeViewModel @Inject constructor(
         get() {
             val stopId = (_currentFocus.value as? CurrentFocus.Stop)?.stop?.id ?: return emptySet()
             val loaded = loadedTrips ?: return emptySet()
-            return if (loaded.stopId.equals(stopId, ignoreCase = true)) loaded.trips else emptySet()
+            return if (loaded.stopId == stopId) loaded.trips else emptySet()
         }
 
     // The route-directions currently drawn for the focused-stop presentation. Unlike [focusedTrips]
@@ -196,7 +196,7 @@ class HomeViewModel @Inject constructor(
         continuingRoutes: Set<RouteDirectionKey> = emptySet(),
     ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
-        val sameStop = previousId?.equals(stop.id, ignoreCase = true) == true
+        val sameStop = previousId == stop.id
         if (sameStop) return StopFocusTransition.Unchanged
         val current = _currentFocus.value as? CurrentFocus.Stop
         val continuePresentation = when (val selected = current?.selectedRoute) {
@@ -328,7 +328,7 @@ class HomeViewModel @Inject constructor(
         trips: Set<FocusedTrip> = emptySet(),
     ) {
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
-        if (!focus.stop.id.equals(stop.id, ignoreCase = true)) return
+        if (focus.stop.id != stop.id) return
         loadedTrips = LoadedTrips(focus.stop.id, trips)
         presentedRoutes = trips.mapTo(linkedSetOf(), FocusedTrip::routeDirection)
         val pending = pendingFocus
@@ -575,7 +575,7 @@ class HomeViewModel @Inject constructor(
             return
         }
         val returnsToSameStop = from is CurrentFocus.Stop && target is CurrentFocus.Stop &&
-            from.stop.id.equals(target.stop.id, ignoreCase = true)
+            from.stop.id == target.stop.id
         if (returnsToSameStop) {
             val selected = target.selectedRoute
             emitMapDirective(

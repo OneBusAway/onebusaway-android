@@ -34,6 +34,9 @@ interface ObaMapCallbacks {
 
     fun onMapClick(point: GeoPoint?)
 
+    /** A long-press on the map at [point] — the host offers "directions from/to here". */
+    fun onMapLongClick(point: GeoPoint) {}
+
     fun onBikeClick(station: BikeStation)
 
     /** A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker). */

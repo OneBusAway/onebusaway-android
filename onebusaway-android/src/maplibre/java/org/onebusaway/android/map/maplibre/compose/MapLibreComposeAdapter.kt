@@ -298,6 +298,10 @@ private fun wireClicks(
         callbacks.onMapClick(null)
         false
     }
+    map.addOnMapLongClickListener { point ->
+        callbacks.onMapLongClick(GeoPoint(point.latitude, point.longitude))
+        true
+    }
     map.setOnMarkerClickListener { tapped ->
         // A tap on the ping ripple routes through to the vehicle it's centered on (maplibre classic markers
         // can't be made non-interactive like Google's Circle), so it doesn't swallow the vehicle tap (#1764).

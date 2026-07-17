@@ -51,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -124,10 +125,14 @@ fun MapFeature(
     // The sheet-driven FAB lift, computed by HomeScreen from its live SheetState (the map composes only
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
+    // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
+    onMapLongPress: (GeoPoint) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
+    // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
+    val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
 
     // Compose-native permission launcher: deliver the result to the map view model (blue dot) + the
     // home view model (the deferred first-launch region check).
@@ -163,6 +168,10 @@ fun MapFeature(
 
             override fun onMapClick(point: GeoPoint?) {
                 homeViewModel.unfocusMapOneLevel()
+            }
+
+            override fun onMapLongClick(point: GeoPoint) {
+                currentOnMapLongPress(point)
             }
 
             override fun onBikeClick(station: BikeStation) {

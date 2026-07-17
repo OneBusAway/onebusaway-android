@@ -51,6 +51,12 @@ private class FakeArrivalsRepository(
      *  (e.g. to fire a superseding load-more before the first finishes). */
     var gate: CompletableDeferred<Unit>? = null
 
+    /** Per-call gate/result overrides indexed by call order, for driving *overlapping* loads that
+     *  complete out of order (issue #1933). When a slot is present the Nth [getArrivals] awaits that
+     *  gate and returns that result instead of [gate]/[result]. */
+    val callGates = mutableListOf<CompletableDeferred<Unit>>()
+    val callResults = mutableListOf<Result<ArrivalsData>>()
+
     var lastFavoriteSet: Pair<String, Boolean>? = null
 
     var lastFavoriteRoute: FavoriteRouteCall? = null
@@ -72,9 +78,10 @@ private class FakeArrivalsRepository(
         stopId: String,
         minutesAfter: Int
     ): Result<ArrivalsData> {
+        val call = requestedMinutesAfter.size
         requestedMinutesAfter.add(minutesAfter)
-        gate?.await()
-        return result
+        (callGates.getOrNull(call) ?: gate)?.await()
+        return callResults.getOrNull(call) ?: result
     }
 
     override suspend fun setStopFavorite(stopId: String, favorite: Boolean) {
@@ -252,6 +259,38 @@ class ArrivalsViewModelTest {
 
         // Only one widen (65 -> 125), not two.
         assertEquals(listOf(65, 125), repository.requestedMinutesAfter)
+    }
+
+    // --- Overlapping out-of-order refreshes (latest-wins guard, #1933) -------------------------
+
+    @Test
+    fun `an out-of-order overlapping refresh cannot clobber the fresher result with a stale one`() = runTest {
+        // The poll refresh (call #0) starts first but lands LAST as a stale fallback; a user refresh
+        // (call #1) starts later and lands FIRST with fresh data. The stale, older-started completion
+        // must not overwrite the fresh one it superseded. Regression for #1933.
+        val repository = FakeArrivalsRepository(Result.success(data()))
+        repository.callGates += CompletableDeferred() // call #0 (poll)
+        repository.callGates += CompletableDeferred() // call #1 (user refresh)
+        repository.callResults += Result.success(data(minutesAfter = 65, isStale = true)) // #0 stale fallback
+        repository.callResults += Result.success(data(minutesAfter = 125, isStale = false)) // #1 fresh
+        val viewModel = ArrivalsViewModel("1_100", repository)
+
+        viewModel.manualRefresh() // poll-like refresh, parks on gate #0
+        viewModel.manualRefresh() // superseding refresh, parks on gate #1
+
+        // The later-started refresh lands first with fresh data.
+        repository.callGates[1].complete(Unit)
+        advanceUntilIdle()
+        val fresh = viewModel.state.value as ArrivalsUiState.Content
+        assertFalse(fresh.isStale)
+        assertEquals(ServerTime(125 * 60_000L), fresh.windowEnd)
+
+        // The earlier-started refresh lands last as a stale fallback — it must be dropped, not applied.
+        repository.callGates[0].complete(Unit)
+        advanceUntilIdle()
+        val afterStale = viewModel.state.value as ArrivalsUiState.Content
+        assertFalse(afterStale.isStale)
+        assertEquals(ServerTime(125 * 60_000L), afterStale.windowEnd)
     }
 
     @Test

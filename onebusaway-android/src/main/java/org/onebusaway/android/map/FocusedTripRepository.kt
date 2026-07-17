@@ -19,8 +19,6 @@ import android.location.Location
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -31,15 +29,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.onebusaway.android.api.data.RouteStopsDataSource
-import org.onebusaway.android.extrapolation.data.BoundedLruCache
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteStopGroup
-import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.SingleFlight
 
 data class FocusedTripShape(
@@ -66,39 +62,12 @@ interface FocusedTripRepository {
 }
 
 private const val MAX_CONCURRENT_SHAPE_FETCHES = 2
-private const val MAX_CACHED_FOCUS_DATA = 32
-private val FOCUS_DATA_CACHE_TTL = 10.minutes
-
-private data class CachedValue<V>(val value: V, val storedAt: ElapsedTime)
-
-private class ExpiringLruCache<K : Any, V : Any>(
-    maxSize: Int,
-    private val ttl: Duration,
-    private val now: () -> ElapsedTime,
-) {
-    private val values = BoundedLruCache<K, CachedValue<V>>(maxSize)
-
-    @Synchronized
-    fun get(key: K): V? {
-        val cached = values.get(key) ?: return null
-        return if (now() - cached.storedAt < ttl) cached.value else {
-            values.remove(key)
-            null
-        }
-    }
-
-    @Synchronized
-    fun put(key: K, value: V) = values.put(key, CachedValue(value, now()))
-}
 
 @Singleton
 class DefaultFocusedTripRepository internal constructor(
     private val observations: TripObservationRepository,
-    private val routeStops: RouteStopsDataSource,
+    private val stopsForRoute: StopsForRouteRepository,
     fetchScope: CoroutineScope,
-    cacheSize: Int = MAX_CACHED_FOCUS_DATA,
-    cacheTtl: Duration = FOCUS_DATA_CACHE_TTL,
-    now: () -> ElapsedTime = ElapsedTime::now,
     // Injectable so the JVM tests (which exercise the failure path) don't hit android.util.Log.
     private val logFailure: (message: String, cause: Exception) -> Unit = { message, cause ->
         Log.w(TAG, message, cause)
@@ -108,18 +77,15 @@ class DefaultFocusedTripRepository internal constructor(
     @Inject
     constructor(
         observations: TripObservationRepository,
-        routeStops: RouteStopsDataSource,
+        stopsForRoute: StopsForRouteRepository,
     ) : this(
         observations,
-        routeStops,
+        stopsForRoute,
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
     )
 
-    private val routeStopFetches = SingleFlight<String, List<RouteStopGroup>>(fetchScope)
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
     private val shapePermits = Semaphore(MAX_CONCURRENT_SHAPE_FETCHES)
-    private val routeStopCache =
-        ExpiringLruCache<String, List<RouteStopGroup>>(cacheSize, cacheTtl, now)
 
     override suspend fun getGeometry(trips: Set<FocusedTrip>): FocusedTripGeometry = coroutineScope {
         val tripsWithShapes = ArrayList<FocusedTrip>()
@@ -182,11 +148,12 @@ class DefaultFocusedTripRepository internal constructor(
         FocusedTripStops(stopIdsByTripId, stopsById)
     }
 
-    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup>? =
-        routeStopCache.get(routeId) ?: routeStopFetches.run(routeId) {
-            routeStopCache.get(routeId) ?: routeStops.stopsForRoute(routeId).getOrNull()
-                ?.also { routeStopCache.put(routeId, it) }
-        }
+    // Caching + coalescing live in the shared StopsForRouteRepository, so the same fetch backs the
+    // route overlay and route-info screen — a stop's routes are never fetched twice. A failure is
+    // rethrown here so resolveOrNull catches and logs it (keeping a real API failure distinguishable
+    // from genuinely empty data), like the schedule sibling above.
+    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup> =
+        stopsForRoute.routeStopGroups(routeId).getOrThrow()
 
     /**
      * A failed trip/route is omitted (logged, so it stays distinguishable from genuinely absent data)

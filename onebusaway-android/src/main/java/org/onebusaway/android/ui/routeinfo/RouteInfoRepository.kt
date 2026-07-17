@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui.routeinfo
 
 import org.onebusaway.android.api.data.RouteDataSource
-import org.onebusaway.android.api.data.RouteStopsDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 
 import android.content.Context
 import android.util.Log
@@ -47,16 +47,16 @@ interface RouteInfoRepository {
 
 /**
  * Default implementation backed by the modernized client: the route metadata comes from the shared
- * [RouteDataSource] and the stops-for-route from [RouteStopsDataSource], fetched in parallel (matching
- * the legacy screen's two concurrent loaders). Registers the route in the recents/search provider on
- * success. Stays on [Dispatchers.IO] for that blocking provider write; all Android statics are
- * quarantined here so [RouteInfoViewModel] stays JVM-testable.
+ * [RouteDataSource] and the stops-for-route from the shared caching [StopsForRouteRepository], fetched
+ * in parallel (matching the legacy screen's two concurrent loaders). Registers the route in the
+ * recents/search provider on success. Stays on [Dispatchers.IO] for that blocking provider write; all
+ * Android statics are quarantined here so [RouteInfoViewModel] stays JVM-testable.
  */
 class DefaultRouteInfoRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val routeRepository: RouteDataSource,
-    private val routeStopsRepository: RouteStopsDataSource,
+    private val stopsForRoute: StopsForRouteRepository,
     private val routeDao: RouteDao,
     private val importGate: ImportGate,
 ) : RouteInfoRepository {
@@ -67,7 +67,7 @@ class DefaultRouteInfoRepository @Inject constructor(
                 // Fetch route metadata and stops-for-route in parallel; both complete before unwrap.
                 val (routeResult, stopsResult) = coroutineScope {
                     val routeDeferred = async { routeRepository.getRoute(routeId) }
-                    val stopsDeferred = async { routeStopsRepository.stopsForRoute(routeId) }
+                    val stopsDeferred = async { stopsForRoute.routeStopGroups(routeId) }
                     routeDeferred.await() to stopsDeferred.await()
                 }
                 val route = routeResult.getOrThrow()

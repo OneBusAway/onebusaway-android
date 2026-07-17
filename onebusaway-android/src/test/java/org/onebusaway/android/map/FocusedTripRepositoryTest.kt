@@ -11,15 +11,15 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
-import org.onebusaway.android.api.data.RouteStopsDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
-import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.Polyline
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -45,10 +45,11 @@ class FocusedTripRepositoryTest {
         override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = null
     }
 
-    private class RouteStops : RouteStopsDataSource {
+    private class RouteStops : StopsForRouteRepository {
         val catalogs = mutableMapOf<String, Result<List<RouteStopGroup>>>()
-        override suspend fun stopsForRoute(routeId: String): Result<List<RouteStopGroup>> =
+        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> =
             catalogs[routeId] ?: Result.success(emptyList())
+        override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
     }
 
     @Test
@@ -63,9 +64,7 @@ class FocusedTripRepositoryTest {
                 listOf(RouteStopGroup("outbound", listOf(stop("a"), stop("b"), stop("c"))))
             )
         }
-        val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, routes, backgroundScope)
 
         val result = repository.getStops(setOf(FocusedTrip("trip", "route", "shape", null)))
 
@@ -80,9 +79,7 @@ class FocusedTripRepositoryTest {
             shapes["shared"] = Polyline(emptyList())
             shapes["missing"] = null
         }
-        val repository = DefaultFocusedTripRepository(
-            observations, RouteStops(), backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, RouteStops(), backgroundScope)
 
         val result = repository.getGeometry(
             setOf(
@@ -111,7 +108,7 @@ class FocusedTripRepositoryTest {
         }
         val loggedFailures = mutableListOf<String>()
         val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope, now = { ElapsedTime(0L) },
+            observations, routes, backgroundScope,
             logFailure = { message, _ -> loggedFailures += message },
         )
 
@@ -135,9 +132,7 @@ class FocusedTripRepositoryTest {
         // no TTL). So a later focus on the same shape re-queries ensureShape — cheap in production,
         // where the polyline is already cached there — rather than memoizing decoded points here.
         val observations = Observations().apply { shapes["shared"] = Polyline(emptyList()) }
-        val repository = DefaultFocusedTripRepository(
-            observations, RouteStops(), backgroundScope, now = { ElapsedTime(0L) }
-        )
+        val repository = DefaultFocusedTripRepository(observations, RouteStops(), backgroundScope)
 
         repository.getGeometry(setOf(FocusedTrip("older-trip", "route", "shared", null)))
         repository.getGeometry(setOf(FocusedTrip("newer-trip", "route", "shared", null)))

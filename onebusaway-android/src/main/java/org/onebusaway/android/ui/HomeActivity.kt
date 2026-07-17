@@ -54,6 +54,8 @@ import org.onebusaway.android.ui.home.HomeScreen
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeDestinationDeps
+import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.home.LaunchIntentChannel
 import org.onebusaway.android.ui.home.LaunchIntentEffect
 import org.onebusaway.android.ui.home.SettingsRehomeEffect
@@ -110,6 +112,12 @@ class HomeActivity : AppCompatActivity() {
     // The help / what's-new / legend dialogs feature module. Activity-scoped.
     private val helpViewModel: HelpViewModel by viewModels()
 
+    // Trip planner, now hosted on HOME (directions focus) rather than a standalone destination. Activity-
+    // scoped so the reactive form + results survive config changes while HOME is on screen; TripPlanViewModel
+    // persists its form via the activity's SavedStateHandle.
+    private val tripPlanViewModel: TripPlanViewModel by viewModels()
+    private val tripResultsViewModel: TripResultsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -146,6 +154,8 @@ class HomeActivity : AppCompatActivity() {
                         donationViewModel = donationViewModel,
                         weatherViewModel = weatherViewModel,
                         helpViewModel = helpViewModel,
+                        tripPlanViewModel = tripPlanViewModel,
+                        tripResultsViewModel = tripResultsViewModel,
                         arrivalsViewModelFactory = arrivalsViewModelFactory,
                         activityActions = activityActions,
                     ),

@@ -40,7 +40,7 @@ internal fun focusBannerTopEdge(
     focusBannerBottomPx: Int,
 ): Int = when (focus) {
     is CurrentFocus.Route, is CurrentFocus.Stop -> focusBannerBottomPx
-    CurrentFocus.None, is CurrentFocus.BikeStation -> 0
+    CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions -> 0
 }
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */

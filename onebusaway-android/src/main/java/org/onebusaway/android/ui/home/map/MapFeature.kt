@@ -275,6 +275,9 @@ fun MapFeature(
                         directive.recenter,
                         directive.animate,
                     )
+                is MapDirective.ShowItinerary ->
+                    mapViewModel.showItinerary(directive.itinerary)
+                MapDirective.ClearItinerary -> mapViewModel.clearShownItinerary()
             }
         }
     }

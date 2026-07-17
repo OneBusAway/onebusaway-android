@@ -39,6 +39,7 @@ internal object CurrentFocusPersistence {
     private const val FOCUS_STOP = "stop"
     private const val FOCUS_ROUTE = "route"
     private const val FOCUS_BIKE = "bike"
+    private const val FOCUS_DIRECTIONS = "directions"
     private const val NO_DIRECTION = Int.MIN_VALUE
 
     fun read(state: SavedStateHandle): CurrentFocus {
@@ -49,6 +50,7 @@ internal object CurrentFocusPersistence {
             FOCUS_ROUTE -> readRouteTarget(state)?.let { CurrentFocus.Route(it) } ?: CurrentFocus.None
             FOCUS_BIKE -> state.get<String>(KEY_BIKE_STATION)?.let { CurrentFocus.BikeStation(it) }
                 ?: CurrentFocus.None
+            FOCUS_DIRECTIONS -> CurrentFocus.Directions
             FOCUS_NONE -> CurrentFocus.None
             else -> readLegacyFocus(state, stop)
         }
@@ -60,6 +62,7 @@ internal object CurrentFocusPersistence {
             is CurrentFocus.Stop -> FOCUS_STOP
             is CurrentFocus.Route -> FOCUS_ROUTE
             is CurrentFocus.BikeStation -> FOCUS_BIKE
+            CurrentFocus.Directions -> FOCUS_DIRECTIONS
         }
         val stop = (focus as? CurrentFocus.Stop)?.stop
         state[KEY_STOP_ID] = stop?.id

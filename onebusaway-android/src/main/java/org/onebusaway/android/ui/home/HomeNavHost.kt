@@ -67,6 +67,8 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.nav.extraDestinations
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.mylists.myListsGraph
+import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -103,6 +105,8 @@ class HomeDestinationDeps(
     val donationViewModel: DonationViewModel,
     val weatherViewModel: WeatherViewModel,
     val helpViewModel: HelpViewModel,
+    val tripPlanViewModel: TripPlanViewModel,
+    val tripResultsViewModel: TripResultsViewModel,
     val arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     val activityActions: HomeActivityActions,
 )
@@ -178,7 +182,12 @@ fun HomeNavHost(
                     onStarredStops = { menuNav(NavRoutes.HOME_STARRED_STOPS, R.string.analytics_label_button_press_star) },
                     onStarredRoutes = { menuNav(NavRoutes.HOME_STARRED_ROUTES, R.string.analytics_label_button_press_star) },
                     onReminders = { menuNav(NavRoutes.MY_REMINDERS, R.string.analytics_label_button_press_reminders) },
-                    onPlanTrip = { menuNav(NavRoutes.TRIP_PLAN, R.string.analytics_label_button_press_trip_plan) },
+                    // Trip planning is now an on-map directions focus (compact form in the top chrome +
+                    // itinerary on the home map), not a separate destination.
+                    onPlanTrip = {
+                        home.homeViewModel.enterDirections(home.mapViewModel.viewport)
+                        home.homeViewModel.reportMenuAnalytics(R.string.analytics_label_button_press_trip_plan)
+                    },
                     onSettings = { menuNav(NavRoutes.SETTINGS, R.string.analytics_label_button_press_settings) },
                     onSearch = { query -> navController.navigateFromHome(NavRoutes.search(query)) },
                     onRecentStopsRoutes = {
@@ -213,6 +222,8 @@ fun HomeNavHost(
                 donationViewModel = home.donationViewModel,
                 weatherViewModel = home.weatherViewModel,
                 helpViewModel = home.helpViewModel,
+                tripPlanViewModel = home.tripPlanViewModel,
+                tripResultsViewModel = home.tripResultsViewModel,
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
                 callbacks = callbacks,
             )

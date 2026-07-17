@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
@@ -89,8 +90,9 @@ data class RouteHeader(
  * binds to the host.
  *
  * Other map screens have their own slim view models over the same building blocks — `StopsMapViewModel`
- * (the report + location-picker maps) and `DirectionsMapViewModel` (the trip-plan results map) — so
- * they pull in only the controllers they use rather than this whole coordinator.
+ * (the report + location-picker maps) — so they pull in only the controllers they use rather than this
+ * whole coordinator. Trip-plan directions now render on this home map too (the [DirectionsMapController]
+ * session below), rather than a separate results-map view model.
  *
  * Scoped to the hosting Activity (obtained via `by viewModels()`), so the home screen + the trip-focus
  * destination share one model and the rendered state survives a configuration change. Its data
@@ -215,6 +217,13 @@ class MapViewModel @Inject constructor(
         scope = viewModelScope,
     )
 
+    // The trip-plan directions use case (draws an itinerary's legs + start/end pins). Reused from the
+    // standalone trip-results map so the home map can render directions itself. `directionsActive` is the
+    // mode flag (paralleling `routeController.isActive` for route mode); it gates teardown in
+    // [leaveCurrentView].
+    private val directionsController = DirectionsMapController(mapHost)
+    private var directionsActive = false
+
     // Keeps vehicle markers clear of whichever top control anchors route focus: the standalone route
     // banner or, for a route selected within stop focus, the always-visible search field.
     private val focusBannerMarkerPaddingPx =
@@ -267,8 +276,8 @@ class MapViewModel @Inject constructor(
     // There is no stored "mode" field: [RouteMapController.routeId] is the single source of truth
     // for whether a route is shown. Each transition tears down the prior view, persists the intended
     // restore view, and starts the new view's loaders. The home bike layer is gated purely by the user's
-    // layer toggle (directions — the only thing that forces bikes on / filters them — is its own
-    // DirectionsMapViewModel), so both transitions start it the same way.
+    // layer toggle; directions — the only thing that forces bikes on / filters them — is handled by the
+    // [showItinerary] session below, so both nearby/route transitions start the bike layer the same way.
 
     /** Show nearby stops in the current viewport (the default home view). */
     fun showNearbyStops() {
@@ -322,6 +331,11 @@ class MapViewModel @Inject constructor(
      */
     private fun leaveCurrentView(clearStopFocus: Boolean) {
         if (clearStopFocus) routeController.clearStopFocus()
+        if (directionsActive) {
+            directionsController.clear()
+            renderState.clearRoutePolylines()
+            directionsActive = false
+        }
         stopsController.stop()
         routeController.stop()
         bikeController.stop()
@@ -433,6 +447,35 @@ class MapViewModel @Inject constructor(
                 preserveStopFocus = stopScoped,
             )
         }
+    }
+
+    /**
+     * Draw [itinerary] on the home map (trip-plan directions focus) via the [DirectionsMapController]
+     * session. The first call leaves the current view (dropping
+     * stop/route focus + nearby stops) and enters directions mode; later calls (a different option
+     * selected) just redraw the legs/pins. Deliberately does not restart the nearby-stops loader —
+     * directions hides nearby stops. Exiting (any other transition → [leaveCurrentView]) tears it down.
+     */
+    fun showItinerary(itinerary: TripItinerary) {
+        if (!directionsActive) {
+            leaveCurrentView(clearStopFocus = true)
+            persistRoute(null)
+            directionsActive = true
+        }
+        directionsController.clear()
+        renderState.clearRoutePolylines()
+        directionsController.start(itinerary)
+        bikeController.start(
+            directions = true,
+            selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary),
+        )
+    }
+
+    /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */
+    fun clearShownItinerary() {
+        if (!directionsActive) return
+        directionsController.clear()
+        renderState.clearRoutePolylines()
     }
 
     /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */

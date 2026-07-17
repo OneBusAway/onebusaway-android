@@ -112,8 +112,9 @@ class GoogleMapRenderer(
     // the single selected vehicle), but kept as a map like the other *ByMarker lookups for symmetry.
     private val continuationBadgeByMarker = HashMap<Marker, ContinuationBadge>()
 
-    // Google-first adjacency route badge tap targets (#1827). Their geographic anchors are laid out
-    // once upstream; these markers then move naturally with the map through pan and zoom.
+    // Adjacency route badge tap targets (#1827), mirrored by the maplibre flavor (#1913). Their
+    // geographic anchors are laid out once upstream; these markers then move naturally with the map
+    // through pan and zoom.
     private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
 
     // The latest trips-for-route poll, published as it changes (after the markers are reconciled). The

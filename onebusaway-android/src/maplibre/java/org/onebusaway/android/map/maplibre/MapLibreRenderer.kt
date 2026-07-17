@@ -42,6 +42,7 @@ import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
+import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapPing
@@ -49,6 +50,7 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
@@ -60,6 +62,7 @@ import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -97,6 +100,11 @@ class MapLibreRenderer(
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
+
+    // Adjacency route badge tap targets (#1827), mirroring the Google flavor's routeBadgeByMarker.
+    // Their geographic anchors are laid out once upstream; these markers then move naturally with the
+    // map through pan and zoom.
+    private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
 
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
     // the next so the retained route and per-frame dynamic layers survive a static redraw.
@@ -173,8 +181,9 @@ class MapLibreRenderer(
             staticAnnotations.clear()
         }
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
-        // the bike tap map is cleared here.
+        // the bike / route-badge tap maps are cleared here.
         bikeByMarker.clear()
+        routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
         routeStopCircleLayer.render(
@@ -216,7 +225,35 @@ class MapLibreRenderer(
                 )
             )
         }
+
+        renderRouteBadges(snapshot.routeBadges)
     }
+
+    // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
+    // icon on the point by default, so no anchor call is needed here (contrast Google's explicit
+    // .anchor(0.5f, 0.5f)). Draw order is add-order in maplibre (no z-index on classic markers), so
+    // adding these last keeps them on top of the stops/bikes/generics drawn above.
+    private fun renderRouteBadges(badges: List<RouteBadge>) {
+        for (badge in badges) {
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(badge.point.toLatLng())
+                    .icon(routeBadgeIcon(badge.routeShortName, badge.color))
+            )
+            staticAnnotations.add(marker)
+            routeBadgeByMarker[marker] = badge
+        }
+    }
+
+    private fun routeBadgeIcon(routeShortName: String, color: Int): Icon =
+        iconFactory.fromBitmap(
+            ContinuationBadgeBitmaps.badge(
+                routeShortName,
+                color,
+                density,
+                darkMode = ThemeUtils.isInDarkMode(context),
+            )
+        )
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
@@ -265,6 +302,7 @@ class MapLibreRenderer(
         bandPolylines.clear()
         vehicleByMarker.clear()
         bikeByMarker.clear()
+        routeBadgeByMarker.clear()
         vehicleIconDirection.clear()
         mostRecentDataMarker = null
         lastVehicleResponse = null
@@ -556,6 +594,9 @@ class MapLibreRenderer(
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
+
+    /** The adjacency route badge (#1827) tapped, or null if [marker] isn't one. */
+    fun routeBadgeForMarker(marker: Marker): RouteBadge? = routeBadgeByMarker[marker]
 
     /**
      * If [marker] is the ping ripple, the vehicle marker it's centered on (else null) — so a tap on the

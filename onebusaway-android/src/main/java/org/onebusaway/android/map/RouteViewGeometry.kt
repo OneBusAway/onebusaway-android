@@ -99,9 +99,9 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
         .toRoutePolylines(selectedRoute, routeColors) + selectedRouteUnderlay + selectedTrip
 
 /**
- * One Google-first badge model per successfully drawn route-direction, preserving the focused-trip
- * order that mirrors the arrivals drawer. The shared layout chooses stable geographic line-center
- * anchors; flavor renderers only draw them.
+ * One badge model per successfully drawn route-direction, preserving the focused-trip order that
+ * mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
+ * flavor renderers only draw them.
  */
 internal fun FocusedTripGeometry.toRouteBadges(
     routes: List<ObaRoute>,

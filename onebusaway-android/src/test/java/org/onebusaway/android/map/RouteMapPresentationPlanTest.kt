@@ -79,6 +79,26 @@ class RouteMapPresentationPlanTest {
     }
 
     @Test
+    fun `whole-route mode keeps the base route under a focused stop on the same route`() {
+        // In whole-route mode the emphasized key carries a null direction, which no concrete focused-trip
+        // key equals. That deliberately keeps the base route: basePolylines is then the merged
+        // both-directions shape, so the single-direction adjacency line covers only part of it — dropping
+        // it would erase the unfocused direction and empty the focused-stop presentation.
+        val plan = assemble(
+            emphasizedRoute = RouteDirectionKey("45", null),
+            focusTrips = setOf(trip("t-45", "45", directionId = 0)),
+            focusedGeometry = geometryFor("45", 0),
+            selected = null,
+            projectedFocusStops = { fail("base route stays, so no focused-stop projection") },
+        )
+
+        // Adjacency line for the focused direction + the merged base route drawn underneath it.
+        assertEquals(2, plan.polylines.size)
+        assertSame(baseStops, plan.stopPresentation)
+        assertSame(basePolylines, plan.framingPolylines)
+    }
+
+    @Test
     fun `emphasized route among focused trips drops the base route and builds focused-stop presentation`() {
         val emphasized = RouteDirectionKey("45", 0)
         val projected = mapOf("stop-a" to GeoPoint(2.0, 2.0))

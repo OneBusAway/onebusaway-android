@@ -136,8 +136,15 @@ internal fun assembleRouteMapPresentation(
         )
     }
 
-    // 3. Stop-focus session: adjacency geometry, over the emphasized base route when that route is not
-    //    itself one of the focused trips (otherwise its shape is already drawn by the adjacency layer).
+    // 3. Stop-focus session: adjacency geometry, over the emphasized base route when that route's shape
+    //    isn't already fully drawn by the adjacency layer. The equality is exact (direction included) on
+    //    purpose: in direction mode [emphasizedRoute] is a concrete-direction key, and when a focused
+    //    trip matches it exactly the adjacency layer already draws that shape, so the base is dropped.
+    //    In whole-route mode [emphasizedRoute] carries a null direction that no concrete focused-trip key
+    //    equals — deliberately keeping the base route, because [basePolylines] is then the merged
+    //    both-directions shape and the single-direction adjacency lines cover only part of it (dropping
+    //    it would erase the unfocused direction, and the null-direction key would also empty
+    //    routeDirectionsByStopId's exact-match filter below).
     val showBaseRoute = isActive && emphasizedRoute != null &&
         focusTrips.none { it.routeDirection == emphasizedRoute }
     val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)

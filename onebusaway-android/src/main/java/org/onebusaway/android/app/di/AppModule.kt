@@ -33,11 +33,14 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.TimeProvider
 
 /**
  * Provides process-wide infrastructure singletons that aren't a repository binding: the app-lifetime
- * [AppScope] coroutine scope, the Preferences [DataStore], and the wall-clock [TimeProvider]. (Feature
+ * [AppScope] coroutine scope, the Preferences [DataStore], and the clock sources ([TimeProvider],
+ * [ElapsedClock]). (Feature
  * singletons like `RegionRepository`/`LocationRepository`/`DonationsManager` are real Hilt
  * `@Singleton`s — bound in `RepositoryModule` or constructed from their own `@Inject` constructors, not
  * sourced from `Application` here.)
@@ -79,6 +82,11 @@ object AppModule {
     @Provides
     @Singleton
     fun provideTimeProvider(): TimeProvider = TimeProvider { System.currentTimeMillis() }
+
+    /** Monotonic-clock source — the [ElapsedClock] counterpart of [TimeProvider] (see #1909). */
+    @Provides
+    @Singleton
+    fun provideElapsedClock(): ElapsedClock = ElapsedClock { ElapsedTime.now() }
 
     @Provides
     @Singleton

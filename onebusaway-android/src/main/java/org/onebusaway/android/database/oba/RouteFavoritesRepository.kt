@@ -34,6 +34,27 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.routeDisplayNames
 
 /**
+ * The narrow route-starring surface a consumer needs (the live starred-id set plus the wholesale
+ * star/unstar write), segregated from [RouteFavoritesRepository]'s full dependency set (Context,
+ * analytics, app scope) so a repository that only stars routes — e.g. the arrivals repository — is
+ * JVM-unit-testable with a fake (#1909).
+ */
+interface RouteFavorites {
+
+    /** The starred route ids, live (see [RouteFavoritesRepository.favoriteRouteIds]). */
+    fun favoriteRouteIds(): Flow<Set<String>>
+
+    /** Stars (or unstars) [routeId] wholesale (see [RouteFavoritesRepository.setFavorite]). */
+    suspend fun setFavorite(
+        routeId: String,
+        shortName: String?,
+        longName: String?,
+        url: String?,
+        favorite: Boolean,
+    )
+}
+
+/**
  * The single owner of route-favorite membership — a wholesale `routes.favorite` bit (#1751). The
  * arrival-row star writes through [setFavorite] so the import gating, the row-existence guarantee, and
  * the bookmark analytics live in one place instead of being re-implemented (and drifting) per surface;
@@ -49,11 +70,11 @@ class RouteFavoritesRepository @Inject constructor(
     private val obaAnalytics: ObaAnalytics,
     @param:AppScope private val appScope: CoroutineScope,
     @param:ApplicationContext private val context: Context,
-) {
+) : RouteFavorites {
 
     /** The starred route ids, live: import-gated, and deduped so an unrelated `routes` write (a route
      *  recorded on an arrivals load) doesn't re-emit an identical set. */
-    fun favoriteRouteIds(): Flow<Set<String>> =
+    override fun favoriteRouteIds(): Flow<Set<String>> =
         routeDao.favoriteRouteIds()
             .onStart { importGate.awaitReady() }
             .map { it.toSet() }
@@ -67,7 +88,7 @@ class RouteFavoritesRepository @Inject constructor(
      * then backfilled from the network so the folder always shows a proper long name — regardless of
      * which surface starred it (a starring surface's loaded route often carries an empty long name).
      */
-    suspend fun setFavorite(
+    override suspend fun setFavorite(
         routeId: String,
         shortName: String?,
         longName: String?,

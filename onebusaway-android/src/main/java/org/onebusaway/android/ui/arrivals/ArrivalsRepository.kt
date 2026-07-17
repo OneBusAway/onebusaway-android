@@ -18,8 +18,6 @@ package org.onebusaway.android.ui.arrivals
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.api.data.StopArrivals
 
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -33,7 +31,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 import org.onebusaway.android.database.oba.ImportGate
-import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.markStopUsed
@@ -41,13 +39,13 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.MyTextUtils
-import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.SituationUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -223,22 +221,25 @@ data class AlertDetails(
  * Default implementation over the api [StopArrivalsDataSource]. Ports ArrivalsListLoader's
  * behavior: widen the time window until arrivals are found, and fall back to the last good response
  * when a refresh fails. Builds the [ArrivalInfo] display model plus the per-arrival actions and service
- * alerts on the IO thread (their constructors read ContentProviders). All Android statics are
- * quarantined here so [ArrivalsViewModel] stays JVM-testable.
+ * alerts on the IO thread (their constructors read ContentProviders). The Android edges live behind
+ * the injected [ArrivalsDisplay]/[ElapsedClock] seams, so this class itself — including the
+ * stale-fallback/CAS concurrency below — is JVM-unit-testable with fakes (#1909; see
+ * `DefaultArrivalsRepositoryTest`), and [ArrivalsViewModel] stays JVM-testable above it.
  *
  * Note: this repo is **stateful** ([lastGood]) and 1:1 with its [ArrivalsViewModel], so its
  * `@Binds` is intentionally **unscoped** (a fresh instance per VM) — do NOT make it `@Singleton`,
  * which would share `lastGood` across stops and corrupt per-stop state.
  */
 class DefaultArrivalsRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
     private val stopArrivals: StopArrivalsDataSource,
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
-    private val routeFavorites: RouteFavoritesRepository,
+    private val routeFavorites: RouteFavorites,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
+    private val display: ArrivalsDisplay,
+    private val elapsedClock: ElapsedClock,
 ) : ArrivalsRepository {
 
     /**
@@ -288,7 +289,7 @@ class DefaultArrivalsRepository @Inject constructor(
             onSuccess = { snapshot ->
                 // Stamp the receipt time as close to the response as possible (before the DB reads in
                 // toData), then publish the whole consistent set with one write once [data] is built.
-                val receivedAt = ElapsedTime.now()
+                val receivedAt = elapsedClock.now()
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
@@ -306,7 +307,7 @@ class DefaultArrivalsRepository @Inject constructor(
                     // reintroducing device clock skew (#1612) — a same-domain ElapsedTime subtraction,
                     // so the typed API allows it directly.
                     val now = ServerTime(stale.snapshot.currentTime) +
-                        (ElapsedTime.now() - stale.receivedAt)
+                        (elapsedClock.now() - stale.receivedAt)
                     val data = toData(stale.snapshot, isStale = true, now = now)
                     // Keep the same snapshot/receipt time; refresh only the derived map snapshot so its
                     // stale ETAs advance. CAS so this can't roll back a fresh snapshot a concurrent
@@ -316,8 +317,8 @@ class DefaultArrivalsRepository @Inject constructor(
                 }
                     ?: Result.failure(
                         IOException(
-                            ObaRequestErrors.getStopErrorString(
-                                context, (error as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
+                            display.stopErrorMessage(
+                                (error as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
                             )
                         )
                     )
@@ -340,9 +341,7 @@ class DefaultArrivalsRepository @Inject constructor(
         val includeArrivalDepartureLabel = false
         // Favorite state is a live overlay applied in the ViewModel (from the reactive starred-route
         // set), not baked here — so a star toggle re-flags the list without this re-fetch.
-        val arrivals = convertArrivals(
-            context, snapshot.arrivals, now, includeArrivalDepartureLabel
-        )
+        val arrivals = display.convert(snapshot.arrivals, now, includeArrivalDepartureLabel)
         val stop = snapshot.stop
         val userInfo = stopDao.userInfo(snapshot.stopId)
         val header = StopHeader(

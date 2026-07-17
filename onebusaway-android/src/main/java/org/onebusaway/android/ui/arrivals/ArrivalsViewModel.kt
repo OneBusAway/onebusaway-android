@@ -124,10 +124,11 @@ class ArrivalsViewModel @AssistedInject constructor(
     suspend fun refresh(): Boolean {
         val generation = ++refreshGeneration
         val result = repository.getArrivals(stopId, minutesAfter)
-        lastResponseTime = WallTime.now()
         // A newer refresh started while this one was in flight — drop this (now stale) completion so it
-        // can't overwrite the fresher state or emit an out-of-date map snapshot. See #1933.
+        // can't overwrite the fresher state, emit an out-of-date map snapshot, or push the poll timer
+        // (measured against the *shown* data) past the fresher completion. See #1933.
         if (generation != refreshGeneration) return false
+        lastResponseTime = WallTime.now()
         return result.fold(
             onSuccess = { data ->
                 minutesAfter = data.minutesAfter

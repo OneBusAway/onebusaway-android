@@ -559,6 +559,15 @@ fun HomeScreen(
                             homeViewModel.clearShownItineraryOnMap()
                         }
                     }
+                    // Drop a green/red pin for each resolved From/To endpoint as it's set, before any plan
+                    // (so a single-endpoint state already shows the point). Only while in directions with
+                    // no itinerary yet — the itinerary's own pins supersede these once it draws.
+                    val showEndpointPins = directionsActive && directionsResults == null
+                    val fromPoint = if (showEndpointPins) tripPlanFormState.from.toGeoPoint() else null
+                    val toPoint = if (showEndpointPins) tripPlanFormState.to.toGeoPoint() else null
+                    LaunchedEffect(fromPoint, toPoint) {
+                        homeViewModel.setDirectionsEndpointsOnMap(fromPoint, toPoint)
+                    }
                     // Back cancels an in-progress map pick, else exits directions focus (to nearby stops).
                     BackHandler(enabled = directionsActive) {
                         if (pickTarget != null) pickTarget = null else homeViewModel.exitDirections()
@@ -938,4 +947,11 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
             Box(Modifier.size(width = 32.dp, height = DRAG_HANDLE_BAR_HEIGHT))
         }
     }
+}
+
+/** A resolved endpoint's map point, or null while it's still free text (no coordinates yet). */
+private fun TripEndpoint.toGeoPoint(): GeoPoint? {
+    val lat = lat
+    val lon = lon
+    return if (lat != null && lon != null) GeoPoint(lat, lon) else null
 }

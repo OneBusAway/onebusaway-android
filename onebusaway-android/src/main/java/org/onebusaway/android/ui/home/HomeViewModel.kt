@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
@@ -542,6 +543,10 @@ class HomeViewModel @Inject constructor(
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
 
+    /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
+    fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) =
+        emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
+
     /** Leave directions focus, returning the map to nearby stops. */
     fun exitDirections() = clearMapFocus()
 
@@ -756,4 +761,7 @@ sealed interface MapDirective {
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective
+
+    /** Show the resolved trip-plan From/To endpoints as pins before an itinerary (null drops a pin). */
+    data class SetDirectionsEndpoints(val from: GeoPoint?, val to: GeoPoint?) : MapDirective
 }

@@ -331,6 +331,9 @@ class MapViewModel @Inject constructor(
      */
     private fun leaveCurrentView(clearStopFocus: Boolean) {
         if (clearStopFocus) routeController.clearStopFocus()
+        // Endpoint pins belong only to the directions-before-a-plan state; drop them on any transition
+        // out (they can exist without [directionsActive], which is only set once an itinerary draws).
+        directionsController.clearEndpoints()
         if (directionsActive) {
             directionsController.clear()
             renderState.clearRoutePolylines()
@@ -463,6 +466,7 @@ class MapViewModel @Inject constructor(
             directionsActive = true
         }
         directionsController.clear()
+        directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
         directionsController.start(itinerary)
         bikeController.start(
@@ -477,6 +481,14 @@ class MapViewModel @Inject constructor(
         directionsController.clear()
         renderState.clearRoutePolylines()
     }
+
+    /**
+     * Show the resolved trip-plan From (green) / To (red) endpoints as pins on the home map before a
+     * full itinerary (a null endpoint drops its pin) — so the first endpoint the user sets appears
+     * immediately. See [DirectionsMapController.setEndpoints] for the supersede/clear lifecycle.
+     */
+    fun setDirectionsEndpoints(from: GeoPoint?, to: GeoPoint?) =
+        directionsController.setEndpoints(from, to)
 
     /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */
     fun clearSelectedRoute() = showNearbyStops()

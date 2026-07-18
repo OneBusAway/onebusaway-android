@@ -16,6 +16,7 @@
 package org.onebusaway.android.util
 
 import android.location.Location
+import org.onebusaway.android.map.render.GeoPoint
 
 /**
  * Decodes Google "encoded polyline" strings used by the OBA shape responses and OTP leg geometry.
@@ -27,16 +28,19 @@ import android.location.Location
 object PolylineDecoder {
 
     /**
-     * Decodes an encoded polyline into a list of points.
+     * Decodes an encoded polyline into a list of flavor-neutral [GeoPoint]s. This is the whole
+     * algorithm — it carries no Android dependency, so it runs (and is tested) on plain JVM.
+     * Callers needing an `android.location.Location` list use [decodeLine], which mints the
+     * platform type at the boundary.
      *
      * @param encoded   the encoded string
      * @param numPoints a hint used to allocate memory; the result always reflects the points
      *                  actually contained in [encoded]
      */
     @JvmStatic
-    fun decodeLine(encoded: String, numPoints: Int): List<Location> {
+    fun decode(encoded: String, numPoints: Int): List<GeoPoint> {
         require(numPoints >= 0) { "numPoints must be >= 0" }
-        val array = ArrayList<Location>(numPoints)
+        val array = ArrayList<GeoPoint>(numPoints)
 
         val len = encoded.length
         var i = 0
@@ -68,9 +72,18 @@ object PolylineDecoder {
             lon += dlon
 
             // The polyline encodes in degrees * 1E5, we need decimal degrees
-            array.add(locationOf(lat / 1E5, lon / 1E5))
+            array.add(GeoPoint(lat / 1E5, lon / 1E5))
         }
 
         return array
     }
+
+    /**
+     * Decodes an encoded polyline into a list of provider-less [Location]s, for map-SDK callers that
+     * need the platform type. Thin adapter over [decode] (same arguments) that mints [Location] at
+     * the boundary.
+     */
+    @JvmStatic
+    fun decodeLine(encoded: String, numPoints: Int): List<Location> =
+        decode(encoded, numPoints).map { locationOf(it.latitude, it.longitude) }
 }

@@ -30,10 +30,14 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.core.content.IntentCompat
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.directions.model.toTripItineraries
+import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.MapViewModel
@@ -55,6 +59,7 @@ import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeDestinationDeps
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.toGeocoded
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.home.LaunchIntentChannel
 import org.onebusaway.android.ui.home.LaunchIntentEffect
@@ -213,9 +218,46 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun applyLaunchIntentSideEffects(intent: Intent) {
         applyIntentSideEffects(intent)
+        maybeRestoreDirectionsFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
+    }
+
+    /**
+     * Re-entry from a trip-plan monitor "your trip changed" notification (see
+     * [org.onebusaway.android.directions.realtime.TripPlanMonitorService.notifyChange]): the intent
+     * carries the simplified request bundle ([TripRequestBuilder.copyIntoBundleSimple]), the updated
+     * itineraries JSON ([OTPConstants.ITINERARIES]), and [OTPConstants.INTENT_SOURCE] =
+     * [OTPConstants.Source.NOTIFICATION]. Switch HOME into the directions focus and seed the form +
+     * results from those extras — the itineraries are injected as-is (no re-plan). Restores the behavior
+     * the retired standalone screen's `maybeRestoreFromIntent` used to provide (#1939).
+     *
+     * No re-restore guard is needed: the launch-intent channel submits each real intent exactly once
+     * (cold `onCreate` seed gated on a null `savedInstanceState`, warm `onNewIntent`), so a config change
+     * doesn't re-fire this — and the activity-scoped [tripPlanViewModel] keeps the restored results.
+     */
+    // UnwrappedClockValue: the trip-plan time defaults to device "now" only when the intent carries none.
+    @Suppress("UnwrappedClockValue")
+    private fun maybeRestoreDirectionsFromIntent(intent: Intent) {
+        val source = IntentCompat.getSerializableExtra(
+            intent, OTPConstants.INTENT_SOURCE, OTPConstants.Source::class.java
+        )
+        if (source != OTPConstants.Source.NOTIFICATION) return
+
+        val itineraries = intent.getStringExtra(OTPConstants.ITINERARIES)?.toTripItineraries().orEmpty()
+        if (itineraries.isEmpty()) return
+
+        val extras = intent.extras ?: return
+        val builder = TripRequestBuilder.initFromBundleSimple(this, extras)
+        viewModel.enterDirections()
+        tripPlanViewModel.restoreFrom(
+            from = builder.from?.toGeocoded(),
+            to = builder.to?.toGeocoded(),
+            dateTimeMillis = builder.dateTime?.toEpochMilli() ?: System.currentTimeMillis(),
+            arriving = builder.arriveBy,
+            itineraries = itineraries,
+        )
     }
 
     /**

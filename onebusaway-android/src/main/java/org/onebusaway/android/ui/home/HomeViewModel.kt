@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
@@ -97,7 +98,7 @@ class HomeViewModel @Inject constructor(
                     addLast(MapUndoEntry(CurrentFocus.Stop(restored.stop)))
                 }
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation ->
+            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
                 addLast(MapUndoEntry(CurrentFocus.None))
         }
     }
@@ -499,7 +500,8 @@ class HomeViewModel @Inject constructor(
             } else {
                 CurrentFocus.Stop(focus.stop)
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
+            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+                CurrentFocus.None
             CurrentFocus.None -> return
         }
         pushFocus(target)
@@ -521,6 +523,27 @@ class HomeViewModel @Inject constructor(
         pendingFocus = null
         emitMapDirective(MapDirective.ClearFocus)
     }
+
+    /**
+     * Enter trip-plan directions focus. The chrome swaps to the trip-plan form; the map draws whatever
+     * itinerary the results VM selects (via [showItineraryOnMap]). A no-op if already in directions.
+     */
+    fun enterDirections(undoViewport: MapViewport? = null) {
+        if (_currentFocus.value == CurrentFocus.Directions) return
+        presentedRoutes = emptySet()
+        pendingFocus = null
+        pushFocus(CurrentFocus.Directions, undoViewport)
+    }
+
+    /** Draw [itinerary] on the home map (only meaningful while in [CurrentFocus.Directions]). */
+    fun showItineraryOnMap(itinerary: TripItinerary) =
+        emitMapDirective(MapDirective.ShowItinerary(itinerary))
+
+    /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
+    fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
+
+    /** Leave directions focus, returning the map to nearby stops. */
+    fun exitDirections() = clearMapFocus()
 
     /** Reframe the focused route as one undoable camera action. */
     fun reframeFocusedRoute(undoViewport: MapViewport?) {
@@ -606,7 +629,9 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
-                CurrentFocus.None, is CurrentFocus.BikeStation ->
+                // Directions redraws its itinerary from the results sheet's own reconcile when it
+                // remounts, so restoring the focus just clears the map here (like None/BikeStation).
+                CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
                     emitMapDirective(MapDirective.ClearFocus)
             }
         }
@@ -725,4 +750,10 @@ sealed interface MapDirective {
         val recenter: Boolean = true,
         val animate: Boolean = false,
     ) : MapDirective
+
+    /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */
+    data class ShowItinerary(val itinerary: TripItinerary) : MapDirective
+
+    /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
+    data object ClearItinerary : MapDirective
 }

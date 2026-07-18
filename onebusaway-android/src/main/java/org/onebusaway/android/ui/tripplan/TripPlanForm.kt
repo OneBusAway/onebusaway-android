@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -36,7 +37,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
@@ -86,8 +86,6 @@ fun TripPlanForm(
     onClearTo: () -> Unit,
     onFromCurrentLocation: () -> Unit,
     onToCurrentLocation: () -> Unit,
-    onFromContacts: () -> Unit,
-    onToContacts: () -> Unit,
     onFromPickOnMap: () -> Unit,
     onToPickOnMap: () -> Unit,
     onSetArriving: (Boolean) -> Unit,
@@ -101,33 +99,55 @@ fun TripPlanForm(
         modifier = modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        AddressField(
-            label = stringResource(R.string.trip_plan_from),
-            tagPrefix = TripPlanTestTags.FROM_PREFIX,
-            endpoint = state.from,
-            suggestions = state.fromSuggestions,
-            onQueryChange = onFromQueryChange,
-            onSelect = onSelectFrom,
-            onClear = onClearFrom,
-            onCurrentLocation = onFromCurrentLocation,
-            onContacts = onFromContacts,
-            onPickOnMap = onFromPickOnMap
-        )
-        TextButton(onClick = onReverse, modifier = Modifier.align(Alignment.End)) {
-            Text(stringResource(R.string.tripplanner_reverse))
+        // The two address fields fill the row; the reverse + additional-preferences actions sit as
+        // compact icons to their right (the on-map form is tight on vertical space).
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AddressField(
+                    label = stringResource(R.string.trip_plan_from),
+                    tagPrefix = TripPlanTestTags.FROM_PREFIX,
+                    endpoint = state.from,
+                    suggestions = state.fromSuggestions,
+                    onQueryChange = onFromQueryChange,
+                    onSelect = onSelectFrom,
+                    onClear = onClearFrom,
+                    onCurrentLocation = onFromCurrentLocation,
+                    onPickOnMap = onFromPickOnMap
+                )
+                AddressField(
+                    label = stringResource(R.string.trip_plan_to),
+                    tagPrefix = TripPlanTestTags.TO_PREFIX,
+                    endpoint = state.to,
+                    suggestions = state.toSuggestions,
+                    onQueryChange = onToQueryChange,
+                    onSelect = onSelectTo,
+                    onClear = onClearTo,
+                    onCurrentLocation = onToCurrentLocation,
+                    onPickOnMap = onToPickOnMap
+                )
+            }
+            Column {
+                IconButton(onClick = onReverse) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_swap_direction),
+                        contentDescription = stringResource(R.string.tripplanner_reverse),
+                    )
+                }
+                IconButton(onClick = onAdvancedSettings) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = stringResource(R.string.trip_plan_advanced_settings),
+                    )
+                }
+            }
         }
-        AddressField(
-            label = stringResource(R.string.trip_plan_to),
-            tagPrefix = TripPlanTestTags.TO_PREFIX,
-            endpoint = state.to,
-            suggestions = state.toSuggestions,
-            onQueryChange = onToQueryChange,
-            onSelect = onSelectTo,
-            onClear = onClearTo,
-            onCurrentLocation = onToCurrentLocation,
-            onContacts = onToContacts,
-            onPickOnMap = onToPickOnMap
-        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -144,9 +164,6 @@ fun TripPlanForm(
             OutlinedButton(onClick = onPickTime, modifier = Modifier.weight(1f)) {
                 Text(state.timeLabel)
             }
-        }
-        TextButton(onClick = onAdvancedSettings) {
-            Text(stringResource(R.string.trip_plan_advanced_settings))
         }
     }
 }
@@ -168,7 +185,6 @@ private fun AddressField(
     onSelect: (TripEndpoint.Geocoded) -> Unit,
     onClear: () -> Unit,
     onCurrentLocation: () -> Unit,
-    onContacts: () -> Unit,
     onPickOnMap: () -> Unit
 ) {
     when (endpoint) {
@@ -180,7 +196,6 @@ private fun AddressField(
             onQueryChange = onQueryChange,
             onSelect = onSelect,
             onCurrentLocation = onCurrentLocation,
-            onContacts = onContacts,
             onPickOnMap = onPickOnMap
         )
         else -> EndpointPillField(
@@ -189,7 +204,6 @@ private fun AddressField(
             endpoint = endpoint,
             onClear = onClear,
             onCurrentLocation = onCurrentLocation,
-            onContacts = onContacts,
             onPickOnMap = onPickOnMap
         )
     }
@@ -205,7 +219,6 @@ private fun EditableAddressField(
     onQueryChange: (String) -> Unit,
     onSelect: (TripEndpoint.Geocoded) -> Unit,
     onCurrentLocation: () -> Unit,
-    onContacts: () -> Unit,
     onPickOnMap: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -221,7 +234,6 @@ private fun EditableAddressField(
             singleLine = true,
             trailingIcon = {
                 AddressActionIcons(
-                    onContacts = onContacts,
                     onCurrentLocation = onCurrentLocation,
                     onPickOnMap = onPickOnMap
                 )
@@ -264,7 +276,6 @@ private fun EndpointPillField(
     endpoint: TripEndpoint,
     onClear: () -> Unit,
     onCurrentLocation: () -> Unit,
-    onContacts: () -> Unit,
     onPickOnMap: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -312,7 +323,6 @@ private fun EndpointPillField(
             label = { Text(label) },
             trailingIcon = {
                 AddressActionIcons(
-                    onContacts = onContacts,
                     onCurrentLocation = onCurrentLocation,
                     onPickOnMap = onPickOnMap
                 )
@@ -325,17 +335,10 @@ private fun EndpointPillField(
 /** The contacts / current-location / pick-on-map shortcuts shared by both endpoint states. */
 @Composable
 private fun AddressActionIcons(
-    onContacts: () -> Unit,
     onCurrentLocation: () -> Unit,
     onPickOnMap: () -> Unit
 ) {
     Row {
-        IconButton(onClick = onContacts) {
-            Icon(
-                painter = painterResource(R.drawable.baseline_import_contacts_24),
-                contentDescription = stringResource(R.string.trip_plan_contacts)
-            )
-        }
         IconButton(onClick = onCurrentLocation) {
             Icon(
                 painter = painterResource(R.drawable.ic_my_location),
@@ -413,7 +416,6 @@ private fun TripPlanFormPreview() {
             onSelectFrom = {}, onSelectTo = {},
             onClearFrom = {}, onClearTo = {},
             onFromCurrentLocation = {}, onToCurrentLocation = {},
-            onFromContacts = {}, onToContacts = {},
             onFromPickOnMap = {}, onToPickOnMap = {},
             onSetArriving = {}, onPickDate = {}, onPickTime = {},
             onReverse = {}, onAdvancedSettings = {}

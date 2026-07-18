@@ -27,6 +27,15 @@ sealed interface CurrentFocus {
     ) : CurrentFocus
     data class Route(val target: RouteTarget) : CurrentFocus
     data class BikeStation(val id: String) : CurrentFocus
+
+    /**
+     * Trip-plan directions mode. A marker with no payload: the itinerary/plan identity lives in
+     * `TripPlanViewModel`/`TripResultsViewModel` (and persists via their own SavedStateHandle), so
+     * duplicating it here would create a second source of truth for "which itinerary". This only says
+     * "the map is in directions mode" — the chrome swaps to the trip-plan form and the map draws the
+     * itinerary the results VM selects.
+     */
+    data object Directions : CurrentFocus
 }
 
 val CurrentFocus.focusedStop: FocusedStop?

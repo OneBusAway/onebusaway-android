@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -55,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import android.app.Activity
 import android.app.NotificationManager
@@ -66,9 +68,6 @@ import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
-import org.onebusaway.android.map.DirectionsMapViewModel
-import org.onebusaway.android.map.compose.NoOpObaMapCallbacks
-import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -141,7 +140,11 @@ private fun RowScope.OptionCard(
  * is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
  */
 @Composable
-fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
+fun TripResultsList(
+    state: TripResultsUiState,
+    modifier: Modifier = Modifier,
+    bottomInset: Dp = 0.dp,
+) {
     Box(
         modifier
             .fillMaxSize()
@@ -159,7 +162,12 @@ fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
                     .padding(32.dp)
             )
 
-            is TripResultsUiState.Success -> LazyColumn(Modifier.fillMaxSize()) {
+            // The surface reaches the bottom edge; a bottom content padding lets the final directions row
+            // be scrolled clear of the nav chrome without an empty strip below the list.
+            is TripResultsUiState.Success -> LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = bottomInset),
+            ) {
                 itemsIndexed(state.directions) { _, item ->
                     DirectionRow(item)
                     HorizontalDivider()
@@ -171,25 +179,23 @@ fun TripResultsList(state: TripResultsUiState, modifier: Modifier = Modifier) {
 
 /**
  * The trip-results **sheet content**: the header (option cards) plus the directions list. Drives the
- * [TripResultsViewModel] (option cards + directions) and the directions-mode [DirectionsMapViewModel] —
- * seeds the plan and follows option selection onto the map — and starts the background trip-update
- * poller when the user has trip-update notifications enabled. [DirectionsMapViewModel.showItinerary]
- * both draws and frames the itinerary (deferring the frame until the map is ready), so no separate
- * "map ready" step is needed here.
+ * [TripResultsViewModel] (option cards + directions) — seeds the plan and follows option selection onto
+ * the map via the [showItinerary] callback — and starts the background trip-update poller when the user
+ * has trip-update notifications enabled. The caller's [showItinerary] both draws and frames the itinerary
+ * (deferring the frame until the map is ready), so no separate "map ready" step is needed here.
  *
- * The map itself is deliberately **not** drawn here: it renders as the trip-plan scaffold *body* (behind
- * this sheet) via [TripResultsMap], revealed by dragging this sheet down. That keeps an interactive
- * [ObaMap] out of the draggable bottom sheet, where the sheet's
- * [androidx.compose.material3.BottomSheetScaffold] would otherwise steal its vertical drags (#1640).
- * Both VMs are hoisted to the caller so the body and this sheet share them.
+ * The map itself is deliberately **not** drawn here — the host (the home map's directions focus) owns the
+ * map surface; this composable only supplies the results header + directions list, keeping an interactive
+ * map out of a draggable bottom sheet where it would fight the sheet's drags (#1640).
  */
 @Composable
 fun TripResultsSheet(
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
-    mapViewModel: DirectionsMapViewModel,
+    showItinerary: (TripItinerary) -> Unit,
     modifier: Modifier = Modifier,
+    listBottomInset: Dp = 0.dp,
 ) {
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
@@ -197,7 +203,7 @@ fun TripResultsSheet(
     // Seed from the completed plan + point the map at the first itinerary (the old bindResults).
     LaunchedEffect(itineraries) {
         resultsViewModel.setItineraries(itineraries, initialIndex = 0)
-        itineraries.firstOrNull()?.let { mapViewModel.showItinerary(it) }
+        itineraries.firstOrNull()?.let { showItinerary(it) }
         maybeStartTripUpdates(activity, params, itineraries, index = 0)
     }
 
@@ -211,7 +217,7 @@ fun TripResultsSheet(
     val currentParams by rememberUpdatedState(params)
     LaunchedEffect(resultsViewModel) {
         resultsViewModel.selectedItinerary.collect { (index, itinerary) ->
-            mapViewModel.showItinerary(itinerary)
+            showItinerary(itinerary)
             maybeStartTripUpdates(activity, currentParams, currentItineraries, index)
         }
     }
@@ -221,26 +227,8 @@ fun TripResultsSheet(
             state = state,
             onSelectOption = resultsViewModel::selectOption,
         )
-        TripResultsList(state, Modifier.weight(1f))
+        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset)
     }
-}
-
-/**
- * The trip-results **map**, rendered as the trip-plan scaffold *body* (behind the results sheet) while
- * the map tab is active. Kept out of the draggable sheet so vertical drags pan the map rather than
- * moving the sheet (#1640); [mapViewModel] is the shared directions-mode VM that [TripResultsSheet]
- * drives (draws the selected itinerary, frames it on the first idle).
- */
-@Composable
-fun TripResultsMap(
-    mapViewModel: DirectionsMapViewModel,
-    modifier: Modifier = Modifier,
-) {
-    ObaMap(
-        host = mapViewModel.host,
-        callbacks = NoOpObaMapCallbacks,
-        modifier = modifier,
-    )
 }
 
 /**

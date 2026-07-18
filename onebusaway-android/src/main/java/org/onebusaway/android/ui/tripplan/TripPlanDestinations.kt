@@ -26,23 +26,11 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
- * The trip-planning navigation cluster: the trip-planning form + results sheet ([NavRoutes.TRIP_PLAN])
- * and its "pick a point on the map" sub-screen ([NavRoutes.TRIP_PLAN_PICK_LOCATION]). Both are already
- * self-wiring (they take only the [navController]).
+ * The trip-planning navigation cluster. The trip-planning form + results now live on the home map as a
+ * directions focus (see `ui/home/directions`), so only the "pick a point on the map" sub-screen
+ * ([NavRoutes.TRIP_PLAN_PICK_LOCATION]) remains a destination here.
  */
 fun NavGraphBuilder.tripPlanGraph(navController: NavHostController) {
-    // Trip plan destination: the trip-planning form + results sheet. Reached
-    // in-app from the home drawer's "Plan a trip"; re-entered from a trip-plan monitor trip-
-    // update notification (trip-plan monitor tags the open intent with the TRIP_PLAN route).
-    // The destination ports the former TripPlanActivity's Android glue. Non-exported.
-    composable(NavRoutes.TRIP_PLAN) {
-        ObaTheme {
-            TripPlanDestination(
-                navController = navController,
-                onBack = { navController.popBackStack() },
-            )
-        }
-    }
     // Trip plan "pick a point on the map" sub-screen (former
     // TripPlanLocationPickerActivity). Reached only from the trip-plan destination's
     // from/to "pick on map"; hands the chosen point back via this entry's previous

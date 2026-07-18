@@ -32,6 +32,7 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.SheetValue
@@ -49,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -82,6 +84,15 @@ import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
+import org.onebusaway.android.ui.home.directions.DirectionsFormCard
+import org.onebusaway.android.ui.home.directions.DirectionsMessageCard
+import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
+import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
+import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
+import org.onebusaway.android.ui.tripplan.PlanResult
+import org.onebusaway.android.ui.tripplan.TripEndpoint
+import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
 import org.onebusaway.android.ui.home.drawer.NavDrawerViewModel
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -190,6 +201,10 @@ fun HomeScreen(
     donationViewModel: DonationViewModel,
     weatherViewModel: WeatherViewModel,
     helpViewModel: HelpViewModel,
+    // The trip planner, hosted on HOME (directions focus): the compact form replaces the search field in
+    // the top chrome and the results sheet + itinerary render over the map.
+    tripPlanViewModel: TripPlanViewModel,
+    tripResultsViewModel: TripResultsViewModel,
     // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
     // the sheet's stop id is runtime-dynamic, so it can't be a plain hiltViewModel). Injected into
     // HomeActivity and threaded down.
@@ -380,7 +395,8 @@ fun HomeScreen(
                     isFavorite = header.routeId in favoriteRouteIds,
                 )
             }
-            CurrentFocus.None, is CurrentFocus.BikeStation -> null
+            // Directions has no focus banner — the trip-plan form in the top chrome is its affordance.
+            CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions -> null
         }
 
         // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
@@ -514,6 +530,40 @@ fun HomeScreen(
                         )
                     }
                 ) {
+                    // Trip-plan directions focus: the compact form replaces the top-chrome search field and
+                    // the results sheet + itinerary render over the map. The form/plan state lives in the
+                    // HOME-scoped trip-plan VMs.
+                    val directionsActive = currentFocus is CurrentFocus.Directions
+                    val tripPlanFormState by tripPlanViewModel.formState.collectAsStateWithLifecycle()
+                    val tripPlanResult by tripPlanViewModel.planState.collectAsStateWithLifecycle()
+                    val directionsResults = (tripPlanResult as? PlanResult.Success)?.takeIf {
+                        it.itineraries.isNotEmpty()
+                    }
+                    // A user-facing message for the non-results plan states (error / no route found), so a
+                    // failed plan (e.g. endpoints outside the transit network) isn't silently swallowed.
+                    val genericPlanError = stringResource(R.string.tripplanner_error_not_defined)
+                    val noRouteMessage = stringResource(R.string.tripplanner_error_path_not_found)
+                    val directionsMessage: String? = when (val r = tripPlanResult) {
+                        is PlanResult.Error -> r.message.ifBlank { genericPlanError }
+                        is PlanResult.Success -> if (r.itineraries.isEmpty()) noRouteMessage else null
+                        else -> null
+                    }
+                    val directionsLoading = tripPlanResult is PlanResult.Loading
+                    // Which endpoint (if any) is being picked directly on the map (crosshair + confirm).
+                    var pickTarget by rememberSaveable { mutableStateOf<DirectionsPickTarget?>(null) }
+                    // Leaving directions ends any in-progress map pick.
+                    LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
+                    // While planning but not yet submittable (no results), clear any stale drawn itinerary.
+                    LaunchedEffect(directionsActive, directionsResults == null) {
+                        if (directionsActive && directionsResults == null) {
+                            homeViewModel.clearShownItineraryOnMap()
+                        }
+                    }
+                    // Back cancels an in-progress map pick, else exits directions focus (to nearby stops).
+                    BackHandler(enabled = directionsActive) {
+                        if (pickTarget != null) pickTarget = null else homeViewModel.exitDirections()
+                    }
+
                     // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle
                     // and MapChrome animates it. Local here since the screen holds the live SheetState. Only
                     // while the sheet is shown at peek — a hidden sheet also rests at PartiallyExpanded now.
@@ -583,16 +633,77 @@ fun HomeScreen(
                             }
                             // The FAB row itself only takes the status-bar inset (no clearance) so it sits at
                             // the very top; the overlay layer above adds the clearance below it.
-                            MapTopChrome(
-                                onOpenDrawer = openDrawer,
-                                onSearch = onSearch,
-                                recents = recents,
-                                onRecentStop = onRecentStop,
-                                onRecentRoute = onRecentRoute,
-                                // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
-                                // the menu FAB that opens it (was the retired overflow ⋮).
-                                menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
-                                modifier = Modifier.statusBarsPadding(),
+                            if (directionsActive) {
+                                // Hidden while picking a point on the map (the pick overlay takes the screen).
+                                if (pickTarget == null) {
+                                    DirectionsFormCard(
+                                        viewModel = tripPlanViewModel,
+                                        state = tripPlanFormState,
+                                        onPickFrom = { pickTarget = DirectionsPickTarget.FROM },
+                                        onPickTo = { pickTarget = DirectionsPickTarget.TO },
+                                        modifier = Modifier
+                                            .align(Alignment.TopCenter)
+                                            .statusBarsPadding()
+                                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                                    )
+                                }
+                            } else {
+                                MapTopChrome(
+                                    onOpenDrawer = openDrawer,
+                                    onSearch = onSearch,
+                                    recents = recents,
+                                    onRecentStop = onRecentStop,
+                                    onRecentRoute = onRecentRoute,
+                                    // Recent stops/routes lives in the drawer, so the onboarding spotlight points at
+                                    // the menu FAB that opens it (was the retired overflow ⋮).
+                                    menuModifier = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_MORE_MENU),
+                                    modifier = Modifier.statusBarsPadding(),
+                                )
+                            }
+                        }
+                        // Directions feedback over the map (not while picking a point): the results sheet
+                        // when a plan produced itineraries, else an error / no-route message; a plan in
+                        // flight shows a top progress line. The results selection drives the drawn itinerary.
+                        if (directionsActive && pickTarget == null) {
+                            when {
+                                directionsResults != null -> DirectionsResultsSheet(
+                                    resultsViewModel = tripResultsViewModel,
+                                    itineraries = directionsResults.itineraries,
+                                    params = directionsResults.params,
+                                    showItinerary = homeViewModel::showItineraryOnMap,
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                )
+                                directionsMessage != null -> DirectionsMessageCard(
+                                    message = directionsMessage,
+                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                )
+                            }
+                            if (directionsLoading) {
+                                LinearProgressIndicator(
+                                    Modifier
+                                        .align(Alignment.TopCenter)
+                                        .fillMaxWidth()
+                                        .statusBarsPadding()
+                                )
+                            }
+                        }
+                        // Pick a From/To point on the home map: crosshair + confirm reads the map center.
+                        pickTarget?.let { target ->
+                            DirectionsPickOverlay(
+                                target = target,
+                                onConfirm = {
+                                    // Only commit + dismiss once we actually have a map center; otherwise
+                                    // keep the picker open rather than silently losing the selection.
+                                    mapViewModel.camera.value?.center?.let { c ->
+                                        val point = TripEndpoint.MapPoint(c.latitude, c.longitude)
+                                        when (target) {
+                                            DirectionsPickTarget.FROM -> tripPlanViewModel.setFrom(point)
+                                            DirectionsPickTarget.TO -> tripPlanViewModel.setTo(point)
+                                        }
+                                        pickTarget = null
+                                    }
+                                },
+                                onCancel = { pickTarget = null },
                             )
                         }
                     }

@@ -50,7 +50,6 @@ import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
-import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
 import java.time.Instant
 import kotlin.coroutines.coroutineContext
@@ -204,8 +203,9 @@ class TripPlanMonitorService : Service() {
 
     /** The low-key ongoing notification required while the foreground service runs. */
     private fun buildOngoingNotification(target: Class<*>): Notification {
+        // Opens HOME (the trip planner is now an on-map directions focus, not a separate destination).
+        // Restoring the watched trip into directions focus is a deferred follow-up.
         val openIntent = Intent(applicationContext, target)
-            .putExtra(NavRoutes.EXTRA_NAV_ROUTE, NavRoutes.TRIP_PLAN)
             .setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         return NotificationCompat.Builder(this, NotificationChannels.TRIP_PLAN_UPDATES_ID)
             .setSmallIcon(R.drawable.ic_bus)
@@ -239,7 +239,8 @@ class TripPlanMonitorService : Service() {
             putExtras(requestExtras)
             putExtra(OTPConstants.ITINERARIES, itineraries.toJson())
             putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION)
-            putExtra(NavRoutes.EXTRA_NAV_ROUTE, NavRoutes.TRIP_PLAN)
+            // The request/itinerary bundle rides along for a future restore-into-directions (#1939); the
+            // intent opens HOME (no EXTRA_NAV_ROUTE) rather than the retired standalone trip-plan screen.
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 

@@ -21,7 +21,6 @@ import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloNetworkException
 import com.apollographql.apollo.network.okHttpClient
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
@@ -43,9 +42,9 @@ import org.onebusaway.android.directions.util.TripRequestBuilder
  * Apollo's `serverUrl` is fixed at client-construction time, so building a lightweight client per
  * distinct URL, reusing the shared [OkHttpClient], is the equivalent seam here), and adapts the
  * response onto the shared [TripItinerary] domain model. Mirrors [DefaultTripPlanRepository]'s OTP1
- * `requestPlan`/`errorMessage` shape: throws [IOException] with a user-facing message on any
- * failure, so [DefaultTripPlanRepository]'s existing `runCatching` wrapping in both `plan()` and
- * `planBlocking()` handles this path the same way as OTP1.
+ * shape: throws a classified [TripPlanException] on any failure (see [otp2ErrorFor]), so
+ * [DefaultTripPlanRepository]'s existing `runCatching` wrapping in both `plan()` and `planBlocking()`
+ * handles this path the same way as OTP1.
  */
 class Otp2Planner @Inject constructor(
     @param:ApplicationContext private val context: Context,
@@ -85,57 +84,61 @@ class Otp2Planner @Inject constructor(
         val data = try {
             runBlocking { apolloClient.query(query).execute() }.dataOrThrow()
         } catch (e: ApolloNetworkException) {
-            // Transport failure (connect/read timeout, DNS, etc.) — the OTP1 path's own
-            // catch-all mapping to the request-timeout message.
-            throw IOException(context.getString(R.string.tripplanner_error_request_timeout), e)
+            // Transport failure (connect/read timeout, DNS, etc.) — a connectivity problem.
+            throw TripPlanException(
+                TripPlanError(TripPlanError.Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout),
+                e,
+            )
         } catch (e: ApolloException) {
-            // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol
-            // error) isn't a timeout — don't tell the user it is.
-            throw IOException(context.getString(R.string.tripplanner_error_not_defined), e)
+            // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol error) isn't
+            // a timeout — surface it as an unclassified request failure, not a connectivity one.
+            throw TripPlanException(TripPlanError.Unknown, e)
         }
 
         data.planConnection?.routingErrors?.firstOrNull()?.let {
-            throw IOException(errorMessage(it))
+            throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
         }
 
         val itineraries = data.toTripItineraries()
         if (itineraries.isEmpty()) {
-            throw IOException(context.getString(R.string.tripplanner_error_path_not_found))
+            throw TripPlanException(TripPlanError.NoRoute)
         }
         return itineraries
     }
+}
 
-    /**
-     * Maps a `routingErrors` entry to a user-facing message: OTP1's existing string resources where
-     * `RoutingErrorCode` names a genuinely equivalent failure, and an OTP2-specific string where it
-     * doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] and
-     * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] have no OTP1-era concept, so folding them into
-     * the generic fallback would silently discard information OTP2 is actually telling the user.
-     */
-    private fun errorMessage(error: PlanQuery.RoutingError): String = when (error.code) {
-        RoutingErrorCode.OUTSIDE_BOUNDS ->
-            context.getString(R.string.tripplanner_error_outside_bounds)
+/**
+ * Classifies an OTP2 `routingErrors` entry into a [TripPlanError]: reuses OTP1's existing detail
+ * strings where [RoutingErrorCode] names a genuinely equivalent failure, and an OTP2-specific string
+ * where it doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] and
+ * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] have no OTP1-era concept, so folding them into the
+ * generic fallback would silently discard information OTP2 is actually telling the user. Top-level and
+ * `internal` (not a `Context`-bound method) so it's exhaustively JVM-unit-testable without Apollo.
+ */
+internal fun otp2ErrorFor(code: RoutingErrorCode, inputField: InputField?): TripPlanError = when (code) {
+    RoutingErrorCode.OUTSIDE_BOUNDS ->
+        TripPlanError(TripPlanError.Category.NO_ROUTE, R.string.tripplanner_error_outside_bounds)
 
-        RoutingErrorCode.NO_TRANSIT_CONNECTION, RoutingErrorCode.NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW ->
-            context.getString(R.string.tripplanner_error_no_transit_times)
+    RoutingErrorCode.NO_TRANSIT_CONNECTION, RoutingErrorCode.NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW ->
+        TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_no_transit_times)
 
-        RoutingErrorCode.NO_STOPS_IN_RANGE ->
-            context.getString(R.string.tripplanner_error_path_not_found)
+    RoutingErrorCode.NO_STOPS_IN_RANGE -> TripPlanError.NoRoute
 
-        RoutingErrorCode.LOCATION_NOT_FOUND -> when (error.inputField) {
-            InputField.FROM -> context.getString(R.string.tripplanner_error_geocode_from_not_found)
-            InputField.TO -> context.getString(R.string.tripplanner_error_geocode_to_not_found)
-            else -> context.getString(R.string.tripplanner_error_not_defined)
-        }
-
-        RoutingErrorCode.OUTSIDE_SERVICE_PERIOD ->
-            context.getString(R.string.tripplanner_error_outside_service_period)
-
-        RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT ->
-            context.getString(R.string.tripplanner_error_walking_better_than_transit)
-
-        RoutingErrorCode.UNKNOWN__ -> context.getString(R.string.tripplanner_error_not_defined)
+    RoutingErrorCode.LOCATION_NOT_FOUND -> when (inputField) {
+        InputField.FROM ->
+            TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_not_found)
+        InputField.TO ->
+            TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_to_not_found)
+        else -> TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_not_defined)
     }
+
+    RoutingErrorCode.OUTSIDE_SERVICE_PERIOD ->
+        TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_outside_service_period)
+
+    RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT ->
+        TripPlanError(TripPlanError.Category.ADVISORY, R.string.tripplanner_error_walking_better_than_transit)
+
+    RoutingErrorCode.UNKNOWN__ -> TripPlanError.Unknown
 }
 
 /** OTP2's standard gtfs GraphQL mount, relative to the OTP base (`…/otp`). */

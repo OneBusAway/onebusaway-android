@@ -63,8 +63,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.google.android.material.datepicker.MaterialDatePicker
@@ -83,6 +87,7 @@ import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.ui.tripplan.TripPlanForm
 import org.onebusaway.android.ui.tripplan.TripPlanFormState
+import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
@@ -273,24 +278,54 @@ fun DirectionsLongPressMenu(
 }
 
 /**
- * A compact message over the map for the non-results plan states — a plan error or an empty result
- * (e.g. endpoints outside the transit network). Sits where the results sheet would be so the user
- * always gets feedback that a plan ran.
+ * The trip-plan error surface: a Material 3 snackbar (the `inverseSurface` container, seated at the
+ * bottom of the map where the results sheet would be). It shows a stable, severity-coloured header
+ * naming the category (every no-route failure reads "Cannot find route") over a single reason line —
+ * the exact wire message — with an explicit dismiss. Unlike a toast or an auto-dismissing snackbar it
+ * persists until the user dismisses it (or the plan state changes), so a deterministic failure —
+ * outside coverage, no route, no service at this time — isn't lost if the user glances away. Header =
+ * the "richer ontology" ([TripPlanError.category]); reason = the specifics ([TripPlanError.detailRes]).
  */
 @Composable
-fun DirectionsMessageCard(message: String, modifier: Modifier = Modifier) {
+fun DirectionsErrorSnackbar(
+    error: TripPlanError,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
-        modifier = modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
+        // A polite live region so a screen reader announces a newly surfaced planning failure.
+        modifier = modifier.fillMaxWidth().navigationBarsPadding().padding(8.dp)
+            .semantics { liveRegion = LiveRegionMode.Polite },
+        shape = RoundedCornerShape(4.dp),
+        color = MaterialTheme.colorScheme.inverseSurface,
+        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
         shadowElevation = 6.dp,
     ) {
-        Text(
-            text = message,
-            modifier = Modifier.padding(16.dp),
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(error.category.headerRes),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = colorResource(error.category.severity.colorRes),
+                )
+                Text(
+                    text = stringResource(error.detailRes),
+                    modifier = Modifier.padding(top = 2.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.9f),
+                )
+            }
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.dismiss),
+                    tint = MaterialTheme.colorScheme.inverseOnSurface,
+                )
+            }
+        }
     }
 }
 

@@ -148,5 +148,5 @@ sealed interface PlanResult {
         val itineraries: List<TripItinerary>,
         val params: TripPlanParams? = null,
     ) : PlanResult
-    data class Error(val message: String) : PlanResult
+    data class Error(val error: TripPlanError) : PlanResult
 }

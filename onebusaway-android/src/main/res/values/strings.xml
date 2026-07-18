@@ -920,6 +920,15 @@
     <string name="tripplanner_no_server_selected_error">No region selected</string>
     <string name="tripplanner_error_dialog_title">Planning not possible</string>
     <!-- Errors -->
+    <!-- Trip-plan error category headers (the consistent heading on the error snackbar; the specific
+         wire message is shown as the reason line beneath). One header per category, so e.g. every
+         no-route failure reads "Cannot find route" with its distinct reason below. -->
+    <string name="tripplanner_error_header_connectivity">Can&#8217;t reach the trip planner</string>
+    <string name="tripplanner_error_header_location">Can&#8217;t find that location</string>
+    <string name="tripplanner_error_header_schedule">No transit at this time</string>
+    <string name="tripplanner_error_header_no_route">Cannot find route</string>
+    <string name="tripplanner_error_header_advisory">Try walking instead</string>
+    <string name="tripplanner_error_header_request">Couldn&#8217;t plan this trip</string>
     <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
     <string name="tripplanner_error_request_timeout">Please check your Internet connection and try
         again.

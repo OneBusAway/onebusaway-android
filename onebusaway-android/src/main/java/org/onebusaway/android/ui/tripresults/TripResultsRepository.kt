@@ -74,8 +74,8 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
         return ItineraryOption(
             mode = mode,
             durationMinutes = itinerary.duration.inWholeMinutes,
-            startTimeMs = itinerary.startTime.epochMs,
-            endTimeMs = (itinerary.startTime + itinerary.duration).epochMs,
+            startTime = itinerary.startTime,
+            endTime = itinerary.startTime + itinerary.duration,
         )
     }
 

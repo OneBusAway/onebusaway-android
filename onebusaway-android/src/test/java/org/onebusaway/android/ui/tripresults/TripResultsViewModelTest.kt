@@ -27,6 +27,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.time.ServerTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripResultsViewModelTest {
@@ -42,8 +43,8 @@ class TripResultsViewModelTest {
     private fun option(shortName: String) = ItineraryOption(
         mode = ModeSummary.Routes(listOf(RouteBadge(shortName, routeColor = null))),
         durationMinutes = 30,
-        startTimeMs = 0L,
-        endTimeMs = 30 * 60_000L,
+        startTime = ServerTime(0L),
+        endTime = ServerTime(30 * 60_000L),
     )
 
     /** Treats itineraries as opaque tokens (as the ViewModel does) and returns canned projections. */

@@ -66,6 +66,7 @@ import android.content.Context
 import android.os.Build
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
@@ -166,10 +167,10 @@ private fun OptionCard(
                 )
                 EtaDurationText(minutes = option.durationMinutes)
             }
-            // The device-localized departure–arrival range.
+            // The device-localized departure–arrival range (unwrap the server clock only here).
             Text(
-                text = "${DisplayFormat.formatTime(context, option.startTimeMs)} – " +
-                    DisplayFormat.formatTime(context, option.endTimeMs),
+                text = "${DisplayFormat.formatTime(context, option.startTime.epochMs)} – " +
+                    DisplayFormat.formatTime(context, option.endTime.epochMs),
                 style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
             )
@@ -395,11 +396,11 @@ private fun TripResultsPreview() {
             options = listOf(
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
-                    durationMinutes = 32, startTimeMs = 0L, endTimeMs = 32 * 60_000L,
+                    durationMinutes = 32, startTime = ServerTime(0L), endTime = ServerTime(32 * 60_000L),
                 ),
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("48", null), RouteBadge("11", null))),
-                    durationMinutes = 41, startTimeMs = 0L, endTimeMs = 41 * 60_000L,
+                    durationMinutes = 41, startTime = ServerTime(0L), endTime = ServerTime(41 * 60_000L),
                 )
             ),
             selectedIndex = 0,

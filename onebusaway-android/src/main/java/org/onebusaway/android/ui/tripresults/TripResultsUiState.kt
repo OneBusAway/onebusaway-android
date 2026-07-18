@@ -15,19 +15,21 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import org.onebusaway.android.time.ServerTime
+
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
  * (not pre-formatted strings) so the card can render route badges / a walk glyph, the ETA-pill duration,
  * and a device-localized time range:
  *  - [mode] — what the card's first line shows for the trip (route badges, a walk glyph, or a label).
  *  - [durationMinutes] — whole-minute trip length, formatted like the arrivals ETA pill.
- *  - [startTimeMs]/[endTimeMs] — epoch millis for the (device-localized) time range.
+ *  - [startTime]/[endTime] — the server-clock trip endpoints, unwrapped only at the time formatter.
  */
 data class ItineraryOption(
     val mode: ModeSummary,
     val durationMinutes: Long,
-    val startTimeMs: Long,
-    val endTimeMs: Long,
+    val startTime: ServerTime,
+    val endTime: ServerTime,
 )
 
 /** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */

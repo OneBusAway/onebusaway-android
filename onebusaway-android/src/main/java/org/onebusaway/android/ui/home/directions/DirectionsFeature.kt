@@ -62,6 +62,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -283,6 +284,9 @@ fun DirectionsResultsSheet(
 /** The drag handle atop [DirectionsResultsSheet]: tap toggles collapse; drag up/down sets it. */
 @Composable
 private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) -> Unit) {
+    // draggable() reports per-frame deltas, so accumulate them — a slow drag would never cross the
+    // threshold on any single frame. Reset once a threshold crossing snaps the sheet, and at drag end.
+    var dragAccumulated by remember { mutableFloatStateOf(0f) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,9 +294,16 @@ private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) 
             .draggable(
                 orientation = Orientation.Vertical,
                 state = rememberDraggableState { delta ->
-                    if (delta > DIRECTIONS_SHEET_DRAG_THRESHOLD) onSetCollapsed(true)
-                    else if (delta < -DIRECTIONS_SHEET_DRAG_THRESHOLD) onSetCollapsed(false)
+                    dragAccumulated += delta
+                    if (dragAccumulated > DIRECTIONS_SHEET_DRAG_THRESHOLD) {
+                        onSetCollapsed(true)
+                        dragAccumulated = 0f
+                    } else if (dragAccumulated < -DIRECTIONS_SHEET_DRAG_THRESHOLD) {
+                        onSetCollapsed(false)
+                        dragAccumulated = 0f
+                    }
                 },
+                onDragStopped = { dragAccumulated = 0f },
             )
             .padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
         contentAlignment = Alignment.Center,

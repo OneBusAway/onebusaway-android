@@ -363,12 +363,8 @@ dependencies {
     implementation(libs.play.services.location)
     // Support libraries
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.cardview)
-    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.exifinterface)
     implementation(libs.commons.io)
-    implementation(libs.commons.lang3)
     // Open311 client library
     implementation(libs.open311.client)
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
@@ -409,9 +405,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     // WorkManager (Java only)
     implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.concurrent.futures)
-    implementation(libs.androidx.concurrent.listenablefuture)
-    implementation(libs.androidx.concurrent.listenablefuture.callback)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.preference)
     // Preferences DataStore — the backing store behind PreferencesRepository.

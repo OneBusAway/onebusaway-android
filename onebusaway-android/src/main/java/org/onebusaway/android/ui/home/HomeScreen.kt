@@ -73,6 +73,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.findActivity
@@ -85,6 +86,7 @@ import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
+import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsMessageCard
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
@@ -551,6 +553,8 @@ fun HomeScreen(
                     val directionsLoading = tripPlanResult is PlanResult.Loading
                     // Which endpoint (if any) is being picked directly on the map (crosshair + confirm).
                     var pickTarget by rememberSaveable { mutableStateOf<DirectionsPickTarget?>(null) }
+                    // A long-pressed map point awaiting the "directions from/to here" choice.
+                    var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                     // Leaving directions ends any in-progress map pick.
                     LaunchedEffect(directionsActive) { if (!directionsActive) pickTarget = null }
                     // While planning but not yet submittable (no results), clear any stale drawn itinerary.
@@ -580,6 +584,7 @@ fun HomeScreen(
                             mapViewModel = mapViewModel,
                             homeViewModel = homeViewModel,
                             fabBottomInset = fabInsetTarget,
+                            onMapLongPress = { longPressPoint = it },
                             modifier = Modifier.fillMaxSize(),
                         )
                         // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -704,6 +709,24 @@ fun HomeScreen(
                                     }
                                 },
                                 onCancel = { pickTarget = null },
+                            )
+                        }
+                        // Long-press → "directions from/to here": enters directions and fills the endpoint
+                        // with the pressed point (which auto-plans once both endpoints are set).
+                        longPressPoint?.let { point ->
+                            val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
+                            DirectionsLongPressMenu(
+                                onFromHere = {
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                    tripPlanViewModel.setFrom(mapPoint)
+                                    longPressPoint = null
+                                },
+                                onToHere = {
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                    tripPlanViewModel.setTo(mapPoint)
+                                    longPressPoint = null
+                                },
+                                onDismiss = { longPressPoint = null },
                             )
                         }
                     }

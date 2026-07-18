@@ -324,6 +324,10 @@ private fun wireClicks(
         cb.onMapClick(GeoPoint(latLng.latitude, latLng.longitude))
     }
 
+    map.setOnMapLongClickListener { latLng ->
+        cb.onMapLongClick(GeoPoint(latLng.latitude, latLng.longitude))
+    }
+
     map.setOnMarkerClickListener { marker -> routeMarkerTap(marker, renderer, infoWindows, cb) }
 
     map.setOnInfoWindowClickListener { marker ->

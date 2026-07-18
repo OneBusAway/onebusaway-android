@@ -19,6 +19,7 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -37,13 +38,17 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -235,6 +240,35 @@ fun DirectionsResultsSheet(
             showItinerary = showItinerary,
             modifier = Modifier.fillMaxWidth(),
         )
+    }
+}
+
+/**
+ * The modal menu shown when the user long-presses the map: "directions from here" / "directions to
+ * here", each of which enters directions focus and fills that endpoint with the pressed point.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DirectionsLongPressMenu(
+    onFromHere: () -> Unit,
+    onToHere: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.navigationBarsPadding()) {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.directions_from_here)) },
+                leadingContent = {
+                    Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
+                },
+                modifier = Modifier.clickable(onClick = onFromHere),
+            )
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.directions_to_here)) },
+                leadingContent = { Icon(Icons.Default.Place, contentDescription = null) },
+                modifier = Modifier.clickable(onClick = onToHere),
+            )
+        }
     }
 }
 

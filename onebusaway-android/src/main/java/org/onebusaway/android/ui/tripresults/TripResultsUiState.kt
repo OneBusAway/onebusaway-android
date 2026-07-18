@@ -24,12 +24,15 @@ import org.onebusaway.android.time.ServerTime
  *  - [mode] — what the card's first line shows for the trip (route badges, a walk glyph, or a label).
  *  - [durationMinutes] — whole-minute trip length, formatted like the arrivals ETA pill.
  *  - [startTime]/[endTime] — the server-clock trip endpoints, unwrapped only at the time formatter.
+ *  - [walkDistanceMeters] — total walking across the trip's legs, in meters; the card formats it to the
+ *    user's units (miles/km, or feet/meters for short walks). 0 when the trip has no walking.
  */
 data class ItineraryOption(
     val mode: ModeSummary,
     val durationMinutes: Long,
     val startTime: ServerTime,
     val endTime: ServerTime,
+    val walkDistanceMeters: Double = 0.0,
 )
 
 /** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */

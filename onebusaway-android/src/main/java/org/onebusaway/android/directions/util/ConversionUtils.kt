@@ -24,6 +24,7 @@ import android.util.Log
 import androidx.core.content.ContextCompat
 import org.onebusaway.android.R
 import org.onebusaway.android.util.ArrivalInfoUtils
+import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.PreferenceUtils
 import java.time.Duration
 import java.time.Instant
@@ -61,31 +62,45 @@ object ConversionUtils {
      * @return formatted string of distance
      */
     @JvmStatic
-    fun getFormattedDistance(meters: Double, applicationContext: Context): String {
-        var text = ""
-        var value = meters
+    fun getFormattedDistance(meters: Double, applicationContext: Context): String =
+        getFormattedDistanceParts(meters, applicationContext).joinToString(" ") { it.text }
 
-        if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
-            if (value < 1000) {
-                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, value) + " " +
-                    applicationContext.resources.getString(R.string.meters_abbreviation)
+    /**
+     * The same distance as [getFormattedDistance], but as its structured value + unit parts (mirroring
+     * [DisplayFormat.formatEtaParts]) so a caller that styles the number and unit differently — e.g. a
+     * bold value with a smaller unit — can do so without re-splitting a joined string. The value is the
+     * emphasized part, the unit abbreviation the un-emphasized one.
+     *
+     * @param meters distance in meters
+     * @param applicationContext context to look up resources
+     */
+    @JvmStatic
+    fun getFormattedDistanceParts(
+        meters: Double,
+        applicationContext: Context,
+    ): List<DisplayFormat.EtaPart> {
+        val (value, unitRes) = if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
+            if (meters < 1000) {
+                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, meters) to
+                    R.string.meters_abbreviation
             } else {
-                value /= 1000
-                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, value) + " " +
-                    applicationContext.resources.getString(R.string.kilometers_abbreviation)
+                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, meters / 1000) to
+                    R.string.kilometers_abbreviation
             }
         } else {
-            var feet = value * FEET_PER_METER
+            val feet = meters * FEET_PER_METER
             if (feet < 1000) {
-                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, feet) + " " +
-                    applicationContext.resources.getString(R.string.feet_abbreviation)
+                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, feet) to
+                    R.string.feet_abbreviation
             } else {
-                feet /= 5280
-                text += String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet) + " " +
-                    applicationContext.resources.getString(R.string.miles_abbreviation)
+                String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_KILOMETERS, feet / 5280) to
+                    R.string.miles_abbreviation
             }
         }
-        return text
+        return listOf(
+            DisplayFormat.EtaPart(value, emphasized = true),
+            DisplayFormat.EtaPart(applicationContext.resources.getString(unitRes), emphasized = false),
+        )
     }
 
     /**

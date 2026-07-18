@@ -71,7 +71,9 @@ import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
+import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.components.EtaDurationText
+import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.findActivity
@@ -91,8 +93,8 @@ fun TripResultsHeader(
     onSelectOption: (Int) -> Unit
 ) {
     val success = state as? TripResultsUiState.Success ?: return
-    // Side-scrollable so options never get squished: each card sizes to its own content (three lines —
-    // route/lines, duration, time) and the row scrolls horizontally when they overflow the width.
+    // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
+    // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
@@ -155,17 +157,24 @@ private fun OptionCard(
                     maxLines = 1,
                 )
             }
-            // Duration — a leading hourglass + the ETA-pill-formatted trip length.
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Icon(
-                    painterResource(R.drawable.hourglass_24),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-                EtaDurationText(minutes = option.durationMinutes)
+            // Duration + walk distance read as one stat group, so they sit tighter together than the
+            // card's other lines.
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+                MetricRow(R.drawable.hourglass_24, contentDescription = null) {
+                    EtaDurationText(minutes = option.durationMinutes)
+                }
+                // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
+                // with the distance styled like the duration (bold value + smaller unit). In the user's units
+                // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
+                if (option.walkDistanceMeters > 0.0) {
+                    MetricRow(
+                        R.drawable.ic_directions_walk,
+                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                    ) {
+                        EtaPartsText(ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context))
+                    }
+                }
             }
             // The device-localized departure–arrival range (unwrap the server clock only here).
             Text(
@@ -175,6 +184,25 @@ private fun OptionCard(
                 maxLines = 1,
             )
         }
+    }
+}
+
+/**
+ * One option-card stat line: a 16dp leading glyph followed by its value [content]. Shared by the
+ * duration and walk-distance rows so their icon size and spacing stay in lockstep.
+ */
+@Composable
+private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Composable () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(
+            painterResource(iconRes),
+            contentDescription = contentDescription,
+            modifier = Modifier.size(16.dp),
+        )
+        content()
     }
 }
 
@@ -397,10 +425,12 @@ private fun TripResultsPreview() {
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
                     durationMinutes = 32, startTime = ServerTime(0L), endTime = ServerTime(32 * 60_000L),
+                    walkDistanceMeters = 800.0,
                 ),
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("48", null), RouteBadge("11", null))),
                     durationMinutes = 41, startTime = ServerTime(0L), endTime = ServerTime(41 * 60_000L),
+                    walkDistanceMeters = 400.0,
                 )
             ),
             selectedIndex = 0,

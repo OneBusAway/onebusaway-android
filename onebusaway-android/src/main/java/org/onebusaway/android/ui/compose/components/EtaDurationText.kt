@@ -18,10 +18,14 @@ package org.onebusaway.android.ui.compose.components
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
@@ -40,9 +44,29 @@ fun EtaDurationText(
     numberSize: TextUnit = 15.sp,
     unitSize: TextUnit = 12.sp,
 ) {
-    val baseSpan = LocalTextStyle.current.toSpanStyle()
+    EtaPartsText(DisplayFormat.formatEtaParts(LocalContext.current, minutes), modifier, numberSize, unitSize)
+}
+
+/**
+ * Renders value/unit display [parts] as a bold value with a smaller unit abbreviation — the shared ETA
+ * styling, factored out of [EtaDurationText] so other value+unit cards (e.g. a trip's walk distance via
+ * [org.onebusaway.android.directions.util.ConversionUtils.getFormattedDistanceParts]) render identically
+ * without duplicating the span logic or the sizes.
+ */
+@Composable
+fun EtaPartsText(
+    parts: List<DisplayFormat.EtaPart>,
+    modifier: Modifier = Modifier,
+    numberSize: TextUnit = 15.sp,
+    unitSize: TextUnit = 12.sp,
+) {
+    // [tightLineStyle] trims the default font padding so a leading icon centers on the text and stacked
+    // rows sit tight; the spans layer the per-part sizes on top of that same base.
+    val base = LocalTextStyle.current
+    val style = remember(base) { tightLineStyle(base) }
+    val baseSpan = style.toSpanStyle()
     val text = buildAnnotatedString {
-        DisplayFormat.formatEtaParts(LocalContext.current, minutes).forEach { part ->
+        parts.forEach { part ->
             val span = if (part.emphasized) {
                 baseSpan.copy(fontSize = numberSize, fontWeight = FontWeight.Bold)
             } else {
@@ -51,5 +75,21 @@ fun EtaDurationText(
             withStyle(span) { append(part.text) }
         }
     }
-    Text(text = text, modifier = modifier)
+    Text(text = text, modifier = modifier, style = style)
 }
+
+/**
+ * [base] with Android's default font-metrics padding (extra ascent/descent space reserved beyond a
+ * glyph's visible ink) trimmed, so a leading icon centers on the text and stacked rows sit tight instead
+ * of being pushed apart by that padding. Pass [size] to also pin the line height to a small pill/badge's
+ * dominant text size; omit it to keep [base]'s own line height. Shared by the arrivals ETA pill
+ * ([org.onebusaway.android.ui.arrivals.components] EtaStrip) and [EtaPartsText].
+ */
+internal fun tightLineStyle(base: TextStyle, size: TextUnit = TextUnit.Unspecified): TextStyle = base.copy(
+    lineHeight = if (size == TextUnit.Unspecified) base.lineHeight else size,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(
+        alignment = LineHeightStyle.Alignment.Center,
+        trim = LineHeightStyle.Trim.Both,
+    ),
+)

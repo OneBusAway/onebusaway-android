@@ -29,7 +29,7 @@ import java.io.File
  * Ports the retired instrumented ShapeRequestTest onto the modernized `shape` endpoint: decodes the
  * captured shape envelope (read from its source-tree location; unit tests run with the module dir as
  * working directory) and asserts the encoded polyline has points. The polyline *decoding* itself is
- * still covered by PolylineDecoderTest (PolylineDecoder.decodeLine, the shared decoder this entry feeds).
+ * still covered by PolylineDecoderTest (PolylineDecoder.decode, the shared decoder this entry feeds).
  */
 class ShapeDecodeTest {
 

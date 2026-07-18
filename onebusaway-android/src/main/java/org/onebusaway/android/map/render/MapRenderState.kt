@@ -28,9 +28,7 @@ import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaTripStatus
-
-/** A geographic point, flavor-neutral (carries no Google/maplibre `LatLng` dependency). */
-data class GeoPoint(val latitude: Double, val longitude: Double)
+import org.onebusaway.android.util.GeoPoint
 
 /** A screen pixel position in the composition's root coordinate space (flavor-neutral). */
 data class ScreenOffset(val x: Float, val y: Float)

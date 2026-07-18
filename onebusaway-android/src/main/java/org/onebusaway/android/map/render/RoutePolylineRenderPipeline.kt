@@ -34,6 +34,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
+import org.onebusaway.android.util.GeoPoint
 
 private const val MAX_MERCATOR_LATITUDE = 85.05112878
 private const val VIEWPORT_MARGIN_MULTIPLIER = 1.0

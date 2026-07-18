@@ -20,6 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Unit tests for the typed reveal reads + atomic consumes on the HOME [SavedStateHandle]:
@@ -80,7 +81,7 @@ class MapRevealTest {
 
         val reveal = handle.consumeStopReveal()
 
-        assertEquals(StopReveal("stop_1", 47.6, -122.3), reveal)
+        assertEquals(StopReveal("stop_1", GeoPoint(47.6, -122.3)), reveal)
         assertNull(handle.get<String>(RESULT_MAP_STOP_ID))
         assertNull(handle.get<Double>(RESULT_MAP_STOP_LAT))
         assertNull(handle.get<Double>(RESULT_MAP_STOP_LON))

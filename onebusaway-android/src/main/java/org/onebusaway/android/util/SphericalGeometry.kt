@@ -56,3 +56,18 @@ fun haversineDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): D
 
     return EARTH_RADIUS_METERS * atan2(y, x)
 }
+
+/**
+ * Initial great-circle bearing from (lat1, lon1) toward (lat2, lon2), in degrees clockwise from true
+ * north (0 = north, 90 = east). The pure equivalent of [android.location.Location.bearingTo], so
+ * bearing math stays JVM-testable and free of the platform type. Returns a value in −180..180 (the
+ * caller normalizes to 0..360 where it wants that).
+ */
+fun initialBearing(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val rLat1 = Math.toRadians(lat1)
+    val rLat2 = Math.toRadians(lat2)
+    val deltaLon = Math.toRadians(lon2 - lon1)
+    val y = sin(deltaLon) * cos(rLat2)
+    val x = cos(rLat1) * sin(rLat2) - sin(rLat1) * cos(rLat2) * cos(deltaLon)
+    return Math.toDegrees(atan2(y, x))
+}

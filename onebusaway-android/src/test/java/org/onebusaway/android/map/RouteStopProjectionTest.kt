@@ -15,24 +15,22 @@
  */
 package org.onebusaway.android.map
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.runner.RunWith
 import org.onebusaway.android.api.adapters.ObaStopElement
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 
 /**
- * Instrumented coverage for the route-map stop projection geometry ([projectStopsOntoPolylines] and
- * [projectFocusedStops]) — the pure nearest-point-across-polylines kernel and its fall-backs. Runs on a
- * device because [org.onebusaway.android.util.Polyline] snaps against `android.location.Location`, which
- * this project's plain-JVM unit tests can't construct (the presentation-assembly logic that consumes the
- * result is JVM-tested in [RouteMapPresentationPlanTest]).
+ * Plain-JVM coverage for the route-map stop projection geometry ([projectStopsOntoPolylines] and
+ * [projectFocusedStops]) — the pure nearest-point-across-polylines kernel and its fall-backs. Runs
+ * off-device now that the projection (and the [org.onebusaway.android.util.Polyline] it snaps against)
+ * operate on flavor-neutral [GeoPoint]s rather than `android.location.Location` (the GeoPoint reform,
+ * #1944); the presentation-assembly logic that consumes the result is JVM-tested in
+ * [RouteMapPresentationPlanTest].
  */
-@RunWith(AndroidJUnit4::class)
 class RouteStopProjectionTest {
 
     // A meridian segment: latitude 0, longitude 0..10.

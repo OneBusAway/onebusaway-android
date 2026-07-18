@@ -349,7 +349,7 @@ class HomeActivity : AppCompatActivity() {
             is ReportTarget.Stop -> target.stop.let {
                 ReportLauncher.start(this, it.id, it.name, it.code, it.lat, it.lon)
             }
-            is ReportTarget.Location -> ReportLauncher.start(this, target.lat, target.lon)
+            is ReportTarget.Location -> ReportLauncher.start(this, target.point.latitude, target.point.longitude)
             ReportTarget.Generic -> ReportLauncher.start(this)
         }
     }

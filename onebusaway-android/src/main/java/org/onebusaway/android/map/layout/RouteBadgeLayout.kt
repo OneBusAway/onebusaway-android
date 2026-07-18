@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.map.layout
 
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.EARTH_RADIUS_METERS

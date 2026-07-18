@@ -43,7 +43,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
@@ -51,6 +51,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.RegionUtils
+import org.onebusaway.android.util.toGeoPoint
 
 /**
  * The nearby-stops use case (the legacy `StopMapController`): loads + accumulates the bus stops in the
@@ -402,10 +403,9 @@ class StopsMapController(
         animate: Boolean = false,
     ) {
         if (recenter) {
-            val loc = stop.location
             host.dispatchGesture(
                 CameraCommand.Recenter(
-                    loc.latitude, loc.longitude,
+                    stop.location.toGeoPoint(),
                     animate = animate,
                     applyRouteBias = routeActive() && overlayExpanded,
                 )

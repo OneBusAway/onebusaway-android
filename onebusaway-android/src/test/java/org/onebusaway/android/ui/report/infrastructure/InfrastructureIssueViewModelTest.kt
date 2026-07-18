@@ -29,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.util.GeoPoint
 
 private class FakeServiceListRepository(private val result: ServiceListResult) : ServiceListRepository {
     override suspend fun loadServices(latitude: Double, longitude: Double) = Result.success(result)

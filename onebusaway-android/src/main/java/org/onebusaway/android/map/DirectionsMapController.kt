@@ -16,7 +16,6 @@
 package org.onebusaway.android.map
 
 import android.graphics.Color
-import android.location.Location
 import android.util.Log
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
@@ -26,7 +25,7 @@ import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.PolylineDecoder
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.RoutePolyline
 
 /**
@@ -88,7 +87,7 @@ class DirectionsMapController(private val host: MapHost) {
                 // An itinerary leg is traversed one way; keep its travel-direction chevrons.
                 RoutePolyline(
                     resolveLegColor(leg),
-                    shape.points.map { it.toGeoPoint() },
+                    shape.points,
                     directional = true,
                 )
             } else {
@@ -172,8 +171,8 @@ class DirectionsMapController(private val host: MapHost) {
     /** An [ObaShape] over a [TripLegGeometry] (ported from the legacy DirectionsMapController). */
     private class LegShape(private val geometry: TripLegGeometry) : ObaShape {
         override val length: Int get() = geometry.length
-        override val points: List<Location> get() =
-            PolylineDecoder.decodeLine(geometry.points.orEmpty(), geometry.length)
+        override val points: List<GeoPoint> get() =
+            PolylineDecoder.decode(geometry.points.orEmpty(), geometry.length)
         override val rawPoints: String get() = geometry.points.orEmpty()
     }
 

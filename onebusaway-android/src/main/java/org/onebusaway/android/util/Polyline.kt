@@ -15,19 +15,19 @@
  */
 package org.onebusaway.android.util
 
-import android.location.Location
 import java.util.Arrays
 import kotlin.math.cos
 
 /**
- * An ordered sequence of geographic points with fast distance-based interpolation. Cumulative
- * distances are precomputed at construction so that [interpolate] and [bearingAt] are O(log n)
- * via binary search; [subPolyline] is O(log n + k) in the number of vertices it returns.
+ * An ordered sequence of flavor-neutral [GeoPoint]s with fast distance-based interpolation. Cumulative
+ * distances are precomputed at construction so that [interpolate] and [bearingAt] are O(log n) via
+ * binary search; [subPolyline] is O(log n + k) in the number of vertices it returns. Carries no
+ * `android.location.Location` dependency — it's pure geometry, so it (and its callers) run on plain JVM.
  */
-class Polyline(points: List<Location>) {
+class Polyline(points: List<GeoPoint>) {
 
     /** Owned copy, so a caller mutating its list can't desync it from [cumulativeDistances]. */
-    val points: List<Location> = points.toList()
+    val points: List<GeoPoint> = points.toList()
 
     private val cumulativeDistances: DoubleArray =
             points
@@ -57,46 +57,25 @@ class Polyline(points: List<Location>) {
         }
     }
 
-    /** Returns the interpolated position at the given distance along the polyline. */
-    fun interpolate(distance: Double): Location? {
-        val out = Location("")
-        return if (interpolateInto(distance, out)) out else null
+    /** Returns the interpolated position at the given distance along the polyline, or null if empty. */
+    fun interpolate(distance: Double): GeoPoint? {
+        if (points.isEmpty()) return null
+        if (points.size < 2 || distance <= 0) return points.first()
+        return interpolate(distance, segmentIndex(distance))
     }
 
     /** Interpolates using a pre-computed [seg] from [segmentIndex]. */
-    fun interpolate(distance: Double, seg: Int): Location? {
-        val out = Location("")
-        return if (interpolateInto(distance, seg, out)) out else null
-    }
-
-    /** Writes the interpolated position into [out]. Returns false if the polyline is empty. */
-    fun interpolateInto(distance: Double, out: Location): Boolean {
-        if (points.isEmpty()) return false
-        if (points.size < 2 || distance <= 0) {
-            out.set(points.first())
-            return true
-        }
-        return interpolateInto(distance, segmentIndex(distance), out)
-    }
-
-    /** Interpolates into [out] using a pre-computed [seg] from [segmentIndex]. */
-    fun interpolateInto(distance: Double, seg: Int, out: Location): Boolean {
-        if (seg < 0) {
-            if (points.isEmpty()) return false
-            out.set(points.first())
-            return true
-        }
+    fun interpolate(distance: Double, seg: Int): GeoPoint? {
+        if (seg < 0) return points.firstOrNull()
         val segLen = cumulativeDistances[seg + 1] - cumulativeDistances[seg]
-        if (segLen <= 0) {
-            out.set(points[seg])
-            return true
-        }
+        if (segLen <= 0) return points[seg]
         val fraction = ((distance - cumulativeDistances[seg]) / segLen).coerceIn(0.0, 1.0)
         val p0 = points[seg]
         val p1 = points[seg + 1]
-        out.latitude = p0.latitude + fraction * (p1.latitude - p0.latitude)
-        out.longitude = p0.longitude + fraction * (p1.longitude - p0.longitude)
-        return true
+        return GeoPoint(
+                p0.latitude + fraction * (p1.latitude - p0.latitude),
+                p0.longitude + fraction * (p1.longitude - p0.longitude)
+        )
     }
 
     /** Returns the bearing (0-360) of the polyline segment at the given distance, or NaN. */
@@ -105,7 +84,10 @@ class Polyline(points: List<Location>) {
     /** Returns the bearing using a pre-computed [seg] from [segmentIndex]. */
     fun bearingAt(seg: Int): Float {
         if (seg < 0) return Float.NaN
-        return (points[seg].bearingTo(points[seg + 1]) + 360) % 360
+        val p0 = points[seg]
+        val p1 = points[seg + 1]
+        val bearing = initialBearing(p0.latitude, p0.longitude, p1.latitude, p1.longitude)
+        return ((bearing + 360) % 360).toFloat()
     }
 
     /**
@@ -116,7 +98,7 @@ class Polyline(points: List<Location>) {
      * to sit a route stop on the route centerline (#1752). This is an exact geometric projection, not a
      * magnitude guess; the planar approximation is negligible at the stop-to-line distances involved.
      */
-    fun nearestPoint(latitude: Double, longitude: Double): Location? {
+    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? {
         if (points.isEmpty()) return null
         if (points.size == 1) return points.first()
         val cosLat = cos(Math.toRadians(latitude))
@@ -146,51 +128,19 @@ class Polyline(points: List<Location>) {
                 bestLon = projLon
             }
         }
-        return locationOf(bestLat, bestLon)
+        return GeoPoint(bestLat, bestLon)
     }
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */
-    fun subPolyline(startDist: Double, endDist: Double): List<Location>? {
-        val result = mutableListOf<Location>()
-        return if (subPolylineInto(startDist, endDist, result)) result else null
-    }
-
-    /**
-     * Fills [out] with the sub-polyline between two distances, with interpolated endpoints. The
-     * list is cleared first. Returns true if the sub-polyline was produced.
-     */
-    fun subPolylineInto(startDist: Double, endDist: Double, out: MutableList<Location>): Boolean {
-        out.clear()
-        val start = interpolate(startDist) ?: return false
-        val end = interpolate(endDist) ?: return false
-        out.add(start)
+    fun subPolyline(startDist: Double, endDist: Double): List<GeoPoint>? {
+        val start = interpolate(startDist) ?: return null
+        val end = interpolate(endDist) ?: return null
+        val result = mutableListOf(start)
         vertexRange(startDist, endDist)?.let { (from, to) ->
-            for (i in from until to) out.add(points[i])
+            for (i in from until to) result.add(points[i])
         }
-        out.add(end)
-        return true
-    }
-
-    /**
-     * Maps the sub-polyline between two distances into [out] via [transform], using [scratch] for
-     * interpolated endpoints. The list is cleared first.
-     */
-    fun <T> subPolylineMapInto(
-            startDist: Double,
-            endDist: Double,
-            out: MutableList<T>,
-            scratch: Location,
-            transform: (Location) -> T
-    ): Boolean {
-        out.clear()
-        if (!interpolateInto(startDist, scratch)) return false
-        out.add(transform(scratch))
-        vertexRange(startDist, endDist)?.let { (from, to) ->
-            for (i in from until to) out.add(transform(points[i]))
-        }
-        if (!interpolateInto(endDist, scratch)) return false
-        out.add(transform(scratch))
-        return true
+        result.add(end)
+        return result
     }
 
     /**

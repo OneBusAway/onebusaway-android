@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map
 
-import android.location.Location
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,12 +25,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
@@ -178,10 +176,8 @@ class DefaultFocusedTripRepository internal constructor(
     private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? =
         shapeFetches.run(shapeId) {
             shapePermits.withPermit {
-                resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }
-                    ?.let { polyline ->
-                        withContext(Dispatchers.Default) { polyline.points.map(Location::toGeoPoint) }
-                    }
+                // The cached [Polyline] already holds decoded [GeoPoint]s — just hand back its points.
+                resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }?.points
             }
         }
 }

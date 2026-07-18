@@ -44,7 +44,7 @@ import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
@@ -623,4 +623,4 @@ class MapLibreRenderer(
     }
 }
 
-private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)

@@ -15,28 +15,20 @@
  */
 package org.onebusaway.android.map
 
-import android.location.Location
 import android.os.Bundle
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
-import org.onebusaway.android.util.locationOf
 import org.onebusaway.android.util.PreferenceUtils
 import java.util.concurrent.TimeUnit
 
 /** Debounce before reacting to a camera move, matching the old MapWatcher poll cadence (stops + bikes). */
 internal const val STOP_LOAD_DEBOUNCE_MS = 250L
 
-/** A flavor-neutral [GeoPoint] as an Android [Location], for the repositories' lat/lon span queries. */
-internal fun GeoPoint.toLocation(): Location = locationOf(latitude, longitude)
-
-/** An Android [Location] (shape/interpolation point) as a flavor-neutral [GeoPoint] (inverse of [toLocation]). */
-internal fun Location.toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)
-
-/** The map's initial camera (lat/lon/zoom) before the loaders / region centering take over. */
-data class MapCameraSeed(val lat: Double, val lon: Double, val zoom: Float)
+/** The map's initial camera (point + zoom) before the loaders / region centering take over. */
+data class MapCameraSeed(val point: GeoPoint, val zoom: Float)
 
 /** The seed-camera default zoom (was HomeActivity.MAP_DEFAULT_ZOOM; NOT [MapParams.DEFAULT_ZOOM] = 18). */
 internal const val SEED_DEFAULT_ZOOM = 16f
@@ -50,14 +42,18 @@ internal const val SEED_DEFAULT_ZOOM = 16f
  */
 internal fun resolveCameraSeed(handle: SavedStateHandle): MapCameraSeed {
     val primary = MapCameraSeed(
-        lat = handle[MapParams.CENTER_LAT] ?: 0.0,
-        lon = handle[MapParams.CENTER_LON] ?: 0.0,
+        point = GeoPoint(
+            latitude = handle[MapParams.CENTER_LAT] ?: 0.0,
+            longitude = handle[MapParams.CENTER_LON] ?: 0.0,
+        ),
         zoom = handle[MapParams.ZOOM] ?: SEED_DEFAULT_ZOOM,
     )
     val restored = Bundle().also { PreferenceUtils.maybeRestoreMapViewToBundle(it) }
     val persisted = MapCameraSeed(
-        lat = restored.getDouble(MapParams.CENTER_LAT, 0.0),
-        lon = restored.getDouble(MapParams.CENTER_LON, 0.0),
+        point = GeoPoint(
+            latitude = restored.getDouble(MapParams.CENTER_LAT, 0.0),
+            longitude = restored.getDouble(MapParams.CENTER_LON, 0.0),
+        ),
         // The persisted zoom defaults to the primary zoom (so an empty persisted view keeps it).
         zoom = restored.getFloat(MapParams.ZOOM, primary.zoom),
     )
@@ -71,7 +67,7 @@ internal fun resolveCameraSeed(handle: SavedStateHandle): MapCameraSeed {
  * (e.g. the persisted zoom defaults to the primary zoom), so this is just the precedence decision.
  */
 internal fun resolveMapSeed(primary: MapCameraSeed, persisted: MapCameraSeed): MapCameraSeed =
-    if (primary.lat == 0.0 && primary.lon == 0.0) persisted else primary
+    if (primary.point.latitude == 0.0 && primary.point.longitude == 0.0) persisted else primary
 
 /** How often the real-time vehicle positions are refreshed while a route is shown. */
 internal val VEHICLE_REFRESH_PERIOD_MS = TimeUnit.SECONDS.toMillis(10)
@@ -245,7 +241,7 @@ fun regionRezoom(changed: Boolean, hasLocation: Boolean, cameraAtSeed: Boolean):
 
 /**
  * The zoom/limit-exceeded half of the "is the last response still good for this viewport?" decision
- * (the legacy `StopsResponse.fulfills`), split out from the Android [Location] center comparison so
+ * (the legacy `StopsResponse.fulfills`), split out from the Android `Location` center comparison so
  * it can be unit-tested on the JVM. Assumes the caller already confirmed the centers match.
  *
  * @param hasResponse whether the last request produced a (non-null) response
@@ -279,7 +275,7 @@ internal fun zoomFulfills(
  * in [MapViewModel] uses this in place of the controller's `lastResponse?.fulfills(request)` check.
  *
  * [CameraSnapshot.center] is a value type, so the center comparison is honest value-equality (the
- * legacy version compared the request center as an Android [Location] — reference equality — so a
+ * legacy version compared the request center as an Android `Location` — reference equality — so a
  * fresh instance almost never matched and the gate rarely short-circuited). The zoom/limit-exceeded
  * half delegates to [zoomFulfills], unchanged.
  *

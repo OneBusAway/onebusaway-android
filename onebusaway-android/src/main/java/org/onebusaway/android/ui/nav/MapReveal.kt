@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.nav
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Navigate to an in-app [route], popping up to HOME and de-duping the top — the single navigation
@@ -101,7 +102,7 @@ fun NavController.revealStopOnMap(stopId: String, lat: Double, lon: Double) {
 
 /** A complete stop reveal read back off the HOME [SavedStateHandle] — the typed counterpart of the
  *  three [RESULT_MAP_STOP_ID]/[RESULT_MAP_STOP_LAT]/[RESULT_MAP_STOP_LON] keys [revealStopOnMap] writes. */
-data class StopReveal(val stopId: String, val lat: Double, val lon: Double)
+data class StopReveal(val stopId: String, val point: GeoPoint)
 
 /**
  * Reads and consumes a pending stop reveal from the HOME [SavedStateHandle] — the symmetric typed *read*
@@ -119,5 +120,5 @@ fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     set(RESULT_MAP_STOP_LAT, null)
     set(RESULT_MAP_STOP_LON, null)
     if (stopId == null || lat == null || lon == null) return null
-    return StopReveal(stopId, lat, lon)
+    return StopReveal(stopId, GeoPoint(lat, lon))
 }

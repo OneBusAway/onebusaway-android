@@ -32,6 +32,7 @@ import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 
 /**
@@ -54,6 +55,8 @@ class TripExtrapolationBuilderTest {
         latitude = lat
         longitude = lng
     }
+
+    private fun gp(lat: Double, lng: Double) = GeoPoint(lat, lng)
 
     /** A minimal predicted [ObaTripStatus] anchor carrying only the fields the data-age marker reads. */
     private fun anchorStatus(position: Location?, distanceAlongTrip: Double?): ObaTripStatus =
@@ -85,7 +88,7 @@ class TripExtrapolationBuilderTest {
 
     /** A straight ~3.3 km line heading north along longitude -122. */
     private fun northLine() = Polyline(
-        listOf(loc(47.00, -122.0), loc(47.01, -122.0), loc(47.02, -122.0), loc(47.03, -122.0))
+        listOf(gp(47.00, -122.0), gp(47.01, -122.0), gp(47.02, -122.0), gp(47.03, -122.0))
     )
 
     @Test

@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.report.constants.ReportConstants
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Orchestrates the infrastructure-issue container: tracks the [IssueLocation], loads Open311
@@ -118,7 +119,7 @@ class InfrastructureIssueViewModel(
                     _uiState.update {
                         it.copy(location = IssueLocation(point.latitude, point.longitude, null), busStopName = null)
                     }
-                    _events.emit(InfrastructureIssueEvent.RecenterMap(point.latitude, point.longitude))
+                    _events.emit(InfrastructureIssueEvent.RecenterMap(point))
                     loadForLocation()
                 },
                 onFailure = { _events.emit(InfrastructureIssueEvent.AddressNotFound) }

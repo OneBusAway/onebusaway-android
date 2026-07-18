@@ -31,6 +31,12 @@ fun locationOf(lat: Double, lon: Double): Location =
         longitude = lon
     }
 
+/** An Android [Location] as a flavor-neutral [GeoPoint]. */
+fun Location.toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)
+
+/** A flavor-neutral [GeoPoint] as a provider-less Android [Location] (inverse of [toGeoPoint]). */
+fun GeoPoint.toLocation(): Location = locationOf(latitude, longitude)
+
 /**
  * Returns the human-readable details of a Location (provider, lat/long, accuracy, age) for
  * debug/email text, or the empty string when [loc] is null.

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * Smooths a marker across a fresh-AVL jump without interrupting its dead-reckoning glide.
  *

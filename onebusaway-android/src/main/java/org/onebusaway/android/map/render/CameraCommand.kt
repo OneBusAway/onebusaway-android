@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * A one-shot, **transient** camera gesture (zoom step, recenter, my-location move, stop-tap centering).
  * A use-case controller dispatches one of these to [MapRenderState.cameraGestures], and the flavor
@@ -37,16 +39,14 @@ sealed interface CameraCommand {
      * the host since it owns the map mode.
      */
     data class Recenter(
-        val lat: Double,
-        val lon: Double,
+        val point: GeoPoint,
         val animate: Boolean,
         val applyRouteBias: Boolean,
     ) : CameraCommand
 
     /** Move to the user's location at either the default zoom or the current zoom (the my-location FAB). */
     data class MoveToLocation(
-        val lat: Double,
-        val lon: Double,
+        val point: GeoPoint,
         val useDefaultZoom: Boolean,
         val animate: Boolean,
     ) : CameraCommand

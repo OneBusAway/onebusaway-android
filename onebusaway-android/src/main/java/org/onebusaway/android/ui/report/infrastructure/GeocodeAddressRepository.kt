@@ -22,9 +22,7 @@ import java.io.IOException
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-/** A geocoded coordinate, decoupled from android.location.Location for the ViewModel. */
-data class GeoPoint(val latitude: Double, val longitude: Double)
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Forward/reverse geocoding for the issue address field, replacing the legacy GeocoderTask and

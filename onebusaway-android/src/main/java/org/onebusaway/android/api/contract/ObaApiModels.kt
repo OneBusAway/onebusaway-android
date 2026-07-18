@@ -496,7 +496,7 @@ data class UmamiAnalyticsDto(
 
 /**
  * The shape (trip path) entry: an encoded-polyline string ([points], Google's algorithm) of
- * [length] points. Decode with `PolylineDecoder.decodeLine`.
+ * [length] points. Decode with `PolylineDecoder.decode`.
  */
 @Serializable
 data class ShapeEntry(

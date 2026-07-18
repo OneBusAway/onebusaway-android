@@ -149,7 +149,7 @@ class DefaultTripVehiclesDataSource @Inject constructor(
 
     override suspend fun shape(shapeId: String): Result<Polyline?> = api.call {
         val entry = it.shape(shapeId).requireData().entry
-        PolylineDecoder.decodeLine(entry.points, entry.length)
+        PolylineDecoder.decode(entry.points, entry.length)
             .takeIf { it.isNotEmpty() }
             ?.let { Polyline(it) }
     }.onFailure { Log.e(TAG, "shape($shapeId) failed", it) }

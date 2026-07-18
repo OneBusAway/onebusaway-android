@@ -23,6 +23,7 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.maplibre.MapHelpMapLibre
+import org.onebusaway.android.map.maplibre.toLatLng
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.DEFAULT_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.FramingIntent
@@ -49,11 +50,11 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
     when (cmd) {
         is CameraCommand.Recenter -> {
             val cp = map.cameraPosition
-            var target = LatLng(cmd.lat, cmd.lon)
+            var target = cmd.point.toLatLng()
             if (cmd.applyRouteBias) {
                 val vr = map.projection.visibleRegion.latLngBounds
                 val span = abs(vr.getLonEast() - vr.getLonWest())
-                target = LatLng(cmd.lat - span * 0.2 / 2, cmd.lon)
+                target = LatLng(cmd.point.latitude - span * 0.2 / 2, cmd.point.longitude)
             }
             val pos = CameraPosition.Builder().target(target)
                 .zoom(cp.zoom).bearing(cp.bearing).tilt(cp.tilt).build()
@@ -63,7 +64,7 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
         is CameraCommand.MoveToLocation -> {
             val zoom = if (cmd.useDefaultZoom) CAMERA_DEFAULT_ZOOM else map.cameraPosition.zoom
-            val pos = CameraPosition.Builder().target(LatLng(cmd.lat, cmd.lon)).zoom(zoom).build()
+            val pos = CameraPosition.Builder().target(cmd.point.toLatLng()).zoom(zoom).build()
             val update = CameraUpdateFactory.newCameraPosition(pos)
             if (cmd.animate) map.animateCamera(update) else map.moveCamera(update)
         }
@@ -119,7 +120,7 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
         }
 
         is FramingIntent.Point -> map.moveCamera(
-            CameraUpdateFactory.newLatLngZoom(LatLng(intent.lat, intent.lon), intent.zoom.toDouble())
+            CameraUpdateFactory.newLatLngZoom(intent.point.toLatLng(), intent.zoom.toDouble())
         )
 
         is FramingIntent.Points -> {

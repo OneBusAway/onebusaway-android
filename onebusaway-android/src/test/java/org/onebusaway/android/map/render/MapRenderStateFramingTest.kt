@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList

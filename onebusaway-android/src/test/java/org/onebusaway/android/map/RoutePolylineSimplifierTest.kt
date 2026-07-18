@@ -18,7 +18,7 @@ package org.onebusaway.android.map
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.simplifyRoutePolyline
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 

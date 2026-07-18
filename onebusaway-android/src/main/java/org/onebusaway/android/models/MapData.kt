@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.models
 
-import android.location.Location
+import org.onebusaway.android.util.GeoPoint
 
 /** The stops visible in a viewport + the routes serving them (for the marker route-type icons). */
 data class NearbyStops(
@@ -41,9 +41,9 @@ data class FocusedTrip(
 
 /**
  * A route's stops, the serving routes (for stop-marker icons), the route + agency name, and its
- * decoded shape. Polylines are [Location] points (the neutral geo type); the map layer turns them
- * into its render `GeoPoint`s. Each [RouteMapStop] carries the direction(s) it serves, so the overlay
- * can be narrowed to a single stop-relevant direction without a separate id index. [directions]
+ * decoded shape. Polylines are flavor-neutral [GeoPoint]s, consumed directly by the map layer. Each
+ * [RouteMapStop] carries the direction(s) it serves, so the overlay can be narrowed to a single
+ * stop-relevant direction without a separate id index. [directions]
  * enumerates the route's selectable directions (id + headsign) so the header can offer a switch.
  *
  * [polylines] is the whole-route (merged, undirected) shape drawn when no direction is selected;
@@ -57,8 +57,8 @@ data class RouteMapData(
     val stops: List<RouteMapStop>,
     val routes: List<ObaRoute>,
     val directions: List<RouteMapDirection>,
-    val polylines: List<List<Location>>,
-    val polylinesByDirection: Map<Int, List<List<Location>>>,
+    val polylines: List<List<GeoPoint>>,
+    val polylinesByDirection: Map<Int, List<List<GeoPoint>>>,
 )
 
 /**

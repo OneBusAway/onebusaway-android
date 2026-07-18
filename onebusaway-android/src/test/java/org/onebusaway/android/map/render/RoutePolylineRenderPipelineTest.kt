@@ -26,6 +26,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
+import org.onebusaway.android.util.GeoPoint
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RoutePolylineRenderPipelineTest {

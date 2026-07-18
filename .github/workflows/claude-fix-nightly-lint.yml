@@ -1,0 +1,136 @@
+name: Claude Fix Nightly Lint
+
+# When the nightly Android Lint leg fails, have Claude Code reproduce the findings, fix them at
+# their source per CLAUDE.md, verify the fix, and open a PR for human review. It NEVER merges — the
+# PR is a proposal. This is deliberately decoupled from android-nightly.yml (via workflow_run) so a
+# slow fix+verify cycle can't tangle with the nightly's `concurrency: nightly, cancel-in-progress`.
+#
+# Note: the nightly has three jobs (all-brands, lint, smoke-api23). workflow_run fires on the whole
+# workflow's conclusion, so the `detect` job below confirms it was specifically the `lint` job that
+# failed before spending any runner time or API tokens on a fix.
+
+on:
+  workflow_run:
+    workflows: ["Android Nightly"]
+    types: [completed]
+  # Allow manual re-runs against the most recent nightly from the Actions tab.
+  workflow_dispatch:
+
+# Never run two fix attempts at once; a newer nightly failure supersedes an in-flight fix.
+concurrency:
+  group: claude-fix-nightly-lint
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    # Only look further if the triggering nightly actually failed (skip on success/cancelled).
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      lint_failed: ${{ steps.check.outputs.lint_failed }}
+      head_sha: ${{ steps.check.outputs.head_sha }}
+    steps:
+      - name: Check whether the `lint` job specifically failed
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          # On workflow_run this is the nightly run id; on manual dispatch we resolve the latest below.
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${RUN_ID:-}" ]; then
+            # workflow_dispatch: find the most recent Android Nightly run.
+            RUN_ID="$(gh run list --repo "$REPO" --workflow 'Android Nightly' \
+              --limit 1 --json databaseId --jq '.[0].databaseId')"
+          fi
+          echo "Inspecting nightly run $RUN_ID"
+
+          conclusion="$(gh api "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+            --jq '.jobs[] | select(.name=="lint") | .conclusion')"
+          head_sha="$(gh api "repos/$REPO/actions/runs/$RUN_ID" --jq '.head_sha')"
+
+          echo "lint job conclusion: ${conclusion:-<none>}"
+          echo "head_sha: $head_sha"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          if [ "$conclusion" = "failure" ]; then
+            echo "lint_failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "lint_failed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  fix:
+    needs: detect
+    if: needs.detect.outputs.lint_failed == 'true'
+    runs-on: ubuntu-latest
+    # Cap the whole leg: one lint run (~7-15 min) + Claude's fix/verify iterations. A hard ceiling
+    # keeps a stuck loop from burning runner minutes and API tokens indefinitely.
+    timeout-minutes: 60
+    permissions:
+      contents: write       # commit the fix to a new branch
+      pull-requests: write  # open the PR
+      issues: write         # let Claude leave context if it can't open a PR
+    steps:
+      - name: Checkout the failing commit
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.detect.outputs.head_sha }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: 21
+          distribution: 'temurin'
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v6
+
+      # Reproduce the failure so Claude has the concrete findings to work from. We EXPECT this to
+      # fail (that's the whole point), so don't let it fail the job — capture the console output and
+      # keep the HTML/XML reports for Claude to read.
+      - name: Reproduce lint findings
+        continue-on-error: true
+        run: |
+          set +e
+          ./gradlew :onebusaway-android:lintObaGoogleDebug --build-cache \
+            -PwarningsAsErrors=true --stacktrace 2>&1 | tee lint-console.log
+          echo "exit=${PIPESTATUS[0]}"
+
+      - name: Claude fixes the lint findings and opens a PR
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Cap the agentic loop so a hard finding can't spin forever (lint re-runs are expensive).
+          claude_args: "--max-turns 40"
+          prompt: |
+            The nightly Android Lint job (`lintObaGoogleDebug`, warnings-as-errors) failed on commit
+            ${{ needs.detect.outputs.head_sha }} of the main branch.
+
+            The console output from reproducing it is in `lint-console.log` at the repo root. The full
+            reports are under `onebusaway-android/build/reports/` (`lint-results-obaGoogleDebug.html`
+            and `.xml`). Read them to get the exact findings.
+
+            Your task:
+            1. Read `CLAUDE.md` first and follow it exactly — especially the "CI is strict" and "No
+               unsanctioned heuristics" sections.
+            2. Fix each reported lint finding AT ITS SOURCE. There is no lint baseline in this repo, so
+               do not add one.
+            3. Only if a finding genuinely cannot be fixed here (e.g. it needs a higher minSdk or a
+               schema change), opt that specific check out in the `lint { disable += ... }` block in
+               `onebusaway-android/build.gradle.kts` with a one-line rationale AND a tracking-issue
+               link — never a blanket disable. Per CLAUDE.md, any opt-out (and any heuristic) is a
+               HUMAN-SIGN-OFF gate: if you resort to one, call it out prominently at the top of the PR
+               description as "NEEDS HUMAN SIGN-OFF" with the assumption and its failure mode.
+            4. Verify your fix compiles clean and lint passes:
+               `./gradlew :onebusaway-android:lintObaGoogleDebug -PwarningsAsErrors=true`
+               Iterate until it is green. If you cannot get it green within your turn budget, do NOT
+               open a PR claiming success — instead open the PR as a DRAFT and describe exactly what
+               remains.
+            5. Open a pull request against `main` with the fix. Title: "Fix nightly lint findings".
+               In the body: list each finding and how you fixed it, paste the final green lint output,
+               and note this PR was generated automatically from a nightly lint failure. Do NOT merge
+               it — leave it for human review.

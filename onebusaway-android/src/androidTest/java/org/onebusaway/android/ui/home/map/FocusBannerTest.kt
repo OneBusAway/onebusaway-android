@@ -20,7 +20,6 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
@@ -29,13 +28,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class FocusBannerTest {
 
-    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
-    @Suppress("DEPRECATION")
+    // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 

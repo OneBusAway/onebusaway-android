@@ -22,11 +22,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.SmokeTest
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * On-device tests for the SlideBox's single-owner anchor-chasing glide. This is the regression test
@@ -37,11 +37,10 @@ import org.onebusaway.android.SmokeTest
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Compose rendering on a 2015-era runtime
 class SlideBoxTest {
 
-    // See EtaStripJustifyTest for why the deprecated rule (Unconfined composition) is kept — under
-    // the v2 rule this project's onGloballyPositioned/effect chains never run (#1792).
-    @Suppress("DEPRECATION")
+    // See createUnconfinedComposeRule for why Unconfined composition is used here — this is the
+    // API 23 floor @SmokeTest, so eager execution matters most (issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     /** The anchor offset the content declares, in px — mutated mid-test to drive the glide. */
     private val anchor = mutableIntStateOf(ANCHOR_PX)

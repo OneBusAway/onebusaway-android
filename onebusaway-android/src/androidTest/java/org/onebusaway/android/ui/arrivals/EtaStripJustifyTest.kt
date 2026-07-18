@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
@@ -28,6 +27,7 @@ import org.junit.Test
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * On-device regression test for the strip justifying to its first non-negative ETA (recent-past
@@ -38,14 +38,10 @@ import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
  */
 class EtaStripJustifyTest {
 
-    // The suggested androidx.compose.ui.test.junit4.v2.createComposeRule runs composition on a
-    // StandardTestDispatcher instead of Unconfined; under it, this composable's Modifier.onGloballyPositioned
-    // callback never fires at all (confirmed via on-device logcat — composition reaches the pill, but the
-    // callback never runs within a 5s poll), not just the expected LaunchedEffect timing shift. Tracked in
-    // https://github.com/OneBusAway/onebusaway-android/issues/1792.
-    @Suppress("DEPRECATION")
+    // Unconfined composition — see createUnconfinedComposeRule for why (this composable's
+    // measure -> onGloballyPositioned -> LaunchedEffect -> scrollTo chain, and issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     /** A strip that overflows its host: the recent-past pills must scroll off to justify. */
     @Test

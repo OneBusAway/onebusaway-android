@@ -42,7 +42,7 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.viewport
@@ -370,9 +370,9 @@ class MapViewModel @Inject constructor(
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
 
     /** Recenter on the focused stop after the arrivals sheet expands over it (a Home map directive). */
-    fun recenterOnFocusedStop(lat: Double, lon: Double) {
+    fun recenterOnFocusedStop(point: GeoPoint) {
         mapHost.dispatchGesture(
-            CameraCommand.Recenter(lat, lon, animate = true, applyRouteBias = routeController.isActive)
+            CameraCommand.Recenter(point, animate = true, applyRouteBias = routeController.isActive)
         )
     }
 

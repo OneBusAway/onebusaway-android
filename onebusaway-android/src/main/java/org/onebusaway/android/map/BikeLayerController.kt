@@ -35,7 +35,8 @@ import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.bike.bikeAction
 import org.onebusaway.android.map.bike.filterStations
 import org.onebusaway.android.map.render.BikeMarker
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.toLocation
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**

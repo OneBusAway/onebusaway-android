@@ -56,7 +56,7 @@ import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils

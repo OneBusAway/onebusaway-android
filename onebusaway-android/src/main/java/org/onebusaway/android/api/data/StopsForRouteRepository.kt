@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.api.data
 
-import android.location.Location
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -35,6 +34,7 @@ import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.models.RouteStopGroup
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PolylineDecoder
 import org.onebusaway.android.util.SingleFlight
 import org.onebusaway.android.util.runCatchingCancellable
@@ -184,7 +184,7 @@ internal fun EntryWithReferences<StopsForRoute>.toRouteMapData(routeId: String):
     )
 }
 
-private fun ShapeEntry.decode(): List<Location> = PolylineDecoder.decodeLine(points, length)
+private fun ShapeEntry.decode(): List<GeoPoint> = PolylineDecoder.decode(points, length)
 
 /**
  * A route's selectable [directions], the [directionsByStop] membership, and each direction's own

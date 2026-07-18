@@ -22,8 +22,7 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
-import android.location.Location
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * A route's full stops (each tagged with the direction(s) it serves, so the controller can re-filter
@@ -65,10 +64,10 @@ data class DirectionShape(val polylines: List<List<GeoPoint>>, val directional: 
 
 /**
  * Loads a route's stops + shapes (one-shot, stops-for-route with polylines) for the route/stop
- * overlays, via the shared caching [StopsForRouteRepository]. Turns the source's
- * [android.location.Location] shape points into the render [GeoPoint]s the overlay consumes, and —
- * when the caller passes a `directionStopId` — narrows the stops to that stop's direction. (Route-mode
- * real-time vehicles are polled via the trip-observation repository's `routeVehiclesStream`.)
+ * overlays, via the shared caching [StopsForRouteRepository]. The source already decodes shapes to the
+ * flavor-neutral [GeoPoint]s the overlay consumes, and — when the caller passes a `directionStopId` —
+ * narrows the stops to that stop's direction. (Route-mode real-time vehicles are polled via the
+ * trip-observation repository's `routeVehiclesStream`.)
  */
 interface RouteMapRepository {
     /**
@@ -93,10 +92,8 @@ class DefaultRouteMapRepository @Inject constructor(
                     agencyName = it.agencyName,
                     stops = it.stops,
                     routes = it.routes,
-                    polylines = it.polylines.map { line -> line.map(Location::toGeoPoint) },
-                    polylinesByDirection = it.polylinesByDirection.mapValues { (_, lines) ->
-                        lines.map { line -> line.map(Location::toGeoPoint) }
-                    },
+                    polylines = it.polylines,
+                    polylinesByDirection = it.polylinesByDirection,
                     directions = it.directions,
                     initialDirectionId = it.stops.anchorDirectionId(directionStopId),
                 )

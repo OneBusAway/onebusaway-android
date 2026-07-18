@@ -22,11 +22,9 @@ import androidx.core.graphics.createBitmap
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import kotlin.math.roundToInt
-import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.RouteStopCircles
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.focusedRouteStopScale
@@ -100,7 +98,7 @@ internal class GoogleRouteStopBitmapLayer(
             if (rendered == null) {
                 val marker = map.addMarker(
                     MarkerOptions()
-                        .position(stop.point.toGoogleLatLng())
+                        .position(stop.point.toLatLng())
                         .icon(icon(sizes.forSelection(selected), selected))
                         .flat(true)
                         .anchor(0.5f, 0.5f)
@@ -110,7 +108,7 @@ internal class GoogleRouteStopBitmapLayer(
                 stopsById[stop.id] = RenderedStop(marker, stop)
             } else {
                 if (rendered.stop.point != stop.point) {
-                    rendered.marker.position = stop.point.toGoogleLatLng()
+                    rendered.marker.position = stop.point.toLatLng()
                 }
                 rendered.stop = stop
             }
@@ -231,5 +229,3 @@ private fun drawRouteStopBitmap(
     }
     return bitmap
 }
-
-private fun GeoPoint.toGoogleLatLng() = LatLng(latitude, longitude)

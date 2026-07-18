@@ -17,7 +17,7 @@ package org.onebusaway.android.map.compose
 
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 
 /**

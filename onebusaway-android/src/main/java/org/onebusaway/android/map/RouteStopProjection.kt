@@ -15,17 +15,16 @@
  */
 package org.onebusaway.android.map
 
-import android.location.Location
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.haversineDistance
 
 /**
- * Snapping route stops onto their drawn shapes for the route-map overlays. Kept out of
- * [RouteMapPresentationPlan] (which is deliberately `android.location.Location`-free so it stays
- * JVM-testable): these snap against [Polyline], so they're covered by the instrumented
- * `RouteStopProjectionTest` rather than a plain-JVM unit test.
+ * Snapping route stops onto their drawn shapes for the route-map overlays. Pure geometry over
+ * flavor-neutral [GeoPoint]s (snapping against [Polyline], which itself carries no
+ * `android.location.Location`), so — like [RouteMapPresentationPlan] — it stays JVM-testable.
  */
 
 /**
@@ -44,13 +43,13 @@ internal fun projectFocusedStops(
         val shapeId = tripById[tripId]?.shapeId ?: continue
         val points = geometry.shapes.firstOrNull { it.shapeId == shapeId }?.points ?: continue
         if (points.size < 2) continue
-        val polyline = Polyline(points.map(GeoPoint::toLocation))
+        val polyline = Polyline(points)
         stopIds.forEach { candidates.getOrPut(it, ::mutableListOf).add(polyline) }
     }
     return buildMap {
         for ((stopId, shapes) in candidates) {
             val stop = stops.stopsById[stopId] ?: continue
-            nearestPointAcross(shapes, stop.location)?.let { put(stopId, it) }
+            nearestPointAcross(shapes, GeoPoint(stop.latitude, stop.longitude))?.let { put(stopId, it) }
         }
     }
 }
@@ -66,20 +65,19 @@ internal fun projectStopsOntoPolylines(
 ): Map<String, GeoPoint> {
     val shapes = points
         .filter { it.size >= 2 }
-        .map { line -> Polyline(line.map(GeoPoint::toLocation)) }
+        .map { line -> Polyline(line) }
     if (shapes.isEmpty()) return emptyMap()
     return stops.associate { stop ->
-        val loc = stop.location
-        stop.id to (nearestPointAcross(shapes, loc) ?: loc.toGeoPoint())
+        val origin = GeoPoint(stop.latitude, stop.longitude)
+        stop.id to (nearestPointAcross(shapes, origin) ?: origin)
     }
 }
 
 /**
- * The nearest point to [location] across [shapes] (the shared nearest-point-across-polylines kernel of
+ * The nearest point to [origin] across [shapes] (the shared nearest-point-across-polylines kernel of
  * [projectFocusedStops] and [projectStopsOntoPolylines]), or null when no shape yields a point.
  */
-private fun nearestPointAcross(shapes: List<Polyline>, location: Location): GeoPoint? =
+private fun nearestPointAcross(shapes: List<Polyline>, origin: GeoPoint): GeoPoint? =
     shapes
-        .mapNotNull { it.nearestPoint(location.latitude, location.longitude) }
-        .minByOrNull(location::distanceTo)
-        ?.toGeoPoint()
+        .mapNotNull { it.nearestPoint(origin.latitude, origin.longitude) }
+        .minByOrNull { haversineDistance(origin.latitude, origin.longitude, it.latitude, it.longitude) }

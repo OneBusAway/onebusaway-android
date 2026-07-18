@@ -42,6 +42,7 @@ import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 
 /** Instrumented tests for the trip-state cache: recording, retention/eviction, and hydration. */
@@ -217,7 +218,7 @@ class TripStateCacheTest {
 
     @Test
     fun testPolylineSinglePoint() {
-        val points = listOf(createLocation(47.0, -122.0))
+        val points = listOf(gp(47.0, -122.0))
         cache.putPolyline("trip1", Polyline(points))
         val poly = cache.lookupTripState("trip1")!!.polyline!!
         val result = poly.interpolate(50.0)!!
@@ -229,8 +230,8 @@ class TripStateCacheTest {
     fun testPolylineTwoPoints() {
         val points =
                 listOf(
-                        createLocation(47.0, -122.0),
-                        createLocation(47.001, -122.0) // ~111 meters north
+                        gp(47.0, -122.0),
+                        gp(47.001, -122.0) // ~111 meters north
                 )
         cache.putPolyline("trip1", Polyline(points))
         val poly = cache.lookupTripState("trip1")!!.polyline!!
@@ -246,10 +247,10 @@ class TripStateCacheTest {
     fun testPolylineMultiplePointsMidInterpolation() {
         val points =
                 listOf(
-                        createLocation(47.0, -122.0),
-                        createLocation(47.001, -122.0), // ~111m
-                        createLocation(47.002, -122.0), // ~222m total
-                        createLocation(47.003, -122.0) // ~333m total
+                        gp(47.0, -122.0),
+                        gp(47.001, -122.0), // ~111m
+                        gp(47.002, -122.0), // ~222m total
+                        gp(47.003, -122.0) // ~333m total
                 )
         cache.putPolyline("trip1", Polyline(points))
         val poly = cache.lookupTripState("trip1")!!.polyline!!
@@ -408,6 +409,8 @@ class TripStateCacheTest {
         loc.longitude = lng
         return loc
     }
+
+    private fun gp(lat: Double, lng: Double) = GeoPoint(lat, lng)
 
     /** Builds an ObaTripSchedule from the given per-stop distances/times via the public constructor. */
     private fun createSchedule(

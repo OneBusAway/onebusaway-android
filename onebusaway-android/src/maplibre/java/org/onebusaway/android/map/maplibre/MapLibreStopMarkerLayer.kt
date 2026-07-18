@@ -21,9 +21,7 @@ import android.content.Context
 import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.Marker
 import org.maplibre.android.annotations.MarkerOptions
-import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
-import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
@@ -96,5 +94,3 @@ internal class MapLibreStopMarkerLayer(
         StopIconKind.FAVORITE_DOT_FOCUSED -> MapLibreStopIcons.focusedFavoriteDotIcon(context)
     }
 }
-
-private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)

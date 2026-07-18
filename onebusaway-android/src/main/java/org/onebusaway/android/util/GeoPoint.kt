@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+ * Copyright (C) 2026 Open Transit Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.models
+package org.onebusaway.android.util
 
-import org.onebusaway.android.util.GeoPoint
-
-interface ObaShape {
-
-    /** The number of points in the line. */
-    val length: Int
-
-    /** The list of points in this line. */
-    val points: List<GeoPoint>
-
-    /** The string encoding of the points in this line. */
-    val rawPoints: String?
-}
+/**
+ * A geographic point, flavor-neutral (carries no Google/maplibre `LatLng` dependency) and free of any
+ * `android.location.Location` dependency — the project's neutral lat/lon primitive. It lives in `util`
+ * (alongside [SphericalGeometry] and [PolylineDecoder]) so lower layers can produce and consume it
+ * without reaching up into `map/render`.
+ */
+data class GeoPoint(val latitude: Double, val longitude: Double)

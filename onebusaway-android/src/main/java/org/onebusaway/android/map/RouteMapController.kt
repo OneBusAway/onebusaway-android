@@ -47,7 +47,8 @@ import org.onebusaway.android.map.render.ContinuationArrow
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FramingIntent
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
@@ -400,7 +401,7 @@ class RouteMapController(
         val currentRouteId = routeId ?: return null
         val id = tripId ?: return null
         val state = tripObservationRepository.lookupTripState(id) ?: return null
-        val anchor = state.polyline?.points?.lastOrNull()?.toGeoPoint() ?: return null
+        val anchor = state.polyline?.points?.lastOrNull() ?: return null
         val nextTripId = state.schedule?.nextTripId ?: return null
         val neighbor = tripObservationRepository.resolveNeighborTrip(nextTripId) ?: return null
         if (!isRouteContinuation(currentRouteId, neighbor.routeId)) return null
@@ -429,13 +430,13 @@ class RouteMapController(
         return RouteContinuation(
             polyline = RoutePolyline(
                 color = lineColor,
-                points = listOf(anchor) + tail.map { it.toGeoPoint() },
+                points = listOf(anchor) + tail,
                 widthProfile = CONTINUATION_LINE_WIDTH_PROFILE,
                 dashed = true,
             ),
-            arrow = ContinuationArrow(arrowPoint.toGeoPoint(), neighborShape.bearingAt(endSeg)),
+            arrow = ContinuationArrow(arrowPoint, neighborShape.bearingAt(endSeg)),
             badge = ContinuationBadge(
-                badgePoint.toGeoPoint(),
+                badgePoint,
                 neighbor.routeId,
                 neighbor.routeShortName.orEmpty(),
                 neighbor.directionId,
@@ -644,7 +645,7 @@ class RouteMapController(
         // The marker is keyed by activeTripId, which resolves directly through the poll references.
         val activeTrip = latestPoll?.response?.trip(tripId)
         return SelectedTripPresentation(
-            points = polyline.points.map { it.toGeoPoint() },
+            points = polyline.points,
             stopIds = schedule.stopTimes.map { it.stopId },
             routeDirection = RouteDirectionKey(
                 currentRouteId,

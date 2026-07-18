@@ -21,10 +21,8 @@ import org.junit.Test
 /**
  * Tests decoding the Google "encoded polyline" points via [PolylineDecoder.decode].
  *
- * Runs on plain JVM: [PolylineDecoder.decode] returns flavor-neutral [org.onebusaway.android.map.render.GeoPoint]s
- * with no `android.location.Location` dependency, so no device/emulator is needed. The thin
- * `decodeLine` adapter that mints `Location` at the boundary is smoke-checked on-device by the
- * instrumented `PolylineDecoderAdapterTest`.
+ * Runs on plain JVM: [PolylineDecoder.decode] returns flavor-neutral [org.onebusaway.android.util.GeoPoint]s
+ * with no `android.location.Location` dependency, so no device/emulator is needed.
  */
 class PolylineDecoderTest {
 

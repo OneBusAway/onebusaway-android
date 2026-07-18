@@ -29,7 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
@@ -54,7 +54,7 @@ private class FakeStartupPreferencesRepository(
 private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val sent = mutableListOf<MapDirective>()
 
-    val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.lat to it.lon }
+    val recenters get() = sent.filterIsInstance<MapDirective.RecenterOnFocusedStop>().map { it.point.latitude to it.point.longitude }
     val routeRequests get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request }
     val routeCommands get() = sent.filterIsInstance<MapDirective.ShowRoute>()
     val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }

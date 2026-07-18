@@ -32,7 +32,8 @@ import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.FramingIntent
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
@@ -229,11 +230,11 @@ class MapHost(
      * completing behind the results sheet).
      */
     fun frameStart(lat: Double, lon: Double) =
-        frame(FramingIntent.Point(lat, lon, MapParams.DEFAULT_ZOOM.toFloat()))
+        frame(FramingIntent.Point(GeoPoint(lat, lon), MapParams.DEFAULT_ZOOM.toFloat()))
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
-        dispatchGesture(CameraCommand.Recenter(lat, lon, animate, applyRouteBias = false))
+        dispatchGesture(CameraCommand.Recenter(GeoPoint(lat, lon), animate, applyRouteBias = false))
     }
 
     /** Drop retained framing and animate back to a viewport captured before a semantic action. */
@@ -319,7 +320,7 @@ class MapHost(
         when (action) {
             MyLocationAction.MoveToLocation -> last?.let {
                 dispatchGesture(
-                    CameraCommand.MoveToLocation(it.latitude, it.longitude, useDefaultZoom, animate)
+                    CameraCommand.MoveToLocation(it.toGeoPoint(), useDefaultZoom, animate)
                 )
             }
             MyLocationAction.ShowNoLocationDialog -> emitEffect(MapEffect.NoLocation)
@@ -363,7 +364,7 @@ class MapHost(
         val atSeed = center.latitude == 0.0 && center.longitude == 0.0
         when (regionRezoom(changed = true, hasLocation = location != null, cameraAtSeed = atSeed)) {
             RegionRezoom.FrameMyLocation ->
-                location?.let { frame(FramingIntent.Point(it.latitude, it.longitude, SEED_DEFAULT_ZOOM)) }
+                location?.let { frame(FramingIntent.Point(it.toGeoPoint(), SEED_DEFAULT_ZOOM)) }
             RegionRezoom.FrameRegion -> frame(FramingIntent.Region)
             RegionRezoom.None -> {}
         }

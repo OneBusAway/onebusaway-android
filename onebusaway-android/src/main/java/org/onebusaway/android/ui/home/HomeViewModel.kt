@@ -34,7 +34,8 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
@@ -244,7 +245,7 @@ class HomeViewModel @Inject constructor(
     fun reportTarget(): ReportTarget {
         _currentFocus.value.focusedStop?.let { return ReportTarget.Stop(it) }
         return locationRepository.lastKnownLocation()
-            ?.let { ReportTarget.Location(it.latitude, it.longitude) }
+            ?.let { ReportTarget.Location(it.toGeoPoint()) }
             ?: ReportTarget.Generic
     }
 
@@ -378,7 +379,7 @@ class HomeViewModel @Inject constructor(
     fun recenterOnFocusedStop(undoViewport: MapViewport? = null) {
         _currentFocus.value.focusedStop?.let {
             recordViewportUndo(undoViewport)
-            emitMapDirective(MapDirective.RecenterOnFocusedStop(it.lat, it.lon))
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(GeoPoint(it.lat, it.lon)))
         }
     }
 
@@ -712,7 +713,7 @@ sealed interface HomeAnalyticsEvent {
  */
 sealed interface MapDirective {
     /** Animate the camera to recenter on the currently focused stop (sheet expanded). */
-    data class RecenterOnFocusedStop(val lat: Double, val lon: Double) : MapDirective
+    data class RecenterOnFocusedStop(val point: GeoPoint) : MapDirective
 
     /** Enter route mode for [request]'s route (the "show vehicles on map" action). */
     data class ShowRoute(

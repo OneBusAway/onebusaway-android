@@ -17,7 +17,7 @@ package org.onebusaway.android.extrapolation
 
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.render.DataAgeMarker
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The display-free output of the extrapolation producer. These types carry only geometry and model

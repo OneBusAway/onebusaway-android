@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * A **retained** camera framing — "what the map is currently framing" — as opposed to a transient
  * [CameraCommand] gesture. A controller sets one via [MapRenderState.frame] and the flavor adapter fits
@@ -41,7 +43,7 @@ sealed interface FramingIntent {
     object Region : FramingIntent
 
     /** Center on a fixed point at a fixed zoom (the degenerate directions itinerary: start == end). */
-    data class Point(val lat: Double, val lon: Double, val zoom: Float) : FramingIntent
+    data class Point(val point: GeoPoint, val zoom: Float) : FramingIntent
 
     /**
      * Fit the bounds enclosing an explicit set of [points] with the default padding — the arrivals-row

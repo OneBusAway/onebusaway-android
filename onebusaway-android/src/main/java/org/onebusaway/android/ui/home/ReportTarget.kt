@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.home
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * The target of a "send feedback / report a problem" launch, derived by [HomeViewModel.reportTarget]:
  * the focused stop, else the last-known location, else nothing. Choosing the variant is VM logic; the
@@ -25,7 +27,7 @@ sealed interface ReportTarget {
     data class Stop(val stop: FocusedStop) : ReportTarget
 
     /** No focused stop; report against the last-known device location. */
-    data class Location(val lat: Double, val lon: Double) : ReportTarget
+    data class Location(val point: GeoPoint) : ReportTarget
 
     /** No focused stop and no known location; open the generic report screen. */
     object Generic : ReportTarget

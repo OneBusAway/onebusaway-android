@@ -95,7 +95,6 @@ import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.report.infrastructure.DefaultGeocodeAddressRepository
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.infrastructure.DefaultServiceListRepository
-import org.onebusaway.android.ui.report.infrastructure.GeoPoint
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureControls
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueEvent
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueViewModel
@@ -115,6 +114,7 @@ import org.onebusaway.android.ui.report.problem.ProblemReportRoute
 import org.onebusaway.android.ui.report.problem.ProblemReportViewModel
 import org.onebusaway.android.ui.report.problem.SubmitState
 import org.onebusaway.android.util.BitmapUtils
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 
 /**
@@ -173,7 +173,7 @@ fun InfrastructureIssueDestination(
                 viewModel.onMapFocusChanged(stop, loc.latitude, loc.longitude)
             }
 
-            override fun onMapClick(point: org.onebusaway.android.map.render.GeoPoint?) {
+            override fun onMapClick(point: GeoPoint?) {
                 mapViewModel.onMapTapped()
                 point?.let { viewModel.onMapFocusChanged(null, it.latitude, it.longitude) }
             }
@@ -199,7 +199,7 @@ fun InfrastructureIssueDestination(
         viewModel.events.collect { event ->
             when (event) {
                 is InfrastructureIssueEvent.RecenterMap ->
-                    mapViewModel.centerOn(event.latitude, event.longitude, animate = true)
+                    mapViewModel.centerOn(event.point.latitude, event.point.longitude, animate = true)
 
                 InfrastructureIssueEvent.AddressNotFound ->
                     android.widget.Toast.makeText(

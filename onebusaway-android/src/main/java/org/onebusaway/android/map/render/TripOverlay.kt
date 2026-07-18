@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * One graded slice of the uncertainty band: a sub-polyline of the route shape, drawn at [colorArgb]
  * with the per-slice alpha already baked into the ARGB. Brighter slices are where the vehicle is

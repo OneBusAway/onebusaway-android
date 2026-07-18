@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.report.infrastructure
 
 import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The issue's current map position, replacing the mutable IssueLocationHelper. [latitude]/
@@ -71,7 +72,7 @@ data class InfrastructureIssueUiState(
 
 /** One-shot effects the host carries out (map recenter, toast, success dialog). */
 sealed interface InfrastructureIssueEvent {
-    data class RecenterMap(val latitude: Double, val longitude: Double) : InfrastructureIssueEvent
+    data class RecenterMap(val point: GeoPoint) : InfrastructureIssueEvent
     data object AddressNotFound : InfrastructureIssueEvent
     data object ReportSent : InfrastructureIssueEvent
 }

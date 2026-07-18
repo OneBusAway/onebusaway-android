@@ -15,15 +15,15 @@
  */
 package org.onebusaway.android.extrapolation
 
-import android.location.Location
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.map.render.DataAgeMarker
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.toGeoPoint
 
 /**
  * Projects an extrapolation onto the route shape to produce the per-frame [TripExtrapolation]: the
@@ -83,7 +83,7 @@ private fun extrapolatedVehicleProjection(state: TripState, nowMs: WallTime): Ve
     val distance = distribution.median().takeIf(Double::isFinite) ?: return null
     // Take the position and the tangent from the same segment so the arrow matches the drawn point.
     val seg = polyline.segmentIndex(distance)
-    val point = polyline.interpolate(distance, seg)?.toGeoPoint() ?: return null
+    val point = polyline.interpolate(distance, seg) ?: return null
     return VehicleProjection(point, polyline.bearingAt(seg))
 }
 
@@ -151,7 +151,7 @@ fun extrapolatedVehicles(
 
 /** The point [distance] along this shape, or null when [distance] is non-finite or off the shape. */
 private fun Polyline.pointAtDistance(distance: Double): GeoPoint? =
-    distance.takeIf(Double::isFinite)?.let { interpolate(it)?.toGeoPoint() }
+    distance.takeIf(Double::isFinite)?.let { interpolate(it) }
 
 private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyline): List<WeightedBandSegment> =
     // Draw the band only out to the fast-estimate marker (the optimistic forward bound), not the full
@@ -159,7 +159,7 @@ private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyl
     uncertaintyBandSlices(distribution, highQuantile = FAST_ESTIMATE_QUANTILE).mapNotNull { slice ->
         val points = polyline.subPolyline(slice.startDist, slice.endDist)?.takeIf { it.size >= 2 }
             ?: return@mapNotNull null
-        WeightedBandSegment(points.map(Location::toGeoPoint), slice.alpha.coerceIn(0f, 1f))
+        WeightedBandSegment(points, slice.alpha.coerceIn(0f, 1f))
     }
 
 /**
@@ -186,5 +186,3 @@ private fun dataAgeMarker(state: TripState, nowMs: WallTime): DataAgeMarker? {
     val ageMs = (nowMs - anchorLocal).inWholeMilliseconds.coerceAtLeast(0L)
     return DataAgeMarker(point, ageMs)
 }
-
-private fun Location.toGeoPoint() = GeoPoint(latitude, longitude)

@@ -85,7 +85,7 @@ import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
-import org.onebusaway.android.map.render.GeoPoint
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.ui.home.CurrentFocus
@@ -257,7 +257,7 @@ fun MapFeature(
         homeViewModel.mapDirectives.collect { directive ->
             when (directive) {
                 is MapDirective.RecenterOnFocusedStop ->
-                    mapViewModel.recenterOnFocusedStop(directive.lat, directive.lon)
+                    mapViewModel.recenterOnFocusedStop(directive.point)
                 is MapDirective.ShowRoute ->
                     mapViewModel.toRoute(
                         directive.request,
@@ -377,8 +377,8 @@ fun MapFeature(
         host = mapViewModel.host,
         callbacks = callbacks,
         modifier = modifier,
-        initialLatitude = seed.lat,
-        initialLongitude = seed.lon,
+        initialLatitude = seed.point.latitude,
+        initialLongitude = seed.point.longitude,
         initialZoom = seed.zoom,
     )
 

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
  * The live camera, published from each flavor's camera-idle listener (both flavors host an imperative
  * map) into `MapViewModel` so the reactive loaders can react to pan/zoom.

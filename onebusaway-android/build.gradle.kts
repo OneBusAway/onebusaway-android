@@ -363,12 +363,8 @@ dependencies {
     implementation(libs.play.services.location)
     // Support libraries
     implementation(libs.androidx.activity.ktx)
-    implementation(libs.androidx.fragment.ktx)
-    implementation(libs.androidx.cardview)
-    implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.exifinterface)
     implementation(libs.commons.io)
-    implementation(libs.commons.lang3)
     // Open311 client library
     implementation(libs.open311.client)
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
@@ -396,9 +392,15 @@ dependencies {
     "maplibreImplementation"(libs.maplibre.android.sdk)
     // Autocomplete text views with clear button for trip planning
     implementation(libs.material)
-    // Version pin: a transitive dependency pulls in Gson 2.8.5; this forces it up to 2.10.1.
-    // (Gson is not used directly in app source.)
-    implementation(libs.gson)
+    // Gson is not used directly in app source. It arrives transitively via
+    // firebase-firestore -> io.grpc:grpc-core, which requests 2.10.1. We don't add it as a
+    // dependency; instead a constraint pins the transitive up to the catalog version so a future
+    // grpc/Firebase bump can't silently drag Gson back below the 2.8.9 CVE-2022-25647 fix.
+    constraints {
+        implementation(libs.gson) {
+            because("CVE-2022-25647: floor transitive Gson at the catalog version; not a direct dependency")
+        }
+    }
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -409,9 +411,6 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     // WorkManager (Java only)
     implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.concurrent.futures)
-    implementation(libs.androidx.concurrent.listenablefuture)
-    implementation(libs.androidx.concurrent.listenablefuture.callback)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.preference)
     // Preferences DataStore — the backing store behind PreferencesRepository.

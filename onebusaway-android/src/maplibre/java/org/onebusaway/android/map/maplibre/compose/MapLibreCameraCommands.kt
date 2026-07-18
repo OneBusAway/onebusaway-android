@@ -46,7 +46,7 @@ private const val CAMERA_DEFAULT_ZOOM = 16.0
  * (not suspending), so this isn't a suspend function. The route-header recenter bias reads the live
  * viewport from [map]. Retained framing is applied by [applyFramingIntent].
  */
-fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
+fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap, renderState: MapRenderState) {
     when (cmd) {
         is CameraCommand.Recenter -> {
             val cp = map.cameraPosition
@@ -64,7 +64,15 @@ fun applyCameraCommand(cmd: CameraCommand, map: MapLibreMap) {
 
         is CameraCommand.MoveToLocation -> {
             val zoom = if (cmd.useDefaultZoom) CAMERA_DEFAULT_ZOOM else map.cameraPosition.zoom
-            val pos = CameraPosition.Builder().target(cmd.point.toLatLng()).zoom(zoom).build()
+            // maplibre's newCameraPosition does NOT consult a persistent map padding (unlike Google's
+            // setPadding), so fold the map's content padding into the CameraPosition here — that centers
+            // the point in the visible band above the directions results sheet, matching the Google flavor.
+            val overlay = renderState.padding.value
+            val pos = CameraPosition.Builder()
+                .target(cmd.point.toLatLng())
+                .zoom(zoom)
+                .padding(0.0, overlay.topPx.toDouble(), 0.0, overlay.bottomPx.toDouble())
+                .build()
             val update = CameraUpdateFactory.newCameraPosition(pos)
             if (cmd.animate) map.animateCamera(update) else map.moveCamera(update)
         }

@@ -44,7 +44,12 @@ sealed interface CameraCommand {
         val applyRouteBias: Boolean,
     ) : CameraCommand
 
-    /** Move to the user's location at either the default zoom or the current zoom (the my-location FAB). */
+    /**
+     * Move to a point at either the default zoom or the current zoom (the my-location FAB, and the
+     * trip-plan itinerary-step focus). The target is centered within the map's content padding, so a
+     * point lands in the visible band above/below any chrome (e.g. above the directions results sheet)
+     * rather than at the true screen center.
+     */
     data class MoveToLocation(
         val point: GeoPoint,
         val useDefaultZoom: Boolean,

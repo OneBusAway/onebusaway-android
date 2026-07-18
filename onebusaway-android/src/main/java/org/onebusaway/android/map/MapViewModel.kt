@@ -475,6 +475,19 @@ class MapViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). The move
+     * centers within the map's content padding, so the point lands in the visible band above the
+     * directions results sheet. Guarded on an active directions session so a stray directive outside
+     * directions can't move the camera.
+     */
+    fun focusItineraryPoint(point: GeoPoint) {
+        if (!directionsActive) return
+        mapHost.dispatchGesture(
+            CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = true)
+        )
+    }
+
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */
     fun clearShownItinerary() {
         if (!directionsActive) return

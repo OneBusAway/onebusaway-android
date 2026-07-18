@@ -107,10 +107,21 @@ class HomeViewModel @Inject constructor(
     private val _canUndoMapAction = MutableStateFlow(mapUndoHistory.isNotEmpty())
     val canUndoMapAction: StateFlow<Boolean> = _canUndoMapAction.asStateFlow()
 
-    // The map's bottom inset (driven by the arrivals sheet) — idempotent last-wins state, applied by
-    // MapFeature. A StateFlow (not an event) so a re-entering map re-reads the latest value.
+    // The map's bottom inset from the arrivals sheet — idempotent last-wins state, applied by MapFeature.
+    // A StateFlow (not an event) so a re-entering map re-reads the latest value. The directions results
+    // sheet reports its own inset ([directionsBottomInset]); MapRenderState combines the two by max.
     private val _mapBottomPadding = MutableStateFlow(0)
     val mapBottomPadding: StateFlow<Int> = _mapBottomPadding.asStateFlow()
+
+    // The map's bottom inset from the directions results sheet — its own source (not shared with the
+    // arrivals inset above), so neither has to assume the two never coexist.
+    private val _directionsBottomInset = MutableStateFlow(0)
+    val directionsBottomInset: StateFlow<Int> = _directionsBottomInset.asStateFlow()
+
+    /** The directions results sheet's height as the map's bottom inset (0 when it isn't shown). */
+    fun setDirectionsResultsInset(px: Int) {
+        _directionsBottomInset.value = px
+    }
 
     // One-shot outbound map interactions (recenter / show route / adjacency / focus) that can't be
     // modeled as state. MapFeature collects these and calls the map view model — so this VM needs no
@@ -541,6 +552,10 @@ class HomeViewModel @Inject constructor(
     fun showItineraryOnMap(itinerary: TripItinerary) =
         emitMapDirective(MapDirective.ShowItinerary(itinerary))
 
+    /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
+    fun focusItineraryPointOnMap(point: GeoPoint) =
+        emitMapDirective(MapDirective.FocusItineraryPoint(point))
+
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
 
@@ -759,6 +774,9 @@ sealed interface MapDirective {
 
     /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */
     data class ShowItinerary(val itinerary: TripItinerary) : MapDirective
+
+    /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
+    data class FocusItineraryPoint(val point: GeoPoint) : MapDirective
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective

@@ -78,6 +78,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 
@@ -215,6 +216,7 @@ fun TripResultsList(
     state: TripResultsUiState,
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
+    onFocusPoint: (GeoPoint) -> Unit = {},
 ) {
     Box(
         modifier
@@ -240,7 +242,7 @@ fun TripResultsList(
                 contentPadding = PaddingValues(bottom = bottomInset),
             ) {
                 itemsIndexed(state.directions) { _, item ->
-                    DirectionRow(item)
+                    DirectionRow(item, onFocusPoint)
                     HorizontalDivider()
                 }
             }
@@ -265,6 +267,7 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp,
 ) {
@@ -298,7 +301,7 @@ fun TripResultsSheet(
             state = state,
             onSelectOption = resultsViewModel::selectOption,
         )
-        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset)
+        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset, onFocusPoint = onFocusPoint)
     }
 }
 
@@ -334,14 +337,23 @@ private fun maybeStartTripUpdates(
 }
 
 @Composable
-private fun DirectionRow(item: DirectionItem) {
+private fun DirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     val hasSubItems = item.subItems.isNotEmpty()
+    val point = item.focusPoint
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(enabled = hasSubItems) { expanded = !expanded }
+                // An expandable row (a chevron) only toggles its sub-steps; only leaf rows send the map
+                // to their point. So a parent never moves the map — its expanded leaves do.
+                .clickable(enabled = hasSubItems || point != null) {
+                    if (hasSubItems) {
+                        expanded = !expanded
+                    } else {
+                        point?.let(onFocusPoint)
+                    }
+                }
                 .padding(horizontal = 12.dp, vertical = 10.dp)
         ) {
             DirectionIcon(item.iconRes)
@@ -377,16 +389,20 @@ private fun DirectionRow(item: DirectionItem) {
             }
         }
         if (expanded) {
-            item.subItems.forEach { sub -> SubDirectionRow(sub) }
+            item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
         }
     }
 }
 
 @Composable
-private fun SubDirectionRow(item: DirectionItem) {
+private fun SubDirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
+    val point = item.focusPoint
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable(enabled = point != null) {
+                point?.let(onFocusPoint)
+            }
             .padding(start = 36.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

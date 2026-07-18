@@ -86,6 +86,7 @@ import java.util.TimeZone
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
@@ -249,6 +250,7 @@ fun DirectionsResultsSheet(
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The system nav-bar inset: the surface reaches the bottom edge (continuous background), but its
@@ -275,6 +277,7 @@ fun DirectionsResultsSheet(
                 params = params,
                 resultsViewModel = resultsViewModel,
                 showItinerary = showItinerary,
+                onFocusPoint = onFocusPoint,
                 modifier = Modifier.fillMaxWidth(),
             )
         }

@@ -71,6 +71,8 @@ fun applyCameraCommand(
 
         is CameraCommand.MoveToLocation -> {
             val zoom = if (cmd.useDefaultZoom) CAMERA_DEFAULT_ZOOM else map.cameraPosition.zoom
+            // newCameraPosition centers the target within the map's content padding (applied globally via
+            // setPadding), so the point lands in the visible band above the directions results sheet.
             val update = CameraUpdateFactory.newCameraPosition(
                 CameraPosition.Builder().target(cmd.point.toLatLng()).zoom(zoom).build()
             )

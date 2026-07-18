@@ -56,12 +56,16 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
@@ -233,9 +237,13 @@ fun HomeScreen(
         // on currentFocus would reset this to 0 when switching between two equal-height banners, framing
         // the map as if no banner showed. The disappearance case resets it via the banner's else branch.
         var focusBannerBottomPx by remember { mutableIntStateOf(0) }
+        // The directions trip-plan form card's absolute bottom edge (window px), so the map's top inset
+        // covers the form/FAB during directions (the itinerary-step focus centers in the band below it).
+        var directionsFormBottomPx by remember { mutableIntStateOf(0) }
         val focusTopEdgePx = focusBannerTopEdge(
             currentFocus,
             focusBannerBottomPx,
+            directionsFormBottomPx,
         )
         LaunchedEffect(focusTopEdgePx) {
             mapViewModel.setFocusBannerBottomEdge(focusTopEdgePx)
@@ -567,6 +575,15 @@ fun HomeScreen(
                     LaunchedEffect(fromPoint, toPoint) {
                         homeViewModel.setDirectionsEndpointsOnMap(fromPoint, toPoint)
                     }
+                    // The results sheet's measured height, published as the map's bottom inset so a tapped
+                    // itinerary step centers in the band above it (0 whenever the sheet isn't shown).
+                    var directionsSheetHeightPx by remember { mutableIntStateOf(0) }
+                    val showResultsSheet = directionsActive && pickTarget == null && directionsResults != null
+                    LaunchedEffect(showResultsSheet, directionsSheetHeightPx) {
+                        homeViewModel.setDirectionsResultsInset(
+                            if (showResultsSheet) directionsSheetHeightPx else 0
+                        )
+                    }
                     // Back cancels an in-progress map pick, else exits directions focus (to nearby stops).
                     BackHandler(enabled = directionsActive) {
                         if (pickTarget != null) pickTarget = null else homeViewModel.exitDirections()
@@ -653,7 +670,12 @@ fun HomeScreen(
                                         modifier = Modifier
                                             .align(Alignment.TopCenter)
                                             .statusBarsPadding()
-                                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                                            .padding(horizontal = 8.dp, vertical = 8.dp)
+                                            // Report the card's bottom edge as the map's top inset (see
+                                            // directionsFormBottomPx) so a focused step clears the form.
+                                            .onGloballyPositioned {
+                                                directionsFormBottomPx = it.boundsInWindow().bottom.roundToInt()
+                                            },
                                     )
                                 }
                             } else {
@@ -680,7 +702,10 @@ fun HomeScreen(
                                     itineraries = directionsResults.itineraries,
                                     params = directionsResults.params,
                                     showItinerary = homeViewModel::showItineraryOnMap,
-                                    modifier = Modifier.align(Alignment.BottomCenter),
+                                    onFocusPoint = homeViewModel::focusItineraryPointOnMap,
+                                    modifier = Modifier
+                                        .align(Alignment.BottomCenter)
+                                        .onSizeChanged { directionsSheetHeightPx = it.height },
                                 )
                                 directionsError != null -> DirectionsErrorSnackbar(
                                     error = directionsError,

@@ -96,6 +96,10 @@ class DirectionsGenerator(
 
         direction.icon = icon
 
+        // Focus the non-transit step on where it starts (the leg's origin).
+        direction.focusLat = leg.from.lat
+        direction.focusLon = leg.from.lon
+
         // Main direction
         val fromPlace = leg.from
         val toPlace = leg.to
@@ -198,6 +202,10 @@ class DirectionsGenerator(
 
             dir.icon = subdirectionIcon
 
+            // Each turn-by-turn step carries its own point, so a tapped sub-step focuses the map on it.
+            dir.focusLat = step.lat
+            dir.focusLon = step.lon
+
             // Add new sub-direction
             subDirections.add(dir)
         }
@@ -240,6 +248,10 @@ class DirectionsGenerator(
         var placeAndHeadsign: String?
         var extra = ""
 
+        // The "get on" step focuses the boarding stop, the "get off" step the alighting stop.
+        direction.focusLat = if (isOnDirection) from.lat else to.lat
+        direction.focusLon = if (isOnDirection) from.lon else to.lon
+
         if (isOnDirection) {
             action = applicationContext.getString(R.string.step_by_step_transit_get_on)
             placeAndHeadsign = from.name
@@ -268,6 +280,8 @@ class DirectionsGenerator(
                 }
                 subDirection.directionText = subDirectionText
                 subDirection.icon = stopIcon
+                subDirection.focusLat = stop.lat
+                subDirection.focusLon = stop.lon
 
                 subDirections.add(subDirection)
             }

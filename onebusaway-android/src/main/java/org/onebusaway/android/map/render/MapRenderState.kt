@@ -303,7 +303,27 @@ class MapRenderState {
         applyTopPadding()
     }
 
-    fun setBottomPadding(px: Int) = _padding.update { it.copy(bottomPx = px) }
+    // Bottom padding is the greater of two independently reported insets — the arrivals sheet and the
+    // directions results sheet — mirroring [applyTopPadding]. They're mutually exclusive today (a focused
+    // stop and directions focus never coexist), but combining by max means neither writer has to know
+    // that, and a stale 0 from the inactive source can't clobber the active inset on a focus transition.
+    private var arrivalsBottomInsetPx = 0
+    private var directionsBottomInsetPx = 0
+
+    private fun applyBottomPadding() =
+        _padding.update { it.copy(bottomPx = maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx)) }
+
+    /** The arrivals sheet's bottom inset (keeps the focused stop above the sheet). */
+    fun setBottomPadding(px: Int) {
+        arrivalsBottomInsetPx = px
+        applyBottomPadding()
+    }
+
+    /** The directions results sheet's bottom inset (keeps a focused itinerary step above the sheet). */
+    fun setDirectionsBottomInset(px: Int) {
+        directionsBottomInsetPx = px
+        applyBottomPadding()
+    }
 
     // The live lat/lng -> screen projector, published by the flavor adapter once the map is laid out
     // (backed by the map's Projection). Lets map-SDK-agnostic callers locate a marker on screen without

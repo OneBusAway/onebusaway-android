@@ -428,13 +428,13 @@ dependencies {
     implementation(libs.gtfs.realtime.bindings)
     implementation(libs.proto.google.common.protos)
 
-    // Jetpack Compose on the 1.11.x line (BOM 2026.05.00 -> compose-ui/foundation 1.11.2, material3
+    // Jetpack Compose on the 1.11.x line (BOM 2026.06.01 -> compose-ui/foundation 1.11.4, material3
     // 1.4.0). This required the coordinated toolchain bump to compileSdk 37 + AGP 9.2.0 + Gradle 9.4.1.
     // The BOM manages compose-ui + material3 (no explicit versions).
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
-    implementation(libs.compose.ui)                     // 1.11.2 via BOM
+    implementation(libs.compose.ui)                     // 1.11.4 via BOM
     implementation(libs.compose.ui.tooling.preview)     // @Preview support
     debugImplementation(libs.compose.ui.tooling)        // preview renderer (debug only)
     // Compose UI instrumented testing (createComposeRule): semantic tree assertions on real devices,

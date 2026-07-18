@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.arrivals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -28,6 +27,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * On-device regression test for the per-row service-alert indicator (issue #1687 Bug 2), which sits
@@ -39,10 +39,9 @@ import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
  */
 class ArrivalAlertIndicatorTest {
 
-    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
-    @Suppress("DEPRECATION")
+    // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     @Test
     fun showsTappableAlertIndicatorWhenArrivalHasActiveAlert() {

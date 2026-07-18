@@ -19,7 +19,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -33,13 +32,13 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.components.previewArrival
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class RouteArrivalRowLongPressTest {
 
-    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
-    @Suppress("DEPRECATION")
+    // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     @Test
     fun longPressOpensScheduleWithoutOverflowButton() {

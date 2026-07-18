@@ -10,7 +10,6 @@
 package org.onebusaway.android.ui.home.arrivals
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -21,14 +20,14 @@ import org.onebusaway.android.ui.arrivals.AlertItem
 import org.onebusaway.android.ui.arrivals.AlertSeverity
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.StopHeader
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.time.ServerTime
 
 class ServiceAlertsDialogTest {
 
-    // See EtaStripJustifyTest for why the v1 (Unconfined) rule is used here (issue #1792).
-    @Suppress("DEPRECATION")
+    // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createUnconfinedComposeRule()
 
     @Test
     fun summaryOpensTheSelectedAlert() {

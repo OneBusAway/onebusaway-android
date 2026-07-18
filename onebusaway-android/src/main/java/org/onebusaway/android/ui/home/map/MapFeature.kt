@@ -287,6 +287,8 @@ fun MapFeature(
                 is MapDirective.ShowItinerary ->
                     mapViewModel.showItinerary(directive.itinerary)
                 MapDirective.ClearItinerary -> mapViewModel.clearShownItinerary()
+                is MapDirective.SetDirectionsEndpoints ->
+                    mapViewModel.setDirectionsEndpoints(directive.from, directive.to)
             }
         }
     }

@@ -38,6 +38,8 @@ import org.onebusaway.android.map.render.RoutePolyline
  * [start] draws an itinerary; [frameDirections] (re-appliable, since the [start]-time camera command
  * is lost before the adapter subscribes) fits it; [clear] removes its start/end pins. The leg
  * polylines are cleared generically by the owner (they share the render state's polyline list).
+ * [setEndpoints] additionally draws standalone From/To pins as the endpoints resolve, before an
+ * itinerary exists (superseded by the itinerary's own start/end pins once [start] runs).
  */
 class DirectionsMapController(private val host: MapHost) {
 
@@ -48,6 +50,16 @@ class DirectionsMapController(private val host: MapHost) {
     private var directionsHasRoute = false
 
     private var directionsStart: GeoPoint? = null
+
+    // The standalone From (green) / To (red) endpoint pins, shown as each endpoint resolves — before,
+    // or without, a full itinerary. Tracked apart from the itinerary's own [directionsMarkerIds] pins so
+    // they can be diffed and cleared independently; the itinerary's pins supersede them once [start]
+    // runs (the owner calls [clearEndpoints]). See [setEndpoints].
+    private var fromEndpoint: EndpointMarker? = null
+
+    private var toEndpoint: EndpointMarker? = null
+
+    private class EndpointMarker(val point: GeoPoint, val id: Int)
 
     /** Draw [itinerary]'s leg polylines + start/end pins and frame it. */
     fun start(itinerary: TripItinerary) {
@@ -118,6 +130,26 @@ class DirectionsMapController(private val host: MapHost) {
     fun clear() {
         directionsMarkerIds.forEach { host.removeMarker(it) }
         directionsMarkerIds.clear()
+    }
+
+    /**
+     * Draw or update the standalone From (green) / To (red) endpoint pins as the user's endpoints
+     * resolve, before an itinerary exists. Diffs against the current pins so an unchanged endpoint keeps
+     * its marker (no flicker) and a null endpoint drops its pin. Reuses the same green/red hues as the
+     * itinerary's start/end pins.
+     */
+    fun setEndpoints(from: GeoPoint?, to: GeoPoint?) {
+        fromEndpoint = reconcileEndpoint(fromEndpoint, from, HUE_GREEN)
+        toEndpoint = reconcileEndpoint(toEndpoint, to, HUE_RED)
+    }
+
+    /** Remove both endpoint pins (leaving directions, or the itinerary's own pins took over). */
+    fun clearEndpoints() = setEndpoints(from = null, to = null)
+
+    private fun reconcileEndpoint(current: EndpointMarker?, point: GeoPoint?, hue: Float): EndpointMarker? {
+        if (current?.point == point) return current
+        current?.let { host.removeMarker(it.id) }
+        return point?.let { EndpointMarker(it, host.addMarker(it.latitude, it.longitude, hue)) }
     }
 
     private fun resolveLegColor(leg: TripLeg): Int {

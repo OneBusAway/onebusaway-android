@@ -692,14 +692,16 @@ fun HomeScreen(
                             DirectionsPickOverlay(
                                 target = target,
                                 onConfirm = {
+                                    // Only commit + dismiss once we actually have a map center; otherwise
+                                    // keep the picker open rather than silently losing the selection.
                                     mapViewModel.camera.value?.center?.let { c ->
                                         val point = TripEndpoint.MapPoint(c.latitude, c.longitude)
                                         when (target) {
                                             DirectionsPickTarget.FROM -> tripPlanViewModel.setFrom(point)
                                             DirectionsPickTarget.TO -> tripPlanViewModel.setTo(point)
                                         }
+                                        pickTarget = null
                                     }
-                                    pickTarget = null
                                 },
                                 onCancel = { pickTarget = null },
                             )

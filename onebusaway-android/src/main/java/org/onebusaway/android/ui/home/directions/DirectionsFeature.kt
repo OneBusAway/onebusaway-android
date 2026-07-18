@@ -83,6 +83,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.util.BikeshareAvailability
+import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -154,9 +155,17 @@ fun DirectionsFormCard(
 private fun setCurrentLocation(context: Context, target: (TripEndpoint) -> Unit) {
     val location = LocationEntryPoint.get(context.applicationContext).lastKnownLocation()
     if (location == null) {
-        Toast.makeText(
-            context, context.getString(R.string.no_location_permission), Toast.LENGTH_SHORT
-        ).show()
+        // A null fix means "no permission" only when permission is actually denied; with permission
+        // granted it just means we don't have a fix yet, which is a different (recoverable) message.
+        val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
+                context, PermissionUtils.LOCATION_PERMISSIONS
+            )
+        ) {
+            R.string.main_waiting_for_location
+        } else {
+            R.string.no_location_permission
+        }
+        Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
         return
     }
     target(TripEndpoint.CurrentLocation(lat = location.latitude, lon = location.longitude))

@@ -392,9 +392,15 @@ dependencies {
     "maplibreImplementation"(libs.maplibre.android.sdk)
     // Autocomplete text views with clear button for trip planning
     implementation(libs.material)
-    // Version pin: a transitive dependency pulls in Gson 2.8.5; this forces it up to 2.10.1.
-    // (Gson is not used directly in app source.)
-    implementation(libs.gson)
+    // Gson is not used directly in app source. It arrives transitively via
+    // firebase-firestore -> io.grpc:grpc-core, which requests 2.10.1. We don't add it as a
+    // dependency; instead a constraint pins the transitive up to the catalog version so a future
+    // grpc/Firebase bump can't silently drag Gson back below the 2.8.9 CVE-2022-25647 fix.
+    constraints {
+        implementation(libs.gson) {
+            because("CVE-2022-25647: floor transitive Gson at the catalog version; not a direct dependency")
+        }
+    }
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)

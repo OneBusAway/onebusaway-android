@@ -105,7 +105,10 @@ class DefaultTripPlanRepository @Inject constructor(
         )
         val itineraries = response.plan?.itineraries?.map { it.toTripItinerary() }
         if (itineraries.isNullOrEmpty()) {
-            throw TripPlanException(otp1ErrorFor(response.error?.id ?: -1))
+            // Empty with no error object is a no-route result (mirrors the OTP2 path), not an
+            // unclassified failure — surface "Cannot find route" rather than the generic message.
+            val errorId = response.error?.id
+            throw TripPlanException(if (errorId != null) otp1ErrorFor(errorId) else TripPlanError.NoRoute)
         }
         return itineraries
     }

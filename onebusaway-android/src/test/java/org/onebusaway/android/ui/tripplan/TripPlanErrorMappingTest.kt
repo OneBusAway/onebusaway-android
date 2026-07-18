@@ -37,42 +37,36 @@ class TripPlanErrorMappingTest {
 
     // ---- OTP1 (REST error codes) ----
 
-    @Test
-    fun otp1_connectivity_and_request() {
-        assertError(Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout,
-            otp1ErrorFor(OtpErrorId.REQUEST_TIMEOUT.id))
-        assertError(Category.REQUEST, R.string.tripplanner_error_system,
-            otp1ErrorFor(OtpErrorId.SYSTEM_ERROR.id))
-        assertError(Category.REQUEST, R.string.tripplanner_error_bogus_parameter,
-            otp1ErrorFor(OtpErrorId.BOGUS_PARAMETER.id))
-        assertError(Category.REQUEST, R.string.tripplanner_error_triangle,
-            otp1ErrorFor(OtpErrorId.TRIANGLE_NOT_AFFINE.id))
-    }
+    // Every OtpErrorId member and the (category, detail) it must classify into. The exhaustiveness
+    // assertion in the test below fails if a new code is added to the enum without an entry here.
+    private val otp1Expected = mapOf(
+        OtpErrorId.SYSTEM_ERROR to (Category.REQUEST to R.string.tripplanner_error_system),
+        OtpErrorId.OUTSIDE_BOUNDS to (Category.NO_ROUTE to R.string.tripplanner_error_outside_bounds),
+        OtpErrorId.PATH_NOT_FOUND to (Category.NO_ROUTE to R.string.tripplanner_error_path_not_found),
+        OtpErrorId.NO_TRANSIT_TIMES to (Category.SCHEDULE to R.string.tripplanner_error_no_transit_times),
+        OtpErrorId.REQUEST_TIMEOUT to (Category.CONNECTIVITY to R.string.tripplanner_error_request_timeout),
+        OtpErrorId.BOGUS_PARAMETER to (Category.REQUEST to R.string.tripplanner_error_bogus_parameter),
+        OtpErrorId.GEOCODE_FROM_NOT_FOUND to (Category.LOCATION to R.string.tripplanner_error_geocode_from_not_found),
+        OtpErrorId.GEOCODE_TO_NOT_FOUND to (Category.LOCATION to R.string.tripplanner_error_geocode_to_not_found),
+        OtpErrorId.GEOCODE_FROM_TO_NOT_FOUND to (Category.LOCATION to R.string.tripplanner_error_geocode_from_to_not_found),
+        OtpErrorId.TOO_CLOSE to (Category.NO_ROUTE to R.string.tripplanner_error_too_close),
+        OtpErrorId.LOCATION_NOT_ACCESSIBLE to (Category.LOCATION to R.string.tripplanner_error_location_not_accessible),
+        OtpErrorId.GEOCODE_FROM_AMBIGUOUS to (Category.LOCATION to R.string.tripplanner_error_geocode_from_ambiguous),
+        OtpErrorId.GEOCODE_TO_AMBIGUOUS to (Category.LOCATION to R.string.tripplanner_error_geocode_to_ambiguous),
+        OtpErrorId.GEOCODE_FROM_TO_AMBIGUOUS to (Category.LOCATION to R.string.tripplanner_error_geocode_from_to_ambiguous),
+        OtpErrorId.UNDERSPECIFIED_TRIANGLE to (Category.REQUEST to R.string.tripplanner_error_triangle),
+        OtpErrorId.TRIANGLE_NOT_AFFINE to (Category.REQUEST to R.string.tripplanner_error_triangle),
+        OtpErrorId.TRIANGLE_OPTIMIZE_TYPE_NOT_SET to (Category.REQUEST to R.string.tripplanner_error_triangle),
+        OtpErrorId.TRIANGLE_VALUES_NOT_SET to (Category.REQUEST to R.string.tripplanner_error_triangle),
+    )
 
     @Test
-    fun otp1_no_route() {
-        assertError(Category.NO_ROUTE, R.string.tripplanner_error_outside_bounds,
-            otp1ErrorFor(OtpErrorId.OUTSIDE_BOUNDS.id))
-        assertError(Category.NO_ROUTE, R.string.tripplanner_error_path_not_found,
-            otp1ErrorFor(OtpErrorId.PATH_NOT_FOUND.id))
-        assertError(Category.NO_ROUTE, R.string.tripplanner_error_too_close,
-            otp1ErrorFor(OtpErrorId.TOO_CLOSE.id))
-    }
-
-    @Test
-    fun otp1_schedule() {
-        assertError(Category.SCHEDULE, R.string.tripplanner_error_no_transit_times,
-            otp1ErrorFor(OtpErrorId.NO_TRANSIT_TIMES.id))
-    }
-
-    @Test
-    fun otp1_location() {
-        assertError(Category.LOCATION, R.string.tripplanner_error_geocode_from_not_found,
-            otp1ErrorFor(OtpErrorId.GEOCODE_FROM_NOT_FOUND.id))
-        assertError(Category.LOCATION, R.string.tripplanner_error_geocode_to_ambiguous,
-            otp1ErrorFor(OtpErrorId.GEOCODE_TO_AMBIGUOUS.id))
-        assertError(Category.LOCATION, R.string.tripplanner_error_location_not_accessible,
-            otp1ErrorFor(OtpErrorId.LOCATION_NOT_ACCESSIBLE.id))
+    fun otp1_classifies_every_error_code() {
+        assertEquals(OtpErrorId.entries.toSet(), otp1Expected.keys)
+        for ((code, expected) in otp1Expected) {
+            val (category, detail) = expected
+            assertError(category, detail, otp1ErrorFor(code.id))
+        }
     }
 
     @Test

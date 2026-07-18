@@ -56,14 +56,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.roundToInt
@@ -76,6 +72,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.SlideBox
+import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
 
@@ -337,21 +334,6 @@ internal fun TripActionsMenu(
         }
     }
 }
-
-/**
- * [base] with Android's default font-metrics padding (extra ascent/descent space reserved beyond a
- * glyph's visible ink) trimmed to [size]'s true line height. Without this, every gap in a small
- * pill/badge — row-to-row, row-to-edge — is a function of opaque per-font-size padding instead of the
- * caller's own explicit spacing.
- */
-private fun tightLineStyle(base: TextStyle, size: TextUnit) = base.copy(
-    lineHeight = size,
-    platformStyle = PlatformTextStyle(includeFontPadding = false),
-    lineHeightStyle = LineHeightStyle(
-        alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both
-    )
-)
 
 /**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend

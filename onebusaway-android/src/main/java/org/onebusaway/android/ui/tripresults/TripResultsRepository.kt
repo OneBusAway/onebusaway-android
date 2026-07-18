@@ -31,8 +31,8 @@ import org.onebusaway.android.util.runCatchingCancellable
 /**
  * Projects [TripItinerary] objects onto the Compose results model. The turn-by-turn directions reuse
  * the legacy [DirectionsGenerator] (which needs a [Context] for resources), and the option cards carry
- * structured data (route badges / walk / duration / time range) formatted by the UI. All on the IO
- * thread so [TripResultsViewModel] stays JVM-testable.
+ * structured data (route badges / walk / duration / time range / walk distance) formatted by the UI. All
+ * on the IO thread so [TripResultsViewModel] stays JVM-testable.
  */
 interface TripResultsRepository {
 
@@ -76,6 +76,10 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
             durationMinutes = itinerary.duration.inWholeMinutes,
             startTime = itinerary.startTime,
             endTime = itinerary.startTime + itinerary.duration,
+            // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
+            walkDistanceMeters = itinerary.legs
+                .filter { it.mode == TripMode.WALK }
+                .sumOf { it.distance },
         )
     }
 

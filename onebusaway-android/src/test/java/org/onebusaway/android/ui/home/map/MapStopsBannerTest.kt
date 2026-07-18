@@ -20,10 +20,11 @@ import org.junit.Test
 import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.util.GeoPoint
 
 class MapStopsBannerTest {
 
-    private val stopFocus = CurrentFocus.Stop(FocusedStop("stop", null, null, 0.0, 0.0))
+    private val stopFocus = CurrentFocus.Stop(FocusedStop("stop", null, null, GeoPoint(0.0, 0.0)))
 
     @Test
     fun `stop focus hides the zoom-in banner`() {

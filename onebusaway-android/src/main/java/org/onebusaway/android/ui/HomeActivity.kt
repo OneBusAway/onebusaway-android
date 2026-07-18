@@ -70,6 +70,7 @@ import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.util.ExternalIntents
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ReminderUtils
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -347,7 +348,7 @@ class HomeActivity : AppCompatActivity() {
         // The VM picks the report target (focused stop → last location → nothing); the host just launches.
         when (val target = viewModel.reportTarget()) {
             is ReportTarget.Stop -> target.stop.let {
-                ReportLauncher.start(this, it.id, it.name, it.code, it.lat, it.lon)
+                ReportLauncher.start(this, it.id, it.name, it.code, it.point.latitude, it.point.longitude)
             }
             is ReportTarget.Location -> ReportLauncher.start(this, target.point.latitude, target.point.longitude)
             ReportTarget.Generic -> ReportLauncher.start(this)
@@ -408,5 +409,5 @@ private fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val lat = extras.getDouble(MapParams.CENTER_LAT)
     val lon = extras.getDouble(MapParams.CENTER_LON)
     if (lat == 0.0 || lon == 0.0) return null
-    return FocusedStop(id, extras.getString(MapParams.STOP_NAME), extras.getString(MapParams.STOP_CODE), lat, lon)
+    return FocusedStop(id, extras.getString(MapParams.STOP_NAME), extras.getString(MapParams.STOP_CODE), GeoPoint(lat, lon))
 }

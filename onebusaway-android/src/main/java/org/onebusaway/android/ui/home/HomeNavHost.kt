@@ -151,7 +151,7 @@ fun HomeNavHost(
                     // An in-session reveal (search result / recents / route-info tap): pan the camera
                     // over to the stop rather than jump, since the map is already on screen.
                     home.homeViewModel.revealStop(
-                        FocusedStop(reveal.stopId, null, null, reveal.point.latitude, reveal.point.longitude),
+                        FocusedStop(reveal.stopId, null, null, reveal.point),
                         animate = true,
                     )
                 } else {

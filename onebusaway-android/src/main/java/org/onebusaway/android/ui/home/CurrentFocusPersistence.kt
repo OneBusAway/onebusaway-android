@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home
 
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.MapParams
+import org.onebusaway.android.util.GeoPoint
 
 /** Mechanical SavedStateHandle encoding for [CurrentFocus], kept out of focus transition logic. */
 internal object CurrentFocusPersistence {
@@ -68,8 +69,8 @@ internal object CurrentFocusPersistence {
         state[KEY_STOP_ID] = stop?.id
         state[KEY_STOP_NAME] = stop?.name
         state[KEY_STOP_CODE] = stop?.code
-        state[KEY_STOP_LAT] = stop?.lat
-        state[KEY_STOP_LON] = stop?.lon
+        state[KEY_STOP_LAT] = stop?.point?.latitude
+        state[KEY_STOP_LON] = stop?.point?.longitude
         state[KEY_BIKE_STATION] = (focus as? CurrentFocus.BikeStation)?.id
 
         val target = (focus as? CurrentFocus.Route)?.target
@@ -139,8 +140,10 @@ internal object CurrentFocusPersistence {
             id = id,
             name = state[KEY_STOP_NAME],
             code = state[KEY_STOP_CODE],
-            lat = state.get<Double>(KEY_STOP_LAT) ?: 0.0,
-            lon = state.get<Double>(KEY_STOP_LON) ?: 0.0,
+            point = GeoPoint(
+                state.get<Double>(KEY_STOP_LAT) ?: 0.0,
+                state.get<Double>(KEY_STOP_LON) ?: 0.0,
+            ),
         )
     }
 }

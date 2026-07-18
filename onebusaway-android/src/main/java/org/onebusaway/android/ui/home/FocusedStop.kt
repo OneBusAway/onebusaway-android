@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.ui.home
 
+import org.onebusaway.android.util.GeoPoint
+
 /**
- * The stop the user tapped on the map, decoupled from the io/elements `ObaStop`. Carries lat/lon so
+ * The stop the user tapped on the map, decoupled from the io/elements `ObaStop`. Carries its [point] so
  * the host can recenter the map and launch feedback without holding the `ObaStop` object, and so the
  * focus survives process death via the ViewModel's `SavedStateHandle`.
  */
@@ -24,8 +26,7 @@ data class FocusedStop(
     val id: String,
     val name: String?,
     val code: String?,
-    val lat: Double,
-    val lon: Double,
+    val point: GeoPoint,
 ) {
     // Empty companion so intent/extras parsing can hang off it as a `FocusedStop.fromIntent(...)`
     // extension where that contract lives (HomeActivity), without this model knowing about intents.

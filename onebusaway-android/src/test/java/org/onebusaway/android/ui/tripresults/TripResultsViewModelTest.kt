@@ -35,8 +35,15 @@ class TripResultsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val options = listOf(
-        ItineraryOption("Route 8", "30 min", "3:00p - 3:30p"),
-        ItineraryOption("Route 48", "40 min", "3:00p - 3:40p")
+        option("8"),
+        option("48"),
+    )
+
+    private fun option(shortName: String) = ItineraryOption(
+        mode = ModeSummary.Routes(listOf(RouteBadge(shortName, routeColor = null))),
+        durationMinutes = 30,
+        startTimeMs = 0L,
+        endTimeMs = 30 * 60_000L,
     )
 
     /** Treats itineraries as opaque tokens (as the ViewModel does) and returns canned projections. */

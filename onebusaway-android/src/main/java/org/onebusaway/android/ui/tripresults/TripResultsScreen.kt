@@ -17,11 +17,12 @@ package org.onebusaway.android.ui.tripresults
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +30,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -51,10 +53,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -68,8 +70,11 @@ import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
+import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 
@@ -85,12 +90,15 @@ fun TripResultsHeader(
     onSelectOption: (Int) -> Unit
 ) {
     val success = state as? TripResultsUiState.Success ?: return
+    // Side-scrollable so options never get squished: each card sizes to its own content (three lines —
+    // route/lines, duration, time) and the row scrolls horizontally when they overflow the width.
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
             .fillMaxWidth()
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         success.options.forEachIndexed { index, option ->
             OptionCard(
@@ -103,7 +111,7 @@ fun TripResultsHeader(
 }
 
 @Composable
-private fun RowScope.OptionCard(
+private fun OptionCard(
     option: ItineraryOption,
     selected: Boolean,
     onClick: () -> Unit
@@ -114,23 +122,57 @@ private fun RowScope.OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
+    val context = LocalContext.current
     Surface(
         color = background,
+        contentColor = textColor,
         shape = MaterialTheme.shapes.small,
+        // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
         modifier = Modifier
-            .weight(1f)
+            .widthIn(min = 104.dp)
             .clickable(onClick = onClick)
     ) {
-        Column(Modifier.padding(8.dp)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            // The modes: transit route badges (no comma between), a walk glyph for a walk-only trip, or
+            // a mode label for other non-transit trips.
+            when (val mode = option.mode) {
+                is ModeSummary.Routes -> Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    mode.badges.forEach { RouteBadgeChip(it.shortName, it.routeColor) }
+                }
+                ModeSummary.Walk -> Icon(
+                    painterResource(R.drawable.ic_directions_walk),
+                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                    // Sized to the route-badge row height so a walk-only card's first line matches.
+                    modifier = Modifier.size(20.dp),
+                )
+                is ModeSummary.Label -> Text(
+                    text = mode.text,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                )
+            }
+            // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(
+                    painterResource(R.drawable.hourglass_24),
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                EtaDurationText(minutes = option.durationMinutes)
+            }
+            // The device-localized departure–arrival range.
             Text(
-                text = option.title,
-                style = MaterialTheme.typography.titleMedium,
-                color = textColor,
+                text = "${DisplayFormat.formatTime(context, option.startTimeMs)} – " +
+                    DisplayFormat.formatTime(context, option.endTimeMs),
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
             )
-            Text(option.durationText, style = MaterialTheme.typography.bodyMedium, color = textColor)
-            Text(option.intervalText, style = MaterialTheme.typography.bodyMedium, color = textColor)
         }
     }
 }
@@ -351,8 +393,14 @@ private fun TripResultsPreview() {
     ObaTheme {
         val state = TripResultsUiState.Success(
             options = listOf(
-                ItineraryOption("Route 8", "32 min", "3:45p - 4:17p"),
-                ItineraryOption("Route 48", "41 min", "3:50p - 4:31p")
+                ItineraryOption(
+                    mode = ModeSummary.Routes(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
+                    durationMinutes = 32, startTimeMs = 0L, endTimeMs = 32 * 60_000L,
+                ),
+                ItineraryOption(
+                    mode = ModeSummary.Routes(listOf(RouteBadge("48", null), RouteBadge("11", null))),
+                    durationMinutes = 41, startTimeMs = 0L, endTimeMs = 41 * 60_000L,
+                )
             ),
             selectedIndex = 0,
             directions = listOf(

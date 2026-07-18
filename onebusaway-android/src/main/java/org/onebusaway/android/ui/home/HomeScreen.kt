@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -40,7 +38,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberStandardBottomSheetState
@@ -63,7 +60,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -76,6 +72,9 @@ import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.render.GeoPoint
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
+import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -909,13 +908,6 @@ private fun SheetValue.toArrivalsSheetState() = when (this) {
     SheetValue.Expanded -> ArrivalsSheetState.Expanded
 }
 
-// The custom drag handle's geometry — the visible bar plus the vertical padding above and below it.
-// Shared by [ArrivalsDragHandle] (what it draws) and the peek-height math (how much room it needs), so
-// the two can't drift apart.
-private val DRAG_HANDLE_BAR_HEIGHT = 4.dp
-private val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
-private val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
-
 // The collapsed drawer peek is capped at this fraction of the screen height (short stops shrink to
 // fit their content below it). A starting value to tune by eye.
 private const val PEEK_HEIGHT_FRACTION = 0.30f
@@ -939,13 +931,7 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
             .padding(horizontal = 24.dp, vertical = DRAG_HANDLE_VERTICAL_PADDING),
         contentAlignment = Alignment.Center,
     ) {
-        Surface(
-            // Same muted grey as the header's icon tint, so the handle matches the panel chrome.
-            color = colorResource(R.color.navdrawer_icon_tint),
-            shape = RoundedCornerShape(percent = 50),
-        ) {
-            Box(Modifier.size(width = 32.dp, height = DRAG_HANDLE_BAR_HEIGHT))
-        }
+        DragHandleBar()
     }
 }
 

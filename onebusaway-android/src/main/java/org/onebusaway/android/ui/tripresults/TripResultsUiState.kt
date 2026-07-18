@@ -15,12 +15,35 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-/** One of the (up to three) itinerary option cards shown above the directions. */
+/**
+ * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
+ * (not pre-formatted strings) so the card can render route badges / a walk glyph, the ETA-pill duration,
+ * and a device-localized time range:
+ *  - [mode] — what the card's first line shows for the trip (route badges, a walk glyph, or a label).
+ *  - [durationMinutes] — whole-minute trip length, formatted like the arrivals ETA pill.
+ *  - [startTimeMs]/[endTimeMs] — epoch millis for the (device-localized) time range.
+ */
 data class ItineraryOption(
-    val title: String,
-    val durationText: String,
-    val intervalText: String
+    val mode: ModeSummary,
+    val durationMinutes: Long,
+    val startTimeMs: Long,
+    val endTimeMs: Long,
 )
+
+/** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */
+sealed interface ModeSummary {
+    /** A transit trip: its legs' route roundels, in order. */
+    data class Routes(val badges: List<RouteBadge>) : ModeSummary
+
+    /** A walk-only trip — shown as a walk glyph. */
+    data object Walk : ModeSummary
+
+    /** Any other non-transit trip (bike/car), as the legacy mode-label title. */
+    data class Label(val text: String) : ModeSummary
+}
+
+/** A transit leg's route roundel data: its short name and (nullable) GTFS color as an ARGB int. */
+data class RouteBadge(val shortName: String, val routeColor: Int?)
 
 /**
  * One step in the directions list — a Compose-ready projection of the legacy [Direction] +

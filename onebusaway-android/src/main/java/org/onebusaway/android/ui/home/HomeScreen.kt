@@ -87,7 +87,7 @@ import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
-import org.onebusaway.android.ui.home.directions.DirectionsMessageCard
+import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
@@ -541,15 +541,11 @@ fun HomeScreen(
                     val directionsResults = (tripPlanResult as? PlanResult.Success)?.takeIf {
                         it.itineraries.isNotEmpty()
                     }
-                    // A user-facing message for the non-results plan states (error / no route found), so a
-                    // failed plan (e.g. endpoints outside the transit network) isn't silently swallowed.
-                    val genericPlanError = stringResource(R.string.tripplanner_error_not_defined)
-                    val noRouteMessage = stringResource(R.string.tripplanner_error_path_not_found)
-                    val directionsMessage: String? = when (val r = tripPlanResult) {
-                        is PlanResult.Error -> r.message.ifBlank { genericPlanError }
-                        is PlanResult.Success -> if (r.itineraries.isEmpty()) noRouteMessage else null
-                        else -> null
-                    }
+                    // The classified error for a failed plan (e.g. endpoints outside the transit
+                    // network), so it isn't silently swallowed; the snackbar renders its header + reason.
+                    // Success is always non-empty (both planners throw NoRoute on empty), so only Error
+                    // surfaces a message.
+                    val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                     val directionsLoading = tripPlanResult is PlanResult.Loading
                     // Which endpoint (if any) is being picked directly on the map (crosshair + confirm).
                     var pickTarget by rememberSaveable { mutableStateOf<DirectionsPickTarget?>(null) }
@@ -678,8 +674,9 @@ fun HomeScreen(
                                     showItinerary = homeViewModel::showItineraryOnMap,
                                     modifier = Modifier.align(Alignment.BottomCenter),
                                 )
-                                directionsMessage != null -> DirectionsMessageCard(
-                                    message = directionsMessage,
+                                directionsError != null -> DirectionsErrorSnackbar(
+                                    error = directionsError,
+                                    onDismiss = tripPlanViewModel::clearPlanResult,
                                     modifier = Modifier.align(Alignment.BottomCenter),
                                 )
                             }

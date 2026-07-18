@@ -126,7 +126,7 @@ class TripPlanViewModel @Inject constructor(
                         // Carry the request that produced the results so the host can arm the
                         // trip-plan-change monitor to re-plan it (see PlanResult.Success.params).
                         onSuccess = { _planState.value = PlanResult.Success(it, params) },
-                        onFailure = { _planState.value = PlanResult.Error(it.message.orEmpty()) }
+                        onFailure = { _planState.value = PlanResult.Error(it.toTripPlanError()) }
                     )
                 }
             }

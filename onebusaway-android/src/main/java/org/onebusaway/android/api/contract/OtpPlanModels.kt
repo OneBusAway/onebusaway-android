@@ -64,9 +64,8 @@ data class OtpErrorDto(
  * Mirrors OTP1's `org.opentripplanner.api.ws.Message` wire error-id vocabulary exactly — the legal
  * values of [OtpErrorDto.id] — ids verified against the vendored jar's enum constructor arguments
  * (`Message(String, int)`), not guessed. Only the codes
- * [org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository]'s `errorMessage` maps to a
- * user-facing string are included; the vendored enum also has a `PLAN_OK` (200) success code this app
- * never needs to name.
+ * [org.onebusaway.android.ui.tripplan.otp1ErrorFor] classifies into a user-facing error are included;
+ * the vendored enum also has a `PLAN_OK` (200) success code this app never needs to name.
  */
 internal enum class OtpErrorId(val id: Int) {
     SYSTEM_ERROR(500),

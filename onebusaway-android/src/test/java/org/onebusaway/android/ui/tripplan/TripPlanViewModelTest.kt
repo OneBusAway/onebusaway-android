@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripplan
 
 import java.io.IOException
+import org.onebusaway.android.R
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -269,11 +270,20 @@ class TripPlanViewModelTest {
     }
 
     @Test
-    fun `a plan failure surfaces Error with the message`() = runTest {
-        val vm = viewModel(plan = FakeTripPlanRepository(Result.failure(IOException("no route"))))
+    fun `a classified plan failure surfaces its TripPlanError`() = runTest {
+        val error = TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_no_transit_times)
+        val vm = viewModel(plan = FakeTripPlanRepository(Result.failure(TripPlanException(error))))
         setBothEndpoints(vm)
         advanceUntilIdle()
-        assertEquals(PlanResult.Error("no route"), vm.planState.value)
+        assertEquals(PlanResult.Error(error), vm.planState.value)
+    }
+
+    @Test
+    fun `an unclassified plan failure falls back to Unknown`() = runTest {
+        val vm = viewModel(plan = FakeTripPlanRepository(Result.failure(IOException("boom"))))
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(PlanResult.Error(TripPlanError.Unknown), vm.planState.value)
     }
 
     @Test

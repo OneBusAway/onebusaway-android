@@ -89,7 +89,9 @@ class DefaultTripPlanRepository @Inject constructor(
      */
     private fun planInternal(builder: TripRequestBuilder): List<TripItinerary> {
         val baseUrl = builder.formattedOtpBaseUrl
-            ?: throw IOException(context.getString(R.string.tripplanner_no_server_selected_error))
+            ?: throw TripPlanException(
+                TripPlanError(TripPlanError.Category.REQUEST, R.string.tripplanner_no_server_selected_error)
+            )
 
         if (builder.usesOtp2) {
             return otp2Planner.plan(builder, baseUrl)
@@ -103,7 +105,7 @@ class DefaultTripPlanRepository @Inject constructor(
         )
         val itineraries = response.plan?.itineraries?.map { it.toTripItinerary() }
         if (itineraries.isNullOrEmpty()) {
-            throw IOException(errorMessage(response.error?.id ?: -1))
+            throw TripPlanException(otp1ErrorFor(response.error?.id ?: -1))
         }
         return itineraries
     }
@@ -163,8 +165,8 @@ class DefaultTripPlanRepository @Inject constructor(
             otpWebService.plan(url).execute()
         } catch (e: IOException) {
             // Transport failure / timeout (SocketTimeoutException is an IOException) — mirror the legacy
-            // catch-all mapping to the request-timeout message.
-            throw IOException(errorMessage(OtpErrorId.REQUEST_TIMEOUT.id), e)
+            // catch-all mapping to a connectivity failure.
+            throw TripPlanException(otp1ErrorFor(OtpErrorId.REQUEST_TIMEOUT.id), e)
         }
 
         // A server-root base we assumed was modern but that failed at the HTTP layer is a pre-1.0
@@ -183,7 +185,7 @@ class DefaultTripPlanRepository @Inject constructor(
             }
             body.use { OtpPlanParser.parse(it.byteStream()) }
         } catch (e: IOException) {
-            throw IOException(errorMessage(OtpErrorId.REQUEST_TIMEOUT.id), e)
+            throw TripPlanException(otp1ErrorFor(OtpErrorId.REQUEST_TIMEOUT.id), e)
         }
 
         // Record a discovered pre-1.0 server so later plans (and the bike layer) skip the probe.
@@ -193,34 +195,46 @@ class DefaultTripPlanRepository @Inject constructor(
         return parsed
     }
 
-    private fun errorMessage(errorCode: Int): String = when (errorCode) {
-        OtpErrorId.SYSTEM_ERROR.id -> context.getString(R.string.tripplanner_error_system)
-        OtpErrorId.OUTSIDE_BOUNDS.id -> context.getString(R.string.tripplanner_error_outside_bounds)
-        OtpErrorId.PATH_NOT_FOUND.id -> context.getString(R.string.tripplanner_error_path_not_found)
-        OtpErrorId.NO_TRANSIT_TIMES.id -> context.getString(R.string.tripplanner_error_no_transit_times)
-        OtpErrorId.REQUEST_TIMEOUT.id -> context.getString(R.string.tripplanner_error_request_timeout)
-        OtpErrorId.BOGUS_PARAMETER.id -> context.getString(R.string.tripplanner_error_bogus_parameter)
-        OtpErrorId.GEOCODE_FROM_NOT_FOUND.id ->
-            context.getString(R.string.tripplanner_error_geocode_from_not_found)
-        OtpErrorId.GEOCODE_TO_NOT_FOUND.id ->
-            context.getString(R.string.tripplanner_error_geocode_to_not_found)
-        OtpErrorId.GEOCODE_FROM_TO_NOT_FOUND.id ->
-            context.getString(R.string.tripplanner_error_geocode_from_to_not_found)
-        OtpErrorId.TOO_CLOSE.id -> context.getString(R.string.tripplanner_error_too_close)
-        OtpErrorId.LOCATION_NOT_ACCESSIBLE.id ->
-            context.getString(R.string.tripplanner_error_location_not_accessible)
-        OtpErrorId.GEOCODE_FROM_AMBIGUOUS.id ->
-            context.getString(R.string.tripplanner_error_geocode_from_ambiguous)
-        OtpErrorId.GEOCODE_TO_AMBIGUOUS.id ->
-            context.getString(R.string.tripplanner_error_geocode_to_ambiguous)
-        OtpErrorId.GEOCODE_FROM_TO_AMBIGUOUS.id ->
-            context.getString(R.string.tripplanner_error_geocode_from_to_ambiguous)
-        OtpErrorId.UNDERSPECIFIED_TRIANGLE.id, OtpErrorId.TRIANGLE_NOT_AFFINE.id,
-        OtpErrorId.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.id, OtpErrorId.TRIANGLE_VALUES_NOT_SET.id ->
-            context.getString(R.string.tripplanner_error_triangle)
-        else -> context.getString(R.string.tripplanner_error_not_defined)
-    }
+}
 
+/**
+ * Classifies an OTP1 error code ([OtpErrorId.id], or `-1` when the server sent no code) into a
+ * [TripPlanError] — the coarse [TripPlanError.Category] plus the specific, already-mapped detail
+ * string. Top-level and `internal` (not a `Context`-bound method) so it's exhaustively
+ * JVM-unit-testable and shares the ontology with the OTP2 path ([otp2ErrorFor]).
+ */
+internal fun otp1ErrorFor(errorCode: Int): TripPlanError = when (errorCode) {
+    OtpErrorId.SYSTEM_ERROR.id ->
+        TripPlanError(TripPlanError.Category.REQUEST, R.string.tripplanner_error_system)
+    OtpErrorId.OUTSIDE_BOUNDS.id ->
+        TripPlanError(TripPlanError.Category.NO_ROUTE, R.string.tripplanner_error_outside_bounds)
+    OtpErrorId.PATH_NOT_FOUND.id -> TripPlanError.NoRoute
+    OtpErrorId.NO_TRANSIT_TIMES.id ->
+        TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_no_transit_times)
+    OtpErrorId.REQUEST_TIMEOUT.id ->
+        TripPlanError(TripPlanError.Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout)
+    OtpErrorId.BOGUS_PARAMETER.id ->
+        TripPlanError(TripPlanError.Category.REQUEST, R.string.tripplanner_error_bogus_parameter)
+    OtpErrorId.GEOCODE_FROM_NOT_FOUND.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_not_found)
+    OtpErrorId.GEOCODE_TO_NOT_FOUND.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_to_not_found)
+    OtpErrorId.GEOCODE_FROM_TO_NOT_FOUND.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_to_not_found)
+    OtpErrorId.TOO_CLOSE.id ->
+        TripPlanError(TripPlanError.Category.NO_ROUTE, R.string.tripplanner_error_too_close)
+    OtpErrorId.LOCATION_NOT_ACCESSIBLE.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_location_not_accessible)
+    OtpErrorId.GEOCODE_FROM_AMBIGUOUS.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_ambiguous)
+    OtpErrorId.GEOCODE_TO_AMBIGUOUS.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_to_ambiguous)
+    OtpErrorId.GEOCODE_FROM_TO_AMBIGUOUS.id ->
+        TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_to_ambiguous)
+    OtpErrorId.UNDERSPECIFIED_TRIANGLE.id, OtpErrorId.TRIANGLE_NOT_AFFINE.id,
+    OtpErrorId.TRIANGLE_OPTIMIZE_TYPE_NOT_SET.id, OtpErrorId.TRIANGLE_VALUES_NOT_SET.id ->
+        TripPlanError(TripPlanError.Category.REQUEST, R.string.tripplanner_error_triangle)
+    else -> TripPlanError.Unknown
 }
 
 /** OTP's default-router path segment: present in a router-rooted base, inserted for a server-root one. */

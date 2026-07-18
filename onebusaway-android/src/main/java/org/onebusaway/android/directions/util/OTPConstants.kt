@@ -50,8 +50,6 @@ object OTPConstants {
 
     const val TRIP_RESULTS_TIME_STRING_FORMAT = "MMMM dd '%s' hh:mm a"
 
-    const val TRIP_RESULTS_TIME_STRING_FORMAT_SUMMARY = "hh:mma"
-
     const val ITINERARIES = "org.onebusaway.android.Itineraries"
 
     const val SELECTED_ITINERARY = "org.onebusaway.android.SELECTED_ITINERARY"

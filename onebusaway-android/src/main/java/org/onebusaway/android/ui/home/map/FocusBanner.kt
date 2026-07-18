@@ -66,6 +66,7 @@ import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
+import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
@@ -281,20 +282,7 @@ private fun StopFocusBanner(
 /** A deliberately tiny route chip: only enough padding to distinguish the route from its headsign. */
 @Composable
 private fun CompactRouteBadge(route: FocusBannerState.SubordinateRoute) {
-    val (container, content) = rememberRouteBadgeColors(route.color)
-    Surface(
-        color = container,
-        contentColor = content,
-        shape = RoundedCornerShape(1.dp),
-    ) {
-        Text(
-            text = route.shortName,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
-        )
-    }
+    RouteBadgeChip(shortName = route.shortName, routeColor = route.color)
 }
 
 /** The nested-route dismiss affordance keeps its visible 22dp size as its exact clickable bounds. */

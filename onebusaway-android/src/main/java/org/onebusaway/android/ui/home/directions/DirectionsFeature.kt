@@ -19,13 +19,18 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -57,7 +62,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,8 +87,12 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
+import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripModes
@@ -221,7 +232,17 @@ private fun pickTripTime(activity: AppCompatActivity, viewModel: TripPlanViewMod
     picker.show(activity.supportFragmentManager, "TIME_PICKER")
 }
 
-/** The bottom directions sheet: option cards + the step-by-step list, over the map. */
+/** Collapsed height of the directions sheet content — just the drag handle peeking above the map. */
+private val DIRECTIONS_SHEET_PEEK = DRAG_HANDLE_HEIGHT
+
+/** Net drag (px per gesture event) on the handle past which the sheet snaps collapsed/expanded. */
+private const val DIRECTIONS_SHEET_DRAG_THRESHOLD = 8f
+
+/**
+ * The bottom directions sheet: option cards + the step-by-step list, over the map. Collapsible via the
+ * drag handle at its top — tap or drag it down to collapse to just the handle (revealing the map), up to
+ * restore the full ~40%-height sheet.
+ */
 @Composable
 fun DirectionsResultsSheet(
     resultsViewModel: TripResultsViewModel,
@@ -230,21 +251,64 @@ fun DirectionsResultsSheet(
     showItinerary: (TripItinerary) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val height = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
+    // The system nav-bar inset: the surface reaches the bottom edge (continuous background), but its
+    // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
+    // stranded under the gesture pill / 3-button bar. Collapsed height includes it so the handle fits.
+    val navBottom = navigationBarBottomPadding()
+    val fullHeight = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
+    var collapsed by rememberSaveable { mutableStateOf(false) }
+    val sheetHeight by animateDpAsState(
+        targetValue = if (collapsed) DIRECTIONS_SHEET_PEEK + navBottom else fullHeight,
+        label = "directionsSheetHeight",
+    )
     Surface(
-        modifier = modifier.fillMaxWidth().heightIn(min = height, max = height),
+        modifier = modifier.fillMaxWidth().height(sheetHeight),
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
         shadowElevation = 8.dp,
     ) {
-        TripResultsSheet(
-            itineraries = itineraries,
-            params = params,
-            resultsViewModel = resultsViewModel,
-            showItinerary = showItinerary,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        Column(Modifier.fillMaxWidth().navigationBarsPadding()) {
+            DirectionsSheetHandle(collapsed = collapsed, onSetCollapsed = { collapsed = it })
+            TripResultsSheet(
+                itineraries = itineraries,
+                params = params,
+                resultsViewModel = resultsViewModel,
+                showItinerary = showItinerary,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+/** The drag handle atop [DirectionsResultsSheet]: tap toggles collapse; drag up/down sets it. */
+@Composable
+private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) -> Unit) {
+    // draggable() reports per-frame deltas, so accumulate them — a slow drag would never cross the
+    // threshold on any single frame. Reset once a threshold crossing snaps the sheet, and at drag end.
+    var dragAccumulated by remember { mutableFloatStateOf(0f) }
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSetCollapsed(!collapsed) }
+            .draggable(
+                orientation = Orientation.Vertical,
+                state = rememberDraggableState { delta ->
+                    dragAccumulated += delta
+                    if (dragAccumulated > DIRECTIONS_SHEET_DRAG_THRESHOLD) {
+                        onSetCollapsed(true)
+                        dragAccumulated = 0f
+                    } else if (dragAccumulated < -DIRECTIONS_SHEET_DRAG_THRESHOLD) {
+                        onSetCollapsed(false)
+                        dragAccumulated = 0f
+                    }
+                },
+                onDragStopped = { dragAccumulated = 0f },
+            )
+            .padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
+        contentAlignment = Alignment.Center,
+    ) {
+        DragHandleBar()
     }
 }
 

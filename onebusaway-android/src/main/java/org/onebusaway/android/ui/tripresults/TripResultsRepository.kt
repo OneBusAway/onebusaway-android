@@ -18,27 +18,25 @@ package org.onebusaway.android.ui.tripresults
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.util.DirectionsGenerator
-import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
- * Projects [TripItinerary] objects onto the Compose results model. Reuses the legacy
- * [DirectionsGenerator]/[ConversionUtils] (which need a [Context] for resources/formatting) and the
- * card interval formatting ported from the old TripResultsFragment, all on the IO thread so
- * [TripResultsViewModel] stays JVM-testable.
+ * Projects [TripItinerary] objects onto the Compose results model. The turn-by-turn directions reuse
+ * the legacy [DirectionsGenerator] (which needs a [Context] for resources), and the option cards carry
+ * structured data (route badges / walk / duration / time range) formatted by the UI. All on the IO
+ * thread so [TripResultsViewModel] stays JVM-testable.
  */
 interface TripResultsRepository {
 
-    /** Summarizes each itinerary into an option card (title, duration, time interval). */
+    /** Summarizes each itinerary into an option card ([ItineraryOption]). */
     suspend fun summarize(itineraries: List<TripItinerary>): Result<List<ItineraryOption>>
 
     /** Builds the turn-by-turn directions for a single itinerary. */
@@ -51,17 +49,39 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
         itineraries: List<TripItinerary>
     ): Result<List<ItineraryOption>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
-            itineraries.map { itinerary ->
-                val durationSec = itinerary.duration.inWholeSeconds
-                ItineraryOption(
-                    title = DirectionsGenerator(itinerary.legs, context).itineraryTitle,
-                    durationText = ConversionUtils
-                        .getFormattedDurationTextNoSeconds(durationSec, false, context),
-                    intervalText = formatTimeString(itinerary.startTime.epochMs, durationSec * 1000)
-                )
-            }
+            itineraries.map { itinerary -> summarize(itinerary) }
         }
     }
+
+    /** Projects one [TripItinerary] into the structured [ItineraryOption] the card renders. */
+    private fun summarize(itinerary: TripItinerary): ItineraryOption {
+        val transitLegs = itinerary.legs.filter { it.mode?.isTransit == true }
+        // A transit trip shows route badges; a walk-only trip shows the walk glyph; anything else
+        // (bike/car) keeps the legacy mode-label title.
+        val mode = when {
+            transitLegs.isNotEmpty() -> ModeSummary.Routes(
+                transitLegs.map { leg ->
+                    RouteBadge(
+                        shortName = leg.badgeShortName(),
+                        // routeColor is a bare wire hex; tolerate a leading '#' just in case.
+                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#")),
+                    )
+                }
+            )
+            itinerary.legs.all { it.mode == TripMode.WALK } -> ModeSummary.Walk
+            else -> ModeSummary.Label(DirectionsGenerator(itinerary.legs, context).itineraryTitle)
+        }
+        return ItineraryOption(
+            mode = mode,
+            durationMinutes = itinerary.duration.inWholeMinutes,
+            startTime = itinerary.startTime,
+            endTime = itinerary.startTime + itinerary.duration,
+        )
+    }
+
+    /** The route's display short name (short name, else the route, else the id). */
+    private fun TripLeg.badgeShortName(): String =
+        listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
 
     override suspend fun directionsFor(
         itinerary: TripItinerary
@@ -101,14 +121,4 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
         }.orEmpty()
 
     private fun CharSequence?.orEmptyString(): String = this?.toString().orEmpty()
-
-    // Ported verbatim from the legacy TripResultsFragment (e.g. "3:45p - 4:30p").
-    private fun formatTimeString(startMs: Long, durationMs: Long): String =
-        "${toDateFmt(startMs)} - ${toDateFmt(startMs + durationMs)}"
-
-    private fun toDateFmt(ms: Long): String {
-        val s = SimpleDateFormat(OTPConstants.TRIP_RESULTS_TIME_STRING_FORMAT_SUMMARY, Locale.getDefault())
-            .format(Date(ms))
-        return s.substring(0, 6).lowercase()
-    }
 }

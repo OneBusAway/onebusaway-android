@@ -239,8 +239,8 @@ class TripPlanMonitorService : Service() {
             putExtras(requestExtras)
             putExtra(OTPConstants.ITINERARIES, itineraries.toJson())
             putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION)
-            // The request/itinerary bundle rides along for a future restore-into-directions; the intent
-            // opens HOME (no EXTRA_NAV_ROUTE) rather than the retired standalone trip-plan destination.
+            // The request/itinerary bundle rides along for a future restore-into-directions (#1939); the
+            // intent opens HOME (no EXTRA_NAV_ROUTE) rather than the retired standalone trip-plan screen.
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 

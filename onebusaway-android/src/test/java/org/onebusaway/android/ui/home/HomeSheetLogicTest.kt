@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Decision-table tests for the pure arrivals-sheet logic extracted from [HomeScreen]. These cover
@@ -28,7 +29,7 @@ import org.junit.Test
  */
 class HomeSheetLogicTest {
 
-    private val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+    private val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
 
     // --- shouldShowSheet ---
 

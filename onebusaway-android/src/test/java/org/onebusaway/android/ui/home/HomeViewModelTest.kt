@@ -117,7 +117,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
 
         vm.onSheetSettled(ArrivalsSheetState.Collapsed, 120) // reveal, skipped
         vm.onSheetSettled(ArrivalsSheetState.Expanded, 120)
@@ -165,7 +165,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.applyInitialFocus(stop)
         assertEquals(stop, vm.currentFocus.value.focusedStop)
         vm.onArrivalsLoaded(obaStop, null, emptySet())
@@ -177,7 +177,7 @@ class HomeViewModelTest {
     @Test
     fun `applyInitialFocus keeps a restored focus and marks it pending`() = runTest {
         val handle = SavedStateHandle()
-        val restored = FocusedStop("42", "Pike St", "577", 47.61, -122.34)
+        val restored = FocusedStop("42", "Pike St", "577", GeoPoint(47.61, -122.34))
         viewModel(savedState = handle).onStopFocused(restored)
         val vm = viewModel(savedState = handle) // recreation: focus restored from the handle
         val map = MapDirectiveRecorder(vm)
@@ -213,7 +213,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         map.sent.clear()
         vm.markPendingMapFocus()
@@ -246,7 +246,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onSheetSettled(ArrivalsSheetState.Collapsed, 120) // reveal, skipped
         vm.onSheetSettled(ArrivalsSheetState.Expanded, 120)
 
@@ -297,7 +297,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
 
         vm.requestShowFocusedStopRouteOnMap("42", directionId = 1)
         advanceUntilIdle()
@@ -316,7 +316,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         vm.selectArrivalRoute(
             request = ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 0),
@@ -343,7 +343,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         advanceUntilIdle()
         map.sent.clear()
@@ -372,7 +372,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", null, "65")
 
@@ -390,7 +390,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0, shortName = "65")
         advanceUntilIdle()
@@ -416,7 +416,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         val viewport = MapViewport(GeoPoint(47.61, -122.31), 14.5)
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0, shortName = "65")
@@ -445,7 +445,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         val viewport = MapViewport(GeoPoint(47.62, -122.32), 13.25)
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0, undoViewport = viewport)
@@ -491,7 +491,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.focusStandaloneRoute(ShowRouteRequest("65"))
         advanceUntilIdle()
@@ -515,7 +515,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
         val viewport = MapViewport(GeoPoint(47.64, -122.34), 13.0)
         vm.onStopFocused(stop)
         vm.focusStandaloneRoute(ShowRouteRequest("65"), undoViewport = viewport)
@@ -537,7 +537,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
 
@@ -557,7 +557,7 @@ class HomeViewModelTest {
     @Test
     fun `map taps drop route attention then stop attention`() = runTest {
         val vm = viewModel()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
 
@@ -575,7 +575,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val mapJob = launch { map.collect() }
         advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
         advanceUntilIdle()
@@ -596,8 +596,8 @@ class HomeViewModelTest {
     @Test
     fun `map tap from plain stop preserves older focus as undo history`() = runTest {
         val vm = viewModel()
-        val first = FocusedStop("first", "1st Ave", "100", 47.6, -122.3)
-        val second = FocusedStop("second", "2nd Ave", "200", 47.61, -122.31)
+        val first = FocusedStop("first", "1st Ave", "100", GeoPoint(47.6, -122.3))
+        val second = FocusedStop("second", "2nd Ave", "200", GeoPoint(47.61, -122.31))
         vm.onStopFocused(first)
         vm.onStopFocused(second)
 
@@ -612,7 +612,7 @@ class HomeViewModelTest {
     @Test
     fun `restored stop route reconstructs its stop and root parents`() = runTest {
         val state = SavedStateHandle()
-        val stop = FocusedStop("stop", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
         viewModel(savedState = state).apply {
             onStopFocused(stop)
             requestShowFocusedStopRouteOnMap("65", directionId = 0)
@@ -629,7 +629,7 @@ class HomeViewModelTest {
     fun `standalone route replaces stop focus and is restored`() = runTest {
         val handle = SavedStateHandle()
         val vm = viewModel(savedState = handle)
-        vm.onStopFocused(FocusedStop("stop", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
 
         vm.focusStandaloneRoute(ShowRouteRequest("65", initialDirectionId = 1))
 
@@ -644,7 +644,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
 
         vm.unfocusMapOneLevel()
         advanceUntilIdle()
@@ -668,7 +668,7 @@ class HomeViewModelTest {
             FocusedTrip("trip-40", "40", "shape-40-express", 0xFF112233.toInt()),
             FocusedTrip("trip-44", "44", "shape-44-local", null),
         )
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         map.sent.clear()
         vm.onArrivalsLoaded(obaStop, null, trips)
@@ -686,7 +686,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         map.sent.clear()
         vm.markPendingMapFocus()
@@ -708,13 +708,13 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         map.sent.clear()
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
-        vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("2", "2nd Ave", "200", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
         assertEquals(emptySet<FocusedTrip>(), vm.focusedTrips)
         assertEquals(1, map.clearStopRoutesCount)
@@ -727,7 +727,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -737,7 +737,7 @@ class HomeViewModelTest {
         map.sent.clear()
 
         val transition = vm.onStopFocused(
-            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
             continuingRoutes = setOf(RouteDirectionKey("40", null)),
         )
         advanceUntilIdle()
@@ -755,7 +755,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -768,7 +768,7 @@ class HomeViewModelTest {
         map.sent.clear()
 
         val transition = vm.onStopFocused(
-            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
             continuingRoutes = setOf(RouteDirectionKey("44", null)),
         )
         advanceUntilIdle()
@@ -784,7 +784,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -798,7 +798,7 @@ class HomeViewModelTest {
         val selection = (vm.currentFocus.value as CurrentFocus.Stop).selectedRoute
         map.sent.clear()
 
-        val nextStop = FocusedStop("2", "2nd Ave", "200", 47.61, -122.31)
+        val nextStop = FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31))
         val transition = vm.onStopFocused(
             nextStop,
             continuingRoutes = setOf(RouteDirectionKey("79", 0)),
@@ -828,7 +828,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -843,7 +843,7 @@ class HomeViewModelTest {
         map.sent.clear()
 
         val transition = vm.onStopFocused(
-            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
             continuingRoutes = setOf(RouteDirectionKey("11", 1)),
         )
         advanceUntilIdle()
@@ -860,7 +860,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -875,7 +875,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         map.sent.clear()
 
-        val nextStop = FocusedStop("2", "2nd Ave", "200", 47.61, -122.31)
+        val nextStop = FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31))
         val transition = vm.onStopFocused(
             nextStop,
             continuingRoutes = setOf(RouteDirectionKey("75", 1)),
@@ -896,7 +896,7 @@ class HomeViewModelTest {
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
         advanceUntilIdle()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(
             obaStop,
             null,
@@ -909,7 +909,7 @@ class HomeViewModelTest {
         map.sent.clear()
 
         val transition = vm.onStopFocused(
-            FocusedStop("2", "2nd Ave", "200", 47.61, -122.31),
+            FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
             continuingRoutes = setOf(RouteDirectionKey("62", null)),
         )
         advanceUntilIdle()
@@ -922,7 +922,7 @@ class HomeViewModelTest {
     @Test
     fun `map unfocus resets exact trips`() = runTest {
         val vm = viewModel()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
@@ -936,7 +936,7 @@ class HomeViewModelTest {
         // for a standalone route empties it by construction (focusStandaloneRoute has no reset call),
         // and the same load re-scoped to a different stop id never leaks across.
         val vm = viewModel()
-        vm.onStopFocused(FocusedStop("1", "Main St", "100", 47.6, -122.3))
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         vm.onArrivalsLoaded(obaStop, null, setOf(FocusedTrip("trip", "40", "shape", null)))
         assertTrue(vm.focusedTrips.isNotEmpty())
 
@@ -949,7 +949,7 @@ class HomeViewModelTest {
     @Test
     fun `onStopFocused sets the focused stop`() = runTest {
         val vm = viewModel()
-        val stop = FocusedStop("1", "Main St", "100", 47.6, -122.3)
+        val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
         assertEquals(stop, vm.currentFocus.value.focusedStop)
     }
@@ -959,14 +959,14 @@ class HomeViewModelTest {
         val vm = viewModel()
         vm.onBikeStationFocused("bike-7")
         assertEquals("bike-7", vm.currentFocus.value.focusedBikeStationId)
-        vm.onStopFocused(FocusedStop("1", null, null, 1.0, 2.0))
+        vm.onStopFocused(FocusedStop("1", null, null, GeoPoint(1.0, 2.0)))
         assertNull(vm.currentFocus.value.focusedBikeStationId)
     }
 
     @Test
     fun `focused stop is restored from SavedStateHandle on recreation`() = runTest {
         val handle = SavedStateHandle()
-        val stop = FocusedStop("42", "Pike St", "577", 47.61, -122.34)
+        val stop = FocusedStop("42", "Pike St", "577", GeoPoint(47.61, -122.34))
         viewModel(savedState = handle).onStopFocused(stop)
         // A fresh ViewModel over the same handle simulates process-death recreation.
         assertEquals(stop, viewModel(savedState = handle).currentFocus.value.focusedStop)
@@ -1074,7 +1074,7 @@ class HomeViewModelTest {
     @Test
     fun `reportTarget is the focused stop when one is focused`() {
         val vm = viewModel()
-        val stop = FocusedStop("1_123", "Main St & 1st", "123", 47.6, -122.3)
+        val stop = FocusedStop("1_123", "Main St & 1st", "123", GeoPoint(47.6, -122.3))
         vm.onStopFocused(stop)
 
         assertEquals(ReportTarget.Stop(stop), vm.reportTarget())

@@ -379,7 +379,7 @@ class HomeViewModel @Inject constructor(
     fun recenterOnFocusedStop(undoViewport: MapViewport? = null) {
         _currentFocus.value.focusedStop?.let {
             recordViewportUndo(undoViewport)
-            emitMapDirective(MapDirective.RecenterOnFocusedStop(GeoPoint(it.lat, it.lon)))
+            emitMapDirective(MapDirective.RecenterOnFocusedStop(it.point))
         }
     }
 

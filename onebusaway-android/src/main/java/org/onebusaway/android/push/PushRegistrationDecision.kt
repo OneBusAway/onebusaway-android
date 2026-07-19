@@ -31,6 +31,15 @@ data class PushRegistration(
 )
 
 /**
+ * True when [this] and [other] address the same server row — the region, host, and token a DELETE (or an
+ * upsert POST) targets. Locale and test-device aren't part of the row's identity, so they don't count.
+ */
+fun PushRegistration.sameEndpoint(other: PushRegistration): Boolean =
+    regionId == other.regionId &&
+        sidecarBaseUrl == other.sidecarBaseUrl &&
+        token == other.token
+
+/**
  * What the registrar should do to reconcile the [PushRegistration] currently on record with the one the
  * device now wants (issue #1957).
  */
@@ -70,10 +79,8 @@ fun decidePushRegistration(
     target == null -> if (last == null) PushRegistrationAction.NoOp else PushRegistrationAction.Unregister(last)
     last == null -> PushRegistrationAction.Register(target)
     target == last -> PushRegistrationAction.NoOp
-    // Same endpoint + token, only locale/test flag changed → a plain re-POST upserts it.
-    target.token == last.token &&
-        target.regionId == last.regionId &&
-        target.sidecarBaseUrl == last.sidecarBaseUrl -> PushRegistrationAction.Register(target)
+    // Same endpoint, only locale/test flag changed → a plain re-POST upserts it.
+    target.sameEndpoint(last) -> PushRegistrationAction.Register(target)
     // Token or region changed → clean up the stale registration, then register the new one.
     else -> PushRegistrationAction.Reregister(previous = last, target = target)
 }

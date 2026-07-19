@@ -16,6 +16,7 @@
 package org.onebusaway.android.push
 
 import android.content.Context
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -51,7 +52,9 @@ import org.onebusaway.android.util.runCatchingCancellable
  *
  * The last successful registration is persisted (the `push_reg_*` prefs slots) so we know exactly what
  * to DELETE on opt-out and can skip redundant POSTs — important given the endpoint's 30 req/min/IP rate
- * limit (see [PushRegistrationWebService]).
+ * limit (see [PushRegistrationWebService]). A separate `push_pending_del_*` slot holds a registration
+ * whose DELETE we still owe when a re-registration's POST landed but its DELETE didn't, so the stale one
+ * is retried on a later [sync] rather than orphaned (still pushing until the 180-day server prune).
  */
 @Singleton
 class PushRegistrationManager internal constructor(
@@ -60,14 +63,17 @@ class PushRegistrationManager internal constructor(
     private val firebaseMessagingManager: FirebaseMessagingManager,
     private val prefs: PreferencesRepository,
     private val scope: CoroutineScope,
-    // Test seams for the two Android-only reads (see the @Inject constructor). Kept off the DI path so
+    // Test seams for the Android-only bits (see the @Inject constructor). Kept off the DI path so
     // sync()'s reconcile/persist semantics — including the Reregister-failure record handling — are
     // exercisable from a plain JVM test, which is where the "orphan on double failure" class of bug lives.
+    // logWarning is a seam too: the failure paths call it, and android.util.Log isn't mocked under a
+    // plain JVM test, so the production default routes to Log.w while tests capture the message instead.
     private val notificationsEnabled: () -> Boolean,
     private val registrationsEndpointPath: String,
+    private val logWarning: (String, Throwable) -> Unit,
 ) {
 
-    /** Production constructor Hilt builds from: resolves the two seams from [context] and delegates. */
+    /** Production constructor Hilt builds from: resolves the seams from [context] and delegates. */
     @Inject
     constructor(
         @ApplicationContext context: Context,
@@ -84,6 +90,7 @@ class PushRegistrationManager internal constructor(
         scope = scope,
         notificationsEnabled = { NotificationManagerCompat.from(context).areNotificationsEnabled() },
         registrationsEndpointPath = context.getString(R.string.arrivals_reminders_api_endpoint),
+        logWarning = { message, cause -> Log.w(TAG, message, cause) },
     )
 
     private val started = AtomicBoolean(false)
@@ -126,6 +133,9 @@ class PushRegistrationManager internal constructor(
 
     /** Reconciles the on-record registration with the currently desired one. */
     private suspend fun sync() = mutex.withLock {
+        // Settle any DELETE we still owe from an earlier Reregister whose POST landed but whose DELETE
+        // didn't, before reconciling, so the stale registration can't linger past this pass.
+        drainPendingDelete()
         when (val action = decidePushRegistration(currentTarget(), loadLast())) {
             PushRegistrationAction.NoOp -> Unit
             is PushRegistrationAction.Register ->
@@ -134,12 +144,20 @@ class PushRegistrationManager internal constructor(
                 if (unregister(action.previous)) clearLast()
             is PushRegistrationAction.Reregister -> {
                 // DELETE the stale registration, then POST the new one, persisting only once the POST
-                // lands. On failure keep `previous` on record UNLESS the DELETE already removed it:
-                // clearing it while it's still registered would make the next sync a plain Register,
-                // orphaning the old region/token (it keeps receiving alerts until the 180-day age-out).
+                // lands. All four failure quadrants are handled so nothing is orphaned:
+                //  - DELETE ok   + POST ok   → persist(target): old gone, new on record.
+                //  - DELETE ok   + POST fail → clearLast(): server holds nothing, next sync re-Registers.
+                //  - DELETE fail + POST fail → keep `previous`: next sync retries the whole Reregister.
+                //  - DELETE fail + POST ok   → persist(target) AND queue `previous` for a retried DELETE
+                //    (drained at the top of a later sync) rather than dropping it — otherwise the old
+                //    region keeps pushing to a still-valid token until the 180-day server age-out.
                 val cleaned = unregister(action.previous)
-                if (register(action.target)) persist(action.target)
-                else if (cleaned) clearLast()
+                if (register(action.target)) {
+                    persist(action.target)
+                    if (!cleaned) persistPendingDelete(action.previous)
+                } else if (cleaned) {
+                    clearLast()
+                }
             }
         }
     }
@@ -163,7 +181,7 @@ class PushRegistrationManager internal constructor(
         )
     }
 
-    /** POSTs [target]; true only on a 2xx (204) success. */
+    /** POSTs [target]; true only on a 2xx (204) success. Retried on the next sync, so a failure isn't fatal. */
     private suspend fun register(target: PushRegistration): Boolean = runCatchingCancellable {
         service.register(
             url = registrationUrl(target),
@@ -171,13 +189,30 @@ class PushRegistrationManager internal constructor(
             locale = target.locale,
             testDevice = target.testDevice,
         ).isSuccessful
+    }.onFailure {
+        // Surface the cause (without the token) so a "why isn't this device registered" report isn't
+        // silent; the retry happens on the next trigger regardless.
+        logWarning("push register failed for region ${target.regionId} at ${target.sidecarBaseUrl}", it)
     }.getOrDefault(false)
 
     /** DELETEs [previous]; true on 204 or 404 (already gone), so a stale record is cleared either way. */
     private suspend fun unregister(previous: PushRegistration): Boolean = runCatchingCancellable {
         val response = service.unregister(url = registrationUrl(previous), token = previous.token)
         response.isSuccessful || response.code() == HttpURLConnection.HTTP_NOT_FOUND
+    }.onFailure {
+        // Same rationale as register(): log the cause without the token; the DELETE is retried later.
+        logWarning("push unregister failed for region ${previous.regionId} at ${previous.sidecarBaseUrl}", it)
     }.getOrDefault(false)
+
+    /**
+     * Retries the DELETE queued by an earlier Reregister (the DELETE-fail/POST-ok quadrant in [sync]).
+     * Runs at the top of every sync; a no-op (one prefs read, no network) when the slot is empty. Cleared
+     * once the DELETE lands (204 or 404), else left to retry on the next sync/foreground.
+     */
+    private suspend fun drainPendingDelete() {
+        val pending = loadPendingDelete() ?: return
+        if (unregister(pending)) clearPendingDelete()
+    }
 
     /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations` — mirrors the alarms URL build. */
     private fun registrationUrl(registration: PushRegistration): String =
@@ -209,6 +244,10 @@ class PushRegistrationManager internal constructor(
         prefs.setBoolean(KEY_TEST_DEVICE, registration.testDevice)
         // Written last: its presence is what [loadLast] treats as "a full record is committed".
         prefs.setString(KEY_TOKEN, registration.token)
+        // This endpoint is now the live registration, so drop any owed DELETE for it — otherwise a
+        // return-to-an-old-endpoint (region/token switched away, then back) would DELETE the row we just
+        // POSTed. This is why the single pending-delete slot is safe.
+        if (loadPendingDelete()?.sameEndpoint(registration) == true) clearPendingDelete()
     }
 
     /** Nulls the commit-sentinel token slot so [loadLast] reports no record. */
@@ -216,12 +255,52 @@ class PushRegistrationManager internal constructor(
         prefs.setString(KEY_TOKEN, null)
     }
 
+    /**
+     * Persists the registration whose DELETE is still outstanding (the DELETE-fail/POST-ok Reregister
+     * quadrant) so [drainPendingDelete] can retry it later. Only the DELETE-addressing fields
+     * (region + host + token) are stored; locale/test-device don't affect a DELETE. A single slot: a
+     * second orphan before the first drains overwrites it — rare (two region changes with both old hosts
+     * unreachable back-to-back), and the loser still falls back to the 180-day server prune.
+     */
+    private fun persistPendingDelete(registration: PushRegistration) {
+        prefs.setLong(KEY_PENDING_DEL_REGION_ID, registration.regionId)
+        prefs.setString(KEY_PENDING_DEL_BASE, registration.sidecarBaseUrl)
+        // Written last: the commit sentinel, mirroring [persist].
+        prefs.setString(KEY_PENDING_DEL_TOKEN, registration.token)
+    }
+
+    /** The registration awaiting a retried DELETE, or null if none is queued. Metadata is placeholder. */
+    private fun loadPendingDelete(): PushRegistration? {
+        val base = prefs.getString(KEY_PENDING_DEL_BASE, null) ?: return null
+        val token = prefs.getString(KEY_PENDING_DEL_TOKEN, null) ?: return null
+        return PushRegistration(
+            regionId = prefs.getLong(KEY_PENDING_DEL_REGION_ID, -1L),
+            sidecarBaseUrl = base,
+            token = token,
+            // Unused by [unregister] — a DELETE is addressed by region + host + token only.
+            locale = "",
+            testDevice = false,
+        )
+    }
+
+    /** Nulls the pending-delete sentinel token slot so [loadPendingDelete] reports nothing queued. */
+    private fun clearPendingDelete() {
+        prefs.setString(KEY_PENDING_DEL_TOKEN, null)
+    }
+
     private companion object {
+        const val TAG = "PushRegistration"
+
         // Internal bookkeeping slots (not user-facing) for the last successful registration.
         const val KEY_REGION_ID = "push_reg_region_id"
         const val KEY_BASE = "push_reg_base"
         const val KEY_TOKEN = "push_reg_token"
         const val KEY_LOCALE = "push_reg_locale"
         const val KEY_TEST_DEVICE = "push_reg_test_device"
+
+        // Slots for a registration whose DELETE is owed but not yet confirmed (see [persistPendingDelete]).
+        const val KEY_PENDING_DEL_REGION_ID = "push_pending_del_region_id"
+        const val KEY_PENDING_DEL_BASE = "push_pending_del_base"
+        const val KEY_PENDING_DEL_TOKEN = "push_pending_del_token"
     }
 }

@@ -338,7 +338,10 @@ private fun maybeStartTripUpdates(
 
 @Composable
 private fun DirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
+    // Rows are keyed by index in the LazyColumn, so switching itineraries reuses this slot for a
+    // different DirectionItem. Key the expansion state on the item so it resets on that swap instead
+    // of leaking a stale expanded state into the new itinerary's row.
+    var expanded by remember(item) { mutableStateOf(false) }
     val hasSubItems = item.subItems.isNotEmpty()
     val point = item.focusPoint
     Column {

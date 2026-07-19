@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -48,13 +46,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +67,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
+import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.SlideBox
 import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -235,41 +232,6 @@ internal fun EtaStrip(
             contentDescriptionRes = R.string.stop_info_eta_strip_scroll_later,
             onClick = { jumpArrow(forward = true) },
         )
-    }
-}
-
-/**
- * A fixed-width trailing/leading gutter holding the "more to scroll" chevron, [visible] when that
- * direction has more content. [pointsRight] picks the direction; the left reuses the right chevron
- * drawable rotated 180°. The slot is reserved even when hidden so toggling it never reflows the
- * pills. Tapping it fires [onClick] (a one-page scroll toward that edge); only wired up while
- * [visible], so a hidden gutter is never an invisible tap target.
- */
-@Composable
-private fun ScrollChevronGutter(
-    visible: Boolean,
-    pointsRight: Boolean,
-    contentDescriptionRes: Int,
-    onClick: () -> Unit,
-) {
-    Box(
-        Modifier
-            .fillMaxHeight()
-            .width(20.dp)
-            .clickable(enabled = visible, onClick = onClick),
-        contentAlignment = Alignment.Center
-    ) {
-        if (visible) {
-            Icon(
-                painter = painterResource(R.drawable.ic_navigation_chevron_right),
-                // Resolved only while shown, since this composable recomposes on every liveNow tick.
-                contentDescription = stringResource(contentDescriptionRes),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .size(20.dp)
-                    .rotate(if (pointsRight) 0f else 180f)
-            )
-        }
     }
 }
 

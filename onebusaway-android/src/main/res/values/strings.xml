@@ -915,6 +915,9 @@
     <string name="directions_from_here">Directions from here</string>
     <string name="directions_to_here">Directions to here</string>
     <string name="trip_plan_clear_endpoint">Clear</string>
+    <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
+    <string name="trip_plan_options_scroll_previous">Show previous options</string>
+    <string name="trip_plan_options_scroll_more">Show more options</string>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>

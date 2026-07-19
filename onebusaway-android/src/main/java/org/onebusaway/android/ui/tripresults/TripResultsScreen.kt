@@ -43,9 +43,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -65,6 +67,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.notifications.NotificationChannels
@@ -76,6 +79,7 @@ import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
@@ -96,21 +100,50 @@ fun TripResultsHeader(
     val success = state as? TripResultsUiState.Success ?: return
     // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
     // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
+    // Flanked by the same overflow chevrons as the ETA strip (ScrollChevronGutter) so the user can see
+    // — and jump to — options hanging off either edge.
+    val scrollState = rememberScrollState()
+    val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
+    val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
+    val scope = rememberCoroutineScope()
+    // Jump one viewport toward an edge (or to that end, whichever is closer — animateScrollTo clamps).
+    fun jump(forward: Boolean) {
+        val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
+        scope.launch { scrollState.animateScrollTo(scrollState.value + delta) }
+    }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        success.options.forEachIndexed { index, option ->
-            OptionCard(
-                option = option,
-                selected = index == success.selectedIndex,
-                onClick = { onSelectOption(index) }
-            )
+        ScrollChevronGutter(
+            visible = canScrollBackward,
+            pointsRight = false,
+            contentDescriptionRes = R.string.trip_plan_options_scroll_previous,
+            onClick = { jump(forward = false) },
+        )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(scrollState)
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            success.options.forEachIndexed { index, option ->
+                OptionCard(
+                    option = option,
+                    selected = index == success.selectedIndex,
+                    onClick = { onSelectOption(index) }
+                )
+            }
         }
+        ScrollChevronGutter(
+            visible = canScrollForward,
+            pointsRight = true,
+            contentDescriptionRes = R.string.trip_plan_options_scroll_more,
+            onClick = { jump(forward = true) },
+        )
     }
 }
 
@@ -208,14 +241,17 @@ private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Compo
 }
 
 /**
- * The directions list (or the loading/error state), filling the results sheet below the header. The map
- * is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
+ * The directions list (or the loading/error state), filling the results sheet. On [Success][
+ * TripResultsUiState.Success] the option-card picker ([TripResultsHeader]) rides along as the list's
+ * first item so it scrolls out of sight as the user moves down the steps, rather than staying pinned.
+ * The map is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
  */
 @Composable
 fun TripResultsList(
     state: TripResultsUiState,
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
+    onSelectOption: (Int) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
 ) {
     Box(
@@ -241,6 +277,11 @@ fun TripResultsList(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = bottomInset),
             ) {
+                // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
+                item {
+                    TripResultsHeader(state, onSelectOption)
+                    HorizontalDivider()
+                }
                 itemsIndexed(state.directions) { _, item ->
                     DirectionRow(item, onFocusPoint)
                     HorizontalDivider()
@@ -296,13 +337,15 @@ fun TripResultsSheet(
         }
     }
 
-    Column(modifier) {
-        TripResultsHeader(
-            state = state,
-            onSelectOption = resultsViewModel::selectOption,
-        )
-        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset, onFocusPoint = onFocusPoint)
-    }
+    // The header (option-card picker) is folded into the list as its first item, so it scrolls away with
+    // the steps instead of staying pinned above them.
+    TripResultsList(
+        state = state,
+        modifier = modifier.fillMaxSize(),
+        bottomInset = listBottomInset,
+        onSelectOption = resultsViewModel::selectOption,
+        onFocusPoint = onFocusPoint,
+    )
 }
 
 /**
@@ -465,10 +508,7 @@ private fun TripResultsPreview() {
                 )
             )
         )
-        Column {
-            TripResultsHeader(state, onSelectOption = {})
-            TripResultsList(state)
-        }
+        TripResultsList(state)
     }
 }
 

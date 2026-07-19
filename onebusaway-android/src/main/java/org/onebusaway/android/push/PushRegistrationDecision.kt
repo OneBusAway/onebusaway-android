@@ -19,7 +19,8 @@ package org.onebusaway.android.push
  * A single push registration on record with OBACloud: the region it targets, the FCM token, and the
  * metadata sent alongside it. All fields participate in equality, so a change to *any* of them (a
  * rotated token, a moved region, a new device locale, a flipped test flag) is a change that must be
- * pushed to the server. Pure data — no Android dependencies — so [decide] is JVM-unit-testable.
+ * pushed to the server. Pure data — no Android dependencies — so [decidePushRegistration] is
+ * JVM-unit-testable.
  */
 data class PushRegistration(
     val regionId: Long,
@@ -62,7 +63,10 @@ sealed interface PushRegistrationAction {
  * Keeping this a pure function (no clock, no I/O, no Android) is deliberate: it is the one place the
  * register/refresh/unregister rules live, and it is exhaustively unit-tested.
  */
-fun decide(target: PushRegistration?, last: PushRegistration?): PushRegistrationAction = when {
+fun decidePushRegistration(
+    target: PushRegistration?,
+    last: PushRegistration?,
+): PushRegistrationAction = when {
     target == null -> if (last == null) PushRegistrationAction.NoOp else PushRegistrationAction.Unregister(last)
     last == null -> PushRegistrationAction.Register(target)
     target == last -> PushRegistrationAction.NoOp

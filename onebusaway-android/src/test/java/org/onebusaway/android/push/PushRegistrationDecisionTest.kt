@@ -19,7 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for [decide] — the pure register/refresh/unregister reconciliation for OBACloud push
+ * Unit tests for [decidePushRegistration] — the pure register/refresh/unregister reconciliation for OBACloud push
  * registration (#1957). Covers each transition between the desired registration ([target]) and the one
  * last sent to the server ([last]).
  */
@@ -35,34 +35,34 @@ class PushRegistrationDecisionTest {
 
     @Test
     fun `nothing desired and nothing on record is a no-op`() {
-        assertEquals(PushRegistrationAction.NoOp, decide(target = null, last = null))
+        assertEquals(PushRegistrationAction.NoOp, decidePushRegistration(target = null, last = null))
     }
 
     @Test
     fun `first registration when nothing is on record`() {
-        assertEquals(PushRegistrationAction.Register(base), decide(target = base, last = null))
+        assertEquals(PushRegistrationAction.Register(base), decidePushRegistration(target = base, last = null))
     }
 
     @Test
     fun `opting out unregisters the recorded registration`() {
-        assertEquals(PushRegistrationAction.Unregister(base), decide(target = null, last = base))
+        assertEquals(PushRegistrationAction.Unregister(base), decidePushRegistration(target = null, last = base))
     }
 
     @Test
     fun `unchanged registration is a no-op`() {
-        assertEquals(PushRegistrationAction.NoOp, decide(target = base, last = base))
+        assertEquals(PushRegistrationAction.NoOp, decidePushRegistration(target = base, last = base))
     }
 
     @Test
     fun `a locale change re-posts on the same token and region`() {
         val target = base.copy(locale = "es-MX")
-        assertEquals(PushRegistrationAction.Register(target), decide(target = target, last = base))
+        assertEquals(PushRegistrationAction.Register(target), decidePushRegistration(target = target, last = base))
     }
 
     @Test
     fun `a test-device flag change re-posts on the same token and region`() {
         val target = base.copy(testDevice = true)
-        assertEquals(PushRegistrationAction.Register(target), decide(target = target, last = base))
+        assertEquals(PushRegistrationAction.Register(target), decidePushRegistration(target = target, last = base))
     }
 
     @Test
@@ -70,7 +70,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(token = "token-b")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decide(target = target, last = base),
+            decidePushRegistration(target = target, last = base),
         )
     }
 
@@ -79,7 +79,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(regionId = 2L, sidecarBaseUrl = "https://other.example.org")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decide(target = target, last = base),
+            decidePushRegistration(target = target, last = base),
         )
     }
 }

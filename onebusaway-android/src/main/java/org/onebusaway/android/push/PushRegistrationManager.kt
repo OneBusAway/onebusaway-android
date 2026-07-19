@@ -45,7 +45,7 @@ import org.onebusaway.android.util.runCatchingCancellable
  *
  * The desired state is derived from three inputs: whether notifications are enabled at the OS level
  * (the opt-in signal — there is no separate in-app toggle), the current region (its id + sidecar host),
- * and the FCM token. Whenever any of them changes we [sync]: [decide] compares the desired
+ * and the FCM token. Whenever any of them changes we [sync]: [decidePushRegistration] compares the desired
  * [PushRegistration] against the one last sent to the server and yields a register / re-register /
  * unregister / no-op action, which [apply] performs against [PushRegistrationWebService].
  *
@@ -102,8 +102,8 @@ class PushRegistrationManager @Inject constructor(
     }
 
     /** Reconciles the on-record registration with the currently desired one. */
-    suspend fun sync() = mutex.withLock {
-        when (val action = decide(currentTarget(), loadLast())) {
+    private suspend fun sync() = mutex.withLock {
+        when (val action = decidePushRegistration(currentTarget(), loadLast())) {
             PushRegistrationAction.NoOp -> Unit
             is PushRegistrationAction.Register ->
                 if (register(action.target)) persist(action.target)

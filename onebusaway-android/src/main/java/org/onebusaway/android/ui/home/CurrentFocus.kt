@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home
 
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 /** The one mutually-exclusive focus rendered by HOME. */
 sealed interface CurrentFocus {
@@ -50,6 +51,8 @@ sealed interface CurrentFocus {
 data class DirectionsRouteFocus(
     val routeId: String,
     val boardStop: FocusedStop?,
+    // The board→alight polyline (the OTP leg geometry) the user rides, drawn thick over the full route.
+    val segment: List<GeoPoint> = emptyList(),
     val directionId: Int? = null,
 )
 

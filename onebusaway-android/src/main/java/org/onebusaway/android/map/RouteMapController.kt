@@ -54,6 +54,7 @@ import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RouteContinuation
+import org.onebusaway.android.map.render.HIGHLIGHTED_SEGMENT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
 
@@ -104,6 +105,11 @@ class RouteMapController(
     // re-enters (rather than just reframing).
     var directionStopId: String? = null
         private set
+
+    // The board→alight polyline of a trip-plan transit leg drilled into route focus, drawn thick over
+    // the full route (empty for every non-directions route launch). Set in start(); overlaid last in
+    // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
+    private var highlightedSegment: List<GeoPoint> = emptyList()
 
     // A restore/deep-link override for the initial direction (the user-selected direction persisted
     // across process death); when set and still valid it wins over the anchor stop's direction.
@@ -214,9 +220,11 @@ class RouteMapController(
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
+        highlightedSegment: List<GeoPoint> = emptyList(),
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
+        this.highlightedSegment = highlightedSegment
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
@@ -463,6 +471,7 @@ class RouteMapController(
         selectionJob = null
         routeId = null
         directionStopId = null
+        highlightedSegment = emptyList()
         initialDirectionOverride = null
         routeStops = emptyList()
         routeStopRoutes = emptyList()
@@ -605,8 +614,18 @@ class RouteMapController(
                 stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
             },
         )
+        // A trip-plan leg's traveled segment (if any), drawn thick and last so it sits on top of the
+        // full route. Uses the route's own colour so it reads as "this part of this route".
+        val segmentOverlay = highlightedSegment.takeIf { it.size >= 2 }?.let { points ->
+            RoutePolyline(
+                color = currentRouteColor(),
+                points = points,
+                widthProfile = HIGHLIGHTED_SEGMENT_WIDTH_PROFILE,
+                directional = true,
+            )
+        }
         renderState.setRoutePolylines(
-            polylines = plan.polylines,
+            polylines = plan.polylines + listOfNotNull(segmentOverlay),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom,
         )

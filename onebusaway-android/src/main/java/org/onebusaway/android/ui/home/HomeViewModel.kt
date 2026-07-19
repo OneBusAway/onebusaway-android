@@ -603,30 +603,36 @@ class HomeViewModel @Inject constructor(
                     FocusedStop(id = id, name = routeLeg.boardStopName, code = routeLeg.boardStopCode, point = point)
                 }
             }
-            focusItineraryRouteLegOnMap(obaRouteId, boardStop)
+            // The leg polyline is the exact board→alight path — drawn thick over the route.
+            focusItineraryRouteLegOnMap(obaRouteId, boardStop, segment = fallbackLegPoints)
         }
     }
 
     /**
      * Recontextualizes the map onto [routeId] (anchored to [boardStop]'s direction, as the stop→route
-     * focus does), and records the overview as the back target so a map-background tap (or Back) returns
-     * to the itinerary. The departing-stop arrivals board is driven off the resulting
-     * [CurrentFocus.Directions.routeFocus] by the sheet. Ids are already OBA-format (see
-     * [focusItineraryRouteLeg], which resolves them).
+     * focus does) with the traveled [segment] drawn thick over it, and records the overview as the back
+     * target so a map-background tap (or Back) returns to the itinerary. The departing-stop arrivals
+     * board is driven off the resulting [CurrentFocus.Directions.routeFocus] by the sheet. Ids are
+     * already OBA-format (see [focusItineraryRouteLeg], which resolves them).
      */
     fun focusItineraryRouteLegOnMap(
         routeId: String,
         boardStop: FocusedStop?,
+        segment: List<GeoPoint> = emptyList(),
         directionId: Int? = null,
         undoViewport: MapViewport? = null,
     ) {
-        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStop, directionId)), undoViewport)
+        pushFocus(
+            CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStop, segment, directionId)),
+            undoViewport,
+        )
         emitMapDirective(
             MapDirective.ShowRoute(
                 ShowRouteRequest(
                     routeId = routeId,
                     directionStopId = boardStop?.id,
                     initialDirectionId = directionId,
+                    highlightedSegment = segment,
                 ),
                 stopScoped = false,
             )
@@ -737,6 +743,7 @@ class HomeViewModel @Inject constructor(
                                     routeId = routeFocus.routeId,
                                     directionStopId = routeFocus.boardStop?.id,
                                     initialDirectionId = routeFocus.directionId,
+                                    highlightedSegment = routeFocus.segment,
                                 ),
                                 stopScoped = false,
                                 frameRoute = frameFocus,

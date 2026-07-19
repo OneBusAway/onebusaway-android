@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
-import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -50,12 +49,12 @@ import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
-import org.onebusaway.android.app.di.PushRegistrationEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
 import org.onebusaway.android.location.isLocationEnabled
 
 /**
@@ -104,13 +103,8 @@ internal fun rememberDestinationReminderAction(
         }
     }
 
-    // The system notification-permission dialog only pauses (never stops) the activity, so the
-    // ProcessLifecycleOwner ON_START resync in PushRegistrationManager never fires for it. Resync
-    // straight from the result callback so an in-flow opt-in registers this device immediately —
-    // the highest-value moment for the push feature — instead of waiting for the next app launch.
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { PushRegistrationEntryPoint.get(context).resync() }
+    // Requests POST_NOTIFICATIONS and resyncs the push registration on the result (see the helper).
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
 
     fun askUserToTurnLocationOn() {
         @Suppress("DEPRECATION")
@@ -178,10 +172,7 @@ internal fun rememberDestinationReminderAction(
             resources.getString(R.string.analytics_label_destination_reminder),
             resources.getString(R.string.analytics_label_destination_reminder_variant_started)
         )
-        // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+        requestNotificationPermission()
         val serviceIntent = setUpNavigationService(position) ?: return
         startNavigationService(serviceIntent)
         Toast.makeText(

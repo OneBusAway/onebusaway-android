@@ -36,7 +36,7 @@ sealed interface FramingIntent {
     /** Fit the route polyline bounds with the default padding. */
     object Route : FramingIntent
 
-    /** Fit the itinerary polyline bounds, padding against the screen dimensions. */
+    /** Fit the itinerary polyline bounds within the map's content padding (directions form + results sheet). */
     object Itinerary : FramingIntent
 
     /** Fit the current region's bounds. */

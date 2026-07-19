@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.R
@@ -206,27 +208,29 @@ class MapHost(
 
     fun setDirectionsBottomInset(px: Int) = renderState.setDirectionsBottomInset(px)
 
-    // Pending one-shot re-fit of the route frame once the route header's top inset lands (see
-    // [frameRoute]). Cancelled the moment any superseding camera intent arrives — another framing, a
-    // dispatched gesture (recenter / my-location / zoom), or a user gesture (via [awaitHeaderInsetCorrection]) —
-    // so a late header measurement can't yank the camera back off a newer intent.
-    private var routeFrameSettleJob: Job? = null
+    // Pending re-fit of a padding-sensitive frame (route / itinerary) as the map's obstruction insets —
+    // the top chrome/focus banner/directions form, the bottom arrivals/directions sheet — are measured
+    // and land *after* the frame first fit (see [frameRoute]/[frameItinerary]). Cancelled the moment any
+    // superseding camera intent arrives — another framing, a dispatched gesture (recenter / my-location /
+    // zoom), or a user gesture (via [insetGrowthReframes]) — so a late measurement can't yank the camera
+    // back off a newer intent.
+    private var frameSettleJob: Job? = null
 
     /** Dispatch a transient camera gesture (zoom step / recenter / my-location move / stop-tap center). */
     fun dispatchGesture(command: CameraCommand) {
-        routeFrameSettleJob?.cancel()
+        frameSettleJob?.cancel()
         renderState.dispatchGesture(command)
     }
 
     /** Set the map's retained framing intent (fit route / itinerary / region / a fixed point). */
     fun frame(intent: FramingIntent) {
-        routeFrameSettleJob?.cancel()
+        frameSettleJob?.cancel()
         renderState.frame(intent)
     }
 
     /** Clear the retained framing so a stale fit isn't re-applied when the map leaves a framed view. */
     fun clearFraming() {
-        routeFrameSettleJob?.cancel()
+        frameSettleJob?.cancel()
         renderState.clearFraming()
     }
 
@@ -240,27 +244,44 @@ class MapHost(
      * The route header is a Compose banner that only reports its measured height into the map's top
      * padding *after* it lays out — so when a route load resolves fast (a cache hit) this frame can fit
      * against stale (pre-header) top padding and land the route partly under the header (#1954). The
-     * adapters read [MapRenderState.padding] at apply time, so we re-emit the retained [FramingIntent.Route]
-     * once the header inset lands (top padding grows past its value here) to let the fit self-correct —
-     * but we yield to the user, dropping the correction if a camera gesture intervenes first.
+     * adapters read [MapRenderState.padding] at apply time, so [frameWithInsetSettle] re-emits the
+     * retained [FramingIntent.Route] as the header inset lands (top padding grows past its value here),
+     * letting the fit self-correct — yielding to the user if a camera gesture intervenes first.
      */
-    fun frameRoute() {
-        frame(FramingIntent.Route)
-        val baselineTopPx = renderState.padding.value.topPx
-        routeFrameSettleJob = scope.launch {
-            if (awaitHeaderInsetCorrection(renderState.padding, cameraInteracting, baselineTopPx)) {
-                // Bypass frame() here: it would cancel this very job, and no new intent is starting.
-                renderState.frame(FramingIntent.Route)
-            }
-        }
-    }
+    fun frameRoute() = frameWithInsetSettle(FramingIntent.Route)
 
     /**
      * Frame the current directions itinerary's bounding box. Retained, so it isn't lost when the
      * directions map is composed behind the results sheet the instant a plan completes, before the
      * adapter subscribes (#1640) — the replay catches the late subscriber up.
+     *
+     * Both the directions form (top inset) and the results sheet (bottom inset) are Compose-measured and
+     * report into [MapRenderState.padding] *after* this frame first fits, so the initial itinerary can
+     * land under those overlays. The adapters fold the padding into the itinerary fit at apply time, so
+     * [frameWithInsetSettle] re-emits the retained [FramingIntent.Itinerary] as each inset lands — yielding
+     * to the user on a gesture. A picker option-switch, made once the sheet is already up, sees the correct
+     * padding immediately and just no-ops the settle.
      */
-    fun frameItinerary() = frame(FramingIntent.Itinerary)
+    fun frameItinerary() = frameWithInsetSettle(FramingIntent.Itinerary)
+
+    /**
+     * Emit a padding-sensitive framing and then re-emit it as the map's obstruction insets land after
+     * layout, so the fit self-corrects once the top/bottom insets it should reserve are known. The
+     * retained framing flow replays the same [intent] to the flavor adapter, which re-reads
+     * [MapRenderState.padding] and re-fits. Bounded by [insetGrowthReframes]: it only reacts to insets that
+     * *grow* past their value at frame time (a sheet collapsing can't trigger it) and stops the instant a
+     * camera gesture starts (the user's view wins).
+     */
+    private fun frameWithInsetSettle(intent: FramingIntent) {
+        frame(intent)
+        val baseline = renderState.padding.value
+        frameSettleJob = scope.launch {
+            insetGrowthReframes(renderState.padding, cameraInteracting, baseline).collect {
+                // Bypass frame(): it would cancel this very job, and no new intent is starting.
+                renderState.frame(intent)
+            }
+        }
+    }
 
     /**
      * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat],[lon] at
@@ -424,20 +445,30 @@ class MapHost(
     }
 }
 
+private sealed interface SettleEvent {
+    /** An obstruction inset grew past its value at frame time (a late-measured overlay landed). */
+    data object Grew : SettleEvent
+
+    /** The user took the camera (a gesture started) — the settle must yield and stop. */
+    data object Gesture : SettleEvent
+}
+
 /**
- * Suspends until the initial route frame should either self-correct or be left alone, then reports which
- * (see [MapHost.frameRoute]). Returns `true` the moment the route header's top inset lands — [padding]'s
- * `topPx` grows past [baselineTopPx], meaning the header measured *after* the frame fit against stale
- * padding, so the retained route framing should be re-applied against the now-correct inset. Returns
- * `false` if a camera gesture starts first ([cameraInteracting] goes true): the user has taken the camera,
- * so don't yank it back. A bottom-only padding change (`topPx` unchanged) matches neither and is ignored,
- * so an arrivals-sheet resize can't trigger a spurious re-fit.
+ * A stream of "re-fit now" ticks for a retained padding-sensitive frame (see [MapHost.frameWithInsetSettle]).
+ * Emits [Unit] each time [padding] grows past [baseline] on either edge — a top-chrome / focus-banner /
+ * directions-form or a bottom arrivals / directions-sheet inset that was measured *after* the frame first
+ * fit — so the caller re-applies the framing against the now-known inset. It completes (no more ticks) the
+ * instant a camera gesture starts ([cameraInteracting] goes true): the user has taken the camera, so a late
+ * measurement must not yank it back. Only *growth* counts, so a sheet collapsing or an inset clearing can't
+ * trigger a spurious re-fit; a frame made once the insets are already up simply never ticks.
  */
-internal suspend fun awaitHeaderInsetCorrection(
-    padding: StateFlow<MapPadding>,
-    cameraInteracting: StateFlow<Boolean>,
-    baselineTopPx: Int,
-): Boolean = merge(
-    padding.filter { it.topPx > baselineTopPx }.map { true },
-    cameraInteracting.filter { it }.map { false },
-).first()
+internal fun insetGrowthReframes(
+    padding: Flow<MapPadding>,
+    cameraInteracting: Flow<Boolean>,
+    baseline: MapPadding,
+): Flow<Unit> = merge(
+    padding.filter { it.topPx > baseline.topPx || it.bottomPx > baseline.bottomPx }.map { SettleEvent.Grew },
+    cameraInteracting.filter { it }.map { SettleEvent.Gesture },
+)
+    .takeWhile { it is SettleEvent.Grew }
+    .map { }

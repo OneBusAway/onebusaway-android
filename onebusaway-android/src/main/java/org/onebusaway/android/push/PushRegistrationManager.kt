@@ -54,14 +54,41 @@ import org.onebusaway.android.util.runCatchingCancellable
  * limit (see [PushRegistrationWebService]).
  */
 @Singleton
-class PushRegistrationManager @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+class PushRegistrationManager internal constructor(
     private val service: PushRegistrationWebService,
     private val regionRepository: RegionRepository,
     private val firebaseMessagingManager: FirebaseMessagingManager,
     private val prefs: PreferencesRepository,
-    @param:AppScope private val scope: CoroutineScope,
+    private val scope: CoroutineScope,
+    // Test seams for the two Android-only reads (see the @Inject constructor). Kept off the DI path so
+    // sync()'s reconcile/persist semantics — including the Reregister-failure record handling — are
+    // exercisable from a plain JVM test, which is where the "orphan on double failure" class of bug lives.
+    private val notificationsEnabled: () -> Boolean,
+    private val registrationsEndpointPath: String,
 ) {
+
+    /**
+     * The production constructor Hilt builds from. It resolves the two seams the JVM can't — the OS
+     * notifications-enabled check and the registrations endpoint-path string — from the application
+     * [context], then delegates to the primary constructor.
+     */
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        service: PushRegistrationWebService,
+        regionRepository: RegionRepository,
+        firebaseMessagingManager: FirebaseMessagingManager,
+        prefs: PreferencesRepository,
+        @AppScope scope: CoroutineScope,
+    ) : this(
+        service = service,
+        regionRepository = regionRepository,
+        firebaseMessagingManager = firebaseMessagingManager,
+        prefs = prefs,
+        scope = scope,
+        notificationsEnabled = { NotificationManagerCompat.from(context).areNotificationsEnabled() },
+        registrationsEndpointPath = context.getString(R.string.arrivals_reminders_api_endpoint),
+    )
 
     private val started = AtomicBoolean(false)
 
@@ -127,7 +154,7 @@ class PushRegistrationManager @Inject constructor(
      * the device's BCP-47 tag, sent as-is with no normalization.
      */
     private fun currentTarget(): PushRegistration? {
-        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return null
+        if (!notificationsEnabled()) return null
         val region = regionRepository.region.value ?: return null
         val base = region.sidecarBaseUrl?.takeIf { it.isNotBlank() } ?: return null
         val token = firebaseMessagingManager.userPushId().takeIf { it.isNotEmpty() } ?: return null
@@ -159,7 +186,7 @@ class PushRegistrationManager @Inject constructor(
     /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations` — mirrors the alarms URL build. */
     private fun registrationUrl(registration: PushRegistration): String =
         registration.sidecarBaseUrl +
-            context.getString(R.string.arrivals_reminders_api_endpoint) +
+            registrationsEndpointPath +
             registration.regionId + "/push_registrations"
 
     /**

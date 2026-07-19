@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
@@ -55,7 +56,9 @@ data class RouteBadge(val shortName: String, val routeColor: Int?)
  * `DirectionExpandableListAdapter`. [text] is the primary line (already prefixed with the step
  * number and, for transit, the time); transit steps add [placeAndHeadsign]/[agency]/[extra] detail
  * lines, and [subItems] holds the expandable sub-steps (intermediate stops / turn-by-turn).
- * [iconRes] is -1 when the step has no icon.
+ * [iconRes] is -1 when the step has no icon. [focusPoint] is the geographic point the step refers to
+ * (a leg endpoint, an intermediate stop, or a walk step) — non-null when the step can focus the map,
+ * null when the underlying place had no coordinates.
  */
 data class DirectionItem(
     val iconRes: Int,
@@ -64,7 +67,8 @@ data class DirectionItem(
     val agency: String? = null,
     val extra: String? = null,
     val isTransit: Boolean = false,
-    val subItems: List<DirectionItem> = emptyList()
+    val subItems: List<DirectionItem> = emptyList(),
+    val focusPoint: GeoPoint? = null,
 ) {
     companion object {
         /** Sentinel for "no icon", matching the legacy Direction.getIcon() contract. */

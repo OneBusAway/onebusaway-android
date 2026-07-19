@@ -24,6 +24,7 @@ import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
@@ -103,7 +104,8 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
                 iconRes = icon,
                 text = "$index. ${directionText.orEmptyString()}",
                 isTransit = false,
-                subItems = subItemsOf(subDirections)
+                subItems = subItemsOf(subDirections),
+                focusPoint = focusPoint,
             )
         } else {
             val time = (if (isRealTimeInfo && newTime != null) newTime else oldTime).orEmptyString()
@@ -114,15 +116,28 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
                 agency = agency?.toString()?.takeIf { it.isNotEmpty() },
                 extra = extra?.toString()?.takeIf { it.isNotEmpty() },
                 isTransit = true,
-                subItems = subItemsOf(subDirections)
+                subItems = subItemsOf(subDirections),
+                focusPoint = focusPoint,
             )
         }
     }
 
     private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> =
         subDirections?.map {
-            DirectionItem(iconRes = it.icon, text = it.directionText.orEmptyString())
+            DirectionItem(
+                iconRes = it.icon,
+                text = it.directionText.orEmptyString(),
+                focusPoint = it.focusPoint,
+            )
         }.orEmpty()
+
+    /** The step's focus point, or null when the underlying place carried no coordinates. */
+    private val Direction.focusPoint: GeoPoint?
+        get() {
+            val lat = focusLat ?: return null
+            val lon = focusLon ?: return null
+            return GeoPoint(lat, lon)
+        }
 
     private fun CharSequence?.orEmptyString(): String = this?.toString().orEmpty()
 }

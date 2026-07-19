@@ -44,6 +44,13 @@ class Direction() {
 
     var isRealTimeInfo = false
 
+    // The geographic point this step refers to (a leg endpoint, an intermediate stop, or a walk
+    // step), set by DirectionsGenerator so the results UI can focus the map on the step when tapped.
+    // Null when the underlying place carries no coordinates.
+    var focusLat: Double? = null
+
+    var focusLon: Double? = null
+
     constructor(
         icon: Int,
         service: CharSequence?,

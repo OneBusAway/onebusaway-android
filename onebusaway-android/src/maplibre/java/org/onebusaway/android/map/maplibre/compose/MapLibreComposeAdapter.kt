@@ -263,7 +263,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         val map = mapLibreMap
         if (map != null) {
             LaunchedEffect(map) {
-                renderState.cameraGestures.collect { command -> applyCameraCommand(command, map) }
+                renderState.cameraGestures.collect { command -> applyCameraCommand(command, map, renderState) }
             }
             LaunchedEffect(map) {
                 renderState.framingIntent.filterNotNull().collect { applyFramingIntent(it, map, renderState, context) }

@@ -199,6 +199,8 @@ class MapHost(
 
     fun setBottomPadding(px: Int) = renderState.setBottomPadding(px)
 
+    fun setDirectionsBottomInset(px: Int) = renderState.setDirectionsBottomInset(px)
+
     /** Dispatch a transient camera gesture (zoom step / recenter / my-location move / stop-tap center). */
     fun dispatchGesture(command: CameraCommand) = renderState.dispatchGesture(command)
 

@@ -242,6 +242,9 @@ fun MapFeature(
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.mapBottomPadding.collect { mapViewModel.host.setBottomPadding(it) }
     }
+    LaunchedEffect(mapViewModel, homeViewModel) {
+        homeViewModel.directionsBottomInset.collect { mapViewModel.host.setDirectionsBottomInset(it) }
+    }
     // Publish the floating top chrome's footprint (status-bar inset + FAB-row clearance) as the map's
     // baseline top inset, so the Google compass and centered content clear the FABs instead of drawing at
     // topPx=0 behind them. The status-bar inset read is confined to a snapshotFlow (not composition), so
@@ -286,6 +289,8 @@ fun MapFeature(
                     )
                 is MapDirective.ShowItinerary ->
                     mapViewModel.showItinerary(directive.itinerary)
+                is MapDirective.FocusItineraryPoint ->
+                    mapViewModel.focusItineraryPoint(directive.point)
                 MapDirective.ClearItinerary -> mapViewModel.clearShownItinerary()
                 is MapDirective.SetDirectionsEndpoints ->
                     mapViewModel.setDirectionsEndpoints(directive.from, directive.to)

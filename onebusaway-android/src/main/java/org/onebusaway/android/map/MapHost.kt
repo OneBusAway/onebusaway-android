@@ -284,6 +284,12 @@ class MapHost(
     }
 
     /**
+     * Frame a single itinerary leg by fitting its polyline [points] within the map's content padding
+     * (so the leg lands in the band above the results sheet). Retained like [frameItinerary].
+     */
+    fun frameItineraryLeg(points: List<GeoPoint>) = frame(FramingIntent.Points(points))
+
+    /**
      * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat],[lon] at
      * the default zoom. Retained like [frameItinerary] since it's requested at the same moment (a plan
      * completing behind the results sheet).

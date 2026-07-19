@@ -94,6 +94,10 @@ data class TripLeg(
 @Serializable
 data class TripPlace(
     val name: String? = null,
+    // The GTFS stop id (OTP2 `stop.gtfsId`), when this place is a transit stop — the identity the
+    // arrivals board / route focus keys on. Distinct from [stopCode], the human-facing platform code.
+    // Null for non-stop places and on the OTP1 path (its wire place carries no stop id).
+    val stopId: String? = null,
     val stopCode: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,

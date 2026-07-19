@@ -52,13 +52,18 @@ sealed interface ModeSummary {
 data class RouteBadge(val shortName: String, val routeColor: Int?)
 
 /**
- * One step in the directions list — a Compose-ready projection of the legacy [Direction] +
- * `DirectionExpandableListAdapter`. [text] is the primary line (already prefixed with the step
- * number and, for transit, the time); transit steps add [placeAndHeadsign]/[agency]/[extra] detail
- * lines, and [subItems] holds the expandable sub-steps (intermediate stops / turn-by-turn).
- * [iconRes] is -1 when the step has no icon. [focusPoint] is the geographic point the step refers to
- * (a leg endpoint, an intermediate stop, or a walk step) — non-null when the step can focus the map,
- * null when the underlying place had no coordinates.
+ * One row in the directions list. Top-level items are **legs** — one card per itinerary leg (a walk
+ * leg, or a transit leg with its board→alight steps folded in); [subItems] holds that leg's
+ * expandable sub-steps (turn-by-turn for a walk leg; board / intermediate stops / alight for a transit
+ * leg). [text] is the primary line (prefixed with the leg number and, for transit, the time); transit
+ * legs add [placeAndHeadsign]/[agency]/[extra] detail lines. [iconRes] is -1 when there's no icon.
+ *
+ * [focusPoint] is the geographic point a sub-step refers to (an intermediate stop, a turn, or an
+ * alight) — non-null when tapping it can recenter the map, null when the underlying place had no
+ * coordinates. [legPoints] is the leg's full decoded polyline, set only on a leg card so tapping the
+ * card body can frame the whole leg. [routeLeg] is set only on a transit leg card and carries the
+ * route/stop identity a later "focus this route" interaction needs (Phase 2); it is unused by the
+ * drawer today.
  */
 data class DirectionItem(
     val iconRes: Int,
@@ -69,12 +74,31 @@ data class DirectionItem(
     val isTransit: Boolean = false,
     val subItems: List<DirectionItem> = emptyList(),
     val focusPoint: GeoPoint? = null,
+    val legPoints: List<GeoPoint> = emptyList(),
+    val routeLeg: RouteLegRef? = null,
 ) {
     companion object {
         /** Sentinel for "no icon", matching the legacy Direction.getIcon() contract. */
         const val NO_ICON = -1
     }
 }
+
+/**
+ * The route/stop identity of a transit leg, carried on its leg card so a future "focus this route"
+ * interaction (Phase 2) can recontextualize the map onto the route and the departing stop. Populated
+ * from the domain [org.onebusaway.android.directions.model.TripLeg]; the drawer does not read it yet.
+ * Ids come from OTP's GTFS ids ([boardStopId]/[alightStopId] may be null on the OTP1 path, which
+ * carries no stop id).
+ */
+data class RouteLegRef(
+    val routeId: String?,
+    val boardStopId: String?,
+    val boardStopCode: String?,
+    val boardStopName: String?,
+    val alightStopId: String?,
+    val boardPoint: GeoPoint?,
+    val alightPoint: GeoPoint?,
+)
 
 /** UI state for the trip-planning results screen. */
 sealed interface TripResultsUiState {

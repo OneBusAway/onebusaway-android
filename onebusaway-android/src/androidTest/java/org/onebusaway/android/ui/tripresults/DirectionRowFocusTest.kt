@@ -15,21 +15,25 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
- * Verifies the itinerary line items are tap-to-focus at the leaf level only: tapping a leaf
- * [DirectionItem] (no sub-steps) invokes `onFocusPoint` with its point, an expandable row only toggles
- * its sub-steps (never focuses the map), and a revealed leaf sub-item focuses its own point. Exercises
- * the real [TripResultsList] click wiring by node text (identity), not screen coordinates.
+ * Verifies the leg-card tap split in [TripResultsList]: tapping a card **body** frames the whole leg
+ * (`onFocusLeg` with its polyline), falling back to the leg's point when it has no polyline; the
+ * separate **expand button** only reveals the sub-steps (never moves the map); and a revealed sub-step
+ * focuses its own point. Drives the real click wiring by node text / content description, not
+ * coordinates.
  */
 class DirectionRowFocusTest {
 
@@ -37,14 +41,17 @@ class DirectionRowFocusTest {
     @get:Rule
     val composeRule = createUnconfinedComposeRule()
 
-    private val walkPoint = GeoPoint(47.6100, -122.3300)
-    private val stopAPoint = GeoPoint(47.6200, -122.3400)
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    private val walkLegPoints = listOf(GeoPoint(47.6100, -122.3300), GeoPoint(47.6120, -122.3320))
+    private val transitLegPoints = listOf(GeoPoint(47.6150, -122.3350), GeoPoint(47.6200, -122.3400))
+    private val stopAPoint = GeoPoint(47.6175, -122.3375)
     private val boardPoint = GeoPoint(47.6150, -122.3350)
 
     private val walk = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
         text = "1. Walk to Pine St & 3rd Ave",
-        focusPoint = walkPoint,
+        legPoints = walkLegPoints,
     )
 
     private val stopA = DirectionItem(
@@ -53,11 +60,12 @@ class DirectionRowFocusTest {
         focusPoint = stopAPoint,
     )
 
-    private val board = DirectionItem(
+    private val transit = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
-        text = "2. Board Route 8",
+        text = "2. Route 8",
         isTransit = true,
         subItems = listOf(stopA),
+        legPoints = transitLegPoints,
         focusPoint = boardPoint,
     )
 
@@ -73,55 +81,87 @@ class DirectionRowFocusTest {
             )
         ),
         selectedIndex = 0,
-        directions = listOf(walk, board),
+        directions = listOf(walk, transit),
     )
 
     @Test
-    fun tappingWalkRowFocusesItsPoint() {
-        var focused: GeoPoint? = null
+    fun tappingLegBodyFramesTheWholeLeg() {
+        var framed: List<GeoPoint>? = null
         composeRule.setContent {
-            TripResultsList(state = state, onFocusPoint = { focused = it })
+            TripResultsList(state = state, onFocusLeg = { framed = it })
         }
 
         composeRule.onNodeWithText(walk.text).performClick()
 
-        assertEquals(walkPoint, focused)
+        assertEquals(walkLegPoints, framed)
     }
 
     @Test
-    fun tappingExpandableRowOnlyExpands_thenLeafSubStopFocusesItsOwnPoint() {
+    fun expandButtonRevealsSubSteps_withoutMovingTheMap_thenSubStepFocuses() {
+        var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
-            TripResultsList(state = state, onFocusPoint = { focused = it })
+            TripResultsList(
+                state = state,
+                onFocusLeg = { framed = it },
+                onFocusPoint = { focused = it },
+            )
         }
 
         // Sub-steps are collapsed to start.
         composeRule.onNodeWithText(stopA.text).assertDoesNotExist()
 
-        // An expandable row (chevron) only reveals its sub-steps — it does NOT move the map, even though
-        // it carries a boarding point.
-        composeRule.onNodeWithText(board.text).performClick()
+        // The expand button reveals the sub-steps — and moves neither the leg frame nor a point.
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+        assertNull(framed)
         assertNull(focused)
         composeRule.onNodeWithText(stopA.text).assertExists()
 
-        // The revealed leaf sub-step focuses its own point.
+        // The revealed sub-step focuses its own point.
         composeRule.onNodeWithText(stopA.text).performClick()
         assertEquals(stopAPoint, focused)
     }
 
     @Test
-    fun rowWithoutAPointDoesNotFocus() {
-        val pointless = DirectionItem(iconRes = DirectionItem.NO_ICON, text = "No coordinates here")
+    fun legWithoutPolylineFallsBackToFocusingItsPoint() {
+        val noGeometry = DirectionItem(
+            iconRes = DirectionItem.NO_ICON,
+            text = "Short hop",
+            focusPoint = boardPoint,
+        )
+        var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(
-                state = state.copy(directions = listOf(pointless)),
+                state = state.copy(directions = listOf(noGeometry)),
+                onFocusLeg = { framed = it },
                 onFocusPoint = { focused = it },
             )
         }
 
-        composeRule.onNodeWithText(pointless.text).performClick()
+        composeRule.onNodeWithText(noGeometry.text).performClick()
 
+        assertNull(framed)
+        assertEquals(boardPoint, focused)
+    }
+
+    @Test
+    fun legWithoutAPointOrPolylineDoesNothing() {
+        val inert = DirectionItem(iconRes = DirectionItem.NO_ICON, text = "No coordinates here")
+        var framed: List<GeoPoint>? = null
+        var focused: GeoPoint? = null
+        composeRule.setContent {
+            TripResultsList(
+                state = state.copy(directions = listOf(inert)),
+                onFocusLeg = { framed = it },
+                onFocusPoint = { focused = it },
+            )
+        }
+
+        composeRule.onNodeWithText(inert.text).performClick()
+
+        assertNull(framed)
         assertNull(focused)
     }
 }

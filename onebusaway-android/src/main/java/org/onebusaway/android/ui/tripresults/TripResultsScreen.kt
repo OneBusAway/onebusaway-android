@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,11 +34,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -252,6 +255,7 @@ fun TripResultsList(
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
     onSelectOption: (Int) -> Unit = {},
+    onFocusLeg: (List<GeoPoint>) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
 ) {
     Box(
@@ -271,7 +275,7 @@ fun TripResultsList(
                     .padding(32.dp)
             )
 
-            // The surface reaches the bottom edge; a bottom content padding lets the final directions row
+            // The surface reaches the bottom edge; a bottom content padding lets the final leg card
             // be scrolled clear of the nav chrome without an empty strip below the list.
             is TripResultsUiState.Success -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -282,9 +286,9 @@ fun TripResultsList(
                     TripResultsHeader(state, onSelectOption)
                     HorizontalDivider()
                 }
+                // One card per leg; the cards' own spacing separates them (no divider between).
                 itemsIndexed(state.directions) { _, item ->
-                    DirectionRow(item, onFocusPoint)
-                    HorizontalDivider()
+                    DirectionRow(item, onFocusLeg, onFocusPoint)
                 }
             }
         }
@@ -308,6 +312,7 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp,
@@ -344,6 +349,7 @@ fun TripResultsSheet(
         modifier = modifier.fillMaxSize(),
         bottomInset = listBottomInset,
         onSelectOption = resultsViewModel::selectOption,
+        onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
     )
 }
@@ -379,63 +385,84 @@ private fun maybeStartTripUpdates(
     TripPlanMonitor.start(activity, params, itinerary, activity.javaClass)
 }
 
+/**
+ * One itinerary leg, as a card. Tapping the card **body** frames the whole leg on the map (falling
+ * back to the leg's representative point when it carries no polyline); a distinct **expand button**
+ * reveals the leg's sub-steps (turn-by-turn for a walk leg; intermediate stops + alight for a transit
+ * leg), each of which recenters the map on its own point. So the body moves the map while the button
+ * only toggles the drawer — two separate targets.
+ */
 @Composable
-private fun DirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
+private fun DirectionRow(
+    item: DirectionItem,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
+) {
     // Rows are keyed by index in the LazyColumn, so switching itineraries reuses this slot for a
     // different DirectionItem. Key the expansion state on the item so it resets on that swap instead
-    // of leaking a stale expanded state into the new itinerary's row.
+    // of leaking a stale expanded state into the new itinerary's card.
     var expanded by remember(item) { mutableStateOf(false) }
     val hasSubItems = item.subItems.isNotEmpty()
+    val canFrame = item.legPoints.isNotEmpty()
     val point = item.focusPoint
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // An expandable row (a chevron) only toggles its sub-steps; only leaf rows send the map
-                // to their point. So a parent never moves the map — its expanded leaves do.
-                .clickable(enabled = hasSubItems || point != null) {
-                    if (hasSubItems) {
-                        expanded = !expanded
-                    } else {
-                        point?.let(onFocusPoint)
+    val bodyClickable = canFrame || point != null
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = bodyClickable) {
+                        if (canFrame) onFocusLeg(item.legPoints) else point?.let(onFocusPoint)
+                    }
+                    .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp)
+            ) {
+                DirectionIcon(item.iconRes)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = item.text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (item.isTransit) FontWeight.Medium else FontWeight.Normal
+                    )
+                    item.placeAndHeadsign?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    item.agency?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    item.extra?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            DirectionIcon(item.iconRes)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = item.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = if (item.isTransit) FontWeight.Medium else FontWeight.Normal
-                )
-                item.placeAndHeadsign?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item.agency?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item.extra?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (hasSubItems) {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            contentDescription = stringResource(
+                                if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
+                            ),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
-            if (hasSubItems) {
-                Icon(
-                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            if (expanded) {
+                item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
+                Spacer(Modifier.height(4.dp))
             }
-        }
-        if (expanded) {
-            item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
         }
     }
 }

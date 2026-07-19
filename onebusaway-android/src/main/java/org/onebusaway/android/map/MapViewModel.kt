@@ -488,6 +488,16 @@ class MapViewModel @Inject constructor(
         )
     }
 
+    /**
+     * Frame a whole tapped itinerary leg: fit its polyline within the map's content padding, so the leg
+     * lands in the visible band above the directions results sheet. Guarded on an active directions
+     * session (like [focusItineraryPoint]); an empty point list is a no-op.
+     */
+    fun focusItineraryLeg(points: List<GeoPoint>) {
+        if (!directionsActive || points.isEmpty()) return
+        mapHost.frameItineraryLeg(points)
+    }
+
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */
     fun clearShownItinerary() {
         if (!directionsActive) return

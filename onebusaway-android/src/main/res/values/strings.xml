@@ -918,6 +918,9 @@
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>
+    <!-- Content descriptions for the button that expands/collapses a leg's steps in the directions list -->
+    <string name="trip_plan_expand_leg">Show steps</string>
+    <string name="trip_plan_collapse_leg">Hide steps</string>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>

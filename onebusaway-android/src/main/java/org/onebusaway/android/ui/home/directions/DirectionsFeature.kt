@@ -250,6 +250,7 @@ fun DirectionsResultsSheet(
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -277,6 +278,7 @@ fun DirectionsResultsSheet(
                 params = params,
                 resultsViewModel = resultsViewModel,
                 showItinerary = showItinerary,
+                onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 modifier = Modifier.fillMaxWidth(),
             )

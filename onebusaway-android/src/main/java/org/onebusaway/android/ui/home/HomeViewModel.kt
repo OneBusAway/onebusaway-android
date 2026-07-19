@@ -556,6 +556,10 @@ class HomeViewModel @Inject constructor(
     fun focusItineraryPointOnMap(point: GeoPoint) =
         emitMapDirective(MapDirective.FocusItineraryPoint(point))
 
+    /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
+    fun focusItineraryLegOnMap(points: List<GeoPoint>) =
+        emitMapDirective(MapDirective.FocusItineraryLeg(points))
+
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
 
@@ -777,6 +781,9 @@ sealed interface MapDirective {
 
     /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
     data class FocusItineraryPoint(val point: GeoPoint) : MapDirective
+
+    /** Frame a whole tapped itinerary leg (fit its polyline within the map's content padding). */
+    data class FocusItineraryLeg(val points: List<GeoPoint>) : MapDirective
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective

@@ -702,6 +702,7 @@ fun HomeScreen(
                                     itineraries = directionsResults.itineraries,
                                     params = directionsResults.params,
                                     showItinerary = homeViewModel::showItineraryOnMap,
+                                    onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                     onFocusPoint = homeViewModel::focusItineraryPointOnMap,
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)

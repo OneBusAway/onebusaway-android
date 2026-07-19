@@ -20,11 +20,9 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
@@ -92,52 +90,10 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
         itinerary: TripItinerary
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
-            DirectionsGenerator(itinerary.legs, context).directions.map { it.toItem() }
+            // The legacy generator supplies the localized step text (needs a Context for resources);
+            // the pure grouping re-shapes its flat output into one card per leg (JVM-testable).
+            val flat = DirectionsGenerator(itinerary.legs, context).directions
+            DirectionCardGrouping.groupByLeg(itinerary.legs, flat)
         }
     }
-
-    /** Mirrors DirectionExpandableListAdapter's group-view text composition. */
-    private fun Direction.toItem(): DirectionItem {
-        val index = directionIndex
-        return if (!isTransit) {
-            DirectionItem(
-                iconRes = icon,
-                text = "$index. ${directionText.orEmptyString()}",
-                isTransit = false,
-                subItems = subItemsOf(subDirections),
-                focusPoint = focusPoint,
-            )
-        } else {
-            val time = (if (isRealTimeInfo && newTime != null) newTime else oldTime).orEmptyString()
-            DirectionItem(
-                iconRes = icon,
-                text = "$index. ${service.orEmptyString()} $time",
-                placeAndHeadsign = placeAndHeadsign?.toString()?.takeIf { it.isNotEmpty() },
-                agency = agency?.toString()?.takeIf { it.isNotEmpty() },
-                extra = extra?.toString()?.takeIf { it.isNotEmpty() },
-                isTransit = true,
-                subItems = subItemsOf(subDirections),
-                focusPoint = focusPoint,
-            )
-        }
-    }
-
-    private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> =
-        subDirections?.map {
-            DirectionItem(
-                iconRes = it.icon,
-                text = it.directionText.orEmptyString(),
-                focusPoint = it.focusPoint,
-            )
-        }.orEmpty()
-
-    /** The step's focus point, or null when the underlying place carried no coordinates. */
-    private val Direction.focusPoint: GeoPoint?
-        get() {
-            val lat = focusLat ?: return null
-            val lon = focusLon ?: return null
-            return GeoPoint(lat, lon)
-        }
-
-    private fun CharSequence?.orEmptyString(): String = this?.toString().orEmpty()
 }

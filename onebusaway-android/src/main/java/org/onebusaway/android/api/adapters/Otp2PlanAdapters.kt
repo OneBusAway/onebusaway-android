@@ -91,6 +91,7 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
 // of two structurally-identical copies.
 private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
     name = name,
+    stopId = stop?.gtfsId,
     stopCode = stop?.code,
     lat = lat,
     lon = lon,

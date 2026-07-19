@@ -95,16 +95,42 @@ class Otp2Planner @Inject constructor(
             throw TripPlanException(TripPlanError.Unknown, e)
         }
 
-        data.planConnection?.routingErrors?.firstOrNull()?.let {
-            throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
-        }
+        return resolveOtp2Plan(data)
+    }
+}
 
-        val itineraries = data.toTripItineraries()
-        if (itineraries.isEmpty()) {
-            throw TripPlanException(TripPlanError.NoRoute)
-        }
+/**
+ * Resolves an OTP2 `planConnection` [PlanQuery.Data] into itineraries, or throws a classified
+ * [TripPlanException] when there is genuinely nothing to show.
+ *
+ * **Itineraries win over routing errors.** A `routingErrors` entry can accompany a perfectly good
+ * result, so we must return the result rather than surface the error. The motivating case (#1947) is
+ * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT]: OTP2 always computes a direct WALK itinerary
+ * alongside transit — the `planConnection.modes` default is documented as "all transit modes are
+ * usable and WALK is used for direct street suggestions" — and when that walk's *generalized* cost
+ * (which folds in wait/transfer/boarding penalties, not just distance) beats every transit option,
+ * the filter chain deletes the *transit* itineraries and attaches this error while **keeping the
+ * walk-only itinerary in `edges`**. Surfacing the error there would throw away a valid walk route and
+ * show a "Try walking instead" advisory with no result — even for trips too long to actually walk.
+ * Returning whatever itineraries came back shows that walk route as a normal option instead.
+ *
+ * This is safe for every *fatal* code — `LOCATION_NOT_FOUND`, `OUTSIDE_BOUNDS`,
+ * `NO_TRANSIT_CONNECTION`, the same-location `WALKING_BETTER_THAN_TRANSIT` raised by OTP's
+ * `SameEdgeAdjuster`, … — because those always come back with empty `edges`, so consulting
+ * `routingErrors` only when there are no itineraries still classifies them exactly as before.
+ *
+ * Top-level and `internal` (no [Context] dependency) so it's JVM-unit-testable from a
+ * [PlanQuery.Data] fixture without Apollo, like [otp2ErrorFor].
+ */
+internal fun resolveOtp2Plan(data: PlanQuery.Data): List<TripItinerary> {
+    val itineraries = data.toTripItineraries()
+    if (itineraries.isNotEmpty()) {
         return itineraries
     }
+    data.planConnection?.routingErrors?.firstOrNull()?.let {
+        throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
+    }
+    throw TripPlanException(TripPlanError.NoRoute)
 }
 
 /**

@@ -41,13 +41,15 @@ sealed interface CurrentFocus {
 
 /**
  * A transit leg the user drilled into from the directions overview — the route-subordinate-to-directions
- * focus. Carries the identity needed to recontextualize the map onto the route ([routeId], anchored to
- * the boarding stop's direction via [boardStopId]) and to show that stop's arrivals board. Ids are OTP
- * GTFS ids; [boardStopId] is null on the OTP1 path, so the arrivals board is simply omitted then.
+ * focus. Carries the OBA identity needed to recontextualize the map onto the route ([routeId], anchored
+ * to the departing stop's direction via [boardStop]) and to show that stop's arrivals board. [boardStop]
+ * is null when the boarding stop couldn't be resolved to an OBA id (e.g. the OTP1 path, or coordinates
+ * missing), in which case the arrivals board is simply omitted. Ids here are already OBA-format — see
+ * [org.onebusaway.android.directions.OtpObaIdResolver].
  */
 data class DirectionsRouteFocus(
     val routeId: String,
-    val boardStopId: String?,
+    val boardStop: FocusedStop?,
     val directionId: Int? = null,
 )
 

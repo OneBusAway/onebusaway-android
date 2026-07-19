@@ -914,6 +914,9 @@
     <string name="trip_plan_map_location">Selected location</string>
     <string name="directions_from_here">Directions from here</string>
     <string name="directions_to_here">Directions to here</string>
+    <!-- Route-focus arrivals board shown when drilling into a transit leg's route from the directions -->
+    <string name="directions_route_focus_back">Back to directions</string>
+    <string name="directions_route_focus_departures">Departures</string>
     <string name="trip_plan_clear_endpoint">Clear</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>

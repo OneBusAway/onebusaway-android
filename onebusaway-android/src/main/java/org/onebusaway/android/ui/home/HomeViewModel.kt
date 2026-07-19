@@ -35,6 +35,7 @@ import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapViewport
@@ -584,43 +585,47 @@ class HomeViewModel @Inject constructor(
      * If the route can't be resolved to an OBA agency (e.g. an agency OBA doesn't cover), degrades to
      * framing the leg via [fallbackLegPoints] rather than issuing a request that would fail.
      */
-    fun focusItineraryRouteLeg(
-        routeGtfsId: String,
-        agencyGtfsId: String?,
-        agencyName: String?,
-        boardStopGtfsId: String?,
-        fallbackLegPoints: List<GeoPoint>,
-    ) {
+    fun focusItineraryRouteLeg(routeLeg: RouteLegRef, fallbackLegPoints: List<GeoPoint>) {
+        val routeGtfsId = routeLeg.routeId ?: return
         viewModelScope.launch {
-            val obaRouteId = otpObaIdResolver.obaRouteId(routeGtfsId, agencyGtfsId, agencyName)
+            val obaRouteId =
+                otpObaIdResolver.obaRouteId(routeGtfsId, routeLeg.agencyGtfsId, routeLeg.agencyName)
             if (obaRouteId == null) {
                 focusItineraryLegOnMap(fallbackLegPoints)
                 return@launch
             }
-            val obaBoardStopId = otpObaIdResolver.obaStopId(boardStopGtfsId, agencyGtfsId, agencyName)
-            focusItineraryRouteLegOnMap(obaRouteId, obaBoardStopId)
+            // Resolve the departing stop for its arrivals board; null (no OBA id or no coordinates)
+            // just means the map focuses the route without the board.
+            val obaBoardStopId =
+                otpObaIdResolver.obaStopId(routeLeg.boardStopId, routeLeg.agencyGtfsId, routeLeg.agencyName)
+            val boardStop = obaBoardStopId?.let { id ->
+                routeLeg.boardPoint?.let { point ->
+                    FocusedStop(id = id, name = routeLeg.boardStopName, code = routeLeg.boardStopCode, point = point)
+                }
+            }
+            focusItineraryRouteLegOnMap(obaRouteId, boardStop)
         }
     }
 
     /**
-     * Recontextualizes the map onto [routeId] (anchored to the boarding stop's direction via
-     * [boardStopId], as the stop→route focus does), and records the overview as the back target so a
-     * map-background tap (or Back) returns to the itinerary. The departing-stop arrivals board is driven
-     * off the resulting [CurrentFocus.Directions.routeFocus] by the sheet. Ids are already OBA-format
-     * (see [focusItineraryRouteLeg], which resolves them).
+     * Recontextualizes the map onto [routeId] (anchored to [boardStop]'s direction, as the stop→route
+     * focus does), and records the overview as the back target so a map-background tap (or Back) returns
+     * to the itinerary. The departing-stop arrivals board is driven off the resulting
+     * [CurrentFocus.Directions.routeFocus] by the sheet. Ids are already OBA-format (see
+     * [focusItineraryRouteLeg], which resolves them).
      */
     fun focusItineraryRouteLegOnMap(
         routeId: String,
-        boardStopId: String?,
+        boardStop: FocusedStop?,
         directionId: Int? = null,
         undoViewport: MapViewport? = null,
     ) {
-        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStopId, directionId)), undoViewport)
+        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStop, directionId)), undoViewport)
         emitMapDirective(
             MapDirective.ShowRoute(
                 ShowRouteRequest(
                     routeId = routeId,
-                    directionStopId = boardStopId,
+                    directionStopId = boardStop?.id,
                     initialDirectionId = directionId,
                 ),
                 stopScoped = false,
@@ -730,7 +735,7 @@ class HomeViewModel @Inject constructor(
                             MapDirective.ShowRoute(
                                 ShowRouteRequest(
                                     routeId = routeFocus.routeId,
-                                    directionStopId = routeFocus.boardStopId,
+                                    directionStopId = routeFocus.boardStop?.id,
                                     initialDirectionId = routeFocus.directionId,
                                 ),
                                 stopScoped = false,

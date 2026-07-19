@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import androidx.compose.material3.Text
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -163,5 +164,60 @@ class DirectionRowFocusTest {
 
         assertNull(framed)
         assertNull(focused)
+    }
+
+    // ---- Transit leg: route highlight (leg row) vs. inline ETA strip (Board / Alight sub-items) ----
+
+    private val boardStop = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", boardPoint)
+    private val alightStop = RouteStopRef("1_600", "600", "Rainier & Alaska", GeoPoint(47.6200, -122.3400))
+    private val routeItem = DirectionItem(
+        iconRes = DirectionItem.NO_ICON,
+        text = "3. Route 8",
+        isTransit = true,
+        legPoints = transitLegPoints,
+        routeLeg = RouteLegRef(
+            routeId = "1_100",
+            headsign = "Rainier Beach",
+            board = boardStop,
+            alight = alightStop,
+        ),
+    )
+    private val routeState = state.copy(directions = listOf(routeItem))
+
+    // A stand-in ETA strip that marks which stop it was asked to render.
+    private fun stripMarker(name: String?) = "ETASTRIP@$name"
+
+    @Test
+    fun tappingTransitLegRow_highlightsRoute() {
+        var captured: Pair<RouteLegRef, List<GeoPoint>>? = null
+        composeRule.setContent {
+            TripResultsList(state = routeState, onFocusRouteLeg = { rl, pts -> captured = rl to pts })
+        }
+
+        composeRule.onNodeWithText(routeItem.text).performClick()
+
+        assertEquals("1_100", captured?.first?.routeId)
+        assertEquals(transitLegPoints, captured?.second)
+    }
+
+    @Test
+    fun expandingTransitLeg_showsBothStopEtaStrips() {
+        composeRule.setContent {
+            TripResultsList(
+                state = routeState,
+                stopEtaStrip = { _, stop, _ -> Text(stripMarker(stop.name)) },
+            )
+        }
+
+        val boardName = boardStop.name!!
+        val alightName = alightStop.name!!
+        // The strips are hidden until the leg is expanded.
+        composeRule.onNodeWithText(stripMarker(boardName)).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+
+        // Expanding shows both the Board and Alight strips at once (no per-stop toggle).
+        composeRule.onNodeWithText(stripMarker(boardName)).assertExists()
+        composeRule.onNodeWithText(stripMarker(alightName)).assertExists()
     }
 }

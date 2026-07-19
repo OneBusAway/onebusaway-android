@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.tripresults
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -108,11 +107,20 @@ class DirectionCardGroupingTest {
         focusLon = alightTo.longitude
     }
 
+    // The pre-resolved (OBA-id) route/stop identity the repository would pass for the transit leg.
+    private val transitRef = RouteLegRef(
+        routeId = "1_100",
+        headsign = "Rainier Beach",
+        board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", boardFrom),
+        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", alightTo),
+    )
+
     @Test
     fun oneCardPerLeg_walkThenTransit() {
         val cards = DirectionCardGrouping.groupByLeg(
             legs = listOf(walkLeg, transitLeg),
             flatDirections = listOf(walkDir, boardDir, alightDir),
+            routeLegRefs = listOf(null, transitRef),
         )
         assertEquals(2, cards.size)
         assertFalse(cards[0].isTransit)
@@ -121,7 +129,8 @@ class DirectionCardGroupingTest {
 
     @Test
     fun walkCard_numberedAndCarriesLegPolylineAndTurnSteps() {
-        val walk = DirectionCardGrouping.groupByLeg(listOf(walkLeg), listOf(walkDir)).single()
+        val walk = DirectionCardGrouping
+            .groupByLeg(listOf(walkLeg), listOf(walkDir), listOf(null)).single()
         assertTrue("leg number prefixed", walk.text.startsWith("1. "))
         assertEquals(3, walk.legPoints.size) // decoded from the leg geometry, for body-tap framing
         assertEquals(1, walk.subItems.size)  // its turn step
@@ -130,9 +139,9 @@ class DirectionCardGroupingTest {
     }
 
     @Test
-    fun transitCard_foldsBoardHeaderWithStopsThenAlight() {
+    fun transitCard_headerFromBoardDirection_noFoldedSubItems() {
         val transit = DirectionCardGrouping
-            .groupByLeg(listOf(transitLeg), listOf(boardDir, alightDir)).single()
+            .groupByLeg(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef)).single()
 
         // Header = the board direction (number + service + time + detail lines).
         assertTrue("leg number prefixed", transit.text.startsWith("1. "))
@@ -141,26 +150,14 @@ class DirectionCardGroupingTest {
         assertEquals(boardFrom, transit.focusPoint)
         assertEquals(3, transit.legPoints.size)
 
-        // Sub-items: intermediate stop(s) then the folded-in alight row (last).
-        assertEquals(2, transit.subItems.size)
-        assertEquals(stopMid, transit.subItems.first().focusPoint)
-        val alight = transit.subItems.last()
-        assertEquals(alightTo, alight.focusPoint)
-        assertTrue(alight.text.contains("Rainier & Alaska"))
+        // Board/Alight are carried on routeLeg and rendered by the UI, not folded into subItems here.
+        assertTrue(transit.subItems.isEmpty())
     }
 
     @Test
-    fun transitCard_carriesRouteAndStopIdentity() {
+    fun transitCard_carriesTheResolvedRouteLeg() {
         val transit = DirectionCardGrouping
-            .groupByLeg(listOf(transitLeg), listOf(boardDir, alightDir)).single()
-        val ref = transit.routeLeg
-        assertNotNull(ref)
-        assertEquals("1_100", ref!!.routeId)
-        assertEquals("1_500", ref.boardStopId)
-        assertEquals("500", ref.boardStopCode)
-        assertEquals("Pine St & 3rd Ave", ref.boardStopName)
-        assertEquals("1_600", ref.alightStopId)
-        assertEquals(boardFrom, ref.boardPoint)
-        assertEquals(alightTo, ref.alightPoint)
+            .groupByLeg(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef)).single()
+        assertEquals(transitRef, transit.routeLeg)
     }
 }

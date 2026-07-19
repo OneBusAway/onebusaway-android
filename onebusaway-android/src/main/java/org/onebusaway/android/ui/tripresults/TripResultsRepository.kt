@@ -20,10 +20,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.util.DirectionsGenerator
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -42,7 +45,10 @@ interface TripResultsRepository {
     suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>>
 }
 
-class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext private val context: Context) : TripResultsRepository {
+class DefaultTripResultsRepository @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val otpObaIdResolver: OtpObaIdResolver,
+) : TripResultsRepository {
 
     override suspend fun summarize(
         itineraries: List<TripItinerary>
@@ -91,9 +97,35 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
             // The legacy generator supplies the localized step text (needs a Context for resources);
-            // the pure grouping re-shapes its flat output into one card per leg (JVM-testable).
+            // the pure grouping re-shapes its flat output into one card per leg (JVM-testable). Each
+            // transit leg's OTP route/stop ids are resolved to OBA ids here (a suspend, network-backed
+            // step) so the drawer can highlight the route and show each stop's live ETAs.
             val flat = DirectionsGenerator(itinerary.legs, context).directions
-            DirectionCardGrouping.groupByLeg(itinerary.legs, flat)
+            val routeLegRefs = itinerary.legs.map { leg ->
+                if (leg.mode?.isOnStreetNonTransit == true) null else resolveRouteLeg(leg)
+            }
+            DirectionCardGrouping.groupByLeg(itinerary.legs, flat, routeLegRefs)
         }
+    }
+
+    /** Resolve a transit leg's OTP route/stop ids onto the OBA ids the drawer's map + ETA strips need. */
+    private suspend fun resolveRouteLeg(leg: TripLeg): RouteLegRef = RouteLegRef(
+        routeId = otpObaIdResolver.obaRouteId(leg.routeId, leg.agencyId, leg.agencyName),
+        headsign = leg.headsign,
+        board = leg.from.resolveStop(leg),
+        alight = leg.to.resolveStop(leg),
+    )
+
+    private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(
+        stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),
+        stopCode = stopCode,
+        name = name,
+        point = geoPoint(),
+    )
+
+    private fun TripPlace.geoPoint(): GeoPoint? {
+        val lat = lat ?: return null
+        val lon = lon ?: return null
+        return GeoPoint(lat, lon)
     }
 }

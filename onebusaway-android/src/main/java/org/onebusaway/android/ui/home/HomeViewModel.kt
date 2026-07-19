@@ -31,7 +31,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
@@ -78,8 +77,6 @@ class HomeViewModel @Inject constructor(
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
     private val locationRepository: LocationRepository,
-    // Maps a planned transit leg's OTP route/stop ids onto OBA ids for route focus.
-    private val otpObaIdResolver: OtpObaIdResolver,
 ) : ViewModel() {
 
     // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
@@ -585,52 +582,54 @@ class HomeViewModel @Inject constructor(
      * If the route can't be resolved to an OBA agency (e.g. an agency OBA doesn't cover), degrades to
      * framing the leg via [fallbackLegPoints] rather than issuing a request that would fail.
      */
+    /**
+     * Tap a transit leg from the directions overview: highlight its route on the map (the whole route +
+     * the traveled [fallbackLegPoints] drawn thick), recording the overview as the back target so a
+     * map-background tap (or Back) returns to the itinerary. [routeLeg]'s ids are already OBA-format
+     * (resolved at build time); an unresolved route degrades to framing the leg. The per-stop ETAs are
+     * shown inline in the drawer's Board/Alight rows, not here.
+     */
     fun focusItineraryRouteLeg(routeLeg: RouteLegRef, fallbackLegPoints: List<GeoPoint>) {
-        val routeGtfsId = routeLeg.routeId ?: return
-        viewModelScope.launch {
-            val obaRouteId =
-                otpObaIdResolver.obaRouteId(routeGtfsId, routeLeg.agencyGtfsId, routeLeg.agencyName)
-            if (obaRouteId == null) {
-                focusItineraryLegOnMap(fallbackLegPoints)
-                return@launch
-            }
-            // Resolve the departing stop for its arrivals board; null (no OBA id or no coordinates)
-            // just means the map focuses the route without the board.
-            val obaBoardStopId =
-                otpObaIdResolver.obaStopId(routeLeg.boardStopId, routeLeg.agencyGtfsId, routeLeg.agencyName)
-            val boardStop = obaBoardStopId?.let { id ->
-                routeLeg.boardPoint?.let { point ->
-                    FocusedStop(id = id, name = routeLeg.boardStopName, code = routeLeg.boardStopCode, point = point)
-                }
-            }
-            // The leg polyline is the exact board→alight path — drawn thick over the route.
-            focusItineraryRouteLegOnMap(obaRouteId, boardStop, segment = fallbackLegPoints)
+        val routeId = routeLeg.routeId
+        if (routeId == null) {
+            focusItineraryLegOnMap(fallbackLegPoints)
+            return
         }
+        focusItineraryRouteLegOnMap(routeId, segment = fallbackLegPoints)
     }
 
     /**
-     * Recontextualizes the map onto [routeId] (anchored to [boardStop]'s direction, as the stop→route
-     * focus does) with the traveled [segment] drawn thick over it, and records the overview as the back
-     * target so a map-background tap (or Back) returns to the itinerary. The departing-stop arrivals
-     * board is driven off the resulting [CurrentFocus.Directions.routeFocus] by the sheet. Ids are
-     * already OBA-format (see [focusItineraryRouteLeg], which resolves them).
+     * A pill tap in a directions leg's inline ETA strip: enter that leg's route focus and focus/animate/
+     * ping the tapped trip's live vehicle — [request] already carries the route, direction-anchor stop,
+     * and focusTripId (built by the shared arrivals handler), so this just rides the same ShowRoute path
+     * as the arrivals drawer, adding the traveled [segment] over the route.
+     */
+    fun focusDirectionsRouteVehicle(request: ShowRouteRequest, segment: List<GeoPoint>) {
+        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request.routeId, segment)))
+        emitMapDirective(
+            MapDirective.ShowRoute(request.copy(highlightedSegment = segment), stopScoped = false)
+        )
+    }
+
+    /**
+     * Recontextualizes the map onto [routeId] with the traveled [segment] drawn thick over it, and
+     * records the overview as the back target so a map-background tap (or Back) returns to the itinerary.
+     * Ids are already OBA-format.
      */
     fun focusItineraryRouteLegOnMap(
         routeId: String,
-        boardStop: FocusedStop?,
         segment: List<GeoPoint> = emptyList(),
         directionId: Int? = null,
         undoViewport: MapViewport? = null,
     ) {
         pushFocus(
-            CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStop, segment, directionId)),
+            CurrentFocus.Directions(DirectionsRouteFocus(routeId, segment, directionId)),
             undoViewport,
         )
         emitMapDirective(
             MapDirective.ShowRoute(
                 ShowRouteRequest(
                     routeId = routeId,
-                    directionStopId = boardStop?.id,
                     initialDirectionId = directionId,
                     highlightedSegment = segment,
                 ),
@@ -741,7 +740,6 @@ class HomeViewModel @Inject constructor(
                             MapDirective.ShowRoute(
                                 ShowRouteRequest(
                                     routeId = routeFocus.routeId,
-                                    directionStopId = routeFocus.boardStop?.id,
                                     initialDirectionId = routeFocus.directionId,
                                     highlightedSegment = routeFocus.segment,
                                 ),

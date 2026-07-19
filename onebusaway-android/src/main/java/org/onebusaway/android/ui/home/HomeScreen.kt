@@ -93,8 +93,8 @@ import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
+import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
-import org.onebusaway.android.ui.home.directions.DirectionsRouteFocusSheet
 import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
@@ -697,21 +697,7 @@ fun HomeScreen(
                         // when a plan produced itineraries, else an error / no-route message; a plan in
                         // flight shows a top progress line. The results selection drives the drawn itinerary.
                         if (directionsActive && pickTarget == null) {
-                            // A transit leg drilled into route focus swaps the step list for the departing
-                            // stop's arrivals board; otherwise the results sheet (or error) shows.
-                            // (currentFocus is smart-cast to Directions inside this directionsActive block.)
-                            val directionsRouteFocus = currentFocus.routeFocus
                             when {
-                                directionsRouteFocus?.boardStop != null -> DirectionsRouteFocusSheet(
-                                    boardStop = directionsRouteFocus.boardStop,
-                                    arrivalsViewModelFactory = arrivalsViewModelFactory,
-                                    onShowTrip = onShowTrip,
-                                    onEditReminder = onEditReminder,
-                                    onBack = homeViewModel::unfocusMapOneLevel,
-                                    modifier = Modifier
-                                        .align(Alignment.BottomCenter)
-                                        .onSizeChanged { directionsSheetHeightPx = it.height },
-                                )
                                 directionsResults != null -> DirectionsResultsSheet(
                                     resultsViewModel = tripResultsViewModel,
                                     itineraries = directionsResults.itineraries,
@@ -722,6 +708,19 @@ fun HomeScreen(
                                     },
                                     onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                     onFocusPoint = homeViewModel::focusItineraryPointOnMap,
+                                    // Each transit leg's Board/Alight row shows that stop's live ETA strip inline.
+                                    stopEtaStrip = { routeLeg, stop, segment ->
+                                        DirectionStopEtaStrip(
+                                            routeLeg = routeLeg,
+                                            stop = stop,
+                                            arrivalsViewModelFactory = arrivalsViewModelFactory,
+                                            onShowTrip = onShowTrip,
+                                            onEditReminder = onEditReminder,
+                                            onFocusVehicle = { request ->
+                                                homeViewModel.focusDirectionsRouteVehicle(request, segment)
+                                            },
+                                        )
+                                    },
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)
                                         .onSizeChanged { directionsSheetHeightPx = it.height },

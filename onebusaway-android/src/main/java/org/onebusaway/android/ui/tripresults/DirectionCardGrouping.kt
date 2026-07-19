@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PolylineDecoder
 
@@ -44,7 +43,16 @@ import org.onebusaway.android.util.PolylineDecoder
  */
 object DirectionCardGrouping {
 
-    fun groupByLeg(legs: List<TripLeg>, flatDirections: List<Direction>): List<DirectionItem> {
+    /**
+     * [routeLegRefs] is aligned to [legs] — the pre-resolved (OBA-id) route/stop identity for each
+     * transit leg, or null for a non-transit leg. The repository resolves these (a suspend, network-
+     * backed step) so this stays pure; a transit card just carries its ref for the UI.
+     */
+    fun groupByLeg(
+        legs: List<TripLeg>,
+        flatDirections: List<Direction>,
+        routeLegRefs: List<RouteLegRef?>,
+    ): List<DirectionItem> {
         val cards = ArrayList<DirectionItem>(legs.size)
         var cursor = 0
         legs.forEachIndexed { legIndex, leg ->
@@ -55,8 +63,10 @@ object DirectionCardGrouping {
                 cards += walkCard(cardNumber, walk, legPoints)
             } else {
                 val board = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
-                val alight = flatDirections.getOrNull(cursor++)
-                cards += transitCard(cardNumber, leg, board, alight, legPoints)
+                // Consume the generator's "get off" direction to keep the cursor aligned; the Board and
+                // Alight stops ride on the pre-resolved routeLeg and are rendered as the card's sub-items.
+                flatDirections.getOrNull(cursor++)
+                cards += transitCard(cardNumber, board, legPoints, routeLegRefs.getOrNull(legIndex))
             }
         }
         return cards
@@ -73,14 +83,13 @@ object DirectionCardGrouping {
 
     private fun transitCard(
         cardNumber: Int,
-        leg: TripLeg,
         board: Direction,
-        alight: Direction?,
         legPoints: List<GeoPoint>,
+        routeLeg: RouteLegRef?,
     ): DirectionItem {
-        // Header = the board direction, composed exactly as the old top-level board row was; the alight
-        // direction (previously its own top-level row) folds in below as the final sub-item.
-        val subItems = subItemsOf(board.subDirections) + listOfNotNull(alight?.toAlightSubItem())
+        // Header = the board direction (route + time + detail lines). The leg's Board and Alight stops
+        // ride on [routeLeg] and are rendered as the card's two sub-items by the UI; the leg row itself
+        // focuses the route, and each sub-item shows its stop's inline ETA strip.
         return DirectionItem(
             iconRes = board.icon,
             text = "$cardNumber. ${board.service.str()} ${board.pickTime()}".trimEnd(),
@@ -88,36 +97,16 @@ object DirectionCardGrouping {
             agency = board.agency.strOrNull(),
             extra = board.extra.strOrNull(),
             isTransit = true,
-            subItems = subItems,
             focusPoint = board.focusPoint(),
             legPoints = legPoints,
-            routeLeg = leg.toRouteLegRef(),
+            routeLeg = routeLeg,
         )
     }
-
-    /** The alight ("get off") direction as the leg card's closing sub-item. */
-    private fun Direction.toAlightSubItem() = DirectionItem(
-        iconRes = icon,
-        text = "${service.str()} ${placeAndHeadsign.str()} ${pickTime()}".trimAllSpaces(),
-        focusPoint = focusPoint(),
-    )
 
     private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> =
         subDirections?.map {
             DirectionItem(iconRes = it.icon, text = it.directionText.str(), focusPoint = it.focusPoint())
         }.orEmpty()
-
-    private fun TripLeg.toRouteLegRef() = RouteLegRef(
-        routeId = routeId,
-        agencyGtfsId = agencyId,
-        agencyName = agencyName,
-        boardStopId = from.stopId,
-        boardStopCode = from.stopCode,
-        boardStopName = from.name,
-        alightStopId = to.stopId,
-        boardPoint = from.point(),
-        alightPoint = to.point(),
-    )
 
     /** Decode the leg's own encoded polyline for framing; empty when the leg carries no geometry. */
     private fun TripLeg.decodedPoints(): List<GeoPoint> {
@@ -138,13 +127,6 @@ object DirectionCardGrouping {
         return GeoPoint(lat, lon)
     }
 
-    private fun TripPlace.point(): GeoPoint? {
-        val lat = lat ?: return null
-        val lon = lon ?: return null
-        return GeoPoint(lat, lon)
-    }
-
     private fun CharSequence?.str(): String = this?.toString().orEmpty()
     private fun CharSequence?.strOrNull(): String? = this?.toString()?.takeIf { it.isNotEmpty() }
-    private fun String.trimAllSpaces(): String = trim().replace(Regex("\\s{2,}"), " ")
 }

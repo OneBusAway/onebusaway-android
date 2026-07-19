@@ -84,22 +84,25 @@ data class DirectionItem(
 }
 
 /**
- * The route/stop identity of a transit leg, carried on its leg card so a future "focus this route"
- * interaction (Phase 2) can recontextualize the map onto the route and the departing stop. Populated
- * from the domain [org.onebusaway.android.directions.model.TripLeg]; the drawer does not read it yet.
- * Ids come from OTP's GTFS ids ([boardStopId]/[alightStopId] may be null on the OTP1 path, which
- * carries no stop id).
+ * The route/stop identity of a transit leg, carried on its leg card so tapping the leg highlights the
+ * route on the map and its Board/Alight sub-items can show each stop's live ETA strip. Ids are already
+ * **OBA-format** — resolved from OTP's GTFS ids at build time (see [org.onebusaway.android.directions
+ * .OtpObaIdResolver]); [routeId]/[RouteStopRef.stopId] are null when they couldn't be resolved (an
+ * unknown agency, or the OTP1 path). [headsign] disambiguates which direction group's ETAs to show.
  */
 data class RouteLegRef(
     val routeId: String?,
-    val agencyGtfsId: String?,
-    val agencyName: String?,
-    val boardStopId: String?,
-    val boardStopCode: String?,
-    val boardStopName: String?,
-    val alightStopId: String?,
-    val boardPoint: GeoPoint?,
-    val alightPoint: GeoPoint?,
+    val headsign: String?,
+    val board: RouteStopRef?,
+    val alight: RouteStopRef?,
+)
+
+/** A transit stop reached on a leg — its OBA id (for arrivals), display name, code, and location. */
+data class RouteStopRef(
+    val stopId: String?,
+    val stopCode: String?,
+    val name: String?,
+    val point: GeoPoint?,
 )
 
 /** UI state for the trip-planning results screen. */

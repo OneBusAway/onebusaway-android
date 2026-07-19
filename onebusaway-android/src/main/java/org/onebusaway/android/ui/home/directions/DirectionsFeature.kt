@@ -42,7 +42,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
@@ -88,17 +87,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
 import org.onebusaway.android.ui.compose.components.SwitchRow
+import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
+import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.arrivals.components.EtaStrip
+import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.home.FocusedStop
-import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tripplan.AdvancedSettings
@@ -110,6 +113,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripresults.RouteLegRef
+import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.util.BikeshareAvailability
@@ -261,6 +265,7 @@ fun DirectionsResultsSheet(
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // The system nav-bar inset: the surface reaches the bottom edge (continuous background), but its
@@ -290,6 +295,7 @@ fun DirectionsResultsSheet(
                 onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
+                stopEtaStrip = stopEtaStrip,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -328,69 +334,75 @@ private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) 
 }
 
 /**
- * The bottom sheet shown while a transit leg's route is in focus (the route-subordinate-to-directions
- * view): the **departing stop's live arrivals board**, over the map's highlighted route. A back control
- * — and a map-background tap — returns to the itinerary overview. Reuses the same per-stop arrivals
- * session + panel as the home focused-stop drawer ([rememberArrivalsSession] / [ArrivalsSheetHost]),
- * keyed to [boardStop], so the board polls and renders identically. Route-row taps are inert here for
- * now (the board is informational within directions focus).
+ * The inline ETA strip shown under a transit leg's Board / Alight row: the live arrivals for that leg's
+ * route at [stop], rendered as the same horizontally-scrollable pill strip the arrivals drawer uses (tap
+ * a pill to focus its vehicle, long-press for the trip menu — wired through [rememberArrivalRowCallbacks]).
+ * Spins up a per-stop arrivals session keyed to [stop] — so it polls only while shown — and picks the
+ * route group matching the leg (by route id, then headsign). Ids on [routeLeg]/[stop] are OBA-format.
  */
 @Composable
-fun DirectionsRouteFocusSheet(
-    boardStop: FocusedStop,
+fun DirectionStopEtaStrip(
+    routeLeg: RouteLegRef,
+    stop: RouteStopRef,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
-    onBack: () -> Unit,
+    onFocusVehicle: (ShowRouteRequest) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val stopId = stop.stopId
+    val point = stop.point
+    val rowPadding = Modifier.fillMaxWidth().padding(start = 36.dp, end = 12.dp, top = 2.dp, bottom = 8.dp)
+    if (stopId == null || point == null) {
+        NoEtasText(rowPadding)
+        return
+    }
     val session = rememberArrivalsSession(
-        focusedStop = boardStop,
+        focusedStop = FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point),
         sheetVisible = true,
         arrivalsViewModelFactory = arrivalsViewModelFactory,
         tutorialState = null,
         onArrivalsLoaded = {},
-        onShowRouteOnMap = { _, _ -> },
+        // A pill tap (via the shared handler's onFocusVehicleOnMap) lands here with a focusTripId
+        // request — hand it to the host to focus/animate/ping that vehicle, reusing the arrivals path.
+        onShowRouteOnMap = { _, request -> onFocusVehicle(request) },
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
         showUndoSnackbar = { _, _, _ -> },
     ) ?: return
     val state by session.viewModel.state.collectAsStateWithLifecycle()
+    val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
 
-    val fullHeight = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
-    Surface(
-        modifier = modifier.fillMaxWidth().height(fullHeight),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
-    ) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding()) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 12.dp, top = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = stringResource(R.string.directions_route_focus_back),
-                    )
-                }
-                Text(
-                    text = boardStop.name ?: stringResource(R.string.directions_route_focus_departures),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-            ArrivalsSheetHost(
-                session = session,
-                state = state,
-                selectedRoute = null,
-                mapRouteColors = emptyMap(),
-                onContentHeight = {},
-            )
-        }
+    val content = state as? ArrivalsUiState.Content ?: return // nothing until the first load lands
+    val group = content.routeGroups.pickForLeg(routeLeg)
+    if (group == null) {
+        NoEtasText(rowPadding)
+        return
     }
+    EtaStrip(
+        trips = group.trips,
+        actionsFor = { content.actions[it.tripId] },
+        callbacks = callbacks,
+        modifier = modifier.then(rowPadding),
+    )
+}
+
+/** The leg's route group at this stop: matched by OBA route id, preferring the leg's headsign. */
+private fun List<RouteRowGroup>.pickForLeg(routeLeg: RouteLegRef): RouteRowGroup? {
+    val forRoute = filter { it.routeId == routeLeg.routeId }
+    val headsign = routeLeg.headsign
+    return forRoute.firstOrNull { headsign != null && it.headsign.equals(headsign, ignoreCase = true) }
+        ?: forRoute.firstOrNull()
+}
+
+@Composable
+private fun NoEtasText(modifier: Modifier) {
+    Text(
+        text = stringResource(R.string.directions_stop_no_arrivals),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier,
+    )
 }
 
 /**

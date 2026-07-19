@@ -17,8 +17,8 @@ package org.onebusaway.android.push
 
 import java.io.IOException
 import java.util.Locale
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -67,9 +67,7 @@ class PushRegistrationManagerTest {
     fun `registers and persists, then a no-op when nothing changed`() = runTest {
         val f = Fixture(this)
         f.setToken("T1")
-
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         val call = f.service.registerCalls.single()
         assertEquals("https://sidecar.test/api/v2/regions/1/push_registrations", call.url)
@@ -79,8 +77,7 @@ class PushRegistrationManagerTest {
         assertEquals("android", call.operatingSystem)
 
         // Same inputs → decide() yields NoOp; no second POST despite the trigger firing again.
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.registerCalls.size)
     }
 
@@ -90,8 +87,7 @@ class PushRegistrationManagerTest {
         f.setToken("T1")
         f.notificationsEnabled = false
 
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         assertTrue(f.service.registerCalls.isEmpty())
         assertTrue(f.service.unregisterCalls.isEmpty())
@@ -99,21 +95,16 @@ class PushRegistrationManagerTest {
 
     @Test
     fun `opt-out unregisters the recorded token and clears the record`() = runTest {
-        val f = Fixture(this)
-        f.setToken("T1")
-        f.manager.resync()
-        advanceUntilIdle()
+        val f = Fixture(this).registered("T1")
 
         // Rider turns notifications off in system settings; the ON_START resync reconciles.
         f.notificationsEnabled = false
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         assertEquals("T1", f.service.unregisterCalls.single().token)
 
         // Record cleared → a further resync is a NoOp (no duplicate DELETE).
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
     }
 
@@ -123,111 +114,87 @@ class PushRegistrationManagerTest {
         f.setToken("T1")
         f.service.onRegister = { throw IOException("offline") }
 
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.registerCalls.size)
 
         // Nothing was persisted, so the retry is a full Register again (not a NoOp).
         f.service.onRegister = { Response.success(Unit) }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(2, f.service.registerCalls.size)
 
         // Now it's on record → the third sync is a NoOp.
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(2, f.service.registerCalls.size)
     }
 
     @Test
     fun `token rotation reregisters, deleting the old token and posting the new`() = runTest {
-        val f = Fixture(this)
-        f.setToken("T1")
-        f.manager.resync()
-        advanceUntilIdle()
+        val f = Fixture(this).registered("T1")
 
         f.setToken("T2")
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         assertEquals("T1", f.service.unregisterCalls.single().token)
         assertEquals(listOf("T1", "T2"), f.service.registerCalls.map { it.token })
 
         // The new token is on record now → NoOp.
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(2, f.service.registerCalls.size)
     }
 
     @Test
     fun `reregister that fully fails keeps previous so the next sync retries the delete`() = runTest {
-        val f = Fixture(this)
-        f.setToken("T1")
-        f.manager.resync()
-        advanceUntilIdle()
+        val f = Fixture(this).registered("T1")
 
         // Region switch mid-offline: both the DELETE of T1 and the POST of T2 fail.
         f.setToken("T2")
         f.service.onUnregister = { throw IOException("offline") }
         f.service.onRegister = { throw IOException("offline") }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         // Back online: the record must still point at T1 so this sync re-runs the full Reregister
         // (DELETE T1 + POST T2). If `previous` had been forgotten, this would be a plain Register(T2)
         // and T1 would never be deleted — the orphan bug.
         f.service.onUnregister = { Response.success(Unit) }
         f.service.onRegister = { Response.success(Unit) }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
 
         assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
 
         // T2 is finally on record → NoOp, no further POSTs.
         val postsSoFar = f.service.registerCalls.size
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(postsSoFar, f.service.registerCalls.size)
     }
 
     @Test
     fun `reregister clears the record when the delete succeeds but the post fails`() = runTest {
-        val f = Fixture(this)
-        f.setToken("T1")
-        f.manager.resync()
-        advanceUntilIdle()
+        val f = Fixture(this).registered("T1")
 
         // DELETE of T1 lands, POST of T2 fails → the server holds nothing, so the record must clear.
         f.setToken("T2")
         f.service.onRegister = { throw IOException("offline") }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
 
         // Record cleared → the retry is a plain Register(T2), with no further DELETE.
         f.service.onRegister = { Response.success(Unit) }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
         assertEquals("T2", f.service.registerCalls.last().token)
     }
 
     @Test
     fun `unregister treats a 404 as already-gone and clears the record`() = runTest {
-        val f = Fixture(this)
-        f.setToken("T1")
-        f.manager.resync()
-        advanceUntilIdle()
+        val f = Fixture(this).registered("T1")
 
         f.notificationsEnabled = false
         f.service.onUnregister = { Response.error(404, "".toResponseBody(null)) }
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
 
         // 404 counts as removed → the record is cleared, so a further resync is a NoOp.
-        f.manager.resync()
-        advanceUntilIdle()
+        f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
     }
 
@@ -236,7 +203,7 @@ class PushRegistrationManagerTest {
      * test-device flag on, and no token until a test sets one. [notificationsEnabled] is a mutable flag
      * so a test can flip the OS opt-in between syncs.
      */
-    private class Fixture(scope: CoroutineScope) {
+    private class Fixture(private val scope: TestScope) {
         val service = FakePushRegistrationWebService()
         val prefs = FakePreferencesRepository().apply {
             setBoolean(R.string.preference_key_push_test_device, true)
@@ -255,6 +222,15 @@ class PushRegistrationManagerTest {
         )
 
         fun setToken(token: String?) = prefs.setString(R.string.firebase_messaging_token, token)
+
+        /** Fires the reconcile trigger and drains it — the manager runs sync() off resync()'s launch. */
+        fun sync() {
+            manager.resync()
+            scope.advanceUntilIdle()
+        }
+
+        /** Establishes a "[token] already registered and on record" baseline before the scenario. */
+        fun registered(token: String): Fixture = apply { setToken(token); sync() }
     }
 
     /** Records every call and returns programmable outcomes (default: success). */

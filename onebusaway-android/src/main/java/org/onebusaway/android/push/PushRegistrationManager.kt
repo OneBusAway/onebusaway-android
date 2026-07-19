@@ -67,11 +67,7 @@ class PushRegistrationManager internal constructor(
     private val registrationsEndpointPath: String,
 ) {
 
-    /**
-     * The production constructor Hilt builds from. It resolves the two seams the JVM can't — the OS
-     * notifications-enabled check and the registrations endpoint-path string — from the application
-     * [context], then delegates to the primary constructor.
-     */
+    /** Production constructor Hilt builds from: resolves the two seams from [context] and delegates. */
     @Inject
     constructor(
         @ApplicationContext context: Context,

@@ -17,14 +17,18 @@ package org.onebusaway.android.map
 
 import android.content.Context
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.R
@@ -35,6 +39,7 @@ import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.location.isLocationEnabled
+import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -201,14 +206,29 @@ class MapHost(
 
     fun setDirectionsBottomInset(px: Int) = renderState.setDirectionsBottomInset(px)
 
+    // Pending one-shot re-fit of the route frame once the route header's top inset lands (see
+    // [frameRoute]). Cancelled the moment any superseding camera intent arrives — another framing, a
+    // dispatched gesture (recenter / my-location / zoom), or a user gesture (via [awaitHeaderInsetCorrection]) —
+    // so a late header measurement can't yank the camera back off a newer intent.
+    private var routeFrameSettleJob: Job? = null
+
     /** Dispatch a transient camera gesture (zoom step / recenter / my-location move / stop-tap center). */
-    fun dispatchGesture(command: CameraCommand) = renderState.dispatchGesture(command)
+    fun dispatchGesture(command: CameraCommand) {
+        routeFrameSettleJob?.cancel()
+        renderState.dispatchGesture(command)
+    }
 
     /** Set the map's retained framing intent (fit route / itinerary / region / a fixed point). */
-    fun frame(intent: FramingIntent) = renderState.frame(intent)
+    fun frame(intent: FramingIntent) {
+        routeFrameSettleJob?.cancel()
+        renderState.frame(intent)
+    }
 
     /** Clear the retained framing so a stale fit isn't re-applied when the map leaves a framed view. */
-    fun clearFraming() = renderState.clearFraming()
+    fun clearFraming() {
+        routeFrameSettleJob?.cancel()
+        renderState.clearFraming()
+    }
 
     /**
      * Frame the active route's bounding box (the "zoom to route" camera move). Sets the retained
@@ -216,8 +236,24 @@ class MapHost(
      * re-selecting the already-shown route from a list that navigates back to a freshly re-created map
      * (the recent-routes case), nor swallowed when re-tapping the same route to snap back to its extent.
      * The route's shape is already in the render state, so the framing has bounds to fit.
+     *
+     * The route header is a Compose banner that only reports its measured height into the map's top
+     * padding *after* it lays out — so when a route load resolves fast (a cache hit) this frame can fit
+     * against stale (pre-header) top padding and land the route partly under the header (#1954). The
+     * adapters read [MapRenderState.padding] at apply time, so we re-emit the retained [FramingIntent.Route]
+     * once the header inset lands (top padding grows past its value here) to let the fit self-correct —
+     * but we yield to the user, dropping the correction if a camera gesture intervenes first.
      */
-    fun frameRoute() = frame(FramingIntent.Route)
+    fun frameRoute() {
+        frame(FramingIntent.Route)
+        val baselineTopPx = renderState.padding.value.topPx
+        routeFrameSettleJob = scope.launch {
+            if (awaitHeaderInsetCorrection(renderState.padding, cameraInteracting, baselineTopPx)) {
+                // Bypass frame() here: it would cancel this very job, and no new intent is starting.
+                renderState.frame(FramingIntent.Route)
+            }
+        }
+    }
 
     /**
      * Frame the current directions itinerary's bounding box. Retained, so it isn't lost when the
@@ -387,3 +423,21 @@ class MapHost(
         }
     }
 }
+
+/**
+ * Suspends until the initial route frame should either self-correct or be left alone, then reports which
+ * (see [MapHost.frameRoute]). Returns `true` the moment the route header's top inset lands — [padding]'s
+ * `topPx` grows past [baselineTopPx], meaning the header measured *after* the frame fit against stale
+ * padding, so the retained route framing should be re-applied against the now-correct inset. Returns
+ * `false` if a camera gesture starts first ([cameraInteracting] goes true): the user has taken the camera,
+ * so don't yank it back. A bottom-only padding change (`topPx` unchanged) matches neither and is ignored,
+ * so an arrivals-sheet resize can't trigger a spurious re-fit.
+ */
+internal suspend fun awaitHeaderInsetCorrection(
+    padding: StateFlow<MapPadding>,
+    cameraInteracting: StateFlow<Boolean>,
+    baselineTopPx: Int,
+): Boolean = merge(
+    padding.filter { it.topPx > baselineTopPx }.map { true },
+    cameraInteracting.filter { it }.map { false },
+).first()

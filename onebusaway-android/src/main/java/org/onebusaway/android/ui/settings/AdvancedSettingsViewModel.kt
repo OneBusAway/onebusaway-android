@@ -81,6 +81,7 @@ class AdvancedSettingsViewModel @Inject constructor(
         prefs = AdvancedPrefSnapshot(
             experimentalRegionsEnabled = prefs.getBoolean(R.string.preference_key_experimental_regions, false),
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
+            pushTestDevice = prefs.getBoolean(R.string.preference_key_push_test_device, false),
             customObaApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null),
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
             customOtpApiUrlUsesGraphQl = prefs.getBoolean(
@@ -103,6 +104,14 @@ class AdvancedSettingsViewModel @Inject constructor(
 
     fun onDisplayTestAlertsChanged(value: Boolean) =
         prefs.setBoolean(R.string.preferences_display_test_alerts, value)
+
+    /**
+     * Toggle whether this device registers into OBACloud's test-only push audience (#1957). The write
+     * lands in the `preference_key_push_test_device` slot that `PushRegistrationManager` reads; its
+     * reactive collector observes preference changes and re-registers with the flipped `test_device` flag.
+     */
+    fun onPushTestDeviceChanged(value: Boolean) =
+        prefs.setBoolean(R.string.preference_key_push_test_device, value)
 
     /**
      * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range

@@ -135,6 +135,8 @@ fun buildSettingsUiState(
 data class AdvancedPrefSnapshot(
     val experimentalRegionsEnabled: Boolean,
     val displayTestAlerts: Boolean,
+    // Registers this device into OBACloud's test-only push audience for previewing service alerts (#1957).
+    val pushTestDevice: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
     // Manual OTP protocol override for the custom URL above (#1780) — the custom-server counterpart
@@ -163,6 +165,7 @@ data class AdvancedSettingsUiState(
     val showExperimentalRegions: Boolean,
     val experimentalRegionsEnabled: Boolean,
     val displayTestAlerts: Boolean,
+    val pushTestDevice: Boolean,
     val customObaApiUrl: String?,
     val customOtpApiUrl: String?,
     val customOtpApiUrlUsesGraphQl: Boolean,
@@ -194,6 +197,7 @@ fun buildAdvancedSettingsUiState(
         showExperimentalRegions = !useFixedRegion,
         experimentalRegionsEnabled = prefs.experimentalRegionsEnabled,
         displayTestAlerts = prefs.displayTestAlerts,
+        pushTestDevice = prefs.pushTestDevice,
         customObaApiUrl = prefs.customObaApiUrl,
         customOtpApiUrl = prefs.customOtpApiUrl,
         customOtpApiUrlUsesGraphQl = prefs.customOtpApiUrlUsesGraphQl,

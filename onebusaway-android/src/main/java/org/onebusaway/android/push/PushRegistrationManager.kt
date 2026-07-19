@@ -110,8 +110,13 @@ class PushRegistrationManager @Inject constructor(
             is PushRegistrationAction.Unregister ->
                 if (unregister(action.previous)) clearLast()
             is PushRegistrationAction.Reregister -> {
-                unregister(action.previous) // best-effort cleanup of the stale token/region
-                if (register(action.target)) persist(action.target) else clearLast()
+                // DELETE the stale registration, then POST the new one, persisting only once the POST
+                // lands. On failure keep `previous` on record UNLESS the DELETE already removed it:
+                // clearing it while it's still registered would make the next sync a plain Register,
+                // orphaning the old region/token (it keeps receiving alerts until the 180-day age-out).
+                val cleaned = unregister(action.previous)
+                if (register(action.target)) persist(action.target)
+                else if (cleaned) clearLast()
             }
         }
     }

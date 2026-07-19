@@ -20,6 +20,7 @@ import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
 import retrofit2.http.HTTP
 import retrofit2.http.POST
+import retrofit2.http.Query
 import retrofit2.http.Url
 
 /**
@@ -39,8 +40,11 @@ interface PushRegistrationWebService {
 
     /**
      * Registers (or refreshes) this device's push token with the region. Form-urlencoded POST to
-     * `…/regions/{id}/push_registrations`. [testDevice] must be sent on every call so a device is not
-     * accidentally reset out of the test audience; [locale] is the device's BCP-47 tag sent as-is.
+     * `…/regions/{id}/push_registrations` (issue #1957). The server upserts on `(region, token)` and
+     * overwrites the stored value from each call, so [testDevice] must be sent every time (an omitted
+     * `test_device` resets it to `false`) — the wire value is the literal `true`/`false` the contract
+     * documents. [locale] is the device's BCP-47 tag sent as-is; the server maps it to its translation
+     * catalog itself.
      */
     @FormUrlEncoded
     @POST
@@ -54,13 +58,10 @@ interface PushRegistrationWebService {
 
     /**
      * Unregisters this device's push [token] from the region (when the rider opts out of
-     * notifications). DELETE to `…/regions/{id}/push_registrations`.
-     *
-     * The issue does not pin down how the token is conveyed to the DELETE; mirroring [register], it is
-     * sent as a form-encoded body field. If the OBACloud contract turns out to expect a query param
-     * instead, switch this to `@Query("token")`. Verify against the server spec before release.
+     * notifications). DELETE to `…/regions/{id}/push_registrations` with the token as a query param
+     * (issue #1957). The contract leaves body-vs-query unstated; a query param avoids sending a body on
+     * a DELETE, which some HTTP stacks/proxies drop, and a Rails `params` backend reads it either way.
      */
-    @FormUrlEncoded
-    @HTTP(method = "DELETE", hasBody = true)
-    suspend fun unregister(@Url url: String, @Field("token") token: String): Response<Unit>
+    @HTTP(method = "DELETE")
+    suspend fun unregister(@Url url: String, @Query("token") token: String): Response<Unit>
 }

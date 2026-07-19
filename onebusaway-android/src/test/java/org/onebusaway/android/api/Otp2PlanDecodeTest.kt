@@ -101,7 +101,7 @@ class Otp2PlanDecodeTest {
                 shortName = "5",
                 longName = "Fifth Ave",
                 color = "0000FF",
-                agency = PlanQuery.Agency(name = "Metro", timezone = "America/Los_Angeles"),
+                agency = PlanQuery.Agency(gtfsId = "1_1", name = "Metro", timezone = "America/Los_Angeles"),
             ),
             trip = PlanQuery.Trip(gtfsId = "1_trip_5", tripHeadsign = "Downtown"),
             legGeometry = null,

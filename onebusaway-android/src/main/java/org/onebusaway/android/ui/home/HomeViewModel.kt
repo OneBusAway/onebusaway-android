@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
@@ -76,6 +77,8 @@ class HomeViewModel @Inject constructor(
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
     private val locationRepository: LocationRepository,
+    // Maps a planned transit leg's OTP route/stop ids onto OBA ids for route focus.
+    private val otpObaIdResolver: OtpObaIdResolver,
 ) : ViewModel() {
 
     // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
@@ -100,7 +103,7 @@ class HomeViewModel @Inject constructor(
                     addLast(MapUndoEntry(CurrentFocus.Stop(restored.stop)))
                 }
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+            is CurrentFocus.Route, is CurrentFocus.BikeStation, is CurrentFocus.Directions ->
                 addLast(MapUndoEntry(CurrentFocus.None))
         }
     }
@@ -513,16 +516,25 @@ class HomeViewModel @Inject constructor(
             } else {
                 CurrentFocus.Stop(focus.stop)
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+            // Route-over-directions becomes the plain itinerary overview; a plain overview exits.
+            is CurrentFocus.Directions -> if (focus.routeFocus == null) {
                 CurrentFocus.None
+            } else {
+                CurrentFocus.Directions()
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
             CurrentFocus.None -> return
         }
         pushFocus(target)
-        if (target is CurrentFocus.Stop) {
-            emitMapDirective(MapDirective.ClearSelectedRoute)
-        } else {
-            presentedRoutes = emptySet()
-            emitMapDirective(MapDirective.ClearFocus)
+        when {
+            target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
+            // Popped a route sub-focus back to the overview: redraw the itinerary over the route.
+            target is CurrentFocus.Directions ->
+                shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+            else -> {
+                presentedRoutes = emptySet()
+                emitMapDirective(MapDirective.ClearFocus)
+            }
         }
     }
 
@@ -542,15 +554,21 @@ class HomeViewModel @Inject constructor(
      * itinerary the results VM selects (via [showItineraryOnMap]). A no-op if already in directions.
      */
     fun enterDirections(undoViewport: MapViewport? = null) {
-        if (_currentFocus.value == CurrentFocus.Directions) return
+        if (_currentFocus.value is CurrentFocus.Directions) return
         presentedRoutes = emptySet()
         pendingFocus = null
-        pushFocus(CurrentFocus.Directions, undoViewport)
+        pushFocus(CurrentFocus.Directions(), undoViewport)
     }
 
+    // The itinerary currently drawn in directions mode, cached so returning from a route sub-focus (a
+    // map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on its own.
+    private var shownItinerary: TripItinerary? = null
+
     /** Draw [itinerary] on the home map (only meaningful while in [CurrentFocus.Directions]). */
-    fun showItineraryOnMap(itinerary: TripItinerary) =
+    fun showItineraryOnMap(itinerary: TripItinerary) {
+        shownItinerary = itinerary
         emitMapDirective(MapDirective.ShowItinerary(itinerary))
+    }
 
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
     fun focusItineraryPointOnMap(point: GeoPoint) =
@@ -559,6 +577,56 @@ class HomeViewModel @Inject constructor(
     /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
     fun focusItineraryLegOnMap(points: List<GeoPoint>) =
         emitMapDirective(MapDirective.FocusItineraryLeg(points))
+
+    /**
+     * Drill into a tapped transit leg from the directions overview. Resolves the leg's OTP route/stop
+     * ids onto OBA ids (async — the resolver may fetch agencies-with-coverage), then enters route focus.
+     * If the route can't be resolved to an OBA agency (e.g. an agency OBA doesn't cover), degrades to
+     * framing the leg via [fallbackLegPoints] rather than issuing a request that would fail.
+     */
+    fun focusItineraryRouteLeg(
+        routeGtfsId: String,
+        agencyGtfsId: String?,
+        agencyName: String?,
+        boardStopGtfsId: String?,
+        fallbackLegPoints: List<GeoPoint>,
+    ) {
+        viewModelScope.launch {
+            val obaRouteId = otpObaIdResolver.obaRouteId(routeGtfsId, agencyGtfsId, agencyName)
+            if (obaRouteId == null) {
+                focusItineraryLegOnMap(fallbackLegPoints)
+                return@launch
+            }
+            val obaBoardStopId = otpObaIdResolver.obaStopId(boardStopGtfsId, agencyGtfsId, agencyName)
+            focusItineraryRouteLegOnMap(obaRouteId, obaBoardStopId)
+        }
+    }
+
+    /**
+     * Recontextualizes the map onto [routeId] (anchored to the boarding stop's direction via
+     * [boardStopId], as the stop→route focus does), and records the overview as the back target so a
+     * map-background tap (or Back) returns to the itinerary. The departing-stop arrivals board is driven
+     * off the resulting [CurrentFocus.Directions.routeFocus] by the sheet. Ids are already OBA-format
+     * (see [focusItineraryRouteLeg], which resolves them).
+     */
+    fun focusItineraryRouteLegOnMap(
+        routeId: String,
+        boardStopId: String?,
+        directionId: Int? = null,
+        undoViewport: MapViewport? = null,
+    ) {
+        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(routeId, boardStopId, directionId)), undoViewport)
+        emitMapDirective(
+            MapDirective.ShowRoute(
+                ShowRouteRequest(
+                    routeId = routeId,
+                    directionStopId = boardStopId,
+                    initialDirectionId = directionId,
+                ),
+                stopScoped = false,
+            )
+        )
+    }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
@@ -654,9 +722,29 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
-                // Directions redraws its itinerary from the results sheet's own reconcile when it
-                // remounts, so restoring the focus just clears the map here (like None/BikeStation).
-                CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+                is CurrentFocus.Directions -> {
+                    val routeFocus = target.routeFocus
+                    if (routeFocus != null) {
+                        // Back into a route sub-focus: re-show that leg's route on the map.
+                        emitMapDirective(
+                            MapDirective.ShowRoute(
+                                ShowRouteRequest(
+                                    routeId = routeFocus.routeId,
+                                    directionStopId = routeFocus.boardStopId,
+                                    initialDirectionId = routeFocus.directionId,
+                                ),
+                                stopScoped = false,
+                                frameRoute = frameFocus,
+                            )
+                        )
+                    } else {
+                        // Back to the itinerary overview: redraw it over any route (the sheet's own
+                        // remount reconcile also covers a fresh entry, where shownItinerary is null).
+                        shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+                            ?: emitMapDirective(MapDirective.ClearFocus)
+                    }
+                }
+                CurrentFocus.None, is CurrentFocus.BikeStation ->
                     emitMapDirective(MapDirective.ClearFocus)
             }
         }

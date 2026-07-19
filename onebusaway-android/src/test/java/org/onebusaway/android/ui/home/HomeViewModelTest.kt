@@ -16,6 +16,9 @@
 package org.onebusaway.android.ui.home
 
 import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.directions.OtpObaIdResolver
+import org.onebusaway.android.models.AgencyContact
 
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -87,7 +90,10 @@ class HomeViewModelTest {
         savedState: SavedStateHandle = SavedStateHandle(),
         locationRepo: FakeLocationRepository = FakeLocationRepository(),
     ) = HomeViewModel(
-        savedState, startupRepo, regionRepo, locationRepo
+        savedState, startupRepo, regionRepo, locationRepo,
+        OtpObaIdResolver(object : AgenciesDataSource {
+            override suspend fun getAgencies() = Result.success(emptyList<AgencyContact>())
+        }),
     )
 
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the

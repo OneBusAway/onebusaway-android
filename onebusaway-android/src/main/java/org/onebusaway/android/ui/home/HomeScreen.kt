@@ -405,7 +405,7 @@ fun HomeScreen(
                 )
             }
             // Directions has no focus banner — the trip-plan form in the top chrome is its affordance.
-            CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions -> null
+            CurrentFocus.None, is CurrentFocus.BikeStation, is CurrentFocus.Directions -> null
         }
 
         // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
@@ -702,6 +702,17 @@ fun HomeScreen(
                                     itineraries = directionsResults.itineraries,
                                     params = directionsResults.params,
                                     showItinerary = homeViewModel::showItineraryOnMap,
+                                    onFocusRouteLeg = { routeLeg, legPoints ->
+                                        routeLeg.routeId?.let {
+                                            homeViewModel.focusItineraryRouteLeg(
+                                                routeGtfsId = it,
+                                                agencyGtfsId = routeLeg.agencyGtfsId,
+                                                agencyName = routeLeg.agencyName,
+                                                boardStopGtfsId = routeLeg.boardStopId,
+                                                fallbackLegPoints = legPoints,
+                                            )
+                                        }
+                                    },
                                     onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                     onFocusPoint = homeViewModel::focusItineraryPointOnMap,
                                     modifier = Modifier

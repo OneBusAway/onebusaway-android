@@ -255,6 +255,7 @@ fun TripResultsList(
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
     onSelectOption: (Int) -> Unit = {},
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit = { _, _ -> },
     onFocusLeg: (List<GeoPoint>) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
 ) {
@@ -288,7 +289,7 @@ fun TripResultsList(
                 }
                 // One card per leg; the cards' own spacing separates them (no divider between).
                 itemsIndexed(state.directions) { _, item ->
-                    DirectionRow(item, onFocusLeg, onFocusPoint)
+                    DirectionRow(item, onFocusRouteLeg, onFocusLeg, onFocusPoint)
                 }
             }
         }
@@ -312,6 +313,7 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -349,6 +351,7 @@ fun TripResultsSheet(
         modifier = modifier.fillMaxSize(),
         bottomInset = listBottomInset,
         onSelectOption = resultsViewModel::selectOption,
+        onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
     )
@@ -386,15 +389,18 @@ private fun maybeStartTripUpdates(
 }
 
 /**
- * One itinerary leg, as a card. Tapping the card **body** frames the whole leg on the map (falling
- * back to the leg's representative point when it carries no polyline); a distinct **expand button**
- * reveals the leg's sub-steps (turn-by-turn for a walk leg; intermediate stops + alight for a transit
- * leg), each of which recenters the map on its own point. So the body moves the map while the button
- * only toggles the drawer — two separate targets.
+ * One itinerary leg, as a card. Tapping the card **body** recontextualizes the map on the leg: a
+ * transit leg drills into its route (route-subordinate focus — the whole route, the traveled segment,
+ * the departing stop's arrivals board), while a walk/other leg frames the leg (falling back to its
+ * representative point when it carries no polyline). A distinct **expand button** reveals the leg's
+ * sub-steps (turn-by-turn for a walk leg; intermediate stops + alight for a transit leg), each of
+ * which recenters the map on its own point. So the body moves the map while the button only toggles
+ * the drawer — two separate targets.
  */
 @Composable
 private fun DirectionRow(
     item: DirectionItem,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
 ) {
@@ -403,9 +409,12 @@ private fun DirectionRow(
     // of leaking a stale expanded state into the new itinerary's card.
     var expanded by remember(item) { mutableStateOf(false) }
     val hasSubItems = item.subItems.isNotEmpty()
+    // A transit leg with a resolvable route id drills into route focus; otherwise the body frames the
+    // leg polyline, or (no geometry) recenters on the leg's representative point.
+    val routeLeg = item.routeLeg?.takeIf { it.routeId != null }
     val canFrame = item.legPoints.isNotEmpty()
     val point = item.focusPoint
-    val bodyClickable = canFrame || point != null
+    val bodyClickable = routeLeg != null || canFrame || point != null
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -419,7 +428,11 @@ private fun DirectionRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable(enabled = bodyClickable) {
-                        if (canFrame) onFocusLeg(item.legPoints) else point?.let(onFocusPoint)
+                        when {
+                            routeLeg != null -> onFocusRouteLeg(routeLeg, item.legPoints)
+                            canFrame -> onFocusLeg(item.legPoints)
+                            else -> point?.let(onFocusPoint)
+                        }
                     }
                     .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp)
             ) {

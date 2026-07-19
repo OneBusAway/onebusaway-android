@@ -92,6 +92,8 @@ data class DirectionItem(
  */
 data class RouteLegRef(
     val routeId: String?,
+    val agencyGtfsId: String?,
+    val agencyName: String?,
     val boardStopId: String?,
     val boardStopCode: String?,
     val boardStopName: String?,

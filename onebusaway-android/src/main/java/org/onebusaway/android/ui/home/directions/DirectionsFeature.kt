@@ -102,6 +102,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanFormState
 import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.util.BikeshareAvailability
@@ -250,6 +251,7 @@ fun DirectionsResultsSheet(
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     modifier: Modifier = Modifier,
@@ -278,6 +280,7 @@ fun DirectionsResultsSheet(
                 params = params,
                 resultsViewModel = resultsViewModel,
                 showItinerary = showItinerary,
+                onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 modifier = Modifier.fillMaxWidth(),

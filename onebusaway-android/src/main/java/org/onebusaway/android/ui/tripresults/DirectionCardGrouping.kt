@@ -109,6 +109,8 @@ object DirectionCardGrouping {
 
     private fun TripLeg.toRouteLegRef() = RouteLegRef(
         routeId = routeId,
+        agencyGtfsId = agencyId,
+        agencyName = agencyName,
         boardStopId = from.stopId,
         boardStopCode = from.stopCode,
         boardStopName = from.name,

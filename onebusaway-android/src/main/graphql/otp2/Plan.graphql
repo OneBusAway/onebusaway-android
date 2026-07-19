@@ -68,7 +68,7 @@ query Plan(
                         shortName
                         longName
                         color
-                        agency { name timezone }
+                        agency { gtfsId name timezone }
                     }
                     trip {
                         gtfsId

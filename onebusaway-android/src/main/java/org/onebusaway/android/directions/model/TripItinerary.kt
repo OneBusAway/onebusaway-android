@@ -72,6 +72,9 @@ data class TripLeg(
     val routeShortName: String? = null,
     val routeLongName: String? = null,
     val routeColor: String? = null,
+    // The route's agency GTFS id (OTP2 `agency.gtfsId`, e.g. `kcm:1`) — used, with [agencyName], to
+    // resolve this leg's route/stops onto OBA ids for route focus. Null on the OTP1 path.
+    val agencyId: String? = null,
     val agencyName: String? = null,
     val agencyTimeZoneOffset: Int = 0,
     val headsign: String? = null,

@@ -57,7 +57,6 @@
 
     <!-- Dark-theme severity header colours (see values/colors.xml). The inverseSurface bar turns light
          here, so the header text flips to the deep tone-40 values to stay legible on it. -->
-    <color name="md_theme_severityInfo">#0B57D0</color>
     <color name="md_theme_severityWarning">#7A4E00</color>
     <color name="md_theme_severityError">#BA1A1A</color>
 

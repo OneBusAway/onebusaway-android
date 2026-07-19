@@ -56,18 +56,19 @@ class Otp2PlanResolveTest {
 
     /**
      * The same-location degenerate case (OTP's `SameEdgeAdjuster`) emits the same code but with no
-     * itineraries — with nothing to show, the advisory still surfaces.
+     * itineraries — with nothing to show, it surfaces as the "too close" no-route result, never as a
+     * "try walking" advisory (#1947).
      */
     @Test
-    fun walkingBetterThanTransit_withoutItineraries_throwsAdvisory() {
+    fun walkingBetterThanTransit_withoutItineraries_throwsTooClose() {
         val data = planData(
             routingErrors = listOf(routingError(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT)),
             edges = emptyList(),
         )
 
         val error = assertThrows(TripPlanException::class.java) { resolveOtp2Plan(data) }.error
-        assertEquals(TripPlanError.Category.ADVISORY, error.category)
-        assertEquals(R.string.tripplanner_error_walking_better_than_transit, error.detailRes)
+        assertEquals(TripPlanError.Category.NO_ROUTE, error.category)
+        assertEquals(R.string.tripplanner_error_too_close, error.detailRes)
     }
 
     /** A fatal error (always empty `edges`) still classifies exactly as before the fix. */

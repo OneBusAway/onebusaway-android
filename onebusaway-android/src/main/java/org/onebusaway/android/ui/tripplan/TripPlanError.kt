@@ -61,20 +61,16 @@ data class TripPlanError(
         /** No usable route between the two points (no path, no stops in range, out of coverage). */
         NO_ROUTE(R.string.tripplanner_error_header_no_route, Severity.WARNING),
 
-        /** Not a failure so much as advice — walking beats transit for this trip. */
-        ADVISORY(R.string.tripplanner_error_header_advisory, Severity.INFO),
-
         /** The request itself was rejected or unclassified (bad parameter, no server, unknown). */
         REQUEST(R.string.tripplanner_error_header_request, Severity.ERROR),
     }
 
     /**
      * How alarming the failure is; [colorRes] is the header colour it maps to (a `md_theme_severity*`
-     * text colour tuned for the inverting `inverseSurface` snackbar bar): [INFO] blue (a tip — not a
-     * failure), [WARNING] amber (a valid, user-actionable non-result), [ERROR] red (something failed).
+     * text colour tuned for the inverting `inverseSurface` snackbar bar): [WARNING] amber (a valid,
+     * user-actionable non-result), [ERROR] red (something failed).
      */
     enum class Severity(@get:ColorRes val colorRes: Int) {
-        INFO(R.color.md_theme_severityInfo),
         WARNING(R.color.md_theme_severityWarning),
         ERROR(R.color.md_theme_severityError),
     }

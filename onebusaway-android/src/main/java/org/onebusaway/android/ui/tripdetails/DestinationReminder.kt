@@ -40,7 +40,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.ResolvableApiException
@@ -51,13 +50,13 @@ import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.PushRegistrationEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.location.isLocationEnabled
-import org.onebusaway.android.util.PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
 
 /**
  * The destination-reminder flow (set a reminder to alight at a chosen stop), as a reusable Compose
@@ -104,6 +103,14 @@ internal fun rememberDestinationReminderAction(
             pendingServiceIntent?.let { startNavigationService(it) }
         }
     }
+
+    // The system notification-permission dialog only pauses (never stops) the activity, so the
+    // ProcessLifecycleOwner ON_START resync in PushRegistrationManager never fires for it. Resync
+    // straight from the result callback so an in-flow opt-in registers this device immediately —
+    // the highest-value moment for the push feature — instead of waiting for the next app launch.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { PushRegistrationEntryPoint.get(context).resync() }
 
     fun askUserToTurnLocationOn() {
         @Suppress("DEPRECATION")
@@ -173,9 +180,7 @@ internal fun rememberDestinationReminderAction(
         )
         // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.requestPermissions(
-                activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST
-            )
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         val serviceIntent = setUpNavigationService(position) ?: return
         startNavigationService(serviceIntent)

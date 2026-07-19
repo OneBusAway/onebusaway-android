@@ -20,9 +20,10 @@ package org.onebusaway.android.ui.tripdetails
 import android.Manifest
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -32,6 +33,7 @@ import androidx.navigation.navArgument
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.app.di.PushRegistrationEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.dataview.TripTrajectoryRoute
@@ -41,7 +43,6 @@ import org.onebusaway.android.ui.tripinfo.TripInfoEvent
 import org.onebusaway.android.ui.tripinfo.TripInfoRoute
 import org.onebusaway.android.ui.tripinfo.TripInfoViewModel
 import org.onebusaway.android.ui.tripinfo.confirmDeleteReminder
-import org.onebusaway.android.util.PermissionUtils
 
 /**
  * The trip navigation cluster: a trip's stops + live vehicle ([NavRoutes.TRIP_DETAILS]) and the
@@ -152,6 +153,13 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
         val infoStopId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_STOP_ID).orEmpty()
         val infoVm: TripInfoViewModel = hiltViewModel()
+        // The system notification-permission dialog only pauses (never stops) the activity, so the
+        // ProcessLifecycleOwner ON_START resync in PushRegistrationManager never fires for it. Resync
+        // straight from the result callback so an in-flow opt-in registers this device immediately
+        // instead of waiting for the next app launch.
+        val notificationPermissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { PushRegistrationEntryPoint.get(activity).resync() }
         LaunchedEffect(infoVm) {
             infoVm.events.collect { event ->
                 when (event) {
@@ -174,11 +182,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 onSave = {
                     // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        ActivityCompat.requestPermissions(
-                            activity,
-                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                            PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
-                        )
+                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     infoVm.save()
                 },

@@ -306,8 +306,13 @@ class PushRegistrationManager internal constructor(
 
     /**
      * The registration last successfully sent to the server, or null if none is on record. The token
-     * slot doubles as the commit sentinel: [persist] writes it last and [clearLast] nulls it, so a
-     * torn/absent write reads back here as "no record" and re-registration (safe, idempotent) follows.
+     * slot doubles as the commit sentinel: [persist] writes it last and [clearLast] nulls it. That
+     * ordering is exact for in-process reads (the prefs cache updates synchronously, in call order) but
+     * each slot persists to disk as its own async DataStore edit, so it is NOT guaranteed across a
+     * process death mid-persist. That's acceptable by design: any torn disk state either reads back as
+     * "no record" (missing base/token) → re-registration, which is a safe idempotent upsert, or as a
+     * stale record whose DELETE the server answers with a tolerated 404. No recovery path depends on
+     * the sentinel being durably last.
      */
     private fun loadLast(): PushRegistration? {
         val base = prefs.getString(KEY_BASE, null) ?: return null
@@ -341,7 +346,8 @@ class PushRegistrationManager internal constructor(
         prefs.setString(KEY_DESCRIPTION, registration.description)
         // Stamps the refresh clock: [sinceLastSent] measures the 24h re-POST window from here.
         prefs.setLong(KEY_SENT_AT, now().epochMs)
-        // Written last: its presence is what [loadLast] treats as "a full record is committed".
+        // Written last: its presence is what [loadLast] treats as "a full record is committed". Exact
+        // in-process; only best-effort on disk (see [loadLast] for why a torn persist is still safe).
         prefs.setString(KEY_TOKEN, registration.token)
         // This endpoint is now the live registration, so drop any owed DELETE for it — otherwise a
         // return-to-an-old-endpoint (region/token switched away, then back) would DELETE the row we just

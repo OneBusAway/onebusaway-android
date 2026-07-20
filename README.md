@@ -31,7 +31,7 @@ Want to build the project yourself and test some changes?  See our [build docume
 
 ## Contributing
 
-We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/main/.github/CONTRIBUTING.md) for details, including Code Style Guidelines and Template.
+We welcome contributions to the project! Please see our [Contributing Guide](https://github.com/OneBusAway/onebusaway-android/blob/main/.github/CONTRIBUTING.md) for details, including Code Style Guidelines.
 
 ## System Architecture
 

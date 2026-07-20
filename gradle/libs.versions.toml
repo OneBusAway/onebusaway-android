@@ -65,7 +65,6 @@ okhttp = "5.4.0"
 kotlinxSerializationJson = "1.11.0"
 coroutines = "1.11.0"
 material = "1.14.0"
-commonsIo = "2.22.0"
 gtfsRealtime = "0.1.0"
 maplibre = "13.3.1"
 # Test-only
@@ -138,7 +137,6 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 
 # --- Misc ---
 material = { module = "com.google.android.material:material", version.ref = "material" }
-commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 
 # --- Testing ---

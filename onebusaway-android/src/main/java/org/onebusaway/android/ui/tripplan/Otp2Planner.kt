@@ -111,8 +111,9 @@ class Otp2Planner @Inject constructor(
  * (which folds in wait/transfer/boarding penalties, not just distance) beats every transit option,
  * the filter chain deletes the *transit* itineraries and attaches this error while **keeping the
  * walk-only itinerary in `edges`**. Surfacing the error there would throw away a valid walk route and
- * show a "Try walking instead" advisory with no result — even for trips too long to actually walk.
- * Returning whatever itineraries came back shows that walk route as a normal option instead.
+ * show a no-result message — even for trips too long to actually walk. Returning whatever itineraries
+ * came back shows that walk route as a normal option instead; the code only classifies as an error
+ * (the same-location "too close" case) when there is genuinely nothing to show.
  *
  * This is safe for every *fatal* code — `LOCATION_NOT_FOUND`, `OUTSIDE_BOUNDS`,
  * `NO_TRANSIT_CONNECTION`, the same-location `WALKING_BETTER_THAN_TRANSIT` raised by OTP's
@@ -136,10 +137,14 @@ internal fun resolveOtp2Plan(data: PlanQuery.Data): List<TripItinerary> {
 /**
  * Classifies an OTP2 `routingErrors` entry into a [TripPlanError]: reuses OTP1's existing detail
  * strings where [RoutingErrorCode] names a genuinely equivalent failure, and an OTP2-specific string
- * where it doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] and
- * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] have no OTP1-era concept, so folding them into the
- * generic fallback would silently discard information OTP2 is actually telling the user. Top-level and
- * `internal` (not a `Context`-bound method) so it's exhaustively JVM-unit-testable without Apollo.
+ * where it doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] has no OTP1-era concept, so folding it
+ * into the generic fallback would silently discard information OTP2 is actually telling the user.
+ *
+ * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] reaches here only when there are no itineraries
+ * (see [resolveOtp2Plan] — when a walk route survives we return it rather than classify an error),
+ * i.e. only OTP's same-location `SameEdgeAdjuster` case, which is exactly OTP1's `TOO_CLOSE`. So it
+ * maps to the same too-close result and never advises walking (#1947). Top-level and `internal` (not a
+ * `Context`-bound method) so it's exhaustively JVM-unit-testable without Apollo.
  */
 internal fun otp2ErrorFor(code: RoutingErrorCode, inputField: InputField?): TripPlanError = when (code) {
     RoutingErrorCode.OUTSIDE_BOUNDS ->
@@ -162,7 +167,7 @@ internal fun otp2ErrorFor(code: RoutingErrorCode, inputField: InputField?): Trip
         TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_outside_service_period)
 
     RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT ->
-        TripPlanError(TripPlanError.Category.ADVISORY, R.string.tripplanner_error_walking_better_than_transit)
+        TripPlanError(TripPlanError.Category.NO_ROUTE, R.string.tripplanner_error_too_close)
 
     RoutingErrorCode.UNKNOWN__ -> TripPlanError.Unknown
 }

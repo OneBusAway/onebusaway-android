@@ -132,7 +132,6 @@
          error = red (a failure). These are *text* colours read against the dark inverseSurface bar, so
          the light theme uses the bright tone-80 values; values-night flips to the deep tone-40 values
          for the bar that turns light there. -->
-    <color name="md_theme_severityInfo">#A9C7FF</color>
     <color name="md_theme_severityWarning">#F0C173</color>
     <color name="md_theme_severityError">#FFB4AB</color>
 

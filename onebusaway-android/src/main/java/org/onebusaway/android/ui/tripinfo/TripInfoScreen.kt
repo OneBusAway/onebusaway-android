@@ -27,9 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -63,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.icons.AppIcons
 
 /** Stateful entry point: collects the ViewModel state and wires the form callbacks. */
 @Composable
@@ -111,7 +109,7 @@ fun TripInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = AppIcons.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_up)
                         )
                     }
@@ -163,7 +161,7 @@ private fun OverflowMenu(onShowRoute: () -> Unit, onShowStop: () -> Unit) {
     Box {
         IconButton(onClick = { expanded = true }) {
             Icon(
-                imageVector = Icons.Default.MoreVert,
+                imageVector = AppIcons.MoreVert,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface
             )

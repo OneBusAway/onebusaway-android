@@ -16,8 +16,6 @@
 package org.onebusaway.android.ui.compose.components
 
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.icons.AppIcons
 
 /**
  * The app's standard top bar for full-screen Compose hosts: a back arrow, the [title], optional
@@ -49,7 +48,7 @@ fun ObaTopAppBar(
         navigationIcon = {
             IconButton(onClick = onBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = AppIcons.ArrowBack,
                     contentDescription = stringResource(R.string.navigate_up)
                 )
             }

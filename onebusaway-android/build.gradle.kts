@@ -440,10 +440,9 @@ dependencies {
     androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
     implementation(libs.compose.material3)              // 1.4.0 via BOM
-    // Material icons (Icons.Filled.*, AutoMirrored ArrowBack). Deprecated and frozen at 1.7.8, and
-    // no longer pulled transitively by material3 1.4.0, so pin explicitly. 1.7.8 runs fine on the
-    // 1.11.x Compose runtime; not managed by the BOM, hence the literal version.
-    implementation(libs.compose.material.icons.core)
+    // The handful of Material Icons the app uses are vendored as plain Compose ImageVectors in
+    // org.onebusaway.android.ui.icons.AppIcons, so we no longer depend on the deprecated (and frozen
+    // at 1.7.8) androidx.compose.material:material-icons-core artifact.
     implementation(libs.androidx.activity.compose)      // matches activity-ktx 1.13.0
     // ViewModel + StateFlow for Compose screens (lifecycle 2.10.0; minSdk 23)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)

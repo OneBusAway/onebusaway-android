@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -46,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
+import org.onebusaway.android.ui.icons.AppIcons
 
 /** A labelled overflow action (the per-tab "Clear" item) for [MyTab]. */
 data class TabAction(@param:StringRes val labelRes: Int, val onClick: () -> Unit)
@@ -140,7 +139,7 @@ private fun ClearOverflow(clear: TabAction) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = null)
+            Icon(AppIcons.MoreVert, contentDescription = null)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(

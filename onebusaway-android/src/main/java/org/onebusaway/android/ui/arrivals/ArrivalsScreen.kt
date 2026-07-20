@@ -36,9 +36,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -81,6 +78,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.MenuRow
@@ -227,7 +225,7 @@ fun ArrivalsScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = AppIcons.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_up)
                         )
                     }
@@ -557,7 +555,7 @@ private fun AlertList(
                 Text(pluralStringResource(R.plurals.alert_show_more, remaining, remaining))
                 Spacer(Modifier.width(4.dp))
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
+                    imageVector = AppIcons.KeyboardArrowDown,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp)
                 )

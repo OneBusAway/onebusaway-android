@@ -41,8 +41,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import kotlin.math.hypot
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.icons.AppIcons
 
 /**
  * One step of a spotlight tutorial: a caption (title + body, optional trailing [bodyIcon]) anchored to
@@ -403,7 +402,7 @@ private fun TutorialCaption(
                 )
                 IconButton(onClick = onClose) {
                     Icon(
-                        Icons.Default.Close,
+                        AppIcons.Close,
                         contentDescription = stringResource(R.string.tutorial_button_close),
                     )
                 }

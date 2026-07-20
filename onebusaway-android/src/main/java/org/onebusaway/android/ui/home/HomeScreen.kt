@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
+import org.onebusaway.android.ui.arrivals.resolveSelectedRouteGroup
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
@@ -84,6 +85,7 @@ import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
+import org.onebusaway.android.ui.home.arrivals.selectedArrivalRowKey
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
@@ -396,10 +398,15 @@ fun HomeScreen(
                             ?.routeColor,
                     )
                 }.orEmpty(),
-                subordinateHeadsign = subordinateRouteHeadsign(currentFocus.selectedRoute) { routeId, directionId ->
-                    arrivalsContent?.routeGroups?.firstOrNull {
-                        it.routeId == routeId && (directionId == null || it.directionId == directionId)
-                    }?.headsign
+                subordinateHeadsign = currentFocus.selectedRoute?.let { selection ->
+                    // Resolve the shown headsign from the loaded arrivals via the same row resolver the
+                    // drawer highlight uses, so every entry point (arrivals row, map route-label tap)
+                    // projects it identically instead of each carrying its own copy.
+                    resolveSelectedRouteGroup(
+                        arrivalsContent?.routeGroups.orEmpty(),
+                        selection.selectedArrivalRowKey(),
+                        selection.originLeg.routeId,
+                    )?.headsign
                 },
             )
             is CurrentFocus.Route -> routeHeader?.let { header ->
@@ -969,21 +976,4 @@ private fun TripEndpoint.toGeoPoint(): GeoPoint? {
     val lat = lat
     val lon = lon
     return if (lat != null && lon != null) GeoPoint(lat, lon) else null
-}
-
-/**
- * The headsign to show beside a focused stop's subordinate route. Prefer the origin headsign the
- * [selection] carried (the arrivals-drawer row entry sets it from the tapped arrival), else resolve it
- * from the loaded arrivals by the origin leg's (route, direction) via [headsignFor] — so entering route
- * focus from a map route-label tap, which carries no headsign, still labels the direction. Null when
- * neither resolves.
- */
-internal fun subordinateRouteHeadsign(
-    selection: StopRouteSelection?,
-    headsignFor: (routeId: String, directionId: Int?) -> String?,
-): String? {
-    selection ?: return null
-    selection.originHeadsign?.let { return it }
-    val leg = selection.legs.firstOrNull() ?: return null
-    return headsignFor(leg.routeId, leg.directionId)
 }

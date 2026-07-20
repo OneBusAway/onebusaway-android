@@ -139,9 +139,11 @@ secure.properties=/path/to/secure.properties
 
 ## Code Style
 
-Use AOSP code style. Import `AndroidStyle.xml` (in repo root) into Android Studio:
-1. Place in Android Studio `/codestyles` directory
-2. Select "AndroidStyle" under File > Settings > Code Style
+Formatting is automated by **Spotless** (root `build.gradle.kts`) — ktlint for Kotlin and
+`*.gradle.kts` (`android_studio` style, pinned in `.editorconfig`), google-java-format for the few
+Java files. Run `./gradlew spotlessApply` to format and `./gradlew spotlessCheck` to verify. Don't
+hand-format; let Spotless own it. (The old `AndroidStyle.xml` Android Studio scheme was removed once
+formatting moved into the build.)
 
 ## Testing
 

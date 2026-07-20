@@ -31,6 +31,12 @@ hilt = "2.60.1"
 apollo = "5.0.1"
 crashlyticsPlugin = "3.0.7"
 playPublisher = "4.0.0"
+# Code formatting: the Spotless Gradle plugin drives ktlint (Kotlin / *.gradle.kts) and
+# google-java-format (the handful of *.java files). See root build.gradle.kts's spotless {} block
+# and .editorconfig (ktlint_code_style = android_studio). ktlint's version is pinned separately so
+# formatting output is reproducible across machines regardless of Spotless's bundled default.
+spotless = "7.0.2"
+ktlint = "1.7.0"
 # Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
 # the :lint-rules module.
 lint = "32.3.0"
@@ -163,3 +169,4 @@ apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }
 play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

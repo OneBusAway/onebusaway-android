@@ -1,0 +1,16 @@
+# EditorConfig — https://editorconfig.org
+# Read by ktlint (via Spotless; see root build.gradle.kts) to pick the formatting style, and by
+# IDEs/editors that support EditorConfig. `android_studio` keeps ktlint close to the AOSP look the
+# project used before Spotless (4-space continuation indent, no wildcard imports, etc.).
+root = true
+
+[*.{kt,kts}]
+ktlint_code_style = android_studio
+# ktlint runs at its 1.7.0 standard-ruleset defaults (which ship filename / property-naming /
+# backing-property-naming disabled — we keep that). function-naming IS on; exempt @Composable
+# functions since PascalCase is correct for them. Keep in sync with build.gradle.kts's editorConfigOverride.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+# max-line-length is the one standard rule Spotless cannot auto-fix (it can't know how to wrap a
+# line), so leaving it on turns every long line into a manual chore — exactly the toil this move away
+# from hand-formatting is meant to remove. Disabled so formatting stays fully automatic.
+ktlint_standard_max-line-length = disabled

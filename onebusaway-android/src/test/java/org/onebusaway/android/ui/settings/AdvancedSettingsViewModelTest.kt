@@ -48,63 +48,70 @@ import org.onebusaway.android.testing.FakePreferencesRepository
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdvancedSettingsViewModelTest {
 
-    private val EXPERIMENTAL = R.string.preference_key_experimental_regions
-    private val OTP_VERSION = R.string.preference_key_otp_api_url_version
+    private val experimental = R.string.preference_key_experimental_regions
+    private val otpVersion = R.string.preference_key_otp_api_url_version
 
     @Test
-    fun `turning off an experimental region clears it, persists the toggle, and resets the OTP version`() =
-        runTest {
-            val repo = FakeRegionRepository(region(1)).apply {
-                refreshResult = RegionStatus.Changed(region(2)) // the re-resolve lands on a new region
-            }
-            val prefs = FakePreferencesRepository().apply { setBoolean(OTP_VERSION, true) }
-
-            applyExperimentalRegionsToggle(
-                enabled = false, regionWasExperimental = true, prefs = prefs, regionRepository = repo,
-            )
-
-            assertNull("the now-invalid region is cleared", repo.region.value)
-            assertFalse("the toggle is persisted", prefs.getBoolean(EXPERIMENTAL, true))
-            assertEquals("the region is re-resolved", 1, repo.refreshCount)
-            assertFalse("a real change resets the OTP version", prefs.getBoolean(OTP_VERSION, true))
+    fun `turning off an experimental region clears it, persists the toggle, and resets the OTP version`() = runTest {
+        val repo = FakeRegionRepository(region(1)).apply {
+            refreshResult = RegionStatus.Changed(region(2)) // the re-resolve lands on a new region
         }
+        val prefs = FakePreferencesRepository().apply { setBoolean(otpVersion, true) }
+
+        applyExperimentalRegionsToggle(
+            enabled = false,
+            regionWasExperimental = true,
+            prefs = prefs,
+            regionRepository = repo
+        )
+
+        assertNull("the now-invalid region is cleared", repo.region.value)
+        assertFalse("the toggle is persisted", prefs.getBoolean(experimental, true))
+        assertEquals("the region is re-resolved", 1, repo.refreshCount)
+        assertFalse("a real change resets the OTP version", prefs.getBoolean(otpVersion, true))
+    }
 
     @Test
     fun `enabling experimental regions persists the toggle without clearing the region`() = runTest {
         val repo = FakeRegionRepository(region(1)).apply { refreshResult = RegionStatus.Unchanged }
-        val prefs = FakePreferencesRepository().apply { setBoolean(OTP_VERSION, true) }
+        val prefs = FakePreferencesRepository().apply { setBoolean(otpVersion, true) }
 
         applyExperimentalRegionsToggle(
-            enabled = true, regionWasExperimental = false, prefs = prefs, regionRepository = repo,
+            enabled = true,
+            regionWasExperimental = false,
+            prefs = prefs,
+            regionRepository = repo
         )
 
         assertNotNull("enabling never clears the region", repo.region.value)
-        assertTrue("the toggle is persisted", prefs.getBoolean(EXPERIMENTAL, false))
+        assertTrue("the toggle is persisted", prefs.getBoolean(experimental, false))
         assertEquals("the region is still re-resolved", 1, repo.refreshCount)
-        assertTrue("an unchanged region leaves the OTP version alone", prefs.getBoolean(OTP_VERSION, true))
+        assertTrue("an unchanged region leaves the OTP version alone", prefs.getBoolean(otpVersion, true))
     }
 
     @Test
-    fun `turning off a non-experimental region persists the toggle but does not clear the region`() =
-        runTest {
-            val repo = FakeRegionRepository(region(1)).apply { refreshResult = RegionStatus.Unchanged }
-            val prefs = FakePreferencesRepository()
+    fun `turning off a non-experimental region persists the toggle but does not clear the region`() = runTest {
+        val repo = FakeRegionRepository(region(1)).apply { refreshResult = RegionStatus.Unchanged }
+        val prefs = FakePreferencesRepository()
 
-            applyExperimentalRegionsToggle(
-                enabled = false, regionWasExperimental = false, prefs = prefs, regionRepository = repo,
-            )
+        applyExperimentalRegionsToggle(
+            enabled = false,
+            regionWasExperimental = false,
+            prefs = prefs,
+            regionRepository = repo
+        )
 
-            assertNotNull("nothing to clear when the region wasn't experimental", repo.region.value)
-            assertFalse("the toggle is persisted", prefs.getBoolean(EXPERIMENTAL, true))
-        }
+        assertNotNull("nothing to clear when the region wasn't experimental", repo.region.value)
+        assertFalse("the toggle is persisted", prefs.getBoolean(experimental, true))
+    }
 
-    private val MAP_STOP_CACHE_SIZE = R.string.preference_key_map_stop_cache_size
+    private val mapStopCacheSize = R.string.preference_key_map_stop_cache_size
 
     @Test
     fun `a valid map stop cache size is accepted and persisted`() {
         val prefs = FakePreferencesRepository()
         assertTrue("a valid in-range size is accepted", applyMapStopCacheSize("250", prefs))
-        assertEquals("the size is persisted", 250, prefs.getInt(MAP_STOP_CACHE_SIZE, -1))
+        assertEquals("the size is persisted", 250, prefs.getInt(mapStopCacheSize, -1))
     }
 
     @Test
@@ -112,7 +119,7 @@ class AdvancedSettingsViewModelTest {
         val prefs = FakePreferencesRepository()
         assertFalse("an out-of-range size is rejected", applyMapStopCacheSize("99999", prefs))
         assertFalse("a non-numeric size is rejected", applyMapStopCacheSize("abc", prefs))
-        assertEquals("nothing was persisted", -1, prefs.getInt(MAP_STOP_CACHE_SIZE, -1))
+        assertEquals("nothing was persisted", -1, prefs.getInt(mapStopCacheSize, -1))
     }
 
     @Test
@@ -124,19 +131,22 @@ class AdvancedSettingsViewModelTest {
             refreshResult = RegionStatus.NeedsManualSelection(regions)
             emitState(RegionState.NeedsManualChoice(regions))
         }
-        val prefs = FakePreferencesRepository().apply { setBoolean(OTP_VERSION, true) }
+        val prefs = FakePreferencesRepository().apply { setBoolean(otpVersion, true) }
 
         val job = launch {
             applyExperimentalRegionsToggle(
-                enabled = false, regionWasExperimental = false, prefs = prefs, regionRepository = repo,
+                enabled = false,
+                regionWasExperimental = false,
+                prefs = prefs,
+                regionRepository = repo
             )
         }
         advanceUntilIdle()
-        assertTrue("must not reset before the pick resolves", prefs.getBoolean(OTP_VERSION, true))
+        assertTrue("must not reset before the pick resolves", prefs.getBoolean(otpVersion, true))
 
         repo.emit(regions[1]) // the user's choice resolves the region
         advanceUntilIdle()
-        assertFalse("resets once the region becomes Active", prefs.getBoolean(OTP_VERSION, true))
+        assertFalse("resets once the region becomes Active", prefs.getBoolean(otpVersion, true))
         job.cancel()
     }
 }

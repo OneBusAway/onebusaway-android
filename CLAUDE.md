@@ -145,6 +145,14 @@ Java files. Run `./gradlew spotlessApply` to format and `./gradlew spotlessCheck
 hand-format; let Spotless own it. (The old `AndroidStyle.xml` Android Studio scheme was removed once
 formatting moved into the build.)
 
+**CI enforces it** — `spotlessCheck` is wired into `check` (which the CI job runs), so unformatted
+code fails the build (same strictness tier as `warningsAsErrors`). ktlint runs the `android_studio`
+code style's standard ruleset **as-is** — including its naming / file-structure checks
+(`property-naming`, `backing-property-naming`, `filename`) — with only two deliberate adjustments:
+`@Composable` functions are exempt from `function-naming` (PascalCase is correct there), and
+`max-line-length` is off (Spotless can't auto-wrap). The one-time bulk reformat is in
+`.git-blame-ignore-revs`.
+
 ## Testing
 
 Tests are in `onebusaway-android/src/androidTest/java/`. Key test classes:

@@ -27,17 +27,17 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.map.bike.BikeAction
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.bike.bikeAction
 import org.onebusaway.android.map.bike.filterStations
 import org.onebusaway.android.map.render.BikeMarker
+import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toLocation
-import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
  * The bikeshare overlay (the legacy `BikeshareMapController`). It **overlays every view** rather than
@@ -52,12 +52,12 @@ class BikeLayerController(
     private val bikeStationsRepository: BikeStationsRepository,
     private val prefsRepository: PreferencesRepository,
     private val regionRepository: RegionRepository,
-    private val scope: CoroutineScope,
+    private val scope: CoroutineScope
 ) {
 
     // Defaults off; the host pushes the real `LayerUtils.isBikeshareLayerVisible()` value on resume
     // (kept off the construction path so the model stays JVM-constructible, like WeatherViewModel).
-    private val _bikeshareVisible = MutableStateFlow(false)
+    private val bikeshareVisible = MutableStateFlow(false)
 
     private var loadJob: Job? = null
 
@@ -67,7 +67,7 @@ class BikeLayerController(
         if (persist) {
             prefsRepository.setBoolean(R.string.preference_key_layer_bikeshare_visible, visible)
         }
-        _bikeshareVisible.value = visible
+        bikeshareVisible.value = visible
     }
 
     /**
@@ -83,13 +83,13 @@ class BikeLayerController(
                 // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
                 host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS)
                     .filter { !host.cameraInteracting.value },
-                _bikeshareVisible,
+                bikeshareVisible
             ) { camera, layerVisible -> camera to layerVisible }
                 // collectLatest so a newer viewport cancels an in-flight station load (the old loadJob?.cancel()).
                 .collectLatest { (camera, layerVisible) ->
                     if (!BikeshareAvailability.isEnabled(
                             regionRepository.currentRegion(),
-                            prefsRepository.getString(R.string.preference_key_otp_api_url, null),
+                            prefsRepository.getString(R.string.preference_key_otp_api_url, null)
                         )
                     ) {
                         return@collectLatest

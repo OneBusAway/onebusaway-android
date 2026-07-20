@@ -51,8 +51,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -93,7 +93,7 @@ data class TutorialStep(
     // When this is the last step of its sequence, the advance button reads "Finish" — unless this step
     // continues into a follow-on tutorial (e.g. the welcome map-stop step chains into the arrivals tour),
     // in which case it keeps reading "Next".
-    val continuesAfter: Boolean = false,
+    val continuesAfter: Boolean = false
 )
 
 /**
@@ -192,17 +192,17 @@ class TutorialState {
 fun rememberTutorialState(): TutorialState = remember { TutorialState() }
 
 /** An ease-out-back curve (overshoots past 1) that gives the annulus pulse its springy "bounce". */
-private val SpotlightBounceEasing = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
+private val SPOTLIGHT_BOUNCE_EASING = CubicBezierEasing(0.34f, 1.56f, 0.64f, 1f)
 
 // A step change transitions the spotlight in place rather than sliding it across the screen: the cutout
 // shrinks shut over the old target, swaps to the new one, then springs back open. The two halves run
 // back-to-back, ~300 ms total.
-private const val SpotlightCloseMillis = 130
-private const val SpotlightOpenMillis = 170
+private const val SPOTLIGHT_CLOSE_MILLIS = 130
+private const val SPOTLIGHT_OPEN_MILLIS = 170
 
 // On a genuine finish, the final cutout grows past the screen edges, dissolving the scrim to reveal the
 // app beneath, then the overlay tears down.
-private const val SpotlightFinishMillis = 300
+private const val SPOTLIGHT_FINISH_MILLIS = 300
 
 /**
  * Provides the active [TutorialState] to deep composables so a target can anchor itself via
@@ -216,9 +216,11 @@ val LocalTutorialState = staticCompositionLocalOf<TutorialState?> { null }
  * Reports this composable's on-screen bounds to [state] under [id] so [TutorialOverlay] can spotlight
  * it. No-ops when [state] is null (no tutorial host) — safe to leave on a reused composable.
  */
-fun Modifier.tutorialAnchor(state: TutorialState?, id: String): Modifier =
-    if (state == null) this
-    else onGloballyPositioned { state.reportBounds(id, it.boundsInRoot()) }
+fun Modifier.tutorialAnchor(state: TutorialState?, id: String): Modifier = if (state == null) {
+    this
+} else {
+    onGloballyPositioned { state.reportBounds(id, it.boundsInRoot()) }
+}
 
 /**
  * The spotlight overlay for the active tutorial step: a full-screen scrim with a rounded cutout over
@@ -245,11 +247,11 @@ fun TutorialOverlay(state: TutorialState) {
     val openFraction = remember { Animatable(0f) }
     LaunchedEffect(step.id) {
         if (step.id != spotlightStepId) {
-            openFraction.animateTo(0f, tween(SpotlightCloseMillis, easing = FastOutLinearInEasing))
+            openFraction.animateTo(0f, tween(SPOTLIGHT_CLOSE_MILLIS, easing = FastOutLinearInEasing))
             spotlightStepId = step.id
         }
         // The springy reopen — also the initial pop-in, where there's no close half to run first.
-        openFraction.animateTo(1f, tween(SpotlightOpenMillis, easing = SpotlightBounceEasing))
+        openFraction.animateTo(1f, tween(SPOTLIGHT_OPEN_MILLIS, easing = SPOTLIGHT_BOUNCE_EASING))
     }
 
     // The finish flourish: on a genuine finish the cutout grows past the screen edges (see the Canvas),
@@ -257,7 +259,7 @@ fun TutorialOverlay(state: TutorialState) {
     val finishProgress = remember { Animatable(0f) }
     LaunchedEffect(state.finishing) {
         if (state.finishing) {
-            finishProgress.animateTo(1f, tween(SpotlightFinishMillis, easing = FastOutSlowInEasing))
+            finishProgress.animateTo(1f, tween(SPOTLIGHT_FINISH_MILLIS, easing = FastOutSlowInEasing))
             state.onFinishExpanded()
         }
     }
@@ -273,10 +275,10 @@ fun TutorialOverlay(state: TutorialState) {
         initialValue = 0f,
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 750, easing = SpotlightBounceEasing),
-            repeatMode = RepeatMode.Reverse,
+            animation = tween(durationMillis = 750, easing = SPOTLIGHT_BOUNCE_EASING),
+            repeatMode = RepeatMode.Reverse
         ),
-        label = "annulusPulse",
+        label = "annulusPulse"
     )
 
     BoxWithConstraints(
@@ -316,8 +318,11 @@ fun TutorialOverlay(state: TutorialState) {
                 // skipped while not finishing (every frame of the overlay's pulsing lifetime), so the
                 // farthest-corner hypot isn't computed and thrown away ~60 times a second for nothing.
                 val radius =
-                    if (finishProgress.value == 0f) openRadius
-                    else lerp(openRadius, farthestCorner(center, size) + minRadius.toPx(), finishProgress.value)
+                    if (finishProgress.value == 0f) {
+                        openRadius
+                    } else {
+                        lerp(openRadius, farthestCorner(center, size) + minRadius.toPx(), finishProgress.value)
+                    }
                 // Annulus thickness ~half the radius, pulsing ±~45% so the ring bounces around the cutout.
                 // Tied to the *open* radius (not the expanding one) so it stays a steady band as it sweeps
                 // off-screen on finish rather than ballooning.
@@ -334,14 +339,14 @@ fun TutorialOverlay(state: TutorialState) {
                     color = annulusColor,
                     radius = radius + annulusWidth / 2f,
                     center = center,
-                    style = Stroke(width = annulusWidth),
+                    style = Stroke(width = annulusWidth)
                 )
                 // The brand-color ring right at the cutout edge.
                 drawCircle(
                     color = ringColor,
                     radius = radius,
                     center = center,
-                    style = Stroke(width = 2.dp.toPx()),
+                    style = Stroke(width = 2.dp.toPx())
                 )
             }
         }
@@ -363,7 +368,7 @@ fun TutorialOverlay(state: TutorialState) {
                 isLast = state.isLast,
                 onNext = state::advance,
                 onClose = state::dismiss,
-                modifier = Modifier.align(alignment),
+                modifier = Modifier.align(alignment)
             )
         }
     }
@@ -375,7 +380,7 @@ private fun TutorialCaption(
     isLast: Boolean,
     onNext: () -> Unit,
     onClose: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier
@@ -386,7 +391,7 @@ private fun TutorialCaption(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 6.dp,
-        shadowElevation = 8.dp,
+        shadowElevation = 8.dp
     ) {
         // Pass the app name as a format arg to both strings so a branded welcome title ("Welcome to
         // %1$s!") fills in; strings without a placeholder simply ignore the extra arg (white-label).
@@ -398,12 +403,12 @@ private fun TutorialCaption(
                     text = stringResource(step.title, appName),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f).padding(top = 12.dp),
+                    modifier = Modifier.weight(1f).padding(top = 12.dp)
                 )
                 IconButton(onClick = onClose) {
                     Icon(
                         AppIcons.Close,
-                        contentDescription = stringResource(R.string.tutorial_button_close),
+                        contentDescription = stringResource(R.string.tutorial_button_close)
                     )
                 }
             }
@@ -411,14 +416,14 @@ private fun TutorialCaption(
                 Text(
                     text = stringResource(step.body, appName),
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f)
                 )
                 step.bodyIcon?.let { icon ->
                     Spacer(Modifier.width(8.dp))
                     Icon(
                         painter = painterResource(icon),
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -431,7 +436,7 @@ private fun TutorialCaption(
             }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, end = 12.dp),
-                horizontalArrangement = Arrangement.End,
+                horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onNext) { Text(stringResource(advanceLabel)) }
             }

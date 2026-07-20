@@ -1,0 +1,10 @@
+# Revisions listed here are skipped by `git blame` so a bulk mechanical change
+# doesn't clobber authorship of every line it touched.
+#
+# GitHub honors this file automatically. For local git, enable it once with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Only pure, tree-wide, behavior-preserving reformats belong here.
+
+# Reformat entire codebase with Spotless (ktlint + google-java-format) (#1971)
+f551f81aadaf7acafc9294dabc9c0cdcc7d5bfb8

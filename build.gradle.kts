@@ -50,25 +50,21 @@ plugins {
 // Java files. ktlint reads .editorconfig (ktlint_code_style = android_studio) for style. Generated
 // sources under build/ are excluded. Run `./gradlew spotlessApply` before pushing.
 spotless {
-    // Applying Spotless auto-wires `spotlessCheck` into the `check` lifecycle task, which CI runs.
-    // Until the whole tree is reformatted (a follow-up "reformat the world" change), enforcing that
-    // here would fail CI on every still-unformatted file. So the gate is OFF for now — `spotlessApply`
-    // and `spotlessCheck` are available to run, but `check` doesn't depend on them. The reformat change
-    // flips this back on (delete this line) once the tree is clean.
-    isEnforceCheck = false
-
+    // Applying Spotless auto-wires `spotlessCheck` into the `check` lifecycle task (which CI runs), so
+    // formatting is enforced now that the whole tree is Spotless-clean. Run `./gradlew spotlessApply`
+    // before pushing to satisfy it.
     val ktlintVersion = libs.versions.ktlint.get()
     // Authoritative ktlint config for the build/CI/agents. Applied via editorConfigOverride (rather
     // than relying on .editorconfig discovery, which Spotless doesn't apply to the kotlinGradle
     // target) so every entry point formats identically. .editorconfig mirrors these for IDEs and the
     // ktlint CLI — keep the two in sync.
-    // ktlint runs at its own 1.7.0 standard-ruleset defaults — note that 1.7.0 already ships the
-    // opinionated filename / property-naming / backing-property-naming rules DISABLED by default, and
-    // we keep that default (naming/file-structure enforcement, if ever wanted, belongs in detekt, not
-    // an auto-formatter). Only two deliberate adjustments below.
+    //
+    // We take the `android_studio` code style's standard ruleset as-is — including its naming checks
+    // (property-naming, backing-property-naming) — rather than carving out exceptions. Only two
+    // deliberate adjustments below.
     val ktlintConfig = mapOf(
         "ktlint_code_style" to "android_studio",
-        // function-naming IS on by default; exempt @Composable functions from it since PascalCase is
+        // function-naming stays on, but exempt @Composable functions from it since PascalCase is
         // correct for them (ktlint's own supported knob, not a workaround).
         "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
         // max-line-length is the one standard rule Spotless cannot auto-fix (it can't decide how to

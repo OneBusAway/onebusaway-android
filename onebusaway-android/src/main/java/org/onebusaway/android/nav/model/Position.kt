@@ -20,10 +20,7 @@ package org.onebusaway.android.nav.model
  * A model class that holds a information for a single position recorded during navigation. Multiple
  * [Position] objects are included in a [PathLink] to define the data collected from the device as it
  * navigated the [PathLink].
- */
-data class Position
-
-/**
+ *
  * [pathLinkId] - the [PathLink] that this ooordinate belongs to
  * [coordinateId] - the unique ID for this Position.
  * [getReadyFlag] - true if the "Get Ready" alert has been announced to the user, false if it has not
@@ -39,17 +36,19 @@ data class Position
  * [numSatsUsed] - number of satellites used in fix
  * [locationProvider] - the name of the provider that generated this fix
  */
-(val pathLinkId: Long,
- val coordinateId: Int,
- val getReadyFlag: Boolean,
- val pullTheCordNowFlag: Boolean,
- val timeSinceAppStartedNanos: Long,
- val timeUtc: Long,
- val latitude: Double,
- val longitude: Double,
- val altitude: Double,
- val speed: Float?,
- val bearing: Float?,
- val horAccuracy: Float,
- val numSatsUsed: Int,
- val locationProvider: String)
+data class Position(
+    val pathLinkId: Long,
+    val coordinateId: Int,
+    val getReadyFlag: Boolean,
+    val pullTheCordNowFlag: Boolean,
+    val timeSinceAppStartedNanos: Long,
+    val timeUtc: Long,
+    val latitude: Double,
+    val longitude: Double,
+    val altitude: Double,
+    val speed: Float?,
+    val bearing: Float?,
+    val horAccuracy: Float,
+    val numSatsUsed: Int,
+    val locationProvider: String
+)

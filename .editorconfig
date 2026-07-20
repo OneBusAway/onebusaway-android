@@ -6,9 +6,9 @@ root = true
 
 [*.{kt,kts}]
 ktlint_code_style = android_studio
-# ktlint runs at its 1.7.0 standard-ruleset defaults (which ship filename / property-naming /
-# backing-property-naming disabled — we keep that). function-naming IS on; exempt @Composable
-# functions since PascalCase is correct for them. Keep in sync with build.gradle.kts's editorConfigOverride.
+# We take the android_studio code style's standard ruleset as-is (including its property-naming /
+# backing-property-naming checks). function-naming stays on but exempts @Composable, since PascalCase
+# is correct there. Keep in sync with build.gradle.kts's editorConfigOverride.
 ktlint_function_naming_ignore_when_annotated_with = Composable
 # max-line-length is the one standard rule Spotless cannot auto-fix (it can't know how to wrap a
 # line), so leaving it on turns every long line into a manual chore — exactly the toil this move away

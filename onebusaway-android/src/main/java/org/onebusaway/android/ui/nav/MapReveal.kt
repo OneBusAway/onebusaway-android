@@ -27,11 +27,10 @@ import org.onebusaway.android.util.GeoPoint
  * consumer. Matches the options that consumer applied, so the back-stack behavior is unchanged: a pushed
  * destination collapses back to HOME, and an already-open destination isn't re-created.
  */
-fun NavController.navigateFromHome(route: String) =
-    navigate(route) {
-        popUpTo(NavRoutes.HOME) { inclusive = false }
-        launchSingleTop = true
-    }
+fun NavController.navigateFromHome(route: String) = navigate(route) {
+    popUpTo(NavRoutes.HOME) { inclusive = false }
+    launchSingleTop = true
+}
 
 /**
  * "Show route / stop on the map" expressed as navigation rather than a reach-through to the host's
@@ -57,7 +56,7 @@ const val RESULT_MAP_STOP_LON = "mapReveal.stopLon"
  */
 fun NavController.revealRouteOnMap(request: ShowRouteRequest) {
     getBackStackEntry(NavRoutes.HOME).savedStateHandle.putRouteReveal(request)
-    popBackStack(NavRoutes.HOME, /* inclusive = */ false)
+    popBackStack(NavRoutes.HOME, false) // inclusive = false
 }
 
 /** The write half of the route-reveal round trip — every [ShowRouteRequest] field, so a request

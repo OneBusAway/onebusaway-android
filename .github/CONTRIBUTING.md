@@ -28,6 +28,11 @@ Before pushing, format your changes:
 ./gradlew spotlessCheck    # verify only, without modifying files
 ```
 
+**CI enforces `spotlessCheck`** — a PR with unformatted code fails the build, so run `spotlessApply`
+first. The one-time bulk reformat is listed in `.git-blame-ignore-revs`; enable it locally with
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips it (GitHub does this
+automatically).
+
 ## Closing policy for issues and pull requests
 
 OneBusAway for Android is a popular project and the capacity to deal with issues and pull requests is limited. Out of respect for our volunteers, issues and pull requests not in line with the guidelines listed in this document may be closed without notice.

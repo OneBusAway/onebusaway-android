@@ -35,6 +35,13 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v6
 
+      # Formatting gate. spotlessCheck needs no emulator, so run it up front to fail fast (in seconds)
+      # rather than after the ~10-min emulator boot below. `check` also depends on spotlessCheck, but
+      # by then the AVD is already running — this step keeps a formatting slip cheap. Run
+      # `./gradlew spotlessApply` locally to fix.
+      - name: Check formatting (Spotless)
+        run: ./gradlew spotlessCheck --stacktrace
+
       # NOTE: Android Lint intentionally does NOT run on the PR/push path. lintObaGoogleDebug is
       # heavyweight (~7-15 min) and dominates this job's wall-clock; it runs instead in the `lint` job
       # in android-nightly.yml (no emulator needed there). The "run tests" step below keeps `-x lint`

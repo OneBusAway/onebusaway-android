@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.ReminderResponse
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.onebusaway.android.api.contract.ReminderResponse
 
 /**
  * Covers the create-alarm response decode. The reminders endpoint returns the created alarm's delete
@@ -29,7 +28,10 @@ import org.junit.Test
  */
 class ReminderDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesReminderResponse() {

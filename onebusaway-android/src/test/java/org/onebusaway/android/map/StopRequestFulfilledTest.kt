@@ -31,15 +31,14 @@ import org.onebusaway.android.util.GeoPoint
  */
 class StopRequestFulfilledTest {
 
-    private fun cam(lat: Double, lon: Double, zoom: Double): CameraSnapshot =
-        CameraSnapshot(
-            center = GeoPoint(lat, lon),
-            zoom = zoom,
-            latSpan = 0.0,
-            lonSpan = 0.0,
-            southWest = GeoPoint(lat - 0.01, lon - 0.01),
-            northEast = GeoPoint(lat + 0.01, lon + 0.01),
-        )
+    private fun cam(lat: Double, lon: Double, zoom: Double): CameraSnapshot = CameraSnapshot(
+        center = GeoPoint(lat, lon),
+        zoom = zoom,
+        latSpan = 0.0,
+        lonSpan = 0.0,
+        southWest = GeoPoint(lat - 0.01, lon - 0.01),
+        northEast = GeoPoint(lat + 0.01, lon + 0.01)
+    )
 
     @Test
     fun `no prior load always needs a load`() {
@@ -48,7 +47,7 @@ class StopRequestFulfilledTest {
                 last = null,
                 lastHadResponse = true,
                 lastLimitExceeded = false,
-                next = cam(47.6, -122.3, 16.0),
+                next = cam(47.6, -122.3, 16.0)
             )
         )
     }
@@ -61,7 +60,7 @@ class StopRequestFulfilledTest {
                 last = c,
                 lastHadResponse = true,
                 lastLimitExceeded = false,
-                next = cam(47.6, -122.3, 16.0),
+                next = cam(47.6, -122.3, 16.0)
             )
         )
     }
@@ -73,7 +72,7 @@ class StopRequestFulfilledTest {
                 last = cam(47.6, -122.3, 16.0),
                 lastHadResponse = true,
                 lastLimitExceeded = false,
-                next = cam(47.61, -122.3, 16.0),
+                next = cam(47.61, -122.3, 16.0)
             )
         )
     }
@@ -91,7 +90,7 @@ class StopRequestFulfilledTest {
                 last = last,
                 lastHadResponse = true,
                 lastLimitExceeded = false,
-                next = next,
+                next = next
             )
         )
     }
@@ -103,7 +102,7 @@ class StopRequestFulfilledTest {
                 last = cam(47.6, -122.3, 14.0),
                 lastHadResponse = true,
                 lastLimitExceeded = true,
-                next = cam(47.6, -122.3, 16.0),
+                next = cam(47.6, -122.3, 16.0)
             )
         )
     }
@@ -117,7 +116,7 @@ class StopRequestFulfilledTest {
                 last = cam(47.6, -122.3, 16.0),
                 lastHadResponse = false,
                 lastLimitExceeded = false,
-                next = cam(47.6, -122.3, 18.0),
+                next = cam(47.6, -122.3, 18.0)
             )
         )
     }

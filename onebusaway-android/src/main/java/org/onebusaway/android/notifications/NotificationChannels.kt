@@ -56,7 +56,7 @@ object NotificationChannels {
             NotificationChannel(
                 TRIP_PLAN_UPDATES_ID,
                 "Trip plan notifications (beta)",
-                NotificationManager.IMPORTANCE_DEFAULT,
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description =
                     "After planning a trip, send notifications if the trip is delayed or no longer recommended."
@@ -66,7 +66,7 @@ object NotificationChannels {
             NotificationChannel(
                 ARRIVAL_REMINDERS_ID,
                 "Bus arrival notifications",
-                NotificationManager.IMPORTANCE_DEFAULT,
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notifications to remind the user of an arriving bus."
             }
@@ -75,7 +75,7 @@ object NotificationChannels {
             NotificationChannel(
                 DESTINATION_ALERT_ID,
                 "Destination alerts",
-                NotificationManager.IMPORTANCE_LOW,
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "All notifications relating to Destination alerts"
             }

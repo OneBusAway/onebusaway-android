@@ -21,6 +21,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,15 +29,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.donations.DonationsManager
 import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.ApiUrlValidator
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.region.RegionStatus
@@ -58,7 +58,7 @@ class AdvancedSettingsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val regionRepository: RegionRepository,
-    private val donationsManager: DonationsManager,
+    private val donationsManager: DonationsManager
 ) : ViewModel() {
 
     init {
@@ -71,7 +71,7 @@ class AdvancedSettingsViewModel @Inject constructor(
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
-                compute(regionRepository.region.value),
+                compute(regionRepository.region.value)
             )
 
     private val _effects = Channel<AdvancedSettingsEffect>(Channel.BUFFERED)
@@ -85,24 +85,23 @@ class AdvancedSettingsViewModel @Inject constructor(
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
             customOtpApiUrlUsesGraphQl = prefs.getBoolean(
                 R.string.preference_key_otp_api_url_is_graphql,
-                false,
+                false
             ),
             mapStopCacheSize = prefs.getInt(
                 R.string.preference_key_map_stop_cache_size,
-                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
-            ),
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE
+            )
         ),
         region = region?.let { AdvancedRegionInfo(it.experimental) },
         useFixedRegion = BuildConfig.USE_FIXED_REGION,
         obaBrandedSummary = context.getString(
             R.string.preferences_oba_api_servername_summary,
-            context.getString(R.string.app_name),
+            context.getString(R.string.app_name)
         ),
-        otpDefaultSummary = context.getString(R.string.preferences_otp_api_servername_summary),
+        otpDefaultSummary = context.getString(R.string.preferences_otp_api_servername_summary)
     )
 
-    fun onDisplayTestAlertsChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preferences_display_test_alerts, value)
+    fun onDisplayTestAlertsChanged(value: Boolean) = prefs.setBoolean(R.string.preferences_display_test_alerts, value)
 
     /**
      * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range
@@ -119,8 +118,11 @@ class AdvancedSettingsViewModel @Inject constructor(
     fun setExperimentalRegions(enabled: Boolean, regionWasExperimental: Boolean) {
         reportPreferencesEvent(
             context,
-            if (enabled) R.string.analytics_label_button_press_experimental_on
-            else R.string.analytics_label_button_press_experimental_off
+            if (enabled) {
+                R.string.analytics_label_button_press_experimental_on
+            } else {
+                R.string.analytics_label_button_press_experimental_off
+            }
         )
         viewModelScope.launch {
             applyExperimentalRegionsToggle(enabled, regionWasExperimental, prefs, regionRepository)
@@ -167,8 +169,7 @@ class AdvancedSettingsViewModel @Inject constructor(
      * [Region.otpBaseGraphqlUrl] when a custom OTP server is in use, so this is set explicitly by
      * the user rather than inferred.
      */
-    fun onCustomOtpApiUrlUsesGraphQlChanged(usesGraphQl: Boolean) =
-        prefs.setBoolean(R.string.preference_key_otp_api_url_is_graphql, usesGraphQl)
+    fun onCustomOtpApiUrlUsesGraphQlChanged(usesGraphQl: Boolean) = prefs.setBoolean(R.string.preference_key_otp_api_url_is_graphql, usesGraphQl)
 
     fun onResetDonationTimestamps() {
         donationsManager.setDonationRequestReminderDate(null)
@@ -188,7 +189,7 @@ internal suspend fun applyExperimentalRegionsToggle(
     enabled: Boolean,
     regionWasExperimental: Boolean,
     prefs: PreferencesRepository,
-    regionRepository: RegionRepository,
+    regionRepository: RegionRepository
 ) {
     if (!enabled && regionWasExperimental) regionRepository.clear()
     prefs.setBoolean(R.string.preference_key_experimental_regions, enabled)
@@ -219,7 +220,7 @@ internal fun applyMapStopCacheSize(text: String, prefs: PreferencesRepository): 
 internal suspend fun resetOtpVersionOnRegionChange(
     status: RegionStatus,
     state: StateFlow<RegionState>,
-    resetOtpVersion: () -> Unit,
+    resetOtpVersion: () -> Unit
 ) {
     when (status) {
         is RegionStatus.Changed -> resetOtpVersion()

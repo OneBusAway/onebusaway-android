@@ -1,12 +1,12 @@
 /* Copyright (C) 2026 Open Transit Software Foundation */
 package org.onebusaway.android.map.render
 
-import org.onebusaway.android.util.GeoPoint
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Exercises the flavor-neutral reconcile/width bookkeeping the Google and MapLibre renderers share
@@ -45,15 +45,14 @@ class RoutePolylineReconcilerTest {
             setWidth = { line, width ->
                 setWidthCount++
                 line.width = width
-            },
+            }
         )
 
         /** The lines still on the map — created minus removed (creation order, not draw order). */
         fun live(): List<FakeLine> = created.filterNot { it.removed }
     }
 
-    private fun line(color: Int, vararg points: Double): RoutePolyline =
-        RoutePolyline(color = color, points = points.map { GeoPoint(it, it) })
+    private fun line(color: Int, vararg points: Double): RoutePolyline = RoutePolyline(color = color, points = points.map { GeoPoint(it, it) })
 
     @Test
     fun `first reconcile creates every line at the zoom width`() {

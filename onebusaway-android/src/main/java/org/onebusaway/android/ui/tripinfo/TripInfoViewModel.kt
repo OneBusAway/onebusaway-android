@@ -38,7 +38,7 @@ import org.onebusaway.android.ui.nav.NavRoutes
 @HiltViewModel
 class TripInfoViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val repository: TripInfoRepository,
+    private val repository: TripInfoRepository
 ) : ViewModel() {
 
     // Launch args arrive via SavedStateHandle — from the NavHost TRIP_INFO destination's nav-args, or
@@ -56,7 +56,7 @@ class TripInfoViewModel @Inject constructor(
         stopSequence = savedState.get<Int>(NavRoutes.ARG_STOP_SEQUENCE) ?: 0,
         serviceDate = savedState.get<Long>(NavRoutes.ARG_SERVICE_DATE) ?: 0,
         vehicleId = savedState.get<String>(NavRoutes.ARG_VEHICLE_ID),
-        serverNowMs = savedState.get<Long>(NavRoutes.ARG_SERVER_NOW) ?: 0,
+        serverNowMs = savedState.get<Long>(NavRoutes.ARG_SERVER_NOW) ?: 0
     )
 
     private val _state = MutableStateFlow<TripInfoUiState>(TripInfoUiState.Loading)
@@ -102,7 +102,10 @@ class TripInfoViewModel @Inject constructor(
         updateContent { it.copy(isSaving = true) }
         viewModelScope.launch {
             val saved = repository.save(
-                args, loaded, REMINDER_MINUTES[content.reminderSelection], content.tripName
+                args,
+                loaded,
+                REMINDER_MINUTES[content.reminderSelection],
+                content.tripName
             )
             updateContent { it.copy(isSaving = false) }
             _events.send(if (saved) TripInfoEvent.Saved else TripInfoEvent.SaveFailed)

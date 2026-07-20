@@ -80,24 +80,22 @@ class SituationUtilsTest {
 
     // --- fixtures ---
 
-    private fun window(from: Long, to: Long): ObaSituation.ActiveWindow =
-        object : ObaSituation.ActiveWindow {
-            override val from = from
-            override val to = to
-        }
+    private fun window(from: Long, to: Long): ObaSituation.ActiveWindow = object : ObaSituation.ActiveWindow {
+        override val from = from
+        override val to = to
+    }
 
-    private fun situation(windows: Array<ObaSituation.ActiveWindow>): ObaSituation =
-        object : ObaSituation {
-            override val id = "test"
-            override val summary: String? = null
-            override val description: String? = null
-            override val severity: String? = null
-            override val advice: String? = null
-            override val reason: String? = null
-            override val url: String? = null
-            override val creationTime = 0L
-            override val allAffects: Array<ObaSituation.AllAffects> = emptyArray()
-            override val consequences: Array<ObaSituation.Consequence> = emptyArray()
-            override val activeWindows = windows
-        }
+    private fun situation(windows: Array<ObaSituation.ActiveWindow>): ObaSituation = object : ObaSituation {
+        override val id = "test"
+        override val summary: String? = null
+        override val description: String? = null
+        override val severity: String? = null
+        override val advice: String? = null
+        override val reason: String? = null
+        override val url: String? = null
+        override val creationTime = 0L
+        override val allAffects: Array<ObaSituation.AllAffects> = emptyArray()
+        override val consequences: Array<ObaSituation.Consequence> = emptyArray()
+        override val activeWindows = windows
+    }
 }

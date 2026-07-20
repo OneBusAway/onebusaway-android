@@ -23,6 +23,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.core.content.ContextCompat
+import kotlin.time.Duration.Companion.milliseconds
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.directions.model.ItineraryDescription
 import org.onebusaway.android.directions.model.TripItinerary
@@ -32,7 +33,6 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.toRequestBuilder
 import org.onebusaway.android.util.PreferenceUtils
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Entry point + scheduler for the trip-plan-change monitor. Replaces the WorkManager/AlarmManager poll
@@ -80,7 +80,7 @@ object TripPlanMonitor {
         context: Context,
         params: TripPlanParams,
         itinerary: TripItinerary,
-        notificationTarget: Class<*>,
+        notificationTarget: Class<*>
     ) {
         val app = context.applicationContext
 
@@ -130,13 +130,17 @@ object TripPlanMonitor {
         // it's a WallTime measured against WallTime.now(). (The stop-at-departure guard uses the
         // itinerary's actual server-provided start time.)
         val requestTime: WallTime? = builder.dateTime?.let { WallTime(it.toEpochMilli()) }
-        if (requestTime != null && !TripMonitorWindow.shouldStartNow(
-                requestTime, WallTime.now(), OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds
+        if (requestTime != null &&
+            !TripMonitorWindow.shouldStartNow(
+                requestTime,
+                WallTime.now(),
+                OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds
             )
         ) {
             scheduleStart(
-                app, bundle,
-                (requestTime - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds).epochMs,
+                app,
+                bundle,
+                (requestTime - OTPConstants.REALTIME_SERVICE_QUERY_WINDOW.milliseconds).epochMs
             )
         } else {
             startServiceNow(app, bundle)

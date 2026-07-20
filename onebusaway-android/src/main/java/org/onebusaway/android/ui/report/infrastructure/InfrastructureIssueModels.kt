@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.util.GeoPoint
 
 /**

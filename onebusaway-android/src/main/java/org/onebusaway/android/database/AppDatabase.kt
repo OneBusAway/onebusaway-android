@@ -8,18 +8,18 @@ import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.MapStopCacheDao
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
-import org.onebusaway.android.database.oba.RegionDao
-import org.onebusaway.android.database.oba.RouteDao
-import org.onebusaway.android.database.oba.ServiceAlertDao
-import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.oba.Open311ServerRecord
 import org.onebusaway.android.database.oba.RegionBoundRecord
+import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RegionRecord
+import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.RouteRecord
+import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.ServiceAlertRecord
+import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.TripAlertRecord
+import org.onebusaway.android.database.oba.TripDao
 import org.onebusaway.android.database.oba.TripRecord
 import org.onebusaway.android.database.survey.dao.StudiesDao
 import org.onebusaway.android.database.survey.dao.SurveysDao
@@ -66,10 +66,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         Open311ServerRecord::class,
         NavStopRecord::class,
         CachedStopRecord::class,
-        CachedRouteTypeRecord::class,
+        CachedRouteTypeRecord::class
     ],
     version = 7,
-    exportSchema = true,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     // Studies

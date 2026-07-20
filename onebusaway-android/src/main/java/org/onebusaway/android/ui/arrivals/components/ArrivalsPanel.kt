@@ -65,7 +65,7 @@ fun ArrivalsPanel(
     onContentHeight: (heightPx: Int) -> Unit,
     // An opaque anchor modifier a host may attach to the first row's ETA pill (e.g. for an onboarding
     // spotlight). The panel stays ignorant of what it's for.
-    etaAnchor: Modifier = Modifier,
+    etaAnchor: Modifier = Modifier
 ) {
     // The system navigation-bar inset (height varies by handset); see the list contentPadding below.
     val navBarInset = navigationBarBottomPadding()
@@ -118,7 +118,7 @@ fun ArrivalsPanel(
                     showAlerts = false,
                     contentPadding = PaddingValues(bottom = navBarInset),
                     // The onboarding spotlight anchors on the first route row's ETA pill.
-                    etaAnchor = etaAnchor,
+                    etaAnchor = etaAnchor
                 )
             }
         }

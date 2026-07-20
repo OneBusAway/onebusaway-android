@@ -16,8 +16,9 @@
 package org.onebusaway.android.map
 
 import android.os.SystemClock
-import kotlinx.coroutines.CoroutineScope
+import java.net.HttpURLConnection
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -29,33 +30,32 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
+import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.extrapolation.extrapolationFromState
-import org.onebusaway.android.models.RouteTrips
-import org.onebusaway.android.models.TripRouteInfo
-import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.time.WallTime
-import java.net.HttpURLConnection
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.FocusedTrip
-import org.onebusaway.android.models.RouteMapDirection
-import org.onebusaway.android.models.RouteMapStop
-import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.map.render.ContinuationArrow
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FramingIntent
-import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
-import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RouteContinuation
+import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
+import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.toGeoPoint
 
 /**
  * Drives the home map while it is showing a single route. Given a route id (via [start]), it loads the
@@ -85,7 +85,7 @@ class RouteMapController(
     private val stopsController: StopsMapController,
     private val tripObservationRepository: TripObservationRepository,
     private val focusedTripRepository: FocusedTripRepository,
-    private val scope: CoroutineScope,
+    private val scope: CoroutineScope
 ) {
 
     // The raw route load, published while in route mode (the view model formats it into the display
@@ -134,7 +134,7 @@ class RouteMapController(
 
     private data class StopFocusSession(
         val stopId: String,
-        val trips: Set<FocusedTrip>,
+        val trips: Set<FocusedTrip>
     )
 
     private var stopFocusSession: StopFocusSession? = null
@@ -219,7 +219,7 @@ class RouteMapController(
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
-        highlightedSegment: List<GeoPoint> = emptyList(),
+        highlightedSegment: List<GeoPoint> = emptyList()
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
@@ -230,8 +230,11 @@ class RouteMapController(
         // a direction-anchored launch (an anchor stop or a restored direction) stays Pending until the
         // route load resolves the filter (below).
         this.directionState =
-            if (directionStopId == null && initialDirectionId == null) DirectionState.Resolved(null)
-            else DirectionState.Pending
+            if (directionStopId == null && initialDirectionId == null) {
+                DirectionState.Resolved(null)
+            } else {
+                DirectionState.Pending
+            }
         // When stop focus survives an arrivals-row or route-badge tap, emphasize this route
         // immediately from the already-loaded adjacency geometry instead of waiting for route load.
         publishMapPresentation()
@@ -346,10 +349,14 @@ class RouteMapController(
         val poll = latestPoll ?: return null
         return MapVehicles(
             markers = extrapolatedVehicles(
-                poll.response, setOf(id), now, resolved.directionId,
-                includeDataFixPoint, tripObservationRepository::lookupTripState,
+                poll.response,
+                setOf(id),
+                now,
+                resolved.directionId,
+                includeDataFixPoint,
+                tripObservationRepository::lookupTripState
             ).map { it.toMarker() },
-            response = poll.response,
+            response = poll.response
         )
     }
 
@@ -395,8 +402,7 @@ class RouteMapController(
     }
 
     /** The shown route's GTFS color (the band tint's basis), or the default when it carries none. */
-    private fun currentRouteColor(): Int =
-        (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
+    private fun currentRouteColor(): Int = (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -436,7 +442,7 @@ class RouteMapController(
     private fun buildRouteContinuation(
         anchor: GeoPoint,
         neighborShape: Polyline,
-        neighbor: TripRouteInfo,
+        neighbor: TripRouteInfo
     ): RouteContinuation? {
         val tail = neighborShape.subPolyline(0.0, CONTINUATION_LINE_LENGTH_METERS) ?: return null
         val badgePoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS / 2) ?: return null
@@ -448,15 +454,15 @@ class RouteMapController(
                 color = lineColor,
                 points = listOf(anchor) + tail,
                 widthProfile = CONTINUATION_LINE_WIDTH_PROFILE,
-                dashed = true,
+                dashed = true
             ),
             arrow = ContinuationArrow(arrowPoint, neighborShape.bearingAt(endSeg)),
             badge = ContinuationBadge(
                 badgePoint,
                 neighbor.routeId,
                 neighbor.routeShortName.orEmpty(),
-                neighbor.directionId,
-            ),
+                neighbor.directionId
+            )
         )
     }
 
@@ -510,7 +516,7 @@ class RouteMapController(
     fun focusStop(
         stopId: String,
         trips: Set<FocusedTrip>,
-        routes: List<ObaRoute>,
+        routes: List<ObaRoute>
     ) {
         val next = StopFocusSession(stopId, LinkedHashSet(trips))
         if (stopFocusSession == next) {
@@ -527,7 +533,7 @@ class RouteMapController(
                 next,
                 routes,
                 FocusedTripGeometry(emptyList()),
-                FocusedTripStops(emptyMap(), emptyMap()),
+                FocusedTripStops(emptyMap(), emptyMap())
             )
         }
         stopFocusJob = scope.launch {
@@ -574,13 +580,13 @@ class RouteMapController(
         session: StopFocusSession,
         routes: List<ObaRoute>,
         geometry: FocusedTripGeometry,
-        stops: FocusedTripStops,
+        stops: FocusedTripStops
     ) {
         stopFocusSession = session
         focusedRoutes = routes
         _focusedRouteColors.value = adjacencyRouteColors(
             session.trips.map(FocusedTrip::routeDirection),
-            retained = _focusedRouteColors.value,
+            retained = _focusedRouteColors.value
         )
         focusedGeometry = geometry
         focusedStops = stops
@@ -620,13 +626,13 @@ class RouteMapController(
             selected = selectedTripRenderInput(),
             projectedFocusStops = {
                 stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
-            },
+            }
         )
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: thin the full route to context + the ridden span on top.
             polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, currentRouteColor()),
             framingPolylines = plan.framingPolylines,
-            routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom,
+            routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom
         )
         renderState.setRouteBadges(plan.badges)
         stopsController.setRoutePresentation(plan.stopPresentation)
@@ -647,7 +653,7 @@ class RouteMapController(
             // focus inactive) and the stop projection only for a drawable trip, so neither is computed on
             // the branches that skip it.
             directionUnderlay = { selectedDirectionUnderlay(selected.routeDirection.directionId) },
-            stopPresentation = { selectedTripStopPresentation(selected) },
+            stopPresentation = { selectedTripStopPresentation(selected) }
         )
     }
 
@@ -667,8 +673,8 @@ class RouteMapController(
             stopIds = schedule.stopTimes.map { it.stopId },
             routeDirection = RouteDirectionKey(
                 currentRouteId,
-                activeTrip?.directionId ?: currentDirectionId,
-            ),
+                activeTrip?.directionId ?: currentDirectionId
+            )
         )
     }
 
@@ -677,8 +683,7 @@ class RouteMapController(
      * whole-route mode [basePolylines] is the merged both-directions geometry, so drawing that as
      * the underlay would surface the opposite direction; resolve the direction shape instead.
      */
-    private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> =
-        directionPolylines(directionId).asDeemphasizedRouteUnderlay()
+    private fun selectedDirectionUnderlay(directionId: Int?): List<RoutePolyline> = directionPolylines(directionId).asDeemphasizedRouteUnderlay()
 
     /** The selected trip's scheduled stops, projected onto its exact shape in schedule order. */
     private fun selectedTripStopPresentation(selected: SelectedTripPresentation): RouteStopPresentation {
@@ -687,7 +692,7 @@ class RouteMapController(
             stops = stops,
             routes = routeStopRoutes,
             routeDirectionsByStopId = stops.associate { it.id to setOf(selected.routeDirection) },
-            projectedPoints = projectStopsOntoPolylines(stops, listOf(selected.points)),
+            projectedPoints = projectStopsOntoPolylines(stops, listOf(selected.points))
         )
     }
 
@@ -744,8 +749,11 @@ class RouteMapController(
         routeShape = routeMap
         val override = initialDirectionOverride
         val resolved =
-            if (override != null && directions.any { it.directionId == override }) override
-            else routeMap.initialDirectionId
+            if (override != null && directions.any { it.directionId == override }) {
+                override
+            } else {
+                routeMap.initialDirectionId
+            }
         directionState = DirectionState.Resolved(resolved)
         _loadedRoute.value = LoadedRoute.Loaded(route, routeMap.agencyName, directions, resolved)
         showDirectionStops()
@@ -777,7 +785,7 @@ class RouteMapController(
             routeDirectionsByStopId = stops.associate {
                 it.id to setOf(RouteDirectionKey(route, currentDirectionId))
             },
-            projectedPoints = projectStopsOntoShape(stops),
+            projectedPoints = projectStopsOntoShape(stops)
         )
         publishMapPresentation()
     }
@@ -808,7 +816,7 @@ class RouteMapController(
             focusedRoutePolyline(
                 color = route.route?.color,
                 points = points,
-                directional = shape.directional,
+                directional = shape.directional
             )
         }
     }
@@ -875,17 +883,16 @@ class RouteMapController(
      * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
      * draw-time live-vs-scheduled flag through (the renderer picks its icon from it).
      */
-    private fun ExtrapolatedVehicle.toMarker(): VehicleMarker =
-        VehicleMarker(
-            // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
-            activeTripId = status.activeTripId.orEmpty(),
-            point = point,
-            isRealtime = isRealtime,
-            status = status,
-            fixTimeMs = fixTimeMs,
-            bearing = bearing,
-            dataFixPoint = dataFixPoint,
-        )
+    private fun ExtrapolatedVehicle.toMarker(): VehicleMarker = VehicleMarker(
+        // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
+        activeTripId = status.activeTripId.orEmpty(),
+        point = point,
+        isRealtime = isRealtime,
+        status = status,
+        fixTimeMs = fixTimeMs,
+        bearing = bearing,
+        dataFixPoint = dataFixPoint
+    )
 }
 
 /**
@@ -904,7 +911,7 @@ internal enum class FocusResolution { WAIT, FIT, DROP }
 internal fun resolveVehicleFocus(
     directionResolved: Boolean,
     pollLanded: Boolean,
-    markerPresent: Boolean,
+    markerPresent: Boolean
 ): FocusResolution = when {
     !directionResolved || !pollLanded -> FocusResolution.WAIT
     markerPresent -> FocusResolution.FIT
@@ -921,8 +928,7 @@ internal fun resolveVehicleFocus(
  * [neighborRouteId] must come from the neighbor trip's own resolved record ([TripRouteInfo.routeId]),
  * never guessed from headsign/direction.
  */
-internal fun isRouteContinuation(currentRouteId: String, neighborRouteId: String): Boolean =
-    neighborRouteId.isNotEmpty() && neighborRouteId != currentRouteId
+internal fun isRouteContinuation(currentRouteId: String, neighborRouteId: String): Boolean = neighborRouteId.isNotEmpty() && neighborRouteId != currentRouteId
 
 // How far (meters) the route-continuation line (#1691) is drawn into the next route's shape before it
 // terminates in an arrowhead — a visual design choice (how much of the next route to preview), tunable
@@ -936,7 +942,7 @@ private const val CONTINUATION_LINE_LENGTH_METERS = 900.0
 private const val CONTINUATION_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP * 0.7f
 private val CONTINUATION_LINE_WIDTH_PROFILE = RouteLineWidthProfile(
     thicknessDp = CONTINUATION_LINE_WIDTH_DP,
-    distantThicknessMultiplier = 1f,
+    distantThicknessMultiplier = 1f
 )
 
 // Used only when the neighbor route carries no GTFS color to draw the continuation line in its own
@@ -975,6 +981,6 @@ sealed interface LoadedRoute {
         val route: ObaRoute,
         val agencyName: String?,
         val directions: List<RouteMapDirection>,
-        val currentDirectionId: Int?,
+        val currentDirectionId: Int?
     ) : LoadedRoute
 }

@@ -15,11 +15,10 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.api.adapters.StopTimeData
-import org.onebusaway.android.api.adapters.TripScheduleData
-
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.adapters.StopTimeData
+import org.onebusaway.android.api.adapters.TripScheduleData
 import org.onebusaway.android.models.ObaTripSchedule
 
 class TripScheduleGeometryTest {

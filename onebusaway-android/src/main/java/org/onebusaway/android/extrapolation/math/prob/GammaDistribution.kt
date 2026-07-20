@@ -24,8 +24,7 @@ import kotlin.math.sqrt
  * Gamma distribution parameterized by shape ([alpha]) and [scale]. Provides PDF, CDF, quantile
  * (inverse CDF), and mean.
  */
-class GammaDistribution(@JvmField val alpha: Double, @JvmField val scale: Double) :
-        ProbDistribution {
+class GammaDistribution(@JvmField val alpha: Double, @JvmField val scale: Double) : ProbDistribution {
 
     init {
         require(alpha > 0) { "alpha must be positive, got $alpha" }
@@ -95,14 +94,14 @@ class GammaDistribution(@JvmField val alpha: Double, @JvmField val scale: Double
         }
 
         private val LN_GAMMA_COEF =
-                doubleArrayOf(
-                        76.18009172947146,
-                        -86.50532032941677,
-                        24.01409824083091,
-                        -1.231739572450155,
-                        0.1208650973866179e-2,
-                        -0.5395239384953e-5
-                )
+            doubleArrayOf(
+                76.18009172947146,
+                -86.50532032941677,
+                24.01409824083091,
+                -1.231739572450155,
+                0.1208650973866179e-2,
+                -0.5395239384953e-5
+            )
 
         /** Lanczos approximation for ln(Gamma(x)), valid for x > 0. */
         @JvmStatic

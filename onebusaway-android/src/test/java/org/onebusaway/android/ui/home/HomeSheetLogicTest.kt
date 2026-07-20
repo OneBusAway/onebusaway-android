@@ -45,7 +45,7 @@ class HomeSheetLogicTest {
     fun `stop and route focus use the measured focus banner edge`() {
         val stopRoute = StopRouteSelection(
             originHeadsign = null,
-            legs = listOf(RouteLeg("route", "40")),
+            legs = listOf(RouteLeg("route", "40"))
         )
         assertEquals(240, focusBannerTopEdge(CurrentFocus.Stop(stop, stopRoute), 240))
         assertEquals(240, focusBannerTopEdge(CurrentFocus.Route(RouteTarget("route")), 240))

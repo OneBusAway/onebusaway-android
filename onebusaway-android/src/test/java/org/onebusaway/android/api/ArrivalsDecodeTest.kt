@@ -15,15 +15,14 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.ArrivalsForStop
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.contract.ArrivalsForStop
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
 
 /**
  * Guards the arrivals-and-departures-for-stop wire shape (numeric version; arrival wire names
@@ -33,7 +32,10 @@ import org.junit.Test
  */
 class ArrivalsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private val body = """
         {

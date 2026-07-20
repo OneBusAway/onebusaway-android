@@ -18,8 +18,8 @@ package org.onebusaway.android.extrapolation
 import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.junit.Test
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 
 class UncertaintyBandTest {
 
@@ -45,8 +45,7 @@ class UncertaintyBandTest {
             x < 2 * c -> 1 - (2 * c - x) * (2 * c - x) / (2 * c * c)
             else -> 1.0
         }
-        override fun quantile(p: Double) =
-            if (p <= 0.5) c * sqrt(2 * p) else 2 * c - c * sqrt(2 * (1 - p))
+        override fun quantile(p: Double) = if (p <= 0.5) c * sqrt(2 * p) else 2 * c - c * sqrt(2 * (1 - p))
     }
 
     /** A distribution with no finite quantile (the degenerate case the contract warns about). */

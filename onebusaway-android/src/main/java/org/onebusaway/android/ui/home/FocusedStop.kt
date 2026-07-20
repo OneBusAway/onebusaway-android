@@ -26,7 +26,7 @@ data class FocusedStop(
     val id: String,
     val name: String?,
     val code: String?,
-    val point: GeoPoint,
+    val point: GeoPoint
 ) {
     // Empty companion so intent/extras parsing can hang off it as a `FocusedStop.fromIntent(...)`
     // extension where that contract lives (HomeActivity), without this model knowing about intents.

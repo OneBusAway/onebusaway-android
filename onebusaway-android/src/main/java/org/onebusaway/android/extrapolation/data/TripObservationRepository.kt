@@ -23,8 +23,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
@@ -66,8 +66,8 @@ interface TripObservationRepository {
      * stream). Consecutive failures back off exponentially (see [nextPollDelayMs]).
      */
     fun tripDetailsStream(
-            tripId: String,
-            intervalMs: Long = DEFAULT_POLL_INTERVAL_MS
+        tripId: String,
+        intervalMs: Long = DEFAULT_POLL_INTERVAL_MS
     ): Flow<Unit>
 
     /**
@@ -76,8 +76,8 @@ interface TripObservationRepository {
      * each OK response. Backfills are children of the collection, so they stop with it.
      */
     fun routeVehiclesStream(
-            routeId: String,
-            intervalMs: Long = DEFAULT_POLL_INTERVAL_MS
+        routeId: String,
+        intervalMs: Long = DEFAULT_POLL_INTERVAL_MS
     ): Flow<RouteTrips>
 
     /**
@@ -103,7 +103,7 @@ interface TripObservationRepository {
 
 @Singleton
 class DefaultTripObservationRepository @Inject constructor(
-        private val fetcher: TripObservationFetcher
+    private val fetcher: TripObservationFetcher
 ) : TripObservationRepository {
 
     private val cache = TripStateCache()
@@ -112,39 +112,37 @@ class DefaultTripObservationRepository @Inject constructor(
 
     override fun lookupTripState(tripId: String?): TripState? = cache.lookupTripState(tripId)
 
-    override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
-            flow {
-                var delayMs = intervalMs
-                while (true) {
-                    // The fetcher resolves failures and non-OK codes to null (logged once).
-                    val details = fetcher.tripDetails(tripId)
-                    val ok = details != null
-                    if (details != null) {
-                        recordTripDetails(tripId, details)
-                        // Emit a tick so a collector can react to a fresh poll (the store holds the data).
-                        emit(Unit)
-                    }
-                    delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
-                    delay(delayMs)
-                }
+    override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = flow {
+        var delayMs = intervalMs
+        while (true) {
+            // The fetcher resolves failures and non-OK codes to null (logged once).
+            val details = fetcher.tripDetails(tripId)
+            val ok = details != null
+            if (details != null) {
+                recordTripDetails(tripId, details)
+                // Emit a tick so a collector can react to a fresh poll (the store holds the data).
+                emit(Unit)
             }
+            delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
+            delay(delayMs)
+        }
+    }
 
-    override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
-            channelFlow {
-                var delayMs = intervalMs
-                while (true) {
-                    // The fetcher resolves failures and non-OK codes to null (logged once).
-                    val response = fetcher.tripsForRoute(routeId)
-                    val ok = response != null
-                    if (response != null) {
-                        recordTripsForRoute(response)
-                        prefetchSchedulesAndShapes(response) // launched into this channelFlow scope
-                        send(response)
-                    }
-                    delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
-                    delay(delayMs)
-                }
+    override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = channelFlow {
+        var delayMs = intervalMs
+        while (true) {
+            // The fetcher resolves failures and non-OK codes to null (logged once).
+            val response = fetcher.tripsForRoute(routeId)
+            val ok = response != null
+            if (response != null) {
+                recordTripsForRoute(response)
+                prefetchSchedulesAndShapes(response) // launched into this channelFlow scope
+                send(response)
             }
+            delayMs = nextPollDelayMs(delayMs, ok, intervalMs)
+            delay(delayMs)
+        }
+    }
 
     override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? {
         // The trip already carries its shape — nothing to fetch or hydrate.
@@ -153,7 +151,7 @@ class DefaultTripObservationRepository @Inject constructor(
         // Concurrent in-flight first-misses on the fetcher's confined dispatcher coalesce in its
         // SingleFlight and resolve to the same instance, so they store the same Polyline here too.
         val polyline = shapeCache.get(shapeId)
-                ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
+            ?: fetcher.shape(shapeId)?.also { shapeCache.put(shapeId, it) }
         return polyline?.also { cache.putPolyline(tripId, it) }
     }
 
@@ -162,9 +160,8 @@ class DefaultTripObservationRepository @Inject constructor(
         return fetcher.tripSchedule(tripId)?.also { cache.putSchedule(tripId, it) }
     }
 
-    override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? =
-            neighborTripCache.get(tripId)
-                    ?: fetcher.tripRouteInfo(tripId)?.also { neighborTripCache.put(tripId, it) }
+    override suspend fun resolveNeighborTrip(tripId: String): TripRouteInfo? = neighborTripCache.get(tripId)
+        ?: fetcher.tripRouteInfo(tripId)?.also { neighborTripCache.put(tripId, it) }
 
     /** Records everything a trip details poll carries: shapeId/active-trip, schedule, service date, observations. */
     private fun recordTripDetails(tripId: String, details: TripDetails) {

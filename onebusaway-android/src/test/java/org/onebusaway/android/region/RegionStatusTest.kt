@@ -125,5 +125,4 @@ class RegionStatusTest {
             resolveRegionStatus(current = region(1), closest = region(2), autoSelect = false)
         )
     }
-
 }

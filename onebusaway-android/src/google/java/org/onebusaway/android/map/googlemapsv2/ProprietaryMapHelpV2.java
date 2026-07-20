@@ -22,78 +22,74 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-
 import org.onebusaway.android.R;
 
-/**
- * Helper methods specific to Google Maps API v2
- */
+/** Helper methods specific to Google Maps API v2 */
 public class ProprietaryMapHelpV2 {
 
-    /**
-     * Returns true if Android Maps V2 is installed, false if it is not
-     */
-    public static boolean isMapsInstalled(@NonNull Context context) {
-        try {
-            ApplicationInfo info = context.getPackageManager()
-                    .getApplicationInfo("com.google.android.apps.maps", 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
-            return false;
-        }
+  /** Returns true if Android Maps V2 is installed, false if it is not */
+  public static boolean isMapsInstalled(@NonNull Context context) {
+    try {
+      ApplicationInfo info =
+          context.getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0);
+      return true;
+    } catch (PackageManager.NameNotFoundException e) {
+      return false;
     }
+  }
 
-    /**
-     * Prompts the user to install Android Maps V2 from Google Play
-     */
-    public static void promptUserInstallMaps(@NonNull final Context context) {
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
-        builder.setMessage(context.getString(R.string.please_install_google_maps_dialog_title));
-        builder.setCancelable(false);
-        builder.setPositiveButton(context.getString(R.string.install_google_maps_positive_button),
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Intent.ACTION_VIEW,
-                                Uri.parse(context.getString(R.string.android_maps_v2_market_url)));
-                        ResolveInfo info = context.getPackageManager()
-                                .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
-                        if (info != null) {
-                            context.startActivity(intent);
-                        } else {
-                            // User doesn't have Play Store installed
-                            MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
-                            builder.setMessage(context.getString(
-                                    R.string.no_play_store));
-                            builder.setCancelable(true);
-                            builder.setPositiveButton(context.getString(R.string.ok),
-                                    new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            AlertDialog d = builder.create();
-                            d.show();
-                        }
+  /** Prompts the user to install Android Maps V2 from Google Play */
+  public static void promptUserInstallMaps(@NonNull final Context context) {
+    MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
+    builder.setMessage(context.getString(R.string.please_install_google_maps_dialog_title));
+    builder.setCancelable(false);
+    builder.setPositiveButton(
+        context.getString(R.string.install_google_maps_positive_button),
+        new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            Intent intent =
+                new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(context.getString(R.string.android_maps_v2_market_url)));
+            ResolveInfo info =
+                context
+                    .getPackageManager()
+                    .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
+            if (info != null) {
+              context.startActivity(intent);
+            } else {
+              // User doesn't have Play Store installed
+              MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(context);
+              builder.setMessage(context.getString(R.string.no_play_store));
+              builder.setCancelable(true);
+              builder.setPositiveButton(
+                  context.getString(R.string.ok),
+                  new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                      dialog.dismiss();
                     }
-                }
-        );
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
+                  });
+              AlertDialog d = builder.create();
+              d.show();
+            }
+          }
+        });
+    AlertDialog dialog = builder.create();
+    dialog.show();
+  }
 
-    /**
-     * Sets the zIndex for the given marker to the given zIndex.
-     * @param m marker to set the zIndex for
-     * @param zIndex zIndex to set on the given marker (default is 0)
-     */
-    public static void setZIndex(@NonNull Marker m, float zIndex) {
-        m.setZIndex(zIndex);
-    }
+  /**
+   * Sets the zIndex for the given marker to the given zIndex.
+   *
+   * @param m marker to set the zIndex for
+   * @param zIndex zIndex to set on the given marker (default is 0)
+   */
+  public static void setZIndex(@NonNull Marker m, float zIndex) {
+    m.setZIndex(zIndex);
+  }
 }

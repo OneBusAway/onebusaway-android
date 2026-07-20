@@ -33,7 +33,7 @@ class ArrivalDedupTest {
     private companion object {
         const val TRIP = "1_801565550"
         const val BLOCK = "1_8110104" // block id of TRIP; the phantom's vehicleId equals this
-        const val COACH = "1_7099"    // a real coach number
+        const val COACH = "1_7099" // a real coach number
         val blockIds: (String) -> String? = { tripId -> if (tripId == TRIP) BLOCK else null }
     }
 
@@ -94,7 +94,7 @@ class ArrivalDedupTest {
         // The phantom collapses against the first visit; both real visits survive.
         assertEquals(
             listOf(first, second),
-            listOf(first, phantomFirst, second).collapseBlockIdPhantoms(blockIds),
+            listOf(first, phantomFirst, second).collapseBlockIdPhantoms(blockIds)
         )
     }
 
@@ -110,7 +110,7 @@ class ArrivalDedupTest {
         serviceDate: Long = 1_783_234_800_000L,
         stopSequence: Int = 15,
         vehicleId: String?,
-        hasAvl: Boolean = true,
+        hasAvl: Boolean = true
     ): ArrivalData = FakeArrivalData(
         tripId = tripId,
         serviceDate = serviceDate,
@@ -118,7 +118,7 @@ class ArrivalDedupTest {
         vehicleId = vehicleId,
         hasTripStatus = true,
         lastKnownLat = if (hasAvl) 47.615 else null,
-        lastKnownLon = if (hasAvl) -122.317 else null,
+        lastKnownLon = if (hasAvl) -122.317 else null
     )
 }
 
@@ -146,5 +146,5 @@ private data class FakeArrivalData(
     override val situationIds: List<String> = emptyList(),
     override val historicalOccupancy: Occupancy? = null,
     override val predictedOccupancy: Occupancy? = null,
-    override val scheduleDeviation: Long = 0L,
+    override val scheduleDeviation: Long = 0L
 ) : ArrivalData

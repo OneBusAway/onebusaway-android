@@ -16,8 +16,8 @@
 package org.onebusaway.android.database.oba
 
 import androidx.room.Room
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -44,7 +44,8 @@ class RouteDaoTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            InstrumentationRegistry.getInstrumentation().targetContext, AppDatabase::class.java
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            AppDatabase::class.java
         ).build()
         dao = db.routeDao()
     }
@@ -74,9 +75,9 @@ class RouteDaoTest {
         val r = dao.getRoute("r1")!!
         assertEquals(2, r.useCount)
         assertEquals(200L, r.accessTime)
-        assertEquals("http://u", r.url)          // NOT clobbered by markRouteUsed
-        assertEquals(1L, r.regionId)             // regionId = null keeps the existing region
-        assertEquals("10", r.shortName)          // short/long names refreshed
+        assertEquals("http://u", r.url) // NOT clobbered by markRouteUsed
+        assertEquals(1L, r.regionId) // regionId = null keeps the existing region
+        assertEquals("10", r.shortName) // short/long names refreshed
         assertEquals("Route 10 renamed", r.longName)
     }
 
@@ -86,7 +87,7 @@ class RouteDaoTest {
         assertTrue(dao.favoriteRouteIds().first().isEmpty())
 
         dao.storeRouteDetails("r4", "40", "Route 40", "http://u", regionId = 4L, now = 100)
-        assertTrue(dao.favoriteRouteIds().first().isEmpty())   // row exists, favorite still unset
+        assertTrue(dao.favoriteRouteIds().first().isEmpty()) // row exists, favorite still unset
 
         dao.setFavorite("r4", 1)
         assertEquals(listOf("r4"), dao.favoriteRouteIds().first())
@@ -106,9 +107,9 @@ class RouteDaoTest {
         dao.ensureRouteDetails("r5", "50", "Route 50", url = null, regionId = null)
 
         val r = dao.getRoute("r5")!!
-        assertEquals(2, r.useCount)               // unchanged — a favorite toggle is not a view
-        assertEquals(200L, r.accessTime)          // unchanged
-        assertEquals("http://u", r.url)           // null url preserves the existing one
+        assertEquals(2, r.useCount) // unchanged — a favorite toggle is not a view
+        assertEquals(200L, r.accessTime) // unchanged
+        assertEquals("http://u", r.url) // null url preserves the existing one
         assertEquals(5L, r.regionId)
 
         // A brand-new (never-viewed) route starts at use_count 0, so it sorts last by frequency.
@@ -127,8 +128,8 @@ class RouteDaoTest {
 
         val r = dao.getRoute("r3")!!
         assertEquals("30-express", r.shortName)
-        assertEquals("http://u", r.url)          // untouched
-        assertEquals("Route 30", r.longName)     // untouched
-        assertEquals(1, r.useCount)              // did not mark used
+        assertEquals("http://u", r.url) // untouched
+        assertEquals("Route 30", r.longName) // untouched
+        assertEquals(1, r.useCount) // did not mark used
     }
 }

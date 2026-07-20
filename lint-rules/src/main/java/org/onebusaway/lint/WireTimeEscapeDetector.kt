@@ -50,29 +50,29 @@ import org.jetbrains.uast.UQualifiedReferenceExpression
  * Demolition condition: if `:api` ever becomes a real Gradle module with `internal` DTOs, the language
  * enforces this and the check should be deleted. See lint-rules/README.md.
  */
-class WireTimeEscapeDetector : Detector(), SourceCodeScanner {
+class WireTimeEscapeDetector :
+    Detector(),
+    SourceCodeScanner {
 
-    override fun getApplicableUastTypes(): List<Class<out UElement>> =
-        listOf(UQualifiedReferenceExpression::class.java)
+    override fun getApplicableUastTypes(): List<Class<out UElement>> = listOf(UQualifiedReferenceExpression::class.java)
 
-    override fun createUastHandler(context: JavaContext): UElementHandler =
-        object : UElementHandler() {
-            override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression) {
-                // Cheap, constant-per-file gate first — adapter/data files never resolve a read.
-                if (isInAdapterLayer(context.uastFile?.packageName)) return
-                val field = WIRE_TIME_FIELDS[TimeLintSupport.propertyKey(node, WIRE_FIELD_NAMES)] ?: return
-                context.report(
-                    ISSUE,
-                    node,
-                    context.getLocation(node),
-                    "Wire time field `$field` read outside the adapter boundary — the DTOs in " +
-                        "`api.contract` are raw `Long`s whose unit is a property of the endpoint (the two " +
-                        "`StopTime` DTOs are seconds vs. epoch millis). Read the domain-typed model " +
-                        "(e.g. `ObaTripSchedule.StopTime.arrivalTime: ScheduleTime`) instead, and let the " +
-                        "adapter be the one place that mints the wire value.",
-                )
-            }
+    override fun createUastHandler(context: JavaContext): UElementHandler = object : UElementHandler() {
+        override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression) {
+            // Cheap, constant-per-file gate first — adapter/data files never resolve a read.
+            if (isInAdapterLayer(context.uastFile?.packageName)) return
+            val field = WIRE_TIME_FIELDS[TimeLintSupport.propertyKey(node, WIRE_FIELD_NAMES)] ?: return
+            context.report(
+                ISSUE,
+                node,
+                context.getLocation(node),
+                "Wire time field `$field` read outside the adapter boundary — the DTOs in " +
+                    "`api.contract` are raw `Long`s whose unit is a property of the endpoint (the two " +
+                    "`StopTime` DTOs are seconds vs. epoch millis). Read the domain-typed model " +
+                    "(e.g. `ObaTripSchedule.StopTime.arrivalTime: ScheduleTime`) instead, and let the " +
+                    "adapter be the one place that mints the wire value."
+            )
         }
+    }
 
     private fun isInAdapterLayer(packageName: String?): Boolean {
         packageName ?: return false
@@ -83,7 +83,7 @@ class WireTimeEscapeDetector : Detector(), SourceCodeScanner {
         /** Packages allowed to consume wire time fields — the mint boundary and its data sources. */
         private val ADAPTER_PACKAGES = listOf(
             "org.onebusaway.android.api.adapters",
-            "org.onebusaway.android.api.data",
+            "org.onebusaway.android.api.data"
         )
 
         // Wire DTO time-field reads (owner#property) -> the field name (for the message). Bare `Long`s
@@ -107,7 +107,7 @@ class WireTimeEscapeDetector : Detector(), SourceCodeScanner {
             "$PKG.ArrivalDeparture#predictedDepartureTime" to "predictedDepartureTime",
             "$PKG.ArrivalDeparture#serviceDate" to "serviceDate",
             "$PKG.Frequency#startTime" to "startTime",
-            "$PKG.Frequency#endTime" to "endTime",
+            "$PKG.Frequency#endTime" to "endTime"
         )
 
         /** The wire field simple-names — the cheap gate before `propertyKey`'s resolve. */
@@ -141,8 +141,8 @@ class WireTimeEscapeDetector : Detector(), SourceCodeScanner {
             severity = Severity.WARNING,
             implementation = Implementation(
                 WireTimeEscapeDetector::class.java,
-                Scope.JAVA_FILE_SCOPE,
-            ),
+                Scope.JAVA_FILE_SCOPE
+            )
         )
     }
 }

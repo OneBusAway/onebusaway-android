@@ -35,10 +35,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
@@ -73,15 +73,16 @@ private const val CHIP_END_COLOR_FRACTION = 0.2f
 // in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
 // over-saturated or too-dark/too-light color — every chip lands at a consistent, legible brightness,
 // and the tone flips lighter for dark theme. Fidget with these to taste.
-private const val CHIP_TONE_LIGHT = 80.0        // container tone in light theme (0=black … 100=white)
-private const val CHIP_TONE_DARK = 78.0         // container tone for dark theme
-private const val CHIP_ON_TONE_LIGHT = 30.0     // text tone on the light-theme (pastel) chip (→ dark)
-private const val CHIP_ON_TONE_DARK = 20.0      // text tone on the dark-theme chip (→ near-black)
-private const val CHIP_MAX_CHROMA_LIGHT = 30.0  // saturation cap in light theme (soft pastel)
-private const val CHIP_MAX_CHROMA_DARK = 60.0   // saturation cap in dark theme
-                                                // (each hue still clamps to its own sRGB gamut limit;
-                                                //  low caps mute vivid hues — e.g. orange → brown)
-private const val ACHROMATIC_CHROMA = 5.0       // below this the source is grey/black/white (no hue)
+private const val CHIP_TONE_LIGHT = 80.0 // container tone in light theme (0=black … 100=white)
+private const val CHIP_TONE_DARK = 78.0 // container tone for dark theme
+private const val CHIP_ON_TONE_LIGHT = 30.0 // text tone on the light-theme (pastel) chip (→ dark)
+private const val CHIP_ON_TONE_DARK = 20.0 // text tone on the dark-theme chip (→ near-black)
+private const val CHIP_MAX_CHROMA_LIGHT = 30.0 // saturation cap in light theme (soft pastel)
+private const val CHIP_MAX_CHROMA_DARK = 60.0 // saturation cap in dark theme
+
+// (each hue still clamps to its own sRGB gamut limit;
+//  low caps mute vivid hues — e.g. orange → brown)
+private const val ACHROMATIC_CHROMA = 5.0 // below this the source is grey/black/white (no hue)
 
 /**
  * Resolves the (container, content) colors for a route-badge chip from the route's GTFS color. We keep
@@ -168,8 +169,7 @@ fun LineBadge(
     val baseStyle = remember(titleLarge) {
         titleLarge.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
     }
-    fun styleAt(size: TextUnit) =
-        baseStyle.copy(fontSize = size, lineHeight = (size.value * LINE_HEIGHT_RATIO).sp)
+    fun styleAt(size: TextUnit) = baseStyle.copy(fontSize = size, lineHeight = (size.value * LINE_HEIGHT_RATIO).sp)
 
     // Largest font in [minFontSize, maxFontSize] whose measured text fits the width × maxHeight /
     // maxLines box; measured here (not via onTextLayout) so it's right on the first frame and in @Preview.
@@ -223,13 +223,13 @@ fun LineBadge(
                                 drawRect(
                                     color = endContainerColor,
                                     topLeft = Offset(size.width - endWidth, 0f),
-                                    size = Size(endWidth, size.height),
+                                    size = Size(endWidth, size.height)
                                 )
                             }
                             drawContent()
                         }
                         .padding(horizontal = CHIP_H_PADDING, vertical = CHIP_V_PADDING),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.Center
                 ) { label() }
             }
         } else {

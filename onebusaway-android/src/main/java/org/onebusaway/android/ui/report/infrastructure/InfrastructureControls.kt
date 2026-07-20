@@ -23,10 +23,10 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -138,12 +138,18 @@ private fun ServiceSpinner(
 
                     is ServiceListItem.Hint -> DropdownMenuItem(
                         text = { Text(item.label) },
-                        onClick = { expanded = false; onServiceSelected(index) }
+                        onClick = {
+                            expanded = false
+                            onServiceSelected(index)
+                        }
                     )
 
                     is ServiceListItem.Category -> DropdownMenuItem(
                         text = { Text(item.name) },
-                        onClick = { expanded = false; onServiceSelected(index) }
+                        onClick = {
+                            expanded = false
+                            onServiceSelected(index)
+                        }
                     )
                 }
             }

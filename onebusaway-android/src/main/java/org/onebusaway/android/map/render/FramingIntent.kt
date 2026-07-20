@@ -75,7 +75,7 @@ const val POINTS_FRAMING_PADDING_DP: Float = 48.0f
  */
 fun framingCorners(
     points: List<GeoPoint>,
-    minSpanDeg: Double = MIN_FRAMING_SPAN_DEG,
+    minSpanDeg: Double = MIN_FRAMING_SPAN_DEG
 ): Pair<GeoPoint, GeoPoint>? {
     if (points.isEmpty()) return null
     val minLat = points.minOf { it.latitude }

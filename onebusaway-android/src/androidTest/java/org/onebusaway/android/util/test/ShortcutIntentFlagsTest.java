@@ -15,25 +15,22 @@
  */
 package org.onebusaway.android.util.test;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.view.ContextThemeWrapper;
-
+import androidx.core.content.pm.ShortcutInfoCompat;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.HomeActivity;
 import org.onebusaway.android.ui.common.Shortcuts;
-
-import java.util.concurrent.atomic.AtomicReference;
-
-import androidx.core.content.pm.ShortcutInfoCompat;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
 
 /**
  * Regression test for issue #1564 — when the app is already running in the background, tapping a
@@ -45,28 +42,34 @@ import static junit.framework.Assert.assertTrue;
 @RunWith(AndroidJUnit4.class)
 public class ShortcutIntentFlagsTest {
 
-    @Test
-    public void makeShortcutInfo_setsNewTaskAndClearTaskFlags() {
-        Instrumentation instr = InstrumentationRegistry.getInstrumentation();
-        final Context themed = new ContextThemeWrapper(instr.getTargetContext(),
-                R.style.Theme_OneBusAway_NoActionBar);
+  @Test
+  public void makeShortcutInfo_setsNewTaskAndClearTaskFlags() {
+    Instrumentation instr = InstrumentationRegistry.getInstrumentation();
+    final Context themed =
+        new ContextThemeWrapper(instr.getTargetContext(), R.style.Theme_OneBusAway_NoActionBar);
 
-        Intent destIntent = new Intent(themed, HomeActivity.class);
-        final AtomicReference<ShortcutInfoCompat> shortcutRef = new AtomicReference<>();
+    Intent destIntent = new Intent(themed, HomeActivity.class);
+    final AtomicReference<ShortcutInfoCompat> shortcutRef = new AtomicReference<>();
 
-        instr.runOnMainSync(() -> shortcutRef.set(
+    instr.runOnMainSync(
+        () ->
+            shortcutRef.set(
                 Shortcuts.makeShortcutInfo(themed, "test", destIntent, R.drawable.star)));
 
-        Intent shortcutIntent = shortcutRef.get().getIntent();
-        int flags = shortcutIntent.getFlags();
-        assertTrue("Shortcut intent must set FLAG_ACTIVITY_NEW_TASK so that the launcher opens it"
-                + " in a fresh task",
-                (flags & Intent.FLAG_ACTIVITY_NEW_TASK) != 0);
-        assertTrue("Shortcut intent must set FLAG_ACTIVITY_CLEAR_TASK so that tapping the shortcut"
-                + " replaces the app's existing back stack with the shortcut destination",
-                (flags & Intent.FLAG_ACTIVITY_CLEAR_TASK) != 0);
-        assertEquals("ShortcutInfoCompat requires the intent action to be set; without ACTION_VIEW"
-                + " requestPinShortcut throws IllegalArgumentException",
-                Intent.ACTION_VIEW, shortcutIntent.getAction());
-    }
+    Intent shortcutIntent = shortcutRef.get().getIntent();
+    int flags = shortcutIntent.getFlags();
+    assertTrue(
+        "Shortcut intent must set FLAG_ACTIVITY_NEW_TASK so that the launcher opens it"
+            + " in a fresh task",
+        (flags & Intent.FLAG_ACTIVITY_NEW_TASK) != 0);
+    assertTrue(
+        "Shortcut intent must set FLAG_ACTIVITY_CLEAR_TASK so that tapping the shortcut"
+            + " replaces the app's existing back stack with the shortcut destination",
+        (flags & Intent.FLAG_ACTIVITY_CLEAR_TASK) != 0);
+    assertEquals(
+        "ShortcutInfoCompat requires the intent action to be set; without ACTION_VIEW"
+            + " requestPinShortcut throws IllegalArgumentException",
+        Intent.ACTION_VIEW,
+        shortcutIntent.getAction());
+  }
 }

@@ -54,10 +54,10 @@ class RegionMapperTest {
                 sidecarBaseUrl = "https://sidecar",
                 plausibleAnalyticsServerUrl = "https://plausible",
                 umamiAnalyticsUrl = "https://umami",
-                umamiAnalyticsId = "umami-id",
+                umamiAnalyticsId = "umami-id"
             ),
             bounds = listOf(RegionBoundRecord(regionId = 42L, latitude = 47.6, longitude = -122.3, latSpan = 0.4, lonSpan = 0.5)),
-            open311Servers = listOf(Open311ServerRecord(regionId = 42L, jurisdiction = "j", apiKey = "k", baseUrl = "https://311")),
+            open311Servers = listOf(Open311ServerRecord(regionId = 42L, jurisdiction = "j", apiKey = "k", baseUrl = "https://311"))
         )
 
         val region = RegionMapper.toRegion(row)
@@ -88,10 +88,10 @@ class RegionMapperTest {
                 id = 1L, name = "R", obaBaseUrl = "", siriBaseUrl = "", language = "", contactEmail = "",
                 supportsObaDiscovery = 0, supportsObaRealtime = 0, supportsSiriRealtime = 0,
                 experimental = null, supportsOtpBikeshare = null, supportsEmbeddedSocial = null,
-                umamiAnalyticsUrl = null, umamiAnalyticsId = null,
+                umamiAnalyticsUrl = null, umamiAnalyticsId = null
             ),
             bounds = emptyList(),
-            open311Servers = emptyList(),
+            open311Servers = emptyList()
         )
 
         val region = RegionMapper.toRegion(row)
@@ -120,7 +120,7 @@ class RegionMapperTest {
             experimental = false,
             supportsOtpBikeshare = true,
             supportsEmbeddedSocial = true,
-            umamiAnalytics = Region.UmamiAnalyticsConfig("https://umami", "id"),
+            umamiAnalytics = Region.UmamiAnalyticsConfig("https://umami", "id")
         )
 
         val back = RegionMapper.toRegion(RegionMapper.toEntities(original))

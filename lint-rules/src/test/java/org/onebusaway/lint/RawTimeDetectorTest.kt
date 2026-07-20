@@ -21,12 +21,11 @@ import org.junit.Test
 
 class RawTimeDetectorTest {
 
-    private fun lintKotlin(source: String) =
-        lint()
-            .files(kotlin(source).indented())
-            .issues(RawTimeDetector.ISSUE, RawTimeDetector.ISSUE_VALUE)
-            .allowMissingSdk()
-            .run()
+    private fun lintKotlin(source: String) = lint()
+        .files(kotlin(source).indented())
+        .issues(RawTimeDetector.ISSUE, RawTimeDetector.ISSUE_VALUE)
+        .allowMissingSdk()
+        .run()
 
     /** The motivating case: a server/scheduled timestamp minus the device clock (#27 / #1612). */
     @Test
@@ -37,7 +36,7 @@ class RawTimeDetectorTest {
             fun etaMillis(departTime: Long): Long {
                 return departTime - System.currentTimeMillis()
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -50,7 +49,7 @@ class RawTimeDetectorTest {
             fun expired(deadline: Long): Boolean {
                 return System.currentTimeMillis() > deadline
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -64,7 +63,7 @@ class RawTimeDetectorTest {
                 val wall = System.currentTimeMillis()
                 return wall
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -75,7 +74,7 @@ class RawTimeDetectorTest {
             """
             package test
             fun now(): Long = System.currentTimeMillis()
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -86,7 +85,7 @@ class RawTimeDetectorTest {
             """
             package test
             fun refresh(nowMs: Long = System.currentTimeMillis()): Long = nowMs
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -100,7 +99,7 @@ class RawTimeDetectorTest {
             fun stamp() {
                 record(System.currentTimeMillis())
             }
-            """,
+            """
         ).expectClean()
     }
 
@@ -113,7 +112,7 @@ class RawTimeDetectorTest {
             fun elapsed(startNanos: Long): Long {
                 return System.nanoTime() - startNanos
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -127,7 +126,7 @@ class RawTimeDetectorTest {
             fun age(fix: Date): Long {
                 return System.currentTimeMillis() - fix.getTime()
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -141,7 +140,7 @@ class RawTimeDetectorTest {
             fun span(start: Instant, end: Instant): Long {
                 return end.toEpochMilli() - start.toEpochMilli()
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -154,7 +153,7 @@ class RawTimeDetectorTest {
             fun delta(a: Long, b: Long): Long {
                 return a - b
             }
-            """,
+            """
         ).expectClean()
     }
 }

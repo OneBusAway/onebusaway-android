@@ -39,21 +39,19 @@ import org.onebusaway.android.models.AgencyContact
  * degrade (e.g. to plain leg framing) rather than issuing a request that would 404 / return null.
  */
 class OtpObaIdResolver @Inject constructor(
-    private val agenciesDataSource: AgenciesDataSource,
+    private val agenciesDataSource: AgenciesDataSource
 ) {
     private val mutex = Mutex()
     private var cachedAgencies: List<AgencyContact>? = null
 
     /** The OBA route id for an OTP transit leg's route, or null when the agency can't be resolved. */
-    suspend fun obaRouteId(routeGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? =
-        obaId(routeGtfsId, agencyGtfsId, agencyName)
+    suspend fun obaRouteId(routeGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? = obaId(routeGtfsId, agencyGtfsId, agencyName)
 
     /**
      * The OBA stop id for a stop reached on an OTP transit leg. The stop is namespaced under the leg's
      * route agency (that's the agency serving it here), so it takes the same resolved agency prefix.
      */
-    suspend fun obaStopId(stopGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? =
-        obaId(stopGtfsId, agencyGtfsId, agencyName)
+    suspend fun obaStopId(stopGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? = obaId(stopGtfsId, agencyGtfsId, agencyName)
 
     private suspend fun obaId(entityGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? {
         val entity = entityGtfsId.entitySuffix() ?: return null

@@ -15,9 +15,7 @@
  */
 package org.onebusaway.android.extrapolation.data
 
-import org.onebusaway.android.api.data.asRouteTrips
-import org.onebusaway.android.time.ServiceDate
-
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -25,7 +23,8 @@ import org.junit.Test
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.TripDetailsEntry
-import java.io.File
+import org.onebusaway.android.api.data.asRouteTrips
+import org.onebusaway.android.time.ServiceDate
 
 /**
  * Ports the trips-for-route coverage of the instrumented AdaptersTest onto the modernized DTO path:
@@ -36,10 +35,12 @@ import java.io.File
  */
 class TripsForRouteDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
-    private fun decode(path: String): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        json.decodeFromString(File(path).readText())
+    private fun decode(path: String): ObaEnvelope<ListWithReferences<TripDetailsEntry>> = json.decodeFromString(File(path).readText())
 
     @Test
     fun distillsOneObservationPerActiveTrip() {

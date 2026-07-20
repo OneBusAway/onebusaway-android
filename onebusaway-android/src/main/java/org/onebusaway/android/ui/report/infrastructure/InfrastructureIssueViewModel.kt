@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.util.GeoPoint
 
@@ -255,8 +255,7 @@ class InfrastructureIssueViewModel(
 
     // --- Helpers --------------------------------------------------------------------------------
 
-    private fun open311TargetOrNone(arrival: TripReportContext?): ReportTarget =
-        selectedCategory?.let { ReportTarget.Open311(it, arrival) } ?: ReportTarget.None
+    private fun open311TargetOrNone(arrival: TripReportContext?): ReportTarget = selectedCategory?.let { ReportTarget.Open311(it, arrival) } ?: ReportTarget.None
 
     private fun showTarget(target: ReportTarget, showMarker: Boolean) {
         _uiState.update {

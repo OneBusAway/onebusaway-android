@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.tripplan
 
 import java.io.IOException
-import org.onebusaway.android.R
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -26,6 +25,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.R
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.location.SearchCenter
@@ -34,7 +35,6 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.TimeProvider
-import org.onebusaway.android.directions.model.TripItinerary
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripPlanViewModelTest {
@@ -61,8 +61,7 @@ class TripPlanViewModelTest {
             return result
         }
 
-        override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> =
-            result.getOrDefault(emptyList())
+        override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = result.getOrDefault(emptyList())
     }
 
     /** A plan repository whose call suspends until [gate] is completed, to exercise the in-flight race. */
@@ -86,9 +85,12 @@ class TripPlanViewModelTest {
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
         region: RegionRepository = FakeRegionRepository()
     ) = TripPlanViewModel(
-        geocode, plan, region,
+        geocode,
+        plan,
+        region,
         SearchCenter(FakeLocationRepository(), region),
-        TimeProvider { 0L }, FakeAdvancedSettingsRepository()
+        TimeProvider { 0L },
+        FakeAdvancedSettingsRepository()
     )
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */

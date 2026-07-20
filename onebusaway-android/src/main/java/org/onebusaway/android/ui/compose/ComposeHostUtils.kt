@@ -64,5 +64,4 @@ tailrec fun Context.findActivity(): AppCompatActivity = when (this) {
  * list matches it as content padding — both call it so the value stays in sync.
  */
 @Composable
-fun navigationBarBottomPadding(): Dp =
-    WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+fun navigationBarBottomPadding(): Dp = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()

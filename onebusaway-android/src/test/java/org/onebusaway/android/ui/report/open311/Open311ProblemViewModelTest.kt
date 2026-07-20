@@ -51,7 +51,11 @@ class Open311ProblemViewModelTest {
         fields = listOf(
             Open311Field(1, "Name", Open311FieldType.TEXT, false, "string"),
             Open311Field(
-                2, "Pick", Open311FieldType.MULTI_CHOICE, false, "multivaluelist",
+                2,
+                "Pick",
+                Open311FieldType.MULTI_CHOICE,
+                false,
+                "multivaluelist",
                 options = listOf(Open311Option("a", "A"), Open311Option("b", "B"))
             )
         ),

@@ -52,7 +52,7 @@ object DirectionCardGrouping {
     fun groupByLeg(
         legs: List<TripLeg>,
         flatDirections: List<Direction>,
-        routeLegRefs: List<RouteLegRef?>,
+        routeLegRefs: List<RouteLegRef?>
     ): List<DirectionItem> {
         val cards = ArrayList<DirectionItem>(legs.size)
         var cursor = 0
@@ -79,14 +79,14 @@ object DirectionCardGrouping {
         isTransit = false,
         subItems = subItemsOf(walk.subDirections),
         focusPoint = walk.focusPoint(),
-        legPoints = legPoints,
+        legPoints = legPoints
     )
 
     private fun transitCard(
         cardNumber: Int,
         board: Direction,
         legPoints: List<GeoPoint>,
-        routeLeg: RouteLegRef?,
+        routeLeg: RouteLegRef?
     ): DirectionItem {
         // Header = the board direction (route + time + detail lines). The leg's Board and Alight stops
         // ride on [routeLeg] and are rendered as the card's two sub-items by the UI; the leg row itself
@@ -100,21 +100,19 @@ object DirectionCardGrouping {
             isTransit = true,
             focusPoint = board.focusPoint(),
             legPoints = legPoints,
-            routeLeg = routeLeg,
+            routeLeg = routeLeg
         )
     }
 
-    private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> =
-        subDirections?.map {
-            DirectionItem(iconRes = it.icon, text = it.directionText.str(), focusPoint = it.focusPoint())
-        }.orEmpty()
+    private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> = subDirections?.map {
+        DirectionItem(iconRes = it.icon, text = it.directionText.str(), focusPoint = it.focusPoint())
+    }.orEmpty()
 
     /** Decode the leg's own encoded polyline for framing; empty when the leg carries no geometry. */
     private fun TripLeg.decodedPoints(): List<GeoPoint> = legGeometry?.decodedPoints().orEmpty()
 
     /** The real-time-aware display time, mirroring the old `Direction.toItem()` pick. */
-    private fun Direction.pickTime(): String =
-        (if (isRealTimeInfo && newTime != null) newTime else oldTime).str()
+    private fun Direction.pickTime(): String = (if (isRealTimeInfo && newTime != null) newTime else oldTime).str()
 
     /** The point this direction refers to, or null when the underlying place had no coordinates. */
     private fun Direction.focusPoint(): GeoPoint? = geoPointOrNull(focusLat, focusLon)

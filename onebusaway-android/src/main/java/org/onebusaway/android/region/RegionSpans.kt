@@ -26,7 +26,7 @@ data class RegionSpan(
     val latSpan: Double,
     val lonSpan: Double,
     val centerLat: Double,
-    val centerLon: Double,
+    val centerLon: Double
 ) {
     val minLat: Double get() = centerLat - latSpan / 2
     val minLon: Double get() = centerLon - lonSpan / 2
@@ -45,6 +45,6 @@ fun Region.span(): RegionSpan {
         latSpan = results[0],
         lonSpan = results[1],
         centerLat = results[2],
-        centerLon = results[3],
+        centerLon = results[3]
     )
 }

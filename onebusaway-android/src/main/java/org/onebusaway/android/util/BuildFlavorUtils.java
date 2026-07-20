@@ -25,26 +25,27 @@ import org.onebusaway.android.BuildConfig;
  */
 public class BuildFlavorUtils {
 
-    public static final String OBA_FLAVOR_BRAND = "oba";
+  public static final String OBA_FLAVOR_BRAND = "oba";
 
-    public static final String AGENCYY_FLAVOR_BRAND = "agencyY";
+  public static final String AGENCYY_FLAVOR_BRAND = "agencyY";
 
-    /**
-     * Returns true if the Pelias API key is non-empty, false if it is not
-     *
-     * @return true if the Pelias API key is non-empty, false if it is not
-     */
-    public static boolean isPeliasApiKeyDefined() {
-        String peliasKey = BuildConfig.PELIAS_API_KEY;
-        return peliasKey != null && peliasKey.length() != 0;
-    }
+  /**
+   * Returns true if the Pelias API key is non-empty, false if it is not
+   *
+   * @return true if the Pelias API key is non-empty, false if it is not
+   */
+  public static boolean isPeliasApiKeyDefined() {
+    String peliasKey = BuildConfig.PELIAS_API_KEY;
+    return peliasKey != null && peliasKey.length() != 0;
+  }
 
-    /**
-     * Helper function to determine whether this is the official app or a white-label version.
-     * @return true if this is the OBA Build Flavor (i.e. the 'official' app),
-     * and false if it is not (i.e. a white-label app).
-     */
-    public static boolean isOBABuildFlavor() {
-        return BuildConfig.FLAVOR_brand.equalsIgnoreCase(OBA_FLAVOR_BRAND);
-    }
+  /**
+   * Helper function to determine whether this is the official app or a white-label version.
+   *
+   * @return true if this is the OBA Build Flavor (i.e. the 'official' app), and false if it is not
+   *     (i.e. a white-label app).
+   */
+  public static boolean isOBABuildFlavor() {
+    return BuildConfig.FLAVOR_brand.equalsIgnoreCase(OBA_FLAVOR_BRAND);
+  }
 }

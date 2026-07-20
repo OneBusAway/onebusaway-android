@@ -18,7 +18,7 @@ package org.onebusaway.android.map.render
 /** Index plan for retaining equal native render objects while reconciling an ordered model list. */
 data class ListReconciliation(
     val previousIndexForNext: List<Int?>,
-    val removedPreviousIndices: Set<Int>,
+    val removedPreviousIndices: Set<Int>
 )
 
 /**

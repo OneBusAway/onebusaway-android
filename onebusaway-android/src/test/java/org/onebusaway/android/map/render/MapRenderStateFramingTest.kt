@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map.render
 
-import org.onebusaway.android.util.GeoPoint
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
@@ -25,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The behavioral contract the framing/gesture split (#1648) depends on: retained framing replays to a
@@ -73,17 +73,17 @@ class MapRenderStateFramingTest {
     fun `route framing geometry stays separate from contextual displayed routes`() {
         val selected = RoutePolyline(
             color = 1,
-            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0)),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0))
         )
         val sibling = RoutePolyline(
             color = 2,
-            points = listOf(GeoPoint(10.0, 10.0), GeoPoint(11.0, 11.0)),
+            points = listOf(GeoPoint(10.0, 10.0), GeoPoint(11.0, 11.0))
         )
         val state = MapRenderState()
 
         state.setRoutePolylines(
             polylines = listOf(sibling, selected),
-            framingPolylines = listOf(selected),
+            framingPolylines = listOf(selected)
         )
 
         assertEquals(listOf(sibling, selected), state.snapshot.value.routePolylines)

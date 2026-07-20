@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
-import org.onebusaway.android.api.adapters.ObaStopElement
-
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -27,6 +25,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.GeoPoint
@@ -40,8 +39,7 @@ private class FakeGeocodeAddressRepository(
     private val forward: GeoPoint? = GeoPoint(40.0, -80.0)
 ) : GeocodeAddressRepository {
     override suspend fun reverseGeocode(latitude: Double, longitude: Double) = Result.success(reverse)
-    override suspend fun forwardGeocode(query: String) =
-        forward?.let { Result.success(it) } ?: Result.failure(IOException())
+    override suspend fun forwardGeocode(query: String) = forward?.let { Result.success(it) } ?: Result.failure(IOException())
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

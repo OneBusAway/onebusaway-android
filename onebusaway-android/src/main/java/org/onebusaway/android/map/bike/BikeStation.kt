@@ -40,5 +40,5 @@ data class BikeStation(
     val spacesAvailable: Int = 0,
     val allowDropoff: Boolean = false,
     val isFloatingBike: Boolean = false,
-    val realTimeData: Boolean = false,
+    val realTimeData: Boolean = false
 )

@@ -37,7 +37,7 @@ class RegionCache @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionDao: RegionDao,
     private val importGate: ImportGate,
-    private val prefs: PreferencesRepository,
+    private val prefs: PreferencesRepository
 ) {
 
     /** The cached regions, or an empty list when the cache is empty. */

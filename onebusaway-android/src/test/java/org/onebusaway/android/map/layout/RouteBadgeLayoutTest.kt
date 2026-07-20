@@ -5,16 +5,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 class RouteBadgeLayoutTest {
 
     @Test
     fun `badge uses distance midpoint rather than middle vertex`() {
         val placement = layoutRouteBadges(
-            listOf(input("route", path(0.0, 0.0, 1.0, 3.0))),
+            listOf(input("route", path(0.0, 0.0, 1.0, 3.0)))
         ).single()
 
         assertEquals(0.0, placement.point.latitude, 0.000001)
@@ -30,8 +30,8 @@ class RouteBadgeLayoutTest {
                     RouteDirectionKey("route", 1),
                     listOf(
                         RouteBadgePath(path(0.0, 0.0, 0.01)),
-                        RouteBadgePath(path(1.0, 10.0, 14.0)),
-                    ),
+                        RouteBadgePath(path(1.0, 10.0, 14.0))
+                    )
                 )
             )
         ).single()
@@ -46,7 +46,7 @@ class RouteBadgeLayoutTest {
         val shared = path(0.0, 0.0, 0.1)
         val placements = layoutRouteBadges(
             listOf(input("first", shared), input("second", shared)),
-            minimumSeparationMeters = 1_000.0,
+            minimumSeparationMeters = 1_000.0
         )
 
         assertEquals(0.05, placements[0].point.longitude, 0.000001)
@@ -60,7 +60,7 @@ class RouteBadgeLayoutTest {
         val shared = path(0.0, 0.0, 0.1)
         val placements = layoutRouteBadges(
             listOf(input("priority", shared), input("later", shared)),
-            minimumSeparationMeters = 1_000.0,
+            minimumSeparationMeters = 1_000.0
         )
 
         assertEquals(listOf("priority", "later"), placements.map { it.route.routeId })
@@ -72,7 +72,7 @@ class RouteBadgeLayoutTest {
         val short = path(0.0, 0.0, 0.001)
         val placements = layoutRouteBadges(
             listOf(input("first", short), input("second", short)),
-            minimumSeparationMeters = 300.0,
+            minimumSeparationMeters = 300.0
         )
 
         assertFalse(placements.first().overlaps)
@@ -88,9 +88,9 @@ class RouteBadgeLayoutTest {
                     RouteDirectionKey("route", 1),
                     listOf(
                         RouteBadgePath(
-                            listOf(GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0)),
+                            listOf(GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0))
                         )
-                    ),
+                    )
                 )
             )
         )
@@ -98,9 +98,7 @@ class RouteBadgeLayoutTest {
         assertTrue(placements.isEmpty())
     }
 
-    private fun input(id: String, points: List<GeoPoint>, directionId: Int? = null) =
-        RouteBadgeLayoutInput(RouteDirectionKey(id, directionId), listOf(RouteBadgePath(points)))
+    private fun input(id: String, points: List<GeoPoint>, directionId: Int? = null) = RouteBadgeLayoutInput(RouteDirectionKey(id, directionId), listOf(RouteBadgePath(points)))
 
-    private fun path(latitude: Double, vararg longitudes: Double) =
-        longitudes.map { longitude -> GeoPoint(latitude, longitude) }
+    private fun path(latitude: Double, vararg longitudes: Double) = longitudes.map { longitude -> GeoPoint(latitude, longitude) }
 }

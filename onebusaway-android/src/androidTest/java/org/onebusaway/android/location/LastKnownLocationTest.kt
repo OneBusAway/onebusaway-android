@@ -21,6 +21,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.hours
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,8 +33,6 @@ import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS
 import org.onebusaway.android.util.TestUtils
 import org.onebusaway.android.util.describeLocation
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.hours
 
 /**
  * Tests that the app can fetch a fresh last-known location through [LocationEntryPoint]. These are

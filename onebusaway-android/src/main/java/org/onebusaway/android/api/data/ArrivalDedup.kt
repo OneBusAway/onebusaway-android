@@ -39,7 +39,7 @@ import org.onebusaway.android.models.ArrivalData
  * survives it. Order is preserved.
  */
 internal fun List<ArrivalData>.collapseBlockIdPhantoms(
-    blockIdOf: (tripId: String) -> String?,
+    blockIdOf: (tripId: String) -> String?
 ): List<ArrivalData> {
     if (size < 2) return this
     fun ArrivalData.isBlockIdPhantom(): Boolean = vehicleId != null && vehicleId == blockIdOf(tripId)

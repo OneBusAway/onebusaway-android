@@ -54,8 +54,8 @@ class EtaStripJustifyTest {
                 previewArrival("40", "Northgate", etaMinutes = 3),
                 previewArrival("40", "Northgate", etaMinutes = 11),
                 previewArrival("40", "Northgate", etaMinutes = 19),
-                previewArrival("40", "Northgate", etaMinutes = 27),
-            ),
+                previewArrival("40", "Northgate", etaMinutes = 27)
+            )
         )
     }
 
@@ -71,8 +71,8 @@ class EtaStripJustifyTest {
             hostWidth = 320.dp,
             trips = listOf(
                 previewArrival("8", "Rainier Beach", etaMinutes = -2),
-                previewArrival("8", "Rainier Beach", etaMinutes = 5),
-            ),
+                previewArrival("8", "Rainier Beach", etaMinutes = 5)
+            )
         )
     }
 
@@ -97,7 +97,7 @@ class EtaStripJustifyTest {
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
                     start = firstUpcomingIndex,
-                    scrollState = scrollState,
+                    scrollState = scrollState
                 )
             }
         }

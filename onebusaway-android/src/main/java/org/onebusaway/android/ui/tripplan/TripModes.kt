@@ -35,14 +35,12 @@ object TripModes {
      * @param selection string resource id of the selected trip mode in the UI
      * @return corresponding trip mode code
      */
-    fun getTripModeCodeFromSelection(selection: Int): Int {
-        return when (selection) {
-            R.string.transit_mode_transit_and_bikeshare -> TRANSIT_AND_BIKE
-            R.string.transit_mode_transit_only -> TRANSIT_ONLY
-            R.string.transit_mode_bus -> BUS_ONLY
-            R.string.transit_mode_rail -> RAIL_ONLY
-            R.string.transit_mode_bikeshare -> BIKESHARE
-            else -> -1
-        }
+    fun getTripModeCodeFromSelection(selection: Int): Int = when (selection) {
+        R.string.transit_mode_transit_and_bikeshare -> TRANSIT_AND_BIKE
+        R.string.transit_mode_transit_only -> TRANSIT_ONLY
+        R.string.transit_mode_bus -> BUS_ONLY
+        R.string.transit_mode_rail -> RAIL_ONLY
+        R.string.transit_mode_bikeshare -> BIKESHARE
+        else -> -1
     }
 }

@@ -15,10 +15,9 @@
  */
 package org.onebusaway.android.extrapolation.test
 
-import org.onebusaway.android.time.WallTime
 import android.location.Location
-import kotlin.time.Duration
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlin.time.Duration
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -32,6 +31,7 @@ import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 
@@ -59,32 +59,31 @@ class TripExtrapolationBuilderTest {
     private fun gp(lat: Double, lng: Double) = GeoPoint(lat, lng)
 
     /** A minimal predicted [ObaTripStatus] anchor carrying only the fields the data-age marker reads. */
-    private fun anchorStatus(position: Location?, distanceAlongTrip: Double?): ObaTripStatus =
-        object : ObaTripStatus {
-            override val serviceDate = 0L
-            override val isPredicted = true
-            override val scheduleDeviation = Duration.ZERO
-            override val vehicleId: String? = null
-            override val closestStop: String? = null
-            override val closestStopTimeOffset = 0L
-            override val position = position
-            override val activeTripId: String? = "t"
-            override val distanceAlongTrip = distanceAlongTrip
-            override val scheduledDistanceAlongTrip: Double? = null
-            override val totalDistanceAlongTrip: Double? = null
-            override val orientation: Double? = null
-            override val nextStop: String? = null
-            override val nextStopTimeOffset: Long? = null
-            override val phase: String? = null
-            override val status: Status? = null
-            override val lastUpdateTime = 0L
-            override val lastKnownLocation = position
-            override val lastLocationUpdateTime = 0L
-            override val lastKnownDistanceAlongTrip: Double? = null
-            override val lastKnownOrientation: Double? = null
-            override val blockTripSequence = 0
-            override val occupancyStatus: Occupancy? = null
-        }
+    private fun anchorStatus(position: Location?, distanceAlongTrip: Double?): ObaTripStatus = object : ObaTripStatus {
+        override val serviceDate = 0L
+        override val isPredicted = true
+        override val scheduleDeviation = Duration.ZERO
+        override val vehicleId: String? = null
+        override val closestStop: String? = null
+        override val closestStopTimeOffset = 0L
+        override val position = position
+        override val activeTripId: String? = "t"
+        override val distanceAlongTrip = distanceAlongTrip
+        override val scheduledDistanceAlongTrip: Double? = null
+        override val totalDistanceAlongTrip: Double? = null
+        override val orientation: Double? = null
+        override val nextStop: String? = null
+        override val nextStopTimeOffset: Long? = null
+        override val phase: String? = null
+        override val status: Status? = null
+        override val lastUpdateTime = 0L
+        override val lastKnownLocation = position
+        override val lastLocationUpdateTime = 0L
+        override val lastKnownDistanceAlongTrip: Double? = null
+        override val lastKnownOrientation: Double? = null
+        override val blockTripSequence = 0
+        override val occupancyStatus: Occupancy? = null
+    }
 
     /** A straight ~3.3 km line heading north along longitude -122. */
     private fun northLine() = Polyline(
@@ -96,7 +95,7 @@ class TripExtrapolationBuilderTest {
         val extrapolation = buildTripExtrapolation(
             TripState("t", polyline = northLine()),
             ExtrapolationResult.Success(UniformDist(3000.0)),
-            nowMs = WallTime(0L),
+            nowMs = WallTime(0L)
         )!!
 
         val vehicle = extrapolation.vehiclePoint!!
@@ -127,20 +126,26 @@ class TripExtrapolationBuilderTest {
                 "t",
                 anchor = anchorStatus(position = loc(47.5, -122.5), distanceAlongTrip = 1500.0),
                 anchorLocalTimeMs = WallTime(1_000L),
-                polyline = northLine(),
+                polyline = northLine()
             ),
             ExtrapolationResult.Success(UniformDist(3000.0)),
-            nowMs = WallTime(6_000L),
+            nowMs = WallTime(6_000L)
         )!!
 
         val dot = extrapolation.dataAge!!
-        assertEquals("dot rides the shape (projected distance), not the off-route raw position",
-            -122.0, dot.point.longitude, 1e-6)
+        assertEquals(
+            "dot rides the shape (projected distance), not the off-route raw position",
+            -122.0,
+            dot.point.longitude,
+            1e-6
+        )
         assertTrue(dot.point.latitude > 47.0 && dot.point.latitude < 47.03)
         // The projected dot coincides with the glide's origin: the median (q0.50 of the uniform over the
         // remaining shape) is at or ahead of it, never behind.
-        assertTrue("glide median is not behind the data dot",
-            extrapolation.vehiclePoint!!.latitude >= dot.point.latitude - 1e-9)
+        assertTrue(
+            "glide median is not behind the data dot",
+            extrapolation.vehiclePoint!!.latitude >= dot.point.latitude - 1e-9
+        )
         assertEquals(5_000L, dot.ageMillis)
     }
 
@@ -152,10 +157,10 @@ class TripExtrapolationBuilderTest {
                 "t",
                 anchor = anchorStatus(position = loc(47.5, -122.5), distanceAlongTrip = null),
                 anchorLocalTimeMs = WallTime(1_000L),
-                polyline = northLine(),
+                polyline = northLine()
             ),
             ExtrapolationResult.NoData,
-            nowMs = WallTime(1_000L),
+            nowMs = WallTime(1_000L)
         )!!
 
         val dot = extrapolation.dataAge!!
@@ -175,7 +180,7 @@ class TripExtrapolationBuilderTest {
         val extrapolation = buildTripExtrapolation(
             TripState("t", polyline = northLine()),
             ExtrapolationResult.NoData,
-            nowMs = WallTime(0L),
+            nowMs = WallTime(0L)
         )!!
         assertNull(extrapolation.vehiclePoint)
         assertNull(extrapolation.fastEstimatePoint)

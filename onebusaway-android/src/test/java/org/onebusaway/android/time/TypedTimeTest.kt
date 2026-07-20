@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.time
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /**
  * Guards the domain-tagged time types: same-domain arithmetic yields a [kotlin.time.Duration] and stays

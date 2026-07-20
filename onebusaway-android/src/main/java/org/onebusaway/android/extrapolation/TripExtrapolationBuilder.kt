@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
-import org.onebusaway.android.models.Status
 import org.onebusaway.android.map.render.DataAgeMarker
-import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.toGeoPoint
 
@@ -41,7 +41,7 @@ fun buildTripExtrapolation(
     state: TripState,
     result: ExtrapolationResult,
     nowMs: WallTime,
-    includeMarkers: Boolean = true,
+    includeMarkers: Boolean = true
 ): TripExtrapolation? {
     val polyline = state.polyline ?: return null
     val distribution = (result as? ExtrapolationResult.Success)?.distribution
@@ -59,13 +59,12 @@ fun buildTripExtrapolation(
         // `!=` (a change means fresh AVL data) — never formats or subtracts it. 0 is the token's own
         // "no fix" value (matching the `TripOverlay`/`MapRenderState` field default), not a coerced
         // 1970 timestamp, so the `?: 0L` here is safe where a display-path one would be a bug.
-        fixTimeMs = state.anchorLocalTimeMs?.epochMs ?: 0L,
+        fixTimeMs = state.anchorLocalTimeMs?.epochMs ?: 0L
     )
 }
 
 /** Composes [TripState.extrapolate] with [buildTripExtrapolation] — the per-frame producer the driver runs. */
-internal fun extrapolationFromState(state: TripState?, nowMs: WallTime, includeMarkers: Boolean = true): TripExtrapolation? =
-    state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs, includeMarkers) }
+internal fun extrapolationFromState(state: TripState?, nowMs: WallTime, includeMarkers: Boolean = true): TripExtrapolation? = state?.let { buildTripExtrapolation(it, it.extrapolate(nowMs), nowMs, includeMarkers) }
 
 /** The extrapolated (median) vehicle [point] along the trip shape and its forward [bearing] there. */
 private data class VehicleProjection(val point: GeoPoint, val bearing: Float)
@@ -114,7 +113,7 @@ fun extrapolatedVehicles(
     // fixes and read only for the one selected vehicle, so computing it every frame is pure waste. Placed
     // before [lookupState] so the callback stays last (trailing-lambda call sites keep working).
     includeDataFixPoint: Boolean = false,
-    lookupState: (String?) -> TripState?,
+    lookupState: (String?) -> TripState?
 ): List<ExtrapolatedVehicle> =
     routeTrips.trips.mapNotNull { trip ->
         val status = trip.status ?: return@mapNotNull null
@@ -145,16 +144,14 @@ fun extrapolatedVehicles(
             // The last real fix's position on the shape (the glide's seed), so the most-recent-data dot
             // sits at the band's origin rather than at the raw off-shape reported lat/lng (#1752). Only
             // the discrete set path asks for it; the per-frame path leaves it null (see the param).
-            dataFixPoint = if (includeDataFixPoint) state?.let(::anchorFixPoint) else null,
+            dataFixPoint = if (includeDataFixPoint) state?.let(::anchorFixPoint) else null
         )
     }
 
 /** The point [distance] along this shape, or null when [distance] is non-finite or off the shape. */
-private fun Polyline.pointAtDistance(distance: Double): GeoPoint? =
-    distance.takeIf(Double::isFinite)?.let { interpolate(it) }
+private fun Polyline.pointAtDistance(distance: Double): GeoPoint? = distance.takeIf(Double::isFinite)?.let { interpolate(it) }
 
-private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyline): List<WeightedBandSegment> =
-    // Draw the band only out to the fast-estimate marker (the optimistic forward bound), not the full
+private fun weightedBandSegments(distribution: ProbDistribution, polyline: Polyline): List<WeightedBandSegment> = // Draw the band only out to the fast-estimate marker (the optimistic forward bound), not the full
     // PDF tail — the distribution continues past it, but the overlay stops there.
     uncertaintyBandSlices(distribution, highQuantile = FAST_ESTIMATE_QUANTILE).mapNotNull { slice ->
         val points = polyline.subPolyline(slice.startDist, slice.endDist)?.takeIf { it.size >= 2 }

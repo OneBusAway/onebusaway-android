@@ -25,9 +25,9 @@ import kotlin.math.sqrt
  * @param comp2 second gamma component
  */
 class GammaMixtureDistribution(
-        private val weight: Double,
-        private val comp1: GammaDistribution,
-        private val comp2: GammaDistribution
+    private val weight: Double,
+    private val comp1: GammaDistribution,
+    private val comp2: GammaDistribution
 ) : ProbDistribution {
 
     init {
@@ -39,8 +39,8 @@ class GammaMixtureDistribution(
     private val quantileHi: Double = run {
         fun secondMoment(g: GammaDistribution) = g.alpha * g.scale * g.scale + g.mean * g.mean
         val variance =
-                (weight * secondMoment(comp1) + (1 - weight) * secondMoment(comp2) - mean * mean)
-                        .coerceAtLeast(0.0)
+            (weight * secondMoment(comp1) + (1 - weight) * secondMoment(comp2) - mean * mean)
+                .coerceAtLeast(0.0)
         mean + 10 * sqrt(variance)
     }
 

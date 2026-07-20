@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 fun RadioOptionList(
     options: Array<String>,
     selectedIndex: Int,
-    onSelect: (Int) -> Unit,
+    onSelect: (Int) -> Unit
 ) {
     Column {
         options.forEachIndexed { index, label ->

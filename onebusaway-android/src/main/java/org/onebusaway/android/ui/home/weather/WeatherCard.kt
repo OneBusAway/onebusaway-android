@@ -65,7 +65,7 @@ fun WeatherFeature(viewModel: WeatherViewModel, onNearby: Boolean, modifier: Mod
             onClick = {
                 data.summary?.let { Toast.makeText(context, it.trim(), Toast.LENGTH_SHORT).show() }
             },
-            modifier = modifier,
+            modifier = modifier
         )
     }
 }

@@ -36,18 +36,24 @@ class StopArrivalsTripPatternTest {
                     routes = listOf(RouteReference(id = "route")),
                     trips = listOf(
                         TripReference(
-                            id = "served-1", routeId = "route", shapeId = "served-shape", directionId = "1",
+                            id = "served-1",
+                            routeId = "route",
+                            shapeId = "served-shape",
+                            directionId = "1"
                         ),
                         TripReference(
-                            id = "served-2", routeId = "route", shapeId = "served-shape", directionId = "1",
+                            id = "served-2",
+                            routeId = "route",
+                            shapeId = "served-shape",
+                            directionId = "1"
                         ),
                         TripReference(id = "other-branch", routeId = "route", shapeId = "other-shape"),
-                        TripReference(id = "missing-shape", routeId = "route"),
-                    ),
-                ),
+                        TripReference(id = "missing-shape", routeId = "route")
+                    )
+                )
             ),
             currentTime = 0L,
-            minutesAfter = 65,
+            minutesAfter = 65
         )
 
         val trips = snapshot.focusedTrips(
@@ -55,7 +61,7 @@ class StopArrivalsTripPatternTest {
                 "served-1" to "route",
                 "served-2" to "route",
                 "missing-shape" to "route",
-                "unknown-trip" to "route",
+                "unknown-trip" to "route"
             )
         )
 
@@ -64,9 +70,9 @@ class StopArrivalsTripPatternTest {
                 FocusedTrip("served-1", "route", "served-shape", null, directionId = 1),
                 FocusedTrip("served-2", "route", "served-shape", null, directionId = 1),
                 FocusedTrip("missing-shape", "route", null, null),
-                FocusedTrip("unknown-trip", "route", null, null),
+                FocusedTrip("unknown-trip", "route", null, null)
             ),
-            trips,
+            trips
         )
     }
 
@@ -78,14 +84,14 @@ class StopArrivalsTripPatternTest {
                     stopId = "stop",
                     arrivalsAndDepartures = listOf(
                         ArrivalDeparture(routeId = "route", tripId = "trip", stopId = "stop")
-                    ),
+                    )
                 ),
                 references = References(
                     trips = listOf(TripReference(id = "trip", routeId = "route", directionId = "1"))
-                ),
+                )
             ),
             currentTime = 0L,
-            minutesAfter = 65,
+            minutesAfter = 65
         )
 
         assertEquals(1, snapshot.arrivals.single().directionId)

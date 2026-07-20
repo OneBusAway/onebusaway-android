@@ -19,8 +19,8 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.sqlite.db.SimpleSQLiteQuery
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -160,7 +160,7 @@ class LegacyDataImporterTest {
                     "CREATE TABLE surveys (survey_id INTEGER PRIMARY KEY, study_id INTEGER, name TEXT, " +
                         "state INTEGER)"
                 )
-                db.execSQL("INSERT INTO surveys VALUES (3,7,'Valid',1)")   // references the imported study
+                db.execSQL("INSERT INTO surveys VALUES (3,7,'Valid',1)") // references the imported study
                 db.execSQL("INSERT INTO surveys VALUES (4,99,'Orphan',1)") // references a missing study
             }
             importer.importSurveyFrom(surveyFile)
@@ -253,14 +253,15 @@ class LegacyDataImporterTest {
 
     private fun count(table: String): Int = scalarInt("SELECT count(*) FROM $table")
 
-    private fun scalarInt(sql: String): Int =
-        room.query(SimpleSQLiteQuery(sql)).use { it.moveToFirst(); it.getInt(0) }
+    private fun scalarInt(sql: String): Int = room.query(SimpleSQLiteQuery(sql)).use {
+        it.moveToFirst()
+        it.getInt(0)
+    }
 
-    private fun scalarStr(sql: String): String? =
-        room.query(SimpleSQLiteQuery(sql)).use {
-            it.moveToFirst()
-            if (it.isNull(0)) null else it.getString(0)
-        }
+    private fun scalarStr(sql: String): String? = room.query(SimpleSQLiteQuery(sql)).use {
+        it.moveToFirst()
+        if (it.isNull(0)) null else it.getString(0)
+    }
 
     /** Builds a legacy ObaProvider-shaped SQLite file with one meaningful row per table. */
     private fun seedLegacy(file: File) {
@@ -297,8 +298,10 @@ class LegacyDataImporterTest {
                 "CREATE TABLE trip_alerts (_id INTEGER PRIMARY KEY AUTOINCREMENT, trip_id VARCHAR, " +
                     "stop_id VARCHAR, start_time INTEGER, state INTEGER)"
             )
-            db.execSQL("INSERT INTO trip_alerts (trip_id, stop_id, start_time, state) " +
-                "VALUES ('trip1','1_100',999,1)")
+            db.execSQL(
+                "INSERT INTO trip_alerts (trip_id, stop_id, start_time, state) " +
+                    "VALUES ('trip1','1_100',999,1)"
+            )
             db.execSQL(
                 "CREATE TABLE service_alerts (_id VARCHAR PRIMARY KEY, marked_read_time INTEGER, " +
                     "hidden INTEGER)"
@@ -322,14 +325,18 @@ class LegacyDataImporterTest {
                 "CREATE TABLE region_bounds (_id INTEGER PRIMARY KEY AUTOINCREMENT, region_id INTEGER, " +
                     "lat REAL, lon REAL, lat_span REAL, lon_span REAL)"
             )
-            db.execSQL("INSERT INTO region_bounds (region_id, lat, lon, lat_span, lon_span) " +
-                "VALUES (0,47.6,-122.3,0.5,0.5)")
+            db.execSQL(
+                "INSERT INTO region_bounds (region_id, lat, lon, lat_span, lon_span) " +
+                    "VALUES (0,47.6,-122.3,0.5,0.5)"
+            )
             db.execSQL(
                 "CREATE TABLE open311_servers (_id INTEGER PRIMARY KEY AUTOINCREMENT, region_id INTEGER, " +
                     "jurisdiction VARCHAR, api_key VARCHAR, open311_base_url VARCHAR)"
             )
-            db.execSQL("INSERT INTO open311_servers (region_id, jurisdiction, api_key, open311_base_url) " +
-                "VALUES (1,'jur','key','http://311')")
+            db.execSQL(
+                "INSERT INTO open311_servers (region_id, jurisdiction, api_key, open311_base_url) " +
+                    "VALUES (1,'jur','key','http://311')"
+            )
             db.execSQL(
                 "CREATE TABLE route_headsign_favorites (route_id VARCHAR, headsign VARCHAR, " +
                     "stop_id VARCHAR, exclude INTEGER)"
@@ -340,8 +347,10 @@ class LegacyDataImporterTest {
                     "start_time INTEGER, trip_id VARCHAR, destination_id VARCHAR, before_id VARCHAR, " +
                     "seq_num INTEGER, is_active INTEGER)"
             )
-            db.execSQL("INSERT INTO nav_stops (nav_id, start_time, trip_id, destination_id, before_id, " +
-                "seq_num, is_active) VALUES ('nav',111,'trip1','1_100','1_99',0,1)")
+            db.execSQL(
+                "INSERT INTO nav_stops (nav_id, start_time, trip_id, destination_id, before_id, " +
+                    "seq_num, is_active) VALUES ('nav',111,'trip1','1_100','1_99',0,1)"
+            )
         }
     }
 }

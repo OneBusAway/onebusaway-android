@@ -47,7 +47,7 @@ import org.onebusaway.android.time.WallTime
  */
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
-    private val repository: ArrivalsRepository,
+    private val repository: ArrivalsRepository
 ) : ViewModel() {
 
     @AssistedFactory
@@ -73,7 +73,10 @@ class ArrivalsViewModel @AssistedInject constructor(
      */
     val state: StateFlow<ArrivalsUiState> =
         combine(
-            loaded, repository.alertHideState(), repository.favoriteRouteIds(), fatalError
+            loaded,
+            repository.alertHideState(),
+            repository.favoriteRouteIds(),
+            fatalError
         ) { data, hideState, favoriteRouteIds, error ->
             when {
                 data != null -> data.toContent(hideState, favoriteRouteIds)
@@ -227,8 +230,7 @@ class ArrivalsViewModel @AssistedInject constructor(
     }
 
     /** Every situation id across the currently loaded active alerts (all grouped ids, deduped). */
-    private fun activeSituationIds(): List<String> =
-        loaded.value?.activeAlerts.orEmpty().flatMapTo(mutableSetOf()) { it.situationIds }.toList()
+    private fun activeSituationIds(): List<String> = loaded.value?.activeAlerts.orEmpty().flatMapTo(mutableSetOf()) { it.situationIds }.toList()
 
     /** The service-alert dialog's content for an alert id (read from the last good response). */
     fun alertDetails(id: String): AlertDetails? = repository.alertDetails(id)
@@ -255,7 +257,7 @@ class ArrivalsViewModel @AssistedInject constructor(
 
     private fun ArrivalsData.toContent(
         hideState: AlertHideState,
-        favoriteRouteIds: Set<String>,
+        favoriteRouteIds: Set<String>
     ): ArrivalsUiState.Content {
         val shown = activeAlerts.filterNot { hideState.isHidden(it, hideAlertsByDefault) }
         val hiddenCount = activeAlerts.size - shown.size

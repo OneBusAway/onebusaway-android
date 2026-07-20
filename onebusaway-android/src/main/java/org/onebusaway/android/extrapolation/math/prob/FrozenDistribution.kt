@@ -25,8 +25,7 @@ package org.onebusaway.android.extrapolation.math.prob
  * @param source the distribution to freeze
  * @param resolution number of table entries (higher = more accurate, default 200)
  */
-class FrozenDistribution(private val source: ProbDistribution, resolution: Int = 200) :
-        ProbDistribution {
+class FrozenDistribution(private val source: ProbDistribution, resolution: Int = 200) : ProbDistribution {
 
     private val table: DoubleArray
     private val step: Double
@@ -36,10 +35,10 @@ class FrozenDistribution(private val source: ProbDistribution, resolution: Int =
         require(resolution >= 2) { "resolution must be >= 2, got $resolution" }
         step = 1.0 / (resolution - 1)
         table =
-                DoubleArray(resolution) { i ->
-                    val p = (i * step).coerceAtMost(1.0 - 1e-9)
-                    source.quantile(p)
-                }
+            DoubleArray(resolution) { i ->
+                val p = (i * step).coerceAtMost(1.0 - 1e-9)
+                source.quantile(p)
+            }
     }
 
     override fun quantile(p: Double): Double {

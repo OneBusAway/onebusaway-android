@@ -16,9 +16,9 @@
 package org.onebusaway.android.location
 
 import android.location.Location
-import org.onebusaway.android.time.WallTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import org.onebusaway.android.time.WallTime
 
 /**
  * Fix-selection policy: which of two device location fixes to keep. All functions are pure — the
@@ -39,8 +39,7 @@ object LocationFixes {
      * @return true if [a] is "better" than [b], false if [b] is "better" than [a]
      */
     @JvmStatic
-    fun compareLocationsByTime(a: Location?, b: Location?): Boolean =
-        a != null && (b == null || WallTime(a.time) > WallTime(b.time))
+    fun compareLocationsByTime(a: Location?, b: Location?): Boolean = a != null && (b == null || WallTime(a.time) > WallTime(b.time))
 
     /**
      * Compares a new location [a] to a previously saved location [b], considering timestamps and
@@ -78,7 +77,7 @@ object LocationFixes {
         candidateTime: WallTime,
         candidateAccuracy: Float,
         currentTime: WallTime,
-        now: WallTime,
+        now: WallTime
     ): Boolean {
         val newer = candidateTime > currentTime
         // Take the new fix only when it is more recent, and either the saved fix is old enough
@@ -93,8 +92,7 @@ object LocationFixes {
      * @return true if same, false otherwise
      */
     @JvmStatic
-    fun isDuplicate(a: Location, b: Location): Boolean =
-        WallTime(a.time) == WallTime(b.time) &&
-            a.latitude == b.latitude &&
-            a.longitude == b.longitude
+    fun isDuplicate(a: Location, b: Location): Boolean = WallTime(a.time) == WallTime(b.time) &&
+        a.latitude == b.latitude &&
+        a.longitude == b.longitude
 }

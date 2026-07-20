@@ -35,6 +35,5 @@ object MyTabs {
     private const val SCHEME = "tab"
 
     /** The tab tag carried by a `tab://<tag>` URI, or null if [uri] isn't a tab link. */
-    fun defaultTabFromUri(uri: Uri): String? =
-        uri.takeIf { it.scheme == SCHEME }?.schemeSpecificPart
+    fun defaultTabFromUri(uri: Uri): String? = uri.takeIf { it.scheme == SCHEME }?.schemeSpecificPart
 }

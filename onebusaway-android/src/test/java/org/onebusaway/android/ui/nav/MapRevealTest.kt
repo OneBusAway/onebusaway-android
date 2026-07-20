@@ -37,7 +37,7 @@ class MapRevealTest {
             routeId = "1_100",
             directionStopId = "1_75403",
             focusTripId = "1_604112894",
-            initialDirectionId = 1,
+            initialDirectionId = 1
         )
 
         handle.putRouteReveal(request)
@@ -75,7 +75,7 @@ class MapRevealTest {
             mapOf(
                 RESULT_MAP_STOP_ID to "stop_1",
                 RESULT_MAP_STOP_LAT to 47.6,
-                RESULT_MAP_STOP_LON to -122.3,
+                RESULT_MAP_STOP_LON to -122.3
             )
         )
 

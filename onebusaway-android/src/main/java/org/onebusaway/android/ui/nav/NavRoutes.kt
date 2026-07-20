@@ -36,7 +36,7 @@ data class ReminderEditorArgs(
     val serviceDate: Long = 0L,
     val vehicleId: String? = null,
     /** Server "now" (epoch millis) the arrival was observed on; same clock domain as [departTime]. */
-    val serverNowMs: Long = 0L,
+    val serverNowMs: Long = 0L
 ) {
     init {
         // Fail fast at this construction site (the arrival "set reminder" path) rather than letting a
@@ -71,6 +71,7 @@ object NavRoutes {
     const val EXTRA_NAV_ROUTE = "org.onebusaway.android.ui.HomeActivity.NAV_ROUTE"
 
     // --- Argless content screens (former thin host Activities) ---
+
     /** Transit agencies supported in the current region. */
     const val AGENCIES = "agencies"
 
@@ -94,6 +95,7 @@ object NavRoutes {
     // context rides one nav-arg ([ARG_REPORT_CONTEXT] = an encoded
     // [org.onebusaway.android.report.ReportContext]), so each destination reads its own back-stack args
     // (process-death safe) instead of the host activity intent. ---
+
     /** The encoded report context (stop/location/trip), carried by every report destination. */
     const val ARG_REPORT_CONTEXT = "reportContext"
 
@@ -107,8 +109,7 @@ object NavRoutes {
     const val CUSTOMER_SERVICE = "customerService?$ARG_REPORT_CONTEXT={$ARG_REPORT_CONTEXT}"
 
     /** Builds a navigable [CUSTOMER_SERVICE] route, optionally carrying the encoded [reportContext]. */
-    fun customerService(reportContext: String? = null): String =
-        "customerService" + reportContextQuery(reportContext)
+    fun customerService(reportContext: String? = null): String = "customerService" + reportContextQuery(reportContext)
 
     // The infrastructure-issue (stop/trip problem) hybrid map+form screen: the selected-service keyword
     // ("stop"/"trip") plus the encoded report context, both as nav-args.
@@ -118,14 +119,13 @@ object NavRoutes {
             "&$ARG_REPORT_CONTEXT={$ARG_REPORT_CONTEXT}"
 
     /** Builds a navigable [INFRASTRUCTURE_ISSUE] route, optionally carrying [selectedService] + context. */
-    fun infrastructureIssue(selectedService: String? = null, reportContext: String? = null): String =
-        "infrastructureIssue" + buildList {
+    fun infrastructureIssue(selectedService: String? = null, reportContext: String? = null): String = "infrastructureIssue" +
+        buildList {
             if (selectedService != null) add("$ARG_SELECTED_SERVICE=${Uri.encode(selectedService)}")
             if (reportContext != null) add("$ARG_REPORT_CONTEXT=${Uri.encode(reportContext)}")
         }.let { if (it.isEmpty()) "" else "?" + it.joinToString("&") }
 
-    private fun reportContextQuery(reportContext: String?): String =
-        if (reportContext != null) "?$ARG_REPORT_CONTEXT=${Uri.encode(reportContext)}" else ""
+    private fun reportContextQuery(reportContext: String?): String = if (reportContext != null) "?$ARG_REPORT_CONTEXT=${Uri.encode(reportContext)}" else ""
 
     // --- Search results (system ACTION_SEARCH target + the home top-bar search field) ---
     const val ARG_QUERY = "query"
@@ -150,16 +150,13 @@ object NavRoutes {
     const val HOME_STARRED_ROUTES = "homeStarredRoutes"
 
     /** Builds a navigable [MY_STOPS] route, optionally pre-selecting the [tab] (a MyTabs tag). */
-    fun myStops(tab: String? = null): String =
-        "myStops" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
+    fun myStops(tab: String? = null): String = "myStops" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
 
     /** Builds a navigable [MY_ROUTES] route, optionally pre-selecting the [tab] (a MyTabs tag). */
-    fun myRoutes(tab: String? = null): String =
-        "myRoutes" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
+    fun myRoutes(tab: String? = null): String = "myRoutes" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
 
     /** Builds a navigable [MY_RECENT] route, optionally pre-selecting the [tab] (a MyTabs tag). */
-    fun myRecent(tab: String? = null): String =
-        "myRecent" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
+    fun myRecent(tab: String? = null): String = "myRecent" + if (tab != null) "?$ARG_TAB=${Uri.encode(tab)}" else ""
 
     /** Builds a navigable [MY_REMINDERS] route. */
     fun myReminders(): String = "myReminders"
@@ -197,9 +194,8 @@ object NavRoutes {
     const val ARRIVALS = "arrivals/{$ARG_STOP_ID}?$ARG_STOP_NAME={$ARG_STOP_NAME}"
 
     /** Builds a navigable [ARRIVALS] route (stop ids can contain `/`, `_`; encode them). */
-    fun arrivals(stopId: String, stopName: String? = null): String =
-        "arrivals/${Uri.encode(stopId)}" +
-            if (stopName != null) "?$ARG_STOP_NAME=${Uri.encode(stopName)}" else ""
+    fun arrivals(stopId: String, stopName: String? = null): String = "arrivals/${Uri.encode(stopId)}" +
+        if (stopName != null) "?$ARG_STOP_NAME=${Uri.encode(stopName)}" else ""
 
     // --- Trip details (C-d) ---
     // Clean nav-arg keys read by TripDetailsViewModel from SavedStateHandle (TripDetailsActivity's
@@ -223,9 +219,8 @@ object NavRoutes {
     const val TRIP_TRAJECTORY = "tripTrajectory/{$ARG_TRIP_ID}?$ARG_STOP_ID={$ARG_STOP_ID}"
 
     /** Builds a navigable [TRIP_TRAJECTORY] route (ids can contain `/`, `_`; encode them). */
-    fun tripTrajectory(tripId: String, stopId: String? = null): String =
-        "tripTrajectory/${Uri.encode(tripId)}" +
-            if (stopId != null) "?$ARG_STOP_ID=${Uri.encode(stopId)}" else ""
+    fun tripTrajectory(tripId: String, stopId: String? = null): String = "tripTrajectory/${Uri.encode(tripId)}" +
+        if (stopId != null) "?$ARG_STOP_ID=${Uri.encode(stopId)}" else ""
 
     // --- Trip info / reminder editor (TripInfo) ---
     // The reminder editor takes the full trip context so a brand-new reminder (from the arrivals
@@ -256,7 +251,7 @@ object NavRoutes {
         stopSequence: Int = 0,
         serviceDate: Long = 0L,
         vehicleId: String? = null,
-        serverNowMs: Long = 0L,
+        serverNowMs: Long = 0L
     ): String {
         val query = buildList {
             if (routeId != null) add("$ARG_ROUTE_ID=${Uri.encode(routeId)}")
@@ -285,7 +280,7 @@ object NavRoutes {
         stopSequence = args.stopSequence,
         serviceDate = args.serviceDate,
         vehicleId = args.vehicleId,
-        serverNowMs = args.serverNowMs,
+        serverNowMs = args.serverNowMs
     )
 
     // --- Feedback ---
@@ -305,7 +300,7 @@ object NavRoutes {
         response: Int,
         logFile: String? = null,
         tripId: String? = null,
-        notificationId: Int = 0,
+        notificationId: Int = 0
     ): String {
         val query = buildList {
             add("$ARG_FEEDBACK_RESPONSE=$response")

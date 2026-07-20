@@ -35,9 +35,9 @@ class RouteSegmentHighlightTest {
     @Test
     fun onSegment_keepsStopsOnThePath_dropsFarOnes() {
         val stops = listOf(
-            stop("on", 47.61, -122.3300),   // right on the line
+            stop("on", 47.61, -122.3300), // right on the line
             stop("near", 47.61, -122.3302), // ~15 m off — within tolerance
-            stop("off", 47.61, -122.3200),  // ~750 m off — excluded
+            stop("off", 47.61, -122.3200) // ~750 m off — excluded
         )
         assertEquals(listOf("on", "near"), stops.onSegment(segment).map { it.id })
     }
@@ -58,8 +58,10 @@ class RouteSegmentHighlightTest {
     fun routePolylinesWithSegment_deemphasizesBase_andAddsNormalWidthOverlay() {
         val base = listOf(
             RoutePolyline(
-                color = null, points = segment,
-                widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE, directional = true,
+                color = null,
+                points = segment,
+                widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+                directional = true
             )
         )
         val result = routePolylinesWithSegment(base, segment, routeColor = 0xFF00FF00.toInt())

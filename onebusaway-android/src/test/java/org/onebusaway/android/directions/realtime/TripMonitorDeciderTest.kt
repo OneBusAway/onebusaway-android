@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.directions.realtime
 
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.directions.model.ItineraryDescription
@@ -22,7 +23,6 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.time.ServerTime
-import java.util.concurrent.TimeUnit
 
 /**
  * JVM unit tests for [TripMonitorDecider] — the itinerary-diff decision extracted from the legacy
@@ -38,13 +38,12 @@ class TripMonitorDeciderTest {
             mode = TripMode.BUS,
             realTime = true,
             tripId = tripId,
-            endTime = ServerTime(endTimeMillis),
+            endTime = ServerTime(endTimeMillis)
         )
         return TripItinerary(legs = listOf(leg))
     }
 
-    private fun monitoring(tripId: String, endTimeMillis: Long): ItineraryDescription =
-        ItineraryDescription(itinerary(tripId, endTimeMillis))
+    private fun monitoring(tripId: String, endTimeMillis: Long): ItineraryDescription = ItineraryDescription(itinerary(tripId, endTimeMillis))
 
     @Test
     fun emptyResults_stops() {
@@ -58,7 +57,7 @@ class TripMonitorDeciderTest {
         val result = TripMonitorDecider.decide(
             monitoring("t1", end),
             listOf(itinerary("t1", end + TimeUnit.SECONDS.toMillis(30))), // 30s later, under 2 min
-            thresholdSeconds,
+            thresholdSeconds
         )
         assertEquals(MonitorResult.KeepMonitoring, result)
     }
@@ -69,7 +68,7 @@ class TripMonitorDeciderTest {
         val result = TripMonitorDecider.decide(
             monitoring("t1", end),
             listOf(itinerary("t1", end + TimeUnit.MINUTES.toMillis(5))), // 5 min late
-            thresholdSeconds,
+            thresholdSeconds
         )
         assertEquals(MonitorResult.Deviation(TimeUnit.MINUTES.toSeconds(5)), result)
     }
@@ -80,7 +79,7 @@ class TripMonitorDeciderTest {
         val result = TripMonitorDecider.decide(
             monitoring("t1", end),
             listOf(itinerary("t1", end - TimeUnit.MINUTES.toMillis(5))), // 5 min early
-            thresholdSeconds,
+            thresholdSeconds
         )
         assertEquals(MonitorResult.Deviation(-TimeUnit.MINUTES.toSeconds(5)), result)
     }
@@ -90,7 +89,7 @@ class TripMonitorDeciderTest {
         val result = TripMonitorDecider.decide(
             monitoring("t1", 1_000_000L),
             listOf(itinerary("t2", 2_000_000L)),
-            thresholdSeconds,
+            thresholdSeconds
         )
         assertEquals(MonitorResult.ItineraryChanged, result)
     }

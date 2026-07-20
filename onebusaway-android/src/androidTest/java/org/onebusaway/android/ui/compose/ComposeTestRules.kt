@@ -41,5 +41,4 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
  * See https://github.com/OneBusAway/onebusaway-android/issues/1792 for the investigation.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-fun createUnconfinedComposeRule(): ComposeContentTestRule =
-    createComposeRule(UnconfinedTestDispatcher())
+fun createUnconfinedComposeRule(): ComposeContentTestRule = createComposeRule(UnconfinedTestDispatcher())

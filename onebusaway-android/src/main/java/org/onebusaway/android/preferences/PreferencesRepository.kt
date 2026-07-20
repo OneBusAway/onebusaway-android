@@ -139,7 +139,7 @@ interface PreferencesRepository {
 class DefaultPreferencesRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val dataStore: DataStore<Preferences>,
-    @param:AppScope private val scope: CoroutineScope,
+    @param:AppScope private val scope: CoroutineScope
 ) : PreferencesRepository {
 
     // Seeded synchronously so the first synchronous read (e.g. from Application.onCreate) sees real

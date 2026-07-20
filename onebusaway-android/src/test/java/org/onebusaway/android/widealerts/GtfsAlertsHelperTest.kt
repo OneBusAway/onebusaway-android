@@ -63,8 +63,7 @@ class GtfsAlertsHelperTest {
         assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(GtfsRealtime.Alert.newBuilder().build(), nowMs))
     }
 
-    private fun alertStartingAt(startSec: Long): GtfsRealtime.Alert =
-        GtfsRealtime.Alert.newBuilder()
-            .addActivePeriod(GtfsRealtime.TimeRange.newBuilder().setStart(startSec).build())
-            .build()
+    private fun alertStartingAt(startSec: Long): GtfsRealtime.Alert = GtfsRealtime.Alert.newBuilder()
+        .addActivePeriod(GtfsRealtime.TimeRange.newBuilder().setStart(startSec).build())
+        .build()
 }

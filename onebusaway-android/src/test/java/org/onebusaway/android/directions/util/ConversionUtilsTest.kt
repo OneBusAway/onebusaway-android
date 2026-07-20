@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.directions.util
 
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 /**
  * JVM unit tests for the pure date helpers extracted during the java.time migration (#1690).

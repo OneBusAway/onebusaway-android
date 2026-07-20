@@ -46,8 +46,7 @@ object Backup {
 
     private const val TAG = "Backup"
 
-    private fun dbFile(context: Context): File =
-        context.getDatabasePath(AppDatabase.DATABASE_NAME)
+    private fun dbFile(context: Context): File = context.getDatabasePath(AppDatabase.DATABASE_NAME)
 
     @JvmStatic
     fun backup(context: Context, uri: Uri) {
@@ -61,7 +60,9 @@ object Backup {
                 ?: throw IOException("Could not open output stream for backup: $uri")
             out.use { FileInputStream(dbFile(context)).use { input -> input.copyTo(it) } }
             Toast.makeText(
-                context, context.getString(R.string.preferences_db_saved), Toast.LENGTH_LONG
+                context,
+                context.getString(R.string.preferences_db_saved),
+                Toast.LENGTH_LONG
             ).show()
             if (BuildConfig.DEBUG) Log.d(TAG, "Database backup saved successfully to: $uri")
         } catch (e: IOException) {

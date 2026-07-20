@@ -39,7 +39,8 @@ class MapStopCacheDaoTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            InstrumentationRegistry.getInstrumentation().targetContext, AppDatabase::class.java
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            AppDatabase::class.java
         ).build()
         dao = db.mapStopCacheDao()
     }
@@ -53,12 +54,12 @@ class MapStopCacheDaoTest {
             listOf(
                 stop("in", lat = 47.60, lon = -122.30, regionId = 1L, lastSeen = 100),
                 stop("outLat", lat = 47.90, lon = -122.30, regionId = 1L, lastSeen = 100),
-                stop("outLon", lat = 47.60, lon = -121.90, regionId = 1L, lastSeen = 100),
+                stop("outLon", lat = 47.60, lon = -121.90, regionId = 1L, lastSeen = 100)
             )
         )
         val rows = dao.stopsInBounds(
             regionId = 1L, minLat = 47.55, maxLat = 47.65, minLon = -122.35, maxLon = -122.25,
-            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 0, limit = 100,
+            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 0, limit = 100
         )
         assertEquals(setOf("in"), rows.map { it.id }.toSet())
     }
@@ -69,12 +70,12 @@ class MapStopCacheDaoTest {
             listOf(
                 stop("fresh", lat = 47.60, lon = -122.30, regionId = 1L, lastSeen = 1_000),
                 stop("otherRegion", lat = 47.60, lon = -122.30, regionId = 2L, lastSeen = 1_000),
-                stop("stale", lat = 47.60, lon = -122.30, regionId = 1L, lastSeen = 100),
+                stop("stale", lat = 47.60, lon = -122.30, regionId = 1L, lastSeen = 100)
             )
         )
         val rows = dao.stopsInBounds(
             regionId = 1L, minLat = 47.5, maxLat = 47.7, minLon = -122.4, maxLon = -122.2,
-            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 500, limit = 100,
+            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 500, limit = 100
         )
         assertEquals(setOf("fresh"), rows.map { it.id }.toSet())
     }
@@ -87,14 +88,14 @@ class MapStopCacheDaoTest {
             listOf(
                 stop("near", lat = 47.61, lon = -122.30, regionId = 1L, lastSeen = 100),
                 stop("mid", lat = 47.64, lon = -122.30, regionId = 1L, lastSeen = 100),
-                stop("far", lat = 47.69, lon = -122.30, regionId = 1L, lastSeen = 100),
+                stop("far", lat = 47.69, lon = -122.30, regionId = 1L, lastSeen = 100)
             )
         )
         val rows = dao.stopsInBounds(
             regionId = 1L, minLat = 47.5, maxLat = 47.7, minLon = -122.4, maxLon = -122.2,
-            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 0, limit = 2,
+            centerLat = 47.60, centerLon = -122.30, ttlCutoff = 0, limit = 2
         )
-        assertEquals(listOf("near", "mid"), rows.map { it.id })   // nearest first, farthest dropped
+        assertEquals(listOf("near", "mid"), rows.map { it.id }) // nearest first, farthest dropped
     }
 
     @Test
@@ -103,7 +104,7 @@ class MapStopCacheDaoTest {
             listOf(
                 CachedRouteTypeRecord("r1", type = 3, regionId = 1L, lastSeen = 1),
                 CachedRouteTypeRecord("r2", type = 2, regionId = 1L, lastSeen = 1),
-                CachedRouteTypeRecord("r3", type = 4, regionId = 1L, lastSeen = 1),
+                CachedRouteTypeRecord("r3", type = 4, regionId = 1L, lastSeen = 1)
             )
         )
         val types = dao.routeTypes(listOf("r1", "r3")).associate { it.id to it.type }
@@ -115,7 +116,7 @@ class MapStopCacheDaoTest {
         dao.upsertStops(
             listOf(
                 stop("old", lat = 1.0, lon = 1.0, regionId = 1L, lastSeen = 100),
-                stop("new", lat = 1.0, lon = 1.0, regionId = 1L, lastSeen = 900),
+                stop("new", lat = 1.0, lon = 1.0, regionId = 1L, lastSeen = 900)
             )
         )
         dao.evictStaleStops(regionId = 1L, ttlCutoff = 500)
@@ -134,7 +135,7 @@ class MapStopCacheDaoTest {
         dao.evictBeyondCap(regionId = 1L, cap = 2)
 
         val remaining = dao.stopsInBounds(1L, 0.0, 2.0, 0.0, 2.0, centerLat = 1.0, centerLon = 1.0, ttlCutoff = 0, limit = 100)
-        assertEquals(setOf("s4", "s5"), remaining.map { it.id }.toSet())   // newest two by last_seen
+        assertEquals(setOf("s4", "s5"), remaining.map { it.id }.toSet()) // newest two by last_seen
         assertEquals(2, dao.countStops(1L))
     }
 
@@ -144,13 +145,13 @@ class MapStopCacheDaoTest {
             listOf(
                 stop("a1", lat = 1.0, lon = 1.0, regionId = 1L, lastSeen = 1),
                 stop("a2", lat = 1.0, lon = 1.0, regionId = 1L, lastSeen = 2),
-                stop("b1", lat = 1.0, lon = 1.0, regionId = 2L, lastSeen = 1),
+                stop("b1", lat = 1.0, lon = 1.0, regionId = 2L, lastSeen = 1)
             )
         )
         dao.evictBeyondCap(regionId = 1L, cap = 1)
 
-        assertEquals(1, dao.countStops(1L))   // region 1 trimmed to 1
-        assertEquals(1, dao.countStops(2L))   // region 2 untouched
+        assertEquals(1, dao.countStops(1L)) // region 1 trimmed to 1
+        assertEquals(1, dao.countStops(2L)) // region 2 untouched
     }
 
     @Test
@@ -161,11 +162,13 @@ class MapStopCacheDaoTest {
         dao.saveAndEvict(
             stops = (1..3).map { stop("s$it", 1.0, 1.0, regionId = 1L, lastSeen = 1_000) },
             types = listOf(CachedRouteTypeRecord("r1", 3, regionId = 1L, lastSeen = 1_000)),
-            regionId = 1L, ttlCutoff = 500, cap = 100,
+            regionId = 1L,
+            ttlCutoff = 500,
+            cap = 100
         )
 
         val remaining = dao.stopsInBounds(1L, 0.0, 2.0, 0.0, 2.0, centerLat = 1.0, centerLon = 1.0, ttlCutoff = 0, limit = 100)
-        assertEquals(setOf("s1", "s2", "s3"), remaining.map { it.id }.toSet())   // stale gone
+        assertEquals(setOf("s1", "s2", "s3"), remaining.map { it.id }.toSet()) // stale gone
         assertEquals(listOf(3), dao.routeTypes(listOf("r1")).map { it.type })
     }
 
@@ -183,10 +186,10 @@ class MapStopCacheDaoTest {
         lon: Double,
         regionId: Long,
         lastSeen: Long,
-        routeIds: String = "r1",
+        routeIds: String = "r1"
     ) = CachedStopRecord(
         id = id, code = "code", name = "name", direction = "N",
         latitude = lat, longitude = lon, locationType = 0,
-        routeIds = routeIds, regionId = regionId, lastSeen = lastSeen,
+        routeIds = routeIds, regionId = regionId, lastSeen = lastSeen
     )
 }

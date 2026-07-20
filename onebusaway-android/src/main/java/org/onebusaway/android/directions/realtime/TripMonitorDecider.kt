@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.directions.realtime
 
+import kotlin.math.abs
+import kotlin.time.Duration
 import org.onebusaway.android.directions.model.ItineraryDescription
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
-import kotlin.math.abs
-import kotlin.time.Duration
 
 /**
  * The outcome of comparing the itinerary the user is monitoring against a freshly-planned set of
@@ -64,7 +64,7 @@ object TripMonitorDecider {
     fun decide(
         current: ItineraryDescription,
         results: List<TripItinerary>,
-        thresholdSeconds: Long,
+        thresholdSeconds: Long
     ): MonitorResult {
         if (results.isEmpty()) {
             // Matches the legacy failure path: no results returned -> stop listening.
@@ -101,8 +101,7 @@ object TripMonitorWindow {
      * comparison ([window] = [org.onebusaway.android.directions.util.OTPConstants.REALTIME_SERVICE_QUERY_WINDOW]).
      */
     @JvmStatic
-    fun shouldStartNow(departure: WallTime, now: WallTime, window: Duration): Boolean =
-        departure - now <= window
+    fun shouldStartNow(departure: WallTime, now: WallTime, window: Duration): Boolean = departure - now <= window
 
     /**
      * Whether the monitored trip has already departed, so warning the user is moot and the foreground
@@ -117,6 +116,5 @@ object TripMonitorWindow {
     // design; here the coarse "has this moment passed?" lifecycle bound accepts the device-clock skew.
     @Suppress("PrematureUnwrap")
     @JvmStatic
-    fun hasDeparted(departure: ServerTime?, now: WallTime): Boolean =
-        departure != null && now.epochMs >= departure.epochMs
+    fun hasDeparted(departure: ServerTime?, now: WallTime): Boolean = departure != null && now.epochMs >= departure.epochMs
 }

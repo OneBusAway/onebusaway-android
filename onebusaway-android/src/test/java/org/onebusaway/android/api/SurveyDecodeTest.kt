@@ -15,14 +15,13 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.StudyResponse
-import org.onebusaway.android.api.contract.SubmitSurveyResponse
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.contract.StudyResponse
+import org.onebusaway.android.api.contract.SubmitSurveyResponse
 
 /**
  * Covers the surveys client decode path. Surveys come from the region's sidecar host as bare JSON
@@ -32,7 +31,10 @@ import org.junit.Test
  */
 class SurveyDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesStudyResponse() {

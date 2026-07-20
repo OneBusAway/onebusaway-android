@@ -15,15 +15,14 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.ShapeEntry
-
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.ShapeEntry
 
 /**
  * Ports the retired instrumented ShapeRequestTest onto the modernized `shape` endpoint: decodes the
@@ -33,7 +32,10 @@ import java.io.File
  */
 class ShapeDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesShapeEntry() {

@@ -26,8 +26,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Verifies the leg-card tap split in [TripResultsList]: tapping a card **body** frames the whole leg
@@ -52,13 +52,13 @@ class DirectionRowFocusTest {
     private val walk = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
         text = "1. Walk to Pine St & 3rd Ave",
-        legPoints = walkLegPoints,
+        legPoints = walkLegPoints
     )
 
     private val stopA = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
         text = "Capitol Hill Station",
-        focusPoint = stopAPoint,
+        focusPoint = stopAPoint
     )
 
     private val transit = DirectionItem(
@@ -67,7 +67,7 @@ class DirectionRowFocusTest {
         isTransit = true,
         subItems = listOf(stopA),
         legPoints = transitLegPoints,
-        focusPoint = boardPoint,
+        focusPoint = boardPoint
     )
 
     // The option card is incidental here (this test drives the directions list, not the header); any
@@ -78,11 +78,11 @@ class DirectionRowFocusTest {
                 mode = ModeSummary.Label("Route 8"),
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
-                endTime = ServerTime(0L),
+                endTime = ServerTime(0L)
             )
         ),
         selectedIndex = 0,
-        directions = listOf(walk, transit),
+        directions = listOf(walk, transit)
     )
 
     @Test
@@ -105,7 +105,7 @@ class DirectionRowFocusTest {
             TripResultsList(
                 state = state,
                 onFocusLeg = { framed = it },
-                onFocusPoint = { focused = it },
+                onFocusPoint = { focused = it }
             )
         }
 
@@ -129,7 +129,7 @@ class DirectionRowFocusTest {
         val noGeometry = DirectionItem(
             iconRes = DirectionItem.NO_ICON,
             text = "Short hop",
-            focusPoint = boardPoint,
+            focusPoint = boardPoint
         )
         var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
@@ -137,7 +137,7 @@ class DirectionRowFocusTest {
             TripResultsList(
                 state = state.copy(directions = listOf(noGeometry)),
                 onFocusLeg = { framed = it },
-                onFocusPoint = { focused = it },
+                onFocusPoint = { focused = it }
             )
         }
 
@@ -156,7 +156,7 @@ class DirectionRowFocusTest {
             TripResultsList(
                 state = state.copy(directions = listOf(inert)),
                 onFocusLeg = { framed = it },
-                onFocusPoint = { focused = it },
+                onFocusPoint = { focused = it }
             )
         }
 
@@ -179,8 +179,8 @@ class DirectionRowFocusTest {
             routeId = "1_100",
             headsign = "Rainier Beach",
             board = boardStop,
-            alight = alightStop,
-        ),
+            alight = alightStop
+        )
     )
     private val routeState = state.copy(directions = listOf(routeItem))
 
@@ -205,7 +205,7 @@ class DirectionRowFocusTest {
         composeRule.setContent {
             TripResultsList(
                 state = routeState,
-                stopEtaStrip = { _, stop, _ -> Text(stripMarker(stop.name)) },
+                stopEtaStrip = { _, stop, _ -> Text(stripMarker(stop.name)) }
             )
         }
 

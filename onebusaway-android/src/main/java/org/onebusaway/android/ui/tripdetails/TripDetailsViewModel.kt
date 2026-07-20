@@ -24,8 +24,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
  * ViewModel for the trip details screen. The 60-second polling loop lives in the screen (driven by
@@ -35,7 +35,7 @@ import org.onebusaway.android.time.WallTime
 @HiltViewModel
 class TripDetailsViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val repository: TripDetailsRepository,
+    private val repository: TripDetailsRepository
 ) : ViewModel() {
 
     // Launch args arrive via SavedStateHandle — from the NavHost destination's nav-args, or from the

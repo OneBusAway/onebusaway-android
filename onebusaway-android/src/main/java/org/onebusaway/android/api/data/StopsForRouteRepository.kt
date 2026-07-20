@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.api.data
 
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -38,7 +39,6 @@ import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PolylineDecoder
 import org.onebusaway.android.util.SingleFlight
 import org.onebusaway.android.util.runCatchingCancellable
-import java.io.IOException
 
 /**
  * The single caching entry point for stops-for-route. `stops-for-route` was formerly fetched down two
@@ -88,7 +88,7 @@ class DefaultStopsForRouteRepository internal constructor(
     cacheSize: Int = MAX_CACHED_ROUTE_STOPS,
     // The one wire call, injected so the JVM tests can exercise caching/coalescing without a live
     // ObaApiProvider. `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code.
-    private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>,
+    private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>
 ) : StopsForRouteRepository {
 
     @Inject
@@ -96,7 +96,7 @@ class DefaultStopsForRouteRepository internal constructor(
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
         fetch = { routeId ->
             api.callOrNull { it.stopsForRoute(routeId, includePolylines = true).requireData() }
-        },
+        }
     )
 
     // Only successful entries are cached; failures/no-endpoint aren't, so they re-fetch. The
@@ -104,8 +104,7 @@ class DefaultStopsForRouteRepository internal constructor(
     private val cache = BoundedLruCache<String, EntryWithReferences<StopsForRoute>>(cacheSize)
     private val fetches = SingleFlight<String, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
 
-    override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> =
-        entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
+    override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
 
     override suspend fun routeMap(routeId: String): Result<RouteMapData?> {
         val fetched = entry(routeId).getOrElse { return Result.failure(it) }
@@ -132,8 +131,7 @@ class DefaultStopsForRouteRepository internal constructor(
         } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
     }
 
-    private fun noEndpoint() =
-        IOException("No OBA API endpoint: no current region and no custom API URL set")
+    private fun noEndpoint() = IOException("No OBA API endpoint: no current region and no custom API URL set")
 }
 
 /**
@@ -147,7 +145,7 @@ internal fun EntryWithReferences<StopsForRoute>.toRouteStopGroups(): List<RouteS
         grouping.stopGroups.map { group ->
             RouteStopGroup(
                 name = group.displayName,
-                stops = group.stopIds.mapNotNull { stopsById[it] }.map(::DtoStop),
+                stops = group.stopIds.mapNotNull { stopsById[it] }.map(::DtoStop)
             )
         }
     }
@@ -180,7 +178,7 @@ internal fun EntryWithReferences<StopsForRoute>.toRouteMapData(routeId: String):
         routes = references.routes.map(::DtoRoute),
         directions = dirs.directions,
         polylines = wholeRoute,
-        polylinesByDirection = byDirection,
+        polylinesByDirection = byDirection
     )
 }
 
@@ -193,7 +191,7 @@ private fun ShapeEntry.decode(): List<GeoPoint> = PolylineDecoder.decode(points,
 internal data class RouteDirections(
     val directions: List<RouteMapDirection>,
     val directionsByStop: Map<String, Set<Int>>,
-    val polylinesByDirection: Map<Int, List<ShapeEntry>>,
+    val polylinesByDirection: Map<Int, List<ShapeEntry>>
 )
 
 /**

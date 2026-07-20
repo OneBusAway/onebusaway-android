@@ -118,7 +118,9 @@ private fun buildMessage(activity: AppCompatActivity, alert: AlertDetails): Char
                     activity.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                 }
             },
-            start, message.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            start,
+            message.length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
     }
     return message

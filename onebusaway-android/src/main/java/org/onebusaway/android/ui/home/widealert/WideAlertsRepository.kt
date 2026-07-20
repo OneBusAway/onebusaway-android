@@ -39,7 +39,7 @@ interface WideAlertsRepository {
  * collector's context decides where emissions are observed.
  */
 class DefaultWideAlertsRepository @Inject constructor(
-    private val gtfsAlerts: GtfsAlerts,
+    private val gtfsAlerts: GtfsAlerts
 ) : WideAlertsRepository {
 
     override fun wideAlerts(regionId: String): Flow<WideAlert> = callbackFlow {

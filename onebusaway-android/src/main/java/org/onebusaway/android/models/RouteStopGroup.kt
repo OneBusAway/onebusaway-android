@@ -18,5 +18,5 @@ package org.onebusaway.android.models
 /** A route's stops for one direction: the group's display name and its [ObaStop]s, in order. */
 data class RouteStopGroup(
     val name: String?,
-    val stops: List<ObaStop>,
+    val stops: List<ObaStop>
 )

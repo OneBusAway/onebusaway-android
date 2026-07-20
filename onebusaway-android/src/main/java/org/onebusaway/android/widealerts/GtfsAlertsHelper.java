@@ -1,183 +1,187 @@
 package org.onebusaway.android.widealerts;
 
+import android.content.Context;
+import androidx.annotation.NonNull;
 import com.google.transit.realtime.GtfsRealtime;
-
+import java.util.Locale;
 import org.onebusaway.android.app.di.DatabaseEntryPoint;
 import org.onebusaway.android.database.widealerts.AlertsRepository;
 import org.onebusaway.android.database.widealerts.entity.AlertEntity;
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
-
-import java.util.Locale;
-
-/**
- * Helper class for GTFS alerts.
- */
+/** Helper class for GTFS alerts. */
 public class GtfsAlertsHelper {
-    private static final String DEFAULT_LANGUAGE_CODE = "en";
+  private static final String DEFAULT_LANGUAGE_CODE = "en";
 
-    /**
-     * Retrieves the title of the alert in the current app language or default language.
-     *
-     * @param alert The GTFS alert.
-     * @return The alert title.
-     */
-    public static @NonNull String getAlertTitle(@NonNull GtfsRealtime.Alert alert) {
-        String currentLanguageCode = getCurrentAppLanguageCode();
-        String title = "";
+  /**
+   * Retrieves the title of the alert in the current app language or default language.
+   *
+   * @param alert The GTFS alert.
+   * @return The alert title.
+   */
+  public static @NonNull String getAlertTitle(@NonNull GtfsRealtime.Alert alert) {
+    String currentLanguageCode = getCurrentAppLanguageCode();
+    String title = "";
 
-        for (GtfsRealtime.TranslatedString.Translation translation : alert.getHeaderText().getTranslationList()) {
-            if (translation.hasLanguage()) {
-                if (translation.getLanguage().equals(currentLanguageCode)) {
-                    return translation.getText();
-                } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
-                    title = translation.getText();
-                }
-            }
+    for (GtfsRealtime.TranslatedString.Translation translation :
+        alert.getHeaderText().getTranslationList()) {
+      if (translation.hasLanguage()) {
+        if (translation.getLanguage().equals(currentLanguageCode)) {
+          return translation.getText();
+        } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
+          title = translation.getText();
         }
-        return title;
+      }
     }
+    return title;
+  }
 
-    /**
-     * Retrieves the description of the alert in the current app language or default language.
-     *
-     * @param alert The GTFS alert.
-     * @return The alert description.
-     */
-    public static @NonNull String getAlertDescription(@NonNull GtfsRealtime.Alert alert) {
-        String currentLanguageCode = getCurrentAppLanguageCode();
-        String description = "";
+  /**
+   * Retrieves the description of the alert in the current app language or default language.
+   *
+   * @param alert The GTFS alert.
+   * @return The alert description.
+   */
+  public static @NonNull String getAlertDescription(@NonNull GtfsRealtime.Alert alert) {
+    String currentLanguageCode = getCurrentAppLanguageCode();
+    String description = "";
 
-        for (GtfsRealtime.TranslatedString.Translation translation : alert.getDescriptionText().getTranslationList()) {
-            if (translation.hasLanguage()) {
-                if (translation.getLanguage().equals(currentLanguageCode)) {
-                    return translation.getText();
-                } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
-                    description = translation.getText();
-                }
-            }
+    for (GtfsRealtime.TranslatedString.Translation translation :
+        alert.getDescriptionText().getTranslationList()) {
+      if (translation.hasLanguage()) {
+        if (translation.getLanguage().equals(currentLanguageCode)) {
+          return translation.getText();
+        } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
+          description = translation.getText();
         }
-        return description;
+      }
     }
+    return description;
+  }
 
-    /**
-     * Retrieves the URL of the alert in the current app language or default language.
-     *
-     * @param alert The GTFS alert.
-     * @return The alert URL.
-     */
-    public static @NonNull String getAlertUrl(@NonNull GtfsRealtime.Alert alert) {
-        String currentLanguageCode = getCurrentAppLanguageCode();
-        String url = "";
+  /**
+   * Retrieves the URL of the alert in the current app language or default language.
+   *
+   * @param alert The GTFS alert.
+   * @return The alert URL.
+   */
+  public static @NonNull String getAlertUrl(@NonNull GtfsRealtime.Alert alert) {
+    String currentLanguageCode = getCurrentAppLanguageCode();
+    String url = "";
 
-        for (GtfsRealtime.TranslatedString.Translation translation : alert.getUrl().getTranslationList()) {
-            if (translation.hasLanguage()) {
-                if (translation.getLanguage().equals(currentLanguageCode)) {
-                    return translation.getText();
-                } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
-                    url = translation.getText();
-                }
-            }
+    for (GtfsRealtime.TranslatedString.Translation translation :
+        alert.getUrl().getTranslationList()) {
+      if (translation.hasLanguage()) {
+        if (translation.getLanguage().equals(currentLanguageCode)) {
+          return translation.getText();
+        } else if (translation.getLanguage().equals(DEFAULT_LANGUAGE_CODE)) {
+          url = translation.getText();
         }
-        return url;
+      }
     }
+    return url;
+  }
 
+  /**
+   * Checks if the entity is valid based on agency-wide, severity, and start date criteria.
+   *
+   * @param entity The GTFS entity.
+   * @param nowMs "Now" in epoch millis (the feed's server clock) for the start-date window (#1612).
+   * @return True if the alert is valid, false otherwise.
+   */
+  public static boolean isValidEntity(
+      @NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity, long nowMs) {
+    return isAgencyWideAlert(entity.getAlert())
+        && isHighSeverity(entity.getAlert())
+        && isStartDateWithin24Hours(entity.getAlert(), nowMs)
+        && !isAlertRead(context, entity);
+  }
 
-    /**
-     * Checks if the entity is valid based on agency-wide, severity, and start date criteria.
-     *
-     * @param entity The GTFS entity.
-     * @param nowMs  "Now" in epoch millis (the feed's server clock) for the start-date window (#1612).
-     * @return True if the alert is valid, false otherwise.
-     */
-    public static boolean isValidEntity(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity, long nowMs) {
-        return isAgencyWideAlert(entity.getAlert()) && isHighSeverity(entity.getAlert()) && isStartDateWithin24Hours(entity.getAlert(), nowMs) && !isAlertRead(context, entity);
+  /**
+   * Checks if the alert is agency-wide.
+   *
+   * @param alert The GTFS alert.
+   * @return True if the alert is agency-wide, false otherwise.
+   */
+  public static boolean isAgencyWideAlert(@NonNull GtfsRealtime.Alert alert) {
+    for (GtfsRealtime.EntitySelector es : alert.getInformedEntityList()) {
+      if (es.hasAgencyId()) {
+        return true;
+      }
     }
+    return false;
+  }
 
-    /**
-     * Checks if the alert is agency-wide.
-     *
-     * @param alert The GTFS alert.
-     * @return True if the alert is agency-wide, false otherwise.
-     */
-    public static boolean isAgencyWideAlert(@NonNull GtfsRealtime.Alert alert) {
-        for (GtfsRealtime.EntitySelector es : alert.getInformedEntityList()) {
-            if (es.hasAgencyId()) {
-                return true;
-            }
-        }
-        return false;
+  /**
+   * Checks if the alert has high severity.
+   *
+   * @param alert The GTFS alert.
+   * @return True if the alert has high severity, false otherwise.
+   */
+  public static boolean isHighSeverity(@NonNull GtfsRealtime.Alert alert) {
+    return alert.hasSeverityLevel()
+        && (alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.SEVERE
+            || alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.WARNING);
+  }
+
+  /**
+   * Checks if the alert start date is within the last 24 hours of {@code nowMs}.
+   *
+   * <p>{@code nowMs} should be the feed's server-clock generation time so the window cancels device
+   * clock skew — the alert's server {@code start} and the "now" it's measured against share one
+   * clock (#1612). Pure function of its inputs; the caller resolves the device-clock fallback.
+   *
+   * @param alert The GTFS alert.
+   * @param nowMs "Now" in epoch millis (the feed's server clock).
+   * @return True if the start date is within the last 24 hours, false otherwise.
+   */
+  public static boolean isStartDateWithin24Hours(@NonNull GtfsRealtime.Alert alert, long nowMs) {
+    // active_period is optional in GTFS-RT (an omitted period means "always active"). With no
+    // period there is no start to bound, so don't surface it as a freshly-started wide alert —
+    // and this avoids an IndexOutOfBoundsException on getActivePeriod(0) that would otherwise
+    // abort the whole feed's processing via the caller's broad catch.
+    if (alert.getActivePeriodCount() == 0) {
+      return false;
     }
+    long startTime = alert.getActivePeriod(0).getStart() * 1000L;
+    long elapsed = nowMs - startTime;
+    // Must have already started (guards future-dated starts, which would otherwise pass the upper
+    // bound with a negative elapsed) and be no older than 24 hours.
+    return elapsed >= 0 && elapsed <= 24 * 60 * 60 * 1000L;
+  }
 
-    /**
-     * Checks if the alert has high severity.
-     *
-     * @param alert The GTFS alert.
-     * @return True if the alert has high severity, false otherwise.
-     */
-    public static boolean isHighSeverity(@NonNull GtfsRealtime.Alert alert) {
-        return alert.hasSeverityLevel() && (alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.SEVERE || alert.getSeverityLevel() == GtfsRealtime.Alert.SeverityLevel.WARNING);
-    }
+  /**
+   * Checks if the alert has already been read.
+   *
+   * @param context The context to access the database.
+   * @param entity The GTFS alert entity to check.
+   * @return True if the alert exists in the database, false otherwise.
+   */
+  public static boolean isAlertRead(
+      @NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
+    return alertsRepository(context).isAlertExists(entity.getId());
+  }
 
-    /**
-     * Checks if the alert start date is within the last 24 hours of {@code nowMs}.
-     *
-     * <p>{@code nowMs} should be the feed's server-clock generation time so the window cancels device
-     * clock skew — the alert's server {@code start} and the "now" it's measured against share one clock
-     * (#1612). Pure function of its inputs; the caller resolves the device-clock fallback.
-     *
-     * @param alert The GTFS alert.
-     * @param nowMs "Now" in epoch millis (the feed's server clock).
-     * @return True if the start date is within the last 24 hours, false otherwise.
-     */
-    public static boolean isStartDateWithin24Hours(@NonNull GtfsRealtime.Alert alert, long nowMs) {
-        // active_period is optional in GTFS-RT (an omitted period means "always active"). With no
-        // period there is no start to bound, so don't surface it as a freshly-started wide alert —
-        // and this avoids an IndexOutOfBoundsException on getActivePeriod(0) that would otherwise
-        // abort the whole feed's processing via the caller's broad catch.
-        if (alert.getActivePeriodCount() == 0) {
-            return false;
-        }
-        long startTime = alert.getActivePeriod(0).getStart() * 1000L;
-        long elapsed = nowMs - startTime;
-        // Must have already started (guards future-dated starts, which would otherwise pass the upper
-        // bound with a negative elapsed) and be no older than 24 hours.
-        return elapsed >= 0 && elapsed <= 24 * 60 * 60 * 1000L;
-    }
+  /**
+   * Marks the alert as read by inserting it into the database.
+   *
+   * @param context The context to access the database.
+   * @param entity The `GtfsRealtime.FeedEntity` object representing the alert.
+   */
+  public static void markAlertAsRead(
+      @NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
+    alertsRepository(context).insertAlert(new AlertEntity(entity.getId()));
+  }
 
-    /**
-     * Checks if the alert has already been read.
-     *
-     * @param context The context to access the database.
-     * @param entity  The GTFS alert entity to check.
-     * @return True if the alert exists in the database, false otherwise.
-     */
+  /**
+   * Resolves the Hilt-provided {@link AlertsRepository} from a bare {@link Context} (this helper is
+   * a static, non-injectable Java utility). Callers here run on the GtfsAlerts background fetch
+   * thread.
+   */
+  private static AlertsRepository alertsRepository(Context context) {
+    return DatabaseEntryPoint.get(context).alertsRepository();
+  }
 
-    public static boolean isAlertRead(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
-        return alertsRepository(context).isAlertExists(entity.getId());
-    }
-
-    /**
-     * Marks the alert as read by inserting it into the database.
-     *
-     * @param context The context to access the database.
-     * @param entity The `GtfsRealtime.FeedEntity` object representing the alert.
-     */
-    public static void markAlertAsRead(@NonNull Context context, @NonNull GtfsRealtime.FeedEntity entity) {
-        alertsRepository(context).insertAlert(new AlertEntity(entity.getId()));
-    }
-
-    /**
-     * Resolves the Hilt-provided {@link AlertsRepository} from a bare {@link Context} (this helper is a
-     * static, non-injectable Java utility). Callers here run on the GtfsAlerts background fetch thread.
-     */
-    private static AlertsRepository alertsRepository(Context context) {
-        return DatabaseEntryPoint.get(context).alertsRepository();
-    }
-
-    public static @NonNull String getCurrentAppLanguageCode() {
-        return Locale.getDefault().getLanguage();
-    }
+  public static @NonNull String getCurrentAppLanguageCode() {
+    return Locale.getDefault().getLanguage();
+  }
 }

@@ -15,16 +15,15 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.time.ScheduleTime
-import org.onebusaway.android.time.WallTime
 import kotlin.time.Duration.Companion.seconds
-import org.onebusaway.android.api.adapters.StopTimeData
-import org.onebusaway.android.api.adapters.TripScheduleData
-
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.onebusaway.android.api.adapters.StopTimeData
+import org.onebusaway.android.api.adapters.TripScheduleData
 import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.time.ScheduleTime
+import org.onebusaway.android.time.WallTime
 
 class ScheduleReplayExtrapolatorTest {
 
@@ -40,11 +39,11 @@ class ScheduleReplayExtrapolatorTest {
     // Segment 1→2: 2000m in 200s (depart@130 → arrive@330) = 10 m/s
 
     private val schedule =
-            makeSchedule(
-                    Triple(0.0, 0L, 0L),
-                    Triple(1000.0, 100L, 130L),
-                    Triple(3000.0, 330L, 330L)
-            )
+        makeSchedule(
+            Triple(0.0, 0L, 0L),
+            Triple(1000.0, 100L, 130L),
+            Triple(3000.0, 330L, 330L)
+        )
 
     // --- Basic travel within a single segment ---
 
@@ -139,8 +138,7 @@ class ScheduleReplayExtrapolatorTest {
     }
 
     /** Convenience: replay from time 0 advancing by dtSec seconds. */
-    private fun replay(schedule: ObaTripSchedule, startDist: Double, dtSec: Double): Double? =
-            replaySchedule(schedule, startDist, WallTime(0L), WallTime((dtSec * 1000).toLong()))
+    private fun replay(schedule: ObaTripSchedule, startDist: Double, dtSec: Double): Double? = replaySchedule(schedule, startDist, WallTime(0L), WallTime((dtSec * 1000).toLong()))
 
     // --- Helpers ---
 
@@ -151,7 +149,7 @@ class ScheduleReplayExtrapolatorTest {
                 stopId = "stop_$i",
                 arrivalTime = ScheduleTime(arrive.seconds),
                 departureTime = ScheduleTime(depart.seconds),
-                distanceAlongTrip = dist,
+                distanceAlongTrip = dist
             )
         }
         return TripScheduleData(stopTimes)

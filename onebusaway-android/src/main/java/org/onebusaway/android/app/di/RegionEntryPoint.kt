@@ -41,8 +41,7 @@ interface RegionEntryPoint {
     companion object {
         /** Resolves the [RegionRepository] from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): RegionRepository =
-            EntryPointAccessors.fromApplication(context, RegionEntryPoint::class.java)
-                .regionRepository()
+        fun get(context: Context): RegionRepository = EntryPointAccessors.fromApplication(context, RegionEntryPoint::class.java)
+            .regionRepository()
     }
 }

@@ -16,6 +16,8 @@
 package org.onebusaway.android.api.adapters
 
 import android.location.Location
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.api.contract.Position
 import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.api.contract.TripReference
@@ -29,8 +31,6 @@ import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.util.locationOf
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 /*
  * Adapters that present the api/ trip DTOs as the `models` domain interfaces
@@ -45,12 +45,14 @@ private fun Position.toLocation(): Location = locationOf(lat, lon)
 internal class DtoTripStatus(private val dto: TripStatus) : ObaTripStatus {
     override val serviceDate: Long get() = dto.serviceDate
     override val isPredicted: Boolean get() = dto.predicted
+
     // Wire sends schedule deviation as raw seconds; mint the domain Duration here.
     override val scheduleDeviation: Duration get() = dto.scheduleDeviation.seconds
     override val vehicleId: String? get() = dto.vehicleId
     override val closestStop: String? get() = dto.closestStop
     override val closestStopTimeOffset: Long get() = dto.closestStopTimeOffset
     override val position: Location? get() = dto.position?.toLocation()
+
     // Absent active-trip id reads as null, like the legacy element (callers skip on it).
     override val activeTripId: String? get() = dto.activeTripId.ifBlank { null }
     override val distanceAlongTrip: Double? get() = dto.distanceAlongTrip
@@ -103,7 +105,7 @@ fun TripSchedule.toObaTripSchedule(): ObaTripSchedule {
             ScheduleTime(it.departureTime.seconds),
             Occupancy.fromString(it.historicalOccupancy),
             Occupancy.fromString(it.predictedOccupancy),
-            it.distanceAlongTrip,
+            it.distanceAlongTrip
         )
     }
     return TripScheduleData(times.toTypedArray(), timeZone, previousTripId, nextTripId)
@@ -118,7 +120,7 @@ class TripScheduleData(
     override val stopTimes: Array<ObaTripSchedule.StopTime> = emptyArray(),
     override val timeZone: String? = null,
     override val previousTripId: String? = null,
-    override val nextTripId: String? = null,
+    override val nextTripId: String? = null
 ) : ObaTripSchedule {
 
     companion object {
@@ -135,5 +137,5 @@ class StopTimeData(
     override val departureTime: ScheduleTime = ScheduleTime(Duration.ZERO),
     override val historicalOccupancy: Occupancy? = null,
     override val predictedOccupancy: Occupancy? = null,
-    override val distanceAlongTrip: Double = 0.0,
+    override val distanceAlongTrip: Double = 0.0
 ) : ObaTripSchedule.StopTime

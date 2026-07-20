@@ -39,18 +39,22 @@ fun NavGraphBuilder.tripPlanGraph(navController: NavHostController) {
         NavRoutes.TRIP_PLAN_PICK_LOCATION,
         arguments = listOf(
             navArgument(NavRoutes.ARG_PICK_LAT) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_PICK_LON) {
-                type = NavType.StringType; nullable = true; defaultValue = null
-            },
-        ),
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }
+        )
     ) { entry ->
         ObaTheme {
             TripPlanLocationPickerDestination(
                 navController = navController,
                 lat = entry.arguments?.getString(NavRoutes.ARG_PICK_LAT)?.toDoubleOrNull(),
-                lon = entry.arguments?.getString(NavRoutes.ARG_PICK_LON)?.toDoubleOrNull(),
+                lon = entry.arguments?.getString(NavRoutes.ARG_PICK_LON)?.toDoubleOrNull()
             )
         }
     }

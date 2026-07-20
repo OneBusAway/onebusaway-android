@@ -35,6 +35,5 @@ class GoogleRouteStopBitmapLayerTest {
         assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true))
     }
 
-    private fun diameter(zoom: Float, stopFocused: Boolean, selected: Boolean): Int =
-        routeStopDiameterPx(zoom, stopFocused, selected, density = 3f)
+    private fun diameter(zoom: Float, stopFocused: Boolean, selected: Boolean): Int = routeStopDiameterPx(zoom, stopFocused, selected, density = 3f)
 }

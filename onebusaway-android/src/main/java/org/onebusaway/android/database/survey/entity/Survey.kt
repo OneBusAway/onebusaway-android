@@ -11,14 +11,20 @@ import androidx.room.PrimaryKey
 // The study_id foreign key is covered by an index so parent-table writes don't trigger a full scan of
 // surveys (#1739). Created in MIGRATION_3_4.
 @Entity(
-    tableName = "surveys", foreignKeys = [ForeignKey(
-        entity = Study::class,
-        parentColumns = ["study_id"],
-        childColumns = ["study_id"],
-        onDelete = ForeignKey.CASCADE
-    )],
+    tableName = "surveys",
+    foreignKeys = [
+        ForeignKey(
+            entity = Study::class,
+            parentColumns = ["study_id"],
+            childColumns = ["study_id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
     indices = [Index("study_id")]
 )
 data class Survey(
-    @PrimaryKey val survey_id: Int, val study_id: Int, val name: String, val state:Int
+    @PrimaryKey val survey_id: Int,
+    val study_id: Int,
+    val name: String,
+    val state: Int
 )

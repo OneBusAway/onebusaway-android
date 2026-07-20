@@ -30,7 +30,7 @@ enum class StopDirection(
     val key: String,
     val xSign: Int,
     val ySign: Int,
-    val compassAngle: Float,
+    val compassAngle: Float
 ) {
     NORTH("N", 0, 1, 0f),
     NORTH_WEST("NW", 1, 1, 315f),

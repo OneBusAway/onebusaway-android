@@ -17,9 +17,16 @@ package org.onebusaway.android.directions.util
 
 import android.content.Context
 import android.os.Bundle
-import androidx.core.os.BundleCompat
 import android.text.TextUtils
 import android.util.Log
+import androidx.core.os.BundleCompat
+import java.io.UnsupportedEncodingException
+import java.net.MalformedURLException
+import java.net.URL
+import java.net.URLEncoder
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.TripPlanRequest
 import org.onebusaway.android.app.di.PreferencesEntryPoint
@@ -28,13 +35,6 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.RegionUtils
-import java.io.UnsupportedEncodingException
-import java.net.MalformedURLException
-import java.net.URL
-import java.net.URLEncoder
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
 
@@ -87,8 +87,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
      * needs it — never itself persisted, so it never has to cross a Bundle/Intent serialization
      * boundary. Mirrors OTP1's `OptimizeType.TRANSFERS`/`QUICK` wire names exactly (verified against
      * the vendored jar); the other five `OptimizeType` values are never requested by this app. */
-    private fun getOptimizeType(): String =
-        if (getOptimizeTransfers()) "TRANSFERS" else "QUICK"
+    private fun getOptimizeType(): String = if (getOptimizeTransfers()) "TRANSFERS" else "QUICK"
 
     fun setWheelchairAccessible(wheelchair: Boolean): TripRequestBuilder {
         mBundle.putBoolean(WHEELCHAIR_ACCESSIBLE, wheelchair)
@@ -196,7 +195,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             "date" to DATE_FORMATTER.format(zoned),
             "time" to TIME_FORMATTER.format(zoned),
             // Our default. This could be configurable.
-            "showIntermediateStops" to true.toString(),
+            "showIntermediateStops" to true.toString()
         )
         getMaxWalkDistance()?.let { parameters["maxWalkDistance"] = it.toString() }
         // Request mode set does not work properly
@@ -232,7 +231,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
                 return OtpTarget(
                     baseUrl = customUrl,
                     usesOtp2 = PreferencesEntryPoint.get(mContext)
-                        .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false),
+                        .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false)
                 )
             }
             // No custom URL and no selected region: baseUrl stays null so the caller

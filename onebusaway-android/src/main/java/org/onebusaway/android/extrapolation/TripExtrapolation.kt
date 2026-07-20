@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.extrapolation
 
-import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.render.DataAgeMarker
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -47,7 +47,7 @@ data class TripExtrapolation(
     val fastEstimatePoint: GeoPoint? = null,
     val band: List<WeightedBandSegment> = emptyList(),
     val dataAge: DataAgeMarker? = null,
-    val fixTimeMs: Long = 0L,
+    val fixTimeMs: Long = 0L
 )
 
 /**
@@ -72,5 +72,5 @@ data class ExtrapolatedVehicle(
     // distanceAlongTrip), so the selected vehicle's most-recent-data dot sits on the centerline at the
     // band's origin instead of the raw off-shape reported lat/lng. Null when there's no shape/anchor to
     // place it (the renderer then falls back to the reported location).
-    val dataFixPoint: GeoPoint? = null,
+    val dataFixPoint: GeoPoint? = null
 )

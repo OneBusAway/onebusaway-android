@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.WeatherResponse
-import org.onebusaway.android.api.contract.WeatherForecast
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import org.onebusaway.android.api.contract.WeatherForecast
+import org.onebusaway.android.api.contract.WeatherResponse
 
 /**
  * Covers the weather decode path. Weather comes from the region's sidecar host as bare JSON (no
@@ -31,7 +30,10 @@ import org.junit.Test
  */
 class WeatherDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesWeatherResponse() {

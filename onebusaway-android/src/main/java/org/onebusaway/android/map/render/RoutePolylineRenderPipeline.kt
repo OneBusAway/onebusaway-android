@@ -50,12 +50,11 @@ internal fun interface RoutePolylineRenderPass {
 
 /** Ordered, flavor-neutral processing of canonical route geometry before a native renderer sees it. */
 internal class RoutePolylineRenderPipeline(
-    private val passes: List<RoutePolylineRenderPass>,
+    private val passes: List<RoutePolylineRenderPass>
 ) {
-    fun apply(polylines: List<RoutePolyline>, camera: CameraSnapshot?): List<RoutePolyline> =
-        passes.fold(polylines) { current, pass ->
-            pass.apply(current, RoutePolylineRenderContext(camera))
-        }
+    fun apply(polylines: List<RoutePolyline>, camera: CameraSnapshot?): List<RoutePolyline> = passes.fold(polylines) { current, pass ->
+        pass.apply(current, RoutePolylineRenderContext(camera))
+    }
 }
 
 private val DEFAULT_ROUTE_POLYLINE_PIPELINE = RoutePolylineRenderPipeline(
@@ -71,21 +70,20 @@ internal fun routePolylineRenderFlow(
     snapshot: StateFlow<MapRenderSnapshot>,
     camera: StateFlow<CameraSnapshot?>,
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
-    pipeline: RoutePolylineRenderPipeline = DEFAULT_ROUTE_POLYLINE_PIPELINE,
-): Flow<List<RoutePolyline>> =
-    combine(
-        snapshot.map { it.routePolylines }.distinctUntilChanged(),
-        camera,
-    ) { polylines, viewport -> polylines to viewport }
-        .mapLatest { (polylines, viewport) ->
-            withContext(dispatcher) { pipeline.apply(polylines, viewport) }
-        }
-        .distinctUntilChanged()
+    pipeline: RoutePolylineRenderPipeline = DEFAULT_ROUTE_POLYLINE_PIPELINE
+): Flow<List<RoutePolyline>> = combine(
+    snapshot.map { it.routePolylines }.distinctUntilChanged(),
+    camera
+) { polylines, viewport -> polylines to viewport }
+    .mapLatest { (polylines, viewport) ->
+        withContext(dispatcher) { pipeline.apply(polylines, viewport) }
+    }
+    .distinctUntilChanged()
 
 internal class ViewportClipRoutePolylinePass : RoutePolylineRenderPass {
     override fun apply(
         polylines: List<RoutePolyline>,
-        context: RoutePolylineRenderContext,
+        context: RoutePolylineRenderContext
     ): List<RoutePolyline> {
         if (polylines.none { RoutePolylineTransform.VIEWPORT_CLIP in it.transforms }) return polylines
         val camera = context.camera
@@ -106,13 +104,14 @@ internal class ViewportClipRoutePolylinePass : RoutePolylineRenderPass {
 internal class ZoomSimplifyRoutePolylinePass : RoutePolylineRenderPass {
     override fun apply(
         polylines: List<RoutePolyline>,
-        context: RoutePolylineRenderContext,
+        context: RoutePolylineRenderContext
     ): List<RoutePolyline> {
         if (polylines.none { RoutePolylineTransform.ZOOM_SIMPLIFY in it.transforms }) return polylines
         val camera = context.camera ?: return polylines
         val latitude = camera.center.latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE)
         val metresPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
-            cos(Math.toRadians(latitude)) / 2.0.pow(camera.zoom.coerceIn(0.0, 30.0))
+            cos(Math.toRadians(latitude)) /
+            2.0.pow(camera.zoom.coerceIn(0.0, 30.0))
         val tolerance = maxOf(MIN_SIMPLIFICATION_METERS, metresPerPixel * SIMPLIFICATION_ERROR_PIXELS)
         var changed = false
         val simplified = polylines.map { polyline ->
@@ -132,17 +131,16 @@ internal class ZoomSimplifyRoutePolylinePass : RoutePolylineRenderPass {
 internal data class MercatorPoint(
     val x: Double,
     val y: Double,
-    val source: GeoPoint? = null,
+    val source: GeoPoint? = null
 )
 
 internal data class MercatorBounds(
     val left: Double,
     val right: Double,
     val bottom: Double,
-    val top: Double,
+    val top: Double
 ) {
-    fun contains(point: MercatorPoint): Boolean =
-        point.x in left..right && point.y in bottom..top
+    fun contains(point: MercatorPoint): Boolean = point.x in left..right && point.y in bottom..top
 }
 
 private data class ClippedSegment(val start: MercatorPoint, val end: MercatorPoint)
@@ -159,14 +157,14 @@ internal fun CameraSnapshot.toPaddedMercatorBounds(): MercatorBounds {
         left = west - horizontalMargin,
         right = east + horizontalMargin,
         bottom = south - verticalMargin,
-        top = north + verticalMargin,
+        top = north + verticalMargin
     )
 }
 
 internal fun clipPolyline(
     polyline: RoutePolyline,
     centerLongitude: Double,
-    bounds: MercatorBounds,
+    bounds: MercatorBounds
 ): List<RoutePolyline> {
     if (polyline.points.size < 2) return emptyList()
     val projected = polyline.points.map { it.toMercator(centerLongitude) }
@@ -203,7 +201,7 @@ internal fun clipPolyline(
 private fun clipSegment(
     start: MercatorPoint,
     end: MercatorPoint,
-    bounds: MercatorBounds,
+    bounds: MercatorBounds
 ): ClippedSegment? {
     val dx = end.x - start.x
     val dy = end.y - start.y
@@ -232,34 +230,32 @@ private fun clipSegment(
     }
     return ClippedSegment(
         start = interpolate(start, end, entry),
-        end = interpolate(start, end, exit),
+        end = interpolate(start, end, exit)
     )
 }
 
-private fun interpolate(start: MercatorPoint, end: MercatorPoint, fraction: Double): MercatorPoint =
-    when {
-        fraction <= COORDINATE_EPSILON -> start
-        fraction >= 1.0 - COORDINATE_EPSILON -> end
-        else -> MercatorPoint(
-            x = start.x + (end.x - start.x) * fraction,
-            y = start.y + (end.y - start.y) * fraction,
-        )
-    }
+private fun interpolate(start: MercatorPoint, end: MercatorPoint, fraction: Double): MercatorPoint = when {
+    fraction <= COORDINATE_EPSILON -> start
+    fraction >= 1.0 - COORDINATE_EPSILON -> end
+    else -> MercatorPoint(
+        x = start.x + (end.x - start.x) * fraction,
+        y = start.y + (end.y - start.y) * fraction
+    )
+}
 
 private fun GeoPoint.toMercator(centerLongitude: Double): MercatorPoint = MercatorPoint(
     x = projectedLongitude(longitude, centerLongitude),
     y = projectedLatitude(latitude),
-    source = this,
+    source = this
 )
 
 private fun MercatorPoint.toGeoPoint(): GeoPoint = source ?: GeoPoint(
     latitude = Math.toDegrees(2.0 * atan(exp(y)) - PI / 2.0),
-    longitude = normalizeLongitude(Math.toDegrees(x)),
+    longitude = normalizeLongitude(Math.toDegrees(x))
 )
 
-private fun MercatorPoint.samePosition(other: MercatorPoint): Boolean =
-    kotlin.math.abs(x - other.x) <= COORDINATE_EPSILON &&
-        kotlin.math.abs(y - other.y) <= COORDINATE_EPSILON
+private fun MercatorPoint.samePosition(other: MercatorPoint): Boolean = kotlin.math.abs(x - other.x) <= COORDINATE_EPSILON &&
+    kotlin.math.abs(y - other.y) <= COORDINATE_EPSILON
 
 private fun projectedLongitude(longitude: Double, centerLongitude: Double): Double {
     var delta = longitude - centerLongitude
@@ -320,8 +316,10 @@ internal fun simplifyRoutePolyline(points: List<GeoPoint>, toleranceMeters: Doub
             val fraction = if (segmentLengthSquared == 0.0) {
                 0.0
             } else {
-                (((x[index] - x[start]) * segmentX + (y[index] - y[start]) * segmentY) /
-                    segmentLengthSquared).coerceIn(0.0, 1.0)
+                (
+                    ((x[index] - x[start]) * segmentX + (y[index] - y[start]) * segmentY) /
+                        segmentLengthSquared
+                    ).coerceIn(0.0, 1.0)
             }
             val offsetX = x[index] - (x[start] + fraction * segmentX)
             val offsetY = y[index] - (y[start] + fraction * segmentY)

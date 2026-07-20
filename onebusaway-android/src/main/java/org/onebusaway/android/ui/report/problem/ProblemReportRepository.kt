@@ -15,9 +15,8 @@
  */
 package org.onebusaway.android.ui.report.problem
 
-import org.onebusaway.android.api.data.ProblemReportDataSource
-
 import android.location.Location
+import org.onebusaway.android.api.data.ProblemReportDataSource
 
 /** Submits stop/trip problem reports to the OBA REST API. */
 interface ProblemReportRepository {
@@ -59,7 +58,7 @@ class DefaultProblemReportRepository(
         comment = comment.ifEmpty { null },
         lat = location?.latitude,
         lon = location?.longitude,
-        accuracyMeters = location?.accuracyMeters(),
+        accuracyMeters = location?.accuracyMeters()
     )
 
     override suspend fun submitTrip(
@@ -80,7 +79,7 @@ class DefaultProblemReportRepository(
         vehicleNumber = vehicleNumber.ifEmpty { null },
         lat = location?.latitude,
         lon = location?.longitude,
-        accuracyMeters = location?.accuracyMeters(),
+        accuracyMeters = location?.accuracyMeters()
     )
 
     /** The location's accuracy in whole meters, or null when the fix carries none. */

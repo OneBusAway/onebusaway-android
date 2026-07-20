@@ -56,7 +56,7 @@ data class Region(
     val paymentWarningBody: String? = null,
     val sidecarBaseUrl: String? = "",
     val plausibleAnalyticsServerUrl: String? = "",
-    val umamiAnalytics: UmamiAnalyticsConfig? = null,
+    val umamiAnalytics: UmamiAnalyticsConfig? = null
 ) {
     val umamiAnalyticsUrl: String? get() = umamiAnalytics?.url
     val umamiAnalyticsId: String? get() = umamiAnalytics?.id
@@ -72,13 +72,13 @@ data class Region(
         val lat: Double = 0.0,
         val lon: Double = 0.0,
         val latSpan: Double = 0.0,
-        val lonSpan: Double = 0.0,
+        val lonSpan: Double = 0.0
     )
 
     data class Open311Server(
         val jurisdictionId: String? = "",
         val apiKey: String? = "",
-        val baseUrl: String? = "",
+        val baseUrl: String? = ""
     ) {
         /** Legacy (misspelled) accessor kept for existing callers. */
         val juridisctionId: String? get() = jurisdictionId

@@ -50,7 +50,7 @@ import org.onebusaway.android.map.compose.ComposeBitmapRenderer
 class MapLibreInfoWindows(
     private val activity: Activity,
     container: ViewGroup,
-    private val map: MapLibreMap,
+    private val map: MapLibreMap
 ) : MapLibreMap.InfoWindowAdapter {
 
     private val preRenderer = ComposeBitmapRenderer(activity, container)
@@ -82,7 +82,8 @@ class MapLibreInfoWindows(
             return ImageView(activity).apply {
                 setImageBitmap(bmp)
                 layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
             }
         }

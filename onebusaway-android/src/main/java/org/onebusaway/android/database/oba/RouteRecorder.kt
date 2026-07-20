@@ -33,7 +33,7 @@ class RouteRecorder @Inject constructor(
     @param:AppScope private val appScope: CoroutineScope,
     private val routeDao: RouteDao,
     private val regionRepository: RegionRepository,
-    private val importGate: ImportGate,
+    private val importGate: ImportGate
 ) {
 
     /** Records a route from an arrival row (no URL); falls back to the headsign for an empty long name. */

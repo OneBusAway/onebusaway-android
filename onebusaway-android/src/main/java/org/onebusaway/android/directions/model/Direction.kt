@@ -57,7 +57,7 @@ class Direction() {
         placeAndHeadsign: CharSequence?,
         oldTime: CharSequence?,
         newTime: CharSequence?,
-        isTransit: Boolean,
+        isTransit: Boolean
     ) : this() {
         this.icon = icon
         this.service = service

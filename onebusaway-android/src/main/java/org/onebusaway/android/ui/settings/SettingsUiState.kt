@@ -50,7 +50,7 @@ data class SettingsPrefSnapshot(
     val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?,
+    val appTheme: String?
 )
 
 /** What the screen needs to know about the current region; null means no region (custom API). */
@@ -60,7 +60,7 @@ data class RegionSummaryInfo(val name: String, val hasOtp: Boolean)
 data class SettingsEnvironment(
     val useFixedRegion: Boolean,
     val sdkInt: Int,
-    val isObaFlavor: Boolean,
+    val isObaFlavor: Boolean
 )
 
 data class SettingsUiState(
@@ -87,7 +87,7 @@ data class SettingsUiState(
     val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
-    val appTheme: String?,
+    val appTheme: String?
 )
 
 /**
@@ -97,7 +97,7 @@ fun buildSettingsUiState(
     prefs: SettingsPrefSnapshot,
     region: RegionSummaryInfo?,
     env: SettingsEnvironment,
-    customApiRegionSummary: String,
+    customApiRegionSummary: String
 ): SettingsUiState = SettingsUiState(
     showRegionCategory = !env.useFixedRegion,
     // Android 8+ manages notification channels itself, so the legacy category is dropped there.
@@ -125,7 +125,7 @@ fun buildSettingsUiState(
     mapMode = prefs.mapMode,
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,
-    appTheme = prefs.appTheme,
+    appTheme = prefs.appTheme
 )
 
 // ---------------------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ data class AdvancedPrefSnapshot(
     // to a region's Region.otpBaseGraphqlUrl, for the no-region case where there's no Region to
     // carry the setting.
     val customOtpApiUrlUsesGraphQl: Boolean,
-    val mapStopCacheSize: Int,
+    val mapStopCacheSize: Int
 )
 
 /** Bounds for the map stop LRU cache size advanced option (see [parseStopCacheSize]). */
@@ -153,8 +153,7 @@ const val MAP_STOP_CACHE_SIZE_MAX = 2000
  * [[MAP_STOP_CACHE_SIZE_MIN], [MAP_STOP_CACHE_SIZE_MAX]], or null if it's not a number or out of
  * range (the screen keeps its dialog open on null). Pure, so the validation is JVM-unit-testable.
  */
-fun parseStopCacheSize(text: String): Int? =
-    text.trim().toIntOrNull()?.takeIf { it in MAP_STOP_CACHE_SIZE_MIN..MAP_STOP_CACHE_SIZE_MAX }
+fun parseStopCacheSize(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in MAP_STOP_CACHE_SIZE_MIN..MAP_STOP_CACHE_SIZE_MAX }
 
 /** Region info the advanced screen needs; null means no region (custom API in use). */
 data class AdvancedRegionInfo(val isExperimental: Boolean)
@@ -169,7 +168,7 @@ data class AdvancedSettingsUiState(
     val customObaApiUrlSummary: String,
     val customOtpApiUrlSummary: String,
     val currentRegionIsExperimental: Boolean,
-    val mapStopCacheSize: Int,
+    val mapStopCacheSize: Int
 )
 
 /**
@@ -182,7 +181,7 @@ fun buildAdvancedSettingsUiState(
     region: AdvancedRegionInfo?,
     useFixedRegion: Boolean,
     obaBrandedSummary: String,
-    otpDefaultSummary: String,
+    otpDefaultSummary: String
 ): AdvancedSettingsUiState {
     val hasRegion = region != null
     // With a region: the OBA row describes the server generically; without one, it shows the custom URL.
@@ -200,7 +199,7 @@ fun buildAdvancedSettingsUiState(
         customObaApiUrlSummary = obaSummary,
         customOtpApiUrlSummary = otpSummary,
         currentRegionIsExperimental = region?.isExperimental == true,
-        mapStopCacheSize = prefs.mapStopCacheSize,
+        mapStopCacheSize = prefs.mapStopCacheSize
     )
 }
 

@@ -23,7 +23,7 @@ sealed interface CurrentFocus {
     data object None : CurrentFocus
     data class Stop(
         val stop: FocusedStop,
-        val selectedRoute: StopRouteSelection? = null,
+        val selectedRoute: StopRouteSelection? = null
     ) : CurrentFocus
     data class Route(val target: RouteTarget) : CurrentFocus
     data class BikeStation(val id: String) : CurrentFocus
@@ -59,27 +59,27 @@ val CurrentFocus.focusedBikeStationId: String?
 data class RouteTarget(
     val routeId: String,
     val directionStopId: String? = null,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     fun toRequest(focusTripId: String? = null) = ShowRouteRequest(
         routeId = routeId,
         directionStopId = directionStopId,
         focusTripId = focusTripId,
-        initialDirectionId = directionId,
+        initialDirectionId = directionId
     )
 }
 
 internal fun ShowRouteRequest.toRouteTarget() = RouteTarget(
     routeId = routeId,
     directionStopId = directionStopId,
-    directionId = initialDirectionId,
+    directionId = initialDirectionId
 )
 
 /** One route reached while following a vehicle block. */
 data class RouteLeg(
     val routeId: String,
     val shortName: String,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
 }
@@ -92,7 +92,7 @@ data class StopRouteSelection(
     // the banner *shows* is read back from the resolved arrivals row, not from here — so don't render
     // this and don't duplicate the rest of the row onto the selection.
     val originHeadsign: String?,
-    val legs: List<RouteLeg>,
+    val legs: List<RouteLeg>
 ) {
     init {
         require(legs.isNotEmpty()) { "StopRouteSelection requires at least one route leg" }

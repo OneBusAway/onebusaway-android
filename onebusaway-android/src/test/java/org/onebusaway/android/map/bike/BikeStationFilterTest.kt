@@ -99,8 +99,14 @@ class BikeStationFilterTest {
         assertEquals(
             "https://otp.prod.obahart.org/otp/routers/default/bike_rental" +
                 "?lowerLeft=27.9,-82.5&upperRight=28.1,-82.4",
-            bikeRentalUrl("https://otp.prod.obahart.org/otp", useOldUrlStructure = false,
-                27.9, -82.5, 28.1, -82.4)
+            bikeRentalUrl(
+                "https://otp.prod.obahart.org/otp",
+                useOldUrlStructure = false,
+                27.9,
+                -82.5,
+                28.1,
+                -82.4
+            )
         )
     }
 
@@ -111,8 +117,14 @@ class BikeStationFilterTest {
         assertEquals(
             "https://otp.prod.sound.obaweb.org/otp/routers/default/bike_rental" +
                 "?lowerLeft=47.5,-122.4&upperRight=47.7,-122.2",
-            bikeRentalUrl("https://otp.prod.sound.obaweb.org/otp/routers/default",
-                useOldUrlStructure = true, 47.5, -122.4, 47.7, -122.2)
+            bikeRentalUrl(
+                "https://otp.prod.sound.obaweb.org/otp/routers/default",
+                useOldUrlStructure = true,
+                47.5,
+                -122.4,
+                47.7,
+                -122.2
+            )
         )
     }
 }

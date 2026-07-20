@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.api.adapters
 
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.api.contract.OtpItineraryDto
 import org.onebusaway.android.api.contract.OtpLegDto
 import org.onebusaway.android.api.contract.OtpLegGeometryDto
@@ -30,7 +31,6 @@ import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripStep
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Maps the OTP `/plan` wire DTOs (`api/contract/OtpPlanModels.kt`) onto the app-owned trip-plan domain
@@ -50,7 +50,7 @@ import kotlin.time.Duration.Companion.seconds
 fun OtpItineraryDto.toTripItinerary(): TripItinerary = TripItinerary(
     duration = (duration?.toLong() ?: 0L).seconds,
     startTime = requireField("itinerary.startTime", startTime?.toLongOrNull()?.let { ServerTime(it) }),
-    legs = legs.map { it.toTripLeg() },
+    legs = legs.map { it.toTripLeg() }
 )
 
 fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
@@ -75,7 +75,7 @@ fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
     intermediateStops = intermediateStops?.map { it.toTripPlace() },
     stop = stop?.map { it.toTripPlace() },
     steps = steps.map { it.toTripStep() },
-    legGeometry = legGeometry?.toTripLegGeometry(),
+    legGeometry = legGeometry?.toTripLegGeometry()
 )
 
 /**
@@ -83,8 +83,7 @@ fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
  * `internal` (not `private`) so `Otp2PlanAdapters.kt` — the same "mint at the boundary" adapter
  * discipline, for OTP2 GraphQL — shares this rather than re-declaring it.
  */
-internal fun <T : Any> requireField(name: String, value: T?): T =
-    value ?: error("OTP response missing required field: $name")
+internal fun <T : Any> requireField(name: String, value: T?): T = value ?: error("OTP response missing required field: $name")
 
 fun OtpPlaceDto.toTripPlace(): TripPlace = TripPlace(
     name = name,
@@ -92,7 +91,7 @@ fun OtpPlaceDto.toTripPlace(): TripPlace = TripPlace(
     lat = lat,
     lon = lon,
     vertexType = vertexType.toEnum<TripVertexType>(),
-    bikeShareId = bikeShareId,
+    bikeShareId = bikeShareId
 )
 
 fun OtpWalkStepDto.toTripStep(): TripStep = TripStep(
@@ -103,15 +102,13 @@ fun OtpWalkStepDto.toTripStep(): TripStep = TripStep(
     exit = exit,
     stayOn = stayOn ?: false,
     lat = lat ?: 0.0,
-    lon = lon ?: 0.0,
+    lon = lon ?: 0.0
 )
 
-fun OtpLegGeometryDto.toTripLegGeometry(): TripLegGeometry =
-    TripLegGeometry(points = points, length = length?.toInt() ?: 0)
+fun OtpLegGeometryDto.toTripLegGeometry(): TripLegGeometry = TripLegGeometry(points = points, length = length?.toInt() ?: 0)
 
 /**
  * Decodes an OTP wire enum name, degrading an unknown/absent value to null rather than throwing.
  * `internal` so `Otp2PlanAdapters.kt` shares this too — see [requireField].
  */
-internal inline fun <reified E : Enum<E>> String?.toEnum(): E? =
-    this?.let { runCatching { enumValueOf<E>(it) }.getOrNull() }
+internal inline fun <reified E : Enum<E>> String?.toEnum(): E? = this?.let { runCatching { enumValueOf<E>(it) }.getOrNull() }

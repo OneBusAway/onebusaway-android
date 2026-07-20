@@ -41,7 +41,7 @@ import org.onebusaway.android.region.RegionRepository
 class AnalyticsProvider @Inject constructor(
     @param:ApplicationContext private val context: Context,
     regionRepository: RegionRepository,
-    @AppScope scope: CoroutineScope,
+    @AppScope scope: CoroutineScope
 ) {
 
     /** The Plausible emitter for the current region, or null when the region has no Plausible server. */

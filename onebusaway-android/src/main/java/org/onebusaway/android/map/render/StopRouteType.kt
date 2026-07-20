@@ -27,7 +27,7 @@ private val ROUTE_TYPE_PRIORITY = intArrayOf(
     ObaRoute.TYPE_FERRY,
     ObaRoute.TYPE_CABLECAR,
     ObaRoute.TYPE_GONDOLA,
-    ObaRoute.TYPE_FUNICULAR,
+    ObaRoute.TYPE_FUNICULAR
 )
 
 /**

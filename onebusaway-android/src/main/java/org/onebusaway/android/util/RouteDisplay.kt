@@ -29,8 +29,7 @@ data class RouteDisplayNames(val shortName: String, val longName: String?)
  * line is the long name (or the description when the long name is missing or equals the short
  * name). Shared by the Compose route repositories.
  */
-fun routeDisplayNames(route: ObaRoute): RouteDisplayNames =
-    routeDisplayNames(route.shortName, route.longName, route.description)
+fun routeDisplayNames(route: ObaRoute): RouteDisplayNames = routeDisplayNames(route.shortName, route.longName, route.description)
 
 /** Field-based overload, for callers (e.g. the modernized api/ DTOs) without an [ObaRoute]. */
 fun routeDisplayNames(
@@ -53,12 +52,9 @@ fun getRouteDisplayName(routeShortName: String?, routeLongName: String?): String
     return ""
 }
 
-fun getRouteDisplayName(route: ObaRoute): String {
-    return getRouteDisplayName(route.shortName, route.longName)
-}
+fun getRouteDisplayName(route: ObaRoute): String = getRouteDisplayName(route.shortName, route.longName)
 
-fun getRouteDescription(route: ObaRoute): String? =
-    getRouteDescription(route.shortName, route.longName, route.description)
+fun getRouteDescription(route: ObaRoute): String? = getRouteDescription(route.shortName, route.longName, route.description)
 
 /** Field-based overload, for callers (e.g. the modernized api/ DTOs) without an [ObaRoute]. */
 fun getRouteDescription(shortName: String?, longName: String?, description: String?): String? {

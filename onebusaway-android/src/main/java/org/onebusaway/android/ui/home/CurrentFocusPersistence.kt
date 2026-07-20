@@ -94,7 +94,7 @@ internal object CurrentFocusPersistence {
             RouteTarget(
                 routeId = it,
                 directionStopId = state[MapParams.ROUTE_DIRECTION_STOP_ID],
-                directionId = state[MapParams.ROUTE_DIRECTION_ID],
+                directionId = state[MapParams.ROUTE_DIRECTION_ID]
             )
         }
         return when {
@@ -102,8 +102,8 @@ internal object CurrentFocusPersistence {
                 stop,
                 StopRouteSelection(
                     originHeadsign = null,
-                    legs = listOf(RouteLeg(route.routeId, route.routeId, route.directionId)),
-                ),
+                    legs = listOf(RouteLeg(route.routeId, route.routeId, route.directionId))
+                )
             )
             route != null -> CurrentFocus.Route(route)
             stop != null -> CurrentFocus.Stop(stop)
@@ -126,13 +126,13 @@ internal object CurrentFocusPersistence {
             RouteLeg(
                 id,
                 names.getOrNull(index).orEmpty().ifBlank { id },
-                directions.getOrNull(index)?.takeUnless { it == NO_DIRECTION },
+                directions.getOrNull(index)?.takeUnless { it == NO_DIRECTION }
             )
         }
         if (legs.isEmpty()) return null
         return StopRouteSelection(
             originHeadsign = state[KEY_ROUTE_ORIGIN_HEADSIGN],
-            legs = legs,
+            legs = legs
         )
     }
 
@@ -144,8 +144,8 @@ internal object CurrentFocusPersistence {
             code = state[KEY_STOP_CODE],
             point = GeoPoint(
                 state.get<Double>(KEY_STOP_LAT) ?: 0.0,
-                state.get<Double>(KEY_STOP_LON) ?: 0.0,
-            ),
+                state.get<Double>(KEY_STOP_LON) ?: 0.0
+            )
         )
     }
 }

@@ -39,8 +39,7 @@ fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
 enum class StopBand { DOT, FULL }
 
 /** The [StopBand] a stop falls in at [zoom]: a dot below [STOP_DOT_ZOOM_THRESHOLD], else the full icon. */
-fun stopZoomBand(zoom: Float): StopBand =
-    if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
+fun stopZoomBand(zoom: Float): StopBand = if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
 
 /**
  * Stop-circle-specific detail scale applied while a route is focused, whether through focused-stop
@@ -52,7 +51,7 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
     startZoom = DETAIL_RAMP_START_ZOOM,
     endZoom = DETAIL_RAMP_END_ZOOM,
     distantValue = STOP_FOCUS_ROUTE_MIN_SCALE,
-    closeValue = 1f,
+    closeValue = 1f
 )
 
 /**
@@ -61,8 +60,14 @@ fun focusedRouteStopScale(zoom: Float): Float = detailZoomRamp(
  * likewise normal/focused. Route stops are native circles owned by the flavor-specific circle layer.
  */
 enum class StopIconKind {
-    FULL, FULL_FOCUSED, DOT, DOT_FOCUSED,
-    FAVORITE, FAVORITE_FOCUSED, FAVORITE_DOT, FAVORITE_DOT_FOCUSED,
+    FULL,
+    FULL_FOCUSED,
+    DOT,
+    DOT_FOCUSED,
+    FAVORITE,
+    FAVORITE_FOCUSED,
+    FAVORITE_DOT,
+    FAVORITE_DOT_FOCUSED
 }
 
 /**
@@ -75,7 +80,7 @@ enum class StopIconKind {
 fun stopIconKind(
     focused: Boolean,
     band: StopBand,
-    favorite: Boolean = false,
+    favorite: Boolean = false
 ): StopIconKind = when {
     favorite && band == StopBand.DOT ->
         if (focused) StopIconKind.FAVORITE_DOT_FOCUSED else StopIconKind.FAVORITE_DOT

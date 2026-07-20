@@ -16,8 +16,8 @@
 package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
-import org.onebusaway.android.models.ObaRoute
 import org.junit.Test
+import org.onebusaway.android.models.ObaRoute
 
 /** Unit tests for [primaryRouteType] — the stop-icon route-type priority resolution. */
 class StopRouteTypeTest {

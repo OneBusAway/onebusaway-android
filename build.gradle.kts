@@ -74,7 +74,7 @@ spotless {
         // max-line-length is the one standard rule Spotless cannot auto-fix (it can't decide how to
         // wrap a line), so leaving it on would turn every long line into a manual chore — the toil
         // this move away from hand-formatting removes. Disabled so formatting stays fully automatic.
-        "ktlint_standard_max-line-length" to "disabled",
+        "ktlint_standard_max-line-length" to "disabled"
     )
     kotlin {
         target("**/*.kt")

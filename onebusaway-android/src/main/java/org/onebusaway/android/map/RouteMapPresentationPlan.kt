@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The complete render plan for one publish of the route map's line/badge/stop layers — the pure output
@@ -34,14 +34,14 @@ internal data class RouteMapPresentation(
     val framingPolylines: List<RoutePolyline>,
     val routeModeScalesStopsWithZoom: Boolean,
     val badges: List<RouteBadge>,
-    val stopPresentation: RouteStopPresentation?,
+    val stopPresentation: RouteStopPresentation?
 )
 
 /** A selected vehicle's exact trip, as read fresh after its shape/schedule resolve. */
 internal data class SelectedTripPresentation(
     val points: List<GeoPoint>,
     val stopIds: List<String>,
-    val routeDirection: RouteDirectionKey,
+    val routeDirection: RouteDirectionKey
 )
 
 /**
@@ -58,7 +58,7 @@ internal data class SelectedTripRenderInput(
     val presentation: SelectedTripPresentation,
     val routeColorFallback: Int,
     val directionUnderlay: () -> List<RoutePolyline>,
-    val stopPresentation: () -> RouteStopPresentation,
+    val stopPresentation: () -> RouteStopPresentation
 )
 
 /**
@@ -91,19 +91,24 @@ internal fun assembleRouteMapPresentation(
     focusedRoutes: List<ObaRoute>,
     routeColors: Map<RouteDirectionKey, Int>,
     selected: SelectedTripRenderInput?,
-    projectedFocusStops: () -> Map<String, GeoPoint>,
+    projectedFocusStops: () -> Map<String, GeoPoint>
 ): RouteMapPresentation {
     // Route badges accompany adjacency geometry; a whole-route emphasis has no adjacency entry to badge.
     val badges = if (emphasizedRoute == null) {
         focusedGeometry.toRouteBadges(focusedRoutes, routeColors)
-    } else emptyList()
+    } else {
+        emptyList()
+    }
 
     // 1. Selected vehicle: draw its exact trip in place of the direction geometry. Stop focus alone
     // gates the underlay, not whether an adjacency color happened to be found for this exact
     // direction — see selectedTripStyle (#1902).
     if (selected != null) {
         val style = selectedTripStyle(
-            focusTrips != null, selected.presentation.routeDirection, routeColors, selected.routeColorFallback,
+            focusTrips != null,
+            selected.presentation.routeDirection,
+            routeColors,
+            selected.routeColorFallback
         )
         val selectedTrip = selected.presentation.points
             .takeIf { it.size >= 2 }
@@ -114,12 +119,12 @@ internal fun assembleRouteMapPresentation(
                     selected.presentation.routeDirection,
                     routeColors,
                     if (style.includeUnderlay) selected.directionUnderlay() else emptyList(),
-                    selectedTrip,
+                    selectedTrip
                 ),
                 framingPolylines = listOf(selectedTrip),
                 routeModeScalesStopsWithZoom = isActive,
                 badges = badges,
-                stopPresentation = selected.stopPresentation(),
+                stopPresentation = selected.stopPresentation()
             )
         }
         // A resolved-but-undrawable (< 2-point) trip falls through to the base/focus branches.
@@ -132,7 +137,7 @@ internal fun assembleRouteMapPresentation(
             framingPolylines = basePolylines,
             routeModeScalesStopsWithZoom = isActive,
             badges = emptyList(),
-            stopPresentation = baseStopPresentation,
+            stopPresentation = baseStopPresentation
         )
     }
 
@@ -145,7 +150,8 @@ internal fun assembleRouteMapPresentation(
     //    both-directions shape and the single-direction adjacency lines cover only part of it (dropping
     //    it would erase the unfocused direction, and the null-direction key would also empty
     //    routeDirectionsByStopId's exact-match filter below).
-    val showBaseRoute = isActive && emphasizedRoute != null &&
+    val showBaseRoute = isActive &&
+        emphasizedRoute != null &&
         focusTrips.none { it.routeDirection == emphasizedRoute }
     val routesByStopId = focusedStops.routeDirectionsByStopId(focusTrips, emphasizedRoute)
     return RouteMapPresentation(
@@ -163,8 +169,8 @@ internal fun assembleRouteMapPresentation(
                 stops = routesByStopId.keys.mapNotNull(focusedStops.stopsById::get),
                 routes = focusedRoutes,
                 routeDirectionsByStopId = routesByStopId,
-                projectedPoints = projectedFocusStops(),
+                projectedPoints = projectedFocusStops()
             )
-        },
+        }
     )
 }

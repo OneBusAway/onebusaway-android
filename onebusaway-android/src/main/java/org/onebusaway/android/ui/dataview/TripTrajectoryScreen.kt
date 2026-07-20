@@ -44,9 +44,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -75,13 +75,12 @@ private val DeviationDashes = PathEffect.dashPathEffect(floatArrayOf(8f, 6f))
 private val NowDashes = PathEffect.dashPathEffect(floatArrayOf(16f, 8f))
 
 /** A text Paint for canvas labels; [color] is an android.graphics.Color int. */
-private fun textPaint(density: Density, color: Int, textSizeDp: Float, bold: Boolean = false) =
-    Paint().apply {
-        this.color = color
-        textSize = with(density) { textSizeDp.dp.toPx() }
-        if (bold) typeface = android.graphics.Typeface.DEFAULT_BOLD
-        isAntiAlias = true
-    }
+private fun textPaint(density: Density, color: Int, textSizeDp: Float, bold: Boolean = false) = Paint().apply {
+    this.color = color
+    textSize = with(density) { textSizeDp.dp.toPx() }
+    if (bold) typeface = android.graphics.Typeface.DEFAULT_BOLD
+    isAntiAlias = true
+}
 
 /**
  * Trip trajectory debug screen — a distance (X) vs server-clock-time (Y, newest on top) plot of a
@@ -111,16 +110,16 @@ fun TripTrajectoryScreen(state: TripTrajectoryUiState, onBack: () -> Unit) {
                     IconButton(onClick = onBack) {
                         Icon(AppIcons.ArrowBack, contentDescription = "Back")
                     }
-                },
+                }
             )
-        },
+        }
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             val ended = if (state.tripEnded) " · trip ended" else ""
             Text(
                 text = "Trip ${state.tripId} · vehicle ${state.vehicleId ?: "—"} · ${state.sampleCount} samples$ended",
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
             )
             TrajectoryGraph(state.trajectory, Modifier.fillMaxWidth().weight(1f))
         }
@@ -137,7 +136,7 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
                 marginLeft = 64.dp.toPx(),
                 marginTop = 12.dp.toPx(),
                 marginRight = 12.dp.toPx(),
-                marginBottom = 28.dp.toPx(),
+                marginBottom = 28.dp.toPx()
             )
         }
     }
@@ -171,8 +170,10 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
     ) {
         invalidations // read so gesture mutations recompose this draw
         viewport.setDataBounds(
-            trajectory.bounds.minDist, trajectory.bounds.maxDist,
-            trajectory.bounds.minTime.epochMs, trajectory.bounds.maxTime.epochMs,
+            trajectory.bounds.minDist,
+            trajectory.bounds.maxDist,
+            trajectory.bounds.minTime.epochMs,
+            trajectory.bounds.maxTime.epochMs
         )
         if (!viewport.setupVisibleWindow(size.width, size.height)) return@Canvas
 
@@ -229,7 +230,7 @@ private fun DrawScope.drawExtrapolation(
     viewport: GraphViewport,
     series: ExtrapolationSeries,
     labelPaint: Paint,
-    deviationLabelPaint: Paint,
+    deviationLabelPaint: Paint
 ) {
     val anchor = Offset(viewport.toPixelX(series.anchor.distanceMeters), viewport.toPixelY(series.anchor.timeMs.epochMs))
     val median = Offset(viewport.toPixelX(series.medianMeters), viewport.toPixelY(series.nowMs.epochMs))
@@ -265,7 +266,7 @@ private fun DrawScope.drawExtrapolation(
         "~${series.medianMeters.toInt()}m",
         median.x + 4f,
         viewport.graphBottom - 6f,
-        labelPaint,
+        labelPaint
     )
 
     // Schedule deviation: an orange marker at the time the schedule says the vehicle reaches the
@@ -279,7 +280,7 @@ private fun DrawScope.drawExtrapolation(
             devLabel,
             median.x + 5f,
             (schedY + median.y) / 2 + 4f,
-            deviationLabelPaint,
+            deviationLabelPaint
         )
     }
 }

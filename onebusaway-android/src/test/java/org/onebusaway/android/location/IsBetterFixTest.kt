@@ -32,8 +32,7 @@ class IsBetterFixTest {
     private val goodAccuracy = LocationFixes.ACC_THRESHOLD_METERS - 1
     private val badAccuracy = LocationFixes.ACC_THRESHOLD_METERS + 1
 
-    private fun isBetter(candidateMs: Long, accuracy: Float, nowMs: Long) =
-        LocationFixes.isBetterFix(WallTime(candidateMs), accuracy, current, WallTime(nowMs))
+    private fun isBetter(candidateMs: Long, accuracy: Float, nowMs: Long) = LocationFixes.isBetterFix(WallTime(candidateMs), accuracy, current, WallTime(nowMs))
 
     @Test
     fun `newer with good accuracy wins`() {

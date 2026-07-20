@@ -15,11 +15,11 @@
  */
 package org.onebusaway.android.time
 
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Guards the civil/schedule-time types: [ScheduleTime] is recurring (no clock domain) and only reaches

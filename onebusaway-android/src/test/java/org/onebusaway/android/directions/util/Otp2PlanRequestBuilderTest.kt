@@ -16,13 +16,13 @@
 package org.onebusaway.android.directions.util
 
 import com.apollographql.apollo.api.Optional
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import org.onebusaway.android.api.graphql.type.PlanAccessMode
 import org.onebusaway.android.api.graphql.type.PlanDirectMode
 import org.onebusaway.android.api.graphql.type.PlanEgressMode
 import org.onebusaway.android.api.graphql.type.TransitMode
 import org.onebusaway.android.ui.tripplan.TripModes
-import org.junit.Assert.assertEquals
-import org.junit.Test
 
 /**
  * Covers [Otp2PlanRequestBuilder.buildModes]/[Otp2PlanRequestBuilder.buildPreferences] — the OTP2
@@ -72,7 +72,7 @@ class Otp2PlanRequestBuilderTest {
         // Mirrors setModeSetById's own fallback: TRANSIT_AND_BIKE without bikeshare == TRANSIT_ONLY.
         assertEquals(
             Optional.Absent,
-            Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_AND_BIKE, bikeshareEnabled = false),
+            Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_AND_BIKE, bikeshareEnabled = false)
         )
     }
 
@@ -124,6 +124,5 @@ class Otp2PlanRequestBuilderTest {
     /** Unwraps an [Optional.Present]'s non-null value, failing the test on [Optional.Absent] or a
      * present-but-null value (mirrors `dataOrThrow` elsewhere: absent-when-a-value-was-expected is a
      * test bug, not something to null-check around). */
-    private fun <T : Any> requirePresent(optional: Optional<T?>): T =
-        (optional as Optional.Present<T?>).value!!
+    private fun <T : Any> requirePresent(optional: Optional<T?>): T = (optional as Optional.Present<T?>).value!!
 }

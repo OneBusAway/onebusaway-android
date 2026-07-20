@@ -44,15 +44,12 @@ interface LocationEntryPoint {
     companion object {
         /** Resolves the read-facing [LocationRepository] from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): LocationRepository =
-            accessor(context).locationRepository()
+        fun get(context: Context): LocationRepository = accessor(context).locationRepository()
 
         /** Resolves the write-side [LocationSink] from any [context] (the device-listener path only). */
         @JvmStatic
-        fun getSink(context: Context): LocationSink =
-            accessor(context).locationSink()
+        fun getSink(context: Context): LocationSink = accessor(context).locationSink()
 
-        private fun accessor(context: Context): LocationEntryPoint =
-            EntryPointAccessors.fromApplication(context, LocationEntryPoint::class.java)
+        private fun accessor(context: Context): LocationEntryPoint = EntryPointAccessors.fromApplication(context, LocationEntryPoint::class.java)
     }
 }

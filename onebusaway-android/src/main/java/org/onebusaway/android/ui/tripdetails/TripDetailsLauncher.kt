@@ -16,9 +16,9 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 
 /**
@@ -47,11 +47,9 @@ object TripDetailsLauncher {
 
         fun setStopId(stopId: String?): Builder = apply { intent.putExtra(NavRoutes.ARG_STOP_ID, stopId) }
 
-        fun setScrollMode(mode: String?): Builder =
-            apply { intent.putExtra(NavRoutes.ARG_SCROLL_MODE, mode) }
+        fun setScrollMode(mode: String?): Builder = apply { intent.putExtra(NavRoutes.ARG_SCROLL_MODE, mode) }
 
-        fun setDestinationId(stopId: String?): Builder =
-            apply { intent.putExtra(NavRoutes.ARG_DEST_ID, stopId) }
+        fun setDestinationId(stopId: String?): Builder = apply { intent.putExtra(NavRoutes.ARG_DEST_ID, stopId) }
 
         fun getIntent(): Intent = intent
 

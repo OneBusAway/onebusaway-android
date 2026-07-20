@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Map interaction a flavor's [ObaComposeMapAdapter] reports back to its host. Flavor-neutral (no

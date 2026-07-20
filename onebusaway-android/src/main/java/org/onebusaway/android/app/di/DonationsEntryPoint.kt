@@ -40,8 +40,7 @@ interface DonationsEntryPoint {
     companion object {
         /** Resolves the [DonationsManager] singleton from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): DonationsManager =
-            EntryPointAccessors.fromApplication(context, DonationsEntryPoint::class.java)
-                .donationsManager()
+        fun get(context: Context): DonationsManager = EntryPointAccessors.fromApplication(context, DonationsEntryPoint::class.java)
+            .donationsManager()
     }
 }

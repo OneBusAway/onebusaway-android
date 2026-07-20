@@ -34,5 +34,4 @@ import kotlinx.coroutines.CancellationException
  * It is `inline` (mirroring `kotlin.runCatching`), so [block] may call suspend functions when invoked
  * from a suspend context and the cancellation guard costs nothing.
  */
-inline fun <T> runCatchingCancellable(block: () -> T): Result<T> =
-    runCatching(block).onFailure { if (it is CancellationException) throw it }
+inline fun <T> runCatchingCancellable(block: () -> T): Result<T> = runCatching(block).onFailure { if (it is CancellationException) throw it }

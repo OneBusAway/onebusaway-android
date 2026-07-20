@@ -49,23 +49,23 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
     // back-stack args. Non-exported; no aliases.
     composable(
         NavRoutes.REPORT,
-        arguments = listOf(reportContextArg()),
+        arguments = listOf(reportContextArg())
     ) { backStackEntry ->
         ObaTheme {
             ReportDestination(
                 navController = navController,
-                reportContext = backStackEntry.decodeReportContext(),
+                reportContext = backStackEntry.decodeReportContext()
             )
         }
     }
     composable(
         NavRoutes.CUSTOMER_SERVICE,
-        arguments = listOf(reportContextArg()),
+        arguments = listOf(reportContextArg())
     ) { backStackEntry ->
         ObaTheme {
             CustomerServiceDestination(
                 navController = navController,
-                reportContext = backStackEntry.decodeReportContext(),
+                reportContext = backStackEntry.decodeReportContext()
             )
         }
     }
@@ -73,10 +73,12 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
         NavRoutes.INFRASTRUCTURE_ISSUE,
         arguments = listOf(
             navArgument(NavRoutes.ARG_SELECTED_SERVICE) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
-            reportContextArg(),
-        ),
+            reportContextArg()
+        )
     ) { backStackEntry ->
         val selectedService =
             backStackEntry.arguments?.getString(NavRoutes.ARG_SELECTED_SERVICE)
@@ -84,7 +86,7 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
             InfrastructureIssueDestination(
                 navController = navController,
                 selectedService = selectedService,
-                reportContext = backStackEntry.decodeReportContext(),
+                reportContext = backStackEntry.decodeReportContext()
             )
         }
     }
@@ -96,18 +98,24 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
         NavRoutes.FEEDBACK,
         arguments = listOf(
             navArgument(NavRoutes.ARG_FEEDBACK_RESPONSE) {
-                type = NavType.IntType; defaultValue = 0
+                type = NavType.IntType
+                defaultValue = 0
             },
             navArgument(NavRoutes.ARG_LOG_FILE) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_TRIP_ID) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_NOTIFICATION_ID) {
-                type = NavType.IntType; defaultValue = 0
-            },
-        ),
+                type = NavType.IntType
+                defaultValue = 0
+            }
+        )
     ) { backStackEntry ->
         val context = LocalContext.current
         val response =
@@ -125,7 +133,7 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
                 onSend = { liked, text ->
                     submitter.submit(liked, text)
                     navController.popBackStack()
-                },
+                }
             )
         }
     }
@@ -133,9 +141,10 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
 
 /** The optional, nullable encoded-[ReportContext] nav-arg shared by every report destination. */
 private fun reportContextArg() = navArgument(NavRoutes.ARG_REPORT_CONTEXT) {
-    type = NavType.StringType; nullable = true; defaultValue = null
+    type = NavType.StringType
+    nullable = true
+    defaultValue = null
 }
 
 /** Decodes this entry's [NavRoutes.ARG_REPORT_CONTEXT] arg into a [ReportContext] (empty if absent). */
-private fun NavBackStackEntry.decodeReportContext(): ReportContext =
-    ReportContext.decode(arguments?.getString(NavRoutes.ARG_REPORT_CONTEXT))
+private fun NavBackStackEntry.decodeReportContext(): ReportContext = ReportContext.decode(arguments?.getString(NavRoutes.ARG_REPORT_CONTEXT))

@@ -37,7 +37,7 @@ import org.onebusaway.android.region.RegionRepository
 class ObaEndpointResolver @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
-    private val preferences: PreferencesRepository,
+    private val preferences: PreferencesRepository
 ) {
 
     /**
@@ -48,10 +48,13 @@ class ObaEndpointResolver @Inject constructor(
     fun baseUrl(): Uri? {
         val custom = preferences.getString(R.string.preference_key_oba_api_url, null)
         val raw = custom?.takeIf { it.isNotEmpty() } ?: regionRepository.region.value?.obaBaseUrl
-        ?: return null
+            ?: return null
         // A scheme-less custom URL is assumed to be https (#126).
-        val withScheme = if (raw.toUri().scheme != null) raw
-        else context.getString(R.string.https_prefix) + raw
+        val withScheme = if (raw.toUri().scheme != null) {
+            raw
+        } else {
+            context.getString(R.string.https_prefix) + raw
+        }
         return withScheme.toUri()
     }
 

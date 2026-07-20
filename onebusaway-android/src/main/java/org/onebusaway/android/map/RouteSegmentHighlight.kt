@@ -45,7 +45,7 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
     segment: List<GeoPoint>,
-    routeColor: Int?,
+    routeColor: Int?
 ): List<RoutePolyline> {
     val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
         RoutePolyline(color = routeColor, points = it, widthProfile = ROUTE_LINE_WIDTH_PROFILE, directional = true)
@@ -61,7 +61,7 @@ internal fun routePolylinesWithSegment(
  */
 internal fun List<ObaStop>.onSegment(
     segment: List<GeoPoint>,
-    toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS,
+    toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
 ): List<ObaStop> {
     val line = segment.takeIf { it.isDrawableSegment() }?.let { Polyline(it) } ?: return this
     return filter { stop ->

@@ -36,12 +36,12 @@ import org.onebusaway.android.time.ServiceDate
  * records. [serviceDate] and [routeType] are null when the response doesn't carry them.
  */
 data class TripObservation(
-        val tripId: String,
-        val status: ObaTripStatus,
-        /** The server's currentTime when the status was fetched. */
-        val serverTimeMs: ServerTime,
-        val serviceDate: ServiceDate?,
-        val routeType: Int?
+    val tripId: String,
+    val status: ObaTripStatus,
+    /** The server's currentTime when the status was fetched. */
+    val serverTimeMs: ServerTime,
+    val serviceDate: ServiceDate?,
+    val routeType: Int?
 )
 
 /**
@@ -49,8 +49,7 @@ data class TripObservation(
  * domain type. The wire convention lives here in the data layer, not on [ServiceDate] itself, which
  * stays a pure domain wrapper (CLAUDE.md: unit/sentinel normalization belongs at the wire boundary).
  */
-internal fun serviceDateOrNull(epochMs: Long): ServiceDate? =
-        epochMs.takeIf { it > 0 }?.let(::ServiceDate)
+internal fun serviceDateOrNull(epochMs: Long): ServiceDate? = epochMs.takeIf { it > 0 }?.let(::ServiceDate)
 
 /** One observation per active trip in the route's vehicles (one for a single trip-details poll). */
 fun RouteTrips.toObservations(): List<TripObservation> = buildList {
@@ -62,8 +61,7 @@ fun RouteTrips.toObservations(): List<TripObservation> = buildList {
 }
 
 /** Resolves [tripId]'s route type from the [RouteTrips] refs, or null when they don't include it. */
-private fun RouteTrips.routeTypeForTrip(tripId: String): Int? =
-        trip(tripId)?.routeId?.let { route(it) }?.type
+private fun RouteTrips.routeTypeForTrip(tripId: String): Int? = trip(tripId)?.routeId?.let { route(it) }?.type
 
 /**
  * Iterates the active trips in a [RouteTrips], skipping entries without a status, an active trip ID,
@@ -71,7 +69,7 @@ private fun RouteTrips.routeTypeForTrip(tripId: String): Int? =
  * walk the vehicles identically.
  */
 internal inline fun RouteTrips.forEachActiveTrip(
-        block: (tripId: String, status: ObaTripStatus, activeTrip: ObaTrip) -> Unit
+    block: (tripId: String, status: ObaTripStatus, activeTrip: ObaTrip) -> Unit
 ) {
     for (tripDetails in trips) {
         val status = tripDetails.status ?: continue

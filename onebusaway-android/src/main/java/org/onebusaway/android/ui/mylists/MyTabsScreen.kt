@@ -27,8 +27,8 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -60,7 +60,7 @@ data class MyTab(
     @param:DrawableRes val iconRes: Int,
     val onSort: (() -> Unit)? = null,
     val clear: TabAction? = null,
-    val content: @Composable () -> Unit,
+    val content: @Composable () -> Unit
 )
 
 /**
@@ -81,7 +81,7 @@ fun MyTabsScreen(
     initialTag: String?,
     persistedTag: String?,
     onPersistTag: (String) -> Unit,
-    onBack: () -> Unit,
+    onBack: () -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val initialPage = remember {
@@ -153,5 +153,4 @@ private fun ClearOverflow(clear: TabAction) {
     }
 }
 
-private fun List<MyTab>.indexOfTag(tag: String): Int? =
-    indexOfFirst { it.tag == tag }.takeIf { it >= 0 }
+private fun List<MyTab>.indexOfTag(tag: String): Int? = indexOfFirst { it.tag == tag }.takeIf { it >= 0 }

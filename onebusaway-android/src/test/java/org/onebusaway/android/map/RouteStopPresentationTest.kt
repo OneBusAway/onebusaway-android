@@ -5,10 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 class RouteStopPresentationTest {
 
@@ -20,14 +20,14 @@ class RouteStopPresentationTest {
             stops = listOf(exact),
             routes = emptyList(),
             routeDirectionsByStopId = mapOf(exact.id to setOf(RouteDirectionKey("62", 1))),
-            projectedPoints = mapOf(exact.id to GeoPoint(48.0, -123.0)),
+            projectedPoints = mapOf(exact.id to GeoPoint(48.0, -123.0))
         )
 
         val result = applyRouteStopPresentation(
             nearby = listOf(marker(exact), marker(other)),
             focusedStopId = exact.id,
             presentation = presentation,
-            markerFor = ::marker,
+            markerFor = ::marker
         ).associateBy(StopMarker::id)
 
         assertEquals(setOf(RouteDirectionKey("62", 1)), result.getValue(exact.id).presentedRoutes)
@@ -39,12 +39,17 @@ class RouteStopPresentationTest {
         val focused = stop("focused")
         val other = stop("other")
         val presentation = RouteStopPresentation(
-            stops = emptyList(), routes = emptyList(), routeDirectionsByStopId = emptyMap(),
-            projectedPoints = emptyMap(),
+            stops = emptyList(),
+            routes = emptyList(),
+            routeDirectionsByStopId = emptyMap(),
+            projectedPoints = emptyMap()
         )
 
         val result = applyRouteStopPresentation(
-            listOf(marker(focused), marker(other)), focused.id, presentation, ::marker,
+            listOf(marker(focused), marker(other)),
+            focused.id,
+            presentation,
+            ::marker
         )
 
         assertEquals(focused.id, result.single().id)
@@ -54,6 +59,10 @@ class RouteStopPresentationTest {
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)
 
     private fun marker(stop: org.onebusaway.android.models.ObaStop) = StopMarker(
-        stop.id, GeoPoint(stop.latitude, stop.longitude), "null", ObaRoute.TYPE_BUS, stop,
+        stop.id,
+        GeoPoint(stop.latitude, stop.longitude),
+        "null",
+        ObaRoute.TYPE_BUS,
+        stop
     )
 }

@@ -65,15 +65,16 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onSort = {
                 host.chooseSortOrder(
-                    PreferenceUtils.getStopSortOrderFromPreferences(host), R.array.sort_stops
+                    PreferenceUtils.getStopSortOrderFromPreferences(host),
+                    R.array.sort_stops
                 ) { vm.setSort(it) }
             },
             onClear = {
                 host.confirmClear(
                     R.string.my_option_clear_starred_stops_title,
-                    R.string.my_option_clear_starred_stops_confirm,
+                    R.string.my_option_clear_starred_stops_confirm
                 ) { vm.clearAll() }
-            },
+            }
         ) {
             StopListDestination(
                 vm,
@@ -81,10 +82,11 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
                 onClick = { navController.navigate(NavRoutes.arrivals(it.id, it.name)) },
                 actions = {
                     host.stopActions(
-                        it, R.string.my_context_remove_star,
-                        onShowOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
+                        it,
+                        R.string.my_context_remove_star,
+                        onShowOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) }
                     ) { vm.remove(it.id) }
-                },
+                }
             )
         }
     }
@@ -97,15 +99,16 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
             onBack = { navController.popBackStack() },
             onSort = {
                 host.chooseSortOrder(
-                    PreferenceUtils.getStopSortOrderFromPreferences(host), R.array.sort_stops
+                    PreferenceUtils.getStopSortOrderFromPreferences(host),
+                    R.array.sort_stops
                 ) { vm.setSort(it) }
             },
             onClear = {
                 host.confirmClear(
                     R.string.my_option_clear_starred_routes_title,
-                    R.string.my_option_clear_starred_routes_confirm,
+                    R.string.my_option_clear_starred_routes_confirm
                 ) { vm.clearAll() }
-            },
+            }
         ) {
             RouteListDestination(
                 vm,
@@ -113,10 +116,11 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
                 onClick = { route -> openRoute(route) { routeId -> navController.revealRouteOnMap(routeId) } },
                 actions = {
                     host.routeActions(
-                        it, R.string.my_context_remove_star,
-                        onShowOnMap = { routeId -> navController.revealRouteOnMap(routeId) },
+                        it,
+                        R.string.my_context_remove_star,
+                        onShowOnMap = { routeId -> navController.revealRouteOnMap(routeId) }
                     ) { vm.remove(it.id) }
-                },
+                }
             )
         }
     }
@@ -134,7 +138,7 @@ private fun StarredListScaffold(
     onBack: () -> Unit,
     onSort: () -> Unit,
     onClear: () -> Unit,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
     ObaTheme {
         Scaffold(
@@ -143,13 +147,13 @@ private fun StarredListScaffold(
                     IconButton(onClick = onSort) {
                         Icon(
                             painter = painterResource(R.drawable.ic_action_content_sort),
-                            contentDescription = stringResource(R.string.menu_option_sort_by),
+                            contentDescription = stringResource(R.string.menu_option_sort_by)
                         )
                     }
                     IconButton(onClick = onClear) {
                         Icon(
                             painter = painterResource(R.drawable.baseline_delete_forever_48),
-                            contentDescription = stringResource(clearLabel),
+                            contentDescription = stringResource(clearLabel)
                         )
                     }
                 }

@@ -21,12 +21,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.search.RouteSearchContent
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.search.SearchViewModel
 import org.onebusaway.android.ui.search.StopSearchContent
-import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.search.StopSearchResult
 import org.onebusaway.android.util.ExternalIntents
 
@@ -43,7 +43,7 @@ fun StopListDestination(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes emptyText: Int,
     onClick: (StopListItem) -> Unit,
-    actions: (StopListItem) -> List<RowAction>,
+    actions: (StopListItem) -> List<RowAction>
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MyListContent(state, emptyText = stringResource(emptyText), itemKey = { it.id }) { stop ->
@@ -56,7 +56,7 @@ fun RouteListDestination(
     viewModel: MyListViewModel<RouteListItem>,
     @StringRes emptyText: Int,
     onClick: (RouteListItem) -> Unit,
-    actions: (RouteListItem) -> List<RowAction>,
+    actions: (RouteListItem) -> List<RowAction>
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MyListContent(state, emptyText = stringResource(emptyText), itemKey = { it.id }) { route ->
@@ -69,7 +69,7 @@ fun ReminderListDestination(
     viewModel: MyListViewModel<ReminderItem>,
     @StringRes emptyText: Int,
     onClick: (ReminderItem) -> Unit,
-    actions: (ReminderItem) -> List<RowAction>,
+    actions: (ReminderItem) -> List<RowAction>
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MyListContent(
@@ -84,11 +84,11 @@ fun ReminderListDestination(
 @Composable
 fun StopSearchDestination(
     viewModel: SearchViewModel<StopSearchResult>,
-    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit,
+    onShowOnMap: (stopId: String, lat: Double, lon: Double) -> Unit
 ) {
     StopSearchContent(
         viewModel = viewModel,
-        onStopClick = { onShowOnMap(it.id, it.latitude, it.longitude) },
+        onStopClick = { onShowOnMap(it.id, it.latitude, it.longitude) }
     )
 }
 
@@ -96,7 +96,7 @@ fun StopSearchDestination(
 fun RouteSearchDestination(
     viewModel: SearchViewModel<RouteSearchResult>,
     onShowOnMap: (routeId: String) -> Unit,
-    onOpenRoute: (routeId: String) -> Unit,
+    onOpenRoute: (routeId: String) -> Unit
 ) {
     val host = LocalContext.current.findActivity()
     RouteSearchContent(

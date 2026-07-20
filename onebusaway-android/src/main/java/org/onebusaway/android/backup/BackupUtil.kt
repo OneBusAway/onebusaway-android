@@ -10,16 +10,14 @@ import java.io.File
  *
  * You MUST delete this temporary file yourself after use.
  */
-fun uriToTempFile(context: Context, uri: Uri): File? {
-    return try {
-        val stream = context.contentResolver.openInputStream(uri)
-        val file = File.createTempFile("temp", "", context.cacheDir)
-        stream.use { input ->
-            file.outputStream().use { output -> input!!.copyTo(output) }
-        }
-        file
-    } catch (e: Exception) {
-        e.printStackTrace()
-        null
+fun uriToTempFile(context: Context, uri: Uri): File? = try {
+    val stream = context.contentResolver.openInputStream(uri)
+    val file = File.createTempFile("temp", "", context.cacheDir)
+    stream.use { input ->
+        file.outputStream().use { output -> input!!.copyTo(output) }
     }
+    file
+} catch (e: Exception) {
+    e.printStackTrace()
+    null
 }

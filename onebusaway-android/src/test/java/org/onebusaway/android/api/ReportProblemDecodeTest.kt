@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.NoData
-import org.onebusaway.android.api.contract.ObaEnvelope
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import org.onebusaway.android.api.contract.NoData
+import org.onebusaway.android.api.contract.ObaEnvelope
 
 /**
  * Covers the report-problem response path: the endpoints carry no data payload, so the response
@@ -31,7 +30,10 @@ import org.junit.Test
  */
 class ReportProblemDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun okResponseDecodesAndPassesRequireOk() {

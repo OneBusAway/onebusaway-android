@@ -48,7 +48,7 @@ fun uncertaintyBandSlices(
     distribution: ProbDistribution,
     lowQuantile: Double = BAND_LOW_QUANTILE,
     highQuantile: Double = BAND_HIGH_QUANTILE,
-    count: Int = BAND_SEGMENT_COUNT,
+    count: Int = BAND_SEGMENT_COUNT
 ): List<BandSlice> {
     if (count <= 0) return emptyList()
     val lo = distribution.quantile(lowQuantile)
@@ -64,7 +64,7 @@ fun uncertaintyBandSlices(
         BandSlice(
             startDist = lo + width * i,
             endDist = lo + width * (i + 1),
-            alpha = (densities[i] / peak).toFloat(),
+            alpha = (densities[i] / peak).toFloat()
         )
     }
 }

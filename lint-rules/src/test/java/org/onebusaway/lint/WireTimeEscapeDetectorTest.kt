@@ -30,15 +30,14 @@ class WireTimeEscapeDetectorTest {
             val arrivalTime: Long = 0,
             val departureTime: Long = 0,
         )
-        """,
+        """
     ).indented()
 
-    private fun lintKotlin(vararg sources: String) =
-        lint()
-            .files(stopTimeDto, *sources.map { kotlin(it).indented() }.toTypedArray())
-            .issues(WireTimeEscapeDetector.ISSUE)
-            .allowMissingSdk()
-            .run()
+    private fun lintKotlin(vararg sources: String) = lint()
+        .files(stopTimeDto, *sources.map { kotlin(it).indented() }.toTypedArray())
+        .issues(WireTimeEscapeDetector.ISSUE)
+        .allowMissingSdk()
+        .run()
 
     /** Reading a wire time field from app code (outside the adapter layer) is flagged. */
     @Test
@@ -48,7 +47,7 @@ class WireTimeEscapeDetectorTest {
             package org.onebusaway.android.ui.trip
             import org.onebusaway.android.api.contract.StopTime
             fun render(st: StopTime): Long = st.arrivalTime
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -60,7 +59,7 @@ class WireTimeEscapeDetectorTest {
             package org.onebusaway.android.api.adapters
             import org.onebusaway.android.api.contract.StopTime
             fun mint(st: StopTime): Long = st.arrivalTime
-            """,
+            """
         ).expectClean()
     }
 
@@ -72,7 +71,7 @@ class WireTimeEscapeDetectorTest {
             package org.onebusaway.android.api.data
             import org.onebusaway.android.api.contract.StopTime
             fun peek(st: StopTime): Long = st.arrivalTime
-            """,
+            """
         ).expectClean()
     }
 
@@ -84,7 +83,7 @@ class WireTimeEscapeDetectorTest {
             package org.onebusaway.android.ui.trip
             import org.onebusaway.android.api.contract.StopTime
             fun id(st: StopTime): String = st.stopId
-            """,
+            """
         ).expectClean()
     }
 
@@ -97,7 +96,7 @@ class WireTimeEscapeDetectorTest {
             import org.onebusaway.android.api.contract.StopTime
             fun sink(ms: Long) {}
             fun render(st: StopTime) { sink(st.arrivalTime) }
-            """,
+            """
         ).expectWarningCount(1)
     }
 }

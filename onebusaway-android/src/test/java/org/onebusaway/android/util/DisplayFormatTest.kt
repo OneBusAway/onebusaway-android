@@ -27,8 +27,7 @@ import org.onebusaway.android.util.DisplayFormat.EtaPart
  */
 class DisplayFormatTest {
 
-    private fun format(minutes: Long): List<EtaPart> =
-        DisplayFormat.formatEtaParts(minutes, minutesAbbrev = "min", hoursAbbrev = "hr")
+    private fun format(minutes: Long): List<EtaPart> = DisplayFormat.formatEtaParts(minutes, minutesAbbrev = "min", hoursAbbrev = "hr")
 
     @Test
     fun `zero minutes omits the hour segment`() {

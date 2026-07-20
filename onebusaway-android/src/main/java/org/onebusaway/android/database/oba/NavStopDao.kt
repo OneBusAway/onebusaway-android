@@ -52,5 +52,5 @@ interface NavStopDao {
 data class NavStopDetailsRow(
     val tripId: String,
     val destinationId: String,
-    val beforeId: String,
+    val beforeId: String
 )

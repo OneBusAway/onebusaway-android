@@ -63,7 +63,7 @@ fun DonationFeature(
     viewModel: DonationViewModel,
     onNearby: Boolean,
     onLearnMore: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -96,14 +96,14 @@ fun DonationFeature(
             onDonate = viewModel::donate,
             onDismissForever = viewModel::dismissForever,
             onRemindLater = viewModel::remindLater,
-            onCancelDismiss = viewModel::cancelDismiss,
+            onCancelDismiss = viewModel::cancelDismiss
         )
     }
     DonationOverlay(
         cardVisible = onNearby && state.available,
         dismissDialogVisible = state.showDismissDialog,
         callbacks = callbacks,
-        modifier = modifier,
+        modifier = modifier
     )
 }
 
@@ -114,7 +114,7 @@ class DonationCallbacks(
     val onDonate: () -> Unit,
     val onDismissForever: () -> Unit,
     val onRemindLater: () -> Unit,
-    val onCancelDismiss: () -> Unit,
+    val onCancelDismiss: () -> Unit
 )
 
 /**
@@ -129,21 +129,21 @@ fun DonationOverlay(
     cardVisible: Boolean,
     dismissDialogVisible: Boolean,
     callbacks: DonationCallbacks,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     if (cardVisible) {
         DonationCard(
             onClose = callbacks.onClose,
             onLearnMore = callbacks.onLearnMore,
             onDonate = callbacks.onDonate,
-            modifier = modifier,
+            modifier = modifier
         )
     }
     if (dismissDialogVisible) {
         DonationDismissDialog(
             onDismissForever = callbacks.onDismissForever,
             onRemindLater = callbacks.onRemindLater,
-            onCancel = callbacks.onCancelDismiss,
+            onCancel = callbacks.onCancelDismiss
         )
     }
 }

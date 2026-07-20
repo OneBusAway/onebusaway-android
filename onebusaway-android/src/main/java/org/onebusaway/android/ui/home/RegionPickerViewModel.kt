@@ -39,7 +39,7 @@ import org.onebusaway.android.region.RegionState
  */
 @HiltViewModel
 class RegionPickerViewModel @Inject constructor(
-    private val regionRepo: RegionRepository,
+    private val regionRepo: RegionRepository
 ) : ViewModel() {
 
     // The regions to choose from while resolution needs a manual pick, else null. Mirrors the manual

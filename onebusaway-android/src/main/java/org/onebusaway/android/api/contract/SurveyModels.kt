@@ -31,7 +31,7 @@ import kotlinx.serialization.Transient
 @Serializable
 data class StudyResponse(
     val surveys: List<Surveys> = emptyList(),
-    val region: Region? = null,
+    val region: Region? = null
 ) {
     @Serializable
     data class Surveys(
@@ -45,13 +45,13 @@ data class StudyResponse(
         val allows_multiple_responses: Boolean? = null,
         val always_visible: Boolean? = null,
         val visible_stop_list: List<String>? = null,
-        val visible_route_list: List<String>? = null,
+        val visible_route_list: List<String>? = null
     ) {
         @Serializable
         data class Study(
             val name: String? = null,
             val description: String? = null,
-            val id: Int = 0,
+            val id: Int = 0
         )
 
         @Serializable
@@ -59,7 +59,7 @@ data class StudyResponse(
             val id: Int = 0,
             val position: Int? = null,
             @SerialName("required") val isRequired: Boolean = false,
-            val content: Content = Content(),
+            val content: Content = Content()
         ) {
             /** Answer held by the survey UI before submit; not part of the wire response. */
             @Transient
@@ -76,7 +76,7 @@ data class StudyResponse(
                 val url: String? = null,
                 val embedded_data_fields: ArrayList<String>? = null,
                 val survey_provider: String? = null,
-                val type: String? = null,
+                val type: String? = null
             )
         }
     }
@@ -84,19 +84,19 @@ data class StudyResponse(
     @Serializable
     data class Region(
         val name: String? = null,
-        val id: Int = 0,
+        val id: Int = 0
     )
 }
 
 /** The ack returned after POSTing survey answers; carries the response id used to update follow-ups. */
 @Serializable
 data class SubmitSurveyResponse(
-    @SerialName("survey_response") val surveyResponse: SurveyResponse? = null,
+    @SerialName("survey_response") val surveyResponse: SurveyResponse? = null
 ) {
     @Serializable
     data class SurveyResponse(
         val id: String? = null,
         @SerialName("update_path") val updatePath: String? = null,
-        @SerialName("user_identifier") val userIdentifier: String? = null,
+        @SerialName("user_identifier") val userIdentifier: String? = null
     )
 }

@@ -102,6 +102,5 @@ class Open311ProblemViewModel(private val repository: Open311Repository) : ViewM
         if (it == Open311SubmitState.Submitting) it else Open311SubmitState.Idle
     }
 
-    private fun putValue(code: Int, value: FieldValue) =
-        _form.update { it.copy(values = it.values + (code to value)) }
+    private fun putValue(code: Int, value: FieldValue) = _form.update { it.copy(values = it.values + (code to value)) }
 }

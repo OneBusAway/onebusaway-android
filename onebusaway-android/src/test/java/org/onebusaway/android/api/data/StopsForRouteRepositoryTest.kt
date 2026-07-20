@@ -105,25 +105,24 @@ class StopsForRouteRepositoryTest {
     // via android.util.Log.e inside SingleFlight, which is unmocked in plain JVM tests (this module
     // avoids Robolectric/mocking), so — like the same branch in SingleFlightTest — it stays untested.
 
-    private fun entryWith(stopIds: List<String>): EntryWithReferences<StopsForRoute> =
-        EntryWithReferences(
-            entry = StopsForRoute(
-                stopGroupings = listOf(
-                    StopGrouping(
-                        stopGroups = listOf(
-                            StopGroup(
-                                id = "0",
-                                name = StopGroupName(names = listOf("Outbound")),
-                                stopIds = stopIds,
-                            )
+    private fun entryWith(stopIds: List<String>): EntryWithReferences<StopsForRoute> = EntryWithReferences(
+        entry = StopsForRoute(
+            stopGroupings = listOf(
+                StopGrouping(
+                    stopGroups = listOf(
+                        StopGroup(
+                            id = "0",
+                            name = StopGroupName(names = listOf("Outbound")),
+                            stopIds = stopIds
                         )
                     )
                 )
-            ),
-            references = References(
-                stops = stopIds.map {
-                    StopReference(id = it, name = it, direction = null, lat = 47.0, lon = -122.0)
-                }
-            ),
+            )
+        ),
+        references = References(
+            stops = stopIds.map {
+                StopReference(id = it, name = it, direction = null, lat = 47.0, lon = -122.0)
+            }
         )
+    )
 }

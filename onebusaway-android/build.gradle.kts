@@ -102,7 +102,8 @@ android {
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
 
     if (project.hasProperty("secure.properties") &&
-        File(project.property("secure.properties") as String).exists()) {
+        File(project.property("secure.properties") as String).exists()
+    ) {
 
         val props = Properties()
         props.load(FileInputStream(file(project.property("secure.properties") as String)))
@@ -411,18 +412,18 @@ dependencies {
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
-    implementation(libs.compose.ui)                     // 1.11.4 via BOM
-    implementation(libs.compose.ui.tooling.preview)     // @Preview support
-    debugImplementation(libs.compose.ui.tooling)        // preview renderer (debug only)
+    implementation(libs.compose.ui) // 1.11.4 via BOM
+    implementation(libs.compose.ui.tooling.preview) // @Preview support
+    debugImplementation(libs.compose.ui.tooling) // preview renderer (debug only)
     // Compose UI instrumented testing (createComposeRule): semantic tree assertions on real devices,
     // per the "never tap raw screen coordinates" testing policy.
     androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
-    implementation(libs.compose.material3)              // 1.4.0 via BOM
+    implementation(libs.compose.material3) // 1.4.0 via BOM
     // The handful of Material Icons the app uses are vendored as plain Compose ImageVectors in
     // org.onebusaway.android.ui.icons.AppIcons, so we no longer depend on the deprecated (and frozen
     // at 1.7.8) androidx.compose.material:material-icons-core artifact.
-    implementation(libs.androidx.activity.compose)      // matches activity-ktx 1.13.0
+    implementation(libs.androidx.activity.compose) // matches activity-ktx 1.13.0
     // ViewModel + StateFlow for Compose screens (lifecycle 2.10.0; minSdk 23)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

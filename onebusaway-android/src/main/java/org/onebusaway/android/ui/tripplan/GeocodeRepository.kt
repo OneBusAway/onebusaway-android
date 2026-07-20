@@ -53,22 +53,21 @@ interface GeocodeRepository {
  */
 class DefaultGeocodeRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val regionRepository: RegionRepository,
+    private val regionRepository: RegionRepository
 ) : GeocodeRepository {
 
-    override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> =
-        withContext(Dispatchers.IO) {
-            runCatchingCancellable {
-                if (query.isBlank()) return@runCatchingCancellable emptyList()
-                val region = regionRepository.region.value
-                val addresses = if (BuildFlavorUtils.isPeliasApiKeyDefined()) {
-                    peliasSuggestions(query, region)
-                } else {
-                    platformSuggestions(query, region)
-                }
-                addresses.withinRegion(region).map { it.toGeocoded() }
+    override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> = withContext(Dispatchers.IO) {
+        runCatchingCancellable {
+            if (query.isBlank()) return@runCatchingCancellable emptyList()
+            val region = regionRepository.region.value
+            val addresses = if (BuildFlavorUtils.isPeliasApiKeyDefined()) {
+                peliasSuggestions(query, region)
+            } else {
+                platformSuggestions(query, region)
             }
+            addresses.withinRegion(region).map { it.toGeocoded() }
         }
+    }
 
     /** Pelias autocomplete, biased to the region's bounding box. Throws IOException on failure. */
     private fun peliasSuggestions(query: String, region: Region?): List<CustomAddress> {
@@ -83,6 +82,7 @@ class DefaultGeocodeRepository @Inject constructor(
     /** On-device [Geocoder] fallback (no Pelias key), limited to the region's bounding box. */
     private fun platformSuggestions(query: String, region: Region?): List<CustomAddress> {
         val geocoder = Geocoder(context)
+
         // Sync getFromLocationName is deprecated in API 33, but its async GeocodeListener replacement
         // *requires* API 33 while minSdk is 23 — and minSdk reaching 33 isn't foreseeable — so the sync
         // call is retained deliberately (this key-free fallback path is already degraded/best-effort).
@@ -94,9 +94,11 @@ class DefaultGeocodeRepository @Inject constructor(
     }
 
     /** Drops results outside the region's server limits (empty region = no filtering). */
-    private fun List<CustomAddress>.withinRegion(region: Region?): List<CustomAddress> =
-        if (region == null) this
-        else filter { RegionUtils.isLocationWithinRegion(locationOf(it.latitude, it.longitude), region) }
+    private fun List<CustomAddress>.withinRegion(region: Region?): List<CustomAddress> = if (region == null) {
+        this
+    } else {
+        filter { RegionUtils.isLocationWithinRegion(locationOf(it.latitude, it.longitude), region) }
+    }
 
     private companion object {
         const val GEOCODER_MAX_RESULTS = 5

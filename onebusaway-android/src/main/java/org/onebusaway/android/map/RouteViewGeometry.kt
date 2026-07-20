@@ -8,10 +8,9 @@ package org.onebusaway.android.map
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
-import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
@@ -19,31 +18,32 @@ import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.getRouteDisplayName
 
 internal val ROUTE_VIEW_TRANSFORMS = setOf(
     RoutePolylineTransform.VIEWPORT_CLIP,
-    RoutePolylineTransform.ZOOM_SIMPLIFY,
+    RoutePolylineTransform.ZOOM_SIMPLIFY
 )
 
 /** The line presentation shared by single-route view and a selected route in focused-stop mode. */
 internal fun focusedRoutePolyline(
     color: Int?,
     points: List<GeoPoint>,
-    directional: Boolean,
+    directional: Boolean
 ) = RoutePolyline(
     color = color,
     points = points,
     widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
     directional = directional,
-    transforms = ROUTE_VIEW_TRANSFORMS,
+    transforms = ROUTE_VIEW_TRANSFORMS
 )
 
 /** The active route's broader geometry retained beneath an exact selected-trip line. */
 internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyline> = map { line ->
     line.copy(
         widthProfile = DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
-        directional = false,
+        directional = false
     )
 }
 
@@ -54,7 +54,7 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
  */
 internal fun FocusedTripGeometry.toRoutePolylines(
     emphasizedRoute: RouteDirectionKey? = null,
-    routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    routeColors: Map<RouteDirectionKey, Int> = emptyMap()
 ): List<RoutePolyline> = buildList {
     val orderedShapes = if (emphasizedRoute == null) {
         shapes
@@ -68,7 +68,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
             focusedRoutePolyline(
                 routeColors[shape.routeDirection] ?: shape.routeColor,
                 shape.points,
-                directional = true,
+                directional = true
             )
         } else {
             val widthProfile = if (emphasizedRoute == null) {
@@ -81,7 +81,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
                 shape.points,
                 widthProfile,
                 directional = emphasizedRoute == null,
-                transforms = ROUTE_VIEW_TRANSFORMS,
+                transforms = ROUTE_VIEW_TRANSFORMS
             )
         }
         add(polyline)
@@ -93,10 +93,11 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
     selectedRoute: RouteDirectionKey,
     routeColors: Map<RouteDirectionKey, Int>,
     selectedRouteUnderlay: List<RoutePolyline>,
-    selectedTrip: RoutePolyline,
-): List<RoutePolyline> =
-    FocusedTripGeometry(shapes.filterNot { it.routeDirection == selectedRoute })
-        .toRoutePolylines(selectedRoute, routeColors) + selectedRouteUnderlay + selectedTrip
+    selectedTrip: RoutePolyline
+): List<RoutePolyline> = FocusedTripGeometry(shapes.filterNot { it.routeDirection == selectedRoute })
+    .toRoutePolylines(selectedRoute, routeColors) +
+    selectedRouteUnderlay +
+    selectedTrip
 
 /**
  * One badge model per successfully drawn route-direction, preserving the focused-trip order that
@@ -105,7 +106,7 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
  */
 internal fun FocusedTripGeometry.toRouteBadges(
     routes: List<ObaRoute>,
-    routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    routeColors: Map<RouteDirectionKey, Int> = emptyMap()
 ): List<RouteBadge> {
     val metadata = routes.associateBy(ObaRoute::id)
     val specs = shapes.groupBy(FocusedTripShape::routeDirection).mapNotNull { (key, routeShapes) ->
@@ -117,7 +118,7 @@ internal fun FocusedTripGeometry.toRouteBadges(
         specs.map { spec ->
             RouteBadgeLayoutInput(
                 spec.key,
-                spec.shapes.map { shape -> RouteBadgePath(shape.points) },
+                spec.shapes.map { shape -> RouteBadgePath(shape.points) }
             )
         }
     ).associateBy { it.route }
@@ -133,7 +134,7 @@ internal fun FocusedTripGeometry.toRouteBadges(
                         ?: spec.route.color
                         ?: DEFAULT_ROUTE_LINE_COLOR,
                     point = placement.point,
-                    directionId = spec.key.directionId,
+                    directionId = spec.key.directionId
                 )
             )
         }
@@ -144,7 +145,7 @@ private data class RouteBadgeSpec(
     val key: RouteDirectionKey,
     val route: ObaRoute,
     val name: String,
-    val shapes: List<FocusedTripShape>,
+    val shapes: List<FocusedTripShape>
 )
 
 /** The selected-trip line's color and whether the generic same-direction underlay stays beneath it. */
@@ -162,16 +163,16 @@ internal fun selectedTripStyle(
     stopFocusActive: Boolean,
     selectedRouteDirection: RouteDirectionKey,
     routeColors: Map<RouteDirectionKey, Int>,
-    gtfsColor: Int,
+    gtfsColor: Int
 ): SelectedTripStyle = SelectedTripStyle(
     color = routeColors[selectedRouteDirection] ?: gtfsColor,
-    includeUnderlay = !stopFocusActive,
+    includeUnderlay = !stopFocusActive
 )
 
 /** Presented route-direction identities at each scheduled stop, optionally narrowed to [route]. */
 internal fun FocusedTripStops.routeDirectionsByStopId(
     trips: Set<FocusedTrip>,
-    route: RouteDirectionKey? = null,
+    route: RouteDirectionKey? = null
 ): Map<String, Set<RouteDirectionKey>> {
     val routesByTripId = trips.associate { it.tripId to it.routeDirection }
     val result = LinkedHashMap<String, MutableSet<RouteDirectionKey>>()

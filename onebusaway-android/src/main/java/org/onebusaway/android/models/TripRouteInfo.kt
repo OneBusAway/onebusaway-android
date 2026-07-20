@@ -31,5 +31,5 @@ data class TripRouteInfo(
     // missing-value convention) when the wire response carries no direction_id — direction_id is
     // optional per GTFS, and 0 is itself a valid direction, so collapsing "unknown" into it would send a
     // rider to a specific, wrong-but-plausible direction instead of the route's default.
-    val directionId: Int? = null,
+    val directionId: Int? = null
 )

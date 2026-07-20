@@ -23,11 +23,11 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Test
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.util.Polyline
-import org.junit.Test
 
 /**
  * The cold polling Flow mechanics — interval, exponential backoff, no-emit-on-failure, and
@@ -40,11 +40,11 @@ class TripObservationRepositoryTest {
 
     /** A fetcher whose trip-details call counts invocations and returns whatever [details] yields. */
     private class FakeFetcher(
-            private val details: () -> TripDetails? = { null },
-            /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
-            private val shapeFor: (String) -> Polyline? = { null },
-            /** Resolves a tripId to its route info; null (the default) means "not found". */
-            private val tripRouteInfoFor: (String) -> TripRouteInfo? = { null }
+        private val details: () -> TripDetails? = { null },
+        /** Resolves a shapeId to its polyline; null (the default) means "no shape". */
+        private val shapeFor: (String) -> Polyline? = { null },
+        /** Resolves a tripId to its route info; null (the default) means "not found". */
+        private val tripRouteInfoFor: (String) -> TripRouteInfo? = { null }
     ) : TripObservationFetcher {
         var tripDetailsCalls = 0
             private set
@@ -108,29 +108,28 @@ class TripObservationRepositoryTest {
     }
 
     @Test
-    fun `ensureShape fetches a shape once and shares the instance across trips on the same route`() =
-            runTest {
-                val shape = Polyline(emptyList())
-                val fetcher = FakeFetcher(shapeFor = { shape })
-                val repo = DefaultTripObservationRepository(fetcher)
+    fun `ensureShape fetches a shape once and shares the instance across trips on the same route`() = runTest {
+        val shape = Polyline(emptyList())
+        val fetcher = FakeFetcher(shapeFor = { shape })
+        val repo = DefaultTripObservationRepository(fetcher)
 
-                val first = repo.ensureShape("tripA", "shape1")
-                val second = repo.ensureShape("tripB", "shape1")
+        val first = repo.ensureShape("tripA", "shape1")
+        val second = repo.ensureShape("tripB", "shape1")
 
-                assertEquals("the shared shape is fetched only once", 1, fetcher.shapeCalls)
-                assertSame("both trips resolve to the same instance", shape, first)
-                assertSame("the second trip reuses the cached instance", shape, second)
-                assertSame(
-                        "the shared instance is recorded on the first trip",
-                        shape,
-                        repo.lookupTripState("tripA")?.polyline
-                )
-                assertSame(
-                        "the shared instance is recorded on the second trip",
-                        shape,
-                        repo.lookupTripState("tripB")?.polyline
-                )
-            }
+        assertEquals("the shared shape is fetched only once", 1, fetcher.shapeCalls)
+        assertSame("both trips resolve to the same instance", shape, first)
+        assertSame("the second trip reuses the cached instance", shape, second)
+        assertSame(
+            "the shared instance is recorded on the first trip",
+            shape,
+            repo.lookupTripState("tripA")?.polyline
+        )
+        assertSame(
+            "the shared instance is recorded on the second trip",
+            shape,
+            repo.lookupTripState("tripB")?.polyline
+        )
+    }
 
     @Test
     fun `ensureShape short-circuits once the trip carries its polyline`() = runTest {
@@ -214,8 +213,8 @@ class TripObservationRepositoryTest {
 
         val emissions = mutableListOf<Unit>()
         repo.tripDetailsStream("trip1", intervalMs = 1_000L)
-                .onEach { emissions.add(it) }
-                .launchIn(backgroundScope)
+            .onEach { emissions.add(it) }
+            .launchIn(backgroundScope)
 
         advanceTimeBy(50_000)
         assertEquals("a null fetch must not emit", 0, emissions.size)

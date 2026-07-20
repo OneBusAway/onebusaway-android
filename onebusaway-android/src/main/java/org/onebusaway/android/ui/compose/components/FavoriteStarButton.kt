@@ -42,7 +42,7 @@ fun FavoriteStarButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tint: Color = LocalContentColor.current,
-    iconSize: Dp = 24.dp,
+    iconSize: Dp = 24.dp
 ) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
@@ -50,11 +50,14 @@ fun FavoriteStarButton(
                 if (isFavorite) R.drawable.star else R.drawable.star_outline
             ),
             contentDescription = stringResource(
-                if (isFavorite) R.string.bus_options_menu_remove_star
-                else R.string.bus_options_menu_add_star
+                if (isFavorite) {
+                    R.string.bus_options_menu_remove_star
+                } else {
+                    R.string.bus_options_menu_add_star
+                }
             ),
             tint = tint,
-            modifier = Modifier.size(iconSize),
+            modifier = Modifier.size(iconSize)
         )
     }
 }

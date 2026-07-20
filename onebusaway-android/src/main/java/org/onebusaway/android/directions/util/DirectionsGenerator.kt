@@ -38,7 +38,7 @@ import org.onebusaway.android.time.ServerTime
  */
 class DirectionsGenerator(
     private val legs: List<TripLeg>,
-    private val applicationContext: Context,
+    private val applicationContext: Context
 ) {
 
     /**
@@ -107,22 +107,28 @@ class DirectionsGenerator(
         mainDirectionText += if (fromPlace.name == null) {
             ""
         } else {
-            " " + applicationContext.getString(R.string.step_by_step_non_transit_from) +
-                " " + getLocalizedStreetName(fromPlace.name, applicationContext.resources)
+            " " +
+                applicationContext.getString(R.string.step_by_step_non_transit_from) +
+                " " +
+                getLocalizedStreetName(fromPlace.name, applicationContext.resources)
         }
         mainDirectionText += if (toPlace.name == null) {
             ""
         } else {
-            " " + applicationContext.getString(R.string.step_by_step_non_transit_to) +
-                " " + getLocalizedStreetName(toPlace.name, applicationContext.resources)
+            " " +
+                applicationContext.getString(R.string.step_by_step_non_transit_to) +
+                " " +
+                getLocalizedStreetName(toPlace.name, applicationContext.resources)
         }
         val extraStopInformation = toPlace.stopCode
         val legDuration = leg.duration.inWholeSeconds
         if (!TextUtils.isEmpty(extraStopInformation)) {
             mainDirectionText += " ($extraStopInformation)"
         }
-        mainDirectionText += "\n[" + ConversionUtils
-            .getFormattedDistance(leg.distance, applicationContext) + " - " +
+        mainDirectionText += "\n[" +
+            ConversionUtils
+                .getFormattedDistance(leg.distance, applicationContext) +
+            " - " +
             ConversionUtils.getFormattedDurationTextNoSeconds(legDuration, false, applicationContext) +
             " ]"
         direction.directionText = mainDirectionText
@@ -149,8 +155,11 @@ class DirectionsGenerator(
 
             // Walk East
             if (relativeDir == null) {
-                subDirectionText += action + " " + applicationContext
-                    .getString(R.string.step_by_step_non_transit_heading) + " "
+                subDirectionText += action +
+                    " " +
+                    applicationContext
+                        .getString(R.string.step_by_step_non_transit_heading) +
+                    " "
                 subDirectionText += "$absoluteDirString "
             } else {
                 // (Turn left)/(Continue)
@@ -159,7 +168,8 @@ class DirectionsGenerator(
                 // Do not need TURN Continue
                 if (relativeDir == TripRelativeDirection.RIGHT || relativeDir == TripRelativeDirection.LEFT) {
                     subDirectionText += applicationContext
-                        .getString(R.string.step_by_step_non_transit_turn) + " "
+                        .getString(R.string.step_by_step_non_transit_turn) +
+                        " "
                 }
 
                 subDirectionText += "$relativeDirString "
@@ -170,14 +180,17 @@ class DirectionsGenerator(
                     if (step.exit != null) {
                         try {
                             val ordinal = getOrdinal(
-                                Integer.parseInt(step.exit), applicationContext.resources
+                                Integer.parseInt(step.exit),
+                                applicationContext.resources
                             )
                             if (ordinal != null) {
                                 subDirectionText += "$ordinal "
                             } else {
                                 subDirectionText += applicationContext
                                     .getString(R.string.step_by_step_non_transit_roundabout_number) +
-                                    " " + ordinal + " "
+                                    " " +
+                                    ordinal +
+                                    " "
                             }
                         } catch (e: NumberFormatException) {
                             // If is not a step_by_step_non_transit_roundabout_number and is not null
@@ -185,18 +198,23 @@ class DirectionsGenerator(
                             subDirectionText += step.exit + " "
                         }
                         subDirectionText += applicationContext
-                            .getString(R.string.step_by_step_non_transit_roundabout_exit) + " "
+                            .getString(R.string.step_by_step_non_transit_roundabout_exit) +
+                            " "
                         streetConnector = applicationContext
                             .getString(R.string.step_by_step_non_transit_connector_street_name_roundabout)
                     }
                 }
             }
 
-            subDirectionText += streetConnector + " " +
-                getLocalizedStreetName(streetName, applicationContext.resources) + " "
+            subDirectionText += streetConnector +
+                " " +
+                getLocalizedStreetName(streetName, applicationContext.resources) +
+                " "
 
-            subDirectionText += "\n[" + ConversionUtils
-                .getFormattedDistance(step.distance, applicationContext) + " ]"
+            subDirectionText += "\n[" +
+                ConversionUtils
+                    .getFormattedDistance(step.distance, applicationContext) +
+                " ]"
 
             dir.directionText = subDirectionText
 
@@ -298,8 +316,11 @@ class DirectionsGenerator(
             }
 
             if (!TextUtils.isEmpty(leg.headsign)) {
-                placeAndHeadsign += " " + applicationContext
-                    .getString(R.string.step_by_step_transit_connector_headsign) + " " + leg.headsign
+                placeAndHeadsign += " " +
+                    applicationContext
+                        .getString(R.string.step_by_step_transit_connector_headsign) +
+                    " " +
+                    leg.headsign
             }
         } else {
             action = applicationContext.getString(R.string.step_by_step_transit_get_off)
@@ -311,21 +332,27 @@ class DirectionsGenerator(
 
         direction.icon = modeIcon
         direction.placeAndHeadsign = applicationContext
-            .getString(R.string.step_by_step_transit_connector_stop_name) + " " + placeAndHeadsign
+            .getString(R.string.step_by_step_transit_connector_stop_name) +
+            " " +
+            placeAndHeadsign
         direction.service = "$action $mode $route"
         direction.agency = agencyName
         direction.extra = extra
 
         if (leg.realTime) {
             val newTimeString = ConversionUtils.getTimeUpdated(
-                applicationContext, oldTimeMillis.epochMs, newTimeMillis.epochMs
+                applicationContext,
+                oldTimeMillis.epochMs,
+                newTimeMillis.epochMs
             )
             direction.newTime = newTimeString
         }
 
         val oldTimeString = SpannableString(
             ConversionUtils.getTimeWithContext(
-                applicationContext, oldTimeMillis.epochMs, true
+                applicationContext,
+                oldTimeMillis.epochMs,
+                true
             )
         )
         direction.oldTime = oldTimeString
@@ -371,20 +398,18 @@ class DirectionsGenerator(
 
         private const val TAG = "DirectionsGenerator"
 
-        private fun getOrdinal(number: Int, resources: Resources): String? {
-            return when (number) {
-                1 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_first)
-                2 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_second)
-                3 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_third)
-                4 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_fourth)
-                5 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_fifth)
-                6 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_sixth)
-                7 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_seventh)
-                8 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_eighth)
-                9 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_ninth)
-                10 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_tenth)
-                else -> null
-            }
+        private fun getOrdinal(number: Int, resources: Resources): String? = when (number) {
+            1 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_first)
+            2 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_second)
+            3 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_third)
+            4 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_fourth)
+            5 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_fifth)
+            6 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_sixth)
+            7 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_seventh)
+            8 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_eighth)
+            9 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_ninth)
+            10 -> resources.getString(R.string.step_by_step_non_transit_roundabout_ordinal_tenth)
+            else -> null
         }
 
         // Dirty fix to avoid the presence of names for unnamed streets (as road, track, etc.) for
@@ -540,25 +565,23 @@ class DirectionsGenerator(
         }
 
         @JvmStatic
-        fun getRelativeDirectionIcon(relDir: TripRelativeDirection, resources: Resources): Int {
-            return when (relDir) {
-                TripRelativeDirection.CIRCLE_CLOCKWISE -> R.drawable.ic_rotary_clockwise
-                TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE -> R.drawable.ic_rotary_counterclockwise
-                TripRelativeDirection.CONTINUE -> R.drawable.ic_continue
-                TripRelativeDirection.DEPART -> R.drawable.ic_depart
-                TripRelativeDirection.ELEVATOR -> R.drawable.ic_elevator
-                TripRelativeDirection.HARD_LEFT -> R.drawable.ic_turn_sharp_left
-                TripRelativeDirection.HARD_RIGHT -> R.drawable.ic_turn_sharp_right
-                TripRelativeDirection.LEFT -> R.drawable.ic_turn_left
-                TripRelativeDirection.RIGHT -> R.drawable.ic_turn_right
-                TripRelativeDirection.SLIGHTLY_LEFT -> R.drawable.ic_turn_slight_left
-                TripRelativeDirection.SLIGHTLY_RIGHT -> R.drawable.ic_turn_slight_right
-                TripRelativeDirection.UTURN_LEFT -> R.drawable.ic_uturn_left
-                TripRelativeDirection.UTURN_RIGHT -> R.drawable.ic_uturn_right
-                // No else: the when is exhaustive over TripRelativeDirection, so a future OTP enum
-                // addition surfaces as a compile error here rather than a silent missing icon.
-                // (The caller's -1 initializer still covers the "icon not set" case.)
-            }
+        fun getRelativeDirectionIcon(relDir: TripRelativeDirection, resources: Resources): Int = when (relDir) {
+            TripRelativeDirection.CIRCLE_CLOCKWISE -> R.drawable.ic_rotary_clockwise
+            TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE -> R.drawable.ic_rotary_counterclockwise
+            TripRelativeDirection.CONTINUE -> R.drawable.ic_continue
+            TripRelativeDirection.DEPART -> R.drawable.ic_depart
+            TripRelativeDirection.ELEVATOR -> R.drawable.ic_elevator
+            TripRelativeDirection.HARD_LEFT -> R.drawable.ic_turn_sharp_left
+            TripRelativeDirection.HARD_RIGHT -> R.drawable.ic_turn_sharp_right
+            TripRelativeDirection.LEFT -> R.drawable.ic_turn_left
+            TripRelativeDirection.RIGHT -> R.drawable.ic_turn_right
+            TripRelativeDirection.SLIGHTLY_LEFT -> R.drawable.ic_turn_slight_left
+            TripRelativeDirection.SLIGHTLY_RIGHT -> R.drawable.ic_turn_slight_right
+            TripRelativeDirection.UTURN_LEFT -> R.drawable.ic_uturn_left
+            TripRelativeDirection.UTURN_RIGHT -> R.drawable.ic_uturn_right
+            // No else: the when is exhaustive over TripRelativeDirection, so a future OTP enum
+            // addition surfaces as a compile error here rather than a silent missing icon.
+            // (The caller's -1 initializer still covers the "icon not set" case.)
         }
     }
 }

@@ -15,18 +15,16 @@
  */
 package org.onebusaway.android.api
 
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import org.onebusaway.android.api.adapters.toRouteDetails
-
 import org.onebusaway.android.api.contract.AgencyReference
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.RouteReference
-
-import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
 
 /**
  * Pure-logic coverage for [toRouteDetails] and the kotlinx.serialization wire models: agency
@@ -34,7 +32,10 @@ import org.junit.Test
  */
 class RouteDetailsMapperTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun resolvesAgencyReferenceById() {
@@ -45,14 +46,14 @@ class RouteDetailsMapperTest {
                 longName = "Capitol Hill",
                 description = "via Denny",
                 url = "https://example.org/route/8",
-                agencyId = "1",
+                agencyId = "1"
             ),
             references = References(
                 agencies = listOf(
                     AgencyReference(id = "2", name = "Other"),
-                    AgencyReference(id = "1", name = "Metro", url = "https://metro.example"),
-                ),
-            ),
+                    AgencyReference(id = "1", name = "Metro", url = "https://metro.example")
+                )
+            )
         )
 
         val details = data.toRouteDetails()
@@ -71,7 +72,7 @@ class RouteDetailsMapperTest {
     fun agencyIsNullWhenReferenceMissing() {
         val data = EntryWithReferences(
             entry = RouteReference(id = "1_100", agencyId = "missing"),
-            references = References(agencies = listOf(AgencyReference(id = "1", name = "Metro"))),
+            references = References(agencies = listOf(AgencyReference(id = "1", name = "Metro")))
         )
 
         assertNull(data.toRouteDetails().agency)

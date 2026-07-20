@@ -40,8 +40,7 @@ interface PreferencesEntryPoint {
     companion object {
         /** Resolves the [PreferencesRepository] from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): PreferencesRepository =
-            EntryPointAccessors.fromApplication(context, PreferencesEntryPoint::class.java)
-                .preferencesRepository()
+        fun get(context: Context): PreferencesRepository = EntryPointAccessors.fromApplication(context, PreferencesEntryPoint::class.java)
+            .preferencesRepository()
     }
 }

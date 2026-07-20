@@ -18,8 +18,8 @@ package org.onebusaway.android.ui.tutorial
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Unit tests for [nearestProjected] — the map-stop spotlight's pure target picker. The fake projection

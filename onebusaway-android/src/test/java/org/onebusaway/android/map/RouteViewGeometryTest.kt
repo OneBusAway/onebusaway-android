@@ -7,7 +7,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
@@ -15,6 +14,7 @@ import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 class RouteViewGeometryTest {
 
@@ -23,7 +23,7 @@ class RouteViewGeometryTest {
         val line = focusedRoutePolyline(
             color = 1,
             points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
-            directional = true,
+            directional = true
         )
 
         assertSame(FOCUSED_ROUTE_LINE_WIDTH_PROFILE, line.widthProfile)
@@ -34,8 +34,10 @@ class RouteViewGeometryTest {
         val geometry = FocusedTripGeometry(
             listOf(
                 FocusedTripShape(
-                    "shape", "route", 0xFF123456.toInt(),
-                    listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0)),
+                    "shape",
+                    "route",
+                    0xFF123456.toInt(),
+                    listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0))
                 )
             )
         )
@@ -45,13 +47,13 @@ class RouteViewGeometryTest {
         assertEquals(listOf(ROUTE_LINE_WIDTH_PROFILE), lines.map { it.widthProfile })
         assertEquals(
             listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0)),
-            lines.single().points,
+            lines.single().points
         )
         assertTrue(lines.all { it.directional })
         lines.forEach {
             assertEquals(
                 setOf(RoutePolylineTransform.VIEWPORT_CLIP, RoutePolylineTransform.ZOOM_SIMPLIFY),
-                it.transforms,
+                it.transforms
             )
         }
     }
@@ -67,7 +69,7 @@ class RouteViewGeometryTest {
         val geometry = FocusedTripGeometry(
             listOf(
                 FocusedTripShape("selected-shape", "selected", 1, points, directionId = 0),
-                FocusedTripShape("other-shape", "other", 2, points, directionId = 1),
+                FocusedTripShape("other-shape", "other", 2, points, directionId = 1)
             )
         )
 
@@ -75,17 +77,17 @@ class RouteViewGeometryTest {
             emphasizedRoute = RouteDirectionKey("selected", 0),
             routeColors = mapOf(
                 RouteDirectionKey("selected", 0) to 10,
-                RouteDirectionKey("other", 1) to 20,
-            ),
+                RouteDirectionKey("other", 1) to 20
+            )
         )
 
         assertEquals(listOf(20, 10), lines.map { it.color })
         assertEquals(
             listOf(
                 DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
-                FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+                FOCUSED_ROUTE_LINE_WIDTH_PROFILE
             ),
-            lines.map { it.widthProfile },
+            lines.map { it.widthProfile }
         )
         assertEquals(listOf(false, true), lines.map { it.directional })
     }
@@ -100,14 +102,14 @@ class RouteViewGeometryTest {
             listOf(
                 FocusedTripShape("sibling", "other", 1, sibling, directionId = 1),
                 FocusedTripShape("variant-a", "selected", 2, firstDirectionVariant, directionId = 0),
-                FocusedTripShape("variant-b", "selected", 2, secondDirectionVariant, directionId = 0),
+                FocusedTripShape("variant-b", "selected", 2, secondDirectionVariant, directionId = 0)
             )
         )
         val selectedTrip = RoutePolyline(
             color = 2,
             points = exactTrip,
             widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
-            directional = true,
+            directional = true
         )
         val underlay = listOf(
             RoutePolyline(2, secondDirectionVariant, widthProfile = ROUTE_LINE_WIDTH_PROFILE, directional = true)
@@ -117,7 +119,7 @@ class RouteViewGeometryTest {
             selectedRoute = RouteDirectionKey("selected", 0),
             routeColors = emptyMap(),
             selectedRouteUnderlay = underlay,
-            selectedTrip = selectedTrip,
+            selectedTrip = selectedTrip
         )
 
         assertEquals(listOf(sibling, secondDirectionVariant, exactTrip), lines.map { it.points })
@@ -125,9 +127,9 @@ class RouteViewGeometryTest {
             listOf(
                 DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
                 DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
-                FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+                FOCUSED_ROUTE_LINE_WIDTH_PROFILE
             ),
-            lines.map { it.widthProfile },
+            lines.map { it.widthProfile }
         )
         assertEquals(listOf(false, false, true), lines.map { it.directional })
         assertSame(selectedTrip, lines.last())
@@ -142,26 +144,26 @@ class RouteViewGeometryTest {
         // adjacency map to begin with.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), gtfsColor = 99),
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), gtfsColor = 99)
         )
         // Stop focus, no adjacency entry for this exact direction (e.g. an opposite-direction vehicle
         // whose direction isn't among the focused stop's own trips, #1902): underlay still drops, but
         // the color falls back to GTFS since there's no adjacency color to carry instead.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), gtfsColor = 99),
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), gtfsColor = 99)
         )
         // Whole-route mode with a stray adjacency entry (shouldn't occur in practice, since routeColors
         // is only ever populated during stop focus) still keeps the underlay — it is not proxied off
         // the color lookup.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, gtfsColor = 99),
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, gtfsColor = 99)
         )
         // Stop focus with a matching adjacency entry: the ordinary case — adjacency color, no underlay.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, gtfsColor = 99),
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, gtfsColor = 99)
         )
     }
 
@@ -169,26 +171,26 @@ class RouteViewGeometryTest {
     fun `scheduled stops carry every presented route that serves them`() {
         val trips = setOf(
             FocusedTrip("trip-45", "45", null, null, directionId = 0),
-            FocusedTrip("trip-79", "79", null, null, directionId = 1),
+            FocusedTrip("trip-79", "79", null, null, directionId = 1)
         )
         val stops = FocusedTripStops(
             stopIdsByTripId = mapOf(
                 "trip-45" to listOf("u-district"),
-                "trip-79" to listOf("u-district", "20th-and-50th"),
+                "trip-79" to listOf("u-district", "20th-and-50th")
             ),
-            stopsById = emptyMap(),
+            stopsById = emptyMap()
         )
 
         assertEquals(
             mapOf(
                 "u-district" to setOf(RouteDirectionKey("45", 0), RouteDirectionKey("79", 1)),
-                "20th-and-50th" to setOf(RouteDirectionKey("79", 1)),
+                "20th-and-50th" to setOf(RouteDirectionKey("79", 1))
             ),
-            stops.routeDirectionsByStopId(trips),
+            stops.routeDirectionsByStopId(trips)
         )
         assertEquals(
             mapOf("u-district" to setOf(RouteDirectionKey("45", 0))),
-            stops.routeDirectionsByStopId(trips, route = RouteDirectionKey("45", 0)),
+            stops.routeDirectionsByStopId(trips, route = RouteDirectionKey("45", 0))
         )
     }
 
@@ -200,24 +202,32 @@ class RouteViewGeometryTest {
             listOf(
                 FocusedTripShape("b-shape", "route-b", null, firstPath, directionId = 1),
                 FocusedTripShape(
-                    "a-shape-1", "route-a", 0xFF123456.toInt(), firstPath, directionId = 0,
+                    "a-shape-1",
+                    "route-a",
+                    0xFF123456.toInt(),
+                    firstPath,
+                    directionId = 0
                 ),
                 FocusedTripShape(
-                    "a-shape-2", "route-a", 0xFF123456.toInt(), secondPath, directionId = 1,
-                ),
+                    "a-shape-2",
+                    "route-a",
+                    0xFF123456.toInt(),
+                    secondPath,
+                    directionId = 1
+                )
             )
         )
 
         val badges = geometry.toRouteBadges(
             routes = listOf(
                 route("route-a", "A", 0xFF654321.toInt()),
-                route("route-b", "B", 0xFFABCDEF.toInt()),
+                route("route-b", "B", 0xFFABCDEF.toInt())
             ),
             routeColors = mapOf(
                 RouteDirectionKey("route-a", 0) to 10,
                 RouteDirectionKey("route-a", 1) to 30,
-                RouteDirectionKey("route-b", 1) to 20,
-            ),
+                RouteDirectionKey("route-b", 1) to 20
+            )
         )
 
         assertEquals(listOf("route-b", "route-a", "route-a"), badges.map { it.routeId })
@@ -235,7 +245,7 @@ class RouteViewGeometryTest {
             listOf(
                 FocusedTripShape("known", "known-route", 1, points),
                 FocusedTripShape("missing-metadata", "missing-route", 2, points),
-                FocusedTripShape("degenerate", "degenerate-route", 3, listOf(points.first())),
+                FocusedTripShape("degenerate", "degenerate-route", 3, listOf(points.first()))
             )
         )
 

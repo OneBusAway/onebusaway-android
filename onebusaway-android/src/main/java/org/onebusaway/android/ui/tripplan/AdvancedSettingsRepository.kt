@@ -38,16 +38,20 @@ class DefaultAdvancedSettingsRepository @Inject constructor(
 
     override fun load(): AdvancedSettings {
         val modeId = PreferenceUtils.getInt(
-            context.getString(R.string.preference_key_trip_plan_travel_by), 0
+            context.getString(R.string.preference_key_trip_plan_travel_by),
+            0
         )
         val maxWalk = PreferenceUtils.getDouble(
-            context.getString(R.string.preference_key_trip_plan_maximum_walking_distance), 0.0
+            context.getString(R.string.preference_key_trip_plan_maximum_walking_distance),
+            0.0
         )
         val optimize = PreferenceUtils.getBoolean(
-            context.getString(R.string.preference_key_trip_plan_minimize_transfers), false
+            context.getString(R.string.preference_key_trip_plan_minimize_transfers),
+            false
         )
         val wheelchair = PreferenceUtils.getBoolean(
-            context.getString(R.string.preference_key_trip_plan_avoid_stairs), false
+            context.getString(R.string.preference_key_trip_plan_avoid_stairs),
+            false
         )
         return AdvancedSettings(
             modeId = modeId,

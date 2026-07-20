@@ -35,7 +35,7 @@ class RoutePolylineReconciler<NativeLine>(
     private val widthOf: (RoutePolyline, Float) -> Float,
     private val createLine: (RoutePolyline, Float) -> NativeLine,
     private val removeLines: (List<NativeLine>) -> Unit,
-    private val setWidth: (NativeLine, Float) -> Unit,
+    private val setWidth: (NativeLine, Float) -> Unit
 ) {
     // The native lines currently drawn, positionally aligned with [renderedPolylines]/[renderedWidths].
     private val lines = mutableListOf<NativeLine>()

@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.report.problem
 
-
 /** Whether the form reports a problem about a stop or about a trip/vehicle. */
 enum class ProblemKind { STOP, TRIP }
 
@@ -76,7 +75,7 @@ object ProblemCodes {
         "stop_number_wrong",
         "stop_location_wrong",
         "route_or_trip_missing",
-        "other",
+        "other"
     )
 
     private val TRIP_CODES = listOf(
@@ -86,9 +85,8 @@ object ProblemCodes {
         "vehicle_came_late",
         "wrong_headsign",
         "vehicle_does_not_stop_here",
-        "other",
+        "other"
     )
 
-    private fun zip(labels: List<String>, codes: List<String?>): List<ProblemCode> =
-        labels.mapIndexed { index, label -> ProblemCode(codes.getOrNull(index), label) }
+    private fun zip(labels: List<String>, codes: List<String?>): List<ProblemCode> = labels.mapIndexed { index, label -> ProblemCode(codes.getOrNull(index), label) }
 }

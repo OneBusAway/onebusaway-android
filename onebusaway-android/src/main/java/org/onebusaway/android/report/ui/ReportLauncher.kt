@@ -18,6 +18,7 @@ package org.onebusaway.android.report.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,24 +31,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
-import androidx.appcompat.app.AppCompatActivity
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
+import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.constants.ReportConstants
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.types.ReportAction
 import org.onebusaway.android.ui.report.types.ReportTypeListRoute
-import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
@@ -100,7 +100,7 @@ object ReportLauncher {
             stopCode = stopCode,
             lat = lat,
             lon = lon,
-            locationString = locationString,
+            locationString = locationString
         )
         return HomeActivity.navIntent(context, NavRoutes.report(reportContext.encode()))
     }
@@ -149,7 +149,7 @@ fun ReportDestination(navController: NavController, reportContext: ReportContext
                     )
                     navController.popBackStack()
                 }) { Text(stringResource(R.string.rt_no)) }
-            },
+            }
         )
     }
 
@@ -178,31 +178,36 @@ private fun onReportActionSelected(
             navController.navigate(NavRoutes.customerService(encodedContext))
             reportEvent(
                 activity,
-                PlausibleAnalytics.REPORT_MORE_EVENT_URL, R.string.analytics_label_customer_service
+                PlausibleAnalytics.REPORT_MORE_EVENT_URL,
+                R.string.analytics_label_customer_service
             )
         }
 
         ReportAction.STOP_PROBLEM -> {
             navController.navigate(
                 NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_stop), encodedContext
+                    activity.getString(R.string.ri_selected_service_stop),
+                    encodedContext
                 )
             )
             reportEvent(
                 activity,
-                PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL, R.string.analytics_label_stop_problem
+                PlausibleAnalytics.REPORT_STOP_PROBLEM_EVENT_URL,
+                R.string.analytics_label_stop_problem
             )
         }
 
         ReportAction.ARRIVAL_PROBLEM -> {
             navController.navigate(
                 NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_trip), encodedContext
+                    activity.getString(R.string.ri_selected_service_trip),
+                    encodedContext
                 )
             )
             reportEvent(
                 activity,
-                PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL, R.string.analytics_label_trip_problem
+                PlausibleAnalytics.REPORT_VEHICLE_PROBLEM_EVENT_URL,
+                R.string.analytics_label_trip_problem
             )
         }
 
@@ -217,7 +222,8 @@ private fun sendAppFeedback(
     ExternalIntents.sendEmail(activity, activity.getString(R.string.ri_app_feedback_email), locationString)
     reportEvent(
         activity,
-        PlausibleAnalytics.REPORT_MORE_EVENT_URL, R.string.analytics_label_app_feedback
+        PlausibleAnalytics.REPORT_MORE_EVENT_URL,
+        R.string.analytics_label_app_feedback
     )
     if (locationString == null) {
         reportEvent(

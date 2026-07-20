@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui.nightlight
 
-import org.onebusaway.android.ui.HomeActivity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -54,6 +53,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity

@@ -15,14 +15,12 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.requireData
-
+import android.util.Log
+import javax.inject.Inject
 import org.onebusaway.android.api.contract.AgencyCoverage
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.net.ObaApiProvider
-
-import android.util.Log
-import javax.inject.Inject
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.AgencyContact
 
 /**
@@ -54,14 +52,13 @@ class DefaultAgenciesDataSource @Inject constructor(
  * agency from the references by id (skipping any unresolved entry) and normalizing blank fields to
  * null. Pure, so it is exercised directly in JVM unit tests.
  */
-internal fun ListWithReferences<AgencyCoverage>.toAgencyContacts(): List<AgencyContact> =
-    list.mapNotNull { coverage ->
-        val agency = references.agency(coverage.agencyId) ?: return@mapNotNull null
-        AgencyContact(
-            id = agency.id,
-            name = agency.name,
-            email = agency.email?.takeIf { it.isNotEmpty() },
-            url = agency.url?.takeIf { it.isNotEmpty() },
-            phone = agency.phone?.takeIf { it.isNotEmpty() },
-        )
-    }
+internal fun ListWithReferences<AgencyCoverage>.toAgencyContacts(): List<AgencyContact> = list.mapNotNull { coverage ->
+    val agency = references.agency(coverage.agencyId) ?: return@mapNotNull null
+    AgencyContact(
+        id = agency.id,
+        name = agency.name,
+        email = agency.email?.takeIf { it.isNotEmpty() },
+        url = agency.url?.takeIf { it.isNotEmpty() },
+        phone = agency.phone?.takeIf { it.isNotEmpty() }
+    )
+}

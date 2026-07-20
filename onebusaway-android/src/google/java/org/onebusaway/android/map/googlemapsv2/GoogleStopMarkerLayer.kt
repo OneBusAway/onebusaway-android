@@ -29,7 +29,7 @@ import org.onebusaway.android.map.render.stopZIndex
 /** Owns non-route stop marker identity, icon reconciliation, tap lookup, and disposal. */
 internal class GoogleStopMarkerLayer(
     private val map: GoogleMap,
-    private val context: Context,
+    private val context: Context
 ) {
     private val markerByStopId = HashMap<String, Marker>()
     private val stopByMarker = HashMap<Marker, StopMarker>()
@@ -53,7 +53,7 @@ internal class GoogleStopMarkerLayer(
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
                 band = band,
-                favorite = stop.favorite,
+                favorite = stop.favorite
             )
             val existing = markerByStopId[stop.id]
             if (existing == null) {

@@ -15,19 +15,18 @@
  */
 package org.onebusaway.android.ui.search
 
-import org.onebusaway.android.api.data.LocationSearchDataSource
-
 import android.content.Context
 import android.util.Log
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.app.di.DatabaseEntryPoint
-import org.onebusaway.android.location.SearchCenter
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.database.oba.StopUserInfo
 import org.onebusaway.android.database.oba.stopDisplayName
 import org.onebusaway.android.database.oba.toStopUserInfoMap
+import org.onebusaway.android.location.SearchCenter
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
@@ -67,22 +66,21 @@ interface StopSearchRepository {
 class DefaultStopSearchRepository(
     private val searchCenter: SearchCenter,
     private val context: Context,
-    private val search: LocationSearchDataSource,
+    private val search: LocationSearchDataSource
 ) : StopSearchRepository {
 
-    override suspend fun search(query: String): Result<List<StopSearchResult>> =
-        withContext(Dispatchers.IO) {
-            runCatchingCancellable {
-                val center = searchCenter.current()
-                    ?: throw IOException("No search location available")
-                val stops = search.stopsNearOrEmpty(center.latitude, center.longitude, query, null)
-                    .getOrThrow()
-                val db = DatabaseEntryPoint.get(context)
-                db.importGate().awaitReady()
-                val userInfo = db.stopDao().userInfoMap().toStopUserInfoMap()
-                stops.map { it.toStopSearchResult(userInfo[it.id]) }
-            }.onFailure { Log.e(TAG, "stop search failed", it) }
-        }
+    override suspend fun search(query: String): Result<List<StopSearchResult>> = withContext(Dispatchers.IO) {
+        runCatchingCancellable {
+            val center = searchCenter.current()
+                ?: throw IOException("No search location available")
+            val stops = search.stopsNearOrEmpty(center.latitude, center.longitude, query, null)
+                .getOrThrow()
+            val db = DatabaseEntryPoint.get(context)
+            db.importGate().awaitReady()
+            val userInfo = db.stopDao().userInfoMap().toStopUserInfoMap()
+            stops.map { it.toStopSearchResult(userInfo[it.id]) }
+        }.onFailure { Log.e(TAG, "stop search failed", it) }
+    }
 
     private companion object {
         const val TAG = "StopSearchRepository"

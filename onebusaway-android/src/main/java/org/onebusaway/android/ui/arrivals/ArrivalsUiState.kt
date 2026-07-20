@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.arrivals
 
 import org.onebusaway.android.time.ServerTime
 
-
 /** The stop being viewed, for the arrivals screen header. */
 data class StopHeader(
     val stopId: String,

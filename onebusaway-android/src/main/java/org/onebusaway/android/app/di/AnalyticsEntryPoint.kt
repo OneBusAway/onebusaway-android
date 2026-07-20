@@ -41,8 +41,7 @@ interface AnalyticsEntryPoint {
     companion object {
         /** Resolves the [ObaAnalytics] orchestrator from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): ObaAnalytics =
-            EntryPointAccessors.fromApplication(context, AnalyticsEntryPoint::class.java)
-                .obaAnalytics()
+        fun get(context: Context): ObaAnalytics = EntryPointAccessors.fromApplication(context, AnalyticsEntryPoint::class.java)
+            .obaAnalytics()
     }
 }

@@ -47,7 +47,9 @@ import org.jetbrains.uast.getParentOfType
  * is deliberately out of scope — the enclosing named function isn't `suspend`, so lint can't see the
  * boundary without heuristics; guard those by hand.
  */
-class SwallowedCancellationDetector : Detector(), SourceCodeScanner {
+class SwallowedCancellationDetector :
+    Detector(),
+    SourceCodeScanner {
 
     override fun getApplicableMethodNames(): List<String> = listOf("runCatching")
 
@@ -67,7 +69,7 @@ class SwallowedCancellationDetector : Detector(), SourceCodeScanner {
             "`runCatching` in a `suspend` function also catches `CancellationException`, converting a " +
                 "cancelled coroutine into a `Result.failure` (the cancellation stops propagating and the " +
                 "work keeps running). Use `runCatchingCancellable` " +
-                "(org.onebusaway.android.util), which rethrows cancellation and is otherwise identical.",
+                "(org.onebusaway.android.util), which rethrows cancellation and is otherwise identical."
         )
     }
 
@@ -76,9 +78,8 @@ class SwallowedCancellationDetector : Detector(), SourceCodeScanner {
      * trailing `kotlin.coroutines.Continuation` parameter on its light (`javaPsi`) method, which is how
      * lint sees suspension without depending on Kotlin compiler PSI.
      */
-    private fun UMethod.isSuspendFunction(): Boolean =
-        javaPsi.parameterList.parameters.lastOrNull()
-            ?.type?.canonicalText?.startsWith(CONTINUATION_FQN) == true
+    private fun UMethod.isSuspendFunction(): Boolean = javaPsi.parameterList.parameters.lastOrNull()
+        ?.type?.canonicalText?.startsWith(CONTINUATION_FQN) == true
 
     companion object {
         private const val KOTLIN_RESULT_KT = "kotlin.ResultKt"
@@ -112,8 +113,8 @@ class SwallowedCancellationDetector : Detector(), SourceCodeScanner {
             severity = Severity.WARNING,
             implementation = Implementation(
                 SwallowedCancellationDetector::class.java,
-                Scope.JAVA_FILE_SCOPE,
-            ),
+                Scope.JAVA_FILE_SCOPE
+            )
         )
     }
 }

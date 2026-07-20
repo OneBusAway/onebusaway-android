@@ -29,8 +29,7 @@ import org.junit.Test
  */
 class TutorialStateTest {
 
-    private fun step(id: String, continuesAfter: Boolean = false) =
-        TutorialStep(id = id, title = 0, body = 0, continuesAfter = continuesAfter)
+    private fun step(id: String, continuesAfter: Boolean = false) = TutorialStep(id = id, title = 0, body = 0, continuesAfter = continuesAfter)
 
     @Test
     fun `start with an empty list is a no-op`() {

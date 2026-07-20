@@ -15,59 +15,54 @@
  */
 package org.onebusaway.android.util.test;
 
+import android.test.AndroidTestCase;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.onebusaway.android.report.ui.util.ServiceUtils;
 
-import android.test.AndroidTestCase;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-/**
- * Tests to evaluate issue reporting utilities
- */
+/** Tests to evaluate issue reporting utilities */
 @RunWith(AndroidJUnit4.class)
 public class ReportUtilTest extends AndroidTestCase {
 
-    /**
-     * Test our heuristic text matching that's used to identify pure transit Open311 deployments
-     * that do not support the Open311 group or keyword elements for explicit matching.
-     */
-    @Test
-    public void testServiceKeywordMatching() {
-        String[] stopServiceNamesMatch = {
-                "Incorrect/Missing Stop ID",
-                "Trash at Bus Stop",
-                "WiFi on bus isn't working",
-                "Positive comments (complement bus driver, etc.)",
-                "Route/trip is missing"};
+  /**
+   * Test our heuristic text matching that's used to identify pure transit Open311 deployments that
+   * do not support the Open311 group or keyword elements for explicit matching.
+   */
+  @Test
+  public void testServiceKeywordMatching() {
+    String[] stopServiceNamesMatch = {
+      "Incorrect/Missing Stop ID",
+      "Trash at Bus Stop",
+      "WiFi on bus isn't working",
+      "Positive comments (complement bus driver, etc.)",
+      "Route/trip is missing"
+    };
 
-        String[] tripServiceNamesMatch = {"Arrival times/schedules",
-                "PSTA - Arrival times/schedules"};
+    String[] tripServiceNamesMatch = {"Arrival times/schedules", "PSTA - Arrival times/schedules"};
 
-        // Match sure all stop-related service names match
-        for (String serviceName : stopServiceNamesMatch) {
-            assertTrue(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
-        }
-
-        // Match sure all trip/arrival time-related service names match
-        for (String serviceName : tripServiceNamesMatch) {
-            assertTrue(ServiceUtils.isTransitTripServiceByText(getContext(), serviceName));
-        }
-
-        String[] serviceNamesNoMatch = {
-                "Business",
-                "Monkey Business",
-                "Somethingbus With More Words After It"};
-
-        // Match sure we don't get false positives for stop matching
-        for (String serviceName : serviceNamesNoMatch) {
-            assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
-        }
-
-        // Match sure we don't get false positives for trip matching
-        for (String serviceName : serviceNamesNoMatch) {
-            assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
-        }
+    // Match sure all stop-related service names match
+    for (String serviceName : stopServiceNamesMatch) {
+      assertTrue(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
     }
+
+    // Match sure all trip/arrival time-related service names match
+    for (String serviceName : tripServiceNamesMatch) {
+      assertTrue(ServiceUtils.isTransitTripServiceByText(getContext(), serviceName));
+    }
+
+    String[] serviceNamesNoMatch = {
+      "Business", "Monkey Business", "Somethingbus With More Words After It"
+    };
+
+    // Match sure we don't get false positives for stop matching
+    for (String serviceName : serviceNamesNoMatch) {
+      assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
+    }
+
+    // Match sure we don't get false positives for trip matching
+    for (String serviceName : serviceNamesNoMatch) {
+      assertFalse(ServiceUtils.isTransitStopServiceByText(getContext(), serviceName));
+    }
+  }
 }

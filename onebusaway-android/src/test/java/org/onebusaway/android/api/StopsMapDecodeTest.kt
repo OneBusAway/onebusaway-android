@@ -15,18 +15,17 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ListWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.StopReference
-import org.onebusaway.android.api.contract.StopsForRoute
-
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.StopReference
+import org.onebusaway.android.api.contract.StopsForRoute
 
 /**
  * Ports the wire coverage of the retired instrumented StopsForLocationTest / StopsForRouteRequestTest
@@ -37,7 +36,10 @@ import java.io.File
  */
 class StopsMapDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun stopsForLocationDecodesWithReferences() {

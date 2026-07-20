@@ -40,7 +40,7 @@ import retrofit2.converter.kotlinx.serialization.asConverterFactory
 class ObaApiProvider @Inject constructor(
     private val resolver: ObaEndpointResolver,
     private val client: OkHttpClient,
-    private val json: Json,
+    private val json: Json
 ) {
     private var cachedBase: Uri? = null
     private var cachedService: ObaWebService? = null
@@ -87,8 +87,7 @@ class ObaApiProvider @Inject constructor(
         return cachedService
     }
 
-    private fun noEndpoint() =
-        IOException("No OBA API endpoint: no current region and no custom API URL set")
+    private fun noEndpoint() = IOException("No OBA API endpoint: no current region and no custom API URL set")
 
     private fun build(base: Uri): ObaWebService {
         // Retrofit requires the base URL to end in '/' so the endpoints' relative paths resolve onto it.

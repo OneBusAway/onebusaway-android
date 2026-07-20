@@ -75,7 +75,7 @@ internal fun SlideBox(
     minReachablePx: () -> Int? = { null },
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     verticalAlignment: Alignment.Vertical = Alignment.Top,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     // Bridges a recomposition-varying lambda into the long-lived effect below, which would
     // otherwise close over the stale first-composition snapshot.
@@ -130,7 +130,7 @@ internal fun SlideBox(
             .widthIn(min = minContentWidth),
         horizontalArrangement = horizontalArrangement,
         verticalAlignment = verticalAlignment,
-        content = content,
+        content = content
     )
 }
 

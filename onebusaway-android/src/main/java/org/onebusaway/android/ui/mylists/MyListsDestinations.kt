@@ -55,8 +55,10 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
     // are scoped to the back-stack entry. The legacy CREATE_SHORTCUT picker mode is dropped.
     val tabArg = listOf(
         navArgument(NavRoutes.ARG_TAB) {
-            type = NavType.StringType; nullable = true; defaultValue = null
-        },
+            type = NavType.StringType
+            nullable = true
+            defaultValue = null
+        }
     )
     composable(NavRoutes.MY_STOPS, arguments = tabArg) { entry ->
         ObaTheme {
@@ -65,7 +67,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
                 onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
+                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
             )
         }
     }
@@ -76,7 +78,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 prefsRepository = PreferencesEntryPoint.get(LocalContext.current),
                 onBack = { navController.popBackStack() },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenRoute = { navController.navigateFromHome(NavRoutes.routeInfo(it)) },
+                onOpenRoute = { navController.navigateFromHome(NavRoutes.routeInfo(it)) }
             )
         }
     }
@@ -88,7 +90,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() },
                 onShowStopOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
                 onShowRouteOnMap = { navController.revealRouteOnMap(it) },
-                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) },
+                onOpenStop = { id, name -> navController.navigateFromHome(NavRoutes.arrivals(id, name)) }
             )
         }
     }
@@ -134,7 +136,7 @@ fun NavGraphBuilder.myListsGraph(navController: NavHostController) {
                                 it,
                                 onEdit = onEditReminder,
                                 onShowRoute = { navController.navigate(NavRoutes.routeInfo(it)) },
-                                onShowStop = { navController.navigate(NavRoutes.arrivals(it)) },
+                                onShowStop = { navController.navigate(NavRoutes.arrivals(it)) }
                             )
                         }
                     )

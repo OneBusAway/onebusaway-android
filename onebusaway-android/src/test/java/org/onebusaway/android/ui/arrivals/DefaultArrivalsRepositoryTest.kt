@@ -122,7 +122,7 @@ class DefaultArrivalsRepositoryTest {
             latitude: Double,
             longitude: Double,
             regionId: Long?,
-            now: Long,
+            now: Long
         ) {
             markStopUsedCalls.add(id)
         }
@@ -134,8 +134,7 @@ class DefaultArrivalsRepositoryTest {
         override suspend fun getStop(stopId: String): StopRecord? = null
         override suspend fun upsert(stop: StopRecord) {}
         override fun recents(cutoff: Long, regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
-        override fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>> =
-            flowOf(emptyList())
+        override fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>> = flowOf(emptyList())
         override fun starredByName(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
         override fun starredByFrequency(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
         override fun favoriteStopIds(): Flow<List<String>> = flowOf(emptyList())
@@ -160,7 +159,7 @@ class DefaultArrivalsRepositoryTest {
             shortName: String?,
             longName: String?,
             url: String?,
-            favorite: Boolean,
+            favorite: Boolean
         ) {}
     }
 
@@ -179,10 +178,9 @@ class DefaultArrivalsRepositoryTest {
         override fun convert(
             arrivals: List<ArrivalData>,
             now: ServerTime,
-            includeArrivalDepartureInStatusLabel: Boolean,
-        ): List<ArrivalInfo> =
-            arrivals.map { ArrivalInfo(null, it, now, includeArrivalDepartureInStatusLabel) }
-                .filter { it.eta >= 0 }
+            includeArrivalDepartureInStatusLabel: Boolean
+        ): List<ArrivalInfo> = arrivals.map { ArrivalInfo(null, it, now, includeArrivalDepartureInStatusLabel) }
+            .filter { it.eta >= 0 }
 
         override fun stopErrorMessage(code: Int): String = "stop-error-$code"
     }
@@ -199,7 +197,7 @@ class DefaultArrivalsRepositoryTest {
     private fun repository(
         dataSource: FakeStopArrivalsDataSource,
         stopDao: FakeStopDao = FakeStopDao(),
-        clock: FakeElapsedClock = FakeElapsedClock(),
+        clock: FakeElapsedClock = FakeElapsedClock()
     ) = DefaultArrivalsRepository(
         regionRepository = FakeRegionRepository(),
         stopArrivals = dataSource,
@@ -209,7 +207,7 @@ class DefaultArrivalsRepositoryTest {
         importGate = NoopImportGate,
         preferences = FakePreferencesRepository(),
         display = FakeArrivalsDisplay(),
-        elapsedClock = clock,
+        elapsedClock = clock
     )
 
     // --- Fixtures ---------------------------------------------------------------------------------
@@ -221,7 +219,7 @@ class DefaultArrivalsRepositoryTest {
         shapeId: String = "shape-A",
         arrivalAt: Long = currentTime + 10 * 60_000L,
         hasArrivals: Boolean = true,
-        minutesAfter: Int = 65,
+        minutesAfter: Int = 65
     ) = StopArrivals(
         data = EntryWithReferences(
             entry = ArrivalsForStop(
@@ -234,27 +232,30 @@ class DefaultArrivalsRepositoryTest {
                             stopId = STOP_ID,
                             stopSequence = 3,
                             scheduledArrivalTime = arrivalAt,
-                            scheduledDepartureTime = arrivalAt,
+                            scheduledDepartureTime = arrivalAt
                         )
                     )
                 } else {
                     emptyList()
-                },
+                }
             ),
             references = References(
                 agencies = listOf(AgencyReference(id = "agency-1", name = "Metro")),
                 stops = listOf(
                     StopReference(
-                        id = STOP_ID, name = "Pine St & 3rd Ave",
-                        lat = 47.61, lon = -122.33, routeIds = listOf("route-1"),
+                        id = STOP_ID,
+                        name = "Pine St & 3rd Ave",
+                        lat = 47.61,
+                        lon = -122.33,
+                        routeIds = listOf("route-1")
                     )
                 ),
                 routes = listOf(RouteReference(id = "route-1", shortName = "5", agencyId = "agency-1")),
-                trips = listOf(TripReference(id = tripId, routeId = "route-1", shapeId = shapeId, directionId = "0")),
-            ),
+                trips = listOf(TripReference(id = tripId, routeId = "route-1", shapeId = shapeId, directionId = "0"))
+            )
         ),
         currentTime = currentTime,
-        minutesAfter = minutesAfter,
+        minutesAfter = minutesAfter
     )
 
     // --- Fresh loads ------------------------------------------------------------------------------
@@ -276,7 +277,7 @@ class DefaultArrivalsRepositoryTest {
         // The exact displayed trips, derived from the same data the drawer shows.
         assertEquals(
             setOf(FocusedTrip("trip-A", "route-1", "shape-A", null, directionId = 0)),
-            loaded.focusedTrips,
+            loaded.focusedTrips
         )
     }
 

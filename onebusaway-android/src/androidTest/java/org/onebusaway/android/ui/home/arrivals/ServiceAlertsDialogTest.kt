@@ -16,12 +16,12 @@ import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.AlertItem
 import org.onebusaway.android.ui.arrivals.AlertSeverity
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.StopHeader
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
-import org.onebusaway.android.time.ServerTime
 
 class ServiceAlertsDialogTest {
 
@@ -40,7 +40,7 @@ class ServiceAlertsDialogTest {
             minutesAfter = 60,
             windowEnd = ServerTime(0),
             isStale = false,
-            alerts = listOf(alert),
+            alerts = listOf(alert)
         )
         composeRule.setContent {
             ServiceAlertsDialog(
@@ -48,7 +48,7 @@ class ServiceAlertsDialogTest {
                 onShowAlert = { selected = it },
                 onHideAlert = {},
                 onShowHiddenAlerts = {},
-                onDismiss = {},
+                onDismiss = {}
             )
         }
 

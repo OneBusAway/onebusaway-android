@@ -166,6 +166,7 @@ object ConversionUtils {
         time: Long,
         inLine: Boolean,
         color: Int = -1,
+        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
     ): CharSequence {
         // Times render in the device's local zone. Date/time math is java.time (see wallClock /
         // isToday / isTomorrow); the actual string is still produced by android.text.format.DateFormat
@@ -180,7 +181,6 @@ object ConversionUtils {
         val local = wallClock(time, zone)
         val displayDate = Date.from(local.toInstant())
         val localDay = local.toLocalDate()
-        val today = LocalDate.now(zone)
 
         val spannableTime = SpannableString(timeFormat.format(displayDate))
         if (color != -1) {
@@ -225,10 +225,12 @@ object ConversionUtils {
     }
 
     @JvmStatic
+    @JvmOverloads
     fun getTimeUpdated(
         applicationContext: Context,
         oldTime: Long,
         newTime: Long,
+        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
     ): CharSequence {
         // See getTimeWithContext: times render in the device's local zone; java.time for the date math,
         // android.text.format.DateFormat (fed a converted java.util.Date) for the localized,
@@ -242,7 +244,6 @@ object ConversionUtils {
         val newLocal = wallClock(newTime, zone, round = false)
         val oldDisplay = Date.from(oldLocal.toInstant())
         val newDisplay = Date.from(newLocal.toInstant())
-        val today = LocalDate.now(zone)
 
         var beforeDateString: CharSequence = ""
         var newDateString: CharSequence = ""

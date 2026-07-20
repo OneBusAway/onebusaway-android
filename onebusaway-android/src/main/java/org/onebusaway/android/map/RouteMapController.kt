@@ -286,6 +286,15 @@ class RouteMapController(
      * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
      */
     fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
+        // A reframe onto the same route+direction-stop can still carry a different (or empty) segment —
+        // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
+        // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
+        // republish when it actually changes.
+        if (highlightedSegment != request.highlightedSegment) {
+            highlightedSegment = request.highlightedSegment
+            showDirectionStops()
+            publishMapPresentation()
+        }
         request.initialDirectionId?.let { selectDirection(it) }
         request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
     }

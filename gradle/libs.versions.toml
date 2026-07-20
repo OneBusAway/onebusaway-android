@@ -61,7 +61,6 @@ lifecycle = "2.11.0"
 navigationCompose = "2.9.8"
 hiltNavigationCompose = "1.4.0"
 composeBom = "2026.06.01"
-materialIcons = "1.7.8"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
 kotlinxSerializationJson = "1.11.0"
@@ -127,8 +126,6 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
-# Material icons are frozen at 1.7.8 and no longer BOM-managed, so this one carries an explicit version.
-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIcons" }
 
 # --- Hilt ---
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }

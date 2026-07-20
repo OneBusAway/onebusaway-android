@@ -22,9 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -54,6 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.icons.AppIcons
 
 /**
  * The trip-plan form: two autocomplete address fields (each with current-location + contacts
@@ -142,7 +140,7 @@ fun TripPlanForm(
                 }
                 IconButton(onClick = onAdvancedSettings) {
                     Icon(
-                        imageVector = Icons.Default.Settings,
+                        imageVector = AppIcons.Settings,
                         contentDescription = stringResource(R.string.trip_plan_advanced_settings),
                     )
                 }
@@ -310,7 +308,7 @@ private fun EndpointPillField(
                     },
                     trailingIcon = {
                         Icon(
-                            imageVector = Icons.Filled.Close,
+                            imageVector = AppIcons.Close,
                             contentDescription = stringResource(R.string.trip_plan_clear_endpoint)
                         )
                     }

@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -59,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.models.SurveyQuestion
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 
 /**
@@ -179,7 +178,7 @@ private fun SurveyHeroCard(
                     )
                     IconButton(onClick = callbacks.onRequestDismiss) {
                         Icon(
-                            Icons.Filled.Close,
+                            AppIcons.Close,
                             contentDescription = stringResource(R.string.dismiss_survey),
                         )
                     }

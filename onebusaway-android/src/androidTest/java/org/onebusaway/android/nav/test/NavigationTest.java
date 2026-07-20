@@ -29,7 +29,6 @@ import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -793,7 +792,13 @@ public class NavigationTest extends ObaTestCase {
      */
     private void runSimulation(String csvFileName, int expectedGetReadyIndex, int expectedPullCordIndex) throws IOException {
         Reader reader = Resources.read(InstrumentationRegistry.getInstrumentation().getTargetContext(), Resources.getTestUri(csvFileName));
-        String csv = IOUtils.toString(reader);
+        StringBuilder sb = new StringBuilder();
+        char[] buffer = new char[8192];
+        int read;
+        while ((read = reader.read(buffer)) != -1) {
+            sb.append(buffer, 0, read);
+        }
+        String csv = sb.toString();
         NavigationSimulation trip = new NavigationSimulation(csv);
         trip.runSimulation(expectedGetReadyIndex, expectedPullCordIndex);
     }

@@ -393,7 +393,6 @@ dependencies {
     // WorkManager (Java only)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.preference)
     // Preferences DataStore — the backing store behind PreferencesRepository.
     implementation(libs.androidx.datastore.preferences)
     // RoomDB

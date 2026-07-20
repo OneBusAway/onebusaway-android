@@ -105,6 +105,11 @@ class RouteMapController(
     var directionStopId: String? = null
         private set
 
+    // The board→alight polyline of a trip-plan transit leg drilled into route focus, drawn thick over
+    // the full route (empty for every non-directions route launch). Set in start(); overlaid last in
+    // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
+    private var highlightedSegment: List<GeoPoint> = emptyList()
+
     // A restore/deep-link override for the initial direction (the user-selected direction persisted
     // across process death); when set and still valid it wins over the anchor stop's direction.
     private var initialDirectionOverride: Int? = null
@@ -214,9 +219,11 @@ class RouteMapController(
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
+        highlightedSegment: List<GeoPoint> = emptyList(),
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
+        this.highlightedSegment = highlightedSegment
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
@@ -279,8 +286,17 @@ class RouteMapController(
      * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
      */
     fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
+        // A reframe onto the same route+direction-stop can still carry a different (or empty) segment —
+        // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
+        // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
+        // republish when it actually changes.
+        if (highlightedSegment != request.highlightedSegment) {
+            highlightedSegment = request.highlightedSegment
+            showDirectionStops()
+            publishMapPresentation()
+        }
         request.initialDirectionId?.let { selectDirection(it) }
-        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) host.frameRoute() else Unit
+        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
     }
 
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
@@ -463,6 +479,7 @@ class RouteMapController(
         selectionJob = null
         routeId = null
         directionStopId = null
+        highlightedSegment = emptyList()
         initialDirectionOverride = null
         routeStops = emptyList()
         routeStopRoutes = emptyList()
@@ -606,7 +623,8 @@ class RouteMapController(
             },
         )
         renderState.setRoutePolylines(
-            polylines = plan.polylines,
+            // Over a highlighted leg segment: thin the full route to context + the ridden span on top.
+            polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, currentRouteColor()),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom,
         )
@@ -736,14 +754,23 @@ class RouteMapController(
         // poll already landed while it was held back.
         publishVehicleSet()
         if (zoomToRoute) {
-            host.frameRoute()
+            frameRouteOrSegment()
         }
+    }
+
+    /**
+     * Frame the highlighted board→alight [segment][highlightedSegment] when one is set (a trip-plan leg
+     * drilled in — zoom to just the ridden part), else the whole route's bounding box.
+     */
+    private fun frameRouteOrSegment() {
+        val segment = highlightedSegment
+        if (segment.isDrawableSegment()) host.frameItineraryLeg(segment) else host.frameRoute()
     }
 
     /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
     private fun showDirectionStops() {
         val route = routeId ?: return
-        val stops = routeStops.stopsForDirection(currentDirectionId)
+        val stops = routeStops.stopsForDirection(currentDirectionId).onSegment(highlightedSegment)
         baseStopPresentation = RouteStopPresentation(
             stops = stops,
             routes = routeStopRoutes,

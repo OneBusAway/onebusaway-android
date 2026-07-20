@@ -16,6 +16,8 @@
 package org.onebusaway.android.directions.model
 
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.PolylineDecoder
 import kotlin.time.Duration
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -72,8 +74,10 @@ data class TripLeg(
     val routeShortName: String? = null,
     val routeLongName: String? = null,
     val routeColor: String? = null,
+    // The route's agency GTFS id (OTP2 `agency.gtfsId`, e.g. `kcm:1`) — used, with [agencyName], to
+    // resolve this leg's route/stops onto OBA ids for route focus. Null on the OTP1 path.
+    val agencyId: String? = null,
     val agencyName: String? = null,
-    val agencyTimeZoneOffset: Int = 0,
     val headsign: String? = null,
     val tripId: String? = null,
     val realTime: Boolean = false,
@@ -94,6 +98,10 @@ data class TripLeg(
 @Serializable
 data class TripPlace(
     val name: String? = null,
+    // The GTFS stop id (OTP2 `stop.gtfsId`), when this place is a transit stop — the identity the
+    // arrivals board / route focus keys on. Distinct from [stopCode], the human-facing platform code.
+    // Null for non-stop places and on the OTP1 path (its wire place carries no stop id).
+    val stopId: String? = null,
     val stopCode: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,
@@ -115,6 +123,13 @@ data class TripStep(
 
 @Serializable
 data class TripLegGeometry(val points: String? = null, val length: Int = 0)
+
+/** Decode the encoded leg polyline to points; empty when the geometry is absent or degenerate. */
+fun TripLegGeometry.decodedPoints(): List<GeoPoint> {
+    val encoded = points ?: return emptyList()
+    if (encoded.isEmpty() || length <= 0) return emptyList()
+    return PolylineDecoder.decode(encoded, length)
+}
 
 private val tripItineraryJson = Json { ignoreUnknownKeys = true }
 

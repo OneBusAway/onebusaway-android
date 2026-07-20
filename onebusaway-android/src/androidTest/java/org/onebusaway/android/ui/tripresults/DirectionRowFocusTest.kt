@@ -15,21 +15,26 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import androidx.compose.material3.Text
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
- * Verifies the itinerary line items are tap-to-focus at the leaf level only: tapping a leaf
- * [DirectionItem] (no sub-steps) invokes `onFocusPoint` with its point, an expandable row only toggles
- * its sub-steps (never focuses the map), and a revealed leaf sub-item focuses its own point. Exercises
- * the real [TripResultsList] click wiring by node text (identity), not screen coordinates.
+ * Verifies the leg-card tap split in [TripResultsList]: tapping a card **body** frames the whole leg
+ * (`onFocusLeg` with its polyline), falling back to the leg's point when it has no polyline; the
+ * separate **expand button** only reveals the sub-steps (never moves the map); and a revealed sub-step
+ * focuses its own point. Drives the real click wiring by node text / content description, not
+ * coordinates.
  */
 class DirectionRowFocusTest {
 
@@ -37,14 +42,17 @@ class DirectionRowFocusTest {
     @get:Rule
     val composeRule = createUnconfinedComposeRule()
 
-    private val walkPoint = GeoPoint(47.6100, -122.3300)
-    private val stopAPoint = GeoPoint(47.6200, -122.3400)
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+
+    private val walkLegPoints = listOf(GeoPoint(47.6100, -122.3300), GeoPoint(47.6120, -122.3320))
+    private val transitLegPoints = listOf(GeoPoint(47.6150, -122.3350), GeoPoint(47.6200, -122.3400))
+    private val stopAPoint = GeoPoint(47.6175, -122.3375)
     private val boardPoint = GeoPoint(47.6150, -122.3350)
 
     private val walk = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
         text = "1. Walk to Pine St & 3rd Ave",
-        focusPoint = walkPoint,
+        legPoints = walkLegPoints,
     )
 
     private val stopA = DirectionItem(
@@ -53,11 +61,12 @@ class DirectionRowFocusTest {
         focusPoint = stopAPoint,
     )
 
-    private val board = DirectionItem(
+    private val transit = DirectionItem(
         iconRes = DirectionItem.NO_ICON,
-        text = "2. Board Route 8",
+        text = "2. Route 8",
         isTransit = true,
         subItems = listOf(stopA),
+        legPoints = transitLegPoints,
         focusPoint = boardPoint,
     )
 
@@ -73,55 +82,159 @@ class DirectionRowFocusTest {
             )
         ),
         selectedIndex = 0,
-        directions = listOf(walk, board),
+        directions = listOf(walk, transit),
     )
 
     @Test
-    fun tappingWalkRowFocusesItsPoint() {
-        var focused: GeoPoint? = null
+    fun tappingLegBodyFramesTheWholeLeg() {
+        var framed: List<GeoPoint>? = null
         composeRule.setContent {
-            TripResultsList(state = state, onFocusPoint = { focused = it })
+            TripResultsList(state = state, onFocusLeg = { framed = it })
         }
 
         composeRule.onNodeWithText(walk.text).performClick()
 
-        assertEquals(walkPoint, focused)
+        assertEquals(walkLegPoints, framed)
     }
 
     @Test
-    fun tappingExpandableRowOnlyExpands_thenLeafSubStopFocusesItsOwnPoint() {
+    fun expandButtonRevealsSubSteps_withoutMovingTheMap_thenSubStepFocuses() {
+        var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
-            TripResultsList(state = state, onFocusPoint = { focused = it })
+            TripResultsList(
+                state = state,
+                onFocusLeg = { framed = it },
+                onFocusPoint = { focused = it },
+            )
         }
 
         // Sub-steps are collapsed to start.
         composeRule.onNodeWithText(stopA.text).assertDoesNotExist()
 
-        // An expandable row (chevron) only reveals its sub-steps — it does NOT move the map, even though
-        // it carries a boarding point.
-        composeRule.onNodeWithText(board.text).performClick()
+        // The expand button reveals the sub-steps — and moves neither the leg frame nor a point.
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+        assertNull(framed)
         assertNull(focused)
         composeRule.onNodeWithText(stopA.text).assertExists()
 
-        // The revealed leaf sub-step focuses its own point.
+        // The revealed sub-step focuses its own point.
         composeRule.onNodeWithText(stopA.text).performClick()
         assertEquals(stopAPoint, focused)
     }
 
     @Test
-    fun rowWithoutAPointDoesNotFocus() {
-        val pointless = DirectionItem(iconRes = DirectionItem.NO_ICON, text = "No coordinates here")
+    fun legWithoutPolylineFallsBackToFocusingItsPoint() {
+        val noGeometry = DirectionItem(
+            iconRes = DirectionItem.NO_ICON,
+            text = "Short hop",
+            focusPoint = boardPoint,
+        )
+        var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(
-                state = state.copy(directions = listOf(pointless)),
+                state = state.copy(directions = listOf(noGeometry)),
+                onFocusLeg = { framed = it },
                 onFocusPoint = { focused = it },
             )
         }
 
-        composeRule.onNodeWithText(pointless.text).performClick()
+        composeRule.onNodeWithText(noGeometry.text).performClick()
 
+        assertNull(framed)
+        assertEquals(boardPoint, focused)
+    }
+
+    @Test
+    fun legWithoutAPointOrPolylineDoesNothing() {
+        val inert = DirectionItem(iconRes = DirectionItem.NO_ICON, text = "No coordinates here")
+        var framed: List<GeoPoint>? = null
+        var focused: GeoPoint? = null
+        composeRule.setContent {
+            TripResultsList(
+                state = state.copy(directions = listOf(inert)),
+                onFocusLeg = { framed = it },
+                onFocusPoint = { focused = it },
+            )
+        }
+
+        composeRule.onNodeWithText(inert.text).performClick()
+
+        assertNull(framed)
         assertNull(focused)
+    }
+
+    // ---- Transit leg: route highlight (leg row) vs. inline ETA strip (Board / Alight sub-items) ----
+
+    private val boardStop = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", boardPoint)
+    private val alightStop = RouteStopRef("1_600", "600", "Rainier & Alaska", GeoPoint(47.6200, -122.3400))
+    private val routeItem = DirectionItem(
+        iconRes = DirectionItem.NO_ICON,
+        text = "3. Route 8",
+        isTransit = true,
+        legPoints = transitLegPoints,
+        routeLeg = RouteLegRef(
+            routeId = "1_100",
+            headsign = "Rainier Beach",
+            board = boardStop,
+            alight = alightStop,
+        ),
+    )
+    private val routeState = state.copy(directions = listOf(routeItem))
+
+    // A stand-in ETA strip that marks which stop it was asked to render.
+    private fun stripMarker(name: String?) = "ETASTRIP@$name"
+
+    @Test
+    fun tappingTransitLegRow_highlightsRoute() {
+        var captured: Pair<RouteLegRef, List<GeoPoint>>? = null
+        composeRule.setContent {
+            TripResultsList(state = routeState, onFocusRouteLeg = { rl, pts -> captured = rl to pts })
+        }
+
+        composeRule.onNodeWithText(routeItem.text).performClick()
+
+        assertEquals("1_100", captured?.first?.routeId)
+        assertEquals(transitLegPoints, captured?.second)
+    }
+
+    @Test
+    fun expandingTransitLeg_showsBothStopEtaStrips() {
+        composeRule.setContent {
+            TripResultsList(
+                state = routeState,
+                stopEtaStrip = { _, stop, _ -> Text(stripMarker(stop.name)) },
+            )
+        }
+
+        val boardName = boardStop.name!!
+        val alightName = alightStop.name!!
+        // The strips are hidden until the leg is expanded.
+        composeRule.onNodeWithText(stripMarker(boardName)).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+
+        // Expanding shows both the Board and Alight strips at once (no per-stop toggle).
+        composeRule.onNodeWithText(stripMarker(boardName)).assertExists()
+        composeRule.onNodeWithText(stripMarker(alightName)).assertExists()
+    }
+
+    @Test
+    fun tappingBoardOrAlightLabel_zoomsToThatStop() {
+        var focused: GeoPoint? = null
+        composeRule.setContent {
+            TripResultsList(state = routeState, onFocusPoint = { focused = it })
+        }
+
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+
+        composeRule.onNodeWithText(boardStop.name!!).performClick()
+        assertEquals(boardStop.point, focused)
+
+        composeRule.onNodeWithText(alightStop.name!!).performClick()
+        assertEquals(alightStop.point, focused)
     }
 }

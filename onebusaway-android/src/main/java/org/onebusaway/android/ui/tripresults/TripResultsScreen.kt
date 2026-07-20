@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,16 +34,20 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +67,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.notifications.NotificationChannels
@@ -73,6 +79,7 @@ import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
@@ -94,21 +101,50 @@ fun TripResultsHeader(
     val success = state as? TripResultsUiState.Success ?: return
     // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
     // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
+    // Flanked by the same overflow chevrons as the ETA strip (ScrollChevronGutter) so the user can see
+    // — and jump to — options hanging off either edge.
+    val scrollState = rememberScrollState()
+    val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
+    val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
+    val scope = rememberCoroutineScope()
+    // Jump one viewport toward an edge (or to that end, whichever is closer — animateScrollTo clamps).
+    fun jump(forward: Boolean) {
+        val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
+        scope.launch { scrollState.animateScrollTo(scrollState.value + delta) }
+    }
     Row(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        success.options.forEachIndexed { index, option ->
-            OptionCard(
-                option = option,
-                selected = index == success.selectedIndex,
-                onClick = { onSelectOption(index) }
-            )
+        ScrollChevronGutter(
+            visible = canScrollBackward,
+            pointsRight = false,
+            contentDescriptionRes = R.string.trip_plan_options_scroll_previous,
+            onClick = { jump(forward = false) },
+        )
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(scrollState)
+                .padding(vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            success.options.forEachIndexed { index, option ->
+                OptionCard(
+                    option = option,
+                    selected = index == success.selectedIndex,
+                    onClick = { onSelectOption(index) }
+                )
+            }
         }
+        ScrollChevronGutter(
+            visible = canScrollForward,
+            pointsRight = true,
+            contentDescriptionRes = R.string.trip_plan_options_scroll_more,
+            onClick = { jump(forward = true) },
+        )
     }
 }
 
@@ -206,15 +242,21 @@ private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Compo
 }
 
 /**
- * The directions list (or the loading/error state), filling the results sheet below the header. The map
- * is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
+ * The directions list (or the loading/error state), filling the results sheet. On [Success][
+ * TripResultsUiState.Success] the option-card picker ([TripResultsHeader]) rides along as the list's
+ * first item so it scrolls out of sight as the user moves down the steps, rather than staying pinned.
+ * The map is the scaffold body behind the sheet ([TripResultsMap]), not a sibling tab.
  */
 @Composable
 fun TripResultsList(
     state: TripResultsUiState,
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
+    onSelectOption: (Int) -> Unit = {},
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit = { _, _ -> },
+    onFocusLeg: (List<GeoPoint>) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
 ) {
     Box(
         modifier
@@ -233,15 +275,20 @@ fun TripResultsList(
                     .padding(32.dp)
             )
 
-            // The surface reaches the bottom edge; a bottom content padding lets the final directions row
+            // The surface reaches the bottom edge; a bottom content padding lets the final leg card
             // be scrolled clear of the nav chrome without an empty strip below the list.
             is TripResultsUiState.Success -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = bottomInset),
             ) {
-                itemsIndexed(state.directions) { _, item ->
-                    DirectionRow(item, onFocusPoint)
+                // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
+                item {
+                    TripResultsHeader(state, onSelectOption)
                     HorizontalDivider()
+                }
+                // One card per leg; the cards' own spacing separates them (no divider between).
+                itemsIndexed(state.directions) { _, item ->
+                    DirectionRow(item, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
                 }
             }
         }
@@ -265,7 +312,10 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp,
 ) {
@@ -294,13 +344,18 @@ fun TripResultsSheet(
         }
     }
 
-    Column(modifier) {
-        TripResultsHeader(
-            state = state,
-            onSelectOption = resultsViewModel::selectOption,
-        )
-        TripResultsList(state, Modifier.weight(1f), bottomInset = listBottomInset, onFocusPoint = onFocusPoint)
-    }
+    // The header (option-card picker) is folded into the list as its first item, so it scrolls away with
+    // the steps instead of staying pinned above them.
+    TripResultsList(
+        state = state,
+        modifier = modifier.fillMaxSize(),
+        bottomInset = listBottomInset,
+        onSelectOption = resultsViewModel::selectOption,
+        onFocusRouteLeg = onFocusRouteLeg,
+        onFocusLeg = onFocusLeg,
+        onFocusPoint = onFocusPoint,
+        stopEtaStrip = stopEtaStrip,
+    )
 }
 
 /**
@@ -334,63 +389,121 @@ private fun maybeStartTripUpdates(
     TripPlanMonitor.start(activity, params, itinerary, activity.javaClass)
 }
 
+/**
+ * One itinerary leg, as a card. Tapping the card **body**:
+ *  - a transit leg highlights its route on the map (the whole route + the traveled segment thick); its
+ *    two sub-items are **Board** and **Alight**, and tapping one reveals that stop's live ETA strip
+ *    inline ([stopEtaStrip]) — pills wired like the arrivals drawer.
+ *  - a walk/other leg frames the leg (falling back to its representative point when it has no polyline);
+ *    its sub-items are the turn-by-turn steps, each recentring the map on its own point.
+ *
+ * A distinct **expand button** reveals the sub-items. So the body moves the map while the button only
+ * toggles the drawer — two separate targets.
+ */
 @Composable
-private fun DirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
+private fun DirectionRow(
+    item: DirectionItem,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+) {
     // Rows are keyed by index in the LazyColumn, so switching itineraries reuses this slot for a
-    // different DirectionItem. Key the expansion state on the item so it resets on that swap instead
-    // of leaking a stale expanded state into the new itinerary's row.
+    // different DirectionItem. Key the expansion state on the item so it resets on that swap instead of
+    // leaking into the new itinerary's card.
     var expanded by remember(item) { mutableStateOf(false) }
-    val hasSubItems = item.subItems.isNotEmpty()
+    // A transit leg with a resolvable route id highlights its route (and expands to Board/Alight);
+    // otherwise the body frames the leg polyline, or (no geometry) recenters on the representative point.
+    val routeLeg = item.routeLeg?.takeIf { it.routeId != null }
+    val canFrame = item.legPoints.isNotEmpty()
     val point = item.focusPoint
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                // An expandable row (a chevron) only toggles its sub-steps; only leaf rows send the map
-                // to their point. So a parent never moves the map — its expanded leaves do.
-                .clickable(enabled = hasSubItems || point != null) {
-                    if (hasSubItems) {
-                        expanded = !expanded
-                    } else {
-                        point?.let(onFocusPoint)
+    val expandable = routeLeg != null || item.subItems.isNotEmpty()
+    val bodyClickable = routeLeg != null || canFrame || point != null
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    ) {
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(enabled = bodyClickable) {
+                        when {
+                            routeLeg != null -> onFocusRouteLeg(routeLeg, item.legPoints)
+                            canFrame -> onFocusLeg(item.legPoints)
+                            else -> point?.let(onFocusPoint)
+                        }
+                    }
+                    .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp)
+            ) {
+                DirectionIcon(item.iconRes)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = item.text,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = if (item.isTransit) FontWeight.Medium else FontWeight.Normal
+                    )
+                    item.placeAndHeadsign?.let {
+                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    item.agency?.let {
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    item.extra?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            DirectionIcon(item.iconRes)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(
-                    text = item.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = if (item.isTransit) FontWeight.Medium else FontWeight.Normal
-                )
-                item.placeAndHeadsign?.let {
-                    Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item.agency?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                item.extra?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                if (expandable) {
+                    // ~1.75x the default chevron so the expand/collapse control reads clearly.
+                    IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
+                        Icon(
+                            imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
+                            contentDescription = stringResource(
+                                if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
+                            ),
+                            // Match the row's leading step icons (see DirectionIcon).
+                            tint = colorResource(R.color.trip_option_icon_tint),
+                            modifier = Modifier.size(42.dp),
+                        )
+                    }
                 }
             }
-            if (hasSubItems) {
-                Icon(
-                    imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            if (expanded) {
+                if (routeLeg != null) {
+                    // Board and Alight, each a tap target that zooms to its stop, followed by that stop's
+                    // live ETA strip.
+                    routeLeg.board?.let { stop ->
+                        RouteStopLabel(
+                            R.string.step_by_step_transit_get_on,
+                            stop.name,
+                            onClick = { stop.point?.let(onFocusPoint) },
+                        )
+                        stopEtaStrip(routeLeg, stop, item.legPoints)
+                    }
+                    routeLeg.alight?.let { stop ->
+                        RouteStopLabel(
+                            R.string.step_by_step_transit_get_off,
+                            stop.name,
+                            onClick = { stop.point?.let(onFocusPoint) },
+                        )
+                        stopEtaStrip(routeLeg, stop, item.legPoints)
+                    }
+                } else {
+                    item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
+                }
+                Spacer(Modifier.height(4.dp))
             }
-        }
-        if (expanded) {
-            item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
         }
     }
 }
@@ -412,6 +525,36 @@ private fun SubDirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Uni
         Text(
             text = item.text,
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+/**
+ * A transit leg's Board / Alight label: the boarding action ([actionRes] — "Get on" / "Get off") and
+ * its [stopName], shown above that stop's inline ETA strip (which is always visible while the leg is
+ * expanded). Its own tap target — tapping zooms the map to that stop ([onClick]).
+ */
+@Composable
+private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(start = 36.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(actionRes),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = stopName.orEmpty(),
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
@@ -463,10 +606,7 @@ private fun TripResultsPreview() {
                 )
             )
         )
-        Column {
-            TripResultsHeader(state, onSelectOption = {})
-            TripResultsList(state)
-        }
+        TripResultsList(state)
     }
 }
 

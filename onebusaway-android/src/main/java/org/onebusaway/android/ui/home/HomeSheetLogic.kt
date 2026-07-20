@@ -45,7 +45,7 @@ internal fun focusBannerTopEdge(
     directionsFormBottomPx: Int = 0,
 ): Int = when (focus) {
     is CurrentFocus.Route, is CurrentFocus.Stop -> focusBannerBottomPx
-    CurrentFocus.Directions -> directionsFormBottomPx
+    is CurrentFocus.Directions -> directionsFormBottomPx
     CurrentFocus.None, is CurrentFocus.BikeStation -> 0
 }
 

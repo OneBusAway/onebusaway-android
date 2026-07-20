@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapViewport
@@ -100,7 +101,7 @@ class HomeViewModel @Inject constructor(
                     addLast(MapUndoEntry(CurrentFocus.Stop(restored.stop)))
                 }
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+            is CurrentFocus.Route, is CurrentFocus.BikeStation, is CurrentFocus.Directions ->
                 addLast(MapUndoEntry(CurrentFocus.None))
         }
     }
@@ -513,16 +514,25 @@ class HomeViewModel @Inject constructor(
             } else {
                 CurrentFocus.Stop(focus.stop)
             }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+            // Route-over-directions becomes the plain itinerary overview; a plain overview exits.
+            is CurrentFocus.Directions -> if (focus.routeFocus == null) {
                 CurrentFocus.None
+            } else {
+                CurrentFocus.Directions()
+            }
+            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
             CurrentFocus.None -> return
         }
         pushFocus(target)
-        if (target is CurrentFocus.Stop) {
-            emitMapDirective(MapDirective.ClearSelectedRoute)
-        } else {
-            presentedRoutes = emptySet()
-            emitMapDirective(MapDirective.ClearFocus)
+        when {
+            target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
+            // Popped a route sub-focus back to the overview: redraw the itinerary over the route.
+            target is CurrentFocus.Directions ->
+                shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+            else -> {
+                presentedRoutes = emptySet()
+                emitMapDirective(MapDirective.ClearFocus)
+            }
         }
     }
 
@@ -542,19 +552,115 @@ class HomeViewModel @Inject constructor(
      * itinerary the results VM selects (via [showItineraryOnMap]). A no-op if already in directions.
      */
     fun enterDirections(undoViewport: MapViewport? = null) {
-        if (_currentFocus.value == CurrentFocus.Directions) return
+        if (_currentFocus.value is CurrentFocus.Directions) return
         presentedRoutes = emptySet()
         pendingFocus = null
-        pushFocus(CurrentFocus.Directions, undoViewport)
+        pushFocus(CurrentFocus.Directions(), undoViewport)
     }
 
-    /** Draw [itinerary] on the home map (only meaningful while in [CurrentFocus.Directions]). */
-    fun showItineraryOnMap(itinerary: TripItinerary) =
+    // The itinerary currently drawn in directions mode, cached so returning from a route sub-focus (a
+    // map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on its own.
+    private var shownItinerary: TripItinerary? = null
+
+    /**
+     * Draw [itinerary] on the home map and frame the whole trip (only meaningful in
+     * [CurrentFocus.Directions]). Showing the full itinerary drops any leg route focus, so an option-card
+     * tap returns to the overview.
+     */
+    fun showItineraryOnMap(itinerary: TripItinerary) {
+        shownItinerary = itinerary
+        popRouteFocus() // the ShowItinerary below is the redraw
         emitMapDirective(MapDirective.ShowItinerary(itinerary))
+    }
+
+    /**
+     * Drop a leg's route sub-focus back to the itinerary overview, if one is active; returns whether it
+     * did (so the caller can redraw the itinerary the route mode tore down).
+     */
+    private fun popRouteFocus(): Boolean {
+        if ((_currentFocus.value as? CurrentFocus.Directions)?.routeFocus == null) return false
+        pushFocus(CurrentFocus.Directions())
+        return true
+    }
 
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
     fun focusItineraryPointOnMap(point: GeoPoint) =
         emitMapDirective(MapDirective.FocusItineraryPoint(point))
+
+    /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
+    fun focusItineraryLegOnMap(points: List<GeoPoint>) {
+        // If a transit leg's route is in focus, drop back to the itinerary overview and redraw it first —
+        // otherwise the framing would no-op in route mode (directionsActive is false).
+        if (popRouteFocus()) shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+        emitMapDirective(MapDirective.FocusItineraryLeg(points))
+    }
+
+    /**
+     * Tap a transit leg from the directions overview: highlight its route on the map (the whole route +
+     * the traveled [fallbackLegPoints] drawn thick), recording the overview as the back target so a
+     * map-background tap (or Back) returns to the itinerary. [routeLeg]'s ids are already OBA-format
+     * (resolved at build time); an unresolved route degrades to framing the leg. The per-stop ETAs are
+     * shown inline in the drawer's Board/Alight rows, not here.
+     */
+    fun focusItineraryRouteLeg(routeLeg: RouteLegRef, fallbackLegPoints: List<GeoPoint>) {
+        val routeId = routeLeg.routeId
+        if (routeId == null) {
+            focusItineraryLegOnMap(fallbackLegPoints)
+            return
+        }
+        // Anchor to the boarding stop so the route shows only the ridden direction.
+        focusItineraryRouteLegOnMap(
+            routeId,
+            segment = fallbackLegPoints,
+            directionStopId = routeLeg.board?.stopId,
+        )
+    }
+
+    /**
+     * A pill tap in a directions leg's inline ETA strip: enter that leg's route focus and focus/animate/
+     * ping the tapped trip's live vehicle — [request] already carries the route, direction-anchor stop,
+     * and focusTripId (built by the shared arrivals handler), so this just rides the same ShowRoute path
+     * as the arrivals drawer, adding the traveled [segment] over the route.
+     */
+    fun focusDirectionsRouteVehicle(request: ShowRouteRequest, segment: List<GeoPoint>) {
+        enterDirectionsRouteFocus(request.copy(highlightedSegment = segment))
+    }
+
+    /**
+     * Recontextualizes the map onto [routeId] with the traveled [segment] drawn thick over it, and
+     * records the overview as the back target so a map-background tap (or Back) returns to the itinerary.
+     * Ids are already OBA-format.
+     */
+    fun focusItineraryRouteLegOnMap(
+        routeId: String,
+        segment: List<GeoPoint> = emptyList(),
+        directionStopId: String? = null,
+        directionId: Int? = null,
+        undoViewport: MapViewport? = null,
+    ) {
+        enterDirectionsRouteFocus(
+            ShowRouteRequest(
+                routeId = routeId,
+                directionStopId = directionStopId,
+                initialDirectionId = directionId,
+                highlightedSegment = segment,
+            ),
+            undoViewport,
+        )
+    }
+
+    /**
+     * Enter the route-subordinate-to-directions focus for [request]: push the itinerary overview as the
+     * back target (with [undoViewport] to restore) and load the route with its ridden segment. Shared by
+     * the leg-row tap and the inline-ETA vehicle tap so both spend the same request faithfully.
+     */
+    private fun enterDirectionsRouteFocus(
+        request: ShowRouteRequest,
+        undoViewport: MapViewport? = null,
+    ) {
+        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request)), undoViewport)
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
+    }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
@@ -650,9 +756,25 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
-                // Directions redraws its itinerary from the results sheet's own reconcile when it
-                // remounts, so restoring the focus just clears the map here (like None/BikeStation).
-                CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions ->
+                is CurrentFocus.Directions -> {
+                    val routeFocus = target.routeFocus
+                    if (routeFocus != null) {
+                        // Back into a route sub-focus: re-show that leg's route on the map.
+                        emitMapDirective(
+                            MapDirective.ShowRoute(
+                                routeFocus.request,
+                                stopScoped = false,
+                                frameRoute = frameFocus,
+                            )
+                        )
+                    } else {
+                        // Back to the itinerary overview: redraw it over any route (the sheet's own
+                        // remount reconcile also covers a fresh entry, where shownItinerary is null).
+                        shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+                            ?: emitMapDirective(MapDirective.ClearFocus)
+                    }
+                }
+                CurrentFocus.None, is CurrentFocus.BikeStation ->
                     emitMapDirective(MapDirective.ClearFocus)
             }
         }
@@ -777,6 +899,9 @@ sealed interface MapDirective {
 
     /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
     data class FocusItineraryPoint(val point: GeoPoint) : MapDirective
+
+    /** Frame a whole tapped itinerary leg (fit its polyline within the map's content padding). */
+    data class FocusItineraryLeg(val points: List<GeoPoint>) : MapDirective
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective

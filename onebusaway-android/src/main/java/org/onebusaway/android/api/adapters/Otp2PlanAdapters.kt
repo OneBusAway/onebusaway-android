@@ -62,9 +62,8 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     routeShortName = route?.shortName,
     routeLongName = route?.longName,
     routeColor = route?.color,
+    agencyId = route?.agency?.gtfsId,
     agencyName = route?.agency?.name,
-    // No OTP2 equivalent: OTP2 timestamps already carry their own offset (issue #1780's wire table).
-    agencyTimeZoneOffset = 0,
     headsign = trip?.tripHeadsign,
     tripId = trip?.gtfsId,
     realTime = realTime ?: false,
@@ -91,6 +90,7 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
 // of two structurally-identical copies.
 private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
     name = name,
+    stopId = stop?.gtfsId,
     stopCode = stop?.code,
     lat = lat,
     lon = lon,

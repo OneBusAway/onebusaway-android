@@ -87,7 +87,7 @@ class HomeViewModelTest {
         savedState: SavedStateHandle = SavedStateHandle(),
         locationRepo: FakeLocationRepository = FakeLocationRepository(),
     ) = HomeViewModel(
-        savedState, startupRepo, regionRepo, locationRepo
+        savedState, startupRepo, regionRepo, locationRepo,
     )
 
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the

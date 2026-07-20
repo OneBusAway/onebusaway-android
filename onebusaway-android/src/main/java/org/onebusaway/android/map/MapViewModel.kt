@@ -301,10 +301,13 @@ class MapViewModel @Inject constructor(
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
+        highlightedSegment: List<GeoPoint> = emptyList(),
     ) {
         leaveCurrentView(clearStopFocus = !preserveStopFocus)
         persistRoute(routeId, directionStopId, initialDirectionId)
-        routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId, focusTripId)
+        routeController.start(
+            routeId, zoomToRoute, directionStopId, initialDirectionId, focusTripId, highlightedSegment,
+        )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
@@ -448,6 +451,7 @@ class MapViewModel @Inject constructor(
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
+                highlightedSegment = request.highlightedSegment,
             )
         }
     }
@@ -482,10 +486,22 @@ class MapViewModel @Inject constructor(
      * directions can't move the camera.
      */
     fun focusItineraryPoint(point: GeoPoint) {
-        if (!directionsActive) return
+        // Fires from the directions drawer in either the itinerary overview (directionsActive) or a
+        // leg's route focus (route mode) — a Board/Alight tap zooms to the stop in both.
+        if (!directionsActive && !routeController.isActive) return
         mapHost.dispatchGesture(
             CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = true)
         )
+    }
+
+    /**
+     * Frame a whole tapped itinerary leg: fit its polyline within the map's content padding, so the leg
+     * lands in the visible band above the directions results sheet. Guarded on an active directions
+     * session (like [focusItineraryPoint]); an empty point list is a no-op.
+     */
+    fun focusItineraryLeg(points: List<GeoPoint>) {
+        if (!directionsActive || points.isEmpty()) return
+        mapHost.frameItineraryLeg(points)
     }
 
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */

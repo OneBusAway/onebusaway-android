@@ -75,6 +75,7 @@ import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
@@ -95,6 +96,7 @@ import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
+import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
 import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
@@ -416,7 +418,7 @@ fun HomeScreen(
                 )
             }
             // Directions has no focus banner — the trip-plan form in the top chrome is its affordance.
-            CurrentFocus.None, is CurrentFocus.BikeStation, CurrentFocus.Directions -> null
+            CurrentFocus.None, is CurrentFocus.BikeStation, is CurrentFocus.Directions -> null
         }
 
         // Whether the reveal slide (peek 0 -> cap) has finished at a resting peek. The peek only shrinks
@@ -713,7 +715,24 @@ fun HomeScreen(
                                     itineraries = directionsResults.itineraries,
                                     params = directionsResults.params,
                                     showItinerary = homeViewModel::showItineraryOnMap,
+                                    onFocusRouteLeg = { routeLeg, legPoints ->
+                                        homeViewModel.focusItineraryRouteLeg(routeLeg, legPoints)
+                                    },
+                                    onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                     onFocusPoint = homeViewModel::focusItineraryPointOnMap,
+                                    // Each transit leg's Board/Alight row shows that stop's live ETA strip inline.
+                                    stopEtaStrip = { routeLeg, stop, segment ->
+                                        DirectionStopEtaStrip(
+                                            routeLeg = routeLeg,
+                                            stop = stop,
+                                            arrivalsViewModelFactory = arrivalsViewModelFactory,
+                                            onShowTrip = onShowTrip,
+                                            onEditReminder = onEditReminder,
+                                            onFocusVehicle = { request ->
+                                                homeViewModel.focusDirectionsRouteVehicle(request, segment)
+                                            },
+                                        )
+                                    },
                                     modifier = Modifier
                                         .align(Alignment.BottomCenter)
                                         .onSizeChanged { directionsSheetHeightPx = it.height },
@@ -972,8 +991,4 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
 }
 
 /** A resolved endpoint's map point, or null while it's still free text (no coordinates yet). */
-private fun TripEndpoint.toGeoPoint(): GeoPoint? {
-    val lat = lat
-    val lon = lon
-    return if (lat != null && lon != null) GeoPoint(lat, lon) else null
-}
+private fun TripEndpoint.toGeoPoint(): GeoPoint? = geoPointOrNull(lat, lon)

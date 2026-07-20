@@ -29,14 +29,25 @@ sealed interface CurrentFocus {
     data class BikeStation(val id: String) : CurrentFocus
 
     /**
-     * Trip-plan directions mode. A marker with no payload: the itinerary/plan identity lives in
-     * `TripPlanViewModel`/`TripResultsViewModel` (and persists via their own SavedStateHandle), so
-     * duplicating it here would create a second source of truth for "which itinerary". This only says
-     * "the map is in directions mode" — the chrome swaps to the trip-plan form and the map draws the
-     * itinerary the results VM selects.
+     * Trip-plan directions mode. The itinerary/plan identity still lives in
+     * `TripPlanViewModel`/`TripResultsViewModel` (persisted via their own SavedStateHandle), so this
+     * does not duplicate "which itinerary". [routeFocus] is the one sub-state it does own: the transit
+     * leg the user drilled into to examine its route (map recontextualized to that route + the
+     * departing stop's arrivals board), mirroring the route-subordinate-to-stop focus. Null is the
+     * plain itinerary overview.
      */
-    data object Directions : CurrentFocus
+    data class Directions(val routeFocus: DirectionsRouteFocus? = null) : CurrentFocus
 }
+
+/**
+ * A transit leg the user tapped from the directions overview — the route-subordinate-to-directions
+ * focus. Recontextualizes the map onto a route with the traveled board→alight segment drawn thick over
+ * it. Holds the exact [ShowRouteRequest] that produced this focus (route id, the boarding stop the
+ * direction is narrowed to, the ridden `highlightedSegment`, and — for a followed vehicle — its
+ * `focusTripId`) so restoring after a back-press replays it faithfully. (Each stop's live ETAs are
+ * shown inline in the drawer's Board/Alight rows, not here.)
+ */
+data class DirectionsRouteFocus(val request: ShowRouteRequest)
 
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop

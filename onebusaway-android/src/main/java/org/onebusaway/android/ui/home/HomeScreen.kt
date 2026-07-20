@@ -396,7 +396,11 @@ fun HomeScreen(
                             ?.routeColor,
                     )
                 }.orEmpty(),
-                subordinateHeadsign = currentFocus.selectedRoute?.originHeadsign,
+                subordinateHeadsign = subordinateRouteHeadsign(currentFocus.selectedRoute) { routeId, directionId ->
+                    arrivalsContent?.routeGroups?.firstOrNull {
+                        it.routeId == routeId && (directionId == null || it.directionId == directionId)
+                    }?.headsign
+                },
             )
             is CurrentFocus.Route -> routeHeader?.let { header ->
                 FocusBannerState.Route(
@@ -965,4 +969,21 @@ private fun TripEndpoint.toGeoPoint(): GeoPoint? {
     val lat = lat
     val lon = lon
     return if (lat != null && lon != null) GeoPoint(lat, lon) else null
+}
+
+/**
+ * The headsign to show beside a focused stop's subordinate route. Prefer the origin headsign the
+ * [selection] carried (the arrivals-drawer row entry sets it from the tapped arrival), else resolve it
+ * from the loaded arrivals by the origin leg's (route, direction) via [headsignFor] — so entering route
+ * focus from a map route-label tap, which carries no headsign, still labels the direction. Null when
+ * neither resolves.
+ */
+internal fun subordinateRouteHeadsign(
+    selection: StopRouteSelection?,
+    headsignFor: (routeId: String, directionId: Int?) -> String?,
+): String? {
+    selection ?: return null
+    selection.originHeadsign?.let { return it }
+    val leg = selection.legs.firstOrNull() ?: return null
+    return headsignFor(leg.routeId, leg.directionId)
 }

@@ -21,54 +21,53 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneOffset
 
 /**
  * JVM unit tests for the pure date helpers extracted during the java.time migration (#1690).
- * These pin the behavior the legacy Calendar path had — GMT wall-clock shifting, round-to-minute
- * (>= 30s rounds up), and the today/tomorrow classification — so a future refactor can't silently
- * regress the rounding boundary.
+ * These pin the round-to-minute (>= 30s rounds up) and today/tomorrow classification, in an explicit
+ * zone (production reads in the device's zone), so a future refactor can't silently regress the
+ * rounding boundary.
  */
 class ConversionUtilsTest {
-
-    private val ONE_HOUR_MS = 3_600_000
 
     private fun epochMs(iso: String): Long = Instant.parse(iso).toEpochMilli()
 
     @Test
-    fun agencyWallClock_noOffset_belowThreshold_doesNotRound() {
-        val zdt = ConversionUtils.agencyWallClock(epochMs("2024-01-15T10:23:29Z"), 0)
+    fun wallClock_belowThreshold_doesNotRound() {
+        val zdt = ConversionUtils.wallClock(epochMs("2024-01-15T10:23:29Z"), ZoneOffset.UTC)
         assertEquals(10, zdt.hour)
         assertEquals(23, zdt.minute)
         assertEquals(LocalDate.of(2024, 1, 15), zdt.toLocalDate())
     }
 
     @Test
-    fun agencyWallClock_noOffset_atThreshold_roundsUp() {
-        val zdt = ConversionUtils.agencyWallClock(epochMs("2024-01-15T10:23:30Z"), 0)
+    fun wallClock_atThreshold_roundsUp() {
+        val zdt = ConversionUtils.wallClock(epochMs("2024-01-15T10:23:30Z"), ZoneOffset.UTC)
         assertEquals(10, zdt.hour)
         assertEquals(24, zdt.minute)
     }
 
     @Test
-    fun agencyWallClock_roundingCrossesMidnight() {
-        val zdt = ConversionUtils.agencyWallClock(epochMs("2024-01-15T23:59:30Z"), 0)
+    fun wallClock_roundingCrossesMidnight() {
+        val zdt = ConversionUtils.wallClock(epochMs("2024-01-15T23:59:30Z"), ZoneOffset.UTC)
         assertEquals(LocalDate.of(2024, 1, 16), zdt.toLocalDate())
         assertEquals(0, zdt.hour)
         assertEquals(0, zdt.minute)
     }
 
     @Test
-    fun agencyWallClock_negativeOffset_shiftsWallClockAndDate() {
-        // 02:00Z shifted back 3h reads as 23:00 on the previous day in GMT wall-clock.
-        val zdt = ConversionUtils.agencyWallClock(epochMs("2024-01-15T02:00:00Z"), -3 * ONE_HOUR_MS)
+    fun wallClock_readInZone_shiftsWallClockAndDate() {
+        // 02:00Z read in UTC-3 is 23:00 on the previous day.
+        val zdt = ConversionUtils.wallClock(epochMs("2024-01-15T02:00:00Z"), ZoneOffset.ofHours(-3))
         assertEquals(LocalDate.of(2024, 1, 14), zdt.toLocalDate())
         assertEquals(23, zdt.hour)
         assertEquals(0, zdt.minute)
     }
 
     @Test
-    fun agencyWallClock_roundDisabled_keepsSubMinute() {
-        val zdt = ConversionUtils.agencyWallClock(epochMs("2024-01-15T10:23:59Z"), 0, round = false)
+    fun wallClock_roundDisabled_keepsSubMinute() {
+        val zdt = ConversionUtils.wallClock(epochMs("2024-01-15T10:23:59Z"), ZoneOffset.UTC, round = false)
         assertEquals(23, zdt.minute)
         assertEquals(59, zdt.second)
     }

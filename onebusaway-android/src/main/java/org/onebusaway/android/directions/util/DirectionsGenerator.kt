@@ -318,14 +318,14 @@ class DirectionsGenerator(
 
         if (leg.realTime) {
             val newTimeString = ConversionUtils.getTimeUpdated(
-                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis.epochMs, newTimeMillis.epochMs
+                applicationContext, oldTimeMillis.epochMs, newTimeMillis.epochMs
             )
             direction.newTime = newTimeString
         }
 
         val oldTimeString = SpannableString(
             ConversionUtils.getTimeWithContext(
-                applicationContext, leg.agencyTimeZoneOffset, oldTimeMillis.epochMs, true
+                applicationContext, oldTimeMillis.epochMs, true
             )
         )
         direction.oldTime = oldTimeString

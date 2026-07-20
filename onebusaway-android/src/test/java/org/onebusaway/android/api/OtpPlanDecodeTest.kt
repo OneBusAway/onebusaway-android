@@ -125,7 +125,6 @@ class OtpPlanDecodeTest {
         val bus = itinerary.legs[1]
         assertEquals(TripMode.BUS, bus.mode)
         assertTrue(bus.realTime)
-        assertEquals(-14400, bus.agencyTimeZoneOffset)
         assertEquals("5", bus.routeShortName)
         assertEquals("0000FF", bus.routeColor)
         assertEquals(30L, bus.departureDelay.inWholeSeconds)

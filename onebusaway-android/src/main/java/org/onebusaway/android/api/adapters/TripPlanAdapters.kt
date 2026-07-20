@@ -61,7 +61,6 @@ fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
     routeLongName = routeLongName,
     routeColor = routeColor,
     agencyName = agencyName,
-    agencyTimeZoneOffset = agencyTimeZoneOffset?.toInt() ?: 0,
     headsign = headsign,
     tripId = tripId,
     realTime = realTime ?: false,

@@ -76,7 +76,6 @@ data class TripLeg(
     // resolve this leg's route/stops onto OBA ids for route focus. Null on the OTP1 path.
     val agencyId: String? = null,
     val agencyName: String? = null,
-    val agencyTimeZoneOffset: Int = 0,
     val headsign: String? = null,
     val tripId: String? = null,
     val realTime: Boolean = false,

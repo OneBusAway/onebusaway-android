@@ -64,8 +64,6 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     routeColor = route?.color,
     agencyId = route?.agency?.gtfsId,
     agencyName = route?.agency?.name,
-    // No OTP2 equivalent: OTP2 timestamps already carry their own offset (issue #1780's wire table).
-    agencyTimeZoneOffset = 0,
     headsign = trip?.tripHeadsign,
     tripId = trip?.gtfsId,
     realTime = realTime ?: false,

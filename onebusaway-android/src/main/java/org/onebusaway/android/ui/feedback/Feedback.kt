@@ -54,9 +54,7 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import java.io.File
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
-import org.apache.commons.io.FileUtils
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
@@ -150,13 +148,16 @@ class FeedbackSubmitter(
         )
         try {
             val file = File(logFilePath)
-            FileUtils.write(file, System.lineSeparator() + feedback, StandardCharsets.UTF_8, true)
+            file.appendText(System.lineSeparator() + feedback)
             val destFolder = File(
                 context.filesDir.absolutePath
                         + File.separator + NavigationService.LOG_DIRECTORY + File.separator + response
             )
             try {
-                FileUtils.moveFileToDirectory(file, destFolder, true)
+                destFolder.mkdirs()
+                if (!file.renameTo(File(destFolder, file.name))) {
+                    throw IOException("Failed to move $file to $destFolder")
+                }
             } catch (e: Exception) {
                 Log.e(FeedbackLauncher.TAG, "File move failed")
             }

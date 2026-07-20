@@ -41,9 +41,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -88,6 +85,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
@@ -427,7 +425,7 @@ fun DirectionsLongPressMenu(
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.directions_to_here)) },
-                leadingContent = { Icon(Icons.Default.Place, contentDescription = null) },
+                leadingContent = { Icon(AppIcons.Place, contentDescription = null) },
                 modifier = Modifier.clickable(onClick = onToHere),
             )
         }
@@ -477,7 +475,7 @@ fun DirectionsErrorSnackbar(
             }
             IconButton(onClick = onDismiss) {
                 Icon(
-                    imageVector = Icons.Filled.Close,
+                    imageVector = AppIcons.Close,
                     contentDescription = stringResource(R.string.dismiss),
                     tint = MaterialTheme.colorScheme.inverseOnSurface,
                 )
@@ -516,7 +514,7 @@ fun BoxScope.DirectionsPickOverlay(
                 style = MaterialTheme.typography.titleMedium,
             )
             IconButton(onClick = onCancel) {
-                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
+                Icon(AppIcons.Close, contentDescription = stringResource(R.string.close))
             }
         }
     }

@@ -38,10 +38,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +66,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.filterRecents
 
@@ -134,7 +131,7 @@ fun MapTopChrome(
                 contentColor = Color.White,
                 modifier = menuModifier.size(TOP_CHROME_HEIGHT),
             ) {
-                Icon(Icons.Default.Menu, stringResource(R.string.navigation_drawer_open))
+                Icon(AppIcons.Menu, stringResource(R.string.navigation_drawer_open))
             }
             SearchField(
                 recents = recents,
@@ -219,7 +216,7 @@ private fun SearchField(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    Icons.Default.Search,
+                    AppIcons.Search,
                     contentDescription = stringResource(R.string.map_option_search),
                     tint = LocalContentColor.current.copy(alpha = 0.7f),
                 )
@@ -259,7 +256,7 @@ private fun SearchField(
                     val hasText = query.isNotEmpty()
                     IconButton(onClick = { if (hasText) query = "" else onDismiss() }) {
                         Icon(
-                            Icons.Default.Clear,
+                            AppIcons.Clear,
                             contentDescription = stringResource(
                                 if (hasText) R.string.stop_info_clear else R.string.search_close
                             ),

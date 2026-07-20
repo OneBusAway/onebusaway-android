@@ -38,8 +38,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
@@ -78,6 +76,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.icons.AppIcons
 
 /** Refresh interval matching the legacy TripDetailsListFragment (fixed 60s). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -155,7 +154,7 @@ fun TripDetailsScreen(
                     // Speed-estimation trajectory graph (debug).
                     IconButton(onClick = onShowTrajectory) {
                         Icon(
-                            imageVector = Icons.Filled.Info,
+                            imageVector = AppIcons.Info,
                             contentDescription = "Trajectory",
                             tint = MaterialTheme.colorScheme.onSurface
                         )

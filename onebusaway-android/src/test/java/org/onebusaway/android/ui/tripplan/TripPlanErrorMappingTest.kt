@@ -107,9 +107,16 @@ class TripPlanErrorMappingTest {
     }
 
     @Test
-    fun otp2_advisory_and_unknown() {
-        assertError(Category.ADVISORY, R.string.tripplanner_error_walking_better_than_transit,
+    fun otp2_walking_better_than_transit_maps_to_too_close() {
+        // Reaches otp2ErrorFor only in the same-location (no-itinerary) case — the too-close result,
+        // matching OTP1's TOO_CLOSE; it never advises walking (#1947). When a walk route survives it
+        // is returned as a normal itinerary by resolveOtp2Plan and this code is never hit.
+        assertError(Category.NO_ROUTE, R.string.tripplanner_error_too_close,
             otp2ErrorFor(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT, null))
+    }
+
+    @Test
+    fun otp2_unknown_falls_back() {
         assertEquals(TripPlanError.Unknown, otp2ErrorFor(RoutingErrorCode.UNKNOWN__, null))
     }
 }

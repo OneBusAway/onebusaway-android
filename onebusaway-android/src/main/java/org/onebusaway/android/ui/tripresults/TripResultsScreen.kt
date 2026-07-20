@@ -35,9 +35,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,6 +81,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -470,7 +468,7 @@ private fun DirectionRow(
                     // ~1.75x the default chevron so the expand/collapse control reads clearly.
                     IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
                         Icon(
-                            imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
                             contentDescription = stringResource(
                                 if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
                             ),

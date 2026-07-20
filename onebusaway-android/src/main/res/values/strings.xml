@@ -935,7 +935,6 @@
     <string name="tripplanner_error_header_location">Can&#8217;t find that location</string>
     <string name="tripplanner_error_header_schedule">No transit at this time</string>
     <string name="tripplanner_error_header_no_route">Cannot find route</string>
-    <string name="tripplanner_error_header_advisory">Try walking instead</string>
     <string name="tripplanner_error_header_request">Couldn&#8217;t plan this trip</string>
     <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
     <string name="tripplanner_error_request_timeout">Please check your Internet connection and try
@@ -948,9 +947,6 @@
     <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>
     <string name="tripplanner_error_outside_service_period">Selected date is outside the available
         transit schedule
-    </string>
-    <string name="tripplanner_error_walking_better_than_transit">Walking is faster than transit for
-        this trip
     </string>
     <string name="tripplanner_error_bogus_parameter">Something went wrong.  Change your trip options and try again.</string>
     <string name="tripplanner_error_geocode_from_not_found">Origin not found</string>

@@ -420,17 +420,22 @@ class PushRegistrationManagerTest {
         /** Captures every warning the manager logs (android.util.Log isn't mocked under a JVM test). */
         val loggedWarnings = mutableListOf<String>()
 
+        // The real store and client over fakes: these tests are about the reconcile → apply → record
+        // loop as a whole, so exercising the actual persistence and failure-classification code (rather
+        // than fakes of it) is the point.
         val manager = PushRegistrationManager(
-            service = service,
+            client = PushRegistrationClient(
+                service = service,
+                registrationsEndpointPath = "/api/v2/regions/",
+                logWarning = { message, _ -> loggedWarnings += message },
+                reportError = { reportedErrors += it },
+            ),
+            store = PushRegistrationStore(prefs = prefs, now = { now }),
             regionRepository = regions,
             firebaseMessagingManager = FirebaseMessagingManager(prefs),
             prefs = prefs,
             scope = scope,
             notificationsEnabled = { notificationsEnabled },
-            registrationsEndpointPath = "/api/v2/regions/",
-            reportError = { reportedErrors += it },
-            logWarning = { message, _ -> loggedWarnings += message },
-            now = { now },
         )
 
         fun setToken(token: String?) = prefs.setString(R.string.firebase_messaging_token, token)

@@ -220,4 +220,21 @@ class DirectionRowFocusTest {
         composeRule.onNodeWithText(stripMarker(boardName)).assertExists()
         composeRule.onNodeWithText(stripMarker(alightName)).assertExists()
     }
+
+    @Test
+    fun tappingBoardOrAlightLabel_zoomsToThatStop() {
+        var focused: GeoPoint? = null
+        composeRule.setContent {
+            TripResultsList(state = routeState, onFocusPoint = { focused = it })
+        }
+
+        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
+            .performClick()
+
+        composeRule.onNodeWithText(boardStop.name!!).performClick()
+        assertEquals(boardStop.point, focused)
+
+        composeRule.onNodeWithText(alightStop.name!!).performClick()
+        assertEquals(alightStop.point, focused)
+    }
 }

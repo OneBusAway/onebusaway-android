@@ -26,7 +26,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.util.DirectionsGenerator
-import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -120,12 +120,6 @@ class DefaultTripResultsRepository @Inject constructor(
         stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),
         stopCode = stopCode,
         name = name,
-        point = geoPoint(),
+        point = geoPointOrNull(lat, lon),
     )
-
-    private fun TripPlace.geoPoint(): GeoPoint? {
-        val lat = lat ?: return null
-        val lon = lon ?: return null
-        return GeoPoint(lat, lon)
-    }
 }

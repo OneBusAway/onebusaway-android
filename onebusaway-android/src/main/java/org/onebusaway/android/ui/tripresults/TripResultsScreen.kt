@@ -467,26 +467,38 @@ private fun DirectionRow(
                     }
                 }
                 if (expandable) {
-                    IconButton(onClick = { expanded = !expanded }) {
+                    // ~1.75x the default chevron so the expand/collapse control reads clearly.
+                    IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
                         Icon(
                             imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
                             contentDescription = stringResource(
                                 if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
                             ),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            // Match the row's leading step icons (see DirectionIcon).
+                            tint = colorResource(R.color.trip_option_icon_tint),
+                            modifier = Modifier.size(42.dp),
                         )
                     }
                 }
             }
             if (expanded) {
                 if (routeLeg != null) {
-                    // Board and Alight, each labelled and followed by that stop's live ETA strip.
+                    // Board and Alight, each a tap target that zooms to its stop, followed by that stop's
+                    // live ETA strip.
                     routeLeg.board?.let { stop ->
-                        RouteStopLabel(R.string.step_by_step_transit_get_on, stop.name)
+                        RouteStopLabel(
+                            R.string.step_by_step_transit_get_on,
+                            stop.name,
+                            onClick = { stop.point?.let(onFocusPoint) },
+                        )
                         stopEtaStrip(routeLeg, stop, item.legPoints)
                     }
                     routeLeg.alight?.let { stop ->
-                        RouteStopLabel(R.string.step_by_step_transit_get_off, stop.name)
+                        RouteStopLabel(
+                            R.string.step_by_step_transit_get_off,
+                            stop.name,
+                            onClick = { stop.point?.let(onFocusPoint) },
+                        )
                         stopEtaStrip(routeLeg, stop, item.legPoints)
                     }
                 } else {
@@ -524,26 +536,27 @@ private fun SubDirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Uni
 /**
  * A transit leg's Board / Alight label: the boarding action ([actionRes] — "Get on" / "Get off") and
  * its [stopName], shown above that stop's inline ETA strip (which is always visible while the leg is
- * expanded).
+ * expanded). Its own tap target — tapping zooms the map to that stop ([onClick]).
  */
 @Composable
-private fun RouteStopLabel(actionRes: Int, stopName: String?) {
+private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 36.dp, end = 12.dp, top = 8.dp, bottom = 2.dp),
+            .clickable(onClick = onClick)
+            .padding(start = 36.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = stringResource(actionRes),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
         )
         Spacer(Modifier.width(6.dp))
         Text(
             text = stopName.orEmpty(),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )

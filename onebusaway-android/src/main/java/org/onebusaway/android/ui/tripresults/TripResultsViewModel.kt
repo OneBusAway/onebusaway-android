@@ -56,12 +56,17 @@ class TripResultsViewModel @Inject constructor(
         load()
     }
 
-    /** Selects a different option card, reloading its directions and re-pointing the map. */
+    /**
+     * Tapping an option card re-points the map at its itinerary (framing the whole trip) — even when
+     * that option is already selected, so a re-tap re-frames after the user has zoomed into a leg. Only
+     * a *change* of option reloads its directions.
+     */
     fun selectOption(index: Int) {
-        if (index == selectedIndex || index !in itineraries.indices) return
+        if (index !in itineraries.indices) return
+        val changed = index != selectedIndex
         selectedIndex = index
         itineraries.getOrNull(index)?.let { _selectedItinerary.tryEmit(index to it) }
-        load()
+        if (changed) load()
     }
 
     private fun load() {

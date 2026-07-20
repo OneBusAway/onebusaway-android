@@ -17,8 +17,9 @@ package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.PolylineDecoder
+import org.onebusaway.android.util.geoPointOrNull
 
 /**
  * Re-groups the legacy [DirectionsGenerator][org.onebusaway.android.directions.util.DirectionsGenerator]'s
@@ -109,23 +110,14 @@ object DirectionCardGrouping {
         }.orEmpty()
 
     /** Decode the leg's own encoded polyline for framing; empty when the leg carries no geometry. */
-    private fun TripLeg.decodedPoints(): List<GeoPoint> {
-        val geometry = legGeometry ?: return emptyList()
-        val encoded = geometry.points ?: return emptyList()
-        if (encoded.isEmpty() || geometry.length <= 0) return emptyList()
-        return PolylineDecoder.decode(encoded, geometry.length)
-    }
+    private fun TripLeg.decodedPoints(): List<GeoPoint> = legGeometry?.decodedPoints().orEmpty()
 
     /** The real-time-aware display time, mirroring the old `Direction.toItem()` pick. */
     private fun Direction.pickTime(): String =
         (if (isRealTimeInfo && newTime != null) newTime else oldTime).str()
 
     /** The point this direction refers to, or null when the underlying place had no coordinates. */
-    private fun Direction.focusPoint(): GeoPoint? {
-        val lat = focusLat ?: return null
-        val lon = focusLon ?: return null
-        return GeoPoint(lat, lon)
-    }
+    private fun Direction.focusPoint(): GeoPoint? = geoPointOrNull(focusLat, focusLon)
 
     private fun CharSequence?.str(): String = this?.toString().orEmpty()
     private fun CharSequence?.strOrNull(): String? = this?.toString()?.takeIf { it.isNotEmpty() }

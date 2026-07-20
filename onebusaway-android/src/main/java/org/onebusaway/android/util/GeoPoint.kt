@@ -22,3 +22,7 @@ package org.onebusaway.android.util
  * without reaching up into `map/render`.
  */
 data class GeoPoint(val latitude: Double, val longitude: Double)
+
+/** A [GeoPoint] from a nullable lat/lon pair, or null when either coordinate is missing. */
+fun geoPointOrNull(latitude: Double?, longitude: Double?): GeoPoint? =
+    if (latitude != null && longitude != null) GeoPoint(latitude, longitude) else null

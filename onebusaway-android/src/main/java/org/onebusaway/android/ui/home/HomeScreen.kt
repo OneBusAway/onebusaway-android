@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
@@ -979,8 +980,4 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
 }
 
 /** A resolved endpoint's map point, or null while it's still free text (no coordinates yet). */
-private fun TripEndpoint.toGeoPoint(): GeoPoint? {
-    val lat = lat
-    val lon = lon
-    return if (lat != null && lon != null) GeoPoint(lat, lon) else null
-}
+private fun TripEndpoint.toGeoPoint(): GeoPoint? = geoPointOrNull(lat, lon)

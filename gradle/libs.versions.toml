@@ -68,7 +68,6 @@ kotlinxSerializationJson = "1.11.0"
 coroutines = "1.11.0"
 material = "1.14.0"
 gson = "2.14.0"
-commonsIo = "2.22.0"
 gtfsRealtime = "0.1.0"
 protoGoogleCommonProtos = "2.73.0"
 maplibre = "13.3.1"
@@ -146,7 +145,6 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 # --- Misc ---
 material = { module = "com.google.android.material:material", version.ref = "material" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 
 # --- Testing ---

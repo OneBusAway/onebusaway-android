@@ -364,7 +364,6 @@ dependencies {
     // Support libraries
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.exifinterface)
-    implementation(libs.commons.io)
     // Open311 client library
     implementation(libs.open311.client)
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"

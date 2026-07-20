@@ -14,7 +14,9 @@ fun uriToTempFile(context: Context, uri: Uri): File? {
     return try {
         val stream = context.contentResolver.openInputStream(uri)
         val file = File.createTempFile("temp", "", context.cacheDir)
-        org.apache.commons.io.FileUtils.copyInputStreamToFile(stream,file)
+        stream.use { input ->
+            file.outputStream().use { output -> input!!.copyTo(output) }
+        }
         file
     } catch (e: Exception) {
         e.printStackTrace()

@@ -43,7 +43,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import org.apache.commons.io.FileUtils
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
@@ -63,7 +62,6 @@ import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.PreferenceUtils
 import java.io.File
 import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -319,7 +317,7 @@ class NavigationService : Service() {
                 last?.latitude ?: 0.0, last?.longitude ?: 0.0
             )
 
-            FileUtils.write(file, header, StandardCharsets.UTF_8, false)
+            file.writeText(header)
         } catch (e: IOException) {
             Log.e(TAG, "File write failed: $e")
         }
@@ -348,7 +346,7 @@ class NavigationService : Service() {
 
             val file = logFile
             if (file != null && file.canWrite()) {
-                FileUtils.write(file, log, StandardCharsets.UTF_8, true)
+                file.appendText(log)
             } else {
                 Log.e(TAG, "Failed to write to file")
             }

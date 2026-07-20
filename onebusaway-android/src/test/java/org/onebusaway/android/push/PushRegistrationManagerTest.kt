@@ -17,6 +17,7 @@ package org.onebusaway.android.push
 
 import java.io.IOException
 import java.util.Locale
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -32,6 +33,7 @@ import org.onebusaway.android.api.contract.PushRegistrationWebService
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
+import org.onebusaway.android.time.WallTime
 import retrofit2.Response
 
 /**
@@ -53,7 +55,7 @@ class PushRegistrationManagerTest {
 
     @Before
     fun pinLocale() {
-        // currentTarget() sends Locale.getDefault().toLanguageTag(); pin it so the assertion is stable.
+        // buildTarget() sends Locale.getDefault().toLanguageTag(); pin it so the assertion is stable.
         previousLocale = Locale.getDefault()
         Locale.setDefault(Locale.US)
     }
@@ -74,6 +76,8 @@ class PushRegistrationManagerTest {
         assertEquals("T1", call.token)
         assertEquals("en-US", call.locale)
         assertEquals(true, call.testDevice)
+        // The server 422s a test_device=true POST without a description.
+        assertEquals(DEVICE_DESCRIPTION, call.description)
         assertEquals("android", call.operatingSystem)
 
         // Same inputs → decide() yields NoOp; no second POST despite the trigger firing again.
@@ -97,7 +101,8 @@ class PushRegistrationManagerTest {
     fun `opt-out unregisters the recorded token and clears the record`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        // Rider turns notifications off in system settings; the ON_START resync reconciles.
+        // Rider turns notifications off in system settings; the ON_START resync reconciles. This is the
+        // ONLY definitive opt-out — contrast the missing-region case below, which must not DELETE.
         f.notificationsEnabled = false
         f.sync()
 
@@ -117,8 +122,11 @@ class PushRegistrationManagerTest {
         f.sync()
         assertEquals(1, f.service.registerCalls.size)
 
-        // The failure is surfaced (not swallowed silently) so an on-device report has the cause.
+        // The failure is surfaced (not swallowed silently) so an on-device report has the cause — but
+        // only locally: transport failures are ordinary and self-healing, and reporting every offline
+        // moment remotely would drown the systematic-rejection signal.
         assertTrue(f.loggedWarnings.any { it.startsWith("push register failed") })
+        assertTrue(f.reportedErrors.isEmpty())
 
         // Nothing was persisted, so the retry is a full Register again (not a NoOp).
         f.service.onRegister = { Response.success(Unit) }
@@ -265,6 +273,129 @@ class PushRegistrationManagerTest {
         assertEquals(1, f.service.unregisterCalls.size)
     }
 
+    @Test
+    fun `an ordinary registration omits the description`() = runTest {
+        val f = Fixture(this)
+        f.prefs.setBoolean(R.string.preference_key_push_test_device, false)
+        f.setToken("T1")
+        f.sync()
+
+        // Null means Retrofit drops the field: the server doesn't require it here, and an ordinary
+        // rider's device name has no business being sent.
+        val call = f.service.registerCalls.single()
+        assertEquals(false, call.testDevice)
+        assertEquals(null, call.description)
+    }
+
+    @Test
+    fun `an unnamed test device registers as an ordinary device instead of failing`() = runTest {
+        val f = Fixture(this)
+        // Flag on, but no name: the server would 422 a test_device=true POST with a blank description,
+        // so we must downgrade rather than send a request guaranteed to fail (matching iOS).
+        f.prefs.setString(R.string.preference_key_push_test_device_name, null)
+        f.setToken("T1")
+        f.sync()
+
+        val call = f.service.registerCalls.single()
+        assertEquals(false, call.testDevice)
+        assertEquals(null, call.description)
+        assertTrue("a downgraded registration must still succeed", f.loggedWarnings.isEmpty())
+    }
+
+    @Test
+    fun `renaming the test device re-posts the new name without a delete`() = runTest {
+        val f = Fixture(this).registered("T1")
+        assertEquals(DEVICE_DESCRIPTION, f.service.registerCalls.single().description)
+
+        f.prefs.setString(R.string.preference_key_push_test_device_name, "Renamed Device")
+        f.sync()
+
+        // Same endpoint (region + host + token), so this upserts in place — no DELETE.
+        assertEquals("Renamed Device", f.service.registerCalls.last().description)
+        assertTrue(f.service.unregisterCalls.isEmpty())
+
+        // Now on record → settled.
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+    }
+
+    @Test
+    fun `an unchanged registration is re-posted once a day to defeat the 180-day prune`() = runTest {
+        val f = Fixture(this).registered("T1")
+        assertEquals(1, f.service.registerCalls.size)
+
+        // Same inputs, an hour later: still a no-op.
+        f.now += 1.hours
+        f.sync()
+        assertEquals(1, f.service.registerCalls.size)
+
+        // Past the refresh window: re-POST so the server's last_seen_at is refreshed.
+        f.now += PUSH_REFRESH_INTERVAL
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+        assertTrue("the keep-alive must not DELETE anything", f.service.unregisterCalls.isEmpty())
+
+        // The refresh restamps the clock, so the very next sync is quiet again.
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+    }
+
+    @Test
+    fun `a missing region is treated as not-yet-known rather than an opt-out`() = runTest {
+        val f = Fixture(this).registered("T1")
+
+        // The region flow is briefly null at cold start (RegionRepository seeds it asynchronously).
+        // Treating that as an opt-out would DELETE the registration and re-POST seconds later.
+        f.regions.emit(null)
+        f.sync()
+
+        assertTrue("a null region must not trigger a DELETE", f.service.unregisterCalls.isEmpty())
+        assertEquals(1, f.service.registerCalls.size)
+
+        // Once the region resolves, the unchanged registration is still on record → no re-POST.
+        f.regions.emit(region(1).copy(sidecarBaseUrl = "https://sidecar.test"))
+        f.sync()
+        assertEquals(1, f.service.registerCalls.size)
+    }
+
+
+    @Test
+    fun `an HTTP error response is logged and reported, not silently swallowed`() = runTest {
+        val f = Fixture(this)
+        f.setToken("T1")
+        // The real regression: a 422 is a *successful call* returning an unsuccessful response, so it
+        // never reaches runCatching's onFailure. It used to vanish entirely.
+        f.service.onRegister = {
+            Response.error(422, """{"error":"Unable to register device"}""".toResponseBody(null))
+        }
+
+        f.sync()
+
+        val warning = f.loggedWarnings.single()
+        assertTrue("status code must be logged: $warning", warning.contains("422"))
+        assertTrue("server error body must be logged: $warning", warning.contains("Unable to register device"))
+        // The token must never reach the log.
+        assertTrue("token must not be logged: $warning", !warning.contains("T1"))
+
+        // Registrations are the server's only audience source, so a systematic rejection must also be
+        // visible remotely (Crashlytics), not just in one developer's logcat.
+        val reported = f.reportedErrors.single()
+        assertTrue("$reported", reported is PushRegistrationException)
+        assertTrue("$reported", reported.message.orEmpty().contains("422"))
+    }
+
+    @Test
+    fun `a failed unregister response is logged too`() = runTest {
+        val f = Fixture(this).registered("T1")
+
+        f.notificationsEnabled = false
+        f.service.onUnregister = { Response.error(500, "boom".toResponseBody(null)) }
+        f.sync()
+
+        val warning = f.loggedWarnings.single()
+        assertTrue("status code must be logged: $warning", warning.contains("500"))
+    }
+
     /**
      * A ready-to-drive manager over fakes: notifications on, one region (id 1 + sidecar), the
      * test-device flag on, and no token until a test sets one. [notificationsEnabled] is a mutable flag
@@ -274,9 +405,17 @@ class PushRegistrationManagerTest {
         val service = FakePushRegistrationWebService()
         val prefs = FakePreferencesRepository().apply {
             setBoolean(R.string.preference_key_push_test_device, true)
+            // Named, so the test-device flag is honoured rather than downgraded (see buildTarget).
+            setString(R.string.preference_key_push_test_device_name, DEVICE_DESCRIPTION)
         }
         val regions = FakeRegionRepository(region(1).copy(sidecarBaseUrl = "https://sidecar.test"))
         var notificationsEnabled = true
+
+        /** Mutable device clock, so a test can jump past [PUSH_REFRESH_INTERVAL]. */
+        var now = WallTime(1_000_000_000L)
+
+        /** Server rejections routed to the remote error channel (Crashlytics in production). */
+        val reportedErrors = mutableListOf<Throwable>()
 
         /** Captures every warning the manager logs (android.util.Log isn't mocked under a JVM test). */
         val loggedWarnings = mutableListOf<String>()
@@ -289,7 +428,9 @@ class PushRegistrationManagerTest {
             scope = scope,
             notificationsEnabled = { notificationsEnabled },
             registrationsEndpointPath = "/api/v2/regions/",
+            reportError = { reportedErrors += it },
             logWarning = { message, _ -> loggedWarnings += message },
+            now = { now },
         )
 
         fun setToken(token: String?) = prefs.setString(R.string.firebase_messaging_token, token)
@@ -311,6 +452,7 @@ class PushRegistrationManagerTest {
             val token: String,
             val locale: String,
             val testDevice: Boolean,
+            val description: String?,
             val operatingSystem: String,
         )
 
@@ -327,9 +469,10 @@ class PushRegistrationManagerTest {
             token: String,
             locale: String,
             testDevice: Boolean,
+            description: String?,
             operatingSystem: String,
         ): Response<Unit> {
-            registerCalls += RegisterCall(url, token, locale, testDevice, operatingSystem)
+            registerCalls += RegisterCall(url, token, locale, testDevice, description, operatingSystem)
             return onRegister()
         }
 
@@ -337,5 +480,10 @@ class PushRegistrationManagerTest {
             unregisterCalls += UnregisterCall(url, token)
             return onUnregister()
         }
+    }
+
+    private companion object {
+        /** Stands in for the name the rider types into the "Test device name" setting. */
+        const val DEVICE_DESCRIPTION = "Sam's Test Pixel"
     }
 }

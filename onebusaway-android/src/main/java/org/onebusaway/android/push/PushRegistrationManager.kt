@@ -21,12 +21,14 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.net.HttpURLConnection
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -37,7 +39,15 @@ import org.onebusaway.android.api.contract.PushRegistrationWebService
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.runCatchingCancellable
+import retrofit2.Response
+
+/**
+ * Carries a push-registration server rejection to the remote error channel. A dedicated type so these
+ * group as their own Crashlytics issue rather than mixing into generic [IllegalStateException]s.
+ */
+class PushRegistrationException(message: String) : Exception(message)
 
 /**
  * Keeps this device's OBACloud push registration (issue #1957) in sync with the app's current state so
@@ -70,7 +80,10 @@ class PushRegistrationManager internal constructor(
     // plain JVM test, so the production default routes to Log.w while tests capture the message instead.
     private val notificationsEnabled: () -> Boolean,
     private val registrationsEndpointPath: String,
-    private val logWarning: (String, Throwable) -> Unit,
+    // Remote error channel for server rejections (see [logHttpFailure]); Crashlytics in production.
+    private val reportError: (Throwable) -> Unit,
+    private val logWarning: (String, Throwable?) -> Unit,
+    private val now: () -> WallTime = WallTime::now,
 ) {
 
     /** Production constructor Hilt builds from: resolves the seams from [context] and delegates. */
@@ -90,6 +103,7 @@ class PushRegistrationManager internal constructor(
         scope = scope,
         notificationsEnabled = { NotificationManagerCompat.from(context).areNotificationsEnabled() },
         registrationsEndpointPath = context.getString(R.string.arrivals_reminders_api_endpoint),
+        reportError = { FirebaseCrashlytics.getInstance().recordException(it) },
         logWarning = { message, cause -> Log.w(TAG, message, cause) },
     )
 
@@ -103,14 +117,19 @@ class PushRegistrationManager internal constructor(
      * Begins reconciling in the background, idempotently (safe to call more than once). Kicked from
      * `Application.onCreate` (on the main thread). Two triggers, covering every input that can change:
      *
-     * - A collector over the region flow and the two preferences this feature reads (the FCM token and
-     *   the test-device flag), running one [sync] per change. All three replay on launch, and each
-     *   later change (token rotation, region switch, toggling the test flag) re-emits. Observing those
-     *   keys specifically — rather than every app-wide preference write — avoids a needless
-     *   `areNotificationsEnabled()` IPC on unrelated writes.
+     * - A collector over the region flow and the preferences this feature reads (the FCM token, the
+     *   test-device flag, and the test-device name), running one [sync] per change. All of them replay
+     *   on launch, and each later change (token rotation, region switch, toggling or naming the test
+     *   device) re-emits. Observing those keys specifically — rather than every app-wide preference
+     *   write — avoids a needless `areNotificationsEnabled()` IPC on unrelated writes.
      * - A process-lifecycle `ON_START` observer that [resync]s whenever the app comes to the foreground,
      *   catching an OS notification-permission change made in system settings (which touches neither a
      *   preference nor the region, so the collector can't see it) regardless of which activity resumes.
+     *
+     * Between them these also drive the [PUSH_REFRESH_INTERVAL] keep-alive: every foreground re-runs
+     * [sync], which re-POSTs an unchanged registration once its 24h window has elapsed. No separate
+     * timer or `WorkManager` job is needed — a rider who never opens the app for 180 days has no
+     * service-alert reach to preserve anyway, and the server prunes exactly that population.
      */
     fun start() {
         if (started.getAndSet(true)) return
@@ -119,7 +138,8 @@ class PushRegistrationManager internal constructor(
                 regionRepository.region,
                 prefs.observeString(R.string.firebase_messaging_token, null),
                 prefs.observeBoolean(R.string.preference_key_push_test_device, false),
-            ) { _, _, _ -> }.collect { sync() }
+                prefs.observeString(R.string.preference_key_push_test_device_name, null),
+            ) { _, _, _, _ -> }.collect { sync() }
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) = resync()
@@ -136,7 +156,22 @@ class PushRegistrationManager internal constructor(
         // Settle any DELETE we still owe from an earlier Reregister whose POST landed but whose DELETE
         // didn't, before reconciling, so the stale registration can't linger past this pass.
         drainPendingDelete()
-        when (val action = decidePushRegistration(currentTarget(), loadLast())) {
+
+        // Notifications being off is the ONLY definitive "this device should not be registered" signal.
+        // A missing region or FCM token just means we can't tell yet — both resolve asynchronously, and
+        // the region flow is explicitly "briefly null at cold start" (see RegionRepository) — so treating
+        // that as an opt-out would fire a spurious DELETE on launch and re-POST seconds later, burning
+        // two requests against a 30 req/min/IP endpoint and leaving a window with no registration at all.
+        // Bail instead and let the collector re-run us when the inputs land; iOS no-ops the same way.
+        val target = if (notificationsEnabled()) {
+            // Inputs still settling (the region seeds asynchronously, the FCM token arrives late) —
+            // bail rather than decide; the collector re-runs us once they land.
+            buildTarget() ?: return@withLock
+        } else {
+            null
+        }
+
+        when (val action = decidePushRegistration(target, loadLast(), sinceLastSent())) {
             PushRegistrationAction.NoOp -> Unit
             is PushRegistrationAction.Register ->
                 if (register(action.target)) persist(action.target)
@@ -163,46 +198,95 @@ class PushRegistrationManager internal constructor(
     }
 
     /**
-     * The registration the device wants right now, or null when it can't/shouldn't be registered
-     * (notifications disabled, no resolved region + sidecar host, or no FCM token yet). The locale is
-     * the device's BCP-47 tag, sent as-is with no normalization.
+     * The registration this device wants, or null when the inputs aren't all resolved yet (no region,
+     * no sidecar host, or no FCM token) — never an opt-out; see [sync]. The locale is the device's
+     * BCP-47 tag, sent as-is with no normalization.
+     *
+     * The test-device flag is honoured only once the rider has named the device: the server rejects a
+     * `test_device=true` registration with a blank `description` (422), so an unnamed device registers
+     * as an ordinary one rather than POSTing a request guaranteed to fail. The iOS client gates its
+     * "Test Device Name" the same way. Deriving `testDevice` from the name rather than tracking it
+     * separately makes that rule hold by construction.
      */
-    private fun currentTarget(): PushRegistration? {
-        if (!notificationsEnabled()) return null
+    private fun buildTarget(): PushRegistration? {
         val region = regionRepository.region.value ?: return null
         val base = region.sidecarBaseUrl?.takeIf { it.isNotBlank() } ?: return null
         val token = firebaseMessagingManager.userPushId().takeIf { it.isNotEmpty() } ?: return null
+        val description = prefs.getString(R.string.preference_key_push_test_device_name, null)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?.takeIf { prefs.getBoolean(R.string.preference_key_push_test_device, false) }
         return PushRegistration(
             regionId = region.id,
             sidecarBaseUrl = base,
             token = token,
             locale = Locale.getDefault().toLanguageTag(),
-            testDevice = prefs.getBoolean(R.string.preference_key_push_test_device, false),
+            testDevice = description != null,
+            description = description,
         )
     }
 
     /** POSTs [target]; true only on a 2xx (204) success. Retried on the next sync, so a failure isn't fatal. */
     private suspend fun register(target: PushRegistration): Boolean = runCatchingCancellable {
-        service.register(
+        val response = service.register(
             url = registrationUrl(target),
             token = target.token,
             locale = target.locale,
             testDevice = target.testDevice,
-        ).isSuccessful
+            // Required by the server for a test device, omitted otherwise (see the service KDoc).
+            description = target.description,
+        )
+        val registered = response.isSuccessful
+        if (!registered) logHttpFailure("register", target, response)
+        registered
     }.onFailure {
         // Surface the cause (without the token) so a "why isn't this device registered" report isn't
         // silent; the retry happens on the next trigger regardless.
-        logWarning("push register failed for region ${target.regionId} at ${target.sidecarBaseUrl}", it)
+        logWarning(failurePrefix("register", target), it)
     }.getOrDefault(false)
 
     /** DELETEs [previous]; true on 204 or 404 (already gone), so a stale record is cleared either way. */
     private suspend fun unregister(previous: PushRegistration): Boolean = runCatchingCancellable {
         val response = service.unregister(url = registrationUrl(previous), token = previous.token)
-        response.isSuccessful || response.code() == HttpURLConnection.HTTP_NOT_FOUND
+        val removed = response.isSuccessful || response.code() == HttpURLConnection.HTTP_NOT_FOUND
+        if (!removed) logHttpFailure("unregister", previous, response)
+        removed
     }.onFailure {
         // Same rationale as register(): log the cause without the token; the DELETE is retried later.
-        logWarning("push unregister failed for region ${previous.regionId} at ${previous.sidecarBaseUrl}", it)
+        logWarning(failurePrefix("unregister", previous), it)
     }.getOrDefault(false)
+
+    /**
+     * The shared opening of every failure message. Identifies the endpoint by region + host — never the
+     * token, and never the URL, since the unregister URL carries the token as a query param.
+     */
+    private fun failurePrefix(operation: String, registration: PushRegistration): String =
+        "push $operation failed for region ${registration.regionId} at ${registration.sidecarBaseUrl}"
+
+    /**
+     * Logs a non-2xx response. Without this an HTTP error is *invisible*: a failed status is a
+     * perfectly successful call as far as [runCatchingCancellable] is concerned, so the `onFailure`
+     * handlers above only ever fire for transport exceptions. Since a failed call also persists
+     * nothing, the same doomed request then repeats on every foreground — silently, and against a
+     * 30 req/min/IP endpoint — which is exactly how the missing-`description` 422 went unnoticed
+     * until a packet capture.
+     */
+    private fun logHttpFailure(
+        operation: String,
+        registration: PushRegistration,
+        response: Response<Unit>,
+    ) {
+        // The server's error body carries the actionable message (e.g. "Description can't be blank").
+        val body = response.errorBody()?.string()?.trim().orEmpty()
+        val detail = if (body.isEmpty()) "" else " $body"
+        val message = "${failurePrefix(operation, registration)}: HTTP ${response.code()}$detail"
+        logWarning(message, null)
+        // Registrations are the server's ONLY audience source for service alerts, so a systematic
+        // rejection — a required field added server-side, a contract change, a throttle — must not be
+        // visible only in one developer's logcat. Report server rejections remotely; transport failures
+        // (handled by the onFailure paths) are ordinary offline noise and stay local.
+        reportError(PushRegistrationException(message))
+    }
 
     /**
      * Retries the DELETE queued by an earlier Reregister (the DELETE-fail/POST-ok quadrant in [sync]).
@@ -234,7 +318,19 @@ class PushRegistrationManager internal constructor(
             token = token,
             locale = prefs.getString(KEY_LOCALE, null) ?: "",
             testDevice = prefs.getBoolean(KEY_TEST_DEVICE, false),
+            description = prefs.getString(KEY_DESCRIPTION, null),
         )
+    }
+
+    /**
+     * How long ago the on-record registration was sent, or null if that is unknown — no record, or one
+     * written before this slot existed. Both the write and this read are device-clock ([WallTime]): it
+     * is a purely local elapsed-time question about our own write, never compared against a server
+     * timestamp, so no server-clock crossing is involved.
+     */
+    private fun sinceLastSent(): Duration? {
+        val sentAtMs = prefs.getLong(KEY_SENT_AT, 0L).takeIf { it > 0L } ?: return null
+        return now() - WallTime(sentAtMs)
     }
 
     private fun persist(registration: PushRegistration) {
@@ -242,6 +338,9 @@ class PushRegistrationManager internal constructor(
         prefs.setString(KEY_BASE, registration.sidecarBaseUrl)
         prefs.setString(KEY_LOCALE, registration.locale)
         prefs.setBoolean(KEY_TEST_DEVICE, registration.testDevice)
+        prefs.setString(KEY_DESCRIPTION, registration.description)
+        // Stamps the refresh clock: [sinceLastSent] measures the 24h re-POST window from here.
+        prefs.setLong(KEY_SENT_AT, now().epochMs)
         // Written last: its presence is what [loadLast] treats as "a full record is committed".
         prefs.setString(KEY_TOKEN, registration.token)
         // This endpoint is now the live registration, so drop any owed DELETE for it — otherwise a
@@ -280,6 +379,7 @@ class PushRegistrationManager internal constructor(
             // Unused by [unregister] — a DELETE is addressed by region + host + token only.
             locale = "",
             testDevice = false,
+            description = null,
         )
     }
 
@@ -297,6 +397,8 @@ class PushRegistrationManager internal constructor(
         const val KEY_TOKEN = "push_reg_token"
         const val KEY_LOCALE = "push_reg_locale"
         const val KEY_TEST_DEVICE = "push_reg_test_device"
+        const val KEY_DESCRIPTION = "push_reg_description"
+        const val KEY_SENT_AT = "push_reg_sent_at"
 
         // Slots for a registration whose DELETE is owed but not yet confirmed (see [persistPendingDelete]).
         const val KEY_PENDING_DEL_REGION_ID = "push_pending_del_region_id"

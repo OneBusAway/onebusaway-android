@@ -15,13 +15,16 @@
  */
 package org.onebusaway.android.push
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
  * Unit tests for [decidePushRegistration] — the pure register/refresh/unregister reconciliation for OBACloud push
  * registration (#1957). Covers each transition between the desired registration ([target]) and the one
- * last sent to the server ([last]).
+ * last sent to the server ([last]), plus the [PUSH_REFRESH_INTERVAL] keep-alive.
  */
 class PushRegistrationDecisionTest {
 
@@ -31,38 +34,80 @@ class PushRegistrationDecisionTest {
         token = "token-a",
         locale = "en-US",
         testDevice = false,
+        description = null,
     )
+
+    /** Comfortably inside [PUSH_REFRESH_INTERVAL], so the keep-alive never confounds these cases. */
+    private val fresh: Duration = 1.hours
+
+    private fun decide(
+        target: PushRegistration?,
+        last: PushRegistration?,
+        sinceLastSent: Duration? = fresh,
+    ) = decidePushRegistration(target, last, sinceLastSent)
 
     @Test
     fun `nothing desired and nothing on record is a no-op`() {
-        assertEquals(PushRegistrationAction.NoOp, decidePushRegistration(target = null, last = null))
+        assertEquals(PushRegistrationAction.NoOp, decide(target = null, last = null))
     }
 
     @Test
     fun `first registration when nothing is on record`() {
-        assertEquals(PushRegistrationAction.Register(base), decidePushRegistration(target = base, last = null))
+        assertEquals(PushRegistrationAction.Register(base), decide(target = base, last = null))
     }
 
     @Test
     fun `opting out unregisters the recorded registration`() {
-        assertEquals(PushRegistrationAction.Unregister(base), decidePushRegistration(target = null, last = base))
+        assertEquals(PushRegistrationAction.Unregister(base), decide(target = null, last = base))
     }
 
     @Test
     fun `unchanged registration is a no-op`() {
-        assertEquals(PushRegistrationAction.NoOp, decidePushRegistration(target = base, last = base))
+        assertEquals(PushRegistrationAction.NoOp, decide(target = base, last = base))
     }
 
     @Test
     fun `a locale change re-posts on the same token and region`() {
         val target = base.copy(locale = "es-MX")
-        assertEquals(PushRegistrationAction.Register(target), decidePushRegistration(target = target, last = base))
+        assertEquals(PushRegistrationAction.Register(target), decide(target = target, last = base))
     }
 
     @Test
     fun `a test-device flag change re-posts on the same token and region`() {
         val target = base.copy(testDevice = true)
-        assertEquals(PushRegistrationAction.Register(target), decidePushRegistration(target = target, last = base))
+        assertEquals(PushRegistrationAction.Register(target), decide(target = target, last = base))
+    }
+
+    @Test
+    fun `an unchanged registration is re-posted once the refresh interval elapses`() {
+        // The keep-alive: without this the server's last_seen_at is never refreshed and the 180-day
+        // prune silently drops a device whose token, region, locale and flags simply never change.
+        assertEquals(
+            PushRegistrationAction.Register(base),
+            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL),
+        )
+        assertEquals(
+            PushRegistrationAction.Register(base),
+            decide(target = base, last = base, sinceLastSent = 30.days),
+        )
+    }
+
+    @Test
+    fun `an unchanged registration is left alone just inside the refresh interval`() {
+        assertEquals(
+            PushRegistrationAction.NoOp,
+            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL - 1.hours),
+        )
+    }
+
+    @Test
+    fun `an unknown last-sent time counts as stale`() {
+        // A record written before the timestamp slot existed. A redundant upsert is harmless; losing
+        // the device to the prune is not, so unknown must re-post rather than no-op.
+        assertEquals(
+            PushRegistrationAction.Register(base),
+            decide(target = base, last = base, sinceLastSent = null),
+        )
     }
 
     @Test
@@ -70,7 +115,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(token = "token-b")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decidePushRegistration(target = target, last = base),
+            decide(target = target, last = base),
         )
     }
 
@@ -79,7 +124,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(regionId = 2L, sidecarBaseUrl = "https://other.example.org")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decidePushRegistration(target = target, last = base),
+            decide(target = target, last = base),
         )
     }
 }

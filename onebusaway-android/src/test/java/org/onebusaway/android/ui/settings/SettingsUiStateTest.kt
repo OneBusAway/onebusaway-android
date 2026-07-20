@@ -128,6 +128,7 @@ class SettingsUiStateTest {
         experimentalRegionsEnabled = false,
         displayTestAlerts = false,
         pushTestDevice = false,
+        pushTestDeviceName = null,
         customObaApiUrl = null,
         customOtpApiUrl = null,
         customOtpApiUrlUsesGraphQl = false,

@@ -45,6 +45,17 @@ interface PushRegistrationWebService {
      * `test_device` resets it to `false`) — the wire value is the literal `true`/`false` the contract
      * documents. [locale] is the device's BCP-47 tag sent as-is; the server maps it to its translation
      * catalog itself.
+     *
+     * [description] is a human-readable device label that the server requires **only** when
+     * [testDevice] is true, rejecting the call otherwise with
+     * `422 {"error":"Unable to register device","messages":["Description can't be blank"]}`. Pass null
+     * for an ordinary registration and Retrofit omits the field entirely — deliberate, so an ordinary
+     * rider's device model is never sent. NOTE: this requirement is absent from the #1957 contract
+     * table; it was established against the deployed server (a `test_device=true` POST without it 422s,
+     * with it 204s, while `test_device=false` 204s either way). The field's *purpose* — labelling rows
+     * in the "Test users only" audience so a human can tell devices apart — is inferred from its name
+     * and that gate, so the exact value we send is a judgement call awaiting confirmation from the
+     * OBACloud maintainers.
      */
     @FormUrlEncoded
     @POST
@@ -53,6 +64,7 @@ interface PushRegistrationWebService {
         @Field("token") token: String,
         @Field("locale") locale: String,
         @Field("test_device") testDevice: Boolean,
+        @Field("description") description: String?,
         @Field("operating_system") operatingSystem: String = "android",
     ): Response<Unit>
 

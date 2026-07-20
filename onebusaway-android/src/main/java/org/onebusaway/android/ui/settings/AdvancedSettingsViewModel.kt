@@ -82,6 +82,7 @@ class AdvancedSettingsViewModel @Inject constructor(
             experimentalRegionsEnabled = prefs.getBoolean(R.string.preference_key_experimental_regions, false),
             displayTestAlerts = prefs.getBoolean(R.string.preferences_display_test_alerts, false),
             pushTestDevice = prefs.getBoolean(R.string.preference_key_push_test_device, false),
+            pushTestDeviceName = prefs.getString(R.string.preference_key_push_test_device_name, null),
             customObaApiUrl = prefs.getString(R.string.preference_key_oba_api_url, null),
             customOtpApiUrl = prefs.getString(R.string.preference_key_otp_api_url, null),
             customOtpApiUrlUsesGraphQl = prefs.getBoolean(
@@ -112,6 +113,17 @@ class AdvancedSettingsViewModel @Inject constructor(
      */
     fun onPushTestDeviceChanged(value: Boolean) =
         prefs.setBoolean(R.string.preference_key_push_test_device, value)
+
+    /**
+     * Set the admin-facing name for this test device (#1957). Blank clears it, which downgrades the
+     * device to an ordinary registration — the server rejects a test-device registration without a
+     * name, so `PushRegistrationManager` declines to send one rather than POST a guaranteed failure.
+     * Always accepted (returns true): any non-blank text is a valid name.
+     */
+    fun onPushTestDeviceNameChanged(value: String): Boolean {
+        prefs.setString(R.string.preference_key_push_test_device_name, value.trim().ifEmpty { null })
+        return true
+    }
 
     /**
      * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range

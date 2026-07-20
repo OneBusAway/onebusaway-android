@@ -36,7 +36,7 @@ interface ArrivalsDisplay {
     fun convert(
         arrivals: List<ArrivalData>,
         now: ServerTime,
-        includeArrivalDepartureInStatusLabel: Boolean,
+        includeArrivalDepartureInStatusLabel: Boolean
     ): List<ArrivalInfo>
 
     /** The user-facing message for a failed arrivals fetch (see [ObaRequestErrors]). */
@@ -45,16 +45,14 @@ interface ArrivalsDisplay {
 
 /** Production implementation over the app [Context] — where the arrivals load path touches Android. */
 class DefaultArrivalsDisplay @Inject constructor(
-    @param:ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context
 ) : ArrivalsDisplay {
 
     override fun convert(
         arrivals: List<ArrivalData>,
         now: ServerTime,
-        includeArrivalDepartureInStatusLabel: Boolean,
-    ): List<ArrivalInfo> =
-        convertArrivals(context, arrivals, now, includeArrivalDepartureInStatusLabel)
+        includeArrivalDepartureInStatusLabel: Boolean
+    ): List<ArrivalInfo> = convertArrivals(context, arrivals, now, includeArrivalDepartureInStatusLabel)
 
-    override fun stopErrorMessage(code: Int): String =
-        ObaRequestErrors.getStopErrorString(context, code)
+    override fun stopErrorMessage(code: Int): String = ObaRequestErrors.getStopErrorString(context, code)
 }

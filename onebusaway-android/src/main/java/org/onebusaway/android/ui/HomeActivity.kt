@@ -38,42 +38,42 @@ import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.toTripItineraries
 import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
-import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.report.ui.ReportLauncher
-import org.onebusaway.android.ui.nav.NavHelp
+import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.home.donation.DonationViewModel
-import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.home.AccessibilityAnalyticsEffect
-import org.onebusaway.android.ui.home.HomeAnalyticsEffect
-import org.onebusaway.android.ui.home.help.HelpAction
-import org.onebusaway.android.ui.home.help.HelpViewModel
-import org.onebusaway.android.ui.home.HomeActivityActions
-import org.onebusaway.android.ui.home.ReportTarget
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.home.HomeActivityActions
+import org.onebusaway.android.ui.home.HomeAnalyticsEffect
+import org.onebusaway.android.ui.home.HomeDestinationDeps
+import org.onebusaway.android.ui.home.HomeNavHost
 import org.onebusaway.android.ui.home.HomeScreen
 import org.onebusaway.android.ui.home.HomeViewModel
-import org.onebusaway.android.ui.home.HomeNavHost
-import org.onebusaway.android.ui.home.HomeDestinationDeps
+import org.onebusaway.android.ui.home.LaunchIntentChannel
+import org.onebusaway.android.ui.home.LaunchIntentEffect
+import org.onebusaway.android.ui.home.PaymentWarningDialog
+import org.onebusaway.android.ui.home.RegionPickerHost
+import org.onebusaway.android.ui.home.ReportTarget
+import org.onebusaway.android.ui.home.SettingsRehomeEffect
+import org.onebusaway.android.ui.home.donation.DonationViewModel
+import org.onebusaway.android.ui.home.help.HelpAction
+import org.onebusaway.android.ui.home.help.HelpViewModel
+import org.onebusaway.android.ui.home.weather.WeatherViewModel
+import org.onebusaway.android.ui.nav.IntentRouteMapper
+import org.onebusaway.android.ui.nav.NavHelp
+import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.toGeocoded
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
-import org.onebusaway.android.ui.home.LaunchIntentChannel
-import org.onebusaway.android.ui.home.LaunchIntentEffect
-import org.onebusaway.android.ui.home.SettingsRehomeEffect
-import org.onebusaway.android.ui.home.PaymentWarningDialog
-import org.onebusaway.android.ui.home.RegionPickerHost
-import org.onebusaway.android.ui.nav.IntentRouteMapper
-import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.survey.SurveyViewModel
+import org.onebusaway.android.ui.tutorial.TutorialPrefs
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ReminderUtils
-import org.onebusaway.android.ui.tutorial.TutorialPrefs
 
 @AndroidEntryPoint
 class HomeActivity : AppCompatActivity() {
@@ -163,8 +163,8 @@ class HomeActivity : AppCompatActivity() {
                         tripPlanViewModel = tripPlanViewModel,
                         tripResultsViewModel = tripResultsViewModel,
                         arrivalsViewModelFactory = arrivalsViewModelFactory,
-                        activityActions = activityActions,
-                    ),
+                        activityActions = activityActions
+                    )
                 )
                 PaymentWarningDialog(viewModel.paymentWarning, viewModel::dismissPaymentWarning)
                 // The forced region picker, driven reactively off the repository (RegionPickerViewModel). At the
@@ -198,7 +198,7 @@ class HomeActivity : AppCompatActivity() {
         // Stage the welcome sequence on the VM latch; HomeScreen starts it when the latch fires.
         onShowWelcomeTutorial = viewModel::requestWelcomeTutorial,
         onSheetSettled = viewModel::onSheetSettled,
-        onArrivalsLoaded = ::onArrivalsLoaded,
+        onArrivalsLoaded = ::onArrivalsLoaded
     )
 
     /**
@@ -242,7 +242,9 @@ class HomeActivity : AppCompatActivity() {
     @Suppress("UnwrappedClockValue")
     private fun maybeRestoreDirectionsFromIntent(intent: Intent) {
         val source = IntentCompat.getSerializableExtra(
-            intent, OTPConstants.INTENT_SOURCE, OTPConstants.Source::class.java
+            intent,
+            OTPConstants.INTENT_SOURCE,
+            OTPConstants.Source::class.java
         )
         if (source != OTPConstants.Source.NOTIFICATION) return
 
@@ -257,7 +259,7 @@ class HomeActivity : AppCompatActivity() {
             to = builder.to?.toGeocoded(),
             dateTimeMillis = builder.dateTime?.toEpochMilli() ?: System.currentTimeMillis(),
             arriving = builder.arriveBy,
-            itineraries = itineraries,
+            itineraries = itineraries
         )
     }
 
@@ -275,7 +277,7 @@ class HomeActivity : AppCompatActivity() {
             // Validating and applying the URLs is the region domain's job; we just parse them off the URI.
             regionRepository.applyCustomApiUrls(
                 obaUrl = data.getQueryParameter("oba-url"),
-                otpUrl = data.getQueryParameter("otp-url"),
+                otpUrl = data.getQueryParameter("otp-url")
             )
             return
         }
@@ -283,7 +285,6 @@ class HomeActivity : AppCompatActivity() {
             reminderRepository.deleteReminderFromPayload(arrivalJson)
         }
     }
-
 
     // --- Nav-drawer one-shot actions (each navigates/launches + reports its own analytics) -----------
     // These were the launcher branches of the old goToNavDrawerItem when-switch; as plain per-row
@@ -379,8 +380,7 @@ class HomeActivity : AppCompatActivity() {
          * [IntentRouteMapper]'s data-URI branches.)
          */
         @JvmStatic
-        fun navIntent(context: Context, route: String): Intent =
-            Intent(context, HomeActivity::class.java).putExtra(NavRoutes.EXTRA_NAV_ROUTE, route)
+        fun navIntent(context: Context, route: String): Intent = Intent(context, HomeActivity::class.java).putExtra(NavRoutes.EXTRA_NAV_ROUTE, route)
     }
 }
 

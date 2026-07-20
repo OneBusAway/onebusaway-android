@@ -63,6 +63,6 @@ fun WideAlertDialog(alert: WideAlert, onDismiss: () -> Unit) {
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.dismiss)) }
-        },
+        }
     )
 }

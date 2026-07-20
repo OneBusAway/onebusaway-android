@@ -27,13 +27,11 @@ import android.os.Build
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.core.net.toUri
-
 import com.google.android.gms.common.GoogleApiAvailability
-
 import org.onebusaway.android.R
+import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.region.Region
 
 /**
@@ -73,8 +71,11 @@ object ExternalIntents {
      * @param tripPlanUrl trip planning URL that failed, if this is a trip problem error report, or null if it's not
      */
     fun sendEmail(
-        context: Context, email: String, location: String?,
-        tripPlanUrl: String?, tripPlanFail: Boolean
+        context: Context,
+        email: String,
+        location: String?,
+        tripPlanUrl: String?,
+        tripPlanFail: Boolean
     ) {
         val obaRegionName = RegionUtils.getObaRegionName(context)
         val autoRegion = PreferenceUtils
@@ -87,8 +88,13 @@ object ExternalIntents {
         }
 
         sendEmail(
-            context, email, location, obaRegionName, regionSelectionMethod,
-            tripPlanUrl, tripPlanFail
+            context,
+            email,
+            location,
+            obaRegionName,
+            regionSelectionMethod,
+            tripPlanUrl,
+            tripPlanFail
         )
     }
 
@@ -102,8 +108,13 @@ object ExternalIntents {
      * @param tripPlanUrl trip planning URL that failed, if this is a trip problem error report, or null if it's not
      */
     private fun sendEmail(
-        context: Context, email: String, location: String?, regionName: String?,
-        regionSelectionMethod: String?, tripPlanUrl: String?, tripPlanFail: Boolean
+        context: Context,
+        email: String,
+        location: String?,
+        regionName: String?,
+        regionSelectionMethod: String?,
+        tripPlanUrl: String?,
+        tripPlanFail: Boolean
     ) {
         val pm = context.packageManager
         val appInfoOba: PackageInfo
@@ -257,10 +268,12 @@ object ExternalIntents {
             return null
         }
 
-        val hasWarning = !TextUtils.isEmpty(region.paymentWarningTitle)
-                || !TextUtils.isEmpty(region.paymentWarningBody)
-        if (hasWarning && !PreferenceUtils.getBoolean(
-                activity.getString(R.string.preference_key_never_show_payment_warning_dialog), false
+        val hasWarning = !TextUtils.isEmpty(region.paymentWarningTitle) ||
+            !TextUtils.isEmpty(region.paymentWarningBody)
+        if (hasWarning &&
+            !PreferenceUtils.getBoolean(
+                activity.getString(R.string.preference_key_never_show_payment_warning_dialog),
+                false
             )
         ) {
             // Caller shows the warning dialog, then calls startPaymentIntent on confirm.

@@ -21,10 +21,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.withTranslation
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
 
 /**
@@ -43,8 +43,14 @@ object MarkerRendering {
 
     /** 8-way unit offsets used to stamp a black outline around an element (a cheap dilate). */
     private val OUTLINE_OFFSETS = arrayOf(
-        floatArrayOf(-1f, 0f), floatArrayOf(1f, 0f), floatArrayOf(0f, -1f), floatArrayOf(0f, 1f),
-        floatArrayOf(-0.7f, -0.7f), floatArrayOf(0.7f, -0.7f), floatArrayOf(-0.7f, 0.7f), floatArrayOf(0.7f, 0.7f),
+        floatArrayOf(-1f, 0f),
+        floatArrayOf(1f, 0f),
+        floatArrayOf(0f, -1f),
+        floatArrayOf(0f, 1f),
+        floatArrayOf(-0.7f, -0.7f),
+        floatArrayOf(0.7f, -0.7f),
+        floatArrayOf(-0.7f, 0.7f),
+        floatArrayOf(0.7f, 0.7f)
     )
 
     /**
@@ -77,7 +83,7 @@ object MarkerRendering {
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
         glyphSize: Float,
-        outline: Float,
+        outline: Float
     ) {
         val pin = ContextCompat.getDrawable(context, R.drawable.pin_base)!!.mutate()
         pin.setBounds(0, 0, contentPx, contentPx)
@@ -103,7 +109,7 @@ object MarkerRendering {
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
         glyphSize: Float,
-        outline: Float,
+        outline: Float
     ) {
         val center = contentPx / 2f
         val radius = center - outline
@@ -133,12 +139,14 @@ object MarkerRendering {
         cyPx: Float,
         halfPx: Float,
         outline: Float,
-        glyphColor: Int,
+        glyphColor: Int
     ) {
         val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
         glyph.setBounds(
-            (cxPx - halfPx).toInt(), (cyPx - halfPx).toInt(),
-            (cxPx + halfPx).toInt(), (cyPx + halfPx).toInt(),
+            (cxPx - halfPx).toInt(),
+            (cyPx - halfPx).toInt(),
+            (cxPx + halfPx).toInt(),
+            (cyPx + halfPx).toInt()
         )
         drawOutlined(canvas, glyph, outline, glyphColor)
     }

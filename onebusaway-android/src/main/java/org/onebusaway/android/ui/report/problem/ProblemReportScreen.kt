@@ -24,10 +24,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -112,7 +112,8 @@ fun ProblemReportForm(
 
             Text(
                 text = stringResource(
-                    R.string.report_problem_hint, stringResource(R.string.app_name)
+                    R.string.report_problem_hint,
+                    stringResource(R.string.app_name)
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -167,7 +168,10 @@ private fun ProblemReportFormStopPreview() {
                 selectedCodeIndex = 1,
                 comment = "The sign says a different name"
             ),
-            onCodeSelected = {}, onCommentChange = {}, onVehicleToggle = {}, onVehicleNumberChange = {}
+            onCodeSelected = {},
+            onCommentChange = {},
+            onVehicleToggle = {},
+            onVehicleNumberChange = {}
         )
     }
 }
@@ -186,7 +190,10 @@ private fun ProblemReportFormTripPreview() {
                 onVehicle = true,
                 vehicleNumber = "1234"
             ),
-            onCodeSelected = {}, onCommentChange = {}, onVehicleToggle = {}, onVehicleNumberChange = {}
+            onCodeSelected = {},
+            onCommentChange = {},
+            onVehicleToggle = {},
+            onVehicleNumberChange = {}
         )
     }
 }

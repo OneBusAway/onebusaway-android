@@ -29,13 +29,13 @@ data class RouteListRow(
     val id: String,
     @ColumnInfo(name = "short_name") val shortName: String,
     @ColumnInfo(name = "long_name") val longName: String?,
-    val url: String?,
+    val url: String?
 )
 
 /** A [RouteListRow] plus the raw [accessTime], for merging recent stops and routes into one time-ordered list. */
 data class RouteRecentRow(
     @Embedded val row: RouteListRow,
-    @ColumnInfo(name = "access_time") val accessTime: Long?,
+    @ColumnInfo(name = "access_time") val accessTime: Long?
 )
 
 private const val ROUTE_REGION_SCOPE =
@@ -83,7 +83,7 @@ interface RouteDao {
         shortName: String?,
         longName: String?,
         regionId: Long?,
-        now: Long,
+        now: Long
     ) {
         val existing = getRoute(routeId)
         upsert(
@@ -92,14 +92,14 @@ interface RouteDao {
                 longName = longName,
                 regionId = regionId ?: existing.regionId,
                 useCount = existing.useCount + 1,
-                accessTime = now,
+                accessTime = now
             ) ?: RouteRecord(
                 id = routeId,
                 shortName = shortName.orEmpty(),
                 longName = longName,
                 useCount = 1,
                 accessTime = now,
-                regionId = regionId,
+                regionId = regionId
             )
         )
     }
@@ -112,7 +112,7 @@ interface RouteDao {
         longName: String?,
         url: String?,
         regionId: Long?,
-        now: Long,
+        now: Long
     ) {
         val existing = getRoute(routeId)
         upsert(
@@ -122,7 +122,7 @@ interface RouteDao {
                 url = url,
                 regionId = regionId ?: existing.regionId,
                 useCount = existing.useCount + 1,
-                accessTime = now,
+                accessTime = now
             ) ?: RouteRecord(
                 id = routeId,
                 shortName = shortName.orEmpty(),
@@ -130,7 +130,7 @@ interface RouteDao {
                 url = url,
                 useCount = 1,
                 accessTime = now,
-                regionId = regionId,
+                regionId = regionId
             )
         )
     }
@@ -150,7 +150,7 @@ interface RouteDao {
         shortName: String?,
         longName: String?,
         url: String?,
-        regionId: Long?,
+        regionId: Long?
     ) {
         val existing = getRoute(routeId)
         upsert(
@@ -158,14 +158,14 @@ interface RouteDao {
                 shortName = shortName?.takeIf { it.isNotEmpty() } ?: existing.shortName,
                 longName = longName?.takeIf { it.isNotEmpty() } ?: existing.longName,
                 url = url?.takeIf { it.isNotEmpty() } ?: existing.url,
-                regionId = regionId ?: existing.regionId,
+                regionId = regionId ?: existing.regionId
             ) ?: RouteRecord(
                 id = routeId,
                 shortName = shortName.orEmpty(),
                 longName = longName,
                 url = url,
                 useCount = 0,
-                regionId = regionId,
+                regionId = regionId
             )
         )
     }

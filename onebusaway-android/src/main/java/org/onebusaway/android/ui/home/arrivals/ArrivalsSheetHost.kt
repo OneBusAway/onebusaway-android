@@ -61,7 +61,7 @@ import org.onebusaway.android.ui.tutorial.tutorialAnchor
 internal data class ArrivalsSession(
     val viewModel: ArrivalsViewModel,
     val handler: ArrivalActionHandler,
-    val listState: LazyListState,
+    val listState: LazyListState
 )
 
 /**
@@ -86,8 +86,8 @@ internal fun rememberArrivalsSession(
     onShowRouteOnMap: (ArrivalInfo, ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
-    showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit,
-) : ArrivalsSession? {
+    showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
+): ArrivalsSession? {
     val stop = focusedStop ?: return null
     return key(stop.id) {
         val viewModelStoreOwner = rememberClearedViewModelStoreOwner(stop.id)
@@ -118,7 +118,7 @@ internal fun rememberArrivalsSession(
                     undoSnackbarState.value(messageRes, actionRes, onAction)
                 },
                 onShowTrip = { tripId, stopId -> showTripState.value(tripId, stopId) },
-                onEditReminder = { args -> editReminderState.value(args) },
+                onEditReminder = { args -> editReminderState.value(args) }
             )
         }
         val listState = remember { LazyListState() }
@@ -152,7 +152,7 @@ internal fun ArrivalsSheetHost(
     state: ArrivalsUiState,
     selectedRoute: StopRouteSelection?,
     mapRouteColors: Map<RouteDirectionKey, Int>,
-    onContentHeight: (heightPx: Int) -> Unit,
+    onContentHeight: (heightPx: Int) -> Unit
 ) {
     session ?: return
     val tutorialState = LocalTutorialState.current
@@ -167,16 +167,15 @@ internal fun ArrivalsSheetHost(
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
             onContentHeight = onContentHeight,
-            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA),
+            etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA)
         )
     }
 }
 
 /** Keep a continuation selected on the drawer row that originally launched it. */
-internal fun StopRouteSelection.selectedArrivalRowKey(): String =
-    originLeg.let { first ->
-        routeRowKey(first.routeId, first.directionId, originHeadsign)
-    }
+internal fun StopRouteSelection.selectedArrivalRowKey(): String = originLeg.let { first ->
+    routeRowKey(first.routeId, first.directionId, originHeadsign)
+}
 
 /**
  * Starts the [ArrivalTutorial] spotlight sequence the first time a focused stop's arrivals load, gated
@@ -194,7 +193,7 @@ private suspend fun maybeStartArrivalTutorial(
     prefs: PreferencesRepository,
     tutorialState: TutorialState,
     hasArrivals: Boolean,
-    awaitSheetVisible: suspend () -> Unit,
+    awaitSheetVisible: suspend () -> Unit
 ) {
     if (tutorialState.active) return
     if (!hasArrivals) return

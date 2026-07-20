@@ -128,13 +128,12 @@ object Open311FormMapper {
         )
     }
 
-    private fun parseOptions(values: List<Any?>?): List<Open311Option> =
-        values.orEmpty().mapNotNull { raw ->
-            val map = raw as? Map<*, *> ?: return@mapNotNull null
-            val key = map[Open311Attribute.KEY]?.toString()
-            val name = map[Open311Attribute.NAME]?.toString()
-            if (key == null || name == null) null else Open311Option(key, name)
-        }
+    private fun parseOptions(values: List<Any?>?): List<Open311Option> = values.orEmpty().mapNotNull { raw ->
+        val map = raw as? Map<*, *> ?: return@mapNotNull null
+        val key = map[Open311Attribute.KEY]?.toString()
+        val name = map[Open311Attribute.NAME]?.toString()
+        if (key == null || name == null) null else Open311Option(key, name)
+    }
 
     private fun Open311Field.initialValue(stopCode: String?): FieldValue = when (type) {
         Open311FieldType.TEXT, Open311FieldType.NUMBER, Open311FieldType.DATETIME ->

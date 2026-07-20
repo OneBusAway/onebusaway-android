@@ -30,7 +30,7 @@ import org.onebusaway.android.donations.DonationsManager
 /** The donation card's state: whether to offer it, and whether the "are you sure?" dialog is up. */
 data class DonationUiState(
     val available: Boolean = false,
-    val showDismissDialog: Boolean = false,
+    val showDismissDialog: Boolean = false
 )
 
 /** One-shot donation navigation the activity carries out (it owns startActivity + the intents). */
@@ -50,7 +50,7 @@ sealed interface DonationEffect {
  */
 @HiltViewModel
 class DonationViewModel @Inject constructor(
-    private val manager: DonationsManager,
+    private val manager: DonationsManager
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DonationUiState())

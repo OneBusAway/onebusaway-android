@@ -52,7 +52,7 @@ data class HelpUiState(val dialog: HelpDialog = HelpDialog.None, val showContact
 @HiltViewModel
 class HelpViewModel @Inject constructor(
     private val prefs: PreferencesRepository,
-    private val regionRepository: RegionRepository,
+    private val regionRepository: RegionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(HelpUiState())
@@ -76,8 +76,7 @@ class HelpViewModel @Inject constructor(
      * one, else the OneBusAway default. The host fires the ACTION_VIEW; choosing the URL is VM work, so
      * it's resolved here rather than in the Activity.
      */
-    fun twitterUrl(): String =
-        regionRepository.region.value?.twitterUrl?.takeUnless { it.isEmpty() } ?: TWITTER_URL
+    fun twitterUrl(): String = regionRepository.region.value?.twitterUrl?.takeUnless { it.isEmpty() } ?: TWITTER_URL
 
     /**
      * Open the help menu (from the nav drawer's Help item). "Contact us" is hidden when a custom OBA API

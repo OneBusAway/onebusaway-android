@@ -15,14 +15,13 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.ListWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.TripDetailsEntry
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.TripDetailsEntry
 
 /**
  * Ports the legacy TripsForLocationTest onto the modernized `trips-for-location` endpoint: the
@@ -30,7 +29,10 @@ import org.junit.Test
  */
 class TripsForLocationDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesTripsInRange() {

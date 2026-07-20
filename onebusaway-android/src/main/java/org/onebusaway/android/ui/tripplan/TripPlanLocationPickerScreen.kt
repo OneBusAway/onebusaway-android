@@ -71,7 +71,7 @@ fun TripPlanLocationPickerDestination(
                 modifier = Modifier.fillMaxSize(),
                 initialLatitude = lat ?: 0.0,
                 initialLongitude = lon ?: 0.0,
-                initialZoom = 16f,
+                initialZoom = 16f
             )
             // Fixed, non-interactive center crosshair (replicates the layout's ImageView): the map pans
             // under it and its center marks the chosen point.

@@ -15,122 +15,110 @@
  */
 package org.onebusaway.android.map.googlemapsv2;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
-
-import org.onebusaway.android.region.Region;
-
 import android.content.Context;
 import android.location.Location;
-import android.util.Log;
-
 import androidx.annotation.NonNull;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import org.onebusaway.android.region.Region;
 
-
-/**
- * Utilities to help process data for Android Maps API v1
- */
+/** Utilities to help process data for Android Maps API v1 */
 public class MapHelpV2 {
 
-    public static final String TAG = "MapHelpV2";
+  public static final String TAG = "MapHelpV2";
 
-    /**
-     * Converts a latitude/longitude to a LatLng.
-     *
-     * @param lat The latitude.
-     * @param lon The longitude.
-     * @return A LatLng representing this latitude/longitude.
-     */
-    @NonNull
-    public static final LatLng makeLatLng(double lat, double lon) {
-        return new LatLng(lat, lon);
+  /**
+   * Converts a latitude/longitude to a LatLng.
+   *
+   * @param lat The latitude.
+   * @param lon The longitude.
+   * @return A LatLng representing this latitude/longitude.
+   */
+  @NonNull
+  public static final LatLng makeLatLng(double lat, double lon) {
+    return new LatLng(lat, lon);
+  }
+
+  /**
+   * Converts a Location to a LatLng.
+   *
+   * @param l Location to convert
+   * @return A LatLng representing this LatLng.
+   */
+  @NonNull
+  public static final LatLng makeLatLng(@NonNull Location l) {
+    return makeLatLng(l.getLatitude(), l.getLongitude());
+  }
+
+  /**
+   * Converts a LatLng to a Location.
+   *
+   * @param latLng LatLng to convert
+   * @return A Location representing this LatLng.
+   */
+  @NonNull
+  public static final Location makeLocation(@NonNull LatLng latLng) {
+    Location l = new Location("FromLatLng");
+    l.setLatitude(latLng.latitude);
+    l.setLongitude(latLng.longitude);
+    return l;
+  }
+
+  /**
+   * Returns the bounds for the entire region.
+   *
+   * @return LatLngBounds for the region
+   */
+  @NonNull
+  public static LatLngBounds getRegionBounds(@NonNull Region region) {
+    if (region == null) {
+      throw new IllegalArgumentException("Region is null");
+    }
+    double latMin = 90;
+    double latMax = -90;
+    double lonMin = 180;
+    double lonMax = -180;
+
+    // This is fairly simplistic
+    for (Region.Bounds bound : region.getBounds()) {
+      // Get the top bound
+      double lat = bound.getLat();
+      double latSpanHalf = bound.getLatSpan() / 2.0;
+      double lat1 = lat - latSpanHalf;
+      double lat2 = lat + latSpanHalf;
+      if (lat1 < latMin) {
+        latMin = lat1;
+      }
+      if (lat2 > latMax) {
+        latMax = lat2;
+      }
+
+      double lon = bound.getLon();
+      double lonSpanHalf = bound.getLonSpan() / 2.0;
+      double lon1 = lon - lonSpanHalf;
+      double lon2 = lon + lonSpanHalf;
+      if (lon1 < lonMin) {
+        lonMin = lon1;
+      }
+      if (lon2 > lonMax) {
+        lonMax = lon2;
+      }
     }
 
-    /**
-     * Converts a Location to a LatLng.
-     *
-     * @param l Location to convert
-     * @return A LatLng representing this LatLng.
-     */
-    @NonNull
-    public static final LatLng makeLatLng(@NonNull Location l) {
-        return makeLatLng(l.getLatitude(), l.getLongitude());
-    }
+    LatLngBounds.Builder builder = new LatLngBounds.Builder();
+    builder.include(MapHelpV2.makeLatLng(latMin, lonMin));
+    builder.include(MapHelpV2.makeLatLng(latMax, lonMax));
 
-    /**
-     * Converts a LatLng to a Location.
-     *
-     * @param latLng LatLng to convert
-     * @return A Location representing this LatLng.
-     */
-    @NonNull
-    public static final Location makeLocation(@NonNull LatLng latLng) {
-        Location l = new Location("FromLatLng");
-        l.setLatitude(latLng.latitude);
-        l.setLongitude(latLng.longitude);
-        return l;
-    }
+    return builder.build();
+  }
 
-    /**
-     * Returns the bounds for the entire region.
-     *
-     * @return LatLngBounds for the region
-     */
-    @NonNull
-    public static LatLngBounds getRegionBounds(@NonNull Region region) {
-        if (region == null) {
-            throw new IllegalArgumentException("Region is null");
-        }
-        double latMin = 90;
-        double latMax = -90;
-        double lonMin = 180;
-        double lonMax = -180;
+  /** Returns true if Android Maps V2 is installed, false if it is not */
+  public static boolean isMapsInstalled(@NonNull Context context) {
+    return ProprietaryMapHelpV2.isMapsInstalled(context);
+  }
 
-        // This is fairly simplistic
-        for (Region.Bounds bound : region.getBounds()) {
-            // Get the top bound
-            double lat = bound.getLat();
-            double latSpanHalf = bound.getLatSpan() / 2.0;
-            double lat1 = lat - latSpanHalf;
-            double lat2 = lat + latSpanHalf;
-            if (lat1 < latMin) {
-                latMin = lat1;
-            }
-            if (lat2 > latMax) {
-                latMax = lat2;
-            }
-
-            double lon = bound.getLon();
-            double lonSpanHalf = bound.getLonSpan() / 2.0;
-            double lon1 = lon - lonSpanHalf;
-            double lon2 = lon + lonSpanHalf;
-            if (lon1 < lonMin) {
-                lonMin = lon1;
-            }
-            if (lon2 > lonMax) {
-                lonMax = lon2;
-            }
-        }
-
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        builder.include(MapHelpV2.makeLatLng(latMin, lonMin));
-        builder.include(MapHelpV2.makeLatLng(latMax, lonMax));
-
-        return builder.build();
-    }
-
-    /**
-     * Returns true if Android Maps V2 is installed, false if it is not
-     */
-    public static boolean isMapsInstalled(@NonNull Context context) {
-        return ProprietaryMapHelpV2.isMapsInstalled(context);
-    }
-
-    /**
-     * Prompts the user to install Android Maps V2
-     */
-    public static void promptUserInstallMaps(@NonNull final Context context) {
-        ProprietaryMapHelpV2.promptUserInstallMaps(context);
-    }
-
+  /** Prompts the user to install Android Maps V2 */
+  public static void promptUserInstallMaps(@NonNull final Context context) {
+    ProprietaryMapHelpV2.promptUserInstallMaps(context);
+  }
 }

@@ -16,12 +16,12 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.compose.ui.test.assertHasClickAction
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.math.abs
 import org.junit.Assert.assertTrue
@@ -40,7 +40,7 @@ class FocusBannerTest {
 
     private fun setStopBanner(
         hasAlerts: Boolean = true,
-        onClearSubordinateRoute: () -> Unit = {},
+        onClearSubordinateRoute: () -> Unit = {}
     ) {
         composeRule.setContent {
             FocusBanner(
@@ -53,9 +53,9 @@ class FocusBannerTest {
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65"),
                         FocusBannerState.SubordinateRoute("75"),
-                        FocusBannerState.SubordinateRoute("40"),
+                        FocusBannerState.SubordinateRoute("40")
                     ),
-                    subordinateHeadsign = "Downtown",
+                    subordinateHeadsign = "Downtown"
                 ),
                 onClose = {},
                 onToggleFavorite = {},
@@ -64,7 +64,7 @@ class FocusBannerTest {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
-                onHeight = {},
+                onHeight = {}
             )
         }
     }
@@ -98,9 +98,9 @@ class FocusBannerTest {
                         shortName = "40",
                         longName = "Downtown - Northgate",
                         agency = "Metro",
-                        routeId = "1_40",
+                        routeId = "1_40"
                     ),
-                    isFavorite = false,
+                    isFavorite = false
                 ),
                 onClose = {},
                 onToggleFavorite = {},
@@ -109,7 +109,7 @@ class FocusBannerTest {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
-                onHeight = {},
+                onHeight = {}
             )
         }
 
@@ -154,7 +154,7 @@ class FocusBannerTest {
                     direction = null,
                     isFavorite = false,
                     favoriteEnabled = false,
-                    hasAlerts = false,
+                    hasAlerts = false
                 ),
                 onClose = {},
                 onToggleFavorite = {},
@@ -163,7 +163,7 @@ class FocusBannerTest {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
-                onHeight = {},
+                onHeight = {}
             )
         }
 

@@ -15,10 +15,6 @@
  */
 package org.onebusaway.android.app.di
 
-import org.onebusaway.android.api.data.StopArrivalsDataSource
-import org.onebusaway.android.api.data.LocationSearchDataSource
-import org.onebusaway.android.api.data.ProblemReportDataSource
-
 import android.content.Context
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -26,6 +22,9 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
+import org.onebusaway.android.api.data.LocationSearchDataSource
+import org.onebusaway.android.api.data.ProblemReportDataSource
+import org.onebusaway.android.api.data.StopArrivalsDataSource
 
 /**
  * A Hilt [EntryPoint] that lets code which can't be constructor- or field-injected reach the shared
@@ -59,32 +58,27 @@ interface NetworkEntryPoint {
     companion object {
         /** Resolves the shared [RegionsWebService] from any [context] (its application is used). */
         @JvmStatic
-        fun getRegions(context: Context): RegionsWebService =
-            EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-                .regionsWebService()
+        fun getRegions(context: Context): RegionsWebService = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
+            .regionsWebService()
 
         /** Resolves the shared [ReminderWebService] from any [context] (its application is used). */
         @JvmStatic
-        fun getReminder(context: Context): ReminderWebService =
-            EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-                .reminderWebService()
+        fun getReminder(context: Context): ReminderWebService = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
+            .reminderWebService()
 
         /** Resolves the shared [LocationSearchDataSource] from any [context] (its application is used). */
         @JvmStatic
-        fun getLocationSearch(context: Context): LocationSearchDataSource =
-            EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-                .locationSearchDataSource()
+        fun getLocationSearch(context: Context): LocationSearchDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
+            .locationSearchDataSource()
 
         /** Resolves the shared [StopArrivalsDataSource] from any [context] (its application is used). */
         @JvmStatic
-        fun getStopArrivals(context: Context): StopArrivalsDataSource =
-            EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-                .stopArrivalsDataSource()
+        fun getStopArrivals(context: Context): StopArrivalsDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
+            .stopArrivalsDataSource()
 
         /** Resolves the shared [ProblemReportDataSource] from any [context] (its application is used). */
         @JvmStatic
-        fun getProblemReport(context: Context): ProblemReportDataSource =
-            EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-                .problemReportDataSource()
+        fun getProblemReport(context: Context): ProblemReportDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
+            .problemReportDataSource()
     }
 }

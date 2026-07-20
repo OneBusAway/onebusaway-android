@@ -53,7 +53,10 @@ class RegionOtpResetTest {
     @Test
     fun `unchanged and terminal statuses leave the OTP version untouched`() = runTest {
         for (status in listOf(
-            RegionStatus.Unchanged, RegionStatus.Skipped, RegionStatus.Fixed(region(1)), RegionStatus.Failed,
+            RegionStatus.Unchanged,
+            RegionStatus.Skipped,
+            RegionStatus.Fixed(region(1)),
+            RegionStatus.Failed
         )) {
             var reset = false
             resetOtpVersionOnRegionChange(status, anyState) { reset = true }

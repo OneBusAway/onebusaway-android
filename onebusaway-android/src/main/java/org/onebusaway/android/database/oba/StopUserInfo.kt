@@ -25,17 +25,14 @@ data class StopUserInfo(val isFavorite: Boolean, val userName: String?)
  * The name to display for a stop: the user's custom name if they renamed it, otherwise the
  * formatted server name.
  */
-fun stopDisplayName(stop: ObaStop, userInfo: StopUserInfo?): String =
-    stopDisplayName(stop.name, userInfo)
+fun stopDisplayName(stop: ObaStop, userInfo: StopUserInfo?): String = stopDisplayName(stop.name, userInfo)
 
 /** Field-based overload, for callers (e.g. the api/ REST DTOs) without an [ObaStop]. */
-fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String =
-    userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
+fun stopDisplayName(serverName: String?, userInfo: StopUserInfo?): String = userInfo?.userName?.takeIf { it.isNotEmpty() } ?: MyTextUtils.formatDisplayText(serverName).orEmpty()
 
 /**
  * Builds the id → [StopUserInfo] map from the Room rows (the legacy UIUtils.StopUserInfoMap), so each
  * search result can show the star and the user's custom name. Callers fetch the rows via
  * `StopDao.userInfoMap()` after the one-time import gate.
  */
-fun List<StopUserInfoMapRow>.toStopUserInfoMap(): Map<String, StopUserInfo> =
-    associate { it.stopId to StopUserInfo(isFavorite = it.favorite == 1, userName = it.userName) }
+fun List<StopUserInfoMapRow>.toStopUserInfoMap(): Map<String, StopUserInfo> = associate { it.stopId to StopUserInfo(isFavorite = it.favorite == 1, userName = it.userName) }

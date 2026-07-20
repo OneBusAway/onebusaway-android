@@ -17,6 +17,11 @@ package org.onebusaway.android.api
 
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import org.onebusaway.android.api.adapters.toTripItineraries
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
@@ -27,11 +32,6 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /**
  * Covers the OTP 2.x GraphQL `planConnection` response mapping
@@ -58,7 +58,7 @@ class Otp2PlanDecodeTest {
                     name = "Stop A",
                     lat = 47.61,
                     lon = -122.31,
-                    stop = PlaceFields.Stop(gtfsId = "1_1001", code = "1001"),
+                    stop = PlaceFields.Stop(gtfsId = "1_1001", code = "1001")
                 )
             ),
             route = null,
@@ -73,9 +73,9 @@ class Otp2PlanDecodeTest {
                     exit = null,
                     stayOn = false,
                     lat = 47.6,
-                    lon = -122.3,
-                ),
-            ),
+                    lon = -122.3
+                )
+            )
         )
         val busLeg = PlanQuery.Leg(
             mode = Mode.BUS,
@@ -84,7 +84,7 @@ class Otp2PlanDecodeTest {
             realTime = true,
             start = PlanQuery.Start(
                 scheduledTime = "2026-07-11T10:02:00-07:00",
-                estimated = PlanQuery.Estimated(time = "2026-07-11T10:02:30-07:00", delay = "PT30S"),
+                estimated = PlanQuery.Estimated(time = "2026-07-11T10:02:30-07:00", delay = "PT30S")
             ),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:12:00-07:00", estimated = null),
             from = from(
@@ -92,7 +92,7 @@ class Otp2PlanDecodeTest {
                     name = "Stop A",
                     lat = 47.61,
                     lon = -122.31,
-                    rentalVehicle = PlaceFields.RentalVehicle(vehicleId = "bs_9", name = "Bike 9"),
+                    rentalVehicle = PlaceFields.RentalVehicle(vehicleId = "bs_9", name = "Bike 9")
                 )
             ),
             to = to(place(name = "Stop B", lat = 47.62, lon = -122.32)),
@@ -101,25 +101,25 @@ class Otp2PlanDecodeTest {
                 shortName = "5",
                 longName = "Fifth Ave",
                 color = "0000FF",
-                agency = PlanQuery.Agency(gtfsId = "1_1", name = "Metro", timezone = "America/Los_Angeles"),
+                agency = PlanQuery.Agency(gtfsId = "1_1", name = "Metro", timezone = "America/Los_Angeles")
             ),
             trip = PlanQuery.Trip(gtfsId = "1_trip_5", tripHeadsign = "Downtown"),
             legGeometry = null,
-            steps = null,
+            steps = null
         )
         val node = PlanQuery.Node(
             start = "2026-07-11T10:00:00-07:00",
             end = "2026-07-11T10:12:00-07:00",
             duration = 1500L,
             numberOfTransfers = 1,
-            legs = listOf(walkLeg, busLeg),
+            legs = listOf(walkLeg, busLeg)
         )
         val data = PlanQuery.Data(
             planConnection = PlanQuery.PlanConnection(
                 searchDateTime = "2026-07-11T10:00:00-07:00",
                 routingErrors = emptyList(),
-                edges = listOf(PlanQuery.Edge(node = node)),
-            ),
+                edges = listOf(PlanQuery.Edge(node = node))
+            )
         )
 
         val itineraries = data.toTripItineraries()
@@ -184,7 +184,7 @@ class Otp2PlanDecodeTest {
 
     private fun planDataWithSingleLeg(
         mode: Mode,
-        itineraryStart: String? = "2026-07-11T10:00:00-07:00",
+        itineraryStart: String? = "2026-07-11T10:00:00-07:00"
     ): PlanQuery.Data {
         val leg = PlanQuery.Leg(
             mode = mode,
@@ -198,21 +198,21 @@ class Otp2PlanDecodeTest {
             route = null,
             trip = null,
             legGeometry = null,
-            steps = null,
+            steps = null
         )
         val node = PlanQuery.Node(
             start = itineraryStart,
             end = "2026-07-11T10:01:00-07:00",
             duration = 60L,
             numberOfTransfers = 0,
-            legs = listOf(leg),
+            legs = listOf(leg)
         )
         return PlanQuery.Data(
             planConnection = PlanQuery.PlanConnection(
                 searchDateTime = null,
                 routingErrors = emptyList(),
-                edges = listOf(PlanQuery.Edge(node = node)),
-            ),
+                edges = listOf(PlanQuery.Edge(node = node))
+            )
         )
     }
 
@@ -226,7 +226,7 @@ class Otp2PlanDecodeTest {
         stop: PlaceFields.Stop? = null,
         rentalVehicle: PlaceFields.RentalVehicle? = null,
         vehicleParking: PlaceFields.VehicleParking? = null,
-        vehicleRentalStation: PlaceFields.VehicleRentalStation? = null,
+        vehicleRentalStation: PlaceFields.VehicleRentalStation? = null
     ): PlaceFields = PlaceFields(name, lat, lon, stop, rentalVehicle, vehicleParking, vehicleRentalStation)
 
     private fun from(fields: PlaceFields) = PlanQuery.From(__typename = "Place", placeFields = fields)

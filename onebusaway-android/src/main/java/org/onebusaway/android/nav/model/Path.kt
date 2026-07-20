@@ -21,6 +21,6 @@ package org.onebusaway.android.nav.model
  * which can include multiple transfers between routes (i.e., GTFS "trips").
  * A [Path] consists of one or more [PathLink].
  */
-data class Path
-
-(val pathLinks: ArrayList<PathLink>)
+data class Path(
+    val pathLinks: ArrayList<PathLink>
+)

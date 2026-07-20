@@ -44,7 +44,7 @@ data class StopRecord(
     @ColumnInfo(name = "user_name") val userName: String? = null,
     @ColumnInfo(name = "access_time") val accessTime: Long? = null,
     @ColumnInfo(name = "favorite") val favorite: Int? = null,
-    @ColumnInfo(name = "region_id") val regionId: Long? = null,
+    @ColumnInfo(name = "region_id") val regionId: Long? = null
 ) {
     /** The legacy projected UI_NAME: the user's custom name when set, otherwise the stop name. */
     val uiName: String get() = if (userName != null) userName else name
@@ -61,7 +61,7 @@ data class RouteRecord(
     @ColumnInfo(name = "access_time") val accessTime: Long? = null,
     @ColumnInfo(name = "favorite") val favorite: Int? = null,
     @ColumnInfo(name = "url") val url: String? = null,
-    @ColumnInfo(name = "region_id") val regionId: Long? = null,
+    @ColumnInfo(name = "region_id") val regionId: Long? = null
 ) {
     val isFavorite: Boolean get() = favorite == 1
 }
@@ -85,7 +85,7 @@ data class TripRecord(
     @ColumnInfo(name = "service_date") val serviceDate: Long,
     @ColumnInfo(name = "stop_sequence") val stopSequence: Int,
     @ColumnInfo(name = "trip_id") val tripId: String,
-    @ColumnInfo(name = "vehicle_id") val vehicleId: String? = null,
+    @ColumnInfo(name = "vehicle_id") val vehicleId: String? = null
 )
 
 @Entity(tableName = "trip_alerts")
@@ -94,14 +94,14 @@ data class TripAlertRecord(
     @ColumnInfo(name = "trip_id") val tripId: String,
     @ColumnInfo(name = "stop_id") val stopId: String,
     @ColumnInfo(name = "start_time") val startTime: Long,
-    @ColumnInfo(name = "state", defaultValue = "0") val state: Int,
+    @ColumnInfo(name = "state", defaultValue = "0") val state: Int
 )
 
 @Entity(tableName = "service_alerts")
 data class ServiceAlertRecord(
     @PrimaryKey @ColumnInfo(name = "_id") val id: String,
     @ColumnInfo(name = "marked_read_time") val markedReadTime: Long? = null,
-    @ColumnInfo(name = "hidden") val hidden: Int? = null,
+    @ColumnInfo(name = "hidden") val hidden: Int? = null
 ) {
     val isHidden: Boolean get() = hidden == 1
 }
@@ -135,7 +135,7 @@ data class RegionRecord(
     val sidecarBaseUrl: String? = null,
     @ColumnInfo(name = "plausible_analytics_server_url") val plausibleAnalyticsServerUrl: String? = null,
     @ColumnInfo(name = "umami_analytics_url") val umamiAnalyticsUrl: String? = null,
-    @ColumnInfo(name = "umami_analytics_id") val umamiAnalyticsId: String? = null,
+    @ColumnInfo(name = "umami_analytics_id") val umamiAnalyticsId: String? = null
 )
 
 @Entity(
@@ -145,10 +145,10 @@ data class RegionRecord(
             entity = RegionRecord::class,
             parentColumns = ["_id"],
             childColumns = ["region_id"],
-            onDelete = ForeignKey.CASCADE,
+            onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("region_id")],
+    indices = [Index("region_id")]
 )
 data class RegionBoundRecord(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "_id") val id: Long = 0,
@@ -156,7 +156,7 @@ data class RegionBoundRecord(
     @ColumnInfo(name = "lat") val latitude: Double,
     @ColumnInfo(name = "lon") val longitude: Double,
     @ColumnInfo(name = "lat_span") val latSpan: Double,
-    @ColumnInfo(name = "lon_span") val lonSpan: Double,
+    @ColumnInfo(name = "lon_span") val lonSpan: Double
 )
 
 /**
@@ -169,7 +169,7 @@ data class Open311ServerRecord(
     @ColumnInfo(name = "region_id") val regionId: Long,
     @ColumnInfo(name = "jurisdiction") val jurisdiction: String? = null,
     @ColumnInfo(name = "api_key") val apiKey: String,
-    @ColumnInfo(name = "open311_base_url") val baseUrl: String,
+    @ColumnInfo(name = "open311_base_url") val baseUrl: String
 )
 
 @Entity(tableName = "nav_stops")
@@ -181,5 +181,5 @@ data class NavStopRecord(
     @ColumnInfo(name = "destination_id") val destinationId: String,
     @ColumnInfo(name = "before_id") val beforeId: String,
     @ColumnInfo(name = "seq_num") val sequence: Int,
-    @ColumnInfo(name = "is_active") val active: Int,
+    @ColumnInfo(name = "is_active") val active: Int
 )

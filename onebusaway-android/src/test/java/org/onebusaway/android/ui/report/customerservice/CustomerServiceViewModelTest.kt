@@ -15,10 +15,6 @@
  */
 package org.onebusaway.android.ui.report.customerservice
 
-import org.onebusaway.android.api.data.AgenciesDataSource
-
-import org.onebusaway.android.models.AgencyContact
-
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -26,6 +22,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.models.AgencyContact
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.compose.ListUiState
 

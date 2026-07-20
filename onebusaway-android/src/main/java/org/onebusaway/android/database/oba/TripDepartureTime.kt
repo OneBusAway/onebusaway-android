@@ -33,24 +33,21 @@ import java.time.ZoneId
 object TripDepartureTime {
 
     /** Decodes a stored "minutes after midnight" value into an epoch-millis time in the current day. */
-    fun toEpochMillis(minutesAfterMidnight: Int): Long =
-        toEpochMillis(minutesAfterMidnight, ZoneId.systemDefault())
+    fun toEpochMillis(minutesAfterMidnight: Int): Long = toEpochMillis(minutesAfterMidnight, ZoneId.systemDefault())
 
     /** Encodes an epoch-millis time into the stored "minutes after midnight" value. */
-    fun fromEpochMillis(epochMillis: Long): Int =
-        fromEpochMillis(epochMillis, ZoneId.systemDefault())
+    fun fromEpochMillis(epochMillis: Long): Int = fromEpochMillis(epochMillis, ZoneId.systemDefault())
 
     /** [toEpochMillis] with an explicit [zone] (test seam; avoids DST flakiness from the device zone). */
     // Storage-encoding boundary: decodes the persisted "minutes after midnight" into an epoch-millis
     // departure time. The raw Long is the encoding's contract, consumed straight by callers/formatters.
     @Suppress("UnwrappedClockValue")
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal fun toEpochMillis(minutesAfterMidnight: Int, zone: ZoneId): Long =
-        LocalDate.now(zone)
-            .atStartOfDay(zone)
-            .plusMinutes(minutesAfterMidnight.toLong())
-            .toInstant()
-            .toEpochMilli()
+    internal fun toEpochMillis(minutesAfterMidnight: Int, zone: ZoneId): Long = LocalDate.now(zone)
+        .atStartOfDay(zone)
+        .plusMinutes(minutesAfterMidnight.toLong())
+        .toInstant()
+        .toEpochMilli()
 
     /** [fromEpochMillis] with an explicit [zone] (test seam). */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)

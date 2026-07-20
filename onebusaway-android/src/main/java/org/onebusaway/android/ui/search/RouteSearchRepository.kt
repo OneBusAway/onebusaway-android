@@ -15,10 +15,9 @@
  */
 package org.onebusaway.android.ui.search
 
-import org.onebusaway.android.api.data.LocationSearchDataSource
-
 import android.util.Log
 import java.io.IOException
+import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.routeDisplayNames
@@ -57,7 +56,7 @@ interface RouteSearchRepository {
  */
 class DefaultRouteSearchRepository(
     private val searchCenter: SearchCenter,
-    private val search: LocationSearchDataSource,
+    private val search: LocationSearchDataSource
 ) : RouteSearchRepository {
 
     override suspend fun search(query: String): Result<List<RouteSearchResult>> = runCatchingCancellable {
@@ -68,8 +67,10 @@ class DefaultRouteSearchRepository(
         if (routes.isEmpty()) {
             searchCenter.regionCenter()?.let { fallback ->
                 routes = search.routesNearOrEmpty(
-                    fallback.latitude, fallback.longitude,
-                    query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS
+                    fallback.latitude,
+                    fallback.longitude,
+                    query,
+                    SearchCenter.DEFAULT_SEARCH_RADIUS_METERS
                 ).getOrThrow()
             }
         }

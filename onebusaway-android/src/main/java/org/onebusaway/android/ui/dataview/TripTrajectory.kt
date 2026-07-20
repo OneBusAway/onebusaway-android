@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.ui.dataview
 
+import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
-import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
-import kotlin.time.Duration.Companion.seconds
 
 /** A plotted point: distance along the trip (meters) at a server-clock time. */
 data class TrajectoryPoint(val distanceMeters: Double, val timeMs: ServerTime)
@@ -30,7 +30,7 @@ data class ScheduleStop(
     val distanceMeters: Double,
     val arrivalMs: ServerTime,
     val departureMs: ServerTime,
-    val stopId: String?,
+    val stopId: String?
 )
 
 /** One position-PDF histogram bin: a distance and its density normalized to the band peak (0..1). */
@@ -51,7 +51,7 @@ data class ExtrapolationSeries(
     val lowMeters: Double,
     val highMeters: Double,
     val pdf: List<PdfBin>,
-    val scheduleAtMedianMs: ServerTime? = null,
+    val scheduleAtMedianMs: ServerTime? = null
 )
 
 /** The full data extent of a trajectory, for the viewport's initial fit. */
@@ -69,7 +69,7 @@ data class TripTrajectory(
      * local clock using the anchor's server/local skew, so the now line tracks the latest
      * observation even when the device clock drifts from the server's.
      */
-    val nowMs: ServerTime = ServerTime(0L),
+    val nowMs: ServerTime = ServerTime(0L)
 )
 
 /** Lower bound of the position-PDF histogram window (quantile). */
@@ -95,7 +95,7 @@ fun pdfBins(
     distribution: ProbDistribution,
     binCount: Int = PDF_BIN_COUNT,
     lowQuantile: Double = PDF_BIN_LOW_QUANTILE,
-    highQuantile: Double = PDF_BIN_HIGH_QUANTILE,
+    highQuantile: Double = PDF_BIN_HIGH_QUANTILE
 ): List<PdfBin> {
     if (binCount <= 0) return emptyList()
     val lo = distribution.quantile(lowQuantile)
@@ -157,7 +157,7 @@ fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
                 // Resolve each recurring schedule offset onto the server-clock axis.
                 arrivalMs = st.arrivalTime.resolve(day),
                 departureMs = st.departureTime.resolve(day),
-                stopId = st.stopId,
+                stopId = st.stopId
             )
         }
     }.orEmpty()
@@ -167,13 +167,23 @@ fun buildTrajectory(state: TripState, nowMs: WallTime): TripTrajectory {
     val distances = buildList {
         observations.forEach { add(it.distanceMeters) }
         schedule.forEach { add(it.distanceMeters) }
-        extrapolation?.let { add(it.anchor.distanceMeters); add(it.medianMeters); add(it.highMeters) }
+        extrapolation?.let {
+            add(it.anchor.distanceMeters)
+            add(it.medianMeters)
+            add(it.highMeters)
+        }
     }
     val times = buildList {
         add(serverNow) // keep the now line in-bounds even before any extrapolation exists
         observations.forEach { add(it.timeMs) }
-        schedule.forEach { add(it.arrivalMs); add(it.departureMs) }
-        extrapolation?.let { add(it.anchor.timeMs); add(it.nowMs) }
+        schedule.forEach {
+            add(it.arrivalMs)
+            add(it.departureMs)
+        }
+        extrapolation?.let {
+            add(it.anchor.timeMs)
+            add(it.nowMs)
+        }
     }
 
     return TripTrajectory(observations, schedule, extrapolation, dataBounds(distances, times), serverNow)
@@ -194,7 +204,7 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
         lowMeters = low,
         highMeters = high,
         pdf = pdfBins(distribution),
-        scheduleAtMedianMs = interpolateScheduleTime(schedule, median),
+        scheduleAtMedianMs = interpolateScheduleTime(schedule, median)
     )
 }
 
@@ -219,16 +229,15 @@ internal data class ScheduleSegment(val d0: Double, val d1: Double, val t0: Serv
  * bound is the last stop of the run. The result has no degenerate segment, so the caller never has to
  * guard against one (no divide-by-zero, no ambiguous boundary ownership).
  */
-internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegment> =
-    (1 until schedule.size).mapNotNull { i ->
-        val prev = schedule[i - 1]
-        val next = schedule[i]
-        if (next.distanceMeters > prev.distanceMeters) {
-            ScheduleSegment(prev.distanceMeters, next.distanceMeters, prev.departureMs, next.arrivalMs)
-        } else {
-            null
-        }
+internal fun scheduleSegments(schedule: List<ScheduleStop>): List<ScheduleSegment> = (1 until schedule.size).mapNotNull { i ->
+    val prev = schedule[i - 1]
+    val next = schedule[i]
+    if (next.distanceMeters > prev.distanceMeters) {
+        ScheduleSegment(prev.distanceMeters, next.distanceMeters, prev.departureMs, next.arrivalMs)
+    } else {
+        null
     }
+}
 
 /**
  * The server-clock time the [schedule] says the vehicle reaches [distanceMeters], linearly

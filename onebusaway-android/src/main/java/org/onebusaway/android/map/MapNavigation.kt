@@ -17,9 +17,9 @@ package org.onebusaway.android.map
 
 import android.content.Context
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.RegionEntryPoint
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
@@ -63,7 +63,7 @@ object MapNavigation {
                     R.string.analytics_label_floating_bike_balloon_clicked
                 }
             ),
-            null,
+            null
         )
         ExternalIntents.launchTampaHoprApp(context)
     }

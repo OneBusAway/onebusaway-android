@@ -38,6 +38,7 @@ object TripMarkerBitmaps {
     private const val ICON_SIZE_DP = 28
     private const val ICON_PADDING_DP = 4
     private const val STROKE_WIDTH_DP = 2f
+
     // Fully opaque: overlapping, per-frame-moving estimate markers blend visibly with a translucent fill.
     private const val FILL_COLOR = 0xFFFFFFFF.toInt()
 
@@ -62,15 +63,25 @@ object TripMarkerBitmaps {
         val bitmap = createBitmap(sizePx, sizePx)
         val canvas = Canvas(bitmap)
 
-        canvas.drawCircle(center, center, center - strokeWidth / 2f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = STROKE_COLOR
-            style = Paint.Style.STROKE
-            this.strokeWidth = strokeWidth
-        })
-        canvas.drawCircle(center, center, center - strokeWidth, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = FILL_COLOR
-            style = Paint.Style.FILL
-        })
+        canvas.drawCircle(
+            center,
+            center,
+            center - strokeWidth / 2f,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = STROKE_COLOR
+                style = Paint.Style.STROKE
+                this.strokeWidth = strokeWidth
+            }
+        )
+        canvas.drawCircle(
+            center,
+            center,
+            center - strokeWidth,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                color = FILL_COLOR
+                style = Paint.Style.FILL
+            }
+        )
 
         ContextCompat.getDrawable(context, drawableRes)?.apply {
             if (tintColor != 0) setTint(tintColor)

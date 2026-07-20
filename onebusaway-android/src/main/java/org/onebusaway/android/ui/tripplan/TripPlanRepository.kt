@@ -64,21 +64,18 @@ class DefaultTripPlanRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val prefs: PreferencesRepository,
     private val otpWebService: OtpWebService,
-    private val otp2Planner: Otp2Planner,
+    private val otp2Planner: Otp2Planner
 ) : TripPlanRepository {
 
-    override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> =
-        withContext(Dispatchers.IO) {
-            runCatchingCancellable { planInternal(builderFor(params)) }
-        }
+    override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> = withContext(Dispatchers.IO) {
+        runCatchingCancellable { planInternal(builderFor(params)) }
+    }
 
     @WorkerThread
-    override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> =
-        runCatching { planInternal(builder) }.getOrDefault(emptyList())
+    override fun planBlocking(builder: TripRequestBuilder): List<TripItinerary> = runCatching { planInternal(builder) }.getOrDefault(emptyList())
 
     /** Assembles a [TripRequestBuilder] from the UI-supplied [params]. */
-    private fun builderFor(params: TripPlanParams): TripRequestBuilder =
-        params.toRequestBuilder(context)
+    private fun builderFor(params: TripPlanParams): TripRequestBuilder = params.toRequestBuilder(context)
 
     /**
      * Runs the OTP request for an already-assembled [builder] on the calling thread. Throws
@@ -101,7 +98,7 @@ class DefaultTripPlanRepository @Inject constructor(
         val response = requestPlan(
             request,
             baseUrl,
-            oldServer = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false),
+            oldServer = prefs.getBoolean(R.string.preference_key_otp_api_url_version, false)
         )
         val itineraries = response.plan?.itineraries?.map { it.toTripItinerary() }
         if (itineraries.isNullOrEmpty()) {
@@ -154,8 +151,11 @@ class DefaultTripPlanRepository @Inject constructor(
             if (modeStringRequestsBikeRental(request.parameters["mode"], bikeRentalToken)) {
                 // Pre-1.0 servers spell bike rental as "BICYCLE, WALK"; modern ones as "BICYCLE_RENT".
                 val bicycle = TripMode.BICYCLE.name
-                val rental = if (ancientServer) "$bicycle, ${TripMode.WALK.name}"
-                             else bicycle + OTP_RENTAL_QUALIFIER
+                val rental = if (ancientServer) {
+                    "$bicycle, ${TripMode.WALK.name}"
+                } else {
+                    bicycle + OTP_RENTAL_QUALIFIER
+                }
                 params.replace(bicycle, rental)
             } else {
                 params
@@ -197,7 +197,6 @@ class DefaultTripPlanRepository @Inject constructor(
         }
         return parsed
     }
-
 }
 
 /**
@@ -254,12 +253,11 @@ private const val OTP_RENTAL_QUALIFIER = "_RENT"
  * 500'd for router-rooted regions like Puget Sound). A server-root base gets the segment inserted; a
  * router-rooted base (or a [oldServer] pre-1.0 server established by the fallback) gets `/plan` alone.
  */
-internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): String =
-    if (baseUrl.contains(OTP_ROUTERS_SEGMENT) || oldServer) {
-        "$baseUrl$OTP_PLAN_LOCATION$query"
-    } else {
-        "$baseUrl$OTP_ROUTERS_SEGMENT$OTP_PLAN_LOCATION$query"
-    }
+internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): String = if (baseUrl.contains(OTP_ROUTERS_SEGMENT) || oldServer) {
+    "$baseUrl$OTP_PLAN_LOCATION$query"
+} else {
+    "$baseUrl$OTP_ROUTERS_SEGMENT$OTP_PLAN_LOCATION$query"
+}
 
 /**
  * True when [modeString] (the OTP `mode` query value built by
@@ -267,8 +265,7 @@ internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): Str
  * wire token — pulled out as a standalone, `Context`-free function so this (previously never-true —
  * see #1778) derivation is unit-testable.
  */
-internal fun modeStringRequestsBikeRental(modeString: String?, bikeRentalToken: String): Boolean =
-    modeString?.contains(bikeRentalToken) == true
+internal fun modeStringRequestsBikeRental(modeString: String?, bikeRentalToken: String): Boolean = modeString?.contains(bikeRentalToken) == true
 
 /**
  * Assembles a [TripRequestBuilder] from these [TripPlanParams]. Shared by the UI plan path

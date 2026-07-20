@@ -51,29 +51,29 @@ import org.jetbrains.uast.getUCallExpression
  *   through to a consuming API (a DAO write, an alarm, a domain-type mint) is not flagged — the value
  *   never rests, so no domain is lost.
  */
-class RawTimeDetector : Detector(), SourceCodeScanner {
+class RawTimeDetector :
+    Detector(),
+    SourceCodeScanner {
 
     // --- ISSUE: producer reading used in arithmetic / comparison (operand of a binary expression) ---
 
-    override fun getApplicableUastTypes(): List<Class<out UElement>> =
-        listOf(UBinaryExpression::class.java)
+    override fun getApplicableUastTypes(): List<Class<out UElement>> = listOf(UBinaryExpression::class.java)
 
-    override fun createUastHandler(context: JavaContext): UElementHandler =
-        object : UElementHandler() {
-            override fun visitBinaryExpression(node: UBinaryExpression) {
-                if (node.operator !in TimeLintSupport.FLAGGED_OPERATORS) return
-                // Report against whichever operand is the raw clock read (left wins if both are).
-                val key = producerKeyOf(node.leftOperand) ?: producerKeyOf(node.rightOperand) ?: return
-                context.report(
-                    ISSUE,
-                    node,
-                    context.getLocation(node),
-                    "Arithmetic on a raw clock reading — ${mintPhrase(CLOCK_SOURCES[key])} " +
-                        "(org.onebusaway.android.time) at the boundary and do the math through the " +
-                        "typed API, rather than on an unwrapped `Long`.",
-                )
-            }
+    override fun createUastHandler(context: JavaContext): UElementHandler = object : UElementHandler() {
+        override fun visitBinaryExpression(node: UBinaryExpression) {
+            if (node.operator !in TimeLintSupport.FLAGGED_OPERATORS) return
+            // Report against whichever operand is the raw clock read (left wins if both are).
+            val key = producerKeyOf(node.leftOperand) ?: producerKeyOf(node.rightOperand) ?: return
+            context.report(
+                ISSUE,
+                node,
+                context.getLocation(node),
+                "Arithmetic on a raw clock reading — ${mintPhrase(CLOCK_SOURCES[key])} " +
+                    "(org.onebusaway.android.time) at the boundary and do the math through the " +
+                    "typed API, rather than on an unwrapped `Long`."
+            )
         }
+    }
 
     // --- ISSUE_VALUE: producer reading coming to rest in a bare Long/Int slot ---
 
@@ -89,13 +89,12 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
             "A raw time reading comes to rest in ${slot.phrase} as a bare `Long` — " +
                 "${mintPhrase(CLOCK_SOURCES[key])} (org.onebusaway.android.time) at the read so the " +
                 "clock domain travels with the value, instead of letting an untyped time escape into " +
-                "the code.",
+                "the code."
         )
     }
 
     /** The `CLOCK_SOURCES` key of [expr] if it (unwrapping receiver/parens) is a known producer call. */
-    private fun producerKeyOf(expr: UExpression?): String? =
-        producerKey(expr?.getUCallExpression()?.resolve())
+    private fun producerKeyOf(expr: UExpression?): String? = producerKey(expr?.getUCallExpression()?.resolve())
 
     companion object {
         /** `owner#method` key into [CLOCK_SOURCES], or null if [method] isn't a known producer. */
@@ -105,9 +104,11 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
                 .takeIf { CLOCK_SOURCES.containsKey(it) }
         }
 
-        private fun mintPhrase(domain: String?): String =
-            if (domain != null) "mint it into `$domain`"
-            else "mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime`"
+        private fun mintPhrase(domain: String?): String = if (domain != null) {
+            "mint it into `$domain`"
+        } else {
+            "mint it into the matching `ServerTime` / `WallTime` / `ElapsedTime`"
+        }
 
         // Known time producers (fully-qualified owner#method) -> the domain the reading belongs to,
         // or null when it's context-dependent (an epoch-from-object source could be any clock). The
@@ -134,7 +135,7 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
             "java.time.Clock#millis" to null,
             "java.time.ZonedDateTime#toEpochSecond" to null,
             "java.time.OffsetDateTime#toEpochSecond" to null,
-            "java.time.LocalDateTime#toEpochSecond" to null,
+            "java.time.LocalDateTime#toEpochSecond" to null
         )
 
         /** Simple method names lint dispatches on; the owner is confirmed via [producerKey]. */
@@ -167,8 +168,8 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
             severity = Severity.WARNING,
             implementation = Implementation(
                 RawTimeDetector::class.java,
-                Scope.JAVA_FILE_SCOPE,
-            ),
+                Scope.JAVA_FILE_SCOPE
+            )
         )
 
         @JvmField
@@ -200,8 +201,8 @@ class RawTimeDetector : Detector(), SourceCodeScanner {
             severity = Severity.WARNING,
             implementation = Implementation(
                 RawTimeDetector::class.java,
-                Scope.JAVA_FILE_SCOPE,
-            ),
+                Scope.JAVA_FILE_SCOPE
+            )
         )
     }
 }

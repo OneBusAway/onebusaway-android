@@ -15,100 +15,98 @@
  */
 package org.onebusaway.android.util;
 
-import org.onebusaway.android.R;
-
 import android.content.Context;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.onebusaway.android.R;
 
 /**
- * Pure helpers for the reminder feature: FCM payload parsing, the reminder-availability check, and the
- * valid-lead-time list. The reminder storage (create/delete/exists over the Trips table) moved to
- * {@code org.onebusaway.android.reminders.ReminderRepository} at the storage-modernization cutover.
+ * Pure helpers for the reminder feature: FCM payload parsing, the reminder-availability check, and
+ * the valid-lead-time list. The reminder storage (create/delete/exists over the Trips table) moved
+ * to {@code org.onebusaway.android.reminders.ReminderRepository} at the storage-modernization
+ * cutover.
  */
 public class ReminderUtils {
 
-    private static final String TAG = "ReminderUtils";
+  private static final String TAG = "ReminderUtils";
 
-    /**
-     * Key for the arrival-and-departure reminder payload (JSON): the FCM message data key on receipt
-     * and the intent extra it is forwarded as. Shared by the FCM service, the route translator, and
-     * the payload parsers ({@link #getStopIdFromPayload}, {@link #getTripIdFromPayload}).
-     */
-    public static final String ARRIVAL_PAYLOAD_KEY = "arrival_and_departure";
+  /**
+   * Key for the arrival-and-departure reminder payload (JSON): the FCM message data key on receipt
+   * and the intent extra it is forwarded as. Shared by the FCM service, the route translator, and
+   * the payload parsers ({@link #getStopIdFromPayload}, {@link #getTripIdFromPayload}).
+   */
+  public static final String ARRIVAL_PAYLOAD_KEY = "arrival_and_departure";
 
-    /**
-     * Extracts the stop_id from an FCM arrival_and_departure JSON payload.
-     *
-     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
-     * @return the stop ID, or null if not present or unparseable
-     */
-    public static @Nullable String getStopIdFromPayload(@Nullable String arrivalJson) {
-        return stringFromPayload(arrivalJson, "stop_id");
+  /**
+   * Extracts the stop_id from an FCM arrival_and_departure JSON payload.
+   *
+   * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+   * @return the stop ID, or null if not present or unparseable
+   */
+  public static @Nullable String getStopIdFromPayload(@Nullable String arrivalJson) {
+    return stringFromPayload(arrivalJson, "stop_id");
+  }
+
+  /**
+   * Extracts the trip_id from an FCM arrival_and_departure JSON payload.
+   *
+   * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
+   * @return the trip ID, or null if not present or unparseable
+   */
+  public static @Nullable String getTripIdFromPayload(@Nullable String arrivalJson) {
+    return stringFromPayload(arrivalJson, "trip_id");
+  }
+
+  private static String stringFromPayload(String arrivalJson, String key) {
+    if (arrivalJson == null) return null;
+    try {
+      JSONObject arrival = new JSONObject(arrivalJson);
+      String value = arrival.optString(key, "");
+      return value.isEmpty() ? null : value;
+    } catch (JSONException e) {
+      Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
+      return null;
+    }
+  }
+
+  /**
+   * Returns the valid reminder lead-times for a departure.
+   *
+   * @param context the application context
+   * @param departTimeMs the departure time, epoch millis
+   * @param nowMs "now", epoch millis, in the SAME clock domain as departTimeMs — the server clock
+   *     for a live arrival's predicted/scheduled departure, or the device clock for a
+   *     locally-reconstructed scheduled time. Measuring the two on one clock keeps device clock
+   *     skew out of the offsets (#1612); this helper never reads a clock itself, so the domain
+   *     choice stays with the caller.
+   * @return the valid reminder times
+   */
+  public static @NonNull String[] getReminderTimes(
+      @NonNull Context context, long departTimeMs, long nowMs) {
+    Integer[] times = {3, 5, 10, 15, 20, 25, 30};
+    // Same-domain subtraction — both operands are epoch millis on the caller's chosen clock.
+    long departTimeInMinutes = (long) Math.ceil((departTimeMs - nowMs) / 60000.0);
+    String[] allTimes = context.getResources().getStringArray(R.array.reminder_time);
+    List<String> validTimes = new ArrayList<>();
+
+    // Add at least 1 minute to the list of valid times
+    validTimes.add(allTimes[0]);
+
+    int index = 1;
+    for (Integer time : times) {
+      if (time <= departTimeInMinutes) {
+        validTimes.add(allTimes[index]);
+      } else {
+        break;
+      }
+      ++index;
     }
 
-    /**
-     * Extracts the trip_id from an FCM arrival_and_departure JSON payload.
-     *
-     * @param arrivalJson the JSON string from the arrival_and_departure FCM data field
-     * @return the trip ID, or null if not present or unparseable
-     */
-    public static @Nullable String getTripIdFromPayload(@Nullable String arrivalJson) {
-        return stringFromPayload(arrivalJson, "trip_id");
-    }
-
-    private static String stringFromPayload(String arrivalJson, String key) {
-        if (arrivalJson == null) return null;
-        try {
-            JSONObject arrival = new JSONObject(arrivalJson);
-            String value = arrival.optString(key, "");
-            return value.isEmpty() ? null : value;
-        } catch (JSONException e) {
-            Log.e(TAG, "Error parsing arrival_and_departure JSON", e);
-            return null;
-        }
-    }
-
-    /**
-     * Returns the valid reminder lead-times for a departure.
-     *
-     * @param context      the application context
-     * @param departTimeMs the departure time, epoch millis
-     * @param nowMs        "now", epoch millis, in the SAME clock domain as departTimeMs — the server
-     *                     clock for a live arrival's predicted/scheduled departure, or the device clock
-     *                     for a locally-reconstructed scheduled time. Measuring the two on one clock
-     *                     keeps device clock skew out of the offsets (#1612); this helper never reads a
-     *                     clock itself, so the domain choice stays with the caller.
-     * @return the valid reminder times
-     */
-    public static @NonNull String[] getReminderTimes(@NonNull Context context, long departTimeMs, long nowMs) {
-        Integer[] times = {3, 5, 10, 15, 20, 25, 30};
-        // Same-domain subtraction — both operands are epoch millis on the caller's chosen clock.
-        long departTimeInMinutes = (long) Math.ceil((departTimeMs - nowMs) / 60000.0);
-        String[] allTimes = context.getResources().getStringArray(R.array.reminder_time);
-        List<String> validTimes = new ArrayList<>();
-
-        // Add at least 1 minute to the list of valid times
-        validTimes.add(allTimes[0]);
-
-        int index = 1;
-        for (Integer time : times) {
-            if (time <= departTimeInMinutes) {
-                validTimes.add(allTimes[index]);
-            } else {
-                break;
-            }
-            ++index;
-        }
-
-        return validTimes.toArray(new String[0]);
-    }
+    return validTimes.toArray(new String[0]);
+  }
 }

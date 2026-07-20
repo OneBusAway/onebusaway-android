@@ -37,9 +37,9 @@ class ArrivalTutorialTest {
             listOf(
                 ArrivalTutorial.KEY_ETA,
                 ArrivalTutorial.KEY_PANEL,
-                ArrivalTutorial.KEY_MORE_MENU,
+                ArrivalTutorial.KEY_MORE_MENU
             ),
-            pending.map { it.id },
+            pending.map { it.id }
         )
     }
 
@@ -58,7 +58,7 @@ class ArrivalTutorialTest {
 
         assertEquals(
             listOf(ArrivalTutorial.KEY_PANEL, ArrivalTutorial.KEY_MORE_MENU),
-            ArrivalTutorial.pendingSteps(prefs).map { it.id },
+            ArrivalTutorial.pendingSteps(prefs).map { it.id }
         )
     }
 

@@ -46,7 +46,7 @@ class DirectionCardGroupingTest {
         mode = TripMode.WALK,
         from = TripPlace(name = "Origin", lat = walkFrom.latitude, lon = walkFrom.longitude),
         to = TripPlace(name = "Pine St & 3rd Ave", lat = boardFrom.latitude, lon = boardFrom.longitude),
-        legGeometry = TripLegGeometry(points = encoded, length = 3),
+        legGeometry = TripLegGeometry(points = encoded, length = 3)
     )
 
     private val transitLeg = TripLeg(
@@ -54,14 +54,20 @@ class DirectionCardGroupingTest {
         routeId = "1_100",
         routeShortName = "8",
         from = TripPlace(
-            name = "Pine St & 3rd Ave", stopId = "1_500", stopCode = "500",
-            lat = boardFrom.latitude, lon = boardFrom.longitude,
+            name = "Pine St & 3rd Ave",
+            stopId = "1_500",
+            stopCode = "500",
+            lat = boardFrom.latitude,
+            lon = boardFrom.longitude
         ),
         to = TripPlace(
-            name = "Rainier & Alaska", stopId = "1_600", stopCode = "600",
-            lat = alightTo.latitude, lon = alightTo.longitude,
+            name = "Rainier & Alaska",
+            stopId = "1_600",
+            stopCode = "600",
+            lat = alightTo.latitude,
+            lon = alightTo.longitude
         ),
-        legGeometry = TripLegGeometry(points = encoded, length = 3),
+        legGeometry = TripLegGeometry(points = encoded, length = 3)
     )
 
     private val walkDir = Direction().apply {
@@ -112,7 +118,7 @@ class DirectionCardGroupingTest {
         routeId = "1_100",
         headsign = "Rainier Beach",
         board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", boardFrom),
-        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", alightTo),
+        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", alightTo)
     )
 
     @Test
@@ -120,7 +126,7 @@ class DirectionCardGroupingTest {
         val cards = DirectionCardGrouping.groupByLeg(
             legs = listOf(walkLeg, transitLeg),
             flatDirections = listOf(walkDir, boardDir, alightDir),
-            routeLegRefs = listOf(null, transitRef),
+            routeLegRefs = listOf(null, transitRef)
         )
         assertEquals(2, cards.size)
         assertFalse(cards[0].isTransit)
@@ -133,7 +139,7 @@ class DirectionCardGroupingTest {
             .groupByLeg(listOf(walkLeg), listOf(walkDir), listOf(null)).single()
         assertTrue("leg number prefixed", walk.text.startsWith("1. "))
         assertEquals(3, walk.legPoints.size) // decoded from the leg geometry, for body-tap framing
-        assertEquals(1, walk.subItems.size)  // its turn step
+        assertEquals(1, walk.subItems.size) // its turn step
         assertEquals(stopMid, walk.subItems.single().focusPoint)
         assertNull("walk legs carry no route identity", walk.routeLeg)
     }

@@ -24,11 +24,10 @@ import androidx.core.graphics.toColorInt
  * when absent or malformed. The single canonical parse used by the wire DTO color readers
  * ([org.onebusaway.android.api.colorArgb]).
  */
-fun parseObaHexColor(hex: String?): Int? =
-    hex?.takeIf { it.isNotEmpty() }?.let {
-        try {
-            "#${it.trim()}".toColorInt()
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+fun parseObaHexColor(hex: String?): Int? = hex?.takeIf { it.isNotEmpty() }?.let {
+    try {
+        "#${it.trim()}".toColorInt()
+    } catch (e: IllegalArgumentException) {
+        null
     }
+}

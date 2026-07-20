@@ -41,7 +41,7 @@ data class TripReportContext(
     val hasTripStatus: Boolean,
     val scheduleDeviation: Long,
     val lastKnownLat: Double?,
-    val lastKnownLon: Double?,
+    val lastKnownLon: Double?
 )
 
 /**
@@ -58,7 +58,7 @@ data class ReportContext(
     val locationString: String? = null,
     val agencyName: String? = null,
     val blockId: String? = null,
-    val trip: TripReportContext? = null,
+    val trip: TripReportContext? = null
 ) {
 
     /**
@@ -148,7 +148,7 @@ data class ReportContext(
                     hasTripStatus = hasTripStatus?.toBoolean() ?: false,
                     scheduleDeviation = scheduleDeviation?.toLong() ?: 0L,
                     lastKnownLat = lastKnownLat?.toDouble(),
-                    lastKnownLon = lastKnownLon?.toDouble(),
+                    lastKnownLon = lastKnownLon?.toDouble()
                 )
             }
             return ReportContext(
@@ -160,7 +160,7 @@ data class ReportContext(
                 locationString = locationString,
                 agencyName = agencyName,
                 blockId = blockId,
-                trip = trip,
+                trip = trip
             )
         }
     }

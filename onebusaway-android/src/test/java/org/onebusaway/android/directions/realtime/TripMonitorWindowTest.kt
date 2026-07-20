@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.directions.realtime
 
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /** JVM unit tests for [TripMonitorWindow] — the monitor's start/stop timing boundaries. */
 class TripMonitorWindowTest {

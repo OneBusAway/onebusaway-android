@@ -15,20 +15,20 @@
  */
 package org.onebusaway.android.nav;
 
+import static android.text.TextUtils.isEmpty;
+import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
+
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.notifications.NotificationChannels;
-import org.onebusaway.android.app.di.AnalyticsEntryPoint;
-import org.onebusaway.android.util.PreferenceUtils;
-
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,168 +36,172 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
-
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.RemoteInput;
-import androidx.work.ExistingPeriodicWorkPolicy;
-import androidx.work.PeriodicWorkRequest;
-import androidx.work.WorkManager;
-
-import static android.text.TextUtils.isEmpty;
-import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
-
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
+import org.onebusaway.android.notifications.NotificationChannels;
+import org.onebusaway.android.util.PreferenceUtils;
 
 public class FeedbackReceiver extends BroadcastReceiver {
-    public static final String TAG = "FeedbackReceiver";
-    public static final String ACTION_REPLY = BuildConfig.APPLICATION_ID + ".action.REPLY";
-    public static final String ACTION_DISMISS_FEEDBACK = BuildConfig.APPLICATION_ID + ".action.DISMISS_FEEDBACK";
-    public static final String TRIP_ID = ".TRIP_ID";
-    public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
-    public static final String RESPONSE = ".RESPONSE";
-    public static final String LOG_FILE = ".LOG_FILE";
+  public static final String TAG = "FeedbackReceiver";
+  public static final String ACTION_REPLY = BuildConfig.APPLICATION_ID + ".action.REPLY";
+  public static final String ACTION_DISMISS_FEEDBACK =
+      BuildConfig.APPLICATION_ID + ".action.DISMISS_FEEDBACK";
+  public static final String TRIP_ID = ".TRIP_ID";
+  public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
+  public static final String RESPONSE = ".RESPONSE";
+  public static final String LOG_FILE = ".LOG_FILE";
 
-    public static final int FEEDBACK_NO = 1;
-    public static final int FEEDBACK_YES = 2;
+  public static final int FEEDBACK_NO = 1;
+  public static final int FEEDBACK_YES = 2;
 
+  @Override
+  public void onReceive(Context context, Intent intent) {
+    Log.d(TAG, "onReceive");
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        Log.d(TAG, "onReceive");
+    int notifyId =
+        intent.getIntExtra(NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1);
+    // int actionNum = intent.getIntExtra(ACTION_NUM, 0);
+    String action = intent.getAction();
 
+    if (action == ACTION_DISMISS_FEEDBACK) {
+      Log.d(TAG, "Dismiss intent");
+      // TODO : Create Snack bar if user dismissed feedback notification without providing feedback
+    } else if (action == ACTION_REPLY) {
+      Log.d(TAG, "Capturing user feedback from notification");
+      captureFeedback(context, intent, notifyId);
+    }
+  }
 
-        int notifyId = intent.getIntExtra(NOTIFICATION_ID,
-                NavigationServiceProvider.NOTIFICATION_ID + 1);
-        //int actionNum = intent.getIntExtra(ACTION_NUM, 0);
-        String action = intent.getAction();
+  private void captureFeedback(Context context, Intent intent, int notifyId) {
+    int response = intent.getIntExtra(RESPONSE, 0);
+    String logFile = intent.getExtras().getString(LOG_FILE);
+    Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+    String userResponse = null;
 
-        if (action == ACTION_DISMISS_FEEDBACK) {
-            Log.d(TAG, "Dismiss intent");
-            //TODO : Create Snack bar if user dismissed feedback notification without providing feedback
-        } else if (action == ACTION_REPLY) {
-            Log.d(TAG, "Capturing user feedback from notification");
-            captureFeedback(context, intent, notifyId);
+    if (remoteInput != null) {
+      Log.d(TAG, "checked remoteInput ");
+      String feedback = remoteInput.getCharSequence(NavigationService.KEY_TEXT_REPLY).toString();
+
+      Log.d(TAG, "Feedback captured");
+
+      NotificationCompat.Builder repliedNotification =
+          new NotificationCompat.Builder(context, NotificationChannels.DESTINATION_ALERT_ID)
+              .setSmallIcon(R.drawable.ic_bus)
+              .setContentTitle(context.getResources().getString(R.string.feedback_notify_title))
+              .setContentText(
+                  context.getResources().getString(R.string.feedback_notify_confirmation));
+
+      Log.d(TAG, "Thank you!");
+      repliedNotification.setOngoing(false);
+
+      NotificationManager mNotificationManager =
+          (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+      mNotificationManager.notify(notifyId, repliedNotification.build());
+
+      if (response == FEEDBACK_YES) {
+        userResponse = context.getString(R.string.analytics_label_destination_reminder_yes);
+      } else {
+        userResponse = context.getString(R.string.analytics_label_destination_reminder_no);
+      }
+
+      Log.d(TAG, "cancelling notification");
+      mNotificationManager.cancel(notifyId);
+
+      Boolean pref =
+          PreferenceUtils.getBoolean(
+              context
+                  .getResources()
+                  .getString(R.string.preferences_key_user_share_destination_logs),
+              true);
+
+      if (pref) {
+        Log.d(TAG, "True");
+        moveLog(context, feedback, userResponse, logFile);
+      } else {
+        Log.d(TAG, "False");
+        deleteLog(logFile);
+        logFeedback(context, feedback, userResponse);
+      }
+    }
+  }
+
+  private void moveLog(Context context, String feedback, String userResponse, String logFile) {
+    try {
+      File lFile = new File(logFile);
+      try (Writer writer =
+          new OutputStreamWriter(new FileOutputStream(lFile, true), StandardCharsets.UTF_8)) {
+        writer.write(System.getProperty("line.separator") + "User Feedback - " + feedback);
+      }
+      Log.d(TAG, "Feedback appended");
+
+      File destFolder =
+          new File(
+              context.getFilesDir().getAbsolutePath()
+                  + File.separator
+                  + LOG_DIRECTORY
+                  + File.separator
+                  + userResponse);
+
+      if (BuildConfig.DEBUG) Log.d(TAG, "sourceLocation: " + lFile);
+      if (BuildConfig.DEBUG) Log.d(TAG, "targetLocation: " + destFolder);
+
+      try {
+        destFolder.mkdirs();
+        File movedFile = new File(destFolder, lFile.getName());
+        if (!lFile.renameTo(movedFile)) {
+          throw new IOException("Failed to move " + lFile + " to " + destFolder);
         }
+        Log.d(TAG, "Move file successful.");
+      } catch (Exception e) {
+        Log.d(TAG, "File move failed");
+      }
+
+      setupLogUploadTask(context);
+
+    } catch (IOException e) {
+      Log.e(TAG, "File write failed: " + e.toString());
     }
+  }
 
-    private void captureFeedback(Context context, Intent intent, int notifyId) {
-        int response = intent.getIntExtra(RESPONSE, 0);
-        String logFile = intent.getExtras().getString(LOG_FILE);
-        Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
-        String userResponse = null;
+  private void deleteLog(String logFile) {
+    File lFile = new File(logFile);
+    boolean deleted = lFile.delete();
+    if (BuildConfig.DEBUG) Log.v(TAG, "Log deleted " + deleted);
+  }
 
-        if (remoteInput != null) {
-            Log.d(TAG, "checked remoteInput ");
-            String feedback = remoteInput.getCharSequence(
-                    NavigationService.KEY_TEXT_REPLY).toString();
+  private void setupLogUploadTask(Context context) {
+    PeriodicWorkRequest.Builder uploadLogsBuilder =
+        new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24, TimeUnit.HOURS);
 
-            Log.d(TAG, "Feedback captured");
+    // Create the actual work object:
+    PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
 
-            NotificationCompat.Builder repliedNotification =
-                    new NotificationCompat.Builder(context
-                            , NotificationChannels.DESTINATION_ALERT_ID)
-                            .setSmallIcon(R.drawable.ic_bus)
-                            .setContentTitle(context.getResources()
-                                    .getString(R.string.feedback_notify_title))
-                            .setContentText(context.getResources()
-                                    .getString(R.string.feedback_notify_confirmation));
+    // Then enqueue the recurring task under a unique name so repeated feedback submissions keep
+    // a single upload chain instead of stacking one each time:
+    WorkManager.getInstance(context)
+        .enqueueUniquePeriodicWork(
+            NavigationUploadWorker.UNIQUE_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            uploadCheckWork);
+  }
 
-            Log.d(TAG, "Thank you!");
-            repliedNotification.setOngoing(false);
-
-            NotificationManager mNotificationManager = (NotificationManager)
-                    context.getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.notify(notifyId, repliedNotification.build());
-
-            if (response == FEEDBACK_YES) {
-                userResponse = context.getString(R.string.analytics_label_destination_reminder_yes);
-            } else {
-                userResponse = context.getString(R.string.analytics_label_destination_reminder_no);
-            }
-
-            Log.d(TAG, "cancelling notification");
-            mNotificationManager.cancel(notifyId);
-
-            Boolean pref = PreferenceUtils.getBoolean(context.getResources()
-                    .getString(R.string.preferences_key_user_share_destination_logs), true);
-
-            if (pref) {
-                Log.d(TAG, "True");
-                moveLog(context, feedback, userResponse, logFile);
-            } else {
-                Log.d(TAG, "False");
-                deleteLog(logFile);
-                logFeedback(context, feedback, userResponse);
-            }
-        }
+  private void logFeedback(Context context, String feedbackText, String userResponse) {
+    Boolean wasGoodReminder;
+    if (userResponse.equals(context.getString(R.string.analytics_label_destination_reminder_yes))) {
+      wasGoodReminder = true;
+    } else {
+      wasGoodReminder = false;
     }
-
-    private void moveLog(Context context, String feedback, String userResponse, String logFile) {
-        try {
-            File lFile = new File(logFile);
-            try (Writer writer = new OutputStreamWriter(
-                    new FileOutputStream(lFile, true), StandardCharsets.UTF_8)) {
-                writer.write(System.getProperty("line.separator") + "User Feedback - " + feedback);
-            }
-            Log.d(TAG, "Feedback appended");
-
-            File destFolder = new File(context.getFilesDir()
-                    .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + userResponse);
-
-            if (BuildConfig.DEBUG) Log.d(TAG, "sourceLocation: " + lFile);
-            if (BuildConfig.DEBUG) Log.d(TAG, "targetLocation: " + destFolder);
-
-            try {
-                destFolder.mkdirs();
-                File movedFile = new File(destFolder, lFile.getName());
-                if (!lFile.renameTo(movedFile)) {
-                    throw new IOException("Failed to move " + lFile + " to " + destFolder);
-                }
-                Log.d(TAG, "Move file successful.");
-            } catch (Exception e) {
-                Log.d(TAG, "File move failed");
-            }
-
-            setupLogUploadTask(context);
-
-        } catch (IOException e) {
-            Log.e(TAG, "File write failed: " + e.toString());
-        }
-
-    }
-
-    private void deleteLog(String logFile) {
-        File lFile = new File(logFile);
-        boolean deleted = lFile.delete();
-        if (BuildConfig.DEBUG) Log.v(TAG, "Log deleted " + deleted);
-    }
-
-    private void setupLogUploadTask(Context context) {
-        PeriodicWorkRequest.Builder uploadLogsBuilder =
-                new PeriodicWorkRequest.Builder(NavigationUploadWorker.class, 24,
-                        TimeUnit.HOURS);
-
-        // Create the actual work object:
-        PeriodicWorkRequest uploadCheckWork = uploadLogsBuilder.build();
-
-        // Then enqueue the recurring task under a unique name so repeated feedback submissions keep
-        // a single upload chain instead of stacking one each time:
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                NavigationUploadWorker.UNIQUE_WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
-                uploadCheckWork);
-    }
-
-    private void logFeedback(Context context, String feedbackText, String userResponse) {
-        Boolean wasGoodReminder;
-        if (userResponse.equals(context.getString(R.string.analytics_label_destination_reminder_yes))) {
-            wasGoodReminder = true;
-        } else {
-            wasGoodReminder = false;
-        }
-        AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(wasGoodReminder
-                , ((!isEmpty(feedbackText)) ? feedbackText : null), null);
-        if (BuildConfig.DEBUG) Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
-                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null));
-    }
-
+    AnalyticsEntryPoint.get(context)
+        .reportDestinationReminderFeedback(
+            wasGoodReminder, ((!isEmpty(feedbackText)) ? feedbackText : null), null);
+    if (BuildConfig.DEBUG)
+      Log.d(
+          TAG,
+          "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+              + wasGoodReminder
+              + ", feedbackText - "
+              + ((!isEmpty(feedbackText)) ? feedbackText : null));
+  }
 }

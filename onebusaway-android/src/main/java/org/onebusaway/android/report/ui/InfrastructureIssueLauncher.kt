@@ -54,11 +54,12 @@ object InfrastructureIssueLauncher {
             lon = longitude,
             agencyName = agencyName,
             blockId = blockId,
-            trip = trip,
+            trip = trip
         )
         activity.startActivity(
             HomeActivity.navIntent(
-                activity, NavRoutes.infrastructureIssue(serviceKeyword, context.encode())
+                activity,
+                NavRoutes.infrastructureIssue(serviceKeyword, context.encode())
             )
         )
     }

@@ -1,124 +1,127 @@
 package org.onebusaway.android.widealerts;
 
+import android.content.Context;
+import android.util.Log;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.google.transit.realtime.GtfsRealtime;
-
+import dagger.hilt.android.qualifiers.ApplicationContext;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.RegionEntryPoint;
 import org.onebusaway.android.region.Region;
 import org.onebusaway.android.util.PreferenceUtils;
 
-import android.content.Context;
-import android.util.Log;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
-import java.net.URL;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import dagger.hilt.android.qualifiers.ApplicationContext;
-
-/**
- * Fetches GTFS alerts and processes them.
- */
+/** Fetches GTFS alerts and processes them. */
 @Singleton
 public class GtfsAlerts {
 
-    private static final String TAG = "GtfsAlerts";
-    private static final Set<String> fetchedRegions = new HashSet<>();
-    private final Context mContext;
+  private static final String TAG = "GtfsAlerts";
+  private static final Set<String> fetchedRegions = new HashSet<>();
+  private final Context mContext;
 
-    @Inject
-    public GtfsAlerts(@ApplicationContext @NonNull Context context) {
-        mContext = context;
+  @Inject
+  public GtfsAlerts(@ApplicationContext @NonNull Context context) {
+    mContext = context;
+  }
+
+  /**
+   * Fetches GTFS alerts from a specified URL and processes them.
+   *
+   * @param regionId The current region ID.
+   * @param callback The callback to handle the alert data.
+   */
+  public void fetchAlerts(@NonNull String regionId, @NonNull GtfsAlertCallBack callback) {
+    if (fetchedRegions.contains(regionId)) {
+      Log.d(TAG, "Alerts already fetched for region: " + regionId);
+      return;
     }
-
-    /**
-     * Fetches GTFS alerts from a specified URL and processes them.
-     *
-     * @param regionId The current region ID.
-     * @param callback The callback to handle the alert data.
-     */
-    public void fetchAlerts(@NonNull String regionId, @NonNull GtfsAlertCallBack callback) {
-        if (fetchedRegions.contains(regionId)) {
-            Log.d(TAG, "Alerts already fetched for region: " + regionId);
-            return;
-        }
-        String pathUrl = getGtfsAlertsUrl(regionId);
-        if (pathUrl == null) {
-            return;
-        }
-        if (BuildConfig.DEBUG) Log.d(TAG, "fetchAlerts for region: " + regionId);
-        new Thread(() -> {
-            try {
+    String pathUrl = getGtfsAlertsUrl(regionId);
+    if (pathUrl == null) {
+      return;
+    }
+    if (BuildConfig.DEBUG) Log.d(TAG, "fetchAlerts for region: " + regionId);
+    new Thread(
+            () -> {
+              try {
                 URL url = new URL(pathUrl);
-                GtfsRealtime.FeedMessage feed = GtfsRealtime.FeedMessage.parseFrom(url.openStream());
+                GtfsRealtime.FeedMessage feed =
+                    GtfsRealtime.FeedMessage.parseFrom(url.openStream());
                 // "Now" for the alert start-date window: the feed header timestamp is this feed's
-                // server clock (seconds since epoch), so using it cancels device clock skew (#1612).
-                // Resolve the device-clock fallback here at the boundary so the downstream check stays
+                // server clock (seconds since epoch), so using it cancels device clock skew
+                // (#1612).
+                // Resolve the device-clock fallback here at the boundary so the downstream check
+                // stays
                 // a pure function of its inputs.
-                long nowMs = feed.hasHeader() && feed.getHeader().hasTimestamp()
+                long nowMs =
+                    feed.hasHeader() && feed.getHeader().hasTimestamp()
                         ? feed.getHeader().getTimestamp() * 1000L
                         : System.currentTimeMillis();
                 processAlerts(feed.getEntityList(), nowMs, callback);
                 fetchedRegions.add(regionId);
-            } catch (Exception e) {
+              } catch (Exception e) {
                 Log.e(TAG, "Error fetching GTFS alert data for region: " + regionId, e);
                 e.printStackTrace();
-            }
-        }).start();
+              }
+            })
+        .start();
+  }
+
+  /**
+   * Processes the list of GTFS alerts and triggers the callback for one valid alert.
+   *
+   * @param alerts The list of GTFS alert entities.
+   * @param nowMs "Now" in epoch millis for the start-date window — the feed's server clock, or the
+   *     device clock when the feed carried no header timestamp (resolved by the caller).
+   * @param callback The callback to handle each alert.
+   */
+  public void processAlerts(
+      @NonNull List<GtfsRealtime.FeedEntity> alerts,
+      long nowMs,
+      @NonNull GtfsAlertCallBack callback) {
+    for (GtfsRealtime.FeedEntity entity : alerts) {
+      if (!GtfsAlertsHelper.isValidEntity(mContext, entity, nowMs)) {
+        continue;
+      }
+      GtfsRealtime.Alert alert = entity.getAlert();
+      String id = entity.getId();
+      String title = GtfsAlertsHelper.getAlertTitle(alert);
+      String description = GtfsAlertsHelper.getAlertDescription(alert);
+      String url = GtfsAlertsHelper.getAlertUrl(alert);
+
+      if (BuildConfig.DEBUG)
+        Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
+      GtfsAlertsHelper.markAlertAsRead(mContext, entity);
+      callback.onAlert(title, description, url);
+      // Only trigger the callback for one alert.
+      break;
     }
+  }
 
-    /**
-     * Processes the list of GTFS alerts and triggers the callback for one valid alert.
-     *
-     * @param alerts   The list of GTFS alert entities.
-     * @param nowMs    "Now" in epoch millis for the start-date window — the feed's server clock, or
-     *                 the device clock when the feed carried no header timestamp (resolved by the caller).
-     * @param callback The callback to handle each alert.
-     */
-    public void processAlerts(@NonNull List<GtfsRealtime.FeedEntity> alerts, long nowMs, @NonNull GtfsAlertCallBack callback) {
-        for (GtfsRealtime.FeedEntity entity : alerts) {
-            if (!GtfsAlertsHelper.isValidEntity(mContext, entity, nowMs)) {
-                continue;
-            }
-            GtfsRealtime.Alert alert = entity.getAlert();
-            String id = entity.getId();
-            String title = GtfsAlertsHelper.getAlertTitle(alert);
-            String description = GtfsAlertsHelper.getAlertDescription(alert);
-            String url = GtfsAlertsHelper.getAlertUrl(alert);
-
-            if (BuildConfig.DEBUG) Log.d(TAG, "Alert: " + id + " - " + title + " - " + description + " - " + url);
-            GtfsAlertsHelper.markAlertAsRead(mContext, entity);
-            callback.onAlert(title, description, url);
-            // Only trigger the callback for one alert.
-            break;
-        }
-    }
-
-    /**
-     * Constructs the URL for fetching GTFS alerts for a given region.
-     *
-     * @param regionId The ID of the region for which to fetch alerts.
-     * @return The URL to fetch GTFS alerts.
-     */
-    @Nullable
-    public String getGtfsAlertsUrl(@NonNull String regionId) {
-        Region region = RegionEntryPoint.get(mContext).currentRegion();
-        if (region == null) return null;
-        String baseUrl = region.getSidecarBaseUrl();
-        if (baseUrl == null) return null;
-        boolean isTestAlert = PreferenceUtils.getBoolean(mContext.getString(R.string.preferences_display_test_alerts), false);
-        String alertAPIURL = baseUrl + mContext.getString(R.string.alerts_api_endpoint);
-        alertAPIURL = alertAPIURL.replace("regionID", regionId);
-        if (isTestAlert) alertAPIURL += "?test=1";
-        return alertAPIURL;
-    }
-
+  /**
+   * Constructs the URL for fetching GTFS alerts for a given region.
+   *
+   * @param regionId The ID of the region for which to fetch alerts.
+   * @return The URL to fetch GTFS alerts.
+   */
+  @Nullable
+  public String getGtfsAlertsUrl(@NonNull String regionId) {
+    Region region = RegionEntryPoint.get(mContext).currentRegion();
+    if (region == null) return null;
+    String baseUrl = region.getSidecarBaseUrl();
+    if (baseUrl == null) return null;
+    boolean isTestAlert =
+        PreferenceUtils.getBoolean(
+            mContext.getString(R.string.preferences_display_test_alerts), false);
+    String alertAPIURL = baseUrl + mContext.getString(R.string.alerts_api_endpoint);
+    alertAPIURL = alertAPIURL.replace("regionID", regionId);
+    if (isTestAlert) alertAPIURL += "?test=1";
+    return alertAPIURL;
+  }
 }

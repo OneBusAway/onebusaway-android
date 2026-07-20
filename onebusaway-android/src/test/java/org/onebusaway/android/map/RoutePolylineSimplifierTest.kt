@@ -18,9 +18,9 @@ package org.onebusaway.android.map
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.simplifyRoutePolyline
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
+import org.onebusaway.android.util.GeoPoint
 
 class RoutePolylineSimplifierTest {
 
@@ -38,7 +38,7 @@ class RoutePolylineSimplifierTest {
         val points = listOf(
             point(eastMeters = 0.0),
             point(eastMeters = 10.0, northMeters = 1.0),
-            point(eastMeters = 20.0),
+            point(eastMeters = 20.0)
         )
 
         val simplified = simplifyRoutePolyline(points, toleranceMeters = 2.0)
@@ -51,7 +51,7 @@ class RoutePolylineSimplifierTest {
         val points = listOf(
             point(eastMeters = 0.0),
             point(eastMeters = 10.0, northMeters = 3.0),
-            point(eastMeters = 20.0),
+            point(eastMeters = 20.0)
         )
 
         assertEquals(points, simplifyRoutePolyline(points, toleranceMeters = 2.0))
@@ -65,7 +65,7 @@ class RoutePolylineSimplifierTest {
             point(eastMeters = 10.0),
             point(eastMeters = 10.0, northMeters = 10.0),
             point(eastMeters = 0.0, northMeters = 10.0),
-            start,
+            start
         )
 
         assertEquals(points, simplifyRoutePolyline(points, toleranceMeters = 2.0))
@@ -78,9 +78,8 @@ class RoutePolylineSimplifierTest {
         assertSame(points, simplifyRoutePolyline(points, toleranceMeters = 0.0))
     }
 
-    private fun point(eastMeters: Double, northMeters: Double = 0.0): GeoPoint =
-        GeoPoint(
-            latitude = Math.toDegrees(northMeters / EARTH_RADIUS_METERS),
-            longitude = Math.toDegrees(eastMeters / EARTH_RADIUS_METERS),
-        )
+    private fun point(eastMeters: Double, northMeters: Double = 0.0): GeoPoint = GeoPoint(
+        latitude = Math.toDegrees(northMeters / EARTH_RADIUS_METERS),
+        longitude = Math.toDegrees(eastMeters / EARTH_RADIUS_METERS)
+    )
 }

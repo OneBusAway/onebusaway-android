@@ -46,7 +46,7 @@ fun ScrollChevronGutter(
     visible: Boolean,
     pointsRight: Boolean,
     contentDescriptionRes: Int,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     Box(
         Modifier

@@ -51,5 +51,5 @@ data class DataAgeMarker(val point: GeoPoint, val ageMillis: Long)
 data class TripOverlay(
     val fastEstimatePoint: GeoPoint? = null,
     val band: List<BandSegment> = emptyList(),
-    val fixTimeMs: Long = 0L,
+    val fixTimeMs: Long = 0L
 )

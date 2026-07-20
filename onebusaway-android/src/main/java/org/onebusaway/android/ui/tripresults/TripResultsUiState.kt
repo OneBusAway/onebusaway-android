@@ -33,7 +33,7 @@ data class ItineraryOption(
     val durationMinutes: Long,
     val startTime: ServerTime,
     val endTime: ServerTime,
-    val walkDistanceMeters: Double = 0.0,
+    val walkDistanceMeters: Double = 0.0
 )
 
 /** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */
@@ -75,7 +75,7 @@ data class DirectionItem(
     val subItems: List<DirectionItem> = emptyList(),
     val focusPoint: GeoPoint? = null,
     val legPoints: List<GeoPoint> = emptyList(),
-    val routeLeg: RouteLegRef? = null,
+    val routeLeg: RouteLegRef? = null
 ) {
     companion object {
         /** Sentinel for "no icon", matching the legacy Direction.getIcon() contract. */
@@ -94,7 +94,7 @@ data class RouteLegRef(
     val routeId: String?,
     val headsign: String?,
     val board: RouteStopRef?,
-    val alight: RouteStopRef?,
+    val alight: RouteStopRef?
 )
 
 /** A transit stop reached on a leg — its OBA id (for arrivals), display name, code, and location. */
@@ -102,7 +102,7 @@ data class RouteStopRef(
     val stopId: String?,
     val stopCode: String?,
     val name: String?,
-    val point: GeoPoint?,
+    val point: GeoPoint?
 )
 
 /** UI state for the trip-planning results screen. */

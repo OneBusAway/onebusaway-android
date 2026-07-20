@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.data.toRouteStopGroups
-
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.References
@@ -25,11 +27,7 @@ import org.onebusaway.android.api.contract.StopGroupName
 import org.onebusaway.android.api.contract.StopGrouping
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.api.contract.StopsForRoute
-
-import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.onebusaway.android.api.data.toRouteStopGroups
 
 /**
  * Pure-logic coverage for [toRouteStopGroups]: group-name extraction from the nested name object,
@@ -54,10 +52,20 @@ class RouteStopGroupsMapperTest {
             ),
             references = References(
                 stops = listOf(
-                    StopReference(id = "1_a", name = "Spring St & 3rd Ave", direction = "NE",
-                        lat = 47.6, lon = -122.33),
-                    StopReference(id = "1_b", name = "Pine St", direction = null,
-                        lat = 47.61, lon = -122.34),
+                    StopReference(
+                        id = "1_a",
+                        name = "Spring St & 3rd Ave",
+                        direction = "NE",
+                        lat = 47.6,
+                        lon = -122.33
+                    ),
+                    StopReference(
+                        id = "1_b",
+                        name = "Pine St",
+                        direction = null,
+                        lat = 47.61,
+                        lon = -122.34
+                    )
                 )
             )
         )
@@ -83,7 +91,7 @@ class RouteStopGroupsMapperTest {
             entry = StopsForRoute(
                 stopGroupings = listOf(
                     StopGrouping(stopGroups = listOf(group, group)),
-                    StopGrouping(stopGroups = listOf(group)),
+                    StopGrouping(stopGroups = listOf(group))
                 )
             ),
             references = References()
@@ -96,7 +104,10 @@ class RouteStopGroupsMapperTest {
     fun decodesRealWireAndReadsGroupNameFromNamesArray() {
         // The group name comes from the `names` array (like legacy names[0]), NOT the non-standard
         // scalar `name` some servers also emit. The fixture sets them differently to prove it.
-        val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+        val json = Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
         val body = """
             {
               "version": 2, "code": 200, "currentTime": 1700000000000, "text": "OK",

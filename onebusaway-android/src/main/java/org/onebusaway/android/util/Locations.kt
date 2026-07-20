@@ -18,18 +18,17 @@
 package org.onebusaway.android.util
 
 import android.location.Location
-import org.onebusaway.android.time.ElapsedTime
 import java.util.Locale
 import java.util.concurrent.TimeUnit
+import org.onebusaway.android.time.ElapsedTime
 
 /**
  * Converts a latitude/longitude to a provider-less [Location].
  */
-fun locationOf(lat: Double, lon: Double): Location =
-    Location("").apply {
-        latitude = lat
-        longitude = lon
-    }
+fun locationOf(lat: Double, lon: Double): Location = Location("").apply {
+    latitude = lat
+    longitude = lon
+}
 
 /** An Android [Location] as a flavor-neutral [GeoPoint]. */
 fun Location.toGeoPoint(): GeoPoint = GeoPoint(latitude, longitude)

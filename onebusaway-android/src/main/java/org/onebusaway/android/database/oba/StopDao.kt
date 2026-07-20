@@ -33,13 +33,13 @@ data class StopListRow(
     val direction: String?,
     val latitude: Double,
     val longitude: Double,
-    val favorite: Int?,
+    val favorite: Int?
 )
 
 /** A [StopListRow] plus the raw [accessTime], for merging recent stops and routes into one time-ordered list. */
 data class StopRecentRow(
     @Embedded val row: StopListRow,
-    @ColumnInfo(name = "access_time") val accessTime: Long?,
+    @ColumnInfo(name = "access_time") val accessTime: Long?
 )
 
 /** The legacy projected UI_NAME expression, reused across the stop list queries. */
@@ -98,7 +98,7 @@ interface StopDao {
         latitude: Double,
         longitude: Double,
         regionId: Long?,
-        now: Long,
+        now: Long
     ) {
         val existing = getStop(id)
         upsert(
@@ -110,7 +110,7 @@ interface StopDao {
                 longitude = longitude,
                 regionId = regionId ?: existing.regionId,
                 useCount = existing.useCount + 1,
-                accessTime = now,
+                accessTime = now
             ) ?: StopRecord(
                 id = id,
                 code = code,
@@ -120,7 +120,7 @@ interface StopDao {
                 latitude = latitude,
                 longitude = longitude,
                 accessTime = now,
-                regionId = regionId,
+                regionId = regionId
             )
         )
     }
@@ -173,33 +173,32 @@ interface StopDao {
  * formatting and marks it used. Shared by the arrivals load and the trip-details reminder persist so
  * the ObaStop -> row mapping lives in one place.
  */
-suspend fun StopDao.markStopUsed(stop: ObaStop, regionId: Long?, now: Long) =
-    markStopUsed(
-        id = stop.id,
-        code = stop.stopCode.orEmpty(),
-        name = MyTextUtils.formatDisplayText(stop.name).orEmpty(),
-        direction = stop.direction.orEmpty(),
-        latitude = stop.latitude,
-        longitude = stop.longitude,
-        regionId = regionId,
-        now = now,
-    )
+suspend fun StopDao.markStopUsed(stop: ObaStop, regionId: Long?, now: Long) = markStopUsed(
+    id = stop.id,
+    code = stop.stopCode.orEmpty(),
+    name = MyTextUtils.formatDisplayText(stop.name).orEmpty(),
+    direction = stop.direction.orEmpty(),
+    latitude = stop.latitude,
+    longitude = stop.longitude,
+    regionId = regionId,
+    now = now
+)
 
 /** The favorite flag + custom name for a single stop (the legacy StopUserInfo read). */
 data class StopUserInfoRow(
     val favorite: Int?,
-    @ColumnInfo(name = "user_name") val userName: String?,
+    @ColumnInfo(name = "user_name") val userName: String?
 )
 
 /** A stop id with its favorite flag + custom name (the legacy StopUserInfoMap rows). */
 data class StopUserInfoMapRow(
     val stopId: String,
     val favorite: Int?,
-    val userName: String?,
+    val userName: String?
 )
 
 /** A stop's coordinates (the legacy Stops.getLocation read). */
 data class StopLocationRow(
     val latitude: Double,
-    val longitude: Double,
+    val longitude: Double
 )

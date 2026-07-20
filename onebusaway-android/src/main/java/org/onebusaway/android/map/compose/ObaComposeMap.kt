@@ -39,15 +39,14 @@ interface ObaComposeMapAdapter {
         modifier: Modifier,
         initialLatitude: Double,
         initialLongitude: Double,
-        initialZoom: Float,
+        initialZoom: Float
     )
 
     companion object {
         /** Reflectively builds the flavor adapter named by `BuildConfig.MAP_COMPOSE_ADAPTER_CLASS`. */
-        fun newInstance(): ObaComposeMapAdapter =
-            Class.forName(BuildConfig.MAP_COMPOSE_ADAPTER_CLASS)
-                .getDeclaredConstructor()
-                .newInstance() as ObaComposeMapAdapter
+        fun newInstance(): ObaComposeMapAdapter = Class.forName(BuildConfig.MAP_COMPOSE_ADAPTER_CLASS)
+            .getDeclaredConstructor()
+            .newInstance() as ObaComposeMapAdapter
     }
 }
 
@@ -59,7 +58,7 @@ fun ObaMap(
     modifier: Modifier = Modifier,
     initialLatitude: Double = 0.0,
     initialLongitude: Double = 0.0,
-    initialZoom: Float = 16f,
+    initialZoom: Float = 16f
 ) {
     val adapter = remember { ObaComposeMapAdapter.newInstance() }
     adapter.Content(
@@ -68,6 +67,6 @@ fun ObaMap(
         modifier,
         initialLatitude,
         initialLongitude,
-        initialZoom,
+        initialZoom
     )
 }

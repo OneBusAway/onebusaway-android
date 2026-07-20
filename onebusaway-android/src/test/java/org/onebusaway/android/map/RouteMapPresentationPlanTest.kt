@@ -20,13 +20,13 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Unit tests for the pure route-map presentation assembler — the three-mode precedence and the
@@ -69,7 +69,7 @@ class RouteMapPresentationPlanTest {
             focusTrips = setOf(trip("t-79", "79", directionId = 1)),
             focusedGeometry = geometryFor("79", 1),
             selected = null,
-            projectedFocusStops = { fail("projection is only computed when focused-stop siblings draw") },
+            projectedFocusStops = { fail("projection is only computed when focused-stop siblings draw") }
         )
 
         // Adjacency line for route 79 + the base route drawn underneath it.
@@ -89,7 +89,7 @@ class RouteMapPresentationPlanTest {
             focusTrips = setOf(trip("t-45", "45", directionId = 0)),
             focusedGeometry = geometryFor("45", 0),
             selected = null,
-            projectedFocusStops = { fail("base route stays, so no focused-stop projection") },
+            projectedFocusStops = { fail("base route stays, so no focused-stop projection") }
         )
 
         // Adjacency line for the focused direction + the merged base route drawn underneath it.
@@ -109,11 +109,14 @@ class RouteMapPresentationPlanTest {
             focusedGeometry = geometryFor("45", 0),
             focusedStops = FocusedTripStops(
                 stopIdsByTripId = mapOf("t-45" to listOf("stop-a")),
-                stopsById = mapOf("stop-a" to stop("stop-a")),
+                stopsById = mapOf("stop-a" to stop("stop-a"))
             ),
             focusedRoutes = listOf(route("45", "45")),
             selected = null,
-            projectedFocusStops = { projections++; projected },
+            projectedFocusStops = {
+                projections++
+                projected
+            }
         )
 
         // Only the adjacency line — the base route is not drawn underneath its own focus.
@@ -133,11 +136,11 @@ class RouteMapPresentationPlanTest {
             focusedGeometry = geometryFor("79", 1),
             focusedStops = FocusedTripStops(
                 stopIdsByTripId = mapOf("t-79" to listOf("stop-b")),
-                stopsById = mapOf("stop-b" to stop("stop-b")),
+                stopsById = mapOf("stop-b" to stop("stop-b"))
             ),
             focusedRoutes = listOf(route("79", "79")),
             selected = null,
-            projectedFocusStops = { emptyMap() },
+            projectedFocusStops = { emptyMap() }
         )
 
         // No emphasized route -> route badges are emitted, and there's no active base route to frame to.
@@ -161,8 +164,8 @@ class RouteMapPresentationPlanTest {
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { underlay },
-                stopPresentation = { selectedStops },
-            ),
+                stopPresentation = { selectedStops }
+            )
         )
 
         // Underlay + exact trip, in that order; the trip carries the GTFS fallback colour.
@@ -187,8 +190,8 @@ class RouteMapPresentationPlanTest {
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { underlay },
-                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) },
-            ),
+                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) }
+            )
         )
 
         // Only the exact trip — the generic direction underlay is dropped because the route already
@@ -211,8 +214,8 @@ class RouteMapPresentationPlanTest {
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { underlay },
-                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) },
-            ),
+                stopPresentation = { RouteStopPresentation(emptyList(), emptyList(), emptyMap(), emptyMap()) }
+            )
         )
 
         // Stop focus being active alone gates the underlay -- not whether an adjacency colour was
@@ -230,12 +233,12 @@ class RouteMapPresentationPlanTest {
                 presentation = SelectedTripPresentation(
                     points = listOf(GeoPoint(0.0, 0.0)), // < 2 points: not drawable
                     stopIds = emptyList(),
-                    routeDirection = RouteDirectionKey("45", 0),
+                    routeDirection = RouteDirectionKey("45", 0)
                 ),
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { fail("an undrawable trip must not build the underlay") },
-                stopPresentation = { fail("an undrawable trip must not project its stops") },
-            ),
+                stopPresentation = { fail("an undrawable trip must not project its stops") }
+            )
         )
 
         assertSame(basePolylines, plan.polylines)
@@ -254,9 +257,9 @@ class RouteMapPresentationPlanTest {
                 presentation = selectedTrip("45", 0),
                 routeColorFallback = 0xFF00FF00.toInt(),
                 directionUnderlay = { emptyList() },
-                stopPresentation = { selectedStops },
+                stopPresentation = { selectedStops }
             ),
-            projectedFocusStops = { fail("selection branch must not project focused stops") },
+            projectedFocusStops = { fail("selection branch must not project focused stops") }
         )
 
         assertSame(selectedStops, plan.stopPresentation)
@@ -274,7 +277,7 @@ class RouteMapPresentationPlanTest {
         focusedRoutes: List<ObaRoute> = emptyList(),
         routeColors: Map<RouteDirectionKey, Int> = emptyMap(),
         selected: SelectedTripRenderInput?,
-        projectedFocusStops: () -> Map<String, GeoPoint> = { emptyMap() },
+        projectedFocusStops: () -> Map<String, GeoPoint> = { emptyMap() }
     ) = assembleRouteMapPresentation(
         isActive = isActive,
         emphasizedRoute = emphasizedRoute,
@@ -286,14 +289,17 @@ class RouteMapPresentationPlanTest {
         focusedRoutes = focusedRoutes,
         routeColors = routeColors,
         selected = selected,
-        projectedFocusStops = projectedFocusStops,
+        projectedFocusStops = projectedFocusStops
     )
 
     private fun geometryFor(routeId: String, directionId: Int) = FocusedTripGeometry(
         listOf(
             FocusedTripShape(
-                "$routeId-shape", routeId, 0xFF808080.toInt(),
-                listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0)), directionId,
+                "$routeId-shape",
+                routeId,
+                0xFF808080.toInt(),
+                listOf(GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0)),
+                directionId
             )
         )
     )
@@ -301,19 +307,16 @@ class RouteMapPresentationPlanTest {
     private fun selectedTrip(routeId: String, directionId: Int) = SelectedTripPresentation(
         points = listOf(GeoPoint(4.0, 0.0), GeoPoint(4.0, 1.0)),
         stopIds = emptyList(),
-        routeDirection = RouteDirectionKey(routeId, directionId),
+        routeDirection = RouteDirectionKey(routeId, directionId)
     )
 
-    private fun line(vararg points: GeoPoint) =
-        RoutePolyline(color = 1, points = points.toList(), widthProfile = ROUTE_LINE_WIDTH_PROFILE)
+    private fun line(vararg points: GeoPoint) = RoutePolyline(color = 1, points = points.toList(), widthProfile = ROUTE_LINE_WIDTH_PROFILE)
 
-    private fun trip(tripId: String, routeId: String, directionId: Int) =
-        FocusedTrip(tripId, routeId, "$routeId-shape", 0xFF808080.toInt(), directionId)
+    private fun trip(tripId: String, routeId: String, directionId: Int) = FocusedTrip(tripId, routeId, "$routeId-shape", 0xFF808080.toInt(), directionId)
 
     private fun fail(message: String): Nothing = throw AssertionError(message)
 
-    private fun stop(id: String): org.onebusaway.android.models.ObaStop =
-        org.onebusaway.android.api.adapters.ObaStopElement(id = id, lat = 47.0, lon = -122.0)
+    private fun stop(id: String): org.onebusaway.android.models.ObaStop = org.onebusaway.android.api.adapters.ObaStopElement(id = id, lat = 47.0, lon = -122.0)
 
     private fun route(id: String, shortName: String) = object : ObaRoute {
         override val id = id

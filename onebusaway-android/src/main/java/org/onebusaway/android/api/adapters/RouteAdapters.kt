@@ -58,6 +58,6 @@ fun EntryWithReferences<RouteReference>.toRouteDetails(): RouteDetails {
         longName = route.longName,
         description = route.description,
         url = route.url,
-        agency = agency?.let { AgencyDetails(it.id, it.name, it.url) },
+        agency = agency?.let { AgencyDetails(it.id, it.name, it.url) }
     )
 }

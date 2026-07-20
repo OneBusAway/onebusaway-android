@@ -39,8 +39,8 @@ import androidx.room.PrimaryKey
     tableName = "cached_stops",
     indices = [
         Index(value = ["region_id", "latitude", "longitude"]),
-        Index(value = ["region_id", "last_seen"]),
-    ],
+        Index(value = ["region_id", "last_seen"])
+    ]
 )
 data class CachedStopRecord(
     @PrimaryKey @ColumnInfo(name = "_id") val id: String,
@@ -52,7 +52,7 @@ data class CachedStopRecord(
     @ColumnInfo(name = "location_type") val locationType: Int,
     @ColumnInfo(name = "route_ids") val routeIds: String,
     @ColumnInfo(name = "region_id") val regionId: Long,
-    @ColumnInfo(name = "last_seen") val lastSeen: Long,
+    @ColumnInfo(name = "last_seen") val lastSeen: Long
 )
 
 /**
@@ -63,11 +63,11 @@ data class CachedStopRecord(
  */
 @Entity(
     tableName = "cached_route_types",
-    indices = [Index(value = ["region_id", "last_seen"])],
+    indices = [Index(value = ["region_id", "last_seen"])]
 )
 data class CachedRouteTypeRecord(
     @PrimaryKey @ColumnInfo(name = "_id") val id: String,
     @ColumnInfo(name = "type") val type: Int,
     @ColumnInfo(name = "region_id") val regionId: Long,
-    @ColumnInfo(name = "last_seen") val lastSeen: Long,
+    @ColumnInfo(name = "last_seen") val lastSeen: Long
 )

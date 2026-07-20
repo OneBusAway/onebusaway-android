@@ -30,7 +30,7 @@ import org.onebusaway.android.ui.nav.NavRoutes
 @HiltViewModel
 class RouteInfoViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val repository: RouteInfoRepository,
+    private val repository: RouteInfoRepository
 ) : ViewModel() {
 
     // The route id arrives via SavedStateHandle, keyed by NavRoutes.ARG_ROUTE_ID — populated either by

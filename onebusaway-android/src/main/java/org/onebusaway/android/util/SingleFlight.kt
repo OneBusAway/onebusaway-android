@@ -41,28 +41,27 @@ class SingleFlight<K : Any, V : Any>(private val scope: CoroutineScope) {
     private val inFlight = ConcurrentHashMap<K, Deferred<V?>>()
 
     /** Runs [block] for [key] in [scope], or joins the in-flight execution for the same key. */
-    suspend fun run(key: K, block: suspend () -> V?): V? =
-            inFlight
-                    // computeIfAbsent is atomic, so concurrent callers for one key share a Deferred.
-                    // The coroutine is LAZY: await() (below) starts it only after computeIfAbsent has
-                    // returned and stored the Deferred, so the finally/remove can never run
-                    // re-entrantly — even for an inline/undispatched dispatcher and a
-                    // non-suspending block.
-                    .computeIfAbsent(key) {
-                        scope.async(start = CoroutineStart.LAZY) {
-                            try {
-                                block()
-                            } catch (e: CancellationException) {
-                                throw e // scope cancelled — propagate, don't mask as a null result
-                            } catch (e: Exception) {
-                                Log.e(TAG, "Single-flight block failed for $key", e)
-                                null
-                            } finally {
-                                inFlight.remove(key)
-                            }
-                        }
-                    }
-                    .await()
+    suspend fun run(key: K, block: suspend () -> V?): V? = inFlight
+        // computeIfAbsent is atomic, so concurrent callers for one key share a Deferred.
+        // The coroutine is LAZY: await() (below) starts it only after computeIfAbsent has
+        // returned and stored the Deferred, so the finally/remove can never run
+        // re-entrantly — even for an inline/undispatched dispatcher and a
+        // non-suspending block.
+        .computeIfAbsent(key) {
+            scope.async(start = CoroutineStart.LAZY) {
+                try {
+                    block()
+                } catch (e: CancellationException) {
+                    throw e // scope cancelled — propagate, don't mask as a null result
+                } catch (e: Exception) {
+                    Log.e(TAG, "Single-flight block failed for $key", e)
+                    null
+                } finally {
+                    inFlight.remove(key)
+                }
+            }
+        }
+        .await()
 
     companion object {
         private const val TAG = "SingleFlight"

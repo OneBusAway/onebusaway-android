@@ -44,12 +44,12 @@ interface SurveyDataSource {
         stopIdentifier: String?,
         stopLatitude: Double,
         stopLongitude: Double,
-        responses: String,
+        responses: String
     ): Result<SurveySubmitResult>
 }
 
 class DefaultSurveyDataSource @Inject constructor(
-    private val service: SurveyWebService,
+    private val service: SurveyWebService
 ) : SurveyDataSource {
 
     override suspend fun studies(url: String, userId: String?): Result<List<Survey>> = runCatchingCancellable {
@@ -63,7 +63,7 @@ class DefaultSurveyDataSource @Inject constructor(
         stopIdentifier: String?,
         stopLatitude: Double,
         stopLongitude: Double,
-        responses: String,
+        responses: String
     ): Result<SurveySubmitResult> = runCatchingCancellable {
         service.submitSurvey(
             url = url,
@@ -72,7 +72,7 @@ class DefaultSurveyDataSource @Inject constructor(
             stopIdentifier = stopIdentifier,
             stopLatitude = stopLatitude,
             stopLongitude = stopLongitude,
-            responses = responses,
+            responses = responses
         ).let { SurveySubmitResult(it.surveyResponse?.id) }
     }.onFailure { Log.e(TAG, "submit failed", it) }
 
@@ -104,9 +104,9 @@ internal fun StudyResponse.toSurveys(): List<Survey> = surveys.map { s ->
                     url = q.content.url,
                     embeddedDataFields = q.content.embedded_data_fields,
                     surveyProvider = q.content.survey_provider,
-                    type = q.content.type,
-                ),
+                    type = q.content.type
+                )
             )
-        },
+        }
     )
 }

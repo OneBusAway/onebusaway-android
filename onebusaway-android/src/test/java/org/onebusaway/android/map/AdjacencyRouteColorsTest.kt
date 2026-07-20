@@ -3,10 +3,10 @@ package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.models.RouteDirectionKey
-import kotlin.math.abs
 
 @SuppressLint("RestrictedApi") // Hct, Material's vendored color-science util; see AdjacencyRouteColors.kt.
 class AdjacencyRouteColorsTest {
@@ -18,7 +18,7 @@ class AdjacencyRouteColorsTest {
         assertEquals(listOf("a", "b", "c", "d"), colors.keys.toList())
         assertEquals(
             listOf(0.0, 90.0, 180.0, 270.0).map { hue -> Hct.from(hue, 75.0, 55.0).toInt() },
-            colors.values.toList(),
+            colors.values.toList()
         )
     }
 
@@ -48,7 +48,7 @@ class AdjacencyRouteColorsTest {
 
         val colors = adjacencyRouteColors(
             listOf("31", "32", "62", "E Line"),
-            retained = mapOf("62" to route62),
+            retained = mapOf("62" to route62)
         )
 
         assertEquals(route62, colors.getValue("62"))
@@ -71,7 +71,7 @@ class AdjacencyRouteColorsTest {
 
         val colors = adjacencyRouteColors(
             listOf("existing", "opposite", "quarter", "three-quarter"),
-            retained,
+            retained
         )
 
         assertEquals(retained.getValue("existing"), colors.getValue("existing"))

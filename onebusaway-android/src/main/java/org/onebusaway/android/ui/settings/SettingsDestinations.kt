@@ -49,7 +49,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
         ObaTheme {
             AgenciesRoute(
                 viewModel = hiltViewModel(),
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
             )
         }
     }
@@ -72,7 +72,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                         ).show()
                     }
                     navController.popBackStack()
-                },
+                }
             )
         }
     }
@@ -83,7 +83,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
         ObaTheme {
             AboutScreen(
                 versionText = buildVersionText(LocalContext.current),
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
             )
         }
     }
@@ -116,7 +116,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
                             activity.getString(R.string.powered_by_oba_url).toUri()
                         )
                     )
-                },
+                }
             )
         }
     }
@@ -125,7 +125,7 @@ fun NavGraphBuilder.settingsGraph(navController: NavHostController) {
         ObaTheme {
             AdvancedSettingsRoute(
                 onBack = { navController.popBackStack() },
-                onGoHome = { NavHelp.goHome(activity, false) },
+                onGoHome = { NavHelp.goHome(activity, false) }
             )
         }
     }

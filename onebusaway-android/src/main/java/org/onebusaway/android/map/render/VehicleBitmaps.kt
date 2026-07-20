@@ -21,12 +21,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.withRotation
 import androidx.annotation.DrawableRes
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withRotation
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteTrips
@@ -91,13 +91,13 @@ object VehicleBitmaps {
         context: Context,
         vehicle: VehicleMarker,
         response: RouteTrips,
-        sizeScale: Float = 1f,
+        sizeScale: Float = 1f
     ): Bitmap = getBitmap(
         context,
         vehicleType(vehicle, response),
         colorResource(vehicle),
         directionIndex(vehicle),
-        sizeScale,
+        sizeScale
     )
 
     /**
@@ -107,12 +107,12 @@ object VehicleBitmaps {
      * even when the bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
      */
     @JvmStatic
-    fun iconKey(vehicle: VehicleMarker, response: RouteTrips, sizeScale: Float = 1f): String =
-        "veh:" + createBitmapCacheKey(
+    fun iconKey(vehicle: VehicleMarker, response: RouteTrips, sizeScale: Float = 1f): String = "veh:" +
+        createBitmapCacheKey(
             vehicleType(vehicle, response),
             directionIndex(vehicle),
             colorResource(vehicle),
-            sizeScale,
+            sizeScale
         )
 
     /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
@@ -129,8 +129,7 @@ object VehicleBitmaps {
      */
     @JvmStatic
     @VisibleForTesting
-    fun normalizeVehicleType(routeType: Int): Int =
-        if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
+    fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
     /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
     private fun colorResource(vehicle: VehicleMarker): Int {
@@ -161,7 +160,7 @@ object VehicleBitmaps {
         vehicleType: Int,
         colorResource: Int,
         halfWind: Int,
-        sizeScale: Float,
+        sizeScale: Float
     ): Bitmap {
         val color = ContextCompat.getColor(context, colorResource)
         val key = createBitmapCacheKey(vehicleType, halfWind, colorResource, sizeScale)
@@ -174,7 +173,7 @@ object VehicleBitmaps {
         vehicleType: Int,
         halfWind: Int,
         colorResource: Int,
-        sizeScale: Float,
+        sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
         return "$type $halfWind $colorResource ${sizeScale.toBits()}"
@@ -185,8 +184,7 @@ object VehicleBitmaps {
      * `@Preview` grid (and tests); the production path goes through [vehicleBitmap] which caches.
      */
     @VisibleForTesting
-    fun previewBitmap(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap =
-        renderMarker(context, vehicleType, halfWind, color, 1f)
+    fun previewBitmap(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap = renderMarker(context, vehicleType, halfWind, color, 1f)
 
     /**
      * Composites the colored disc, white mode glyph, and (unless undirected) white heading arrow — each
@@ -199,10 +197,12 @@ object VehicleBitmaps {
         vehicleType: Int,
         halfWind: Int,
         color: Int,
-        sizeScale: Float,
+        sizeScale: Float
     ): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        val scale = context.resources.displayMetrics.density * MARKER_SIZE_DP * sizeScale /
+        val scale = context.resources.displayMetrics.density *
+            MARKER_SIZE_DP *
+            sizeScale /
             MarkerRendering.GRID
         val pad = PAD_GRID * scale
         val contentPx = (MarkerRendering.GRID * scale).toInt()
@@ -244,10 +244,9 @@ object VehicleBitmaps {
         else -> R.drawable.ic_bus
     }
 
-    private fun supportedVehicleType(vehicleType: Int): Boolean =
-        vehicleType == ObaRoute.TYPE_BUS ||
-            vehicleType == ObaRoute.TYPE_FERRY ||
-            vehicleType == ObaRoute.TYPE_TRAM ||
-            vehicleType == ObaRoute.TYPE_SUBWAY ||
-            vehicleType == ObaRoute.TYPE_RAIL
+    private fun supportedVehicleType(vehicleType: Int): Boolean = vehicleType == ObaRoute.TYPE_BUS ||
+        vehicleType == ObaRoute.TYPE_FERRY ||
+        vehicleType == ObaRoute.TYPE_TRAM ||
+        vehicleType == ObaRoute.TYPE_SUBWAY ||
+        vehicleType == ObaRoute.TYPE_RAIL
 }

@@ -15,19 +15,17 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.adapters.DtoStop
-import org.onebusaway.android.api.adapters.toObaTripSchedule
-import org.onebusaway.android.api.adapters.DtoRoute
-import org.onebusaway.android.api.adapters.DtoTrip
-import org.onebusaway.android.api.adapters.DtoTripStatus
-import org.onebusaway.android.api.requireData
-
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.net.ObaApiProvider
-import org.onebusaway.android.api.contract.TripDetailsEntry
-
 import android.util.Log
 import javax.inject.Inject
+import org.onebusaway.android.api.adapters.DtoRoute
+import org.onebusaway.android.api.adapters.DtoStop
+import org.onebusaway.android.api.adapters.DtoTrip
+import org.onebusaway.android.api.adapters.DtoTripStatus
+import org.onebusaway.android.api.adapters.toObaTripSchedule
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
@@ -42,7 +40,7 @@ import org.onebusaway.android.models.ObaTripStatus
 class TripDetails internal constructor(
     private val data: EntryWithReferences<TripDetailsEntry>,
     /** The server `currentTime` of this response (epoch millis). */
-    val currentTime: Long,
+    val currentTime: Long
 ) {
     private val refs get() = data.references
     private val entry get() = data.entry
@@ -82,7 +80,7 @@ interface TripDetailsDataSource {
 }
 
 class DefaultTripDetailsDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : TripDetailsDataSource {
 
     override suspend fun tripDetails(tripId: String): Result<TripDetails> = api.call {

@@ -15,25 +15,29 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import android.app.Activity
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -62,30 +66,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import android.app.Activity
-import android.app.NotificationManager
-import android.content.Context
-import android.os.Build
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.notifications.NotificationChannels
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
+import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.ui.tripplan.TripPlanParams
 
 /**
  * The results header: the (1–3) itinerary option cards. Shown above the directions list, pinned at the
@@ -107,6 +107,7 @@ fun TripResultsHeader(
     val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
     val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
     val scope = rememberCoroutineScope()
+
     // Jump one viewport toward an edge (or to that end, whichever is closer — animateScrollTo clamps).
     fun jump(forward: Boolean) {
         val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
@@ -116,13 +117,13 @@ fun TripResultsHeader(
         modifier = Modifier
             .background(MaterialTheme.colorScheme.surface)
             .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         ScrollChevronGutter(
             visible = canScrollBackward,
             pointsRight = false,
             contentDescriptionRes = R.string.trip_plan_options_scroll_previous,
-            onClick = { jump(forward = false) },
+            onClick = { jump(forward = false) }
         )
         Row(
             modifier = Modifier
@@ -143,7 +144,7 @@ fun TripResultsHeader(
             visible = canScrollForward,
             pointsRight = true,
             contentDescriptionRes = R.string.trip_plan_options_scroll_more,
-            onClick = { jump(forward = true) },
+            onClick = { jump(forward = true) }
         )
     }
 }
@@ -172,7 +173,7 @@ private fun OptionCard(
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // The modes: transit route badges (no comma between), a walk glyph for a walk-only trip, or
             // a mode label for other non-transit trips.
@@ -184,12 +185,12 @@ private fun OptionCard(
                     painterResource(R.drawable.ic_directions_walk),
                     contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
                     // Sized to the route-badge row height so a walk-only card's first line matches.
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp)
                 )
                 is ModeSummary.Label -> Text(
                     text = mode.text,
                     style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
+                    maxLines = 1
                 )
             }
             // Duration + walk distance read as one stat group, so they sit tighter together than the
@@ -205,7 +206,7 @@ private fun OptionCard(
                 if (option.walkDistanceMeters > 0.0) {
                     MetricRow(
                         R.drawable.ic_directions_walk,
-                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action)
                     ) {
                         EtaPartsText(ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context))
                     }
@@ -216,7 +217,7 @@ private fun OptionCard(
                 text = "${DisplayFormat.formatTime(context, option.startTime.epochMs)} – " +
                     DisplayFormat.formatTime(context, option.endTime.epochMs),
                 style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
+                maxLines = 1
             )
         }
     }
@@ -230,12 +231,12 @@ private fun OptionCard(
 private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Composable () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
             painterResource(iconRes),
             contentDescription = contentDescription,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(16.dp)
         )
         content()
     }
@@ -256,7 +257,7 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit = { _, _ -> },
     onFocusLeg: (List<GeoPoint>) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> }
 ) {
     Box(
         modifier
@@ -279,7 +280,7 @@ fun TripResultsList(
             // be scrolled clear of the nav chrome without an empty strip below the list.
             is TripResultsUiState.Success -> LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = bottomInset),
+                contentPadding = PaddingValues(bottom = bottomInset)
             ) {
                 // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
                 item {
@@ -317,7 +318,7 @@ fun TripResultsSheet(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     modifier: Modifier = Modifier,
-    listBottomInset: Dp = 0.dp,
+    listBottomInset: Dp = 0.dp
 ) {
     val state by resultsViewModel.state.collectAsStateWithLifecycle()
     val activity = LocalContext.current.findActivity()
@@ -354,7 +355,7 @@ fun TripResultsSheet(
         onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
-        stopEtaStrip = stopEtaStrip,
+        stopEtaStrip = stopEtaStrip
     )
 }
 
@@ -368,7 +369,7 @@ private fun maybeStartTripUpdates(
     activity: Activity,
     params: TripPlanParams?,
     itineraries: List<TripItinerary>,
-    index: Int,
+    index: Int
 ) {
     val itinerary = itineraries.getOrNull(index) ?: return
     if (params == null) return
@@ -406,7 +407,7 @@ private fun DirectionRow(
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
     // Rows are keyed by index in the LazyColumn, so switching itineraries reuses this slot for a
     // different DirectionItem. Key the expansion state on the item so it resets on that swap instead of
@@ -425,7 +426,7 @@ private fun DirectionRow(
         tonalElevation = 1.dp,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Column {
             Row(
@@ -474,7 +475,7 @@ private fun DirectionRow(
                             ),
                             // Match the row's leading step icons (see DirectionIcon).
                             tint = colorResource(R.color.trip_option_icon_tint),
-                            modifier = Modifier.size(42.dp),
+                            modifier = Modifier.size(42.dp)
                         )
                     }
                 }
@@ -487,7 +488,7 @@ private fun DirectionRow(
                         RouteStopLabel(
                             R.string.step_by_step_transit_get_on,
                             stop.name,
-                            onClick = { stop.point?.let(onFocusPoint) },
+                            onClick = { stop.point?.let(onFocusPoint) }
                         )
                         stopEtaStrip(routeLeg, stop, item.legPoints)
                     }
@@ -495,7 +496,7 @@ private fun DirectionRow(
                         RouteStopLabel(
                             R.string.step_by_step_transit_get_off,
                             stop.name,
-                            onClick = { stop.point?.let(onFocusPoint) },
+                            onClick = { stop.point?.let(onFocusPoint) }
                         )
                         stopEtaStrip(routeLeg, stop, item.legPoints)
                     }
@@ -549,7 +550,7 @@ private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Uni
             text = stringResource(actionRes),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(Modifier.width(6.dp))
         Text(
@@ -584,13 +585,17 @@ private fun TripResultsPreview() {
             options = listOf(
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
-                    durationMinutes = 32, startTime = ServerTime(0L), endTime = ServerTime(32 * 60_000L),
-                    walkDistanceMeters = 800.0,
+                    durationMinutes = 32,
+                    startTime = ServerTime(0L),
+                    endTime = ServerTime(32 * 60_000L),
+                    walkDistanceMeters = 800.0
                 ),
                 ItineraryOption(
                     mode = ModeSummary.Routes(listOf(RouteBadge("48", null), RouteBadge("11", null))),
-                    durationMinutes = 41, startTime = ServerTime(0L), endTime = ServerTime(41 * 60_000L),
-                    walkDistanceMeters = 400.0,
+                    durationMinutes = 41,
+                    startTime = ServerTime(0L),
+                    endTime = ServerTime(41 * 60_000L),
+                    walkDistanceMeters = 400.0
                 )
             ),
             selectedIndex = 0,

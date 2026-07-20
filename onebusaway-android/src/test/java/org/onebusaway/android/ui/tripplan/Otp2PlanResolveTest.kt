@@ -45,7 +45,7 @@ class Otp2PlanResolveTest {
     fun walkingBetterThanTransit_withWalkItinerary_returnsTheWalk() {
         val data = planData(
             routingErrors = listOf(routingError(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT)),
-            edges = listOf(walkEdge()),
+            edges = listOf(walkEdge())
         )
 
         val itineraries = resolveOtp2Plan(data)
@@ -63,7 +63,7 @@ class Otp2PlanResolveTest {
     fun walkingBetterThanTransit_withoutItineraries_throwsTooClose() {
         val data = planData(
             routingErrors = listOf(routingError(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT)),
-            edges = emptyList(),
+            edges = emptyList()
         )
 
         val error = assertThrows(TripPlanException::class.java) { resolveOtp2Plan(data) }.error
@@ -76,7 +76,7 @@ class Otp2PlanResolveTest {
     fun fatalError_withoutItineraries_throwsClassifiedError() {
         val data = planData(
             routingErrors = listOf(routingError(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.FROM)),
-            edges = emptyList(),
+            edges = emptyList()
         )
 
         val error = assertThrows(TripPlanException::class.java) { resolveOtp2Plan(data) }.error
@@ -97,17 +97,16 @@ class Otp2PlanResolveTest {
 
     private fun planData(
         routingErrors: List<PlanQuery.RoutingError>,
-        edges: List<PlanQuery.Edge>,
+        edges: List<PlanQuery.Edge>
     ) = PlanQuery.Data(
         planConnection = PlanQuery.PlanConnection(
             searchDateTime = "2026-07-11T10:00:00-07:00",
             routingErrors = routingErrors,
-            edges = edges,
-        ),
+            edges = edges
+        )
     )
 
-    private fun routingError(code: RoutingErrorCode, inputField: InputField? = null) =
-        PlanQuery.RoutingError(code = code, description = code.name, inputField = inputField)
+    private fun routingError(code: RoutingErrorCode, inputField: InputField? = null) = PlanQuery.RoutingError(code = code, description = code.name, inputField = inputField)
 
     private fun walkEdge(): PlanQuery.Edge {
         val leg = PlanQuery.Leg(
@@ -122,24 +121,21 @@ class Otp2PlanResolveTest {
             route = null,
             trip = null,
             legGeometry = null,
-            steps = null,
+            steps = null
         )
         val node = PlanQuery.Node(
             start = "2026-07-11T10:00:00-07:00",
             end = "2026-07-11T10:40:00-07:00",
             duration = 2400L,
             numberOfTransfers = 0,
-            legs = listOf(leg),
+            legs = listOf(leg)
         )
         return PlanQuery.Edge(node = node)
     }
 
-    private fun placeFields(name: String, lat: Double, lon: Double) =
-        PlaceFields(name, lat, lon, null, null, null, null)
+    private fun placeFields(name: String, lat: Double, lon: Double) = PlaceFields(name, lat, lon, null, null, null, null)
 
-    private fun from(name: String, lat: Double, lon: Double) =
-        PlanQuery.From(__typename = "Place", placeFields = placeFields(name, lat, lon))
+    private fun from(name: String, lat: Double, lon: Double) = PlanQuery.From(__typename = "Place", placeFields = placeFields(name, lat, lon))
 
-    private fun to(name: String, lat: Double, lon: Double) =
-        PlanQuery.To(__typename = "Place", placeFields = placeFields(name, lat, lon))
+    private fun to(name: String, lat: Double, lon: Double) = PlanQuery.To(__typename = "Place", placeFields = placeFields(name, lat, lon))
 }

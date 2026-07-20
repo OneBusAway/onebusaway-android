@@ -24,9 +24,9 @@ package org.onebusaway.android.extrapolation.math.prob
  * flip the distribution and break quantile monotonicity, so they are rejected.
  */
 class AffineTransformDistribution(
-        private val base: ProbDistribution,
-        private val offset: Double,
-        private val scale: Double
+    private val base: ProbDistribution,
+    private val offset: Double,
+    private val scale: Double
 ) : ProbDistribution {
 
     init {
@@ -36,11 +36,15 @@ class AffineTransformDistribution(
     override val mean: Double
         get() = offset + base.mean * scale
 
-    override fun pdf(x: Double): Double =
-            if (scale > 0) base.pdf((x - offset) / scale) / scale else 0.0
+    override fun pdf(x: Double): Double = if (scale > 0) base.pdf((x - offset) / scale) / scale else 0.0
 
-    override fun cdf(x: Double): Double =
-            if (scale > 0) base.cdf((x - offset) / scale) else if (x >= offset) 1.0 else 0.0
+    override fun cdf(x: Double): Double = if (scale > 0) {
+        base.cdf((x - offset) / scale)
+    } else if (x >= offset) {
+        1.0
+    } else {
+        0.0
+    }
 
     override fun quantile(p: Double): Double = offset + base.quantile(p) * scale
 }

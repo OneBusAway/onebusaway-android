@@ -30,7 +30,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
  */
 @Singleton
 class FirebaseMessagingManager @Inject constructor(
-    private val prefs: PreferencesRepository,
+    private val prefs: PreferencesRepository
 ) {
 
     /**

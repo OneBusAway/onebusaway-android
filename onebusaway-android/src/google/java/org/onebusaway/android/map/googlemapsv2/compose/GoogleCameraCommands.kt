@@ -22,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import kotlin.math.abs
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
@@ -35,7 +36,6 @@ import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
-import kotlin.math.abs
 
 // The same constants the imperative GoogleMapHost used for these camera moves.
 private const val CAMERA_DEFAULT_ZOOM = 16.0f
@@ -49,7 +49,7 @@ private const val CAMERA_DEFAULT_ZOOM = 16.0f
  */
 fun applyCameraCommand(
     cmd: CameraCommand,
-    map: GoogleMap,
+    map: GoogleMap
 ) {
     when (cmd) {
         is CameraCommand.Recenter -> {
@@ -121,7 +121,7 @@ fun applyFramingIntent(
     intent: FramingIntent,
     map: GoogleMap,
     renderState: MapRenderState,
-    context: Context,
+    context: Context
 ) {
     when (intent) {
         FramingIntent.Route -> {

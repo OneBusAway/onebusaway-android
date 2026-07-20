@@ -55,7 +55,7 @@ class ArrivalAlertIndicatorTest {
             scheduleUrl = null,
             agencyName = null,
             blockId = null,
-            alertSituationId = "situation-1",
+            alertSituationId = "situation-1"
         )
 
         composeRule.setContent {
@@ -63,7 +63,7 @@ class ArrivalAlertIndicatorTest {
                 group = RouteRowGroup(listOf(trip)),
                 actionsFor = { actions },
                 isFavorite = false,
-                callbacks = previewRowCallbacks(),
+                callbacks = previewRowCallbacks()
             )
         }
 

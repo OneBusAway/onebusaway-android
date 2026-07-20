@@ -44,15 +44,14 @@ class SettingsUiStateTest {
         mapMode = "normal",
         preferredUnits = "Automatic",
         preferredTempUnits = "Automatic",
-        appTheme = "System default",
+        appTheme = "System default"
     )
 
-    private fun env(useFixedRegion: Boolean = false, sdkInt: Int = 30, isObaFlavor: Boolean = true) =
-        SettingsEnvironment(useFixedRegion, sdkInt, isObaFlavor)
+    private fun env(useFixedRegion: Boolean = false, sdkInt: Int = 30, isObaFlavor: Boolean = true) = SettingsEnvironment(useFixedRegion, sdkInt, isObaFlavor)
 
     private fun build(
         region: RegionSummaryInfo? = RegionSummaryInfo("Puget Sound", hasOtp = true),
-        env: SettingsEnvironment = env(),
+        env: SettingsEnvironment = env()
     ) = buildSettingsUiState(prefs, region, env, customApiRegionSummary = "Custom API")
 
     // --- region category / summary ---
@@ -130,16 +129,19 @@ class SettingsUiStateTest {
         customObaApiUrl = null,
         customOtpApiUrl = null,
         customOtpApiUrlUsesGraphQl = false,
-        mapStopCacheSize = 200,
+        mapStopCacheSize = 200
     )
 
     private fun buildAdv(
         prefs: AdvancedPrefSnapshot = advPrefs,
         region: AdvancedRegionInfo? = AdvancedRegionInfo(isExperimental = false),
-        useFixedRegion: Boolean = false,
+        useFixedRegion: Boolean = false
     ) = buildAdvancedSettingsUiState(
-        prefs, region, useFixedRegion,
-        obaBrandedSummary = "OBA server", otpDefaultSummary = "OTP default",
+        prefs,
+        region,
+        useFixedRegion,
+        obaBrandedSummary = "OBA server",
+        otpDefaultSummary = "OTP default"
     )
 
     @Test
@@ -155,8 +157,8 @@ class SettingsUiStateTest {
             "https://custom.example.org",
             buildAdv(
                 prefs = advPrefs.copy(customObaApiUrl = "https://custom.example.org"),
-                region = null,
-            ).customObaApiUrlSummary,
+                region = null
+            ).customObaApiUrlSummary
         )
     }
 
@@ -167,16 +169,16 @@ class SettingsUiStateTest {
             "https://otp.example.org",
             buildAdv(
                 prefs = advPrefs.copy(customOtpApiUrl = "https://otp.example.org"),
-                region = AdvancedRegionInfo(false),
-            ).customOtpApiUrlSummary,
+                region = AdvancedRegionInfo(false)
+            ).customOtpApiUrlSummary
         )
         // Custom OTP set but no region: legacy showed the default summary.
         assertEquals(
             "OTP default",
             buildAdv(
                 prefs = advPrefs.copy(customOtpApiUrl = "https://otp.example.org"),
-                region = null,
-            ).customOtpApiUrlSummary,
+                region = null
+            ).customOtpApiUrlSummary
         )
     }
 

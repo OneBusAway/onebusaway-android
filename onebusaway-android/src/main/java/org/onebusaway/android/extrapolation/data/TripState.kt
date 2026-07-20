@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.extrapolation.data
 
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.Extrapolator
 import org.onebusaway.android.extrapolation.GammaExtrapolator
@@ -22,12 +24,10 @@ import org.onebusaway.android.extrapolation.ScheduleReplayExtrapolator
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
-import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.Polyline
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 
 private const val MAX_ENTRIES = 100
 private val MAX_HORIZON = 15.minutes
@@ -36,11 +36,11 @@ private const val TRIP_END_DISTANCE_THRESHOLD = 50.0
 
 /** One recorded vehicle status snapshot with the clocks it arrived under. */
 data class HistoryEntry(
-        val status: ObaTripStatus,
-        /** The server's currentTime when the status was fetched. */
-        val serverTimeMs: ServerTime,
-        /** Local device clock when the response was received. */
-        val localTimeMs: WallTime
+    val status: ObaTripStatus,
+    /** The server's currentTime when the status was fetched. */
+    val serverTimeMs: ServerTime,
+    /** Local device clock when the response was received. */
+    val localTimeMs: WallTime
 )
 
 /**
@@ -58,53 +58,53 @@ data class HistoryEntry(
  * may use reference equality on it to detect fresh data.
  */
 data class TripState(
-        val tripId: String,
-        /** Raw vehicle status log (everything, for debugging), oldest first, capped at 100. */
-        val history: List<HistoryEntry> = emptyList(),
-        /** The most recent status by timestamp, with GPS winning ties. */
-        val anchor: ObaTripStatus? = null,
-        /**
-         * Effective timestamp of the anchor in the **server** clock domain (lastUpdateTime, or
-         * serverTimeMs as fallback), or null when there is no anchor yet. Used for plotting against
-         * other server-clock values. Non-null exactly when [anchor] is — they are set as a unit.
-         */
-        val anchorTimeMs: ServerTime? = null,
-        /**
-         * Same instant as [anchorTimeMs], in the local device clock domain, or null with no anchor.
-         * Used for extrapolation — comparing `System.currentTimeMillis()` against a server timestamp
-         * would silently classify fresh data as stale under client/server clock skew.
-         */
-        val anchorLocalTimeMs: WallTime? = null,
-        val schedule: ObaTripSchedule? = null,
-        /** The trip's service day, or null when not yet known. */
-        val serviceDate: ServiceDate? = null,
-        val polyline: Polyline? = null,
-        val routeType: Int? = null,
-        /**
-         * The trip the vehicle serving this trip most recently reported as active — equal to
-         * [tripId] while the vehicle is still on this run, and the successor run's trip ID once
-         * the vehicle rolls onto its next trip. Null until a trip details response is recorded,
-         * or when the latest one carried no vehicle status.
-         */
-        val vehicleActiveTripId: String? = null,
-        /** The polled trip's shape id (from the trip details references), for on-demand shape activation. */
-        val shapeId: String? = null
+    val tripId: String,
+    /** Raw vehicle status log (everything, for debugging), oldest first, capped at 100. */
+    val history: List<HistoryEntry> = emptyList(),
+    /** The most recent status by timestamp, with GPS winning ties. */
+    val anchor: ObaTripStatus? = null,
+    /**
+     * Effective timestamp of the anchor in the **server** clock domain (lastUpdateTime, or
+     * serverTimeMs as fallback), or null when there is no anchor yet. Used for plotting against
+     * other server-clock values. Non-null exactly when [anchor] is — they are set as a unit.
+     */
+    val anchorTimeMs: ServerTime? = null,
+    /**
+     * Same instant as [anchorTimeMs], in the local device clock domain, or null with no anchor.
+     * Used for extrapolation — comparing `System.currentTimeMillis()` against a server timestamp
+     * would silently classify fresh data as stale under client/server clock skew.
+     */
+    val anchorLocalTimeMs: WallTime? = null,
+    val schedule: ObaTripSchedule? = null,
+    /** The trip's service day, or null when not yet known. */
+    val serviceDate: ServiceDate? = null,
+    val polyline: Polyline? = null,
+    val routeType: Int? = null,
+    /**
+     * The trip the vehicle serving this trip most recently reported as active — equal to
+     * [tripId] while the vehicle is still on this run, and the successor run's trip ID once
+     * the vehicle rolls onto its next trip. Null until a trip details response is recorded,
+     * or when the latest one carried no vehicle status.
+     */
+    val vehicleActiveTripId: String? = null,
+    /** The polled trip's shape id (from the trip details references), for on-demand shape activation. */
+    val shapeId: String? = null
 ) {
 
     /** [history]'s raw statuses, projected once per snapshot. */
     val statuses: List<ObaTripStatus> by
-            lazy(LazyThreadSafetyMode.NONE) { history.map { it.status } }
+        lazy(LazyThreadSafetyMode.NONE) { history.map { it.status } }
 
     // Body property: excluded from equals/hashCode/copy. Fresh per instance, so snapshot
     // identity invalidates the fitted model without any explicit cache key.
     private val extrapolator: Extrapolator by
-            lazy(LazyThreadSafetyMode.NONE) {
-                if (routeType != null && ObaRoute.isGradeSeparated(routeType)) {
-                    ScheduleReplayExtrapolator(this)
-                } else {
-                    GammaExtrapolator(this)
-                }
+        lazy(LazyThreadSafetyMode.NONE) {
+            if (routeType != null && ObaRoute.isGradeSeparated(routeType)) {
+                ScheduleReplayExtrapolator(this)
+            } else {
+                GammaExtrapolator(this)
             }
+        }
 
     /**
      * Returns the state with [status] recorded, or `this` when the entry is skipped
@@ -127,8 +127,8 @@ data class TripState(
         // Skip true duplicates (same distance and time as previous entry)
         val prev = history.lastOrNull()?.status
         if (prev != null &&
-                        status.distanceAlongTrip == prev.distanceAlongTrip &&
-                        status.lastUpdateTime == prev.lastUpdateTime
+            status.distanceAlongTrip == prev.distanceAlongTrip &&
+            status.lastUpdateTime == prev.lastUpdateTime
         ) {
             return this
         }
@@ -136,28 +136,36 @@ data class TripState(
         // Update anchor: newest timestamp wins; GPS wins ties. lastUpdateTime is a raw server-clock
         // Long on the status, so wrap it into its domain before comparing against anchorTimeMs.
         val effectiveTime =
-                if (status.lastUpdateTime > 0) ServerTime(status.lastUpdateTime) else serverTimeMs
+            if (status.lastUpdateTime > 0) ServerTime(status.lastUpdateTime) else serverTimeMs
         // The one sanctioned server↔device crossing: pairing the same response's two clocks measures
         // the skew. Done on the raw epochMs deliberately (the typed API forbids server − device), so
         // the anchor's server instant can be re-expressed on the device clock below.
         val serverLocalOffsetMs = serverTimeMs.epochMs - localTimeMs.epochMs
         val currentAnchorTime = anchorTimeMs
         val anchorAdvances =
-                currentAnchorTime == null ||
-                        effectiveTime > currentAnchorTime ||
-                        (effectiveTime == currentAnchorTime &&
-                                status.isLocationRealtime &&
-                                anchor?.isLocationRealtime != true)
+            currentAnchorTime == null ||
+                effectiveTime > currentAnchorTime ||
+                (
+                    effectiveTime == currentAnchorTime &&
+                        status.isLocationRealtime &&
+                        anchor?.isLocationRealtime != true
+                    )
 
         val appended = history + HistoryEntry(status, serverTimeMs, localTimeMs)
         return copy(
-                history = if (appended.size > MAX_ENTRIES) appended.takeLast(MAX_ENTRIES)
-                else appended,
-                anchor = if (anchorAdvances) status else anchor,
-                anchorTimeMs = if (anchorAdvances) effectiveTime else anchorTimeMs,
-                anchorLocalTimeMs =
-                        if (anchorAdvances) WallTime(effectiveTime.epochMs - serverLocalOffsetMs)
-                        else anchorLocalTimeMs
+            history = if (appended.size > MAX_ENTRIES) {
+                appended.takeLast(MAX_ENTRIES)
+            } else {
+                appended
+            },
+            anchor = if (anchorAdvances) status else anchor,
+            anchorTimeMs = if (anchorAdvances) effectiveTime else anchorTimeMs,
+            anchorLocalTimeMs =
+            if (anchorAdvances) {
+                WallTime(effectiveTime.epochMs - serverLocalOffsetMs)
+            } else {
+                anchorLocalTimeMs
+            }
         )
     }
 
@@ -165,30 +173,29 @@ data class TripState(
      * Returns the state with everything [observation] carries applied — the status
      * recorded, plus serviceDate and routeType when the observation has them.
      */
-    fun withObservation(observation: TripObservation, localTimeMs: WallTime): TripState =
-            withStatus(observation.status, observation.serverTimeMs, localTimeMs)
-                    .withServiceDate(observation.serviceDate)
-                    .withRouteType(observation.routeType)
+    fun withObservation(observation: TripObservation, localTimeMs: WallTime): TripState = withStatus(observation.status, observation.serverTimeMs, localTimeMs)
+        .withServiceDate(observation.serviceDate)
+        .withRouteType(observation.routeType)
 
     /** Returns the state with [serviceDate] applied, or `this` when it is null (unknown) or unchanged. */
-    fun withServiceDate(serviceDate: ServiceDate?): TripState =
-            if (serviceDate != null && serviceDate != this.serviceDate) copy(serviceDate = serviceDate)
-            else this
+    fun withServiceDate(serviceDate: ServiceDate?): TripState = if (serviceDate != null && serviceDate != this.serviceDate) {
+        copy(serviceDate = serviceDate)
+    } else {
+        this
+    }
 
     /**
      * Returns the state with [routeType] filled in, or `this` when it is already known or
      * [routeType] is null — route type is static per trip, so the first writer wins.
      */
-    fun withRouteType(routeType: Int?): TripState =
-            if (this.routeType == null && routeType != null) copy(routeType = routeType) else this
+    fun withRouteType(routeType: Int?): TripState = if (this.routeType == null && routeType != null) copy(routeType = routeType) else this
 
     /**
      * Returns the state with [schedule] filled in, or `this` when it is already known — the
      * schedule is an immutable resource (TripObservationFetcher.kt), so the first writer wins and
      * repeated poll-tick writes don't churn the snapshot.
      */
-    fun withSchedule(schedule: ObaTripSchedule): TripState =
-            if (this.schedule == null) copy(schedule = schedule) else this
+    fun withSchedule(schedule: ObaTripSchedule): TripState = if (this.schedule == null) copy(schedule = schedule) else this
 
     /**
      * Converts a local-device-clock instant to the server clock, using the skew measured at the
@@ -217,8 +224,7 @@ data class TripState(
         if (dt < Duration.ZERO || dt > MAX_HORIZON) return ExtrapolationResult.Stale
         if (lastDist <= PRE_DEPARTURE_DISTANCE_THRESHOLD) return ExtrapolationResult.TripNotStarted
         val totalDist = currentAnchor.totalDistanceAlongTrip
-        if (totalDist != null && totalDist > 0 && totalDist - lastDist < TRIP_END_DISTANCE_THRESHOLD
-        ) {
+        if (totalDist != null && totalDist > 0 && totalDist - lastDist < TRIP_END_DISTANCE_THRESHOLD) {
             return ExtrapolationResult.TripEnded
         }
 

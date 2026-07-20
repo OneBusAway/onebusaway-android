@@ -70,7 +70,12 @@ class ProblemReportViewModel(
 
                 is ProblemParams.Trip ->
                     repository.submitTrip(
-                        p, code, form.comment, form.onVehicle, form.vehicleNumber, location
+                        p,
+                        code,
+                        form.comment,
+                        form.onVehicle,
+                        form.vehicleNumber,
+                        location
                     )
             }
             _submitState.value = result.fold(

@@ -48,7 +48,7 @@ import org.onebusaway.android.directions.util.TripRequestBuilder
  */
 class Otp2Planner @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    @param:Otp2HttpClient private val okHttpClient: OkHttpClient,
+    @param:Otp2HttpClient private val okHttpClient: OkHttpClient
 ) {
 
     /**
@@ -87,7 +87,7 @@ class Otp2Planner @Inject constructor(
             // Transport failure (connect/read timeout, DNS, etc.) — a connectivity problem.
             throw TripPlanException(
                 TripPlanError(TripPlanError.Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout),
-                e,
+                e
             )
         } catch (e: ApolloException) {
             // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol error) isn't
@@ -183,5 +183,4 @@ private const val OTP2_GTFS_GRAPHQL_PATH = "/gtfs/v1"
  * gtfs API path, identical across OTP2 servers (verified against the live endpoint). Trailing slash
  * on the base is tolerated so `…/otp` and `…/otp/` both resolve to `…/otp/gtfs/v1`.
  */
-internal fun otp2GraphQlEndpoint(otpBaseUrl: String): String =
-    otpBaseUrl.trimEnd('/') + OTP2_GTFS_GRAPHQL_PATH
+internal fun otp2GraphQlEndpoint(otpBaseUrl: String): String = otpBaseUrl.trimEnd('/') + OTP2_GTFS_GRAPHQL_PATH

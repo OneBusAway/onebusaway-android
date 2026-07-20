@@ -25,8 +25,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -37,14 +37,14 @@ class TripResultsViewModelTest {
 
     private val options = listOf(
         option("8"),
-        option("48"),
+        option("48")
     )
 
     private fun option(shortName: String) = ItineraryOption(
         mode = ModeSummary.Routes(listOf(RouteBadge(shortName, routeColor = null))),
         durationMinutes = 30,
         startTime = ServerTime(0L),
-        endTime = ServerTime(30 * 60_000L),
+        endTime = ServerTime(30 * 60_000L)
     )
 
     /** Treats itineraries as opaque tokens (as the ViewModel does) and returns canned projections. */

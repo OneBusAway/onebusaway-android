@@ -20,8 +20,8 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,9 +52,9 @@ class PreferencesRepositoryReadYourWritesTest {
         val repo = DefaultPreferencesRepository(InstrumentationRegistry.getInstrumentation().targetContext, dataStore, backgroundScope)
         runCurrent() // let the cache machinery subscribe + process the initial (empty) state
 
-        repo.setString(key, "first")   // optimistic cache = "first"
-        repo.setString(key, "second")  // optimistic cache = "second" — the value a reader must see
-        runCurrent()                   // run the async persists
+        repo.setString(key, "first") // optimistic cache = "first"
+        repo.setString(key, "second") // optimistic cache = "second" — the value a reader must see
+        runCurrent() // run the async persists
 
         // The earlier write commits late: DataStore emits the stale "first" state *after* "second" was
         // set. A collector that blindly mirrored this into the cache would clobber "second".
@@ -71,6 +71,7 @@ class PreferencesRepositoryReadYourWritesTest {
      */
     private class FakeDataStore(initial: Preferences = emptyPreferences()) : DataStore<Preferences> {
         private val emissions = MutableSharedFlow<Preferences>(replay = 1, extraBufferCapacity = 64)
+
         @Volatile
         private var committed = initial
 

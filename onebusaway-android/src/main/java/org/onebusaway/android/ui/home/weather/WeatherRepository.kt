@@ -46,14 +46,15 @@ interface WeatherRepository {
 class DefaultWeatherRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val regionRepository: RegionRepository,
-    private val weatherService: WeatherWebService,
+    private val weatherService: WeatherWebService
 ) : WeatherRepository {
 
     override suspend fun currentForecast(regionId: Long): Result<WeatherData> = runCatchingCancellable {
         val base = regionRepository.region.value?.sidecarBaseUrl
             ?: throw IOException("No sidecar base URL for region $regionId")
-        val url = base + context.getString(R.string.weather_api_endpoint)
-            .replace("regionID", regionId.toString())
+        val url = base +
+            context.getString(R.string.weather_api_endpoint)
+                .replace("regionID", regionId.toString())
         val forecast = weatherService.getWeather(url).current_forecast
             ?: throw IOException("No weather forecast for region $regionId")
         WeatherData(forecast.icon ?: "", forecast.temperature, forecast.summary)

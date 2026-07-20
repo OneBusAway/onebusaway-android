@@ -56,10 +56,11 @@ import org.jetbrains.uast.skipParenthesizedExprDown
  * a Kotlin-ecosystem-wide concern, not this app's clock-domain discipline. Enrolling stdlib eliminators
  * would be noise far beyond that discipline; see lint-rules/README.md.
  */
-class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
+class PrematureUnwrapDetector :
+    Detector(),
+    SourceCodeScanner {
 
-    override fun getApplicableUastTypes(): List<Class<out UElement>> =
-        listOf(UBinaryExpression::class.java, UQualifiedReferenceExpression::class.java)
+    override fun getApplicableUastTypes(): List<Class<out UElement>> = listOf(UBinaryExpression::class.java, UQualifiedReferenceExpression::class.java)
 
     override fun createUastHandler(context: JavaContext): UElementHandler {
         // The domain package is where the instant types *define* their own algebra, which necessarily
@@ -81,7 +82,7 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
                     context.getLocation(node),
                     "Arithmetic on an unwrapped `$domain` instant — keep it typed and subtract instants " +
                         "(which yields a `kotlin.time.Duration`) or shift by a `Duration`, instead of " +
-                        "doing the math on a bare `Long`.",
+                        "doing the math on a bare `Long`."
                 )
             }
 
@@ -95,7 +96,7 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
                     context.getLocation(node),
                     "A `$domain` instant is unwrapped to a bare `Long` in ${slot.phrase} — pass the " +
                         "typed instant instead, and unwrap (`.epochMs` / `.ms`) only at a platform sink " +
-                        "(formatting, a pixel coordinate, an alarm).",
+                        "(formatting, a pixel coordinate, an alarm)."
                 )
             }
         }
@@ -105,9 +106,8 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
      * The instant domain [expr] unwraps (an `x.epochMs` / `x.ms` accessor read on an instant type,
      * looking through parentheses), or null if it isn't such an unwrap.
      */
-    private fun unwrapDomainOf(expr: UExpression?): String? =
-        (expr?.skipParenthesizedExprDown() as? UQualifiedReferenceExpression)
-            ?.let { DOMAIN_ESCAPES[TimeLintSupport.propertyKey(it, ACCESSOR_NAMES)] }
+    private fun unwrapDomainOf(expr: UExpression?): String? = (expr?.skipParenthesizedExprDown() as? UQualifiedReferenceExpression)
+        ?.let { DOMAIN_ESCAPES[TimeLintSupport.propertyKey(it, ACCESSOR_NAMES)] }
 
     companion object {
         /** The package that defines the instant types; exempt because it implements their own algebra. */
@@ -117,7 +117,7 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
         private val DOMAIN_ESCAPES: Map<String, String> = mapOf(
             "org.onebusaway.android.time.ServerTime#epochMs" to "ServerTime",
             "org.onebusaway.android.time.WallTime#epochMs" to "WallTime",
-            "org.onebusaway.android.time.ElapsedTime#ms" to "ElapsedTime",
+            "org.onebusaway.android.time.ElapsedTime#ms" to "ElapsedTime"
         )
 
         /** The accessor simple-names (`epochMs`, `ms`) — the cheap gate before `propertyKey`'s resolve. */
@@ -152,8 +152,8 @@ class PrematureUnwrapDetector : Detector(), SourceCodeScanner {
             severity = Severity.WARNING,
             implementation = Implementation(
                 PrematureUnwrapDetector::class.java,
-                Scope.JAVA_FILE_SCOPE,
-            ),
+                Scope.JAVA_FILE_SCOPE
+            )
         )
     }
 }

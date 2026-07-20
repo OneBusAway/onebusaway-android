@@ -47,19 +47,19 @@ class ArrivalInfoTest {
     private fun arrival(
         predicted: Boolean,
         predictedArrivalTime: Long,
-        scheduledArrivalTime: Long = scheduledArrival,
+        scheduledArrivalTime: Long = scheduledArrival
     ): ArrivalData = FakeArrivalData(
         predicted = predicted,
         // Mirror the adapter's wire→domain mint: a non-positive predicted instant decodes to null.
         predictedArrivalTime = predictedArrivalTime.takeIf { it > 0L }?.let { ServerTime(it) },
-        scheduledArrivalTime = ServerTime(scheduledArrivalTime),
+        scheduledArrivalTime = ServerTime(scheduledArrivalTime)
     )
 
     private fun infoFor(data: ArrivalData) = ArrivalInfo(
         context = null,
         data = data,
         now = now,
-        includeArrivalDepartureInStatusLabel = false,
+        includeArrivalDepartureInStatusLabel = false
     )
 
     /** A predicted arrival ~50min out (slightly later than [scheduledArrival]), shared by the
@@ -170,5 +170,5 @@ private data class FakeArrivalData(
     override val hasTripStatus: Boolean = false,
     override val scheduleDeviation: Long = 0L,
     override val lastKnownLat: Double? = null,
-    override val lastKnownLon: Double? = null,
+    override val lastKnownLon: Double? = null
 ) : ArrivalData

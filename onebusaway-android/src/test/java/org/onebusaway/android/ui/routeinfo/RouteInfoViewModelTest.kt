@@ -45,8 +45,7 @@ class RouteInfoViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     // The VM reads its route id from SavedStateHandle (the host normalizes the data URI into it).
-    private fun handle(routeId: String = "1_8") =
-        SavedStateHandle(mapOf(NavRoutes.ARG_ROUTE_ID to routeId))
+    private fun handle(routeId: String = "1_8") = SavedStateHandle(mapOf(NavRoutes.ARG_ROUTE_ID to routeId))
 
     private val route = RouteInfo(
         id = "1_8",

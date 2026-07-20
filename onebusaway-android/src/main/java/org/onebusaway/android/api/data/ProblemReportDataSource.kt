@@ -15,11 +15,9 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.requireOk
-
-import org.onebusaway.android.api.net.ObaApiProvider
-
 import javax.inject.Inject
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireOk
 
 /**
  * Submits stop/trip problem reports to the OBA REST API. Takes plain values (the feature unpacks its
@@ -34,7 +32,7 @@ interface ProblemReportDataSource {
         comment: String?,
         lat: Double?,
         lon: Double?,
-        accuracyMeters: Int?,
+        accuracyMeters: Int?
     ): Result<Unit>
 
     suspend fun reportTrip(
@@ -48,7 +46,7 @@ interface ProblemReportDataSource {
         vehicleNumber: String?,
         lat: Double?,
         lon: Double?,
-        accuracyMeters: Int?,
+        accuracyMeters: Int?
     ): Result<Unit>
 }
 
@@ -62,7 +60,7 @@ class DefaultProblemReportDataSource @Inject constructor(
         comment: String?,
         lat: Double?,
         lon: Double?,
-        accuracyMeters: Int?,
+        accuracyMeters: Int?
     ): Result<Unit> = api.call {
         it.reportProblemWithStop(
             stopId = stopId,
@@ -71,7 +69,7 @@ class DefaultProblemReportDataSource @Inject constructor(
             userComment = comment,
             userLat = lat,
             userLon = lon,
-            userLocationAccuracy = accuracyMeters,
+            userLocationAccuracy = accuracyMeters
         ).requireOk()
     }
 
@@ -86,7 +84,7 @@ class DefaultProblemReportDataSource @Inject constructor(
         vehicleNumber: String?,
         lat: Double?,
         lon: Double?,
-        accuracyMeters: Int?,
+        accuracyMeters: Int?
     ): Result<Unit> = api.call {
         it.reportProblemWithTrip(
             tripId = tripId,
@@ -100,7 +98,7 @@ class DefaultProblemReportDataSource @Inject constructor(
             userLon = lon,
             userLocationAccuracy = accuracyMeters,
             userOnVehicle = onVehicle,
-            userVehicleNumber = vehicleNumber,
+            userVehicleNumber = vehicleNumber
         ).requireOk()
     }
 

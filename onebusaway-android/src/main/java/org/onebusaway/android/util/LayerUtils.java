@@ -16,9 +16,7 @@
 package org.onebusaway.android.util;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
-
 import org.onebusaway.android.R;
 import org.onebusaway.android.app.di.PreferencesEntryPoint;
 
@@ -26,16 +24,16 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint;
  * Utility methods related to creating layers. Currently only methods related to the bikeshare layer
  * are present as this is the only layer at the moment.
  *
- * Created by carvalhorr on 7/21/17.
+ * <p>Created by carvalhorr on 7/21/17.
  */
-
 public class LayerUtils {
 
-    /**
-    * @return true if the bikeshare layer is active and visible
-     */
-    public static boolean isBikeshareLayerVisible(@NonNull Context context) {
-        return BikeshareAvailability.isEnabled(context) && PreferencesEntryPoint.get(context).getBoolean(
-                R.string.preference_key_layer_bikeshare_visible, true);
-    }
+  /**
+   * @return true if the bikeshare layer is active and visible
+   */
+  public static boolean isBikeshareLayerVisible(@NonNull Context context) {
+    return BikeshareAvailability.isEnabled(context)
+        && PreferencesEntryPoint.get(context)
+            .getBoolean(R.string.preference_key_layer_bikeshare_visible, true);
+  }
 }

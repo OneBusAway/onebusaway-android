@@ -34,8 +34,7 @@ class ServiceListMappingTest {
         setType(type)
     }
 
-    private fun items(vararg services: Service) =
-        ServiceListMapper.toItems(services.toList(), "Choose a Problem", "Others", "Transit")
+    private fun items(vararg services: Service) = ServiceListMapper.toItems(services.toList(), "Choose a Problem", "Others", "Transit")
 
     /** A compact label for each row, for order assertions. */
     private fun ServiceListItem.label() = when (this) {

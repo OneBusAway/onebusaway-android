@@ -44,7 +44,7 @@ class IntentRouteMapperTest {
                 isSearch = true,
                 searchQuery = "loser",
                 hasArrivalPayload = true,
-                arrivalStopId = "1_99",
+                arrivalStopId = "1_99"
             )
         )
         assertEquals(RouteDecision.Verbatim("settings"), decision)
@@ -55,7 +55,7 @@ class IntentRouteMapperTest {
         // The URLs apply as a side effect (HomeActivity); routing stays on the home/map path.
         assertEquals(
             RouteDecision.None,
-            decide(RouteIntent(isAddRegion = true, isSearch = true, searchQuery = "x")),
+            decide(RouteIntent(isAddRegion = true, isSearch = true, searchQuery = "x"))
         )
     }
 
@@ -65,7 +65,7 @@ class IntentRouteMapperTest {
             RouteIntent(
                 isSearch = true,
                 searchQuery = "1st ave",
-                pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403"),
+                pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403")
             )
         )
         assertEquals(RouteDecision.Search("1st ave"), decision)
@@ -82,7 +82,7 @@ class IntentRouteMapperTest {
     fun `an arrival payload with a parsed stop id opens that stop's arrivals`() {
         assertEquals(
             RouteDecision.Arrivals("1_75403"),
-            decide(RouteIntent(hasArrivalPayload = true, arrivalStopId = "1_75403")),
+            decide(RouteIntent(hasArrivalPayload = true, arrivalStopId = "1_75403"))
         )
     }
 
@@ -95,9 +95,9 @@ class IntentRouteMapperTest {
                 RouteIntent(
                     hasArrivalPayload = true,
                     arrivalStopId = null,
-                    tripDetailsId = "trip-should-be-ignored",
+                    tripDetailsId = "trip-should-be-ignored"
                 )
-            ),
+            )
         )
     }
 
@@ -111,9 +111,9 @@ class IntentRouteMapperTest {
                 RouteIntent(
                     tripDetailsId = "trip-1",
                     tripDetailsStopId = "1_75403",
-                    tripDetailsScrollMode = "arrivals",
+                    tripDetailsScrollMode = "arrivals"
                 )
-            ),
+            )
         )
     }
 
@@ -128,7 +128,7 @@ class IntentRouteMapperTest {
     fun `a recent-routes tab link opens My Routes`() {
         assertEquals(
             RouteDecision.MyRoutes(MyTabs.RECENT_ROUTES),
-            decide(RouteIntent(tabTag = MyTabs.RECENT_ROUTES)),
+            decide(RouteIntent(tabTag = MyTabs.RECENT_ROUTES))
         )
     }
 
@@ -136,7 +136,7 @@ class IntentRouteMapperTest {
     fun `any other tab link opens My Stops on that tab`() {
         assertEquals(
             RouteDecision.MyStops(MyTabs.STARRED_STOPS),
-            decide(RouteIntent(tabTag = MyTabs.STARRED_STOPS)),
+            decide(RouteIntent(tabTag = MyTabs.STARRED_STOPS))
         )
     }
 
@@ -149,9 +149,9 @@ class IntentRouteMapperTest {
             decide(
                 RouteIntent(
                     pathSegments = listOf(DeepLinkUris.STOPS_PATH, "1_75403"),
-                    arrivalsStopName = "Pike St & 3rd Ave",
+                    arrivalsStopName = "Pike St & 3rd Ave"
                 )
-            ),
+            )
         )
     }
 
@@ -159,7 +159,7 @@ class IntentRouteMapperTest {
     fun `a routes data-URI opens route info`() {
         assertEquals(
             RouteDecision.RouteInfo("1_100224"),
-            decide(RouteIntent(pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224"))),
+            decide(RouteIntent(pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224")))
         )
     }
 
@@ -167,7 +167,7 @@ class IntentRouteMapperTest {
     fun `an unrecognized data-URI path stays on the home or map path`() {
         assertEquals(
             RouteDecision.None,
-            decide(RouteIntent(pathSegments = listOf("service_alerts", "abc"))),
+            decide(RouteIntent(pathSegments = listOf("service_alerts", "abc")))
         )
     }
 }

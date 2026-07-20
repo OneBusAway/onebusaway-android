@@ -55,7 +55,7 @@ class TripPlanViewModel @Inject constructor(
     private val regionRepository: RegionRepository,
     private val searchCenter: SearchCenter,
     timeProvider: TimeProvider,
-    settingsRepository: AdvancedSettingsRepository,
+    settingsRepository: AdvancedSettingsRepository
 ) : ViewModel() {
 
     /**
@@ -133,8 +133,7 @@ class TripPlanViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
-    private suspend fun suggestionsFor(query: String): List<TripEndpoint.Geocoded> =
-        if (query.isBlank()) emptyList() else geocode.suggest(query).getOrDefault(emptyList())
+    private suspend fun suggestionsFor(query: String): List<TripEndpoint.Geocoded> = if (query.isBlank()) emptyList() else geocode.suggest(query).getOrDefault(emptyList())
 
     fun onFromQueryChange(query: String) {
         _formState.update { it.copy(from = TripEndpoint.FreeText(query)) }
@@ -200,8 +199,10 @@ class TripPlanViewModel @Inject constructor(
     fun reverseTrip() {
         _formState.update {
             it.copy(
-                from = it.to, to = it.from,
-                fromSuggestions = emptyList(), toSuggestions = emptyList()
+                from = it.to,
+                to = it.from,
+                fromSuggestions = emptyList(),
+                toSuggestions = emptyList()
             )
         }
         replanOrClearResult()
@@ -249,11 +250,9 @@ class TripPlanViewModel @Inject constructor(
         planInputs.trySend(if (form.canSubmit) form.toParams() else null)
     }
 
-    private fun formatDate(millis: Long): String =
-        SimpleDateFormat(DATE_PATTERN, Locale.getDefault()).format(Date(millis))
+    private fun formatDate(millis: Long): String = SimpleDateFormat(DATE_PATTERN, Locale.getDefault()).format(Date(millis))
 
-    private fun formatTime(millis: Long): String =
-        SimpleDateFormat(TIME_PATTERN, Locale.getDefault()).format(Date(millis))
+    private fun formatTime(millis: Long): String = SimpleDateFormat(TIME_PATTERN, Locale.getDefault()).format(Date(millis))
 
     private companion object {
         const val SUGGEST_DEBOUNCE_MS = 350L

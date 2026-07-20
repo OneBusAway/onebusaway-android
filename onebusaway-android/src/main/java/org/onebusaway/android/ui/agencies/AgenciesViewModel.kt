@@ -15,18 +15,15 @@
  */
 package org.onebusaway.android.ui.agencies
 
-import org.onebusaway.android.api.data.AgenciesDataSource
-
-import org.onebusaway.android.models.AgencyContact
-
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.models.AgencyContact
 import org.onebusaway.android.ui.compose.ListLoadingViewModel
 
 /** ViewModel for the supported agencies screen. */
 @HiltViewModel
-class AgenciesViewModel @Inject constructor(private val repository: AgenciesDataSource) :
-    ListLoadingViewModel<AgencyContact>() {
+class AgenciesViewModel @Inject constructor(private val repository: AgenciesDataSource) : ListLoadingViewModel<AgencyContact>() {
 
     init {
         load()

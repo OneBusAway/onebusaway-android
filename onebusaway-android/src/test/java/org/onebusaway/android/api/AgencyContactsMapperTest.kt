@@ -15,18 +15,16 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.data.toAgencyContacts
-
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
 import org.onebusaway.android.api.contract.AgencyCoverage
 import org.onebusaway.android.api.contract.AgencyReference
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.References
-
-import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.onebusaway.android.api.data.toAgencyContacts
 
 /**
  * Pure-logic coverage for [toAgencyContacts] and the list-with-references wire models: agency
@@ -35,7 +33,10 @@ import org.junit.Test
  */
 class AgencyContactsMapperTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun resolvesAgenciesAndNormalizesBlankUrl() {
@@ -44,7 +45,7 @@ class AgencyContactsMapperTest {
             references = References(
                 agencies = listOf(
                     AgencyReference(id = "1", name = "Metro", url = "https://metro.example"),
-                    AgencyReference(id = "2", name = "Ferry", url = ""),
+                    AgencyReference(id = "2", name = "Ferry", url = "")
                 )
             )
         )

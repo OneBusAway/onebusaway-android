@@ -53,7 +53,7 @@ interface MapStopCacheDao {
         centerLat: Double,
         centerLon: Double,
         ttlCutoff: Long,
-        limit: Int,
+        limit: Int
     ): List<CachedStopRecord>
 
     /** The cached route types for the given route ids (the icon-colour lookup). */
@@ -94,7 +94,7 @@ interface MapStopCacheDao {
         types: List<CachedRouteTypeRecord>,
         regionId: Long,
         ttlCutoff: Long,
-        cap: Int,
+        cap: Int
     ) {
         upsertStops(stops)
         upsertRouteTypes(types)

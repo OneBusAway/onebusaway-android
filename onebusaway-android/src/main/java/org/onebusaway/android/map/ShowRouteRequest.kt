@@ -45,5 +45,5 @@ data class ShowRouteRequest(
     val directionStopId: String? = null,
     val focusTripId: String? = null,
     val initialDirectionId: Int? = null,
-    val highlightedSegment: List<GeoPoint> = emptyList(),
+    val highlightedSegment: List<GeoPoint> = emptyList()
 )

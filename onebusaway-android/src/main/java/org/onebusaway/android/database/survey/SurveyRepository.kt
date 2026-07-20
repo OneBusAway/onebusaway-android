@@ -20,7 +20,7 @@ import org.onebusaway.android.models.Survey as SurveyModel
 class SurveyRepository @Inject constructor(
     private val studiesDao: StudiesDao,
     private val surveysDao: SurveysDao,
-    private val importGate: ImportGate,
+    private val importGate: ImportGate
 ) {
 
     /**

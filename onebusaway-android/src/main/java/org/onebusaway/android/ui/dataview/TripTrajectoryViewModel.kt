@@ -37,7 +37,7 @@ import org.onebusaway.android.ui.nav.NavRoutes
 @HiltViewModel
 class TripTrajectoryViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    private val repository: TripObservationRepository,
+    private val repository: TripObservationRepository
 ) : ViewModel() {
 
     private val tripId: String = savedState.get<String>(NavRoutes.ARG_TRIP_ID)
@@ -62,7 +62,7 @@ class TripTrajectoryViewModel @Inject constructor(
             vehicleId = snapshot.anchor?.vehicleId,
             sampleCount = snapshot.history.size,
             tripEnded = snapshot.vehicleActiveTripId != null && snapshot.vehicleActiveTripId != tripId,
-            trajectory = buildTrajectory(snapshot, now),
+            trajectory = buildTrajectory(snapshot, now)
         )
     }
 }

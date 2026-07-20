@@ -16,8 +16,8 @@
 package org.onebusaway.android.database.oba
 
 import androidx.room.Room
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -41,7 +41,8 @@ class RegionDaoReplaceAllTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            InstrumentationRegistry.getInstrumentation().targetContext, AppDatabase::class.java
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            AppDatabase::class.java
         ).build()
         dao = db.regionDao()
     }
@@ -54,7 +55,7 @@ class RegionDaoReplaceAllTest {
         dao.replaceAll(listOf(regionWithChildren(0)))
 
         val hydrated = dao.getRegion(0)!!
-        assertEquals(0L, hydrated.region.id)          // Tampa id 0 not reassigned
+        assertEquals(0L, hydrated.region.id) // Tampa id 0 not reassigned
         assertEquals(1, hydrated.bounds.size)
         assertEquals(1, hydrated.open311Servers.size)
     }
@@ -66,12 +67,12 @@ class RegionDaoReplaceAllTest {
         // Replace with a different set: region 5, and a region with no open311 servers.
         dao.replaceAll(listOf(regionWithChildren(5, servers = 0)))
 
-        assertNull(dao.getRegion(0))                  // old regions gone
+        assertNull(dao.getRegion(0)) // old regions gone
         assertNull(dao.getRegion(1))
         assertEquals(1, dao.getAllRegions().size)
         val r5 = dao.getRegion(5)!!
-        assertEquals(1, r5.bounds.size)               // region_bounds reinserted
-        assertEquals(0, r5.open311Servers.size)       // open311 cleared, none reinserted
+        assertEquals(1, r5.bounds.size) // region_bounds reinserted
+        assertEquals(0, r5.open311Servers.size) // open311 cleared, none reinserted
     }
 
     private fun regionWithChildren(id: Long, servers: Int = 1) = RegionWithChildren(
@@ -84,13 +85,17 @@ class RegionDaoReplaceAllTest {
             contactEmail = "e@x",
             supportsObaDiscovery = 1,
             supportsObaRealtime = 1,
-            supportsSiriRealtime = 0,
+            supportsSiriRealtime = 0
         ),
         bounds = listOf(
             RegionBoundRecord(regionId = id, latitude = 1.0, longitude = 2.0, latSpan = 0.1, lonSpan = 0.1)
         ),
-        open311Servers = if (servers == 0) emptyList() else listOf(
-            Open311ServerRecord(regionId = id, apiKey = "k$id", baseUrl = "http://311/$id")
-        ),
+        open311Servers = if (servers == 0) {
+            emptyList()
+        } else {
+            listOf(
+                Open311ServerRecord(regionId = id, apiKey = "k$id", baseUrl = "http://311/$id")
+            )
+        }
     )
 }

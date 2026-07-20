@@ -16,8 +16,8 @@
 package org.onebusaway.android.database.oba
 
 import androidx.room.Room
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -43,7 +43,8 @@ class ServiceAlertDaoTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            InstrumentationRegistry.getInstrumentation().targetContext, AppDatabase::class.java
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            AppDatabase::class.java
         ).build()
         dao = db.serviceAlertDao()
     }
@@ -56,7 +57,7 @@ class ServiceAlertDaoTest {
         dao.markRead("a1", now = 500)
 
         assertFalse(dao.isHidden("a1"))
-        assertTrue(dao.hideDecisions().first().isEmpty())   // hidden stayed NULL -> not a decision
+        assertTrue(dao.hideDecisions().first().isEmpty()) // hidden stayed NULL -> not a decision
     }
 
     @Test
@@ -73,10 +74,10 @@ class ServiceAlertDaoTest {
 
     @Test
     fun markReadThenHide_updateSameRow_bothStatesCoexist() = runBlocking {
-        dao.markRead("a1", now = 100)   // inserts row, read stamped, hidden NULL
-        dao.setHidden("a1", true)       // updates the same row's hidden decision
+        dao.markRead("a1", now = 100) // inserts row, read stamped, hidden NULL
+        dao.setHidden("a1", true) // updates the same row's hidden decision
 
         assertTrue(dao.isHidden("a1"))
-        assertEquals(1, dao.hideDecisions().first().size)   // one row, not a duplicate insert
+        assertEquals(1, dao.hideDecisions().first().size) // one row, not a duplicate insert
     }
 }

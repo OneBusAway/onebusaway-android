@@ -57,9 +57,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -75,39 +75,38 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import java.util.Calendar
 import java.util.TimeZone
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.ui.icons.AppIcons
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.directions.util.ConversionUtils
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
-import org.onebusaway.android.ui.compose.components.DragHandleBar
-import org.onebusaway.android.ui.compose.components.SwitchRow
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
+import org.onebusaway.android.ui.compose.components.DragHandleBar
+import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripModes
+import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanForm
 import org.onebusaway.android.ui.tripplan.TripPlanFormState
-import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripresults.RouteLegRef
@@ -115,6 +114,7 @@ import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.util.BikeshareAvailability
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -143,7 +143,7 @@ fun DirectionsFormCard(
     state: TripPlanFormState,
     onPickFrom: () -> Unit,
     onPickTo: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val activity = context.findActivity()
@@ -155,7 +155,7 @@ fun DirectionsFormCard(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
-        shadowElevation = 3.dp,
+        shadowElevation = 3.dp
     ) {
         Column(Modifier.heightIn(max = maxHeight).verticalScroll(rememberScrollState())) {
             TripPlanForm(
@@ -174,7 +174,7 @@ fun DirectionsFormCard(
                 onPickDate = { pickTripDate(activity, viewModel) },
                 onPickTime = { pickTripTime(activity, viewModel) },
                 onReverse = viewModel::reverseTrip,
-                onAdvancedSettings = { showAdvanced = true },
+                onAdvancedSettings = { showAdvanced = true }
             )
         }
     }
@@ -190,7 +190,8 @@ private fun setCurrentLocation(context: Context, target: (TripEndpoint) -> Unit)
         // A null fix means "no permission" only when permission is actually denied; with permission
         // granted it just means we don't have a fix yet, which is a different (recoverable) message.
         val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
-                context, PermissionUtils.LOCATION_PERMISSIONS
+                context,
+                PermissionUtils.LOCATION_PERMISSIONS
             )
         ) {
             R.string.main_waiting_for_location
@@ -264,7 +265,7 @@ fun DirectionsResultsSheet(
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     // The system nav-bar inset: the surface reaches the bottom edge (continuous background), but its
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
@@ -274,14 +275,14 @@ fun DirectionsResultsSheet(
     var collapsed by rememberSaveable { mutableStateOf(false) }
     val sheetHeight by animateDpAsState(
         targetValue = if (collapsed) DIRECTIONS_SHEET_PEEK + navBottom else fullHeight,
-        label = "directionsSheetHeight",
+        label = "directionsSheetHeight"
     )
     Surface(
         modifier = modifier.fillMaxWidth().height(sheetHeight),
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 2.dp,
-        shadowElevation = 8.dp,
+        shadowElevation = 8.dp
     ) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding()) {
             DirectionsSheetHandle(collapsed = collapsed, onSetCollapsed = { collapsed = it })
@@ -294,7 +295,7 @@ fun DirectionsResultsSheet(
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }
@@ -322,10 +323,10 @@ private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) 
                         dragAccumulated = 0f
                     }
                 },
-                onDragStopped = { dragAccumulated = 0f },
+                onDragStopped = { dragAccumulated = 0f }
             )
             .padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.Center
     ) {
         DragHandleBar()
     }
@@ -346,7 +347,7 @@ fun DirectionStopEtaStrip(
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
     onFocusVehicle: (ShowRouteRequest) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val stopId = stop.stopId
     val point = stop.point
@@ -366,7 +367,7 @@ fun DirectionStopEtaStrip(
         onShowRouteOnMap = { _, request -> onFocusVehicle(request) },
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
-        showUndoSnackbar = { _, _, _ -> },
+        showUndoSnackbar = { _, _, _ -> }
     ) ?: return
     val state by session.viewModel.state.collectAsStateWithLifecycle()
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
@@ -381,7 +382,7 @@ fun DirectionStopEtaStrip(
         trips = group.trips,
         actionsFor = { content.actions[it.tripId] },
         callbacks = callbacks,
-        modifier = modifier.then(rowPadding),
+        modifier = modifier.then(rowPadding)
     )
 }
 
@@ -399,7 +400,7 @@ private fun NoEtasText(modifier: Modifier) {
         text = stringResource(R.string.directions_stop_no_arrivals),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier,
+        modifier = modifier
     )
 }
 
@@ -412,7 +413,7 @@ private fun NoEtasText(modifier: Modifier) {
 fun DirectionsLongPressMenu(
     onFromHere: () -> Unit,
     onToHere: () -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.navigationBarsPadding()) {
@@ -421,12 +422,12 @@ fun DirectionsLongPressMenu(
                 leadingContent = {
                     Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
                 },
-                modifier = Modifier.clickable(onClick = onFromHere),
+                modifier = Modifier.clickable(onClick = onFromHere)
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.directions_to_here)) },
                 leadingContent = { Icon(AppIcons.Place, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onToHere),
+                modifier = Modifier.clickable(onClick = onToHere)
             )
         }
     }
@@ -445,7 +446,7 @@ fun DirectionsLongPressMenu(
 fun DirectionsErrorSnackbar(
     error: TripPlanError,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         // A polite live region so a screen reader announces a newly surfaced planning failure.
@@ -454,30 +455,30 @@ fun DirectionsErrorSnackbar(
         shape = RoundedCornerShape(4.dp),
         color = MaterialTheme.colorScheme.inverseSurface,
         contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        shadowElevation = 6.dp,
+        shadowElevation = 6.dp
     ) {
         Row(
             modifier = Modifier.padding(start = 16.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
                 Text(
                     text = stringResource(error.category.headerRes),
                     style = MaterialTheme.typography.titleSmall,
-                    color = colorResource(error.category.severity.colorRes),
+                    color = colorResource(error.category.severity.colorRes)
                 )
                 Text(
                     text = stringResource(error.detailRes),
                     modifier = Modifier.padding(top = 2.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.9f),
+                    color = MaterialTheme.colorScheme.inverseOnSurface.copy(alpha = 0.9f)
                 )
             }
             IconButton(onClick = onDismiss) {
                 Icon(
                     imageVector = AppIcons.Close,
                     contentDescription = stringResource(R.string.dismiss),
-                    tint = MaterialTheme.colorScheme.inverseOnSurface,
+                    tint = MaterialTheme.colorScheme.inverseOnSurface
                 )
             }
         }
@@ -493,25 +494,28 @@ fun DirectionsErrorSnackbar(
 fun BoxScope.DirectionsPickOverlay(
     target: DirectionsPickTarget,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit,
+    onCancel: () -> Unit
 ) {
     Surface(
         modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(8.dp),
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 3.dp,
-        shadowElevation = 3.dp,
+        shadowElevation = 3.dp
     ) {
         Row(
             modifier = Modifier.padding(start = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(
-                    if (target == DirectionsPickTarget.FROM) R.string.trip_plan_from
-                    else R.string.trip_plan_to
+                    if (target == DirectionsPickTarget.FROM) {
+                        R.string.trip_plan_from
+                    } else {
+                        R.string.trip_plan_to
+                    }
                 ),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium
             )
             IconButton(onClick = onCancel) {
                 Icon(AppIcons.Close, contentDescription = stringResource(R.string.close))
@@ -523,14 +527,14 @@ fun BoxScope.DirectionsPickOverlay(
         painter = painterResource(R.drawable.ic_my_location),
         contentDescription = null,
         tint = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.align(Alignment.Center).size(48.dp),
+        modifier = Modifier.align(Alignment.Center).size(48.dp)
     )
     Button(
         onClick = onConfirm,
         modifier = Modifier
             .align(Alignment.BottomCenter)
             .navigationBarsPadding()
-            .padding(bottom = 24.dp),
+            .padding(bottom = 24.dp)
     ) {
         Text(stringResource(R.string.trip_plan_use_this_location))
     }
@@ -540,7 +544,7 @@ fun BoxScope.DirectionsPickOverlay(
 @Composable
 private fun DirectionsAdvancedSettingsDialog(
     viewModel: TripPlanViewModel,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
     val imperial = remember { !PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
@@ -591,7 +595,10 @@ private fun DirectionsAdvancedSettingsDialog(
                             options.forEach { (label, code) ->
                                 DropdownMenuItem(
                                     text = { Text(label) },
-                                    onClick = { selectedMode = code; expanded = false },
+                                    onClick = {
+                                        selectedMode = code
+                                        expanded = false
+                                    }
                                 )
                             }
                         }
@@ -599,7 +606,7 @@ private fun DirectionsAdvancedSettingsDialog(
                 }
                 Row(
                     modifier = Modifier.padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(stringResource(R.string.maximum_walk_distance), modifier = Modifier.weight(1f))
                     OutlinedTextField(
@@ -607,7 +614,7 @@ private fun DirectionsAdvancedSettingsDialog(
                         onValueChange = { new -> maxWalk = new.filter { it.isDigit() } },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(96.dp),
+                        modifier = Modifier.width(96.dp)
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
@@ -619,12 +626,12 @@ private fun DirectionsAdvancedSettingsDialog(
                 SwitchRow(
                     label = stringResource(R.string.minimize_transfers),
                     checked = minimizeTransfers,
-                    onCheckedChange = { minimizeTransfers = it },
+                    onCheckedChange = { minimizeTransfers = it }
                 )
                 SwitchRow(
                     label = stringResource(R.string.wheelchair_accessible),
                     checked = wheelchair,
-                    onCheckedChange = { wheelchair = it },
+                    onCheckedChange = { wheelchair = it }
                 )
             }
         },
@@ -637,7 +644,8 @@ private fun DirectionsAdvancedSettingsDialog(
                     AdvancedSettings(selectedMode, maxWalkMeters, minimizeTransfers, wheelchair)
                 )
                 PreferenceUtils.saveInt(
-                    context.getString(R.string.preference_key_trip_plan_travel_by), selectedMode
+                    context.getString(R.string.preference_key_trip_plan_travel_by),
+                    selectedMode
                 )
                 PreferenceUtils.saveDouble(
                     context.getString(R.string.preference_key_trip_plan_maximum_walking_distance),
@@ -648,10 +656,11 @@ private fun DirectionsAdvancedSettingsDialog(
                     minimizeTransfers
                 )
                 PreferenceUtils.saveBoolean(
-                    context.getString(R.string.preference_key_trip_plan_avoid_stairs), wheelchair
+                    context.getString(R.string.preference_key_trip_plan_avoid_stairs),
+                    wheelchair
                 )
                 onDismiss()
             }) { Text(stringResource(R.string.ok)) }
-        },
+        }
     )
 }

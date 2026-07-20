@@ -16,153 +16,152 @@
 
 package org.onebusaway.android.util.test;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.onebusaway.android.region.Region;
-import org.onebusaway.android.mock.MockRegion;
-import org.onebusaway.android.util.Locations;
-import org.onebusaway.android.util.RegionUtils;
-
-import android.content.Context;
-import android.location.Location;
-
-import java.util.ArrayList;
-
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import androidx.test.platform.app.InstrumentationRegistry;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 
-/**
- * Tests to evaluate region utilities
- */
+import android.content.Context;
+import android.location.Location;
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+import java.util.ArrayList;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.onebusaway.android.mock.MockRegion;
+import org.onebusaway.android.region.Region;
+import org.onebusaway.android.util.Locations;
+import org.onebusaway.android.util.RegionUtils;
+
+/** Tests to evaluate region utilities */
 @RunWith(AndroidJUnit4.class)
 public class RegionUtilTest {
 
-    public static final float APPROXIMATE_DISTANCE_EQUALS_THRESHOLD = 2;  // meters
+  public static final float APPROXIMATE_DISTANCE_EQUALS_THRESHOLD = 2; // meters
 
-    // Mock regions to use in tests
-    Region mPsRegion;
+  // Mock regions to use in tests
+  Region mPsRegion;
 
-    Region mTampaRegion;
+  Region mTampaRegion;
 
-    // Locations to use in tests
-    Location mSeattleLoc;
+  // Locations to use in tests
+  Location mSeattleLoc;
 
-    Location mTampaLoc;
+  Location mTampaLoc;
 
-    Location mLondonLoc;
+  Location mLondonLoc;
 
-    Location mZeroZeroLoc;
+  Location mZeroZeroLoc;
 
-    Context mTargetContext;
+  Context mTargetContext;
 
-    @Before
-    public void before() {
-        mTargetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        mPsRegion = MockRegion.getPugetSound(mTargetContext);
-        mTampaRegion = MockRegion.getTampa(mTargetContext);
+  @Before
+  public void before() {
+    mTargetContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    mPsRegion = MockRegion.getPugetSound(mTargetContext);
+    mTampaRegion = MockRegion.getTampa(mTargetContext);
 
-        // Region locations
-        mSeattleLoc = Locations.locationOf(47.6097, -122.3331);
-        mTampaLoc = Locations.locationOf(27.9681, -82.4764);
+    // Region locations
+    mSeattleLoc = Locations.locationOf(47.6097, -122.3331);
+    mTampaLoc = Locations.locationOf(27.9681, -82.4764);
 
-        // Far locations
-        mLondonLoc = Locations.locationOf(51.5072, -0.1275);
-        mZeroZeroLoc = Locations.locationOf(0, 0);
-    }
+    // Far locations
+    mLondonLoc = Locations.locationOf(51.5072, -0.1275);
+    mZeroZeroLoc = Locations.locationOf(0, 0);
+  }
 
-    @Test
-    public void testGetDistanceAway() {
-        float distance = RegionUtils.getDistanceAway(mPsRegion, mSeattleLoc);
-        assertApproximateEquals(1210, distance);
+  @Test
+  public void testGetDistanceAway() {
+    float distance = RegionUtils.getDistanceAway(mPsRegion, mSeattleLoc);
+    assertApproximateEquals(1210, distance);
 
-        distance = RegionUtils.getDistanceAway(mTampaRegion, mTampaLoc);
-        assertApproximateEquals(3160, distance);
-    }
+    distance = RegionUtils.getDistanceAway(mTampaRegion, mTampaLoc);
+    assertApproximateEquals(3160, distance);
+  }
 
-    @Test
-    public void testGetClosestRegion() {
-        ArrayList<Region> list = new ArrayList<>();
-        list.add(mPsRegion);
-        list.add(mTampaRegion);
+  @Test
+  public void testGetClosestRegion() {
+    ArrayList<Region> list = new ArrayList<>();
+    list.add(mPsRegion);
+    list.add(mTampaRegion);
 
-        boolean useLimiter = false;
-
-        /**
-         * Without distance limiter - this should always return a region, no matter how far away
-         * it is
-         */
-        // Close to region
-        Region closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mSeattleLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
-
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mTampaLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
-
-        // Far from region
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mZeroZeroLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
-
-        /**
-         * With distance limiter - this should only return a region if its within
-         * the RegionUtils.DISTANCE_LIMITER threshold, otherwise null should be returned
-         */
-        useLimiter = true;
-
-        // Close to region
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mSeattleLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
-
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mTampaLoc, useLimiter);
-        assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
-
-        // Far from region
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mLondonLoc, useLimiter);
-        assertNull(closestRegion);
-
-        closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mZeroZeroLoc, useLimiter);
-        assertNull(closestRegion);
-    }
-
-    @Test
-    public void testGetRegionSpan() {
-        double[] results = new double[4];
-        RegionUtils.getRegionSpan(mTampaRegion, results);
-
-        assertApproximateEquals(0.542461f, (float) results[0]);
-        assertApproximateEquals(0.576357f, (float) results[1]);
-        assertApproximateEquals(27.9769105f, (float) results[2]);
-        assertApproximateEquals(-82.445851f, (float) results[3]);
-    }
-
-    public void testIsLocationWithinRegion() {
-        assertTrue(RegionUtils.isLocationWithinRegion(mSeattleLoc, mPsRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mTampaLoc, mPsRegion));
-
-        assertTrue(RegionUtils.isLocationWithinRegion(mTampaLoc, mTampaRegion));
-        assertFalse(RegionUtils.isLocationWithinRegion(mSeattleLoc, mTampaRegion));
-    }
-
-    @Test
-    public void testIsRegionUsable() {
-        assertTrue(RegionUtils.isRegionUsable(mTargetContext, mPsRegion));
-        assertTrue(RegionUtils.isRegionUsable(mTargetContext, mTampaRegion));
-
-        assertFalse(RegionUtils.isRegionUsable(mTargetContext, MockRegion.getRegionWithoutObaApis(mTargetContext)));
-        assertFalse(RegionUtils.isRegionUsable(mTargetContext, MockRegion.getInactiveRegion(mTargetContext)));
-    }
+    boolean useLimiter = false;
 
     /**
-     * Asserts that the expectedDistance is approximately equal to the actual distance, within
-     * APPROXIMATE_DISTANCE_EQUALS_THRESHOLD
+     * Without distance limiter - this should always return a region, no matter how far away it is
      */
-    private void assertApproximateEquals(float expectedDistance, float actualDistance) {
-        assertTrue(expectedDistance - APPROXIMATE_DISTANCE_EQUALS_THRESHOLD <= actualDistance &&
-                actualDistance <= expectedDistance + APPROXIMATE_DISTANCE_EQUALS_THRESHOLD);
-    }
+    // Close to region
+    Region closestRegion =
+        RegionUtils.getClosestRegion(mTargetContext, list, mSeattleLoc, useLimiter);
+    assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
+
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mTampaLoc, useLimiter);
+    assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
+
+    // Far from region
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mZeroZeroLoc, useLimiter);
+    assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
+
+    /**
+     * With distance limiter - this should only return a region if its within the
+     * RegionUtils.DISTANCE_LIMITER threshold, otherwise null should be returned
+     */
+    useLimiter = true;
+
+    // Close to region
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mSeattleLoc, useLimiter);
+    assertEquals(closestRegion.getId(), RegionUtils.PUGET_SOUND_REGION_ID);
+
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mTampaLoc, useLimiter);
+    assertEquals(closestRegion.getId(), RegionUtils.TAMPA_REGION_ID);
+
+    // Far from region
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mLondonLoc, useLimiter);
+    assertNull(closestRegion);
+
+    closestRegion = RegionUtils.getClosestRegion(mTargetContext, list, mZeroZeroLoc, useLimiter);
+    assertNull(closestRegion);
+  }
+
+  @Test
+  public void testGetRegionSpan() {
+    double[] results = new double[4];
+    RegionUtils.getRegionSpan(mTampaRegion, results);
+
+    assertApproximateEquals(0.542461f, (float) results[0]);
+    assertApproximateEquals(0.576357f, (float) results[1]);
+    assertApproximateEquals(27.9769105f, (float) results[2]);
+    assertApproximateEquals(-82.445851f, (float) results[3]);
+  }
+
+  public void testIsLocationWithinRegion() {
+    assertTrue(RegionUtils.isLocationWithinRegion(mSeattleLoc, mPsRegion));
+    assertFalse(RegionUtils.isLocationWithinRegion(mTampaLoc, mPsRegion));
+
+    assertTrue(RegionUtils.isLocationWithinRegion(mTampaLoc, mTampaRegion));
+    assertFalse(RegionUtils.isLocationWithinRegion(mSeattleLoc, mTampaRegion));
+  }
+
+  @Test
+  public void testIsRegionUsable() {
+    assertTrue(RegionUtils.isRegionUsable(mTargetContext, mPsRegion));
+    assertTrue(RegionUtils.isRegionUsable(mTargetContext, mTampaRegion));
+
+    assertFalse(
+        RegionUtils.isRegionUsable(
+            mTargetContext, MockRegion.getRegionWithoutObaApis(mTargetContext)));
+    assertFalse(
+        RegionUtils.isRegionUsable(mTargetContext, MockRegion.getInactiveRegion(mTargetContext)));
+  }
+
+  /**
+   * Asserts that the expectedDistance is approximately equal to the actual distance, within
+   * APPROXIMATE_DISTANCE_EQUALS_THRESHOLD
+   */
+  private void assertApproximateEquals(float expectedDistance, float actualDistance) {
+    assertTrue(
+        expectedDistance - APPROXIMATE_DISTANCE_EQUALS_THRESHOLD <= actualDistance
+            && actualDistance <= expectedDistance + APPROXIMATE_DISTANCE_EQUALS_THRESHOLD);
+  }
 }

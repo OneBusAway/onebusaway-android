@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.extrapolation
 
+import kotlin.time.Duration
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.DiracDistribution
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.time.ScheduleTime
 import org.onebusaway.android.time.WallTime
-import kotlin.time.Duration
 
 /**
  * Per-trip extrapolator for grade-separated transit (rail, subway) that replays the schedule
@@ -29,14 +29,14 @@ import kotlin.time.Duration
 class ScheduleReplayExtrapolator(state: TripState) : Extrapolator(state) {
 
     override fun doExtrapolate(
-            lastDist: Double,
-            lastTime: WallTime,
-            queryTime: WallTime
+        lastDist: Double,
+        lastTime: WallTime,
+        queryTime: WallTime
     ): ExtrapolationResult {
         val schedule = state.schedule ?: return ExtrapolationResult.MissingSchedule
         val distance =
-                replaySchedule(schedule, lastDist, lastTime, queryTime)
-                        ?: return ExtrapolationResult.MissingSchedule
+            replaySchedule(schedule, lastDist, lastTime, queryTime)
+                ?: return ExtrapolationResult.MissingSchedule
         return ExtrapolationResult.Success(DiracDistribution(distance))
     }
 }
@@ -56,21 +56,21 @@ class ScheduleReplayExtrapolator(state: TripState) : Extrapolator(state) {
  * @return the extrapolated distance in meters, or null if out of bounds
  */
 fun replaySchedule(
-        schedule: ObaTripSchedule,
-        startDist: Double,
-        lastTime: WallTime,
-        queryTime: WallTime
+    schedule: ObaTripSchedule,
+    startDist: Double,
+    lastTime: WallTime,
+    queryTime: WallTime
 ): Double? {
     val dt: Duration = queryTime - lastTime
     val stopTimes = schedule.stopTimes
     if (stopTimes.size < 2 || dt < Duration.ZERO) return null
 
     val segIdx =
-            try {
-                schedule.findSegmentStartIndex(startDist)
-            } catch (e: IndexOutOfBoundsException) {
-                return null
-            }
+        try {
+            schedule.findSegmentStartIndex(startDist)
+        } catch (e: IndexOutOfBoundsException) {
+            return null
+        }
     val segStart = stopTimes[segIdx]
     val segEnd = stopTimes[segIdx + 1]
 
@@ -91,9 +91,9 @@ fun replaySchedule(
  * to [targetTime] (a schedule time).
  */
 private fun walkForward(
-        stopTimes: Array<ObaTripSchedule.StopTime>,
-        startSegIdx: Int,
-        targetTime: ScheduleTime
+    stopTimes: Array<ObaTripSchedule.StopTime>,
+    startSegIdx: Int,
+    targetTime: ScheduleTime
 ): Double {
     // Check if still within the starting segment's travel phase
     val segEnd = stopTimes[startSegIdx + 1]
@@ -125,9 +125,9 @@ private fun walkForward(
 
 /** Linearly interpolates distance within a travel segment given a schedule time. */
 private fun interpolateInSegment(
-        from: ObaTripSchedule.StopTime,
-        to: ObaTripSchedule.StopTime,
-        targetTime: ScheduleTime
+    from: ObaTripSchedule.StopTime,
+    to: ObaTripSchedule.StopTime,
+    targetTime: ScheduleTime
 ): Double {
     val travelTime: Duration = to.arrivalTime - from.departureTime
     if (travelTime <= Duration.ZERO) return to.distanceAlongTrip

@@ -34,7 +34,7 @@ data class ReminderRow(
     val name: String?,
     val headsign: String?,
     val departure: Int,
-    @ColumnInfo(name = "route_short_name") val routeShortName: String?,
+    @ColumnInfo(name = "route_short_name") val routeShortName: String?
 )
 
 /** Room access for trip reminders (the legacy `trips` table). */

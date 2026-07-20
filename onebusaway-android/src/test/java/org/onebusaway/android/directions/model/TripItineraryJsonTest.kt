@@ -31,7 +31,7 @@ class TripItineraryJsonTest {
     fun `round-trips an itinerary through JSON`() {
         val itinerary = TripItinerary(
             startTime = ServerTime(1_700_000_000_000L),
-            legs = listOf(TripLeg(mode = TripMode.BUS, tripId = "t1")),
+            legs = listOf(TripLeg(mode = TripMode.BUS, tripId = "t1"))
         )
 
         val decoded = listOf(itinerary).toJson().toTripItineraries()

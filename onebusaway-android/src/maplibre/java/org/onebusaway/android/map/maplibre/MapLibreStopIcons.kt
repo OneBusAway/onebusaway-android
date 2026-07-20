@@ -19,12 +19,12 @@ package org.onebusaway.android.map.maplibre
 
 import android.content.Context
 import androidx.core.content.ContextCompat
+import kotlin.math.roundToInt
 import org.maplibre.android.annotations.Icon
 import org.maplibre.android.annotations.IconFactory
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopDirection
-import kotlin.math.roundToInt
 
 /**
  * Stateless factory for the maplibre bus-stop marker icons, extracted from the old maplibre
@@ -170,21 +170,20 @@ object MapLibreStopIcons {
             iconFactory.fromBitmap(
                 StopBitmaps.scale(
                     createBusStopIcon(context, it, selected = true, arrowTip, arrowBase),
-                    FOCUS_ICON_SCALE,
-                ),
+                    FOCUS_ICON_SCALE
+                )
             )
         }.toTypedArray()
 
         // Starred-stop full-band icon: an inflated star with the normal-sized direction arrow drawn on
         // top; the focused variant is the selected-color star, enlarged as a whole.
-        fun stars(topColor: Int, bottomColor: Int, focused: Boolean): Array<Icon> =
-            StopDirection.entries.map { direction ->
-                val marker = StopBitmaps.favoriteMarker(
-                    basePx, starPx, direction != StopDirection.NONE, direction.compassAngle,
-                    topColor, bottomColor, arrowTip, arrowBase, starOutlinePx,
-                )
-                iconFactory.fromBitmap(if (focused) StopBitmaps.scale(marker, FOCUS_ICON_SCALE) else marker)
-            }.toTypedArray()
+        fun stars(topColor: Int, bottomColor: Int, focused: Boolean): Array<Icon> = StopDirection.entries.map { direction ->
+            val marker = StopBitmaps.favoriteMarker(
+                basePx, starPx, direction != StopDirection.NONE, direction.compassAngle,
+                topColor, bottomColor, arrowTip, arrowBase, starOutlinePx
+            )
+            iconFactory.fromBitmap(if (focused) StopBitmaps.scale(marker, FOCUS_ICON_SCALE) else marker)
+        }.toTypedArray()
         starStopIcons = stars(starLight, starDark, focused = false)
         starStopIconsFocused = stars(focusColor, focusColor, focused = true)
 
@@ -199,7 +198,9 @@ object MapLibreStopIcons {
         val starDot = StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx)
         val focusedStarDot = StopBitmaps.star(
             (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
-            focusColor, focusColor, starOutlinePx,
+            focusColor,
+            focusColor,
+            starOutlinePx
         )
         starDotStopIcon = iconFactory.fromBitmap(starDot)
         starDotStopIconFocused = iconFactory.fromBitmap(focusedStarDot)
@@ -211,17 +212,17 @@ object MapLibreStopIcons {
         direction: StopDirection,
         selected: Boolean,
         arrowTip: Int,
-        arrowBase: Int,
+        arrowBase: Int
     ) = StopBitmaps.directionalStopMarker(
         requireNotNull(
             ContextCompat.getDrawable(
                 context,
-                if (selected) R.drawable.selected_map_stop_icon else R.drawable.map_stop_icon,
-            ),
+                if (selected) R.drawable.selected_map_stop_icon else R.drawable.map_stop_icon
+            )
         ),
         direction,
         basePx,
         arrowTip,
-        arrowBase,
+        arrowBase
     )
 }

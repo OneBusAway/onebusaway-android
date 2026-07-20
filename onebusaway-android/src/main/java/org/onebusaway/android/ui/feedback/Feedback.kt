@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.feedback
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -61,6 +60,7 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.nav.NavigationUploadWorker
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -99,7 +99,7 @@ object FeedbackLauncher {
         response: Int,
         logFile: String? = null,
         tripId: String? = null,
-        notificationId: Int = 0,
+        notificationId: Int = 0
     ): Intent = HomeActivity.navIntent(
         context,
         NavRoutes.feedback(response, logFile, tripId, notificationId)
@@ -116,11 +116,10 @@ object FeedbackLauncher {
 class FeedbackSubmitter(
     private val context: Context,
     private val prefs: PreferencesRepository,
-    private val logFile: String?,
+    private val logFile: String?
 ) {
 
-    fun shareLogsPref(): Boolean =
-        prefs.getBoolean(R.string.preferences_key_user_share_destination_logs, true)
+    fun shareLogsPref(): Boolean = prefs.getBoolean(R.string.preferences_key_user_share_destination_logs, true)
 
     fun setShareLogs(share: Boolean) {
         prefs.setBoolean(R.string.preferences_key_user_share_destination_logs, share)
@@ -135,7 +134,9 @@ class FeedbackSubmitter(
             logFeedback(liked, feedback)
         }
         Toast.makeText(
-            context, context.getString(R.string.feedback_notify_confirmation), Toast.LENGTH_SHORT
+            context,
+            context.getString(R.string.feedback_notify_confirmation),
+            Toast.LENGTH_SHORT
         ).show()
     }
 
@@ -143,15 +144,21 @@ class FeedbackSubmitter(
     private fun moveLog(liked: Boolean, feedback: String) {
         val logFilePath = logFile ?: return
         val response = context.getString(
-            if (liked) R.string.analytics_label_destination_reminder_yes
-            else R.string.analytics_label_destination_reminder_no
+            if (liked) {
+                R.string.analytics_label_destination_reminder_yes
+            } else {
+                R.string.analytics_label_destination_reminder_no
+            }
         )
         try {
             val file = File(logFilePath)
             file.appendText(System.lineSeparator() + feedback)
             val destFolder = File(
-                context.filesDir.absolutePath
-                        + File.separator + NavigationService.LOG_DIRECTORY + File.separator + response
+                context.filesDir.absolutePath +
+                    File.separator +
+                    NavigationService.LOG_DIRECTORY +
+                    File.separator +
+                    response
             )
             try {
                 destFolder.mkdirs()
@@ -186,7 +193,9 @@ class FeedbackSubmitter(
 
     private fun logFeedback(liked: Boolean, feedbackText: String) {
         AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(
-            liked, feedbackText.ifEmpty { null }, null
+            liked,
+            feedbackText.ifEmpty { null },
+            null
         )
     }
 }
@@ -284,8 +293,11 @@ private fun ThumbButton(
     val icon = if (upvote) R.drawable.ic_thumb_up else R.drawable.ic_thumb_down
     val tint = if (selected) FeedbackSelectedColor else MaterialTheme.colorScheme.onSurfaceVariant
     val description = stringResource(
-        if (upvote) R.string.feedback_like_button_description
-        else R.string.feedback_dislike_button_description
+        if (upvote) {
+            R.string.feedback_like_button_description
+        } else {
+            R.string.feedback_dislike_button_description
+        }
     )
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(

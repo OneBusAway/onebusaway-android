@@ -45,8 +45,8 @@ import org.onebusaway.android.database.oba.RouteRecentRow
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
-import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
@@ -98,7 +98,7 @@ private fun StopListRow.toStopItem(context: Context): StopListItem {
         directionText = directionText,
         lat = latitude,
         lon = longitude,
-        isFavorite = favorite == 1,
+        isFavorite = favorite == 1
     )
 }
 
@@ -106,16 +106,14 @@ private fun RouteListRow.toRouteItem() = RouteListItem(
     id = id,
     shortName = shortName,
     longName = longName?.takeIf { it.isNotEmpty() },
-    url = url?.takeIf { it.isNotEmpty() },
+    url = url?.takeIf { it.isNotEmpty() }
 )
 
 // The recent-row variants embed the list row + access_time, so reuse the exact list-row mappers on the
 // embedded [row] and keep the display formatting in one place.
-internal fun StopRecentRow.toRecentItem(context: Context) =
-    RecentItem.Stop(row.toStopItem(context), accessTime)
+internal fun StopRecentRow.toRecentItem(context: Context) = RecentItem.Stop(row.toStopItem(context), accessTime)
 
-internal fun RouteRecentRow.toRecentItem() =
-    RecentItem.Route(row.toRouteItem(), accessTime)
+internal fun RouteRecentRow.toRecentItem() = RecentItem.Route(row.toRouteItem(), accessTime)
 
 /** How many recents the search dropdown holds; ~4 are visible, the rest scroll (matches the list caps). */
 private const val RECENTS_LIMIT = 20
@@ -124,11 +122,10 @@ private const val RECENTS_LIMIT = 20
 internal fun mergeRecents(
     stops: List<RecentItem>,
     routes: List<RecentItem>,
-    limit: Int,
-): List<RecentItem> =
-    (stops + routes)
-        .sortedByDescending { it.accessTime ?: Long.MIN_VALUE }
-        .take(limit)
+    limit: Int
+): List<RecentItem> = (stops + routes)
+    .sortedByDescending { it.accessTime ?: Long.MIN_VALUE }
+    .take(limit)
 
 /**
  * Filter [items] to those whose stop name / route short-or-long name contains [query] (case-insensitive).
@@ -156,20 +153,19 @@ class SearchRecentsRepository(private val context: Context) : MyListRepository<R
     private val region = RegionEntryPoint.get(context).region
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<RecentItem>> =
-        region.flatMapLatest { r ->
-            val cutoff = recentCutoff()
-            combine(
-                stopDao.recentsForSearch(cutoff, r?.id),
-                routeDao.recentsForSearch(cutoff, r?.id),
-            ) { stops, routes ->
-                mergeRecents(
-                    stops.map { it.toRecentItem(context) },
-                    routes.map { it.toRecentItem() },
-                    RECENTS_LIMIT,
-                )
-            }
-        }.flowOn(Dispatchers.IO)
+    override fun observe(): Flow<List<RecentItem>> = region.flatMapLatest { r ->
+        val cutoff = recentCutoff()
+        combine(
+            stopDao.recentsForSearch(cutoff, r?.id),
+            routeDao.recentsForSearch(cutoff, r?.id)
+        ) { stops, routes ->
+            mergeRecents(
+                stops.map { it.toRecentItem(context) },
+                routes.map { it.toRecentItem() },
+                RECENTS_LIMIT
+            )
+        }
+    }.flowOn(Dispatchers.IO)
 }
 
 /** Recently viewed stops, marked unused on removal/clear. */
@@ -181,10 +177,9 @@ class RecentStopsRepository(private val context: Context) : MyListRepository<Sto
     private val region = RegionEntryPoint.get(context).region
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<StopListItem>> =
-        region.flatMapLatest { r -> stopDao.recents(recentCutoff(), r?.id) }
-            .map { rows -> rows.map { it.toStopItem(context) } }
-            .flowOn(Dispatchers.IO)
+    override fun observe(): Flow<List<StopListItem>> = region.flatMapLatest { r -> stopDao.recents(recentCutoff(), r?.id) }
+        .map { rows -> rows.map { it.toStopItem(context) } }
+        .flowOn(Dispatchers.IO)
 
     // Gate the writes: a remove/clear racing the one-time importer's clear-then-insert would otherwise
     // be silently wiped. Reads self-heal via Room invalidation once the import commits, so they don't.
@@ -208,10 +203,9 @@ class RecentRoutesRepository(private val context: Context) : MyListRepository<Ro
     private val region = RegionEntryPoint.get(context).region
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<RouteListItem>> =
-        region.flatMapLatest { r -> routeDao.recents(recentCutoff(), r?.id) }
-            .map { rows -> rows.map { it.toRouteItem() } }
-            .flowOn(Dispatchers.IO)
+    override fun observe(): Flow<List<RouteListItem>> = region.flatMapLatest { r -> routeDao.recents(recentCutoff(), r?.id) }
+        .map { rows -> rows.map { it.toRouteItem() } }
+        .flowOn(Dispatchers.IO)
 
     override suspend fun remove(id: String) {
         importGate.awaitReady()
@@ -245,30 +239,29 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<StopListItem>> =
-        combine(region, sort) { r, order -> r?.id to order }
-            .flatMapLatest { (regionId, order) ->
-                val rows = if (order == SORT_BY_FREQUENCY) {
-                    stopDao.starredByFrequency(regionId)
-                } else {
-                    stopDao.starredByName(regionId)
-                }
-                rows.map { list -> list.map { it.toStopItem(context).copy(arrivals = StopArrivals.Loading) } }
+    override fun observe(): Flow<List<StopListItem>> = combine(region, sort) { r, order -> r?.id to order }
+        .flatMapLatest { (regionId, order) ->
+            val rows = if (order == SORT_BY_FREQUENCY) {
+                stopDao.starredByFrequency(regionId)
+            } else {
+                stopDao.starredByName(regionId)
             }
-            .flatMapLatest { stops ->
-                // Restart the arrivals poll whenever the stop set (or sort) changes: show the stops with
-                // their Loading badges first, then re-emit them with each poll's results merged in.
-                if (stops.isEmpty()) {
-                    flowOf(stops)
-                } else {
-                    arrivalsPoll(context, stops.map { it.id })
-                        .map { byStop ->
-                            stops.map { it.copy(arrivals = StopArrivals.Loaded(byStop[it.id].orEmpty())) }
-                        }
-                        .onStart { emit(stops) }
-                }
+            rows.map { list -> list.map { it.toStopItem(context).copy(arrivals = StopArrivals.Loading) } }
+        }
+        .flatMapLatest { stops ->
+            // Restart the arrivals poll whenever the stop set (or sort) changes: show the stops with
+            // their Loading badges first, then re-emit them with each poll's results merged in.
+            if (stops.isEmpty()) {
+                flowOf(stops)
+            } else {
+                arrivalsPoll(context, stops.map { it.id })
+                    .map { byStop ->
+                        stops.map { it.copy(arrivals = StopArrivals.Loaded(byStop[it.id].orEmpty())) }
+                    }
+                    .onStart { emit(stops) }
             }
-            .flowOn(Dispatchers.IO)
+        }
+        .flowOn(Dispatchers.IO)
 
     override suspend fun remove(id: String) {
         importGate.awaitReady()
@@ -296,17 +289,16 @@ class StarredRoutesRepository(private val context: Context) : MyListRepository<R
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<RouteListItem>> =
-        combine(region, sort) { r, order -> r?.id to order }
-            .flatMapLatest { (regionId, order) ->
-                if (order == SORT_BY_FREQUENCY) {
-                    routeDao.starredByFrequency(regionId)
-                } else {
-                    routeDao.starredByName(regionId)
-                }
+    override fun observe(): Flow<List<RouteListItem>> = combine(region, sort) { r, order -> r?.id to order }
+        .flatMapLatest { (regionId, order) ->
+            if (order == SORT_BY_FREQUENCY) {
+                routeDao.starredByFrequency(regionId)
+            } else {
+                routeDao.starredByName(regionId)
             }
-            .map { rows -> rows.map { it.toRouteItem() } }
-            .flowOn(Dispatchers.IO)
+        }
+        .map { rows -> rows.map { it.toRouteItem() } }
+        .flowOn(Dispatchers.IO)
 
     // Unstarring a route just clears its single favorite bit (#1751).
     override suspend fun remove(id: String) {
@@ -333,12 +325,11 @@ class RemindersRepository(private val context: Context) : MyListRepository<Remin
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun observe(): Flow<List<ReminderItem>> =
-        sort.flatMapLatest { order ->
-            if (order == SORT_BY_NAME) tripDao.remindersByName() else tripDao.remindersByDeparture()
-        }
-            .map { rows -> rows.map { it.toReminderItem(context) } }
-            .flowOn(Dispatchers.IO)
+    override fun observe(): Flow<List<ReminderItem>> = sort.flatMapLatest { order ->
+        if (order == SORT_BY_NAME) tripDao.remindersByName() else tripDao.remindersByDeparture()
+    }
+        .map { rows -> rows.map { it.toReminderItem(context) } }
+        .flowOn(Dispatchers.IO)
 }
 
 private fun ReminderRow.toReminderItem(context: Context): ReminderItem {
@@ -380,17 +371,16 @@ private suspend fun fetchArrivals(
 }
 
 /** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
-private suspend fun fetchStopBadges(context: Context, stopId: String): List<ArrivalBadge> =
-    runCatchingCancellable {
-        val snapshot = NetworkEntryPoint.getStopArrivals(context)
-            .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
-            .getOrThrow()
-        // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
-        // rows don't render the favorite star.
-        convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
-            .take(MAX_ARRIVALS_PER_STOP)
-            .map { it.toBadge(context) }
-    }.getOrDefault(emptyList())
+private suspend fun fetchStopBadges(context: Context, stopId: String): List<ArrivalBadge> = runCatchingCancellable {
+    val snapshot = NetworkEntryPoint.getStopArrivals(context)
+        .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
+        .getOrThrow()
+    // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
+    // rows don't render the favorite star.
+    convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
+        .take(MAX_ARRIVALS_PER_STOP)
+        .map { it.toBadge(context) }
+}.getOrDefault(emptyList())
 
 private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
     val etaText = if (eta <= 0) {
@@ -400,7 +390,9 @@ private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
     }
     return ArrivalBadge(
         text = context.getString(
-            R.string.starred_stop_arrival_badge, getRouteDisplayName(shortName, routeLongName), etaText
+            R.string.starred_stop_arrival_badge,
+            getRouteDisplayName(shortName, routeLongName),
+            etaText
         ),
         colorRes = badgeColor(color)
     )

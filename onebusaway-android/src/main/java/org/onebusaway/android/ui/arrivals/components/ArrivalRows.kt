@@ -20,9 +20,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -95,7 +95,7 @@ class ArrivalRowCallbacks(
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
-    val onShowAlert: (String) -> Unit,
+    val onShowAlert: (String) -> Unit
 )
 
 /**
@@ -122,7 +122,7 @@ internal fun ArrivalCard(
             shape = shape,
             color = color,
             border = border,
-            content = content,
+            content = content
         )
     } else {
         Surface(modifier = base, shape = shape, color = color, border = border, content = content)
@@ -149,7 +149,7 @@ private fun ArrivalRowVisual(
     badgeContainer: Color = Color.Unspecified,
     badgeContent: Color = Color.Unspecified,
     onAlertClick: (() -> Unit)? = null,
-    onEtaClick: (() -> Unit)? = null,
+    onEtaClick: (() -> Unit)? = null
 ) {
     val decoration = strikeThroughIf(canceled)
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
@@ -196,14 +196,14 @@ private fun ArrivalRowVisual(
 internal fun ArrivalAlertIndicator(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    iconSize: Dp = 24.dp,
+    iconSize: Dp = 24.dp
 ) {
     IconButton(onClick = onClick, modifier = modifier) {
         Icon(
             painter = painterResource(R.drawable.baseline_warning_24),
             contentDescription = stringResource(R.string.stop_info_arrival_service_alert),
             tint = MaterialTheme.colorScheme.error,
-            modifier = Modifier.size(iconSize),
+            modifier = Modifier.size(iconSize)
         )
     }
 }
@@ -218,7 +218,7 @@ internal fun ArrivalRowContent(
     badgeContainer: Color = Color.Unspecified,
     badgeContent: Color = Color.Unspecified,
     onAlertClick: (() -> Unit)? = null,
-    onEtaClick: (() -> Unit)? = null,
+    onEtaClick: (() -> Unit)? = null
 ) {
     ArrivalRowVisual(
         shortName = arrival.shortName.orEmpty(),
@@ -233,7 +233,7 @@ internal fun ArrivalRowContent(
         badgeContainer = badgeContainer,
         badgeContent = badgeContent,
         onAlertClick = onAlertClick,
-        onEtaClick = onEtaClick,
+        onEtaClick = onEtaClick
     )
 }
 
@@ -264,7 +264,7 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    etaAnchor: Modifier = Modifier,
+    etaAnchor: Modifier = Modifier
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -277,7 +277,9 @@ fun RouteArrivalRow(
     val scheduleUrl = routeActions?.scheduleUrl?.takeIf { it.isNotBlank() }
     val scheduleActionLabel = if (scheduleUrl != null) {
         stringResource(R.string.bus_options_menu_show_route_schedule)
-    } else null
+    } else {
+        null
+    }
     val displayedRouteNames = selectedRouteNames.takeIf { selected }.orEmpty()
     val compoundBadge = displayedRouteNames.size > 1
     val selectionBorder = selectionColor
@@ -295,7 +297,7 @@ fun RouteArrivalRow(
                     .combinedClickable(
                         onClick = { callbacks.onShowVehiclesOnMap(representative) },
                         onLongClickLabel = scheduleActionLabel,
-                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
+                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null
                     )
                     .padding(
                         start = 10.dp,
@@ -315,7 +317,7 @@ fun RouteArrivalRow(
                     LineBadge(
                         text = continuationBadgeText(
                             displayedRouteNames,
-                            representative.shortName.orEmpty(),
+                            representative.shortName.orEmpty()
                         ),
                         // The trailing padding is the gap to the divider — part of the badge section,
                         // so the TopEnd-aligned alert glyph sits flush against the divider.
@@ -325,7 +327,7 @@ fun RouteArrivalRow(
                         maxLines = if (compoundBadge) 1 else 2,
                         color = badgeContent,
                         containerColor = badgeContainer,
-                        endContainerColor = mapRouteColor?.let(::Color) ?: Color.Unspecified,
+                        endContainerColor = mapRouteColor?.let(::Color) ?: Color.Unspecified
                     )
                     if (onAlertClick != null) {
                         ArrivalAlertIndicator(
@@ -337,7 +339,7 @@ fun RouteArrivalRow(
                                 // Cancel the row's vertical padding so the triangle's top lines up with
                                 // the corner star, which floats at the card's very top (above this
                                 // padding) rather than inside the row's content box.
-                                .offset(y = -ROW_VERTICAL_PADDING),
+                                .offset(y = -ROW_VERTICAL_PADDING)
                         )
                     }
                 }
@@ -357,7 +359,7 @@ fun RouteArrivalRow(
                         // Justify the soonest upcoming pill to the leading edge (the ETA the row is
                         // sorted by), so recent-past pills overflow left.
                         start = group.firstUpcomingIndex,
-                        firstPillModifier = etaAnchor,
+                        firstPillModifier = etaAnchor
                     )
                 }
             }
@@ -373,7 +375,7 @@ fun RouteArrivalRow(
                         // Tighten the button's touch box to the icon + a small margin, like the corner
                         // overflow icon below, instead of Material's 48dp default — keeps the star flush
                         // in the corner with no compensating offset.
-                        modifier = Modifier.size(28.dp),
+                        modifier = Modifier.size(28.dp)
                     )
                 }
             }
@@ -382,7 +384,7 @@ fun RouteArrivalRow(
                     expanded = menuExpanded,
                     onDismiss = { menuExpanded = false },
                     scheduleUrl = scheduleUrl,
-                    callbacks = callbacks,
+                    callbacks = callbacks
                 )
             }
         }
@@ -401,8 +403,7 @@ internal fun alertClick(
     group: RouteRowGroup,
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     callbacks: ArrivalRowCallbacks
-): (() -> Unit)? =
-    group.activeAlertSituationId(actionsFor)?.let { id -> { callbacks.onShowAlert(id) } }
+): (() -> Unit)? = group.activeAlertSituationId(actionsFor)?.let { id -> { callbacks.onShowAlert(id) } }
 
 /** The arrival row's top/bottom padding. The corner alert glyph offsets up by this amount to cancel
  *  it, so its top lines up with the favorite star (which floats above this padding at the card top);
@@ -421,7 +422,8 @@ internal fun RouteActionsMenu(
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
-            onDismiss(); callbacks.onShowRouteSchedule(scheduleUrl)
+            onDismiss()
+            callbacks.onShowRouteSchedule(scheduleUrl)
         }
     }
 }
@@ -432,7 +434,7 @@ internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Uni
     DropdownMenuItem(
         text = { Text(stringResource(textRes)) },
         onClick = onClick,
-        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } },
+        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } }
     )
 }
 
@@ -460,7 +462,7 @@ private fun EtaContent(
     color: Color,
     predicted: Boolean,
     canceled: Boolean,
-    onClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
 ) {
     val decoration = strikeThroughIf(canceled)
     // When clickable, clip to the pill shape so the tap ripple stays inside the ETA. No padding/size
@@ -488,7 +490,7 @@ private fun EtaContent(
                 text = etaAnnotatedString(
                     etaParts,
                     emphasizedSpan = SpanStyle(fontSize = 36.sp, fontWeight = FontWeight.Bold, color = color),
-                    unemphasizedSpan = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = color),
+                    unemphasizedSpan = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = color)
                 ),
                 textDecoration = decoration
             )
@@ -520,12 +522,11 @@ internal fun RealtimeIndicator(color: Color, modifier: Modifier = Modifier) {
         painter = painterResource(R.drawable.ic_rss_feed),
         contentDescription = null,
         modifier = modifier,
-        tint = color,
+        tint = color
     )
 }
 
-private fun strikeThroughIf(canceled: Boolean): TextDecoration =
-    if (canceled) TextDecoration.LineThrough else TextDecoration.None
+private fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
 
 /**
  * Renders [DisplayFormat.formatEtaParts] output as a single [AnnotatedString] — not separate Text
@@ -540,7 +541,7 @@ private fun strikeThroughIf(canceled: Boolean): TextDecoration =
 internal fun etaAnnotatedString(
     etaParts: List<DisplayFormat.EtaPart>,
     emphasizedSpan: SpanStyle,
-    unemphasizedSpan: SpanStyle,
+    unemphasizedSpan: SpanStyle
 ): AnnotatedString = buildAnnotatedString {
     etaParts.forEach { part ->
         withStyle(if (part.emphasized) emphasizedSpan else unemphasizedSpan) {
@@ -580,7 +581,7 @@ private data class PreviewArrivalData(
     override val hasTripStatus: Boolean = false,
     override val scheduleDeviation: Long = 0L,
     override val lastKnownLat: Double? = null,
-    override val lastKnownLon: Double? = null,
+    override val lastKnownLon: Double? = null
 ) : ArrivalData {
     override val scheduledDepartureTime: ServerTime get() = scheduledArrivalTime
     override val predictedDepartureTime: ServerTime? get() = predictedArrivalTime
@@ -603,7 +604,7 @@ internal fun previewArrival(
     status: Status = Status.DEFAULT,
     routeId: String = "route_$shortName",
     routeLongName: String? = null,
-    directionId: Int? = null,
+    directionId: Int? = null
 ): ArrivalInfo {
     val predictedMs = etaMinutes * PREVIEW_MIN_MS
     val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
@@ -618,10 +619,10 @@ internal fun previewArrival(
             predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
             predicted = predicted,
             status = status,
-            routeLongName = routeLongName,
+            routeLongName = routeLongName
         ),
         now = ServerTime(0L),
-        includeArrivalDepartureInStatusLabel = false,
+        includeArrivalDepartureInStatusLabel = false
     )
 }
 
@@ -634,7 +635,7 @@ internal fun previewRowCallbacks() = ArrivalRowCallbacks(
     onSetReminder = {},
     onShowRouteSchedule = {},
     onReportArrivalProblem = {},
-    onShowAlert = {},
+    onShowAlert = {}
 )
 
 @Preview(showBackground = true, widthDp = 400)
@@ -652,7 +653,7 @@ private fun RouteArrivalRowPreview() {
                 routeColor = 0xFF0A5B3E.toInt(),
                 scheduleUrl = null,
                 agencyName = null,
-                blockId = null,
+                blockId = null
             )
         )
     }
@@ -665,19 +666,19 @@ private fun RouteArrivalRowPreview() {
                         listOf(
                             previewArrival("40", "Northgate", etaMinutes = 3),
                             previewArrival("40", "Northgate", etaMinutes = 11, scheduleDeviationMinutes = 2),
-                            previewArrival("40", "Northgate", etaMinutes = 24, predicted = false),
+                            previewArrival("40", "Northgate", etaMinutes = 24, predicted = false)
                         )
                     ),
                     actionsFor = { actions[it.tripId] },
                     isFavorite = true,
-                    callbacks = callbacks,
+                    callbacks = callbacks
                 )
                 // A single-arrival route with a just-departed (recent-past) pill leading.
                 RouteArrivalRow(
                     group = RouteRowGroup(
                         listOf(
                             previewArrival("8", "Rainier Beach", etaMinutes = -2),
-                            previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3),
+                            previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3)
                         )
                     ),
                     actionsFor = {
@@ -689,11 +690,11 @@ private fun RouteArrivalRowPreview() {
                             routeColor = 0xFF9C27B0.toInt(),
                             scheduleUrl = null,
                             agencyName = null,
-                            blockId = null,
+                            blockId = null
                         )
                     },
                     isFavorite = false,
-                    callbacks = callbacks,
+                    callbacks = callbacks
                 )
             }
         }

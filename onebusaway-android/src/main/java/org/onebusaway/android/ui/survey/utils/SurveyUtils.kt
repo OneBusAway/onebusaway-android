@@ -1,6 +1,7 @@
 package org.onebusaway.android.ui.survey.utils
 
 import android.util.Log
+import java.util.Date
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -8,7 +9,6 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
 import org.onebusaway.android.ui.survey.SurveyPreferences
-import java.util.Date
 
 /**
  * Utility class for managing and processing surveys within the application.
@@ -152,9 +152,7 @@ object SurveyUtils {
      */
     fun getSurveyAnswersRequestBody(
         questionsList: List<SurveyQuestion>
-    ): JSONArray? {
-        return getAllSurveyQuestionAnswers(questionsList)
-    }
+    ): JSONArray? = getAllSurveyQuestionAnswers(questionsList)
 
     /**
      * Retrieves the answers for all survey questions except the hero question.
@@ -271,7 +269,7 @@ object SurveyUtils {
         surveyPreferences: SurveyPreferences,
         appLaunchCount: Int,
         donationUiShowing: Boolean,
-        isVisibleOnStops: Boolean,
+        isVisibleOnStops: Boolean
     ): Boolean {
         // User will receive a survey every `surveyLaunchCount` app launches
         if (appLaunchCount % launchesUntilSurveyShown != 0) return false
@@ -316,9 +314,7 @@ object SurveyUtils {
         return Date(timestamp)
     }
 
-    fun isValidEmbeddedDataList(embeddedDataList: ArrayList<String>?): Boolean {
-        return !embeddedDataList.isNullOrEmpty()
-    }
+    fun isValidEmbeddedDataList(embeddedDataList: ArrayList<String>?): Boolean = !embeddedDataList.isNullOrEmpty()
 
     /**
      * Converts an array of route IDs to an ArrayList.
@@ -326,9 +322,7 @@ object SurveyUtils {
      * @param routes An array of route IDs.
      * @return An ArrayList containing the route IDs from the input array.
      */
-    fun getRoutesIDList(routes: Array<String>): ArrayList<String> {
-        return ArrayList(routes.asList())
-    }
+    fun getRoutesIDList(routes: Array<String>): ArrayList<String> = ArrayList(routes.asList())
 
     /**
      * Returns the stop identifier if the stop is non-null, has a valid ID,
@@ -338,12 +332,10 @@ object SurveyUtils {
      * @param visibleOnStops Indicates if the stop is visible.
      * @return The stop identifier or null if conditions are not met.
      */
-    fun getCurrentStopIdentifier(currentStop: ObaStop?, visibleOnStops: Boolean): String? {
-        return if (currentStop != null && visibleOnStops) {
-            currentStop.id
-        } else {
-            null
-        }
+    fun getCurrentStopIdentifier(currentStop: ObaStop?, visibleOnStops: Boolean): String? = if (currentStop != null && visibleOnStops) {
+        currentStop.id
+    } else {
+        null
     }
 
     /**

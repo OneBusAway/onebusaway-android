@@ -56,8 +56,7 @@ class TripDetailsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     // The VM reads its launch args from SavedStateHandle (seeded from intent extras in production).
-    private fun handle(tripId: String = "t") =
-        SavedStateHandle(mapOf(NavRoutes.ARG_TRIP_ID to tripId))
+    private fun handle(tripId: String = "t") = SavedStateHandle(mapOf(NavRoutes.ARG_TRIP_ID to tripId))
 
     private fun data() = TripDetailsData(
         header = TripHeader(
@@ -96,7 +95,8 @@ class TripDetailsViewModelTest {
     @Test
     fun `refresh emits Error when there is no content and the load fails`() = runTest {
         val viewModel = TripDetailsViewModel(
-            handle(), FakeTripDetailsRepository(Result.failure(IOException("No network")))
+            handle(),
+            FakeTripDetailsRepository(Result.failure(IOException("No network")))
         )
 
         viewModel.refresh()

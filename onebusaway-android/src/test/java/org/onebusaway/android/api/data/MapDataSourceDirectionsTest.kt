@@ -30,7 +30,7 @@ class MapDataSourceDirectionsTest {
         id: String?,
         names: List<String> = emptyList(),
         stopIds: List<String> = emptyList(),
-        polylines: List<ShapeEntry> = emptyList(),
+        polylines: List<ShapeEntry> = emptyList()
     ) = StopGroup(id = id, name = StopGroupName(names), stopIds = stopIds, polylines = polylines)
 
     private fun shape(points: String) = ShapeEntry(points = points, length = points.length)
@@ -44,7 +44,7 @@ class MapDataSourceDirectionsTest {
         val result = directionsOf(listOf(grouping(group("0", listOf("to Downtown")), group("1", listOf("to Northgate")))))
         assertEquals(
             listOf(RouteMapDirection(0, "to Downtown"), RouteMapDirection(1, "to Northgate")),
-            result,
+            result
         )
     }
 
@@ -66,12 +66,12 @@ class MapDataSourceDirectionsTest {
         val result = directionsOf(
             listOf(
                 grouping(group("1", listOf("to Northgate")), group("0", listOf("to Downtown"))),
-                grouping(group("1", listOf("to Northgate Alt"))),
+                grouping(group("1", listOf("to Northgate Alt")))
             )
         )
         assertEquals(
             listOf(RouteMapDirection(0, "to Downtown"), RouteMapDirection(1, "to Northgate")),
-            result,
+            result
         )
     }
 
@@ -92,7 +92,7 @@ class MapDataSourceDirectionsTest {
             listOf(
                 grouping(
                     group("0", listOf("to Downtown"), stopIds = listOf("a", "shared")),
-                    group("1", listOf("to Northgate"), stopIds = listOf("b", "shared")),
+                    group("1", listOf("to Northgate"), stopIds = listOf("b", "shared"))
                 )
             )
         )
@@ -108,7 +108,7 @@ class MapDataSourceDirectionsTest {
             listOf(
                 grouping(
                     group("0", polylines = listOf(shape("aaa"))),
-                    group("1", polylines = listOf(shape("bbb"), shape("ccc"))),
+                    group("1", polylines = listOf(shape("bbb"), shape("ccc")))
                 )
             )
         ).polylinesByDirection
@@ -122,7 +122,7 @@ class MapDataSourceDirectionsTest {
         val result = directionsFrom(
             listOf(
                 grouping(group("0", polylines = listOf(shape("aaa")))),
-                grouping(group("0", polylines = listOf(shape("bbb")))),
+                grouping(group("0", polylines = listOf(shape("bbb"))))
             )
         ).polylinesByDirection
         assertEquals(listOf(shape("aaa"), shape("bbb")), result[0])
@@ -136,7 +136,7 @@ class MapDataSourceDirectionsTest {
             listOf(
                 grouping(
                     group("0", polylines = listOf(shape("aaa"))),
-                    group("0", polylines = listOf(shape("aaa"))),
+                    group("0", polylines = listOf(shape("aaa")))
                 )
             )
         ).polylinesByDirection

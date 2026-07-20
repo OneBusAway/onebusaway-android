@@ -15,6 +15,10 @@
  */
 package org.onebusaway.android.api.adapters
 
+import java.time.OffsetDateTime
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toKotlinDuration
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
@@ -27,10 +31,6 @@ import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripStep
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
-import java.time.OffsetDateTime
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.toKotlinDuration
 
 /**
  * Maps the OTP 2.x GraphQL `planConnection` response (Apollo-generated from
@@ -46,13 +46,12 @@ import kotlin.time.toKotlinDuration
  * non-null — never OTP2's own deprecated `Place.vertexType` field, which would trip a Kotlin
  * deprecation warning under this repo's `-PwarningsAsErrors=true` CI gate.
  */
-fun PlanQuery.Data.toTripItineraries(): List<TripItinerary> =
-    planConnection?.edges.orEmpty().mapNotNull { it?.node }.map { it.toTripItinerary() }
+fun PlanQuery.Data.toTripItineraries(): List<TripItinerary> = planConnection?.edges.orEmpty().mapNotNull { it?.node }.map { it.toTripItinerary() }
 
 private fun PlanQuery.Node.toTripItinerary(): TripItinerary = TripItinerary(
     duration = (duration ?: 0L).seconds,
     startTime = requireField("itinerary.start", start?.toServerTime()),
-    legs = legs.filterNotNull().map { it.toTripLeg() },
+    legs = legs.filterNotNull().map { it.toTripLeg() }
 )
 
 private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
@@ -73,7 +72,7 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     arrivalDelay = end.estimated?.delay.toDelayDuration(),
     startTime = requireField(
         "leg.start",
-        (start.estimated?.time ?: start.scheduledTime).toServerTime(),
+        (start.estimated?.time ?: start.scheduledTime).toServerTime()
     ),
     endTime = requireField("leg.end", (end.estimated?.time ?: end.scheduledTime).toServerTime()),
     from = from.placeFields.toTripPlace(),
@@ -83,7 +82,7 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     intermediateStops = null,
     stop = null,
     steps = steps.orEmpty().filterNotNull().map { it.toTripStep() },
-    legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) },
+    legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) }
 )
 
 // PlaceFields backs both Leg.from and Leg.to (see the Plan.graphql fragment) — one mapping instead
@@ -97,9 +96,9 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
     vertexType = inferVertexType(
         hasStop = stop != null,
         hasRental = rentalVehicle != null || vehicleRentalStation != null,
-        hasParking = vehicleParking != null,
+        hasParking = vehicleParking != null
     ),
-    bikeShareId = rentalVehicle?.vehicleId ?: vehicleRentalStation?.stationId,
+    bikeShareId = rentalVehicle?.vehicleId ?: vehicleRentalStation?.stationId
 )
 
 /**
@@ -109,13 +108,12 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
  * note on [PlanQuery.Data.toTripItineraries]. A place matching none of them is a plain street
  * location/POI, i.e. OTP1's own `NORMAL`.
  */
-private fun inferVertexType(hasStop: Boolean, hasRental: Boolean, hasParking: Boolean): TripVertexType =
-    when {
-        hasStop -> TripVertexType.TRANSIT
-        hasRental -> TripVertexType.BIKESHARE
-        hasParking -> TripVertexType.BIKEPARK
-        else -> TripVertexType.NORMAL
-    }
+private fun inferVertexType(hasStop: Boolean, hasRental: Boolean, hasParking: Boolean): TripVertexType = when {
+    hasStop -> TripVertexType.TRANSIT
+    hasRental -> TripVertexType.BIKESHARE
+    hasParking -> TripVertexType.BIKEPARK
+    else -> TripVertexType.NORMAL
+}
 
 private fun PlanQuery.Step.toTripStep(): TripStep = TripStep(
     distance = distance ?: 0.0,
@@ -125,7 +123,7 @@ private fun PlanQuery.Step.toTripStep(): TripStep = TripStep(
     exit = exit,
     stayOn = stayOn ?: false,
     lat = lat ?: 0.0,
-    lon = lon ?: 0.0,
+    lon = lon ?: 0.0
 )
 
 // requireField/toEnum are shared with the OTP1 adapter — see TripPlanAdapters.kt.
@@ -136,5 +134,4 @@ private fun String.toServerTime(): ServerTime = ServerTime(OffsetDateTime.parse(
 
 /** Parses an OTP2 `Duration` scalar string (an ISO-8601 duration, e.g. `PT2M`); absent (no real-time
  * estimate for this event) means no delay. */
-private fun String?.toDelayDuration(): Duration =
-    this?.let { java.time.Duration.parse(it).toKotlinDuration() } ?: Duration.ZERO
+private fun String?.toDelayDuration(): Duration = this?.let { java.time.Duration.parse(it).toKotlinDuration() } ?: Duration.ZERO

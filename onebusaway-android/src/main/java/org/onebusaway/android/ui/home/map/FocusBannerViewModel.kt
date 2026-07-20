@@ -32,7 +32,7 @@ import org.onebusaway.android.map.RouteHeader
 /** Route-favorite state for the shared focus banner. Stop favorites remain stop-session state. */
 @HiltViewModel
 class FocusBannerViewModel @Inject constructor(
-    private val routeFavorites: RouteFavoritesRepository,
+    private val routeFavorites: RouteFavoritesRepository
 ) : ViewModel() {
 
     // Optimistic overrides applied synchronously on tap so back-to-back toggles each build on the last
@@ -68,7 +68,7 @@ class FocusBannerViewModel @Inject constructor(
                 shortName = header.shortName,
                 longName = header.longName,
                 url = null,
-                favorite = favorite,
+                favorite = favorite
             )
         }
     }

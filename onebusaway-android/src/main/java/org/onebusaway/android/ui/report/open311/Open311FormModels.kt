@@ -74,8 +74,7 @@ data class Open311FormState(
 
     fun singleChoice(code: Int): String? = (values[code] as? FieldValue.SingleChoice)?.selectedKey
 
-    fun multiChoice(code: Int): Set<String> =
-        (values[code] as? FieldValue.MultiChoice)?.selectedKeys ?: emptySet()
+    fun multiChoice(code: Int): Set<String> = (values[code] as? FieldValue.MultiChoice)?.selectedKeys ?: emptySet()
 }
 
 /** Distinguishes load progress from the editable form. */

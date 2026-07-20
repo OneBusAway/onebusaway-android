@@ -115,8 +115,9 @@ interface LocationSink {
  */
 @Singleton
 class DefaultLocationRepository @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-) : LocationRepository, LocationSink {
+    @param:ApplicationContext private val context: Context
+) : LocationRepository,
+    LocationSink {
 
     private val _location = MutableStateFlow<Location?>(null)
 
@@ -179,15 +180,14 @@ class DefaultLocationRepository @Inject constructor(
         demand.update { it - MAP_UPDATE_INTERVAL_SECONDS } // removes one occurrence
     }
 
-    override fun locationUpdates(intervalSeconds: Int): Flow<Location> =
-        location.filterNotNull()
-            .onStart {
-                ensureSeeded()
-                demand.update { it + intervalSeconds }
-            }
-            .onCompletion {
-                demand.update { it - intervalSeconds } // removes one occurrence (also on cancellation)
-            }
+    override fun locationUpdates(intervalSeconds: Int): Flow<Location> = location.filterNotNull()
+        .onStart {
+            ensureSeeded()
+            demand.update { it + intervalSeconds }
+        }
+        .onCompletion {
+            demand.update { it - intervalSeconds } // removes one occurrence (also on cancellation)
+        }
 
     /**
      * Seeds [_location] from the cached fix (the lazy [lastKnownLocation] poll) the first time a

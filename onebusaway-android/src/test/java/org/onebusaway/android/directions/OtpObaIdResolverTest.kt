@@ -33,23 +33,21 @@ class OtpObaIdResolverTest {
         agency("1", "Metro Transit"),
         agency("40", "Sound Transit"),
         agency("19", "Intercity Transit"),
-        agency("97", "Skagit Transit"),
+        agency("97", "Skagit Transit")
     )
 
-    private fun resolver(agencies: Result<List<AgencyContact>> = Result.success(coverage)) =
-        OtpObaIdResolver(object : AgenciesDataSource {
-            override suspend fun getAgencies() = agencies
-        })
+    private fun resolver(agencies: Result<List<AgencyContact>> = Result.success(coverage)) = OtpObaIdResolver(object : AgenciesDataSource {
+        override suspend fun getAgencies() = agencies
+    })
 
-    private fun agency(id: String, name: String) =
-        AgencyContact(id = id, name = name, email = null, url = null, phone = null)
+    private fun agency(id: String, name: String) = AgencyContact(id = id, name = name, email = null, url = null, phone = null)
 
     @Test
     fun derivedAgencySuffix_whenCovered() = runTest {
         // kcm:1 → suffix "1" is a covered agency → OBA route 1_102574.
         assertEquals(
             "1_102574",
-            resolver().obaRouteId("kcm:102574", agencyGtfsId = "kcm:1", agencyName = "Metro Transit"),
+            resolver().obaRouteId("kcm:102574", agencyGtfsId = "kcm:1", agencyName = "Metro Transit")
         )
     }
 
@@ -57,7 +55,7 @@ class OtpObaIdResolverTest {
     fun stopTakesTheSameAgencyPrefix() = runTest {
         assertEquals(
             "1_13585",
-            resolver().obaStopId("kcm:13585", agencyGtfsId = "kcm:1", agencyName = "Metro Transit"),
+            resolver().obaStopId("kcm:13585", agencyGtfsId = "kcm:1", agencyName = "Metro Transit")
         )
     }
 
@@ -66,7 +64,7 @@ class OtpObaIdResolverTest {
         // Sound Transit's own feed is numeric: 40:40 → "40", covered → 40_2LINE.
         assertEquals(
             "40_2LINE",
-            resolver().obaRouteId("40:2LINE", agencyGtfsId = "40:40", agencyName = "Sound Transit"),
+            resolver().obaRouteId("40:2LINE", agencyGtfsId = "40:40", agencyName = "Sound Transit")
         )
     }
 
@@ -75,7 +73,7 @@ class OtpObaIdResolverTest {
         // Intercity is 19:0 in OTP (suffix "0" isn't covered) but agency "19" in OBA — matched by name.
         assertEquals(
             "19_600",
-            resolver().obaRouteId("19:600", agencyGtfsId = "19:0", agencyName = "Intercity Transit"),
+            resolver().obaRouteId("19:600", agencyGtfsId = "19:0", agencyName = "Intercity Transit")
         )
     }
 
@@ -87,15 +85,15 @@ class OtpObaIdResolverTest {
             resolver().obaRouteId(
                 "Skagit:42",
                 agencyGtfsId = "Skagit:e0e4541a-2714-487b-b30c-f5c6cb4a310f",
-                agencyName = "Skagit Transit",
-            ),
+                agencyName = "Skagit Transit"
+            )
         )
     }
 
     @Test
     fun unresolvable_whenNeitherSuffixNorNameMatches() = runTest {
         assertNull(
-            resolver().obaRouteId("foo:9", agencyGtfsId = "foo:9", agencyName = "Nowhere Transit"),
+            resolver().obaRouteId("foo:9", agencyGtfsId = "foo:9", agencyName = "Nowhere Transit")
         )
     }
 
@@ -105,7 +103,7 @@ class OtpObaIdResolverTest {
         assertEquals(
             "1_102574",
             resolver(Result.failure(RuntimeException("offline")))
-                .obaRouteId("kcm:102574", agencyGtfsId = "kcm:1", agencyName = "Metro Transit"),
+                .obaRouteId("kcm:102574", agencyGtfsId = "kcm:1", agencyName = "Metro Transit")
         )
     }
 

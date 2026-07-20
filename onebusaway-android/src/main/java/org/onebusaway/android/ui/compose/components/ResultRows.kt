@@ -136,13 +136,19 @@ private fun RouteRowContentPreview() {
     ObaTheme {
         Column {
             RouteRowContent(
-                "8", "Seattle Center - Capitol Hill - Rainier Beach", rowModifier,
-                routeColor = 0x00A651, agency = "King County Metro"
+                "8",
+                "Seattle Center - Capitol Hill - Rainier Beach",
+                rowModifier,
+                routeColor = 0x00A651,
+                agency = "King County Metro"
             )
             HorizontalDivider()
             RouteRowContent(
-                "12", "Interlaken Park - Capitol Hill - Downtown Seattle", rowModifier,
-                routeColor = 0x0075BF, agency = "King County Metro"
+                "12",
+                "Interlaken Park - Capitol Hill - Downtown Seattle",
+                rowModifier,
+                routeColor = 0x0075BF,
+                agency = "King County Metro"
             )
             HorizontalDivider()
             // No color → neutral chip; no agency → agency line omitted.

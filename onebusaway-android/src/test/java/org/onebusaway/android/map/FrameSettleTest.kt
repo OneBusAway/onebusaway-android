@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.map.render.MapPadding
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.toList
@@ -25,6 +24,7 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.map.render.MapPadding
 
 /**
  * The frame-settle race ([MapHost.frameRoute]/[frameItinerary], #1954): the map's obstruction insets —
@@ -47,7 +47,7 @@ class FrameSettleTest {
      */
     private suspend fun TestScope.settleTicks(
         startInteracting: Boolean = false,
-        script: (padding: MutableStateFlow<MapPadding>, interacting: MutableStateFlow<Boolean>) -> Unit,
+        script: (padding: MutableStateFlow<MapPadding>, interacting: MutableStateFlow<Boolean>) -> Unit
     ): Int {
         val padding = MutableStateFlow(baseline)
         val interacting = MutableStateFlow(startInteracting)

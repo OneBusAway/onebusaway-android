@@ -30,7 +30,7 @@ class FocusResolutionTest {
         // A direction-anchored launch is still Pending: hold, even if a poll landed and a marker exists.
         assertEquals(
             FocusResolution.WAIT,
-            resolveVehicleFocus(directionResolved = false, pollLanded = true, markerPresent = true),
+            resolveVehicleFocus(directionResolved = false, pollLanded = true, markerPresent = true)
         )
     }
 
@@ -40,7 +40,7 @@ class FocusResolutionTest {
         // vehicle is absent. Must not drop the focus here.
         assertEquals(
             FocusResolution.WAIT,
-            resolveVehicleFocus(directionResolved = true, pollLanded = false, markerPresent = false),
+            resolveVehicleFocus(directionResolved = true, pollLanded = false, markerPresent = false)
         )
     }
 
@@ -48,7 +48,7 @@ class FocusResolutionTest {
     fun fits_when_the_vehicle_is_on_the_map() {
         assertEquals(
             FocusResolution.FIT,
-            resolveVehicleFocus(directionResolved = true, pollLanded = true, markerPresent = true),
+            resolveVehicleFocus(directionResolved = true, pollLanded = true, markerPresent = true)
         )
     }
 
@@ -58,7 +58,7 @@ class FocusResolutionTest {
         // focus so the caller can fall back to framing the whole route.
         assertEquals(
             FocusResolution.DROP,
-            resolveVehicleFocus(directionResolved = true, pollLanded = true, markerPresent = false),
+            resolveVehicleFocus(directionResolved = true, pollLanded = true, markerPresent = false)
         )
     }
 }

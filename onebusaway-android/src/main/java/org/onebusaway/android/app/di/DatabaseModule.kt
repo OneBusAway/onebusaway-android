@@ -59,14 +59,18 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
-        Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java,
-            AppDatabase.DATABASE_NAME
-        ).addMigrations(
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7
-        ).build()
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase = Room.databaseBuilder(
+        context.applicationContext,
+        AppDatabase::class.java,
+        AppDatabase.DATABASE_NAME
+    ).addMigrations(
+        MIGRATION_1_2,
+        MIGRATION_2_3,
+        MIGRATION_3_4,
+        MIGRATION_4_5,
+        MIGRATION_5_6,
+        MIGRATION_6_7
+    ).build()
 
     @Provides
     fun provideLegacyImportDao(db: AppDatabase): LegacyImportDao = db.legacyImportDao()
@@ -109,6 +113,6 @@ object DatabaseModule {
     fun provideLegacyDataImporter(
         @ApplicationContext context: Context,
         db: AppDatabase,
-        prefs: PreferencesRepository,
+        prefs: PreferencesRepository
     ): LegacyDataImporter = LegacyDataImporter(context, db, prefs)
 }

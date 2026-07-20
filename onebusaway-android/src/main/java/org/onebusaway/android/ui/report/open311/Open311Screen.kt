@@ -300,10 +300,18 @@ private fun AnonymousAndContact(
         ContactField(form.contact.firstName, onFirstNameChange, R.string.ri_user_name_hint, enabled)
         ContactField(form.contact.lastName, onLastNameChange, R.string.ri_user_lastname_hint, enabled)
         ContactField(
-            form.contact.email, onEmailChange, R.string.ri_user_email_hint, enabled, KeyboardType.Email
+            form.contact.email,
+            onEmailChange,
+            R.string.ri_user_email_hint,
+            enabled,
+            KeyboardType.Email
         )
         ContactField(
-            form.contact.phone, onPhoneChange, R.string.ri_user_phone_hint, enabled, KeyboardType.Phone
+            form.contact.phone,
+            onPhoneChange,
+            R.string.ri_user_phone_hint,
+            enabled,
+            KeyboardType.Phone
         )
     }
 }

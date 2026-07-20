@@ -48,12 +48,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
-import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.region.Region
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.report.ui.reportGraph
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -67,14 +67,12 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.nav.extraDestinations
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.mylists.myListsGraph
-import org.onebusaway.android.ui.tripplan.TripPlanViewModel
-import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.RESULT_MAP_ROUTE_ID
-import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
+import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
@@ -83,7 +81,9 @@ import org.onebusaway.android.ui.settings.settingsGraph
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripdetails.tripGraph
+import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.tripPlanGraph
+import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
@@ -108,7 +108,7 @@ class HomeDestinationDeps(
     val tripPlanViewModel: TripPlanViewModel,
     val tripResultsViewModel: TripResultsViewModel,
     val arrivalsViewModelFactory: ArrivalsViewModel.Factory,
-    val activityActions: HomeActivityActions,
+    val activityActions: HomeActivityActions
 )
 
 /**
@@ -121,7 +121,7 @@ class HomeDestinationDeps(
 @Composable
 fun HomeNavHost(
     navController: NavHostController,
-    home: HomeDestinationDeps,
+    home: HomeDestinationDeps
 ) {
     NavHost(navController = navController, startDestination = NavRoutes.HOME) {
         composable(NavRoutes.HOME) { entry ->
@@ -152,7 +152,7 @@ fun HomeNavHost(
                     // over to the stop rather than jump, since the map is already on screen.
                     home.homeViewModel.revealStop(
                         FocusedStop(reveal.stopId, null, null, reveal.point),
-                        animate = true,
+                        animate = true
                     )
                 } else {
                     // Keys already consumed; record the dropped focus so the latent path is findable
@@ -172,6 +172,7 @@ fun HomeNavHost(
             val context = LocalContext.current
             val callbacks = remember(navController, home, context) {
                 val a = home.activityActions
+
                 // A menu row: navigate (popping to HOME) + report its analytics.
                 fun menuNav(route: String, @StringRes label: Int) {
                     navController.navigateFromHome(route)
@@ -200,8 +201,11 @@ fun HomeNavHost(
                     onRecentStop = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) },
                     onRecentRoute = { routeId -> navController.revealRouteOnMap(routeId) },
                     onHelpAction = { action ->
-                        if (action == HelpAction.AGENCIES) navController.navigateFromHome(NavRoutes.AGENCIES)
-                        else a.onHelpActionExternal(action)
+                        if (action == HelpAction.AGENCIES) {
+                            navController.navigateFromHome(NavRoutes.AGENCIES)
+                        } else {
+                            a.onHelpActionExternal(action)
+                        }
                     },
                     onShowTrip = { tripId, stopId ->
                         navController.navigateFromHome(
@@ -210,7 +214,7 @@ fun HomeNavHost(
                     },
                     onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) },
                     onLearnMore = { navController.navigateFromHome(NavRoutes.DONATION_LEARN_MORE) },
-                    onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) },
+                    onOpenSurvey = { url -> navController.navigateFromHome(NavRoutes.surveyWebView(url)) }
                 )
             }
             HomeScreen(
@@ -225,7 +229,7 @@ fun HomeNavHost(
                 tripPlanViewModel = home.tripPlanViewModel,
                 tripResultsViewModel = home.tripResultsViewModel,
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
-                callbacks = callbacks,
+                callbacks = callbacks
             )
         }
         // The rest of the graph, grouped by feature (each a NavGraphBuilder extension near its
@@ -258,7 +262,7 @@ fun HomeNavHost(
 internal fun LaunchIntentEffect(
     navController: NavHostController,
     launchIntents: Flow<Intent>,
-    onSideEffects: (Intent) -> Unit,
+    onSideEffects: (Intent) -> Unit
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(navController, lifecycleOwner) {
@@ -304,7 +308,8 @@ internal fun HomeAnalyticsEffect(analyticsEvents: SharedFlow<HomeAnalyticsEvent>
                 is HomeAnalyticsEvent.MenuItem ->
                     analytics.reportUiEvent(
                         PlausibleAnalytics.REPORT_MENU_EVENT_URL,
-                        resources.getString(event.labelRes), null,
+                        resources.getString(event.labelRes),
+                        null
                     )
             }
         }
@@ -358,7 +363,7 @@ internal fun SettingsRehomeEffect(navController: NavHostController) {
 @Composable
 internal fun PaymentWarningDialog(
     paymentWarning: StateFlow<Region?>,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     val activity = LocalContext.current.findActivity()
     val warnRegion by paymentWarning.collectAsStateWithLifecycle()
@@ -372,7 +377,8 @@ internal fun PaymentWarningDialog(
                 optOutLabel = stringResource(R.string.main_never_ask_again),
                 onOptOut = {
                     PreferenceUtils.saveBoolean(
-                        activity.getString(R.string.preference_key_never_show_payment_warning_dialog), it
+                        activity.getString(R.string.preference_key_never_show_payment_warning_dialog),
+                        it
                     )
                 },
                 confirmText = stringResource(R.string.ok),
@@ -380,7 +386,7 @@ internal fun PaymentWarningDialog(
                     onDismiss()
                     ExternalIntents.startPaymentIntent(activity, region)
                 },
-                onDismissRequest = onDismiss,
+                onDismissRequest = onDismiss
             )
         }
     }

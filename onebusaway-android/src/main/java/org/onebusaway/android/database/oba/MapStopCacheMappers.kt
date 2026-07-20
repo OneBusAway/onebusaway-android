@@ -43,15 +43,14 @@ private const val ROUTE_ID_DELIM = '\u001F'
 fun joinRouteIds(ids: Array<String>): String = ids.joinToString(ROUTE_ID_DELIM.toString())
 
 /** Splits the stored [CachedStopRecord.routeIds]; `""` becomes an empty array (not `arrayOf("")`). */
-fun splitRouteIds(joined: String): Array<String> =
-    if (joined.isEmpty()) emptyArray() else joined.split(ROUTE_ID_DELIM).toTypedArray()
+fun splitRouteIds(joined: String): Array<String> = if (joined.isEmpty()) emptyArray() else joined.split(ROUTE_ID_DELIM).toTypedArray()
 
 /** A viewport's latitude/longitude bounds for the cache bounding-box query. */
 data class LatLonBounds(
     val minLat: Double,
     val maxLat: Double,
     val minLon: Double,
-    val maxLon: Double,
+    val maxLon: Double
 )
 
 /**
@@ -59,13 +58,12 @@ data class LatLonBounds(
  * spans, matching how [org.onebusaway.android.api.data.MapDataSource.nearbyStops] interprets them):
  * centre ± span/2.
  */
-fun boundsFor(centerLat: Double, centerLon: Double, latSpan: Double, lonSpan: Double): LatLonBounds =
-    LatLonBounds(
-        minLat = centerLat - latSpan / 2,
-        maxLat = centerLat + latSpan / 2,
-        minLon = centerLon - lonSpan / 2,
-        maxLon = centerLon + lonSpan / 2,
-    )
+fun boundsFor(centerLat: Double, centerLon: Double, latSpan: Double, lonSpan: Double): LatLonBounds = LatLonBounds(
+    minLat = centerLat - latSpan / 2,
+    maxLat = centerLat + latSpan / 2,
+    minLon = centerLon - lonSpan / 2,
+    maxLon = centerLon + lonSpan / 2
+)
 
 /** Instants before this cutoff are stale — cached older than [STOP_CACHE_TTL] relative to [now]. */
 fun ttlCutoff(now: WallTime): WallTime = now - STOP_CACHE_TTL
@@ -103,5 +101,5 @@ fun ObaStop.toCachedRecord(regionId: Long, now: Long): CachedStopRecord = Cached
     locationType = locationType,
     routeIds = joinRouteIds(routeIds),
     regionId = regionId,
-    lastSeen = now,
+    lastSeen = now
 )

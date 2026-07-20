@@ -20,9 +20,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.survey.dao.StudiesDao
+import org.onebusaway.android.database.survey.dao.SurveysDao
 import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
-import org.onebusaway.android.database.survey.dao.SurveysDao
 import org.onebusaway.android.models.Survey as SurveyModel
 import org.onebusaway.android.models.SurveyStudy
 
@@ -47,7 +47,7 @@ class SurveyRepositoryTest {
         allowsMultipleResponses = null,
         alwaysVisible = null,
         visibleStopList = null,
-        visibleRouteList = null,
+        visibleRouteList = null
     )
 
     @Test

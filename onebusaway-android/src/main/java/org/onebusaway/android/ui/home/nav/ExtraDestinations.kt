@@ -26,19 +26,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import org.onebusaway.android.app.di.DonationsEntryPoint
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.app.di.DatabaseEntryPoint
+import org.onebusaway.android.app.di.DonationsEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
-import org.onebusaway.android.ui.nav.revealRouteOnMap
-import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationLearnMoreScreen
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.revealRouteOnMap
+import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.nightlight.NightLightRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsRoute
 import org.onebusaway.android.ui.searchresults.SearchResultsViewModel
 import org.onebusaway.android.ui.survey.SurveyWebViewScreen
-import org.onebusaway.android.app.di.DatabaseEntryPoint
 
 /**
  * The standalone one-off destinations that don't belong to a larger feature graph: the donation
@@ -60,7 +60,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                     donationsManager.dismissDonationRequests()
                     context.startActivity(donationsManager.buildOpenDonationsPageIntent())
                     navController.popBackStack()
-                },
+                }
             )
         }
     }
@@ -71,14 +71,14 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
     composable(
         NavRoutes.SURVEY_WEB_VIEW,
         arguments = listOf(
-            navArgument(NavRoutes.ARG_URL) { type = NavType.StringType },
-        ),
+            navArgument(NavRoutes.ARG_URL) { type = NavType.StringType }
+        )
     ) { backStackEntry ->
         val url = backStackEntry.arguments?.getString(NavRoutes.ARG_URL).orEmpty()
         ObaTheme {
             SurveyWebViewScreen(
                 url = url,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStack() }
             )
         }
     }
@@ -100,8 +100,8 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
             navArgument(NavRoutes.ARG_QUERY) {
                 type = NavType.StringType
                 defaultValue = ""
-            },
-        ),
+            }
+        )
     ) { backStackEntry ->
         val activity = LocalContext.current.findActivity()
         // Analytics is reached via AnalyticsEntryPoint off the Context (as in MapFeature/TripPlanScreen)
@@ -123,7 +123,7 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 },
                 onStopShowOnMap = { stop ->
                     navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
-                },
+                }
             )
         }
     }

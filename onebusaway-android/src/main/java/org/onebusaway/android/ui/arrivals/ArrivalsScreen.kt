@@ -78,16 +78,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
 import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.ui.icons.AppIcons
-import org.onebusaway.android.ui.nightlight.NightLightLauncher
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.MenuRow
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
-import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.ui.compose.components.LoadingContent
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.icons.AppIcons
+import org.onebusaway.android.ui.nightlight.NightLightLauncher
+import org.onebusaway.android.util.DisplayFormat
 
 /** Refresh interval matching the legacy ArrivalsListFragment (fixed 60s, not the server value). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -130,7 +130,7 @@ internal fun rememberArrivalRowCallbacks(
         onSetReminder = handler::onSetReminder,
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
-        onShowAlert = handler::onShowAlert,
+        onShowAlert = handler::onShowAlert
     )
 }
 
@@ -142,6 +142,7 @@ internal fun rememberArrivalRowCallbacks(
 interface ArrivalActionHandler {
     fun onRouteFavorite(actions: ArrivalActions)
     fun onShowVehiclesOnMap(arrival: ArrivalInfo)
+
     /** The ETA-pill tap: frame the arrival's live vehicle with its stop, or toast if none is tracked. */
     fun onFocusVehicleOnMap(arrival: ArrivalInfo)
     fun onShowTripStatus(arrival: ArrivalInfo)
@@ -281,7 +282,7 @@ fun ArrivalsScreen(
                     handler = handler,
                     onShowHiddenAlerts = onShowHiddenAlerts,
                     onLoadMore = onLoadMore,
-                    loadingMore = loadingMore,
+                    loadingMore = loadingMore
                 )
 
                 is ArrivalsUiState.Error -> Text(
@@ -316,9 +317,18 @@ internal fun OverflowMenu(
             )
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            MenuRow(R.string.stop_info_option_show_details) { expanded = false; onStopDetails() }
-            MenuRow(R.string.stop_info_option_report_problem) { expanded = false; onReportStopProblem() }
-            MenuRow(R.string.stop_info_option_hide_alerts) { expanded = false; onHideAlerts() }
+            MenuRow(R.string.stop_info_option_show_details) {
+                expanded = false
+                onStopDetails()
+            }
+            MenuRow(R.string.stop_info_option_report_problem) {
+                expanded = false
+                onReportStopProblem()
+            }
+            MenuRow(R.string.stop_info_option_hide_alerts) {
+                expanded = false
+                onHideAlerts()
+            }
             MenuRow(R.string.stop_info_option_night_light) {
                 expanded = false
                 onNightLight?.invoke() ?: NightLightLauncher.start(context)
@@ -396,7 +406,7 @@ internal fun ArrivalsList(
                     onShowAlert = handler::onShowAlert,
                     onHideAlert = handler::onHideAlert,
                     onShowHiddenAlerts = onShowHiddenAlerts,
-                    modifier = Modifier.animateItem(),
+                    modifier = Modifier.animateItem()
                 )
             }
         }
@@ -417,7 +427,7 @@ internal fun ArrivalsList(
                     mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
                     selected = group.key == effectiveSelectedRowKey,
                     selectedRouteNames =
-                        if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
+                    if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     // Glide up/down as the alert section above is toggled in/out.
@@ -514,7 +524,7 @@ internal fun ServiceAlertsContent(
     onShowAlert: (String) -> Unit,
     onHideAlert: (AlertItem) -> Unit,
     onShowHiddenAlerts: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Column(modifier) {
         if (alerts.isNotEmpty()) {

@@ -96,8 +96,8 @@ class BisectTest {
         // hyperconcentrated distribution, which bisect is allowed to return.
         val result = bisect({ Double.NaN }, 0.5, 1.0)
         assertTrue(
-                "Result should be finite (refine cap returns best-effort midpoint)",
-                result.isFinite()
+            "Result should be finite (refine cap returns best-effort midpoint)",
+            result.isFinite()
         )
     }
 

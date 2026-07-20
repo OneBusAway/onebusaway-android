@@ -106,7 +106,7 @@ internal fun EtaStrip(
     firstPillModifier: Modifier = Modifier,
     // Hoisted so callers (and previews) can control/observe the scroll — e.g. a preview starts it
     // mid-scroll to show both edge chevrons.
-    scrollState: ScrollState = rememberScrollState(),
+    scrollState: ScrollState = rememberScrollState()
 ) {
     val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
     val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
@@ -175,7 +175,7 @@ internal fun EtaStrip(
             visible = canScrollBackward,
             pointsRight = false,
             contentDescriptionRes = R.string.stop_info_eta_strip_scroll_earlier,
-            onClick = { jumpArrow(forward = false) },
+            onClick = { jumpArrow(forward = false) }
         )
 
         // The scrollable pill content, inside the gesture-owning SlideBox: the strip DECLARES what it
@@ -196,7 +196,7 @@ internal fun EtaStrip(
             modifier = Modifier.weight(1f).height(IntrinsicSize.Max),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
-            verticalAlignment = Alignment.Bottom,
+            verticalAlignment = Alignment.Bottom
         ) {
             trips.forEachIndexed { index, trip ->
                 // Only the currently-pinned pill measures its content-space offset — it's the one
@@ -220,7 +220,7 @@ internal fun EtaStrip(
                     liveNow = liveNow,
                     actions = actionsFor(trip),
                     callbacks = callbacks,
-                    modifier = pillModifier,
+                    modifier = pillModifier
                 )
             }
         }
@@ -230,7 +230,7 @@ internal fun EtaStrip(
             visible = canScrollForward,
             pointsRight = true,
             contentDescriptionRes = R.string.stop_info_eta_strip_scroll_later,
-            onClick = { jumpArrow(forward = true) },
+            onClick = { jumpArrow(forward = true) }
         )
     }
 }
@@ -244,7 +244,7 @@ private fun EtaPillWithMenu(
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes
@@ -266,7 +266,7 @@ private fun EtaPillWithMenu(
             canceled = trip.status == Status.CANCELED,
             clockTime = clockTime,
             onClick = { callbacks.onEtaClick(trip) },
-            onLongClick = { expanded = true },
+            onLongClick = { expanded = true }
         )
         TripActionsMenu(expanded, { expanded = false }, trip, actions, callbacks)
     }
@@ -284,14 +284,17 @@ internal fun TripActionsMenu(
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(R.string.bus_options_menu_show_trip_details, MaterialSymbols.TripStatus) {
-            onDismiss(); callbacks.onShowTripStatus(arrival)
+            onDismiss()
+            callbacks.onShowTripStatus(arrival)
         }
         MenuRow(R.string.bus_options_menu_set_reminder, MaterialSymbols.AddReminder) {
-            onDismiss(); callbacks.onSetReminder(arrival)
+            onDismiss()
+            callbacks.onSetReminder(arrival)
         }
         if (actions != null) {
             MenuRow(R.string.bus_options_menu_report_trip_problem, MaterialSymbols.Report) {
-                onDismiss(); callbacks.onReportArrivalProblem(actions)
+                onDismiss()
+                callbacks.onReportArrivalProblem(actions)
             }
         }
     }
@@ -320,7 +323,7 @@ internal fun EtaPill(
     canceled: Boolean = false,
     clockTime: String? = null,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null
 ) {
     val decoration = if (canceled) TextDecoration.LineThrough else null
     val shape = RoundedCornerShape(8.dp)
@@ -365,7 +368,10 @@ internal fun EtaPill(
             // guessed independently of the actual text metrics.
             Column(
                 modifier = Modifier.padding(
-                    start = 6.dp, end = 6.dp, top = topPadding, bottom = bottomPadding
+                    start = 6.dp,
+                    end = 6.dp,
+                    top = topPadding,
+                    bottom = bottomPadding
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(clockTimeGap)
@@ -392,7 +398,7 @@ internal fun EtaPill(
                                 fontSize = labelSize,
                                 fontWeight = FontWeight.Normal,
                                 color = Color.White
-                            ),
+                            )
                         ),
                         textDecoration = decoration,
                         // Keyed to numberSize (the line's dominant glyph) — the smaller labelSize span
@@ -421,7 +427,7 @@ internal fun EtaPill(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(top = 1.dp, end = 1.dp)
-                        .size(indicatorSize),
+                        .size(indicatorSize)
                 )
             }
         }
@@ -432,8 +438,7 @@ internal fun EtaPill(
 // Previews.
 
 /** [count] "40 Northgate" pills with increasing upcoming ETAs, for the strip previews. */
-private fun northgatePills(count: Int) =
-    List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8) }
+private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8) }
 
 /**
  * Shared strip-preview scaffold. height(IntrinsicSize.Min) bounds the row to the pill height — as
@@ -443,7 +448,7 @@ private fun northgatePills(count: Int) =
 @Composable
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
-    scrollState: ScrollState = rememberScrollState(),
+    scrollState: ScrollState = rememberScrollState()
 ) {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -452,7 +457,7 @@ private fun EtaStripPreviewFrame(
                     trips = trips,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
-                    scrollState = scrollState,
+                    scrollState = scrollState
                 )
             }
         }
@@ -481,7 +486,7 @@ private fun EtaStripFitsPreview() {
     EtaStripPreviewFrame(
         trips = listOf(
             previewArrival("8", "Rainier Beach", etaMinutes = 4),
-            previewArrival("8", "Rainier Beach", etaMinutes = 12),
+            previewArrival("8", "Rainier Beach", etaMinutes = 12)
         )
     )
 }
@@ -506,7 +511,10 @@ private fun EtaPillVariantsPreview() {
                 EtaPill(12, colorResource(R.color.stop_info_early), predicted = true, clockTime = "3:12pm")
                 EtaPill(22, colorResource(R.color.stop_info_scheduled_time), predicted = false, clockTime = "3:22pm")
                 EtaPill(
-                    8, colorResource(R.color.stop_info_scheduled_time), predicted = false, canceled = true,
+                    8,
+                    colorResource(R.color.stop_info_scheduled_time),
+                    predicted = false,
+                    canceled = true,
                     clockTime = "3:08pm"
                 )
                 // Past an hour: the number switches to hours, the leftover minutes fold into the label (#1777).

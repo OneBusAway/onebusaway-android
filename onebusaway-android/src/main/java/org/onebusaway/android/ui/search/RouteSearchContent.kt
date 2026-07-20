@@ -90,7 +90,7 @@ private fun RouteSearchRow(
         )
         CenteredLongPressMenu(
             expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
+            onDismissRequest = { menuExpanded = false }
         ) {
             MenuHeader(stringResource(R.string.route_name, route.shortName))
             DropdownMenuItem(

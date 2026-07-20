@@ -26,10 +26,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * Drives the welcome tutorial's map-stop spotlight in a map-SDK-agnostic way: while the
@@ -49,7 +49,7 @@ import org.onebusaway.android.map.render.StopMarker
 fun MapStopSpotlight(
     projector: MapProjector?,
     currentStops: () -> List<StopMarker>,
-    onFocusStop: (StopMarker) -> Unit,
+    onFocusStop: (StopMarker) -> Unit
 ) {
     val tutorialState = LocalTutorialState.current ?: return
     val active = tutorialState.current?.id == WelcomeTutorial.KEY_MAP_STOP
@@ -75,8 +75,8 @@ fun MapStopSpotlight(
                         offset.x - markerRadiusPx,
                         offset.y - markerRadiusPx,
                         offset.x + markerRadiusPx,
-                        offset.y + markerRadiusPx,
-                    ),
+                        offset.y + markerRadiusPx
+                    )
                 )
             }
             delay(120)
@@ -93,7 +93,7 @@ fun MapStopSpotlight(
 }
 
 /**
- * The item whose geographic point ([pointOf]) projects nearest to [centerX],[centerY], paired with that
+ * The item whose geographic point ([pointOf]) projects nearest to [centerX], [centerY], paired with that
  * projected position — or null if [items] is empty or none of them project on screen ([project] returns
  * null). Pure, so the spotlight's target selection is JVM-unit-testable independently of the map SDK.
  */
@@ -102,7 +102,7 @@ internal fun <T> nearestProjected(
     pointOf: (T) -> GeoPoint,
     centerX: Float,
     centerY: Float,
-    project: (GeoPoint) -> ScreenOffset?,
+    project: (GeoPoint) -> ScreenOffset?
 ): Pair<T, ScreenOffset>? {
     var best: Pair<T, ScreenOffset>? = null
     var bestDistance = Float.MAX_VALUE

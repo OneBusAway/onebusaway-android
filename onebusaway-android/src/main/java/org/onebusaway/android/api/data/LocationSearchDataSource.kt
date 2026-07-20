@@ -15,15 +15,13 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.adapters.DtoStop
-import org.onebusaway.android.api.adapters.DtoRoute
-import org.onebusaway.android.api.listOrEmpty
-import org.onebusaway.android.api.requireData
-
-import org.onebusaway.android.api.net.ObaApiProvider
-
 import android.util.Log
 import javax.inject.Inject
+import org.onebusaway.android.api.adapters.DtoRoute
+import org.onebusaway.android.api.adapters.DtoStop
+import org.onebusaway.android.api.listOrEmpty
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 
@@ -34,7 +32,7 @@ import org.onebusaway.android.models.ObaStop
  */
 data class RoutesNearResult(
     val routes: List<ObaRoute>,
-    val agencyNames: Map<String, String>,
+    val agencyNames: Map<String, String>
 )
 
 /**
@@ -59,35 +57,47 @@ interface LocationSearchDataSource {
 
 /** Default implementation backed by [ObaWebService]; adapts each reference via [DtoRoute]/[DtoStop]. */
 class DefaultLocationSearchDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : LocationSearchDataSource {
 
     override suspend fun routesNear(
-        lat: Double, lon: Double, query: String?, radius: Int?,
+        lat: Double,
+        lon: Double,
+        query: String?,
+        radius: Int?
     ): Result<RoutesNearResult> = api.call {
         val data = it.routesForLocation(lat, lon, query, radius).requireData()
         RoutesNearResult(
             routes = data.list.map(::DtoRoute),
             // Index the response's referenced agencies by id so the combined-search row can show the
             // operating agency under each route's long name (mirrors the arrivals path's refs.agency).
-            agencyNames = data.references.agencies.associate { agency -> agency.id to agency.name },
+            agencyNames = data.references.agencies.associate { agency -> agency.id to agency.name }
         )
     }.onFailure { Log.e(TAG, "routesNear failed", it) }
 
     override suspend fun stopsNear(
-        lat: Double, lon: Double, query: String?, radius: Int?,
+        lat: Double,
+        lon: Double,
+        query: String?,
+        radius: Int?
     ): Result<List<ObaStop>> = api.call {
         it.stopsForLocation(lat, lon, query, radius).requireData().list.map(::DtoStop)
     }.onFailure { Log.e(TAG, "stopsNear failed", it) }
 
     override suspend fun routesNearOrEmpty(
-        lat: Double, lon: Double, query: String?, radius: Int?,
+        lat: Double,
+        lon: Double,
+        query: String?,
+        radius: Int?
     ): Result<List<ObaRoute>> = api.call {
         it.routesForLocation(lat, lon, query, radius).listOrEmpty().map(::DtoRoute)
     }.onFailure { Log.e(TAG, "routesNearOrEmpty failed", it) }
 
     override suspend fun stopsNearOrEmpty(
-        lat: Double, lon: Double, query: String?, radius: Int?,
+        lat: Double,
+        lon: Double,
+        query: String?,
+        radius: Int?
     ): Result<List<ObaStop>> = api.call {
         it.stopsForLocation(lat, lon, query, radius).listOrEmpty().map(::DtoStop)
     }.onFailure { Log.e(TAG, "stopsNearOrEmpty failed", it) }

@@ -15,22 +15,21 @@
  */
 package org.onebusaway.android.ui.searchresults
 
-import org.onebusaway.android.api.data.LocationSearchDataSource
-import org.onebusaway.android.api.data.RoutesNearResult
-
-import javax.inject.Inject
 import android.location.Location
 import java.io.IOException
+import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import org.onebusaway.android.api.data.LocationSearchDataSource
+import org.onebusaway.android.api.data.RoutesNearResult
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.location.SearchCenter
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.database.oba.StopUserInfo
 import org.onebusaway.android.database.oba.stopDisplayName
 import org.onebusaway.android.database.oba.toStopUserInfoMap
+import org.onebusaway.android.location.SearchCenter
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.routeDisplayNames
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -50,7 +49,7 @@ class DefaultSearchResultsRepository @Inject constructor(
     private val searchCenter: SearchCenter,
     private val search: LocationSearchDataSource,
     private val stopDao: StopDao,
-    private val importGate: ImportGate,
+    private val importGate: ImportGate
 ) : SearchResultsRepository {
 
     override suspend fun search(query: String): Result<List<SearchResultItem>> = coroutineScope {
@@ -99,10 +98,9 @@ class DefaultSearchResultsRepository @Inject constructor(
             .getOrThrow()
     }
 
-    private suspend fun searchStops(query: String, center: Location): List<ObaStop> =
-        search
-            .stopsNear(center.latitude, center.longitude, query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS)
-            .getOrThrow()
+    private suspend fun searchStops(query: String, center: Location): List<ObaStop> = search
+        .stopsNear(center.latitude, center.longitude, query, SearchCenter.DEFAULT_SEARCH_RADIUS_METERS)
+        .getOrThrow()
 
     private fun toRoute(route: ObaRoute, agencyNames: Map<String, String>): SearchResultItem.Route {
         val names = routeDisplayNames(route)
@@ -117,13 +115,12 @@ class DefaultSearchResultsRepository @Inject constructor(
         )
     }
 
-    private fun toStop(stop: ObaStop, userInfo: StopUserInfo?) =
-        SearchResultItem.Stop(
-            id = stop.id,
-            name = stopDisplayName(stop, userInfo),
-            direction = stop.direction.orEmpty(),
-            isFavorite = userInfo?.isFavorite == true,
-            latitude = stop.latitude,
-            longitude = stop.longitude
-        )
+    private fun toStop(stop: ObaStop, userInfo: StopUserInfo?) = SearchResultItem.Stop(
+        id = stop.id,
+        name = stopDisplayName(stop, userInfo),
+        direction = stop.direction.orEmpty(),
+        isFavorite = userInfo?.isFavorite == true,
+        latitude = stop.latitude,
+        longitude = stop.longitude
+    )
 }

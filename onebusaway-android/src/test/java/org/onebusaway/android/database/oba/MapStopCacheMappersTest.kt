@@ -68,9 +68,14 @@ class MapStopCacheMappersTest {
     @Test
     fun toCachedRecord_thenToObaStop_preservesFields() {
         val stop = fakeStop(
-            id = "1_75403", code = "75403", name = "Pine St & 5th Ave",
-            direction = "NW", locationType = ObaStop.LOCATION_STOP,
-            lat = 47.61, lon = -122.34, routeIds = arrayOf("1_100", "1_101"),
+            id = "1_75403",
+            code = "75403",
+            name = "Pine St & 5th Ave",
+            direction = "NW",
+            locationType = ObaStop.LOCATION_STOP,
+            lat = 47.61,
+            lon = -122.34,
+            routeIds = arrayOf("1_100", "1_101")
         )
 
         val record = stop.toCachedRecord(regionId = 3L, now = 500L)
@@ -92,8 +97,14 @@ class MapStopCacheMappersTest {
     fun roundTrip_preservesNullDirectionSentinel_nullCodeName_andZeroRoutes() {
         // The wire "no direction" sentinel is the literal string "null"; must survive verbatim.
         val sentinel = fakeStop(
-            id = "s1", code = null, name = null, direction = "null",
-            locationType = ObaStop.LOCATION_STATION, lat = 1.0, lon = 2.0, routeIds = emptyArray(),
+            id = "s1",
+            code = null,
+            name = null,
+            direction = "null",
+            locationType = ObaStop.LOCATION_STATION,
+            lat = 1.0,
+            lon = 2.0,
+            routeIds = emptyArray()
         )
         val back = sentinel.toCachedRecord(regionId = 1L, now = 1L).toObaStop()
 
@@ -112,7 +123,7 @@ class MapStopCacheMappersTest {
         locationType: Int,
         lat: Double,
         lon: Double,
-        routeIds: Array<String>,
+        routeIds: Array<String>
     ): ObaStop = object : ObaStop {
         override val id = id
         override val stopCode = code

@@ -42,7 +42,7 @@ fun DragHandleBar(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         color = colorResource(R.color.navdrawer_icon_tint),
-        shape = RoundedCornerShape(percent = 50),
+        shape = RoundedCornerShape(percent = 50)
     ) {
         Box(Modifier.size(width = 32.dp, height = DRAG_HANDLE_BAR_HEIGHT))
     }

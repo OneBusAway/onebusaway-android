@@ -15,201 +15,188 @@
  */
 package org.onebusaway.android.util;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GoogleApiAvailability;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.Priority;
-
-import org.onebusaway.android.app.di.LocationEntryPoint;
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
+import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
 
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
-
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.Priority;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static org.onebusaway.android.util.PermissionUtils.LOCATION_PERMISSIONS;
+import org.onebusaway.android.app.di.LocationEntryPoint;
 
 /**
- * A helper class that keeps listeners updated with the best location available from
- * multiple providers
+ * A helper class that keeps listeners updated with the best location available from multiple
+ * providers
  */
 public class LocationHelper implements android.location.LocationListener {
 
-    public interface Listener {
+  public interface Listener {
 
-        /**
-         * Called every time there is an update to the best location available
-         */
-        void onLocationChanged(@NonNull Location location);
+    /** Called every time there is an update to the best location available */
+    void onLocationChanged(@NonNull Location location);
+  }
+
+  static final String TAG = "LocationHelper";
+
+  Context mContext;
+
+  LocationManager mLocationManager;
+
+  ArrayList<Listener> mListeners = new ArrayList<Listener>();
+
+  LocationRequest mLocationRequest;
+
+  LocationCallback mLocationCallback;
+
+  private static final int MILLISECONDS_PER_SECOND = 1000;
+
+  private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
+
+  private static final long FASTEST_INTERVAL =
+      MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
+
+  /**
+   * @param context
+   * @param interval Update interval in seconds.
+   */
+  public LocationHelper(@NonNull Context context, int interval) {
+    mContext = context;
+    mLocationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+    // Create the LocationRequest object with high accuracy and the requested update
+    // interval, allowing updates as fast as every second
+    mLocationRequest =
+        new LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY, (long) interval * MILLISECONDS_PER_SECOND)
+            .setMinUpdateIntervalMillis(FASTEST_INTERVAL)
+            .build();
+  }
+
+  /**
+   * Registers the provided listener for location updates, but first checks to see if Location
+   * permissions are granted. If permissions haven't been granted, returns false and does not
+   * register any listeners. After the caller has received permission from the user it can call this
+   * method again.
+   *
+   * @param listener listener for updates
+   * @return true if permissions have been granted and the listener was registered, false if
+   *     permissions have not been granted and no listener was registered
+   */
+  public synchronized boolean registerListener(@NonNull Listener listener) {
+    if (!PermissionUtils.hasGrantedAtLeastOnePermission(mContext, LOCATION_PERMISSIONS)) {
+      return false;
+    }
+    // User has granted permissions - continue to register listener for location updates
+    if (!mListeners.contains(listener)) {
+      mListeners.add(listener);
     }
 
-    static final String TAG = "LocationHelper";
+    // If this is the first listener, make sure we're monitoring the sensors to provide updates
+    if (mListeners.size() == 1) {
+      // Listen for location
+      registerAllProviders();
+    }
+    return true;
+  }
 
-    Context mContext;
+  public synchronized void unregisterListener(@NonNull Listener listener) {
+    mListeners.remove(listener);
 
-    LocationManager mLocationManager;
+    if (mListeners.size() == 0) {
+      try {
+        mLocationManager.removeUpdates(this);
+        removeFusedLocationUpdates();
+      } catch (SecurityException e) {
+        // We're just unregistering listeners here, so just log exception if user revoked
+        // permissions after the listener was registered
+        Log.w(TAG, "User may have denied location permission - " + e);
+      }
+    }
+  }
 
-    ArrayList<Listener> mListeners = new ArrayList<Listener>();
+  @Override
+  public void onLocationChanged(@NonNull Location location) {
+    // Offer this location to the centralized location store, it case its better than currently
+    // stored location
+    LocationEntryPoint.getSink(mContext).update(location);
+    // Notify listeners with the newest location from the central store (which could be the one
+    // that was just generated above)
+    Location lastLocation = LocationEntryPoint.get(mContext).lastKnownLocation();
+    if (lastLocation != null) {
+      // We need to copy the location, in case the store replaces this object
+      Location locationForListeners = new Location("for listeners");
+      locationForListeners.set(lastLocation);
+      for (Listener l : mListeners) {
+        l.onLocationChanged(locationForListeners);
+      }
+    }
+  }
 
-    LocationRequest mLocationRequest;
+  // Deprecated (no-op) since API 29, but still abstract on our minSdk-23 floor (it only gained a
+  // default implementation in API 30), so the override must stay to avoid an AbstractMethodError.
+  @SuppressWarnings("deprecation")
+  @Override
+  public void onStatusChanged(String provider, int status, Bundle extras) {}
 
-    LocationCallback mLocationCallback;
+  @Override
+  public void onProviderEnabled(@NonNull String provider) {}
 
-    private static final int MILLISECONDS_PER_SECOND = 1000;
+  @Override
+  public void onProviderDisabled(@NonNull String provider) {}
 
-    private static final int FASTEST_INTERVAL_IN_SECONDS = 1;
-
-    private static final long FASTEST_INTERVAL =
-            MILLISECONDS_PER_SECOND * FASTEST_INTERVAL_IN_SECONDS;
-
-    /**
-     *
-     * @param context
-     * @param interval Update interval in seconds.
-     */
-    public LocationHelper(@NonNull Context context, int interval) {
-        mContext = context;
-        mLocationManager = (LocationManager) mContext
-                .getSystemService(Context.LOCATION_SERVICE);
-        // Create the LocationRequest object with high accuracy and the requested update
-        // interval, allowing updates as fast as every second
-        mLocationRequest = new LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,
-                (long) interval * MILLISECONDS_PER_SECOND)
-                .setMinUpdateIntervalMillis(FASTEST_INTERVAL)
-                .build();
+  private void registerAllProviders() throws SecurityException {
+    // Register the network and GPS provider (and anything else available)
+    List<String> providers = mLocationManager.getProviders(true);
+    for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
+      mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
     }
 
-    /**
-     * Registers the provided listener for location updates, but first checks to see if Location
-     * permissions are granted.  If permissions haven't been granted, returns false and does not
-     * register any listeners.  After the caller has received permission from the user it can
-     * call this method again.
-     * @param listener listener for updates
-     * @return true if permissions have been granted and the listener was registered, false if
-     * permissions have not been granted and no listener was registered
-     */
-    public synchronized boolean registerListener(@NonNull Listener listener) {
-        if (!PermissionUtils.hasGrantedAtLeastOnePermission(mContext, LOCATION_PERMISSIONS)) {
-            return false;
-        }
-        // User has granted permissions - continue to register listener for location updates
-        if (!mListeners.contains(listener)) {
-            mListeners.add(listener);
-        }
+    requestFusedLocationUpdates();
+  }
 
-        // If this is the first listener, make sure we're monitoring the sensors to provide updates
-        if (mListeners.size() == 1) {
-            // Listen for location
-            registerAllProviders();
-        }
-        return true;
+  /**
+   * Request location updates from the fused location provider, if Google Play Services is available
+   * on this device
+   */
+  private void requestFusedLocationUpdates() {
+    GoogleApiAvailability api = GoogleApiAvailability.getInstance();
+    if (api.isGooglePlayServicesAvailable(mContext) != ConnectionResult.SUCCESS) {
+      // No Google Play Services - the framework location providers will provide updates
+      return;
     }
-
-    public synchronized void unregisterListener(@NonNull Listener listener) {
-        mListeners.remove(listener);
-
-        if (mListeners.size() == 0) {
-            try {
-                mLocationManager.removeUpdates(this);
-                removeFusedLocationUpdates();
-            } catch (SecurityException e) {
-                // We're just unregistering listeners here, so just log exception if user revoked
-                // permissions after the listener was registered
-                Log.w(TAG, "User may have denied location permission - " + e);
+    if (mLocationCallback == null) {
+      mLocationCallback =
+          new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+              onLocationChanged(locationResult.getLastLocation());
             }
-        }
+          };
     }
-
-    @Override
-    public void onLocationChanged(@NonNull Location location) {
-        // Offer this location to the centralized location store, it case its better than currently
-        // stored location
-        LocationEntryPoint.getSink(mContext).update(location);
-        // Notify listeners with the newest location from the central store (which could be the one
-        // that was just generated above)
-        Location lastLocation = LocationEntryPoint.get(mContext).lastKnownLocation();
-        if (lastLocation != null) {
-            // We need to copy the location, in case the store replaces this object
-            Location locationForListeners = new Location("for listeners");
-            locationForListeners.set(lastLocation);
-            for (Listener l : mListeners) {
-                l.onLocationChanged(locationForListeners);
-            }
-        }
+    try {
+      getFusedLocationProviderClient(mContext)
+          .requestLocationUpdates(mLocationRequest, mLocationCallback, null);
+    } catch (SecurityException e) {
+      // We only register the fused provider if permission was granted, so if it was revoked
+      // in between log the warning and continue
+      Log.w(TAG, "User may have denied location permission - " + e);
     }
+  }
 
-    // Deprecated (no-op) since API 29, but still abstract on our minSdk-23 floor (it only gained a
-    // default implementation in API 30), so the override must stay to avoid an AbstractMethodError.
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
+  /** Stop location updates from the fused location provider, if they were previously requested */
+  private void removeFusedLocationUpdates() {
+    if (mLocationCallback != null) {
+      getFusedLocationProviderClient(mContext).removeLocationUpdates(mLocationCallback);
     }
-
-    @Override
-    public void onProviderEnabled(@NonNull String provider) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(@NonNull String provider) {
-
-    }
-
-    private void registerAllProviders() throws SecurityException {
-        // Register the network and GPS provider (and anything else available)
-        List<String> providers = mLocationManager.getProviders(true);
-        for (Iterator<String> i = providers.iterator(); i.hasNext(); ) {
-            mLocationManager.requestLocationUpdates(i.next(), 0, 0, this);
-        }
-
-        requestFusedLocationUpdates();
-    }
-
-    /**
-     * Request location updates from the fused location provider, if Google Play Services is
-     * available on this device
-     */
-    private void requestFusedLocationUpdates() {
-        GoogleApiAvailability api = GoogleApiAvailability.getInstance();
-        if (api.isGooglePlayServicesAvailable(mContext) != ConnectionResult.SUCCESS) {
-            // No Google Play Services - the framework location providers will provide updates
-            return;
-        }
-        if (mLocationCallback == null) {
-            mLocationCallback = new LocationCallback() {
-                @Override
-                public void onLocationResult(LocationResult locationResult) {
-                    onLocationChanged(locationResult.getLastLocation());
-                }
-            };
-        }
-        try {
-            getFusedLocationProviderClient(mContext)
-                    .requestLocationUpdates(mLocationRequest, mLocationCallback, null);
-        } catch (SecurityException e) {
-            // We only register the fused provider if permission was granted, so if it was revoked
-            // in between log the warning and continue
-            Log.w(TAG, "User may have denied location permission - " + e);
-        }
-    }
-
-    /**
-     * Stop location updates from the fused location provider, if they were previously requested
-     */
-    private void removeFusedLocationUpdates() {
-        if (mLocationCallback != null) {
-            getFusedLocationProviderClient(mContext).removeLocationUpdates(mLocationCallback);
-        }
-    }
+  }
 }

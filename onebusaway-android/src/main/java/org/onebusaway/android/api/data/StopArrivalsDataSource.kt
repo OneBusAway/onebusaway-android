@@ -15,25 +15,23 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.adapters.DtoStop
-import org.onebusaway.android.api.adapters.DtoRoute
-import org.onebusaway.android.api.adapters.DtoTrip
-import org.onebusaway.android.api.adapters.asArrivalData
-import org.onebusaway.android.api.requireData
-
-import org.onebusaway.android.api.contract.ArrivalsForStop
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.net.ObaApiProvider
-import org.onebusaway.android.api.contract.SituationReference
-
 import android.util.Log
 import javax.inject.Inject
+import org.onebusaway.android.api.adapters.DtoRoute
+import org.onebusaway.android.api.adapters.DtoStop
+import org.onebusaway.android.api.adapters.DtoTrip
+import org.onebusaway.android.api.adapters.asArrivalData
+import org.onebusaway.android.api.contract.ArrivalsForStop
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.SituationReference
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ArrivalData
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTrip
-import org.onebusaway.android.models.FocusedTrip
 
 /**
  * A resolved snapshot of a stop's arrivals-and-departures: the [arrivals] plus the references the
@@ -46,7 +44,7 @@ class StopArrivals internal constructor(
     /** The server `currentTime` of this response (epoch millis). */
     val currentTime: Long,
     /** The effective minutes-after window this response was fetched with. */
-    val minutesAfter: Int,
+    val minutesAfter: Int
 ) {
     private val refs get() = data.references
     private val entry get() = data.entry
@@ -81,18 +79,17 @@ class StopArrivals internal constructor(
     fun trip(id: String): ObaTrip? = refs.trip(id)?.let(::DtoTrip)
 
     /** Resolves the displayed arrivals to exact trips without expanding through route membership. */
-    fun focusedTrips(trips: Iterable<Pair<String, String>>): Set<FocusedTrip> =
-        trips.mapNotNullTo(LinkedHashSet()) { (rawTripId, routeId) ->
-            val tripId = rawTripId.takeIf(String::isNotBlank) ?: return@mapNotNullTo null
-            val trip = trip(tripId)
-            FocusedTrip(
-                tripId = tripId,
-                routeId = routeId,
-                shapeId = trip?.shapeId?.takeIf(String::isNotBlank),
-                routeColor = route(routeId)?.color,
-                directionId = refs.trip(tripId)?.directionId?.toIntOrNull(),
-            )
-        }
+    fun focusedTrips(trips: Iterable<Pair<String, String>>): Set<FocusedTrip> = trips.mapNotNullTo(LinkedHashSet()) { (rawTripId, routeId) ->
+        val tripId = rawTripId.takeIf(String::isNotBlank) ?: return@mapNotNullTo null
+        val trip = trip(tripId)
+        FocusedTrip(
+            tripId = tripId,
+            routeId = routeId,
+            shapeId = trip?.shapeId?.takeIf(String::isNotBlank),
+            routeColor = route(routeId)?.color,
+            directionId = refs.trip(tripId)?.directionId?.toIntOrNull()
+        )
+    }
 
     /** Resolves a situation (service alert) from the references pool by id, or null. */
     fun situation(id: String): ObaSituation? = refs.situation(id)?.let(::DtoSituation)
@@ -123,7 +120,7 @@ interface StopArrivalsDataSource {
 }
 
 class DefaultStopArrivalsDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : StopArrivalsDataSource {
 
     override suspend fun arrivals(stopId: String, minutesAfter: Int): Result<StopArrivals> = api.call {

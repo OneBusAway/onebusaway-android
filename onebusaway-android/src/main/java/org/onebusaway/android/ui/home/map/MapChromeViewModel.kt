@@ -35,7 +35,7 @@ data class MapChromeState(
     val zoomControls: Boolean = false,
     val leftHand: Boolean = false,
     val layersFab: Boolean = false,
-    val bikeshareActive: Boolean = false,
+    val bikeshareActive: Boolean = false
 )
 
 /**
@@ -49,7 +49,7 @@ data class MapChromeState(
 @HiltViewModel
 class MapChromeViewModel @Inject constructor(
     prefsRepo: PreferencesRepository,
-    regionRepo: RegionRepository,
+    regionRepo: RegionRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MapChromeState())
@@ -64,7 +64,7 @@ class MapChromeViewModel @Inject constructor(
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),
                 prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
                 regionRepo.region,
-                prefsRepo.observeString(R.string.preference_key_otp_api_url, null),
+                prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
             ) { zoomControls, leftHand, bikeVisible, region, otpUrl ->
                 // Reactive re-derivation of bikeshare availability for this consumer, tracking region +
                 // the OTP-URL pref. Shares the one predicate ([BikeshareAvailability]) with the trip/layer
@@ -74,7 +74,7 @@ class MapChromeViewModel @Inject constructor(
                     zoomControls = zoomControls,
                     leftHand = leftHand,
                     layersFab = bikeshareEnabled,
-                    bikeshareActive = bikeshareEnabled && bikeVisible,
+                    bikeshareActive = bikeshareEnabled && bikeVisible
                 )
             }.distinctUntilChanged().collect { _state.value = it }
         }

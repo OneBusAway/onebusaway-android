@@ -227,17 +227,16 @@ internal object MaterialSymbols {
     }
 }
 
-private fun symbol(name: String, pathData: PathBuilder.() -> Unit): ImageVector =
-    ImageVector.Builder(
-        name = name,
-        defaultWidth = 24.dp,
-        defaultHeight = 24.dp,
-        viewportWidth = 24f,
-        viewportHeight = 24f,
-    ).apply {
-        path(
-            fill = SolidColor(Color.Black),
-            pathFillType = PathFillType.NonZero,
-            pathBuilder = pathData,
-        )
-    }.build()
+private fun symbol(name: String, pathData: PathBuilder.() -> Unit): ImageVector = ImageVector.Builder(
+    name = name,
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f
+).apply {
+    path(
+        fill = SolidColor(Color.Black),
+        pathFillType = PathFillType.NonZero,
+        pathBuilder = pathData
+    )
+}.build()

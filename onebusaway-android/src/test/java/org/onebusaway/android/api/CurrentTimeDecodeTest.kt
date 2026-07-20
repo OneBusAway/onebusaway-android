@@ -15,18 +15,20 @@
  */
 package org.onebusaway.android.api
 
+import kotlinx.serialization.json.Json
+import org.junit.Assert.assertEquals
+import org.junit.Test
 import org.onebusaway.android.api.contract.CurrentTime
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 
-import kotlinx.serialization.json.Json
-import org.junit.Assert.assertEquals
-import org.junit.Test
-
 /** Ports the legacy CurrentTimeRequestTest onto the modernized `current-time` endpoint. */
 class CurrentTimeDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private val body = """
         {

@@ -40,7 +40,7 @@ import org.onebusaway.android.region.RegionRepository
 @HiltViewModel
 class WideAlertViewModel @Inject constructor(
     wideAlertsRepo: WideAlertsRepository,
-    regionRepo: RegionRepository,
+    regionRepo: RegionRepository
 ) : ViewModel() {
 
     private val _wideAlert = MutableStateFlow<WideAlert?>(null)

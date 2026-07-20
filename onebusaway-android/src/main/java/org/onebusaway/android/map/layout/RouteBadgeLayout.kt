@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.map.layout
 
-import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.map.render.haversineMeters
-import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.util.EARTH_RADIUS_METERS
+import org.onebusaway.android.util.GeoPoint
 
 /** One shape on which a route-direction badge may be anchored. */
 data class RouteBadgePath(val points: List<GeoPoint>)
@@ -30,14 +30,14 @@ data class RouteBadgePath(val points: List<GeoPoint>)
 /** One route-direction identity and the geographic shapes on which its badge may be anchored. */
 data class RouteBadgeLayoutInput(
     val route: RouteDirectionKey,
-    val paths: List<RouteBadgePath>,
+    val paths: List<RouteBadgePath>
 )
 
 /** A stable geographic badge anchor. Input order determines collision priority. */
 data class RouteBadgePlacement(
     val route: RouteDirectionKey,
     val point: GeoPoint,
-    val overlaps: Boolean,
+    val overlaps: Boolean
 )
 
 /**
@@ -50,7 +50,7 @@ data class RouteBadgePlacement(
 fun layoutRouteBadges(
     inputs: List<RouteBadgeLayoutInput>,
     minimumSeparationMeters: Double = DEFAULT_BADGE_SEPARATION_METERS,
-    maxStaggerSteps: Int = DEFAULT_MAX_STAGGER_STEPS,
+    maxStaggerSteps: Int = DEFAULT_MAX_STAGGER_STEPS
 ): List<RouteBadgePlacement> {
     val separation = minimumSeparationMeters.coerceAtLeast(0.0)
     val occupied = mutableListOf<GeoPoint>()
@@ -78,7 +78,7 @@ fun layoutRouteBadges(
 
 private data class MeasuredPath(
     val points: List<GeoPoint>,
-    val cumulativeMeters: DoubleArray,
+    val cumulativeMeters: DoubleArray
 ) {
     val lengthMeters: Double get() = cumulativeMeters.last()
 
@@ -129,10 +129,18 @@ private fun interpolate(start: GeoPoint, end: GeoPoint, fraction: Double): GeoPo
 
     val startWeight = sin((1.0 - fraction) * angle) / sinAngle
     val endWeight = sin(fraction * angle) / sinAngle
-    val x = startWeight * cos(startLatitude) * cos(startLongitude) +
-        endWeight * cos(endLatitude) * cos(endLongitude)
-    val y = startWeight * cos(startLatitude) * sin(startLongitude) +
-        endWeight * cos(endLatitude) * sin(endLongitude)
+    val x = startWeight *
+        cos(startLatitude) *
+        cos(startLongitude) +
+        endWeight *
+        cos(endLatitude) *
+        cos(endLongitude)
+    val y = startWeight *
+        cos(startLatitude) *
+        sin(startLongitude) +
+        endWeight *
+        cos(endLatitude) *
+        sin(endLongitude)
     val z = startWeight * sin(startLatitude) + endWeight * sin(endLatitude)
     return GeoPoint(Math.toDegrees(atan2(z, sqrt(x * x + y * y))), Math.toDegrees(atan2(y, x)))
 }

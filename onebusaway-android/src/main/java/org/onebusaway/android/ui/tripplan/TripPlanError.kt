@@ -39,7 +39,7 @@ import org.onebusaway.android.R
  */
 data class TripPlanError(
     val category: Category,
-    @get:StringRes val detailRes: Int,
+    @get:StringRes val detailRes: Int
 ) {
     /**
      * The coarse failure kind. [headerRes] is the stable heading naming the category; [severity]
@@ -47,7 +47,7 @@ data class TripPlanError(
      */
     enum class Category(
         @get:StringRes val headerRes: Int,
-        val severity: Severity,
+        val severity: Severity
     ) {
         /** Couldn't reach or get a usable answer from the planner (timeout, transport failure). */
         CONNECTIVITY(R.string.tripplanner_error_header_connectivity, Severity.ERROR),
@@ -62,7 +62,7 @@ data class TripPlanError(
         NO_ROUTE(R.string.tripplanner_error_header_no_route, Severity.WARNING),
 
         /** The request itself was rejected or unclassified (bad parameter, no server, unknown). */
-        REQUEST(R.string.tripplanner_error_header_request, Severity.ERROR),
+        REQUEST(R.string.tripplanner_error_header_request, Severity.ERROR)
     }
 
     /**
@@ -72,7 +72,7 @@ data class TripPlanError(
      */
     enum class Severity(@get:ColorRes val colorRes: Int) {
         WARNING(R.color.md_theme_severityWarning),
-        ERROR(R.color.md_theme_severityError),
+        ERROR(R.color.md_theme_severityError)
     }
 
     companion object {
@@ -92,5 +92,4 @@ data class TripPlanError(
 class TripPlanException(val error: TripPlanError, cause: Throwable? = null) : IOException(cause)
 
 /** The [TripPlanError] for a thrown [Throwable], falling back to [TripPlanError.Unknown]. */
-fun Throwable.toTripPlanError(): TripPlanError =
-    (this as? TripPlanException)?.error ?: TripPlanError.Unknown
+fun Throwable.toTripPlanError(): TripPlanError = (this as? TripPlanException)?.error ?: TripPlanError.Unknown

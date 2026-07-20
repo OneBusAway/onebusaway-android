@@ -39,15 +39,13 @@ object DisplayFormat {
      * arrival/departure
      */
     @JvmStatic
-    fun formatTime(context: Context, time: Long): String {
-        return DateUtils.formatDateTime(
-            context,
-            time,
-            DateUtils.FORMAT_SHOW_TIME or
-                    DateUtils.FORMAT_NO_NOON or
-                    DateUtils.FORMAT_NO_MIDNIGHT
-        )
-    }
+    fun formatTime(context: Context, time: Long): String = DateUtils.formatDateTime(
+        context,
+        time,
+        DateUtils.FORMAT_SHOW_TIME or
+            DateUtils.FORMAT_NO_NOON or
+            DateUtils.FORMAT_NO_MIDNIGHT
+    )
 
     /**
      * Takes the number of minutes, and returns a user-readable string
@@ -64,8 +62,10 @@ object DisplayFormat {
      */
     @JvmStatic
     fun getNoArrivalsMessage(
-        context: Context, minutes: Int,
-        additionalArrivals: Boolean, shortFormat: Boolean
+        context: Context,
+        minutes: Int,
+        additionalArrivals: Boolean,
+        shortFormat: Boolean
     ): String {
         if (minutes <= MINUTES_IN_HOUR) {
             // Return just minutes
@@ -100,14 +100,18 @@ object DisplayFormat {
                     context.resources
                         .getQuantityString(
                             R.plurals.stop_info_no_additional_data_hours_minutes_short_format,
-                            minutes / 60, minutes % 60, minutes / 60
+                            minutes / 60,
+                            minutes % 60,
+                            minutes / 60
                         )
                 } else {
                     // Long version
                     context.resources
                         .getQuantityString(
                             R.plurals.stop_info_no_additional_data_hours_minutes,
-                            minutes / 60, minutes % 60, minutes / 60
+                            minutes / 60,
+                            minutes % 60,
+                            minutes / 60
                         )
                 }
             } else {
@@ -117,7 +121,8 @@ object DisplayFormat {
                         .getQuantityString(
                             R.plurals.stop_info_nodata_hours_minutes_short_format,
                             minutes / 60,
-                            minutes % 60, minutes / 60
+                            minutes % 60,
+                            minutes / 60
                         )
                 } else {
                     // Long version
@@ -125,7 +130,8 @@ object DisplayFormat {
                         .getQuantityString(
                             R.plurals.stop_info_nodata_hours_minutes,
                             minutes / 60,
-                            minutes % 60, minutes / 60
+                            minutes % 60,
+                            minutes / 60
                         )
                 }
             }

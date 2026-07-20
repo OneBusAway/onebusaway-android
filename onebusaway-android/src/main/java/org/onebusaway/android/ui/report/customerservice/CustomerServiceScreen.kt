@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.report.customerservice
 
-import org.onebusaway.android.models.AgencyContact
-
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.models.AgencyContact
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -137,7 +136,11 @@ private fun CustomerServiceScreenPreview() {
                     AgencyContact("97", "Phone-only Transit", null, null, "206-555-2000")
                 )
             ),
-            onRetry = {}, onEmail = {}, onWeb = {}, onPhone = {}, onBack = {}
+            onRetry = {},
+            onEmail = {},
+            onWeb = {},
+            onPhone = {},
+            onBack = {}
         )
     }
 }

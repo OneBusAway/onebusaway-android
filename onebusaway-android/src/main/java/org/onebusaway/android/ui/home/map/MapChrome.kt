@@ -73,7 +73,7 @@ fun MapChrome(
     onMyLocation: () -> Unit,
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
-    onToggleBikeshare: () -> Unit,
+    onToggleBikeshare: () -> Unit
 ) {
     // Animate the lift here so the per-frame value only recomposes the FABs, not the hosting map
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).

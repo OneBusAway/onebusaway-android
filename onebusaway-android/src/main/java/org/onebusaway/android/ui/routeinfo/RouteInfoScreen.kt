@@ -274,7 +274,7 @@ private fun StopRow(
         )
         CenteredLongPressMenu(
             expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
+            onDismissRequest = { menuExpanded = false }
         ) {
             MenuHeader(stop.name)
             DropdownMenuItem(
@@ -338,7 +338,10 @@ private fun RouteInfoScreenSuccessPreview() {
                     )
                 )
             ),
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -349,7 +352,10 @@ private fun RouteInfoScreenLoadingPreview() {
     ObaTheme {
         RouteInfoScreen(
             state = RouteInfoUiState.Loading,
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -360,7 +366,10 @@ private fun RouteInfoScreenErrorPreview() {
     ObaTheme {
         RouteInfoScreen(
             state = RouteInfoUiState.Error("Please check your Internet connection and try again."),
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }

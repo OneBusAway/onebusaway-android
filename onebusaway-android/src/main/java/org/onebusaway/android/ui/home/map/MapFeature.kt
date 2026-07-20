@@ -71,13 +71,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.flow.distinctUntilChanged
 import java.util.Locale
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
@@ -85,19 +84,20 @@ import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeViewModel
 import org.onebusaway.android.ui.home.MapDirective
 import org.onebusaway.android.ui.home.StopFocusTransition
-import org.onebusaway.android.ui.home.focusedBikeStationId
-import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
+import org.onebusaway.android.ui.home.focusedBikeStationId
+import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
@@ -127,7 +127,7 @@ fun MapFeature(
     fabBottomInset: Dp,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
     onMapLongPress: (GeoPoint) -> Unit = {},
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -151,7 +151,7 @@ fun MapFeature(
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
                     FocusedStop(stop.id, stop.name, stop.stopCode, marker.point),
-                    continuingRoutes = marker.presentedRoutes,
+                    continuingRoutes = marker.presentedRoutes
                 )
                 if (transition == StopFocusTransition.ReplacePresentation) {
                     mapViewModel.clearAllFocus()
@@ -162,7 +162,7 @@ fun MapFeature(
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                     resources.getString(R.string.analytics_label_button_press_map_icon),
-                    null,
+                    null
                 )
             }
 
@@ -189,7 +189,7 @@ fun MapFeature(
                             R.string.analytics_label_floating_bike_marker_clicked
                         }
                     ),
-                    null,
+                    null
                 )
             }
 
@@ -200,32 +200,34 @@ fun MapFeature(
             override fun onRouteContinuationClick(
                 routeId: String,
                 routeShortName: String,
-                directionId: Int?,
+                directionId: Int?
             ) {
                 homeViewModel.advanceRouteContinuation(
                     routeId,
                     routeShortName,
                     directionId,
-                    undoViewport = mapViewModel.viewport,
+                    undoViewport = mapViewModel.viewport
                 )
             }
 
             override fun onRouteBadgeClick(
                 routeId: String,
                 routeShortName: String,
-                directionId: Int?,
+                directionId: Int?
             ) {
                 homeViewModel.requestShowFocusedStopRouteOnMap(
                     routeId,
                     directionId,
                     routeShortName,
-                    undoViewport = mapViewModel.viewport,
+                    undoViewport = mapViewModel.viewport
                 )
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
                 MapNavigation.openVehicleTripDetails(
-                    context, status, homeViewModel.currentFocus.value.focusedStop?.id
+                    context,
+                    status,
+                    homeViewModel.currentFocus.value.focusedStop?.id
                 )
             }
 
@@ -265,7 +267,7 @@ fun MapFeature(
                     mapViewModel.toRoute(
                         directive.request,
                         directive.stopScoped,
-                        directive.frameRoute,
+                        directive.frameRoute
                     )
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
@@ -274,7 +276,7 @@ fun MapFeature(
                     mapViewModel.showStopRoutes(
                         directive.stopId,
                         directive.routes,
-                        directive.trips,
+                        directive.trips
                     )
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
                 MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
@@ -285,7 +287,7 @@ fun MapFeature(
                         directive.routes,
                         directive.overlayExpanded,
                         directive.recenter,
-                        directive.animate,
+                        directive.animate
                     )
                 is MapDirective.ShowItinerary ->
                     mapViewModel.showItinerary(directive.itinerary)
@@ -311,13 +313,19 @@ fun MapFeature(
                 MapEffect.RequestLocationPermission ->
                     permissionLauncher.launch(PermissionUtils.LOCATION_PERMISSIONS)
                 MapEffect.WaitingForLocation -> Toast.makeText(
-                    context, R.string.main_waiting_for_location, Toast.LENGTH_SHORT
+                    context,
+                    R.string.main_waiting_for_location,
+                    Toast.LENGTH_SHORT
                 ).show()
                 MapEffect.VehicleNotOnMap -> Toast.makeText(
-                    context, R.string.stop_info_vehicle_not_on_map, Toast.LENGTH_SHORT
+                    context,
+                    R.string.stop_info_vehicle_not_on_map,
+                    Toast.LENGTH_SHORT
                 ).show()
                 is MapEffect.ShowError -> Toast.makeText(
-                    context, ObaRequestErrors.getMapErrorString(context, effect.code), Toast.LENGTH_LONG
+                    context,
+                    ObaRequestErrors.getMapErrorString(context, effect.code),
+                    Toast.LENGTH_LONG
                 ).show()
             }
         }
@@ -347,15 +355,18 @@ fun MapFeature(
     when (dialog) {
         MapEffect.OutOfRange -> OutOfRangeDialog(
             regionName = mapViewModel.currentRegionName.orEmpty(),
-            onConfirm = { mapViewModel.zoomToRegion(); dialog = null },
-            onDismiss = { dialog = null },
+            onConfirm = {
+                mapViewModel.zoomToRegion()
+                dialog = null
+            },
+            onDismiss = { dialog = null }
         )
         MapEffect.NoLocation -> NoLocationDialog(
             onEnable = {
                 context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 dialog = null
             },
-            onDismiss = { dialog = null },
+            onDismiss = { dialog = null }
         )
         MapEffect.ShowPermissionRationale -> PermissionRationaleDialog(
             onOk = {
@@ -368,7 +379,7 @@ fun MapFeature(
                 mapViewModel.onLocationPermissionResult(false)
                 homeViewModel.onLocationPermissionResult()
                 dialog = null
-            },
+            }
         )
         else -> {}
     }
@@ -386,7 +397,7 @@ fun MapFeature(
         modifier = modifier,
         initialLatitude = seed.point.latitude,
         initialLongitude = seed.point.longitude,
-        initialZoom = seed.zoom,
+        initialZoom = seed.zoom
     )
 
     // The nearby-stops info notice: "zoom in to see more stops" when the load was truncated (the API's
@@ -405,7 +416,7 @@ fun MapFeature(
     ) {
         StopsInfoBanner(
             banner = stopsBanner.forFocus(currentFocus),
-            modifier = Modifier.align(Alignment.TopCenter),
+            modifier = Modifier.align(Alignment.TopCenter)
         )
         if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
             val zoom = camera?.zoom?.toFloat() ?: seed.zoom
@@ -414,7 +425,7 @@ fun MapFeature(
                     Locale.US,
                     "Zoom %.2f · route %.2f×",
                     zoom,
-                    routeLineWidthScale(zoom),
+                    routeLineWidthScale(zoom)
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.labelMedium,
@@ -422,7 +433,7 @@ fun MapFeature(
                     .align(Alignment.TopStart)
                     .clip(RoundedCornerShape(6.dp))
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
     }
@@ -434,7 +445,7 @@ fun MapFeature(
     MapStopSpotlight(
         projector = mapStopProjector,
         currentStops = { mapViewModel.renderState.snapshot.value.stops },
-        onFocusStop = { callbacks.onStopClick(it) },
+        onFocusStop = { callbacks.onStopClick(it) }
     )
 
     // The map chrome FABs (my-location / zoom / layers), over the map. The visibility gates are a
@@ -452,14 +463,15 @@ fun MapFeature(
         onMyLocation = {
             // Reset the prefs that suppress the enable-location / permission prompts, then recenter.
             PreferenceUtils.saveBoolean(
-                resources.getString(R.string.preference_key_never_show_location_dialog), false
+                resources.getString(R.string.preference_key_never_show_location_dialog),
+                false
             )
             PreferenceUtils.setUserDeniedLocationPermissions(context, false)
             mapViewModel.requestMyLocation(useDefaultZoom = true, animate = true)
             AnalyticsEntryPoint.get(context).reportUiEvent(
                 PlausibleAnalytics.REPORT_MAP_EVENT_URL,
                 resources.getString(R.string.analytics_label_button_press_location),
-                null,
+                null
             )
         },
         onZoomIn = { mapViewModel.zoomIn() },
@@ -478,15 +490,14 @@ fun MapFeature(
                     } else {
                         R.string.analytics_label_bikeshare_activated
                     }
-                ),
+                )
             )
-        },
+        }
     )
 }
 
 /** A truncated nearby-stop load is irrelevant while the user is already focused on one stop. */
-internal fun StopsBanner.forFocus(focus: CurrentFocus): StopsBanner =
-    if (this == StopsBanner.MoreStopsAvailable && focus is CurrentFocus.Stop) StopsBanner.None else this
+internal fun StopsBanner.forFocus(focus: CurrentFocus): StopsBanner = if (this == StopsBanner.MoreStopsAvailable && focus is CurrentFocus.Stop) StopsBanner.None else this
 
 /**
  * The nearby-stops info notice: an extended-FAB-style pill (leading icon + text) at the top-center of the
@@ -511,9 +522,10 @@ private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) 
         // Pop into place (scale up from ~80% with a little spring), rather than sliding down from the edge.
         enter = scaleIn(
             initialScale = 0.8f,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        ) + fadeIn(),
-        exit = scaleOut(targetScale = 0.8f) + fadeOut(),
+            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)
+        ) +
+            fadeIn(),
+        exit = scaleOut(targetScale = 0.8f) + fadeOut()
     ) {
         // A plain Row (not a Surface): a non-clickable Surface still consumes pointer events across its
         // bounds, so a pan/tap/pinch that starts on the pill would be swallowed instead of reaching the
@@ -527,18 +539,18 @@ private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) 
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
                 .padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 painterResource(iconRes),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(20.dp)
             )
             Text(
                 text = stringResource(labelRes),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -556,7 +568,7 @@ private fun OutOfRangeDialog(regionName: String, onConfirm: () -> Unit, onDismis
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.main_outofrange_no)) }
-        },
+        }
     )
 }
 
@@ -573,14 +585,14 @@ private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
                 Text(stringResource(R.string.main_nolocation, stringResource(R.string.app_name)))
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = neverAskAgain,
                         onCheckedChange = {
                             neverAskAgain = it
                             PreferenceUtils.saveBoolean(neverShowDialogKey, it)
-                        },
+                        }
                     )
                     Text(stringResource(R.string.main_never_ask_again))
                 }
@@ -591,7 +603,7 @@ private fun NoLocationDialog(onEnable: () -> Unit, onDismiss: () -> Unit) {
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.rt_no)) }
-        },
+        }
     )
 }
 
@@ -607,6 +619,6 @@ private fun PermissionRationaleDialog(onOk: () -> Unit, onNoThanks: () -> Unit) 
         },
         dismissButton = {
             TextButton(onClick = onNoThanks) { Text(stringResource(R.string.no_thanks)) }
-        },
+        }
     )
 }

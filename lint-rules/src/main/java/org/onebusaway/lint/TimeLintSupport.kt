@@ -56,7 +56,7 @@ internal object TimeLintSupport {
         UastBinaryOperator.GREATER,
         UastBinaryOperator.LESS,
         UastBinaryOperator.GREATER_OR_EQUALS,
-        UastBinaryOperator.LESS_OR_EQUALS,
+        UastBinaryOperator.LESS_OR_EQUALS
     )
 
     /** A bare `Long`/`Int` slot a time can come to rest in domainless; [phrase] is its user-message noun. */
@@ -65,7 +65,7 @@ internal object TimeLintSupport {
         FIELD("a field"),
         RETURN("a return value"),
         PARAMETER("a default parameter value"),
-        ASSIGNMENT("an assignment"),
+        ASSIGNMENT("an assignment")
     }
 
     /**
@@ -88,14 +88,13 @@ internal object TimeLintSupport {
     }
 
     private fun ownerFqnOf(resolved: PsiElement?): String? = when (resolved) {
-        is PsiMember -> resolved.containingClass?.qualifiedName            // a getter method or backing field
+        is PsiMember -> resolved.containingClass?.qualifiedName // a getter method or backing field
         is PsiParameter -> (resolved.declarationScope as? PsiMethod)?.containingClass?.qualifiedName
         else -> null
     }
 
     /** A `Long`/`Int` (boxed or primitive) — a slot a time can hide in domainless. */
-    private fun isBareTimeType(type: PsiType?): Boolean =
-        type != null && type.canonicalText in BARE_TIME_TYPES
+    private fun isBareTimeType(type: PsiType?): Boolean = type != null && type.canonicalText in BARE_TIME_TYPES
 
     private val BARE_TIME_TYPES =
         setOf("long", "int", "java.lang.Long", "java.lang.Integer")
@@ -106,20 +105,19 @@ internal object TimeLintSupport {
      * separate trigger), or bound to a non-time-shaped type. [read] is the boundary read: a producer
      * call (`RawTimeDetector`) or a domain-instant accessor reference (`PrematureUnwrapDetector`).
      */
-    fun restingSlot(read: UExpression): Slot? =
-        when (val parent = skipParenthesizedExprUp(read.getQualifiedParentOrThis().uastParent)) {
-            is UParameter -> Slot.PARAMETER.takeIf { isBareTimeType(parent.type) }
-            // A `?.` safe-call desugars into a *synthetic* local in UAST (`x?.epochMs` → a temp), which
-            // is not a resting slot — the value is still on its way to whatever consumes the safe-call
-            // (a nullable field/arg, or a sink). Only a real source-level local (has sourcePsi) rests.
-            is ULocalVariable -> Slot.LOCAL.takeIf { isBareTimeType(parent.type) && parent.sourcePsi != null }
-            is UField -> Slot.FIELD.takeIf { isBareTimeType(parent.type) }
-            is UReturnExpression ->
-                Slot.RETURN.takeIf { isBareTimeType(read.getParentOfType<UMethod>()?.returnType) }
-            is UBinaryExpression -> Slot.ASSIGNMENT.takeIf {
-                parent.operator == UastBinaryOperator.ASSIGN &&
-                    isBareTimeType(parent.leftOperand.getExpressionType())
-            }
-            else -> null
+    fun restingSlot(read: UExpression): Slot? = when (val parent = skipParenthesizedExprUp(read.getQualifiedParentOrThis().uastParent)) {
+        is UParameter -> Slot.PARAMETER.takeIf { isBareTimeType(parent.type) }
+        // A `?.` safe-call desugars into a *synthetic* local in UAST (`x?.epochMs` → a temp), which
+        // is not a resting slot — the value is still on its way to whatever consumes the safe-call
+        // (a nullable field/arg, or a sink). Only a real source-level local (has sourcePsi) rests.
+        is ULocalVariable -> Slot.LOCAL.takeIf { isBareTimeType(parent.type) && parent.sourcePsi != null }
+        is UField -> Slot.FIELD.takeIf { isBareTimeType(parent.type) }
+        is UReturnExpression ->
+            Slot.RETURN.takeIf { isBareTimeType(read.getParentOfType<UMethod>()?.returnType) }
+        is UBinaryExpression -> Slot.ASSIGNMENT.takeIf {
+            parent.operator == UastBinaryOperator.ASSIGN &&
+                isBareTimeType(parent.leftOperand.getExpressionType())
         }
+        else -> null
+    }
 }

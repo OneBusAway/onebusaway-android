@@ -34,23 +34,23 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.ui.tripresults.RouteLegRef
-import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.toGeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
-import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
+import org.onebusaway.android.ui.tripresults.RouteLegRef
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.toGeoPoint
 
 /** How a tapped stop changes the map presentation already visible beneath the arrivals drawer. */
 internal enum class StopFocusTransition {
     Unchanged,
     ContinuePresentation,
-    ReplacePresentation,
+    ReplacePresentation
 }
 
 /**
@@ -76,7 +76,7 @@ class HomeViewModel @Inject constructor(
     private val regionRepo: RegionRepository,
     // The last-known device location: the report-target fallback reads it here, so the
     // focused-stop-vs-location decision lives with the focused stop instead of in the activity.
-    private val locationRepository: LocationRepository,
+    private val locationRepository: LocationRepository
 ) : ViewModel() {
 
     // The single source of truth, replaced atomically by replaceFocus(). Seeded from the
@@ -89,7 +89,7 @@ class HomeViewModel @Inject constructor(
     // natural predecessors without viewport snapshots after process recreation.
     private data class MapUndoEntry(
         val focus: CurrentFocus,
-        val viewport: MapViewport? = null,
+        val viewport: MapViewport? = null
     )
 
     private val mapUndoHistory = ArrayDeque<MapUndoEntry>().apply {
@@ -164,6 +164,7 @@ class HomeViewModel @Inject constructor(
 
     /** The sheet's last resting position, for the activity's imperative map/tutorial side-effects. */
     val lastSettledSheet: ArrivalsSheetState get() = settledSheet
+
     // A restored/deep-linked focus the imperative map hasn't been told about yet (re-derived by the
     // host on each create from the restored focusedStop, so it needn't be persisted). Null when no
     // focus is pending. A single data class rather than a boolean pair (#1903): each mark atomically
@@ -174,7 +175,7 @@ class HomeViewModel @Inject constructor(
         // Whether the pending focus should animate the camera over to the stop (an in-session reveal —
         // a search/recents tap) rather than jump to it (a cold-start restore, where flying from a
         // default camera position would look wrong).
-        val animate: Boolean = false,
+        val animate: Boolean = false
     )
     private var pendingFocus: PendingFocus? = null
 
@@ -211,7 +212,7 @@ class HomeViewModel @Inject constructor(
      */
     internal fun onStopFocused(
         stop: FocusedStop,
-        continuingRoutes: Set<RouteDirectionKey> = emptySet(),
+        continuingRoutes: Set<RouteDirectionKey> = emptySet()
     ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId == stop.id
@@ -228,7 +229,7 @@ class HomeViewModel @Inject constructor(
         pushFocus(
             CurrentFocus.Stop(
                 stop = stop,
-                selectedRoute = if (continuePresentation) current?.selectedRoute else null,
+                selectedRoute = if (continuePresentation) current?.selectedRoute else null
             )
         )
         return if (continuePresentation) {
@@ -343,7 +344,7 @@ class HomeViewModel @Inject constructor(
     fun onArrivalsLoaded(
         stop: ObaStop,
         routes: List<ObaRoute>?,
-        trips: Set<FocusedTrip> = emptySet(),
+        trips: Set<FocusedTrip> = emptySet()
     ) {
         val focus = _currentFocus.value as? CurrentFocus.Stop ?: return
         if (focus.stop.id != stop.id) return
@@ -363,7 +364,7 @@ class HomeViewModel @Inject constructor(
                     routes,
                     settledSheet == ArrivalsSheetState.Expanded,
                     recenter = !preserveViewport,
-                    animate = pending.animate,
+                    animate = pending.animate
                 )
             )
         }
@@ -373,7 +374,7 @@ class HomeViewModel @Inject constructor(
             MapDirective.ShowStopRoutes(
                 stopId = stop.id,
                 routes = routes.orEmpty(),
-                trips = focusedTrips,
+                trips = focusedTrips
             )
         )
         focus.selectedRoute?.let {
@@ -381,7 +382,7 @@ class HomeViewModel @Inject constructor(
                 MapDirective.ShowRoute(
                     it.target(focus.stop.id).toRequest(),
                     stopScoped = true,
-                    frameRoute = frameSelectedRoute,
+                    frameRoute = frameSelectedRoute
                 )
             )
         }
@@ -400,7 +401,7 @@ class HomeViewModel @Inject constructor(
         request: ShowRouteRequest,
         shortName: String,
         headsign: String?,
-        undoViewport: MapViewport? = null,
+        undoViewport: MapViewport? = null
     ) {
         val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
         selectStopRoute(
@@ -408,7 +409,7 @@ class HomeViewModel @Inject constructor(
             request = request,
             firstLeg = RouteLeg(request.routeId, shortName, request.initialDirectionId),
             originHeadsign = headsign,
-            undoViewport = undoViewport,
+            undoViewport = undoViewport
         )
     }
 
@@ -429,7 +430,7 @@ class HomeViewModel @Inject constructor(
         routeId: String,
         shortName: String,
         directionId: Int?,
-        undoViewport: MapViewport? = null,
+        undoViewport: MapViewport? = null
     ) {
         when (val focus = _currentFocus.value) {
             is CurrentFocus.Stop -> {
@@ -465,7 +466,7 @@ class HomeViewModel @Inject constructor(
         routeId: String,
         directionId: Int?,
         shortName: String = routeId,
-        undoViewport: MapViewport? = null,
+        undoViewport: MapViewport? = null
     ) {
         val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
         selectStopRoute(
@@ -473,11 +474,11 @@ class HomeViewModel @Inject constructor(
             request = ShowRouteRequest(
                 routeId = routeId,
                 directionStopId = stopFocus.stop.id,
-                initialDirectionId = directionId,
+                initialDirectionId = directionId
             ),
             firstLeg = RouteLeg(routeId, shortName, directionId),
             originHeadsign = null,
-            undoViewport = undoViewport,
+            undoViewport = undoViewport
         )
     }
 
@@ -486,19 +487,19 @@ class HomeViewModel @Inject constructor(
         request: ShowRouteRequest,
         firstLeg: RouteLeg,
         originHeadsign: String?,
-        undoViewport: MapViewport?,
+        undoViewport: MapViewport?
     ) {
         val next = stopFocus.copy(
             selectedRoute = StopRouteSelection(
                 originHeadsign = originHeadsign,
-                legs = listOf(firstLeg),
+                legs = listOf(firstLeg)
             )
         )
         pushFocus(next, undoViewport)
         emitMapDirective(
             MapDirective.ShowRoute(
                 request.copy(directionStopId = stopFocus.stop.id),
-                stopScoped = true,
+                stopScoped = true
             )
         )
     }
@@ -584,8 +585,7 @@ class HomeViewModel @Inject constructor(
     }
 
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
-    fun focusItineraryPointOnMap(point: GeoPoint) =
-        emitMapDirective(MapDirective.FocusItineraryPoint(point))
+    fun focusItineraryPointOnMap(point: GeoPoint) = emitMapDirective(MapDirective.FocusItineraryPoint(point))
 
     /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
     fun focusItineraryLegOnMap(points: List<GeoPoint>) {
@@ -612,7 +612,7 @@ class HomeViewModel @Inject constructor(
         focusItineraryRouteLegOnMap(
             routeId,
             segment = fallbackLegPoints,
-            directionStopId = routeLeg.board?.stopId,
+            directionStopId = routeLeg.board?.stopId
         )
     }
 
@@ -636,16 +636,16 @@ class HomeViewModel @Inject constructor(
         segment: List<GeoPoint> = emptyList(),
         directionStopId: String? = null,
         directionId: Int? = null,
-        undoViewport: MapViewport? = null,
+        undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(
             ShowRouteRequest(
                 routeId = routeId,
                 directionStopId = directionStopId,
                 initialDirectionId = directionId,
-                highlightedSegment = segment,
+                highlightedSegment = segment
             ),
-            undoViewport,
+            undoViewport
         )
     }
 
@@ -656,7 +656,7 @@ class HomeViewModel @Inject constructor(
      */
     private fun enterDirectionsRouteFocus(
         request: ShowRouteRequest,
-        undoViewport: MapViewport? = null,
+        undoViewport: MapViewport? = null
     ) {
         pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request)), undoViewport)
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
@@ -666,8 +666,7 @@ class HomeViewModel @Inject constructor(
     fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
 
     /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
-    fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) =
-        emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
+    fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
 
     /** Leave directions focus, returning the map to nearby stops. */
     fun exitDirections() = clearMapFocus()
@@ -729,17 +728,21 @@ class HomeViewModel @Inject constructor(
             entry.viewport?.let { emitMapDirective(MapDirective.RestoreViewport(it)) }
             return
         }
-        val returnsToSameStop = from is CurrentFocus.Stop && target is CurrentFocus.Stop &&
+        val returnsToSameStop = from is CurrentFocus.Stop &&
+            target is CurrentFocus.Stop &&
             from.stop.id == target.stop.id
         if (returnsToSameStop) {
             val selected = target.selectedRoute
             emitMapDirective(
-                if (selected == null) MapDirective.ClearSelectedRoute
-                else MapDirective.ShowRoute(
-                    selected.target(target.stop.id).toRequest(),
-                    stopScoped = true,
-                    frameRoute = frameFocus,
-                )
+                if (selected == null) {
+                    MapDirective.ClearSelectedRoute
+                } else {
+                    MapDirective.ShowRoute(
+                        selected.target(target.stop.id).toRequest(),
+                        stopScoped = true,
+                        frameRoute = frameFocus
+                    )
+                }
             )
         } else {
             when (target) {
@@ -752,7 +755,7 @@ class HomeViewModel @Inject constructor(
                         MapDirective.ShowRoute(
                             target.target.toRequest(),
                             stopScoped = false,
-                            frameRoute = frameFocus,
+                            frameRoute = frameFocus
                         )
                     )
                 }
@@ -764,7 +767,7 @@ class HomeViewModel @Inject constructor(
                             MapDirective.ShowRoute(
                                 routeFocus.request,
                                 stopScoped = false,
-                                frameRoute = frameFocus,
+                                frameRoute = frameFocus
                             )
                         )
                     } else {
@@ -824,7 +827,6 @@ class HomeViewModel @Inject constructor(
             refreshRegions()
         }
     }
-
 }
 
 /**
@@ -856,7 +858,7 @@ sealed interface MapDirective {
     data class ShowRoute(
         val request: ShowRouteRequest,
         val stopScoped: Boolean,
-        val frameRoute: Boolean = true,
+        val frameRoute: Boolean = true
     ) : MapDirective
 
     /** Restore the camera paired with an undone semantic action. */
@@ -869,7 +871,7 @@ sealed interface MapDirective {
     data class ShowStopRoutes(
         val stopId: String,
         val routes: List<ObaRoute>,
-        val trips: Set<FocusedTrip> = emptySet(),
+        val trips: Set<FocusedTrip> = emptySet()
     ) : MapDirective
 
     /** Clear an active focused-stop route view when the focused stop changes or is removed. */
@@ -891,7 +893,7 @@ sealed interface MapDirective {
         val routes: List<ObaRoute>?,
         val overlayExpanded: Boolean,
         val recenter: Boolean = true,
-        val animate: Boolean = false,
+        val animate: Boolean = false
     ) : MapDirective
 
     /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */

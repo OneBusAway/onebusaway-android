@@ -17,29 +17,30 @@ package org.onebusaway.android.map;
 
 public class MapParams {
 
-    // These specify the initial state of the map, or the frozen state.
-    public static final String STOP_ID = ".StopId";
+  // These specify the initial state of the map, or the frozen state.
+  public static final String STOP_ID = ".StopId";
 
-    public static final String STOP_NAME = ".StopName";
+  public static final String STOP_NAME = ".StopName";
 
-    public static final String STOP_CODE = ".StopCode";
+  public static final String STOP_CODE = ".StopCode";
 
-    public static final String ROUTE_ID = ".RouteId";
+  public static final String ROUTE_ID = ".RouteId";
 
-    // The stop a "show vehicles on map" launch anchored to, so route mode restores its direction filter.
-    public static final String ROUTE_DIRECTION_STOP_ID = ".RouteDirectionStopId";
+  // The stop a "show vehicles on map" launch anchored to, so route mode restores its direction
+  // filter.
+  public static final String ROUTE_DIRECTION_STOP_ID = ".RouteDirectionStopId";
 
-    // The user-selected direction (via the route header's switch), restored across process death.
-    // Wins over the anchor stop when it's still a valid direction of the restored route.
-    public static final String ROUTE_DIRECTION_ID = ".RouteDirectionId";
+  // The user-selected direction (via the route header's switch), restored across process death.
+  // Wins over the anchor stop when it's still a valid direction of the restored route.
+  public static final String ROUTE_DIRECTION_ID = ".RouteDirectionId";
 
-    public static final String CENTER_LAT = ".MapCenterLat";
+  public static final String CENTER_LAT = ".MapCenterLat";
 
-    public static final String CENTER_LON = ".MapCenterLon";
+  public static final String CENTER_LON = ".MapCenterLon";
 
-    public static final String ZOOM = ".MapZoom";
+  public static final String ZOOM = ".MapZoom";
 
-    public static final String ZOOM_TO_ROUTE = ".ZoomToRoute";
+  public static final String ZOOM_TO_ROUTE = ".ZoomToRoute";
 
-    public static final int DEFAULT_ZOOM = 18;
+  public static final int DEFAULT_ZOOM = 18;
 }

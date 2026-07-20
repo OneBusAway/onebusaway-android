@@ -35,14 +35,14 @@ data class RouteLineWidthProfile(
     val thicknessDp: Float,
     val rampStartZoom: Float = DETAIL_RAMP_START_ZOOM,
     val fullThicknessZoom: Float = DETAIL_RAMP_END_ZOOM,
-    val distantThicknessMultiplier: Float = ROUTE_DETAIL_DISTANT_SCALE,
+    val distantThicknessMultiplier: Float = ROUTE_DETAIL_DISTANT_SCALE
 ) {
     fun multiplierAt(zoom: Float): Float = detailZoomRamp(
         zoom,
         startZoom = rampStartZoom,
         endZoom = fullThicknessZoom,
         distantValue = distantThicknessMultiplier,
-        closeValue = 1f,
+        closeValue = 1f
     )
 
     fun thicknessAt(zoom: Float): Float = thicknessDp * multiplierAt(zoom)
@@ -53,12 +53,12 @@ val ROUTE_LINE_WIDTH_PROFILE = RouteLineWidthProfile(ROUTE_LINE_WIDTH_DP)
 
 /** Shared by single-route view and a route selected from focused-stop mode. */
 val FOCUSED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
-    thicknessDp = ROUTE_LINE_WIDTH_DP * 1.5f,
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 1.5f
 )
 
 /** Contextual sibling routes shown underneath a route selected from focused-stop mode. */
 val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
-    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.275f,
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.275f
 )
 
 /** Route-line scale retained for unprofiled lines and vehicle markers. */
@@ -70,7 +70,7 @@ internal fun detailZoomRamp(
     startZoom: Float,
     endZoom: Float,
     distantValue: Float,
-    closeValue: Float,
+    closeValue: Float
 ): Float {
     val progress = ((zoom - startZoom) / (endZoom - startZoom)).coerceIn(0f, 1f)
     return distantValue + (closeValue - distantValue) * progress

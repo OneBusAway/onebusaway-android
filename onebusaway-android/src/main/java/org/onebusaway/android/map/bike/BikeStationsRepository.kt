@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.map.bike
 
-import javax.inject.Inject
 import android.location.Location
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toBikeStations
@@ -33,18 +33,16 @@ import org.onebusaway.android.util.runCatchingCancellable
  * request maps them to OTP's lowerLeft / upperRight.
  */
 interface BikeStationsRepository {
-    suspend fun getStations(southWest: Location, northEast: Location):
-            Result<List<BikeStation>>
+    suspend fun getStations(southWest: Location, northEast: Location): Result<List<BikeStation>>
 }
 
 class DefaultBikeStationsRepository @Inject constructor(
     private val bikeService: BikeWebService,
     private val regionRepository: RegionRepository,
-    private val prefs: PreferencesRepository,
+    private val prefs: PreferencesRepository
 ) : BikeStationsRepository {
 
-    override suspend fun getStations(southWest: Location, northEast: Location):
-            Result<List<BikeStation>> = runCatchingCancellable {
+    override suspend fun getStations(southWest: Location, northEast: Location): Result<List<BikeStation>> = runCatchingCancellable {
         val base = otpBaseUrl() ?: error("No OTP base URL for the current region")
 
         // OTP servers differ in how their base URL is rooted (see TripPlanRepository): the "new"
@@ -70,10 +68,16 @@ class DefaultBikeStationsRepository @Inject constructor(
         base: String,
         useOldUrlStructure: Boolean,
         southWest: Location,
-        northEast: Location,
+        northEast: Location
     ): List<BikeStation> = bikeService.getBikeStations(
-        bikeRentalUrl(base, useOldUrlStructure, southWest.latitude, southWest.longitude,
-            northEast.latitude, northEast.longitude)
+        bikeRentalUrl(
+            base,
+            useOldUrlStructure,
+            southWest.latitude,
+            southWest.longitude,
+            northEast.latitude,
+            northEast.longitude
+        )
     ).toBikeStations()
 
     /** The custom OTP url (advanced setting) or the region's `otpBaseUrl`, trailing slash stripped. */
@@ -98,7 +102,7 @@ internal fun bikeRentalUrl(
     swLat: Double,
     swLon: Double,
     neLat: Double,
-    neLon: Double,
+    neLon: Double
 ): String {
     val path = if (useOldUrlStructure) "/bike_rental" else "/routers/default/bike_rental"
     return "$formattedBase$path?lowerLeft=$swLat,$swLon&upperRight=$neLat,$neLon"
@@ -114,7 +118,7 @@ internal fun bikeRentalUrl(
  */
 internal fun filterStations(
     all: List<BikeStation>,
-    selectedIds: List<String>?,
+    selectedIds: List<String>?
 ): List<BikeStation>? = when {
     selectedIds == null -> all
     selectedIds.isEmpty() -> null
@@ -130,7 +134,7 @@ internal enum class BikeAction {
     CLEAR,
 
     /** Leave the overlay untouched (directions mode before its station filter is known). */
-    LEAVE,
+    LEAVE
 }
 
 /**
@@ -147,7 +151,7 @@ internal enum class BikeAction {
 internal fun bikeAction(
     isDirections: Boolean,
     selectedIds: List<String>?,
-    layerVisible: Boolean,
+    layerVisible: Boolean
 ): BikeAction {
     val show = if (isDirections && !selectedIds.isNullOrEmpty()) true else layerVisible
     return when {

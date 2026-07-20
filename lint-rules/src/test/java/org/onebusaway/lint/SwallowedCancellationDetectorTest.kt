@@ -21,12 +21,11 @@ import org.junit.Test
 
 class SwallowedCancellationDetectorTest {
 
-    private fun lintKotlin(vararg sources: String) =
-        lint()
-            .files(*sources.map { kotlin(it).indented() }.toTypedArray())
-            .issues(SwallowedCancellationDetector.ISSUE)
-            .allowMissingSdk()
-            .run()
+    private fun lintKotlin(vararg sources: String) = lint()
+        .files(*sources.map { kotlin(it).indented() }.toTypedArray())
+        .issues(SwallowedCancellationDetector.ISSUE)
+        .allowMissingSdk()
+        .run()
 
     /** The motivating case: bare `runCatching` directly in a suspend function body. */
     @Test
@@ -36,7 +35,7 @@ class SwallowedCancellationDetectorTest {
             package test
             suspend fun load(): Result<Int> = runCatching { fetch() }
             suspend fun fetch(): Int = 1
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -52,7 +51,7 @@ class SwallowedCancellationDetectorTest {
                 return r
             }
             suspend fun fetch(): Int = 1
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -65,7 +64,7 @@ class SwallowedCancellationDetectorTest {
             fun <T> runCatchingCancellable(block: () -> T): Result<T> = runCatching(block)
             suspend fun load(): Result<Int> = runCatchingCancellable { fetch() }
             suspend fun fetch(): Int = 1
-            """,
+            """
         ).expectClean()
     }
 
@@ -76,7 +75,7 @@ class SwallowedCancellationDetectorTest {
             """
             package test
             fun parse(s: String): Result<Int> = runCatching { s.toInt() }
-            """,
+            """
         ).expectClean()
     }
 
@@ -88,7 +87,7 @@ class SwallowedCancellationDetectorTest {
             package test
             inline fun <T> guard(block: () -> T): Result<T> =
                 runCatching(block).onFailure { }
-            """,
+            """
         ).expectClean()
     }
 
@@ -100,7 +99,7 @@ class SwallowedCancellationDetectorTest {
             package test
             class Helper { fun runCatching(block: () -> Int): Int = block() }
             suspend fun load(h: Helper): Int = h.runCatching { 1 }
-            """,
+            """
         ).expectClean()
     }
 }

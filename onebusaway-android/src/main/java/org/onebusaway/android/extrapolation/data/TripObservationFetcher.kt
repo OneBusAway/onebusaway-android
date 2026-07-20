@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.extrapolation.data
 
-import org.onebusaway.android.api.data.TripVehiclesDataSource
-
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import org.onebusaway.android.api.data.TripVehiclesDataSource
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
@@ -75,7 +74,7 @@ data class TripDetails(
     val schedule: ObaTripSchedule?,
     val serviceDate: ServiceDate?,
     val vehicleActiveTripId: String?,
-    val shapeId: String?,
+    val shapeId: String?
 )
 
 private const val MAX_CONCURRENT_FETCHES = 2
@@ -83,7 +82,7 @@ private const val TAG = "TripObservationFetcher"
 
 @Singleton
 class DefaultTripObservationFetcher @Inject constructor(
-        private val dataSource: TripVehiclesDataSource
+    private val dataSource: TripVehiclesDataSource
 ) : TripObservationFetcher {
 
     /**
@@ -104,68 +103,62 @@ class DefaultTripObservationFetcher @Inject constructor(
     private val shapeFetches = SingleFlight<String, Polyline>(fetchScope)
     private val tripRouteInfoFetches = SingleFlight<String, TripRouteInfo>(fetchScope)
 
-    override suspend fun tripDetails(tripId: String): TripDetails? =
-            guarded("trip details for $tripId") {
-                // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
-                val routeTrips = dataSource.tripDetails(tripId).getOrThrow()
-                // A single trip-details fetch yields one trip; its ObaTripDetails carries the
-                // schedule + (unfiltered) status the distillation needs.
-                val details = routeTrips.trips.firstOrNull()
-                TripDetails(
-                    observations = routeTrips.toObservations(),
-                    schedule = details?.schedule,
-                    serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
-                    vehicleActiveTripId = details?.status?.activeTripId,
-                    shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() },
-                )
-            }
+    override suspend fun tripDetails(tripId: String): TripDetails? = guarded("trip details for $tripId") {
+        // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
+        val routeTrips = dataSource.tripDetails(tripId).getOrThrow()
+        // A single trip-details fetch yields one trip; its ObaTripDetails carries the
+        // schedule + (unfiltered) status the distillation needs.
+        val details = routeTrips.trips.firstOrNull()
+        TripDetails(
+            observations = routeTrips.toObservations(),
+            schedule = details?.schedule,
+            serviceDate = serviceDateOrNull(details?.status?.serviceDate ?: 0),
+            vehicleActiveTripId = details?.status?.activeTripId,
+            shapeId = routeTrips.trip(tripId)?.shapeId?.takeIf { it.isNotEmpty() }
+        )
+    }
 
-    override suspend fun tripsForRoute(routeId: String): RouteTrips? =
-            guarded("trips for route $routeId") {
-                // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
-                dataSource.tripsForRoute(routeId).getOrThrow()
-            }
+    override suspend fun tripsForRoute(routeId: String): RouteTrips? = guarded("trips for route $routeId") {
+        // The data source returns Result; getOrThrow re-raises a non-OK code so guarded maps it to null.
+        dataSource.tripsForRoute(routeId).getOrThrow()
+    }
 
     /**
      * Runs [block], resolving any failure to null (logged) so a transient network error becomes a
      * skipped poll tick rather than a crashed Flow. [CancellationException] propagates — a stopped
      * poll is not a failure. (The SingleFlight-coalesced fetches guard themselves the same way.)
      */
-    private suspend fun <T : Any> guarded(what: String, block: suspend () -> T?): T? =
-            try {
-                block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to fetch $what", e)
-                null
-            }
+    private suspend fun <T : Any> guarded(what: String, block: suspend () -> T?): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "Failed to fetch $what", e)
+        null
+    }
 
-    override suspend fun tripSchedule(tripId: String): ObaTripSchedule? =
-            scheduleFetches.run(tripId) {
-                guarded("schedule for $tripId") {
-                    dataSource.tripSchedule(tripId).getOrThrow()
-                }.also {
-                    if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
-                }
-            }
+    override suspend fun tripSchedule(tripId: String): ObaTripSchedule? = scheduleFetches.run(tripId) {
+        guarded("schedule for $tripId") {
+            dataSource.tripSchedule(tripId).getOrThrow()
+        }.also {
+            if (it == null) Log.w(TAG, "Schedule fetch for $tripId yielded no schedule")
+        }
+    }
 
-    override suspend fun shape(shapeId: String): Polyline? =
-            shapeFetches.run(shapeId) {
-                // Bound concurrent fetches so a route backfill can't fan out into dozens at once;
-                // the data source does the (shared-algorithm) decode. A failed Result re-raises via
-                // getOrThrow and resolves to null in guarded, like the old null-coalescing path did.
-                withContext(fetchDispatcher) {
-                    guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() }
-                }.also {
-                    if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
-                }
-            }
+    override suspend fun shape(shapeId: String): Polyline? = shapeFetches.run(shapeId) {
+        // Bound concurrent fetches so a route backfill can't fan out into dozens at once;
+        // the data source does the (shared-algorithm) decode. A failed Result re-raises via
+        // getOrThrow and resolves to null in guarded, like the old null-coalescing path did.
+        withContext(fetchDispatcher) {
+            guarded("shape for $shapeId") { dataSource.shape(shapeId).getOrThrow() }
+        }.also {
+            if (it == null) Log.w(TAG, "Shape fetch for $shapeId yielded no polyline")
+        }
+    }
 
-    override suspend fun tripRouteInfo(tripId: String): TripRouteInfo? =
-            tripRouteInfoFetches.run(tripId) {
-                guarded("route info for trip $tripId") {
-                    dataSource.trip(tripId).getOrThrow()
-                }
-            }
+    override suspend fun tripRouteInfo(tripId: String): TripRouteInfo? = tripRouteInfoFetches.run(tripId) {
+        guarded("route info for trip $tripId") {
+            dataSource.trip(tripId).getOrThrow()
+        }
+    }
 }

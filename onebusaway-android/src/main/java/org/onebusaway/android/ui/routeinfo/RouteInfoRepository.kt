@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.ui.routeinfo
 
-import org.onebusaway.android.api.data.RouteDataSource
-import org.onebusaway.android.api.data.StopsForRouteRepository
-
 import android.content.Context
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,11 +26,13 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
-import org.onebusaway.android.models.RouteDetails
-import org.onebusaway.android.models.RouteStopGroup
-import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.api.data.RouteDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.RouteDetails
+import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
@@ -59,34 +58,33 @@ class DefaultRouteInfoRepository @Inject constructor(
     private val routeRepository: RouteDataSource,
     private val stopsForRoute: StopsForRouteRepository,
     private val routeDao: RouteDao,
-    private val importGate: ImportGate,
+    private val importGate: ImportGate
 ) : RouteInfoRepository {
 
-    override suspend fun loadRouteInfo(routeId: String): Result<RouteInfo> =
-        withContext(Dispatchers.IO) {
-            runCatchingCancellable {
-                // Fetch route metadata and stops-for-route in parallel; both complete before unwrap.
-                val (routeResult, stopsResult) = coroutineScope {
-                    val routeDeferred = async { routeRepository.getRoute(routeId) }
-                    val stopsDeferred = async { stopsForRoute.routeStopGroups(routeId) }
-                    routeDeferred.await() to stopsDeferred.await()
-                }
-                val route = routeResult.getOrThrow()
-                val directions = stopsResult.getOrThrow().toRouteDirections()
-                registerRouteUsage(route)
-                toRouteInfo(route, directions)
+    override suspend fun loadRouteInfo(routeId: String): Result<RouteInfo> = withContext(Dispatchers.IO) {
+        runCatchingCancellable {
+            // Fetch route metadata and stops-for-route in parallel; both complete before unwrap.
+            val (routeResult, stopsResult) = coroutineScope {
+                val routeDeferred = async { routeRepository.getRoute(routeId) }
+                val stopsDeferred = async { stopsForRoute.routeStopGroups(routeId) }
+                routeDeferred.await() to stopsDeferred.await()
             }
-                // runCatchingCancellable rethrows a cancelled load, so it isn't logged and disguised
-                // (below) as a "route not found" error string.
-                .onFailure { Log.e(TAG, "loadRouteInfo($routeId) failed", it) }
-                // The VM renders Result.failure's message, so surface a user-facing route error
-                // string. Preserve the OBA code when we have one (e.g. 404 -> "route not found");
-                // a transport/parse error has none, so fall back to the connection message.
-                .recoverCatching { error ->
-                    val code = (error as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
-                    throw IOException(ObaRequestErrors.getRouteErrorString(context, code))
-                }
+            val route = routeResult.getOrThrow()
+            val directions = stopsResult.getOrThrow().toRouteDirections()
+            registerRouteUsage(route)
+            toRouteInfo(route, directions)
         }
+            // runCatchingCancellable rethrows a cancelled load, so it isn't logged and disguised
+            // (below) as a "route not found" error string.
+            .onFailure { Log.e(TAG, "loadRouteInfo($routeId) failed", it) }
+            // The VM renders Result.failure's message, so surface a user-facing route error
+            // string. Preserve the OBA code when we have one (e.g. 404 -> "route not found");
+            // a transport/parse error has none, so fall back to the connection message.
+            .recoverCatching { error ->
+                val code = (error as? ObaApiException)?.code ?: ObaApi.OBA_IO_EXCEPTION
+                throw IOException(ObaRequestErrors.getRouteErrorString(context, code))
+            }
+    }
 
     /** Records the route in the recents/search table so it appears in recents and search (legacy parity). */
     private suspend fun registerRouteUsage(route: RouteDetails) {
@@ -98,8 +96,12 @@ class DefaultRouteInfoRepository @Inject constructor(
         // favorites backfill so every routes-cache write agrees on the display names.
         val names = routeDisplayNames(route.shortName, route.longName, route.description)
         routeDao.storeRouteDetails(
-            route.id, names.shortName, names.longName, route.url,
-            regionRepository.region.value?.id, System.currentTimeMillis()
+            route.id,
+            names.shortName,
+            names.longName,
+            route.url,
+            regionRepository.region.value?.id,
+            System.currentTimeMillis()
         )
     }
 

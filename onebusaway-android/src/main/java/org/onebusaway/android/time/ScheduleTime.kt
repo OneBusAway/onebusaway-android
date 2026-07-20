@@ -55,8 +55,7 @@ value class ServiceDate(val epochMs: Long) {
          * [ScheduleTime.resolve]d against it inherit that slop. Use only where an approximate day is
          * better than none; never treat its result as interchangeable with a server-sent date.
          */
-        fun approximateFromDeviceMidnight(deviceMidnightMs: Long): ServiceDate =
-            ServiceDate(deviceMidnightMs)
+        fun approximateFromDeviceMidnight(deviceMidnightMs: Long): ServiceDate = ServiceDate(deviceMidnightMs)
     }
 }
 
@@ -77,12 +76,10 @@ value class ServiceDate(val epochMs: Long) {
 @JvmInline
 value class ScheduleTime(val sinceServiceDayStart: Duration) : Comparable<ScheduleTime> {
 
-    override fun compareTo(other: ScheduleTime): Int =
-        sinceServiceDayStart.compareTo(other.sinceServiceDayStart)
+    override fun compareTo(other: ScheduleTime): Int = sinceServiceDayStart.compareTo(other.sinceServiceDayStart)
 
     /** The scheduled interval from [other] to this schedule point. Same-domain only. */
-    operator fun minus(other: ScheduleTime): Duration =
-        sinceServiceDayStart - other.sinceServiceDayStart
+    operator fun minus(other: ScheduleTime): Duration = sinceServiceDayStart - other.sinceServiceDayStart
 
     /** This schedule point shifted later by [elapsed] (the group action); still schedule time. */
     operator fun plus(elapsed: Duration): ScheduleTime = ScheduleTime(sinceServiceDayStart + elapsed)
@@ -102,6 +99,5 @@ value class ScheduleTime(val sinceServiceDayStart: Duration) : Comparable<Schedu
      * ever emitted a non-GTFS-conformant service date. Lands in [ServerTime] because schedules are
      * always compared against the server's "now", never the device clock (CLAUDE.md "Time domains").
      */
-    fun resolve(day: ServiceDate): ServerTime =
-        ServerTime(day.epochMs + sinceServiceDayStart.inWholeMilliseconds)
+    fun resolve(day: ServiceDate): ServerTime = ServerTime(day.epochMs + sinceServiceDayStart.inWholeMilliseconds)
 }

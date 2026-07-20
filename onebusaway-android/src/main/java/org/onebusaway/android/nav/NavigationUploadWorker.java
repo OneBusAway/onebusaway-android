@@ -15,126 +15,151 @@
  */
 package org.onebusaway.android.nav;
 
+import static android.text.TextUtils.isEmpty;
+import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
+
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
-
+import androidx.annotation.NonNull;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
-
-import org.onebusaway.android.BuildConfig;
-import org.onebusaway.android.R;
-import org.onebusaway.android.app.di.AnalyticsEntryPoint;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-
-import androidx.annotation.NonNull;
-import androidx.work.Worker;
-import androidx.work.WorkerParameters;
-
-import static android.text.TextUtils.isEmpty;
-import static org.onebusaway.android.nav.NavigationService.LOG_DIRECTORY;
+import org.onebusaway.android.BuildConfig;
+import org.onebusaway.android.R;
+import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 
 public class NavigationUploadWorker extends Worker {
 
-    public static final String TAG = "NavigationUploadWorker";
+  public static final String TAG = "NavigationUploadWorker";
 
-    /**
-     * Unique name for the periodic upload work, shared by every enqueue site so WorkManager keeps a
-     * single recurring chain instead of stacking a new one per feedback submission.
-     */
-    public static final String UNIQUE_WORK_NAME = "navigation_log_upload";
+  /**
+   * Unique name for the periodic upload work, shared by every enqueue site so WorkManager keeps a
+   * single recurring chain instead of stacking a new one per feedback submission.
+   */
+  public static final String UNIQUE_WORK_NAME = "navigation_log_upload";
 
+  public NavigationUploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    super(context, workerParams);
+  }
 
-    public NavigationUploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
-    }
+  @NonNull
+  @Override
+  public Result doWork() {
+    uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes));
+    uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_no));
+    return Result.success();
+  }
 
-    @NonNull
-    @Override
-    public Result doWork() {
-        uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes));
-        uploadLog(getApplicationContext().getString(R.string.analytics_label_destination_reminder_no));
-        return Result.success();
-    }
+  private void uploadLog(String response) {
 
-    private void uploadLog(String response) {
+    FirebaseStorage storage = FirebaseStorage.getInstance();
+    StorageReference storageRef = storage.getReference();
+    File dir =
+        new File(
+            getApplicationContext().getFilesDir().getAbsolutePath()
+                + File.separator
+                + LOG_DIRECTORY
+                + File.separator
+                + response);
+    if (dir.exists()) {
+      Log.d(TAG, "Directory exists");
+      for (File lFile : dir.listFiles()) {
+        Uri file = Uri.fromFile(lFile);
+        String logFileName = lFile.getName();
+        StorageReference logRef =
+            storageRef.child("android/destination_reminders/" + response + "/" + logFileName);
+        Log.d(TAG, "Location : " + response + logFileName);
 
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        StorageReference storageRef = storage.getReference();
-        File dir = new File(getApplicationContext().getFilesDir()
-                .getAbsolutePath() + File.separator + LOG_DIRECTORY + File.separator + response);
-        if (dir.exists()) {
-            Log.d(TAG, "Directory exists");
-            for (File lFile : dir.listFiles()) {
-                Uri file = Uri.fromFile(lFile);
-                String logFileName = lFile.getName();
-                StorageReference logRef = storageRef.child("android/destination_reminders/" + response
-                        + "/" + logFileName);
-                Log.d(TAG, "Location : " + response + logFileName);
+        String sCurrentLine, feedbackText = "";
+        // Read as UTF-8 to match how FeedbackReceiver writes the log (FileReader would use the
+        // platform-default charset). FileReader(File, Charset) is API 33+, so wrap a
+        // FileInputStream to stay minSdk-23 safe.
+        try (BufferedReader br =
+            new BufferedReader(
+                new InputStreamReader(new FileInputStream(lFile), StandardCharsets.UTF_8))) {
+          while ((sCurrentLine = br.readLine()) != null) {
+            feedbackText = sCurrentLine;
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
 
-                String sCurrentLine, feedbackText = "";
-                // Read as UTF-8 to match how FeedbackReceiver writes the log (FileReader would use the
-                // platform-default charset). FileReader(File, Charset) is API 33+, so wrap a
-                // FileInputStream to stay minSdk-23 safe.
-                try (BufferedReader br = new BufferedReader(
-                        new InputStreamReader(new FileInputStream(lFile), StandardCharsets.UTF_8))) {
-                    while ((sCurrentLine = br.readLine()) != null) {
-                        feedbackText = sCurrentLine;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        StorageMetadata metadata =
+            new StorageMetadata.Builder()
+                .setCustomMetadata("Response", response)
+                .setCustomMetadata("FeedbackText", feedbackText)
+                .build();
 
-                StorageMetadata metadata = new StorageMetadata.Builder()
-                        .setCustomMetadata("Response", response)
-                        .setCustomMetadata("FeedbackText", feedbackText)
-                        .build();
-
-                UploadTask uploadTask = logRef.putFile(file, metadata);
-                uploadTask.addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        Log.e(TAG, "Log upload failed");
-                    }
-                }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        if (BuildConfig.DEBUG) Log.d(TAG, logFileName + " uploaded successful");
-                        String userResponse = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_response));
-                        String feedbackText = taskSnapshot.getMetadata().getCustomMetadata(getApplicationContext().getString(R.string.analytics_label_custom_metadata_feedback));
-                        String fileURL = taskSnapshot.getStorage().getDownloadUrl().toString();
-                        if (BuildConfig.DEBUG) Log.d(TAG, "Response - " + userResponse);
-                        if (BuildConfig.DEBUG) Log.d(TAG, "FeedbackText - " + feedbackText);
-                        if (BuildConfig.DEBUG) Log.d(TAG, "Download URL - " + fileURL);
-                        logFeedback(feedbackText, userResponse, fileURL);
-                        boolean deleted = lFile.delete();
-                        if (BuildConfig.DEBUG) Log.v(TAG, logFileName + " deleted : " + deleted);
-                    }
+        UploadTask uploadTask = logRef.putFile(file, metadata);
+        uploadTask
+            .addOnFailureListener(
+                new OnFailureListener() {
+                  @Override
+                  public void onFailure(@NonNull Exception exception) {
+                    Log.e(TAG, "Log upload failed");
+                  }
+                })
+            .addOnSuccessListener(
+                new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                  @Override
+                  public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    if (BuildConfig.DEBUG) Log.d(TAG, logFileName + " uploaded successful");
+                    String userResponse =
+                        taskSnapshot
+                            .getMetadata()
+                            .getCustomMetadata(
+                                getApplicationContext()
+                                    .getString(R.string.analytics_label_custom_metadata_response));
+                    String feedbackText =
+                        taskSnapshot
+                            .getMetadata()
+                            .getCustomMetadata(
+                                getApplicationContext()
+                                    .getString(R.string.analytics_label_custom_metadata_feedback));
+                    String fileURL = taskSnapshot.getStorage().getDownloadUrl().toString();
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Response - " + userResponse);
+                    if (BuildConfig.DEBUG) Log.d(TAG, "FeedbackText - " + feedbackText);
+                    if (BuildConfig.DEBUG) Log.d(TAG, "Download URL - " + fileURL);
+                    logFeedback(feedbackText, userResponse, fileURL);
+                    boolean deleted = lFile.delete();
+                    if (BuildConfig.DEBUG) Log.v(TAG, logFileName + " deleted : " + deleted);
+                  }
                 });
-            }
-        }
+      }
     }
+  }
 
-    private void logFeedback(String feedbackText, String userResponse, String fileName) {
-        Boolean wasGoodReminder;
-        if (userResponse.equals(getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes))) {
-            wasGoodReminder = true;
-        } else {
-            wasGoodReminder = false;
-        }
-        AnalyticsEntryPoint.get(getApplicationContext()).reportDestinationReminderFeedback(wasGoodReminder
-                , ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
-        if (BuildConfig.DEBUG) Log.d(TAG, "User feedback logged to Firebase Analytics :: wasGoodReminder - "
-                + wasGoodReminder + ", feedbackText - " + ((!isEmpty(feedbackText)) ? feedbackText : null) + ", filename - " + fileName);
+  private void logFeedback(String feedbackText, String userResponse, String fileName) {
+    Boolean wasGoodReminder;
+    if (userResponse.equals(
+        getApplicationContext().getString(R.string.analytics_label_destination_reminder_yes))) {
+      wasGoodReminder = true;
+    } else {
+      wasGoodReminder = false;
     }
+    AnalyticsEntryPoint.get(getApplicationContext())
+        .reportDestinationReminderFeedback(
+            wasGoodReminder, ((!isEmpty(feedbackText)) ? feedbackText : null), fileName);
+    if (BuildConfig.DEBUG)
+      Log.d(
+          TAG,
+          "User feedback logged to Firebase Analytics :: wasGoodReminder - "
+              + wasGoodReminder
+              + ", feedbackText - "
+              + ((!isEmpty(feedbackText)) ? feedbackText : null)
+              + ", filename - "
+              + fileName);
+  }
 }

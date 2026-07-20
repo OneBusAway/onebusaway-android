@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,7 +36,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material3.Text
 import org.onebusaway.android.models.ObaRoute
 
 /**
@@ -52,7 +52,7 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
         ObaRoute.TYPE_RAIL to "rail",
         ObaRoute.TYPE_SUBWAY to "subway",
         ObaRoute.TYPE_TRAM to "tram",
-        ObaRoute.TYPE_FERRY to "ferry",
+        ObaRoute.TYPE_FERRY to "ferry"
     )
     val dirLabels = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW", "—")
 

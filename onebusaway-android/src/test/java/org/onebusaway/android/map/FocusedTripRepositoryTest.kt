@@ -47,8 +47,7 @@ class FocusedTripRepositoryTest {
 
     private class RouteStops : StopsForRouteRepository {
         val catalogs = mutableMapOf<String, Result<List<RouteStopGroup>>>()
-        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> =
-            catalogs[routeId] ?: Result.success(emptyList())
+        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = catalogs[routeId] ?: Result.success(emptyList())
         override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
     }
 
@@ -86,7 +85,7 @@ class FocusedTripRepositoryTest {
                 FocusedTrip("first", "route", "shared", 7, directionId = 1),
                 FocusedTrip("second", "route", "shared", 7, directionId = 0),
                 FocusedTrip("failed", "route", "missing", 8),
-                FocusedTrip("no-shape", "route", null, 9),
+                FocusedTrip("no-shape", "route", null, 9)
             )
         )
 
@@ -108,14 +107,16 @@ class FocusedTripRepositoryTest {
         }
         val loggedFailures = mutableListOf<String>()
         val repository = DefaultFocusedTripRepository(
-            observations, routes, backgroundScope,
-            logFailure = { message, _ -> loggedFailures += message },
+            observations,
+            routes,
+            backgroundScope,
+            logFailure = { message, _ -> loggedFailures += message }
         )
 
         val result = repository.getStops(
             setOf(
                 FocusedTrip("failed", "route", "failed-shape", null),
-                FocusedTrip("good", "route", "good-shape", null),
+                FocusedTrip("good", "route", "good-shape", null)
             )
         )
 
@@ -139,10 +140,9 @@ class FocusedTripRepositoryTest {
 
         assertEquals(
             listOf("older-trip" to "shared", "newer-trip" to "shared"),
-            observations.shapeRequests,
+            observations.shapeRequests
         )
     }
 
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)
-
 }

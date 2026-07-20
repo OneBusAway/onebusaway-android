@@ -58,9 +58,7 @@ object MyTextUtils {
      * @return true if the provided string is all caps, and false if it is not
      */
     @JvmStatic
-    fun isAllCaps(str: String): Boolean {
-        return str == str.uppercase()
-    }
+    fun isAllCaps(str: String): Boolean = str == str.uppercase()
 
     /**
      * Converts the given string to sentence case, where the first
@@ -72,21 +70,24 @@ object MyTextUtils {
      */
     @JvmStatic
     fun toSentenceCase(inputVal: String?): String? {
-        if (inputVal == null)
+        if (inputVal == null) {
             return null
+        }
 
-        if (inputVal.isEmpty())
+        if (inputVal.isEmpty()) {
             return ""
+        }
 
         // Strings with only one character uppercased.
 
-        if (inputVal.length == 1)
+        if (inputVal.length == 1) {
             return inputVal.uppercase()
+        }
 
         // Otherwise uppercase first letter, lowercase the rest.
 
         return inputVal.substring(0, 1).uppercase() +
-                inputVal.substring(1).lowercase()
+            inputVal.substring(1).lowercase()
     }
 
     /**

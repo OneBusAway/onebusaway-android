@@ -38,7 +38,7 @@ import org.onebusaway.android.time.WallTime
 suspend fun drivePings(
     pings: SharedFlow<String>,
     camera: StateFlow<CameraSnapshot?>,
-    target: PingTarget,
+    target: PingTarget
 ) {
     pings.collectLatest { tripId ->
         // collectLatest cancels this block when a newer ping arrives; clear any in-flight ripple in the

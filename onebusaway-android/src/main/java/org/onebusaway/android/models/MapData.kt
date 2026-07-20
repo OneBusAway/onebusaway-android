@@ -22,7 +22,7 @@ data class NearbyStops(
     val stops: List<ObaStop>,
     val routes: List<ObaRoute>,
     val outOfRange: Boolean,
-    val limitExceeded: Boolean,
+    val limitExceeded: Boolean
 )
 
 /** Stable identity for one directional variant of a route. */
@@ -34,7 +34,7 @@ data class FocusedTrip(
     val routeId: String,
     val shapeId: String?,
     val routeColor: Int?,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
 }
@@ -58,7 +58,7 @@ data class RouteMapData(
     val routes: List<ObaRoute>,
     val directions: List<RouteMapDirection>,
     val polylines: List<List<GeoPoint>>,
-    val polylinesByDirection: Map<Int, List<List<GeoPoint>>>,
+    val polylinesByDirection: Map<Int, List<List<GeoPoint>>>
 )
 
 /**
@@ -68,7 +68,7 @@ data class RouteMapData(
  */
 data class RouteMapDirection(
     val directionId: Int,
-    val label: String,
+    val label: String
 )
 
 /**
@@ -78,5 +78,5 @@ data class RouteMapDirection(
  */
 data class RouteMapStop(
     val stop: ObaStop,
-    val directionIds: Set<Int>,
+    val directionIds: Set<Int>
 )

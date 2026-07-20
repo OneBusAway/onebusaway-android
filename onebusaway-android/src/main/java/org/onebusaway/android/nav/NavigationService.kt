@@ -35,7 +35,16 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.File
+import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,10 +54,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
-import org.onebusaway.android.notifications.NotificationChannels
-import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
@@ -57,19 +65,11 @@ import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.location.LocationFixes
 import org.onebusaway.android.nav.model.Path
 import org.onebusaway.android.nav.model.PathLink
+import org.onebusaway.android.notifications.NotificationChannels
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.PreferenceUtils
-import java.io.File
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
-import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
-import org.onebusaway.android.time.ElapsedTime
 
 /**
  * Implements the "destination reminders" feature in the app that notifies the user as they
@@ -84,8 +84,11 @@ import org.onebusaway.android.time.ElapsedTime
 class NavigationService : Service() {
 
     @Inject lateinit var navStopDao: NavStopDao
+
     @Inject lateinit var stopDao: StopDao
+
     @Inject lateinit var importGate: ImportGate
+
     @Inject lateinit var obaAnalytics: ObaAnalytics
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -93,9 +96,9 @@ class NavigationService : Service() {
 
     private var lastLocation: Location? = null
 
-    private var destinationStopId: String? = null   // Destination Stop ID
-    private var beforeStopId: String? = null         // Before Destination Stop ID
-    private var tripId: String? = null               // Trip ID
+    private var destinationStopId: String? = null // Destination Stop ID
+    private var beforeStopId: String? = null // Before Destination Stop ID
+    private var tripId: String? = null // Trip ID
 
     private var coordId = 0
 
@@ -129,7 +132,7 @@ class NavigationService : Service() {
                         destinationId = destinationStopId.orEmpty(),
                         beforeId = beforeStopId.orEmpty(),
                         sequence = 1,
-                        active = 1,
+                        active = 1
                     )
                 )
 
@@ -190,7 +193,8 @@ class NavigationService : Service() {
             val notification = navProvider!!.getForegroundStartingNotification()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(
-                    NavigationServiceProvider.NOTIFICATION_ID, notification,
+                    NavigationServiceProvider.NOTIFICATION_ID,
+                    notification,
                     ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
                 )
             } else {
@@ -267,8 +271,11 @@ class NavigationService : Service() {
         val auth = FirebaseAuth.getInstance()
         val numCores = Runtime.getRuntime().availableProcessors()
         val executor = ThreadPoolExecutor(
-            numCores * 2, numCores * 2,
-            60L, TimeUnit.SECONDS, LinkedBlockingQueue()
+            numCores * 2,
+            numCores * 2,
+            60L,
+            TimeUnit.SECONDS,
+            LinkedBlockingQueue()
         )
         auth.signInAnonymously()
             .addOnCompleteListener(executor) { task ->
@@ -299,7 +306,9 @@ class NavigationService : Service() {
 
             val subFolder = File(
                 applicationContext
-                    .filesDir.absolutePath + File.separator + LOG_DIRECTORY
+                    .filesDir.absolutePath +
+                    File.separator +
+                    LOG_DIRECTORY
             )
 
             if (!subFolder.exists()) {
@@ -365,13 +374,17 @@ class NavigationService : Service() {
         val delIntent = Intent(applicationContext, FeedbackReceiver::class.java)
         delIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
 
-        if (mFirstFeedback || Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
+        if (mFirstFeedback ||
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
         ) {
             // Feedback is a HomeActivity NavHost destination; makeIntent builds the
             // explicit HomeActivity intent carrying the feedback route (with these args as nav-args).
             var fdIntent = FeedbackLauncher.makeIntent(
-                applicationContext, FeedbackLauncher.FEEDBACK_NO, logFile!!.absolutePath, tripId,
+                applicationContext,
+                FeedbackLauncher.FEEDBACK_NO,
+                logFile!!.absolutePath,
+                tripId,
                 NavigationServiceProvider.NOTIFICATION_ID + 1
             )
             fdIntent.action = FeedbackReceiver.ACTION_REPLY
@@ -386,7 +399,10 @@ class NavigationService : Service() {
             val fdPendingIntentNo = PendingIntent.getActivity(applicationContext, 1, fdIntent, flags)
 
             fdIntent = FeedbackLauncher.makeIntent(
-                applicationContext, FeedbackLauncher.FEEDBACK_YES, logFile!!.absolutePath, tripId,
+                applicationContext,
+                FeedbackLauncher.FEEDBACK_YES,
+                logFile!!.absolutePath,
+                tripId,
                 NavigationServiceProvider.NOTIFICATION_ID + 1
             )
             fdIntent.action = FeedbackReceiver.ACTION_REPLY
@@ -403,17 +419,20 @@ class NavigationService : Service() {
             val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, delFlags)
 
             builder = NotificationCompat.Builder(
-                applicationContext, NotificationChannels.DESTINATION_ALERT_ID
+                applicationContext,
+                NotificationChannels.DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_bus)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))
                 .setContentText(message)
                 .addAction(
-                    0, resources.getString(R.string.feedback_action_reply_no),
+                    0,
+                    resources.getString(R.string.feedback_action_reply_no),
                     fdPendingIntentNo
                 )
                 .addAction(
-                    0, resources.getString(R.string.feedback_action_reply_yes),
+                    0,
+                    resources.getString(R.string.feedback_action_reply_yes),
                     fdPendingIntentYes
                 )
                 .setDeleteIntent(pDelIntent)
@@ -431,7 +450,11 @@ class NavigationService : Service() {
             // Mutable so the RemoteInput reply can be written into it; PendingIntentCompat
             // applies FLAG_MUTABLE/FLAG_IMMUTABLE per API level without an inlined S+ constant.
             val fdPendingIntentNo = PendingIntentCompat.getBroadcast(
-                applicationContext, 100, intentNo, 0, true
+                applicationContext,
+                100,
+                intentNo,
+                0,
+                true
             )
 
             val replyLabelNo = resources.getString(R.string.feedback_action_reply_no)
@@ -452,7 +475,11 @@ class NavigationService : Service() {
 
             // PendingIntent to handle user feedback when a user taps on 'Yes'
             val fdPendingIntentYes = PendingIntentCompat.getBroadcast(
-                applicationContext, 101, intentYes, 0, true
+                applicationContext,
+                101,
+                intentYes,
+                0,
+                true
             )
 
             val replyLabelYes = resources.getString(R.string.feedback_action_reply_yes)
@@ -467,7 +494,8 @@ class NavigationService : Service() {
             val pDelIntent = PendingIntentCompat.getBroadcast(applicationContext, 0, delIntent, 0, true)
 
             builder = NotificationCompat.Builder(
-                applicationContext, NotificationChannels.DESTINATION_ALERT_ID
+                applicationContext,
+                NotificationChannels.DESTINATION_ALERT_ID
             )
                 .setSmallIcon(R.drawable.ic_bus)
                 .setContentTitle(resources.getString(R.string.feedback_notify_title))
@@ -487,7 +515,9 @@ class NavigationService : Service() {
 
     private fun setupLogCleanupTask() {
         val cleanupLogsBuilder = PeriodicWorkRequest.Builder(
-            NavigationCleanupWorker::class.java, 24, TimeUnit.HOURS
+            NavigationCleanupWorker::class.java,
+            24,
+            TimeUnit.HOURS
         )
 
         // Create the actual work object:

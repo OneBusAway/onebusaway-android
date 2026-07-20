@@ -22,10 +22,6 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.StrikethroughSpan
 import android.util.Log
 import androidx.core.content.ContextCompat
-import org.onebusaway.android.R
-import org.onebusaway.android.util.ArrivalInfoUtils
-import org.onebusaway.android.util.DisplayFormat
-import org.onebusaway.android.util.PreferenceUtils
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -33,6 +29,10 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.Locale
+import org.onebusaway.android.R
+import org.onebusaway.android.util.ArrivalInfoUtils
+import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * @author Khoa Tran
@@ -53,8 +53,7 @@ object ConversionUtils {
      * @return formatted string of distance
      */
     @JvmStatic
-    fun getFormattedDistance(meters: Double, applicationContext: Context): String =
-        getFormattedDistanceParts(meters, applicationContext).joinToString(" ") { it.text }
+    fun getFormattedDistance(meters: Double, applicationContext: Context): String = getFormattedDistanceParts(meters, applicationContext).joinToString(" ") { it.text }
 
     /**
      * The same distance as [getFormattedDistance], but as its structured value + unit parts (mirroring
@@ -68,7 +67,7 @@ object ConversionUtils {
     @JvmStatic
     fun getFormattedDistanceParts(
         meters: Double,
-        applicationContext: Context,
+        applicationContext: Context
     ): List<DisplayFormat.EtaPart> {
         val (value, unitRes) = if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
             if (meters < 1000) {
@@ -90,7 +89,7 @@ object ConversionUtils {
         }
         return listOf(
             DisplayFormat.EtaPart(value, emphasized = true),
-            DisplayFormat.EtaPart(applicationContext.resources.getString(unitRes), emphasized = false),
+            DisplayFormat.EtaPart(applicationContext.resources.getString(unitRes), emphasized = false)
         )
     }
 
@@ -130,7 +129,7 @@ object ConversionUtils {
     fun getFormattedDurationTextNoSeconds(
         sec: Long,
         longFormat: Boolean,
-        applicationContext: Context,
+        applicationContext: Context
     ): String {
         var text = ""
         val h = sec / 3600
@@ -166,7 +165,7 @@ object ConversionUtils {
         time: Long,
         inLine: Boolean,
         color: Int = -1,
-        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
+        today: LocalDate = LocalDate.now(ZoneId.systemDefault())
     ): CharSequence {
         // Times render in the device's local zone. Date/time math is java.time (see wallClock /
         // isToday / isTomorrow); the actual string is still produced by android.text.format.DateFormat
@@ -192,22 +191,28 @@ object ConversionUtils {
                 isToday(localDay, today) -> TextUtils.concat(
                     " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
-                    " ", spannableTime
+                    " ",
+                    spannableTime
                 )
 
                 isTomorrow(localDay, today) -> TextUtils.concat(
                     " ",
-                    applicationContext.resources.getString(R.string.time_connector_next_day), " ",
+                    applicationContext.resources.getString(R.string.time_connector_next_day),
+                    " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
-                    " ", spannableTime
+                    " ",
+                    spannableTime
                 )
 
                 else -> TextUtils.concat(
                     " ",
-                    applicationContext.resources.getString(R.string.time_connector_before_date), " ",
-                    dateFormat.format(displayDate), " ",
+                    applicationContext.resources.getString(R.string.time_connector_before_date),
+                    " ",
+                    dateFormat.format(displayDate),
+                    " ",
                     applicationContext.resources.getString(R.string.time_connector_before_time),
-                    " ", spannableTime
+                    " ",
+                    spannableTime
                 )
             }
         } else {
@@ -215,7 +220,9 @@ object ConversionUtils {
                 isToday(localDay, today) -> spannableTime
 
                 isTomorrow(localDay, today) -> TextUtils.concat(
-                    " ", spannableTime, ", ",
+                    " ",
+                    spannableTime,
+                    ", ",
                     applicationContext.resources.getString(R.string.time_connector_next_day)
                 )
 
@@ -230,7 +237,7 @@ object ConversionUtils {
         applicationContext: Context,
         oldTime: Long,
         newTime: Long,
-        today: LocalDate = LocalDate.now(ZoneId.systemDefault()),
+        today: LocalDate = LocalDate.now(ZoneId.systemDefault())
     ): CharSequence {
         // See getTimeWithContext: times render in the device's local zone; java.time for the date math,
         // android.text.format.DateFormat (fed a converted java.util.Date) for the localized,
@@ -287,8 +294,12 @@ object ConversionUtils {
             }
 
         return TextUtils.concat(
-            beforeDateString, newDateString, oldDateString,
-            beforeTimeString, oldTimeString, newTimeString
+            beforeDateString,
+            newDateString,
+            oldDateString,
+            beforeTimeString,
+            oldTimeString,
+            newTimeString
         )
     }
 
@@ -347,7 +358,7 @@ object ConversionUtils {
     fun getRouteShortNameSafe(
         routeShortName: String?,
         routeLongName: String?,
-        context: Context,
+        context: Context
     ): String {
         var routeName = ""
 
@@ -356,9 +367,11 @@ object ConversionUtils {
             if (routeShortName != null) {
                 routeName += " $routeShortName"
             } else if (routeLongName != null) {
-                routeName += " " + tailAndTruncateSentence(
-                    routeLongName, OTPConstants.ROUTE_SHORT_NAME_MAX_SIZE
-                )
+                routeName += " " +
+                    tailAndTruncateSentence(
+                        routeLongName,
+                        OTPConstants.ROUTE_SHORT_NAME_MAX_SIZE
+                    )
             }
         }
         return routeName
@@ -377,7 +390,7 @@ object ConversionUtils {
     fun getRouteLongNameSafe(
         routeLongName: String?,
         routeShortName: String?,
-        includeShortName: Boolean,
+        includeShortName: Boolean
     ): String {
         var routeName = ""
 

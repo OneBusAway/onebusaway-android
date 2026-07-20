@@ -57,7 +57,7 @@ internal fun DirectionHeadsign(direction: String, modifier: Modifier = Modifier)
             fontFamily = FontFamily.Monospace,
             letterSpacing = (-0.1).sp,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

@@ -18,7 +18,6 @@
  */
 package org.onebusaway.android.ui.settings
 
-import org.onebusaway.android.ui.HomeActivity
 import android.app.Activity
 import android.content.Intent
 import android.media.RingtoneManager
@@ -44,13 +43,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.backup.BackupUtils
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
 import org.onebusaway.android.ui.settings.components.ListPreferenceItem
 import org.onebusaway.android.ui.settings.components.PreferenceCategory
 import org.onebusaway.android.ui.settings.components.SwitchPreferenceItem
-import org.onebusaway.android.backup.BackupUtils
 
 /**
  * The settings NavHost destination (former `SettingsActivity`) — now a pure-Compose
@@ -68,7 +68,7 @@ fun SettingsRoute(
     onGoHomeResetTutorial: () -> Unit,
     onOpenDonate: () -> Unit,
     onOpenPoweredByOba: () -> Unit,
-    viewModel: SettingsViewModel = hiltViewModel(),
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val activity = LocalContext.current.findActivity()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -163,7 +163,7 @@ fun SettingsRoute(
         onAboutClick = {
             viewModel.onAboutClicked()
             onNavigateToAbout()
-        },
+        }
     )
 
     SettingsScreen(state = state, onBack = onBack, actions = actions)
@@ -196,14 +196,14 @@ class SettingsActions(
     val onTutorialClick: () -> Unit,
     val onDonateClick: () -> Unit,
     val onPoweredByObaClick: () -> Unit,
-    val onAboutClick: () -> Unit,
+    val onAboutClick: () -> Unit
 )
 
 @Composable
 fun SettingsScreen(
     state: SettingsUiState,
     onBack: () -> Unit,
-    actions: SettingsActions,
+    actions: SettingsActions
 ) {
     val appName = stringResource(R.string.app_name)
     Scaffold(
@@ -222,13 +222,13 @@ fun SettingsScreen(
                     ClickPreferenceItem(
                         title = stringResource(R.string.preferences_region_title),
                         summary = state.regionSummary,
-                        onClick = actions.onRegionClick,
+                        onClick = actions.onRegionClick
                     )
                     SwitchPreferenceItem(
                         title = stringResource(R.string.preferences_auto_select_region_title),
                         summary = stringResource(R.string.preferences_auto_select_region_summary),
                         checked = state.autoSelectRegion,
-                        onCheckedChange = actions.onAutoSelectRegion,
+                        onCheckedChange = actions.onAutoSelectRegion
                     )
                 }
             }
@@ -238,19 +238,19 @@ fun SettingsScreen(
                     title = stringResource(R.string.preferences_show_negative_arrivals_title),
                     summary = stringResource(R.string.preferences_show_negative_arrivals_summary),
                     checked = state.showNegativeArrivals,
-                    onCheckedChange = actions.onShowNegativeArrivals,
+                    onCheckedChange = actions.onShowNegativeArrivals
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_hide_alerts_title),
                     summary = stringResource(R.string.preferences_hide_alerts_summary),
                     checked = state.hideAlerts,
-                    onCheckedChange = actions.onHideAlerts,
+                    onCheckedChange = actions.onHideAlerts
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_zoom_controls_title),
                     summary = stringResource(R.string.preferences_show_zoom_controls_summary),
                     checked = state.showZoomControls,
-                    onCheckedChange = actions.onShowZoomControls,
+                    onCheckedChange = actions.onShowZoomControls
                 )
                 val mapOptions = stringArrayResource(R.array.preferred_map_options).toList()
                 ListPreferenceItem(
@@ -258,37 +258,37 @@ fun SettingsScreen(
                     entries = mapOptions,
                     entryValues = mapOptions,
                     selectedValue = state.mapMode,
-                    onValueSelected = actions.onMapMode,
+                    onValueSelected = actions.onMapMode
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_weather_view),
                     summary = stringResource(R.string.preferences_show_weather_view_on_map),
                     checked = state.displayWeatherView,
-                    onCheckedChange = actions.onDisplayWeatherView,
+                    onCheckedChange = actions.onDisplayWeatherView
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_available_studies_title),
                     summary = stringResource(R.string.preferences_show_available_studies_body),
                     checked = state.showAvailableStudies,
-                    onCheckedChange = actions.onShowAvailableStudies,
+                    onCheckedChange = actions.onShowAvailableStudies
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_tutorial_screens_title),
                     summary = stringResource(R.string.preferences_show_tutorial_screens_summary),
                     checked = state.showTutorialScreens,
-                    onCheckedChange = actions.onShowTutorialScreens,
+                    onCheckedChange = actions.onShowTutorialScreens
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_left_hand_mode_title),
                     summary = stringResource(R.string.preferences_left_hand_mode_summary),
                     checked = state.leftHandMode,
-                    onCheckedChange = actions.onLeftHandMode,
+                    onCheckedChange = actions.onLeftHandMode
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_show_header_arrivals_title),
                     summary = stringResource(R.string.preferences_show_header_arrivals_summary),
                     checked = state.showHeaderArrivals,
-                    onCheckedChange = actions.onShowHeaderArrivals,
+                    onCheckedChange = actions.onShowHeaderArrivals
                 )
                 val unitOptions = stringArrayResource(R.array.preferred_units_options).toList()
                 ListPreferenceItem(
@@ -296,7 +296,7 @@ fun SettingsScreen(
                     entries = unitOptions,
                     entryValues = unitOptions,
                     selectedValue = state.preferredUnits,
-                    onValueSelected = actions.onPreferredUnits,
+                    onValueSelected = actions.onPreferredUnits
                 )
                 val tempUnitOptions = stringArrayResource(R.array.preferred_temp_unit_options).toList()
                 ListPreferenceItem(
@@ -304,7 +304,7 @@ fun SettingsScreen(
                     entries = tempUnitOptions,
                     entryValues = tempUnitOptions,
                     selectedValue = state.preferredTempUnits,
-                    onValueSelected = actions.onPreferredTempUnits,
+                    onValueSelected = actions.onPreferredTempUnits
                 )
                 val themeOptions = stringArrayResource(R.array.app_theme_options).toList()
                 ListPreferenceItem(
@@ -312,7 +312,7 @@ fun SettingsScreen(
                     entries = themeOptions,
                     entryValues = themeOptions,
                     selectedValue = state.appTheme,
-                    onValueSelected = actions.onAppTheme,
+                    onValueSelected = actions.onAppTheme
                 )
             }
 
@@ -321,20 +321,20 @@ fun SettingsScreen(
                     ClickPreferenceItem(
                         title = stringResource(R.string.preferences_preferred_sound_title),
                         summary = stringResource(R.string.preferences_preferred_sound_summary, appName),
-                        onClick = actions.onRingtoneClick,
+                        onClick = actions.onRingtoneClick
                     )
                     SwitchPreferenceItem(
                         title = stringResource(R.string.preferences_preferred_vibration_title),
                         summary = stringResource(R.string.preferences_preferred_vibration_summary, appName),
                         checked = state.vibrateAllowed,
-                        onCheckedChange = actions.onVibrateAllowed,
+                        onCheckedChange = actions.onVibrateAllowed
                     )
                     if (state.showTripPlanNotifications) {
                         SwitchPreferenceItem(
                             title = stringResource(R.string.preferences_trip_plan_notifications_title),
                             summary = stringResource(R.string.preferences_trip_plan_notifications_summary),
                             checked = state.tripPlanNotifications,
-                            onCheckedChange = actions.onTripPlanNotifications,
+                            onCheckedChange = actions.onTripPlanNotifications
                         )
                     }
                 }
@@ -344,12 +344,12 @@ fun SettingsScreen(
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_save_title),
                     summary = stringResource(R.string.preferences_save_summary),
-                    onClick = actions.onSaveBackup,
+                    onClick = actions.onSaveBackup
                 )
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_restore_title),
                     summary = stringResource(R.string.preferences_restore_summary, appName),
-                    onClick = actions.onRestoreBackup,
+                    onClick = actions.onRestoreBackup
                 )
             }
 
@@ -357,7 +357,7 @@ fun SettingsScreen(
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_category_advanced),
                     summary = stringResource(R.string.preferences_screen_advanced_summary),
-                    onClick = actions.onAdvancedClick,
+                    onClick = actions.onAdvancedClick
                 )
             }
 
@@ -366,31 +366,31 @@ fun SettingsScreen(
                     title = stringResource(R.string.preferences_analytics_title),
                     summary = stringResource(R.string.preferences_analytics_summary),
                     checked = state.analyticsEnabled,
-                    onCheckedChange = actions.onAnalytics,
+                    onCheckedChange = actions.onAnalytics
                 )
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_tutorial_title),
                     summary = stringResource(R.string.preferences_tutorial_summary),
-                    onClick = actions.onTutorialClick,
+                    onClick = actions.onTutorialClick
                 )
                 if (state.showDonate) {
                     ClickPreferenceItem(
                         title = stringResource(R.string.preferences_donate_title),
                         summary = stringResource(R.string.preferences_donate_summary, appName),
-                        onClick = actions.onDonateClick,
+                        onClick = actions.onDonateClick
                     )
                 }
                 if (state.showPoweredByOba) {
                     ClickPreferenceItem(
                         title = stringResource(R.string.preferences_powered_by_oba_title, appName),
                         summary = stringResource(R.string.preferences_powered_by_oba_summary),
-                        onClick = actions.onPoweredByObaClick,
+                        onClick = actions.onPoweredByObaClick
                     )
                 }
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_about_title),
                     summary = stringResource(R.string.preferences_about_summary),
-                    onClick = actions.onAboutClick,
+                    onClick = actions.onAboutClick
                 )
             }
 
@@ -399,10 +399,11 @@ fun SettingsScreen(
                     SwitchPreferenceItem(
                         title = stringResource(R.string.preferences_user_share_destination_logs_title),
                         summary = stringResource(
-                            R.string.preferences_user_share_destination_logs_summary, appName
+                            R.string.preferences_user_share_destination_logs_summary,
+                            appName
                         ),
                         checked = state.shareDestinationLogs,
-                        onCheckedChange = actions.onShareDestinationLogs,
+                        onCheckedChange = actions.onShareDestinationLogs
                     )
                 }
             }

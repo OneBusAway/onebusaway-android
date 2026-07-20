@@ -16,179 +16,165 @@
 
 package org.onebusaway.android.util;
 
-import android.content.Context;
 import android.content.res.Resources;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Set;
 import org.onebusaway.android.R;
 import org.onebusaway.android.ui.arrivals.ArrivalInfo;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
 public class ArrivalInfoUtils {
 
-    public final static class InfoComparator implements Comparator<ArrivalInfo> {
+  public static final class InfoComparator implements Comparator<ArrivalInfo> {
 
-        public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
-            return (int) (lhs.getEta() - rhs.getEta());
-        }
+    public int compare(ArrivalInfo lhs, ArrivalInfo rhs) {
+      return (int) (lhs.getEta() - rhs.getEta());
+    }
+  }
+
+  /**
+   * Returns the index in the provided infoList for the first non-negative arrival ETA in the list,
+   * or -1 if no non-negative ETAs exist in the list
+   *
+   * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
+   *     negative infinity to positive infinity
+   * @return the index in the provided infoList for the first non-negative arrival ETA in the list,
+   *     or -1 if no non-negative ETAs exist in the list
+   */
+  public static int findFirstNonNegativeArrival(@NonNull ArrayList<ArrivalInfo> infoList) {
+    for (int i = 0; i < infoList.size(); i++) {
+      ArrivalInfo info = infoList.get(i);
+      if (info.getEta() >= 0) {
+        return i;
+      }
+    }
+    // We didn't find any non-negative ETAs
+    return -1;
+  }
+
+  /**
+   * Returns the indexes in the provided infoList for the preferred arrivals to be prioritized in
+   * the header, or null if no non-negative ETAs exist in the list. An arrival is preferred when its
+   * route is starred ({@code favoriteRouteIds} contains its route id — a route star is wholesale
+   * now, #1751). If none are favorited, the indexes returned may simply be the indexes of the first
+   * (and second, if it exists) non-negative arrival times.
+   *
+   * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
+   *     negative infinity to positive infinity
+   * @param favoriteRouteIds the ids of the user's starred routes
+   * @return the indexes in the provided infoList for the preferred arrivals to be prioritized in
+   *     the header, or null if no non-negative ETAs exist in the list
+   */
+  public static @Nullable ArrayList<Integer> findPreferredArrivalIndexes(
+      @NonNull ArrayList<ArrivalInfo> infoList, @NonNull Set<String> favoriteRouteIds) {
+    // Start by getting the index of the first non-negative arrival time
+    int firstIndex = findFirstNonNegativeArrival(infoList);
+    if (firstIndex == -1) {
+      return null;
+    }
+    // Find any favorites
+    ArrayList<Integer> preferredIndexes = new ArrayList<>();
+    for (int i = firstIndex; i < infoList.size(); i++) {
+      ArrivalInfo info = infoList.get(i);
+      if (favoriteRouteIds.contains(info.getRouteId())) {
+        preferredIndexes.add(i);
+      }
     }
 
-    /**
-     * Returns the index in the provided infoList for the first non-negative arrival ETA in the
-     * list, or -1 if no non-negative ETAs exist in the list
-     *
-     * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
-     *                 negative infinity to positive infinity
-     * @return the index in the provided infoList for the first non-negative arrival ETA in the
-     * list, or -1 if no non-negative ETAs exist in the list
-     */
-    public static int findFirstNonNegativeArrival(@NonNull ArrayList<ArrivalInfo> infoList) {
-        for (int i = 0; i < infoList.size(); i++) {
-            ArrivalInfo info = infoList.get(i);
-            if (info.getEta() >= 0) {
-                return i;
-            }
-        }
-        // We didn't find any non-negative ETAs
-        return -1;
+    // If we have at least two favorites, that's enough to fill the header - return them
+    if (preferredIndexes.size() >= 2) {
+      return preferredIndexes;
     }
 
-    /**
-     * Returns the indexes in the provided infoList for the preferred arrivals to be prioritized in the
-     * header, or null if no non-negative ETAs exist in the list. An arrival is preferred when its route
-     * is starred ({@code favoriteRouteIds} contains its route id — a route star is wholesale now, #1751).
-     * If none are favorited, the indexes returned may simply be the indexes of the first (and second,
-     * if it exists) non-negative arrival times.
-     *
-     * @param infoList list to search for non-negative arrival times, ordered by relative ETA from
-     *                 negative infinity to positive infinity
-     * @param favoriteRouteIds the ids of the user's starred routes
-     * @return the indexes in the provided infoList for the preferred arrivals to be prioritized in the
-     * header, or null if no non-negative ETAs exist in the list
-     */
-    public static @Nullable ArrayList<Integer> findPreferredArrivalIndexes(
-            @NonNull ArrayList<ArrivalInfo> infoList, @NonNull Set<String> favoriteRouteIds) {
-        // Start by getting the index of the first non-negative arrival time
-        int firstIndex = findFirstNonNegativeArrival(infoList);
-        if (firstIndex == -1) {
-            return null;
-        }
-        // Find any favorites
-        ArrayList<Integer> preferredIndexes = new ArrayList<>();
-        for (int i = firstIndex; i < infoList.size(); i++) {
-            ArrivalInfo info = infoList.get(i);
-            if (favoriteRouteIds.contains(info.getRouteId())) {
-                preferredIndexes.add(i);
-            }
-        }
-
-        // If we have at least two favorites, that's enough to fill the header - return them
-        if (preferredIndexes.size() >= 2) {
-            return preferredIndexes;
-        }
-
-        // If we have one favorite, and the index is different from the firstIndex, then add the firstIndex and return
-        if (preferredIndexes.size() == 1 && preferredIndexes.get(0) != firstIndex) {
-            preferredIndexes.add(firstIndex);
-        }
-
-        // If we have no preferred indexes (i.e., starred route/headsigns) at this point, then add the firstIndex
-        if (preferredIndexes.size() == 0) {
-            preferredIndexes.add(firstIndex);
-
-            // If there is another non-negative arrival time, then add it too
-            int secondIndex = firstIndex + 1;
-            if (secondIndex < infoList.size()) {
-                preferredIndexes.add(secondIndex);
-            }
-        }
-
-        return preferredIndexes;
+    // If we have one favorite, and the index is different from the firstIndex, then add the
+    // firstIndex and return
+    if (preferredIndexes.size() == 1 && preferredIndexes.get(0) != firstIndex) {
+      preferredIndexes.add(firstIndex);
     }
 
-    /**
-     * Returns the status color to be used, depending on whether the vehicle is running early,
-     * late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     *
-     * @param scheduled the scheduled time, in minutes past unix epoch
-     * @param predicted the predicted time, in minutes past unix epoch
-     * @return the status color to be used, depending on whether the vehicle is running early, late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     */
-    public static int computeColor(final long scheduled, final long predicted) {
-        return statusColor(predicted != 0, predicted - scheduled);
+    // If we have no preferred indexes (i.e., starred route/headsigns) at this point, then add the
+    // firstIndex
+    if (preferredIndexes.size() == 0) {
+      preferredIndexes.add(firstIndex);
+
+      // If there is another non-negative arrival time, then add it too
+      int secondIndex = firstIndex + 1;
+      if (secondIndex < infoList.size()) {
+        preferredIndexes.add(secondIndex);
+      }
     }
 
-    /**
-     * The one live-vs-scheduled color choice shared by the map's vehicle markers/info windows and the
-     * arrival-list rows: the schedule-deviation color when real-time, otherwise the scheduled (gray)
-     * color. [deviationMinutes] is ignored when not real-time.
-     */
-    public static int statusColor(final boolean isRealtime, final long deviationMinutes) {
-        return isRealtime ? computeColorFromDeviation(deviationMinutes) : R.color.stop_info_scheduled_time;
-    }
+    return preferredIndexes;
+  }
 
-    /**
-     * Returns the status color to be used, depending on whether the vehicle is running early,
-     * late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     *
-     * @param delay the deviation from the scheduled time, in minutes - positive means bus is
-     *              running late,
-     *              negative means early
-     * @return the status color to be used, depending on whether the vehicle is running early, late,
-     * ontime,
-     * or if we don't have real-time info (i.e., scheduled)
-     */
-    public static int computeColorFromDeviation(final long delay) {
-        // Bus is arriving
-        if (delay > 0) {
-            // Arriving delayed
-            return R.color.stop_info_delayed;
-        } else if (delay < 0) {
-            // Arriving early
-            return R.color.stop_info_early;
-        } else {
-            // Arriving on time
-            return R.color.stop_info_ontime;
-        }
-    }
+  /**
+   * Returns the status color to be used, depending on whether the vehicle is running early, late,
+   * ontime, or if we don't have real-time info (i.e., scheduled)
+   *
+   * @param scheduled the scheduled time, in minutes past unix epoch
+   * @param predicted the predicted time, in minutes past unix epoch
+   * @return the status color to be used, depending on whether the vehicle is running early, late,
+   *     ontime, or if we don't have real-time info (i.e., scheduled)
+   */
+  public static int computeColor(final long scheduled, final long predicted) {
+    return statusColor(predicted != 0, predicted - scheduled);
+  }
 
-    /**
-     * Computes the arrival status label from the delay (i.e., schedule deviation), where positive
-     * means the bus is running late and negative means the bus is running ahead of schedule
-     *
-     * @param delay schedule deviation, in minutes, for this vehicle where positive
-     *              means the bus is running late and negative means the bus is running ahead of
-     *              schedule
-     * @return the arrival status label based on the deviation
-     */
-    public static @NonNull String computeArrivalLabelFromDelay(@NonNull Resources res, long delay) {
-        if (delay > 0) {
-            // Arriving delayed
-            return res.getQuantityString(
-                    R.plurals.stop_info_arrive_delayed, (int) delay,
-                    delay);
-        } else if (delay < 0) {
-            // Arriving early
-            delay = -delay;
-            return res
-                    .getQuantityString(
-                            R.plurals.stop_info_arrive_early,
-                            (int) delay, delay);
-        } else {
-            // Arriving on time
-            return res.getString(R.string.stop_info_ontime);
-        }
+  /**
+   * The one live-vs-scheduled color choice shared by the map's vehicle markers/info windows and the
+   * arrival-list rows: the schedule-deviation color when real-time, otherwise the scheduled (gray)
+   * color. [deviationMinutes] is ignored when not real-time.
+   */
+  public static int statusColor(final boolean isRealtime, final long deviationMinutes) {
+    return isRealtime
+        ? computeColorFromDeviation(deviationMinutes)
+        : R.color.stop_info_scheduled_time;
+  }
+
+  /**
+   * Returns the status color to be used, depending on whether the vehicle is running early, late,
+   * ontime, or if we don't have real-time info (i.e., scheduled)
+   *
+   * @param delay the deviation from the scheduled time, in minutes - positive means bus is running
+   *     late, negative means early
+   * @return the status color to be used, depending on whether the vehicle is running early, late,
+   *     ontime, or if we don't have real-time info (i.e., scheduled)
+   */
+  public static int computeColorFromDeviation(final long delay) {
+    // Bus is arriving
+    if (delay > 0) {
+      // Arriving delayed
+      return R.color.stop_info_delayed;
+    } else if (delay < 0) {
+      // Arriving early
+      return R.color.stop_info_early;
+    } else {
+      // Arriving on time
+      return R.color.stop_info_ontime;
     }
+  }
+
+  /**
+   * Computes the arrival status label from the delay (i.e., schedule deviation), where positive
+   * means the bus is running late and negative means the bus is running ahead of schedule
+   *
+   * @param delay schedule deviation, in minutes, for this vehicle where positive means the bus is
+   *     running late and negative means the bus is running ahead of schedule
+   * @return the arrival status label based on the deviation
+   */
+  public static @NonNull String computeArrivalLabelFromDelay(@NonNull Resources res, long delay) {
+    if (delay > 0) {
+      // Arriving delayed
+      return res.getQuantityString(R.plurals.stop_info_arrive_delayed, (int) delay, delay);
+    } else if (delay < 0) {
+      // Arriving early
+      delay = -delay;
+      return res.getQuantityString(R.plurals.stop_info_arrive_early, (int) delay, delay);
+    } else {
+      // Arriving on time
+      return res.getString(R.string.stop_info_ontime);
+    }
+  }
 }

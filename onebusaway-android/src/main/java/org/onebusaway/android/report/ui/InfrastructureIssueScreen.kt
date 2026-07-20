@@ -16,13 +16,15 @@
  */
 package org.onebusaway.android.report.ui
 
-import org.onebusaway.android.api.adapters.ObaStopElement
-
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,43 +57,41 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import edu.usf.cutr.open311client.Open311
+import edu.usf.cutr.open311client.constants.Open311Constants
+import edu.usf.cutr.open311client.models.Service
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import edu.usf.cutr.open311client.Open311
-import edu.usf.cutr.open311client.models.Service
 import org.onebusaway.android.R
-import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.map.MapParams
-import org.onebusaway.android.map.StopsMapViewModel
-import org.onebusaway.android.map.compose.ObaMap
-import org.onebusaway.android.map.compose.ObaMapCallbacks
-import edu.usf.cutr.open311client.constants.Open311Constants
-import android.content.Context
-import android.net.Uri
-import android.util.Log
-import android.widget.Toast
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
+import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
-import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.map.MapParams
+import org.onebusaway.android.map.StopsMapViewModel
+import org.onebusaway.android.map.compose.ObaMap
+import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.infrastructure.DefaultGeocodeAddressRepository
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.infrastructure.DefaultServiceListRepository
@@ -99,7 +99,6 @@ import org.onebusaway.android.ui.report.infrastructure.InfrastructureControls
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueEvent
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueViewModel
 import org.onebusaway.android.ui.report.infrastructure.ReportTarget
-import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.open311.DefaultOpen311Repository
 import org.onebusaway.android.ui.report.open311.Open311IssueContext
 import org.onebusaway.android.ui.report.open311.Open311ProblemViewModel
@@ -132,7 +131,7 @@ import org.onebusaway.android.util.MyTextUtils
 fun InfrastructureIssueDestination(
     navController: NavController,
     selectedService: String?,
-    reportContext: ReportContext,
+    reportContext: ReportContext
 ) {
     val activity = LocalContext.current.findActivity()
 
@@ -203,7 +202,9 @@ fun InfrastructureIssueDestination(
 
                 InfrastructureIssueEvent.AddressNotFound ->
                     android.widget.Toast.makeText(
-                        activity, R.string.ri_address_not_found, android.widget.Toast.LENGTH_LONG
+                        activity,
+                        R.string.ri_address_not_found,
+                        android.widget.Toast.LENGTH_LONG
                     ).show()
 
                 InfrastructureIssueEvent.ReportSent -> showSuccess = true
@@ -240,11 +241,11 @@ fun InfrastructureIssueDestination(
                         IconButton(onClick = submit) {
                             Icon(
                                 painter = painterResource(R.drawable.ic_action_social_send_now),
-                                contentDescription = stringResource(R.string.report_problem_send),
+                                contentDescription = stringResource(R.string.report_problem_send)
                             )
                         }
                     }
-                },
+                }
             )
         }
     ) { padding ->
@@ -268,13 +269,13 @@ fun InfrastructureIssueDestination(
                         .height(MAP_HEIGHT.dp),
                     initialLatitude = state.location.latitude,
                     initialLongitude = state.location.longitude,
-                    initialZoom = MapParams.DEFAULT_ZOOM.toFloat(),
+                    initialZoom = MapParams.DEFAULT_ZOOM.toFloat()
                 )
 
                 InfrastructureControls(
                     state = state,
                     onAddressSearch = viewModel::onAddressSearch,
-                    onServiceSelected = viewModel::onServiceSelected,
+                    onServiceSelected = viewModel::onServiceSelected
                 )
 
                 // The stop/trip problem form, the arrivals picker, and the Open311 dynamic form all
@@ -295,7 +296,7 @@ fun InfrastructureIssueDestination(
                             target = target,
                             issueViewModel = viewModel,
                             onSubmit = { formSubmit = it },
-                            onSubmittingChanged = { open311Submitting = it },
+                            onSubmittingChanged = { open311Submitting = it }
                         )
 
                     ReportTarget.None -> Unit
@@ -323,7 +324,7 @@ fun InfrastructureIssueDestination(
             text = { Text(Open311Constants.M_REPORT_SUCCESS) },
             confirmButton = {
                 TextButton(onClick = leaveReportFlow) { Text("OK") }
-            },
+            }
         )
     }
 }
@@ -341,7 +342,7 @@ private const val MAP_HEIGHT = 200
 private fun createInfrastructureIssueViewModel(
     activity: AppCompatActivity,
     selectedService: String?,
-    reportContext: ReportContext,
+    reportContext: ReportContext
 ): InfrastructureIssueViewModel {
     val latitude = reportContext.lat
     val longitude = reportContext.lon
@@ -364,7 +365,7 @@ private fun createInfrastructureIssueViewModel(
         defaultIssueType = defaultIssueType,
         arrivalInfo = reportContext.trip,
         agencyName = reportContext.agencyName,
-        blockId = reportContext.blockId,
+        blockId = reportContext.blockId
     )
 }
 
@@ -381,14 +382,14 @@ private fun StopTripProblemForm(
     stop: ObaStop,
     arrival: TripReportContext?,
     issueViewModel: InfrastructureIssueViewModel,
-    onSubmit: ((() -> Unit)?) -> Unit,
+    onSubmit: ((() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
     val vm: ProblemReportViewModel = viewModel(
         key = "problem:${arrival?.tripId ?: stop.id}",
         factory = viewModelFactory {
             initializer { createProblemReportViewModel(context, stop, arrival) }
-        },
+        }
     )
 
     LaunchedEffect(vm) {
@@ -415,7 +416,9 @@ private fun StopTripProblemForm(
             val form = vm.formState.value
             if (!form.canSubmit) {
                 Toast.makeText(
-                    context, R.string.report_problem_invalid_argument, Toast.LENGTH_LONG
+                    context,
+                    R.string.report_problem_invalid_argument,
+                    Toast.LENGTH_LONG
                 ).show()
             } else {
                 reportProblemAnalytics(context, form.kind)
@@ -433,7 +436,7 @@ private fun StopTripProblemForm(
 private fun ArrivalsPickerInline(
     stop: ObaStop,
     activity: AppCompatActivity,
-    issueViewModel: InfrastructureIssueViewModel,
+    issueViewModel: InfrastructureIssueViewModel
 ) {
     val arrivalsViewModel: ArrivalsViewModel = viewModel(
         key = "picker:${stop.id}",
@@ -441,7 +444,7 @@ private fun ArrivalsPickerInline(
             initializer {
                 ArrivalsViewModelFactoryEntryPoint.get(activity).create(stop.id)
             }
-        },
+        }
     )
     SimpleArrivalsPicker(arrivalsViewModel) { arrival ->
         issueViewModel.onArrivalSelected(arrival.toTripReportContext())
@@ -452,7 +455,7 @@ private fun ArrivalsPickerInline(
 private fun createProblemReportViewModel(
     context: Context,
     stop: ObaStop,
-    arrival: TripReportContext?,
+    arrival: TripReportContext?
 ): ProblemReportViewModel {
     val repository =
         DefaultProblemReportRepository(NetworkEntryPoint.getProblemReport(context.applicationContext))
@@ -462,13 +465,13 @@ private fun createProblemReportViewModel(
                 tripId = arrival.tripId,
                 stopId = arrival.stopId,
                 vehicleId = arrival.vehicleId,
-                serviceDate = arrival.serviceDate,
+                serviceDate = arrival.serviceDate
             ),
             codes = ProblemCodes.trip(
                 context.resources.getStringArray(R.array.report_trip_problem_code_bus).toList()
             ),
             headsign = MyTextUtils.formatDisplayText(arrival.headsign),
-            repository = repository,
+            repository = repository
         )
     } else {
         ProblemReportViewModel(
@@ -477,7 +480,7 @@ private fun createProblemReportViewModel(
                 context.resources.getStringArray(R.array.report_stop_problem_code).toList()
             ),
             headsign = null,
-            repository = repository,
+            repository = repository
         )
     }
 }
@@ -498,7 +501,7 @@ private fun reportProblemAnalytics(context: Context, kind: ProblemKind) {
             } else {
                 R.string.analytics_label_report_stop_problem
             }
-        ),
+        )
     )
 }
 
@@ -519,7 +522,7 @@ private fun Open311FormInline(
     target: ReportTarget.Open311,
     issueViewModel: InfrastructureIssueViewModel,
     onSubmit: ((() -> Unit)?) -> Unit,
-    onSubmittingChanged: (Boolean) -> Unit,
+    onSubmittingChanged: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -530,7 +533,7 @@ private fun Open311FormInline(
         key = "open311:${target.category.code ?: target.category.name}",
         factory = viewModelFactory {
             initializer { createOpen311ViewModel(context, issueViewModel, target) }
-        },
+        }
     )
 
     // Absolute path of the file handed to the camera, promoted to the form only on success (survives
@@ -591,7 +594,7 @@ private fun Open311FormInline(
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_OPEN311_SERVER_EVENT_URL,
                     analyticsProblem,
-                    service.service_name,
+                    service.service_name
                 )
             }
         }
@@ -616,7 +619,7 @@ private fun Open311FormInline(
         },
         onPickFromGallery = {
             pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-        },
+        }
     )
 }
 
@@ -624,7 +627,7 @@ private fun Open311FormInline(
 private fun createOpen311ViewModel(
     context: Context,
     issueViewModel: InfrastructureIssueViewModel,
-    target: ReportTarget.Open311,
+    target: ReportTarget.Open311
 ): Open311ProblemViewModel {
     val (_, agencyName, blockId) = issueViewModel.tripContext()
     val tripContext = target.arrival?.let { Open311TripContext(it, agencyName, blockId) }
@@ -638,7 +641,7 @@ private fun createOpen311ViewModel(
         issueProvider = {
             val snapshot = issueViewModel.issueContext()
             Open311IssueContext(snapshot.latitude, snapshot.longitude, snapshot.address, snapshot.stop)
-        },
+        }
     )
     return Open311ProblemViewModel(repository)
 }

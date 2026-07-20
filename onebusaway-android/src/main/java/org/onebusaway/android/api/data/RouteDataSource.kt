@@ -15,13 +15,11 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.adapters.toRouteDetails
-import org.onebusaway.android.api.requireData
-
-import org.onebusaway.android.api.net.ObaApiProvider
-
 import android.util.Log
 import javax.inject.Inject
+import org.onebusaway.android.api.adapters.toRouteDetails
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.RouteDetails
 
 /** Fetches route details from the modernized OBA REST client. */
@@ -40,7 +38,7 @@ interface RouteDataSource {
  * repositories this needs no manual `withContext(Dispatchers.IO)` wrapper.
  */
 class DefaultRouteDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : RouteDataSource {
 
     override suspend fun getRoute(routeId: String): Result<RouteDetails> = api.call {

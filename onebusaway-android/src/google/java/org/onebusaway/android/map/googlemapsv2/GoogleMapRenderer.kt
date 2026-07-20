@@ -21,8 +21,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
-import kotlin.math.cos
-import kotlin.math.pow
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -38,11 +36,13 @@ import com.google.android.gms.maps.model.PolylineOptions
 import com.google.android.gms.maps.model.StrokeStyle
 import com.google.android.gms.maps.model.StyleSpan
 import com.google.android.gms.maps.model.TextureStyle
+import java.util.concurrent.TimeUnit
+import kotlin.math.cos
+import kotlin.math.pow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
 import org.onebusaway.android.map.render.BikeBand
@@ -50,30 +50,30 @@ import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
-import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
+import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
+import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.MapVehicles
-import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
-import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
-import java.util.concurrent.TimeUnit
 
 /**
  * The Google counterpart of `MapLibreRenderer`: it draws the shared [MapRenderState] onto a real
@@ -98,9 +98,10 @@ import java.util.concurrent.TimeUnit
 class GoogleMapRenderer(
     private val map: GoogleMap,
     private val context: Context,
-    private val renderState: MapRenderState,
+    private val renderState: MapRenderState
 ) : PingTarget {
     private val stopMarkerLayer = GoogleStopMarkerLayer(map, context)
+
     // The GoogleRouteStopLayer seam keeps route-stop drawing strategies swappable behind one line.
     private val routeStopLayer: GoogleRouteStopLayer =
         GoogleRouteStopBitmapLayer(
@@ -108,7 +109,7 @@ class GoogleMapRenderer(
             context.resources.displayMetrics.density,
             ContextCompat.getColor(context, R.color.route_stop_fill),
             ContextCompat.getColor(context, R.color.map_stop_focus),
-            ContextCompat.getColor(context, R.color.route_stop_outline),
+            ContextCompat.getColor(context, R.color.route_stop_outline)
         )
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
@@ -142,7 +143,7 @@ class GoogleMapRenderer(
         widthOf = ::routeWidthPx,
         createLine = ::addRoutePolyline,
         removeLines = { lines -> lines.forEach { it.remove() } },
-        setWidth = { line, width -> line.width = width },
+        setWidth = { line, width -> line.width = width }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
@@ -165,6 +166,7 @@ class GoogleMapRenderer(
     // info-window title, and a z-index above the band, and glides to a fresh fix. Icon resolves lazily
     // on first show.
     private val fastEstimate = TripEstimateMarker({ fastEstimateIcon() }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
+
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its
     // bubble is open longer than the settle.
@@ -260,7 +262,7 @@ class GoogleMapRenderer(
             snapshot.stops,
             snapshot.focusedStopId,
             snapshot.routeStopsScaleWithZoom,
-            map.cameraPosition.zoom,
+            map.cameraPosition.zoom
         )
 
         if (snapshot.bikeshareVisible) {
@@ -375,20 +377,18 @@ class GoogleMapRenderer(
         continuationBadgeByMarker[marker] = badge
     }
 
-    private fun routeBadgeIcon(routeShortName: String, color: Int): BitmapDescriptor =
-        descriptorCache.get("route-badge:$routeShortName:$color") {
-            ContinuationBadgeBitmaps.badge(
-                routeShortName,
-                color,
-                density,
-                darkMode = ThemeUtils.isInDarkMode(context),
-            )
-        }
+    private fun routeBadgeIcon(routeShortName: String, color: Int): BitmapDescriptor = descriptorCache.get("route-badge:$routeShortName:$color") {
+        ContinuationBadgeBitmaps.badge(
+            routeShortName,
+            color,
+            density,
+            darkMode = ThemeUtils.isInDarkMode(context)
+        )
+    }
 
-    private fun continuationArrowIcon(color: Int): BitmapDescriptor =
-        descriptorCache.get("continuation-arrow:$color") {
-            ContinuationBadgeBitmaps.arrow(color)
-        }
+    private fun continuationArrowIcon(color: Int): BitmapDescriptor = descriptorCache.get("continuation-arrow:$color") {
+        ContinuationBadgeBitmaps.arrow(color)
+    }
 
     /** Resolve one line's complete width profile at [zoom]. */
     private fun routeWidthPx(polyline: RoutePolyline, zoom: Float): Float = polyline.widthProfile
@@ -472,7 +472,10 @@ class GoogleMapRenderer(
     // Circles draw beneath all markers in gms, so the vehicle icon stays crisp on top.
     override fun tickPing(now: WallTime): Boolean {
         val tripId = pingTripId ?: return false
-        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run {
+            clearPing()
+            return false
+        }
         val start = pingStart ?: now.also { pingStart = it }
         val elapsed = now - start
         if (MapPing.isDone(elapsed)) {
@@ -482,7 +485,8 @@ class GoogleMapRenderer(
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
         val metersPerPx =
-            METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO * cos(Math.toRadians(center.latitude)) /
+            METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
+                cos(Math.toRadians(center.latitude)) /
                 2.0.pow(map.cameraPosition.zoom.toDouble())
         val radiusMeters = radiusPx * metersPerPx
         val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
@@ -658,10 +662,9 @@ class GoogleMapRenderer(
         }
     }
 
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor =
-        descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response, renderedVehicleScale)) {
-            VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
-        }
+    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor = descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response, renderedVehicleScale)) {
+        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
+    }
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
@@ -715,7 +718,7 @@ class GoogleMapRenderer(
     private inner class TripEstimateMarker(
         private val iconProvider: () -> BitmapDescriptor,
         private val title: String,
-        private val zIndex: Float,
+        private val zIndex: Float
     ) {
         private var marker: Marker? = null
         private val smoother = CorrectionSmoother()
@@ -753,16 +756,13 @@ class GoogleMapRenderer(
     private fun fastEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate)
 
     // The signal glyph is light, so tint it gray to read on the white disc (used by the most-recent-data dot).
-    private fun dataAgeIcon(): BitmapDescriptor =
-        tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
+    private fun dataAgeIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
 
-    private fun tripCircleIcon(drawableRes: Int, tintColor: Int = 0): BitmapDescriptor =
-        descriptorCache.get("circle:$drawableRes:$tintColor") {
-            TripMarkerBitmaps.circle(context, drawableRes, tintColor)
-        }
+    private fun tripCircleIcon(drawableRes: Int, tintColor: Int = 0): BitmapDescriptor = descriptorCache.get("circle:$drawableRes:$tintColor") {
+        TripMarkerBitmaps.circle(context, drawableRes, tintColor)
+    }
 
-    fun stopForMarker(marker: Marker): StopMarker? =
-        stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
+    fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
 
     fun onCameraMoveStarted() = routeStopLayer.onCameraMoveStarted()
 

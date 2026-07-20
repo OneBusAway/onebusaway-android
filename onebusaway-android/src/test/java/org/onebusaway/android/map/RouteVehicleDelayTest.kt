@@ -15,9 +15,9 @@
  */
 package org.onebusaway.android.map
 
+import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 /**
  * Unit tests for [nextVehicleDelay] — the resume-mid-period timing for the route vehicle poll,
@@ -27,8 +27,7 @@ class RouteVehicleDelayTest {
 
     private val base = 1_000_000_000L // arbitrary non-zero nanosecond "lastUpdated"
 
-    private fun nanosAfter(lastUpdated: Long, elapsedMillis: Long): Long =
-        lastUpdated + TimeUnit.MILLISECONDS.toNanos(elapsedMillis)
+    private fun nanosAfter(lastUpdated: Long, elapsedMillis: Long): Long = lastUpdated + TimeUnit.MILLISECONDS.toNanos(elapsedMillis)
 
     @Test
     fun `never loaded waits a full period`() {

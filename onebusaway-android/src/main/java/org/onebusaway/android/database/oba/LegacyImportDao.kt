@@ -34,7 +34,7 @@ data class LegacyData(
     val regions: List<RegionRecord>,
     val regionBounds: List<RegionBoundRecord>,
     val open311Servers: List<Open311ServerRecord>,
-    val navStops: List<NavStopRecord>,
+    val navStops: List<NavStopRecord>
 )
 
 /**
@@ -46,7 +46,7 @@ data class RoomBackupData(
     val legacy: LegacyData,
     val studies: List<Study>,
     val surveys: List<Survey>,
-    val alerts: List<AlertEntity>,
+    val alerts: List<AlertEntity>
 )
 
 /**
@@ -95,18 +95,41 @@ interface LegacyImportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAlerts(rows: List<AlertEntity>)
 
-    @Query("DELETE FROM stops") suspend fun clearStops()
-    @Query("DELETE FROM routes") suspend fun clearRoutes()
-    @Query("DELETE FROM trips") suspend fun clearTrips()
-    @Query("DELETE FROM trip_alerts") suspend fun clearTripAlerts()
-    @Query("DELETE FROM service_alerts") suspend fun clearServiceAlerts()
-    @Query("DELETE FROM region_bounds") suspend fun clearRegionBounds()
-    @Query("DELETE FROM open311_servers") suspend fun clearOpen311Servers()
-    @Query("DELETE FROM regions") suspend fun clearRegions()
-    @Query("DELETE FROM nav_stops") suspend fun clearNavStops()
-    @Query("DELETE FROM surveys") suspend fun clearSurveys()
-    @Query("DELETE FROM studies") suspend fun clearStudies()
-    @Query("DELETE FROM alerts") suspend fun clearAlerts()
+    @Query("DELETE FROM stops")
+    suspend fun clearStops()
+
+    @Query("DELETE FROM routes")
+    suspend fun clearRoutes()
+
+    @Query("DELETE FROM trips")
+    suspend fun clearTrips()
+
+    @Query("DELETE FROM trip_alerts")
+    suspend fun clearTripAlerts()
+
+    @Query("DELETE FROM service_alerts")
+    suspend fun clearServiceAlerts()
+
+    @Query("DELETE FROM region_bounds")
+    suspend fun clearRegionBounds()
+
+    @Query("DELETE FROM open311_servers")
+    suspend fun clearOpen311Servers()
+
+    @Query("DELETE FROM regions")
+    suspend fun clearRegions()
+
+    @Query("DELETE FROM nav_stops")
+    suspend fun clearNavStops()
+
+    @Query("DELETE FROM surveys")
+    suspend fun clearSurveys()
+
+    @Query("DELETE FROM studies")
+    suspend fun clearStudies()
+
+    @Query("DELETE FROM alerts")
+    suspend fun clearAlerts()
 
     /**
      * Replaces *every* table from a full Room-format backup atomically — the legacy tables plus the

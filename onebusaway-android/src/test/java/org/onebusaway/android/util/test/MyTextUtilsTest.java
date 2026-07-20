@@ -15,35 +15,35 @@
  */
 package org.onebusaway.android.util.test;
 
-import org.junit.Test;
-import org.onebusaway.android.util.MyTextUtils;
-
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
+import org.junit.Test;
+import org.onebusaway.android.util.MyTextUtils;
+
 public class MyTextUtilsTest {
 
-    @Test
-    public void testTitleCase() {
-        assertEquals(null, MyTextUtils.toTitleCase(null));
-        assertEquals("E John St & 13th Ave E", MyTextUtils.toTitleCase("E JOHN ST & 13th AVE E"));
-        assertEquals("Seattle", MyTextUtils.toTitleCase("SEATTLE"));
-        assertEquals("Seattle", MyTextUtils.toTitleCase("Seattle"));
-    }
+  @Test
+  public void testTitleCase() {
+    assertEquals(null, MyTextUtils.toTitleCase(null));
+    assertEquals("E John St & 13th Ave E", MyTextUtils.toTitleCase("E JOHN ST & 13th AVE E"));
+    assertEquals("Seattle", MyTextUtils.toTitleCase("SEATTLE"));
+    assertEquals("Seattle", MyTextUtils.toTitleCase("Seattle"));
+  }
 
-    @Test
-    public void testSentenceCase() {
-        assertEquals("Testing sentence case", MyTextUtils.toSentenceCase("Testing sentence case"));
-        assertEquals("Testing sentence case again",
-                MyTextUtils.toSentenceCase("TESTING SENTENCE CASE AGAIN"));
-        assertEquals("Another test", MyTextUtils.toSentenceCase("Another Test"));
-        assertEquals("Another test", MyTextUtils.toSentenceCase("Another TEST"));
-    }
+  @Test
+  public void testSentenceCase() {
+    assertEquals("Testing sentence case", MyTextUtils.toSentenceCase("Testing sentence case"));
+    assertEquals(
+        "Testing sentence case again", MyTextUtils.toSentenceCase("TESTING SENTENCE CASE AGAIN"));
+    assertEquals("Another test", MyTextUtils.toSentenceCase("Another Test"));
+    assertEquals("Another test", MyTextUtils.toSentenceCase("Another TEST"));
+  }
 
-    @Test
-    public void testIsAllCaps() {
-        assertTrue(MyTextUtils.isAllCaps("THIS IS ALL CAPS"));
-        assertFalse(MyTextUtils.isAllCaps("THIS IS not ALL CAPS"));
-    }
+  @Test
+  public void testIsAllCaps() {
+    assertTrue(MyTextUtils.isAllCaps("THIS IS ALL CAPS"));
+    assertFalse(MyTextUtils.isAllCaps("THIS IS not ALL CAPS"));
+  }
 }

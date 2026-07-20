@@ -189,16 +189,22 @@ private fun SearchResultsScreenSuccessPreview() {
             state = ListUiState.Success(
                 listOf(
                     SearchResultItem.Route(
-                        "1_8", "8", "Seattle Center - Rainier Beach", null,
-                        routeColor = 0x00A651, agency = "King County Metro"
+                        "1_8",
+                        "8",
+                        "Seattle Center - Rainier Beach",
+                        null,
+                        routeColor = 0x00A651,
+                        agency = "King County Metro"
                     ),
                     SearchResultItem.Route("1_40", "40", "Downtown - Northgate", null),
                     SearchResultItem.Stop("1_100", "Broadway & E Denny Way", "S", true, 47.6, -122.3),
                     SearchResultItem.Stop("1_101", "Stop with no direction", "", false, 47.6, -122.3)
                 )
             ),
-            onRetry = {}, onBack = {},
-            onRouteShowOnMap = {}, onStopShowOnMap = {}
+            onRetry = {},
+            onBack = {},
+            onRouteShowOnMap = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -210,8 +216,10 @@ private fun SearchResultsScreenEmptyPreview() {
         SearchResultsScreen(
             title = "zzzz",
             state = ListUiState.Success(emptyList()),
-            onRetry = {}, onBack = {},
-            onRouteShowOnMap = {}, onStopShowOnMap = {}
+            onRetry = {},
+            onBack = {},
+            onRouteShowOnMap = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -223,8 +231,10 @@ private fun SearchResultsScreenLoadingPreview() {
         SearchResultsScreen(
             title = "8",
             state = ListUiState.Loading,
-            onRetry = {}, onBack = {},
-            onRouteShowOnMap = {}, onStopShowOnMap = {}
+            onRetry = {},
+            onBack = {},
+            onRouteShowOnMap = {},
+            onStopShowOnMap = {}
         )
     }
 }

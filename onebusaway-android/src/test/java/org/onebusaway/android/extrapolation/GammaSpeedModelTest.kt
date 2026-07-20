@@ -61,10 +61,10 @@ class GammaSpeedModelTest {
             val dist = h34Dist(sched)
             val expectedMph = sched * MPS_TO_MPH
             assertEquals(
-                    "mean should equal sched speed at $sched m/s",
-                    expectedMph,
-                    dist.mean,
-                    expectedMph * 0.01
+                "mean should equal sched speed at $sched m/s",
+                expectedMph,
+                dist.mean,
+                expectedMph * 0.01
             )
         }
     }
@@ -204,8 +204,8 @@ class GammaSpeedModelTest {
         val dist = h34Dist(0.01)
         assertTrue("mean should be finite and positive", dist.mean.isFinite() && dist.mean > 0)
         assertTrue(
-                "median should be finite and positive",
-                dist.median().isFinite() && dist.median() > 0
+            "median should be finite and positive",
+            dist.median().isFinite() && dist.median() > 0
         )
     }
 
@@ -224,8 +224,8 @@ class GammaSpeedModelTest {
         val dist = h34Dist(100.0)
         assertTrue("mean should be finite and positive", dist.mean.isFinite() && dist.mean > 0)
         assertTrue(
-                "median should be finite and positive",
-                dist.median().isFinite() && dist.median() > 0
+            "median should be finite and positive",
+            dist.median().isFinite() && dist.median() > 0
         )
     }
 

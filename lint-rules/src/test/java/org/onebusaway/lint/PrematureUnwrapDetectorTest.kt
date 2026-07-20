@@ -28,15 +28,14 @@ class PrematureUnwrapDetectorTest {
         @JvmInline value class ServerTime(val epochMs: Long)
         @JvmInline value class WallTime(val epochMs: Long)
         @JvmInline value class ElapsedTime(val ms: Long)
-        """,
+        """
     ).indented()
 
-    private fun lintKotlin(source: String) =
-        lint()
-            .files(typedTime, kotlin(source).indented())
-            .issues(PrematureUnwrapDetector.ISSUE)
-            .allowMissingSdk()
-            .run()
+    private fun lintKotlin(source: String) = lint()
+        .files(typedTime, kotlin(source).indented())
+        .issues(PrematureUnwrapDetector.ISSUE)
+        .allowMissingSdk()
+        .run()
 
     /** The value-class accessor read resolves to the getter — pins the UAST-over-source resolution. */
     @Test
@@ -48,7 +47,7 @@ class PrematureUnwrapDetectorTest {
             fun ageMs(anchor: ServerTime, now: ServerTime): Long {
                 return now.epochMs - anchor.epochMs
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -62,7 +61,7 @@ class PrematureUnwrapDetectorTest {
             fun after(a: WallTime, b: WallTime): Boolean {
                 return a.epochMs > b.epochMs
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -77,7 +76,7 @@ class PrematureUnwrapDetectorTest {
                 val ms: Long = t.epochMs
                 return ms
             }
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -89,7 +88,7 @@ class PrematureUnwrapDetectorTest {
             package test
             import org.onebusaway.android.time.ElapsedTime
             fun raw(t: ElapsedTime): Long = t.ms
-            """,
+            """
         ).expectWarningCount(1)
     }
 
@@ -107,7 +106,7 @@ class PrematureUnwrapDetectorTest {
             import org.onebusaway.android.time.ServerTime
             class Box(val ms: Long?)
             fun box(t: ServerTime?) = Box(t?.epochMs)
-            """,
+            """
         ).expectClean()
     }
 
@@ -120,7 +119,7 @@ class PrematureUnwrapDetectorTest {
             import org.onebusaway.android.time.ServerTime
             fun format(ms: Long): String = ms.toString()
             fun label(t: ServerTime): String = format(t.epochMs)
-            """,
+            """
         ).expectClean()
     }
 
@@ -135,8 +134,8 @@ class PrematureUnwrapDetectorTest {
                     @JvmInline value class ServerTime(val epochMs: Long) {
                         operator fun minus(other: ServerTime): Long = epochMs - other.epochMs
                     }
-                    """,
-                ).indented(),
+                    """
+                ).indented()
             )
             .issues(PrematureUnwrapDetector.ISSUE)
             .allowMissingSdk()
@@ -153,7 +152,7 @@ class PrematureUnwrapDetectorTest {
             import org.onebusaway.android.time.ServerTime
             operator fun ServerTime.minus(o: ServerTime): Long = 0
             fun d(a: ServerTime, b: ServerTime) = a - b
-            """,
+            """
         ).expectClean()
     }
 }

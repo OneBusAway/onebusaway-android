@@ -16,6 +16,8 @@
 package org.onebusaway.android.extrapolation
 
 import kotlin.math.exp
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.AffineTransformDistribution
 import org.onebusaway.android.extrapolation.math.prob.FrozenDistribution
@@ -24,8 +26,6 @@ import org.onebusaway.android.extrapolation.math.prob.GammaMixtureDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.time.WallTime
-import kotlin.time.Duration
-import kotlin.time.DurationUnit
 
 // H34 two-gamma mixture parameters, fitted on span-weighted King County Metro data (in mph).
 private const val START_B0 = 0.571381 // 1/mph
@@ -51,14 +51,14 @@ class GammaExtrapolator(state: TripState) : Extrapolator(state) {
     private var cachedDistribution: ProbDistribution? = null
 
     override fun doExtrapolate(
-            lastDist: Double,
-            lastTime: WallTime,
-            queryTime: WallTime
+        lastDist: Double,
+        lastTime: WallTime,
+        queryTime: WallTime
     ): ExtrapolationResult {
         val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
         val speedDist = resolveDistribution() ?: return ExtrapolationResult.MissingSchedule
         return ExtrapolationResult.Success(
-                AffineTransformDistribution(speedDist, lastDist, dtSec / MPS_TO_MPH)
+            AffineTransformDistribution(speedDist, lastDist, dtSec / MPS_TO_MPH)
         )
     }
 
@@ -70,8 +70,8 @@ class GammaExtrapolator(state: TripState) : Extrapolator(state) {
         val lastStatus = state.history.lastOrNull()?.status ?: return null
         val schedule = state.schedule
         val scheduleSpeed =
-                schedule?.speedAtDistance(lastStatus.scheduledDistanceAlongTrip ?: return null)
-                        ?: return null
+            schedule?.speedAtDistance(lastStatus.scheduledDistanceAlongTrip ?: return null)
+                ?: return null
 
         return buildH34SpeedDistribution(scheduleSpeed).also { cachedDistribution = it }
     }
@@ -138,17 +138,18 @@ private fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? 
         stopTimes[segmentStart + 1].distanceAlongTrip - stopTimes[segmentStart].distanceAlongTrip
     val timeDelta: Duration = stopTimes[segmentStart + 1].arrivalTime - stopTimes[segmentStart].departureTime
 
-    return if (distDelta > 0 && timeDelta > Duration.ZERO)
+    return if (distDelta > 0 && timeDelta > Duration.ZERO) {
         distDelta / timeDelta.toDouble(DurationUnit.SECONDS)
-    else null
+    } else {
+        null
+    }
 }
 
 private fun sigmoid(x: Double): Double = 1.0 / (1.0 + exp(-x))
 
 /** Piecewise linear ramp from START_B0 to END_B0, flat after KINK. */
-private fun beta0(v: Double): Double =
-        when {
-            v >= KINK -> END_B0
-            v <= 0 -> START_B0
-            else -> START_B0 + (END_B0 - START_B0) * (v / KINK)
-        }
+private fun beta0(v: Double): Double = when {
+    v >= KINK -> END_B0
+    v <= 0 -> START_B0
+    else -> START_B0 + (END_B0 - START_B0) * (v / KINK)
+}

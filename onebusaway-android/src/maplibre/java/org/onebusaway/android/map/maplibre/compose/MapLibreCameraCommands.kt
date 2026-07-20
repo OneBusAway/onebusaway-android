@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.maplibre.compose
 
 import android.content.Context
+import kotlin.math.abs
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -33,7 +34,6 @@ import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
-import kotlin.math.abs
 
 // The same default zoom the imperative MapLibreMapHost used for these camera moves.
 private const val CAMERA_DEFAULT_ZOOM = 16.0
@@ -161,7 +161,7 @@ private fun MapLibreMap.animateBounds(bounds: LatLngBounds, pad: Int, overlay: M
             pad,
             overlay.topPx + pad,
             pad,
-            overlay.bottomPx + pad,
+            overlay.bottomPx + pad
         )
     )
 }

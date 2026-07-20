@@ -15,22 +15,20 @@
  */
 package org.onebusaway.android.api.data
 
-import org.onebusaway.android.api.adapters.toObaTripSchedule
-import org.onebusaway.android.api.adapters.colorArgb
-import org.onebusaway.android.api.adapters.DtoTripDetails
+import android.util.Log
+import javax.inject.Inject
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoTrip
-import org.onebusaway.android.api.requireData
-
+import org.onebusaway.android.api.adapters.DtoTripDetails
+import org.onebusaway.android.api.adapters.colorArgb
+import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.TripDetailsEntry
-
-import android.util.Log
-import javax.inject.Inject
+import org.onebusaway.android.api.net.ObaApiProvider
+import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripDetails
@@ -44,7 +42,7 @@ import org.onebusaway.android.util.PolylineDecoder
 private fun routeTripsOf(
     entries: List<TripDetailsEntry>,
     references: References,
-    serverTimeMs: Long,
+    serverTimeMs: Long
 ): RouteTrips = object : RouteTrips {
     override val trips: List<ObaTripDetails> =
         entries.dedupeByActiveTripKeepingBestFix().map { DtoTripDetails(it) }
@@ -132,7 +130,7 @@ interface TripVehiclesDataSource {
 }
 
 class DefaultTripVehiclesDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : TripVehiclesDataSource {
 
     override suspend fun tripsForRoute(routeId: String): Result<RouteTrips> = api.call {
@@ -164,7 +162,7 @@ class DefaultTripVehiclesDataSource @Inject constructor(
             shapeId = entry.shapeId?.takeIf { s -> s.isNotEmpty() },
             routeShortName = route?.shortName,
             routeColor = route?.colorArgb(),
-            directionId = entry.directionId?.toIntOrNull(),
+            directionId = entry.directionId?.toIntOrNull()
         )
     }.onFailure { Log.e(TAG, "trip($tripId) failed", it) }
 

@@ -33,9 +33,9 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AppScope
-import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.util.RegionUtils
 
 /**
@@ -146,7 +146,7 @@ class DefaultRegionRepository @Inject constructor(
     private val prefs: PreferencesRepository,
     private val locationRepository: LocationRepository,
     private val regionCache: RegionCache,
-    @param:AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope
 ) : RegionRepository {
 
     // Seeded null and then asynchronously from the region cache once the one-time import has run — the

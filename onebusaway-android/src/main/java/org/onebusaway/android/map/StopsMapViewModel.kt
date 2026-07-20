@@ -25,9 +25,9 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 
@@ -48,7 +48,7 @@ class StopsMapViewModel @Inject constructor(
     regionRepo: RegionRepository,
     locationRepository: LocationRepository,
     prefsRepository: PreferencesRepository,
-    @ApplicationContext context: Context,
+    @ApplicationContext context: Context
 ) : ViewModel() {
 
     private val mapHost = MapHost(
@@ -57,7 +57,7 @@ class StopsMapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         prefsRepository = prefsRepository,
-        context = context,
+        context = context
     )
 
     /** The shared map surface the flavor adapter binds to. */
@@ -75,9 +75,9 @@ class StopsMapViewModel @Inject constructor(
         cacheSize = {
             prefsRepository.getInt(
                 R.string.preference_key_map_stop_cache_size,
-                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE
             )
-        },
+        }
     )
 
     init {
@@ -94,8 +94,7 @@ class StopsMapViewModel @Inject constructor(
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
 
     /** Drop a generic pin (the report screen's chosen-location marker); returns its id for removal. */
-    fun addMarker(latitude: Double, longitude: Double, hue: Float?): Int =
-        mapHost.addMarker(latitude, longitude, hue)
+    fun addMarker(latitude: Double, longitude: Double, hue: Float?): Int = mapHost.addMarker(latitude, longitude, hue)
 
     fun removeMarker(id: Int) = mapHost.removeMarker(id)
 }

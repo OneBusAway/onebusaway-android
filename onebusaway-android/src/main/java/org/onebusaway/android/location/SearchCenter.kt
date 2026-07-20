@@ -16,10 +16,10 @@
 package org.onebusaway.android.location
 
 import android.location.Location
+import javax.inject.Inject
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.span
 import org.onebusaway.android.util.locationOf
-import javax.inject.Inject
 
 /**
  * Resolves the location to center a "near me" search on: the device's last known location, falling
@@ -31,14 +31,13 @@ import javax.inject.Inject
  */
 class SearchCenter @Inject constructor(
     private val locationRepository: LocationRepository,
-    private val regionRepository: RegionRepository,
+    private val regionRepository: RegionRepository
 ) {
     /** Last known device location, else [regionCenter], else null. */
     fun current(): Location? = locationRepository.lastKnownLocation() ?: regionCenter()
 
     /** The current region's center, or null when no region is set. */
-    fun regionCenter(): Location? =
-        regionRepository.region.value?.span()?.let { locationOf(it.centerLat, it.centerLon) }
+    fun regionCenter(): Location? = regionRepository.region.value?.span()?.let { locationOf(it.centerLat, it.centerLon) }
 
     companion object {
         /** Radius (m) for the wide fallback search around the region center. */

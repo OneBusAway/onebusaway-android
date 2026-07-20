@@ -16,13 +16,14 @@
 package org.onebusaway.android.map
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
@@ -32,22 +33,21 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
-import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.R
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.FramingIntent
-import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.toGeoPoint
-import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.util.toGeoPoint
 
 /** The informational strip shown across the top of the nearby-stops map (see [MapHost.stopsBanner]). */
 sealed interface StopsBanner {
@@ -80,7 +80,7 @@ class MapHost(
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
-    private val context: Context,
+    private val context: Context
 ) {
 
     val renderState = MapRenderState()
@@ -290,12 +290,11 @@ class MapHost(
     fun frameItineraryLeg(points: List<GeoPoint>) = frame(FramingIntent.Points(points))
 
     /**
-     * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat],[lon] at
+     * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat], [lon] at
      * the default zoom. Retained like [frameItinerary] since it's requested at the same moment (a plan
      * completing behind the results sheet).
      */
-    fun frameStart(lat: Double, lon: Double) =
-        frame(FramingIntent.Point(GeoPoint(lat, lon), MapParams.DEFAULT_ZOOM.toFloat()))
+    fun frameStart(lat: Double, lon: Double) = frame(FramingIntent.Point(GeoPoint(lat, lon), MapParams.DEFAULT_ZOOM.toFloat()))
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) {
@@ -317,8 +316,7 @@ class MapHost(
 
     // ----- Generic markers -----
 
-    fun addMarker(latitude: Double, longitude: Double, hue: Float?): Int =
-        renderState.addMarker(GeoPoint(latitude, longitude), hue)
+    fun addMarker(latitude: Double, longitude: Double, hue: Float?): Int = renderState.addMarker(GeoPoint(latitude, longitude), hue)
 
     fun removeMarker(id: Int) = renderState.removeMarker(id)
 
@@ -375,12 +373,13 @@ class MapHost(
         val action = myLocationAction(
             locationEnabled = isLocationEnabled(app),
             neverShowLocationDialog =
-                prefsRepository.getBoolean(R.string.preference_key_never_show_location_dialog, false),
+            prefsRepository.getBoolean(R.string.preference_key_never_show_location_dialog, false),
             hasLastKnownLocation = last != null,
             hasPermission = PermissionUtils.hasGrantedAtLeastOnePermission(
-                app, PermissionUtils.LOCATION_PERMISSIONS
+                app,
+                PermissionUtils.LOCATION_PERMISSIONS
             ),
-            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(context),
+            userDeniedPermission = PreferenceUtils.userDeniedLocationPermission(context)
         )
         when (action) {
             MyLocationAction.MoveToLocation -> last?.let {
@@ -471,10 +470,10 @@ private sealed interface SettleEvent {
 internal fun insetGrowthReframes(
     padding: Flow<MapPadding>,
     cameraInteracting: Flow<Boolean>,
-    baseline: MapPadding,
+    baseline: MapPadding
 ): Flow<Unit> = merge(
     padding.filter { it.topPx > baseline.topPx || it.bottomPx > baseline.bottomPx }.map { SettleEvent.Grew },
-    cameraInteracting.filter { it }.map { SettleEvent.Gesture },
+    cameraInteracting.filter { it }.map { SettleEvent.Gesture }
 )
     .takeWhile { it is SettleEvent.Grew }
     .map { }

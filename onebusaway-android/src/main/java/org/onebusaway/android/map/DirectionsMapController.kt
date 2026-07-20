@@ -24,9 +24,9 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.util.OTPConstants
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.map.render.RoutePolyline
 
 /**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
@@ -88,7 +88,7 @@ class DirectionsMapController(private val host: MapHost) {
                 RoutePolyline(
                     resolveLegColor(leg),
                     shape.points,
-                    directional = true,
+                    directional = true
                 )
             } else {
                 null

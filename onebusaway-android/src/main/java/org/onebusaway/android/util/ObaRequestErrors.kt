@@ -21,11 +21,10 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.provider.Settings
-
 import java.net.HttpURLConnection
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.api.ObaApi
+import org.onebusaway.android.app.di.RegionEntryPoint
 
 /**
  * Maps OBA REST API response codes and device connectivity state to user-friendly error messages.

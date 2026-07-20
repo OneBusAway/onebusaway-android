@@ -49,8 +49,7 @@ class BitmapDescriptorCache<V : Any>(maxSize: Int, private val wrap: (Bitmap) ->
      *
      * @param bitmap supplies the source [Bitmap] to wrap; called only when [key] is absent.
      */
-    fun get(key: String, bitmap: () -> Bitmap): V =
-        cache.get(key) ?: wrap(bitmap()).also { cache.put(key, it) }
+    fun get(key: String, bitmap: () -> Bitmap): V = cache.get(key) ?: wrap(bitmap()).also { cache.put(key, it) }
 
     /** Drop every wrapper, releasing the native textures once the markers using them are gone. */
     fun clear() = cache.evictAll()

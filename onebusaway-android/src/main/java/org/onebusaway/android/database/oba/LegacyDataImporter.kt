@@ -45,7 +45,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
 class LegacyDataImporter(
     private val context: Context,
     private val database: AppDatabase,
-    private val prefs: PreferencesRepository,
+    private val prefs: PreferencesRepository
 ) {
 
     /** Imports the legacy data once, then deletes the legacy file. No-op if already done or absent. */
@@ -79,14 +79,16 @@ class LegacyDataImporter(
      */
     suspend fun importRoomBackupFrom(backupFile: File) {
         val data = SQLiteDatabase.openDatabase(
-            backupFile.path, null, SQLiteDatabase.OPEN_READWRITE
+            backupFile.path,
+            null,
+            SQLiteDatabase.OPEN_READWRITE
         ).use { db ->
             val (studies, surveys) = readSurveyData(db)
             RoomBackupData(
                 legacy = readAll(db),
                 studies = studies,
                 surveys = surveys,
-                alerts = db.read("alerts") { AlertEntity(id = str("id") ?: return@read null) },
+                alerts = db.read("alerts") { AlertEntity(id = str("id") ?: return@read null) }
             )
         }
         database.legacyImportDao().replaceAll(data)
@@ -130,7 +132,7 @@ class LegacyDataImporter(
                 study_id = int("study_id") ?: return@read null,
                 name = str("name").orEmpty(),
                 description = str("description").orEmpty(),
-                is_subscribed = (int("is_subscribed") ?: 0) != 0,
+                is_subscribed = (int("is_subscribed") ?: 0) != 0
             )
         }
         val studyIds = studies.mapTo(HashSet()) { it.study_id }
@@ -139,7 +141,7 @@ class LegacyDataImporter(
                 survey_id = int("survey_id") ?: return@read null,
                 study_id = int("study_id") ?: return@read null,
                 name = str("name").orEmpty(),
-                state = int("state") ?: 0,
+                state = int("state") ?: 0
             )
         }.filter { it.study_id in studyIds }
         return studies to surveys
@@ -154,126 +156,126 @@ class LegacyDataImporter(
             if ((int("exclude") ?: 0) == 0) str("route_id") else null
         }.toHashSet()
         return LegacyData(
-        stops = db.read("stops") {
-        StopRecord(
-            id = str("_id") ?: return@read null,
-            code = str("code").orEmpty(),
-            name = str("name").orEmpty(),
-            direction = str("direction").orEmpty(),
-            useCount = int("use_count") ?: 0,
-            latitude = dbl("latitude") ?: 0.0,
-            longitude = dbl("longitude") ?: 0.0,
-            userName = str("user_name"),
-            accessTime = long("access_time"),
-            favorite = int("favorite"),
-            regionId = long("region_id"),
+            stops = db.read("stops") {
+                StopRecord(
+                    id = str("_id") ?: return@read null,
+                    code = str("code").orEmpty(),
+                    name = str("name").orEmpty(),
+                    direction = str("direction").orEmpty(),
+                    useCount = int("use_count") ?: 0,
+                    latitude = dbl("latitude") ?: 0.0,
+                    longitude = dbl("longitude") ?: 0.0,
+                    userName = str("user_name"),
+                    accessTime = long("access_time"),
+                    favorite = int("favorite"),
+                    regionId = long("region_id")
+                )
+            },
+            routes = db.read("routes") {
+                val id = str("_id") ?: return@read null
+                RouteRecord(
+                    id = id,
+                    shortName = str("short_name").orEmpty(),
+                    longName = str("long_name"),
+                    useCount = int("use_count") ?: 0,
+                    userName = str("user_name"),
+                    accessTime = long("access_time"),
+                    favorite = if (id in favoriteRouteIds) 1 else int("favorite"),
+                    url = str("url"),
+                    regionId = long("region_id")
+                )
+            },
+            trips = db.read("trips") {
+                TripRecord(
+                    id = str("_id") ?: return@read null,
+                    stopId = str("stop_id") ?: return@read null,
+                    routeId = str("route_id"),
+                    departure = int("departure") ?: 0,
+                    headsign = str("headsign"),
+                    name = str("name").orEmpty(),
+                    reminder = int("reminder") ?: 0,
+                    alarmDeletePath = str("alarm_delete_path").orEmpty(),
+                    serviceDate = long("service_date") ?: 0,
+                    stopSequence = int("stop_sequence") ?: 0,
+                    tripId = str("trip_id").orEmpty(),
+                    vehicleId = str("vehicle_id")
+                )
+            },
+            tripAlerts = db.read("trip_alerts") {
+                TripAlertRecord(
+                    id = long("_id") ?: 0,
+                    tripId = str("trip_id") ?: return@read null,
+                    stopId = str("stop_id") ?: return@read null,
+                    startTime = long("start_time") ?: 0,
+                    state = int("state") ?: 0
+                )
+            },
+            serviceAlerts = db.read("service_alerts") {
+                ServiceAlertRecord(
+                    id = str("_id") ?: return@read null,
+                    markedReadTime = long("marked_read_time"),
+                    hidden = int("hidden")
+                )
+            },
+            regions = db.read("regions") {
+                RegionRecord(
+                    id = long("_id") ?: return@read null,
+                    name = str("name").orEmpty(),
+                    obaBaseUrl = str("oba_base_url").orEmpty(),
+                    siriBaseUrl = str("siri_base_url").orEmpty(),
+                    language = str("lang").orEmpty(),
+                    contactEmail = str("contact_email").orEmpty(),
+                    supportsObaDiscovery = int("supports_api_discovery") ?: 0,
+                    supportsObaRealtime = int("supports_api_realtime") ?: 0,
+                    supportsSiriRealtime = int("supports_siri_realtime") ?: 0,
+                    twitterUrl = str("twitter_url"),
+                    experimental = int("experimental"),
+                    stopInfoUrl = str("stop_info_url"),
+                    otpBaseUrl = str("otp_base_url"),
+                    otpContactEmail = str("otp_contact_email"),
+                    supportsOtpBikeshare = int("supports_otp_bikeshare"),
+                    supportsEmbeddedSocial = int("supports_embedded_social"),
+                    paymentAndroidAppId = str("payment_android_app_id"),
+                    paymentWarningTitle = str("payment_warning_title"),
+                    paymentWarningBody = str("payment_warning_body"),
+                    sidecarBaseUrl = str("sidecar_base_url"),
+                    plausibleAnalyticsServerUrl = str("plausible_analytics_server_url"),
+                    umamiAnalyticsUrl = str("umami_analytics_url"),
+                    umamiAnalyticsId = str("umami_analytics_id")
+                )
+            },
+            regionBounds = db.read("region_bounds") {
+                RegionBoundRecord(
+                    id = long("_id") ?: 0,
+                    regionId = long("region_id") ?: return@read null,
+                    latitude = dbl("lat") ?: 0.0,
+                    longitude = dbl("lon") ?: 0.0,
+                    latSpan = dbl("lat_span") ?: 0.0,
+                    lonSpan = dbl("lon_span") ?: 0.0
+                )
+            },
+            open311Servers = db.read("open311_servers") {
+                Open311ServerRecord(
+                    id = long("_id") ?: 0,
+                    regionId = long("region_id") ?: return@read null,
+                    jurisdiction = str("jurisdiction"),
+                    apiKey = str("api_key").orEmpty(),
+                    baseUrl = str("open311_base_url").orEmpty()
+                )
+            },
+            navStops = db.read("nav_stops") {
+                NavStopRecord(
+                    id = long("_id") ?: 0,
+                    navId = str("nav_id") ?: return@read null,
+                    startTime = long("start_time") ?: 0,
+                    tripId = str("trip_id").orEmpty(),
+                    destinationId = str("destination_id").orEmpty(),
+                    beforeId = str("before_id").orEmpty(),
+                    sequence = int("seq_num") ?: 0,
+                    active = int("is_active") ?: 0
+                )
+            }
         )
-        },
-        routes = db.read("routes") {
-        val id = str("_id") ?: return@read null
-        RouteRecord(
-            id = id,
-            shortName = str("short_name").orEmpty(),
-            longName = str("long_name"),
-            useCount = int("use_count") ?: 0,
-            userName = str("user_name"),
-            accessTime = long("access_time"),
-            favorite = if (id in favoriteRouteIds) 1 else int("favorite"),
-            url = str("url"),
-            regionId = long("region_id"),
-        )
-        },
-        trips = db.read("trips") {
-        TripRecord(
-            id = str("_id") ?: return@read null,
-            stopId = str("stop_id") ?: return@read null,
-            routeId = str("route_id"),
-            departure = int("departure") ?: 0,
-            headsign = str("headsign"),
-            name = str("name").orEmpty(),
-            reminder = int("reminder") ?: 0,
-            alarmDeletePath = str("alarm_delete_path").orEmpty(),
-            serviceDate = long("service_date") ?: 0,
-            stopSequence = int("stop_sequence") ?: 0,
-            tripId = str("trip_id").orEmpty(),
-            vehicleId = str("vehicle_id"),
-        )
-        },
-        tripAlerts = db.read("trip_alerts") {
-        TripAlertRecord(
-            id = long("_id") ?: 0,
-            tripId = str("trip_id") ?: return@read null,
-            stopId = str("stop_id") ?: return@read null,
-            startTime = long("start_time") ?: 0,
-            state = int("state") ?: 0,
-        )
-        },
-        serviceAlerts = db.read("service_alerts") {
-        ServiceAlertRecord(
-            id = str("_id") ?: return@read null,
-            markedReadTime = long("marked_read_time"),
-            hidden = int("hidden"),
-        )
-        },
-        regions = db.read("regions") {
-        RegionRecord(
-            id = long("_id") ?: return@read null,
-            name = str("name").orEmpty(),
-            obaBaseUrl = str("oba_base_url").orEmpty(),
-            siriBaseUrl = str("siri_base_url").orEmpty(),
-            language = str("lang").orEmpty(),
-            contactEmail = str("contact_email").orEmpty(),
-            supportsObaDiscovery = int("supports_api_discovery") ?: 0,
-            supportsObaRealtime = int("supports_api_realtime") ?: 0,
-            supportsSiriRealtime = int("supports_siri_realtime") ?: 0,
-            twitterUrl = str("twitter_url"),
-            experimental = int("experimental"),
-            stopInfoUrl = str("stop_info_url"),
-            otpBaseUrl = str("otp_base_url"),
-            otpContactEmail = str("otp_contact_email"),
-            supportsOtpBikeshare = int("supports_otp_bikeshare"),
-            supportsEmbeddedSocial = int("supports_embedded_social"),
-            paymentAndroidAppId = str("payment_android_app_id"),
-            paymentWarningTitle = str("payment_warning_title"),
-            paymentWarningBody = str("payment_warning_body"),
-            sidecarBaseUrl = str("sidecar_base_url"),
-            plausibleAnalyticsServerUrl = str("plausible_analytics_server_url"),
-            umamiAnalyticsUrl = str("umami_analytics_url"),
-            umamiAnalyticsId = str("umami_analytics_id"),
-        )
-        },
-        regionBounds = db.read("region_bounds") {
-        RegionBoundRecord(
-            id = long("_id") ?: 0,
-            regionId = long("region_id") ?: return@read null,
-            latitude = dbl("lat") ?: 0.0,
-            longitude = dbl("lon") ?: 0.0,
-            latSpan = dbl("lat_span") ?: 0.0,
-            lonSpan = dbl("lon_span") ?: 0.0,
-        )
-        },
-        open311Servers = db.read("open311_servers") {
-        Open311ServerRecord(
-            id = long("_id") ?: 0,
-            regionId = long("region_id") ?: return@read null,
-            jurisdiction = str("jurisdiction"),
-            apiKey = str("api_key").orEmpty(),
-            baseUrl = str("open311_base_url").orEmpty(),
-        )
-        },
-        navStops = db.read("nav_stops") {
-        NavStopRecord(
-            id = long("_id") ?: 0,
-            navId = str("nav_id") ?: return@read null,
-            startTime = long("start_time") ?: 0,
-            tripId = str("trip_id").orEmpty(),
-            destinationId = str("destination_id").orEmpty(),
-            beforeId = str("before_id").orEmpty(),
-            sequence = int("seq_num") ?: 0,
-            active = int("is_active") ?: 0,
-        )
-        },
-    )
     }
 
     private companion object {
@@ -296,21 +298,16 @@ private inline fun <T> SQLiteDatabase.read(table: String, map: Cursor.() -> T?):
     }
 }
 
-private fun SQLiteDatabase.tableExists(table: String): Boolean =
-    rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
-        .use { it.moveToFirst() }
+private fun SQLiteDatabase.tableExists(table: String): Boolean = rawQuery("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(table))
+    .use { it.moveToFirst() }
 
-private fun Cursor.str(name: String): String? =
-    columnIndex(name)?.takeIf { !isNull(it) }?.let { getString(it) }
+private fun Cursor.str(name: String): String? = columnIndex(name)?.takeIf { !isNull(it) }?.let { getString(it) }
 
-private fun Cursor.int(name: String): Int? =
-    columnIndex(name)?.takeIf { !isNull(it) }?.let { getInt(it) }
+private fun Cursor.int(name: String): Int? = columnIndex(name)?.takeIf { !isNull(it) }?.let { getInt(it) }
 
-private fun Cursor.long(name: String): Long? =
-    columnIndex(name)?.takeIf { !isNull(it) }?.let { getLong(it) }
+private fun Cursor.long(name: String): Long? = columnIndex(name)?.takeIf { !isNull(it) }?.let { getLong(it) }
 
-private fun Cursor.dbl(name: String): Double? =
-    columnIndex(name)?.takeIf { !isNull(it) }?.let { getDouble(it) }
+private fun Cursor.dbl(name: String): Double? = columnIndex(name)?.takeIf { !isNull(it) }?.let { getDouble(it) }
 
 /** The column's index, or null when the legacy file's schema version predates that column. */
 private fun Cursor.columnIndex(name: String): Int? = getColumnIndex(name).takeIf { it >= 0 }

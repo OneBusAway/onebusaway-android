@@ -35,7 +35,7 @@ fun convertArrivals(
     context: Context,
     arrivals: List<ArrivalData>,
     ms: ServerTime,
-    includeArrivalDepartureInStatusLabel: Boolean,
+    includeArrivalDepartureInStatusLabel: Boolean
 ): List<ArrivalInfo> {
     val showNegativeArrivals = PreferencesEntryPoint.get(context)
         .getBoolean(R.string.preference_key_show_negative_arrivals, true)

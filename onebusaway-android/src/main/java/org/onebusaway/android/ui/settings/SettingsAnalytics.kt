@@ -17,14 +17,14 @@ package org.onebusaway.android.ui.settings
 
 import android.content.Context
 import androidx.annotation.StringRes
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 
 /** Reports a settings UI event (label [labelRes]) to the preferences analytics page. */
 internal fun reportPreferencesEvent(context: Context, @StringRes labelRes: Int) {
     AnalyticsEntryPoint.get(context).reportUiEvent(
         PlausibleAnalytics.REPORT_PREFERENCES_EVENT_URL,
         context.getString(labelRes),
-        null,
+        null
     )
 }

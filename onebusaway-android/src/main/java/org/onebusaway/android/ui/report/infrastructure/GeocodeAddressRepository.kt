@@ -68,15 +68,14 @@ class DefaultGeocodeAddressRepository(private val context: Context) : GeocodeAdd
     }
 
     @Suppress("DEPRECATION")
-    override suspend fun forwardGeocode(query: String): Result<GeoPoint> =
-        withContext(Dispatchers.IO) {
-            try {
-                val geocoder = Geocoder(context)
-                val match = geocoder.getFromLocationName(query, 3)?.firstOrNull()
-                    ?: return@withContext Result.failure(IOException("Address not found: $query"))
-                Result.success(GeoPoint(match.latitude, match.longitude))
-            } catch (e: IOException) {
-                Result.failure(e)
-            }
+    override suspend fun forwardGeocode(query: String): Result<GeoPoint> = withContext(Dispatchers.IO) {
+        try {
+            val geocoder = Geocoder(context)
+            val match = geocoder.getFromLocationName(query, 3)?.firstOrNull()
+                ?: return@withContext Result.failure(IOException("Address not found: $query"))
+            Result.success(GeoPoint(match.latitude, match.longitude))
+        } catch (e: IOException) {
+            Result.failure(e)
         }
+    }
 }

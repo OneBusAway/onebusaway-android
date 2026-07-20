@@ -26,6 +26,7 @@ import org.onebusaway.android.time.ServerTime
 interface ArrivalData {
     val routeId: String
     val tripId: String
+
     /** GTFS direction id resolved from the trip reference, or null when the feed omits it. */
     val directionId: Int? get() = null
     val stopId: String
@@ -37,18 +38,22 @@ interface ArrivalData {
     val vehicleId: String?
     val predicted: Boolean
     val scheduledArrivalTime: ServerTime
+
     /** The real-time predicted arrival, or null when the server gave no usable prediction (#1687). */
     val predictedArrivalTime: ServerTime?
     val scheduledDepartureTime: ServerTime
+
     /** The real-time predicted departure, or null when the server gave no usable prediction (#1687). */
     val predictedDepartureTime: ServerTime?
     val status: Status?
     val frequency: FrequencyWindow?
+
     /** Ids of the service alerts (situations) that reference this specific arrival, resolved against
      *  the response's references pool. Empty when the arrival carries no per-trip alert. */
     val situationIds: List<String>
     val historicalOccupancy: Occupancy?
     val predictedOccupancy: Occupancy?
+
     /** Real-time fields, for the report context; defaults when there is no trip status. */
     val hasTripStatus: Boolean
     val scheduleDeviation: Long

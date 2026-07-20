@@ -50,11 +50,11 @@ internal fun ServiceAlertsDialog(
     onShowAlert: (String) -> Unit,
     onHideAlert: (AlertItem) -> Unit,
     onShowHiddenAlerts: () -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -63,22 +63,22 @@ internal fun ServiceAlertsDialog(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
                 .heightIn(max = 560.dp)
-                .testTag("focus_alert_panel"),
+                .testTag("focus_alert_panel")
         ) {
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = stringResource(R.string.stop_info_service_alerts),
                         style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f)
                     )
                     IconButton(onClick = onDismiss) {
                         Icon(
                             painter = painterResource(R.drawable.ic_navigation_close),
-                            contentDescription = stringResource(android.R.string.cancel),
+                            contentDescription = stringResource(android.R.string.cancel)
                         )
                     }
                 }
@@ -89,7 +89,7 @@ internal fun ServiceAlertsDialog(
                     onShowAlert = onShowAlert,
                     onHideAlert = onHideAlert,
                     onShowHiddenAlerts = onShowHiddenAlerts,
-                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp),
+                    modifier = Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp)
                 )
             }
         }

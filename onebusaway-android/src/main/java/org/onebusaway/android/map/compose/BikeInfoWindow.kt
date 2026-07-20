@@ -51,18 +51,18 @@ fun BikeInfoWindow(station: BikeStation) {
             text = station.name,
             color = BikePrimary,
             fontWeight = FontWeight.Bold,
-            fontSize = 14.sp,
+            fontSize = 14.sp
         )
         if (station.isFloatingBike) {
             Text(
                 text = stringResource(R.string.floating_bike_title),
                 color = BikeSecondary,
-                fontSize = 12.sp,
+                fontSize = 12.sp
             )
         } else {
             Row(
                 modifier = Modifier.padding(top = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 BikeCount(stringResource(R.string.bike_info_window_bikes_title), station.bikesAvailable)
                 BikeCount(stringResource(R.string.bike_info_window_spaces_title), station.spacesAvailable)
@@ -71,13 +71,13 @@ fun BikeInfoWindow(station: BikeStation) {
                 Text(
                     text = stringResource(R.string.bike_station_title),
                     color = BikeSecondary,
-                    fontSize = 12.sp,
+                    fontSize = 12.sp
                 )
                 Icon(
                     painter = painterResource(R.drawable.ic_navigation_chevron_right),
                     contentDescription = null,
                     tint = BikeSecondary,
-                    modifier = Modifier.size(20.dp),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

@@ -22,8 +22,7 @@ package org.onebusaway.android.api.data
  * "updated 0 sec ago". Falling back to the device clock keeps a skewed-but-sane baseline in that
  * degenerate case, while the normal path stays on the server clock so skew cancels (#1612).
  */
-internal fun serverNowOrDeviceClock(serverCurrentTime: Long): Long =
-    if (serverCurrentTime > 0L) serverCurrentTime else System.currentTimeMillis()
+internal fun serverNowOrDeviceClock(serverCurrentTime: Long): Long = if (serverCurrentTime > 0L) serverCurrentTime else System.currentTimeMillis()
 
 /**
  * Normalizes an OBA service-alert active-window timestamp to epoch milliseconds. The unit is **not
@@ -39,8 +38,7 @@ internal fun serverNowOrDeviceClock(serverCurrentTime: Long): Long =
  * 1e12 (year ~33658) is misread as millis. Both are far outside any real alert window. Non-positive
  * values (an unset `from`, or `to == 0` meaning "no end") pass through unchanged.
  */
-internal fun situationEpochToMillis(timestamp: Long): Long =
-    if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) timestamp * 1_000L else timestamp
+internal fun situationEpochToMillis(timestamp: Long): Long = if (timestamp in 1 until SECONDS_MILLIS_THRESHOLD) timestamp * 1_000L else timestamp
 
 /** OBA's server-side seconds-vs-millis boundary (`GtfsRealtimeAlertLibrary.toMillis`). */
 private const val SECONDS_MILLIS_THRESHOLD = 1_000_000_000_000L

@@ -130,31 +130,29 @@ class ArrivalsViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule(UnconfinedTestDispatcher())
 
-    private fun header(favorite: Boolean = false) =
-        StopHeader("1_100", "Pine St & 3rd Ave", "S", favorite)
+    private fun header(favorite: Boolean = false) = StopHeader("1_100", "Pine St & 3rd Ave", "S", favorite)
 
     private fun data(
         minutesAfter: Int = 65,
         isStale: Boolean = false,
         favorite: Boolean = false,
         hideAlertsByDefault: Boolean = false
-    ) =
-        ArrivalsData(
-            arrivals = emptyList(),
-            routeGroups = emptyList(),
-            header = header(favorite),
-            minutesAfter = minutesAfter,
-            windowEnd = ServerTime(minutesAfter * 60_000L),
-            isStale = isStale,
-            actions = emptyMap(),
-            activeAlerts = emptyList(),
-            hideAlertsByDefault = hideAlertsByDefault,
-            routeDisplayNames = emptyList(),
-            stopCode = null,
-            stopLat = 0.0,
-            stopLon = 0.0,
-            stopUserName = null
-        )
+    ) = ArrivalsData(
+        arrivals = emptyList(),
+        routeGroups = emptyList(),
+        header = header(favorite),
+        minutesAfter = minutesAfter,
+        windowEnd = ServerTime(minutesAfter * 60_000L),
+        isStale = isStale,
+        actions = emptyMap(),
+        activeAlerts = emptyList(),
+        hideAlertsByDefault = hideAlertsByDefault,
+        routeDisplayNames = emptyList(),
+        stopCode = null,
+        stopLat = 0.0,
+        stopLon = 0.0,
+        stopUserName = null
+    )
 
     @Test
     fun `initial state is Loading`() = runTest {
@@ -313,7 +311,7 @@ class ArrivalsViewModelTest {
         routeLongName = "Fifth Ave",
         scheduleUrl = null,
         agencyName = null,
-        blockId = null,
+        blockId = null
     )
 
     @Test
@@ -338,7 +336,7 @@ class ArrivalsViewModelTest {
     @Test
     fun `toggleRouteFavorite unstars a starred route`() = runTest {
         val repository = FakeArrivalsRepository(Result.success(data()))
-        repository.favoriteRoutes.value = setOf("1_5")   // already starred (from any surface)
+        repository.favoriteRoutes.value = setOf("1_5") // already starred (from any surface)
         val viewModel = ArrivalsViewModel("1_100", repository)
         viewModel.refresh()
 

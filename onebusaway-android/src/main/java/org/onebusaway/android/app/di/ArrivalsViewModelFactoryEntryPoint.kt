@@ -42,8 +42,7 @@ interface ArrivalsViewModelFactoryEntryPoint {
     companion object {
         /** Resolves the [ArrivalsViewModel.Factory] from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): ArrivalsViewModel.Factory =
-            EntryPointAccessors.fromApplication(context, ArrivalsViewModelFactoryEntryPoint::class.java)
-                .arrivalsViewModelFactory()
+        fun get(context: Context): ArrivalsViewModel.Factory = EntryPointAccessors.fromApplication(context, ArrivalsViewModelFactoryEntryPoint::class.java)
+            .arrivalsViewModelFactory()
     }
 }

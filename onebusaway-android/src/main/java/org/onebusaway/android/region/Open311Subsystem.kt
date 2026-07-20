@@ -45,7 +45,7 @@ object Open311Subsystem {
             val option = Open311Option(
                 server.baseUrl,
                 server.apiKey,
-                server.jurisdictionId?.takeIf { it.isNotEmpty() },
+                server.jurisdictionId?.takeIf { it.isNotEmpty() }
             )
             Open311Manager.initOpen311WithOption(option)
         }

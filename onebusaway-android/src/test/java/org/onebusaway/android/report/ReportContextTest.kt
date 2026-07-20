@@ -29,7 +29,7 @@ class ReportContextTest {
         predictedArrivalTime = 11L, predictedDepartureTime = 22L,
         scheduledArrivalTime = 33L, scheduledDepartureTime = 44L,
         hasTripStatus = true, scheduleDeviation = -120L,
-        lastKnownLat = 47.61, lastKnownLon = -122.34,
+        lastKnownLat = 47.61, lastKnownLon = -122.34
     )
 
     @Test
@@ -37,7 +37,7 @@ class ReportContextTest {
         val ctx = ReportContext(
             stopId = "1_75403", stopName = "Pine St & 3rd Ave (N)", stopCode = "75403",
             lat = 47.6062, lon = -122.3321, locationString = "near 3rd & Pine",
-            agencyName = "Metro Transit", blockId = "block-7", trip = fullTrip,
+            agencyName = "Metro Transit", blockId = "block-7", trip = fullTrip
         )
         assertEquals(ctx, ReportContext.decode(ctx.encode()))
     }
@@ -51,8 +51,12 @@ class ReportContextTest {
     @Test
     fun `stop-only context carries no trip`() {
         val ctx = ReportContext(
-            stopId = "s1", stopName = "Name", stopCode = "c", lat = 1.0, lon = 2.0,
-            locationString = "loc",
+            stopId = "s1",
+            stopName = "Name",
+            stopCode = "c",
+            lat = 1.0,
+            lon = 2.0,
+            locationString = "loc"
         )
         val round = ReportContext.decode(ctx.encode())
         assertEquals(ctx, round)

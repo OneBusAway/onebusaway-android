@@ -16,7 +16,6 @@
 package org.onebusaway.android.api.adapters
 
 import org.onebusaway.android.api.contract.ArrivalDeparture
-
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
@@ -24,8 +23,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 
 /** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
-internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData =
-    DtoArrivalData(this, directionId)
+internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData = DtoArrivalData(this, directionId)
 
 /**
  * A closed (or otherwise suppressed) stop keeps `predicted:true` but replaces the near-term prediction
@@ -36,12 +34,11 @@ internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData =
  */
 // `internal`, not `private`: a same-file class getter reads it, and a private top-level function would
 // force a synthetic accessor (SyntheticAccessor lint) — internal is accessed directly.
-internal fun predictedServerTimeOrNull(epochMs: Long): ServerTime? =
-    epochMs.takeIf { it > 0L }?.let { ServerTime(it) }
+internal fun predictedServerTimeOrNull(epochMs: Long): ServerTime? = epochMs.takeIf { it > 0L }?.let { ServerTime(it) }
 
 private class DtoArrivalData(
     private val d: ArrivalDeparture,
-    override val directionId: Int?,
+    override val directionId: Int?
 ) : ArrivalData {
     override val routeId get() = d.routeId
     override val tripId get() = d.tripId
@@ -53,6 +50,7 @@ private class DtoArrivalData(
     override val serviceDate get() = d.serviceDate
     override val vehicleId get() = d.vehicleId
     override val predicted get() = d.predicted
+
     // Wire→server mint: these are the server clock, already epoch millis.
     override val scheduledArrivalTime get() = ServerTime(d.scheduledArrivalTime)
     override val predictedArrivalTime get() = predictedServerTimeOrNull(d.predictedArrivalTime)

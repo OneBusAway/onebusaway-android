@@ -64,7 +64,7 @@ private val DROPDOWN_MAX_HEIGHT = 224.dp
 fun SearchRecentsDropdown(
     recents: List<RecentItem>,
     onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
-    onRecentRoute: (routeId: String) -> Unit,
+    onRecentRoute: (routeId: String) -> Unit
 ) {
     Column(Modifier.fillMaxWidth()) {
         // A divider + muted section header separate the recents from the query field above and label
@@ -74,7 +74,7 @@ fun SearchRecentsDropdown(
             text = stringResource(R.string.search_recents_header),
             style = MaterialTheme.typography.labelMedium,
             color = LocalContentColor.current.copy(alpha = 0.6f),
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
         )
         LazyColumn(Modifier.heightIn(max = DROPDOWN_MAX_HEIGHT)) {
             itemsIndexed(recents, key = { _, item -> item.key }) { index, item ->
@@ -82,24 +82,24 @@ fun SearchRecentsDropdown(
                 when (item) {
                     is RecentItem.Stop -> RecentRow(
                         icon = R.drawable.stop_flag,
-                        onClick = { onRecentStop(item.stop.id, item.stop.lat, item.stop.lon) },
+                        onClick = { onRecentStop(item.stop.id, item.stop.lat, item.stop.lon) }
                     ) {
                         StopRowContent(
                             name = item.stop.name,
                             direction = item.stop.rawDirection.orEmpty(),
                             isFavorite = item.stop.isFavorite,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
                     is RecentItem.Route -> RecentRow(
                         icon = R.drawable.ic_route,
-                        onClick = { onRecentRoute(item.route.id) },
+                        onClick = { onRecentRoute(item.route.id) }
                     ) {
                         RouteRowContent(
                             shortName = item.route.shortName,
                             longName = item.route.longName,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -113,20 +113,20 @@ fun SearchRecentsDropdown(
 private fun RecentRow(
     @DrawableRes icon: Int,
     onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable RowScope.() -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
             tint = colorResource(R.color.navdrawer_icon_tint),
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(24.dp)
         )
         Spacer(Modifier.width(16.dp))
         content()

@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.ui.routeinfo
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.DeepLinkUris
 
 /**
@@ -39,8 +39,7 @@ object RouteInfoLauncher {
     }
 
     @JvmStatic
-    fun makeIntent(context: Context, routeId: String): Intent =
-        Intent(context, HomeActivity::class.java).apply {
-            data = Uri.withAppendedPath(DeepLinkUris.ROUTES, routeId)
-        }
+    fun makeIntent(context: Context, routeId: String): Intent = Intent(context, HomeActivity::class.java).apply {
+        data = Uri.withAppendedPath(DeepLinkUris.ROUTES, routeId)
+    }
 }

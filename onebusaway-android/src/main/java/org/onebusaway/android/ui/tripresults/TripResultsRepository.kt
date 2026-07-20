@@ -47,7 +47,7 @@ interface TripResultsRepository {
 
 class DefaultTripResultsRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val otpObaIdResolver: OtpObaIdResolver,
+    private val otpObaIdResolver: OtpObaIdResolver
 ) : TripResultsRepository {
 
     override suspend fun summarize(
@@ -69,7 +69,7 @@ class DefaultTripResultsRepository @Inject constructor(
                     RouteBadge(
                         shortName = leg.badgeShortName(),
                         // routeColor is a bare wire hex; tolerate a leading '#' just in case.
-                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#")),
+                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#"))
                     )
                 }
             )
@@ -84,13 +84,12 @@ class DefaultTripResultsRepository @Inject constructor(
             // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
             walkDistanceMeters = itinerary.legs
                 .filter { it.mode == TripMode.WALK }
-                .sumOf { it.distance },
+                .sumOf { it.distance }
         )
     }
 
     /** The route's display short name (short name, else the route, else the id). */
-    private fun TripLeg.badgeShortName(): String =
-        listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
+    private fun TripLeg.badgeShortName(): String = listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
 
     override suspend fun directionsFor(
         itinerary: TripItinerary
@@ -113,13 +112,13 @@ class DefaultTripResultsRepository @Inject constructor(
         routeId = otpObaIdResolver.obaRouteId(leg.routeId, leg.agencyId, leg.agencyName),
         headsign = leg.headsign,
         board = leg.from.resolveStop(leg),
-        alight = leg.to.resolveStop(leg),
+        alight = leg.to.resolveStop(leg)
     )
 
     private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(
         stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),
         stopCode = stopCode,
         name = name,
-        point = geoPointOrNull(lat, lon),
+        point = geoPointOrNull(lat, lon)
     )
 }

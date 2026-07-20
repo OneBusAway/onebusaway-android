@@ -30,7 +30,9 @@ import androidx.annotation.StringRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.Instant
 import javax.inject.Inject
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -51,8 +53,6 @@ import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
-import java.time.Instant
-import kotlin.coroutines.coroutineContext
 
 /**
  * Foreground service that watches a planned trip for changes while the user is within the
@@ -107,7 +107,7 @@ class TripPlanMonitorService : Service() {
         extras: Bundle,
         desc: ItineraryDescription,
         target: Class<*>,
-        departure: ServerTime?,
+        departure: ServerTime?
     ) {
         try {
             while (coroutineContext.isActive) {
@@ -134,28 +134,36 @@ class TripPlanMonitorService : Service() {
                     }
 
                     val result = TripMonitorDecider.decide(
-                        desc, itineraries, OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD
+                        desc,
+                        itineraries,
+                        OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD
                     )
                     if (BuildConfig.DEBUG) Log.d(TAG, "Monitor check result: $result")
                     when (result) {
                         is MonitorResult.Deviation -> {
                             notifyChange(
-                                desc, target, builder, itineraries,
+                                desc,
+                                target,
+                                builder,
+                                itineraries,
                                 titleRes = if (result.delaySeconds > 0) {
                                     R.string.trip_plan_delay
                                 } else {
                                     R.string.trip_plan_early
                                 },
-                                messageRes = R.string.trip_plan_notification_new_plan_text,
+                                messageRes = R.string.trip_plan_notification_new_plan_text
                             )
                             break
                         }
 
                         MonitorResult.ItineraryChanged -> {
                             notifyChange(
-                                desc, target, builder, itineraries,
+                                desc,
+                                target,
+                                builder,
+                                itineraries,
                                 titleRes = R.string.trip_plan_notification_new_plan_title,
-                                messageRes = R.string.trip_plan_notification_new_plan_text,
+                                messageRes = R.string.trip_plan_notification_new_plan_text
                             )
                             break
                         }
@@ -193,7 +201,8 @@ class TripPlanMonitorService : Service() {
         val notification = buildOngoingNotification(target)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(
-                ONGOING_NOTIFICATION_ID, notification,
+                ONGOING_NOTIFICATION_ID,
+                notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
             )
         } else {
@@ -225,7 +234,7 @@ class TripPlanMonitorService : Service() {
         builder: TripRequestBuilder,
         itineraries: List<TripItinerary>,
         @StringRes titleRes: Int,
-        @StringRes messageRes: Int,
+        @StringRes messageRes: Int
     ) {
         val messageText = getString(messageRes)
 

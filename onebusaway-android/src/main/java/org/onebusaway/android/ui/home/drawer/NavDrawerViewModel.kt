@@ -40,7 +40,7 @@ import org.onebusaway.android.region.RegionRepository
 @HiltViewModel
 class NavDrawerViewModel @Inject constructor(
     navItemsRepo: NavItemsRepository,
-    regionRepo: RegionRepository,
+    regionRepo: RegionRepository
 ) : ViewModel() {
 
     // Seeded synchronously, then re-pulled on each region-id change. Uses the manual

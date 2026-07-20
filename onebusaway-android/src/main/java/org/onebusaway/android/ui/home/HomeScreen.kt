@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
+import org.onebusaway.android.ui.arrivals.resolveSelectedRouteGroup
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.map.MapViewModel
@@ -84,6 +85,7 @@ import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
+import org.onebusaway.android.ui.home.arrivals.selectedArrivalRowKey
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
@@ -396,7 +398,16 @@ fun HomeScreen(
                             ?.routeColor,
                     )
                 }.orEmpty(),
-                subordinateHeadsign = currentFocus.selectedRoute?.originHeadsign,
+                subordinateHeadsign = currentFocus.selectedRoute?.let { selection ->
+                    // Resolve the shown headsign from the loaded arrivals via the same row resolver the
+                    // drawer highlight uses, so every entry point (arrivals row, map route-label tap)
+                    // projects it identically instead of each carrying its own copy.
+                    resolveSelectedRouteGroup(
+                        arrivalsContent?.routeGroups.orEmpty(),
+                        selection.selectedArrivalRowKey(),
+                        selection.originLeg.routeId,
+                    )?.headsign
+                },
             )
             is CurrentFocus.Route -> routeHeader?.let { header ->
                 FocusBannerState.Route(

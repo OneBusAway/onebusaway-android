@@ -343,6 +343,29 @@ class RouteRowGroupingTest {
     }
 
     @Test
+    fun selectedRouteGroup_suppliesRowHeadsign_forMapBadgeDirectionKey() {
+        // A map route-label tap names (route, direction) with no headsign string; the resolved group
+        // supplies the headsign the focus banner shows — the same row the drawer promotes.
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11", directionId = 0))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11", directionId = 1))),
+        )
+
+        val group = resolveSelectedRouteGroup(groups, routeRowKey("11", 1, null), "11")
+        assertEquals("Downtown", group?.headsign)
+    }
+
+    @Test
+    fun selectedRouteGroup_null_whenNoRowResolves() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11"))),
+        )
+
+        assertEquals(null, resolveSelectedRouteGroup(groups, routeRowKey("11", "Different label"), "11"))
+    }
+
+    @Test
     fun grouping_usesNumericDirectionRatherThanDisplayHeadsign() {
         val arrivals = listOf(
             previewArrival("11", "Same label", 2, routeId = "11", directionId = 0),

@@ -38,7 +38,6 @@ lint = "32.3.0"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseAnalytics = "23.2.0"
-firebaseFirestore = "26.4.1"
 firebaseAuth = "24.2.0"
 firebaseStorage = "22.0.1"
 firebaseCrashlytics = "20.1.0"
@@ -67,10 +66,8 @@ okhttp = "5.4.0"
 kotlinxSerializationJson = "1.11.0"
 coroutines = "1.11.0"
 material = "1.14.0"
-gson = "2.14.0"
 commonsIo = "2.22.0"
 gtfsRealtime = "0.1.0"
-protoGoogleCommonProtos = "2.73.0"
 maplibre = "13.3.1"
 # Test-only
 androidxTestRunner = "1.7.0"
@@ -84,7 +81,6 @@ desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 
 # --- Firebase / Google Play services ---
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebaseCrashlytics" }
@@ -98,7 +94,6 @@ open311-client = { module = "com.github.OneBusAway:open311-client", version.ref 
 pelias-client-library = { module = "com.github.OneBusAway:pelias-client-library", version.ref = "pelias" }
 comparators = { module = "org.onebusaway.util:comparators", version.ref = "comparators" }
 gtfs-realtime-bindings = { module = "org.mobilitydata:gtfs-realtime-bindings", version.ref = "gtfsRealtime" }
-proto-google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "protoGoogleCommonProtos" }
 
 # --- AndroidX ---
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
@@ -145,7 +140,6 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 
 # --- Misc ---
 material = { module = "com.google.android.material:material", version.ref = "material" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 

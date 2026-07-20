@@ -23,7 +23,6 @@ import android.os.Bundle;
 import android.util.Log;
 
 
-import org.apache.commons.io.FileUtils;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.notifications.NotificationChannels;
@@ -31,7 +30,10 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint;
 import org.onebusaway.android.util.PreferenceUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -132,7 +134,10 @@ public class FeedbackReceiver extends BroadcastReceiver {
     private void moveLog(Context context, String feedback, String userResponse, String logFile) {
         try {
             File lFile = new File(logFile);
-            FileUtils.write(lFile, System.getProperty("line.separator") + "User Feedback - " + feedback, StandardCharsets.UTF_8, true);
+            try (Writer writer = new OutputStreamWriter(
+                    new FileOutputStream(lFile, true), StandardCharsets.UTF_8)) {
+                writer.write(System.getProperty("line.separator") + "User Feedback - " + feedback);
+            }
             Log.d(TAG, "Feedback appended");
 
             File destFolder = new File(context.getFilesDir()
@@ -142,9 +147,11 @@ public class FeedbackReceiver extends BroadcastReceiver {
             if (BuildConfig.DEBUG) Log.d(TAG, "targetLocation: " + destFolder);
 
             try {
-                FileUtils.moveFileToDirectory(
-                        FileUtils.getFile(lFile),
-                        FileUtils.getFile(destFolder), true);
+                destFolder.mkdirs();
+                File movedFile = new File(destFolder, lFile.getName());
+                if (!lFile.renameTo(movedFile)) {
+                    throw new IOException("Failed to move " + lFile + " to " + destFolder);
+                }
                 Log.d(TAG, "Move file successful.");
             } catch (Exception e) {
                 Log.d(TAG, "File move failed");

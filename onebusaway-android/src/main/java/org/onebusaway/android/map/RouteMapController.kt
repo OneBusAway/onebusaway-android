@@ -54,7 +54,6 @@ import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RouteContinuation
-import org.onebusaway.android.map.render.HIGHLIGHTED_SEGMENT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
 
@@ -288,7 +287,7 @@ class RouteMapController(
      */
     fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
         request.initialDirectionId?.let { selectDirection(it) }
-        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) host.frameRoute() else Unit
+        request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
     }
 
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
@@ -614,18 +613,9 @@ class RouteMapController(
                 stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
             },
         )
-        // A trip-plan leg's traveled segment (if any), drawn thick and last so it sits on top of the
-        // full route. Uses the route's own colour so it reads as "this part of this route".
-        val segmentOverlay = highlightedSegment.takeIf { it.size >= 2 }?.let { points ->
-            RoutePolyline(
-                color = currentRouteColor(),
-                points = points,
-                widthProfile = HIGHLIGHTED_SEGMENT_WIDTH_PROFILE,
-                directional = true,
-            )
-        }
         renderState.setRoutePolylines(
-            polylines = plan.polylines + listOfNotNull(segmentOverlay),
+            // Over a highlighted leg segment: thin the full route to context + the ridden span on top.
+            polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, currentRouteColor()),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom,
         )
@@ -755,14 +745,23 @@ class RouteMapController(
         // poll already landed while it was held back.
         publishVehicleSet()
         if (zoomToRoute) {
-            host.frameRoute()
+            frameRouteOrSegment()
         }
+    }
+
+    /**
+     * Frame the highlighted board→alight [segment][highlightedSegment] when one is set (a trip-plan leg
+     * drilled in — zoom to just the ridden part), else the whole route's bounding box.
+     */
+    private fun frameRouteOrSegment() {
+        val segment = highlightedSegment
+        if (segment.isDrawableSegment()) host.frameItineraryLeg(segment) else host.frameRoute()
     }
 
     /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
     private fun showDirectionStops() {
         val route = routeId ?: return
-        val stops = routeStops.stopsForDirection(currentDirectionId)
+        val stops = routeStops.stopsForDirection(currentDirectionId).onSegment(highlightedSegment)
         baseStopPresentation = RouteStopPresentation(
             stops = stops,
             routes = routeStopRoutes,

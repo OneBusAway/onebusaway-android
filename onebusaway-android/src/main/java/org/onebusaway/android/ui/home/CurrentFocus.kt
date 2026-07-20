@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.home
 
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.util.GeoPoint
 
 /** The one mutually-exclusive focus rendered by HOME. */
 sealed interface CurrentFocus {
@@ -42,15 +41,13 @@ sealed interface CurrentFocus {
 
 /**
  * A transit leg the user tapped from the directions overview — the route-subordinate-to-directions
- * focus. Recontextualizes the map onto the OBA [routeId] with the traveled [segment] drawn thick over
- * it. (Each stop's live ETAs are shown inline in the drawer's Board/Alight rows, not here.)
+ * focus. Recontextualizes the map onto a route with the traveled board→alight segment drawn thick over
+ * it. Holds the exact [ShowRouteRequest] that produced this focus (route id, the boarding stop the
+ * direction is narrowed to, the ridden `highlightedSegment`, and — for a followed vehicle — its
+ * `focusTripId`) so restoring after a back-press replays it faithfully. (Each stop's live ETAs are
+ * shown inline in the drawer's Board/Alight rows, not here.)
  */
-data class DirectionsRouteFocus(
-    val routeId: String,
-    // The board→alight polyline (the OTP leg geometry) the user rides, drawn thick over the full route.
-    val segment: List<GeoPoint> = emptyList(),
-    val directionId: Int? = null,
-)
+data class DirectionsRouteFocus(val request: ShowRouteRequest)
 
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop

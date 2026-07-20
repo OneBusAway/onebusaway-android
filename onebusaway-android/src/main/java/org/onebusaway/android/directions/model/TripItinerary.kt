@@ -16,6 +16,8 @@
 package org.onebusaway.android.directions.model
 
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.PolylineDecoder
 import kotlin.time.Duration
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -121,6 +123,13 @@ data class TripStep(
 
 @Serializable
 data class TripLegGeometry(val points: String? = null, val length: Int = 0)
+
+/** Decode the encoded leg polyline to points; empty when the geometry is absent or degenerate. */
+fun TripLegGeometry.decodedPoints(): List<GeoPoint> {
+    val encoded = points ?: return emptyList()
+    if (encoded.isEmpty() || length <= 0) return emptyList()
+    return PolylineDecoder.decode(encoded, length)
+}
 
 private val tripItineraryJson = Json { ignoreUnknownKeys = true }
 

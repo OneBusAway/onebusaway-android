@@ -486,7 +486,9 @@ class MapViewModel @Inject constructor(
      * directions can't move the camera.
      */
     fun focusItineraryPoint(point: GeoPoint) {
-        if (!directionsActive) return
+        // Fires from the directions drawer in either the itinerary overview (directionsActive) or a
+        // leg's route focus (route mode) — a Board/Alight tap zooms to the stop in both.
+        if (!directionsActive && !routeController.isActive) return
         mapHost.dispatchGesture(
             CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = true)
         )

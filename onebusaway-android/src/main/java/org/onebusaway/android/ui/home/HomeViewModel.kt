@@ -562,10 +562,25 @@ class HomeViewModel @Inject constructor(
     // map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on its own.
     private var shownItinerary: TripItinerary? = null
 
-    /** Draw [itinerary] on the home map (only meaningful while in [CurrentFocus.Directions]). */
+    /**
+     * Draw [itinerary] on the home map and frame the whole trip (only meaningful in
+     * [CurrentFocus.Directions]). Showing the full itinerary drops any leg route focus, so an option-card
+     * tap returns to the overview.
+     */
     fun showItineraryOnMap(itinerary: TripItinerary) {
         shownItinerary = itinerary
+        popRouteFocus() // the ShowItinerary below is the redraw
         emitMapDirective(MapDirective.ShowItinerary(itinerary))
+    }
+
+    /**
+     * Drop a leg's route sub-focus back to the itinerary overview, if one is active; returns whether it
+     * did (so the caller can redraw the itinerary the route mode tore down).
+     */
+    private fun popRouteFocus(): Boolean {
+        if ((_currentFocus.value as? CurrentFocus.Directions)?.routeFocus == null) return false
+        pushFocus(CurrentFocus.Directions())
+        return true
     }
 
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
@@ -573,15 +588,13 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(MapDirective.FocusItineraryPoint(point))
 
     /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
-    fun focusItineraryLegOnMap(points: List<GeoPoint>) =
+    fun focusItineraryLegOnMap(points: List<GeoPoint>) {
+        // If a transit leg's route is in focus, drop back to the itinerary overview and redraw it first —
+        // otherwise the framing would no-op in route mode (directionsActive is false).
+        if (popRouteFocus()) shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
         emitMapDirective(MapDirective.FocusItineraryLeg(points))
+    }
 
-    /**
-     * Drill into a tapped transit leg from the directions overview. Resolves the leg's OTP route/stop
-     * ids onto OBA ids (async — the resolver may fetch agencies-with-coverage), then enters route focus.
-     * If the route can't be resolved to an OBA agency (e.g. an agency OBA doesn't cover), degrades to
-     * framing the leg via [fallbackLegPoints] rather than issuing a request that would fail.
-     */
     /**
      * Tap a transit leg from the directions overview: highlight its route on the map (the whole route +
      * the traveled [fallbackLegPoints] drawn thick), recording the overview as the back target so a
@@ -595,7 +608,12 @@ class HomeViewModel @Inject constructor(
             focusItineraryLegOnMap(fallbackLegPoints)
             return
         }
-        focusItineraryRouteLegOnMap(routeId, segment = fallbackLegPoints)
+        // Anchor to the boarding stop so the route shows only the ridden direction.
+        focusItineraryRouteLegOnMap(
+            routeId,
+            segment = fallbackLegPoints,
+            directionStopId = routeLeg.board?.stopId,
+        )
     }
 
     /**
@@ -605,10 +623,7 @@ class HomeViewModel @Inject constructor(
      * as the arrivals drawer, adding the traveled [segment] over the route.
      */
     fun focusDirectionsRouteVehicle(request: ShowRouteRequest, segment: List<GeoPoint>) {
-        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request.routeId, segment)))
-        emitMapDirective(
-            MapDirective.ShowRoute(request.copy(highlightedSegment = segment), stopScoped = false)
-        )
+        enterDirectionsRouteFocus(request.copy(highlightedSegment = segment))
     }
 
     /**
@@ -619,23 +634,32 @@ class HomeViewModel @Inject constructor(
     fun focusItineraryRouteLegOnMap(
         routeId: String,
         segment: List<GeoPoint> = emptyList(),
+        directionStopId: String? = null,
         directionId: Int? = null,
         undoViewport: MapViewport? = null,
     ) {
-        pushFocus(
-            CurrentFocus.Directions(DirectionsRouteFocus(routeId, segment, directionId)),
+        enterDirectionsRouteFocus(
+            ShowRouteRequest(
+                routeId = routeId,
+                directionStopId = directionStopId,
+                initialDirectionId = directionId,
+                highlightedSegment = segment,
+            ),
             undoViewport,
         )
-        emitMapDirective(
-            MapDirective.ShowRoute(
-                ShowRouteRequest(
-                    routeId = routeId,
-                    initialDirectionId = directionId,
-                    highlightedSegment = segment,
-                ),
-                stopScoped = false,
-            )
-        )
+    }
+
+    /**
+     * Enter the route-subordinate-to-directions focus for [request]: push the itinerary overview as the
+     * back target (with [undoViewport] to restore) and load the route with its ridden segment. Shared by
+     * the leg-row tap and the inline-ETA vehicle tap so both spend the same request faithfully.
+     */
+    private fun enterDirectionsRouteFocus(
+        request: ShowRouteRequest,
+        undoViewport: MapViewport? = null,
+    ) {
+        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request)), undoViewport)
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
     }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
@@ -738,11 +762,7 @@ class HomeViewModel @Inject constructor(
                         // Back into a route sub-focus: re-show that leg's route on the map.
                         emitMapDirective(
                             MapDirective.ShowRoute(
-                                ShowRouteRequest(
-                                    routeId = routeFocus.routeId,
-                                    initialDirectionId = routeFocus.directionId,
-                                    highlightedSegment = routeFocus.segment,
-                                ),
+                                routeFocus.request,
                                 stopScoped = false,
                                 frameRoute = frameFocus,
                             )

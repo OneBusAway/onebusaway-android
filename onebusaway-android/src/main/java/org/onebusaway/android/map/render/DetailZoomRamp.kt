@@ -61,15 +61,6 @@ val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 0.275f,
 )
 
-/**
- * The traveled board→alight segment of a route, when a trip-plan transit leg is in focus: drawn
- * markedly thicker than the [focused][FOCUSED_ROUTE_LINE_WIDTH_PROFILE] route (1.5×) it overlays so the
- * portion the user actually rides stands out along the full route.
- */
-val HIGHLIGHTED_SEGMENT_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
-    thicknessDp = ROUTE_LINE_WIDTH_DP * 2.4f,
-)
-
 /** Route-line scale retained for unprofiled lines and vehicle markers. */
 fun routeLineWidthScale(zoom: Float): Float = ROUTE_LINE_WIDTH_PROFILE.multiplierAt(zoom)
 

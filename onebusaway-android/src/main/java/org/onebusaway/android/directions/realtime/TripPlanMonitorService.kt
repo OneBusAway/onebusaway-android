@@ -81,9 +81,16 @@ class TripPlanMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val extras = intent?.extras
         val target = extras?.let { readNotificationTarget(it) }
-        val desc = extras?.let { readItineraryDescription(it) }
-        if (extras == null || target == null || desc == null) {
-            Log.w(TAG, "Missing monitoring state - stopping")
+        val parse = extras?.let { readMonitorState(it) }
+        if (extras == null || target == null || parse !is MonitorStateParse.Valid) {
+            // Stop without notifying on any unusable state. Incompatible = a pending alarm / redelivered
+            // intent written by a newer monitor format that survived an app update; we can't interpret it,
+            // so we never risk a spurious "your trip changed" alert on it.
+            when (parse) {
+                MonitorStateParse.Incompatible ->
+                    Log.w(TAG, "Monitor bundle is a newer, incompatible format - stopping")
+                else -> Log.w(TAG, "Missing monitoring state - stopping")
+            }
             stopSelf()
             return Service.START_NOT_STICKY
         }
@@ -91,13 +98,11 @@ class TripPlanMonitorService : Service() {
         // Must promote to the foreground promptly after startForegroundService(); do it synchronously.
         startForegroundMonitoring(target)
 
-        // The stored departure is a server-provided instant (0 = unknown); mint it back into ServerTime.
-        val departureMs = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_START_DATE)
-        val itineraryDeparture: ServerTime? = if (departureMs != 0L) ServerTime(departureMs) else null
-
         // A fresh start supersedes any in-flight loop (re-selected option / redelivered intent).
         monitorJob?.cancel()
-        monitorJob = serviceScope.launch { runMonitorLoop(extras, desc, target, itineraryDeparture) }
+        monitorJob = serviceScope.launch {
+            runMonitorLoop(extras, parse.description, target, parse.departure)
+        }
 
         // Redeliver the monitoring state if the service is killed and restarted mid-window.
         return Service.START_REDELIVER_INTENT
@@ -142,7 +147,6 @@ class TripPlanMonitorService : Service() {
                     when (result) {
                         is MonitorResult.Deviation -> {
                             notifyChange(
-                                desc,
                                 target,
                                 builder,
                                 itineraries,
@@ -151,19 +155,20 @@ class TripPlanMonitorService : Service() {
                                 } else {
                                     R.string.trip_plan_early
                                 },
-                                messageRes = R.string.trip_plan_notification_new_plan_text
+                                messageRes = R.string.trip_plan_notification_deviation_text
                             )
                             break
                         }
 
                         MonitorResult.ItineraryChanged -> {
+                            // The monitored itinerary is no longer among the recommended results — the
+                            // plan "changed", which is not the same as "a better plan was found".
                             notifyChange(
-                                desc,
                                 target,
                                 builder,
                                 itineraries,
-                                titleRes = R.string.trip_plan_notification_new_plan_title,
-                                messageRes = R.string.trip_plan_notification_new_plan_text
+                                titleRes = R.string.trip_plan_notification_changed_title,
+                                messageRes = R.string.trip_plan_notification_changed_text
                             )
                             break
                         }
@@ -229,7 +234,6 @@ class TripPlanMonitorService : Service() {
 
     /** Fires the user-facing "your trip changed" alert (a distinct, dismissable notification). */
     private fun notifyChange(
-        desc: ItineraryDescription,
         target: Class<*>,
         builder: TripRequestBuilder,
         itineraries: List<TripItinerary>,
@@ -238,18 +242,16 @@ class TripPlanMonitorService : Service() {
     ) {
         val messageText = getString(messageRes)
 
-        // Reopen the trip-plan screen with enough state to rehydrate the form + fresh results
-        // (matches TripPlanScreen.maybeRestoreFromIntent, which reads the simplified request bundle).
-        // The itinerary list is JSON-encoded (kotlinx.serialization), not passed via
-        // Intent.putExtra(String, Serializable) — TripItinerary has no reason to implement
-        // java.io.Serializable itself, unlike the OTP1 POJOs this domain model replaced.
+        // Reopen HOME with enough state to rehydrate the directions form + these fresh results. The
+        // simplified request bundle + JSON itineraries are consumed by HomeActivity.maybeRestoreDirections-
+        // FromIntent (#1939), which re-enters the on-map directions focus. The itinerary list is
+        // JSON-encoded (kotlinx.serialization), not Intent.putExtra(String, Serializable) — TripItinerary
+        // has no reason to implement java.io.Serializable, unlike the OTP1 POJOs this model replaced.
         val requestExtras = Bundle().also { builder.copyIntoBundleSimple(it) }
         val openIntent = Intent(applicationContext, target).apply {
             putExtras(requestExtras)
             putExtra(OTPConstants.ITINERARIES, itineraries.toJson())
             putExtra(OTPConstants.INTENT_SOURCE, OTPConstants.Source.NOTIFICATION)
-            // The request/itinerary bundle rides along for a future restore-into-directions (#1939); the
-            // intent opens HOME (no EXTRA_NAV_ROUTE) rather than the retired standalone trip-plan screen.
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
@@ -266,7 +268,7 @@ class TripPlanMonitorService : Service() {
             .build()
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(desc.id, notification)
+        manager.notify(TRIP_CHANGE_NOTIFICATION_ID, notification)
     }
 
     private fun activityPendingIntent(intent: Intent): PendingIntent {
@@ -284,14 +286,17 @@ class TripPlanMonitorService : Service() {
 
     // -- Monitoring state (read back from the intent extras) ------------------------------------
 
-    private fun readItineraryDescription(extras: Bundle): ItineraryDescription? {
-        val tripIds = extras.getStringArray(TripPlanMonitor.EXTRA_ITINERARY_DESC)?.toList()
-        val endDateMillis = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_END_DATE)
-        if (tripIds.isNullOrEmpty() || endDateMillis == 0L) {
-            return null
-        }
-        return ItineraryDescription(tripIds, Instant.ofEpochMilli(endDateMillis))
-    }
+    /** Pull the persisted primitives out of the [Bundle] and validate them (see [parseMonitorState]). */
+    private fun readMonitorState(extras: Bundle): MonitorStateParse = parseMonitorState(
+        version = if (extras.containsKey(TripPlanMonitor.EXTRA_MONITOR_VERSION)) {
+            extras.getInt(TripPlanMonitor.EXTRA_MONITOR_VERSION)
+        } else {
+            null
+        },
+        tripIds = extras.getStringArray(TripPlanMonitor.EXTRA_ITINERARY_DESC)?.toList(),
+        startDateMillis = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_START_DATE),
+        endDateMillis = extras.getLong(TripPlanMonitor.EXTRA_ITINERARY_END_DATE)
+    )
 
     private fun readNotificationTarget(extras: Bundle): Class<*>? {
         val name = extras.getString(OTPConstants.NOTIFICATION_TARGET) ?: return null
@@ -306,7 +311,13 @@ class TripPlanMonitorService : Service() {
     private companion object {
         const val TAG = "TripPlanMonitorSvc"
 
-        /** Stable id for the ongoing foreground notification (distinct from the per-trip alert id). */
+        /** Stable id for the ongoing foreground notification (distinct from the change-alert id). */
         const val ONGOING_NOTIFICATION_ID = 0x7C1D
+
+        /**
+         * Stable id for the "your trip changed / is delayed" alert. Fixed (not per-trip) because only one
+         * trip is monitored at a time, so a later alert correctly replaces an earlier one.
+         */
+        const val TRIP_CHANGE_NOTIFICATION_ID = 0x7C1E
     }
 }

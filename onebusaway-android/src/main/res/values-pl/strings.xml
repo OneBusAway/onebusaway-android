@@ -980,8 +980,6 @@
     <string name="connector_before_route">Linia</string>
 
     <!-- Trip plan notifications -->
-    <string name="trip_plan_notification_new_plan_title">Znaleźliśmy lepszy plan podróży</string>
-    <string name="trip_plan_notification_new_plan_text">Dotknij, aby zobaczyć nowe wyniki dla Twojego ostatniego miejsca początkowego/docelowego.</string>
     <string name="trip_plan_delay">Twoja podróż jest opóźniona.</string>
     <string name="trip_plan_early">Twoja podróż jest wcześniej.</string>
 

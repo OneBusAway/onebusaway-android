@@ -16,9 +16,6 @@
 package org.onebusaway.android.ui.tripresults
 
 import android.app.Activity
-import android.app.NotificationManager
-import android.content.Context
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -69,11 +66,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
+import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
-import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
@@ -373,17 +369,7 @@ private fun maybeStartTripUpdates(
 ) {
     val itinerary = itineraries.getOrNull(index) ?: return
     if (params == null) return
-
-    val context = activity.applicationContext
-    val notificationsEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val channel = manager.getNotificationChannel(NotificationChannels.TRIP_PLAN_UPDATES_ID)
-        channel != null && channel.importance != NotificationManager.IMPORTANCE_NONE
-    } else {
-        PreferencesEntryPoint.get(context)
-            .getBoolean(R.string.preference_key_trip_plan_notifications, true)
-    }
-    if (!notificationsEnabled) return
+    if (!TripPlanNotifications.isEnabled(activity)) return
 
     // The notification re-opens the activity that launched monitoring (HomeActivity, which hosts the
     // trip-plan destination) tagged with the TRIP_PLAN route — see TripPlanMonitorService.notifyChange.

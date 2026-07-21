@@ -864,8 +864,6 @@
 
     <!-- Real time -->
 
-    <string name="trip_plan_notification_new_plan_title">Piano di viaggio migliore trovato</string>
-    <string name="trip_plan_notification_new_plan_text">Tocca per vedere i nuovi risultati per i tuoi ultimi luoghi di partenza/arrivo.</string>
     <string name="trip_plan_delay">Il tuo viaggio è in ritardo.</string>
     <string name="trip_plan_early">Il tuo viaggio è in anticipo.</string>
 

@@ -21,8 +21,6 @@ import java.util.concurrent.TimeUnit
 
 object OTPConstants {
 
-    const val PREFERENCE_KEY_LIVE_UPDATES = "live_updates"
-
     @JvmField
     val DEFAULT_UPDATE_INTERVAL_TRIP_TIME = TimeUnit.SECONDS.toMillis(60)
 

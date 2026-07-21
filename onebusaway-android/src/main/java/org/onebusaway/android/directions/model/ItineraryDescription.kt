@@ -1,5 +1,6 @@
-/**
+/*
  * Copyright (C) 2016 Cambridge Systematics, Inc.
+ * Copyright (C) 2026 Open Transit Software Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,37 +18,39 @@ package org.onebusaway.android.directions.model
 
 import java.time.Duration
 import java.time.Instant
+import org.onebusaway.android.directions.gtfsEntitySuffix
 
 /**
- * Itinerary desciption is a list of trips and a rank. This is for the Realtime service.
+ * The identity of a monitored itinerary: the ordered trip ids of its transit legs plus its end time.
+ * The trip-plan-change monitor compares the itinerary the user is watching against a fresh re-plan by
+ * matching these (see [org.onebusaway.android.directions.realtime.TripMonitorDecider]).
+ *
+ * **Identity is compared on the normalized entity suffix of each trip id, not the raw id.** OTP1 and
+ * OTP2 label the same GTFS trip differently — OTP2 prefixes a feed id (`1:trip_5`), OTP1 does not
+ * (`trip_5`) — so raw-string equality would report an unchanged trip as "changed" after the OTP1→OTP2
+ * migration. [gtfsEntitySuffix] strips the feed prefix (the one sanctioned normalization), collapsing
+ * both to the same underlying id so a monitor armed under either planner compares correctly. The raw
+ * [tripIds] are retained as-is (that is what the monitor persists across process death); normalization
+ * happens only at comparison time via [normalizedTripIds].
  */
-class ItineraryDescription {
+class ItineraryDescription(val tripIds: List<String>, val endDate: Instant?) {
 
-    val tripIds: List<String>
+    /** The [tripIds] with each feed prefix stripped — the scheme-independent match key. */
+    val normalizedTripIds: List<String> = tripIds.map { gtfsEntitySuffix(it) ?: it }
 
-    val endDate: Instant?
-
-    constructor(itinerary: TripItinerary) {
+    constructor(itinerary: TripItinerary) : this(
         tripIds = itinerary.legs
             .filter { it.mode?.isTransit == true }
-            .mapNotNull { it.tripId }
-
+            .mapNotNull { it.tripId },
         endDate = itinerary.legs.lastOrNull()?.endTime?.let { Instant.ofEpochMilli(it.epochMs) }
-    }
-
-    constructor(tripIds: List<String>, endDate: Instant?) {
-        this.tripIds = tripIds
-        this.endDate = endDate
-    }
+    )
 
     /**
-     * Check if this itinerary matches the itinerary of another ItineraryDescription
-     *
-     * @param other object to compare to
-     * @return true if matches, false otherwise
+     * Whether this itinerary is the same one described by [other], comparing the normalized
+     * ([normalizedTripIds]) trip ids as an ordered structural equality — so the same trips in the same
+     * order match regardless of which planner (OTP1/OTP2) labeled them.
      */
-    fun itineraryMatches(other: ItineraryDescription): Boolean = // Ordered structural equality: same trip IDs in the same order.
-        tripIds == other.tripIds
+    fun itineraryMatches(other: ItineraryDescription): Boolean = normalizedTripIds == other.normalizedTripIds
 
     /**
      * Check the delay on this itinerary relative to a newer one.
@@ -62,16 +65,6 @@ class ItineraryDescription {
         // Both are server-provided instants; measure the span with java.time rather than raw epoch millis.
         return Duration.between(thisEnd, otherEnd).toMillis() / 1000
     }
-
-    /**
-     * An ID for this ItineraryDescription.
-     * The notification requires an ID so it does not create duplicates. Right now, sending a
-     * notification cancels out the trip-plan monitor, so we do not send multiple notifications,
-     * but we may in future.
-     * Use the hash code of the trips array. Not guaranteed to be unique.
-     */
-    val id: Int
-        get() = if (tripIds.isEmpty()) -1 else tripIds.hashCode()
 
     /**
      * @param now the current time, supplied by the caller (keep the clock out of this helper).

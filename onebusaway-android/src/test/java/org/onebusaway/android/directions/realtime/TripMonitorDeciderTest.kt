@@ -93,4 +93,67 @@ class TripMonitorDeciderTest {
         )
         assertEquals(MonitorResult.ItineraryChanged, result)
     }
+
+    /**
+     * Regression for the OTP1→OTP2 misfire: a trip armed under OTP1 (bare id `trip_5`) re-planned under
+     * OTP2 (feed-prefixed `1:trip_5`) is the *same* trip and must NOT report `ItineraryChanged`. Before
+     * the entity-suffix normalization this compared raw strings and fired the false "better plan" alert.
+     */
+    @Test
+    fun crossScheme_sameTrip_matchesInsteadOfReportingChanged() {
+        val end = 1_000_000L
+        val result = TripMonitorDecider.decide(
+            monitoring("trip_5", end), // armed under OTP1
+            listOf(itinerary("1:trip_5", end + TimeUnit.SECONDS.toMillis(30))), // re-planned under OTP2
+            thresholdSeconds
+        )
+        assertEquals(MonitorResult.KeepMonitoring, result)
+    }
+
+    @Test
+    fun crossScheme_sameTripDelayed_reportsDeviationNotChanged() {
+        val end = 1_000_000L
+        val result = TripMonitorDecider.decide(
+            monitoring("trip_5", end),
+            listOf(itinerary("1:trip_5", end + TimeUnit.MINUTES.toMillis(5))),
+            thresholdSeconds
+        )
+        assertEquals(MonitorResult.Deviation(TimeUnit.MINUTES.toSeconds(5)), result)
+    }
+
+    @Test
+    fun matchingItinerary_exactlyAtThreshold_keepsMonitoring() {
+        val end = 1_000_000L
+        val result = TripMonitorDecider.decide(
+            monitoring("t1", end),
+            listOf(itinerary("t1", end + TimeUnit.SECONDS.toMillis(thresholdSeconds))), // == threshold
+            thresholdSeconds
+        )
+        // abs(delay) > threshold is strict, so exactly-at-threshold is not yet a deviation.
+        assertEquals(MonitorResult.KeepMonitoring, result)
+    }
+
+    @Test
+    fun matchingItinerary_oneSecondPastThreshold_reportsDeviation() {
+        val end = 1_000_000L
+        val result = TripMonitorDecider.decide(
+            monitoring("t1", end),
+            listOf(itinerary("t1", end + TimeUnit.SECONDS.toMillis(thresholdSeconds + 1))),
+            thresholdSeconds
+        )
+        assertEquals(MonitorResult.Deviation(thresholdSeconds + 1), result)
+    }
+
+    @Test
+    fun matchingItinerary_unparseableEndDate_keepsMonitoring() {
+        // The monitored description has no end date (couldn't be parsed): getDelay is null, so a match
+        // with no measurable delay keeps polling rather than crying "changed" or "delayed".
+        val current = ItineraryDescription(listOf("t1"), endDate = null)
+        val result = TripMonitorDecider.decide(
+            current,
+            listOf(itinerary("t1", 1_000_000L)),
+            thresholdSeconds
+        )
+        assertEquals(MonitorResult.KeepMonitoring, result)
+    }
 }

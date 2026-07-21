@@ -54,7 +54,7 @@ class OtpObaIdResolver @Inject constructor(
     suspend fun obaStopId(stopGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? = obaId(stopGtfsId, agencyGtfsId, agencyName)
 
     private suspend fun obaId(entityGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? {
-        val entity = entityGtfsId.entitySuffix() ?: return null
+        val entity = gtfsEntitySuffix(entityGtfsId) ?: return null
         val agency = resolveAgency(agencyGtfsId, agencyName) ?: return null
         return "${agency}_$entity"
     }
@@ -66,7 +66,7 @@ class OtpObaIdResolver @Inject constructor(
      * already equals OBA's (the common case).
      */
     private suspend fun resolveAgency(agencyGtfsId: String?, agencyName: String?): String? {
-        val derived = agencyGtfsId.entitySuffix()
+        val derived = gtfsEntitySuffix(agencyGtfsId)
         val agencies = agencies() ?: return derived
         if (derived != null && agencies.any { it.id == derived }) return derived
         return agencyName
@@ -76,11 +76,5 @@ class OtpObaIdResolver @Inject constructor(
 
     private suspend fun agencies(): List<AgencyContact>? = mutex.withLock {
         cachedAgencies ?: agenciesDataSource.getAgencies().getOrNull()?.also { cachedAgencies = it }
-    }
-
-    /** The entity part after the feed prefix (`kcm:102574` → `102574`); the whole value when unprefixed. */
-    private fun String?.entitySuffix(): String? {
-        val s = this ?: return null
-        return s.substringAfter(':', missingDelimiterValue = s).takeIf { it.isNotEmpty() }
     }
 }

@@ -803,8 +803,6 @@
     <string name="trip_plan_advanced_settings">Lisäasetukset</string>
     <string name="trip_plan_delay">Matkasi on myöhässä.</string>
     <string name="trip_plan_early">Matkasi on etuajassa.</string>
-    <string name="trip_plan_notification_new_plan_title">Löysimme paremman matkasuunnitelman</string>
-    <string name="trip_plan_notification_new_plan_text">Napauta nähdäksesi uudet tulokset viimeisimmälle lähtöpaikka/määränpää-parille.</string>
     <string name="minimize_transfers">Minimoi vaihdot</string>
     <string name="maximum_walk_distance">Enimmäiskävelymatka:</string>
     <string name="wheelchair_accessible">Vältä portaita</string>

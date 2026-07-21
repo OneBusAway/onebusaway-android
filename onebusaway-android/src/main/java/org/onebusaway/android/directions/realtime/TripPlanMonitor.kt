@@ -32,7 +32,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.toRequestBuilder
-import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * Entry point + scheduler for the trip-plan-change monitor. Replaces the WorkManager/AlarmManager poll
@@ -62,6 +61,18 @@ object TripPlanMonitor {
     /** The watched itinerary's end time, epoch millis (long). */
     const val EXTRA_ITINERARY_END_DATE = "org.onebusaway.android.tripmonitor.ITINERARY_END_DATE"
 
+    /** The [MONITOR_STATE_VERSION] the bundle was written with (int; absent = legacy v0). */
+    const val EXTRA_MONITOR_VERSION = "org.onebusaway.android.tripmonitor.MONITOR_VERSION"
+
+    /**
+     * Version of the persisted monitor-state format. A pending alarm / redelivered service intent can
+     * survive an app update, so bump this whenever the bundle's shape or meaning changes incompatibly;
+     * a service reading a **newer** version than it understands stops silently rather than misfiring
+     * (see [parseMonitorState]). Bare trip-id normalization already bridges the OTP1↔OTP2 id-vocabulary
+     * difference, so v1 stays compatible with pre-versioning (v0) bundles.
+     */
+    const val MONITOR_STATE_VERSION = 1
+
     internal const val ACTION_START_MONITORING =
         "org.onebusaway.android.tripmonitor.action.START_MONITORING"
 
@@ -84,7 +95,9 @@ object TripPlanMonitor {
     ) {
         val app = context.applicationContext
 
-        if (!PreferenceUtils.getBoolean(OTPConstants.PREFERENCE_KEY_LIVE_UPDATES, true)) {
+        // Single enable-gate (in-app toggle AND OS-side allowed) — see TripPlanNotifications. Also
+        // re-checked at the call site; belt-and-suspenders since arming can be deferred by an alarm.
+        if (!TripPlanNotifications.isEnabled(app)) {
             return
         }
 
@@ -116,6 +129,7 @@ object TripPlanMonitor {
         val builder = params.toRequestBuilder(app)
         val bundle = Bundle().apply {
             builder.copyIntoBundleSimple(this)
+            putInt(EXTRA_MONITOR_VERSION, MONITOR_STATE_VERSION)
             putStringArray(EXTRA_ITINERARY_DESC, tripIds.toTypedArray())
             putLong(EXTRA_ITINERARY_START_DATE, itineraryDeparture.epochMs)
             putLong(EXTRA_ITINERARY_END_DATE, endDate.toEpochMilli())

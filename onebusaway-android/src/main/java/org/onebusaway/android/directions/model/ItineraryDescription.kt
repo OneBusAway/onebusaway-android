@@ -33,27 +33,17 @@ import org.onebusaway.android.directions.gtfsEntitySuffix
  * [tripIds] are retained as-is (that is what the monitor persists across process death); normalization
  * happens only at comparison time via [normalizedTripIds].
  */
-class ItineraryDescription {
-
-    val tripIds: List<String>
-
-    val endDate: Instant?
+class ItineraryDescription(val tripIds: List<String>, val endDate: Instant?) {
 
     /** The [tripIds] with each feed prefix stripped — the scheme-independent match key. */
-    val normalizedTripIds: List<String> by lazy { tripIds.map { gtfsEntitySuffix(it) ?: it } }
+    val normalizedTripIds: List<String> = tripIds.map { gtfsEntitySuffix(it) ?: it }
 
-    constructor(itinerary: TripItinerary) {
+    constructor(itinerary: TripItinerary) : this(
         tripIds = itinerary.legs
             .filter { it.mode?.isTransit == true }
-            .mapNotNull { it.tripId }
-
+            .mapNotNull { it.tripId },
         endDate = itinerary.legs.lastOrNull()?.endTime?.let { Instant.ofEpochMilli(it.epochMs) }
-    }
-
-    constructor(tripIds: List<String>, endDate: Instant?) {
-        this.tripIds = tripIds
-        this.endDate = endDate
-    }
+    )
 
     /**
      * Whether this itinerary is the same one described by [other], comparing the normalized

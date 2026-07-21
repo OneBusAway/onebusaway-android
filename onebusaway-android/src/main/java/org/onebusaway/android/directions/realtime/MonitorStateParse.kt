@@ -20,23 +20,19 @@ import org.onebusaway.android.directions.model.ItineraryDescription
 import org.onebusaway.android.time.ServerTime
 
 /**
- * The validated state one [TripPlanMonitorService] tick needs: the itinerary being watched
- * ([description]) and its server-clock [departure] (null = unknown, i.e. fall back to the trip-end
- * guard).
- */
-data class TripMonitorState(
-    val description: ItineraryDescription,
-    val departure: ServerTime?
-)
-
-/**
  * The outcome of validating a persisted monitor bundle before (re)starting the loop. A pure sealed type
  * (no Android/`Bundle` dependency) so the version/validity gate is JVM-unit-testable — see
  * [parseMonitorState].
  */
 sealed interface MonitorStateParse {
-    /** The bundle is usable — monitor [state]. */
-    data class Valid(val state: TripMonitorState) : MonitorStateParse
+    /**
+     * The bundle is usable: monitor the itinerary described by [description] (its server-clock
+     * [departure] is null when unknown, i.e. fall back to the trip-end guard).
+     */
+    data class Valid(
+        val description: ItineraryDescription,
+        val departure: ServerTime?
+    ) : MonitorStateParse
 
     /** Required state is absent/empty — there is nothing to monitor. Stop without notifying. */
     data object Missing : MonitorStateParse
@@ -73,5 +69,5 @@ fun parseMonitorState(
     }
     val description = ItineraryDescription(tripIds, Instant.ofEpochMilli(endDateMillis))
     val departure = if (startDateMillis != 0L) ServerTime(startDateMillis) else null
-    return MonitorStateParse.Valid(TripMonitorState(description, departure))
+    return MonitorStateParse.Valid(description, departure)
 }

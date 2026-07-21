@@ -27,13 +27,15 @@ class TripMonitorStateTest {
     private val start = 1_700_000_000_000L
     private val end = 1_700_000_600_000L
 
+    private val version = TripPlanMonitor.MONITOR_STATE_VERSION
+
     @Test
     fun validBundleParsesToState() {
-        val parse = parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION, tripIds, start, end)
+        val parse = parseMonitorState(version, tripIds, start, end)
         assertTrue(parse is MonitorStateParse.Valid)
-        val state = (parse as MonitorStateParse.Valid).state
-        assertEquals(tripIds, state.description.tripIds)
-        assertEquals(start, state.departure?.epochMs)
+        val valid = parse as MonitorStateParse.Valid
+        assertEquals(tripIds, valid.description.tripIds)
+        assertEquals(start, valid.departure?.epochMs)
     }
 
     @Test
@@ -45,16 +47,16 @@ class TripMonitorStateTest {
 
     @Test
     fun unknownStartDateBecomesNullDeparture() {
-        val parse = parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION, tripIds, startDateMillis = 0L, endDateMillis = end)
+        val parse = parseMonitorState(version, tripIds, startDateMillis = 0L, endDateMillis = end)
         assertTrue(parse is MonitorStateParse.Valid)
-        assertNull((parse as MonitorStateParse.Valid).state.departure)
+        assertNull((parse as MonitorStateParse.Valid).departure)
     }
 
     @Test
     fun emptyTripIdsIsMissing() {
         assertEquals(
             MonitorStateParse.Missing,
-            parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION, tripIds = emptyList(), startDateMillis = start, endDateMillis = end)
+            parseMonitorState(version, tripIds = emptyList(), startDateMillis = start, endDateMillis = end)
         )
     }
 
@@ -62,7 +64,7 @@ class TripMonitorStateTest {
     fun nullTripIdsIsMissing() {
         assertEquals(
             MonitorStateParse.Missing,
-            parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION, tripIds = null, startDateMillis = start, endDateMillis = end)
+            parseMonitorState(version, tripIds = null, startDateMillis = start, endDateMillis = end)
         )
     }
 
@@ -70,7 +72,7 @@ class TripMonitorStateTest {
     fun absentEndDateIsMissing() {
         assertEquals(
             MonitorStateParse.Missing,
-            parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION, tripIds, startDateMillis = start, endDateMillis = 0L)
+            parseMonitorState(version, tripIds, startDateMillis = start, endDateMillis = 0L)
         )
     }
 
@@ -79,7 +81,7 @@ class TripMonitorStateTest {
         // A bundle from a future build we can't interpret: stop silently rather than misfire.
         assertEquals(
             MonitorStateParse.Incompatible,
-            parseMonitorState(TripPlanMonitor.MONITOR_STATE_VERSION + 1, tripIds, start, end)
+            parseMonitorState(version + 1, tripIds, start, end)
         )
     }
 }

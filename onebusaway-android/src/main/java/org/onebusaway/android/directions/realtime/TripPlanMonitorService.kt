@@ -81,7 +81,7 @@ class TripPlanMonitorService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val extras = intent?.extras
         val target = extras?.let { readNotificationTarget(it) }
-        val parse = extras?.let { parseMonitorState(it) }
+        val parse = extras?.let { readMonitorState(it) }
         if (extras == null || target == null || parse !is MonitorStateParse.Valid) {
             // Stop without notifying on any unusable state. Incompatible = a pending alarm / redelivered
             // intent written by a newer monitor format that survived an app update; we can't interpret it,
@@ -94,7 +94,6 @@ class TripPlanMonitorService : Service() {
             stopSelf()
             return Service.START_NOT_STICKY
         }
-        val state = parse.state
 
         // Must promote to the foreground promptly after startForegroundService(); do it synchronously.
         startForegroundMonitoring(target)
@@ -102,7 +101,7 @@ class TripPlanMonitorService : Service() {
         // A fresh start supersedes any in-flight loop (re-selected option / redelivered intent).
         monitorJob?.cancel()
         monitorJob = serviceScope.launch {
-            runMonitorLoop(extras, state.description, target, state.departure)
+            runMonitorLoop(extras, parse.description, target, parse.departure)
         }
 
         // Redeliver the monitoring state if the service is killed and restarted mid-window.
@@ -288,7 +287,7 @@ class TripPlanMonitorService : Service() {
     // -- Monitoring state (read back from the intent extras) ------------------------------------
 
     /** Pull the persisted primitives out of the [Bundle] and validate them (see [parseMonitorState]). */
-    private fun parseMonitorState(extras: Bundle): MonitorStateParse = parseMonitorState(
+    private fun readMonitorState(extras: Bundle): MonitorStateParse = parseMonitorState(
         version = if (extras.containsKey(TripPlanMonitor.EXTRA_MONITOR_VERSION)) {
             extras.getInt(TripPlanMonitor.EXTRA_MONITOR_VERSION)
         } else {

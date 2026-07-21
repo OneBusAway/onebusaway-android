@@ -72,9 +72,12 @@ spotless {
         // this move away from hand-formatting removes. Disabled so formatting stays fully automatic.
         "ktlint_standard_max-line-length" to "disabled"
     )
+    // `.claude/**` holds Claude Code's gitignored scratch — notably nested git worktrees whose (possibly
+    // pre-reformat) sources would otherwise be globbed in and fail the format gate. It never ships and
+    // doesn't exist on CI, so exclude it everywhere alongside generated `build/` output.
     kotlin {
         target("**/*.kt")
-        targetExclude("**/build/**")
+        targetExclude("**/build/**", "**/.claude/**")
         ktlint(ktlintVersion).editorConfigOverride(ktlintConfig)
     }
     kotlinGradle {
@@ -82,11 +85,12 @@ spotless {
         // brand-flavor files under onebusaway-android/flavors/*.gradle are *.gradle, not *.gradle.kts,
         // so they're intentionally not matched here.
         target("**/*.gradle.kts")
+        targetExclude("**/.claude/**")
         ktlint(ktlintVersion).editorConfigOverride(ktlintConfig)
     }
     java {
         target("**/*.java")
-        targetExclude("**/build/**")
+        targetExclude("**/build/**", "**/.claude/**")
         googleJavaFormat()
     }
 }

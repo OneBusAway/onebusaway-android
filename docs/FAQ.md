@@ -28,7 +28,7 @@ Please be sure to tap on the star next to the stop name, not the route name (see
 
 ### Why does OneBusAway Android need photo and other permissions?
 
-See the [Permissions explained](PERMISSIONS.md) page.
+See the [Permissions explained](../PRIVACY.md) page.
 
 ### I can see bus stops on the map, but the map itself is gray with no street names.  What's going on?
 

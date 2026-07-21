@@ -17,17 +17,17 @@ OneBusAway for Android provides:
 5. The ability to search for nearby stops or routes
 6. Real-time multimodal trip planning, using real-time transit and bike share information (requires a regional [OpenTripPlanner](https://www.opentripplanner.org/) server)
 7. Bike share map layer, which includes real-time availability information for floating bikes and bike rack capacity (requires a regional [OpenTripPlanner](https://www.opentripplanner.org/) server)
-8. Issue reporting to any Open311-compliant issue management system (see [this page](ISSUE_REPORTING.md) for details)
+8. Issue reporting to any Open311-compliant issue management system (see [this page](docs/ISSUE_REPORTING.md) for details)
 
 OneBusAway for Android automatically keeps track of your most used stops and routes, and allows you to put shortcuts on your phone's home screen for any stop or route you choose.
 
 ## Alpha and Beta Testing
 
-Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](https://github.com/OneBusAway/onebusaway-android/blob/main/BETA_TESTING.md) for details.
+Get early access to new OneBusAway Android versions, and help us squash bugs! See our [Testing Guide](docs/BETA_TESTING.md) for details.
 
 ## Build Setup
 
-Want to build the project yourself and test some changes?  See our [build documentation](BUILD.md).
+Want to build the project yourself and test some changes?  See our [build documentation](docs/BUILD.md).
 
 ## Contributing
 
@@ -35,18 +35,18 @@ We welcome contributions to the project! Please see our [Contributing Guide](htt
 
 ## System Architecture
 
-Curious what servers power certain features in OneBusAway Android?  Check out the [System Architecture page](SYSTEM_ARCHITECTURE.md).
+Curious what servers power certain features in OneBusAway Android?  Check out the [System Architecture page](docs/SYSTEM_ARCHITECTURE.md).
 
 ## Deploying OneBusAway Android in Your City
 
 There are two ways to deploy OneBusAway Android in your city:
 
 1. **Join the OneBusAway [multi-region project](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region)** - The easiest way to get started - simply set up your own OneBusAway server with your own transit data, and get added to the OneBusAway apps!  See [this page](https://github.com/OneBusAway/onebusaway/wiki/Multi-Region) for details.
-2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play based on the OneBusAway Android source code. See [rebranding page](https://github.com/OneBusAway/onebusaway-android/blob/main/REBRANDING.md) for details.
+2. **Deploy a rebranded version of OneBusAway Android as your own app on Google Play** - Requires a bit more maintenance, but it allows you to set up your own app on Google Play based on the OneBusAway Android source code. See [rebranding page](docs/REBRANDING.md) for details.
 
 ## Testing Your Own OneBusAway/OpenTripPlanner servers
 
-Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and/or [OpenTripPlanner](https://www.opentripplanner.org/) server?  You can test both in this app without compiling any Android code.  Just download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot), and see our [Custom Server Setup Guide](CUSTOM_SERVERS.md) for details.
+Did you just set up your own [OneBusAway](https://github.com/OneBusAway/onebusaway-application-modules/wiki) and/or [OpenTripPlanner](https://www.opentripplanner.org/) server?  You can test both in this app without compiling any Android code.  Just download the app from [Google Play](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot), and see our [Custom Server Setup Guide](docs/CUSTOM_SERVERS.md) for details.
 
 ## Permissions
 
@@ -54,7 +54,7 @@ In order to support certain features in OneBusAway, we need to request various p
 
 ## Troubleshooting
 
-Things not going well building the project?  See our [Troubleshooting](TROUBLESHOOTING.md) section.  If you're a user of the app, check out our [FAQ](FAQ.md).
+Things not going well building the project?  See our [Troubleshooting](docs/TROUBLESHOOTING.md) section.  If you're a user of the app, check out our [FAQ](docs/FAQ.md).
 
 ## OneBusAway Project
 

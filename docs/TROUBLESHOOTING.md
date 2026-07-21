@@ -17,7 +17,7 @@ Open the Android SDK Manager and make sure the following are installed:
 	* Android SDK Tools
 	* Android SDK Platform-tools
 	* Android SDK Build-tools
-* Under the currently used SDK version (see `compileSdkVersion` in [`onebusaway-android/build.gradle`](onebusaway-android/build.gradle))
+* Under the currently used SDK version (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts))
 	* SDK Platform
 	* Google APIs
 * Extras

@@ -292,7 +292,7 @@ The app supports multiple OBA server deployments. Region configuration:
 
 ## White-Label / Branding
 
-The app supports white-labeling via Gradle product flavors. See `REBRANDING.md` for full documentation.
+The app supports white-labeling via Gradle product flavors. See `docs/REBRANDING.md` for full documentation.
 
 ### Branded String Pattern
 Strings containing the app name use `%1$s` placeholders that are replaced at runtime:

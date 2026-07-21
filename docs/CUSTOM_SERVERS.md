@@ -20,7 +20,7 @@ server.  After entering the server name and path, hit the back button twice to e
 
 We strongly encourage you to configure your server to use SSL for secure communication via HTTPS - this is required for launching as a new region in the Regions API due to requirements in Android and iOS.
 
-If you want to test a server without SSL enabled, you'll need to build your own version of this app with an edited [`onebusaway-android/src/main/res/xml/network_security_config.xml`](onebusaway-android/src/main/res/xml/network_security_config.xml) file to add an exception for your server. This is an Android restriction for plain text HTTP communication - see https://developer.android.com/training/articles/security-config for details.
+If you want to test a server without SSL enabled, you'll need to build your own version of this app with an edited [`onebusaway-android/src/main/res/xml/network_security_config.xml`](../onebusaway-android/src/main/res/xml/network_security_config.xml) file to add an exception for your server. This is an Android restriction for plain text HTTP communication - see https://developer.android.com/training/articles/security-config for details.
 
 ### OneBusAway API Server
 

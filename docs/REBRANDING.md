@@ -190,7 +190,7 @@ Firebase provides analytics and crash reporting. To set up Firebase for your bra
 
 #### Adding Your App to google-services.json
 
-Open `onebusaway-android/google-services.json` and append the following object to the existing `client` array, leaving `project_info` and the other entries in that array untouched:
+Open `onebusaway-android/google-services.json` and append the following object to the existing `client` array, leaving the top-level `project_info` and the existing `client` entries untouched:
 
 ```json
 {

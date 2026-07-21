@@ -39,6 +39,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -505,7 +506,9 @@ class MapViewModel @Inject constructor(
      */
     fun focusItineraryLeg(points: List<GeoPoint>) {
         if (!directionsActive || points.isEmpty()) return
-        mapHost.frameItineraryLeg(points)
+        // A short walking leg (crossing a street) frames to a block-level floor rather than the default
+        // minimum, so the user doesn't have to zoom in further to read it.
+        mapHost.frameItineraryLeg(points, WALK_LEG_MIN_FRAMING_SPAN_DEG)
     }
 
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */

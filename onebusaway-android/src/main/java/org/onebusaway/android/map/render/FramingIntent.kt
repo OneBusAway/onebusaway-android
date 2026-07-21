@@ -49,11 +49,15 @@ sealed interface FramingIntent {
      * Fit the bounds enclosing an explicit set of [points] with the default padding — the arrivals-row
      * tap fitting a route's live vehicle together with its originating stop, so the map frames the
      * relationship between the two. Self-contained (unlike [Route]/[Region], it carries its own points),
-     * so a replay to a re-created adapter just re-fits the same box. The adapter expands a degenerate box
-     * (a vehicle sitting on its stop) to a minimum span so it doesn't zoom to the rooftops
-     * (see [framingCorners]).
+     * so a replay to a re-created adapter just re-fits the same box. The adapter expands a box smaller
+     * than [minSpanDeg] up to that span so a tiny/degenerate box (a vehicle sitting on its stop) doesn't
+     * zoom to the rooftops (see [framingCorners]); a tapped walking leg passes a tighter block-level
+     * floor ([WALK_LEG_MIN_FRAMING_SPAN_DEG]) so a short hop frames closer in.
      */
-    data class Points(val points: List<GeoPoint>) : FramingIntent
+    data class Points(
+        val points: List<GeoPoint>,
+        val minSpanDeg: Double = MIN_FRAMING_SPAN_DEG
+    ) : FramingIntent
 }
 
 /** Default breathing room between route/itinerary bounds and the unobstructed map viewport. */
@@ -61,6 +65,14 @@ const val DEFAULT_FRAMING_PADDING_DP: Float = 20.0f
 
 /** The smallest lat/lon span a [FramingIntent.Points] box is fit to, so near-coincident points don't over-zoom. */
 const val MIN_FRAMING_SPAN_DEG: Double = 0.004
+
+/**
+ * The block-level minimum span used when framing a tapped walking leg — so a short hop (e.g. crossing a
+ * street) frames closer in than the default [MIN_FRAMING_SPAN_DEG] rather than making the user zoom in
+ * further. ~0.0014° of latitude ≈ 500 ft; longitude degrees run shorter at these latitudes, so the box
+ * is a touch narrower than tall, matching the existing degree-uniform convention (see [framingCorners]).
+ */
+const val WALK_LEG_MIN_FRAMING_SPAN_DEG: Double = 0.0014
 
 /**
  * Padding (dp) between a [FramingIntent.Points] box and the map edges — breathing room around the fit

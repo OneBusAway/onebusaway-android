@@ -235,9 +235,6 @@ fun ListPreferenceItem(
  * A free-text row (replaces `EditTextPreference`). Tapping opens a dialog seeded with [currentValue];
  * confirming calls [onValueChange] with the trimmed text and keeps the dialog open if it returns
  * `false` (preserving the legacy `onPreferenceChange` reject-on-invalid contract, e.g. URL validation).
- *
- * [maxLength], when non-null, caps what the field will accept — for values a server bounds, so the
- * limit is felt while typing rather than surfacing later as a rejected request.
  */
 @Composable
 fun EditTextPreferenceItem(
@@ -248,8 +245,7 @@ fun EditTextPreferenceItem(
     onValueChange: (String) -> Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    keyboardType: KeyboardType = KeyboardType.Uri,
-    maxLength: Int? = null
+    keyboardType: KeyboardType = KeyboardType.Uri
 ) {
     var showDialog by remember { mutableStateOf(false) }
     ClickPreferenceItem(
@@ -267,7 +263,7 @@ fun EditTextPreferenceItem(
             text = {
                 OutlinedTextField(
                     value = text,
-                    onValueChange = { text = if (maxLength == null) it else it.take(maxLength) },
+                    onValueChange = { text = it },
                     singleLine = true,
                     placeholder = { Text(hint) },
                     keyboardOptions = KeyboardOptions(keyboardType = keyboardType)

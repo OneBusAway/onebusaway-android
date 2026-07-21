@@ -35,6 +35,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.donations.DonationsManager
 import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.push.PUSH_DESCRIPTION_MAX_LENGTH
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
@@ -117,11 +118,12 @@ class AdvancedSettingsViewModel @Inject constructor(
      * device to an ordinary registration — the server rejects a test-device registration without a
      * name, so `PushRegistrationManager` declines to send one rather than POST a guaranteed failure.
      * Always accepted (returns true): any non-blank text is a valid name.
+     *
+     * Normalized to the server's [PUSH_DESCRIPTION_MAX_LENGTH] cap here, at the one boundary where this
+     * value enters persistence, so what is stored is by construction a legal `description` and the name
+     * shown in settings is the name that goes on the wire.
      */
-    fun onPushTestDeviceNameChanged(value: String): Boolean {
-        prefs.setString(R.string.preference_key_push_test_device_name, value.trim().ifEmpty { null })
-        return true
-    }
+    fun onPushTestDeviceNameChanged(value: String): Boolean = applyPushTestDeviceName(value, prefs)
 
     /**
      * Apply an edit to the map stop LRU cache size. Returns true if the input was a valid in-range
@@ -227,6 +229,23 @@ internal suspend fun applyExperimentalRegionsToggle(
 internal fun applyMapStopCacheSize(text: String, prefs: PreferencesRepository): Boolean {
     val size = parseStopCacheSize(text) ?: return false
     prefs.setInt(R.string.preference_key_map_stop_cache_size, size)
+    return true
+}
+
+/**
+ * The test-device-name edit's domain effect, split from
+ * [AdvancedSettingsViewModel.onPushTestDeviceNameChanged] so it's free of Android dependencies and
+ * unit-tested directly (see AdvancedSettingsViewModelTest).
+ *
+ * This is the one boundary where the name enters persistence, so it is where the value is normalized to
+ * OBACloud's [PUSH_DESCRIPTION_MAX_LENGTH] cap: what is stored is by construction a legal `description`,
+ * which keeps the name shown in settings identical to the one sent on the wire. Blank clears the slot,
+ * downgrading the device to an ordinary registration. Always accepted — any non-blank text is a valid
+ * name, so unlike [applyMapStopCacheSize] there is no reject-on-invalid case.
+ */
+internal fun applyPushTestDeviceName(value: String, prefs: PreferencesRepository): Boolean {
+    val name = value.trim().take(PUSH_DESCRIPTION_MAX_LENGTH).ifEmpty { null }
+    prefs.setString(R.string.preference_key_push_test_device_name, name)
     return true
 }
 

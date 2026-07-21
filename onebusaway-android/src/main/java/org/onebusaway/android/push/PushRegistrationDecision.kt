@@ -20,24 +20,32 @@ import kotlin.time.Duration.Companion.hours
 
 /**
  * A single push registration on record with OBACloud: the region it targets, the FCM token, and the
- * metadata sent alongside it. All fields participate in equality, so a change to *any* of them (a
- * rotated token, a moved region, a new device locale, a flipped test flag) is a change that must be
- * pushed to the server. Pure data — no Android dependencies — so [decidePushRegistration] is
- * JVM-unit-testable.
+ * metadata sent alongside it. All properties participate in equality, so a change to *any* of them (a
+ * rotated token, a moved region, a new device locale, a renamed or cleared test-device label) is a
+ * change that must be pushed to the server. Pure data — no Android dependencies — so
+ * [decidePushRegistration] is JVM-unit-testable.
  */
 data class PushRegistration(
     val regionId: Long,
     val sidecarBaseUrl: String,
     val token: String,
     val locale: String,
-    val testDevice: Boolean,
     /**
      * The admin-facing label sent alongside a test-device registration (null for an ordinary one). It
      * participates in equality so that renaming the device re-POSTs — and because it can only change
      * when the rider edits the setting, it never churns on its own.
      */
     val description: String?
-)
+) {
+
+    /**
+     * Whether this registers as a test device. Derived rather than stored: the server requires a
+     * `description` exactly when `test_device=true` (422 otherwise), so carrying the flag separately
+     * would admit a pair — flag set, no name — that can only ever be rejected. Deriving it makes that
+     * rule hold by construction, at the type level, instead of by agreement between call sites.
+     */
+    val testDevice: Boolean get() = description != null
+}
 
 /**
  * Re-POST an otherwise-unchanged registration this often, so the server's `last_seen_at` is refreshed

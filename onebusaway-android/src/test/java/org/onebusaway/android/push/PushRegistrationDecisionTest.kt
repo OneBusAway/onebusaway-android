@@ -19,6 +19,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -33,7 +34,6 @@ class PushRegistrationDecisionTest {
         sidecarBaseUrl = "https://sidecar.example.org",
         token = "token-a",
         locale = "en-US",
-        testDevice = false,
         description = null
     )
 
@@ -74,7 +74,9 @@ class PushRegistrationDecisionTest {
 
     @Test
     fun `a test-device flag change re-posts on the same token and region`() {
-        val target = base.copy(testDevice = true)
+        // Naming the device is what promotes it: testDevice derives from the description.
+        val target = base.copy(description = "Sam's Pixel")
+        assertTrue("naming the device must promote it to a test device", target.testDevice)
         assertEquals(PushRegistrationAction.Register(target), decide(target = target, last = base))
     }
 

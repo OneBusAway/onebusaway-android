@@ -26,6 +26,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.push.PUSH_DESCRIPTION_MAX_LENGTH
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionState
 import org.onebusaway.android.region.RegionStatus
@@ -120,6 +121,30 @@ class AdvancedSettingsViewModelTest {
         assertFalse("an out-of-range size is rejected", applyMapStopCacheSize("99999", prefs))
         assertFalse("a non-numeric size is rejected", applyMapStopCacheSize("abc", prefs))
         assertEquals("nothing was persisted", -1, prefs.getInt(mapStopCacheSize, -1))
+    }
+
+    private val pushTestDeviceName = R.string.preference_key_push_test_device_name
+
+    @Test
+    fun `a test device name is trimmed and stored, and blank clears it`() {
+        val prefs = FakePreferencesRepository()
+
+        assertTrue("any non-blank name is accepted", applyPushTestDeviceName("  Sam's Pixel  ", prefs))
+        assertEquals("Sam's Pixel", prefs.getString(pushTestDeviceName, null))
+
+        assertTrue("blank is accepted too", applyPushTestDeviceName("   ", prefs))
+        assertNull("blank clears the slot, downgrading to an ordinary device", prefs.getString(pushTestDeviceName, null))
+    }
+
+    @Test
+    fun `a test device name is capped at the server's limit before it is stored`() {
+        val prefs = FakePreferencesRepository()
+
+        // Normalizing here — the only boundary where this value enters persistence — is what keeps the
+        // stored name a legal `description`, so settings shows exactly what goes on the wire.
+        applyPushTestDeviceName("N".repeat(300), prefs)
+
+        assertEquals("N".repeat(PUSH_DESCRIPTION_MAX_LENGTH), prefs.getString(pushTestDeviceName, null))
     }
 
     @Test

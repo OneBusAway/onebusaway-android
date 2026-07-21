@@ -303,9 +303,10 @@ class PushRegistrationManagerTest {
     @Test
     fun `an over-long test device name is truncated to the server's limit`() = runTest {
         val f = Fixture(this)
-        // The input field bounds this too, but a value stored before that bound existed must still not
-        // reach the server: OBACloud caps the description at 255 chars and 422s anything longer, and a
-        // rejected registration persists nothing, so the doomed POST would repeat on every foreground.
+        // The settings write boundary caps this, so an over-long value can only arrive by writing the
+        // pref directly (as here). Guard it at the wire anyway: OBACloud 422s a description over 255
+        // chars, and a rejected registration persists nothing, so the doomed POST would repeat on
+        // every foreground.
         f.prefs.setString(R.string.preference_key_push_test_device_name, "N".repeat(300))
         f.setToken("T1")
         f.sync()
@@ -450,7 +451,7 @@ class PushRegistrationManagerTest {
             notificationsEnabled = { notificationsEnabled }
         )
 
-        fun setToken(token: String?) = prefs.setString(R.string.firebase_messaging_token, token)
+        fun setToken(token: String) = prefs.setString(R.string.firebase_messaging_token, token)
 
         /** Fires the reconcile trigger and drains it — the manager runs sync() off resync()'s launch. */
         fun sync() {

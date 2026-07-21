@@ -20,6 +20,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import org.onebusaway.android.app.di.PushRegistrationEntryPoint
 
@@ -43,9 +44,14 @@ internal fun rememberNotificationPermissionRequest(): () -> Unit {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { PushRegistrationEntryPoint.get(context).resync() }
-    return {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    // Remembered so the returned action keeps a stable identity across recompositions — callers pass it
+    // into other composables (see TripDestinations), which could not skip if it were a fresh lambda
+    // every time.
+    return remember(launcher) {
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
         }
     }
 }

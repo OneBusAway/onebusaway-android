@@ -197,12 +197,13 @@ class PushRegistrationManager internal constructor(
      * The test-device flag is honoured only once the rider has named the device: the server rejects a
      * `test_device=true` registration with a blank `description` (422), so an unnamed device registers
      * as an ordinary one rather than POSTing a request guaranteed to fail. The iOS client gates its
-     * "Test Device Name" the same way. Deriving `testDevice` from the name rather than tracking it
-     * separately makes that rule hold by construction.
+     * "Test Device Name" the same way — and [PushRegistration.testDevice] derives the flag from the
+     * name, so that rule holds by construction.
      *
-     * The name is truncated to [PUSH_DESCRIPTION_MAX_LENGTH] here as well as being bounded at the input
-     * field, so a value that predates that bound (or arrives from anywhere else) still can't produce a
-     * request the server is guaranteed to reject.
+     * The name is capped when it is written (`AdvancedSettingsViewModel.onPushTestDeviceNameChanged`),
+     * which is what keeps the stored value legal; the [PUSH_DESCRIPTION_MAX_LENGTH] clamp here is a
+     * cheap guard on the wire boundary itself, so no path can put an over-long `description` on a
+     * request the server would reject outright.
      */
     private fun buildTarget(): PushRegistration? {
         val region = regionRepository.region.value ?: return null
@@ -218,7 +219,6 @@ class PushRegistrationManager internal constructor(
             sidecarBaseUrl = base,
             token = token,
             locale = Locale.getDefault().toLanguageTag(),
-            testDevice = description != null,
             description = description
         )
     }

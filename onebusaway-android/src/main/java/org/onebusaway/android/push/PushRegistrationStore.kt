@@ -61,7 +61,6 @@ class PushRegistrationStore internal constructor(
             sidecarBaseUrl = base,
             token = token,
             locale = prefs.getString(KEY_LOCALE, null) ?: "",
-            testDevice = prefs.getBoolean(KEY_TEST_DEVICE, false),
             description = prefs.getString(KEY_DESCRIPTION, null)
         )
     }
@@ -81,7 +80,6 @@ class PushRegistrationStore internal constructor(
         prefs.setLong(KEY_REGION_ID, registration.regionId)
         prefs.setString(KEY_BASE, registration.sidecarBaseUrl)
         prefs.setString(KEY_LOCALE, registration.locale)
-        prefs.setBoolean(KEY_TEST_DEVICE, registration.testDevice)
         prefs.setString(KEY_DESCRIPTION, registration.description)
         prefs.setLong(KEY_SENT_AT, now().epochMs)
         // The commit sentinel, written last.
@@ -125,7 +123,6 @@ class PushRegistrationStore internal constructor(
             token = token,
             // Unused when deleting — a DELETE is addressed by region + host + token only.
             locale = "",
-            testDevice = false,
             description = null
         )
     }
@@ -140,7 +137,6 @@ class PushRegistrationStore internal constructor(
         const val KEY_BASE = "push_reg_base"
         const val KEY_TOKEN = "push_reg_token"
         const val KEY_LOCALE = "push_reg_locale"
-        const val KEY_TEST_DEVICE = "push_reg_test_device"
         const val KEY_DESCRIPTION = "push_reg_description"
         const val KEY_SENT_AT = "push_reg_sent_at"
 

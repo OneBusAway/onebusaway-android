@@ -301,6 +301,21 @@ class PushRegistrationManagerTest {
     }
 
     @Test
+    fun `an over-long test device name is truncated to the server's limit`() = runTest {
+        val f = Fixture(this)
+        // The input field bounds this too, but a value stored before that bound existed must still not
+        // reach the server: OBACloud caps the description at 255 chars and 422s anything longer, and a
+        // rejected registration persists nothing, so the doomed POST would repeat on every foreground.
+        f.prefs.setString(R.string.preference_key_push_test_device_name, "N".repeat(300))
+        f.setToken("T1")
+        f.sync()
+
+        val call = f.service.registerCalls.single()
+        assertEquals(true, call.testDevice)
+        assertEquals("N".repeat(PUSH_DESCRIPTION_MAX_LENGTH), call.description)
+    }
+
+    @Test
     fun `renaming the test device re-posts the new name without a delete`() = runTest {
         val f = Fixture(this).registered("T1")
         assertEquals(DEVICE_DESCRIPTION, f.service.registerCalls.single().description)

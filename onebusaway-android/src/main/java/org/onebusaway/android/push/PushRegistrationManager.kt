@@ -199,6 +199,10 @@ class PushRegistrationManager internal constructor(
      * as an ordinary one rather than POSTing a request guaranteed to fail. The iOS client gates its
      * "Test Device Name" the same way. Deriving `testDevice` from the name rather than tracking it
      * separately makes that rule hold by construction.
+     *
+     * The name is truncated to [PUSH_DESCRIPTION_MAX_LENGTH] here as well as being bounded at the input
+     * field, so a value that predates that bound (or arrives from anywhere else) still can't produce a
+     * request the server is guaranteed to reject.
      */
     private fun buildTarget(): PushRegistration? {
         val region = regionRepository.region.value ?: return null
@@ -206,6 +210,7 @@ class PushRegistrationManager internal constructor(
         val token = firebaseMessagingManager.userPushId().takeIf { it.isNotEmpty() } ?: return null
         val description = prefs.getString(R.string.preference_key_push_test_device_name, null)
             ?.trim()
+            ?.take(PUSH_DESCRIPTION_MAX_LENGTH)
             ?.takeIf { it.isNotEmpty() }
             ?.takeIf { prefs.getBoolean(R.string.preference_key_push_test_device, false) }
         return PushRegistration(

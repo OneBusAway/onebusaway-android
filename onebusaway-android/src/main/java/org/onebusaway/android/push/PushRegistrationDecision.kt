@@ -48,6 +48,14 @@ data class PushRegistration(
 val PUSH_REFRESH_INTERVAL: Duration = 24.hours
 
 /**
+ * The server's cap on a test device's `description` (OBACloud's push-notifications documentation:
+ * "Free text ≤255 chars identifying the device to admins"). Enforced client-side so a long name is
+ * truncated rather than POSTed and rejected — a `description` that violates this is a 422, and since a
+ * failed registration persists nothing, the doomed request would otherwise repeat on every foreground.
+ */
+const val PUSH_DESCRIPTION_MAX_LENGTH = 255
+
+/**
  * True when [this] and [other] address the same server row — the region, host, and token a DELETE (or an
  * upsert POST) targets. Locale and test-device aren't part of the row's identity, so they don't count.
  */

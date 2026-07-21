@@ -50,12 +50,14 @@ interface PushRegistrationWebService {
      * [testDevice] is true, rejecting the call otherwise with
      * `422 {"error":"Unable to register device","messages":["Description can't be blank"]}`. Pass null
      * for an ordinary registration and Retrofit omits the field entirely — deliberate, so an ordinary
-     * rider's device model is never sent. NOTE: this requirement is absent from the #1957 contract
-     * table; it was established against the deployed server (a `test_device=true` POST without it 422s,
-     * with it 204s, while `test_device=false` 204s either way). The field's *purpose* — labelling rows
-     * in the "Test users only" audience so a human can tell devices apart — is inferred from its name
-     * and that gate, so the exact value we send is a judgement call awaiting confirmation from the
-     * OBACloud maintainers.
+     * rider's device model is never sent.
+     *
+     * OBACloud's push-notifications documentation now specifies this field, confirming the behaviour
+     * this client was originally built against by probing the deployed server: free text "≤255 chars
+     * identifying the device to admins" (e.g. `"Aaron's iPhone 17"`), "server-enforced when
+     * `test_device=true` (422 if blank)", and cleared server-side when a device is demoted to
+     * `test_device=false`. The rider supplies the value, and it is capped at
+     * `PUSH_DESCRIPTION_MAX_LENGTH` before it reaches here.
      */
     @FormUrlEncoded
     @POST
@@ -71,8 +73,9 @@ interface PushRegistrationWebService {
     /**
      * Unregisters this device's push [token] from the region (when the rider opts out of
      * notifications). DELETE to `…/regions/{id}/push_registrations` with the token as a query param
-     * (issue #1957). The contract leaves body-vs-query unstated; a query param avoids sending a body on
-     * a DELETE, which some HTTP stacks/proxies drop, and a Rails `params` backend reads it either way.
+     * (issue #1957) — the form OBACloud's push-notifications documentation specifies:
+     * `DELETE /api/v2/regions/{region_id}/push_registrations?token={token}`. It also documents a `404`
+     * (token never registered) as equivalent to success, which [PushRegistrationClient] treats as such.
      */
     @HTTP(method = "DELETE")
     suspend fun unregister(@Url url: String, @Query("token") token: String): Response<Unit>

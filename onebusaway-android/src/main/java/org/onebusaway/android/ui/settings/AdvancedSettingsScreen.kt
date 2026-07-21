@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 import org.onebusaway.android.map.StopsMapController
+import org.onebusaway.android.push.PUSH_DESCRIPTION_MAX_LENGTH
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.settings.components.ClickPreferenceItem
@@ -203,7 +204,8 @@ fun AdvancedSettingsScreen(
                     currentValue = state.pushTestDeviceName,
                     hint = stringResource(R.string.preferences_push_test_device_name_title),
                     onValueChange = onPushTestDeviceName,
-                    keyboardType = KeyboardType.Text
+                    keyboardType = KeyboardType.Text,
+                    maxLength = PUSH_DESCRIPTION_MAX_LENGTH
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_map_stop_cache_size_title),

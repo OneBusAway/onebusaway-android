@@ -35,7 +35,7 @@ playPublisher = "4.0.0"
 # google-java-format (the handful of *.java files). See root build.gradle.kts's spotless {} block
 # and .editorconfig (ktlint_code_style = android_studio). ktlint's version is pinned separately so
 # formatting output is reproducible across machines regardless of Spotless's bundled default.
-spotless = "7.0.2"
+spotless = "8.8.0"
 ktlint = "1.7.0"
 # Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
 # the :lint-rules module.

@@ -154,7 +154,7 @@ fun applyFramingIntent(
         )
 
         is FramingIntent.Points -> {
-            val (sw, ne) = framingCorners(intent.points) ?: return
+            val (sw, ne) = framingCorners(intent.points, intent.minSpanDeg) ?: return
             val bounds = LatLngBounds(LatLng(sw.latitude, sw.longitude), LatLng(ne.latitude, ne.longitude))
             // An ETA tap emits the padding update and this framing together with no ordering guarantee, so
             // fold the current insets in here (see animateBounds) or the vehicle+stop pair lands under the

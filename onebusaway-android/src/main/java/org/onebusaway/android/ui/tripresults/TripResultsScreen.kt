@@ -393,13 +393,12 @@ private fun maybeStartTripUpdates(
 /**
  * One itinerary leg, as a card. Tapping the card **body**:
  *  - a transit leg highlights its route on the map (the whole route + the traveled segment thick); its
- *    two sub-items are **Board** and **Alight**, and tapping one reveals that stop's live ETA strip
- *    inline ([stopEtaStrip]) — pills wired like the arrivals drawer.
+ *    two sub-items are **Board** and **Alight**; the Board stop shows its live ETA strip inline
+ *    ([stopEtaStrip]) — pills wired like the arrivals drawer. These are **always shown**.
  *  - a walk/other leg frames the leg (falling back to its representative point when it has no polyline);
- *    its sub-items are the turn-by-turn steps, each recentring the map on its own point.
- *
- * A distinct **expand button** reveals the sub-items. So the body moves the map while the button only
- * toggles the drawer — two separate targets.
+ *    its sub-items are the turn-by-turn steps, each recentring the map on its own point. These would be
+ *    mostly noise, so they stay **collapsed** behind a chevron **expand button** — tapping it only
+ *    toggles the drawer (never moves the map).
  */
 @Composable
 private fun DirectionRow(
@@ -409,17 +408,17 @@ private fun DirectionRow(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
-    // Rows are keyed by index in the LazyColumn, so switching itineraries reuses this slot for a
-    // different DirectionItem. Key the expansion state on the item so it resets on that swap instead of
-    // leaking into the new itinerary's card.
-    var expanded by remember(item) { mutableStateOf(false) }
-    // A transit leg with a resolvable route id highlights its route (and expands to Board/Alight);
+    // A transit leg with a resolvable route id highlights its route (and its Board/Alight sub-items);
     // otherwise the body frames the leg polyline, or (no geometry) recenters on the representative point.
     val routeLeg = item.routeLeg?.takeIf { it.routeId != null }
     val canFrame = item.legPoints.isNotEmpty()
     val point = item.focusPoint
-    val expandable = routeLeg != null || item.subItems.isNotEmpty()
     val bodyClickable = routeLeg != null || canFrame || point != null
+    // Only walk/other legs collapse their turn-by-turn steps behind a chevron — a transit leg's
+    // Board/Alight strips are always shown. Rows are keyed by index in the LazyColumn, so key the
+    // expansion state on the item to reset it when this slot is reused for a different itinerary's leg.
+    val collapsibleSteps = routeLeg == null && item.subItems.isNotEmpty()
+    var expanded by remember(item) { mutableStateOf(false) }
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -439,7 +438,12 @@ private fun DirectionRow(
                             else -> point?.let(onFocusPoint)
                         }
                     }
-                    .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 4.dp)
+                    .padding(
+                        start = 12.dp,
+                        top = 10.dp,
+                        bottom = 10.dp,
+                        end = if (collapsibleSteps) 4.dp else 12.dp
+                    )
             ) {
                 DirectionIcon(item.iconRes)
                 Spacer(Modifier.width(12.dp))
@@ -465,7 +469,7 @@ private fun DirectionRow(
                         )
                     }
                 }
-                if (expandable) {
+                if (collapsibleSteps) {
                     // ~1.75x the default chevron so the expand/collapse control reads clearly.
                     IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
                         Icon(
@@ -480,29 +484,28 @@ private fun DirectionRow(
                     }
                 }
             }
-            if (expanded) {
-                if (routeLeg != null) {
-                    // Board and Alight, each a tap target that zooms to its stop, followed by that stop's
-                    // live ETA strip.
-                    routeLeg.board?.let { stop ->
-                        RouteStopLabel(
-                            R.string.step_by_step_transit_get_on,
-                            stop.name,
-                            onClick = { stop.point?.let(onFocusPoint) }
-                        )
-                        stopEtaStrip(routeLeg, stop, item.legPoints)
-                    }
-                    routeLeg.alight?.let { stop ->
-                        RouteStopLabel(
-                            R.string.step_by_step_transit_get_off,
-                            stop.name,
-                            onClick = { stop.point?.let(onFocusPoint) }
-                        )
-                        stopEtaStrip(routeLeg, stop, item.legPoints)
-                    }
-                } else {
-                    item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
+            if (routeLeg != null) {
+                // A transit leg's Board and Alight are always shown — each a tap target that zooms to
+                // its stop. Only the Board stop carries a live ETA strip.
+                routeLeg.board?.let { stop ->
+                    RouteStopLabel(
+                        R.string.step_by_step_transit_get_on,
+                        stop.name,
+                        onClick = { stop.point?.let(onFocusPoint) }
+                    )
+                    stopEtaStrip(routeLeg, stop, item.legPoints)
                 }
+                routeLeg.alight?.let { stop ->
+                    RouteStopLabel(
+                        R.string.step_by_step_transit_get_off,
+                        stop.name,
+                        onClick = { stop.point?.let(onFocusPoint) }
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+            } else if (expanded) {
+                // A walk/other leg's turn-by-turn steps, revealed only when the user expands them.
+                item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
                 Spacer(Modifier.height(4.dp))
             }
         }
@@ -534,8 +537,8 @@ private fun SubDirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Uni
 
 /**
  * A transit leg's Board / Alight label: the boarding action ([actionRes] — "Get on" / "Get off") and
- * its [stopName], shown above that stop's inline ETA strip (which is always visible while the leg is
- * expanded). Its own tap target — tapping zooms the map to that stop ([onClick]).
+ * its [stopName]. The Board label is shown above that stop's inline ETA strip; the Alight label stands
+ * alone. Its own tap target — tapping zooms the map to that stop ([onClick]).
  */
 @Composable
 private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Unit) {

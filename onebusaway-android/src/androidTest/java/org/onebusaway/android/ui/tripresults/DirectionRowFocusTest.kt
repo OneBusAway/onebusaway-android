@@ -30,11 +30,11 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * Verifies the leg-card tap split in [TripResultsList]: tapping a card **body** frames the whole leg
- * (`onFocusLeg` with its polyline), falling back to the leg's point when it has no polyline; the
- * separate **expand button** only reveals the sub-steps (never moves the map); and a revealed sub-step
- * focuses its own point. Drives the real click wiring by node text / content description, not
- * coordinates.
+ * Verifies the leg-card tap wiring in [TripResultsList]: tapping a card **body** frames the whole leg
+ * (`onFocusLeg` with its polyline), falling back to the leg's point when it has no polyline. A walk/other
+ * leg's turn-by-turn steps collapse behind an **expand button** (which only reveals them, never moves the
+ * map) and tapping a revealed sub-step focuses its own point; a transit leg's Board/Alight ETA strips are
+ * always shown. Drives the real click wiring by node text / content description, not coordinates.
  */
 class DirectionRowFocusTest {
 
@@ -98,7 +98,7 @@ class DirectionRowFocusTest {
     }
 
     @Test
-    fun expandButtonRevealsSubSteps_withoutMovingTheMap_thenSubStepFocuses() {
+    fun walkLegExpandButtonRevealsSubSteps_withoutMovingTheMap_thenSubStepFocuses() {
         var framed: List<GeoPoint>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
@@ -109,7 +109,7 @@ class DirectionRowFocusTest {
             )
         }
 
-        // Sub-steps are collapsed to start.
+        // A walk/other leg's turn-by-turn steps are collapsed to start.
         composeRule.onNodeWithText(stopA.text).assertDoesNotExist()
 
         // The expand button reveals the sub-steps — and moves neither the leg frame nor a point.
@@ -201,7 +201,7 @@ class DirectionRowFocusTest {
     }
 
     @Test
-    fun expandingTransitLeg_showsBothStopEtaStrips() {
+    fun transitLeg_showsOnlyTheBoardStopEtaStrip() {
         composeRule.setContent {
             TripResultsList(
                 state = routeState,
@@ -211,14 +211,9 @@ class DirectionRowFocusTest {
 
         val boardName = boardStop.name!!
         val alightName = alightStop.name!!
-        // The strips are hidden until the leg is expanded.
-        composeRule.onNodeWithText(stripMarker(boardName)).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
-            .performClick()
-
-        // Expanding shows both the Board and Alight strips at once (no per-stop toggle).
+        // The Board strip is shown (no expand toggle); the Alight stop has no ETA strip.
         composeRule.onNodeWithText(stripMarker(boardName)).assertExists()
-        composeRule.onNodeWithText(stripMarker(alightName)).assertExists()
+        composeRule.onNodeWithText(stripMarker(alightName)).assertDoesNotExist()
     }
 
     @Test
@@ -227,9 +222,6 @@ class DirectionRowFocusTest {
         composeRule.setContent {
             TripResultsList(state = routeState, onFocusPoint = { focused = it })
         }
-
-        composeRule.onNodeWithContentDescription(context.getString(R.string.trip_plan_expand_leg))
-            .performClick()
 
         composeRule.onNodeWithText(boardStop.name!!).performClick()
         assertEquals(boardStop.point, focused)

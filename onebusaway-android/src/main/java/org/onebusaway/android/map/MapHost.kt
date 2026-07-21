@@ -39,6 +39,7 @@ import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.FramingIntent
+import org.onebusaway.android.map.render.MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.MapPadding
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
@@ -285,9 +286,10 @@ class MapHost(
 
     /**
      * Frame a single itinerary leg by fitting its polyline [points] within the map's content padding
-     * (so the leg lands in the band above the results sheet). Retained like [frameItinerary].
+     * (so the leg lands in the band above the results sheet). Retained like [frameItinerary]. A short
+     * leg is fit to at least [minSpanDeg] so it doesn't over-zoom (see [framingCorners]).
      */
-    fun frameItineraryLeg(points: List<GeoPoint>) = frame(FramingIntent.Points(points))
+    fun frameItineraryLeg(points: List<GeoPoint>, minSpanDeg: Double = MIN_FRAMING_SPAN_DEG) = frame(FramingIntent.Points(points, minSpanDeg))
 
     /**
      * Frame a degenerate directions itinerary (no route shape — start == end): center on [lat], [lon] at

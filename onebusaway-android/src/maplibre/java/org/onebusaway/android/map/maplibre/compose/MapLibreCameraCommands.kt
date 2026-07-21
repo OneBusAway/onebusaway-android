@@ -137,7 +137,7 @@ fun applyFramingIntent(intent: FramingIntent, map: MapLibreMap, renderState: Map
         )
 
         is FramingIntent.Points -> {
-            val (sw, ne) = framingCorners(intent.points) ?: return
+            val (sw, ne) = framingCorners(intent.points, intent.minSpanDeg) ?: return
             val bounds = LatLngBounds.Builder()
                 .include(LatLng(sw.latitude, sw.longitude))
                 .include(LatLng(ne.latitude, ne.longitude))

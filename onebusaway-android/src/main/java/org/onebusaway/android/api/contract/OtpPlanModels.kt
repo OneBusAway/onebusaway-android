@@ -43,12 +43,12 @@ import kotlinx.serialization.json.jsonPrimitive
 @Serializable
 data class OtpResponseDto(
     val plan: OtpTripPlanDto? = null,
-    val error: OtpErrorDto? = null,
+    val error: OtpErrorDto? = null
 )
 
 @Serializable
 data class OtpTripPlanDto(
-    val itineraries: List<OtpItineraryDto> = emptyList(),
+    val itineraries: List<OtpItineraryDto> = emptyList()
 )
 
 @Serializable
@@ -57,7 +57,7 @@ data class OtpErrorDto(
     val msg: String? = null,
     val message: String? = null,
     val noPath: Boolean = false,
-    val missing: List<String> = emptyList(),
+    val missing: List<String> = emptyList()
 )
 
 /**
@@ -85,7 +85,7 @@ internal enum class OtpErrorId(val id: Int) {
     UNDERSPECIFIED_TRIANGLE(370),
     TRIANGLE_NOT_AFFINE(371),
     TRIANGLE_OPTIMIZE_TYPE_NOT_SET(372),
-    TRIANGLE_VALUES_NOT_SET(373),
+    TRIANGLE_VALUES_NOT_SET(373)
 }
 
 /**
@@ -100,7 +100,7 @@ data class TripPlanRequest(val parameters: Map<String, String>)
 data class OtpItineraryDto(
     val duration: Double? = null,
     @Serializable(with = WireStringSerializer::class) val startTime: String? = null,
-    val legs: List<OtpLegDto> = emptyList(),
+    val legs: List<OtpLegDto> = emptyList()
 )
 
 @Serializable
@@ -127,7 +127,7 @@ data class OtpLegDto(
     val intermediateStops: List<OtpPlaceDto>? = null,
     val stop: List<OtpPlaceDto>? = null,
     val steps: List<OtpWalkStepDto> = emptyList(),
-    val legGeometry: OtpLegGeometryDto? = null,
+    val legGeometry: OtpLegGeometryDto? = null
 )
 
 @Serializable
@@ -137,7 +137,7 @@ data class OtpPlaceDto(
     val lat: Double? = null,
     val lon: Double? = null,
     val vertexType: String? = null,
-    val bikeShareId: String? = null,
+    val bikeShareId: String? = null
 )
 
 @Serializable
@@ -149,13 +149,13 @@ data class OtpWalkStepDto(
     val exit: String? = null,
     val stayOn: Boolean? = null,
     val lon: Double? = null,
-    val lat: Double? = null,
+    val lat: Double? = null
 )
 
 @Serializable
 data class OtpLegGeometryDto(
     val points: String? = null,
-    val length: Double? = null,
+    val length: Double? = null
 )
 
 /**
@@ -169,8 +169,7 @@ private object WireStringSerializer : KSerializer<String> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("WireString", PrimitiveKind.STRING)
 
-    override fun deserialize(decoder: Decoder): String =
-        (decoder as JsonDecoder).decodeJsonElement().jsonPrimitive.content
+    override fun deserialize(decoder: Decoder): String = (decoder as JsonDecoder).decodeJsonElement().jsonPrimitive.content
 
     override fun serialize(encoder: Encoder, value: String) = encoder.encodeString(value)
 }
@@ -198,12 +197,11 @@ object OtpPlanParser {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun parse(body: String): OtpResponseDto =
-        try {
-            json.decodeFromString<OtpResponseDto>(body)
-        } catch (e: SerializationException) {
-            throw IOException("Malformed OTP /plan response", e)
-        }
+    fun parse(body: String): OtpResponseDto = try {
+        json.decodeFromString<OtpResponseDto>(body)
+    } catch (e: SerializationException) {
+        throw IOException("Malformed OTP /plan response", e)
+    }
 
     /**
      * Reads [input] fully as UTF-8 and [parse]s it — the single stream→[OtpResponseDto] entry point,

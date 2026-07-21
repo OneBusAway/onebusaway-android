@@ -36,7 +36,7 @@ data class PushRegistration(
      * participates in equality so that renaming the device re-POSTs — and because it can only change
      * when the rider edits the setting, it never churns on its own.
      */
-    val description: String?,
+    val description: String?
 )
 
 /**
@@ -51,10 +51,9 @@ val PUSH_REFRESH_INTERVAL: Duration = 24.hours
  * True when [this] and [other] address the same server row — the region, host, and token a DELETE (or an
  * upsert POST) targets. Locale and test-device aren't part of the row's identity, so they don't count.
  */
-fun PushRegistration.sameEndpoint(other: PushRegistration): Boolean =
-    regionId == other.regionId &&
-        sidecarBaseUrl == other.sidecarBaseUrl &&
-        token == other.token
+fun PushRegistration.sameEndpoint(other: PushRegistration): Boolean = regionId == other.regionId &&
+    sidecarBaseUrl == other.sidecarBaseUrl &&
+    token == other.token
 
 /**
  * What the registrar should do to reconcile the [PushRegistration] currently on record with the one the
@@ -77,7 +76,7 @@ sealed interface PushRegistrationAction {
      */
     data class Reregister(
         val previous: PushRegistration,
-        val target: PushRegistration,
+        val target: PushRegistration
     ) : PushRegistrationAction
 }
 
@@ -98,7 +97,7 @@ sealed interface PushRegistrationAction {
 fun decidePushRegistration(
     target: PushRegistration?,
     last: PushRegistration?,
-    sinceLastSent: Duration?,
+    sinceLastSent: Duration?
 ): PushRegistrationAction = when {
     target == null -> if (last == null) PushRegistrationAction.NoOp else PushRegistrationAction.Unregister(last)
     last == null -> PushRegistrationAction.Register(target)

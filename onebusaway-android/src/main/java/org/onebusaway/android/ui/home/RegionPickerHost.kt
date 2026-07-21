@@ -74,7 +74,7 @@ private fun RegionLoadFailedDialog(onRetry: () -> Unit) {
         },
         dismissButton = {
             TextButton(onClick = { dismissed = true }) { Text(stringResource(R.string.dismiss)) }
-        },
+        }
     )
 }
 

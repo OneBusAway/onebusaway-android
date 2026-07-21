@@ -61,6 +61,5 @@ object MapPing {
     fun alpha(progress: Float): Float = (1f - progress).coerceIn(0f, 1f)
 
     /** Applies [alpha01] (`0..1`) to the low 24 bits of [baseColor], producing an ARGB color. */
-    fun withAlpha(baseColor: Int, alpha01: Float): Int =
-        ((alpha01.coerceIn(0f, 1f) * 255f).toInt() shl 24) or (baseColor and 0x00FFFFFF)
+    fun withAlpha(baseColor: Int, alpha01: Float): Int = ((alpha01.coerceIn(0f, 1f) * 255f).toInt() shl 24) or (baseColor and 0x00FFFFFF)
 }

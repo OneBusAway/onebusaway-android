@@ -35,7 +35,7 @@ interface ObaWebService {
      */
     @GET("api/where/route/{routeId}.json")
     suspend fun route(
-        @Path("routeId") routeId: String,
+        @Path("routeId") routeId: String
     ): ObaEnvelope<EntryWithReferences<RouteReference>>
 
     /**
@@ -45,7 +45,7 @@ interface ObaWebService {
      */
     @GET("api/where/stop/{stopId}.json")
     suspend fun stop(
-        @Path("stopId") stopId: String,
+        @Path("stopId") stopId: String
     ): ObaEnvelope<EntryWithReferences<StopReference>>
 
     /**
@@ -62,7 +62,7 @@ interface ObaWebService {
      */
     @GET("api/where/agency/{agencyId}.json")
     suspend fun agency(
-        @Path("agencyId") agencyId: String,
+        @Path("agencyId") agencyId: String
     ): ObaEnvelope<EntryWithReferences<AgencyReference>>
 
     /**
@@ -75,7 +75,7 @@ interface ObaWebService {
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("query") query: String? = null,
-        @Query("radius") radius: Int? = null,
+        @Query("radius") radius: Int? = null
     ): ObaEnvelope<ListWithReferences<RouteReference>>
 
     /**
@@ -96,7 +96,7 @@ interface ObaWebService {
         // The map fetches by bounding-box span instead of radius; both are optional and dropped when null.
         @Query("latSpan") latSpan: Double? = null,
         @Query("lonSpan") lonSpan: Double? = null,
-        @Query("maxCount") maxCount: Int? = null,
+        @Query("maxCount") maxCount: Int? = null
     ): ObaEnvelope<ListWithReferences<StopReference>>
 
     /**
@@ -108,7 +108,7 @@ interface ObaWebService {
     @GET("api/where/stops-for-route/{routeId}.json")
     suspend fun stopsForRoute(
         @Path("routeId") routeId: String,
-        @Query("includePolylines") includePolylines: Boolean = false,
+        @Query("includePolylines") includePolylines: Boolean = false
     ): ObaEnvelope<EntryWithReferences<StopsForRoute>>
 
     /**
@@ -118,7 +118,7 @@ interface ObaWebService {
      */
     @GET("api/where/trip-details/{tripId}.json")
     suspend fun tripDetails(
-        @Path("tripId") tripId: String,
+        @Path("tripId") tripId: String
     ): ObaEnvelope<EntryWithReferences<TripDetailsEntry>>
 
     /**
@@ -129,7 +129,7 @@ interface ObaWebService {
     @GET("api/where/arrivals-and-departures-for-stop/{stopId}.json")
     suspend fun arrivalsAndDeparturesForStop(
         @Path("stopId") stopId: String,
-        @Query("minutesAfter") minutesAfter: Int? = null,
+        @Query("minutesAfter") minutesAfter: Int? = null
     ): ObaEnvelope<EntryWithReferences<ArrivalsForStop>>
 
     /**
@@ -145,7 +145,7 @@ interface ObaWebService {
      */
     @GET("api/where/route-ids-for-agency/{agencyId}.json")
     suspend fun routeIdsForAgency(
-        @Path("agencyId") agencyId: String,
+        @Path("agencyId") agencyId: String
     ): ObaEnvelope<ListWithReferences<String>>
 
     /**
@@ -154,7 +154,7 @@ interface ObaWebService {
      */
     @GET("api/where/stop-ids-for-agency/{agencyId}.json")
     suspend fun stopIdsForAgency(
-        @Path("agencyId") agencyId: String,
+        @Path("agencyId") agencyId: String
     ): ObaEnvelope<ListWithReferences<String>>
 
     /**
@@ -164,7 +164,7 @@ interface ObaWebService {
      */
     @GET("api/where/trip/{tripId}.json")
     suspend fun trip(
-        @Path("tripId") tripId: String,
+        @Path("tripId") tripId: String
     ): ObaEnvelope<EntryWithReferences<TripReference>>
 
     /**
@@ -176,7 +176,7 @@ interface ObaWebService {
     suspend fun tripsForLocation(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
-        @Query("radius") radius: Int? = null,
+        @Query("radius") radius: Int? = null
     ): ObaEnvelope<ListWithReferences<TripDetailsEntry>>
 
     /**
@@ -187,7 +187,7 @@ interface ObaWebService {
     @GET("api/where/schedule-for-stop/{stopId}.json")
     suspend fun scheduleForStop(
         @Path("stopId") stopId: String,
-        @Query("date") date: String? = null,
+        @Query("date") date: String? = null
     ): ObaEnvelope<EntryWithReferences<StopSchedule>>
 
     /**
@@ -196,7 +196,7 @@ interface ObaWebService {
      */
     @GET("api/where/shape/{shapeId}.json")
     suspend fun shape(
-        @Path("shapeId") shapeId: String,
+        @Path("shapeId") shapeId: String
     ): ObaEnvelope<EntryWithReferences<ShapeEntry>>
 
     /**
@@ -208,7 +208,7 @@ interface ObaWebService {
     suspend fun tripsForRoute(
         @Path("routeId") routeId: String,
         @Query("includeStatus") includeStatus: Boolean = true,
-        @Query("includeSchedule") includeSchedule: Boolean = false,
+        @Query("includeSchedule") includeSchedule: Boolean = false
     ): ObaEnvelope<ListWithReferences<TripDetailsEntry>>
 
     /**
@@ -225,7 +225,7 @@ interface ObaWebService {
         @Query("userComment") userComment: String? = null,
         @Query("userLat") userLat: Double? = null,
         @Query("userLon") userLon: Double? = null,
-        @Query("userLocationAccuracy") userLocationAccuracy: Int? = null,
+        @Query("userLocationAccuracy") userLocationAccuracy: Int? = null
     ): ObaEnvelope<NoData>
 
     /**
@@ -246,6 +246,6 @@ interface ObaWebService {
         @Query("userLon") userLon: Double? = null,
         @Query("userLocationAccuracy") userLocationAccuracy: Int? = null,
         @Query("userOnVehicle") userOnVehicle: Boolean? = null,
-        @Query("userVehicleNumber") userVehicleNumber: String? = null,
+        @Query("userVehicleNumber") userVehicleNumber: String? = null
     ): ObaEnvelope<NoData>
 }

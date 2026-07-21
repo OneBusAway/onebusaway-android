@@ -15,9 +15,8 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.api.data.StopsForRouteRepository
-
 import javax.inject.Inject
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteMapDirection
@@ -43,7 +42,7 @@ data class RouteMap(
     val polylines: List<List<GeoPoint>>,
     val polylinesByDirection: Map<Int, List<List<GeoPoint>>>,
     val directions: List<RouteMapDirection>,
-    val initialDirectionId: Int?,
+    val initialDirectionId: Int?
 ) {
     /**
      * The shape to draw for [directionId], paired with whether it reads as directional. A selected
@@ -81,24 +80,23 @@ interface RouteMapRepository {
 }
 
 class DefaultRouteMapRepository @Inject constructor(
-    private val stopsForRoute: StopsForRouteRepository,
+    private val stopsForRoute: StopsForRouteRepository
 ) : RouteMapRepository {
 
-    override suspend fun getRoute(routeId: String, directionStopId: String?): Result<RouteMap?> =
-        stopsForRoute.routeMap(routeId).map { data ->
-            data?.let {
-                RouteMap(
-                    route = it.route,
-                    agencyName = it.agencyName,
-                    stops = it.stops,
-                    routes = it.routes,
-                    polylines = it.polylines,
-                    polylinesByDirection = it.polylinesByDirection,
-                    directions = it.directions,
-                    initialDirectionId = it.stops.anchorDirectionId(directionStopId),
-                )
-            }
+    override suspend fun getRoute(routeId: String, directionStopId: String?): Result<RouteMap?> = stopsForRoute.routeMap(routeId).map { data ->
+        data?.let {
+            RouteMap(
+                route = it.route,
+                agencyName = it.agencyName,
+                stops = it.stops,
+                routes = it.routes,
+                polylines = it.polylines,
+                polylinesByDirection = it.polylinesByDirection,
+                directions = it.directions,
+                initialDirectionId = it.stops.anchorDirectionId(directionStopId)
+            )
         }
+    }
 }
 
 /**
@@ -117,9 +115,11 @@ internal fun List<RouteMapStop>.anchorDirectionId(anchorStopId: String?): Int? {
  * preserved and stops shared between directions that also serve [directionId] are included. Pure;
  * unit-tested.
  */
-internal fun List<RouteMapStop>.stopsForDirection(directionId: Int?): List<ObaStop> =
-    if (directionId == null) map { it.stop }
-    else filter { directionId in it.directionIds }.map { it.stop }
+internal fun List<RouteMapStop>.stopsForDirection(directionId: Int?): List<ObaStop> = if (directionId == null) {
+    map { it.stop }
+} else {
+    filter { directionId in it.directionIds }.map { it.stop }
+}
 
 /** Narrows the route catalog to one trip's scheduled stop ids, preserving schedule order. */
 internal fun List<RouteMapStop>.stopsForTrip(stopIds: List<String>): List<ObaStop> {

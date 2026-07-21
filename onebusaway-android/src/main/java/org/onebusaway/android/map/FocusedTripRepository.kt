@@ -18,8 +18,8 @@ package org.onebusaway.android.map
 import android.util.Log
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
@@ -29,11 +29,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteStopGroup
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.SingleFlight
 
 data class FocusedTripShape(
@@ -41,7 +41,7 @@ data class FocusedTripShape(
     val routeId: String,
     val routeColor: Int?,
     val points: List<GeoPoint>,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
 }
@@ -50,7 +50,7 @@ data class FocusedTripGeometry(val shapes: List<FocusedTripShape>)
 
 data class FocusedTripStops(
     val stopIdsByTripId: Map<String, List<String>>,
-    val stopsById: Map<String, ObaStop>,
+    val stopsById: Map<String, ObaStop>
 )
 
 /** Exact shape and scheduled-stop pass-throughs for the trips displayed at a focused stop. */
@@ -69,17 +69,17 @@ class DefaultFocusedTripRepository internal constructor(
     // Injectable so the JVM tests (which exercise the failure path) don't hit android.util.Log.
     private val logFailure: (message: String, cause: Exception) -> Unit = { message, cause ->
         Log.w(TAG, message, cause)
-    },
+    }
 ) : FocusedTripRepository {
 
     @Inject
     constructor(
         observations: TripObservationRepository,
-        stopsForRoute: StopsForRouteRepository,
+        stopsForRoute: StopsForRouteRepository
     ) : this(
         observations,
         stopsForRoute,
-        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),
+        CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     )
 
     private val shapeFetches = SingleFlight<String, List<GeoPoint>>(fetchScope)
@@ -111,7 +111,7 @@ class DefaultFocusedTripRepository internal constructor(
                             trip.routeId,
                             trip.routeColor,
                             points,
-                            trip.directionId,
+                            trip.directionId
                         )
                     }
                 }
@@ -150,8 +150,7 @@ class DefaultFocusedTripRepository internal constructor(
     // route overlay and route-info screen — a stop's routes are never fetched twice. A failure is
     // rethrown here so resolveOrNull catches and logs it (keeping a real API failure distinguishable
     // from genuinely empty data), like the schedule sibling above.
-    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup> =
-        stopsForRoute.routeStopGroups(routeId).getOrThrow()
+    private suspend fun fetchRouteStops(routeId: String): List<RouteStopGroup> = stopsForRoute.routeStopGroups(routeId).getOrThrow()
 
     /**
      * A failed trip/route is omitted (logged, so it stays distinguishable from genuinely absent data)
@@ -173,13 +172,12 @@ class DefaultFocusedTripRepository internal constructor(
      * shape and re-decodes the (already-cached) polyline per focus. The map is cheap and runs on a
      * focus change, not the per-frame path; the permit caps concurrent shape fetches.
      */
-    private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? =
-        shapeFetches.run(shapeId) {
-            shapePermits.withPermit {
-                // The cached [Polyline] already holds decoded [GeoPoint]s — just hand back its points.
-                resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }?.points
-            }
+    private suspend fun fetchShape(tripId: String, shapeId: String): List<GeoPoint>? = shapeFetches.run(shapeId) {
+        shapePermits.withPermit {
+            // The cached [Polyline] already holds decoded [GeoPoint]s — just hand back its points.
+            resolveOrNull("shape $shapeId") { observations.ensureShape(tripId, shapeId) }?.points
         }
+    }
 }
 
 private const val TAG = "FocusedTripRepository"

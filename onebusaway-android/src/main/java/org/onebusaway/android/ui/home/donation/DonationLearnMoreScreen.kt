@@ -72,7 +72,8 @@ internal fun DonationLearnMoreScreen(onBack: () -> Unit, onDonate: () -> Unit) {
             )
             Text(
                 text = stringResource(
-                    R.string.donation_learn_more_explanation, stringResource(R.string.app_name)
+                    R.string.donation_learn_more_explanation,
+                    stringResource(R.string.app_name)
                 ),
                 fontSize = 18.sp,
                 modifier = Modifier.padding(margin)

@@ -52,10 +52,12 @@ class SearchViewModel<T>(
                 emit(SearchUiState.Idle)
             } else {
                 emit(SearchUiState.Searching)
-                emit(search(query).fold(
-                    onSuccess = { SearchUiState.Results(it) },
-                    onFailure = { SearchUiState.Error }
-                ))
+                emit(
+                    search(query).fold(
+                        onSuccess = { SearchUiState.Results(it) },
+                        onFailure = { SearchUiState.Error }
+                    )
+                )
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState.Idle)

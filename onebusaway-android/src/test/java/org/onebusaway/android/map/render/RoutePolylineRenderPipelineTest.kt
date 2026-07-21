@@ -99,7 +99,7 @@ class RoutePolylineRenderPipelineTest {
             point(0.0, 4.0),
             point(0.0, 5.0),
             point(0.0, 4.0),
-            point(0.0, 0.0),
+            point(0.0, 0.0)
         )
 
         val result = pipeline.apply(listOf(line), camera())
@@ -122,7 +122,7 @@ class RoutePolylineRenderPipelineTest {
         val camera = camera(
             center = point(0.0, 179.0),
             southWest = point(-1.0, 178.0),
-            northEast = point(1.0, -180.0),
+            northEast = point(1.0, -180.0)
         )
 
         val result = pipeline.apply(listOf(line), camera).single()
@@ -137,12 +137,12 @@ class RoutePolylineRenderPipelineTest {
         val points = listOf(
             localPoint(latitude, eastMeters = 0.0),
             localPoint(latitude, eastMeters = 50.0, northMeters = 10.0),
-            localPoint(latitude, eastMeters = 100.0),
+            localPoint(latitude, eastMeters = 100.0)
         )
         val line = RoutePolyline(
             color = null,
             points = points,
-            transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY),
+            transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY)
         )
 
         val overview = pipeline.apply(listOf(line), camera(center = point(latitude, 0.0), zoom = 10.0))
@@ -158,22 +158,22 @@ class RoutePolylineRenderPipelineTest {
         widthProfile = ROUTE_LINE_WIDTH_PROFILE,
         transforms = setOf(
             RoutePolylineTransform.VIEWPORT_CLIP,
-            RoutePolylineTransform.ZOOM_SIMPLIFY,
-        ),
+            RoutePolylineTransform.ZOOM_SIMPLIFY
+        )
     )
 
     private fun camera(
         center: GeoPoint = point(0.0, 0.0),
         zoom: Double = 20.0,
         southWest: GeoPoint = point(-1.0, -1.0),
-        northEast: GeoPoint = point(1.0, 1.0),
+        northEast: GeoPoint = point(1.0, 1.0)
     ) = CameraSnapshot(
         center = center,
         zoom = zoom,
         latSpan = northEast.latitude - southWest.latitude,
         lonSpan = 2.0,
         southWest = southWest,
-        northEast = northEast,
+        northEast = northEast
     )
 
     private fun point(latitude: Double, longitude: Double) = GeoPoint(latitude, longitude)
@@ -181,12 +181,12 @@ class RoutePolylineRenderPipelineTest {
     private fun localPoint(
         latitude: Double,
         eastMeters: Double,
-        northMeters: Double = 0.0,
+        northMeters: Double = 0.0
     ): GeoPoint {
         val latitudeRadians = Math.toRadians(latitude)
         return GeoPoint(
             latitude = latitude + Math.toDegrees(northMeters / EARTH_RADIUS_METERS),
-            longitude = Math.toDegrees(eastMeters / (EARTH_RADIUS_METERS * cos(latitudeRadians))),
+            longitude = Math.toDegrees(eastMeters / (EARTH_RADIUS_METERS * cos(latitudeRadians)))
         )
     }
 

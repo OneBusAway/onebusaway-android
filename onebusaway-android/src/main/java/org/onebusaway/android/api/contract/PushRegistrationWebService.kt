@@ -65,7 +65,7 @@ interface PushRegistrationWebService {
         @Field("locale") locale: String,
         @Field("test_device") testDevice: Boolean,
         @Field("description") description: String?,
-        @Field("operating_system") operatingSystem: String = "android",
+        @Field("operating_system") operatingSystem: String = "android"
     ): Response<Unit>
 
     /**

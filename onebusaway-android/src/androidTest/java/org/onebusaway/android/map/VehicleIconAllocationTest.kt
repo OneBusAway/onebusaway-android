@@ -15,14 +15,14 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.time.WallTime
 import android.content.Context
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import android.graphics.Bitmap
 import android.util.Log
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -40,7 +40,7 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
-import java.util.concurrent.TimeUnit
+import org.onebusaway.android.time.WallTime
 
 /**
  * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps a gliding vehicle's icon on
@@ -58,7 +58,10 @@ class VehicleIconAllocationTest {
 
     private val context: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // A real, busy trips-for-route snapshot (38 vehicles across many HART routes, with full route refs so
     // icon type/color resolve) — the "busy route" the issue calls out. Decoded through the api/ DTO
@@ -84,7 +87,7 @@ class VehicleIconAllocationTest {
                     isRealtime = v.status.isLocationRealtime,
                     status = v.status,
                     fixTimeMs = v.fixTimeMs,
-                    bearing = v.bearing,
+                    bearing = v.bearing
                 )
             }
     }
@@ -106,7 +109,7 @@ class VehicleIconAllocationTest {
     private fun replay(
         vehicles: List<VehicleMarker>,
         response: RouteTrips,
-        frames: Int,
+        frames: Int
     ): Counts {
         val counts = Counts()
         val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
@@ -142,7 +145,7 @@ class VehicleIconAllocationTest {
         Log.i(
             "VehicleIconAlloc",
             "${vehicles.size} vehicles: ${longRun.requests} requests -> " +
-                "${longRun.allocations} allocs, ${longRun.bitmapDecodes} bitmap decodes",
+                "${longRun.allocations} allocs, ${longRun.bitmapDecodes} bitmap decodes"
         )
 
         // Naive work — a fromBitmap per octant flip — grows with the session length...
@@ -151,14 +154,14 @@ class VehicleIconAllocationTest {
         assertEquals(
             "descriptor allocations must not grow with frame count",
             shortRun.allocations,
-            longRun.allocations,
+            longRun.allocations
         )
         // The expensive bitmap decode/tint runs only on a miss, i.e. exactly once per minted descriptor —
         // never re-run on the hot path even as the bounded VehicleBitmaps LRU evicts under a busy route.
         assertEquals(
             "bitmap decode must run only on descriptor-cache misses",
             longRun.allocations,
-            longRun.bitmapDecodes,
+            longRun.bitmapDecodes
         )
         // The sharing property, asserted exactly: the cache mints one descriptor per *distinct* icon key,
         // not one per request and not one per vehicle. A regression that keyed per-activeTripId (or dropped
@@ -166,11 +169,11 @@ class VehicleIconAllocationTest {
         assertEquals(
             "the cache must mint exactly one descriptor per distinct icon key",
             longRun.keys.size,
-            longRun.allocations,
+            longRun.allocations
         )
         assertTrue(
             "descriptors must actually be shared — far fewer allocations than requests",
-            longRun.allocations < longRun.requests,
+            longRun.allocations < longRun.requests
         )
     }
 
@@ -246,21 +249,24 @@ class VehicleIconAllocationTest {
         val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
         var supplied = 0
         val cache = BitmapDescriptorCache<Int>(2) { 0 }
-        fun get(key: String) = cache.get(key) { supplied++; bitmap }
+        fun get(key: String) = cache.get(key) {
+            supplied++
+            bitmap
+        }
 
         get("a")
-        get("b")            // cache now holds [a, b]
-        get("c")            // exceeds maxSize: evicts a (LRU)
+        get("b") // cache now holds [a, b]
+        get("c") // exceeds maxSize: evicts a (LRU)
         assertEquals("three distinct keys are three misses", 3, supplied)
 
-        get("b")            // still cached -> hit
+        get("b") // still cached -> hit
         assertEquals("a cached key must not re-supply", 3, supplied)
 
-        get("a")            // evicted -> miss, supplier re-invoked
+        get("a") // evicted -> miss, supplier re-invoked
         assertEquals("an evicted key must re-invoke the supplier", 4, supplied)
 
         cache.clear()
-        get("b")            // after clear -> miss
+        get("b") // after clear -> miss
         assertEquals("get after clear must re-invoke the supplier", 5, supplied)
     }
 
@@ -268,14 +274,13 @@ class VehicleIconAllocationTest {
      * Force the realtime color path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the
      * bearing so the heading octant is fixed — only the deviation color varies between the variants.
      */
-    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker =
-        vehicle.copy(
-            isRealtime = true,
-            bearing = 0f,
-            status = object : ObaTripStatus by vehicle.status {
-                override val scheduleDeviation: Duration = deviationSeconds.seconds
-            },
-        )
+    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = vehicle.copy(
+        isRealtime = true,
+        bearing = 0f,
+        status = object : ObaTripStatus by vehicle.status {
+            override val scheduleDeviation: Duration = deviationSeconds.seconds
+        }
+    )
 
     companion object {
         // Sweep the bearing through all 8 octants within a few frames, then revisit them (no new icons) —
@@ -283,6 +288,7 @@ class VehicleIconAllocationTest {
         private const val BEARING_STEP_DEG = 25f
         private const val SHORT_FRAMES = 60
         private const val LONG_FRAMES = 240
+
         // Far larger than the snapshot's distinct icons (8 octants x a handful of type/deviation-color
         // combos), so eviction never confounds the "allocations independent of frame count" invariant. The
         // production cap is deliberately smaller — it only needs to cover the live working set, not history.

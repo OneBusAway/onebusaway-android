@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.survey
 
-import org.onebusaway.android.api.data.SurveyDataSource
-
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,8 +22,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import org.onebusaway.android.app.di.AppScope
-import org.onebusaway.android.donations.DonationsManager
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -37,12 +33,15 @@ import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import org.onebusaway.android.R
+import org.onebusaway.android.api.data.SurveyDataSource
+import org.onebusaway.android.app.di.AppScope
+import org.onebusaway.android.database.survey.SurveyRepository
+import org.onebusaway.android.donations.DonationsManager
 import org.onebusaway.android.models.Survey
 import org.onebusaway.android.models.SurveyQuestion
 import org.onebusaway.android.models.SurveySubmitResult
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.database.survey.SurveyRepository
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 
 /** The bottom-sheet state for the survey's remaining (non-hero) questions. */
@@ -50,7 +49,7 @@ data class SurveySheetState(
     val title: String,
     val description: String,
     val questions: List<SurveyQuestion>,
-    val submitting: Boolean = false,
+    val submitting: Boolean = false
 )
 
 /**
@@ -68,7 +67,7 @@ data class SurveyUiState(
     val showDismissDialog: Boolean = false,
     val sheet: SurveySheetState? = null,
     val textRadioAnswers: Map<Int, String> = emptyMap(),
-    val checkboxAnswers: Map<Int, Set<String>> = emptyMap(),
+    val checkboxAnswers: Map<Int, Set<String>> = emptyMap()
 )
 
 /** One-shot effects the host carries out (launching the external-survey activity, showing a toast). */
@@ -92,7 +91,7 @@ class SurveyViewModel @Inject constructor(
     private val surveyRepo: SurveyDataSource,
     private val surveyStore: SurveyRepository,
     private val donationsManager: DonationsManager,
-    @param:AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SurveyUiState())
@@ -136,9 +135,11 @@ class SurveyViewModel @Inject constructor(
                 surveyPreferences,
                 prefs.getAppLaunchCount(),
                 donationsManager.shouldShowDonationUI(),
-                isVisibleOnStops = false,
+                isVisibleOnStops = false
             )
-        ) return
+        ) {
+            return
+        }
         requested = true
         val url = studyUrl() ?: return
         viewModelScope.launch {
@@ -167,7 +168,7 @@ class SurveyViewModel @Inject constructor(
                 survey = survey,
                 heroQuestion = hero,
                 heroMode = mode,
-                sharedInfo = buildSharedInfo(sharedFields),
+                sharedInfo = buildSharedInfo(sharedFields)
             )
         }
     }
@@ -217,8 +218,8 @@ class SurveyViewModel @Inject constructor(
                     sheet = SurveySheetState(
                         title = survey.study?.name.orEmpty(),
                         description = survey.study?.description.orEmpty(),
-                        questions = remaining,
-                    ),
+                        questions = remaining
+                    )
                 )
             }
         }
@@ -304,8 +305,9 @@ class SurveyViewModel @Inject constructor(
     private fun studyUrl(): String? {
         val region = regionRepository.region.value ?: return null
         val base = region.sidecarBaseUrl ?: return null
-        return base + context.getString(R.string.studies_api_endpoint)
-            .replace("regionID", region.id.toString())
+        return base +
+            context.getString(R.string.studies_api_endpoint)
+                .replace("regionID", region.id.toString())
     }
 
     private fun submitUrl(hero: Boolean): String {
@@ -316,16 +318,15 @@ class SurveyViewModel @Inject constructor(
         return url
     }
 
-    private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? =
-        surveyRepo.submit(
-            url = apiUrl,
-            userIdentifier = surveyPreferences.getUserUUID(),
-            surveyId = surveyId,
-            stopIdentifier = null,
-            stopLatitude = 0.0,
-            stopLongitude = 0.0,
-            responses = body.toString(),
-        ).getOrNull()
+    private suspend fun submit(apiUrl: String, surveyId: Int, body: JSONArray): SurveySubmitResult? = surveyRepo.submit(
+        url = apiUrl,
+        userIdentifier = surveyPreferences.getUserUUID(),
+        surveyId = surveyId,
+        stopIdentifier = null,
+        stopLatitude = 0.0,
+        stopLongitude = 0.0,
+        responses = body.toString()
+    ).getOrNull()
 
     /** Builds the single-question JSON body for the hero question, or null if its answer is missing. */
     private fun heroAnswerBody(hero: SurveyQuestion): JSONArray? {

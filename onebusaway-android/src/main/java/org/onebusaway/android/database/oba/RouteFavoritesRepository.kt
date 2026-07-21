@@ -50,7 +50,7 @@ interface RouteFavorites {
         shortName: String?,
         longName: String?,
         url: String?,
-        favorite: Boolean,
+        favorite: Boolean
     )
 }
 
@@ -69,16 +69,15 @@ class RouteFavoritesRepository @Inject constructor(
     private val importGate: ImportGate,
     private val obaAnalytics: ObaAnalytics,
     @param:AppScope private val appScope: CoroutineScope,
-    @param:ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context
 ) : RouteFavorites {
 
     /** The starred route ids, live: import-gated, and deduped so an unrelated `routes` write (a route
      *  recorded on an arrivals load) doesn't re-emit an identical set. */
-    override fun favoriteRouteIds(): Flow<Set<String>> =
-        routeDao.favoriteRouteIds()
-            .onStart { importGate.awaitReady() }
-            .map { it.toSet() }
-            .distinctUntilChanged()
+    override fun favoriteRouteIds(): Flow<Set<String>> = routeDao.favoriteRouteIds()
+        .onStart { importGate.awaitReady() }
+        .map { it.toSet() }
+        .distinctUntilChanged()
 
     /**
      * Stars (or unstars) [routeId] wholesale. Ensures the `routes` row exists (so the Starred Routes
@@ -93,7 +92,7 @@ class RouteFavoritesRepository @Inject constructor(
         shortName: String?,
         longName: String?,
         url: String?,
-        favorite: Boolean,
+        favorite: Boolean
     ) {
         importGate.awaitReady()
         val regionId = regionRepository.region.value?.id

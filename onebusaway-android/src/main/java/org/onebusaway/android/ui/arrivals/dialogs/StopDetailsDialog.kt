@@ -69,7 +69,8 @@ fun createStopDetailsDialogText(
 
     // Routes that serve this stop
     if (routeDisplayNames != null) {
-        val routes = context.getString(R.string.stop_info_route_ids_label) + " " +
+        val routes = context.getString(R.string.stop_info_route_ids_label) +
+            " " +
             formatRouteDisplayNames(routeDisplayNames, emptyList())
         message.append(routes)
     }

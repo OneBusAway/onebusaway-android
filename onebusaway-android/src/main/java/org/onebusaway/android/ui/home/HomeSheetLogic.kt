@@ -42,22 +42,21 @@ internal fun shouldShowSheet(focus: CurrentFocus): Boolean = focus is CurrentFoc
 internal fun focusBannerTopEdge(
     focus: CurrentFocus,
     focusBannerBottomPx: Int,
-    directionsFormBottomPx: Int = 0,
+    directionsFormBottomPx: Int = 0
 ): Int = when (focus) {
     is CurrentFocus.Route, is CurrentFocus.Stop -> focusBannerBottomPx
-    CurrentFocus.Directions -> directionsFormBottomPx
+    is CurrentFocus.Directions -> directionsFormBottomPx
     CurrentFocus.None, is CurrentFocus.BikeStation -> 0
 }
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
-internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState =
-    if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
+internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState = if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded
 
 /** Whether the sheet consumes back by collapsing before focus navigation proceeds. */
 enum class SheetBackAction { COLLAPSE, NAVIGATE_BACK, NONE }
 
 internal fun sheetBackAction(current: ArrivalsSheetState): SheetBackAction = when (current) {
-    ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE      // full -> peek
+    ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE // full -> peek
     ArrivalsSheetState.Collapsed -> SheetBackAction.NAVIGATE_BACK
-    ArrivalsSheetState.Hidden -> SheetBackAction.NONE            // let the system handle back
+    ArrivalsSheetState.Hidden -> SheetBackAction.NONE // let the system handle back
 }

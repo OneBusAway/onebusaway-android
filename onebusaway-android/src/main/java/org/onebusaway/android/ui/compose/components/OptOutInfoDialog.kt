@@ -54,7 +54,7 @@ fun OptOutInfoDialog(
     optOutLabel: String? = null,
     onOptOut: ((Boolean) -> Unit)? = null,
     dismissText: String? = null,
-    onDismiss: () -> Unit = onDismissRequest,
+    onDismiss: () -> Unit = onDismissRequest
 ) {
     val linkColor = MaterialTheme.colorScheme.primary
     AlertDialog(
@@ -69,8 +69,11 @@ fun OptOutInfoDialog(
                     SwitchRow(
                         label = optOutLabel,
                         checked = optedOut,
-                        onCheckedChange = { optedOut = it; onOptOut(it) },
-                        modifier = Modifier.padding(top = 12.dp),
+                        onCheckedChange = {
+                            optedOut = it
+                            onOptOut(it)
+                        },
+                        modifier = Modifier.padding(top = 12.dp)
                     )
                 }
             }
@@ -81,7 +84,7 @@ fun OptOutInfoDialog(
         },
         properties = DialogProperties(
             dismissOnBackPress = false,
-            dismissOnClickOutside = false,
-        ),
+            dismissOnClickOutside = false
+        )
     )
 }

@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.dataview
 
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.WallTime
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -30,16 +28,18 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
-import org.onebusaway.android.models.RouteTrips
-import org.onebusaway.android.models.TripRouteInfo
+import org.junit.Test
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.models.TripRouteInfo
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.testing.testTripStatus
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.Polyline
-import org.onebusaway.android.models.ObaTripSchedule
-import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripTrajectoryViewModelTest {
@@ -53,14 +53,12 @@ class TripTrajectoryViewModelTest {
 
         override fun lookupTripState(tripId: String?): TripState? = state
 
-        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
-            flow {
-                detailsCollections++
-                awaitCancellation()
-            }
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = flow {
+            detailsCollections++
+            awaitCancellation()
+        }
 
-        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
-            emptyFlow()
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
 
@@ -88,12 +86,10 @@ class TripTrajectoryViewModelTest {
 
         override fun lookupTripState(tripId: String?): TripState? = stored
 
-        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> =
-            // Records on collection; emits nothing — the ViewModel only collects for the side effect.
+        override fun tripDetailsStream(tripId: String, intervalMs: Long): Flow<Unit> = // Records on collection; emits nothing — the ViewModel only collects for the side effect.
             records.transform<TripState, Unit> { stored = it }
 
-        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> =
-            emptyFlow()
+        override fun routeVehiclesStream(routeId: String, intervalMs: Long): Flow<RouteTrips> = emptyFlow()
 
         override suspend fun ensureShape(tripId: String, shapeId: String): Polyline? = null
 
@@ -104,7 +100,7 @@ class TripTrajectoryViewModelTest {
 
     private fun viewModel(repo: TripObservationRepository) = TripTrajectoryViewModel(
         SavedStateHandle(mapOf(NavRoutes.ARG_TRIP_ID to "trip1")),
-        repo,
+        repo
     )
 
     @Test
@@ -154,7 +150,7 @@ class TripTrajectoryViewModelTest {
             TripState("trip1").withStatus(
                 testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = 5_000L, vehicleId = "bus7"),
                 serverTimeMs = ServerTime(5_000L),
-                localTimeMs = WallTime(5_000L),
+                localTimeMs = WallTime(5_000L)
             )
         )
         runCurrent()

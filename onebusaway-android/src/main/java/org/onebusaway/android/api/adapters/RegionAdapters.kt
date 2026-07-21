@@ -16,7 +16,6 @@
 package org.onebusaway.android.api.adapters
 
 import org.onebusaway.android.api.contract.RegionDto
-
 import org.onebusaway.android.region.Region
 
 /**
@@ -55,5 +54,5 @@ fun RegionDto.toObaRegion(): Region = Region(
     plausibleAnalyticsServerUrl,
     // Match getRegionsFromProvider: only build a config when something is actually set.
     umamiAnalytics?.takeIf { it.url != null || it.id != null }
-        ?.let { Region.UmamiAnalyticsConfig(it.url, it.id) },
+        ?.let { Region.UmamiAnalyticsConfig(it.url, it.id) }
 )

@@ -57,7 +57,7 @@ class TripPlanErrorMappingTest {
         OtpErrorId.UNDERSPECIFIED_TRIANGLE to (Category.REQUEST to R.string.tripplanner_error_triangle),
         OtpErrorId.TRIANGLE_NOT_AFFINE to (Category.REQUEST to R.string.tripplanner_error_triangle),
         OtpErrorId.TRIANGLE_OPTIMIZE_TYPE_NOT_SET to (Category.REQUEST to R.string.tripplanner_error_triangle),
-        OtpErrorId.TRIANGLE_VALUES_NOT_SET to (Category.REQUEST to R.string.tripplanner_error_triangle),
+        OtpErrorId.TRIANGLE_VALUES_NOT_SET to (Category.REQUEST to R.string.tripplanner_error_triangle)
     )
 
     @Test
@@ -79,37 +79,71 @@ class TripPlanErrorMappingTest {
 
     @Test
     fun otp2_no_route() {
-        assertError(Category.NO_ROUTE, R.string.tripplanner_error_outside_bounds,
-            otp2ErrorFor(RoutingErrorCode.OUTSIDE_BOUNDS, null))
-        assertError(Category.NO_ROUTE, R.string.tripplanner_error_path_not_found,
-            otp2ErrorFor(RoutingErrorCode.NO_STOPS_IN_RANGE, null))
+        assertError(
+            Category.NO_ROUTE,
+            R.string.tripplanner_error_outside_bounds,
+            otp2ErrorFor(RoutingErrorCode.OUTSIDE_BOUNDS, null)
+        )
+        assertError(
+            Category.NO_ROUTE,
+            R.string.tripplanner_error_path_not_found,
+            otp2ErrorFor(RoutingErrorCode.NO_STOPS_IN_RANGE, null)
+        )
     }
 
     @Test
     fun otp2_schedule() {
-        assertError(Category.SCHEDULE, R.string.tripplanner_error_no_transit_times,
-            otp2ErrorFor(RoutingErrorCode.NO_TRANSIT_CONNECTION, null))
-        assertError(Category.SCHEDULE, R.string.tripplanner_error_no_transit_times,
-            otp2ErrorFor(RoutingErrorCode.NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW, null))
-        assertError(Category.SCHEDULE, R.string.tripplanner_error_outside_service_period,
-            otp2ErrorFor(RoutingErrorCode.OUTSIDE_SERVICE_PERIOD, null))
+        assertError(
+            Category.SCHEDULE,
+            R.string.tripplanner_error_no_transit_times,
+            otp2ErrorFor(RoutingErrorCode.NO_TRANSIT_CONNECTION, null)
+        )
+        assertError(
+            Category.SCHEDULE,
+            R.string.tripplanner_error_no_transit_times,
+            otp2ErrorFor(RoutingErrorCode.NO_TRANSIT_CONNECTION_IN_SEARCH_WINDOW, null)
+        )
+        assertError(
+            Category.SCHEDULE,
+            R.string.tripplanner_error_outside_service_period,
+            otp2ErrorFor(RoutingErrorCode.OUTSIDE_SERVICE_PERIOD, null)
+        )
     }
 
     @Test
     fun otp2_location_depends_on_input_field() {
-        assertError(Category.LOCATION, R.string.tripplanner_error_geocode_from_not_found,
-            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.FROM))
-        assertError(Category.LOCATION, R.string.tripplanner_error_geocode_to_not_found,
-            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.TO))
+        assertError(
+            Category.LOCATION,
+            R.string.tripplanner_error_geocode_from_not_found,
+            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.FROM)
+        )
+        assertError(
+            Category.LOCATION,
+            R.string.tripplanner_error_geocode_to_not_found,
+            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.TO)
+        )
         // No input field named -> still a location problem, generic detail.
-        assertError(Category.LOCATION, R.string.tripplanner_error_not_defined,
-            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, null))
+        assertError(
+            Category.LOCATION,
+            R.string.tripplanner_error_not_defined,
+            otp2ErrorFor(RoutingErrorCode.LOCATION_NOT_FOUND, null)
+        )
     }
 
     @Test
-    fun otp2_advisory_and_unknown() {
-        assertError(Category.ADVISORY, R.string.tripplanner_error_walking_better_than_transit,
-            otp2ErrorFor(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT, null))
+    fun otp2_walking_better_than_transit_maps_to_too_close() {
+        // Reaches otp2ErrorFor only in the same-location (no-itinerary) case — the too-close result,
+        // matching OTP1's TOO_CLOSE; it never advises walking (#1947). When a walk route survives it
+        // is returned as a normal itinerary by resolveOtp2Plan and this code is never hit.
+        assertError(
+            Category.NO_ROUTE,
+            R.string.tripplanner_error_too_close,
+            otp2ErrorFor(RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT, null)
+        )
+    }
+
+    @Test
+    fun otp2_unknown_falls_back() {
         assertEquals(TripPlanError.Unknown, otp2ErrorFor(RoutingErrorCode.UNKNOWN__, null))
     }
 }

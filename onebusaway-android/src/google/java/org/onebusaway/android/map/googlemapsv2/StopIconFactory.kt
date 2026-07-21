@@ -26,12 +26,12 @@ import android.util.SparseArray
 import androidx.core.content.ContextCompat
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import kotlin.math.roundToInt
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.StopBitmaps
 import org.onebusaway.android.map.render.StopDirection
 import org.onebusaway.android.models.ObaRoute
-import kotlin.math.roundToInt
 
 /**
  * Stateless factory for bus-stop marker icons, extracted from the old StopOverlay. It holds the
@@ -97,7 +97,7 @@ object StopIconFactory {
         ObaRoute.TYPE_RAIL,
         ObaRoute.TYPE_SUBWAY,
         ObaRoute.TYPE_TRAM,
-        ObaRoute.TYPE_FERRY,
+        ObaRoute.TYPE_FERRY
     )
 
     // (The primary-route-type priority that used to live here is now the pure primaryRouteType() in
@@ -255,7 +255,7 @@ object StopIconFactory {
             val iconsFocused = StopDirection.entries.map {
                 StopBitmaps.scale(
                     createStopIcon(context, it, selected = true, routeType, arrowTip, arrowBase),
-                    FOCUS_ICON_SCALE,
+                    FOCUS_ICON_SCALE
                 )
             }.toTypedArray()
             stopDescriptors.put(routeType, toDescriptors(icons))
@@ -275,41 +275,41 @@ object StopIconFactory {
         // Starred-stop full-band icons: an inflated star with the normal-sized direction arrow drawn on
         // top, per direction. Route-type agnostic (no route glyph). The focused variant is the selected-
         // color star, enlarged like every other focused marker.
-        fun favoriteStars(topColor: Int, bottomColor: Int, focused: Boolean): Array<BitmapDescriptor> =
-            toDescriptors(
-                StopDirection.entries.map { direction ->
-                    val marker = StopBitmaps.favoriteMarker(
-                        px, starPx, direction != StopDirection.NONE, direction.compassAngle,
-                        topColor, bottomColor, arrowTip, arrowBase, starOutlinePx,
-                    )
-                    if (focused) StopBitmaps.scale(marker, FOCUS_ICON_SCALE) else marker
-                }.toTypedArray(),
-            )
+        fun favoriteStars(topColor: Int, bottomColor: Int, focused: Boolean): Array<BitmapDescriptor> = toDescriptors(
+            StopDirection.entries.map { direction ->
+                val marker = StopBitmaps.favoriteMarker(
+                    px, starPx, direction != StopDirection.NONE, direction.compassAngle,
+                    topColor, bottomColor, arrowTip, arrowBase, starOutlinePx
+                )
+                if (focused) StopBitmaps.scale(marker, FOCUS_ICON_SCALE) else marker
+            }.toTypedArray()
+        )
         favoriteDescriptors = favoriteStars(starLight, starDark, focused = false)
         favoriteDescriptorsFocused = favoriteStars(focusColor, focusColor, focused = true)
 
         dotDescriptor = BitmapDescriptorFactory.fromBitmap(StopBitmaps.dot(basePx, arrowTip))
         dotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
-            StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE),
+            StopBitmaps.dot(basePx, focusColor, StopBitmaps.FOCUSED_DOT_SCALE)
         )
 
         // Dot-band starred stops: a plain star (no arrow, matching the plain dot), dot-sized and enlarged
         // when focused. Gold gradient normally, the selected color when focused; same thin outline.
         val starDotPx = (basePx * 0.5f * StopBitmaps.STAR_SIZE_SCALE).roundToInt()
         starDotDescriptor = BitmapDescriptorFactory.fromBitmap(
-            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx),
+            StopBitmaps.star(starDotPx, starLight, starDark, starOutlinePx)
         )
         starDotDescriptorFocused = BitmapDescriptorFactory.fromBitmap(
             StopBitmaps.star(
                 (starDotPx * StopBitmaps.FOCUSED_DOT_SCALE).roundToInt(),
-                focusColor, focusColor, starOutlinePx,
-            ),
+                focusColor,
+                focusColor,
+                starOutlinePx
+            )
         )
     }
 
     /** Wraps each pre-rendered bitmap into a BitmapDescriptor once, so callers can reuse them. */
-    private fun toDescriptors(bitmaps: Array<Bitmap>): Array<BitmapDescriptor> =
-        Array(bitmaps.size) { BitmapDescriptorFactory.fromBitmap(bitmaps[it]) }
+    private fun toDescriptors(bitmaps: Array<Bitmap>): Array<BitmapDescriptor> = Array(bitmaps.size) { BitmapDescriptorFactory.fromBitmap(bitmaps[it]) }
 
     /**
      * Creates a stop icon: the shared circle + direction arrow, with this flavor's route-type glyph
@@ -327,15 +327,15 @@ object StopIconFactory {
         selected: Boolean,
         routeType: Int,
         arrowTip: Int,
-        arrowBase: Int,
+        arrowBase: Int
     ): Bitmap {
         // All stops get a slightly larger circle so the vehicle glyph is clearly visible
         val px = (basePx * GLYPH_ICON_SCALE).toInt()
         val shape = requireNotNull(
             ContextCompat.getDrawable(
                 context,
-                if (selected) R.drawable.selected_map_stop_icon else R.drawable.map_stop_icon,
-            ),
+                if (selected) R.drawable.selected_map_stop_icon else R.drawable.map_stop_icon
+            )
         )
         return StopBitmaps.directionalStopMarker(shape, direction, px, arrowTip, arrowBase) { canvas, bounds ->
             drawRouteTypeSymbol(canvas, bounds, routeType)
@@ -356,14 +356,14 @@ object StopIconFactory {
             ObaRoute.TYPE_RAIL to R.drawable.ic_train,
             ObaRoute.TYPE_SUBWAY to R.drawable.ic_subway,
             ObaRoute.TYPE_TRAM to R.drawable.ic_tram,
-            ObaRoute.TYPE_FERRY to R.drawable.ic_ferry,
+            ObaRoute.TYPE_FERRY to R.drawable.ic_ferry
         )
         for ((type, drawableRes) in glyphMapping) {
             // Rasterize white via the shared helper (its SRC_IN tint recolors the glyph, like
             // VehicleBitmaps/BikeBitmaps), so the glyph is stamped onto the stop circle as-is.
             routeTypeGlyphs.put(
                 type,
-                MarkerRendering.rasterize(context, drawableRes, glyphSizePx, tint = Color.WHITE),
+                MarkerRendering.rasterize(context, drawableRes, glyphSizePx, tint = Color.WHITE)
             )
         }
     }
@@ -392,7 +392,7 @@ object StopIconFactory {
             glyph,
             cx - glyph.width / 2f,
             cy - glyph.height / 2f,
-            glyphPaint,
+            glyphPaint
         )
     }
 
@@ -421,7 +421,7 @@ object StopIconFactory {
     private fun lookupStopIcon(
         cache: SparseArray<Array<BitmapDescriptor>>,
         direction: String,
-        routeType: Int,
+        routeType: Int
     ): BitmapDescriptor {
         val normalizedType = normalizeRouteType(routeType)
         val icons = cache.get(normalizedType) ?: cache.get(ObaRoute.TYPE_BUS)

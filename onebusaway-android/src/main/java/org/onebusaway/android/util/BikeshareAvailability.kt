@@ -37,11 +37,10 @@ object BikeshareAvailability {
     fun isEnabled(context: Context): Boolean = isEnabled(
         RegionEntryPoint.get(context).currentRegion(),
         PreferencesEntryPoint.get(context)
-            .getString(context.getString(R.string.preference_key_otp_api_url), null),
+            .getString(context.getString(R.string.preference_key_otp_api_url), null)
     )
 
     /** Pure predicate for injected consumers that already hold the [region] + [customOtpApiUrl]. */
     @JvmStatic
-    fun isEnabled(region: Region?, customOtpApiUrl: String?): Boolean =
-        (region != null && region.supportsOtpBikeshare) || !customOtpApiUrl.isNullOrEmpty()
+    fun isEnabled(region: Region?, customOtpApiUrl: String?): Boolean = (region != null && region.supportsOtpBikeshare) || !customOtpApiUrl.isNullOrEmpty()
 }

@@ -32,7 +32,7 @@ class OneBusAwayIssueRegistry : IssueRegistry() {
             RawTimeDetector.ISSUE_VALUE,
             PrematureUnwrapDetector.ISSUE,
             WireTimeEscapeDetector.ISSUE,
-            SwallowedCancellationDetector.ISSUE,
+            SwallowedCancellationDetector.ISSUE
         )
 
     override val api: Int = CURRENT_API
@@ -40,6 +40,6 @@ class OneBusAwayIssueRegistry : IssueRegistry() {
     override val vendor: Vendor = Vendor(
         vendorName = "OneBusAway",
         identifier = "org.onebusaway.android",
-        feedbackUrl = "https://github.com/OneBusAway/onebusaway-android/issues",
+        feedbackUrl = "https://github.com/OneBusAway/onebusaway-android/issues"
     )
 }

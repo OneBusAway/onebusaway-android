@@ -37,8 +37,14 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     val chosen = mutableListOf<Region>()
     val customApiUrls = mutableListOf<Pair<String?, String?>>()
 
-    override suspend fun refresh(): RegionStatus { refreshCount++; return refreshResult }
-    override suspend fun choose(region: Region) { chosen.add(region); emit(region) }
+    override suspend fun refresh(): RegionStatus {
+        refreshCount++
+        return refreshResult
+    }
+    override suspend fun choose(region: Region) {
+        chosen.add(region)
+        emit(region)
+    }
     override fun clear() = emit(null)
     override fun applyRegion(region: Region?, regionChanged: Boolean) = emit(region)
 
@@ -48,9 +54,15 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
         if (obaUrl != null) emit(null)
     }
 
-    fun emit(region: Region?) { _region.value = region; _state.value = RegionState.Active(region) }
+    fun emit(region: Region?) {
+        _region.value = region
+        _state.value = RegionState.Active(region)
+    }
+
     /** Drives the richer [state] flow directly (Resolving / NeedsManualChoice / Failed). */
-    fun emitState(state: RegionState) { _state.value = state }
+    fun emitState(state: RegionState) {
+        _state.value = state
+    }
 }
 
 /** Minimal [Region] fixture — only the id matters to the selection logic (compared by id). */
@@ -58,32 +70,32 @@ internal fun region(
     id: Long,
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
-    otpContactEmail: String? = null,
+    otpContactEmail: String? = null
 ): Region = Region(
-        id,            // id
-        "Region $id",  // name
-        true,          // active
-        null,          // obaBaseUrl
-        null,          // siriBaseUrl
-        emptyArray(),  // bounds
-        emptyArray(),  // open311Servers
-        null,          // lang
-        null,          // contactEmail
-        true,          // supportsObaDiscoveryApis
-        true,          // supportsObaRealtimeApis
-        false,         // supportsSiriRealtimeApis
-        twitterUrl,    // twitterUrl
-        false,         // experimental
-        null,          // stopInfoUrl
-        null,          // otpBaseUrl
-        otpContactEmail, // otpContactEmail
-        supportsOtpBikeshare, // supportsOtpBikeshare
-        null,          // otpBaseGraphqlUrl
-        false,         // supportsEmbeddedSocial
-        null,          // paymentAndroidAppId
-        null,          // paymentWarningTitle
-        null,          // paymentWarningBody
-        null,          // sidecarBaseUrl
-        null,          // plausibleAnalyticsServerUrl
-        null           // umamiAnalytics (UmamiAnalyticsConfig)
-    )
+    id, // id
+    "Region $id", // name
+    true, // active
+    null, // obaBaseUrl
+    null, // siriBaseUrl
+    emptyArray(), // bounds
+    emptyArray(), // open311Servers
+    null, // lang
+    null, // contactEmail
+    true, // supportsObaDiscoveryApis
+    true, // supportsObaRealtimeApis
+    false, // supportsSiriRealtimeApis
+    twitterUrl, // twitterUrl
+    false, // experimental
+    null, // stopInfoUrl
+    null, // otpBaseUrl
+    otpContactEmail, // otpContactEmail
+    supportsOtpBikeshare, // supportsOtpBikeshare
+    null, // otpBaseGraphqlUrl
+    false, // supportsEmbeddedSocial
+    null, // paymentAndroidAppId
+    null, // paymentWarningTitle
+    null, // paymentWarningBody
+    null, // sidecarBaseUrl
+    null, // plausibleAnalyticsServerUrl
+    null // umamiAnalytics (UmamiAnalyticsConfig)
+)

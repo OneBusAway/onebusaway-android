@@ -14,16 +14,24 @@ To ensure that the app source code remains fully open-source under a common lice
 
 This project adheres to a [Code of Conduct](https://github.com/OneBusAway/onebusaway/blob/master/CODE_OF_CONDUCT.md). By participating, you are expected to honor this code.
 
-## Code Style and Template
+## Code Style
 
-We use the [Android Open-Source Project (AOSP) Code Style Guidelines](http://source.android.com/source/code-style.html).
+Formatting is automated with [Spotless](https://github.com/diffplug/spotless) — no IDE setup or
+manual reformatting required. It runs [ktlint](https://github.com/pinterest/ktlint) (Kotlin and
+`*.gradle.kts`, in the `android_studio` style — see `.editorconfig`) and google-java-format (the
+remaining Java files).
 
-We strongly suggest that you use the [`AndroidStyle.xml`](/AndroidStyle.xml) template file, included in this repository, in Android Studio to format your code:
+Before pushing, format your changes:
 
-1. Place `AndroidStyle.xml` in your Android Studio `/codestyles` directory (e.g., `%userprofile%\.AndroidStudioBeta\config\codestyles`, or `~/Library/Preferences/AndroidStudioBeta/codestyles/` on OS X)
-2. Restart Android Studio.
-3. Go to "File->Settings->Code Style", and under "Scheme" select "AndroidStyle" and click "Ok".
-4. Right-click on the files that contain your contributions and select "Reformat Code", check "Optimize imports", and select "Run".
+```bash
+./gradlew spotlessApply    # rewrite files in place
+./gradlew spotlessCheck    # verify only, without modifying files
+```
+
+**CI enforces `spotlessCheck`** — a PR with unformatted code fails the build, so run `spotlessApply`
+first. The one-time bulk reformat is listed in `.git-blame-ignore-revs`; enable it locally with
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips it (GitHub does this
+automatically).
 
 ## Closing policy for issues and pull requests
 
@@ -61,7 +69,7 @@ If you can, please submit a pull request with the fix or improvements including 
 2. Create a feature branch
 3. Write tests and code
 4. Run the unit tests with `gradlew connectedObaGoogleDebugAndroidTest` to make sure you didn't break anything
-5. Apply the `AndroidStyle.xml` style template to your code in Android Studio.
+5. Format your changes with `./gradlew spotlessApply`.
 6. Your PR branch may be a single squashed commit or a string of commits — whichever you prefer. The PR is squashed when it's merged to `main`, so you don't need to squash it yourself.
 7. Push your commits to your fork
 8. Submit a pull request with a motive for your change and the method you used to achieve it

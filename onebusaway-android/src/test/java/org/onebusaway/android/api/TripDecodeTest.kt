@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.TripReference
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.TripReference
 
 /**
  * Ports the legacy TripRequestTest onto the modernized `trip` endpoint, asserting the full trip
@@ -30,7 +29,10 @@ import org.junit.Test
  */
 class TripDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private val body = """
         {

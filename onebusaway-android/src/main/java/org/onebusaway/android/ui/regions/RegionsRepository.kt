@@ -24,9 +24,9 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.region.Region
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionCache
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.RegionUtils
@@ -76,7 +76,7 @@ class DefaultRegionsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val regionCache: RegionCache,
     private val locationRepository: LocationRepository,
-    private val obaAnalytics: ObaAnalytics,
+    private val obaAnalytics: ObaAnalytics
 ) : RegionsRepository {
 
     // Domain objects from the last successful load, so selectRegion(id) can resolve the Region
@@ -85,34 +85,33 @@ class DefaultRegionsRepository @Inject constructor(
     @Volatile
     private var regionsById: Map<Long, Region> = emptyMap()
 
-    override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> =
-        withContext(Dispatchers.IO) {
-            val regions = regionCache.loadRegions(refresh)
-                ?: return@withContext Result.failure(
-                    IOException("Regions could not be loaded from any source")
-                )
-            val usable = regions.filter { RegionUtils.isRegionUsable(context, it) }
-            regionsById = usable.associateBy { it.id }
+    override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> = withContext(Dispatchers.IO) {
+        val regions = regionCache.loadRegions(refresh)
+            ?: return@withContext Result.failure(
+                IOException("Regions could not be loaded from any source")
+            )
+        val usable = regions.filter { RegionUtils.isRegionUsable(context, it) }
+        regionsById = usable.associateBy { it.id }
 
-            val location = locationRepository.lastKnownLocation()
-            val currentRegionId = regionRepository.currentRegion()?.id
-            val items = usable.map { region ->
-                RegionItem(
-                    id = region.id,
-                    name = region.name,
-                    distanceMeters = location?.let { RegionUtils.getDistanceAway(region, it) },
-                    isCurrent = region.id == currentRegionId
-                )
-            }
-            // Sort by distance only when we have a location, like the legacy picker
-            Result.success(
-                if (location != null) {
-                    items.sortedBy { it.distanceMeters ?: Float.MAX_VALUE }
-                } else {
-                    items
-                }
+        val location = locationRepository.lastKnownLocation()
+        val currentRegionId = regionRepository.currentRegion()?.id
+        val items = usable.map { region ->
+            RegionItem(
+                id = region.id,
+                name = region.name,
+                distanceMeters = location?.let { RegionUtils.getDistanceAway(region, it) },
+                isCurrent = region.id == currentRegionId
             )
         }
+        // Sort by distance only when we have a location, like the legacy picker
+        Result.success(
+            if (location != null) {
+                items.sortedBy { it.distanceMeters ?: Float.MAX_VALUE }
+            } else {
+                items
+            }
+        )
+    }
 
     override suspend fun selectRegion(id: Long): Boolean {
         val region = regionsById[id] ?: return false

@@ -21,8 +21,7 @@ import org.onebusaway.android.ui.compose.ListLoadingViewModel
 
 /** ViewModel for the region picker screen. */
 @HiltViewModel
-class RegionsViewModel @Inject constructor(private val repository: RegionsRepository) :
-    ListLoadingViewModel<RegionItem>() {
+class RegionsViewModel @Inject constructor(private val repository: RegionsRepository) : ListLoadingViewModel<RegionItem>() {
 
     init {
         load()

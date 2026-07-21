@@ -62,7 +62,7 @@ object IntentRouteMapper {
         /** Data-URI path segments (`content://<authority>/<path>/{id}`), read by path since the authority is flavor-specific. */
         val pathSegments: List<String> = emptyList(),
         /** Optional pre-load stop title for the stops data-URI ([ArrivalsIntents.STOP_NAME]). */
-        val arrivalsStopName: String? = null,
+        val arrivalsStopName: String? = null
     )
 
     /**
@@ -83,8 +83,7 @@ object IntentRouteMapper {
     }
 
     /** Translates an incoming external [intent] into the NavHost route to open, or null to stay on home/map. */
-    fun routeForIntent(intent: Intent?): String? =
-        intent?.let { decide(read(it)).toRoute() }
+    fun routeForIntent(intent: Intent?): String? = intent?.let { decide(read(it)).toRoute() }
 
     /**
      * The pure route-precedence decision over [input] — the exact branch order of the former
@@ -165,7 +164,7 @@ object IntentRouteMapper {
             isNightLight = intent.component?.className?.endsWith(NIGHT_LIGHT_ACTIVITY) == true,
             tabTag = tabTag,
             pathSegments = data?.pathSegments ?: emptyList(),
-            arrivalsStopName = intent.getStringExtra(ArrivalsIntents.STOP_NAME),
+            arrivalsStopName = intent.getStringExtra(ArrivalsIntents.STOP_NAME)
         )
     }
 }

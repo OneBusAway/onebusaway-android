@@ -23,14 +23,19 @@ import org.onebusaway.android.time.WallTime
 sealed class ExtrapolationResult {
     /** Extrapolation succeeded. */
     class Success(val distribution: ProbDistribution) : ExtrapolationResult()
+
     /** No valid vehicle data exists for the trip. */
     object NoData : ExtrapolationResult()
+
     /** Vehicle data is older than the extrapolation horizon. */
     object Stale : ExtrapolationResult()
+
     /** Vehicle is at the trip start before scheduled departure. */
     object TripNotStarted : ExtrapolationResult()
+
     /** Vehicle is at or near the end of the trip. */
     object TripEnded : ExtrapolationResult()
+
     /** Required schedule data is missing. */
     object MissingSchedule : ExtrapolationResult()
 }
@@ -48,8 +53,8 @@ abstract class Extrapolator(protected val state: TripState) {
      * clock skew. The type makes that same-domain requirement a compile-time guarantee (#1620).
      */
     abstract fun doExtrapolate(
-            lastDist: Double,
-            lastTime: WallTime,
-            queryTime: WallTime
+        lastDist: Double,
+        lastTime: WallTime,
+        queryTime: WallTime
     ): ExtrapolationResult
 }

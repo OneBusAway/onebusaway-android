@@ -21,9 +21,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,10 +38,8 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Icon
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -72,12 +70,13 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.RealtimeIndicator
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.ui.icons.AppIcons
 
 /** Refresh interval matching the legacy TripDetailsListFragment (fixed 60s). */
 private const val REFRESH_PERIOD_MS = 60_000L
@@ -105,7 +104,7 @@ fun TripDetailsRoute(
     onBack: () -> Unit,
     onStopClick: (stopId: String, name: String, direction: String?) -> Unit,
     onSetDestinationReminder: (stopIndex: Int) -> Unit,
-    onShowTrajectory: () -> Unit = {},
+    onShowTrajectory: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
@@ -117,7 +116,7 @@ fun TripDetailsRoute(
         onRefresh = viewModel::manualRefresh,
         onStopClick = onStopClick,
         onSetDestinationReminder = onSetDestinationReminder,
-        onShowTrajectory = onShowTrajectory,
+        onShowTrajectory = onShowTrajectory
     )
 }
 
@@ -130,7 +129,7 @@ fun TripDetailsScreen(
     onRefresh: () -> Unit,
     onStopClick: (String, String, String?) -> Unit,
     onSetDestinationReminder: (Int) -> Unit,
-    onShowTrajectory: () -> Unit = {},
+    onShowTrajectory: () -> Unit = {}
 ) {
     val content = state as? TripDetailsUiState.Content
     Scaffold(
@@ -142,7 +141,7 @@ fun TripDetailsScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         } else {
                             Icon(
@@ -155,7 +154,7 @@ fun TripDetailsScreen(
                     // Speed-estimation trajectory graph (debug).
                     IconButton(onClick = onShowTrajectory) {
                         Icon(
-                            imageVector = Icons.Filled.Info,
+                            imageVector = AppIcons.Info,
                             contentDescription = "Trajectory",
                             tint = MaterialTheme.colorScheme.onSurface
                         )
@@ -436,8 +435,7 @@ private fun TripDetailsPreview() {
             )
             val passedColor = colorResource(R.color.trip_details_passed)
             val notPassedColor = colorResource(R.color.trip_details_not_passed)
-            fun stop(name: String, time: String, passed: Boolean, line: LinePosition, vehicle: Boolean = false, pin: StopPin = StopPin.NONE) =
-                TripStopItem("s_$name", name, "S", time, false, passed, line, vehicle, pin)
+            fun stop(name: String, time: String, passed: Boolean, line: LinePosition, vehicle: Boolean = false, pin: StopPin = StopPin.NONE) = TripStopItem("s_$name", name, "S", time, false, passed, line, vehicle, pin)
             TripStopRow(stop("Denny Way", "3:00 PM", true, LinePosition.FIRST), lineColor, vehicleColor, passedColor, true, {}, null)
             TripStopRow(stop("Pine St & 3rd Ave", "3:03 PM", true, LinePosition.MIDDLE, vehicle = true), lineColor, vehicleColor, passedColor, true, {}, null)
             TripStopRow(stop("Broadway & E Pine", "3:08 PM", false, LinePosition.MIDDLE, pin = StopPin.FOCUSED), lineColor, vehicleColor, notPassedColor, true, {}, null)

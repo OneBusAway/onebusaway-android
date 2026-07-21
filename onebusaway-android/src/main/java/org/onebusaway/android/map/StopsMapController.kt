@@ -22,34 +22,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.CachedViewport
 import org.onebusaway.android.database.oba.StopCacheRepository
-import org.onebusaway.android.models.NearbyStops
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
-import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.models.NearbyStops
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.RegionUtils
 import org.onebusaway.android.util.toGeoPoint
 
@@ -86,7 +86,7 @@ class StopsMapController(
     // The device wall clock for the cache TTL (a purely local timer). Read once per load; injectable so
     // tests pin it. The default is the sanctioned WallTime.now() mint (inert for the slim maps, whose
     // cache is disabled so it's never read).
-    private val now: () -> WallTime = { WallTime.now() },
+    private val now: () -> WallTime = { WallTime.now() }
 ) {
 
     private val renderState get() = host.renderState
@@ -210,8 +210,13 @@ class StopsMapController(
                     if (stopCache != null && regionId != null) {
                         val cached = guardCache("read") {
                             stopCache.stopsFor(
-                                snapshot.center.latitude, snapshot.center.longitude,
-                                snapshot.latSpan, snapshot.lonSpan, regionId, loadTime, maxStops,
+                                snapshot.center.latitude,
+                                snapshot.center.longitude,
+                                snapshot.latSpan,
+                                snapshot.lonSpan,
+                                regionId,
+                                loadTime,
+                                maxStops
                             )
                         }
                         if (cached != null && cached.stops.isNotEmpty()) {
@@ -272,15 +277,14 @@ class StopsMapController(
      * is a nice-to-have, the network path is authoritative. Cancellation is rethrown so flatMapLatest
      * can still abandon a superseded viewport.
      */
-    private suspend fun <T> guardCache(op: String, block: suspend () -> T): T? =
-        try {
-            block()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Log.e(TAG, "Stop cache $op failed", e)
-            null
-        }
+    private suspend fun <T> guardCache(op: String, block: suspend () -> T): T? = try {
+        block()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.e(TAG, "Stop cache $op failed", e)
+        null
+    }
 
     /**
      * One viewport's emission: a [Cached] render (served instantly from the persistent cache) followed
@@ -294,7 +298,7 @@ class StopsMapController(
         data class Network(
             val result: Result<NearbyStops?>,
             val servedCache: Boolean,
-            val snapshot: CameraSnapshot,
+            val snapshot: CameraSnapshot
         ) : StopLoad
     }
 
@@ -320,8 +324,11 @@ class StopsMapController(
             // The load failed. If the cache already rendered stops for this viewport (offline), show the
             // "showing saved stops" banner instead of the generic error toast — the user has stops on
             // screen, and a per-pan toast would spam. A genuine failure with nothing cached still toasts.
-            if (servedCache) host.setStopsBanner(StopsBanner.ShowingSavedStops)
-            else host.emitEffect(MapEffect.ShowError.from(it))
+            if (servedCache) {
+                host.setStopsBanner(StopsBanner.ShowingSavedStops)
+            } else {
+                host.emitEffect(MapEffect.ShowError.from(it))
+            }
             return
         }
         if (nearby == null) {
@@ -345,8 +352,11 @@ class StopsMapController(
             } catch (e: IllegalArgumentException) {
                 // Issue #69 - some devices are providing invalid lat/long coordinates.
                 Log.e(
-                    TAG, "Invalid latitude or longitude - lat = " + myLocation.latitude +
-                            ", long = " + myLocation.longitude
+                    TAG,
+                    "Invalid latitude or longitude - lat = " +
+                        myLocation.latitude +
+                        ", long = " +
+                        myLocation.longitude
                 )
             }
             if (!inRegion && nearby.stops.isEmpty()) {
@@ -400,14 +410,14 @@ class StopsMapController(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false,
+        animate: Boolean = false
     ) {
         if (recenter) {
             host.dispatchGesture(
                 CameraCommand.Recenter(
                     stop.location.toGeoPoint(),
                     animate = animate,
-                    applyRouteBias = routeActive() && overlayExpanded,
+                    applyRouteBias = routeActive() && overlayExpanded
                 )
             )
         }
@@ -426,7 +436,7 @@ class StopsMapController(
         stops: List<ObaStop>,
         routes: List<ObaRoute>,
         viewport: CameraSnapshot? = null,
-        complete: Boolean = false,
+        complete: Boolean = false
     ) {
         cacheRoutes(routes)
         accumulateAndPublish(stops, viewport, complete)
@@ -443,7 +453,7 @@ class StopsMapController(
     private fun accumulateAndPublish(
         stops: List<ObaStop>,
         viewport: CameraSnapshot? = null,
-        complete: Boolean = false,
+        complete: Boolean = false
     ) {
         for (stop in stops) {
             val marker = toStopMarker(stop)
@@ -451,10 +461,16 @@ class StopsMapController(
             // Preserve referential stability when nothing the ordinary-stop renderer reads changed.
             stopAccum[stop.id] =
                 if (
-                    existing != null && existing.point == marker.point &&
-                    existing.direction == marker.direction && existing.routeType == marker.routeType &&
+                    existing != null &&
+                    existing.point == marker.point &&
+                    existing.direction == marker.direction &&
+                    existing.routeType == marker.routeType &&
                     existing.favorite == marker.favorite
-                ) existing else marker
+                ) {
+                    existing
+                } else {
+                    marker
+                }
         }
         if (viewport == null) {
             publishStops()
@@ -465,7 +481,11 @@ class StopsMapController(
         // one is a sample, so it evicts nothing (#1754).
         if (complete) {
             evictStaleInViewport(
-                stopAccum, viewport.southWest, viewport.northEast, stops.mapTo(HashSet()) { it.id }, focusedId,
+                stopAccum,
+                viewport.southWest,
+                viewport.northEast,
+                stops.mapTo(HashSet()) { it.id },
+                focusedId
             )
         }
         // Bound to the nearest to centre (never evicting the centred core against an incomplete sample).
@@ -522,8 +542,12 @@ class StopsMapController(
         // ObaStop.getDirection() is "N".."NW" or the literal "null" string for no direction.
         val direction = stop.direction ?: "null"
         return StopMarker(
-            stop.id, stop.location.toGeoPoint(), direction, routeType, stop,
-            favorite = stop.id in favoriteIds,
+            stop.id,
+            stop.location.toGeoPoint(),
+            direction,
+            routeType,
+            stop,
+            favorite = stop.id in favoriteIds
         )
     }
 
@@ -539,7 +563,7 @@ class StopsMapController(
                 nearby = stopAccum.values,
                 focusedStopId = renderState.snapshot.value.focusedStopId,
                 presentation = presentation,
-                markerFor = ::toStopMarker,
+                markerFor = ::toStopMarker
             )
         )
     }
@@ -556,7 +580,7 @@ internal data class RouteStopPresentation(
     val stops: List<ObaStop>,
     val routes: List<ObaRoute>,
     val routeDirectionsByStopId: Map<String, Set<RouteDirectionKey>>,
-    val projectedPoints: Map<String, GeoPoint>,
+    val projectedPoints: Map<String, GeoPoint>
 )
 
 /** Pure marker merge/style policy shared by base-route and exact-trip stop presentations. */
@@ -564,7 +588,7 @@ internal fun applyRouteStopPresentation(
     nearby: Collection<StopMarker>,
     focusedStopId: String?,
     presentation: RouteStopPresentation,
-    markerFor: (ObaStop) -> StopMarker,
+    markerFor: (ObaStop) -> StopMarker
 ): List<StopMarker> {
     val source = LinkedHashMap<String, StopMarker>()
     nearby.firstOrNull { it.id == focusedStopId }?.let { source[it.id] = it }
@@ -572,7 +596,7 @@ internal fun applyRouteStopPresentation(
     return source.values.map { marker ->
         marker.copy(
             point = presentation.projectedPoints[marker.id] ?: marker.point,
-            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
         )
     }
 }

@@ -40,6 +40,5 @@ val REPORT_TYPE_ACTIONS = listOf(
  */
 object ReportTypeGate {
 
-    fun apply(types: List<ReportType>, emailDefined: Boolean): List<ReportType> =
-        if (emailDefined) types else types.filterNot { it.action == ReportAction.APP_FEEDBACK }
+    fun apply(types: List<ReportType>, emailDefined: Boolean): List<ReportType> = if (emailDefined) types else types.filterNot { it.action == ReportAction.APP_FEEDBACK }
 }

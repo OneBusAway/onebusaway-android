@@ -27,7 +27,7 @@ class ArrivalsSheetSelectionTest {
     fun routeFocus_selectsRowByDirectionId() {
         val selection = StopRouteSelection(
             originHeadsign = null,
-            legs = listOf(RouteLeg("route-8", "8", directionId = 1)),
+            legs = listOf(RouteLeg("route-8", "8", directionId = 1))
         )
 
         assertEquals(routeRowKey("route-8", 1, null), selection.selectedArrivalRowKey())
@@ -37,7 +37,7 @@ class ArrivalsSheetSelectionTest {
     fun routeFocus_withoutDirectionId_fallsBackToOriginHeadsign() {
         val selection = StopRouteSelection(
             originHeadsign = "Northgate",
-            legs = listOf(RouteLeg("route-8", "8")),
+            legs = listOf(RouteLeg("route-8", "8"))
         )
 
         assertEquals(routeRowKey("route-8", "Northgate"), selection.selectedArrivalRowKey())
@@ -47,12 +47,12 @@ class ArrivalsSheetSelectionTest {
     fun continuation_keepsOriginalDrawerRowSelected() {
         val selection = StopRouteSelection(
             originHeadsign = "Downtown",
-            legs = listOf(RouteLeg("route-65", "65"), RouteLeg("route-75", "75")),
+            legs = listOf(RouteLeg("route-65", "65"), RouteLeg("route-75", "75"))
         )
 
         assertEquals(
             routeRowKey("route-65", "Downtown"),
-            selection.selectedArrivalRowKey(),
+            selection.selectedArrivalRowKey()
         )
     }
 }

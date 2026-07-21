@@ -39,7 +39,7 @@ import org.onebusaway.android.map.compose.ComposeBitmapRenderer
  */
 class GoogleInfoWindows(
     private val activity: Activity,
-    container: ViewGroup,
+    container: ViewGroup
 ) : GoogleMap.InfoWindowAdapter {
 
     private val preRenderer = ComposeBitmapRenderer(activity, container)
@@ -98,7 +98,8 @@ class GoogleInfoWindows(
             return ImageView(activity).apply {
                 setImageBitmap(bmp)
                 layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
                 )
             }
         }

@@ -31,6 +31,12 @@ hilt = "2.60.1"
 apollo = "5.0.1"
 crashlyticsPlugin = "3.0.7"
 playPublisher = "4.0.0"
+# Code formatting: the Spotless Gradle plugin drives ktlint (Kotlin / *.gradle.kts) and
+# google-java-format (the handful of *.java files). See root build.gradle.kts's spotless {} block
+# and .editorconfig (ktlint_code_style = android_studio). ktlint's version is pinned separately so
+# formatting output is reproducible across machines regardless of Spotless's bundled default.
+spotless = "7.0.2"
+ktlint = "1.7.0"
 # Lint tooling tracks AGP: lintVersion == agpVersion + 23.0.0 (AGP 9.2.0 -> 32.2.0). Consumed by
 # the :lint-rules module.
 lint = "32.3.0"
@@ -38,7 +44,6 @@ lint = "32.3.0"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseAnalytics = "23.2.0"
-firebaseFirestore = "26.4.1"
 firebaseAuth = "24.2.0"
 firebaseStorage = "22.0.1"
 firebaseCrashlytics = "20.1.0"
@@ -53,7 +58,6 @@ activity = "1.13.0"
 exifinterface = "1.4.2"
 appcompat = "1.7.1"
 coreKtx = "1.19.0"
-preference = "1.2.1"
 datastore = "1.2.1"
 work = "2.11.2"
 room = "2.8.4"
@@ -61,16 +65,12 @@ lifecycle = "2.11.0"
 navigationCompose = "2.9.8"
 hiltNavigationCompose = "1.4.0"
 composeBom = "2026.06.01"
-materialIcons = "1.7.8"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
 kotlinxSerializationJson = "1.11.0"
 coroutines = "1.11.0"
 material = "1.14.0"
-gson = "2.14.0"
-commonsIo = "2.22.0"
 gtfsRealtime = "0.1.0"
-protoGoogleCommonProtos = "2.73.0"
 maplibre = "13.3.1"
 # Test-only
 androidxTestRunner = "1.7.0"
@@ -84,7 +84,6 @@ desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 
 # --- Firebase / Google Play services ---
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
 firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebaseCrashlytics" }
@@ -98,7 +97,6 @@ open311-client = { module = "com.github.OneBusAway:open311-client", version.ref 
 pelias-client-library = { module = "com.github.OneBusAway:pelias-client-library", version.ref = "pelias" }
 comparators = { module = "org.onebusaway.util:comparators", version.ref = "comparators" }
 gtfs-realtime-bindings = { module = "org.mobilitydata:gtfs-realtime-bindings", version.ref = "gtfsRealtime" }
-proto-google-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version.ref = "protoGoogleCommonProtos" }
 
 # --- AndroidX ---
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
@@ -106,7 +104,6 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
-androidx-preference = { module = "androidx.preference:preference", version.ref = "preference" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
 androidx-work-runtime = { module = "androidx.work:work-runtime", version.ref = "work" }
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
@@ -128,8 +125,6 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
-# Material icons are frozen at 1.7.8 and no longer BOM-managed, so this one carries an explicit version.
-compose-material-icons-core = { module = "androidx.compose.material:material-icons-core", version.ref = "materialIcons" }
 
 # --- Hilt ---
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
@@ -146,8 +141,6 @@ kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutine
 
 # --- Misc ---
 material = { module = "com.google.android.material:material", version.ref = "material" }
-gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-commons-io = { module = "commons-io:commons-io", version.ref = "commonsIo" }
 maplibre-android-sdk = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
 
 # --- Testing ---
@@ -177,3 +170,4 @@ apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "crashlyticsPlugin" }
 play-publisher = { id = "com.github.triplet.play", version.ref = "playPublisher" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }

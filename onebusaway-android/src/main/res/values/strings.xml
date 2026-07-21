@@ -914,7 +914,15 @@
     <string name="trip_plan_map_location">Selected location</string>
     <string name="directions_from_here">Directions from here</string>
     <string name="directions_to_here">Directions to here</string>
+    <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
+    <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
     <string name="trip_plan_clear_endpoint">Clear</string>
+    <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
+    <string name="trip_plan_options_scroll_previous">Show previous options</string>
+    <string name="trip_plan_options_scroll_more">Show more options</string>
+    <!-- Content descriptions for the button that expands/collapses a leg's steps in the directions list -->
+    <string name="trip_plan_expand_leg">Show steps</string>
+    <string name="trip_plan_collapse_leg">Hide steps</string>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>
@@ -927,7 +935,6 @@
     <string name="tripplanner_error_header_location">Can&#8217;t find that location</string>
     <string name="tripplanner_error_header_schedule">No transit at this time</string>
     <string name="tripplanner_error_header_no_route">Cannot find route</string>
-    <string name="tripplanner_error_header_advisory">Try walking instead</string>
     <string name="tripplanner_error_header_request">Couldn&#8217;t plan this trip</string>
     <string name="tripplanner_error_not_defined">Sorry, something went wrong.  Please try again.</string>
     <string name="tripplanner_error_request_timeout">Please check your Internet connection and try
@@ -940,9 +947,6 @@
     <string name="tripplanner_error_no_transit_times">Transit times for selected date are not available</string>
     <string name="tripplanner_error_outside_service_period">Selected date is outside the available
         transit schedule
-    </string>
-    <string name="tripplanner_error_walking_better_than_transit">Walking is faster than transit for
-        this trip
     </string>
     <string name="tripplanner_error_bogus_parameter">Something went wrong.  Change your trip options and try again.</string>
     <string name="tripplanner_error_geocode_from_not_found">Origin not found</string>

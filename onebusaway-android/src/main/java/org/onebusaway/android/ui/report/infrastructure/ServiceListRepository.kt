@@ -17,12 +17,12 @@
 package org.onebusaway.android.ui.report.infrastructure
 
 import android.content.Context
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import edu.usf.cutr.open311client.Open311
 import edu.usf.cutr.open311client.Open311Manager
 import edu.usf.cutr.open311client.models.Service
 import edu.usf.cutr.open311client.models.ServiceListRequest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.report.ui.util.ServiceUtils

@@ -18,8 +18,8 @@ package org.onebusaway.android.ui.report.types
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import edu.usf.cutr.open311client.Open311Manager
+import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.region.RegionRepository
 
@@ -36,7 +36,7 @@ interface ReportTypeRepository {
  */
 class DefaultReportTypeRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val regionRepository: RegionRepository,
+    private val regionRepository: RegionRepository
 ) : ReportTypeRepository {
 
     override fun reportTypes(): List<ReportType> {

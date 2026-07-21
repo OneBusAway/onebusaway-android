@@ -51,19 +51,19 @@ class PushRegistrationClient internal constructor(
     // Seams for the Android-only reporting sinks, so failure handling is assertable from a plain JVM
     // test: android.util.Log and Crashlytics are both unavailable there.
     private val logWarning: (String, Throwable?) -> Unit,
-    private val reportError: (Throwable) -> Unit,
+    private val reportError: (Throwable) -> Unit
 ) {
 
     /** Production constructor Hilt builds from: resolves the seams from [context] and delegates. */
     @Inject
     constructor(
         @ApplicationContext context: Context,
-        service: PushRegistrationWebService,
+        service: PushRegistrationWebService
     ) : this(
         service = service,
         registrationsEndpointPath = context.getString(R.string.arrivals_reminders_api_endpoint),
         logWarning = { message, cause -> Log.w(TAG, message, cause) },
-        reportError = { FirebaseCrashlytics.getInstance().recordException(it) },
+        reportError = { FirebaseCrashlytics.getInstance().recordException(it) }
     )
 
     /** POSTs [target]. True only on a 2xx (204) success. */
@@ -74,7 +74,7 @@ class PushRegistrationClient internal constructor(
             locale = target.locale,
             testDevice = target.testDevice,
             // Required by the server for a test device, omitted otherwise (see the service KDoc).
-            description = target.description,
+            description = target.description
         )
         val registered = response.isSuccessful
         if (!registered) reportHttpFailure("register", target, response)
@@ -93,10 +93,10 @@ class PushRegistrationClient internal constructor(
     }.onFailure { logTransportFailure("unregister", previous, it) }.getOrDefault(false)
 
     /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations` — mirrors the alarms URL build. */
-    private fun registrationUrl(registration: PushRegistration): String =
-        registration.sidecarBaseUrl +
-            registrationsEndpointPath +
-            registration.regionId + "/push_registrations"
+    private fun registrationUrl(registration: PushRegistration): String = registration.sidecarBaseUrl +
+        registrationsEndpointPath +
+        registration.regionId +
+        "/push_registrations"
 
     /**
      * Reports a non-2xx response. Without this an HTTP error would be *invisible*: a failed status is a
@@ -112,7 +112,7 @@ class PushRegistrationClient internal constructor(
     private fun reportHttpFailure(
         operation: String,
         registration: PushRegistration,
-        response: Response<Unit>,
+        response: Response<Unit>
     ) {
         // The server's error body carries the actionable message (e.g. "Description can't be blank").
         val body = response.errorBody()?.string()?.trim().orEmpty()
@@ -129,15 +129,14 @@ class PushRegistrationClient internal constructor(
     private fun logTransportFailure(
         operation: String,
         registration: PushRegistration,
-        cause: Throwable,
+        cause: Throwable
     ) = logWarning(failurePrefix(operation, registration), cause)
 
     /**
      * The shared opening of every failure message. Identifies the endpoint by region + host — never the
      * token, and never the URL, since the unregister URL carries the token as a query param.
      */
-    private fun failurePrefix(operation: String, registration: PushRegistration): String =
-        "push $operation failed for region ${registration.regionId} at ${registration.sidecarBaseUrl}"
+    private fun failurePrefix(operation: String, registration: PushRegistration): String = "push $operation failed for region ${registration.regionId} at ${registration.sidecarBaseUrl}"
 
     private companion object {
         const val TAG = "PushRegistration"

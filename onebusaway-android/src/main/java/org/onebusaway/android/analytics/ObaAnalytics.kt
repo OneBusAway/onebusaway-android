@@ -40,7 +40,7 @@ class ObaAnalytics @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val analyticsProvider: AnalyticsProvider,
     private val preferences: PreferencesRepository,
-    private val firebase: FirebaseAnalytics,
+    private val firebase: FirebaseAnalytics
 ) {
 
     /** Distance buckets reported when a stop is tapped. */
@@ -58,8 +58,7 @@ class ObaAnalytics @Inject constructor(
 
         companion object {
             /** The first bucket whose ceiling exceeds [meters], or [DISTANCE_8] (infinity) past 3200m. */
-            fun forDistance(meters: Float): ObaStopDistance =
-                entries.firstOrNull { meters < it.distanceInMeters } ?: DISTANCE_8
+            fun forDistance(meters: Float): ObaStopDistance = entries.firstOrNull { meters < it.distanceInMeters } ?: DISTANCE_8
         }
     }
 
@@ -119,7 +118,7 @@ class ObaAnalytics @Inject constructor(
         stopId: String,
         stopName: String?,
         myLocation: Location?,
-        stopLocation: Location,
+        stopLocation: Location
     ) {
         if (!isAnalyticsActive() || myLocation == null) return
         if (myLocation.accuracy < LOCATION_ACCURACY_THRESHOLD) {
@@ -131,7 +130,7 @@ class ObaAnalytics @Inject constructor(
     private fun reportViewStopEvent(
         stopId: String,
         stopName: String?,
-        proximityToStopCategory: String,
+        proximityToStopCategory: String
     ) {
         if (!isAnalyticsActive()) return
         val bundle = Bundle().apply {
@@ -156,7 +155,7 @@ class ObaAnalytics @Inject constructor(
     fun setSendAnonymousData(isAnalyticsActive: Boolean) {
         firebase.setUserProperty(
             string(R.string.analytics_label_analytics_property),
-            isAnalyticsActive.toYesNo(),
+            isAnalyticsActive.toYesNo()
         )
         firebase.setAnalyticsCollectionEnabled(isAnalyticsActive)
     }
@@ -172,7 +171,7 @@ class ObaAnalytics @Inject constructor(
         if (!isAnalyticsActive()) return
         firebase.setUserProperty(
             string(R.string.analytics_label_show_departed_vehicles_property),
-            showDepartedVehicles.toYesNo(),
+            showDepartedVehicles.toYesNo()
         )
     }
 
@@ -192,18 +191,21 @@ class ObaAnalytics @Inject constructor(
     fun reportDestinationReminderFeedback(
         wasGoodReminder: Boolean,
         feedbackText: String?,
-        fileName: String?,
+        fileName: String?
     ) {
         if (!isAnalyticsActive()) return
         val bundle = Bundle().apply {
             putString(
                 FirebaseAnalytics.Param.ITEM_ID,
-                string(R.string.analytics_label_button_press_destination_reminder_feedback),
+                string(R.string.analytics_label_button_press_destination_reminder_feedback)
             )
             putString(
                 FirebaseAnalytics.Param.ITEM_VARIANT,
-                if (wasGoodReminder) string(R.string.analytics_label_destination_reminder_yes)
-                else string(R.string.analytics_label_destination_reminder_no),
+                if (wasGoodReminder) {
+                    string(R.string.analytics_label_destination_reminder_yes)
+                } else {
+                    string(R.string.analytics_label_destination_reminder_no)
+                }
             )
             if (!feedbackText.isNullOrEmpty()) putString(FirebaseAnalytics.Param.CONTENT, feedbackText)
             if (!fileName.isNullOrEmpty()) putString(FirebaseAnalytics.Param.LOCATION_ID, fileName)
@@ -212,8 +214,7 @@ class ObaAnalytics @Inject constructor(
     }
 
     /** Whether the user has left analytics collection enabled in settings. */
-    private fun isAnalyticsActive(): Boolean =
-        preferences.getBoolean(R.string.preferences_key_analytics, true)
+    private fun isAnalyticsActive(): Boolean = preferences.getBoolean(R.string.preferences_key_analytics, true)
 
     private fun string(resId: Int): String = context.getString(resId)
 

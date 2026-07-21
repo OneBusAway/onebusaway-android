@@ -37,8 +37,8 @@ object PlausibleAnalytics {
      * @param state The state of the item that was selected.
      */
     @JvmStatic
-    fun reportUiEvent(plausible: Plausible?, pageURL:String, id: String, state: String?) {
-        if(plausible == null) return
+    fun reportUiEvent(plausible: Plausible?, pageURL: String, id: String, state: String?) {
+        if (plausible == null) return
         plausible.event("Item Selected", pageURL, props = mapOf("item_id" to id, "item_variant" to state))
     }
 
@@ -49,7 +49,7 @@ object PlausibleAnalytics {
      */
     @JvmStatic
     fun reportSearchEvent(plausible: Plausible?, query: String) {
-        if(plausible == null) return
+        if (plausible == null) return
         plausible.event("Search", REPORT_SEARCH_EVENT_URL, props = mapOf("query" to query))
     }
 
@@ -61,7 +61,7 @@ object PlausibleAnalytics {
      */
     @JvmStatic
     fun reportViewStopEvent(plausible: Plausible?, id: String, stopDistance: String) {
-        if(plausible == null) return
+        if (plausible == null) return
         plausible.pageView(REPORT_VIEW_STOP_EVENT_URL, props = mapOf("id" to id, "distance" to stopDistance))
     }
 }

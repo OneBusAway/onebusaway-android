@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.ui.search
 
-import org.onebusaway.android.api.adapters.DtoStop
-
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.adapters.DtoStop
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.database.oba.StopUserInfo
 

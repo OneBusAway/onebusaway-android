@@ -60,9 +60,9 @@ interface DatabaseEntryPoint {
 
     companion object {
         @JvmStatic
-        fun get(context: Context): DatabaseEntryPoint =
-            EntryPointAccessors.fromApplication(
-                context.applicationContext, DatabaseEntryPoint::class.java
-            )
+        fun get(context: Context): DatabaseEntryPoint = EntryPointAccessors.fromApplication(
+            context.applicationContext,
+            DatabaseEntryPoint::class.java
+        )
     }
 }

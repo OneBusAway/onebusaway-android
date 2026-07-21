@@ -15,18 +15,17 @@
  */
 package org.onebusaway.android.api.bridge
 
-import org.onebusaway.android.api.adapters.toObaRegion
-
 import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.NetworkEntryPoint
+import org.onebusaway.android.api.adapters.toObaRegion
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.RegionDto
 import org.onebusaway.android.api.requireData
+import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.region.Region
 
 /**
@@ -40,7 +39,10 @@ object RegionsClient {
 
     private const val TAG = "RegionsClient"
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     /** Fetches the live regions directory from the fixed regions host; empty list on failure. */
     @JvmStatic

@@ -15,18 +15,15 @@
  */
 package org.onebusaway.android.ui.report.customerservice
 
-import org.onebusaway.android.api.data.AgenciesDataSource
-
-import org.onebusaway.android.models.AgencyContact
-
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.models.AgencyContact
 import org.onebusaway.android.ui.compose.ListLoadingViewModel
 
 /** ViewModel for the customer-service contact list. */
 @HiltViewModel
-class CustomerServiceViewModel @Inject constructor(private val repository: AgenciesDataSource) :
-    ListLoadingViewModel<AgencyContact>() {
+class CustomerServiceViewModel @Inject constructor(private val repository: AgenciesDataSource) : ListLoadingViewModel<AgencyContact>() {
 
     init {
         load()

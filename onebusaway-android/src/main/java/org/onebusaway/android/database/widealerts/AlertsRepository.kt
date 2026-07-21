@@ -13,7 +13,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  */
 @Singleton
 class AlertsRepository @Inject constructor(
-    private val alertDao: AlertDao,
+    private val alertDao: AlertDao
 ) {
 
     /** Whether an alert with [alertId] has already been recorded (shown). */

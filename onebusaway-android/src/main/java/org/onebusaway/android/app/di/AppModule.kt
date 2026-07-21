@@ -59,9 +59,11 @@ object AppModule {
     @Singleton
     @AppScope
     fun provideAppScope(): CoroutineScope = CoroutineScope(
-        SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, e ->
-            Log.e("AppScope", "Uncaught exception in a fire-and-forget coroutine; ignoring", e)
-        }
+        SupervisorJob() +
+            Dispatchers.IO +
+            CoroutineExceptionHandler { _, e ->
+                Log.e("AppScope", "Uncaught exception in a fire-and-forget coroutine; ignoring", e)
+            }
     )
 
     // The Preferences DataStore backing [PreferencesRepository]. A one-time SharedPreferencesMigration
@@ -71,11 +73,11 @@ object AppModule {
     @Singleton
     fun providePreferencesDataStore(
         @ApplicationContext context: Context,
-        @AppScope scope: CoroutineScope,
+        @AppScope scope: CoroutineScope
     ): DataStore<Preferences> = PreferenceDataStoreFactory.create(
         migrations = listOf(SharedPreferencesMigration(context, context.packageName + "_preferences")),
         scope = scope,
-        produceFile = { context.preferencesDataStoreFile("settings") },
+        produceFile = { context.preferencesDataStoreFile("settings") }
     )
 
     /** Wall-clock source — the single `System.currentTimeMillis()` boundary for injected consumers. */
@@ -91,6 +93,6 @@ object AppModule {
     @Provides
     @Singleton
     fun provideFirebaseAnalytics(
-        @ApplicationContext context: Context,
+        @ApplicationContext context: Context
     ): FirebaseAnalytics = FirebaseAnalytics.getInstance(context)
 }

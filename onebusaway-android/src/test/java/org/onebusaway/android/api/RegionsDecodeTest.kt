@@ -15,12 +15,7 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.adapters.toObaRegion
-
-import org.onebusaway.android.api.contract.ListWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.RegionDto
-
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,7 +23,10 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import org.onebusaway.android.api.adapters.toObaRegion
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.RegionDto
 
 /**
  * Ports the regions-parsing coverage of the retired instrumented RegionsTest onto the modernized
@@ -38,7 +36,10 @@ import java.io.File
  */
 class RegionsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     private fun decode(path: String): List<RegionDto> {
         val envelope: ObaEnvelope<ListWithReferences<RegionDto>> =
@@ -67,7 +68,7 @@ class RegionsDecodeTest {
         val pugetSound = regions.single { it.name == "Puget Sound" }
         assertEquals(
             "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp",
-            pugetSound.otpBaseGraphqlUrl,
+            pugetSound.otpBaseGraphqlUrl
         )
         regions.filter { it.name != "Puget Sound" }
             .forEach { assertNull(it.otpBaseGraphqlUrl) }

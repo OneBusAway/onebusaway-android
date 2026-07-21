@@ -39,6 +39,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlin.math.abs
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import org.maplibre.android.MapLibre
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
@@ -53,19 +59,13 @@ import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.VehicleInfoWindow
-import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.compose.drivePings
+import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.routePolylineRenderFlow
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.map
-import kotlin.math.abs
 
 private const val STYLE_URL_LIGHT = "https://tiles.openfreemap.org/styles/liberty"
 private const val STYLE_URL_DARK = "https://tiles.openfreemap.org/styles/dark"
@@ -100,7 +100,7 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
         modifier: Modifier,
         initialLatitude: Double,
         initialLongitude: Double,
-        initialZoom: Float,
+        initialZoom: Float
     ) {
         val renderState = host.renderState
         val cb = requireNotNull(callbacks) { "MapLibreComposeAdapter requires ObaMapCallbacks" }
@@ -286,7 +286,7 @@ private fun wireClicks(
     map: MapLibreMap,
     renderer: MapLibreRenderer,
     infoWindows: MapLibreInfoWindows,
-    callbacks: ObaMapCallbacks,
+    callbacks: ObaMapCallbacks
 ) {
     map.addOnMapClickListener { point ->
         renderer.routeStopAt(point)?.let { stop ->
@@ -366,7 +366,7 @@ private fun snapshot(map: MapLibreMap, target: LatLng): CameraSnapshot {
         latSpan = abs(north - south),
         lonSpan = abs(east - west),
         southWest = GeoPoint(south, west),
-        northEast = GeoPoint(north, east),
+        northEast = GeoPoint(north, east)
     )
 }
 

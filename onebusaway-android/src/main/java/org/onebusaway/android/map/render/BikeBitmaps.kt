@@ -19,8 +19,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import androidx.core.graphics.createBitmap
 import androidx.annotation.DrawableRes
+import androidx.core.graphics.createBitmap
 import org.onebusaway.android.R
 
 /**
@@ -59,13 +59,11 @@ object BikeBitmaps {
 
     /** The large bike-station pin (navy pin + white bike-dock glyph). */
     @JvmStatic
-    fun bigStation(context: Context): Bitmap =
-        sBigStation ?: bigMarker(context, R.drawable.bike_dock).also { sBigStation = it }
+    fun bigStation(context: Context): Bitmap = sBigStation ?: bigMarker(context, R.drawable.bike_dock).also { sBigStation = it }
 
     /** The large floating-bike pin (navy pin + white cyclist glyph). */
     @JvmStatic
-    fun bigFloating(context: Context): Bitmap =
-        sBigFloating ?: bigMarker(context, R.drawable.ic_directions_bike).also { sBigFloating = it }
+    fun bigFloating(context: Context): Bitmap = sBigFloating ?: bigMarker(context, R.drawable.ic_directions_bike).also { sBigFloating = it }
 
     /** Composites pin_base (tinted navy) with a centered white [glyphRes] — no outline, tip at the bottom. */
     private fun bigMarker(context: Context, @DrawableRes glyphRes: Int): Bitmap {
@@ -73,7 +71,7 @@ object BikeBitmaps {
         val sizePx = (MarkerRendering.GRID * scale).toInt()
         val bitmap = createBitmap(sizePx, sizePx)
         MarkerRendering.drawPinAndGlyph(
-            Canvas(bitmap), context, sizePx, scale, PIN_COLOR, glyphRes, Color.WHITE, GLYPH_SIZE, outline = 0f,
+            Canvas(bitmap), context, sizePx, scale, PIN_COLOR, glyphRes, Color.WHITE, GLYPH_SIZE, outline = 0f
         )
         return bitmap
     }

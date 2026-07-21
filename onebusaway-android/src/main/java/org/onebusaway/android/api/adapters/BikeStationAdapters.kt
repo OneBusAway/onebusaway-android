@@ -36,5 +36,5 @@ fun BikeStationDto.toBikeStation(): BikeStation = BikeStation(
     spacesAvailable = spacesAvailable,
     allowDropoff = allowDropoff,
     isFloatingBike = isFloatingBike,
-    realTimeData = realTimeData,
+    realTimeData = realTimeData
 )

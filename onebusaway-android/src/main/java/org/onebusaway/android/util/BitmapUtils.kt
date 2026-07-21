@@ -55,9 +55,9 @@ object BitmapUtils {
         }
         val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile(
-            imageFileName.toString(),  /* prefix */
-            ".jpg",         /* suffix */
-            storageDir      /* directory */
+            imageFileName.toString(), /* prefix */
+            ".jpg", /* suffix */
+            storageDir /* directory */
         )
     }
 
@@ -106,7 +106,8 @@ object BitmapUtils {
      */
     private fun calculateInSampleSize(
         options: BitmapFactory.Options,
-        reqWidth: Int, reqHeight: Int
+        reqWidth: Int,
+        reqHeight: Int
     ): Int {
         // Raw height and width of image
         val height = options.outHeight

@@ -31,7 +31,7 @@ class Otp2GraphQlEndpointTest {
         // base + /gtfs/v1 verified to serve the GraphQL endpoint.
         assertEquals(
             "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp/gtfs/v1",
-            otp2GraphQlEndpoint("https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp"),
+            otp2GraphQlEndpoint("https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp")
         )
     }
 
@@ -39,7 +39,7 @@ class Otp2GraphQlEndpointTest {
     fun toleratesTrailingSlashWithoutDoublingIt() {
         assertEquals(
             "https://example.opentripplanner.org/otp/gtfs/v1",
-            otp2GraphQlEndpoint("https://example.opentripplanner.org/otp/"),
+            otp2GraphQlEndpoint("https://example.opentripplanner.org/otp/")
         )
     }
 }

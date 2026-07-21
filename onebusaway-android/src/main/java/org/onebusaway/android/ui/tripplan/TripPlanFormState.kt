@@ -61,14 +61,14 @@ sealed interface TripEndpoint {
         override val lat: Double?,
         override val lon: Double?,
         /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
-        override val isTransit: Boolean = false,
+        override val isTransit: Boolean = false
     ) : TripEndpoint
 
     /** An address-book (contacts) pick; may still need server-side geocoding (null coordinates). */
     data class AddressBook(
         val displayName: String,
         override val lat: Double?,
-        override val lon: Double?,
+        override val lon: Double?
     ) : TripEndpoint
 
     /** The device's current location. Its label is a fixed string resolved by the UI. */
@@ -146,7 +146,7 @@ sealed interface PlanResult {
      */
     data class Success(
         val itineraries: List<TripItinerary>,
-        val params: TripPlanParams? = null,
+        val params: TripPlanParams? = null
     ) : PlanResult
     data class Error(val error: TripPlanError) : PlanResult
 }

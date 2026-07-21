@@ -40,9 +40,9 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
-import org.onebusaway.android.map.render.RouteStopCircles
 import org.onebusaway.android.map.render.DETAIL_RAMP_END_ZOOM
 import org.onebusaway.android.map.render.DETAIL_RAMP_START_ZOOM
+import org.onebusaway.android.map.render.RouteStopCircles
 import org.onebusaway.android.map.render.STOP_FOCUS_ROUTE_MIN_SCALE
 import org.onebusaway.android.map.render.StopMarker
 
@@ -57,11 +57,11 @@ internal class MapLibreRouteStopCircleLayer(
     private val density: Float,
     private val fillColor: Int,
     private val selectedFillColor: Int,
-    private val outlineColor: Int,
+    private val outlineColor: Int
 ) {
     private val source = GeoJsonSource(
         SOURCE_ID,
-        FeatureCollection.fromFeatures(emptyList<Feature>()),
+        FeatureCollection.fromFeatures(emptyList<Feature>())
     )
     private var stopById: Map<String, StopMarker> = emptyMap()
     private var renderedStops: List<StopMarker> = emptyList()
@@ -77,7 +77,7 @@ internal class MapLibreRouteStopCircleLayer(
                     switchCase(
                         eq(get(SELECTED_PROPERTY), true),
                         color(selectedFillColor),
-                        color(fillColor),
+                        color(fillColor)
                     )
                 ),
                 circleStrokeColor(outlineColor),
@@ -87,10 +87,10 @@ internal class MapLibreRouteStopCircleLayer(
                     radiusExpression(
                         STROKE_MIN_RADIUS_PROPERTY,
                         STROKE_MAX_RADIUS_PROPERTY,
-                        RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX,
+                        RouteStopCircles.STROKE_WIDTH_PX / RouteStopCircles.RADIUS_PX
                     )
                 ),
-                circleSortKey(get(MAX_RADIUS_PROPERTY)),
+                circleSortKey(get(MAX_RADIUS_PROPERTY))
             )
         )
         style.addLayer(
@@ -99,7 +99,7 @@ internal class MapLibreRouteStopCircleLayer(
                 .withProperties(
                     circleRadius(radiusExpression(scale = RouteStopCircles.INNER_RADIUS_SCALE)),
                     circleColor(outlineColor),
-                    circleSortKey(get(MAX_RADIUS_PROPERTY)),
+                    circleSortKey(get(MAX_RADIUS_PROPERTY))
                 )
         )
     }
@@ -110,7 +110,9 @@ internal class MapLibreRouteStopCircleLayer(
             routeStops == renderedStops &&
             focusedStopId == renderedFocusedStopId &&
             scaleWithZoom == renderedScaleWithZoom
-        ) return
+        ) {
+            return
+        }
         renderedStops = routeStops
         renderedFocusedStopId = focusedStopId
         renderedScaleWithZoom = scaleWithZoom
@@ -124,13 +126,13 @@ internal class MapLibreRouteStopCircleLayer(
                 addBooleanProperty(SELECTED_PROPERTY, stop.id == focusedStopId)
                 addNumberProperty(
                     MIN_RADIUS_PROPERTY,
-                    RouteStopCircles.RADIUS_PX * stopFocusMinScale * selectedScale,
+                    RouteStopCircles.RADIUS_PX * stopFocusMinScale * selectedScale
                 )
                 addNumberProperty(MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX * selectedScale)
                 // Base radii without the selection scale, so the stroke-width ramp stays constant weight.
                 addNumberProperty(
                     STROKE_MIN_RADIUS_PROPERTY,
-                    RouteStopCircles.RADIUS_PX * stopFocusMinScale,
+                    RouteStopCircles.RADIUS_PX * stopFocusMinScale
                 )
                 addNumberProperty(STROKE_MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX)
             }
@@ -145,7 +147,7 @@ internal class MapLibreRouteStopCircleLayer(
             screen.x - tapRadius,
             screen.y - tapRadius,
             screen.x + tapRadius,
-            screen.y + tapRadius,
+            screen.y + tapRadius
         )
         val feature = map.queryRenderedFeatures(hitBox, OUTER_LAYER_ID).firstOrNull()
         return feature?.getStringProperty(STOP_ID_PROPERTY)?.let(stopById::get)
@@ -173,16 +175,15 @@ internal class MapLibreRouteStopCircleLayer(
     private fun radiusExpression(
         minProperty: String = MIN_RADIUS_PROPERTY,
         maxProperty: String = MAX_RADIUS_PROPERTY,
-        scale: Float = 1f,
+        scale: Float = 1f
     ): Expression = interpolate(
         linear(),
         zoom(),
         stop(DETAIL_RAMP_START_ZOOM, scaledRadius(minProperty, scale)),
-        stop(DETAIL_RAMP_END_ZOOM, scaledRadius(maxProperty, scale)),
+        stop(DETAIL_RAMP_END_ZOOM, scaledRadius(maxProperty, scale))
     )
 
-    private fun scaledRadius(property: String, scale: Float): Expression =
-        if (scale == 1f) get(property) else product(get(property), literal(scale))
+    private fun scaledRadius(property: String, scale: Float): Expression = if (scale == 1f) get(property) else product(get(property), literal(scale))
 
     private companion object {
         const val SOURCE_ID = "oba-route-stops"

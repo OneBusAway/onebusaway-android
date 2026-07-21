@@ -33,13 +33,13 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
-import org.onebusaway.android.region.Region
-import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.ServiceAlertDao
+import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
-import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
+import org.onebusaway.android.util.BuildFlavorUtils
 import org.onebusaway.android.util.ThemeUtils
 
 /** One-shot actions the root settings screen can only perform with its host Activity. */
@@ -64,13 +64,13 @@ class SettingsViewModel @Inject constructor(
     private val regionRepository: RegionRepository,
     private val serviceAlertDao: ServiceAlertDao,
     private val importGate: ImportGate,
-    private val obaAnalytics: ObaAnalytics,
+    private val obaAnalytics: ObaAnalytics
 ) : ViewModel() {
 
     private val env = SettingsEnvironment(
         useFixedRegion = BuildConfig.USE_FIXED_REGION,
         sdkInt = Build.VERSION.SDK_INT,
-        isObaFlavor = BuildFlavorUtils.isOBABuildFlavor(),
+        isObaFlavor = BuildFlavorUtils.isOBABuildFlavor()
     )
 
     val state: StateFlow<SettingsUiState> =
@@ -78,7 +78,7 @@ class SettingsViewModel @Inject constructor(
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
-                compute(regionRepository.region.value),
+                compute(regionRepository.region.value)
             )
 
     private val _effects = Channel<SettingsEffect>(Channel.BUFFERED)
@@ -88,7 +88,7 @@ class SettingsViewModel @Inject constructor(
         prefs = readSnapshot(),
         region = region?.let { RegionSummaryInfo(it.name.orEmpty(), !it.otpBaseUrl.isNullOrEmpty()) },
         env = env,
-        customApiRegionSummary = context.getString(R.string.preferences_region_summary_custom_api),
+        customApiRegionSummary = context.getString(R.string.preferences_region_summary_custom_api)
     )
 
     private fun readSnapshot() = SettingsPrefSnapshot(
@@ -107,20 +107,20 @@ class SettingsViewModel @Inject constructor(
         shareDestinationLogs = prefs.getBoolean(R.string.preferences_key_user_share_destination_logs, true),
         mapMode = prefs.getString(
             R.string.preference_key_map_mode,
-            context.getString(R.string.preferences_preferred_map_option_normal2d),
+            context.getString(R.string.preferences_preferred_map_option_normal2d)
         ),
         preferredUnits = prefs.getString(
             R.string.preference_key_preferred_units,
-            context.getString(R.string.preferences_preferred_units_option_automatic),
+            context.getString(R.string.preferences_preferred_units_option_automatic)
         ),
         preferredTempUnits = prefs.getString(
             R.string.preference_key_preferred_temperature_units,
-            context.getString(R.string.preferences_preferred_units_option_automatic),
+            context.getString(R.string.preferences_preferred_units_option_automatic)
         ),
         appTheme = prefs.getString(
             R.string.preference_key_app_theme,
-            context.getString(R.string.preferences_app_theme_option_system_default),
-        ),
+            context.getString(R.string.preferences_app_theme_option_system_default)
+        )
     )
 
     // region Toggle actions
@@ -129,8 +129,11 @@ class SettingsViewModel @Inject constructor(
         prefs.setBoolean(R.string.preference_key_auto_select_region, value)
         reportPreferencesEvent(
             context,
-            if (value) R.string.analytics_label_button_press_auto
-            else R.string.analytics_label_button_press_manual
+            if (value) {
+                R.string.analytics_label_button_press_auto
+            } else {
+                R.string.analytics_label_button_press_manual
+            }
         )
     }
 
@@ -141,7 +144,12 @@ class SettingsViewModel @Inject constructor(
 
     fun onHideAlertsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_hide_alerts, value)
-        if (value) viewModelScope.launch { importGate.awaitReady(); serviceAlertDao.setAllHidden(1) }
+        if (value) {
+            viewModelScope.launch {
+                importGate.awaitReady()
+                serviceAlertDao.setAllHidden(1)
+            }
+        }
     }
 
     /**
@@ -152,39 +160,31 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { regionRepository.refresh() }
     }
 
-    fun onShowZoomControlsChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_show_zoom_controls, value)
+    fun onShowZoomControlsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_zoom_controls, value)
 
-    fun onDisplayWeatherViewChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_display_weather_view, value)
+    fun onDisplayWeatherViewChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_display_weather_view, value)
 
-    fun onShowAvailableStudiesChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_show_available_studies, value)
+    fun onShowAvailableStudiesChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_available_studies, value)
 
-    fun onShowTutorialScreensChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_show_tutorial_screens, value)
+    fun onShowTutorialScreensChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_tutorial_screens, value)
 
     fun onLeftHandModeChanged(value: Boolean) {
         prefs.setBoolean(R.string.preference_key_left_hand_mode, value)
         obaAnalytics.setLeftHanded(value)
     }
 
-    fun onShowHeaderArrivalsChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_show_header_arrivals, value)
+    fun onShowHeaderArrivalsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_header_arrivals, value)
 
-    fun onVibrateAllowedChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_preference_vibrate_allowed, value)
+    fun onVibrateAllowedChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_preference_vibrate_allowed, value)
 
-    fun onTripPlanNotificationsChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preference_key_trip_plan_notifications, value)
+    fun onTripPlanNotificationsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_trip_plan_notifications, value)
 
     fun onAnalyticsChanged(value: Boolean) {
         prefs.setBoolean(R.string.preferences_key_analytics, value)
         obaAnalytics.setSendAnonymousData(value)
     }
 
-    fun onShareDestinationLogsChanged(value: Boolean) =
-        prefs.setBoolean(R.string.preferences_key_user_share_destination_logs, value)
+    fun onShareDestinationLogsChanged(value: Boolean) = prefs.setBoolean(R.string.preferences_key_user_share_destination_logs, value)
 
     // endregion
 
@@ -192,11 +192,9 @@ class SettingsViewModel @Inject constructor(
 
     fun onMapModeChanged(value: String) = prefs.setString(R.string.preference_key_map_mode, value)
 
-    fun onPreferredUnitsChanged(value: String) =
-        prefs.setString(R.string.preference_key_preferred_units, value)
+    fun onPreferredUnitsChanged(value: String) = prefs.setString(R.string.preference_key_preferred_units, value)
 
-    fun onPreferredTempUnitsChanged(value: String) =
-        prefs.setString(R.string.preference_key_preferred_temperature_units, value)
+    fun onPreferredTempUnitsChanged(value: String) = prefs.setString(R.string.preference_key_preferred_temperature_units, value)
 
     fun onAppThemeChanged(value: String) {
         prefs.setString(R.string.preference_key_app_theme, value)
@@ -213,8 +211,7 @@ class SettingsViewModel @Inject constructor(
         get() = prefs.getString(R.string.preference_key_notification_sound, null)
 
     /** Persists the ringtone the host's picker returned (empty string == silent). */
-    fun onRingtonePicked(value: String) =
-        prefs.setString(R.string.preference_key_notification_sound, value)
+    fun onRingtonePicked(value: String) = prefs.setString(R.string.preference_key_notification_sound, value)
 
     fun onTutorialClicked() {
         reportPreferencesEvent(context, R.string.analytics_label_button_press_tutorial)
@@ -222,8 +219,7 @@ class SettingsViewModel @Inject constructor(
         _effects.trySend(SettingsEffect.GoHomeResetTutorial)
     }
 
-    fun onPoweredByObaClicked() =
-        reportPreferencesEvent(context, R.string.analytics_label_button_press_powered_by_oba)
+    fun onPoweredByObaClicked() = reportPreferencesEvent(context, R.string.analytics_label_button_press_powered_by_oba)
 
     fun onAboutClicked() = reportPreferencesEvent(context, R.string.analytics_label_button_press_about)
 

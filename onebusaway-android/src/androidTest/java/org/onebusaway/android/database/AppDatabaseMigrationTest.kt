@@ -16,8 +16,8 @@
 package org.onebusaway.android.database
 
 import androidx.room.testing.MigrationTestHelper
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -141,7 +141,8 @@ class AppDatabaseMigrationTest {
             "INSERT INTO cached_route_types (_id, type, region_id, last_seen) VALUES ('r1', 3, 1, 123)"
         )
         db.query("SELECT count(*) FROM cached_stops").use { c ->
-            c.moveToFirst(); assertEquals(1, c.getInt(0))
+            c.moveToFirst()
+            assertEquals(1, c.getInt(0))
         }
         db.close()
     }
@@ -186,7 +187,8 @@ class AppDatabaseMigrationTest {
         db: androidx.sqlite.db.SupportSQLiteDatabase,
         routeId: String
     ): Int = db.query("SELECT favorite FROM routes WHERE _id='$routeId'").use {
-        it.moveToFirst(); it.getInt(0)
+        it.moveToFirst()
+        it.getInt(0)
     }
 
     private companion object {

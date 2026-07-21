@@ -15,17 +15,19 @@
  */
 package org.onebusaway.android.directions.model
 
-import org.onebusaway.android.time.ServerTime
 import kotlin.time.Duration
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.PolylineDecoder
 
 /**
  * The app's own trip-plan domain model — replaces direct use of the vendored, unpublished-snapshot
@@ -61,7 +63,7 @@ import kotlinx.serialization.json.Json
 data class TripItinerary(
     @Serializable(with = DurationSerializer::class) val duration: Duration = Duration.ZERO,
     @Serializable(with = ServerTimeSerializer::class) val startTime: ServerTime = ServerTime(0L),
-    val legs: List<TripLeg> = emptyList(),
+    val legs: List<TripLeg> = emptyList()
 )
 
 @Serializable
@@ -72,8 +74,10 @@ data class TripLeg(
     val routeShortName: String? = null,
     val routeLongName: String? = null,
     val routeColor: String? = null,
+    // The route's agency GTFS id (OTP2 `agency.gtfsId`, e.g. `kcm:1`) — used, with [agencyName], to
+    // resolve this leg's route/stops onto OBA ids for route focus. Null on the OTP1 path.
+    val agencyId: String? = null,
     val agencyName: String? = null,
-    val agencyTimeZoneOffset: Int = 0,
     val headsign: String? = null,
     val tripId: String? = null,
     val realTime: Boolean = false,
@@ -88,17 +92,21 @@ data class TripLeg(
     val intermediateStops: List<TripPlace>? = null,
     val stop: List<TripPlace>? = null,
     val steps: List<TripStep> = emptyList(),
-    val legGeometry: TripLegGeometry? = null,
+    val legGeometry: TripLegGeometry? = null
 )
 
 @Serializable
 data class TripPlace(
     val name: String? = null,
+    // The GTFS stop id (OTP2 `stop.gtfsId`), when this place is a transit stop — the identity the
+    // arrivals board / route focus keys on. Distinct from [stopCode], the human-facing platform code.
+    // Null for non-stop places and on the OTP1 path (its wire place carries no stop id).
+    val stopId: String? = null,
     val stopCode: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,
     val vertexType: TripVertexType? = null,
-    val bikeShareId: String? = null,
+    val bikeShareId: String? = null
 )
 
 @Serializable
@@ -110,11 +118,18 @@ data class TripStep(
     val exit: String? = null,
     val stayOn: Boolean = false,
     val lat: Double = 0.0,
-    val lon: Double = 0.0,
+    val lon: Double = 0.0
 )
 
 @Serializable
 data class TripLegGeometry(val points: String? = null, val length: Int = 0)
+
+/** Decode the encoded leg polyline to points; empty when the geometry is absent or degenerate. */
+fun TripLegGeometry.decodedPoints(): List<GeoPoint> {
+    val encoded = points ?: return emptyList()
+    if (encoded.isEmpty() || length <= 0) return emptyList()
+    return PolylineDecoder.decode(encoded, length)
+}
 
 private val tripItineraryJson = Json { ignoreUnknownKeys = true }
 
@@ -124,18 +139,16 @@ private val tripItineraryJson = Json { ignoreUnknownKeys = true }
  * `TripPlanMonitorService.notifyChange` / `TripPlanScreen.maybeRestoreFromIntent`). Paired with
  * [String.toTripItineraries].
  */
-fun List<TripItinerary>.toJson(): String =
-    tripItineraryJson.encodeToString(ListSerializer(TripItinerary.serializer()), this)
+fun List<TripItinerary>.toJson(): String = tripItineraryJson.encodeToString(ListSerializer(TripItinerary.serializer()), this)
 
 /**
  * The read side of [List.toJson]. A corrupted/truncated extra degrades to an empty list — exactly how
  * [TripPlanScreen.maybeRestoreFromIntent][org.onebusaway.android.ui.tripplan] already treats a missing
  * extra — rather than crashing the activity on notification re-entry.
  */
-fun String.toTripItineraries(): List<TripItinerary> =
-    runCatching {
-        tripItineraryJson.decodeFromString(ListSerializer(TripItinerary.serializer()), this)
-    }.getOrDefault(emptyList())
+fun String.toTripItineraries(): List<TripItinerary> = runCatching {
+    tripItineraryJson.decodeFromString(ListSerializer(TripItinerary.serializer()), this)
+}.getOrDefault(emptyList())
 
 private object ServerTimeSerializer : KSerializer<ServerTime> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("ServerTime", PrimitiveKind.LONG)
@@ -155,8 +168,23 @@ private object DurationSerializer : KSerializer<Duration> {
  * re-derive it from the raw mode name.
  */
 enum class TripMode {
-    WALK, BICYCLE, CAR, TRAM, SUBWAY, RAIL, BUS, FERRY, CABLE_CAR, GONDOLA, FUNICULAR, TRANSIT,
-    TRAINISH, BUSISH, BOARDING, ALIGHTING, TRANSFER;
+    WALK,
+    BICYCLE,
+    CAR,
+    TRAM,
+    SUBWAY,
+    RAIL,
+    BUS,
+    FERRY,
+    CABLE_CAR,
+    GONDOLA,
+    FUNICULAR,
+    TRANSIT,
+    TRAINISH,
+    BUSISH,
+    BOARDING,
+    ALIGHTING,
+    TRANSFER;
 
     val isTransit: Boolean
         get() = this in TRANSIT_MODES
@@ -175,8 +203,19 @@ enum class TripVertexType { NORMAL, BIKESHARE, BIKEPARK, TRANSIT }
 
 /** Mirrors OTP1's `org.opentripplanner.api.model.RelativeDirection` wire vocabulary exactly. */
 enum class TripRelativeDirection {
-    DEPART, HARD_LEFT, LEFT, SLIGHTLY_LEFT, CONTINUE, SLIGHTLY_RIGHT, RIGHT, HARD_RIGHT,
-    CIRCLE_CLOCKWISE, CIRCLE_COUNTERCLOCKWISE, ELEVATOR, UTURN_LEFT, UTURN_RIGHT,
+    DEPART,
+    HARD_LEFT,
+    LEFT,
+    SLIGHTLY_LEFT,
+    CONTINUE,
+    SLIGHTLY_RIGHT,
+    RIGHT,
+    HARD_RIGHT,
+    CIRCLE_CLOCKWISE,
+    CIRCLE_COUNTERCLOCKWISE,
+    ELEVATOR,
+    UTURN_LEFT,
+    UTURN_RIGHT
 }
 
 /** Mirrors OTP1's `org.opentripplanner.api.model.AbsoluteDirection` wire vocabulary exactly. */

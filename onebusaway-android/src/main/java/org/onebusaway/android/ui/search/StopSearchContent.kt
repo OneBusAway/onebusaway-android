@@ -31,7 +31,7 @@ import org.onebusaway.android.ui.compose.components.StopRowContent
 @Composable
 fun StopSearchContent(
     viewModel: SearchViewModel<StopSearchResult>,
-    onStopClick: (StopSearchResult) -> Unit,
+    onStopClick: (StopSearchResult) -> Unit
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
     val state by viewModel.state.collectAsStateWithLifecycle()

@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.AgencyReference
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.contract.AgencyReference
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
 
 /**
  * Ports the legacy AgencyRequestTest onto the modernized `agency` endpoint: decodes a real Puget
@@ -30,7 +29,10 @@ import org.junit.Test
  */
 class AgencyDetailsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // Captured from api.pugetsound.onebusaway.org/api/where/agency/1.json (trimmed).
     private val body = """

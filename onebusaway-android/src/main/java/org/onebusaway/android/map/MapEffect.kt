@@ -16,7 +16,6 @@
 package org.onebusaway.android.map
 
 import android.util.Log
-
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
 

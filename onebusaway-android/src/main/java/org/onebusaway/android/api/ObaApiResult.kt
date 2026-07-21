@@ -15,11 +15,10 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.ListWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-
 import java.io.IOException
 import java.net.HttpURLConnection
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
 
 /**
  * Thrown when an OBA response carries a non-OK app-level [code] (a standard HTTP status mirrored in
@@ -60,5 +59,4 @@ fun ObaEnvelope<*>.requireOk() {
  * or parse failure still throws before reaching here, so callers' `runCatching` maps that to
  * `Result.failure`.
  */
-fun <T> ObaEnvelope<ListWithReferences<T>>.listOrEmpty(): List<T> =
-    if (code == HttpURLConnection.HTTP_OK) data?.list.orEmpty() else emptyList()
+fun <T> ObaEnvelope<ListWithReferences<T>>.listOrEmpty(): List<T> = if (code == HttpURLConnection.HTTP_OK) data?.list.orEmpty() else emptyList()

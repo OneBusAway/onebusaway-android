@@ -23,20 +23,31 @@ sealed interface CurrentFocus {
     data object None : CurrentFocus
     data class Stop(
         val stop: FocusedStop,
-        val selectedRoute: StopRouteSelection? = null,
+        val selectedRoute: StopRouteSelection? = null
     ) : CurrentFocus
     data class Route(val target: RouteTarget) : CurrentFocus
     data class BikeStation(val id: String) : CurrentFocus
 
     /**
-     * Trip-plan directions mode. A marker with no payload: the itinerary/plan identity lives in
-     * `TripPlanViewModel`/`TripResultsViewModel` (and persists via their own SavedStateHandle), so
-     * duplicating it here would create a second source of truth for "which itinerary". This only says
-     * "the map is in directions mode" — the chrome swaps to the trip-plan form and the map draws the
-     * itinerary the results VM selects.
+     * Trip-plan directions mode. The itinerary/plan identity still lives in
+     * `TripPlanViewModel`/`TripResultsViewModel` (persisted via their own SavedStateHandle), so this
+     * does not duplicate "which itinerary". [routeFocus] is the one sub-state it does own: the transit
+     * leg the user drilled into to examine its route (map recontextualized to that route + the
+     * departing stop's arrivals board), mirroring the route-subordinate-to-stop focus. Null is the
+     * plain itinerary overview.
      */
-    data object Directions : CurrentFocus
+    data class Directions(val routeFocus: DirectionsRouteFocus? = null) : CurrentFocus
 }
+
+/**
+ * A transit leg the user tapped from the directions overview — the route-subordinate-to-directions
+ * focus. Recontextualizes the map onto a route with the traveled board→alight segment drawn thick over
+ * it. Holds the exact [ShowRouteRequest] that produced this focus (route id, the boarding stop the
+ * direction is narrowed to, the ridden `highlightedSegment`, and — for a followed vehicle — its
+ * `focusTripId`) so restoring after a back-press replays it faithfully. (Each stop's live ETAs are
+ * shown inline in the drawer's Board/Alight rows, not here.)
+ */
+data class DirectionsRouteFocus(val request: ShowRouteRequest)
 
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop
@@ -48,37 +59,40 @@ val CurrentFocus.focusedBikeStationId: String?
 data class RouteTarget(
     val routeId: String,
     val directionStopId: String? = null,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     fun toRequest(focusTripId: String? = null) = ShowRouteRequest(
         routeId = routeId,
         directionStopId = directionStopId,
         focusTripId = focusTripId,
-        initialDirectionId = directionId,
+        initialDirectionId = directionId
     )
 }
 
 internal fun ShowRouteRequest.toRouteTarget() = RouteTarget(
     routeId = routeId,
     directionStopId = directionStopId,
-    directionId = initialDirectionId,
+    directionId = initialDirectionId
 )
 
 /** One route reached while following a vehicle block. */
 data class RouteLeg(
     val routeId: String,
     val shortName: String,
-    val directionId: Int? = null,
+    val directionId: Int? = null
 ) {
     val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
 }
 
 /** A route selected inside stop focus, anchored to its original arrivals row across continuations. */
 data class StopRouteSelection(
-    // The first leg already owns the row's route + direction identity. Headsign is only the legacy
-    // fallback for responses that omit directionId, so don't duplicate the rest of the row here.
+    // Row *identity*, never display: with [originLeg]'s route + directionId it forms the row key
+    // ([selectedArrivalRowKey]) fed to `resolveSelectedRouteGroup`, disambiguating the legacy case where
+    // a response omits directionId and only the headsign string tells two directions apart. The headsign
+    // the banner *shows* is read back from the resolved arrivals row, not from here — so don't render
+    // this and don't duplicate the rest of the row onto the selection.
     val originHeadsign: String?,
-    val legs: List<RouteLeg>,
+    val legs: List<RouteLeg>
 ) {
     init {
         require(legs.isNotEmpty()) { "StopRouteSelection requires at least one route leg" }

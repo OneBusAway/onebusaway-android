@@ -50,12 +50,12 @@ class StopCacheRepository @Inject constructor(private val dao: MapStopCacheDao) 
         lonSpan: Double,
         regionId: Long,
         now: WallTime,
-        limit: Int,
+        limit: Int
     ): CachedViewport {
         val bounds = boundsFor(centerLat, centerLon, latSpan, lonSpan)
         val rows = dao.stopsInBounds(
             regionId, bounds.minLat, bounds.maxLat, bounds.minLon, bounds.maxLon,
-            centerLat, centerLon, ttlCutoff(now).epochMs, limit,
+            centerLat, centerLon, ttlCutoff(now).epochMs, limit
         )
         if (rows.isEmpty()) return CachedViewport(emptyList(), emptyMap())
         val routeIds = rows.flatMapTo(mutableSetOf()) { splitRouteIds(it.routeIds).asIterable() }

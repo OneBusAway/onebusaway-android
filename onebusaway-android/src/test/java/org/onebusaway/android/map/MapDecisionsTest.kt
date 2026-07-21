@@ -71,7 +71,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = false,
                 hasLastKnownLocation = true,
                 hasPermission = true,
-                userDeniedPermission = false,
+                userDeniedPermission = false
             )
         )
         assertEquals(
@@ -81,7 +81,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = true,
                 hasLastKnownLocation = true,
                 hasPermission = true,
-                userDeniedPermission = false,
+                userDeniedPermission = false
             )
         )
     }
@@ -95,7 +95,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = false,
                 hasLastKnownLocation = false,
                 hasPermission = false,
-                userDeniedPermission = false,
+                userDeniedPermission = false
             )
         )
         assertEquals(
@@ -105,7 +105,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = false,
                 hasLastKnownLocation = false,
                 hasPermission = false,
-                userDeniedPermission = true,
+                userDeniedPermission = true
             )
         )
     }
@@ -119,7 +119,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = false,
                 hasLastKnownLocation = false,
                 hasPermission = true,
-                userDeniedPermission = false,
+                userDeniedPermission = false
             )
         )
     }
@@ -133,7 +133,7 @@ class MapDecisionsTest {
                 neverShowLocationDialog = false,
                 hasLastKnownLocation = true,
                 hasPermission = false, // a cached fix moves us even without a live permission
-                userDeniedPermission = true,
+                userDeniedPermission = true
             )
         )
     }

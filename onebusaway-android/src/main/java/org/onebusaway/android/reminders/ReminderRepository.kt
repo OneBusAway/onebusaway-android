@@ -38,7 +38,7 @@ class ReminderRepository @Inject constructor(
     @param:ApplicationContext private val context: Context,
     @param:AppScope private val appScope: CoroutineScope,
     private val tripDao: TripDao,
-    private val importGate: ImportGate,
+    private val importGate: ImportGate
 ) {
 
     /**

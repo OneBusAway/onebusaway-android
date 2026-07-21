@@ -70,7 +70,7 @@ object ContinuationBadgeBitmaps {
             outlineWidth / 2f,
             outlineWidth / 2f,
             width - outlineWidth / 2f,
-            height - outlineWidth / 2f,
+            height - outlineWidth / 2f
         )
         canvas.drawRoundRect(
             badgeBounds,
@@ -79,7 +79,7 @@ object ContinuationBadgeBitmaps {
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 this.color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color))
                 style = Paint.Style.FILL
-            },
+            }
         )
         canvas.drawRoundRect(
             badgeBounds,
@@ -89,7 +89,7 @@ object ContinuationBadgeBitmaps {
                 this.color = routeBadgeOutlineColor(color, darkMode)
                 style = Paint.Style.STROKE
                 strokeWidth = outlineWidth
-            },
+            }
         )
         val baseline = height / 2f - (metrics.ascent + metrics.descent) / 2f
         canvas.drawText(routeShortName, width / 2f, baseline, textPaint)
@@ -117,7 +117,13 @@ object ContinuationBadgeBitmaps {
             lineTo(0f, ARROW_HEIGHT_PX)
             close()
         }
-        canvas.drawPath(path, Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color; style = Paint.Style.FILL })
+        canvas.drawPath(
+            path,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                this.color = color
+                style = Paint.Style.FILL
+            }
+        )
         canvas.drawPath(
             path,
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -125,7 +131,7 @@ object ContinuationBadgeBitmaps {
                 style = Paint.Style.STROKE
                 strokeWidth = ARROW_STROKE_PX
                 strokeJoin = Paint.Join.ROUND
-            },
+            }
         )
         return bitmap
     }

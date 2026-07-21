@@ -45,17 +45,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.concurrent.TimeUnit
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
+import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDisplayName
-import java.util.concurrent.TimeUnit
 
 /**
  * The vehicle marker info-window content (shared across map flavors): route + headsign, a
@@ -79,8 +79,10 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
     // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer), so the window can't
     // disagree with the icon; the arrival listings share the scheduled-vs-deviation coloring via ArrivalInfoUtils.
     VehicleInfoWindowContent(
-        title = getRouteDisplayName(route) + " " +
-            stringResource(R.string.trip_info_separator) + " " +
+        title = getRouteDisplayName(route) +
+            " " +
+            stringResource(R.string.trip_info_separator) +
+            " " +
             MyTextUtils.formatDisplayText(trip.headsign),
         statusLabel = if (isRealtime) {
             ArrivalInfoUtils.computeArrivalLabelFromDelay(res, deviationMin)
@@ -89,7 +91,7 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
         },
         statusColor = colorResource(ArrivalInfoUtils.statusColor(isRealtime, deviationMin)),
         occupancyDots = if (isRealtime) occupancyDots(status.occupancyStatus) else 0,
-        lastUpdated = lastUpdatedText(res, isRealtime, status, now),
+        lastUpdated = lastUpdatedText(res, isRealtime, status, now)
     )
 }
 
@@ -105,7 +107,7 @@ private fun VehicleInfoWindowContent(
     statusLabel: String,
     statusColor: Color,
     occupancyDots: Int,
-    lastUpdated: String,
+    lastUpdated: String
 ) {
     // This window draws its own bubble (each flavor returns the whole view from getInfoWindow, so the
     // SDK adds no chrome) and is pre-rendered inside ObaTheme, so it follows the app's light/dark
@@ -124,12 +126,12 @@ private fun VehicleInfoWindowContent(
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            overflow = TextOverflow.Ellipsis
         )
 
         Row(
             modifier = Modifier.padding(vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = statusLabel,
@@ -137,7 +139,7 @@ private fun VehicleInfoWindowContent(
                 fontSize = 12.sp,
                 modifier = Modifier
                     .background(statusColor, RoundedCornerShape(4.dp))
-                    .padding(horizontal = 5.dp, vertical = 2.dp),
+                    .padding(horizontal = 5.dp, vertical = 2.dp)
             )
 
             if (occupancyDots > 0) {
@@ -150,14 +152,14 @@ private fun VehicleInfoWindowContent(
             Text(
                 text = lastUpdated,
                 color = colors.onSurfaceVariant,
-                fontSize = 12.sp,
+                fontSize = 12.sp
             )
             Spacer(Modifier.width(4.dp))
             Icon(
                 painter = painterResource(R.drawable.ic_navigation_chevron_right),
                 contentDescription = null,
                 tint = colors.onSurfaceVariant,
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -174,7 +176,7 @@ private fun OccupancyMeter(dots: Int, modifier: Modifier = Modifier) {
         modifier = modifier
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
             .padding(horizontal = 5.dp, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        horizontalArrangement = Arrangement.spacedBy(1.dp)
     ) {
         // Always reserve all three positions so the frame keeps a constant size; empty ones are blank
         // spacers rather than transparent icons, so we don't pay to draw an invisible vector.
@@ -184,7 +186,7 @@ private fun OccupancyMeter(dots: Int, modifier: Modifier = Modifier) {
                     painter = painterResource(R.drawable.ic_occupancy),
                     contentDescription = null,
                     tint = colorResource(R.color.stop_info_occupancy),
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(14.dp)
                 )
             } else {
                 Spacer(Modifier.size(14.dp))
@@ -197,7 +199,7 @@ private fun OccupancyMeter(dots: Int, modifier: Modifier = Modifier) {
 @Preview(
     name = "Occupancy meter — dark",
     showBackground = true,
-    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    uiMode = Configuration.UI_MODE_NIGHT_YES
 )
 @Composable
 private fun OccupancyMeterPreview() {
@@ -205,14 +207,14 @@ private fun OccupancyMeterPreview() {
         Surface {
             Column(
                 modifier = Modifier.padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 for (dots in 0..3) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "$dots:",
                             fontSize = 12.sp,
-                            modifier = Modifier.width(24.dp),
+                            modifier = Modifier.width(24.dp)
                         )
                         OccupancyMeter(dots)
                     }
@@ -232,7 +234,7 @@ private fun VehicleInfoWindowPreview() {
             statusColor = colorResource(R.color.stop_info_delayed),
             // Two silhouettes: FEW_SEATS_AVAILABLE / STANDING_ROOM_ONLY.
             occupancyDots = 2,
-            lastUpdated = "Estimate from data updated 12 sec ago",
+            lastUpdated = "Estimate from data updated 12 sec ago"
         )
     }
 }

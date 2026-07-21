@@ -17,17 +17,17 @@ package org.onebusaway.android.api
 
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
+import org.junit.Test
 import org.onebusaway.android.api.adapters.toTripItinerary
 import org.onebusaway.android.api.contract.OtpPlanParser
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertThrows
-import org.junit.Assert.assertTrue
-import org.junit.Test
 
 /**
  * Covers the OTP `/plan` decode ([OtpPlanParser]) and the mapping onto the app-owned trip-plan domain
@@ -125,7 +125,6 @@ class OtpPlanDecodeTest {
         val bus = itinerary.legs[1]
         assertEquals(TripMode.BUS, bus.mode)
         assertTrue(bus.realTime)
-        assertEquals(-14400, bus.agencyTimeZoneOffset)
         assertEquals("5", bus.routeShortName)
         assertEquals("0000FF", bus.routeColor)
         assertEquals(30L, bus.departureDelay.inWholeSeconds)

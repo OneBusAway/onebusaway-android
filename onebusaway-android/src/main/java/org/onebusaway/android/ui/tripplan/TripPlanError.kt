@@ -39,7 +39,7 @@ import org.onebusaway.android.R
  */
 data class TripPlanError(
     val category: Category,
-    @get:StringRes val detailRes: Int,
+    @get:StringRes val detailRes: Int
 ) {
     /**
      * The coarse failure kind. [headerRes] is the stable heading naming the category; [severity]
@@ -47,7 +47,7 @@ data class TripPlanError(
      */
     enum class Category(
         @get:StringRes val headerRes: Int,
-        val severity: Severity,
+        val severity: Severity
     ) {
         /** Couldn't reach or get a usable answer from the planner (timeout, transport failure). */
         CONNECTIVITY(R.string.tripplanner_error_header_connectivity, Severity.ERROR),
@@ -61,22 +61,18 @@ data class TripPlanError(
         /** No usable route between the two points (no path, no stops in range, out of coverage). */
         NO_ROUTE(R.string.tripplanner_error_header_no_route, Severity.WARNING),
 
-        /** Not a failure so much as advice — walking beats transit for this trip. */
-        ADVISORY(R.string.tripplanner_error_header_advisory, Severity.INFO),
-
         /** The request itself was rejected or unclassified (bad parameter, no server, unknown). */
-        REQUEST(R.string.tripplanner_error_header_request, Severity.ERROR),
+        REQUEST(R.string.tripplanner_error_header_request, Severity.ERROR)
     }
 
     /**
      * How alarming the failure is; [colorRes] is the header colour it maps to (a `md_theme_severity*`
-     * text colour tuned for the inverting `inverseSurface` snackbar bar): [INFO] blue (a tip — not a
-     * failure), [WARNING] amber (a valid, user-actionable non-result), [ERROR] red (something failed).
+     * text colour tuned for the inverting `inverseSurface` snackbar bar): [WARNING] amber (a valid,
+     * user-actionable non-result), [ERROR] red (something failed).
      */
     enum class Severity(@get:ColorRes val colorRes: Int) {
-        INFO(R.color.md_theme_severityInfo),
         WARNING(R.color.md_theme_severityWarning),
-        ERROR(R.color.md_theme_severityError),
+        ERROR(R.color.md_theme_severityError)
     }
 
     companion object {
@@ -96,5 +92,4 @@ data class TripPlanError(
 class TripPlanException(val error: TripPlanError, cause: Throwable? = null) : IOException(cause)
 
 /** The [TripPlanError] for a thrown [Throwable], falling back to [TripPlanError.Unknown]. */
-fun Throwable.toTripPlanError(): TripPlanError =
-    (this as? TripPlanException)?.error ?: TripPlanError.Unknown
+fun Throwable.toTripPlanError(): TripPlanError = (this as? TripPlanException)?.error ?: TripPlanError.Unknown

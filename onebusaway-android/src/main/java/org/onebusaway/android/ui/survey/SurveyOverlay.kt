@@ -26,8 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
@@ -40,7 +39,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.models.SurveyQuestion
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.survey.utils.SurveyUtils
 
 /**
@@ -77,7 +76,7 @@ fun SurveyFeature(
     viewModel: SurveyViewModel,
     onNearby: Boolean,
     onOpenSurvey: (url: String) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
@@ -112,7 +111,7 @@ fun SurveyFeature(
             onRequestDismiss = viewModel::requestDismiss,
             onSkip = viewModel::skipSurvey,
             onRemindLater = viewModel::remindMeLater,
-            onCancelDismiss = viewModel::cancelDismiss,
+            onCancelDismiss = viewModel::cancelDismiss
         )
     }
     SurveyOverlay(state, callbacks, modifier)
@@ -128,7 +127,7 @@ class SurveyCallbacks(
     val onRequestDismiss: () -> Unit,
     val onSkip: () -> Unit,
     val onRemindLater: () -> Unit,
-    val onCancelDismiss: () -> Unit,
+    val onCancelDismiss: () -> Unit
 )
 
 /**
@@ -141,7 +140,7 @@ class SurveyCallbacks(
 fun SurveyOverlay(
     state: SurveyUiState,
     callbacks: SurveyCallbacks,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     // The hero card shows while a survey is loaded and the remaining-questions sheet isn't up.
     val hero = state.heroQuestion
@@ -161,13 +160,13 @@ private fun SurveyHeroCard(
     state: SurveyUiState,
     hero: SurveyQuestion,
     callbacks: SurveyCallbacks,
-    modifier: Modifier,
+    modifier: Modifier
 ) {
     val external = state.heroMode == SurveyUtils.EXTERNAL_SURVEY_WITHOUT_HERO_QUESTION
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(8.dp)
     ) {
         Box {
             Column(Modifier.padding(16.dp)) {
@@ -175,12 +174,12 @@ private fun SurveyHeroCard(
                     Text(
                         text = questionLabel(hero),
                         modifier = Modifier.weight(1f),
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.Medium
                     )
                     IconButton(onClick = callbacks.onRequestDismiss) {
                         Icon(
-                            Icons.Filled.Close,
-                            contentDescription = stringResource(R.string.dismiss_survey),
+                            AppIcons.Close,
+                            contentDescription = stringResource(R.string.dismiss_survey)
                         )
                     }
                 }
@@ -192,7 +191,7 @@ private fun SurveyHeroCard(
                     Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.End
                 ) {
                     if (external) {
                         Button(onClick = callbacks.onOpenExternalWithoutHero) {
@@ -219,18 +218,18 @@ private fun SurveyQuestionsSheet(state: SurveyUiState, callbacks: SurveyCallback
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = callbacks.onRequestDismiss,
-        sheetState = sheetState,
+        sheetState = sheetState
     ) {
         Box {
             Column(
                 Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+                    .padding(16.dp)
             ) {
                 Text(
                     stringResource(R.string.onebusaway_survey, stringResource(R.string.app_name)),
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Bold
                 )
                 if (sheet.title.isNotEmpty()) {
                     Text(sheet.title, Modifier.padding(top = 12.dp), fontWeight = FontWeight.Bold)
@@ -242,7 +241,7 @@ private fun SurveyQuestionsSheet(state: SurveyUiState, callbacks: SurveyCallback
                     Column(Modifier.padding(top = 16.dp)) {
                         Text(
                             "${index + 1}. ${questionLabel(question)}",
-                            fontWeight = FontWeight.Medium,
+                            fontWeight = FontWeight.Medium
                         )
                         SurveyQuestionInput(question, state, callbacks)
                     }
@@ -251,7 +250,7 @@ private fun SurveyQuestionsSheet(state: SurveyUiState, callbacks: SurveyCallback
                     onClick = callbacks.onSubmitSheet,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 24.dp),
+                        .padding(top = 24.dp)
                 ) {
                     Text(stringResource(R.string.submit))
                 }
@@ -267,7 +266,7 @@ private fun SurveyQuestionsSheet(state: SurveyUiState, callbacks: SurveyCallback
 private fun SurveyQuestionInput(
     question: SurveyQuestion,
     state: SurveyUiState,
-    callbacks: SurveyCallbacks,
+    callbacks: SurveyCallbacks
 ) {
     val id = question.id
     when (question.content.type) {
@@ -278,7 +277,7 @@ private fun SurveyQuestionInput(
                     OptionRow(option, onClick = { callbacks.onTextOrRadio(id, option) }) {
                         RadioButton(
                             selected = selected == option,
-                            onClick = { callbacks.onTextOrRadio(id, option) },
+                            onClick = { callbacks.onTextOrRadio(id, option) }
                         )
                     }
                 }
@@ -290,16 +289,16 @@ private fun SurveyQuestionInput(
             Column {
                 Text(
                     stringResource(R.string.you_can_select_multiple_options_for_this_pool),
-                    Modifier.padding(bottom = 4.dp),
+                    Modifier.padding(bottom = 4.dp)
                 )
                 question.content.options.orEmpty().forEach { option ->
                     OptionRow(
                         option,
-                        onClick = { callbacks.onToggleCheckbox(id, option, option !in selected) },
+                        onClick = { callbacks.onToggleCheckbox(id, option, option !in selected) }
                     ) {
                         Checkbox(
                             checked = option in selected,
-                            onCheckedChange = { callbacks.onToggleCheckbox(id, option, it) },
+                            onCheckedChange = { callbacks.onToggleCheckbox(id, option, it) }
                         )
                     }
                 }
@@ -313,7 +312,7 @@ private fun SurveyQuestionInput(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
-                placeholder = { Text(stringResource(R.string.write_your_answer_here)) },
+                placeholder = { Text(stringResource(R.string.write_your_answer_here)) }
             )
         }
 
@@ -328,7 +327,7 @@ private fun OptionRow(text: String, onClick: () -> Unit, content: @Composable ()
         Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         content()
         Text(text)
@@ -355,7 +354,7 @@ private fun SurveyDismissDialog(callbacks: SurveyCallbacks) {
                     Text(stringResource(R.string.remind_me_latter))
                 }
             }
-        },
+        }
     )
 }
 

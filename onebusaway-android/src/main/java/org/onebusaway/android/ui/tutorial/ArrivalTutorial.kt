@@ -53,19 +53,19 @@ object ArrivalTutorial {
         TutorialStep(
             id = KEY_ETA,
             title = R.string.tutorial_arrival_header_arrival_info_title,
-            body = R.string.tutorial_arrival_header_arrival_info_text,
+            body = R.string.tutorial_arrival_header_arrival_info_text
         ),
         TutorialStep(
             id = KEY_PANEL,
             title = R.string.tutorial_arrival_header_sliding_panel_title,
-            body = R.string.tutorial_arrival_header_sliding_panel_text,
+            body = R.string.tutorial_arrival_header_sliding_panel_text
         ),
         TutorialStep(
             id = KEY_MORE_MENU,
             title = R.string.tutorial_recent_stops_routes_title,
             body = R.string.tutorial_recent_stops_routes_text,
-            bodyIcon = R.drawable.history_24,
-        ),
+            bodyIcon = R.drawable.history_24
+        )
     )
 
     /**

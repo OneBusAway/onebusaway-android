@@ -15,23 +15,22 @@
  */
 package org.onebusaway.android.extrapolation.test
 
-import org.onebusaway.android.time.WallTime
-import org.onebusaway.android.api.data.asRouteTrips
-
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onebusaway.android.extrapolation.data.TripState
-import org.onebusaway.android.extrapolation.data.toObservations
-import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.data.asRouteTrips
+import org.onebusaway.android.extrapolation.data.TripState
+import org.onebusaway.android.extrapolation.data.toObservations
+import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.mock.Resources
+import org.onebusaway.android.time.WallTime
 
 /**
  * The per-vehicle live position producer [extrapolatedVehicles] against a trips-for-route response.
@@ -53,25 +52,27 @@ class ExtrapolatedVehiclesTest {
 
     private val noState: (String?) -> TripState? = { null }
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // Decode the same fixture through the api/ DTO path the production fetch now uses.
-    private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_extrapolation"))
-            .use { json.decodeFromString(it.readText()) }
+    private fun response(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> = Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_extrapolation"))
+        .use { json.decodeFromString(it.readText()) }
 
     @Test
     fun skipsCanceledMissingRefAndPositionlessVehiclesWithoutCrashing() {
         // route_1 + route_2 requested: only trip_A and trip_B survive; the canceled, ref-less, and
         // positionless trips are dropped rather than throwing.
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1", "route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(), setOf("route_1", "route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(listOf("trip_A", "trip_B"), vehicles.map { it.status.activeTripId })
     }
 
     @Test
     fun placesVehicleAtLastKnownLocationAndReportsFixTimeWhenNoState() {
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -87,7 +88,7 @@ class ExtrapolatedVehiclesTest {
 
     @Test
     fun fallsBackToPositionWhenNoLastKnownLocation() {
-        val vehicles = extrapolatedVehicles(response().asRouteTrips(),setOf("route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
+        val vehicles = extrapolatedVehicles(response().asRouteTrips(), setOf("route_2"), nowMs = WallTime(1_000_000L), lookupState = noState)
 
         assertEquals(1, vehicles.size)
         val vehicle = vehicles[0]
@@ -99,16 +100,15 @@ class ExtrapolatedVehiclesTest {
     @Test
     fun filtersToRequestedRoutesOnly() {
         // route_3 serves none of the trips.
-        assertTrue(extrapolatedVehicles(response().asRouteTrips(),setOf("route_3"), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(), setOf("route_3"), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
         // Empty request -> nothing.
-        assertTrue(extrapolatedVehicles(response().asRouteTrips(),emptySet(), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
+        assertTrue(extrapolatedVehicles(response().asRouteTrips(), emptySet(), nowMs = WallTime(1_000_000L), lookupState = noState).isEmpty())
     }
 
     // A trips-for-route response with two vehicles on route_1 heading opposite directions (GTFS
     // directionId 0 vs 1) — the "show vehicles on map" direction filter's fixture.
-    private fun directionResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_direction_filter"))
-            .use { json.decodeFromString(it.readText()) }
+    private fun directionResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> = Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_direction_filter"))
+        .use { json.decodeFromString(it.readText()) }
 
     @Test
     fun keepsOnlyTheRequestedDirectionWhenDirectionIdGiven() {
@@ -130,16 +130,18 @@ class ExtrapolatedVehiclesTest {
     @Test
     fun keepsBothDirectionsWhenDirectionIdNull() {
         val vehicles = extrapolatedVehicles(
-            directionResponse().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+            directionResponse().asRouteTrips(),
+            setOf("route_1"),
+            nowMs = WallTime(1_000_000L),
+            lookupState = noState
         )
         assertEquals(listOf("trip_out", "trip_in"), vehicles.map { it.status.activeTripId })
     }
 
     // A trips-for-route response listing the same trip twice — a schedule-only entry (position, no
     // fix) and a real-time entry (lastKnownLocation), in each order — the #1667/#50 flicker fixture.
-    private fun duplicateResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_duplicate_trip"))
-            .use { json.decodeFromString(it.readText()) }
+    private fun duplicateResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> = Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_duplicate_trip"))
+        .use { json.decodeFromString(it.readText()) }
 
     @Test
     fun wireDedupCollapsesDuplicateTripKeepingTheRealtimeFix() {
@@ -156,7 +158,10 @@ class ExtrapolatedVehiclesTest {
         // End to end: the doubled trip yields a single vehicle at the real-time point, not two
         // vehicles fighting over one activeTripId marker key.
         val vehicles = extrapolatedVehicles(
-            duplicateResponse().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+            duplicateResponse().asRouteTrips(),
+            setOf("route_1"),
+            nowMs = WallTime(1_000_000L),
+            lookupState = noState
         )
         assertEquals(listOf("trip_dup1", "trip_dup2"), vehicles.map { it.status.activeTripId })
         assertEquals(47.201, vehicles[0].point.latitude, 1e-6)
@@ -165,9 +170,8 @@ class ExtrapolatedVehiclesTest {
 
     // Two distinct trips both reporting the same active trip (a vehicle mid-rollover): the ghost
     // predecessor (scheduled) and the real-time successor — collide on activeTripId, not trip id.
-    private fun rolloverResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> =
-        Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_rollover"))
-            .use { json.decodeFromString(it.readText()) }
+    private fun rolloverResponse(): ObaEnvelope<ListWithReferences<TripDetailsEntry>> = Resources.read(InstrumentationRegistry.getInstrumentation().targetContext, Resources.getTestUri("trips_for_route_rollover"))
+        .use { json.decodeFromString(it.readText()) }
 
     @Test
     fun wireDedupCollapsesRolloverAcrossRenderAndStore() {
@@ -175,7 +179,10 @@ class ExtrapolatedVehiclesTest {
         // to one entry there — fixing both consumers of RouteTrips at once: the render vehicles...
         val trips = rolloverResponse().asRouteTrips()
         val vehicles = extrapolatedVehicles(
-            trips, setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = noState
+            trips,
+            setOf("route_1"),
+            nowMs = WallTime(1_000_000L),
+            lookupState = noState
         )
         assertEquals(1, vehicles.size)
         assertEquals("trip_next", vehicles[0].status.activeTripId)
@@ -192,7 +199,7 @@ class ExtrapolatedVehiclesTest {
             if (tripId == "trip_A") TripState("trip_A", anchorLocalTimeMs = WallTime(999_000L)) else null
         }
 
-        val vehicle = extrapolatedVehicles(response().asRouteTrips(),setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = anchored).single()
+        val vehicle = extrapolatedVehicles(response().asRouteTrips(), setOf("route_1"), nowMs = WallTime(1_000_000L), lookupState = anchored).single()
 
         assertEquals(999_000L, vehicle.fixTimeMs)
         assertEquals(47.20, vehicle.point.latitude, 1e-6)

@@ -28,7 +28,7 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class BikeRentalStationsDto(
-    val stations: List<BikeStationDto> = emptyList(),
+    val stations: List<BikeStationDto> = emptyList()
 )
 
 @Serializable
@@ -41,5 +41,5 @@ data class BikeStationDto(
     val spacesAvailable: Int = 0,
     val allowDropoff: Boolean = false,
     val isFloatingBike: Boolean = false,
-    val realTimeData: Boolean = false,
+    val realTimeData: Boolean = false
 )

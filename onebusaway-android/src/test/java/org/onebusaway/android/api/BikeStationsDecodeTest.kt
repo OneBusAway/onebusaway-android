@@ -15,15 +15,14 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.adapters.toBikeStations
-import org.onebusaway.android.api.contract.BikeRentalStationsDto
-
+import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
+import org.onebusaway.android.api.adapters.toBikeStations
+import org.onebusaway.android.api.contract.BikeRentalStationsDto
 
 /**
  * Covers the OTP bike-rental decode + the mapping onto the app-owned
@@ -33,7 +32,10 @@ import java.io.File
  */
 class BikeStationsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesAndMapsStations() {

@@ -30,17 +30,17 @@ class Polyline(points: List<GeoPoint>) {
     val points: List<GeoPoint> = points.toList()
 
     private val cumulativeDistances: DoubleArray =
-            points
-                    .zipWithNext { prev, cur ->
-                        haversineDistance(
-                                prev.latitude,
-                                prev.longitude,
-                                cur.latitude,
-                                cur.longitude
-                        )
-                    }
-                    .runningFold(0.0) { acc, dist -> acc + dist }
-                    .toDoubleArray()
+        points
+            .zipWithNext { prev, cur ->
+                haversineDistance(
+                    prev.latitude,
+                    prev.longitude,
+                    cur.latitude,
+                    cur.longitude
+                )
+            }
+            .runningFold(0.0) { acc, dist -> acc + dist }
+            .toDoubleArray()
 
     /**
      * Returns the index of the segment start for the given distance, or -1 if the polyline has
@@ -73,8 +73,8 @@ class Polyline(points: List<GeoPoint>) {
         val p0 = points[seg]
         val p1 = points[seg + 1]
         return GeoPoint(
-                p0.latitude + fraction * (p1.latitude - p0.latitude),
-                p0.longitude + fraction * (p1.longitude - p0.longitude)
+            p0.latitude + fraction * (p1.latitude - p0.latitude),
+            p0.longitude + fraction * (p1.longitude - p0.longitude)
         )
     }
 

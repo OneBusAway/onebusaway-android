@@ -22,8 +22,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.models.RouteMapStop
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * [anchorDirectionId] (resolve the launch anchor stop → its direction), [stopsForDirection]
@@ -33,8 +33,7 @@ import org.onebusaway.android.models.RouteMapStop
  */
 class RouteDirectionFocusTest {
 
-    private fun stop(id: String, vararg directions: Int) =
-        RouteMapStop(ObaStopElement(id = id), directions.toSet())
+    private fun stop(id: String, vararg directions: Int) = RouteMapStop(ObaStopElement(id = id), directions.toSet())
 
     // Outbound (direction 0) serves a/b, inbound (direction 1) serves c/d.
     private val stops = listOf(stop("a", 0), stop("b", 0), stop("c", 1), stop("d", 1))
@@ -103,7 +102,7 @@ class RouteDirectionFocusTest {
     fun tripStopsFollowScheduleRatherThanRouteDirection() {
         assertEquals(
             listOf("b", "d"),
-            stops.stopsForTrip(listOf("b", "missing", "d", "b")).map { it.id },
+            stops.stopsForTrip(listOf("b", "missing", "d", "b")).map { it.id }
         )
     }
 
@@ -120,7 +119,7 @@ class RouteDirectionFocusTest {
         polylines = whole,
         polylinesByDirection = byDirection,
         directions = emptyList(),
-        initialDirectionId = null,
+        initialDirectionId = null
     )
 
     @Test

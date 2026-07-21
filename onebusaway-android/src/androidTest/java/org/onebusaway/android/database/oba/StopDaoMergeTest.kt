@@ -16,8 +16,8 @@
 package org.onebusaway.android.database.oba
 
 import androidx.room.Room
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -41,7 +41,8 @@ class StopDaoMergeTest {
     @Before
     fun setUp() {
         db = Room.inMemoryDatabaseBuilder(
-            InstrumentationRegistry.getInstrumentation().targetContext, AppDatabase::class.java
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            AppDatabase::class.java
         ).build()
         dao = db.stopDao()
     }
@@ -63,7 +64,7 @@ class StopDaoMergeTest {
         assertEquals("Home", s.userName)
         assertEquals(2, s.useCount)
         assertEquals(200L, s.accessTime)
-        assertEquals("Main Street", s.name)     // identity/coords still refreshed
+        assertEquals("Main Street", s.name) // identity/coords still refreshed
     }
 
     @Test
@@ -81,19 +82,19 @@ class StopDaoMergeTest {
 
         val rows = dao.starredByName(regionId = 1L).first()
 
-        assertEquals(setOf("s1", "s3"), rows.map { it.id }.toSet())   // region 2 excluded
-        assertEquals("Zulu", rows.first { it.id == "s1" }.uiName)     // user_name wins over name
-        assertEquals("Gamma", rows.first { it.id == "s3" }.uiName)    // falls back to name
+        assertEquals(setOf("s1", "s3"), rows.map { it.id }.toSet()) // region 2 excluded
+        assertEquals("Zulu", rows.first { it.id == "s1" }.uiName) // user_name wins over name
+        assertEquals("Gamma", rows.first { it.id == "s3" }.uiName) // falls back to name
     }
 
     @Test
     fun recents_excludesUnusedAndHonorsRegionScope() = runBlocking {
         dao.markStopUsed("s1", "1", "Alpha", "N", 1.0, 1.0, regionId = 1L, now = 10)
         dao.markStopUsed("s2", "2", "Beta", "N", 2.0, 2.0, regionId = 2L, now = 20)
-        dao.markUnused("s1")   // use_count -> 0, access_time -> null
+        dao.markUnused("s1") // use_count -> 0, access_time -> null
 
         val rows = dao.recents(cutoff = 0, regionId = 2L).first()
 
-        assertEquals(listOf("s2"), rows.map { it.id })   // s1 unused; s2 in region
+        assertEquals(listOf("s2"), rows.map { it.id }) // s1 unused; s2 in region
     }
 }

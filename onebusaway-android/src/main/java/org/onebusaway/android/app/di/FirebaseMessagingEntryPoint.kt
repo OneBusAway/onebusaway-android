@@ -39,8 +39,7 @@ interface FirebaseMessagingEntryPoint {
     companion object {
         /** Resolves the [FirebaseMessagingManager] singleton from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): FirebaseMessagingManager =
-            EntryPointAccessors.fromApplication(context, FirebaseMessagingEntryPoint::class.java)
-                .firebaseMessagingManager()
+        fun get(context: Context): FirebaseMessagingManager = EntryPointAccessors.fromApplication(context, FirebaseMessagingEntryPoint::class.java)
+            .firebaseMessagingManager()
     }
 }

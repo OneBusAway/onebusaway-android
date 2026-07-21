@@ -46,7 +46,7 @@ import org.onebusaway.android.time.WallTime
 class PushRegistrationStore internal constructor(
     private val prefs: PreferencesRepository,
     // Device clock, injectable so the refresh window is drivable from a JVM test.
-    private val now: () -> WallTime,
+    private val now: () -> WallTime
 ) {
 
     @Inject
@@ -62,7 +62,7 @@ class PushRegistrationStore internal constructor(
             token = token,
             locale = prefs.getString(KEY_LOCALE, null) ?: "",
             testDevice = prefs.getBoolean(KEY_TEST_DEVICE, false),
-            description = prefs.getString(KEY_DESCRIPTION, null),
+            description = prefs.getString(KEY_DESCRIPTION, null)
         )
     }
 
@@ -126,7 +126,7 @@ class PushRegistrationStore internal constructor(
             // Unused when deleting — a DELETE is addressed by region + host + token only.
             locale = "",
             testDevice = false,
-            description = null,
+            description = null
         )
     }
 

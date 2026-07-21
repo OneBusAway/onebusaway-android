@@ -50,7 +50,7 @@ class ObaStopElement @JvmOverloads constructor(
     private val code: String = "",
     override val direction: String = "",
     override val locationType: Int = ObaStop.LOCATION_STOP,
-    override val routeIds: Array<String> = EMPTY_ROUTES,
+    override val routeIds: Array<String> = EMPTY_ROUTES
 ) : ObaStop {
 
     override val stopCode: String get() = code

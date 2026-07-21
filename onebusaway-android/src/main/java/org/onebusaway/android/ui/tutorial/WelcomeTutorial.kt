@@ -39,7 +39,7 @@ object WelcomeTutorial {
         TutorialStep(
             id = KEY_INTRO,
             title = R.string.tutorial_welcome_title,
-            body = R.string.tutorial_welcome_text,
+            body = R.string.tutorial_welcome_text
         ),
         TutorialStep(
             id = KEY_MAP_STOP,
@@ -47,7 +47,7 @@ object WelcomeTutorial {
             body = R.string.tutorial_welcome_map_stop_text,
             // Last welcome step, but completing it focuses the stop and continues into the arrivals tour,
             // so its button stays "Next" rather than "Finish".
-            continuesAfter = true,
-        ),
+            continuesAfter = true
+        )
     )
 }

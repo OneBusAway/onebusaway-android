@@ -31,12 +31,12 @@ class VehicleBitmapsTest {
     fun cablecarNormalizesToTram() {
         assertEquals(
             ObaRoute.TYPE_TRAM,
-            VehicleBitmaps.normalizeVehicleType(ObaRoute.TYPE_CABLECAR),
+            VehicleBitmaps.normalizeVehicleType(ObaRoute.TYPE_CABLECAR)
         )
         assertEquals(
             "a cablecar route resolves to the same type as a tram route",
             VehicleBitmaps.normalizeVehicleType(ObaRoute.TYPE_TRAM),
-            VehicleBitmaps.normalizeVehicleType(ObaRoute.TYPE_CABLECAR),
+            VehicleBitmaps.normalizeVehicleType(ObaRoute.TYPE_CABLECAR)
         )
     }
 
@@ -48,7 +48,7 @@ class VehicleBitmapsTest {
             ObaRoute.TYPE_SUBWAY,
             ObaRoute.TYPE_RAIL,
             ObaRoute.TYPE_BUS,
-            ObaRoute.TYPE_FERRY,
+            ObaRoute.TYPE_FERRY
         )) {
             assertEquals(type.toLong(), VehicleBitmaps.normalizeVehicleType(type).toLong())
         }

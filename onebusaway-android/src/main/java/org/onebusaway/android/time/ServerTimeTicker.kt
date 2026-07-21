@@ -61,5 +61,4 @@ private fun rememberTickingElapsedTime(): ElapsedTime {
  * 1s-lagged ticker never yields a "now" before the anchor. Extracted from [rememberLiveServerTime]
  * as a pure function so it's JVM-unit-testable without Compose.
  */
-internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, nowElapsed: ElapsedTime): ServerTime =
-    serverTime + (nowElapsed - anchorElapsed).coerceAtLeast(Duration.ZERO)
+internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, nowElapsed: ElapsedTime): ServerTime = serverTime + (nowElapsed - anchorElapsed).coerceAtLeast(Duration.ZERO)

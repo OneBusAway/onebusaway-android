@@ -39,11 +39,9 @@ class FakePreferencesRepository(private val observeValue: Boolean = true) : Pref
     private val stringFlows = mutableMapOf<Any, MutableStateFlow<String?>>()
 
     // Un-set boolean keys seed to [observeValue] (legacy default-true behavior); strings to their default.
-    private fun boolFlow(key: Any) =
-        boolFlows.getOrPut(key) { MutableStateFlow((values[key] as Boolean?) ?: observeValue) }
+    private fun boolFlow(key: Any) = boolFlows.getOrPut(key) { MutableStateFlow((values[key] as Boolean?) ?: observeValue) }
 
-    private fun stringFlow(key: Any, default: String?) =
-        stringFlows.getOrPut(key) { MutableStateFlow((values[key] as String?) ?: default) }
+    private fun stringFlow(key: Any, default: String?) = stringFlows.getOrPut(key) { MutableStateFlow((values[key] as String?) ?: default) }
 
     override fun observeBoolean(keyRes: Int, default: Boolean): Flow<Boolean> = boolFlow(keyRes)
 
@@ -69,14 +67,38 @@ class FakePreferencesRepository(private val observeValue: Boolean = true) : Pref
     // incrementAppLaunchCount() is inherited from the interface default (getAppLaunchCount + setInt).
     override fun getAppLaunchCount() = getInt(PreferencesRepository.APP_LAUNCH_COUNT_KEY, 0)
 
-    override fun setBoolean(keyRes: Int, value: Boolean) { values[keyRes] = value; boolFlow(keyRes).value = value }
-    override fun setBoolean(key: String, value: Boolean) { values[key] = value; boolFlow(key).value = value }
-    override fun setString(keyRes: Int, value: String?) { values[keyRes] = value; stringFlow(keyRes, null).value = value }
-    override fun setString(key: String, value: String?) { values[key] = value; stringFlow(key, null).value = value }
-    override fun setInt(keyRes: Int, value: Int) { values[keyRes] = value }
-    override fun setInt(key: String, value: Int) { values[key] = value }
-    override fun setLong(keyRes: Int, value: Long) { values[keyRes] = value }
-    override fun setLong(key: String, value: Long) { values[key] = value }
-    override fun setFloat(keyRes: Int, value: Float) { values[keyRes] = value }
-    override fun setFloat(key: String, value: Float) { values[key] = value }
+    override fun setBoolean(keyRes: Int, value: Boolean) {
+        values[keyRes] = value
+        boolFlow(keyRes).value = value
+    }
+    override fun setBoolean(key: String, value: Boolean) {
+        values[key] = value
+        boolFlow(key).value = value
+    }
+    override fun setString(keyRes: Int, value: String?) {
+        values[keyRes] = value
+        stringFlow(keyRes, null).value = value
+    }
+    override fun setString(key: String, value: String?) {
+        values[key] = value
+        stringFlow(key, null).value = value
+    }
+    override fun setInt(keyRes: Int, value: Int) {
+        values[keyRes] = value
+    }
+    override fun setInt(key: String, value: Int) {
+        values[key] = value
+    }
+    override fun setLong(keyRes: Int, value: Long) {
+        values[keyRes] = value
+    }
+    override fun setLong(key: String, value: Long) {
+        values[key] = value
+    }
+    override fun setFloat(keyRes: Int, value: Float) {
+        values[keyRes] = value
+    }
+    override fun setFloat(key: String, value: Float) {
+        values[key] = value
+    }
 }

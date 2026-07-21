@@ -22,8 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.report.customerservice.CustomerServiceRoute
@@ -56,7 +56,8 @@ fun CustomerServiceDestination(navController: NavController, reportContext: Repo
             reportContactEvent(agency.name, R.string.analytics_label_customer_service_email)
             if (locationString == null) {
                 reportContactEvent(
-                    agency.name, R.string.analytics_label_customer_service_email_without_location
+                    agency.name,
+                    R.string.analytics_label_customer_service_email_without_location
                 )
             }
         },

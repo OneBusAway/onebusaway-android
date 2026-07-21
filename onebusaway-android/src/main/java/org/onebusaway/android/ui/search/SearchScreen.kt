@@ -22,8 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.icons.AppIcons
 
 /**
  * Shared incremental-search screen: a search box above a state-driven body. Embedded inside
@@ -65,7 +64,7 @@ fun <T> SearchScreen(
                 {
                     IconButton(onClick = { onQueryChange("") }) {
                         Icon(
-                            imageVector = Icons.Filled.Clear,
+                            imageVector = AppIcons.Clear,
                             contentDescription = stringResource(R.string.stop_info_clear)
                         )
                     }

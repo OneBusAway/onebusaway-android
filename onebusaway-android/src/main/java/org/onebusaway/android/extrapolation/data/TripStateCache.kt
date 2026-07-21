@@ -77,9 +77,9 @@ internal class TripStateCache {
      * [polledTripId] once the vehicle rolls onto its next run; null without a vehicle status).
      */
     fun putTripDetails(
-            polledTripId: String,
-            vehicleActiveTripId: String?,
-            shapeId: String?
+        polledTripId: String,
+        vehicleActiveTripId: String?,
+        shapeId: String?
     ) {
         update(polledTripId) {
             it.copy(vehicleActiveTripId = vehicleActiveTripId, shapeId = shapeId)

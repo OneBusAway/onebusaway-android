@@ -16,8 +16,8 @@
 package org.onebusaway.android.testing
 
 import android.location.Location
-import org.onebusaway.android.models.ObaTripStatus
 import kotlin.time.Duration
+import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 
@@ -36,7 +36,7 @@ fun testTripStatus(
     activeTripId: String? = null,
     predicted: Boolean = false,
     hasLastKnownLocation: Boolean = false,
-    hasPosition: Boolean = false,
+    hasPosition: Boolean = false
 ): ObaTripStatus = TestTripStatus(
     distanceAlongTrip = distanceAlongTrip,
     totalDistanceAlongTrip = totalDistanceAlongTrip,
@@ -45,7 +45,7 @@ fun testTripStatus(
     activeTripId = activeTripId,
     predicted = predicted,
     hasLastKnownLocation = hasLastKnownLocation,
-    hasPosition = hasPosition,
+    hasPosition = hasPosition
 )
 
 private class TestTripStatus(
@@ -56,7 +56,7 @@ private class TestTripStatus(
     activeTripId: String?,
     predicted: Boolean,
     private val hasLastKnownLocation: Boolean,
-    private val hasPosition: Boolean,
+    private val hasPosition: Boolean
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted

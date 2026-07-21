@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.agencies
 
-import org.onebusaway.android.models.AgencyContact
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,6 +38,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.models.AgencyContact
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -136,7 +135,9 @@ private fun AgenciesScreenSuccessPreview() {
                     AgencyContact("97", "No-website Transit", null, null, null)
                 )
             ),
-            onRetry = {}, onAgencyClick = {}, onBack = {}
+            onRetry = {},
+            onAgencyClick = {},
+            onBack = {}
         )
     }
 }

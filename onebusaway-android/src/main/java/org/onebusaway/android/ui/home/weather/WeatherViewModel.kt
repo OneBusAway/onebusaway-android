@@ -37,7 +37,7 @@ import org.onebusaway.android.region.RegionRepository
 data class WeatherUiState(
     val data: WeatherData? = null,
     val hidden: Boolean = false,
-    val preferredTempUnits: String? = null,
+    val preferredTempUnits: String? = null
 )
 
 /**
@@ -51,7 +51,7 @@ data class WeatherUiState(
 class WeatherViewModel @Inject constructor(
     private val weatherRepo: WeatherRepository,
     regionRepo: RegionRepository,
-    preferencesRepository: PreferencesRepository,
+    preferencesRepository: PreferencesRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(WeatherUiState())

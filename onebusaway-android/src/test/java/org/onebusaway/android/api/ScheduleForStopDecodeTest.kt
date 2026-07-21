@@ -15,14 +15,13 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.StopSchedule
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.StopSchedule
 
 /**
  * Ports the legacy ScheduleForStopTest onto the modernized `schedule-for-stop` endpoint, walking the
@@ -31,7 +30,10 @@ import org.junit.Test
  */
 class ScheduleForStopDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // Mirrors the KCM stop 1_75403 schedule the retired instrumented test asserted against.
     private val body = """

@@ -86,7 +86,8 @@ class Open311FormMappingTest {
     fun `choice options parse NAME and KEY in order`() {
         val description = describedBy(
             attribute(
-                7, Open311DataType.SINGLEVALUELIST,
+                7,
+                Open311DataType.SINGLEVALUELIST,
                 options = listOf("Broken" to "broken_key", "Missing" to "missing_key")
             )
         )
@@ -130,7 +131,10 @@ class Open311FormMappingTest {
         val description = describedBy(attribute(12, Open311DataType.STRING, description = "Stop ID"))
 
         val mapped = Open311FormMapper.mapForm(
-            description, null, isTransitService = true, stopCode = "55555"
+            description,
+            null,
+            isTransitService = true,
+            stopCode = "55555"
         ) { it == "Stop ID" }
 
         val field = mapped.fields.single()
@@ -170,11 +174,19 @@ class Open311FormMappingTest {
         val fields = listOf(
             Open311Field(1, "Text", Open311FieldType.TEXT, false, Open311DataType.STRING),
             Open311Field(
-                2, "Pick one", Open311FieldType.SINGLE_CHOICE, false, Open311DataType.SINGLEVALUELIST,
+                2,
+                "Pick one",
+                Open311FieldType.SINGLE_CHOICE,
+                false,
+                Open311DataType.SINGLEVALUELIST,
                 options = listOf(Open311Option("a", "A"))
             ),
             Open311Field(
-                3, "Pick many", Open311FieldType.MULTI_CHOICE, false, Open311DataType.MULTIVALUELIST,
+                3,
+                "Pick many",
+                Open311FieldType.MULTI_CHOICE,
+                false,
+                Open311DataType.MULTIVALUELIST,
                 options = listOf(Open311Option("x", "X"), Open311Option("y", "Y"))
             )
         )
@@ -199,7 +211,11 @@ class Open311FormMappingTest {
         val fields = listOf(
             Open311Field(1, "Text", Open311FieldType.TEXT, false, Open311DataType.STRING),
             Open311Field(
-                2, "Pick one", Open311FieldType.SINGLE_CHOICE, false, Open311DataType.SINGLEVALUELIST,
+                2,
+                "Pick one",
+                Open311FieldType.SINGLE_CHOICE,
+                false,
+                Open311DataType.SINGLEVALUELIST,
                 options = listOf(Open311Option("a", "A"))
             )
         )

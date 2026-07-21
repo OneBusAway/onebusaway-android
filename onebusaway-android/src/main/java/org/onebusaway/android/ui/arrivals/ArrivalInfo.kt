@@ -17,6 +17,8 @@
 package org.onebusaway.android.ui.arrivals
 
 import android.content.Context
+import java.text.DateFormat
+import java.util.Date
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
@@ -26,8 +28,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.getRouteDisplayName
-import java.text.DateFormat
-import java.util.Date
 
 /**
  * @param includeArrivalDepartureInStatusLabel true if the arrival/departure label should be
@@ -37,7 +37,7 @@ class ArrivalInfo(
     context: Context?,
     private val data: ArrivalData,
     now: ServerTime,
-    includeArrivalDepartureInStatusLabel: Boolean,
+    includeArrivalDepartureInStatusLabel: Boolean
 ) : RouteDirectionItem {
 
     override val eta: Long
@@ -146,7 +146,7 @@ class ArrivalInfo(
         hasTripStatus = data.hasTripStatus,
         scheduleDeviation = data.scheduleDeviation,
         lastKnownLat = data.lastKnownLat,
-        lastKnownLon = data.lastKnownLon,
+        lastKnownLon = data.lastKnownLon
     )
 
     init {
@@ -193,7 +193,11 @@ class ArrivalInfo(
         color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
 
         statusText = computeStatusLabel(
-            context, now, hasPrediction, scheduledMins, predictedMins,
+            context,
+            now,
+            hasPrediction,
+            scheduledMins,
+            predictedMins,
             includeArrivalDepartureInStatusLabel
         )
         timeText = computeTimeLabel(context)
@@ -272,13 +276,17 @@ class ArrivalInfo(
                 return if (delay > 0) {
                     // Delayed
                     res.getQuantityString(
-                        R.plurals.stop_info_status_late_without_arrive_depart, delay.toInt(), delay
+                        R.plurals.stop_info_status_late_without_arrive_depart,
+                        delay.toInt(),
+                        delay
                     )
                 } else if (delay < 0) {
                     // Early
                     delay = -delay
                     res.getQuantityString(
-                        R.plurals.stop_info_status_early_without_arrive_depart, delay.toInt(), delay
+                        R.plurals.stop_info_status_early_without_arrive_depart,
+                        delay.toInt(),
+                        delay
                     )
                 } else {
                     // On time

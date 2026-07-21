@@ -62,7 +62,7 @@ enum class HelpAction { TUTORIALS, LEGEND, WHATS_NEW, AGENCIES, TWITTER, CONTACT
 fun HelpFeature(
     viewModel: HelpViewModel,
     onHelpAction: (HelpAction) -> Unit,
-    onShowWelcomeTutorial: () -> Unit,
+    onShowWelcomeTutorial: () -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val regionReady by viewModel.regionReady.collectAsStateWithLifecycle()
@@ -87,7 +87,7 @@ fun HelpFeature(
                     }
                 }
             },
-            onDismiss = viewModel::dismiss,
+            onDismiss = viewModel::dismiss
         )
         HelpDialog.WhatsNew -> WhatsNewDialog(
             onDismiss = {
@@ -96,9 +96,12 @@ fun HelpFeature(
             }
         )
         HelpDialog.TutorialOptOut -> TutorialOptOutDialog(
-            onYes = { viewModel.setTutorialsEnabled(true); onShowWelcomeTutorial() },
+            onYes = {
+                viewModel.setTutorialsEnabled(true)
+                onShowWelcomeTutorial()
+            },
             onNo = { viewModel.setTutorialsEnabled(false) },
-            onDismiss = viewModel::dismiss,
+            onDismiss = viewModel::dismiss
         )
         HelpDialog.Legend -> LegendDialog(onDismiss = viewModel::dismiss)
         HelpDialog.None -> Unit
@@ -202,7 +205,7 @@ private fun LegendRow(
     @ColorRes color: Int,
     predicted: Boolean,
     @StringRes label: Int,
-    canceled: Boolean = false,
+    canceled: Boolean = false
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),

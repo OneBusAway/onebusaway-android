@@ -16,31 +16,28 @@
 package org.onebusaway.android.util;
 
 import android.os.Build;
-
 import org.onebusaway.android.BuildConfig;
 
-/**
- * A class containing utility methods related to unit tests
- */
+/** A class containing utility methods related to unit tests */
 public class TestUtils {
 
-    /**
-     * Returns true if tests are running on an emulator, false if tests are running
-     * on an actual device
-     *
-     * @return true if tests are running on an emulator, false if tests are running
-     * on an actual device
-     */
-    public static boolean isRunningOnEmulator() {
-        return Build.FINGERPRINT.contains("generic");
-    }
+  /**
+   * Returns true if tests are running on an emulator, false if tests are running on an actual
+   * device
+   *
+   * @return true if tests are running on an emulator, false if tests are running on an actual
+   *     device
+   */
+  public static boolean isRunningOnEmulator() {
+    return Build.FINGERPRINT.contains("generic");
+  }
 
-    /**
-     * Returns true if the test is running on CI, and false if it is not
-     *
-     * @return true if the test is running on CI, and false if it is not
-     */
-    public static boolean isRunningOnCI() {
-        return BuildConfig.CI != null && BuildConfig.CI.equals("true");
-    }
+  /**
+   * Returns true if the test is running on CI, and false if it is not
+   *
+   * @return true if the test is running on CI, and false if it is not
+   */
+  public static boolean isRunningOnCI() {
+    return BuildConfig.CI != null && BuildConfig.CI.equals("true");
+  }
 }

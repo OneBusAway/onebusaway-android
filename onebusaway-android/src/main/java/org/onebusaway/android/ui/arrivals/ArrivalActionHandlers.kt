@@ -15,18 +15,18 @@
  */
 package org.onebusaway.android.ui.arrivals
 
-import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
-import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
-import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
-import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import org.onebusaway.android.R
-import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.report.ui.InfrastructureIssueLauncher
+import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
+import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
+import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
+import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -77,7 +77,7 @@ fun createArrivalActionHandler(
             ShowRouteRequest(
                 arrival.routeId,
                 arrival.stopId,
-                initialDirectionId = arrival.directionId,
+                initialDirectionId = arrival.directionId
             )
         )
     }
@@ -103,7 +103,7 @@ fun createArrivalActionHandler(
                 arrival.routeId,
                 arrival.stopId,
                 focusTripId = tripId,
-                initialDirectionId = arrival.directionId,
+                initialDirectionId = arrival.directionId
             )
         )
     }
@@ -142,7 +142,7 @@ fun createArrivalActionHandler(
                 stopSequence = arrival.stopSequence,
                 serviceDate = arrival.serviceDate,
                 vehicleId = arrival.vehicleId,
-                serverNowMs = arrival.serverNow.epochMs,
+                serverNowMs = arrival.serverNow.epochMs
             )
         )
     }
@@ -179,7 +179,8 @@ fun createArrivalActionHandler(
             onHideAll = {
                 viewModel.hideAllRecordedAlerts()
                 PreferenceUtils.saveBoolean(
-                    activity.getString(R.string.preference_key_hide_alerts), true
+                    activity.getString(R.string.preference_key_hide_alerts),
+                    true
                 )
             },
             onDismiss = { isAlertHidden -> if (isAlertHidden) viewModel.manualRefresh() },

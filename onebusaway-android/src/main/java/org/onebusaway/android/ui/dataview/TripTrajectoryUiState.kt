@@ -25,11 +25,10 @@ data class TripTrajectoryUiState(
     val sampleCount: Int,
     /** The reporting vehicle has rolled onto its next run, so this trip is no longer being served. */
     val tripEnded: Boolean,
-    val trajectory: TripTrajectory,
+    val trajectory: TripTrajectory
 ) {
     companion object {
         /** The pre-data state: header known, nothing plotted yet. */
-        fun empty(tripId: String) =
-            TripTrajectoryUiState(tripId, vehicleId = null, sampleCount = 0, tripEnded = false, trajectory = TripTrajectory())
+        fun empty(tripId: String) = TripTrajectoryUiState(tripId, vehicleId = null, sampleCount = 0, tripEnded = false, trajectory = TripTrajectory())
     }
 }

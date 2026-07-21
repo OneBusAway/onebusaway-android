@@ -48,14 +48,14 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsStatusCodes
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.di.AnalyticsEntryPoint
+import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
-import org.onebusaway.android.location.isLocationEnabled
 
 /**
  * The destination-reminder flow (set a reminder to alight at a chosen stop), as a reusable Compose
@@ -72,7 +72,7 @@ internal fun rememberDestinationReminderAction(
     viewModel: TripDetailsViewModel,
     prefsRepository: PreferencesRepository,
     tripId: String,
-    stopId: String?,
+    stopId: String?
 ): (stopIndex: Int) -> Unit {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -176,7 +176,9 @@ internal fun rememberDestinationReminderAction(
         val serviceIntent = setUpNavigationService(position) ?: return
         startNavigationService(serviceIntent)
         Toast.makeText(
-            context, resources.getString(R.string.destination_reminder_title), Toast.LENGTH_LONG
+            context,
+            resources.getString(R.string.destination_reminder_title),
+            Toast.LENGTH_LONG
         ).show()
     }
 
@@ -201,7 +203,8 @@ internal fun rememberDestinationReminderAction(
             optOutLabel = stringResource(R.string.main_never_ask_again),
             onOptOut = {
                 prefsRepository.setBoolean(
-                    R.string.preference_key_never_show_change_location_mode_dialog, it
+                    R.string.preference_key_never_show_change_location_mode_dialog,
+                    it
                 )
             },
             confirmText = stringResource(R.string.rt_yes),
@@ -211,7 +214,7 @@ internal fun rememberDestinationReminderAction(
             },
             dismissText = stringResource(R.string.rt_no),
             onDismiss = { showLocationModeDialog = false },
-            onDismissRequest = { showLocationModeDialog = false },
+            onDismissRequest = { showLocationModeDialog = false }
         )
     }
     if (showBetaDialog) {
@@ -223,12 +226,13 @@ internal fun rememberDestinationReminderAction(
             optOutLabel = stringResource(R.string.main_never_show_again),
             onOptOut = {
                 prefsRepository.setBoolean(
-                    R.string.preference_key_never_show_destination_reminder_beta_dialog, it
+                    R.string.preference_key_never_show_destination_reminder_beta_dialog,
+                    it
                 )
             },
             confirmText = stringResource(R.string.ok),
             onConfirm = { showBetaDialog = false },
-            onDismissRequest = { showBetaDialog = false },
+            onDismissRequest = { showBetaDialog = false }
         )
     }
 
@@ -245,7 +249,10 @@ internal fun rememberDestinationReminderAction(
         }
         val filter = IntentFilter(TripDetailsLauncher.ACTION_SERVICE_DESTROYED)
         ContextCompat.registerReceiver(
-            activity, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED
+            activity,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
         )
         onDispose { runCatching { activity.unregisterReceiver(receiver) } }
     }
@@ -259,10 +266,9 @@ internal fun rememberDestinationReminderAction(
  * a UX decision (tracked in #1728), and the legacy setting still reads on devices, so keep it for now.
  */
 @Suppress("DEPRECATION")
-private fun isHighAccuracyLocationMode(context: Context): Boolean =
-    try {
-        Settings.Secure.getInt(context.contentResolver, Settings.Secure.LOCATION_MODE) ==
-            Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
-    } catch (e: Settings.SettingNotFoundException) {
-        false
-    }
+private fun isHighAccuracyLocationMode(context: Context): Boolean = try {
+    Settings.Secure.getInt(context.contentResolver, Settings.Secure.LOCATION_MODE) ==
+        Settings.Secure.LOCATION_MODE_HIGH_ACCURACY
+} catch (e: Settings.SettingNotFoundException) {
+    false
+}

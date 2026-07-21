@@ -38,14 +38,14 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
         modifier = modifier,
         color = container,
         contentColor = content,
-        shape = RoundedCornerShape(1.dp),
+        shape = RoundedCornerShape(1.dp)
     ) {
         Text(
             text = shortName,
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp)
         )
     }
 }

@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.map.bike.BikeStation
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * A do-nothing [ObaMapCallbacks] for map screens that don't react to taps (the trip-plan location

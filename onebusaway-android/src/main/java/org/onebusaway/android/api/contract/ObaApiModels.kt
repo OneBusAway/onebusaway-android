@@ -34,7 +34,7 @@ data class ObaEnvelope<T>(
     val code: Int = 0,
     val currentTime: Long = 0,
     val text: String = "",
-    val data: T? = null,
+    val data: T? = null
 )
 
 /**
@@ -44,7 +44,7 @@ data class ObaEnvelope<T>(
 @Serializable
 data class EntryWithReferences<T>(
     val entry: T,
-    val references: References = References(),
+    val references: References = References()
 )
 
 /**
@@ -57,7 +57,7 @@ data class ListWithReferences<T>(
     val references: References = References(),
     val limitExceeded: Boolean = false,
     // True when the query point lies outside the served region (the *-for-location endpoints).
-    val outOfRange: Boolean = false,
+    val outOfRange: Boolean = false
 )
 
 /**
@@ -71,7 +71,7 @@ data class References(
     val stops: List<StopReference> = emptyList(),
     val routes: List<RouteReference> = emptyList(),
     val trips: List<TripReference> = emptyList(),
-    val situations: List<SituationReference> = emptyList(),
+    val situations: List<SituationReference> = emptyList()
 ) {
     // Index each pool by id (lazily, once per response) so repeated resolution — the per-arrival
     // projections and the per-frame vehicle sampler — is O(1) instead of a linear scan.
@@ -110,7 +110,7 @@ data class RouteReference(
     // the consumer that needs it (trip-details / arrivals line color).
     val color: String? = null,
     val textColor: String? = null,
-    val agencyId: String = "",
+    val agencyId: String = ""
 )
 
 /**
@@ -128,7 +128,7 @@ data class AgencyReference(
     val email: String? = null,
     val fareUrl: String? = null,
     val disclaimer: String? = null,
-    val privateService: Boolean = false,
+    val privateService: Boolean = false
 )
 
 /**
@@ -137,7 +137,7 @@ data class AgencyReference(
  */
 @Serializable
 data class AgencyCoverage(
-    val agencyId: String = "",
+    val agencyId: String = ""
 )
 
 /**
@@ -153,7 +153,7 @@ data class StopReference(
     val lat: Double = 0.0,
     val lon: Double = 0.0,
     val locationType: Int = 0,
-    val routeIds: List<String> = emptyList(),
+    val routeIds: List<String> = emptyList()
 )
 
 /**
@@ -164,13 +164,13 @@ data class StopReference(
 @Serializable
 data class StopsForRoute(
     val stopGroupings: List<StopGrouping> = emptyList(),
-    val polylines: List<ShapeEntry> = emptyList(),
+    val polylines: List<ShapeEntry> = emptyList()
 )
 
 /** A grouping of stops (typically by direction) within a route. */
 @Serializable
 data class StopGrouping(
-    val stopGroups: List<StopGroup> = emptyList(),
+    val stopGroups: List<StopGroup> = emptyList()
 )
 
 /**
@@ -186,7 +186,7 @@ data class StopGroup(
     val id: String? = null,
     val name: StopGroupName = StopGroupName(),
     val stopIds: List<String> = emptyList(),
-    val polylines: List<ShapeEntry> = emptyList(),
+    val polylines: List<ShapeEntry> = emptyList()
 ) {
     /** The group's display name — the first entry of the name object's `names` array, like legacy. */
     val displayName: String? get() = name.names.firstOrNull()
@@ -198,7 +198,7 @@ data class StopGroup(
  */
 @Serializable
 data class StopGroupName(
-    val names: List<String> = emptyList(),
+    val names: List<String> = emptyList()
 )
 
 /**
@@ -216,7 +216,7 @@ data class TripReference(
     val directionId: String? = null,
     val serviceId: String? = null,
     val shapeId: String? = null,
-    val timeZone: String? = null,
+    val timeZone: String? = null
 )
 
 /** Wire model for the trip-details entry: real-time [status] and the [schedule] of stop times. */
@@ -224,7 +224,7 @@ data class TripReference(
 data class TripDetailsEntry(
     val tripId: String = "",
     val status: TripStatus? = null,
-    val schedule: TripSchedule? = null,
+    val schedule: TripSchedule? = null
 )
 
 /**
@@ -256,14 +256,14 @@ data class TripStatus(
     val lastKnownDistanceAlongTrip: Double? = null,
     val lastKnownOrientation: Double? = null,
     val blockTripSequence: Int = 0,
-    val occupancyStatus: String? = null,
+    val occupancyStatus: String? = null
 )
 
 /** A lat/lon point (e.g. a trip's last-known vehicle location). */
 @Serializable
 data class Position(
     val lat: Double = 0.0,
-    val lon: Double = 0.0,
+    val lon: Double = 0.0
 )
 
 /** The scheduled stop times of a trip, in order, plus the adjacent block trips and zone. */
@@ -272,7 +272,7 @@ data class TripSchedule(
     val stopTimes: List<StopTime> = emptyList(),
     val timeZone: String? = null,
     val previousTripId: String? = null,
-    val nextTripId: String? = null,
+    val nextTripId: String? = null
 )
 
 /**
@@ -289,7 +289,7 @@ data class StopTime(
     val departureTime: Long = 0,
     val historicalOccupancy: String? = null,
     val predictedOccupancy: String? = null,
-    val distanceAlongTrip: Double = 0.0,
+    val distanceAlongTrip: Double = 0.0
 )
 
 /**
@@ -301,7 +301,7 @@ data class ArrivalsForStop(
     val stopId: String = "",
     val arrivalsAndDepartures: List<ArrivalDeparture> = emptyList(),
     val nearbyStopIds: List<String> = emptyList(),
-    val situationIds: List<String> = emptyList(),
+    val situationIds: List<String> = emptyList()
 )
 
 /**
@@ -329,7 +329,7 @@ data class ArrivalDeparture(
     val frequency: Frequency? = null,
     val historicalOccupancy: String? = null,
     val occupancyStatus: String? = null,
-    val situationIds: List<String> = emptyList(),
+    val situationIds: List<String> = emptyList()
 )
 
 /** Headway-based (exact_times=0) service window for a frequency trip; all epoch millis / seconds. */
@@ -337,7 +337,7 @@ data class ArrivalDeparture(
 data class Frequency(
     val startTime: Long = 0,
     val endTime: Long = 0,
-    val headway: Long = 0,
+    val headway: Long = 0
 )
 
 /** Wire model for a service alert (situation) in the references pool. */
@@ -349,13 +349,13 @@ data class SituationReference(
     val url: SituationText = SituationText(),
     val severity: String? = null,
     val activeWindows: List<SituationWindow> = emptyList(),
-    val allAffects: List<SituationAffects> = emptyList(),
+    val allAffects: List<SituationAffects> = emptyList()
 )
 
 /** An OBA localized-string wrapper (`{value, lang}`); only the [value] is modeled. */
 @Serializable
 data class SituationText(
-    val value: String? = null,
+    val value: String? = null
 )
 
 /**
@@ -369,13 +369,13 @@ data class SituationText(
 @Serializable
 data class SituationWindow(
     val from: Long = 0,
-    val to: Long = 0,
+    val to: Long = 0
 )
 
 /** A situation's affects clause; only [routeId] is modeled (for route-filtered alerts). */
 @Serializable
 data class SituationAffects(
-    val routeId: String? = null,
+    val routeId: String? = null
 )
 
 /** Marker payload for endpoints whose response carries no data — only the envelope code matters (e.g. report-problem). */
@@ -386,7 +386,7 @@ class NoData
 @Serializable
 data class CurrentTime(
     val time: Long = 0,
-    val readableTime: String = "",
+    val readableTime: String = ""
 )
 
 /**
@@ -398,21 +398,21 @@ data class StopSchedule(
     val stopId: String = "",
     val timeZone: String = "",
     val date: Long = 0,
-    val stopRouteSchedules: List<RouteSchedule> = emptyList(),
+    val stopRouteSchedules: List<RouteSchedule> = emptyList()
 )
 
 /** A route's scheduled service at a stop, split by direction in [stopRouteDirectionSchedules]. */
 @Serializable
 data class RouteSchedule(
     val routeId: String = "",
-    val stopRouteDirectionSchedules: List<DirectionSchedule> = emptyList(),
+    val stopRouteDirectionSchedules: List<DirectionSchedule> = emptyList()
 )
 
 /** One direction's scheduled stop times ([scheduleStopTimes]) under a [tripHeadsign]. */
 @Serializable
 data class DirectionSchedule(
     val tripHeadsign: String = "",
-    val scheduleStopTimes: List<ScheduleStopTime> = emptyList(),
+    val scheduleStopTimes: List<ScheduleStopTime> = emptyList()
 )
 
 /**
@@ -427,7 +427,7 @@ data class ScheduleStopTime(
     val serviceId: String? = null,
     val stopHeadsign: String? = null,
     val arrivalTime: Long = 0,
-    val departureTime: Long = 0,
+    val departureTime: Long = 0
 )
 
 /**
@@ -467,7 +467,7 @@ data class RegionDto(
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,
-    val paymentWarningBody: String? = null,
+    val paymentWarningBody: String? = null
 )
 
 /** One bounding box of a region (center [lat]/[lon] and its [latSpan]/[lonSpan]). */
@@ -476,7 +476,7 @@ data class RegionBoundsDto(
     val lat: Double = 0.0,
     val lon: Double = 0.0,
     val latSpan: Double = 0.0,
-    val lonSpan: Double = 0.0,
+    val lonSpan: Double = 0.0
 )
 
 /** An Open311 (issue-reporting) server configured for a region. */
@@ -484,14 +484,14 @@ data class RegionBoundsDto(
 data class Open311ServerDto(
     val jurisdictionId: String? = null,
     val apiKey: String? = null,
-    val baseUrl: String? = null,
+    val baseUrl: String? = null
 )
 
 /** A region's Umami analytics config (`{url, id}`); absent when the region isn't instrumented. */
 @Serializable
 data class UmamiAnalyticsDto(
     val url: String? = null,
-    val id: String? = null,
+    val id: String? = null
 )
 
 /**
@@ -501,5 +501,5 @@ data class UmamiAnalyticsDto(
 @Serializable
 data class ShapeEntry(
     val points: String = "",
-    val length: Int = 0,
+    val length: Int = 0
 )

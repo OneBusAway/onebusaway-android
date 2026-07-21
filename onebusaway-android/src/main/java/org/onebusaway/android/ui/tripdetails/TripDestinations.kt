@@ -64,8 +64,8 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
-            },
-        ),
+            }
+        )
     ) { backStackEntry ->
         val context = LocalContext.current
         val tripId =
@@ -83,9 +83,9 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                     viewModel = tripVm,
                     prefsRepository = PreferencesEntryPoint.get(context),
                     tripId = tripId,
-                    stopId = tripStopId,
+                    stopId = tripStopId
                 ),
-                onShowTrajectory = { navController.navigate(NavRoutes.tripTrajectory(tripId)) },
+                onShowTrajectory = { navController.navigate(NavRoutes.tripTrajectory(tripId)) }
             )
         }
     }
@@ -97,9 +97,11 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
         arguments = listOf(
             navArgument(NavRoutes.ARG_TRIP_ID) { type = NavType.StringType },
             navArgument(NavRoutes.ARG_STOP_ID) {
-                type = NavType.StringType; nullable = true; defaultValue = null
-            },
-        ),
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }
+        )
     ) {
         val trajectoryVm: TripTrajectoryViewModel = hiltViewModel()
         ObaTheme {
@@ -115,33 +117,47 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
             navArgument(NavRoutes.ARG_TRIP_ID) { type = NavType.StringType },
             navArgument(NavRoutes.ARG_STOP_ID) { type = NavType.StringType },
             navArgument(NavRoutes.ARG_ROUTE_ID) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_ROUTE_NAME) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_STOP_NAME) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_HEADSIGN) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_DEPART_TIME) {
-                type = NavType.LongType; defaultValue = 0L
+                type = NavType.LongType
+                defaultValue = 0L
             },
             navArgument(NavRoutes.ARG_STOP_SEQUENCE) {
-                type = NavType.IntType; defaultValue = 0
+                type = NavType.IntType
+                defaultValue = 0
             },
             navArgument(NavRoutes.ARG_SERVICE_DATE) {
-                type = NavType.LongType; defaultValue = 0L
+                type = NavType.LongType
+                defaultValue = 0L
             },
             navArgument(NavRoutes.ARG_VEHICLE_ID) {
-                type = NavType.StringType; nullable = true; defaultValue = null
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             },
             navArgument(NavRoutes.ARG_SERVER_NOW) {
-                type = NavType.LongType; defaultValue = 0L
-            },
-        ),
+                type = NavType.LongType
+                defaultValue = 0L
+            }
+        )
     ) { backStackEntry ->
         val activity = LocalContext.current.findActivity()
         val infoTripId =
@@ -156,12 +172,16 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 when (event) {
                     TripInfoEvent.Saved -> {
                         Toast.makeText(
-                            activity, R.string.trip_info_saved, Toast.LENGTH_SHORT
+                            activity,
+                            R.string.trip_info_saved,
+                            Toast.LENGTH_SHORT
                         ).show()
                         navController.popBackStack()
                     }
                     TripInfoEvent.SaveFailed -> Toast.makeText(
-                        activity, R.string.failed_to_set_reminder, Toast.LENGTH_SHORT
+                        activity,
+                        R.string.failed_to_set_reminder,
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -186,7 +206,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 },
                 onShowStop = {
                     navController.navigate(NavRoutes.arrivals(infoStopId, infoVm.stopName()))
-                },
+                }
             )
         }
     }

@@ -66,7 +66,7 @@ object RegionMapper {
             paymentWarningBody = r.paymentWarningBody,
             sidecarBaseUrl = r.sidecarBaseUrl,
             plausibleAnalyticsServerUrl = r.plausibleAnalyticsServerUrl,
-            umamiAnalytics = umami,
+            umamiAnalytics = umami
         )
     }
 
@@ -96,7 +96,7 @@ object RegionMapper {
             sidecarBaseUrl = region.sidecarBaseUrl,
             plausibleAnalyticsServerUrl = region.plausibleAnalyticsServerUrl,
             umamiAnalyticsUrl = region.umamiAnalyticsUrl,
-            umamiAnalyticsId = region.umamiAnalyticsId,
+            umamiAnalyticsId = region.umamiAnalyticsId
         ),
         bounds = region.bounds.map {
             RegionBoundRecord(
@@ -104,7 +104,7 @@ object RegionMapper {
                 latitude = it.lat,
                 longitude = it.lon,
                 latSpan = it.latSpan,
-                lonSpan = it.lonSpan,
+                lonSpan = it.lonSpan
             )
         },
         open311Servers = region.open311Servers.map {
@@ -112,9 +112,9 @@ object RegionMapper {
                 regionId = region.id,
                 jurisdiction = it.jurisdictionId,
                 apiKey = it.apiKey.orEmpty(),
-                baseUrl = it.baseUrl.orEmpty(),
+                baseUrl = it.baseUrl.orEmpty()
             )
-        },
+        }
     )
 
     private fun Boolean.toInt(): Int = if (this) 1 else 0

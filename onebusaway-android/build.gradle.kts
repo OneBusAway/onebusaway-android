@@ -102,7 +102,8 @@ android {
     // http://stackoverflow.com/questions/20673625/gradle-0-7-0-duplicate-files-during-packaging-of-apk
 
     if (project.hasProperty("secure.properties") &&
-        File(project.property("secure.properties") as String).exists()) {
+        File(project.property("secure.properties") as String).exists()
+    ) {
 
         val props = Properties()
         props.load(FileInputStream(file(project.property("secure.properties") as String)))
@@ -176,12 +177,9 @@ android {
         // so consolidating them is unwanted, and the ~140 hits are pure noise. Opt out rather than
         // baseline them.
         //
-        // The next four are the tail of the lint-baseline cleanup (the goal being to delete the baseline
+        // The next three are the tail of the lint-baseline cleanup (the goal being to delete the baseline
         // entirely): each is a single/handful of findings that is either not our code to fix or not worth
         // fixing, so we opt out of the check rather than carry a baseline entry for it:
-        //  - InvalidPackage: emitted from grpc-core.jar, which references javax.naming[.directory] (JNDI)
-        //    — packages absent on Android — on a name-resolution path the app never exercises. It's
-        //    third-party library bytecode, not fixable here.
         //  - PermissionNamingConvention: the app's `${applicationId}.permission.TRIP_SERVICE` custom
         //    permission predates the convention; renaming a shipped permission is a compatibility break,
         //    so the name stays.
@@ -202,7 +200,7 @@ android {
             "MissingTranslation", "ExtraTranslation", "LogNotTimber",
             "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion",
             "OldTargetApi", "DuplicateStrings",
-            "InvalidPackage", "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp",
+            "PermissionNamingConvention", "MemberExtensionConflict", "ConvertToWebp",
             "SyntheticAccessor"
         )
         // Run the FULL lint catalog — including checks that are off by default and library-provided
@@ -348,13 +346,6 @@ dependencies {
     implementation(libs.firebase.analytics)
     // Plausible Analytics
     implementation(libs.plausible.android.sdk)
-    // Cloud Firestore (for storing destination alert test data)
-    implementation(libs.firebase.firestore) {
-        // Exclude protobuf-lite and protolite-well-known-types to avoid conflicts with GTFS-realtime bindings
-        // See https://github.com/firebase/firebase-android-sdk/issues/5997
-        exclude(group = "com.google.firebase", module = "protolite-well-known-types")
-        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
-    }
     implementation(libs.firebase.auth)
     implementation(libs.firebase.storage)
     // Firebase Crashlytics
@@ -364,7 +355,6 @@ dependencies {
     // Support libraries
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.exifinterface)
-    implementation(libs.commons.io)
     // Open311 client library
     implementation(libs.open311.client)
     // The OBA REST stack (api/): Retrofit + OkHttp + kotlinx.serialization. Every OBA "where"
@@ -392,15 +382,6 @@ dependencies {
     "maplibreImplementation"(libs.maplibre.android.sdk)
     // Autocomplete text views with clear button for trip planning
     implementation(libs.material)
-    // Gson is not used directly in app source. It arrives transitively via
-    // firebase-firestore -> io.grpc:grpc-core, which requests 2.10.1. We don't add it as a
-    // dependency; instead a constraint pins the transitive up to the catalog version so a future
-    // grpc/Firebase bump can't silently drag Gson back below the 2.8.9 CVE-2022-25647 fix.
-    constraints {
-        implementation(libs.gson) {
-            because("CVE-2022-25647: floor transitive Gson at the catalog version; not a direct dependency")
-        }
-    }
     // Unit tests - seems like this is still necessary w/ Android X even though useLibrary is declared earlier
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
@@ -412,7 +393,6 @@ dependencies {
     // WorkManager (Java only)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.preference)
     // Preferences DataStore — the backing store behind PreferencesRepository.
     implementation(libs.androidx.datastore.preferences)
     // RoomDB
@@ -425,7 +405,6 @@ dependencies {
     ksp(libs.hilt.android.compiler)
     // GTFS Realtime bindings for parsing GTFS-realtime data
     implementation(libs.gtfs.realtime.bindings)
-    implementation(libs.proto.google.common.protos)
 
     // Jetpack Compose on the 1.11.x line (BOM 2026.06.01 -> compose-ui/foundation 1.11.4, material3
     // 1.4.0). This required the coordinated toolchain bump to compileSdk 37 + AGP 9.2.0 + Gradle 9.4.1.
@@ -433,19 +412,18 @@ dependencies {
     val composeBom = platform(libs.compose.bom)
     implementation(composeBom)
     androidTestImplementation(composeBom)
-    implementation(libs.compose.ui)                     // 1.11.4 via BOM
-    implementation(libs.compose.ui.tooling.preview)     // @Preview support
-    debugImplementation(libs.compose.ui.tooling)        // preview renderer (debug only)
+    implementation(libs.compose.ui) // 1.11.4 via BOM
+    implementation(libs.compose.ui.tooling.preview) // @Preview support
+    debugImplementation(libs.compose.ui.tooling) // preview renderer (debug only)
     // Compose UI instrumented testing (createComposeRule): semantic tree assertions on real devices,
     // per the "never tap raw screen coordinates" testing policy.
     androidTestImplementation(libs.compose.ui.test.junit4)
     debugImplementation(libs.compose.ui.test.manifest)
-    implementation(libs.compose.material3)              // 1.4.0 via BOM
-    // Material icons (Icons.Filled.*, AutoMirrored ArrowBack). Deprecated and frozen at 1.7.8, and
-    // no longer pulled transitively by material3 1.4.0, so pin explicitly. 1.7.8 runs fine on the
-    // 1.11.x Compose runtime; not managed by the BOM, hence the literal version.
-    implementation(libs.compose.material.icons.core)
-    implementation(libs.androidx.activity.compose)      // matches activity-ktx 1.13.0
+    implementation(libs.compose.material3) // 1.4.0 via BOM
+    // The handful of Material Icons the app uses are vendored as plain Compose ImageVectors in
+    // org.onebusaway.android.ui.icons.AppIcons, so we no longer depend on the deprecated (and frozen
+    // at 1.7.8) androidx.compose.material:material-icons-core artifact.
+    implementation(libs.androidx.activity.compose) // matches activity-ktx 1.13.0
     // ViewModel + StateFlow for Compose screens (lifecycle 2.10.0; minSdk 23)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

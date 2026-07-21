@@ -15,10 +15,9 @@
  */
 package org.onebusaway.android.ui.routeinfo
 
-import org.onebusaway.android.api.adapters.ObaStopElement
-
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.RouteStopGroup
 
 /**
@@ -35,7 +34,7 @@ class RouteDirectionsMapperTest {
                 stops = listOf(
                     ObaStopElement("1_a", 47.6, -122.33, "Spring St & 3rd Ave", "101", "NE"),
                     // Blank direction normalizes to empty string.
-                    ObaStopElement("1_b", 47.61, -122.34, "Pine St", "102", ""),
+                    ObaStopElement("1_b", 47.61, -122.34, "Pine St", "102", "")
                 )
             )
         )

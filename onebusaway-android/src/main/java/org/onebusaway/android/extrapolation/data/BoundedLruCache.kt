@@ -28,10 +28,10 @@ package org.onebusaway.android.extrapolation.data
 internal class BoundedLruCache<K : Any, V : Any>(private val maxSize: Int) {
 
     private val entries =
-            object : LinkedHashMap<K, V>(16, 0.75f, /* accessOrder = */ true) {
-                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>): Boolean =
-                        size > maxSize
-            }
+        // LinkedHashMap(initialCapacity, loadFactor, accessOrder = true) → iterate in LRU order
+        object : LinkedHashMap<K, V>(16, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>): Boolean = size > maxSize
+        }
 
     /** The cached value for [key], or null if it was never cached (or has been evicted). */
     @Synchronized

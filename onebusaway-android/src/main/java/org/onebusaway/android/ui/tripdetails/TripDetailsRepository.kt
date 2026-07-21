@@ -15,37 +15,36 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
-import org.onebusaway.android.api.data.TripDetailsDataSource
-import org.onebusaway.android.api.data.TripDetails
-
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.Calendar
 import java.util.GregorianCalendar
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaTrip
-import org.onebusaway.android.models.ObaTripSchedule
-import org.onebusaway.android.models.ObaTripStatus
-import org.onebusaway.android.extrapolation.data.serviceDateOrNull
-import org.onebusaway.android.models.Status
-import org.onebusaway.android.time.ServiceDate
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import org.onebusaway.android.api.data.TripDetails
+import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.extrapolation.data.serviceDateOrNull
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Status
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.time.ServiceDate
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
@@ -103,7 +102,7 @@ class DefaultTripDetailsRepository @Inject constructor(
     private val stopDao: StopDao,
     private val regionRepository: RegionRepository,
     private val importGate: ImportGate,
-    @param:AppScope private val appScope: CoroutineScope,
+    @param:AppScope private val appScope: CoroutineScope
 ) : TripDetailsRepository {
 
     private var lastGood: TripDetails? = null
@@ -251,8 +250,11 @@ class DefaultTripDetailsRepository @Inject constructor(
     ): String = when {
         status == null -> context.getString(R.string.trip_details_scheduled_data)
         !status.isPredicted ->
-            if (status.status == Status.CANCELED) context.getString(R.string.stop_info_canceled)
-            else context.getString(R.string.trip_details_scheduled_data)
+            if (status.status == Status.CANCELED) {
+                context.getString(R.string.stop_info_canceled)
+            } else {
+                context.getString(R.string.trip_details_scheduled_data)
+            }
 
         else -> {
             val absDev = deviation.absoluteValue

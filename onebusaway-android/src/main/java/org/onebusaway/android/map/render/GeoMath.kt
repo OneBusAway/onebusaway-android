@@ -23,8 +23,7 @@ import org.onebusaway.android.util.haversineDistance
  * to the shared [haversineDistance], which matches the server's distance-along-trip values (same
  * Earth radius); neither carries an Android dependency, so callers stay pure / JVM-testable.
  */
-fun haversineMeters(a: GeoPoint, b: GeoPoint): Double =
-    haversineDistance(a.latitude, a.longitude, b.latitude, b.longitude)
+fun haversineMeters(a: GeoPoint, b: GeoPoint): Double = haversineDistance(a.latitude, a.longitude, b.latitude, b.longitude)
 
 /**
  * Web-Mercator ground resolution at zoom 0 on the equator, in meters per pixel (256px tiles). Scale to

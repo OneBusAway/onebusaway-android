@@ -44,7 +44,7 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
  */
 class ComposeBitmapRenderer(
     private val activity: Activity,
-    private val container: ViewGroup,
+    private val container: ViewGroup
 ) {
 
     // The in-flight pre-render (one at a time), so a second render tears the first down.
@@ -74,7 +74,7 @@ class ComposeBitmapRenderer(
         pendingListener = listener
         container.addView(
             composeView,
-            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+            ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         )
         composeView.viewTreeObserver.addOnGlobalLayoutListener(listener)
     }

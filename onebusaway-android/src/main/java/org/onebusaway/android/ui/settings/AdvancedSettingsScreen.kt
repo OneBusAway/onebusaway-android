@@ -51,7 +51,7 @@ import org.onebusaway.android.ui.settings.components.SwitchPreferenceItem
 fun AdvancedSettingsRoute(
     onBack: () -> Unit,
     onGoHome: () -> Unit,
-    viewModel: AdvancedSettingsViewModel = hiltViewModel(),
+    viewModel: AdvancedSettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -104,7 +104,7 @@ fun AdvancedSettingsRoute(
                     Toast.makeText(
                         context,
                         resources.getString(R.string.custom_api_url_error, appName),
-                        Toast.LENGTH_SHORT,
+                        Toast.LENGTH_SHORT
                     ).show()
                     false
                 }
@@ -118,7 +118,7 @@ fun AdvancedSettingsRoute(
                     Toast.makeText(
                         context,
                         resources.getString(R.string.custom_otp_api_url_error),
-                        Toast.LENGTH_SHORT,
+                        Toast.LENGTH_SHORT
                     ).show()
                     false
                 }
@@ -135,14 +135,14 @@ fun AdvancedSettingsRoute(
                         resources.getString(
                             R.string.preferences_map_stop_cache_size_error,
                             MAP_STOP_CACHE_SIZE_MIN,
-                            MAP_STOP_CACHE_SIZE_MAX,
+                            MAP_STOP_CACHE_SIZE_MAX
                         ),
-                        Toast.LENGTH_SHORT,
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
         },
-        onResetDonationTimestamps = viewModel::onResetDonationTimestamps,
+        onResetDonationTimestamps = viewModel::onResetDonationTimestamps
     )
 }
 
@@ -158,14 +158,14 @@ fun AdvancedSettingsScreen(
     onOtpUrlChange: (String) -> Boolean,
     onOtpUrlUsesGraphQlChange: (Boolean) -> Unit,
     onMapStopCacheSizeChange: (String) -> Boolean,
-    onResetDonationTimestamps: () -> Unit,
+    onResetDonationTimestamps: () -> Unit
 ) {
     val appName = stringResource(R.string.app_name)
     Scaffold(
         topBar = {
             ObaTopAppBar(
                 title = stringResource(R.string.preferences_category_advanced),
-                onBack = onBack,
+                onBack = onBack
             )
         }
     ) { padding ->
@@ -181,20 +181,20 @@ fun AdvancedSettingsScreen(
                         title = stringResource(R.string.preferences_experimental_regions_title),
                         summary = stringResource(R.string.preferences_experimental_regions_summary),
                         checked = state.experimentalRegionsEnabled,
-                        onCheckedChange = onExperimentalToggle,
+                        onCheckedChange = onExperimentalToggle
                     )
                 }
                 SwitchPreferenceItem(
                     title = stringResource(R.string.display_test_alerts),
                     summary = stringResource(R.string.display_test_wide_alerts_for_regions),
                     checked = state.displayTestAlerts,
-                    onCheckedChange = onDisplayTestAlerts,
+                    onCheckedChange = onDisplayTestAlerts
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_push_test_device_title),
                     summary = stringResource(R.string.preferences_push_test_device_summary),
                     checked = state.pushTestDevice,
-                    onCheckedChange = onPushTestDevice,
+                    onCheckedChange = onPushTestDevice
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_push_test_device_name_title),
@@ -203,32 +203,32 @@ fun AdvancedSettingsScreen(
                     currentValue = state.pushTestDeviceName,
                     hint = stringResource(R.string.preferences_push_test_device_name_title),
                     onValueChange = onPushTestDeviceName,
-                    keyboardType = KeyboardType.Text,
+                    keyboardType = KeyboardType.Text
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_map_stop_cache_size_title),
                     summary = stringResource(
                         R.string.preferences_map_stop_cache_size_summary,
-                        state.mapStopCacheSize,
+                        state.mapStopCacheSize
                     ),
                     currentValue = state.mapStopCacheSize.toString(),
                     hint = StopsMapController.DEFAULT_STOP_CACHE_SIZE.toString(),
                     onValueChange = onMapStopCacheSizeChange,
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.Number
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_oba_api_servername_title, appName),
                     summary = state.customObaApiUrlSummary,
                     currentValue = state.customObaApiUrl,
                     hint = stringResource(R.string.preferences_oba_api_servername_hint),
-                    onValueChange = onObaUrlChange,
+                    onValueChange = onObaUrlChange
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_otp_api_servername_title),
                     summary = state.customOtpApiUrlSummary,
                     currentValue = state.customOtpApiUrl,
                     hint = stringResource(R.string.preferences_otp_api_servername_hint),
-                    onValueChange = onOtpUrlChange,
+                    onValueChange = onOtpUrlChange
                 )
                 // Only meaningful once a custom OTP URL is set — TripRequestBuilder.usesOtp2 only
                 // reads this preference in that case, falling back to the region's own
@@ -239,13 +239,13 @@ fun AdvancedSettingsScreen(
                         title = stringResource(R.string.preferences_otp_api_url_is_graphql_title),
                         summary = stringResource(R.string.preferences_otp_api_url_is_graphql_summary),
                         checked = state.customOtpApiUrlUsesGraphQl,
-                        onCheckedChange = onOtpUrlUsesGraphQlChange,
+                        onCheckedChange = onOtpUrlUsesGraphQlChange
                     )
                 }
                 ClickPreferenceItem(
                     title = stringResource(R.string.preferences_reset_donation_timestamps_title),
                     summary = stringResource(R.string.preferences_reset_donation_timestamps_summary),
-                    onClick = onResetDonationTimestamps,
+                    onClick = onResetDonationTimestamps
                 )
             }
         }

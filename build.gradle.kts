@@ -40,6 +40,55 @@ plugins {
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.play.publisher) apply false
+    // Spotless is applied (not `apply false`) at the root so a single pair of tasks —
+    // `spotlessApply` (fix) / `spotlessCheck` (verify) — formats the whole tree from one place,
+    // rather than per-module. Replaces the old "import AndroidStyle.xml, reformat in the IDE" flow.
+    alias(libs.plugins.spotless)
+}
+
+// Formatting is enforced by Spotless, driving ktlint for Kotlin and google-java-format for the few
+// Java files. ktlint reads .editorconfig (ktlint_code_style = android_studio) for style. Generated
+// sources under build/ are excluded. Run `./gradlew spotlessApply` before pushing.
+spotless {
+    // Applying Spotless auto-wires `spotlessCheck` into the `check` lifecycle task (which CI runs), so
+    // formatting is enforced now that the whole tree is Spotless-clean. Run `./gradlew spotlessApply`
+    // before pushing to satisfy it.
+    val ktlintVersion = libs.versions.ktlint.get()
+    // Authoritative ktlint config for the build/CI/agents. Applied via editorConfigOverride (rather
+    // than relying on .editorconfig discovery, which Spotless doesn't apply to the kotlinGradle
+    // target) so every entry point formats identically. .editorconfig mirrors these for IDEs and the
+    // ktlint CLI — keep the two in sync.
+    //
+    // We take the `android_studio` code style's standard ruleset as-is — including its naming checks
+    // (property-naming, backing-property-naming) — rather than carving out exceptions. Only two
+    // deliberate adjustments below.
+    val ktlintConfig = mapOf(
+        "ktlint_code_style" to "android_studio",
+        // function-naming stays on, but exempt @Composable functions from it since PascalCase is
+        // correct for them (ktlint's own supported knob, not a workaround).
+        "ktlint_function_naming_ignore_when_annotated_with" to "Composable",
+        // max-line-length is the one standard rule Spotless cannot auto-fix (it can't decide how to
+        // wrap a line), so leaving it on would turn every long line into a manual chore — the toil
+        // this move away from hand-formatting removes. Disabled so formatting stays fully automatic.
+        "ktlint_standard_max-line-length" to "disabled"
+    )
+    kotlin {
+        target("**/*.kt")
+        targetExclude("**/build/**")
+        ktlint(ktlintVersion).editorConfigOverride(ktlintConfig)
+    }
+    kotlinGradle {
+        // Kotlin DSL build scripts (root, settings, :onebusaway-android, :lint-rules). The Groovy
+        // brand-flavor files under onebusaway-android/flavors/*.gradle are *.gradle, not *.gradle.kts,
+        // so they're intentionally not matched here.
+        target("**/*.gradle.kts")
+        ktlint(ktlintVersion).editorConfigOverride(ktlintConfig)
+    }
+    java {
+        target("**/*.java")
+        targetExclude("**/build/**")
+        googleJavaFormat()
+    }
 }
 
 allprojects {

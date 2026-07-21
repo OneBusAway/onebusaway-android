@@ -29,14 +29,14 @@ data class Survey(
     val allowsMultipleResponses: Boolean?,
     val alwaysVisible: Boolean?,
     val visibleStopList: List<String>?,
-    val visibleRouteList: List<String>?,
+    val visibleRouteList: List<String>?
 )
 
 /** The study a [Survey] belongs to. */
 data class SurveyStudy(
     val name: String?,
     val description: String?,
-    val id: Int,
+    val id: Int
 )
 
 /** One survey question; holds the UI's in-progress answer ([answer] / [multipleAnswer]) before submit. */
@@ -44,7 +44,7 @@ class SurveyQuestion(
     val id: Int,
     val position: Int?,
     val isRequired: Boolean,
-    val content: SurveyContent,
+    val content: SurveyContent
 ) {
     /** Free-text / radio answer captured by the UI before submit. */
     var answer: String? = null
@@ -60,7 +60,7 @@ data class SurveyContent(
     val url: String?,
     val embeddedDataFields: ArrayList<String>?,
     val surveyProvider: String?,
-    val type: String?,
+    val type: String?
 )
 
 /** The submit ack: the response id used to update follow-up answers. */

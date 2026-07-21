@@ -24,10 +24,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.onebusaway.android.map.bike.BikeStation
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.GeoPoint
 
 /** A screen pixel position in the composition's root coordinate space (flavor-neutral). */
@@ -58,7 +58,7 @@ const val DEFAULT_ROUTE_LINE_COLOR: Int = 0xFF0000FF.toInt()
 /** Optional renderer-bound geometry transforms. Lines opt in explicitly; the default is pass-through. */
 enum class RoutePolylineTransform {
     VIEWPORT_CLIP,
-    ZOOM_SIMPLIFY,
+    ZOOM_SIMPLIFY
 }
 
 /**
@@ -89,7 +89,7 @@ data class RoutePolyline(
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dashed: Boolean = false,
-    val transforms: Set<RoutePolylineTransform> = emptySet(),
+    val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */
     val resolvedColor: Int get() = color ?: DEFAULT_ROUTE_LINE_COLOR
@@ -122,7 +122,7 @@ data class VehicleMarker(
     // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
     // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported
     // lat/lng. Null when there's no shape/anchor; the renderer then falls back to the reported location.
-    val dataFixPoint: GeoPoint? = null,
+    val dataFixPoint: GeoPoint? = null
 )
 
 /**
@@ -135,7 +135,7 @@ data class BikeMarker(
     val id: String,
     val point: GeoPoint,
     val isFloatingBike: Boolean,
-    val station: BikeStation,
+    val station: BikeStation
 )
 
 /**
@@ -157,7 +157,7 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
-    val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
+    val presentedRoutes: Set<RouteDirectionKey> = emptySet()
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }
@@ -173,7 +173,7 @@ data class ContinuationBadge(
     val point: GeoPoint,
     val routeId: String,
     val routeShortName: String,
-    val directionId: Int?,
+    val directionId: Int?
 )
 
 /**
@@ -185,7 +185,7 @@ data class RouteBadge(
     val routeShortName: String,
     val color: Int,
     val point: GeoPoint,
-    val directionId: Int?,
+    val directionId: Int?
 )
 
 /**
@@ -225,7 +225,7 @@ data class MapRenderSnapshot(
     // The selected vehicle's route continuation (#1691), or null. A discrete, infrequently-changing
     // annotation like the fields above, so it rides the same renderStatic() redraw path rather than
     // the 20Hz vehicle-motion sampler.
-    val routeContinuation: RouteContinuation? = null,
+    val routeContinuation: RouteContinuation? = null
 ) {
     /** Focused-stop adjacency and route focus use the same route-stop zoom scale. */
     val routeStopsScaleWithZoom: Boolean
@@ -243,7 +243,7 @@ data class MapRenderSnapshot(
  */
 data class MapVehicles(
     val markers: List<VehicleMarker> = emptyList(),
-    val response: RouteTrips? = null,
+    val response: RouteTrips? = null
 )
 
 /**
@@ -288,8 +288,7 @@ class MapRenderState {
     private var topChromeInsetPx = 0
     private var focusBannerBottomEdgePx = 0
 
-    private fun applyTopPadding() =
-        _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, focusBannerBottomEdgePx)) }
+    private fun applyTopPadding() = _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, focusBannerBottomEdgePx)) }
 
     /** The floating top-chrome inset (status bar + FAB-row clearance); keeps the compass below the FABs. */
     fun setTopChromeInset(px: Int) {
@@ -310,8 +309,7 @@ class MapRenderState {
     private var arrivalsBottomInsetPx = 0
     private var directionsBottomInsetPx = 0
 
-    private fun applyBottomPadding() =
-        _padding.update { it.copy(bottomPx = maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx)) }
+    private fun applyBottomPadding() = _padding.update { it.copy(bottomPx = maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx)) }
 
     /** The arrivals sheet's bottom inset (keeps the focused stop above the sheet). */
     fun setBottomPadding(px: Int) {
@@ -357,7 +355,7 @@ class MapRenderState {
     // replay=0 so a ping emitted with no map subscribed is discarded, buffered so the emit never drops.
     private val _mapPings = MutableSharedFlow<String>(
         extraBufferCapacity = 8,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     val mapPings: SharedFlow<String> = _mapPings.asSharedFlow()
@@ -377,7 +375,7 @@ class MapRenderState {
     // route fit isn't re-applied in nearby-stops mode.
     private val _framingIntent = MutableSharedFlow<FramingIntent?>(
         replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
     val framingIntent: SharedFlow<FramingIntent?> = _framingIntent.asSharedFlow()
@@ -401,13 +399,13 @@ class MapRenderState {
     fun setRoutePolylines(
         polylines: List<RoutePolyline>,
         framingPolylines: List<RoutePolyline> = polylines,
-        routeModeScalesStopsWithZoom: Boolean = false,
+        routeModeScalesStopsWithZoom: Boolean = false
     ) {
         routeFramingPolylines = framingPolylines
         _snapshot.update {
             it.copy(
                 routePolylines = polylines,
-                routeModeScalesStopsWithZoom = routeModeScalesStopsWithZoom,
+                routeModeScalesStopsWithZoom = routeModeScalesStopsWithZoom
             )
         }
     }

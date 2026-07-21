@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.map.render
 
-import org.onebusaway.android.util.GeoPoint
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
 class MapRenderStateRouteStopScaleTest {
 
@@ -27,7 +27,7 @@ class MapRenderStateRouteStopScaleTest {
         val state = MapRenderState()
         val route = RoutePolyline(
             color = 1,
-            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0)),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0))
         )
 
         state.setRoutePolylines(listOf(route), routeModeScalesStopsWithZoom = true)

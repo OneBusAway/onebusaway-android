@@ -22,19 +22,19 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.push.FirebaseMessagingManager
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.TripDao
-import org.onebusaway.android.database.oba.TripRecord
 import org.onebusaway.android.database.oba.TripDepartureTime
+import org.onebusaway.android.database.oba.TripRecord
+import org.onebusaway.android.push.FirebaseMessagingManager
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.reminders.ReminderRepository
 import org.onebusaway.android.time.WallTime
-import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ReminderUtils
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -111,7 +111,7 @@ class DefaultTripInfoRepository @Inject constructor(
     private val tripDao: TripDao,
     private val stopDao: StopDao,
     private val importGate: ImportGate,
-    private val firebaseMessagingManager: FirebaseMessagingManager,
+    private val firebaseMessagingManager: FirebaseMessagingManager
 ) : TripInfoRepository {
 
     override suspend fun load(args: TripInfoArgs): TripInfoData = withContext(Dispatchers.IO) {
@@ -161,7 +161,8 @@ class DefaultTripInfoRepository @Inject constructor(
         vehicleId = args.vehicleId,
         tripName = "",
         reminderMinutes = PreferenceUtils.getInt(
-            context.getString(R.string.preference_key_default_reminder_time), DEFAULT_REMINDER_MINUTES
+            context.getString(R.string.preference_key_default_reminder_time),
+            DEFAULT_REMINDER_MINUTES
         ),
         isNewTrip = true,
         reminderNowMs = args.reminderNowMs()
@@ -173,8 +174,7 @@ class DefaultTripInfoRepository @Inject constructor(
      * — the correct reference for an edit-from-storage departure, which is a locally-reconstructed
      * scheduled time rather than a server timestamp.
      */
-    private fun TripInfoArgs.reminderNowMs(): Long =
-        serverNowMs.takeIf { it != 0L } ?: WallTime.now().epochMs
+    private fun TripInfoArgs.reminderNowMs(): Long = serverNowMs.takeIf { it != 0L } ?: WallTime.now().epochMs
 
     private fun toTripInfoData(
         routeId: String?,
@@ -189,7 +189,7 @@ class DefaultTripInfoRepository @Inject constructor(
         reminderMinutes: Int,
         isNewTrip: Boolean,
         // "Now" against which the reminder lead-times are filtered, same clock domain as [departTime].
-        reminderNowMs: Long,
+        reminderNowMs: Long
     ) = TripInfoData(
         routeId = routeId,
         headsign = headsign,
@@ -206,7 +206,8 @@ class DefaultTripInfoRepository @Inject constructor(
         departureText = context.getString(
             R.string.trip_info_depart,
             DateUtils.formatDateTime(
-                context, departTime,
+                context,
+                departTime,
                 DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_NO_NOON or DateUtils.FORMAT_NO_MIDNIGHT
             )
         ),
@@ -224,7 +225,8 @@ class DefaultTripInfoRepository @Inject constructor(
         // row delete and the server delete are both no-ops when nothing is saved (one read, not two).
         reminderRepository.deleteReminder(args.tripId, args.stopId)
         PreferenceUtils.saveInt(
-            context.getString(R.string.preference_key_default_reminder_time), reminderMinutes
+            context.getString(R.string.preference_key_default_reminder_time),
+            reminderMinutes
         )
         val alarmDeletePath = requestAlarm(args, data, reminderMinutes * 60) ?: return@withContext false
         tripDao.upsert(
@@ -240,7 +242,7 @@ class DefaultTripInfoRepository @Inject constructor(
                 serviceDate = data.serviceDate,
                 stopSequence = data.stopSequence,
                 tripId = args.tripId,
-                vehicleId = data.vehicleId,
+                vehicleId = data.vehicleId
             )
         )
         true
@@ -258,8 +260,10 @@ class DefaultTripInfoRepository @Inject constructor(
         // push registration completes); the legacy builder returned null in that case.
         val userPushId = firebaseMessagingManager.userPushId()
         if (userPushId.isEmpty()) return null
-        val url = base + context.getString(R.string.arrivals_reminders_api_endpoint) +
-            region.id + "/alarms"
+        val url = base +
+            context.getString(R.string.arrivals_reminders_api_endpoint) +
+            region.id +
+            "/alarms"
         // runCatchingCancellable keeps a cancelled save from being reported to the UI as a save failure.
         return runCatchingCancellable {
             reminderService.createAlarm(
@@ -270,7 +274,7 @@ class DefaultTripInfoRepository @Inject constructor(
                 tripId = args.tripId,
                 userPushId = userPushId,
                 secondsBefore = reminderSeconds,
-                vehicleId = data.vehicleId,
+                vehicleId = data.vehicleId
             ).url
         }.getOrNull()
     }

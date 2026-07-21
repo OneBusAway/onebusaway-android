@@ -37,30 +37,30 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
-import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
-import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.MapVehicles
+import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.bikeZoomBand
-import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -94,7 +94,7 @@ class MapLibreRenderer(
     private val map: MapLibreMap,
     mapStyle: Style,
     private val context: Context,
-    private val renderState: MapRenderState,
+    private val renderState: MapRenderState
 ) : PingTarget {
     private val stopMarkerLayer = MapLibreStopMarkerLayer(map, context)
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
@@ -125,7 +125,7 @@ class MapLibreRenderer(
             )
         },
         removeLines = { lines -> map.removeAnnotations(lines) },
-        setWidth = { line, width -> line.width = width },
+        setWidth = { line, width -> line.width = width }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
@@ -172,8 +172,9 @@ class MapLibreRenderer(
         density,
         ContextCompat.getColor(context, R.color.route_stop_fill),
         ContextCompat.getColor(context, R.color.map_stop_focus),
-        ContextCompat.getColor(context, R.color.route_stop_outline),
+        ContextCompat.getColor(context, R.color.route_stop_outline)
     )
+
     // Reused across the ripple's frames — redrawn in place rather than reallocated each frame (the ring
     // is a bitmap because the classic annotation API has no circle). Freed with the ping in clearPing.
     private var pingBitmap: Bitmap? = null
@@ -196,7 +197,7 @@ class MapLibreRenderer(
         routeStopCircleLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,
-            snapshot.routeStopsScaleWithZoom,
+            snapshot.routeStopsScaleWithZoom
         )
 
         if (snapshot.bikeshareVisible) {
@@ -252,15 +253,14 @@ class MapLibreRenderer(
         }
     }
 
-    private fun routeBadgeIcon(routeShortName: String, color: Int): Icon =
-        iconFactory.fromBitmap(
-            ContinuationBadgeBitmaps.badge(
-                routeShortName,
-                color,
-                density,
-                darkMode = ThemeUtils.isInDarkMode(context),
-            )
+    private fun routeBadgeIcon(routeShortName: String, color: Int): Icon = iconFactory.fromBitmap(
+        ContinuationBadgeBitmaps.badge(
+            routeShortName,
+            color,
+            density,
+            darkMode = ThemeUtils.isInDarkMode(context)
         )
+    )
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
@@ -278,8 +278,7 @@ class MapLibreRenderer(
         updateVehicleScale(detailScale)
     }
 
-    private fun routeWidth(polyline: RoutePolyline, zoom: Float): Float =
-        polyline.widthProfile?.thicknessAt(zoom) ?: (ROUTE_WIDTH_DP * routeLineWidthScale(zoom))
+    private fun routeWidth(polyline: RoutePolyline, zoom: Float): Float = polyline.widthProfile?.thicknessAt(zoom) ?: (ROUTE_WIDTH_DP * routeLineWidthScale(zoom))
 
     /**
      * Update the dynamic layer for one display frame: the route's live [vehicles] (null off route mode)
@@ -332,7 +331,10 @@ class MapLibreRenderer(
     // bitmap is a constant max-size square so the ring stays centered as it grows inside it.
     override fun tickPing(now: WallTime): Boolean {
         val tripId = pingTripId ?: return false
-        val center = vehicleMarkersByTripId[tripId]?.position ?: run { clearPing(); return false }
+        val center = vehicleMarkersByTripId[tripId]?.position ?: run {
+            clearPing()
+            return false
+        }
         val start = pingStart ?: now.also { pingStart = it }
         val elapsed = now - start
         if (MapPing.isDone(elapsed)) {
@@ -500,10 +502,9 @@ class MapLibreRenderer(
 
     // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
     // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon =
-        iconFactory.fromBitmap(
-            VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
-        )
+    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
+        VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
+    )
 
     /** Re-stamp retained vehicle markers only when the settle-time detail scale changes. */
     private fun updateVehicleScale(scale: Float) {
@@ -565,7 +566,7 @@ class MapLibreRenderer(
         icon: Icon,
         title: String,
         fixTimeMs: Long,
-        nowMs: Long,
+        nowMs: Long
     ) {
         val existing = tripMarkersByRole[role]
         if (point == null) {
@@ -588,6 +589,7 @@ class MapLibreRenderer(
     private val fastEstimateIcon: Icon by lazy {
         iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
     }
+
     // The signal glyph is light, so tint it gray to read on the white disc (the most-recent-data dot).
     private val dataAgeIcon: Icon by lazy {
         iconFactory.fromBitmap(
@@ -611,8 +613,7 @@ class MapLibreRenderer(
      * `clickable(false)` (Google draws the ping as a non-clickable Circle), so the click listener routes a
      * ping tap through to its vehicle via this (#1764).
      */
-    fun vehicleMarkerUnderPing(marker: Marker): Marker? =
-        if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
+    fun vehicleMarkerUnderPing(marker: Marker): Marker? = if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
 
     /** The current trips-for-route response, needed to render a vehicle's info window. */
     fun vehicleResponse(): RouteTrips? = lastVehicleResponse

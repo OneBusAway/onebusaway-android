@@ -37,8 +37,7 @@ class SurveyDataSourceCancellationTest {
 
     /** A web service whose calls behave as if the coroutine was cancelled mid-request. */
     private val cancellingService = object : SurveyWebService {
-        override suspend fun getStudy(url: String, userId: String?) =
-            throw CancellationException("cancelled")
+        override suspend fun getStudy(url: String, userId: String?) = throw CancellationException("cancelled")
 
         override suspend fun submitSurvey(
             url: String,
@@ -47,7 +46,7 @@ class SurveyDataSourceCancellationTest {
             stopIdentifier: String?,
             stopLatitude: Double,
             stopLongitude: Double,
-            responses: String,
+            responses: String
         ) = throw CancellationException("cancelled")
     }
 

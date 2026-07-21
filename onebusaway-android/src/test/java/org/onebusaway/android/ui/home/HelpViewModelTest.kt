@@ -42,7 +42,7 @@ class HelpViewModelTest {
 
     private fun viewModel(
         prefs: FakePreferencesRepository = FakePreferencesRepository(),
-        regionRepo: FakeRegionRepository = FakeRegionRepository(),
+        regionRepo: FakeRegionRepository = FakeRegionRepository()
     ) = HelpViewModel(prefs, regionRepo)
 
     @Test

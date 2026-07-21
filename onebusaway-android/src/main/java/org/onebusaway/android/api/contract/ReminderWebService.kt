@@ -45,7 +45,7 @@ interface ReminderWebService {
         @Field("user_push_id") userPushId: String,
         @Field("seconds_before") secondsBefore: Int,
         @Field("vehicle_id") vehicleId: String?,
-        @Field("operating_system") operatingSystem: String = "android",
+        @Field("operating_system") operatingSystem: String = "android"
     ): ReminderResponse
 
     /** Deletes a previously-created alarm by its delete [url]. The body is unused (status only). */

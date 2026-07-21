@@ -41,7 +41,7 @@ sealed interface CameraCommand {
     data class Recenter(
         val point: GeoPoint,
         val animate: Boolean,
-        val applyRouteBias: Boolean,
+        val applyRouteBias: Boolean
     ) : CameraCommand
 
     /**
@@ -53,7 +53,7 @@ sealed interface CameraCommand {
     data class MoveToLocation(
         val point: GeoPoint,
         val useDefaultZoom: Boolean,
-        val animate: Boolean,
+        val animate: Boolean
     ) : CameraCommand
 
     /** Set the zoom level (preserving the current center). */

@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.ui.arrivals
 
-import org.onebusaway.android.api.data.StopArrivalsDataSource
-import org.onebusaway.android.api.data.StopArrivals
-
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -30,21 +27,23 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.api.ObaApiException
+import org.onebusaway.android.api.data.StopArrivals
+import org.onebusaway.android.api.data.StopArrivalsDataSource
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.markStopUsed
+import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.FocusedTrip
-import org.onebusaway.android.time.ElapsedClock
-import org.onebusaway.android.time.ElapsedTime
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.time.ElapsedClock
+import org.onebusaway.android.time.ElapsedTime
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.SituationUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -59,27 +58,25 @@ import org.onebusaway.android.util.getRouteDisplayName
 internal fun planActiveAlerts(
     situations: List<ObaSituation>,
     isActive: (ObaSituation) -> Boolean
-): List<AlertItem> =
-    situations.filter(isActive)
-        .groupBy { it.contentKey }
-        .map { (contentId, group) ->
-            val representative = group.first()
-            AlertItem(
-                contentId = contentId,
-                situationId = representative.id,
-                situationIds = group.mapTo(mutableSetOf()) { it.id },
-                summary = representative.summary.orEmpty(),
-                severity = severityOf(representative.severity)
-            )
-        }
+): List<AlertItem> = situations.filter(isActive)
+    .groupBy { it.contentKey }
+    .map { (contentId, group) ->
+        val representative = group.first()
+        AlertItem(
+            contentId = contentId,
+            situationId = representative.id,
+            situationIds = group.mapTo(mutableSetOf()) { it.id },
+            summary = representative.summary.orEmpty(),
+            severity = severityOf(representative.severity)
+        )
+    }
 
 /**
  * The representative *active* service-alert id for an arrival: the first of the arrival's referenced
  * [situationIds] that is currently active, or null when none apply. Drives the per-row alert
  * indicator (issue #1687 Bug 2) so a row lights up only for an alert the banner is also surfacing.
  */
-internal fun activeAlertFor(situationIds: List<String>, activeSituationIds: Set<String>): String? =
-    situationIds.firstOrNull { it in activeSituationIds }
+internal fun activeAlertFor(situationIds: List<String>, activeSituationIds: Set<String>): String? = situationIds.firstOrNull { it in activeSituationIds }
 
 /** Maps an ObaSituation severity onto the three banner styles, matching the legacy SituationAlert. */
 internal fun severityOf(severity: String?): AlertSeverity = when (severity) {
@@ -206,7 +203,7 @@ data class ArrivalsLoaded(
     val routes: List<ObaRoute>?,
     val hasArrivals: Boolean,
     /** Exact displayed trips; geometry and reachable stops resolve independently from this identity. */
-    val focusedTrips: Set<FocusedTrip>,
+    val focusedTrips: Set<FocusedTrip>
 )
 
 /** The fields the service-alert dialog shows, decoupled from `ObaSituation`. */
@@ -214,7 +211,7 @@ data class AlertDetails(
     val id: String,
     val summary: String?,
     val description: String?,
-    val url: String?,
+    val url: String?
 )
 
 /**
@@ -239,7 +236,7 @@ class DefaultArrivalsRepository @Inject constructor(
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
     private val display: ArrivalsDisplay,
-    private val elapsedClock: ElapsedClock,
+    private val elapsedClock: ElapsedClock
 ) : ArrivalsRepository {
 
     /**
@@ -261,7 +258,7 @@ class DefaultArrivalsRepository @Inject constructor(
     private data class LastGood(
         val snapshot: StopArrivals,
         val receivedAt: ElapsedTime,
-        val loaded: ArrivalsLoaded,
+        val loaded: ArrivalsLoaded
     )
 
     private val lastGood = AtomicReference<LastGood?>(null)
@@ -293,7 +290,10 @@ class DefaultArrivalsRepository @Inject constructor(
                 // Record the stop once per session so favoriting persists (setFavorite is an
                 // UPDATE — it needs the row to exist) and the stop shows in Recent stops.
                 if (!stopRecorded) {
-                    snapshot.stop?.let { recordStop(it, System.currentTimeMillis()); stopRecorded = true }
+                    snapshot.stop?.let {
+                        recordStop(it, System.currentTimeMillis())
+                        stopRecorded = true
+                    }
                 }
                 val data = toData(snapshot, isStale = false, now = ServerTime(snapshot.currentTime))
                 lastGood.set(LastGood(snapshot, receivedAt, loadedSnapshot(snapshot, data)))
@@ -375,7 +375,7 @@ class DefaultArrivalsRepository @Inject constructor(
             actions = buildActions(snapshot, arrivals, activeSituationIds),
             activeAlerts = activeAlerts,
             hideAlertsByDefault =
-                preferences.getBoolean(R.string.preference_key_hide_alerts, false),
+            preferences.getBoolean(R.string.preference_key_hide_alerts, false),
             routeDisplayNames = routeDisplayNames,
             stopCode = stop?.stopCode,
             stopLat = stop?.latitude ?: 0.0,
@@ -395,8 +395,7 @@ class DefaultArrivalsRepository @Inject constructor(
     /** The operating agency's display name for a route, or null when either the route or its agency
      *  reference is missing from the snapshot. Shared by the route-row sort key and [buildActions] so
      *  the two don't independently reimplement the same route→agency lookup. */
-    private fun agencyNameFor(snapshot: StopArrivals, routeId: String): String? =
-        snapshot.route(routeId)?.agencyId?.let(snapshot::agencyName)
+    private fun agencyNameFor(snapshot: StopArrivals, routeId: String): String? = snapshot.route(routeId)?.agencyId?.let(snapshot::agencyName)
 
     /** Precomputes the navigation/dialog data for each arrival (legacy reads these on menu tap). */
     private fun buildActions(
@@ -444,10 +443,9 @@ class DefaultArrivalsRepository @Inject constructor(
 
     override fun favoriteRouteIds(): Flow<Set<String>> = routeFavorites.favoriteRouteIds()
 
-    override fun alertHideState(): Flow<AlertHideState> =
-        serviceAlertDao.hideDecisions()
-            .onStart { importGate.awaitReady() }
-            .map { rows -> AlertHideState(rows.associate { it.id to (it.hidden == 1) }) }
+    override fun alertHideState(): Flow<AlertHideState> = serviceAlertDao.hideDecisions()
+        .onStart { importGate.awaitReady() }
+        .map { rows -> AlertHideState(rows.associate { it.id to (it.hidden == 1) }) }
 
     override suspend fun hideAlerts(ids: List<String>) {
         importGate.awaitReady()
@@ -474,21 +472,19 @@ class DefaultArrivalsRepository @Inject constructor(
         serviceAlertDao.setAllHidden(1)
     }
 
-    override fun alertDetails(id: String): AlertDetails? =
-        lastGood.get()?.snapshot?.situation(id)?.let {
-            AlertDetails(it.id, it.summary, it.description, it.url)
-        }
+    override fun alertDetails(id: String): AlertDetails? = lastGood.get()?.snapshot?.situation(id)?.let {
+        AlertDetails(it.id, it.summary, it.description, it.url)
+    }
 
     override fun lastLoaded(): ArrivalsLoaded? = lastGood.get()?.loaded
 
     /** Pairs the response's map payload with the exact displayed trips. */
-    private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded =
-        ArrivalsLoaded(
-            stop = snapshot.stop,
-            routes = snapshot.routes,
-            hasArrivals = snapshot.hasArrivals,
-            focusedTrips = snapshot.focusedTrips(data.arrivals.map { it.tripId to it.routeId }),
-        )
+    private fun loadedSnapshot(snapshot: StopArrivals, data: ArrivalsData): ArrivalsLoaded = ArrivalsLoaded(
+        stop = snapshot.stop,
+        routes = snapshot.routes,
+        hasArrivals = snapshot.hasArrivals,
+        focusedTrips = snapshot.focusedTrips(data.arrivals.map { it.tripId to it.routeId })
+    )
 
     companion object {
 

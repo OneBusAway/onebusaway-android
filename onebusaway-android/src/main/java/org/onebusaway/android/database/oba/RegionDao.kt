@@ -30,7 +30,7 @@ data class RegionWithChildren(
     @Relation(parentColumn = "_id", entityColumn = "region_id")
     val bounds: List<RegionBoundRecord>,
     @Relation(parentColumn = "_id", entityColumn = "region_id")
-    val open311Servers: List<Open311ServerRecord>,
+    val open311Servers: List<Open311ServerRecord>
 )
 
 /**

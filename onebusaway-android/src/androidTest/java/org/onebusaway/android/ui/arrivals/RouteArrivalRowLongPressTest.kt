@@ -53,7 +53,7 @@ class RouteArrivalRowLongPressTest {
             onSetReminder = {},
             onShowRouteSchedule = { openedScheduleUrl = it },
             onReportArrivalProblem = {},
-            onShowAlert = {},
+            onShowAlert = {}
         )
         val actions = ArrivalActions(
             tripId = trip.tripId,
@@ -63,7 +63,7 @@ class RouteArrivalRowLongPressTest {
             routeColor = 0xFF0A5B3E.toInt(),
             scheduleUrl = scheduleUrl,
             agencyName = null,
-            blockId = null,
+            blockId = null
         )
 
         composeRule.setContent {
@@ -71,7 +71,7 @@ class RouteArrivalRowLongPressTest {
                 group = RouteRowGroup(listOf(trip)),
                 actionsFor = { actions },
                 isFavorite = false,
-                callbacks = callbacks,
+                callbacks = callbacks
             )
         }
 

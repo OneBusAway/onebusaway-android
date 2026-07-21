@@ -39,8 +39,7 @@ interface PushRegistrationEntryPoint {
     companion object {
         /** Resolves the [PushRegistrationManager] singleton from any [context] (its application is used). */
         @JvmStatic
-        fun get(context: Context): PushRegistrationManager =
-            EntryPointAccessors.fromApplication(context, PushRegistrationEntryPoint::class.java)
-                .pushRegistrationManager()
+        fun get(context: Context): PushRegistrationManager = EntryPointAccessors.fromApplication(context, PushRegistrationEntryPoint::class.java)
+            .pushRegistrationManager()
     }
 }

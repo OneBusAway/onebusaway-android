@@ -20,12 +20,13 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onebusaway.android.directions.model.Direction
+import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.util.DirectionsGenerator
+import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -44,7 +45,10 @@ interface TripResultsRepository {
     suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>>
 }
 
-class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext private val context: Context) : TripResultsRepository {
+class DefaultTripResultsRepository @Inject constructor(
+    @param:ApplicationContext private val context: Context,
+    private val otpObaIdResolver: OtpObaIdResolver
+) : TripResultsRepository {
 
     override suspend fun summarize(
         itineraries: List<TripItinerary>
@@ -65,7 +69,7 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
                     RouteBadge(
                         shortName = leg.badgeShortName(),
                         // routeColor is a bare wire hex; tolerate a leading '#' just in case.
-                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#")),
+                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#"))
                     )
                 }
             )
@@ -80,64 +84,41 @@ class DefaultTripResultsRepository @Inject constructor(@param:ApplicationContext
             // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
             walkDistanceMeters = itinerary.legs
                 .filter { it.mode == TripMode.WALK }
-                .sumOf { it.distance },
+                .sumOf { it.distance }
         )
     }
 
     /** The route's display short name (short name, else the route, else the id). */
-    private fun TripLeg.badgeShortName(): String =
-        listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
+    private fun TripLeg.badgeShortName(): String = listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
 
     override suspend fun directionsFor(
         itinerary: TripItinerary
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
-            DirectionsGenerator(itinerary.legs, context).directions.map { it.toItem() }
+            // The legacy generator supplies the localized step text (needs a Context for resources);
+            // the pure grouping re-shapes its flat output into one card per leg (JVM-testable). Each
+            // transit leg's OTP route/stop ids are resolved to OBA ids here (a suspend, network-backed
+            // step) so the drawer can highlight the route and show each stop's live ETAs.
+            val flat = DirectionsGenerator(itinerary.legs, context).directions
+            val routeLegRefs = itinerary.legs.map { leg ->
+                if (leg.mode?.isOnStreetNonTransit == true) null else resolveRouteLeg(leg)
+            }
+            DirectionCardGrouping.groupByLeg(itinerary.legs, flat, routeLegRefs)
         }
     }
 
-    /** Mirrors DirectionExpandableListAdapter's group-view text composition. */
-    private fun Direction.toItem(): DirectionItem {
-        val index = directionIndex
-        return if (!isTransit) {
-            DirectionItem(
-                iconRes = icon,
-                text = "$index. ${directionText.orEmptyString()}",
-                isTransit = false,
-                subItems = subItemsOf(subDirections),
-                focusPoint = focusPoint,
-            )
-        } else {
-            val time = (if (isRealTimeInfo && newTime != null) newTime else oldTime).orEmptyString()
-            DirectionItem(
-                iconRes = icon,
-                text = "$index. ${service.orEmptyString()} $time",
-                placeAndHeadsign = placeAndHeadsign?.toString()?.takeIf { it.isNotEmpty() },
-                agency = agency?.toString()?.takeIf { it.isNotEmpty() },
-                extra = extra?.toString()?.takeIf { it.isNotEmpty() },
-                isTransit = true,
-                subItems = subItemsOf(subDirections),
-                focusPoint = focusPoint,
-            )
-        }
-    }
+    /** Resolve a transit leg's OTP route/stop ids onto the OBA ids the drawer's map + ETA strips need. */
+    private suspend fun resolveRouteLeg(leg: TripLeg): RouteLegRef = RouteLegRef(
+        routeId = otpObaIdResolver.obaRouteId(leg.routeId, leg.agencyId, leg.agencyName),
+        headsign = leg.headsign,
+        board = leg.from.resolveStop(leg),
+        alight = leg.to.resolveStop(leg)
+    )
 
-    private fun subItemsOf(subDirections: List<Direction>?): List<DirectionItem> =
-        subDirections?.map {
-            DirectionItem(
-                iconRes = it.icon,
-                text = it.directionText.orEmptyString(),
-                focusPoint = it.focusPoint,
-            )
-        }.orEmpty()
-
-    /** The step's focus point, or null when the underlying place carried no coordinates. */
-    private val Direction.focusPoint: GeoPoint?
-        get() {
-            val lat = focusLat ?: return null
-            val lon = focusLon ?: return null
-            return GeoPoint(lat, lon)
-        }
-
-    private fun CharSequence?.orEmptyString(): String = this?.toString().orEmpty()
+    private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(
+        stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),
+        stopCode = stopCode,
+        name = name,
+        point = geoPointOrNull(lat, lon)
+    )
 }

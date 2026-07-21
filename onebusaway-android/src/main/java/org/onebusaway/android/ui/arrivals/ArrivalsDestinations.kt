@@ -35,11 +35,11 @@ import androidx.navigation.navArgument
 import kotlinx.coroutines.launch
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.navigateFromHome
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
-import org.onebusaway.android.ui.compose.theme.ObaTheme
-import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.routeinfo.RouteInfoRoute
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 
@@ -57,7 +57,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
         NavRoutes.ROUTE_INFO,
         arguments = listOf(
             navArgument(NavRoutes.ARG_ROUTE_ID) { type = NavType.StringType }
-        ),
+        )
     ) { backStackEntry ->
         val routeId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_ROUTE_ID).orEmpty()
@@ -71,7 +71,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 },
                 onStopShowOnMap = { stop ->
                     navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
-                },
+                }
             )
         }
     }
@@ -88,8 +88,8 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
-            },
-        ),
+            }
+        )
     ) { backStackEntry ->
         val context = LocalContext.current
         val activity = context.findActivity()
@@ -128,7 +128,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                         NavRoutes.tripDetails(tripId, sid, TripDetailsLauncher.SCROLL_MODE_STOP)
                     )
                 },
-                onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) },
+                onEditReminder = { args -> navController.navigateFromHome(NavRoutes.tripInfo(args)) }
             )
         }
         ObaTheme {
@@ -138,7 +138,7 @@ fun NavGraphBuilder.arrivalsGraph(navController: NavHostController) {
                 handler = handler,
                 onBack = { navController.popBackStack() },
                 snackbarHostState = snackbarHostState,
-                onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) },
+                onNightLight = { navController.navigateFromHome(NavRoutes.NIGHT_LIGHT) }
             )
         }
     }

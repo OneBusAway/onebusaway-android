@@ -196,68 +196,66 @@ class PushRegistrationManagerTest {
     }
 
     @Test
-    fun `reregister with a failed delete but successful post queues the delete for a later retry`() =
-        runTest {
-            val f = Fixture(this).registered("T1")
+    fun `reregister with a failed delete but successful post queues the delete for a later retry`() = runTest {
+        val f = Fixture(this).registered("T1")
 
-            // Region-change-style Reregister where DELETE(T1) fails but POST(T2) lands: T2 is live, yet
-            // the old T1 registration is still on the server. It must be queued, not dropped.
-            f.setToken("T2")
-            f.service.onUnregister = { throw IOException("offline") }
-            f.sync()
+        // Region-change-style Reregister where DELETE(T1) fails but POST(T2) lands: T2 is live, yet
+        // the old T1 registration is still on the server. It must be queued, not dropped.
+        f.setToken("T2")
+        f.service.onUnregister = { throw IOException("offline") }
+        f.sync()
 
-            assertEquals(listOf("T1", "T2"), f.service.registerCalls.map { it.token })
-            assertEquals(1, f.service.unregisterCalls.count { it.token == "T1" })
+        assertEquals(listOf("T1", "T2"), f.service.registerCalls.map { it.token })
+        assertEquals(1, f.service.unregisterCalls.count { it.token == "T1" })
 
-            // Next sync, old host reachable again: the queued DELETE(T1) is retried and clears, while the
-            // live T2 registration is left untouched (no re-POST).
-            f.service.onUnregister = { Response.success(Unit) }
-            val postsBefore = f.service.registerCalls.size
-            f.sync()
-            assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
-            assertEquals(postsBefore, f.service.registerCalls.size)
+        // Next sync, old host reachable again: the queued DELETE(T1) is retried and clears, while the
+        // live T2 registration is left untouched (no re-POST).
+        f.service.onUnregister = { Response.success(Unit) }
+        val postsBefore = f.service.registerCalls.size
+        f.sync()
+        assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
+        assertEquals(postsBefore, f.service.registerCalls.size)
 
-            // Drained → a further sync neither DELETEs nor POSTs.
-            f.sync()
-            assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
-            assertEquals(postsBefore, f.service.registerCalls.size)
-        }
+        // Drained → a further sync neither DELETEs nor POSTs.
+        f.sync()
+        assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
+        assertEquals(postsBefore, f.service.registerCalls.size)
+    }
 
     @Test
-    fun `a queued delete never removes the live registration after returning to the old token`() =
-        runTest {
-            val f = Fixture(this).registered("T1")
+    fun `a queued delete never removes the live registration after returning to the old token`() = runTest {
+        val f = Fixture(this).registered("T1")
 
-            // T1 -> T2 with DELETE(T1) failing: T2 live, T1 queued for a retried DELETE.
-            f.setToken("T2")
-            f.service.onUnregister = { throw IOException("offline") }
-            f.sync()
+        // T1 -> T2 with DELETE(T1) failing: T2 live, T1 queued for a retried DELETE.
+        f.setToken("T2")
+        f.service.onUnregister = { throw IOException("offline") }
+        f.sync()
 
-            // Return to T1 while the old host is still unreachable: the reconcile re-POSTs T1 (now live),
-            // and committing T1 must drop the still-queued DELETE(T1) so it can't later kill the live row
-            // (only the newly-stale T2 stays queued).
-            f.setToken("T1")
-            f.sync()
+        // Return to T1 while the old host is still unreachable: the reconcile re-POSTs T1 (now live),
+        // and committing T1 must drop the still-queued DELETE(T1) so it can't later kill the live row
+        // (only the newly-stale T2 stays queued).
+        f.setToken("T1")
+        f.sync()
 
-            // Old host reachable again. Draining must NOT delete T1 (it's live); only DELETE(T2) fires.
-            f.service.onUnregister = { Response.success(Unit) }
-            val deletesT1Before = f.service.unregisterCalls.count { it.token == "T1" }
-            f.sync()
+        // Old host reachable again. Draining must NOT delete T1 (it's live); only DELETE(T2) fires.
+        f.service.onUnregister = { Response.success(Unit) }
+        val deletesT1Before = f.service.unregisterCalls.count { it.token == "T1" }
+        f.sync()
 
-            assertEquals(
-                "the live T1 registration must not be deleted",
-                deletesT1Before,
-                f.service.unregisterCalls.count { it.token == "T1" },
-            )
-            assertTrue("the stale T2 must be drained", f.service.unregisterCalls.any { it.token == "T2" })
+        assertEquals(
+            "the live T1 registration must not be deleted",
+            deletesT1Before,
+            f.service.unregisterCalls.count { it.token == "T1" }
+        )
+        assertTrue("the stale T2 must be drained", f.service.unregisterCalls.any { it.token == "T2" })
 
-            // T1 remains the live, on-record registration → a further sync is a pure NoOp.
-            val posts = f.service.registerCalls.size
-            val deletes = f.service.unregisterCalls.size
-            f.sync()
-            assertEquals(posts, f.service.registerCalls.size)
-            assertEquals(deletes, f.service.unregisterCalls.size)
-        }
+        // T1 remains the live, on-record registration → a further sync is a pure NoOp.
+        val posts = f.service.registerCalls.size
+        val deletes = f.service.unregisterCalls.size
+        f.sync()
+        assertEquals(posts, f.service.registerCalls.size)
+        assertEquals(deletes, f.service.unregisterCalls.size)
+    }
 
     @Test
     fun `unregister treats a 404 as already-gone and clears the record`() = runTest {
@@ -358,7 +356,6 @@ class PushRegistrationManagerTest {
         assertEquals(1, f.service.registerCalls.size)
     }
 
-
     @Test
     fun `an HTTP error response is logged and reported, not silently swallowed`() = runTest {
         val f = Fixture(this)
@@ -428,14 +425,14 @@ class PushRegistrationManagerTest {
                 service = service,
                 registrationsEndpointPath = "/api/v2/regions/",
                 logWarning = { message, _ -> loggedWarnings += message },
-                reportError = { reportedErrors += it },
+                reportError = { reportedErrors += it }
             ),
             store = PushRegistrationStore(prefs = prefs, now = { now }),
             regionRepository = regions,
             firebaseMessagingManager = FirebaseMessagingManager(prefs),
             prefs = prefs,
             scope = scope,
-            notificationsEnabled = { notificationsEnabled },
+            notificationsEnabled = { notificationsEnabled }
         )
 
         fun setToken(token: String?) = prefs.setString(R.string.firebase_messaging_token, token)
@@ -447,7 +444,10 @@ class PushRegistrationManagerTest {
         }
 
         /** Establishes a "[token] already registered and on record" baseline before the scenario. */
-        fun registered(token: String): Fixture = apply { setToken(token); sync() }
+        fun registered(token: String): Fixture = apply {
+            setToken(token)
+            sync()
+        }
     }
 
     /** Records every call and returns programmable outcomes (default: success). */
@@ -458,7 +458,7 @@ class PushRegistrationManagerTest {
             val locale: String,
             val testDevice: Boolean,
             val description: String?,
-            val operatingSystem: String,
+            val operatingSystem: String
         )
 
         data class UnregisterCall(val url: String, val token: String)
@@ -475,7 +475,7 @@ class PushRegistrationManagerTest {
             locale: String,
             testDevice: Boolean,
             description: String?,
-            operatingSystem: String,
+            operatingSystem: String
         ): Response<Unit> {
             registerCalls += RegisterCall(url, token, locale, testDevice, description, operatingSystem)
             return onRegister()

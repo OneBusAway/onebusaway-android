@@ -53,19 +53,19 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
-import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.VehicleInfoWindow
-import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.compose.drivePings
+import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.routePolylineRenderFlow
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.ThemeUtils
 
@@ -103,7 +103,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
         modifier: Modifier,
         initialLatitude: Double,
         initialLongitude: Double,
-        initialZoom: Float,
+        initialZoom: Float
     ) {
         val renderState = host.renderState
         val cb = requireNotNull(callbacks) { "GoogleComposeAdapter requires ObaMapCallbacks" }
@@ -148,7 +148,8 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                 if (initialLatitude != 0.0 || initialLongitude != 0.0) {
                     map.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(
-                            LatLng(initialLatitude, initialLongitude), initialZoom
+                            LatLng(initialLatitude, initialLongitude),
+                            initialZoom
                         )
                     )
                 }
@@ -254,7 +255,9 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                             lastNanos = frameNanos
                             val now = WallTime.now()
                             activeRenderer.renderDynamic(
-                                tripSampler?.invoke(now.epochMs), vehiclesSampler?.invoke(now.epochMs), now.epochMs
+                                tripSampler?.invoke(now.epochMs),
+                                vehiclesSampler?.invoke(now.epochMs),
+                                now.epochMs
                             )
                         }
                     }
@@ -303,7 +306,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
 
         AndroidView(
             factory = { mapView },
-            modifier = modifier.onGloballyPositioned { mapRootOffset = it.positionInRoot() },
+            modifier = modifier.onGloballyPositioned { mapRootOffset = it.positionInRoot() }
         )
     }
 }
@@ -317,7 +320,7 @@ private fun wireClicks(
     map: GoogleMap,
     renderer: GoogleMapRenderer,
     infoWindows: GoogleInfoWindows,
-    cb: ObaMapCallbacks,
+    cb: ObaMapCallbacks
 ) {
     map.setOnMapClickListener { latLng ->
         infoWindows.clear()
@@ -349,7 +352,7 @@ private fun routeMarkerTap(
     marker: Marker,
     renderer: GoogleMapRenderer,
     infoWindows: GoogleInfoWindows,
-    cb: ObaMapCallbacks,
+    cb: ObaMapCallbacks
 ): Boolean {
     val stop = renderer.stopForMarker(marker)
     if (stop != null) {
@@ -378,7 +381,7 @@ private fun routeMarkerTap(
         cb.onRouteContinuationClick(
             continuationBadge.routeId,
             continuationBadge.routeShortName,
-            continuationBadge.directionId,
+            continuationBadge.directionId
         )
         return true
     }
@@ -402,6 +405,7 @@ private fun routeMarkerTap(
 private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, marker: Marker) {
     open(marker) {
         val live = renderer.vehicleForMarker(marker)
+
         // Deliberate snapshot read, not a reactive subscription: this content is rendered to a bitmap on
         // each GoogleInfoWindows.refresh (the window is a detached bitmap, not a live composition), so we
         // want the latest poll at render time rather than a collectAsState that would never recompose here.
@@ -423,7 +427,7 @@ private fun snapshot(map: GoogleMap): CameraSnapshot {
         latSpan = ne.latitude - sw.latitude,
         lonSpan = ne.longitude - sw.longitude,
         southWest = GeoPoint(sw.latitude, sw.longitude),
-        northEast = GeoPoint(ne.latitude, ne.longitude),
+        northEast = GeoPoint(ne.latitude, ne.longitude)
     )
 }
 
@@ -434,14 +438,13 @@ private fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) 
 }
 
 /** The map style for the current night-mode state: the dark theme, or POI removal in light mode. */
-private fun resolveMapStyle(context: Context): MapStyleOptions =
-    if (ThemeUtils.isInDarkMode(context)) {
-        MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
-    } else {
-        // Light mode: hide POIs (ported from GoogleMapHost.onMapReady) and bus-stop icons,
-        // which are redundant with our own stop markers.
-        MapStyleOptions(
-            "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
-                "{\"featureType\":\"transit.station.bus\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
-        )
-    }
+private fun resolveMapStyle(context: Context): MapStyleOptions = if (ThemeUtils.isInDarkMode(context)) {
+    MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
+} else {
+    // Light mode: hide POIs (ported from GoogleMapHost.onMapReady) and bus-stop icons,
+    // which are redundant with our own stop markers.
+    MapStyleOptions(
+        "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
+            "{\"featureType\":\"transit.station.bus\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
+    )
+}

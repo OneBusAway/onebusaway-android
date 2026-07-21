@@ -56,6 +56,6 @@ internal fun TripExtrapolation.toTripOverlay(bandColorArgb: Int): TripOverlay {
             val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()
             BandSegment(slice.points, (alpha shl 24) or baseRgb)
         },
-        fixTimeMs = fixTimeMs,
+        fixTimeMs = fixTimeMs
     )
 }

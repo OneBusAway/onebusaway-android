@@ -18,8 +18,8 @@ package org.onebusaway.android.ui.arrivals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
-import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.continuationBadgeText
+import org.onebusaway.android.ui.arrivals.components.previewArrival
 
 /**
  * JVM unit tests for the pure route-row grouping/ordering functions. Grouping and the between-row
@@ -38,7 +38,7 @@ class RouteRowGroupingTest {
         assertEquals("65 › 75", continuationBadgeText(listOf("65", "75"), "fallback"))
         assertEquals(
             "65 » 75",
-            continuationBadgeText(listOf("65", "67", "75"), "fallback"),
+            continuationBadgeText(listOf("65", "67", "75"), "fallback")
         )
     }
 
@@ -47,7 +47,7 @@ class RouteRowGroupingTest {
         override val headsign: String?,
         override val eta: Long,
         override val lineName: String = routeId,
-        val agencyName: String? = null,
+        val agencyName: String? = null
     ) : RouteDirectionItem
 
     /** [groupByRouteDirection] with the agency name read off [FakeItem] itself. */
@@ -60,7 +60,7 @@ class RouteRowGroupingTest {
         val items = listOf(
             FakeItem("A", "North", 3),
             FakeItem("A", "South", 6),
-            FakeItem("A", "North", 15),
+            FakeItem("A", "North", 15)
         )
         val groups = group(items)
 
@@ -74,7 +74,7 @@ class RouteRowGroupingTest {
         // Same route+headsign appearing twice (e.g. frequency-based service) → one group.
         val items = listOf(
             FakeItem("A", "North", 4),
-            FakeItem("A", "North", 4),
+            FakeItem("A", "North", 4)
         )
         val groups = group(items)
 
@@ -86,7 +86,7 @@ class RouteRowGroupingTest {
     fun grouping_nullAndBlankHeadsignGroupTogether() {
         val items = listOf(
             FakeItem("A", null, 1),
-            FakeItem("A", "", 9),
+            FakeItem("A", "", 9)
         )
         assertEquals(1, group(items).size)
     }
@@ -102,7 +102,7 @@ class RouteRowGroupingTest {
         // the caller fed in (upstream: ETA-sorted by ArrivalInfoUtils.InfoComparator).
         val items = listOf(
             FakeItem("A", "North", -2),
-            FakeItem("A", "North", 20),
+            FakeItem("A", "North", 20)
         )
         assertEquals(listOf(-2L, 20L), group(items).single().map { it.eta })
     }
@@ -115,7 +115,7 @@ class RouteRowGroupingTest {
         val items = listOf(
             FakeItem("r550", "X", eta = 1, agencyName = "Metro", lineName = "550"),
             FakeItem("r8", "X", eta = 1, agencyName = "Metro", lineName = "8"),
-            FakeItem("r40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
+            FakeItem("r40", "X", eta = 1, agencyName = "Metro", lineName = "40")
         )
         assertEquals(listOf("r8", "r40", "r550"), group(items).map { it.first().routeId })
     }
@@ -128,7 +128,7 @@ class RouteRowGroupingTest {
         val items = listOf(
             FakeItem("rapidride", "X", eta = 1, agencyName = "Metro", lineName = "RapidRide E"),
             FakeItem("aline", "X", eta = 1, agencyName = "Metro", lineName = "A Line"),
-            FakeItem("r8", "X", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("r8", "X", eta = 1, agencyName = "Metro", lineName = "8")
         )
         assertEquals(listOf("r8", "aline", "rapidride"), group(items).map { it.first().routeId })
     }
@@ -138,7 +138,7 @@ class RouteRowGroupingTest {
         // Agency is the primary key: a numerically-later line in an earlier agency still sorts first.
         val items = listOf(
             FakeItem("r-zoo-8", "X", eta = 1, agencyName = "Zoo Transit", lineName = "8"),
-            FakeItem("r-metro-40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
+            FakeItem("r-metro-40", "X", eta = 1, agencyName = "Metro", lineName = "40")
         )
         assertEquals(listOf("r-metro-40", "r-zoo-8"), group(items).map { it.first().routeId })
     }
@@ -147,7 +147,7 @@ class RouteRowGroupingTest {
     fun ordering_nullAgencySortsLast() {
         val items = listOf(
             FakeItem("named", "X", eta = 1, agencyName = "Metro", lineName = "1"),
-            FakeItem("unnamed", "X", eta = 1, agencyName = null, lineName = "1"),
+            FakeItem("unnamed", "X", eta = 1, agencyName = null, lineName = "1")
         )
         assertEquals(listOf("named", "unnamed"), group(items).map { it.first().routeId })
     }
@@ -156,7 +156,7 @@ class RouteRowGroupingTest {
     fun ordering_blankAgencySortsLast_sameAsNull() {
         val items = listOf(
             FakeItem("blank", "X", eta = 1, agencyName = "", lineName = "1"),
-            FakeItem("named", "X", eta = 1, agencyName = "Metro", lineName = "1"),
+            FakeItem("named", "X", eta = 1, agencyName = "Metro", lineName = "1")
         )
         assertEquals(listOf("named", "blank"), group(items).map { it.first().routeId })
     }
@@ -166,7 +166,7 @@ class RouteRowGroupingTest {
         // Same (agency, line) serving two directions at the stop — order must not depend on input order.
         val items = listOf(
             FakeItem("r8", "West", eta = 1, agencyName = "Metro", lineName = "8"),
-            FakeItem("r8", "East", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("r8", "East", eta = 1, agencyName = "Metro", lineName = "8")
         )
         assertEquals(listOf("East", "West"), group(items).map { it.first().headsign })
     }
@@ -177,7 +177,7 @@ class RouteRowGroupingTest {
         // as long as its (agency, line) key sorts first.
         val items = listOf(
             FakeItem("r40", "X", eta = 1, agencyName = "Metro", lineName = "40"),
-            FakeItem("r8", "X", eta = 999, agencyName = "Metro", lineName = "8"),
+            FakeItem("r8", "X", eta = 999, agencyName = "Metro", lineName = "8")
         )
         assertEquals(listOf("r8", "r40"), group(items).map { it.first().routeId })
     }
@@ -188,7 +188,7 @@ class RouteRowGroupingTest {
         // aside, this covers hypothetical equal-but-distinct groups).
         val items = listOf(
             FakeItem("first", "X", eta = 1, agencyName = "Metro", lineName = "8"),
-            FakeItem("second", "X", eta = 1, agencyName = "Metro", lineName = "8"),
+            FakeItem("second", "X", eta = 1, agencyName = "Metro", lineName = "8")
         )
         assertEquals(listOf("first", "second"), group(items).map { it.first().routeId })
     }
@@ -199,7 +199,7 @@ class RouteRowGroupingTest {
     fun arrivalsGrouping_lineNameFallsBackToLongName_whenShortNameBlank() {
         val arrivals = listOf(
             previewArrival(shortName = "", headsign = "X", etaMinutes = 1, routeId = "blank-short", routeLongName = "Zephyr Line"),
-            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "has-short"),
+            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "has-short")
         )
         val groups = groupArrivalsByRouteDirection(arrivals) { null }
         // "8" (numeric) sorts before "Zephyr Line" (non-numeric fallback) under natural ordering.
@@ -209,7 +209,7 @@ class RouteRowGroupingTest {
     @Test
     fun arrivalsGrouping_lineNameFallsBackToRouteId_whenShortAndLongNameBlank() {
         val arrivals = listOf(
-            previewArrival(shortName = "", headsign = "X", etaMinutes = 1, routeId = "aaa-fallback", routeLongName = null),
+            previewArrival(shortName = "", headsign = "X", etaMinutes = 1, routeId = "aaa-fallback", routeLongName = null)
         )
         val groups = groupArrivalsByRouteDirection(arrivals) { null }
         assertEquals("aaa-fallback", groups.single().representative.routeId)
@@ -219,7 +219,7 @@ class RouteRowGroupingTest {
     fun arrivalsGrouping_usesSuppliedAgencyNameAccessor() {
         val arrivals = listOf(
             previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "zoo-route"),
-            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "metro-route"),
+            previewArrival(shortName = "8", headsign = "X", etaMinutes = 1, routeId = "metro-route")
         )
         val groups = groupArrivalsByRouteDirection(arrivals) { arrival ->
             if (arrival.routeId == "metro-route") "Metro" else "Zoo Transit"
@@ -229,8 +229,7 @@ class RouteRowGroupingTest {
 
     // Favorite-first ordering ---------------------------------------------------------------------
 
-    private fun order(items: List<FakeItem>, favorites: Set<String>) =
-        orderGroupsByFavorite(items, favorites) { it.routeId }.map { it.routeId }
+    private fun order(items: List<FakeItem>, favorites: Set<String>) = orderGroupsByFavorite(items, favorites) { it.routeId }.map { it.routeId }
 
     @Test
     fun ordering_liftsStarredRoutesToTop() {
@@ -239,7 +238,7 @@ class RouteRowGroupingTest {
             FakeItem("A", "North", 2),
             FakeItem("B", "East", 5),
             FakeItem("C", "West", 8),
-            FakeItem("D", "South", 11),
+            FakeItem("D", "South", 11)
         )
         assertEquals(listOf("B", "D", "A", "C"), order(items, setOf("B", "D")))
     }
@@ -251,7 +250,7 @@ class RouteRowGroupingTest {
             FakeItem("A", "North", 2),
             FakeItem("B", "East", 5),
             FakeItem("C", "West", 8),
-            FakeItem("D", "South", 11),
+            FakeItem("D", "South", 11)
         )
         assertEquals(listOf("A", "C", "B", "D"), order(items, setOf("A", "C")))
     }
@@ -261,7 +260,7 @@ class RouteRowGroupingTest {
         val items = listOf(
             FakeItem("A", "North", 2),
             FakeItem("B", "East", 5),
-            FakeItem("C", "West", 8),
+            FakeItem("C", "West", 8)
         )
         assertEquals(listOf("A", "B", "C"), order(items, emptySet()))
     }
@@ -270,7 +269,7 @@ class RouteRowGroupingTest {
     fun ordering_allFavorites_leavesOrderUnchanged() {
         val items = listOf(
             FakeItem("A", "North", 2),
-            FakeItem("B", "East", 5),
+            FakeItem("B", "East", 5)
         )
         assertEquals(listOf("A", "B"), order(items, setOf("A", "B")))
     }
@@ -282,7 +281,7 @@ class RouteRowGroupingTest {
         val groups = listOf(
             RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
             RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
-            RouteRowGroup(listOf(previewArrival("A", "South", etaMinutes = 8, routeId = "A"))),
+            RouteRowGroup(listOf(previewArrival("A", "South", etaMinutes = 8, routeId = "A")))
         )
         val originalKeys = groups.map(RouteRowGroup::key)
 
@@ -290,7 +289,7 @@ class RouteRowGroupingTest {
 
         assertEquals(
             listOf(routeRowKey("A", "South"), routeRowKey("A", "North"), routeRowKey("B", "East")),
-            promoted.map(RouteRowGroup::key),
+            promoted.map(RouteRowGroup::key)
         )
         assertEquals(originalKeys, groups.map(RouteRowGroup::key))
     }
@@ -299,12 +298,12 @@ class RouteRowGroupingTest {
     fun selectedRow_usesSoleRouteRow_whenMapAndArrivalHeadsignsDiffer() {
         val groups = listOf(
             RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
-            RouteRowGroup(listOf(previewArrival("12", "Downtown", 5, routeId = "12"))),
+            RouteRowGroup(listOf(previewArrival("12", "Downtown", 5, routeId = "12")))
         )
 
         assertEquals(
             routeRowKey("11", "Madison Park"),
-            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Madison Park via Pine"), "11"),
+            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Madison Park via Pine"), "11")
         )
     }
 
@@ -312,12 +311,12 @@ class RouteRowGroupingTest {
     fun selectedRow_doesNotGuess_whenRouteHasMultipleDirectionRows() {
         val groups = listOf(
             RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
-            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11"))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11")))
         )
 
         assertEquals(
             null,
-            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Different label"), "11"),
+            resolveSelectedRouteGroupKey(groups, routeRowKey("11", "Different label"), "11")
         )
     }
 
@@ -329,7 +328,7 @@ class RouteRowGroupingTest {
             ),
             RouteRowGroup(
                 listOf(previewArrival("11", "Downtown", 5, routeId = "11", directionId = 1))
-            ),
+            )
         )
 
         assertEquals(
@@ -337,16 +336,39 @@ class RouteRowGroupingTest {
             resolveSelectedRouteGroupKey(
                 groups,
                 routeRowKey("11", 1, "A completely different label"),
-                "11",
-            ),
+                "11"
+            )
         )
+    }
+
+    @Test
+    fun selectedRouteGroup_suppliesRowHeadsign_forMapBadgeDirectionKey() {
+        // A map route-label tap names (route, direction) with no headsign string; the resolved group
+        // supplies the headsign the focus banner shows — the same row the drawer promotes.
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11", directionId = 0))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11", directionId = 1)))
+        )
+
+        val group = resolveSelectedRouteGroup(groups, routeRowKey("11", 1, null), "11")
+        assertEquals("Downtown", group?.headsign)
+    }
+
+    @Test
+    fun selectedRouteGroup_null_whenNoRowResolves() {
+        val groups = listOf(
+            RouteRowGroup(listOf(previewArrival("11", "Madison Park", 2, routeId = "11"))),
+            RouteRowGroup(listOf(previewArrival("11", "Downtown", 5, routeId = "11")))
+        )
+
+        assertEquals(null, resolveSelectedRouteGroup(groups, routeRowKey("11", "Different label"), "11"))
     }
 
     @Test
     fun grouping_usesNumericDirectionRatherThanDisplayHeadsign() {
         val arrivals = listOf(
             previewArrival("11", "Same label", 2, routeId = "11", directionId = 0),
-            previewArrival("11", "Same label", 5, routeId = "11", directionId = 1),
+            previewArrival("11", "Same label", 5, routeId = "11", directionId = 1)
         )
 
         assertEquals(2, groupArrivalsByRouteDirection(arrivals) { "Metro" }.size)
@@ -356,7 +378,7 @@ class RouteRowGroupingTest {
     fun noActiveSelection_returnsOriginalOrderingInstance() {
         val groups = listOf(
             RouteRowGroup(listOf(previewArrival("A", "North", etaMinutes = 2, routeId = "A"))),
-            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B"))),
+            RouteRowGroup(listOf(previewArrival("B", "East", etaMinutes = 5, routeId = "B")))
         )
 
         assertSame(groups, promoteSelectedRouteGroup(groups, selectedKey = null))
@@ -376,7 +398,7 @@ class RouteRowGroupingTest {
         scheduleUrl = null,
         agencyName = null,
         blockId = null,
-        alertSituationId = alertSituationId,
+        alertSituationId = alertSituationId
     )
 
     @Test
@@ -384,8 +406,8 @@ class RouteRowGroupingTest {
         // Representative (soonest) trip is unaffected; a later trip in the same group carries an alert.
         val group = RouteRowGroup(
             listOf(
-                previewArrival("A", "North", etaMinutes = 3),   // representative, unaffected
-                previewArrival("A", "North", etaMinutes = 20),  // affected
+                previewArrival("A", "North", etaMinutes = 3), // representative, unaffected
+                previewArrival("A", "North", etaMinutes = 20) // affected
             )
         )
         val id = group.activeAlertSituationId { arrival ->

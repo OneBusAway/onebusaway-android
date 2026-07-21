@@ -73,7 +73,7 @@ class RouteStopProjectionTest {
         val geometry = FocusedTripGeometry(listOf(shape("s1", "r1", meridian)))
         val stops = FocusedTripStops(
             stopIdsByTripId = mapOf("t1" to listOf("a")),
-            stopsById = mapOf("a" to stop("a", lat = 1.0, lon = 5.0)),
+            stopsById = mapOf("a" to stop("a", lat = 1.0, lon = 5.0))
         )
 
         val projected = projectFocusedStops(trips, geometry, stops)
@@ -85,18 +85,18 @@ class RouteStopProjectionTest {
     fun projectFocusedStops_picksNearestAcrossEveryTripThatServesTheStop() {
         val trips = setOf(
             focusedTrip("t1", "r1", shapeId = "s1"),
-            focusedTrip("t2", "r2", shapeId = "s2"),
+            focusedTrip("t2", "r2", shapeId = "s2")
         )
         val geometry = FocusedTripGeometry(
             listOf(
                 shape("s1", "r1", listOf(GeoPoint(10.0, 0.0), GeoPoint(10.0, 10.0))),
-                shape("s2", "r2", meridian),
+                shape("s2", "r2", meridian)
             )
         )
         // The stop is served by both trips; it must snap to whichever shape is nearer (the meridian).
         val stops = FocusedTripStops(
             stopIdsByTripId = mapOf("t1" to listOf("a"), "t2" to listOf("a")),
-            stopsById = mapOf("a" to stop("a", lat = 1.0, lon = 5.0)),
+            stopsById = mapOf("a" to stop("a", lat = 1.0, lon = 5.0))
         )
 
         val projected = projectFocusedStops(trips, geometry, stops)
@@ -109,7 +109,7 @@ class RouteStopProjectionTest {
         val trips = setOf(
             focusedTrip("t-missing", "r1", shapeId = "s-absent"),
             focusedTrip("t-degenerate", "r2", shapeId = "s-degenerate"),
-            focusedTrip("t-noshape", "r3", shapeId = null),
+            focusedTrip("t-noshape", "r3", shapeId = null)
         )
         val geometry = FocusedTripGeometry(
             // s-absent isn't present at all; s-degenerate has < 2 points.
@@ -119,13 +119,13 @@ class RouteStopProjectionTest {
             stopIdsByTripId = mapOf(
                 "t-missing" to listOf("a"),
                 "t-degenerate" to listOf("b"),
-                "t-noshape" to listOf("c"),
+                "t-noshape" to listOf("c")
             ),
             stopsById = mapOf(
                 "a" to stop("a", lat = 1.0, lon = 5.0),
                 "b" to stop("b", lat = 1.0, lon = 5.0),
-                "c" to stop("c", lat = 1.0, lon = 5.0),
-            ),
+                "c" to stop("c", lat = 1.0, lon = 5.0)
+            )
         )
 
         val projected = projectFocusedStops(trips, geometry, stops)
@@ -142,9 +142,7 @@ class RouteStopProjectionTest {
 
     private fun stop(id: String, lat: Double, lon: Double) = ObaStopElement(id = id, lat = lat, lon = lon)
 
-    private fun shape(shapeId: String, routeId: String, points: List<GeoPoint>) =
-        FocusedTripShape(shapeId, routeId, routeColor = null, points = points)
+    private fun shape(shapeId: String, routeId: String, points: List<GeoPoint>) = FocusedTripShape(shapeId, routeId, routeColor = null, points = points)
 
-    private fun focusedTrip(tripId: String, routeId: String, shapeId: String?) =
-        org.onebusaway.android.models.FocusedTrip(tripId, routeId, shapeId, routeColor = null)
+    private fun focusedTrip(tripId: String, routeId: String, shapeId: String?) = org.onebusaway.android.models.FocusedTrip(tripId, routeId, shapeId, routeColor = null)
 }

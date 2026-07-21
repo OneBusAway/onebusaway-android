@@ -38,10 +38,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,6 +66,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.mylists.RecentItem
 import org.onebusaway.android.ui.mylists.filterRecents
 
@@ -98,7 +95,7 @@ fun MapTopChrome(
     onRecentRoute: (routeId: String) -> Unit,
     // Opaque anchor a host may attach to the menu (☰) FAB (e.g. for an onboarding spotlight).
     menuModifier: Modifier = Modifier,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val margin = dimensionResource(R.dimen.fab_margin_horizontal)
     val focusManager = LocalFocusManager.current
@@ -126,15 +123,15 @@ fun MapTopChrome(
             horizontalArrangement = Arrangement.spacedBy(margin),
             // Top-aligned so the menu FAB stays put at the top of the row as the search field expands its
             // dropdown downward (rather than re-centering against the taller field).
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.Top
         ) {
             FloatingActionButton(
                 onClick = onOpenDrawer,
                 containerColor = colorResource(R.color.theme_accent),
                 contentColor = Color.White,
-                modifier = menuModifier.size(TOP_CHROME_HEIGHT),
+                modifier = menuModifier.size(TOP_CHROME_HEIGHT)
             ) {
-                Icon(Icons.Default.Menu, stringResource(R.string.navigation_drawer_open))
+                Icon(AppIcons.Menu, stringResource(R.string.navigation_drawer_open))
             }
             SearchField(
                 recents = recents,
@@ -155,7 +152,7 @@ fun MapTopChrome(
                     onRecentRoute(routeId)
                 },
                 onDismiss = { focusManager.clearFocus() },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -182,7 +179,7 @@ private fun SearchField(
     onRecentStop: (id: String, lat: Double, lon: Double) -> Unit,
     onRecentRoute: (routeId: String) -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     var query by remember { mutableStateOf("") }
     // Shown as the visual placeholder AND set as the field's accessibility label — decorationBox text
@@ -199,8 +196,10 @@ private fun SearchField(
     val pillRadius = TOP_CHROME_HEIGHT / 2
     val bottomRadius = if (expanded) EXPANDED_BOTTOM_RADIUS else pillRadius
     val shape = RoundedCornerShape(
-        topStart = pillRadius, topEnd = pillRadius,
-        bottomStart = bottomRadius, bottomEnd = bottomRadius,
+        topStart = pillRadius,
+        topEnd = pillRadius,
+        bottomStart = bottomRadius,
+        bottomEnd = bottomRadius
     )
 
     Surface(
@@ -208,7 +207,7 @@ private fun SearchField(
         shape = shape,
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 6.dp,
+        shadowElevation = 6.dp
     ) {
         Column {
             Row(
@@ -216,12 +215,12 @@ private fun SearchField(
                     .fillMaxWidth()
                     .height(TOP_CHROME_HEIGHT)
                     .padding(start = 16.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Default.Search,
+                    AppIcons.Search,
                     contentDescription = stringResource(R.string.map_option_search),
-                    tint = LocalContentColor.current.copy(alpha = 0.7f),
+                    tint = LocalContentColor.current.copy(alpha = 0.7f)
                 )
                 Spacer(Modifier.width(12.dp))
                 BasicTextField(
@@ -259,10 +258,10 @@ private fun SearchField(
                     val hasText = query.isNotEmpty()
                     IconButton(onClick = { if (hasText) query = "" else onDismiss() }) {
                         Icon(
-                            Icons.Default.Clear,
+                            AppIcons.Clear,
                             contentDescription = stringResource(
                                 if (hasText) R.string.stop_info_clear else R.string.search_close
-                            ),
+                            )
                         )
                     }
                 }
@@ -271,7 +270,7 @@ private fun SearchField(
                 SearchRecentsDropdown(
                     recents = shown,
                     onRecentStop = onRecentStop,
-                    onRecentRoute = onRecentRoute,
+                    onRecentRoute = onRecentRoute
                 )
             }
         }
@@ -305,8 +304,7 @@ internal val MAP_TOP_CHROME_CLEARANCE = MAP_TOP_CHROME_CONTROL_BOTTOM + 8.dp
  * [MAP_TOP_CHROME_CLEARANCE]. Both HomeScreen (its overlay container) and MapFeature (the stops-notice
  * pill) apply this one modifier, so the status-bar + clearance handling can't drift between them.
  */
-fun Modifier.mapTopChromeOverlayInset(): Modifier =
-    this.statusBarsPadding().padding(top = MAP_TOP_CHROME_CLEARANCE)
+fun Modifier.mapTopChromeOverlayInset(): Modifier = this.statusBarsPadding().padding(top = MAP_TOP_CHROME_CLEARANCE)
 
 /**
  * The floating top chrome's total vertical footprint in **pixels**: the caller-measured [statusBarTopPx]
@@ -316,5 +314,4 @@ fun Modifier.mapTopChromeOverlayInset(): Modifier =
  * same row. Deliberately not `@Composable`: the caller reads the snapshot-backed status-bar inset inside
  * a `snapshotFlow` so inset changes don't recompose the map.
  */
-fun mapTopChromeInsetPx(statusBarTopPx: Int, density: Density): Int =
-    statusBarTopPx + with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }
+fun mapTopChromeInsetPx(statusBarTopPx: Int, density: Density): Int = statusBarTopPx + with(density) { MAP_TOP_CHROME_CLEARANCE.roundToPx() }

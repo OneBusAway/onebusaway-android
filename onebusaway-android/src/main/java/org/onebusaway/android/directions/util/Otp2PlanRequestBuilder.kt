@@ -100,12 +100,11 @@ object Otp2PlanRequestBuilder {
                 buildPreferences(builder.getWheelchairAccessible(), builder.getOptimizeTransfers())
             ),
             modes = buildModes(builder.getModeSetId(), BikeshareAvailability.isEnabled(context)),
-            numItineraries = NUM_ITINERARIES,
+            numItineraries = NUM_ITINERARIES
         )
     }
 
-    private fun coordinateLocation(lat: Double, lon: Double): PlanLocationInput =
-        PlanLocationInput(coordinate = Optional.present(PlanCoordinateInput(lat, lon)))
+    private fun coordinateLocation(lat: Double, lon: Double): PlanLocationInput = PlanLocationInput(coordinate = Optional.present(PlanCoordinateInput(lat, lon)))
 
     /**
      * @param optimizeTransfers mirrors [TripRequestBuilder.getOptimizeTransfers] — OTP1's
@@ -113,28 +112,27 @@ object Otp2PlanRequestBuilder {
      */
     internal fun buildPreferences(
         wheelchairAccessible: Boolean,
-        optimizeTransfers: Boolean,
-    ): PlanPreferencesInput =
-        PlanPreferencesInput(
-            accessibility = Optional.present(
-                AccessibilityPreferencesInput(
-                    wheelchair = Optional.present(
-                        WheelchairPreferencesInput(enabled = Optional.present(wheelchairAccessible))
+        optimizeTransfers: Boolean
+    ): PlanPreferencesInput = PlanPreferencesInput(
+        accessibility = Optional.present(
+            AccessibilityPreferencesInput(
+                wheelchair = Optional.present(
+                    WheelchairPreferencesInput(enabled = Optional.present(wheelchairAccessible))
+                )
+            )
+        ),
+        transit = if (optimizeTransfers) {
+            Optional.present(
+                TransitPreferencesInput(
+                    transfer = Optional.present(
+                        TransferPreferencesInput(cost = Optional.present(OPTIMIZE_TRANSFERS_COST_SECONDS))
                     )
                 )
-            ),
-            transit = if (optimizeTransfers) {
-                Optional.present(
-                    TransitPreferencesInput(
-                        transfer = Optional.present(
-                            TransferPreferencesInput(cost = Optional.present(OPTIMIZE_TRANSFERS_COST_SECONDS))
-                        )
-                    )
-                )
-            } else {
-                Optional.Absent
-            },
-        )
+            )
+        } else {
+            Optional.Absent
+        }
+    )
 
     /**
      * Maps [TripModes.*][TripModes] to OTP2's `modes` input, mirroring
@@ -163,7 +161,7 @@ object Otp2PlanRequestBuilder {
                             // rental trip always walks to/from the vehicle. Verified against the
                             // live OTP 2.x server. #1780.
                             access = Optional.present(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL)),
-                            egress = Optional.present(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL)),
+                            egress = Optional.present(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL))
                         )
                     )
                 )
@@ -176,7 +174,7 @@ object Otp2PlanRequestBuilder {
         TripModes.BIKESHARE -> Optional.present(
             PlanModesInput(
                 direct = Optional.present(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL)),
-                directOnly = Optional.present(true),
+                directOnly = Optional.present(true)
             )
         )
 

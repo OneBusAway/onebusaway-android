@@ -15,10 +15,10 @@
  */
 package org.onebusaway.android.ui.search
 
+import java.net.HttpURLConnection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.net.HttpURLConnection
 import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.RouteReference
@@ -31,8 +31,7 @@ import org.onebusaway.android.util.routeDisplayNames
  */
 class RouteSearchMappingTest {
 
-    private fun envelope(code: Int, routes: List<RouteReference>) =
-        ObaEnvelope(code = code, data = ListWithReferences(list = routes))
+    private fun envelope(code: Int, routes: List<RouteReference>) = ObaEnvelope(code = code, data = ListWithReferences(list = routes))
 
     @Test
     fun listOrEmptyReturnsListOnOk() {

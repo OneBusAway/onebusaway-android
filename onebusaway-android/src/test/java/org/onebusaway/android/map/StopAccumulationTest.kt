@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.api.adapters.ObaStopElement
-
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.map.render.StopMarker
 
 /**
  * Unit tests for the stop-accumulation logic [StopsMapController.showStops] / [StopsMapController.clearStops]
@@ -33,14 +32,11 @@ import org.onebusaway.android.map.render.StopMarker
  */
 class StopAccumulationTest {
 
-    private fun marker(id: String, lat: Double = 0.0, lon: Double = 0.0): StopMarker =
-        StopMarker(id, GeoPoint(lat, lon), "null", ObaRoute.TYPE_BUS, ObaStopElement(id, lat, lon, id, id))
+    private fun marker(id: String, lat: Double = 0.0, lon: Double = 0.0): StopMarker = StopMarker(id, GeoPoint(lat, lon), "null", ObaRoute.TYPE_BUS, ObaStopElement(id, lat, lon, id, id))
 
-    private fun accumOf(vararg ids: String): LinkedHashMap<String, StopMarker> =
-        LinkedHashMap<String, StopMarker>().apply { ids.forEach { put(it, marker(it)) } }
+    private fun accumOf(vararg ids: String): LinkedHashMap<String, StopMarker> = LinkedHashMap<String, StopMarker>().apply { ids.forEach { put(it, marker(it)) } }
 
-    private fun accumOf(vararg markers: StopMarker): LinkedHashMap<String, StopMarker> =
-        LinkedHashMap<String, StopMarker>().apply { markers.forEach { put(it.id, it) } }
+    private fun accumOf(vararg markers: StopMarker): LinkedHashMap<String, StopMarker> = LinkedHashMap<String, StopMarker>().apply { markers.forEach { put(it.id, it) } }
 
     private fun LinkedHashMap<String, StopMarker>.ids() = keys.toSet()
 
@@ -58,7 +54,7 @@ class StopAccumulationTest {
         // center at (0,0): near < mid < far by longitude distance.
         val accum = accumOf(marker("near", 0.0, 1.0), marker("mid", 0.0, 3.0), marker("far", 0.0, 9.0))
         trimToNearest(accum, GeoPoint(0.0, 0.0), cap = 2, focusedId = null)
-        assertEquals(setOf("near", "mid"), accum.ids())   // the farthest is dropped
+        assertEquals(setOf("near", "mid"), accum.ids()) // the farthest is dropped
     }
 
     @Test
@@ -76,8 +72,11 @@ class StopAccumulationTest {
         val accum = accumOf(marker("kept", 0.0, 0.0), marker("stale", 1.0, 1.0))
         // Viewport covers both; the response only carried "kept" — "stale" is dropped.
         evictStaleInViewport(
-            accum, southWest = GeoPoint(-2.0, -2.0), northEast = GeoPoint(2.0, 2.0),
-            present = setOf("kept"), focusedId = null,
+            accum,
+            southWest = GeoPoint(-2.0, -2.0),
+            northEast = GeoPoint(2.0, 2.0),
+            present = setOf("kept"),
+            focusedId = null
         )
         assertEquals(setOf("kept"), accum.ids())
     }
@@ -85,13 +84,16 @@ class StopAccumulationTest {
     @Test
     fun `keeps omitted stops outside the viewport, and the focused stop`() {
         val accum = accumOf(
-            marker("outside", 10.0, 10.0),   // omitted but out of the box → not the response's concern
-            marker("focused", 1.0, 1.0),     // omitted + in the box, but focused → kept
-            marker("stale", 0.5, 0.5),       // omitted + in the box → dropped
+            marker("outside", 10.0, 10.0), // omitted but out of the box → not the response's concern
+            marker("focused", 1.0, 1.0), // omitted + in the box, but focused → kept
+            marker("stale", 0.5, 0.5) // omitted + in the box → dropped
         )
         evictStaleInViewport(
-            accum, southWest = GeoPoint(-2.0, -2.0), northEast = GeoPoint(2.0, 2.0),
-            present = emptySet(), focusedId = "focused",
+            accum,
+            southWest = GeoPoint(-2.0, -2.0),
+            northEast = GeoPoint(2.0, 2.0),
+            present = emptySet(),
+            focusedId = "focused"
         )
         assertEquals(setOf("outside", "focused"), accum.ids())
     }

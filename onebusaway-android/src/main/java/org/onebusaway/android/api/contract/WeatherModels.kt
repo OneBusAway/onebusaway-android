@@ -33,7 +33,7 @@ data class WeatherResponse(
     val region_name: String? = null,
     val retrieved_at: String? = null,
     val today_summary: String? = null,
-    val units: String? = null,
+    val units: String? = null
 )
 
 @Serializable
@@ -45,5 +45,5 @@ data class WeatherForecast(
     val temperature: Double = 0.0,
     val temperature_feels_like: Double = 0.0,
     val time: Int = 0,
-    val wind_speed: Double = 0.0,
+    val wind_speed: Double = 0.0
 )

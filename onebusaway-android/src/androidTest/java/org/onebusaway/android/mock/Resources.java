@@ -15,35 +15,31 @@
  */
 package org.onebusaway.android.mock;
 
-import org.onebusaway.android.BuildConfig;
-
 import android.content.Context;
 import android.net.Uri;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import org.onebusaway.android.BuildConfig;
 
 public class Resources {
 
-    private static final Uri TEST_RAW_URI =
-            Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + ".test/raw/");
+  private static final Uri TEST_RAW_URI =
+      Uri.parse("android.resource://" + BuildConfig.APPLICATION_ID + ".test/raw/");
 
-    public static Uri.Builder buildTestUri() {
-        return TEST_RAW_URI.buildUpon();
-    }
+  public static Uri.Builder buildTestUri() {
+    return TEST_RAW_URI.buildUpon();
+  }
 
-    public static Uri getTestUri(String path) {
-        return Uri.withAppendedPath(TEST_RAW_URI, path);
-    }
+  public static Uri getTestUri(String path) {
+    return Uri.withAppendedPath(TEST_RAW_URI, path);
+  }
 
-    /**
-     * Read a resource by Uri
-     */
-    public static Reader read(Context context, Uri uri) throws IOException {
-        InputStream stream = context.getContentResolver().openInputStream(uri);
-        InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
-        return reader;
-    }
+  /** Read a resource by Uri */
+  public static Reader read(Context context, Uri uri) throws IOException {
+    InputStream stream = context.getContentResolver().openInputStream(uri);
+    InputStreamReader reader = new InputStreamReader(stream, "UTF-8");
+    return reader;
+  }
 }

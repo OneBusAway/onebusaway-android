@@ -15,17 +15,10 @@
  */
 package org.onebusaway.android.extrapolation.test
 
-import org.onebusaway.android.time.ScheduleTime
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.ServiceDate
-import org.onebusaway.android.time.WallTime
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import org.onebusaway.android.api.adapters.StopTimeData
-import org.onebusaway.android.api.adapters.TripScheduleData
-
 import android.location.Location
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -35,6 +28,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.SmokeTest
+import org.onebusaway.android.api.adapters.StopTimeData
+import org.onebusaway.android.api.adapters.TripScheduleData
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripObservation
 import org.onebusaway.android.extrapolation.data.TripStateCache
@@ -42,6 +37,10 @@ import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
+import org.onebusaway.android.time.ScheduleTime
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 
@@ -78,16 +77,16 @@ class TripStateCacheTest {
     fun testTrackerRetainsFullHistory() {
         for (i in 0 until 50) {
             val status =
-                    createStatus(
-                            "v1",
-                            "trip1",
-                            47.0 + i * 0.001,
-                            -122.0,
-                            100.0 * i,
-                            100.0 * i,
-                            5000.0,
-                            1000L + i * 30000L
-                    )
+                createStatus(
+                    "v1",
+                    "trip1",
+                    47.0 + i * 0.001,
+                    -122.0,
+                    100.0 * i,
+                    100.0 * i,
+                    5000.0,
+                    1000L + i * 30000L
+                )
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
 
@@ -141,7 +140,7 @@ class TripStateCacheTest {
         val cap = 100
         for (i in 0 until cap) {
             val status =
-                    createStatus("v$i", "trip$i", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L + i)
+                createStatus("v$i", "trip$i", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L + i)
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
         assertEquals(cap, cache.getTrackedTripIds().size)
@@ -168,7 +167,7 @@ class TripStateCacheTest {
         val cap = 100
         for (i in 0 until cap) {
             val status =
-                    createStatus("v$i", "trip$i", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L + i)
+                createStatus("v$i", "trip$i", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L + i)
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
         assertEquals(cap, cache.getTrackedTripIds().size)
@@ -229,10 +228,10 @@ class TripStateCacheTest {
     @Test
     fun testPolylineTwoPoints() {
         val points =
-                listOf(
-                        gp(47.0, -122.0),
-                        gp(47.001, -122.0) // ~111 meters north
-                )
+            listOf(
+                gp(47.0, -122.0),
+                gp(47.001, -122.0) // ~111 meters north
+            )
         cache.putPolyline("trip1", Polyline(points))
         val poly = cache.lookupTripState("trip1")!!.polyline!!
         // Interpolate at 0 — should return first point
@@ -246,19 +245,19 @@ class TripStateCacheTest {
     @Test
     fun testPolylineMultiplePointsMidInterpolation() {
         val points =
-                listOf(
-                        gp(47.0, -122.0),
-                        gp(47.001, -122.0), // ~111m
-                        gp(47.002, -122.0), // ~222m total
-                        gp(47.003, -122.0) // ~333m total
-                )
+            listOf(
+                gp(47.0, -122.0),
+                gp(47.001, -122.0), // ~111m
+                gp(47.002, -122.0), // ~222m total
+                gp(47.003, -122.0) // ~333m total
+            )
         cache.putPolyline("trip1", Polyline(points))
         val poly = cache.lookupTripState("trip1")!!.polyline!!
         // Interpolate at ~166m — should be between second and third point
         val mid = poly.interpolate(166.0)!!
         assertTrue(
-                "Should be between 47.001 and 47.002",
-                mid.latitude > 47.001 && mid.latitude < 47.002
+            "Should be between 47.001 and 47.002",
+            mid.latitude > 47.001 && mid.latitude < 47.002
         )
     }
 
@@ -274,11 +273,11 @@ class TripStateCacheTest {
         val queryTime = 200_000L
 
         val schedule =
-                createSchedule(
-                        doubleArrayOf(0.0, 1000.0),
-                        longArrayOf(0, 200),
-                        longArrayOf(100, 300)
-                )
+            createSchedule(
+                doubleArrayOf(0.0, 1000.0),
+                longArrayOf(0, 200),
+                longArrayOf(100, 300)
+            )
         cache.putSchedule("trip1", schedule)
         cache.putServiceDate("trip1", ServiceDate(serviceDate))
 
@@ -316,42 +315,42 @@ class TripStateCacheTest {
         val baseDistance = 0.0
 
         val schedule =
-                createSchedule(
-                        doubleArrayOf(0.0, 5000.0, 10000.0),
-                        longArrayOf(0, 500, 1000),
-                        longArrayOf(0, 500, 1000)
-                )
+            createSchedule(
+                doubleArrayOf(0.0, 5000.0, 10000.0),
+                longArrayOf(0, 500, 1000),
+                longArrayOf(0, 500, 1000)
+            )
         cache.putSchedule("trip1", schedule)
         cache.putServiceDate("trip1", ServiceDate(serviceDate))
 
         // Record 5 position updates, each 30 seconds apart, 300m apart (~10 m/s)
         for (i in 0 until 5) {
             val status =
-                    createStatus(
-                            "v1",
-                            "trip1",
-                            47.0 + i * 0.003,
-                            -122.0,
-                            baseDistance + i * 300.0,
-                            baseDistance + i * 300.0,
-                            10000.0,
-                            baseTime + i * 30_000L
-                    )
+                createStatus(
+                    "v1",
+                    "trip1",
+                    47.0 + i * 0.003,
+                    -122.0,
+                    baseDistance + i * 300.0,
+                    baseDistance + i * 300.0,
+                    10000.0,
+                    baseTime + i * 30_000L
+                )
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
 
         val latestTimestamp = baseTime + 120_000L
         val latestStatus =
-                createStatus(
-                        "v1",
-                        "trip1",
-                        47.012,
-                        -122.0,
-                        1200.0,
-                        1200.0,
-                        10000.0,
-                        latestTimestamp
-                )
+            createStatus(
+                "v1",
+                "trip1",
+                47.012,
+                -122.0,
+                1200.0,
+                1200.0,
+                10000.0,
+                latestTimestamp
+            )
 
         recordStatus(latestStatus, System.currentTimeMillis(), System.currentTimeMillis())
         val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(latestTimestamp))
@@ -363,43 +362,42 @@ class TripStateCacheTest {
     // --- Helper methods ---
 
     /** Records [status] as an observation of its active trip, as the response adapters would. */
-    private fun recordStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long) =
-            cache.record(
-                    TripObservation(
-                            status.activeTripId!!,
-                            status,
-                            ServerTime(serverTimeMs),
-                            serviceDate = null,
-                            routeType = null
-                    ),
-                    WallTime(localTimeMs)
-            )
+    private fun recordStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long) = cache.record(
+        TripObservation(
+            status.activeTripId!!,
+            status,
+            ServerTime(serverTimeMs),
+            serviceDate = null,
+            routeType = null
+        ),
+        WallTime(localTimeMs)
+    )
 
     private fun createStatus(
-            vehicleId: String,
-            activeTripId: String,
-            lat: Double,
-            lng: Double,
-            distanceAlongTrip: Double?,
-            scheduledDistance: Double?,
-            totalDistance: Double?,
-            lastLocationUpdateTime: Long,
-            predicted: Boolean = true
+        vehicleId: String,
+        activeTripId: String,
+        lat: Double,
+        lng: Double,
+        distanceAlongTrip: Double?,
+        scheduledDistance: Double?,
+        totalDistance: Double?,
+        lastLocationUpdateTime: Long,
+        predicted: Boolean = true
     ): ObaTripStatus {
         val pos = createLocation(lat, lng)
         return TestTripStatus(
-                vehicleId = vehicleId,
-                activeTripId = activeTripId,
-                position = pos,
-                lastKnownLocation = pos,
-                distanceAlongTrip = distanceAlongTrip,
-                lastKnownDistanceAlongTrip = null,
-                scheduledDistanceAlongTrip = scheduledDistance,
-                totalDistanceAlongTrip = totalDistance,
-                lastUpdateTime = lastLocationUpdateTime,
-                lastLocationUpdateTime = lastLocationUpdateTime,
-                scheduleDeviation = 0L,
-                predicted = predicted
+            vehicleId = vehicleId,
+            activeTripId = activeTripId,
+            position = pos,
+            lastKnownLocation = pos,
+            distanceAlongTrip = distanceAlongTrip,
+            lastKnownDistanceAlongTrip = null,
+            scheduledDistanceAlongTrip = scheduledDistance,
+            totalDistanceAlongTrip = totalDistance,
+            lastUpdateTime = lastLocationUpdateTime,
+            lastLocationUpdateTime = lastLocationUpdateTime,
+            scheduleDeviation = 0L,
+            predicted = predicted
         )
     }
 
@@ -414,35 +412,35 @@ class TripStateCacheTest {
 
     /** Builds an ObaTripSchedule from the given per-stop distances/times via the public constructor. */
     private fun createSchedule(
-            distances: DoubleArray,
-            arrivalTimes: LongArray,
-            departureTimes: LongArray
+        distances: DoubleArray,
+        arrivalTimes: LongArray,
+        departureTimes: LongArray
     ): ObaTripSchedule = TripScheduleData(
-            Array<ObaTripSchedule.StopTime>(distances.size) { i ->
-                StopTimeData(
-                    stopId = "stop_$i",
-                    arrivalTime = ScheduleTime(arrivalTimes[i].seconds),
-                    departureTime = ScheduleTime(departureTimes[i].seconds),
-                    distanceAlongTrip = distances[i],
-                )
-            },
-        )
+        Array<ObaTripSchedule.StopTime>(distances.size) { i ->
+            StopTimeData(
+                stopId = "stop_$i",
+                arrivalTime = ScheduleTime(arrivalTimes[i].seconds),
+                departureTime = ScheduleTime(departureTimes[i].seconds),
+                distanceAlongTrip = distances[i]
+            )
+        }
+    )
 }
 
 /** Test-only implementation of ObaTripStatus for creating test fixtures without reflection. */
 private class TestTripStatus(
-        vehicleId: String?,
-        activeTripId: String?,
-        position: Location?,
-        lastKnownLocation: Location?,
-        distanceAlongTrip: Double?,
-        lastKnownDistanceAlongTrip: Double?,
-        scheduledDistanceAlongTrip: Double?,
-        totalDistanceAlongTrip: Double?,
-        lastUpdateTime: Long,
-        lastLocationUpdateTime: Long,
-        scheduleDeviation: Long,
-        predicted: Boolean
+    vehicleId: String?,
+    activeTripId: String?,
+    position: Location?,
+    lastKnownLocation: Location?,
+    distanceAlongTrip: Double?,
+    lastKnownDistanceAlongTrip: Double?,
+    scheduledDistanceAlongTrip: Double?,
+    totalDistanceAlongTrip: Double?,
+    lastUpdateTime: Long,
+    lastLocationUpdateTime: Long,
+    scheduleDeviation: Long,
+    predicted: Boolean
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted

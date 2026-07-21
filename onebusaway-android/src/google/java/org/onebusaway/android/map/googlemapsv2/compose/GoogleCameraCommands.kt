@@ -22,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
+import kotlin.math.abs
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.map.googlemapsv2.MapHelpV2
@@ -35,7 +36,6 @@ import org.onebusaway.android.map.render.POINTS_FRAMING_PADDING_DP
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.framingCorners
 import org.onebusaway.android.util.ViewUtils
-import kotlin.math.abs
 
 // The same constants the imperative GoogleMapHost used for these camera moves.
 private const val CAMERA_DEFAULT_ZOOM = 16.0f
@@ -49,7 +49,7 @@ private const val CAMERA_DEFAULT_ZOOM = 16.0f
  */
 fun applyCameraCommand(
     cmd: CameraCommand,
-    map: GoogleMap,
+    map: GoogleMap
 ) {
     when (cmd) {
         is CameraCommand.Recenter -> {
@@ -121,7 +121,7 @@ fun applyFramingIntent(
     intent: FramingIntent,
     map: GoogleMap,
     renderState: MapRenderState,
-    context: Context,
+    context: Context
 ) {
     when (intent) {
         FramingIntent.Route -> {
@@ -129,30 +129,16 @@ fun applyFramingIntent(
             if (bounds == null) {
                 Toast.makeText(context, R.string.route_info_no_shape_data, Toast.LENGTH_SHORT).show()
             } else {
-                // Framing and padding are collected independently; apply the current obstruction here
-                // so an initial route frame cannot race the route header's padding update.
-                map.applyMapPadding(renderState.padding.value)
-                // animateCamera (not moveCamera) so UI-driven route framing eases in, matching the
-                // maplibre adapter's applyFramingIntent (#1719).
-                map.animateCamera(
-                    CameraUpdateFactory.newLatLngBounds(
-                        bounds,
-                        ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP),
-                    )
-                )
+                map.animateBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP), renderState.padding.value)
             }
         }
 
         FramingIntent.Itinerary -> {
             val bounds = routePolylineBounds(renderState.getRoutePolylines()) ?: return
-            val dm = context.resources.displayMetrics
-            // animateCamera to match the maplibre adapter (#1719); see Route above.
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(
-                    bounds, dm.widthPixels, dm.heightPixels,
-                    ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP)
-                )
-            )
+            // Fit within the directions form (top) + results sheet (bottom) insets so the whole itinerary
+            // lands in the visible band, matching Route/Points. Those insets are Compose-measured after
+            // this first fit, so MapHost re-emits the frame as they land to self-correct (#1954).
+            map.animateBounds(bounds, ViewUtils.dpToPixels(context, DEFAULT_FRAMING_PADDING_DP), renderState.padding.value)
         }
 
         FramingIntent.Region -> {
@@ -170,25 +156,33 @@ fun applyFramingIntent(
         is FramingIntent.Points -> {
             val (sw, ne) = framingCorners(intent.points) ?: return
             val bounds = LatLngBounds(LatLng(sw.latitude, sw.longitude), LatLng(ne.latitude, ne.longitude))
-            // Google's newLatLngBounds fits the box inside the map's content padding, so this fit must see
-            // the current route-header (top) + arrivals-sheet (bottom) insets. The padding collector
-            // (GoogleComposeAdapter) is a *separate* coroutine with no ordering guarantee against this
-            // framing collector: an ETA tap emits the padding update and the framing intent together, and
-            // if this runs first the box is fit against the map's stale padding and lands under the
-            // overlays that are open right after the tap. Apply the current padding here so the fit is
-            // self-sufficient (idempotent with the collector — setPadding is absolute, not additive).
-            map.applyMapPadding(renderState.padding.value)
-            map.animateCamera(
-                CameraUpdateFactory.newLatLngBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP))
-            )
+            // An ETA tap emits the padding update and this framing together with no ordering guarantee, so
+            // fold the current insets in here (see animateBounds) or the vehicle+stop pair lands under the
+            // overlays open right after the tap.
+            map.animateBounds(bounds, ViewUtils.dpToPixels(context, POINTS_FRAMING_PADDING_DP), renderState.padding.value)
         }
     }
 }
 
 /**
+ * Ease the camera to fit [bounds] within [overlay] (the top/bottom content-padding obstruction) plus
+ * [paddingPx] of symmetric breathing room. Applies [overlay] via [applyMapPadding] first so Google's
+ * newLatLngBounds fits inside it: framing and the padding collector ([GoogleComposeAdapter]) are
+ * independent coroutines with no ordering guarantee, so setting the current obstruction here makes the fit
+ * self-sufficient (idempotent with the collector — setPadding is absolute, not additive). animateCamera
+ * (not moveCamera) eases in, matching the maplibre adapter's animateBounds (#1719). The Route/Itinerary/
+ * Points branches differ only in [paddingPx]; MapHost re-emits the frame as late-measured insets land so
+ * the fit self-corrects (#1954).
+ */
+private fun GoogleMap.animateBounds(bounds: LatLngBounds, paddingPx: Int, overlay: MapPadding) {
+    applyMapPadding(overlay)
+    animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, paddingPx))
+}
+
+/**
  * Push a [MapPadding] onto the [GoogleMap] as content padding — the single place the top/bottom insets
  * map onto `setPadding`'s slots (left/right stay 0). Shared by the [GoogleComposeAdapter] padding
- * collector and the Points framing, so both agree on the mapping.
+ * collector and [animateBounds], so both agree on the mapping.
  */
 internal fun GoogleMap.applyMapPadding(padding: MapPadding) = setPadding(0, padding.topPx, 0, padding.bottomPx)
 

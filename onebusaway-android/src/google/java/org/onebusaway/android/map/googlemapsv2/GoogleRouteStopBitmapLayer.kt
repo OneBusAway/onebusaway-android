@@ -39,21 +39,21 @@ internal class GoogleRouteStopBitmapLayer(
     private val density: Float,
     private val fillColor: Int,
     private val selectedFillColor: Int,
-    private val outlineColor: Int,
+    private val outlineColor: Int
 ) : GoogleRouteStopLayer {
     private data class RenderedStop(
         val marker: Marker,
-        var stop: StopMarker,
+        var stop: StopMarker
     )
 
     private data class StampSizes(
         val normal: Int,
-        val selected: Int,
+        val selected: Int
     )
 
     private data class IconKey(
         val diameterPx: Int,
-        val selected: Boolean,
+        val selected: Boolean
     )
 
     private val stopsById = HashMap<String, RenderedStop>()
@@ -67,14 +67,16 @@ internal class GoogleRouteStopBitmapLayer(
         stops: List<StopMarker>,
         focusedStopId: String?,
         scaleWithZoom: Boolean,
-        zoom: Float,
+        zoom: Float
     ) {
         val routeStops = stops.filter(StopMarker::routeStop)
         if (
             routeStops == renderedStops &&
             focusedStopId == renderedFocusedStopId &&
             scaleWithZoom == renderedScaleWithZoom
-        ) return
+        ) {
+            return
+        }
         val previousFocusedStopId = renderedFocusedStopId
         val previousSizes = renderedSizes
         renderedStops = routeStops
@@ -131,8 +133,7 @@ internal class GoogleRouteStopBitmapLayer(
         stamp(sizes)
     }
 
-    override fun stopForMarker(marker: Marker): StopMarker? =
-        (marker.tag as? String)?.let(stopsById::get)?.stop
+    override fun stopForMarker(marker: Marker): StopMarker? = (marker.tag as? String)?.let(stopsById::get)?.stop
 
     override fun dispose() {
         stopsById.values.forEach { it.marker.remove() }
@@ -161,26 +162,24 @@ internal class GoogleRouteStopBitmapLayer(
         rendered.marker.zIndex = zIndex(selected)
     }
 
-    private fun icon(diameterPx: Int, selected: Boolean): BitmapDescriptor =
-        icons.getOrPut(IconKey(diameterPx, selected)) {
-            BitmapDescriptorFactory.fromBitmap(
-                drawRouteStopBitmap(
-                    diameterPx,
-                    selected,
-                    if (selected) selectedFillColor else fillColor,
-                    outlineColor,
-                )
+    private fun icon(diameterPx: Int, selected: Boolean): BitmapDescriptor = icons.getOrPut(IconKey(diameterPx, selected)) {
+        BitmapDescriptorFactory.fromBitmap(
+            drawRouteStopBitmap(
+                diameterPx,
+                selected,
+                if (selected) selectedFillColor else fillColor,
+                outlineColor
             )
-        }
+        )
+    }
 
-    private fun zIndex(selected: Boolean): Float =
-        stopZIndex(routeStop = true, favorite = false) + if (selected) 0.01f else 0f
+    private fun zIndex(selected: Boolean): Float = stopZIndex(routeStop = true, favorite = false) + if (selected) 0.01f else 0f
 
     private fun StampSizes.forSelection(selected: Boolean): Int = if (selected) this.selected else normal
 
     private fun stampSizes(zoom: Float, scaleWithZoom: Boolean): StampSizes = StampSizes(
         normal = routeStopDiameterPx(zoom, scaleWithZoom, selected = false, density),
-        selected = routeStopDiameterPx(zoom, scaleWithZoom, selected = true, density),
+        selected = routeStopDiameterPx(zoom, scaleWithZoom, selected = true, density)
     )
 }
 
@@ -188,7 +187,7 @@ internal fun routeStopDiameterPx(
     zoom: Float,
     scaleWithZoom: Boolean,
     selected: Boolean,
-    density: Float,
+    density: Float
 ): Int {
     val focusScale = if (scaleWithZoom) focusedRouteStopScale(zoom) else 1f
     val selectedScale = if (selected) RouteStopCircles.FOCUSED_SCALE else 1f
@@ -201,7 +200,7 @@ private fun drawRouteStopBitmap(
     diameterPx: Int,
     selected: Boolean,
     fillColor: Int,
-    outlineColor: Int,
+    outlineColor: Int
 ): Bitmap {
     val bitmap = createBitmap(diameterPx, diameterPx)
     val canvas = Canvas(bitmap)

@@ -16,10 +16,10 @@
  */
 package org.onebusaway.android.ui.arrivals
 
-import org.onebusaway.android.ui.HomeActivity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.DeepLinkUris
 
 /**

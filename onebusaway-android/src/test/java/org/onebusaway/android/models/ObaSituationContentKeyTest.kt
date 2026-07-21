@@ -88,7 +88,7 @@ class ObaSituationContentKeyTest {
         description = description,
         severity = severity,
         activeWindows =
-            if (from != 0L || to != 0L) arrayOf(FakeActiveWindow(from, to)) else emptyArray()
+        if (from != 0L || to != 0L) arrayOf(FakeActiveWindow(from, to)) else emptyArray()
     )
 
     private class FakeSituation(

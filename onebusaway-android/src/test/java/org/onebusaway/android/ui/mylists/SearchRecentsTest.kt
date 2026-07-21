@@ -22,13 +22,19 @@ import org.junit.Test
 class SearchRecentsTest {
 
     private fun stop(id: String, name: String, accessTime: Long?) = RecentItem.Stop(
-        StopListItem(id = id, name = name, rawDirection = "N", directionText = "Northbound",
-            lat = 0.0, lon = 0.0, isFavorite = false),
-        accessTime,
+        StopListItem(
+            id = id,
+            name = name,
+            rawDirection = "N",
+            directionText = "Northbound",
+            lat = 0.0,
+            lon = 0.0,
+            isFavorite = false
+        ),
+        accessTime
     )
 
-    private fun route(id: String, shortName: String, longName: String?, accessTime: Long?) =
-        RecentItem.Route(RouteListItem(id = id, shortName = shortName, longName = longName, url = null), accessTime)
+    private fun route(id: String, shortName: String, longName: String?, accessTime: Long?) = RecentItem.Route(RouteListItem(id = id, shortName = shortName, longName = longName, url = null), accessTime)
 
     // --- mergeRecents ---
 
@@ -80,7 +86,7 @@ class SearchRecentsTest {
         stop("s1", "Broadway & E Denny Way", 400),
         route("r1", "8", "Rainier Beach", 300),
         stop("s2", "3rd Ave & Pine St", 200),
-        route("r2", "40", "Downtown Ballard", 100),
+        route("r2", "40", "Downtown Ballard", 100)
     )
 
     @Test

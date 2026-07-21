@@ -19,15 +19,15 @@ import android.text.TextUtils
 import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
-import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.push.FirebaseMessagingManager
+import org.onebusaway.android.region.RegionRepository
 
 /** The (app-global) inputs that gate which home nav-drawer rows are shown — surfaced as a `StateFlow`
  *  by [NavDrawerViewModel] for [HomeNavDrawerSheet] to render. */
 data class NavItemAvailability(
     val showReminders: Boolean,
     val planTripAvailable: Boolean,
-    val payFareAvailable: Boolean,
+    val payFareAvailable: Boolean
 )
 
 /**
@@ -48,7 +48,7 @@ interface NavItemsRepository {
 class DefaultNavItemsRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val prefs: PreferencesRepository,
-    private val firebaseMessagingManager: FirebaseMessagingManager,
+    private val firebaseMessagingManager: FirebaseMessagingManager
 ) : NavItemsRepository {
 
     override fun availability(): NavItemAvailability {
@@ -56,10 +56,11 @@ class DefaultNavItemsRepository @Inject constructor(
         return NavItemAvailability(
             showReminders = firebaseMessagingManager.hasPushToken(),
             planTripAvailable = region != null &&
-                (!TextUtils.isEmpty(region.otpBaseUrl) ||
-                    !TextUtils.isEmpty(
-                        prefs.getString(R.string.preference_key_otp_api_url, null))),
-            payFareAvailable = region != null && !TextUtils.isEmpty(region.paymentAndroidAppId),
+                (
+                    !TextUtils.isEmpty(region.otpBaseUrl) ||
+                        !TextUtils.isEmpty(prefs.getString(R.string.preference_key_otp_api_url, null))
+                    ),
+            payFareAvailable = region != null && !TextUtils.isEmpty(region.paymentAndroidAppId)
         )
     }
 }

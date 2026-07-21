@@ -64,7 +64,9 @@ class NavDrawerViewModelTest {
 
         // The region now supports fare payment; a region change picks it up without a host push.
         repo.availability = NavItemAvailability(
-            showReminders = false, planTripAvailable = false, payFareAvailable = true
+            showReminders = false,
+            planTripAvailable = false,
+            payFareAvailable = true
         )
         regions.emit(region(1))
         advanceUntilIdle()

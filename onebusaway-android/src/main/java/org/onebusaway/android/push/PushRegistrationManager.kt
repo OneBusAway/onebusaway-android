@@ -64,7 +64,7 @@ class PushRegistrationManager internal constructor(
     private val scope: CoroutineScope,
     // The one Android-only read left here: NotificationManagerCompat isn't available to a plain JVM
     // test, and the opt-in signal is what the whole reconcile hinges on.
-    private val notificationsEnabled: () -> Boolean,
+    private val notificationsEnabled: () -> Boolean
 ) {
 
     /** Production constructor Hilt builds from: resolves the seam from [context] and delegates. */
@@ -76,7 +76,7 @@ class PushRegistrationManager internal constructor(
         regionRepository: RegionRepository,
         firebaseMessagingManager: FirebaseMessagingManager,
         prefs: PreferencesRepository,
-        @AppScope scope: CoroutineScope,
+        @AppScope scope: CoroutineScope
     ) : this(
         client = client,
         store = store,
@@ -84,7 +84,7 @@ class PushRegistrationManager internal constructor(
         firebaseMessagingManager = firebaseMessagingManager,
         prefs = prefs,
         scope = scope,
-        notificationsEnabled = { NotificationManagerCompat.from(context).areNotificationsEnabled() },
+        notificationsEnabled = { NotificationManagerCompat.from(context).areNotificationsEnabled() }
     )
 
     private val started = AtomicBoolean(false)
@@ -118,7 +118,7 @@ class PushRegistrationManager internal constructor(
                 regionRepository.region,
                 prefs.observeString(R.string.firebase_messaging_token, null),
                 prefs.observeBoolean(R.string.preference_key_push_test_device, false),
-                prefs.observeString(R.string.preference_key_push_test_device_name, null),
+                prefs.observeString(R.string.preference_key_push_test_device_name, null)
             ) { _, _, _, _ -> }.collect { sync() }
         }
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -214,7 +214,7 @@ class PushRegistrationManager internal constructor(
             token = token,
             locale = Locale.getDefault().toLanguageTag(),
             testDevice = description != null,
-            description = description,
+            description = description
         )
     }
 }

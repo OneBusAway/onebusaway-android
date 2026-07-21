@@ -67,14 +67,14 @@ private const val DISABLED_ALPHA = 0.38f
 fun PreferenceCategory(
     title: String,
     modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     Column(modifier.fillMaxWidth()) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp)
         )
         content()
     }
@@ -93,7 +93,7 @@ private fun PreferenceRow(
     enabled: Boolean,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    content: (@Composable () -> Unit)? = null,
+    content: (@Composable () -> Unit)? = null
 ) {
     val clickable = onClick != null && enabled
     val rowModifier = modifier
@@ -106,13 +106,13 @@ private fun PreferenceRow(
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha),
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha)
             )
             if (!summary.isNullOrEmpty()) {
                 Text(
                     text = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = alpha)
                 )
             }
         }
@@ -131,7 +131,7 @@ fun SwitchPreferenceItem(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    enabled: Boolean = true
 ) {
     PreferenceRow(
         title = title,
@@ -143,9 +143,9 @@ fun SwitchPreferenceItem(
             Switch(
                 checked = checked,
                 onCheckedChange = { onCheckedChange(it) },
-                enabled = enabled,
+                enabled = enabled
             )
-        },
+        }
     )
 }
 
@@ -156,14 +156,14 @@ fun ClickPreferenceItem(
     summary: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    enabled: Boolean = true
 ) {
     PreferenceRow(
         title = title,
         summary = summary,
         enabled = enabled,
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier
     )
 }
 
@@ -181,7 +181,7 @@ fun ListPreferenceItem(
     selectedValue: String?,
     onValueSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+    enabled: Boolean = true
 ) {
     var showDialog by remember { mutableStateOf(false) }
     val summary = entries.getOrNull(entryValues.indexOf(selectedValue))
@@ -190,7 +190,7 @@ fun ListPreferenceItem(
         summary = summary,
         onClick = { showDialog = true },
         modifier = modifier,
-        enabled = enabled,
+        enabled = enabled
     )
     if (showDialog) {
         AlertDialog(
@@ -209,10 +209,10 @@ fun ListPreferenceItem(
                                     onClick = {
                                         showDialog = false
                                         if (value != selectedValue) onValueSelected(value)
-                                    },
+                                    }
                                 )
                                 .padding(vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(selected = value == selectedValue, onClick = null)
                             Spacer(Modifier.width(16.dp))
@@ -226,7 +226,7 @@ fun ListPreferenceItem(
                 TextButton(onClick = { showDialog = false }) {
                     Text(stringResource(android.R.string.cancel))
                 }
-            },
+            }
         )
     }
 }
@@ -245,7 +245,7 @@ fun EditTextPreferenceItem(
     onValueChange: (String) -> Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    keyboardType: KeyboardType = KeyboardType.Uri,
+    keyboardType: KeyboardType = KeyboardType.Uri
 ) {
     var showDialog by remember { mutableStateOf(false) }
     ClickPreferenceItem(
@@ -253,7 +253,7 @@ fun EditTextPreferenceItem(
         summary = summary,
         onClick = { showDialog = true },
         modifier = modifier,
-        enabled = enabled,
+        enabled = enabled
     )
     if (showDialog) {
         var text by remember { mutableStateOf(currentValue.orEmpty()) }
@@ -266,7 +266,7 @@ fun EditTextPreferenceItem(
                     onValueChange = { text = it },
                     singleLine = true,
                     placeholder = { Text(hint) },
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType)
                 )
             },
             confirmButton = {
@@ -278,7 +278,7 @@ fun EditTextPreferenceItem(
                 TextButton(onClick = { showDialog = false }) {
                     Text(stringResource(android.R.string.cancel))
                 }
-            },
+            }
         )
     }
 }
@@ -294,7 +294,7 @@ private fun PreferenceItemsPreview() {
                     title = "Show negative arrivals",
                     summary = "Show buses that have already departed",
                     checked = sw,
-                    onCheckedChange = { sw = it },
+                    onCheckedChange = { sw = it }
                 )
                 HorizontalDivider()
                 ListPreferenceItem(
@@ -302,13 +302,13 @@ private fun PreferenceItemsPreview() {
                     entries = listOf("Normal", "Satellite"),
                     entryValues = listOf("normal", "satellite"),
                     selectedValue = "normal",
-                    onValueSelected = {},
+                    onValueSelected = {}
                 )
                 HorizontalDivider()
                 ClickPreferenceItem(
                     title = "About",
                     summary = "Version, licenses, contributors",
-                    onClick = {},
+                    onClick = {}
                 )
                 HorizontalDivider()
                 EditTextPreferenceItem(
@@ -316,7 +316,7 @@ private fun PreferenceItemsPreview() {
                     summary = "Not set",
                     currentValue = null,
                     hint = "https://api.example.org",
-                    onValueChange = { true },
+                    onValueChange = { true }
                 )
             }
         }

@@ -18,6 +18,13 @@ package org.onebusaway.android.ui.report.open311
 
 import android.content.Context
 import android.graphics.Bitmap
+import edu.usf.cutr.open311client.Open311
+import edu.usf.cutr.open311client.models.Open311User
+import edu.usf.cutr.open311client.models.Service
+import edu.usf.cutr.open311client.models.ServiceDescription
+import edu.usf.cutr.open311client.models.ServiceDescriptionRequest
+import edu.usf.cutr.open311client.models.ServiceRequest
+import edu.usf.cutr.open311client.utils.Open311Validator
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -27,17 +34,10 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import edu.usf.cutr.open311client.Open311
-import edu.usf.cutr.open311client.models.Open311User
-import edu.usf.cutr.open311client.models.Service
-import edu.usf.cutr.open311client.models.ServiceDescription
-import edu.usf.cutr.open311client.models.ServiceDescriptionRequest
-import edu.usf.cutr.open311client.models.ServiceRequest
-import edu.usf.cutr.open311client.utils.Open311Validator
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.report.ui.util.ServiceUtils
 import org.onebusaway.android.util.BitmapUtils
@@ -88,7 +88,10 @@ class DefaultOpen311Repository(
     override suspend fun loadForm(): Result<Open311FormState> = withContext(Dispatchers.IO) {
         val issue = issueProvider()
         val request = ServiceDescriptionRequest(
-            issue.latitude, issue.longitude, open311.jurisdiction, service.service_code
+            issue.latitude,
+            issue.longitude,
+            open311.jurisdiction,
+            service.service_code
         )
         val description = open311.getServiceDescription(request)
         if (description == null || description.isSuccess != true) {
@@ -118,53 +121,54 @@ class DefaultOpen311Repository(
         )
     }
 
-    override suspend fun submit(form: Open311FormState): Open311SubmitState =
-        withContext(Dispatchers.IO) {
-            saveContact(form.contact)
-            val issue = issueProvider()
-            val user = if (form.anonymous) anonymousUser() else form.contact.toUser()
+    override suspend fun submit(form: Open311FormState): Open311SubmitState = withContext(Dispatchers.IO) {
+        saveContact(form.contact)
+        val issue = issueProvider()
+        val user = if (form.anonymous) anonymousUser() else form.contact.toUser()
 
-            val builder = ServiceRequest.Builder()
-                .setJurisdiction_id(open311.jurisdiction)
-                .setService_code(service.service_code)
-                .setService_name(service.service_name)
-                .setLatitude(issue.latitude)
-                .setLongitude(issue.longitude)
-                .setSummary(null)
-                .setDescription(form.mainDescription)
-                .setEmail(user.email)
-                .setFirst_name(user.name)
-                .setLast_name(user.lastName)
-                .setPhone(user.phone)
-                .setAddress_string(issue.address?.takeIf { it.isNotEmpty() })
-                .setDevice_id(PreferenceUtils.getString(ObaApi.APP_UID))
-            form.imagePath?.let { builder.setMedia(downsampleImage(it)) }
+        val builder = ServiceRequest.Builder()
+            .setJurisdiction_id(open311.jurisdiction)
+            .setService_code(service.service_code)
+            .setService_name(service.service_name)
+            .setLatitude(issue.latitude)
+            .setLongitude(issue.longitude)
+            .setSummary(null)
+            .setDescription(form.mainDescription)
+            .setEmail(user.email)
+            .setFirst_name(user.name)
+            .setLast_name(user.lastName)
+            .setPhone(user.phone)
+            .setAddress_string(issue.address?.takeIf { it.isNotEmpty() })
+            .setDevice_id(PreferenceUtils.getString(ObaApi.APP_UID))
+        form.imagePath?.let { builder.setMedia(downsampleImage(it)) }
 
-            val serviceRequest = builder.createServiceRequest()
-            serviceRequest.attributes = Open311FormMapper.toAttributePairs(form.fields, form.values)
+        val serviceRequest = builder.createServiceRequest()
+        serviceRequest.attributes = Open311FormMapper.toAttributePairs(form.fields, form.values)
 
-            val errorCode = Open311Validator.validateServiceRequest(
-                serviceRequest, open311.open311Option.open311Type, serviceDescription
+        val errorCode = Open311Validator.validateServiceRequest(
+            serviceRequest,
+            open311.open311Option.open311Type,
+            serviceDescription
+        )
+        if (!Open311Validator.isValid(errorCode)) {
+            return@withContext Open311SubmitState.ValidationError(
+                Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode)
             )
-            if (!Open311Validator.isValid(errorCode)) {
-                return@withContext Open311SubmitState.ValidationError(
-                    Open311Validator.getErrorMessageForServiceRequestByErrorCode(errorCode)
-                )
-            }
-
-            if (ServiceUtils.isTransitServiceByType(service.type)) {
-                serviceRequest.description = form.mainDescription + transitIssueParameters(issue.obaStop)
-            }
-
-            val response = open311.postServiceRequest(serviceRequest)
-            if (response != null && response.isSuccess == true) {
-                Open311SubmitState.Sent
-            } else {
-                val message = response?.errorMessage?.takeIf { it.isNotEmpty() }
-                    ?: context.getString(R.string.ri_unsuccessful_submit)
-                Open311SubmitState.ServerError(message)
-            }
         }
+
+        if (ServiceUtils.isTransitServiceByType(service.type)) {
+            serviceRequest.description = form.mainDescription + transitIssueParameters(issue.obaStop)
+        }
+
+        val response = open311.postServiceRequest(serviceRequest)
+        if (response != null && response.isSuccess == true) {
+            Open311SubmitState.Sent
+        } else {
+            val message = response?.errorMessage?.takeIf { it.isNotEmpty() }
+                ?: context.getString(R.string.ri_unsuccessful_submit)
+            Open311SubmitState.ServerError(message)
+        }
+    }
 
     private fun loadContact() = ContactInfo(
         firstName = PreferenceUtils.getString(ReportConstants.PREF_NAME).orEmpty(),

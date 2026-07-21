@@ -35,7 +35,7 @@ interface SurveyWebService {
     @GET
     suspend fun getStudy(
         @Url url: String,
-        @Query("user_id") userId: String?,
+        @Query("user_id") userId: String?
     ): StudyResponse
 
     /**
@@ -51,6 +51,6 @@ interface SurveyWebService {
         @Field("stop_identifier") stopIdentifier: String?,
         @Field("stop_latitude") stopLatitude: Double,
         @Field("stop_longitude") stopLongitude: Double,
-        @Field("responses") responses: String,
+        @Field("responses") responses: String
     ): SubmitSurveyResponse
 }

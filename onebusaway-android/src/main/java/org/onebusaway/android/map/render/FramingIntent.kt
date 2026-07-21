@@ -36,7 +36,7 @@ sealed interface FramingIntent {
     /** Fit the route polyline bounds with the default padding. */
     object Route : FramingIntent
 
-    /** Fit the itinerary polyline bounds, padding against the screen dimensions. */
+    /** Fit the itinerary polyline bounds within the map's content padding (directions form + results sheet). */
     object Itinerary : FramingIntent
 
     /** Fit the current region's bounds. */
@@ -75,7 +75,7 @@ const val POINTS_FRAMING_PADDING_DP: Float = 48.0f
  */
 fun framingCorners(
     points: List<GeoPoint>,
-    minSpanDeg: Double = MIN_FRAMING_SPAN_DEG,
+    minSpanDeg: Double = MIN_FRAMING_SPAN_DEG
 ): Pair<GeoPoint, GeoPoint>? {
     if (points.isEmpty()) return null
     val minLat = points.minOf { it.latitude }

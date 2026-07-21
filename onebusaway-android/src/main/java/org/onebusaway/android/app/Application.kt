@@ -18,6 +18,7 @@ package org.onebusaway.android.app
 
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import java.util.UUID
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
@@ -31,7 +32,6 @@ import org.onebusaway.android.region.RegionSubsystems
 import org.onebusaway.android.util.CustomApiUrlLabel
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
-import java.util.UUID
 
 @HiltAndroidApp
 class Application : android.app.Application() {

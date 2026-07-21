@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.ui.home
 
-import org.onebusaway.android.api.adapters.ObaStopElement
-
 import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -27,9 +25,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.RouteDirectionKey
@@ -37,13 +35,17 @@ import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.util.GeoPoint
 
 private class FakeStartupPreferencesRepository(
     var initial: Boolean = false
 ) : StartupPreferencesRepository {
     var cleared = 0
     override fun isInitialStartup(): Boolean = initial
-    override fun clearInitialStartup() { cleared++; initial = false }
+    override fun clearInitialStartup() {
+        cleared++
+        initial = false
+    }
 }
 
 /**
@@ -85,9 +87,12 @@ class HomeViewModelTest {
         startupRepo: FakeStartupPreferencesRepository = FakeStartupPreferencesRepository(),
         regionRepo: FakeRegionRepository = FakeRegionRepository().apply { refreshResult = regionStatus },
         savedState: SavedStateHandle = SavedStateHandle(),
-        locationRepo: FakeLocationRepository = FakeLocationRepository(),
+        locationRepo: FakeLocationRepository = FakeLocationRepository()
     ) = HomeViewModel(
-        savedState, startupRepo, regionRepo, locationRepo
+        savedState,
+        startupRepo,
+        regionRepo,
+        locationRepo
     )
 
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the
@@ -222,7 +227,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size)
         assertEquals(false, map.focusStops.single().overlayExpanded)
-        vm.onArrivalsLoaded(obaStop, null, emptySet())         // latch cleared -> no further dispatch
+        vm.onArrivalsLoaded(obaStop, null, emptySet()) // latch cleared -> no further dispatch
         advanceUntilIdle()
         assertEquals(1, map.focusStops.size)
         job.cancel()
@@ -304,7 +309,7 @@ class HomeViewModelTest {
 
         assertEquals(
             ShowRouteRequest(routeId = "42", directionStopId = "stop", initialDirectionId = 1),
-            map.routeRequests.single(),
+            map.routeRequests.single()
         )
         assertTrue(map.routeCommands.single().stopScoped)
         mapJob.cancel()
@@ -321,7 +326,7 @@ class HomeViewModelTest {
         vm.selectArrivalRoute(
             request = ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 0),
             shortName = "65",
-            headsign = "Downtown",
+            headsign = "Downtown"
         )
         advanceUntilIdle()
         // Selecting the route frames it once.
@@ -351,7 +356,7 @@ class HomeViewModelTest {
         vm.selectArrivalRoute(
             request = ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 0),
             shortName = "65",
-            headsign = "Downtown",
+            headsign = "Downtown"
         )
         vm.advanceRouteContinuation("75", "75", directionId = 1)
         advanceUntilIdle()
@@ -424,7 +429,7 @@ class HomeViewModelTest {
             "75",
             directionId = 1,
             shortName = "75",
-            undoViewport = viewport,
+            undoViewport = viewport
         )
         advanceUntilIdle()
         map.sent.clear()
@@ -458,7 +463,7 @@ class HomeViewModelTest {
         assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
         assertEquals(
             listOf(MapDirective.ClearSelectedRoute, MapDirective.RestoreViewport(viewport)),
-            map.sent,
+            map.sent
         )
         mapJob.cancel()
     }
@@ -666,7 +671,7 @@ class HomeViewModelTest {
         // No pending restored focus: the load still starts the route view for the already-tapped stop.
         val trips = setOf(
             FocusedTrip("trip-40", "40", "shape-40-express", 0xFF112233.toInt()),
-            FocusedTrip("trip-44", "44", "shape-44-local", null),
+            FocusedTrip("trip-44", "44", "shape-44-local", null)
         )
         vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
         advanceUntilIdle()
@@ -697,8 +702,10 @@ class HomeViewModelTest {
 
         assertEquals(trips, vm.focusedTrips)
         assertEquals(1, map.focusStops.size) // pending focus still dispatched
-        assertTrue(map.sent.indexOfFirst { it is MapDirective.FocusStop } <
-            map.sent.indexOfFirst { it is MapDirective.ShowStopRoutes })
+        assertTrue(
+            map.sent.indexOfFirst { it is MapDirective.FocusStop } <
+                map.sent.indexOfFirst { it is MapDirective.ShowStopRoutes }
+        )
         job.cancel()
     }
 
@@ -731,14 +738,14 @@ class HomeViewModelTest {
         vm.onArrivalsLoaded(
             obaStop,
             null,
-            setOf(FocusedTrip("trip", "40", "shape", null)),
+            setOf(FocusedTrip("trip", "40", "shape", null))
         )
         advanceUntilIdle()
         map.sent.clear()
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
-            continuingRoutes = setOf(RouteDirectionKey("40", null)),
+            continuingRoutes = setOf(RouteDirectionKey("40", null))
         )
         advanceUntilIdle()
 
@@ -761,15 +768,15 @@ class HomeViewModelTest {
             null,
             setOf(
                 FocusedTrip("trip-40", "40", "shape-40", null),
-                FocusedTrip("trip-44", "44", "shape-44", null),
-            ),
+                FocusedTrip("trip-44", "44", "shape-44", null)
+            )
         )
         advanceUntilIdle()
         map.sent.clear()
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
-            continuingRoutes = setOf(RouteDirectionKey("44", null)),
+            continuingRoutes = setOf(RouteDirectionKey("44", null))
         )
         advanceUntilIdle()
 
@@ -790,8 +797,8 @@ class HomeViewModelTest {
             null,
             setOf(
                 FocusedTrip("trip-45", "45", "shape-45", null, directionId = 0),
-                FocusedTrip("trip-79", "79", "shape-79", null, directionId = 0),
-            ),
+                FocusedTrip("trip-79", "79", "shape-79", null, directionId = 0)
+            )
         )
         vm.requestShowFocusedStopRouteOnMap("79", directionId = 0)
         advanceUntilIdle()
@@ -801,7 +808,7 @@ class HomeViewModelTest {
         val nextStop = FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31))
         val transition = vm.onStopFocused(
             nextStop,
-            continuingRoutes = setOf(RouteDirectionKey("79", 0)),
+            continuingRoutes = setOf(RouteDirectionKey("79", 0))
         )
         advanceUntilIdle()
 
@@ -812,7 +819,7 @@ class HomeViewModelTest {
         vm.onArrivalsLoaded(
             ObaStopElement("2", 47.61, -122.31, "2nd Ave", "200"),
             null,
-            setOf(FocusedTrip("next-trip-79", "79", "next-shape-79", null, directionId = 0)),
+            setOf(FocusedTrip("next-trip-79", "79", "next-shape-79", null, directionId = 0))
         )
         advanceUntilIdle()
 
@@ -832,19 +839,19 @@ class HomeViewModelTest {
         vm.onArrivalsLoaded(
             obaStop,
             null,
-            setOf(FocusedTrip("trip-11", "11", "shape-11", null, directionId = 0)),
+            setOf(FocusedTrip("trip-11", "11", "shape-11", null, directionId = 0))
         )
         vm.selectArrivalRoute(
             request = ShowRouteRequest("11", directionStopId = "1", initialDirectionId = 0),
             shortName = "11",
-            headsign = "Downtown",
+            headsign = "Downtown"
         )
         advanceUntilIdle()
         map.sent.clear()
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
-            continuingRoutes = setOf(RouteDirectionKey("11", 1)),
+            continuingRoutes = setOf(RouteDirectionKey("11", 1))
         )
         advanceUntilIdle()
 
@@ -864,12 +871,12 @@ class HomeViewModelTest {
         vm.onArrivalsLoaded(
             obaStop,
             null,
-            setOf(FocusedTrip("trip-65", "65", "shape-65", null, directionId = 0)),
+            setOf(FocusedTrip("trip-65", "65", "shape-65", null, directionId = 0))
         )
         vm.selectArrivalRoute(
             request = ShowRouteRequest("65", directionStopId = "1", initialDirectionId = 0),
             shortName = "65",
-            headsign = "Downtown",
+            headsign = "Downtown"
         )
         vm.advanceRouteContinuation("75", "75", directionId = 1)
         advanceUntilIdle()
@@ -878,7 +885,7 @@ class HomeViewModelTest {
         val nextStop = FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31))
         val transition = vm.onStopFocused(
             nextStop,
-            continuingRoutes = setOf(RouteDirectionKey("75", 1)),
+            continuingRoutes = setOf(RouteDirectionKey("75", 1))
         )
         advanceUntilIdle()
 
@@ -902,15 +909,15 @@ class HomeViewModelTest {
             null,
             setOf(
                 FocusedTrip("trip-45", "45", "shape-45", null),
-                FocusedTrip("trip-79", "79", "shape-79", null),
-            ),
+                FocusedTrip("trip-79", "79", "shape-79", null)
+            )
         )
         advanceUntilIdle()
         map.sent.clear()
 
         val transition = vm.onStopFocused(
             FocusedStop("2", "2nd Ave", "200", GeoPoint(47.61, -122.31)),
-            continuingRoutes = setOf(RouteDirectionKey("62", null)),
+            continuingRoutes = setOf(RouteDirectionKey("62", null))
         )
         advanceUntilIdle()
 

@@ -15,9 +15,9 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.haversineDistance
 
@@ -35,7 +35,7 @@ import org.onebusaway.android.util.haversineDistance
 internal fun projectFocusedStops(
     trips: Set<FocusedTrip>,
     geometry: FocusedTripGeometry,
-    stops: FocusedTripStops,
+    stops: FocusedTripStops
 ): Map<String, GeoPoint> {
     val tripById = trips.associateBy(FocusedTrip::tripId)
     val candidates = LinkedHashMap<String, MutableList<Polyline>>()
@@ -61,7 +61,7 @@ internal fun projectFocusedStops(
  */
 internal fun projectStopsOntoPolylines(
     stops: List<ObaStop>,
-    points: List<List<GeoPoint>>,
+    points: List<List<GeoPoint>>
 ): Map<String, GeoPoint> {
     val shapes = points
         .filter { it.size >= 2 }
@@ -77,7 +77,6 @@ internal fun projectStopsOntoPolylines(
  * The nearest point to [origin] across [shapes] (the shared nearest-point-across-polylines kernel of
  * [projectFocusedStops] and [projectStopsOntoPolylines]), or null when no shape yields a point.
  */
-private fun nearestPointAcross(shapes: List<Polyline>, origin: GeoPoint): GeoPoint? =
-    shapes
-        .mapNotNull { it.nearestPoint(origin.latitude, origin.longitude) }
-        .minByOrNull { haversineDistance(origin.latitude, origin.longitude, it.latitude, it.longitude) }
+private fun nearestPointAcross(shapes: List<Polyline>, origin: GeoPoint): GeoPoint? = shapes
+    .mapNotNull { it.nearestPoint(origin.latitude, origin.longitude) }
+    .minByOrNull { haversineDistance(origin.latitude, origin.longitude, it.latitude, it.longitude) }

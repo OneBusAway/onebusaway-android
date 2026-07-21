@@ -30,7 +30,7 @@ import org.onebusaway.android.map.render.stopIconKind
 /** Owns non-route stop marker identity, icon reconciliation, tap lookup, and disposal. */
 internal class MapLibreStopMarkerLayer(
     private val map: MapLibreMap,
-    private val context: Context,
+    private val context: Context
 ) {
     private val markerByStopId = HashMap<String, Marker>()
     private val stopByMarker = HashMap<Marker, StopMarker>()
@@ -54,7 +54,7 @@ internal class MapLibreStopMarkerLayer(
             val kind = stopIconKind(
                 focused = stop.id == focusedStopId,
                 band = band,
-                favorite = stop.favorite,
+                favorite = stop.favorite
             )
             val existing = markerByStopId[stop.id]
             if (existing == null) {

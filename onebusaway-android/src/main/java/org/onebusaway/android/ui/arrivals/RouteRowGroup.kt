@@ -52,11 +52,10 @@ private val BLANK_LAST_COMPARATOR: Comparator<String?> = nullsLast(String.CASE_I
  *  each group's representative (first) item once per comparison. */
 private fun <T : RouteDirectionItem> routeSortComparator(
     agencyNameOf: (T) -> String?
-): Comparator<List<T>> =
-    compareBy<List<T>, String?>(BLANK_LAST_COMPARATOR) {
-        agencyNameOf(it.first())?.takeIf(String::isNotBlank)
-    }.thenBy(LINE_NAME_COMPARATOR) { it.first().lineName }
-        .thenBy(BLANK_LAST_COMPARATOR) { it.first().headsign?.takeIf(String::isNotBlank) }
+): Comparator<List<T>> = compareBy<List<T>, String?>(BLANK_LAST_COMPARATOR) {
+    agencyNameOf(it.first())?.takeIf(String::isNotBlank)
+}.thenBy(LINE_NAME_COMPARATOR) { it.first().lineName }
+    .thenBy(BLANK_LAST_COMPARATOR) { it.first().headsign?.takeIf(String::isNotBlank) }
 
 /**
  * One arrivals row: all upcoming trips for a single (route, direction) at the stop, ETA-sorted
@@ -87,8 +86,7 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
      *  any of its grouped trips is, not just the soonest. [actionsFor] supplies each trip's resolved
      *  [ArrivalActions] (the group itself holds only [ArrivalInfo]), mirroring how the row looks up
      *  per-trip actions elsewhere. */
-    fun activeAlertSituationId(actionsFor: (ArrivalInfo) -> ArrivalActions?): String? =
-        trips.firstNotNullOfOrNull { actionsFor(it)?.alertSituationId }
+    fun activeAlertSituationId(actionsFor: (ArrivalInfo) -> ArrivalActions?): String? = trips.firstNotNullOfOrNull { actionsFor(it)?.alertSituationId }
 
     /** The direction name shown on top of the row (may be blank). */
     val headsign: String? get() = representative.headsign
@@ -98,12 +96,10 @@ data class RouteRowGroup(val trips: List<ArrivalInfo>) {
 }
 
 /** Stable identity shared by grouping, LazyColumn, and the home drawer's reactive row selection. */
-internal fun routeRowKey(routeId: String, headsign: String?): String =
-    routeRowKey(routeId, null, headsign)
+internal fun routeRowKey(routeId: String, headsign: String?): String = routeRowKey(routeId, null, headsign)
 
 /** Direction id is authoritative when available; headsign remains a legacy nullable fallback. */
-internal fun routeRowKey(routeId: String, directionId: Int?, headsign: String?): String =
-    "$routeId\u0000${directionId?.let { "direction:$it" } ?: headsign.orEmpty()}"
+internal fun routeRowKey(routeId: String, directionId: Int?, headsign: String?): String = "$routeId\u0000${directionId?.let { "direction:$it" } ?: headsign.orEmpty()}"
 
 /** The grouping key for a (route, direction): a blank headsign and a null headsign group together. */
 private fun RouteDirectionItem.groupKey(): String = routeRowKey(routeId, directionId, headsign)
@@ -137,8 +133,7 @@ fun <T : RouteDirectionItem> groupByRouteDirection(
 fun groupArrivalsByRouteDirection(
     arrivals: List<ArrivalInfo>,
     agencyNameOf: (ArrivalInfo) -> String?
-): List<RouteRowGroup> =
-    groupByRouteDirection(arrivals, agencyNameOf).map { RouteRowGroup(it) }
+): List<RouteRowGroup> = groupByRouteDirection(arrivals, agencyNameOf).map { RouteRowGroup(it) }
 
 /**
  * Stable favorite-first ordering: items whose [routeIdOf] is in [favoriteRouteIds] move to the top,
@@ -169,7 +164,7 @@ fun orderRouteGroupsByFavorite(
  */
 internal fun promoteSelectedRouteGroup(
     groups: List<RouteRowGroup>,
-    selectedKey: String?,
+    selectedKey: String?
 ): List<RouteRowGroup> {
     val index = groups.indexOfFirst { it.key == selectedKey }
     if (index <= 0) return groups
@@ -188,9 +183,25 @@ internal fun promoteSelectedRouteGroup(
 internal fun resolveSelectedRouteGroupKey(
     groups: List<RouteRowGroup>,
     requestedKey: String?,
-    routeId: String?,
+    routeId: String?
 ): String? {
     groups.firstOrNull { it.key == requestedKey }?.let { return it.key }
     if (routeId == null) return null
     return groups.filter { it.routeId == routeId }.singleOrNull()?.key
+}
+
+/**
+ * The selected row's *group* (not just its key) — the single identity→row resolution every stop-focus
+ * surface shares. The drawer promotes this row and the focus banner reads its shown headsign from the
+ * same resolver, so a map route-label tap and an arrivals-row tap that name the same (route, direction)
+ * can never disagree on the headsign shown: it's projected from the resolved row, never carried on the
+ * selection. Null when the selection resolves to no row (see [resolveSelectedRouteGroupKey]).
+ */
+internal fun resolveSelectedRouteGroup(
+    groups: List<RouteRowGroup>,
+    requestedKey: String?,
+    routeId: String?
+): RouteRowGroup? {
+    val key = resolveSelectedRouteGroupKey(groups, requestedKey, routeId) ?: return null
+    return groups.firstOrNull { it.key == key }
 }

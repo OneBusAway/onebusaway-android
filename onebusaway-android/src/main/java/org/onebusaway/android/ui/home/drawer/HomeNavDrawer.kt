@@ -60,7 +60,7 @@ fun HomeNavDrawerSheet(
     onSettings: () -> Unit,
     onHelp: () -> Unit,
     onSendFeedback: () -> Unit,
-    onOpenSource: () -> Unit,
+    onOpenSource: () -> Unit
 ) {
     // Match the legacy drawer width; the Material3 default (360dp) is noticeably wider.
     ModalDrawerSheet(Modifier.width(dimensionResource(R.dimen.navigation_drawer_width))) {
@@ -92,7 +92,7 @@ fun HomeNavDrawerSheet(
 private fun DrawerRow(
     @StringRes title: Int,
     @DrawableRes icon: Int?,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     NavigationDrawerItem(
         label = { Text(stringResource(title)) },
@@ -103,6 +103,6 @@ private fun DrawerRow(
             { Icon(painterResource(res), contentDescription = null, modifier = Modifier.size(24.dp)) }
         },
         onClick = onClick,
-        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
     )
 }

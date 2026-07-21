@@ -15,9 +15,6 @@
  */
 package org.onebusaway.android.app.di
 
-import org.onebusaway.android.api.net.ApiParamsInterceptor
-import org.onebusaway.android.api.net.ObaEndpointResolver
-
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,8 +33,10 @@ import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
 import org.onebusaway.android.api.contract.WeatherWebService
-import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import org.onebusaway.android.api.net.ApiParamsInterceptor
+import org.onebusaway.android.api.net.ObaEndpointResolver
 import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 /**
  * Wires the modernized Retrofit-based OBA REST client. The OBA host is region-dependent, so
@@ -63,17 +62,16 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideOkHttpClient(resolver: ObaEndpointResolver): OkHttpClient =
-        OkHttpClient.Builder()
-            .addInterceptor(ApiParamsInterceptor(resolver))
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(
-                        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
-                    )
-                }
+    fun provideOkHttpClient(resolver: ObaEndpointResolver): OkHttpClient = OkHttpClient.Builder()
+        .addInterceptor(ApiParamsInterceptor(resolver))
+        .apply {
+            if (BuildConfig.DEBUG) {
+                addInterceptor(
+                    HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+                )
             }
-            .build()
+        }
+        .build()
 
     /**
      * The regions-directory client. Built with a plain client (NO [ApiParamsInterceptor]) since regions
@@ -81,8 +79,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideRegionsWebService(json: Json): RegionsWebService =
-        plainRetrofit(json).create(RegionsWebService::class.java)
+    fun provideRegionsWebService(json: Json): RegionsWebService = plainRetrofit(json).create(RegionsWebService::class.java)
 
     /**
      * The surveys client. Like regions, it targets a non-OBA host (the region's sidecar) via `@Url`,
@@ -90,8 +87,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideSurveyWebService(json: Json): SurveyWebService =
-        plainRetrofit(json).create(SurveyWebService::class.java)
+    fun provideSurveyWebService(json: Json): SurveyWebService = plainRetrofit(json).create(SurveyWebService::class.java)
 
     /**
      * The bike-rental client. Targets an OpenTripPlanner host (the region's `otpBaseUrl`) via `@Url`,
@@ -99,8 +95,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideBikeWebService(json: Json): BikeWebService =
-        plainRetrofit(json).create(BikeWebService::class.java)
+    fun provideBikeWebService(json: Json): BikeWebService = plainRetrofit(json).create(BikeWebService::class.java)
 
     /**
      * The weather client. Targets the region's sidecar host via `@Url` (like surveys), so it uses a
@@ -108,8 +103,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideWeatherWebService(json: Json): WeatherWebService =
-        plainRetrofit(json).create(WeatherWebService::class.java)
+    fun provideWeatherWebService(json: Json): WeatherWebService = plainRetrofit(json).create(WeatherWebService::class.java)
 
     /**
      * The arrivals-reminders client. Targets the region's sidecar host via `@Url`, so like surveys
@@ -117,8 +111,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideReminderWebService(json: Json): ReminderWebService =
-        plainRetrofit(json).create(ReminderWebService::class.java)
+    fun provideReminderWebService(json: Json): ReminderWebService = plainRetrofit(json).create(ReminderWebService::class.java)
 
     /**
      * The OBACloud push-registration client (#1957). Targets the region's sidecar host via `@Url`, so
@@ -126,8 +119,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun providePushRegistrationWebService(json: Json): PushRegistrationWebService =
-        plainRetrofit(json).create(PushRegistrationWebService::class.java)
+    fun providePushRegistrationWebService(json: Json): PushRegistrationWebService = plainRetrofit(json).create(PushRegistrationWebService::class.java)
 
     /**
      * The OpenTripPlanner trip-planner client. Like [provideBikeWebService] it targets the region's OTP
@@ -136,8 +128,7 @@ object NetworkModule {
      */
     @Provides
     @Singleton
-    fun provideOtpWebService(json: Json): OtpWebService =
-        plainRetrofit(json, otpTimeoutClient()).create(OtpWebService::class.java)
+    fun provideOtpWebService(json: Json): OtpWebService = plainRetrofit(json, otpTimeoutClient()).create(OtpWebService::class.java)
 
     /**
      * The OTP 2.x GraphQL trip-planner client's transport (#1780). Like [provideOtpWebService] it
@@ -153,17 +144,16 @@ object NetworkModule {
     fun provideOtp2OkHttpClient(): OkHttpClient = otpTimeoutClient()
 
     /** A plain OkHttp client (debug logging only, no [ApiParamsInterceptor]), optionally [configure]d. */
-    private fun plainClient(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient =
-        OkHttpClient.Builder()
-            .apply {
-                if (BuildConfig.DEBUG) {
-                    addInterceptor(
-                        HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
-                    )
-                }
+    private fun plainClient(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient = OkHttpClient.Builder()
+        .apply {
+            if (BuildConfig.DEBUG) {
+                addInterceptor(
+                    HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC }
+                )
             }
-            .apply(configure)
-            .build()
+        }
+        .apply(configure)
+        .build()
 
     /** A [plainClient] with the legacy 15s connect/read timeouts the OTP `/plan` and GraphQL calls have
      * always used (OTP servers can be slow), rather than OkHttp's shorter defaults. */
@@ -176,12 +166,11 @@ object NetworkModule {
      * A Retrofit built on a plain [client] (defaults to [plainClient]) for services that pass an
      * absolute `@Url` per call rather than relying on the region host rewrite.
      */
-    private fun plainRetrofit(json: Json, client: OkHttpClient = plainClient()): Retrofit =
-        Retrofit.Builder()
-            .baseUrl("https://localhost/")
-            .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-            .build()
+    private fun plainRetrofit(json: Json, client: OkHttpClient = plainClient()): Retrofit = Retrofit.Builder()
+        .baseUrl("https://localhost/")
+        .client(client)
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+        .build()
 
     private const val OTP_TIMEOUT_SECONDS = 15L
 }

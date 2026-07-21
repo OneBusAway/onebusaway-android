@@ -36,7 +36,7 @@ import androidx.compose.ui.window.Dialog
 internal fun CenteredLongPressMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
+    content: @Composable ColumnScope.() -> Unit
 ) {
     if (!expanded) return
     Dialog(onDismissRequest = onDismissRequest) {
@@ -46,7 +46,7 @@ internal fun CenteredLongPressMenu(
             color = MaterialTheme.colorScheme.surfaceContainer,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             tonalElevation = 3.dp,
-            shadowElevation = 8.dp,
+            shadowElevation = 8.dp
         ) {
             Column(Modifier.padding(vertical = 8.dp), content = content)
         }

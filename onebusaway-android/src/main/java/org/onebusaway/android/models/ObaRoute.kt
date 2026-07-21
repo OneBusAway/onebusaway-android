@@ -67,7 +67,6 @@ interface ObaRoute : ObaElement {
          * interference (light rail, subway, commuter rail, ferry).
          */
         @JvmStatic
-        fun isGradeSeparated(type: Int): Boolean =
-            type == TYPE_TRAM || type == TYPE_SUBWAY || type == TYPE_RAIL || type == TYPE_FERRY
+        fun isGradeSeparated(type: Int): Boolean = type == TYPE_TRAM || type == TYPE_SUBWAY || type == TYPE_RAIL || type == TYPE_FERRY
     }
 }

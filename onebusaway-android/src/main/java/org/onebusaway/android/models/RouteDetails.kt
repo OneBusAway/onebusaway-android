@@ -25,12 +25,12 @@ data class RouteDetails(
     val longName: String?,
     val description: String?,
     val url: String?,
-    val agency: AgencyDetails?,
+    val agency: AgencyDetails?
 )
 
 /** The agency operating a route. */
 data class AgencyDetails(
     val id: String,
     val name: String,
-    val url: String?,
+    val url: String?
 )

@@ -40,7 +40,7 @@ class MapStopsBannerTest {
     fun `nearby mode preserves the zoom-in banner`() {
         assertEquals(
             StopsBanner.MoreStopsAvailable,
-            StopsBanner.MoreStopsAvailable.forFocus(CurrentFocus.None),
+            StopsBanner.MoreStopsAvailable.forFocus(CurrentFocus.None)
         )
     }
 }

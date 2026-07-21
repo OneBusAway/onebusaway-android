@@ -15,14 +15,13 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.EntryWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-import org.onebusaway.android.api.contract.StopReference
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
+import org.onebusaway.android.api.contract.StopReference
 
 /**
  * Ports the legacy StopRequestTest onto the modernized `stop` endpoint: decodes a real Puget Sound
@@ -32,7 +31,10 @@ import org.junit.Test
  */
 class StopDetailsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // Captured from api.pugetsound.onebusaway.org/api/where/stop/1_29261.json (trimmed; extra
     // entry fields parent/staticRouteIds/wheelchairBoarding and ref kinds are ignored by the model).

@@ -17,12 +17,12 @@ package org.onebusaway.android.map
 
 import android.os.Bundle
 import androidx.lifecycle.SavedStateHandle
+import java.util.concurrent.TimeUnit
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PreferenceUtils
-import java.util.concurrent.TimeUnit
 
 /** Debounce before reacting to a camera move, matching the old MapWatcher poll cadence (stops + bikes). */
 internal const val STOP_LOAD_DEBOUNCE_MS = 250L
@@ -44,18 +44,18 @@ internal fun resolveCameraSeed(handle: SavedStateHandle): MapCameraSeed {
     val primary = MapCameraSeed(
         point = GeoPoint(
             latitude = handle[MapParams.CENTER_LAT] ?: 0.0,
-            longitude = handle[MapParams.CENTER_LON] ?: 0.0,
+            longitude = handle[MapParams.CENTER_LON] ?: 0.0
         ),
-        zoom = handle[MapParams.ZOOM] ?: SEED_DEFAULT_ZOOM,
+        zoom = handle[MapParams.ZOOM] ?: SEED_DEFAULT_ZOOM
     )
     val restored = Bundle().also { PreferenceUtils.maybeRestoreMapViewToBundle(it) }
     val persisted = MapCameraSeed(
         point = GeoPoint(
             latitude = restored.getDouble(MapParams.CENTER_LAT, 0.0),
-            longitude = restored.getDouble(MapParams.CENTER_LON, 0.0),
+            longitude = restored.getDouble(MapParams.CENTER_LON, 0.0)
         ),
         // The persisted zoom defaults to the primary zoom (so an empty persisted view keeps it).
-        zoom = restored.getFloat(MapParams.ZOOM, primary.zoom),
+        zoom = restored.getFloat(MapParams.ZOOM, primary.zoom)
     )
     return resolveMapSeed(primary, persisted)
 }
@@ -66,8 +66,7 @@ internal fun resolveCameraSeed(handle: SavedStateHandle): MapCameraSeed {
  * which case we fall back to the [persisted] last-viewed camera. The caller applies the read defaults
  * (e.g. the persisted zoom defaults to the primary zoom), so this is just the precedence decision.
  */
-internal fun resolveMapSeed(primary: MapCameraSeed, persisted: MapCameraSeed): MapCameraSeed =
-    if (primary.point.latitude == 0.0 && primary.point.longitude == 0.0) persisted else primary
+internal fun resolveMapSeed(primary: MapCameraSeed, persisted: MapCameraSeed): MapCameraSeed = if (primary.point.latitude == 0.0 && primary.point.longitude == 0.0) persisted else primary
 
 /** How often the real-time vehicle positions are refreshed while a route is shown. */
 internal val VEHICLE_REFRESH_PERIOD_MS = TimeUnit.SECONDS.toMillis(10)
@@ -118,7 +117,7 @@ internal fun trimToNearest(
     accum: LinkedHashMap<String, StopMarker>,
     center: GeoPoint,
     cap: Int,
-    focusedId: String?,
+    focusedId: String?
 ) {
     if (accum.size <= cap) return
     val keep = LinkedHashSet<String>()
@@ -146,7 +145,7 @@ internal fun evictStaleInViewport(
     southWest: GeoPoint,
     northEast: GeoPoint,
     present: Set<String>,
-    focusedId: String?,
+    focusedId: String?
 ) {
     val it = accum.entries.iterator()
     while (it.hasNext()) {
@@ -182,7 +181,7 @@ enum class MyLocationAction {
     ShowWaitingToast,
 
     /** Nothing to do (e.g. services off but the user opted out of the dialog, or permission denied). */
-    None,
+    None
 }
 
 /**
@@ -197,7 +196,7 @@ fun myLocationAction(
     neverShowLocationDialog: Boolean,
     hasLastKnownLocation: Boolean,
     hasPermission: Boolean,
-    userDeniedPermission: Boolean,
+    userDeniedPermission: Boolean
 ): MyLocationAction {
     if (!locationEnabled) {
         return if (neverShowLocationDialog) MyLocationAction.None else MyLocationAction.ShowNoLocationDialog
@@ -220,7 +219,7 @@ enum class RegionRezoom {
     FrameRegion,
 
     /** Leave the camera where it is. */
-    None,
+    None
 }
 
 /**
@@ -254,7 +253,7 @@ internal fun zoomFulfills(
     hasResponse: Boolean,
     lastLimitExceeded: Boolean,
     lastZoom: Double,
-    newZoom: Double,
+    newZoom: Double
 ): Boolean {
     if (!hasResponse) {
         return true
@@ -289,7 +288,7 @@ internal fun stopRequestFulfilled(
     last: CameraSnapshot?,
     lastHadResponse: Boolean,
     lastLimitExceeded: Boolean,
-    next: CameraSnapshot,
+    next: CameraSnapshot
 ): Boolean {
     if (last == null) {
         return false

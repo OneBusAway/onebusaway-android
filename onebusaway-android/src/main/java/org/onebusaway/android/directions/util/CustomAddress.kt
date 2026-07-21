@@ -18,9 +18,9 @@ package org.onebusaway.android.directions.util
 import android.location.Address
 import android.os.Parcel
 import android.os.Parcelable
+import java.util.Locale
 import org.geojson.Feature
 import org.geojson.Point
-import java.util.Locale
 
 /**
  * Created by foucelhas on 18/08/14.
@@ -134,6 +134,7 @@ class CustomAddress(locale: Locale) : Address(locale) {
                 override fun createFromParcel(parcel: Parcel): CustomAddress {
                     val language = parcel.readString().orEmpty()
                     val country = parcel.readString()
+
                     // Locale.of(...) requires API 34 (> minSdk 23), and Locale.Builder validates
                     // strictly — it can throw on the lenient, parcel-sourced language/country the
                     // legacy constructor accepts — so keep the deprecated-but-lenient constructor. #1728

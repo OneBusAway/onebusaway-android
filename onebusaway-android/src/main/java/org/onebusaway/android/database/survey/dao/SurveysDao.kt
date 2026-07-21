@@ -1,6 +1,11 @@
 package org.onebusaway.android.database.survey.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import org.onebusaway.android.database.survey.entity.Survey
 
 /**
@@ -19,7 +24,7 @@ interface SurveysDao {
     suspend fun deleteSurvey(survey: Survey)
 
     @Query("SELECT *FROM surveys")
-    suspend fun getAllSurveys():List<Survey>
+    suspend fun getAllSurveys(): List<Survey>
 
     @Query("SELECT * FROM surveys WHERE survey_id = :surveyId")
     suspend fun getSurveyById(surveyId: Int): Survey?
@@ -29,5 +34,4 @@ interface SurveysDao {
 
     @Query("SELECT COUNT(*) > 0 FROM surveys WHERE survey_id = :surveyId")
     suspend fun isSurveyIdExists(surveyId: Int): Boolean
-
 }

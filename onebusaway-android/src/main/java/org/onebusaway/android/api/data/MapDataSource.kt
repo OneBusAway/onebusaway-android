@@ -15,12 +15,11 @@
  */
 package org.onebusaway.android.api.data
 
+import javax.inject.Inject
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoStop
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
-
-import javax.inject.Inject
 import org.onebusaway.android.models.NearbyStops
 
 /**
@@ -41,25 +40,37 @@ interface MapDataSource {
      * `limitExceeded` when more stops matched than were returned; null leaves the server default.
      */
     suspend fun nearbyStops(
-        lat: Double, lon: Double, latSpan: Double, lonSpan: Double, maxCount: Int? = null,
+        lat: Double,
+        lon: Double,
+        latSpan: Double,
+        lonSpan: Double,
+        maxCount: Int? = null
     ): Result<NearbyStops?>
 }
 
 class DefaultMapDataSource @Inject constructor(
-    private val api: ObaApiProvider,
+    private val api: ObaApiProvider
 ) : MapDataSource {
 
     override suspend fun nearbyStops(
-        lat: Double, lon: Double, latSpan: Double, lonSpan: Double, maxCount: Int?,
+        lat: Double,
+        lon: Double,
+        latSpan: Double,
+        lonSpan: Double,
+        maxCount: Int?
     ): Result<NearbyStops?> = api.callOrNull { service ->
         val data = service.stopsForLocation(
-            lat = lat, lon = lon, latSpan = latSpan, lonSpan = lonSpan, maxCount = maxCount,
+            lat = lat,
+            lon = lon,
+            latSpan = latSpan,
+            lonSpan = lonSpan,
+            maxCount = maxCount
         ).requireData()
         NearbyStops(
             stops = data.list.map(::DtoStop),
             routes = data.references.routes.map(::DtoRoute),
             outOfRange = data.outOfRange,
-            limitExceeded = data.limitExceeded,
+            limitExceeded = data.limitExceeded
         )
     }
 }

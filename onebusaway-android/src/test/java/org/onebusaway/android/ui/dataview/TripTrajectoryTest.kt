@@ -15,16 +15,13 @@
  */
 package org.onebusaway.android.ui.dataview
 
-import org.onebusaway.android.time.ScheduleTime
-import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.time.ServiceDate
-import org.onebusaway.android.time.WallTime
-import kotlin.time.Duration.Companion.seconds
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Test
 import org.onebusaway.android.api.adapters.StopTimeData
 import org.onebusaway.android.api.adapters.TripScheduleData
 import org.onebusaway.android.extrapolation.data.TripState
@@ -32,7 +29,10 @@ import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.testing.testTripStatus
-import org.junit.Test
+import org.onebusaway.android.time.ScheduleTime
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.ServiceDate
+import org.onebusaway.android.time.WallTime
 
 class TripTrajectoryTest {
 
@@ -56,8 +56,7 @@ class TripTrajectoryTest {
             x < 2 * c -> 1 - (2 * c - x) * (2 * c - x) / (2 * c * c)
             else -> 1.0
         }
-        override fun quantile(p: Double) =
-            if (p <= 0.5) c * sqrt(2 * p) else 2 * c - c * sqrt(2 * (1 - p))
+        override fun quantile(p: Double) = if (p <= 0.5) c * sqrt(2 * p) else 2 * c - c * sqrt(2 * (1 - p))
     }
 
     private object NaNQuantileDist : ProbDistribution {
@@ -176,21 +175,20 @@ class TripTrajectoryTest {
      * extrapolate() through schedule replay, which succeeds mid-route, so buildTrajectory() emits a
      * non-null extrapolation overlay.
      */
-    private fun skewedRailState(anchorServerTime: Long, anchorLocalMs: Long): TripState =
-        TripState.empty("trip1")
-            .withStatus(
-                testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = anchorServerTime, activeTripId = "trip1"),
-                serverTimeMs = ServerTime(anchorServerTime),
-                localTimeMs = WallTime(anchorLocalMs),
-            )
-            .withSchedule(railSchedule)
-            .withRouteType(ObaRoute.TYPE_SUBWAY)
+    private fun skewedRailState(anchorServerTime: Long, anchorLocalMs: Long): TripState = TripState.empty("trip1")
+        .withStatus(
+            testTripStatus(distanceAlongTrip = 500.0, lastUpdateTime = anchorServerTime, activeTripId = "trip1"),
+            serverTimeMs = ServerTime(anchorServerTime),
+            localTimeMs = WallTime(anchorLocalMs)
+        )
+        .withSchedule(railSchedule)
+        .withRouteType(ObaRoute.TYPE_SUBWAY)
 
     /** Three stops at 0/1000/3000 m — enough for schedule replay to succeed mid-route. */
     private val railSchedule = makeSchedule(
         Triple(0.0, 0L, 0L),
         Triple(1000.0, 100L, 130L),
-        Triple(3000.0, 330L, 330L),
+        Triple(3000.0, 330L, 330L)
     )
 
     private fun makeSchedule(vararg stops: Triple<Double, Long, Long>): ObaTripSchedule {
@@ -241,8 +239,7 @@ class TripTrajectoryTest {
 
     // --- interpolateScheduleTime ---
 
-    private fun stop(dist: Double, arriveMs: Long, departMs: Long = arriveMs) =
-        ScheduleStop(distanceMeters = dist, arrivalMs = ServerTime(arriveMs), departureMs = ServerTime(departMs), stopId = null)
+    private fun stop(dist: Double, arriveMs: Long, departMs: Long = arriveMs) = ScheduleStop(distanceMeters = dist, arrivalMs = ServerTime(arriveMs), departureMs = ServerTime(departMs), stopId = null)
 
     @Test
     fun `schedule time interpolates linearly within the bracketing stops`() {
@@ -283,7 +280,7 @@ class TripTrajectoryTest {
         val schedule = listOf(
             stop(0.0, 1_000L, departMs = 2_000L),
             stop(100.0, 6_000L, departMs = 7_000L), // dwell: arrives 6000, departs 7000
-            stop(200.0, 10_000L),
+            stop(200.0, 10_000L)
         )
         // Exactly at the middle stop, the half-open [d0, d1) segments give it to the *next* segment,
         // so it reads the departure (7000) deterministically rather than ambiguously matching the
@@ -296,7 +293,7 @@ class TripTrajectoryTest {
         val schedule = listOf(
             stop(0.0, 1_000L),
             stop(100.0, 6_000L),
-            stop(200.0, 10_000L),
+            stop(200.0, 10_000L)
         )
         // The trip's end distance is excluded by the half-open segments, so it's mapped to the last
         // segment's arrival (the final stop, 10000) rather than falling through to null.
@@ -308,7 +305,7 @@ class TripTrajectoryTest {
         val schedule = listOf(
             stop(0.0, 1_000L),
             stop(100.0, 6_000L),
-            stop(100.0, 10_000L), // trailing zero-length pair (shared shape_dist_traveled)
+            stop(100.0, 10_000L) // trailing zero-length pair (shared shape_dist_traveled)
         )
         // The last *interpolatable* pair is 0 -> 100 (the trailing 100 -> 100 pair forms no segment),
         // so the max distance maps to that segment's arrival (6000) instead of falling through to null.
@@ -329,7 +326,7 @@ class TripTrajectoryTest {
             stop(0.0, 1_000L),
             stop(100.0, 6_000L, departMs = 7_000L),
             stop(100.0, 8_000L), // degenerate middle pair: skipped
-            stop(200.0, 12_000L),
+            stop(200.0, 12_000L)
         )
         // 150 lands in the 100 -> 200 segment (departure 8000 to arrival 12000), proving the loop
         // advances past the degenerate middle pair.
@@ -344,7 +341,7 @@ class TripTrajectoryTest {
             stop(0.0, 1_000L, departMs = 2_000L),
             stop(100.0, 6_000L),
             stop(50.0, 8_000L, departMs = 9_000L),
-            stop(150.0, 12_000L),
+            stop(150.0, 12_000L)
         )
         // 75 lies in both segments; first-match gives it to (0 -> 100): 2000 + 0.75 * (6000 - 2000).
         assertEquals(ServerTime(5_000L), interpolateScheduleTime(schedule, 75.0))
@@ -390,14 +387,14 @@ class TripTrajectoryTest {
             stop(0.0, 1_000L),
             stop(100.0, 6_000L, departMs = 7_000L), // first at 100: its arrival (6000) ends the entering segment
             stop(100.0, 8_000L), // last at 100: its departure (8000) starts the leaving segment
-            stop(200.0, 12_000L),
+            stop(200.0, 12_000L)
         )
         assertEquals(
             listOf(
                 ScheduleSegment(0.0, 100.0, ServerTime(1_000L), ServerTime(6_000L)),
-                ScheduleSegment(100.0, 200.0, ServerTime(8_000L), ServerTime(12_000L)),
+                ScheduleSegment(100.0, 200.0, ServerTime(8_000L), ServerTime(12_000L))
             ),
-            scheduleSegments(schedule),
+            scheduleSegments(schedule)
         )
     }
 
@@ -408,7 +405,7 @@ class TripTrajectoryTest {
         val schedule = listOf(
             stop(0.0, 1_000L, departMs = 2_000L),
             stop(0.0, 3_000L, departMs = 4_000L),
-            stop(100.0, 8_000L),
+            stop(100.0, 8_000L)
         )
         assertEquals(listOf(ScheduleSegment(0.0, 100.0, ServerTime(4_000L), ServerTime(8_000L))), scheduleSegments(schedule))
     }

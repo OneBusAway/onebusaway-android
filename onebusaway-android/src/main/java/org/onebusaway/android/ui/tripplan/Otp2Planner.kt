@@ -48,7 +48,7 @@ import org.onebusaway.android.directions.util.TripRequestBuilder
  */
 class Otp2Planner @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    @param:Otp2HttpClient private val okHttpClient: OkHttpClient,
+    @param:Otp2HttpClient private val okHttpClient: OkHttpClient
 ) {
 
     /**
@@ -87,7 +87,7 @@ class Otp2Planner @Inject constructor(
             // Transport failure (connect/read timeout, DNS, etc.) — a connectivity problem.
             throw TripPlanException(
                 TripPlanError(TripPlanError.Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout),
-                e,
+                e
             )
         } catch (e: ApolloException) {
             // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol error) isn't
@@ -95,25 +95,56 @@ class Otp2Planner @Inject constructor(
             throw TripPlanException(TripPlanError.Unknown, e)
         }
 
-        data.planConnection?.routingErrors?.firstOrNull()?.let {
-            throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
-        }
+        return resolveOtp2Plan(data)
+    }
+}
 
-        val itineraries = data.toTripItineraries()
-        if (itineraries.isEmpty()) {
-            throw TripPlanException(TripPlanError.NoRoute)
-        }
+/**
+ * Resolves an OTP2 `planConnection` [PlanQuery.Data] into itineraries, or throws a classified
+ * [TripPlanException] when there is genuinely nothing to show.
+ *
+ * **Itineraries win over routing errors.** A `routingErrors` entry can accompany a perfectly good
+ * result, so we must return the result rather than surface the error. The motivating case (#1947) is
+ * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT]: OTP2 always computes a direct WALK itinerary
+ * alongside transit — the `planConnection.modes` default is documented as "all transit modes are
+ * usable and WALK is used for direct street suggestions" — and when that walk's *generalized* cost
+ * (which folds in wait/transfer/boarding penalties, not just distance) beats every transit option,
+ * the filter chain deletes the *transit* itineraries and attaches this error while **keeping the
+ * walk-only itinerary in `edges`**. Surfacing the error there would throw away a valid walk route and
+ * show a no-result message — even for trips too long to actually walk. Returning whatever itineraries
+ * came back shows that walk route as a normal option instead; the code only classifies as an error
+ * (the same-location "too close" case) when there is genuinely nothing to show.
+ *
+ * This is safe for every *fatal* code — `LOCATION_NOT_FOUND`, `OUTSIDE_BOUNDS`,
+ * `NO_TRANSIT_CONNECTION`, the same-location `WALKING_BETTER_THAN_TRANSIT` raised by OTP's
+ * `SameEdgeAdjuster`, … — because those always come back with empty `edges`, so consulting
+ * `routingErrors` only when there are no itineraries still classifies them exactly as before.
+ *
+ * Top-level and `internal` (no [Context] dependency) so it's JVM-unit-testable from a
+ * [PlanQuery.Data] fixture without Apollo, like [otp2ErrorFor].
+ */
+internal fun resolveOtp2Plan(data: PlanQuery.Data): List<TripItinerary> {
+    val itineraries = data.toTripItineraries()
+    if (itineraries.isNotEmpty()) {
         return itineraries
     }
+    data.planConnection?.routingErrors?.firstOrNull()?.let {
+        throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
+    }
+    throw TripPlanException(TripPlanError.NoRoute)
 }
 
 /**
  * Classifies an OTP2 `routingErrors` entry into a [TripPlanError]: reuses OTP1's existing detail
  * strings where [RoutingErrorCode] names a genuinely equivalent failure, and an OTP2-specific string
- * where it doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] and
- * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] have no OTP1-era concept, so folding them into the
- * generic fallback would silently discard information OTP2 is actually telling the user. Top-level and
- * `internal` (not a `Context`-bound method) so it's exhaustively JVM-unit-testable without Apollo.
+ * where it doesn't — [RoutingErrorCode.OUTSIDE_SERVICE_PERIOD] has no OTP1-era concept, so folding it
+ * into the generic fallback would silently discard information OTP2 is actually telling the user.
+ *
+ * [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT] reaches here only when there are no itineraries
+ * (see [resolveOtp2Plan] — when a walk route survives we return it rather than classify an error),
+ * i.e. only OTP's same-location `SameEdgeAdjuster` case, which is exactly OTP1's `TOO_CLOSE`. So it
+ * maps to the same too-close result and never advises walking (#1947). Top-level and `internal` (not a
+ * `Context`-bound method) so it's exhaustively JVM-unit-testable without Apollo.
  */
 internal fun otp2ErrorFor(code: RoutingErrorCode, inputField: InputField?): TripPlanError = when (code) {
     RoutingErrorCode.OUTSIDE_BOUNDS ->
@@ -136,7 +167,7 @@ internal fun otp2ErrorFor(code: RoutingErrorCode, inputField: InputField?): Trip
         TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_outside_service_period)
 
     RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT ->
-        TripPlanError(TripPlanError.Category.ADVISORY, R.string.tripplanner_error_walking_better_than_transit)
+        TripPlanError(TripPlanError.Category.NO_ROUTE, R.string.tripplanner_error_too_close)
 
     RoutingErrorCode.UNKNOWN__ -> TripPlanError.Unknown
 }
@@ -152,5 +183,4 @@ private const val OTP2_GTFS_GRAPHQL_PATH = "/gtfs/v1"
  * gtfs API path, identical across OTP2 servers (verified against the live endpoint). Trailing slash
  * on the base is tolerated so `…/otp` and `…/otp/` both resolve to `…/otp/gtfs/v1`.
  */
-internal fun otp2GraphQlEndpoint(otpBaseUrl: String): String =
-    otpBaseUrl.trimEnd('/') + OTP2_GTFS_GRAPHQL_PATH
+internal fun otp2GraphQlEndpoint(otpBaseUrl: String): String = otpBaseUrl.trimEnd('/') + OTP2_GTFS_GRAPHQL_PATH

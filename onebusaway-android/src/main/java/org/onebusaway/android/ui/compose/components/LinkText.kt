@@ -30,23 +30,22 @@ private val URL_REGEX = Regex("""https?://[^\s)]+""")
  * Wraps every bare URL in [text] with a tappable, underlined [LinkAnnotation.Url] — the Compose
  * equivalent of a TextView's `autoLink="web"`. Shared by the About screen and the info dialogs.
  */
-fun linkifyUrls(text: String, linkColor: Color): AnnotatedString =
-    buildAnnotatedString {
-        var last = 0
-        for (match in URL_REGEX.findAll(text)) {
-            val url = match.value.trimEnd('.', ',')
-            append(text.substring(last, match.range.first))
-            withLink(
-                LinkAnnotation.Url(
-                    url,
-                    TextLinkStyles(
-                        style = SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)
-                    )
+fun linkifyUrls(text: String, linkColor: Color): AnnotatedString = buildAnnotatedString {
+    var last = 0
+    for (match in URL_REGEX.findAll(text)) {
+        val url = match.value.trimEnd('.', ',')
+        append(text.substring(last, match.range.first))
+        withLink(
+            LinkAnnotation.Url(
+                url,
+                TextLinkStyles(
+                    style = SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)
                 )
-            ) {
-                append(url)
-            }
-            last = match.range.first + url.length
+            )
+        ) {
+            append(url)
         }
-        append(text.substring(last))
+        last = match.range.first + url.length
     }
+    append(text.substring(last))
+}

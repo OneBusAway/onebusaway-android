@@ -83,12 +83,14 @@ private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
 sealed interface FocusBannerState {
     val isFavorite: Boolean
     val favoriteEnabled: Boolean
+
     @get:DrawableRes val focusIconRes: Int
+
     @get:StringRes val focusDescriptionRes: Int
 
     data class SubordinateRoute(
         val shortName: String,
-        val color: Int? = null,
+        val color: Int? = null
     )
 
     data class Stop(
@@ -98,7 +100,7 @@ sealed interface FocusBannerState {
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
         val subordinateRoutes: List<SubordinateRoute> = emptyList(),
-        val subordinateHeadsign: String? = null,
+        val subordinateHeadsign: String? = null
     ) : FocusBannerState {
         override val focusIconRes = R.drawable.stop_flag
         override val focusDescriptionRes = R.string.stop_shortcut
@@ -106,7 +108,7 @@ sealed interface FocusBannerState {
 
     data class Route(
         val header: RouteHeader,
-        override val isFavorite: Boolean,
+        override val isFavorite: Boolean
     ) : FocusBannerState {
         override val favoriteEnabled: Boolean get() = header.routeId != null
         override val focusIconRes = R.drawable.ic_route
@@ -130,7 +132,7 @@ fun FocusBanner(
     onSelectDirection: (Int) -> Unit,
     onFrameRoute: () -> Unit,
     onHeight: (Int) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         modifier = modifier.onSizeChanged { onHeight(it.height) },
@@ -138,17 +140,17 @@ fun FocusBanner(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shadowElevation = 6.dp,
+        shadowElevation = 6.dp
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Min)
         ) {
             FocusIdentityRail(
                 iconRes = state.focusIconRes,
                 iconDescription = stringResource(state.focusDescriptionRes),
                 isFavorite = state.isFavorite,
                 favoriteEnabled = state.favoriteEnabled,
-                onToggleFavorite = onToggleFavorite,
+                onToggleFavorite = onToggleFavorite
             )
             VerticalDivider(Modifier.fillMaxHeight())
             Box(Modifier.weight(1f)) {
@@ -158,13 +160,13 @@ fun FocusBanner(
                         onShowAlerts = onShowAlerts,
                         onClearSubordinateRoute = onClearSubordinateRoute,
                         onRecenter = onRecenterStop,
-                        onClose = onClose,
+                        onClose = onClose
                     )
                     is FocusBannerState.Route -> RouteFocusBanner(
                         state = state,
                         onSelectDirection = onSelectDirection,
                         onFrameRoute = onFrameRoute,
-                        onClose = onClose,
+                        onClose = onClose
                     )
                 }
             }
@@ -179,23 +181,23 @@ private fun FocusIdentityRail(
     iconDescription: String,
     isFavorite: Boolean,
     favoriteEnabled: Boolean,
-    onToggleFavorite: () -> Unit,
+    onToggleFavorite: () -> Unit
 ) {
     Column(
         modifier = Modifier.fillMaxHeight().width(48.dp).heightIn(min = 64.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceEvenly,
+        verticalArrangement = Arrangement.SpaceEvenly
     ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = iconDescription,
             tint = colorResource(R.color.navdrawer_icon_tint),
-            modifier = Modifier.size(FOCUS_RAIL_ICON_SIZE),
+            modifier = Modifier.size(FOCUS_RAIL_ICON_SIZE)
         )
         BannerFavoriteAction(
             isFavorite = isFavorite,
             enabled = favoriteEnabled,
-            onClick = onToggleFavorite,
+            onClick = onToggleFavorite
         )
     }
 }
@@ -206,18 +208,21 @@ private fun StopFocusBanner(
     onShowAlerts: () -> Unit,
     onClearSubordinateRoute: () -> Unit,
     onRecenter: () -> Unit,
-    onClose: () -> Unit,
+    onClose: () -> Unit
 ) {
     Column(Modifier.fillMaxWidth().fillMaxHeight()) {
         Row(
             Modifier
                 .fillMaxWidth()
                 .then(
-                    if (state.subordinateRoutes.isEmpty()) Modifier.weight(1f)
-                    else Modifier
+                    if (state.subordinateRoutes.isEmpty()) {
+                        Modifier.weight(1f)
+                    } else {
+                        Modifier
+                    }
                 )
                 .padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             val name = if (!state.direction.isNullOrBlank()) {
                 "${state.title} (${state.direction.trim()})"
@@ -232,8 +237,8 @@ private fun StopFocusBanner(
                 modifier = Modifier.weight(1f).clickable(
                     onClickLabel = stringResource(R.string.stop_info_recenter),
                     role = Role.Button,
-                    onClick = onRecenter,
-                ),
+                    onClick = onRecenter
+                )
             )
             if (state.hasAlerts) {
                 BannerAlertAction(onClick = onShowAlerts)
@@ -241,7 +246,7 @@ private fun StopFocusBanner(
             HeaderIconButton(
                 iconRes = R.drawable.ic_navigation_close,
                 contentDescription = stringResource(android.R.string.cancel),
-                onClick = onClose,
+                onClick = onClose
             )
         }
         if (state.subordinateRoutes.isNotEmpty()) {
@@ -250,7 +255,7 @@ private fun StopFocusBanner(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 8.dp, top = 7.dp, end = 8.dp, bottom = 7.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 state.subordinateRoutes.forEachIndexed { index, route ->
                     if (index > 0) {
@@ -258,7 +263,7 @@ private fun StopFocusBanner(
                             text = "›",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 3.dp),
+                            modifier = Modifier.padding(horizontal = 3.dp)
                         )
                     }
                     CompactRouteBadge(route)
@@ -270,7 +275,7 @@ private fun StopFocusBanner(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 6.dp).weight(1f),
+                        modifier = Modifier.padding(start = 6.dp).weight(1f)
                     )
                 } ?: Spacer(Modifier.weight(1f))
                 CompactRouteDismissAction(onClick = onClearSubordinateRoute)
@@ -294,7 +299,7 @@ private fun CompactRouteDismissAction(onClick: () -> Unit) {
         tint = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
             .size(22.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
     )
 }
 
@@ -303,12 +308,12 @@ private fun RouteFocusBanner(
     state: FocusBannerState.Route,
     onSelectDirection: (Int) -> Unit,
     onFrameRoute: () -> Unit,
-    onClose: () -> Unit,
+    onClose: () -> Unit
 ) {
     val header = state.header
     Row(
         Modifier.fillMaxWidth().padding(if (header.loading) 8.dp else 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (header.loading) {
             CircularProgressIndicator(Modifier.size(48.dp))
@@ -324,9 +329,9 @@ private fun RouteFocusBanner(
                     .clickable(
                         onClickLabel = stringResource(R.string.route_header_frame_route),
                         role = Role.Button,
-                        onClick = onFrameRoute,
+                        onClick = onFrameRoute
                     ),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 // The badge + name column is one tap target that reframes the map to the route's extent.
                 // A square route roundel: the short name shrinks to fit inside the tile, on the same
@@ -339,7 +344,7 @@ private fun RouteFocusBanner(
                     square = true,
                     color = badgeContent,
                     containerColor = badgeContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp),
+                    modifier = Modifier.padding(horizontal = 10.dp)
                 )
                 Column(Modifier.weight(1f)) {
                     if (header.longName.isNotEmpty()) {
@@ -348,7 +353,7 @@ private fun RouteFocusBanner(
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                     if (directionLabel != null) {
@@ -367,14 +372,14 @@ private fun RouteFocusBanner(
                 SwitchDirectionAction(
                     directions = header.directions,
                     currentDirectionId = header.currentDirectionId,
-                    onSelectDirection = onSelectDirection,
+                    onSelectDirection = onSelectDirection
                 )
             }
         }
         HeaderIconButton(
             iconRes = R.drawable.ic_navigation_close,
             contentDescription = stringResource(android.R.string.cancel),
-            onClick = onClose,
+            onClick = onClose
         )
     }
 }
@@ -387,13 +392,16 @@ private fun RouteFocusBanner(
 private fun BannerFavoriteAction(
     isFavorite: Boolean,
     enabled: Boolean,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     Icon(
         painter = painterResource(if (isFavorite) R.drawable.star else R.drawable.star_outline),
         contentDescription = stringResource(
-            if (isFavorite) R.string.bus_options_menu_remove_star
-            else R.string.bus_options_menu_add_star
+            if (isFavorite) {
+                R.string.bus_options_menu_remove_star
+            } else {
+                R.string.bus_options_menu_add_star
+            }
         ),
         tint = colorResource(R.color.navdrawer_icon_tint),
         modifier = Modifier
@@ -412,7 +420,7 @@ private fun BannerAlertAction(onClick: () -> Unit) {
             .clickable(onClick = onClick)
             .minimumInteractiveComponentSize()
             .padding(12.dp)
-            .size(24.dp),
+            .size(24.dp)
     )
 }
 
@@ -425,14 +433,14 @@ private fun BannerAlertAction(onClick: () -> Unit) {
 private fun HeaderIconButton(
     @DrawableRes iconRes: Int,
     contentDescription: String,
-    onClick: () -> Unit,
+    onClick: () -> Unit
 ) {
     IconButton(onClick = onClick, modifier = Modifier.size(HEADER_ICON_BUTTON_SIZE)) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
             tint = colorResource(R.color.navdrawer_icon_tint),
-            modifier = Modifier.size(HEADER_ICON_SIZE),
+            modifier = Modifier.size(HEADER_ICON_SIZE)
         )
     }
 }
@@ -446,7 +454,7 @@ private fun HeaderIconButton(
 private fun SwitchDirectionAction(
     directions: List<RouteMapDirection>,
     currentDirectionId: Int?,
-    onSelectDirection: (Int) -> Unit,
+    onSelectDirection: (Int) -> Unit
 ) {
     var showPicker by remember { mutableStateOf(false) }
     HeaderIconButton(
@@ -458,7 +466,7 @@ private fun SwitchDirectionAction(
             } else {
                 showPicker = true
             }
-        },
+        }
     )
     if (showPicker) {
         val unnamed = stringResource(R.string.route_direction_unnamed)
@@ -472,14 +480,14 @@ private fun SwitchDirectionAction(
                     onSelect = { index ->
                         showPicker = false
                         onSelectDirection(directions[index].directionId)
-                    },
+                    }
                 )
             },
             confirmButton = {
                 TextButton(onClick = { showPicker = false }) {
                     Text(stringResource(android.R.string.cancel))
                 }
-            },
+            }
         )
     }
 }
@@ -501,9 +509,9 @@ private fun FocusBannerPreview() {
                     hasAlerts = true,
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65", 0xFF26823B.toInt()),
-                        FocusBannerState.SubordinateRoute("75", 0xFF125BA8.toInt()),
+                        FocusBannerState.SubordinateRoute("75", 0xFF125BA8.toInt())
                     ),
-                    subordinateHeadsign = "Downtown Seattle",
+                    subordinateHeadsign = "Downtown Seattle"
                 ),
                 onClose = {},
                 onToggleFavorite = {},
@@ -512,21 +520,24 @@ private fun FocusBannerPreview() {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
-                onHeight = {},
+                onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
             FocusBanner(
-                state = FocusBannerState.Route(RouteHeader(
-                    loading = false,
-                    shortName = "40",
-                    longName = "Downtown Seattle - Northgate",
-                    agency = "King County Metro",
-                    directions = listOf(
-                        RouteMapDirection(0, "to Downtown Seattle"),
-                        RouteMapDirection(1, "to Northgate"),
+                state = FocusBannerState.Route(
+                    RouteHeader(
+                        loading = false,
+                        shortName = "40",
+                        longName = "Downtown Seattle - Northgate",
+                        agency = "King County Metro",
+                        directions = listOf(
+                            RouteMapDirection(0, "to Downtown Seattle"),
+                            RouteMapDirection(1, "to Northgate")
+                        ),
+                        currentDirectionId = 0
                     ),
-                    currentDirectionId = 0,
-                ), isFavorite = false),
+                    isFavorite = false
+                ),
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
@@ -534,7 +545,7 @@ private fun FocusBannerPreview() {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
-                onHeight = {},
+                onHeight = {}
             )
         }
     }

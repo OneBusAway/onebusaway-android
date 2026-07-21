@@ -42,7 +42,7 @@ fun EtaDurationText(
     minutes: Long,
     modifier: Modifier = Modifier,
     numberSize: TextUnit = 15.sp,
-    unitSize: TextUnit = 12.sp,
+    unitSize: TextUnit = 12.sp
 ) {
     EtaPartsText(DisplayFormat.formatEtaParts(LocalContext.current, minutes), modifier, numberSize, unitSize)
 }
@@ -58,7 +58,7 @@ fun EtaPartsText(
     parts: List<DisplayFormat.EtaPart>,
     modifier: Modifier = Modifier,
     numberSize: TextUnit = 15.sp,
-    unitSize: TextUnit = 12.sp,
+    unitSize: TextUnit = 12.sp
 ) {
     // [tightLineStyle] trims the default font padding so a leading icon centers on the text and stacked
     // rows sit tight; the spans layer the per-part sizes on top of that same base.
@@ -90,6 +90,6 @@ internal fun tightLineStyle(base: TextStyle, size: TextUnit = TextUnit.Unspecifi
     platformStyle = PlatformTextStyle(includeFontPadding = false),
     lineHeightStyle = LineHeightStyle(
         alignment = LineHeightStyle.Alignment.Center,
-        trim = LineHeightStyle.Trim.Both,
-    ),
+        trim = LineHeightStyle.Trim.Both
+    )
 )

@@ -29,10 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -63,6 +59,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.MenuHeader
 import org.onebusaway.android.ui.compose.components.StopRowContent
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.icons.AppIcons
 
 /** Stateful entry point: collects the ViewModel's state and wires UI events to the host. */
 @Composable
@@ -100,7 +97,7 @@ fun RouteInfoScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = AppIcons.ArrowBack,
                             contentDescription = stringResource(R.string.navigate_up)
                         )
                     }
@@ -232,9 +229,9 @@ private fun DirectionHeader(name: String, expanded: Boolean, onClick: () -> Unit
         )
         Icon(
             imageVector = if (expanded) {
-                Icons.Filled.KeyboardArrowUp
+                AppIcons.KeyboardArrowUp
             } else {
-                Icons.Filled.KeyboardArrowDown
+                AppIcons.KeyboardArrowDown
             },
             contentDescription = null
         )
@@ -277,7 +274,7 @@ private fun StopRow(
         )
         CenteredLongPressMenu(
             expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false },
+            onDismissRequest = { menuExpanded = false }
         ) {
             MenuHeader(stop.name)
             DropdownMenuItem(
@@ -341,7 +338,10 @@ private fun RouteInfoScreenSuccessPreview() {
                     )
                 )
             ),
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -352,7 +352,10 @@ private fun RouteInfoScreenLoadingPreview() {
     ObaTheme {
         RouteInfoScreen(
             state = RouteInfoUiState.Loading,
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }
@@ -363,7 +366,10 @@ private fun RouteInfoScreenErrorPreview() {
     ObaTheme {
         RouteInfoScreen(
             state = RouteInfoUiState.Error("Please check your Internet connection and try again."),
-            onBack = {}, onShowRouteOnMap = {}, onStopClick = {}, onStopShowOnMap = {}
+            onBack = {},
+            onShowRouteOnMap = {},
+            onStopClick = {},
+            onStopShowOnMap = {}
         )
     }
 }

@@ -34,7 +34,7 @@ class PushRegistrationDecisionTest {
         token = "token-a",
         locale = "en-US",
         testDevice = false,
-        description = null,
+        description = null
     )
 
     /** Comfortably inside [PUSH_REFRESH_INTERVAL], so the keep-alive never confounds these cases. */
@@ -43,7 +43,7 @@ class PushRegistrationDecisionTest {
     private fun decide(
         target: PushRegistration?,
         last: PushRegistration?,
-        sinceLastSent: Duration? = fresh,
+        sinceLastSent: Duration? = fresh
     ) = decidePushRegistration(target, last, sinceLastSent)
 
     @Test
@@ -84,11 +84,11 @@ class PushRegistrationDecisionTest {
         // prune silently drops a device whose token, region, locale and flags simply never change.
         assertEquals(
             PushRegistrationAction.Register(base),
-            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL),
+            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL)
         )
         assertEquals(
             PushRegistrationAction.Register(base),
-            decide(target = base, last = base, sinceLastSent = 30.days),
+            decide(target = base, last = base, sinceLastSent = 30.days)
         )
     }
 
@@ -96,7 +96,7 @@ class PushRegistrationDecisionTest {
     fun `an unchanged registration is left alone just inside the refresh interval`() {
         assertEquals(
             PushRegistrationAction.NoOp,
-            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL - 1.hours),
+            decide(target = base, last = base, sinceLastSent = PUSH_REFRESH_INTERVAL - 1.hours)
         )
     }
 
@@ -106,7 +106,7 @@ class PushRegistrationDecisionTest {
         // the device to the prune is not, so unknown must re-post rather than no-op.
         assertEquals(
             PushRegistrationAction.Register(base),
-            decide(target = base, last = base, sinceLastSent = null),
+            decide(target = base, last = base, sinceLastSent = null)
         )
     }
 
@@ -115,7 +115,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(token = "token-b")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decide(target = target, last = base),
+            decide(target = target, last = base)
         )
     }
 
@@ -124,7 +124,7 @@ class PushRegistrationDecisionTest {
         val target = base.copy(regionId = 2L, sidecarBaseUrl = "https://other.example.org")
         assertEquals(
             PushRegistrationAction.Reregister(previous = base, target = target),
-            decide(target = target, last = base),
+            decide(target = target, last = base)
         )
     }
 }

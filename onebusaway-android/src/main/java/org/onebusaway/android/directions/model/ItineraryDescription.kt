@@ -46,8 +46,7 @@ class ItineraryDescription {
      * @param other object to compare to
      * @return true if matches, false otherwise
      */
-    fun itineraryMatches(other: ItineraryDescription): Boolean =
-        // Ordered structural equality: same trip IDs in the same order.
+    fun itineraryMatches(other: ItineraryDescription): Boolean = // Ordered structural equality: same trip IDs in the same order.
         tripIds == other.tripIds
 
     /**

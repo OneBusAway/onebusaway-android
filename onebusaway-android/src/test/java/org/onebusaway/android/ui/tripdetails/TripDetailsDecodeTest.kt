@@ -30,7 +30,10 @@ import org.onebusaway.android.api.contract.TripDetailsEntry
  */
 class TripDetailsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     // Trimmed to the modeled fields plus extras (occupancy, position, etc.) that must be ignored.
     private val body = """

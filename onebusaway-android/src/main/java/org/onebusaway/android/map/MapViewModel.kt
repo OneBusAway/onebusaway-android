@@ -28,27 +28,27 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
-import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.models.RouteMapDirection
-import org.onebusaway.android.models.RouteDirectionKey
-import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.viewport
-import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.models.FocusedTrip
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.getRouteDescription
@@ -71,7 +71,7 @@ data class RouteHeader(
      *  badge chip takes its hue, matching the arrival rows. */
     val routeColor: Int? = null,
     val directions: List<RouteMapDirection> = emptyList(),
-    val currentDirectionId: Int? = null,
+    val currentDirectionId: Int? = null
 ) {
     /** The direction currently shown by the map, or null while loading / showing the whole route. */
     val currentDirection: RouteMapDirection?
@@ -119,7 +119,7 @@ class MapViewModel @Inject constructor(
     private val tripObservationRepository: TripObservationRepository,
     private val stopDao: StopDao,
     private val stopCache: StopCacheRepository,
-    @param:ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context
 ) : ViewModel() {
 
     // The flavor-neutral map surface: render state + camera + padding + generic markers +
@@ -132,7 +132,7 @@ class MapViewModel @Inject constructor(
         regionRepo = regionRepo,
         locationRepository = locationRepository,
         prefsRepository = prefsRepository,
-        context = context,
+        context = context
     )
 
     /** The shared map surface the flavor adapter binds to (render state + camera + my-location). */
@@ -154,7 +154,7 @@ class MapViewModel @Inject constructor(
         cacheSize = {
             prefsRepository.getInt(
                 R.string.preference_key_map_stop_cache_size,
-                StopsMapController.DEFAULT_STOP_CACHE_SIZE,
+                StopsMapController.DEFAULT_STOP_CACHE_SIZE
             )
         },
         // The home map stars the user's favorite stops (#1680). Room runs the query off the main thread
@@ -162,7 +162,7 @@ class MapViewModel @Inject constructor(
         favoriteStopIds = stopDao.favoriteStopIds().map { it.toSet() },
         // The home map reads through the persistent stop cache (#1754) so stops appear instantly on a
         // slow/cold-start load.
-        stopCache = stopCache,
+        stopCache = stopCache
     )
 
     // ----- Map-host surface (delegated) -----
@@ -197,12 +197,11 @@ class MapViewModel @Inject constructor(
         bikeStationsRepository = bikeStationsRepository,
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
-        scope = viewModelScope,
+        scope = viewModelScope
     )
 
     /** Toggle the home-map bikeshare layer (the host syncs the pref on resume; the FAB persists it). */
-    fun setBikeshareLayerVisible(visible: Boolean, persist: Boolean = false) =
-        bikeController.setBikeshareLayerVisible(visible, persist)
+    fun setBikeshareLayerVisible(visible: Boolean, persist: Boolean = false) = bikeController.setBikeshareLayerVisible(visible, persist)
 
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
@@ -214,7 +213,7 @@ class MapViewModel @Inject constructor(
         stopsController = stopsController,
         tripObservationRepository = tripObservationRepository,
         focusedTripRepository = focusedTripRepository,
-        scope = viewModelScope,
+        scope = viewModelScope
     )
 
     // The trip-plan directions use case (draws an itinerary's legs + start/end pins). Reused from the
@@ -258,7 +257,7 @@ class MapViewModel @Inject constructor(
             shortName = "",
             longName = "",
             agency = "",
-            routeId = routeController.routeId,
+            routeId = routeController.routeId
         )
         is LoadedRoute.Loaded -> RouteHeader(
             loading = false,
@@ -268,7 +267,7 @@ class MapViewModel @Inject constructor(
             routeId = route.id,
             routeColor = route.color,
             directions = directions,
-            currentDirectionId = currentDirectionId,
+            currentDirectionId = currentDirectionId
         )
     }
 
@@ -301,10 +300,18 @@ class MapViewModel @Inject constructor(
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
+        highlightedSegment: List<GeoPoint> = emptyList()
     ) {
         leaveCurrentView(clearStopFocus = !preserveStopFocus)
         persistRoute(routeId, directionStopId, initialDirectionId)
-        routeController.start(routeId, zoomToRoute, directionStopId, initialDirectionId, focusTripId)
+        routeController.start(
+            routeId,
+            zoomToRoute,
+            directionStopId,
+            initialDirectionId,
+            focusTripId,
+            highlightedSegment
+        )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
 
@@ -317,7 +324,7 @@ class MapViewModel @Inject constructor(
     private fun persistRoute(
         routeId: String?,
         directionStopId: String? = null,
-        initialDirectionId: Int? = null,
+        initialDirectionId: Int? = null
     ) {
         savedStateHandle[MapParams.ROUTE_ID] = routeId
         savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = directionStopId
@@ -386,7 +393,7 @@ class MapViewModel @Inject constructor(
         routes: List<ObaRoute>?,
         overlayExpanded: Boolean,
         recenter: Boolean = true,
-        animate: Boolean = false,
+        animate: Boolean = false
     ) = stopsController.focusStop(stop, routes, overlayExpanded, recenter, animate)
 
     /**
@@ -396,7 +403,7 @@ class MapViewModel @Inject constructor(
     fun showStopRoutes(
         stopId: String,
         routes: List<ObaRoute>,
-        trips: Set<FocusedTrip>,
+        trips: Set<FocusedTrip>
     ) {
         val focusedStopId = renderState.snapshot.value.focusedStopId
         if (focusedStopId != stopId) return
@@ -426,7 +433,7 @@ class MapViewModel @Inject constructor(
     fun toRoute(
         request: ShowRouteRequest,
         stopScoped: Boolean = false,
-        frameRoute: Boolean = true,
+        frameRoute: Boolean = true
     ) {
         // Same route AND same direction anchor: a plain re-tap (no focus) just reframes (the recent-routes
         // re-tap); an ETA-pill focus instead fits the vehicle+stop against the already-loaded vehicles (or
@@ -448,6 +455,7 @@ class MapViewModel @Inject constructor(
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
+                highlightedSegment = request.highlightedSegment
             )
         }
     }
@@ -471,7 +479,7 @@ class MapViewModel @Inject constructor(
         directionsController.start(itinerary)
         bikeController.start(
             directions = true,
-            selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary),
+            selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)
         )
     }
 
@@ -482,10 +490,22 @@ class MapViewModel @Inject constructor(
      * directions can't move the camera.
      */
     fun focusItineraryPoint(point: GeoPoint) {
-        if (!directionsActive) return
+        // Fires from the directions drawer in either the itinerary overview (directionsActive) or a
+        // leg's route focus (route mode) — a Board/Alight tap zooms to the stop in both.
+        if (!directionsActive && !routeController.isActive) return
         mapHost.dispatchGesture(
             CameraCommand.MoveToLocation(point, useDefaultZoom = true, animate = true)
         )
+    }
+
+    /**
+     * Frame a whole tapped itinerary leg: fit its polyline within the map's content padding, so the leg
+     * lands in the visible band above the directions results sheet. Guarded on an active directions
+     * session (like [focusItineraryPoint]); an empty point list is a no-op.
+     */
+    fun focusItineraryLeg(points: List<GeoPoint>) {
+        if (!directionsActive || points.isEmpty()) return
+        mapHost.frameItineraryLeg(points)
     }
 
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */
@@ -500,8 +520,7 @@ class MapViewModel @Inject constructor(
      * full itinerary (a null endpoint drops its pin) — so the first endpoint the user sets appears
      * immediately. See [DirectionsMapController.setEndpoints] for the supersede/clear lifecycle.
      */
-    fun setDirectionsEndpoints(from: GeoPoint?, to: GeoPoint?) =
-        directionsController.setEndpoints(from, to)
+    fun setDirectionsEndpoints(from: GeoPoint?, to: GeoPoint?) = directionsController.setEndpoints(from, to)
 
     /** Leave a route selected within stop focus and restore the stop's full adjacency presentation. */
     fun clearSelectedRoute() = showNearbyStops()
@@ -557,8 +576,7 @@ class MapViewModel @Inject constructor(
     fun onLocationPermissionResult(granted: Boolean) = mapHost.onLocationPermissionResult(granted)
 
     /** The my-location FAB / a programmatic recenter: center on the user's location, or raise an effect. */
-    fun requestMyLocation(useDefaultZoom: Boolean, animate: Boolean) =
-        mapHost.requestMyLocation(useDefaultZoom, animate)
+    fun requestMyLocation(useDefaultZoom: Boolean, animate: Boolean) = mapHost.requestMyLocation(useDefaultZoom, animate)
 
     fun zoomIn() = mapHost.zoomIn()
 
@@ -605,11 +623,10 @@ class MapViewModel @Inject constructor(
                 directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
                 // A user-selected direction persisted before process death wins over the anchor stop.
                 initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID],
-                preserveStopFocus = false,
+                preserveStopFocus = false
             )
         } else {
             showNearbyStops()
         }
     }
-
 }

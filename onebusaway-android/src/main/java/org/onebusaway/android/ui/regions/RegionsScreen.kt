@@ -177,7 +177,10 @@ private fun RegionsScreenSuccessPreview() {
                     RegionItem(3, "No-location Region", null, isCurrent = false)
                 )
             ),
-            onRetry = {}, onRefresh = {}, onRegionClick = {}, onBack = {}
+            onRetry = {},
+            onRefresh = {},
+            onRegionClick = {},
+            onBack = {}
         )
     }
 }
@@ -188,7 +191,10 @@ private fun RegionsScreenLoadingPreview() {
     ObaTheme {
         RegionsScreen(
             state = ListUiState.Loading,
-            onRetry = {}, onRefresh = {}, onRegionClick = {}, onBack = {}
+            onRetry = {},
+            onRefresh = {},
+            onRegionClick = {},
+            onBack = {}
         )
     }
 }
@@ -199,7 +205,10 @@ private fun RegionsScreenErrorPreview() {
     ObaTheme {
         RegionsScreen(
             state = ListUiState.Error,
-            onRetry = {}, onRefresh = {}, onRegionClick = {}, onBack = {}
+            onRetry = {},
+            onRefresh = {},
+            onRegionClick = {},
+            onBack = {}
         )
     }
 }

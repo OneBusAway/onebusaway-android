@@ -21,43 +21,41 @@ import android.content.Context;
 import android.content.Intent;
 
 /**
- * Receives broadcasts when the user interacts with the navigation notification and passes them
- * to the NavigationServiceProvider
+ * Receives broadcasts when the user interacts with the navigation notification and passes them to
+ * the NavigationServiceProvider
  */
 public class NavigationReceiver extends BroadcastReceiver {
-    public static final String TAG = "NavigationReceiver";
+  public static final String TAG = "NavigationReceiver";
 
-    public static final String NAV_ID = ".NAV_ID";
-    public static final String ACTION_NUM = ".ACTION_NUM";
-    public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
+  public static final String NAV_ID = ".NAV_ID";
+  public static final String ACTION_NUM = ".ACTION_NUM";
+  public static final String NOTIFICATION_ID = ".NOTIFICATION_ID";
 
-    public static final int DISMISS_NOTIFICATION = 1;
-    public static final int CANCEL_TRIP = 2;
+  public static final int DISMISS_NOTIFICATION = 1;
+  public static final int CANCEL_TRIP = 2;
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        int navId = intent.getIntExtra(NAV_ID, 0);
-        int actionNum = intent.getIntExtra(ACTION_NUM, 0);
-        int notifyId = intent.getIntExtra(NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID);
+  @Override
+  public void onReceive(Context context, Intent intent) {
+    int navId = intent.getIntExtra(NAV_ID, 0);
+    int actionNum = intent.getIntExtra(ACTION_NUM, 0);
+    int notifyId = intent.getIntExtra(NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID);
 
-        switch (actionNum) {
-            case DISMISS_NOTIFICATION:
-                NavigationServiceProvider.mTTS.stop();
-                break;
+    switch (actionNum) {
+      case DISMISS_NOTIFICATION:
+        NavigationServiceProvider.mTTS.stop();
+        break;
 
-            case CANCEL_TRIP:
-                cancelTrip(context);
-                break;
-        }
-
+      case CANCEL_TRIP:
+        cancelTrip(context);
+        break;
     }
+  }
 
-    private void cancelTrip(Context context) {
-        Context appCxt = context.getApplicationContext();
-        appCxt.stopService(new Intent(appCxt, NavigationService.class));
-        NotificationManager manager = (NotificationManager)
-                appCxt.getSystemService(Context.NOTIFICATION_SERVICE);
-        manager.cancel(NavigationServiceProvider.NOTIFICATION_ID);
-    }
-
+  private void cancelTrip(Context context) {
+    Context appCxt = context.getApplicationContext();
+    appCxt.stopService(new Intent(appCxt, NavigationService.class));
+    NotificationManager manager =
+        (NotificationManager) appCxt.getSystemService(Context.NOTIFICATION_SERVICE);
+    manager.cancel(NavigationServiceProvider.NOTIFICATION_ID);
+  }
 }

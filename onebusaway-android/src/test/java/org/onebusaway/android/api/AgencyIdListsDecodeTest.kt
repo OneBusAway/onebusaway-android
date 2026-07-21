@@ -15,13 +15,12 @@
  */
 package org.onebusaway.android.api
 
-import org.onebusaway.android.api.contract.ListWithReferences
-import org.onebusaway.android.api.contract.ObaEnvelope
-
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.contract.ListWithReferences
+import org.onebusaway.android.api.contract.ObaEnvelope
 
 /**
  * Ports the legacy RouteIdsForAgencyRequestTest / StopIdsForAgencyRequestTest onto the modernized
@@ -30,7 +29,10 @@ import org.junit.Test
  */
 class AgencyIdListsDecodeTest {
 
-    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
 
     @Test
     fun decodesRouteIds() {

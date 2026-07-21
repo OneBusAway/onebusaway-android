@@ -75,7 +75,10 @@ class SingleFlightTest {
             release.await()
             1
         }
-        val bBlock: suspend () -> Int = { bStarted = true; 2 }
+        val bBlock: suspend () -> Int = {
+            bStarted = true
+            2
+        }
 
         val a = async { singleFlight.run("a", aBlock) }
         aEntered.await() // a is now running aBlock and parked on release
@@ -94,8 +97,20 @@ class SingleFlightTest {
         var executions = 0
 
         // Entries clear on completion, so the second call is a fresh execution, not a joined one.
-        assertEquals(1, singleFlight.run("k") { executions++; 1 })
-        assertEquals(2, singleFlight.run("k") { executions++; 2 })
+        assertEquals(
+            1,
+            singleFlight.run("k") {
+                executions++
+                1
+            }
+        )
+        assertEquals(
+            2,
+            singleFlight.run("k") {
+                executions++
+                2
+            }
+        )
         assertEquals(2, executions)
     }
 
@@ -134,9 +149,20 @@ class SingleFlightTest {
         var executions = 0
 
         // The finally/remove runs even when the block is cancelled, so the entry does not linger.
-        runCatching { singleFlight.run("k") { executions++; throw CancellationException("stop") } }
+        runCatching {
+            singleFlight.run("k") {
+                executions++
+                throw CancellationException("stop")
+            }
+        }
 
-        assertEquals(7, singleFlight.run("k") { executions++; 7 })
+        assertEquals(
+            7,
+            singleFlight.run("k") {
+                executions++
+                7
+            }
+        )
         assertEquals(2, executions) // the second call ran fresh rather than joining a dead flight
     }
 

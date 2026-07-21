@@ -16,7 +16,6 @@
  */
 package org.onebusaway.android.ui.nightlight
 
-import org.onebusaway.android.ui.HomeActivity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -27,8 +26,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -56,9 +53,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.common.Shortcuts
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -186,7 +185,7 @@ private fun NightLightScreen(onBack: () -> Unit, onCreateShortcut: () -> Unit) {
                 Box {
                     IconButton(onClick = { expanded = true }) {
                         Icon(
-                            imageVector = Icons.Default.MoreVert,
+                            imageVector = AppIcons.MoreVert,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurface
                         )

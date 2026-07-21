@@ -64,10 +64,12 @@ object StopBitmaps {
 
     /** Scales [bitmap] uniformly by [factor] — shared by the flavor factories' focused/star variants. */
     @JvmStatic
-    fun scale(bitmap: Bitmap, factor: Float): Bitmap =
-        Bitmap.createScaledBitmap(
-            bitmap, (bitmap.width * factor).toInt(), (bitmap.height * factor).toInt(), true
-        )
+    fun scale(bitmap: Bitmap, factor: Float): Bitmap = Bitmap.createScaledBitmap(
+        bitmap,
+        (bitmap.width * factor).toInt(),
+        (bitmap.height * factor).toInt(),
+        true
+    )
 
     /**
      * A filled circle in [fillColor] with a thin white outline for contrast against the map, sized
@@ -121,8 +123,13 @@ object StopBitmaps {
      * gradient, plus a white outline of [outlineWidthPx] (matched by the caller to the circle's border).
      */
     private fun drawStar(
-        canvas: Canvas, cx: Float, cy: Float, size: Float,
-        topColor: Int, bottomColor: Int, outlineWidthPx: Float,
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        size: Float,
+        topColor: Int,
+        bottomColor: Int,
+        outlineWidthPx: Float
     ) {
         // Inset the star tips so the outline stays inside the bounds.
         val inset = max(1f, size / 12f)
@@ -134,8 +141,13 @@ object StopBitmaps {
         val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
             shader = LinearGradient(
-                cx, cy - outerRadius, cx, cy + outerRadius,
-                topColor, bottomColor, Shader.TileMode.CLAMP
+                cx,
+                cy - outerRadius,
+                cx,
+                cy + outerRadius,
+                topColor,
+                bottomColor,
+                Shader.TileMode.CLAMP
             )
         }
         canvas.drawPath(path, fill)
@@ -179,7 +191,7 @@ object StopBitmaps {
         starBottomColor: Int,
         arrowTipColor: Int,
         arrowBaseColor: Int,
-        starOutlineWidthPx: Float,
+        starOutlineWidthPx: Float
     ): Bitmap {
         val circleRadius = basePx / 2f
         val arrowWidth = basePx / 2f
@@ -201,8 +213,13 @@ object StopBitmaps {
         val center = size / 2f
 
         drawStar(
-            canvas, center, center, starDiameterPx.toFloat(),
-            starTopColor, starBottomColor, starOutlineWidthPx
+            canvas,
+            center,
+            center,
+            starDiameterPx.toFloat(),
+            starTopColor,
+            starBottomColor,
+            starOutlineWidthPx
         )
 
         if (hasArrow) {
@@ -210,10 +227,10 @@ object StopBitmaps {
             // its gradient to the compass direction in one step.
             val path = Path().apply {
                 fillType = Path.FillType.EVEN_ODD
-                moveTo(center, center - tipDistance)                    // tip
-                lineTo(center - arrowWidth / 2, center - baseDistance)  // lower left
-                lineTo(center, center - baseDistance - cutout)          // cutout notch
-                lineTo(center + arrowWidth / 2, center - baseDistance)  // lower right
+                moveTo(center, center - tipDistance) // tip
+                lineTo(center - arrowWidth / 2, center - baseDistance) // lower left
+                lineTo(center, center - baseDistance - cutout) // cutout notch
+                lineTo(center + arrowWidth / 2, center - baseDistance) // lower right
                 lineTo(center, center - tipDistance)
                 close()
             }
@@ -222,8 +239,13 @@ object StopBitmaps {
                     style = Paint.Style.FILL
                     // Darkest at the tip, matching the plain markers' arrow shading.
                     shader = LinearGradient(
-                        center, center - tipDistance, center, center - tipDistance + arrowHeight,
-                        arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR
+                        center,
+                        center - tipDistance,
+                        center,
+                        center - tipDistance + arrowHeight,
+                        arrowTipColor,
+                        arrowBaseColor,
+                        Shader.TileMode.MIRROR
                     )
                 }
                 drawPath(path, fill)
@@ -283,7 +305,7 @@ object StopBitmaps {
         circlePx: Int,
         arrowTipColor: Int,
         arrowBaseColor: Int,
-        onCircle: ((Canvas, Rect) -> Unit)? = null,
+        onCircle: ((Canvas, Rect) -> Unit)? = null
     ): Bitmap {
         val arrowWidthPx = circlePx / 2f
         val arrowHeightPx = circlePx / 3f
@@ -319,8 +341,13 @@ object StopBitmaps {
                 shape.setBounds(0, buffer.toInt(), circlePx, bm.height)
                 // Shade with darkest color at tip of arrow
                 arrowPaintFill.shader = LinearGradient(
-                    (bm.width / 2).toFloat(), 0f, (bm.width / 2).toFloat(), arrowHeightPx,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    (bm.width / 2).toFloat(),
+                    0f,
+                    (bm.width / 2).toFloat(),
+                    arrowHeightPx,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // For NORTH, no rotation occurs - use center of image anyway so we have some value
                 rotationX = bm.width / 2f
@@ -334,8 +361,13 @@ object StopBitmaps {
                 shape.setBounds(buffer.toInt(), buffer.toInt(), bm.width, bm.height)
                 // Shade with darkest color at tip of arrow
                 arrowPaintFill.shader = LinearGradient(
-                    0f, 0f, buffer, buffer,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    0f,
+                    0f,
+                    buffer,
+                    buffer,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // Rotate around below coordinates (trial and error)
                 rotationX = circlePx / 2f + buffer / 2f
@@ -348,8 +380,13 @@ object StopBitmaps {
                 c = Canvas(bm)
                 shape.setBounds(buffer.toInt(), 0, bm.width, bm.height)
                 arrowPaintFill.shader = LinearGradient(
-                    0f, (bm.height / 2).toFloat(), arrowHeightPx, (bm.height / 2).toFloat(),
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    0f,
+                    (bm.height / 2).toFloat(),
+                    arrowHeightPx,
+                    (bm.height / 2).toFloat(),
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // For WEST
                 rotationX = bm.height / 2f
@@ -362,8 +399,13 @@ object StopBitmaps {
                 c = Canvas(bm)
                 shape.setBounds(buffer.toInt(), 0, bm.width, circlePx)
                 arrowPaintFill.shader = LinearGradient(
-                    0f, bm.height.toFloat(), buffer, bm.height - buffer,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    0f,
+                    bm.height.toFloat(),
+                    buffer,
+                    bm.height - buffer,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // Rotate around below coordinates (trial and error)
                 rotationX = bm.width / 2f - buffer / 4f
@@ -376,9 +418,13 @@ object StopBitmaps {
                 c = Canvas(bm)
                 shape.setBounds(0, 0, bm.width, (bm.height - buffer).toInt())
                 arrowPaintFill.shader = LinearGradient(
-                    (bm.width / 2).toFloat(), bm.height.toFloat(), (bm.width / 2).toFloat(),
+                    (bm.width / 2).toFloat(),
+                    bm.height.toFloat(),
+                    (bm.width / 2).toFloat(),
                     bm.height - arrowHeightPx,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 rotationX = bm.width / 2f
                 rotationY = bm.height / 2f
@@ -390,8 +436,13 @@ object StopBitmaps {
                 c = Canvas(bm)
                 shape.setBounds(0, 0, circlePx, circlePx)
                 arrowPaintFill.shader = LinearGradient(
-                    bm.width.toFloat(), bm.height.toFloat(), bm.width - buffer, bm.height - buffer,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    bm.width.toFloat(),
+                    bm.height.toFloat(),
+                    bm.width - buffer,
+                    bm.height - buffer,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // Rotate around below coordinates (trial and error)
                 rotationX = (circlePx + buffer / 2) / 2f
@@ -404,9 +455,13 @@ object StopBitmaps {
                 c = Canvas(bm)
                 shape.setBounds(0, 0, circlePx, bm.height)
                 arrowPaintFill.shader = LinearGradient(
-                    bm.width.toFloat(), (bm.height / 2).toFloat(),
-                    bm.width - arrowHeightPx, (bm.height / 2).toFloat(),
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    bm.width.toFloat(),
+                    (bm.height / 2).toFloat(),
+                    bm.width - arrowHeightPx,
+                    (bm.height / 2).toFloat(),
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 rotationX = bm.width / 2f
                 rotationY = bm.height / 2f
@@ -419,8 +474,13 @@ object StopBitmaps {
                 shape.setBounds(0, buffer.toInt(), circlePx, bm.height)
                 // Shade with darkest color at tip of arrow
                 arrowPaintFill.shader = LinearGradient(
-                    bm.width.toFloat(), 0f, bm.width - buffer, buffer,
-                    arrowTipColor, arrowBaseColor, Shader.TileMode.MIRROR,
+                    bm.width.toFloat(),
+                    0f,
+                    bm.width - buffer,
+                    buffer,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
                 )
                 // Rotate around middle of circle
                 rotationX = circlePx / 2f

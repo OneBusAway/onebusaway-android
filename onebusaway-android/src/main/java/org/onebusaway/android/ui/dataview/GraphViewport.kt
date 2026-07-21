@@ -31,7 +31,7 @@ class GraphViewport(
     val marginLeft: Float,
     val marginTop: Float,
     val marginRight: Float,
-    val marginBottom: Float,
+    val marginBottom: Float
 ) {
     // Full data bounds (set by setDataBounds)
     var fullMinDist = 0.0
@@ -110,7 +110,7 @@ class GraphViewport(
     }
 
     /**
-     * Applies a focal-point-preserving pinch zoom. The data-space point under [focusX],[focusY] stays
+     * Applies a focal-point-preserving pinch zoom. The data-space point under [focusX], [focusY] stays
      * fixed on screen.
      */
     fun applyScale(factor: Float, focusX: Float, focusY: Float, viewWidth: Float, viewHeight: Float) {
@@ -127,7 +127,9 @@ class GraphViewport(
         val visTimeRange = (fullTimeRange / scaleY).toLong()
         val focalDist = fullMinDist + offsetDist + visDistRange * ((focusX - marginLeft) / gw)
         val focalTime =
-            fullMinTime + offsetTime + visTimeRange -
+            fullMinTime +
+                offsetTime +
+                visTimeRange -
                 (visTimeRange * ((focusY - marginTop) / gh)).toLong()
 
         scaleX = max(1f, min(20f, scaleX * factor))
@@ -138,8 +140,10 @@ class GraphViewport(
         val newVisTimeRange = (fullTimeRange / scaleY).toLong()
         offsetDist = focalDist - fullMinDist - newVisDistRange * ((focusX - marginLeft) / gw)
         offsetTime =
-            focalTime - fullMinTime - newVisTimeRange +
-                (newVisTimeRange * ((focusY - marginTop) / gh)).toLong()
+            focalTime -
+            fullMinTime -
+            newVisTimeRange +
+            (newVisTimeRange * ((focusY - marginTop) / gh)).toLong()
 
         clampOffsets()
     }
@@ -161,11 +165,9 @@ class GraphViewport(
         clampOffsets()
     }
 
-    fun toPixelX(dist: Double): Float =
-        marginLeft + graphW * ((dist - visMinDist) / visDistRange).toFloat()
+    fun toPixelX(dist: Double): Float = marginLeft + graphW * ((dist - visMinDist) / visDistRange).toFloat()
 
-    fun toPixelY(time: Long): Float =
-        marginTop + graphH * (1f - (time - visMinTime).toFloat() / visTimeRange)
+    fun toPixelY(time: Long): Float = marginTop + graphH * (1f - (time - visMinTime).toFloat() / visTimeRange)
 
     inline fun forEachTimeTick(action: (y: Float, time: Long) -> Unit) {
         val visMaxTime = visMinTime + visTimeRange

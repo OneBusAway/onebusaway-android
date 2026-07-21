@@ -16,7 +16,7 @@ This results in a total of 1 * 3 = 3 core build variants.  Each of these core va
 
 The below instructions assume you're going to be building for the **google** platform flavor and original **oba** brand by default (e.g., `obaGoogleDebug`).
 
-If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](https://github.com/OneBusAway/onebusaway-android/blob/main/REBRANDING.md).
+If you want more info about building the other brands, please see the [Rebranding OneBusAway Android page](REBRANDING.md).
 
 ### Prerequisites for both Android Studio and Gradle
 
@@ -27,7 +27,7 @@ If you want more info about building the other brands, please see the [Rebrandin
 
 1. Download, install, and run the latest version of [Android Studio](http://developer.android.com/sdk/installing/studio.html).
 1. At the welcome screen select `Import Project`, browse to the location of this repository and select it then select Ok.
-1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](onebusaway-android/build.gradle.kts)) then select OK.
+1. Open the Android SDK Manager (Tools->Android->SDK Manager) and add a checkmark for the necessary API level (see `compileSdk` in [`onebusaway-android/build.gradle.kts`](../onebusaway-android/build.gradle.kts)) then select OK.
 1. Connect a [debugging enabled](https://developer.android.com/tools/device.html) Android device to your computer or setup an Android Virtual Device (Tools->Andorid->AVD Manager).
 1. Open the "Build Variants" window (it appears as a vertical button on left side of workspace by default) & choose **obaGoogleDebug** to select the Google Play version.
 1. Click the green play button (or Alt+Shift+F10) to build and run the project!

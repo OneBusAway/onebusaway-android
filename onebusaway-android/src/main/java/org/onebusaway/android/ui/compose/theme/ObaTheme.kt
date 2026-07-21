@@ -29,7 +29,7 @@ import org.onebusaway.android.R
  *
  * Colors are read via [colorResource] instead of being duplicated as Kotlin constants so there is
  * a single source of truth: night mode switches automatically with the resource configuration,
- * and white-label brand flavors that override colors.xml (see REBRANDING.md) are respected
+ * and white-label brand flavors that override colors.xml (see docs/REBRANDING.md) are respected
  * without any Compose-side changes. Slots not defined in colors.xml fall back to the Material 3
  * baseline for the current light/dark mode.
  */

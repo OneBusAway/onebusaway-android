@@ -48,7 +48,7 @@ import org.onebusaway.android.util.RegionUtils;
  * Loads previously recorded trips (GPS data) and replays them through the NavigationServiceProvider
  * via the NavigationSimulation class.
  *
- * <p>For creating new test methods - see the file DESTINATION_REMINDERS.md
+ * <p>For creating new test methods - see the file docs/DESTINATION_REMINDERS.md
  */
 @RunWith(AndroidJUnit4.class)
 public class NavigationTest extends ObaTestCase {

@@ -73,7 +73,8 @@ That's it! All other branded strings use `%1$s` placeholders that automatically 
     <color name="brand_color_dark">#YOUR_DARK_COLOR</color>
     <color name="theme_muted">#YOUR_MUTED_COLOR</color>
     <color name="theme_accent">#YOUR_ACCENT_COLOR</color>
-    <color name="tutorial_background">#dfYOUR_PRIMARY</color>
+    <!-- Primary color with a "df" alpha prefix (~87% opaque) -->
+    <color name="tutorial_background">#dfYOUR_PRIMARY_COLOR</color>
     <color name="ic_launcher_background">#YOUR_PRIMARY_COLOR</color>
     <!-- Keep on-time arrivals green even if your theme isn't green -->
     <color name="stop_info_ontime">#4CAF50</color>
@@ -103,7 +104,7 @@ Use [Android Asset Studio](http://romannurik.github.io/AndroidAssetStudio/icons-
 
 ### Step 4: Add Firebase Configuration (Optional)
 
-Add your app's Firebase client info to `google-services.json`. See `docs/REBRANDING.md` for detailed instructions.
+Add your app's Firebase client info to `google-services.json`. See [`REBRANDING.md`](../../docs/REBRANDING.md) for detailed instructions.
 
 **Note on API key security:** Firebase API keys in `google-services.json` are safe to commit to version control. Unlike server-side API keys, these client-side keys are designed to be embedded in apps and are protected by:
 - Package name restrictions (the key only works for your specific app ID)

@@ -20,15 +20,15 @@ We have one Gradle "platform" flavor dimension:
 * **agencyY** = A sample rebranded version of OneBusAway for a fictitious "Agency Y"
 * **kiedybus** = KiedyBus, a Polish transit app
 
-Here's where you can download the apps for each of these brands on Google Play:
+Here's where you can download three of these brands on Google Play (KiedyBus is maintained by a third party and isn't listed here):
 
 * [OneBusAway](https://play.google.com/store/apps/details?id=com.joulespersecond.seattlebusbot)
 * [Agency X](https://play.google.com/store/apps/details?id=org.agencyx.android)
 * [Agency Y](https://play.google.com/store/apps/details?id=org.agencyy.android)
 
-And here are screenshots for these 3 brands:
+And here are screenshots of those same three brands:
 
-<img src="https://cloud.githubusercontent.com/assets/928045/23876835/a6ceb718-0815-11e7-866a-5daef01d0a08.png" width="496" height="281" align=center />
+<img src="https://cloud.githubusercontent.com/assets/928045/23876835/a6ceb718-0815-11e7-866a-5daef01d0a08.png" alt="Side-by-side screenshots of the OneBusAway, Agency X, and Agency Y brands, each showing the same stop and arrival times screen in its own brand colors" width="496" height="281" align=center />
 
 Each brand is deployed as an independent app on Google Play (using the **google** platform flavor).
 
@@ -74,13 +74,13 @@ android.productFlavors {
 }
 ```
 
-See `flavors/README.md` for the complete list of configuration options.
+See [`onebusaway-android/flavors/README.md`](../onebusaway-android/flavors/README.md) for the complete list of configuration options.
 
 ### Step 2: Create Resource Directory
 
 Create minimal resources in `src/newBrandName/res/`:
 
-```
+```text
 src/newBrandName/
 └── res/
     ├── values/
@@ -118,7 +118,8 @@ All other branded strings use `%1$s` placeholders that automatically substitute 
     <color name="brand_color_dark">#YOUR_DARK_COLOR</color>
     <color name="theme_muted">#YOUR_MUTED_COLOR</color>
     <color name="theme_accent">#YOUR_ACCENT_COLOR</color>
-    <color name="tutorial_background">#dfYOUR_PRIMARY</color>
+    <!-- Primary color with a "df" alpha prefix (~87% opaque) -->
+    <color name="tutorial_background">#dfYOUR_PRIMARY_COLOR</color>
     <color name="ic_launcher_background">#YOUR_PRIMARY_COLOR</color>
     <!-- Keep on-time color green even if your theme isn't green -->
     <color name="stop_info_ontime">#4CAF50</color>
@@ -189,43 +190,37 @@ Firebase provides analytics and crash reporting. To set up Firebase for your bra
 
 #### Adding Your App to google-services.json
 
-Open `onebusaway-android/google-services.json` and add your app's client entry to the `client` array:
+Open `onebusaway-android/google-services.json` and append the following object to the existing `client` array, leaving the top-level `project_info` and the existing `client` entries untouched:
 
 ```json
 {
-  "project_info": { ... },
-  "client": [
-    // ... existing entries ...
+  "client_info": {
+    "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
+    "android_client_info": {
+      "package_name": "com.newbrandname.android"
+    }
+  },
+  "oauth_client": [
     {
-      "client_info": {
-        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_ID",
-        "android_client_info": {
-          "package_name": "com.newbrandname.android"
-        }
-      },
-      "oauth_client": [
+      "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+      "client_type": 3
+    }
+  ],
+  "api_key": [
+    {
+      "current_key": "YOUR_FIREBASE_API_KEY"
+    }
+  ],
+  "services": {
+    "appinvite_service": {
+      "other_platform_oauth_client": [
         {
           "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
           "client_type": 3
         }
-      ],
-      "api_key": [
-        {
-          "current_key": "YOUR_FIREBASE_API_KEY"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
+      ]
     }
-  ]
+  }
 }
 ```
 
@@ -304,7 +299,7 @@ Users can change the sorting style using the "Sort by" button regardless of the 
 `USE_PELIAS_GEOCODING` - Controls which service is used for searching origins and destinations in trip planning:
 
 * `true` - Uses the [Pelias geocoder](https://github.com/pelias/pelias) (configured for [geocode.earth](https://geocode.earth/) by default). Requires a Pelias API key in `gradle.properties`:
-  ```
+  ```properties
   Pelias_newBrandName=YOUR_API_KEY
   ```
 * `false` - Uses the [Google Places SDK](https://developers.google.com/places/android-sdk/intro). Requires a Google Maps Platform billing account.
@@ -313,9 +308,9 @@ Users can change the sorting style using the "Sort by" button regardless of the 
 
 See the following flavor files for complete examples:
 
-* `flavors/agencyX.gradle` - Multi-region brand with Style A arrivals
-* `flavors/agencyY.gradle` - Fixed-region brand with Style B arrivals
-* `flavors/kiedybus.gradle` - Multi-region brand with custom regions API
+* [`agencyX.gradle`](../onebusaway-android/flavors/agencyX.gradle) - Multi-region brand with Style A arrivals
+* [`agencyY.gradle`](../onebusaway-android/flavors/agencyY.gradle) - Fixed-region brand with Style B arrivals
+* [`kiedybus.gradle`](../onebusaway-android/flavors/kiedybus.gradle) - Multi-region brand with custom regions API
 
 ## Acknowledgements
 

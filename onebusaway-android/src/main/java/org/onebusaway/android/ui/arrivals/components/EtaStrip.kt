@@ -86,8 +86,7 @@ import org.onebusaway.android.util.DisplayFormat
  * [now]), or -1 when every trip is recent-past. The single source of the "which pill leads" rule,
  * shared by the strip's first-display pin and its live-departure BOOKKEEPER so the two can't disagree.
  */
-private fun List<ArrivalInfo>.firstUpcomingIndex(now: ServerTime): Int =
-    indexOfFirst { it.liveEta(now) >= 0 }
+private fun List<ArrivalInfo>.firstUpcomingIndex(now: ServerTime): Int = indexOfFirst { it.liveEta(now) >= 0 }
 
 /**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills

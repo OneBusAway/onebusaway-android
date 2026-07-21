@@ -31,8 +31,10 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
  * On-device regression test for the strip justifying to its first non-negative ETA (recent-past
- * pills overflowing off the left, see EtaStrip's `start` parameter). Renders the real composable —
- * not a fake — and asserts the scroll actually happened, since a broken justify silently leaves
+ * pills overflowing off the left). The strip derives this first-upcoming justify internally from
+ * `trips`, so this also guards against the #1973 regression where forgetting to justify let the pin
+ * start at 0 and glide-animate the recent-past pills off on entry. Renders the real composable — not
+ * a fake — and asserts the scroll actually happened, since a broken justify silently leaves
  * scrollState at 0. Covers both a strip that overflows its host and one whose pills fit (where the
  * justify only works because SlideBox floors the content width — see EtaStrip's `minReachablePx`).
  */
@@ -77,8 +79,8 @@ class EtaStripJustifyTest {
     }
 
     /**
-     * Renders the real [EtaStrip] in a [hostWidth]-wide host, justified to its first upcoming ETA,
-     * and asserts the strip actually scrolls the recent-past pills off the leading edge.
+     * Renders the real [EtaStrip] in a [hostWidth]-wide host and asserts the strip actually scrolls
+     * the recent-past pills off the leading edge, justifying to its first upcoming ETA.
      *
      * The measure -> onGloballyPositioned -> pinnedOffsetPx write -> LaunchedEffect -> scrollTo chain
      * spans a recomposition, so a single waitForIdle() can return before scrollTo has run. Poll
@@ -86,7 +88,6 @@ class EtaStripJustifyTest {
      * broken justify silently leaves scrollState at 0.
      */
     private fun assertJustifiesLeadingEdge(hostWidth: Dp, trips: List<ArrivalInfo>) {
-        val firstUpcomingIndex = trips.indexOfFirst { it.eta >= 0 }
         lateinit var scrollState: ScrollState
 
         composeRule.setContent {
@@ -96,7 +97,6 @@ class EtaStripJustifyTest {
                     trips = trips,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
-                    start = firstUpcomingIndex,
                     scrollState = scrollState
                 )
             }

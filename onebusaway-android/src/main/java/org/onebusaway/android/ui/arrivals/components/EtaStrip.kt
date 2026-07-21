@@ -89,9 +89,9 @@ import org.onebusaway.android.util.DisplayFormat
  * strip's own drag-to-scroll.
  *
  * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
- * there instantly on first display (using [start]), then as the shared live clock ticks a trip's ETA
- * past zero between polls, glides the strip left so the just-departed pill visibly slides into the
- * left overflow instead of sitting there stale until the next poll.
+ * there instantly on first display, then as the shared live clock ticks a trip's ETA past zero
+ * between polls, glides the strip left so the just-departed pill visibly slides into the left
+ * overflow instead of sitting there stale until the next poll.
  */
 @Composable
 internal fun EtaStrip(
@@ -99,10 +99,6 @@ internal fun EtaStrip(
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
-    // The trip index to justify to the strip's leading (left) edge on first display; earlier trips
-    // (e.g. the recent-past, negative-ETA pills) then overflow off the left, reachable via the left
-    // chevron. Null (or index 0) leaves the strip at its start.
-    start: Int? = null,
     firstPillModifier: Modifier = Modifier,
     // Hoisted so callers (and previews) can control/observe the scroll — e.g. a preview starts it
     // mid-scroll to show both edge chevrons.
@@ -123,10 +119,16 @@ internal fun EtaStrip(
     var pinnedOffsetPx by remember { mutableIntStateOf(-1) }
 
     // The pill currently pinned to the strip's leading edge — earlier (recent-past) pills overflow off
-    // the left, reachable via the left chevron. Starts at the poll-time first-upcoming index (or 0,
-    // already the strip's start, when every trip is upcoming); only ever advances forward, from the
-    // BOOKKEEPER effect below — never yanked backward by an ordinary poll data reshuffle.
-    var pinnedIndex by remember { mutableIntStateOf(start?.takeIf { it in 1..trips.lastIndex } ?: 0) }
+    // the left, reachable via the left chevron. Initialized to the first-upcoming index so the strip
+    // justifies there on first display (0 — already the strip's start — when the first pill is itself
+    // upcoming, or when none is). Derived from `trips` with the SAME predicate the BOOKKEEPER effect
+    // uses below, so first-display and steady-state agree and no caller can desync them by forgetting
+    // to pass it (#1973). Thereafter only ever advances forward, from the BOOKKEEPER — never yanked
+    // backward by an ordinary poll data reshuffle.
+    var pinnedIndex by remember {
+        val firstUpcoming = trips.indexOfFirst { it.liveEta(liveNow) >= 0 }
+        mutableIntStateOf(firstUpcoming.takeIf { it in 1..trips.lastIndex } ?: 0)
+    }
 
     // A one-shot scroll target (absolute, same units as pinnedOffsetPx) set by tapping an overflow
     // chevron; takes priority over the pinned-pill anchor below. Left in place once reached — like an

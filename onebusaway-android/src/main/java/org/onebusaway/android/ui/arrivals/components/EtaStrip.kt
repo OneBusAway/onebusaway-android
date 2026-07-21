@@ -82,6 +82,13 @@ import org.onebusaway.android.util.DisplayFormat
 // not a gesture on this strip.
 
 /**
+ * Index of the soonest *upcoming* pill (first trip whose live ETA hasn't gone negative against
+ * [now]), or -1 when every trip is recent-past. The single source of the "which pill leads" rule,
+ * shared by the strip's first-display pin and its live-departure BOOKKEEPER so the two can't disagree.
+ */
+private fun List<ArrivalInfo>.firstUpcomingIndex(now: ServerTime): Int = indexOfFirst { it.liveEta(now) >= 0 }
+
+/**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills
  * overflow the row, a chevron appears at that edge to signal there's more to scroll to; tapping it
  * moves the strip one strip-width further that direction (or to the end, whichever is closer). The
@@ -89,9 +96,9 @@ import org.onebusaway.android.util.DisplayFormat
  * strip's own drag-to-scroll.
  *
  * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
- * there instantly on first display (using [start]), then as the shared live clock ticks a trip's ETA
- * past zero between polls, glides the strip left so the just-departed pill visibly slides into the
- * left overflow instead of sitting there stale until the next poll.
+ * there instantly on first display, then as the shared live clock ticks a trip's ETA past zero
+ * between polls, glides the strip left so the just-departed pill visibly slides into the left
+ * overflow instead of sitting there stale until the next poll.
  */
 @Composable
 internal fun EtaStrip(
@@ -99,10 +106,6 @@ internal fun EtaStrip(
     actionsFor: (ArrivalInfo) -> ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
-    // The trip index to justify to the strip's leading (left) edge on first display; earlier trips
-    // (e.g. the recent-past, negative-ETA pills) then overflow off the left, reachable via the left
-    // chevron. Null (or index 0) leaves the strip at its start.
-    start: Int? = null,
     firstPillModifier: Modifier = Modifier,
     // Hoisted so callers (and previews) can control/observe the scroll — e.g. a preview starts it
     // mid-scroll to show both edge chevrons.
@@ -123,10 +126,15 @@ internal fun EtaStrip(
     var pinnedOffsetPx by remember { mutableIntStateOf(-1) }
 
     // The pill currently pinned to the strip's leading edge — earlier (recent-past) pills overflow off
-    // the left, reachable via the left chevron. Starts at the poll-time first-upcoming index (or 0,
-    // already the strip's start, when every trip is upcoming); only ever advances forward, from the
-    // BOOKKEEPER effect below — never yanked backward by an ordinary poll data reshuffle.
-    var pinnedIndex by remember { mutableIntStateOf(start?.takeIf { it in 1..trips.lastIndex } ?: 0) }
+    // the left, reachable via the left chevron. Initialized to the first-upcoming index so the strip
+    // justifies there on first display (0 — already the strip's start — when the first pill is itself
+    // upcoming, or when none is; `firstUpcomingIndex` returns -1 there, floored to 0). Uses the SAME
+    // `firstUpcomingIndex` helper the BOOKKEEPER effect uses below, so first-display and steady-state
+    // agree and no caller can desync them by forgetting to pass it (#1973). Thereafter only ever
+    // advances forward, from the BOOKKEEPER — never yanked backward by an ordinary poll data reshuffle.
+    var pinnedIndex by remember {
+        mutableIntStateOf(trips.firstUpcomingIndex(liveNow).coerceAtLeast(0))
+    }
 
     // A one-shot scroll target (absolute, same units as pinnedOffsetPx) set by tapping an overflow
     // chevron; takes priority over the pinned-pill anchor below. Left in place once reached — like an
@@ -151,7 +159,7 @@ internal fun EtaStrip(
     // exactly once as a level change, not by polling a recomposition-derived key. Never backward, so
     // an ordinary poll data reshuffle can't yank the pin; only a live departure moves it.
     LaunchedEffect(Unit) {
-        snapshotFlow { tripsState.value.indexOfFirst { it.liveEta(liveNowState.value) >= 0 } }
+        snapshotFlow { tripsState.value.firstUpcomingIndex(liveNowState.value) }
             .collect { current ->
                 if (current > pinnedIndex) {
                     pinnedIndex = current

@@ -356,9 +356,6 @@ fun RouteArrivalRow(
                         trips = group.trips,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
-                        // Justify the soonest upcoming pill to the leading edge (the ETA the row is
-                        // sorted by), so recent-past pills overflow left.
-                        start = group.firstUpcomingIndex,
                         firstPillModifier = etaAnchor
                     )
                 }

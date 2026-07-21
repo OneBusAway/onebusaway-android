@@ -35,7 +35,7 @@ If you use an issue management system that supports the Open311 standard, you ca
 
 ## Configure your own servers
 
-#### OneBusAway and OpenTripPlanner
+### OneBusAway and OpenTripPlanner
 
 See the [Getting Started](https://github.com/OneBusAway/onebusaway-application-modules#getting-started) section of the [**onebusaway-application-modules**](https://github.com/OneBusAway/onebusaway-application-modules) project to set up your own OneBusAway server - this is a good place to start, and will give you arrival estimates and service alerts in the OneBusAway Android app.
 
@@ -45,6 +45,6 @@ After you've tested arrival information, if you want to add trip planning and/or
 
 When you have this set up, see the [Custom Servers](CUSTOM_SERVERS.md#opentripplanner-api-server) documentation again to point your OBA Android app to your new OTP server.
 
-#### Open311
+### Open311
 
 Currently we don't have a way to easily plug an Open311 server URL directly into the OBA Android app UI to test, but [let us know](https://github.com/OneBusAway/onebusaway/wiki/Contact-Us) if you'd like to test it out and we'll help out.

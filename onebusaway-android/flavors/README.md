@@ -103,7 +103,7 @@ Use [Android Asset Studio](http://romannurik.github.io/AndroidAssetStudio/icons-
 
 ### Step 4: Add Firebase Configuration (Optional)
 
-Add your app's Firebase client info to `google-services.json`. See `docs/REBRANDING.md` for detailed instructions.
+Add your app's Firebase client info to `google-services.json`. See [`REBRANDING.md`](../../docs/REBRANDING.md) for detailed instructions.
 
 **Note on API key security:** Firebase API keys in `google-services.json` are safe to commit to version control. Unlike server-side API keys, these client-side keys are designed to be embedded in apps and are protected by:
 - Package name restrictions (the key only works for your specific app ID)

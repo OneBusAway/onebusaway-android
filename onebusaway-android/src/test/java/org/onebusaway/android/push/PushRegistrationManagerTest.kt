@@ -355,6 +355,22 @@ class PushRegistrationManagerTest {
     }
 
     @Test
+    fun `a backwards device-clock jump refreshes once instead of starving the keep-alive`() = runTest {
+        val f = Fixture(this).registered("T1")
+
+        // The clock is set back past the record's stamp: elapsed-since-sent would read negative, which
+        // must count as stale — otherwise the keep-alive stays silent until the clock catches back up,
+        // within reach of the 180-day prune for a large jump.
+        f.now -= 2.hours
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+
+        // The refresh restamped at the new clock, so the next sync is quiet again.
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+    }
+
+    @Test
     fun `a missing region is treated as not-yet-known rather than an opt-out`() = runTest {
         val f = Fixture(this).registered("T1")
 

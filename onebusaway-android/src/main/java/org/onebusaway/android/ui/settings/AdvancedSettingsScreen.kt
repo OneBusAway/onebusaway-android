@@ -192,7 +192,14 @@ fun AdvancedSettingsScreen(
                 )
                 SwitchPreferenceItem(
                     title = stringResource(R.string.preferences_push_test_device_title),
-                    summary = stringResource(R.string.preferences_push_test_device_summary),
+                    // On-but-unnamed is the one state where the toggle silently has no effect (the
+                    // device registers normally until a name is set — see PushRegistrationManager),
+                    // so say exactly that instead of the generic description.
+                    summary = if (state.pushTestDevice && state.pushTestDeviceName == null) {
+                        stringResource(R.string.preferences_push_test_device_unnamed_summary)
+                    } else {
+                        stringResource(R.string.preferences_push_test_device_summary)
+                    },
                     checked = state.pushTestDevice,
                     onCheckedChange = onPushTestDevice
                 )
@@ -203,6 +210,8 @@ fun AdvancedSettingsScreen(
                     currentValue = state.pushTestDeviceName,
                     hint = stringResource(R.string.preferences_push_test_device_name_title),
                     onValueChange = onPushTestDeviceName,
+                    // The name only matters while registering as a test device, so it follows the toggle.
+                    enabled = state.pushTestDevice,
                     keyboardType = KeyboardType.Text
                 )
                 EditTextPreferenceItem(

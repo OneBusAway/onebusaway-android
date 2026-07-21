@@ -66,13 +66,18 @@ class PushRegistrationStore internal constructor(
     }
 
     /**
-     * How long ago [last] was sent, or null if unknown — no record, or one written before this slot
-     * existed. Purely local elapsed time measured against our own write ([WallTime] on both ends), never
-     * against a server timestamp, so no server-clock crossing is involved.
+     * How long ago [last] was sent, or null if unknown — no record, one written before this slot
+     * existed, or a device wall clock that has since been set backwards (the elapsed time would read
+     * negative, which would silence the [PUSH_REFRESH_INTERVAL] keep-alive until the clock caught back
+     * up — for a large jump, long enough for the server's 180-day prune to drop the device). Unknown
+     * counts as stale, so the caller re-POSTs and [record] restamps at the new clock, healing the jump.
+     *
+     * Purely local elapsed time measured against our own write ([WallTime] on both ends), never against
+     * a server timestamp, so no server-clock crossing is involved.
      */
     fun sinceLastSent(): Duration? {
         val sentAtMs = prefs.getLong(KEY_SENT_AT, 0L).takeIf { it > 0L } ?: return null
-        return now() - WallTime(sentAtMs)
+        return (now() - WallTime(sentAtMs)).takeIf { !it.isNegative() }
     }
 
     /** Commits [registration] as the live record and stamps the refresh clock. */
@@ -93,6 +98,10 @@ class PushRegistrationStore internal constructor(
     /** Forgets the live record, so [last] reports nothing on record. */
     fun clear() {
         prefs.setString(KEY_TOKEN, null)
+        // Dropped with the record it stamped (after the sentinel, so a torn clear still reads as "no
+        // record"): sinceLastSent() must not report an elapsed time for a registration last() says
+        // doesn't exist.
+        prefs.setLong(KEY_SENT_AT, 0L)
     }
 
     /**

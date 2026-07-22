@@ -760,7 +760,6 @@
 
     <!-- Report issue -->
     <string name="report_dialog_stop_header">Napauta pysäkkiä kartalla</string>
-    <string name="report_problem_report">Ilmoita</string>
     <string name="ri_others">Muut</string>
     <string name="ri_desc_hint">Ongelman kuvaus</string>
     <string name="ri_button_camera">Kamera</string>
@@ -808,7 +807,6 @@
     <string name="wheelchair_accessible">Vältä portaita</string>
     <string name="travel_by_label">Matkustustapa: </string>
     <string name="tripplanner_no_server_selected_error">Aluetta ei ole valittu</string>
-    <string name="tripplanner_error_dialog_title">Suunnittelu ei mahdollista</string>
     <string name="tripplanner_error_not_defined">Pahoittelut, jokin meni pieleen. Yritä uudelleen.</string>
     <string name="tripplanner_error_request_timeout">Tarkista internetyhteys ja yritä uudelleen.</string>
     <string name="tripplanner_error_system">Tarkista internetyhteys ja yritä uudelleen.</string>
@@ -826,9 +824,7 @@
     <string name="tripplanner_error_geocode_from_to_ambiguous">Lähtöpaikka ja määränpää ovat epäselviä</string>
     <string name="tripplanner_error_triangle">Jokin meni pieleen. Muuta pyöräilyasetuksia ja yritä uudelleen</string>
     <string name="tripplanner_current_location">Nykyinen sijainti</string>
-    <string name="tripplanner_no_contact">Tälle alueelle ei ole matkasuunnittelun yhteystietoa.</string>
     <string name="tripplanner_reverse">Käännä</string>
-    <string name="tripplanner_report_trip_problem">Ilmoita matkasuunnitelman ongelmasta</string>
     <string name="connector_before_route">Linja</string>
     <string name="time_connector_next_day">huomenna</string>
     <string name="time_connector_before_time">klo</string>

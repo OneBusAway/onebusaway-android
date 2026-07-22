@@ -108,7 +108,6 @@
 
     <!-- The below region name value needs to match existing iOS Firebase User Property -->
     <string name="analytics_label_region_name">RegionName</string>
-    <string name="analytics_label_trip_plan">Planned a Trip</string>
     <string name="analytics_label_button_press_star">starred_stops</string>
     <string name="analytics_label_button_press_reminders">my_reminders</string>
     <string name="analytics_label_button_press_trip_plan">trip_plan</string>
@@ -136,7 +135,6 @@
     <string name="analytics_label_stop_problem">feedback_stop_problem</string>
     <string name="analytics_label_trip_problem">feedback_trip_problem</string>
     <string name="analytics_label_app_feedback">feedback_app_feedback_email</string>
-    <string name="analytics_label_app_feedback_otp">Reported OTP problem</string>
     <string name="analytics_label_app_feedback_without_location">feedback_app_feedback_email_no_location</string>
     <string name="analytics_label_customer_service">feedback_customer_service</string>
     <string name="analytics_label_customer_service_web">Open web page</string>

@@ -16,14 +16,12 @@
 package org.onebusaway.android.ui.home.help
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
@@ -58,18 +56,10 @@ class HelpViewModel @Inject constructor(
     private val _state = MutableStateFlow(HelpUiState())
     val state: StateFlow<HelpUiState> = _state.asStateFlow()
 
-    // Whether a region has resolved — gates the auto-show of "What's New". Reads the shared
-    // [RegionRepository.regionPresent] predicate; [HelpFeature] reads it. Mirrors the manual
-    // collect-into-MutableStateFlow idiom used by the other feature VMs (WeatherViewModel) rather than a
-    // SharingStarted.Eagerly stateIn, whose never-completing collector leaks across JVM unit tests.
-    private val _regionReady = MutableStateFlow(regionRepository.region.value != null)
-    val regionReady: StateFlow<Boolean> = _regionReady.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            regionRepository.regionPresent.collect { _regionReady.value = it }
-        }
-    }
+    // Whether a region has resolved — gates the auto-show of "What's New". The repository owns this hot
+    // predicate ([RegionRepository.regionPresent]); [HelpFeature] reads it. Re-exposed verbatim (no local
+    // mirror needed).
+    val regionReady: StateFlow<Boolean> get() = regionRepository.regionPresent
 
     /**
      * The Twitter/X URL to open from the help menu: the current region's own Twitter URL when it has

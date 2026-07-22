@@ -24,10 +24,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.BuildConfig
@@ -59,11 +60,12 @@ interface RegionRepository {
     fun currentRegion(): Region? = region.value
 
     /**
-     * Whether a region is currently resolved — the deduped `region != null` projection. Derived once
-     * here so feature view models (survey, what's-new gate) consume one canonical predicate instead of
-     * each re-deriving it from [region].
+     * Whether a region is currently resolved — the deduped `region != null` projection, as a **hot**
+     * [StateFlow] with a synchronous `.value`. Owned here so feature view models (survey, what's-new gate)
+     * consume one canonical predicate they can collect *and* read synchronously, instead of each snapshotting
+     * [region] and re-collecting it into a private mirror (#1969).
      */
-    val regionPresent: Flow<Boolean> get() = region.map { it != null }.distinctUntilChanged()
+    val regionPresent: StateFlow<Boolean>
 
     /**
      * The richer resolution state — what the UI can render directly: a refresh in flight,
@@ -166,6 +168,14 @@ class DefaultRegionRepository @Inject constructor(
     override val region: StateFlow<Region?> get() = holder.region
 
     override val state: StateFlow<RegionState> get() = holder.state
+
+    // The canonical "is a region resolved?" predicate, kept hot on the app scope so consumers get a
+    // synchronous .value and one shared collector instead of each mirroring [region] themselves (#1969).
+    // Eagerly (not WhileSubscribed): it's a trivial derived boolean on a process-lifetime singleton, and
+    // keeping .value always current matters more than shedding a no-op collector when nobody's subscribed.
+    override val regionPresent: StateFlow<Boolean> =
+        holder.region.map { it != null }.distinctUntilChanged()
+            .stateIn(appScope, SharingStarted.Eagerly, holder.region.value != null)
 
     /** Loads the persisted current region (by the saved region-id) from the cache, or null if none. */
     private suspend fun loadPersistedRegion(): Region? {

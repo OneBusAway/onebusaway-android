@@ -23,23 +23,64 @@ import org.junit.Test
 class RegionStateHolderTest {
 
     @Test
-    fun `the seed region is the initial value and Active`() {
-        // Region equality is id-based, so region(1) matches the seeded region(1).
-        val holder = RegionStateHolder(region(1))
+    fun `starts with a null region and a Resolving state`() {
+        // The state starts Resolving (not Active) so cold-start consumers can tell "not resolved yet" from
+        // a real Active (#1969); the repository's init settles it via settleIfResolving().
+        val holder = RegionStateHolder()
+        assertNull(holder.region.value)
+        assertEquals(RegionState.Resolving, holder.state.value)
+    }
+
+    @Test
+    fun `settleIfResolving activates while the state is still Resolving`() {
+        val holder = RegionStateHolder()
+        holder.settleIfResolving(region(1))
         assertEquals(region(1), holder.region.value)
         assertEquals(RegionState.Active(region(1)), holder.state.value)
     }
 
     @Test
-    fun `a null seed yields a null Active`() {
-        val holder = RegionStateHolder(null)
+    fun `settleIfResolving with null is the deliberate custom-URL Active(null)`() {
+        val holder = RegionStateHolder()
+        holder.settleIfResolving(null)
         assertNull(holder.region.value)
         assertEquals(RegionState.Active(null), holder.state.value)
     }
 
     @Test
+    fun `settleIfResolving settles over a refresh's transient resolving`() {
+        // A refresh marks Resolving before its IO; the init seed may land mid-flight and is allowed to
+        // publish early — the refresh's terminal write then supersedes it (#1969).
+        val holder = RegionStateHolder().apply { resolving() }
+        holder.settleIfResolving(region(1))
+        assertEquals(region(1), holder.region.value)
+        assertEquals(RegionState.Active(region(1)), holder.state.value)
+    }
+
+    @Test
+    fun `settleIfResolving is a no-op once the state has settled`() {
+        // Regression guard for the #1969 review note: a refresh that has already resolved — to Active,
+        // NeedsManualChoice, or Failed — owns the state; the late init seed must not clobber it.
+        val active = RegionStateHolder().apply { activated(region(1)) }
+        active.settleIfResolving(region(2))
+        assertEquals(region(1), active.region.value)
+        assertEquals(RegionState.Active(region(1)), active.state.value)
+
+        val regions = listOf(region(1), region(2))
+        val choosing = RegionStateHolder().apply { needsChoice(regions) }
+        choosing.settleIfResolving(region(3))
+        assertNull(choosing.region.value)
+        assertEquals(RegionState.NeedsManualChoice(regions), choosing.state.value)
+
+        val failed = RegionStateHolder().apply { failed() }
+        failed.settleIfResolving(region(3))
+        assertNull(failed.region.value)
+        assertEquals(RegionState.Failed, failed.state.value)
+    }
+
+    @Test
     fun `activated updates region and state, including back to null`() {
-        val holder = RegionStateHolder(region(1))
+        val holder = RegionStateHolder()
         holder.activated(region(2))
         assertEquals(region(2), holder.region.value)
         assertEquals(RegionState.Active(region(2)), holder.state.value)
@@ -50,7 +91,8 @@ class RegionStateHolderTest {
 
     @Test
     fun `resolving and failed change state but keep the last region`() {
-        val holder = RegionStateHolder(region(1))
+        // Region equality is id-based, so region(1) matches the activated region(1).
+        val holder = RegionStateHolder().apply { activated(region(1)) }
         holder.resolving()
         assertEquals(region(1), holder.region.value)
         assertEquals(RegionState.Resolving, holder.state.value)
@@ -61,7 +103,7 @@ class RegionStateHolderTest {
 
     @Test
     fun `needsChoice carries the regions and keeps the last region`() {
-        val holder = RegionStateHolder(null)
+        val holder = RegionStateHolder()
         val regions = listOf(region(1), region(2))
         holder.needsChoice(regions)
         assertNull(holder.region.value)

@@ -389,6 +389,7 @@ fun HomeScreen(
                         title = arrivalsContent?.header?.name?.takeIf { it.isNotBlank() }
                             ?: currentFocus.stop.name.orEmpty(),
                         direction = arrivalsContent?.header?.direction,
+                        stopCode = arrivalsContent?.stopCode ?: currentFocus.stop.code,
                         isFavorite = arrivalsContent?.header?.isFavorite == true,
                         favoriteEnabled = arrivalsContent != null,
                         hasAlerts = arrivalsContent?.hasAlerts == true,

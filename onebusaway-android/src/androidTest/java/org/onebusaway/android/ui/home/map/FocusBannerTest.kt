@@ -47,6 +47,7 @@ class FocusBannerTest {
                 state = FocusBannerState.Stop(
                     title = "Pine St & 3rd Ave",
                     direction = "N",
+                    stopCode = "12345",
                     isFavorite = false,
                     favoriteEnabled = true,
                     hasAlerts = hasAlerts,
@@ -124,7 +125,10 @@ class FocusBannerTest {
     @Test
     fun stopBannerShowsIdentityAndFullSubordinateRouteChain() {
         setStopBanner()
-        composeRule.onNodeWithText("Pine St & 3rd Ave (N)").assertIsDisplayed()
+        composeRule.onNodeWithText("Pine St & 3rd Ave").assertIsDisplayed()
+        val expectedSubtitle = "${context.getString(R.string.stop_details_code, "12345")} · " +
+            context.getString(R.string.direction_n)
+        composeRule.onNodeWithText(expectedSubtitle).assertIsDisplayed()
         listOf("65", "75", "40", "Downtown").forEach {
             composeRule.onNodeWithText(it).assertIsDisplayed()
         }
@@ -152,6 +156,7 @@ class FocusBannerTest {
                 state = FocusBannerState.Stop(
                     title = "Pine St & 3rd Ave",
                     direction = null,
+                    stopCode = null,
                     isFavorite = false,
                     favoriteEnabled = false,
                     hasAlerts = false

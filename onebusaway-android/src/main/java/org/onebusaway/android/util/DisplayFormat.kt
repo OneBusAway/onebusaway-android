@@ -180,6 +180,12 @@ object DisplayFormat {
         }
     }
 
+    /** [direction] resolved to a localized display string ("Northbound"), or null when absent/blank. */
+    @JvmStatic
+    fun stopDirectionText(context: Context, direction: String?): String? = direction?.takeIf { it.isNotBlank() }
+        ?.let { context.getString(getStopDirectionText(it)) }
+        ?.takeIf { it.isNotEmpty() }
+
     @JvmStatic
     @StringRes
     fun getStopDirectionText(direction: String): Int = when (direction) {

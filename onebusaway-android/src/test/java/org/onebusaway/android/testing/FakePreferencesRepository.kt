@@ -18,6 +18,7 @@ package org.onebusaway.android.testing
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import org.onebusaway.android.preferences.PreferencesEditor
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -101,4 +102,8 @@ class FakePreferencesRepository(private val observeValue: Boolean = true) : Pref
     override fun setFloat(key: String, value: Float) {
         values[key] = value
     }
+
+    // In-memory, so there is no commit to tear: replaying the block through the setters honors edit's
+    // atomicity contract exactly.
+    override fun edit(block: PreferencesEditor.() -> Unit) = block(this)
 }

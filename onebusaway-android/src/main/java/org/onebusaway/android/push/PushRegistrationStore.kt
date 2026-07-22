@@ -18,6 +18,7 @@ package org.onebusaway.android.push
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.time.Duration
+import org.onebusaway.android.preferences.PreferencesEditor
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.time.WallTime
 
@@ -32,15 +33,12 @@ import org.onebusaway.android.time.WallTime
  * - **A pending delete** ([pendingDelete]) — a registration whose DELETE is still owed. See
  *   [queuePendingDelete].
  *
- * Each record spans several preference slots, so one of them — the token — acts as a **commit
- * sentinel**: writes store it last and clears null it, and a read returns nothing unless it is present.
- * A half-written record therefore reads back as "no record" rather than as a corrupt one.
- *
- * That ordering is exact for in-process reads (the prefs cache updates synchronously, in call order)
- * but each slot persists to disk as its own async DataStore edit, so it is NOT guaranteed across a
- * process death mid-persist. Acceptable by design: every torn state lands on a safe path — a missing
- * sentinel reads as "no record" and re-registration is an idempotent upsert, while a stale record's
- * DELETE is answered with a tolerated 404. No recovery path depends on the sentinel being durably last.
+ * Each record spans several preference slots, with the token as the **presence marker**: a read
+ * returns nothing unless it is present, and clearing a record nulls it. Every multi-slot write goes
+ * through [PreferencesRepository.edit], which commits all of a record's slots atomically — in process
+ * and on disk (#1978) — so a record persists whole or not at all across a process death. A record
+ * whose marker is present but whose addressing fields are missing (which for a pending delete would
+ * aim its DELETE at region -1, whose 404 reads as success) therefore cannot exist.
  */
 @Singleton
 class PushRegistrationStore internal constructor(
@@ -82,26 +80,29 @@ class PushRegistrationStore internal constructor(
 
     /** Commits [registration] as the live record and stamps the refresh clock. */
     fun record(registration: PushRegistration) {
-        prefs.setLong(KEY_REGION_ID, registration.regionId)
-        prefs.setString(KEY_BASE, registration.sidecarBaseUrl)
-        prefs.setString(KEY_LOCALE, registration.locale)
-        prefs.setString(KEY_DESCRIPTION, registration.description)
-        prefs.setLong(KEY_SENT_AT, now().epochMs)
-        // The commit sentinel, written last.
-        prefs.setString(KEY_TOKEN, registration.token)
-        // This endpoint is live again, so drop any DELETE still owed for it — otherwise returning to an
-        // old endpoint (region/token switched away, then back) would delete the row we just POSTed.
-        // This is what makes a single pending-delete slot safe.
-        if (pendingDelete()?.sameEndpoint(registration) == true) clearPendingDelete()
+        // This endpoint is live again, so the same commit drops any DELETE still owed for it — otherwise
+        // returning to an old endpoint (region/token switched away, then back) would delete the row we
+        // just POSTed. This is what makes a single pending-delete slot safe.
+        val dropsPendingDelete = pendingDelete()?.sameEndpoint(registration) == true
+        prefs.edit {
+            setLong(KEY_REGION_ID, registration.regionId)
+            setString(KEY_BASE, registration.sidecarBaseUrl)
+            setString(KEY_LOCALE, registration.locale)
+            setString(KEY_DESCRIPTION, registration.description)
+            setLong(KEY_SENT_AT, now().epochMs)
+            setString(KEY_TOKEN, registration.token)
+            if (dropsPendingDelete) stagePendingDeleteClear()
+        }
     }
 
     /** Forgets the live record, so [last] reports nothing on record. */
     fun clear() {
-        prefs.setString(KEY_TOKEN, null)
-        // Dropped with the record it stamped (after the sentinel, so a torn clear still reads as "no
-        // record"): sinceLastSent() must not report an elapsed time for a registration last() says
-        // doesn't exist.
-        prefs.setLong(KEY_SENT_AT, 0L)
+        prefs.edit {
+            setString(KEY_TOKEN, null)
+            // Dropped with the record it stamped: sinceLastSent() must not report an elapsed time for a
+            // registration last() says doesn't exist.
+            setLong(KEY_SENT_AT, 0L)
+        }
     }
 
     /**
@@ -116,10 +117,11 @@ class PushRegistrationStore internal constructor(
      * and the loser still falls back to the server prune.
      */
     fun queuePendingDelete(registration: PushRegistration) {
-        prefs.setLong(KEY_PENDING_DEL_REGION_ID, registration.regionId)
-        prefs.setString(KEY_PENDING_DEL_BASE, registration.sidecarBaseUrl)
-        // The commit sentinel, written last — mirroring [record].
-        prefs.setString(KEY_PENDING_DEL_TOKEN, registration.token)
+        prefs.edit {
+            setLong(KEY_PENDING_DEL_REGION_ID, registration.regionId)
+            setString(KEY_PENDING_DEL_BASE, registration.sidecarBaseUrl)
+            setString(KEY_PENDING_DEL_TOKEN, registration.token)
+        }
     }
 
     /** The registration awaiting a retried DELETE, or null if none is queued. */
@@ -137,7 +139,12 @@ class PushRegistrationStore internal constructor(
     }
 
     fun clearPendingDelete() {
-        prefs.setString(KEY_PENDING_DEL_TOKEN, null)
+        prefs.edit { stagePendingDeleteClear() }
+    }
+
+    /** The one place that knows how a queued pending delete is dropped: null its presence marker. */
+    private fun PreferencesEditor.stagePendingDeleteClear() {
+        setString(KEY_PENDING_DEL_TOKEN, null)
     }
 
     private companion object {

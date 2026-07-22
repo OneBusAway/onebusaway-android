@@ -18,6 +18,7 @@ package org.onebusaway.android.preferences
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -39,6 +40,10 @@ import org.junit.runner.RunWith
  * the cache could revert a newer optimistic write when a *stale* emission of an earlier write arrived
  * after it — so `setX(B)` immediately followed by `getX()` could return an earlier value `A`. This is
  * what made the region/custom-URL instrumented tests flake (`expected api.tampa… but was api.pugetsound…`).
+ *
+ * Also pins the [PreferencesRepository.edit] batch contract (#1978): all staged keys land in a single
+ * DataStore commit — the atomicity that multi-slot records (e.g. `PushRegistrationStore`) rely on to
+ * never tear across a process death.
  */
 @RunWith(AndroidJUnit4::class)
 class PreferencesRepositoryReadYourWritesTest {
@@ -64,6 +69,36 @@ class PreferencesRepositoryReadYourWritesTest {
         assertEquals("second", repo.getString(key, null))
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun edit_commitsAllStagedKeysInOneDataStoreUpdate() = runTest {
+        val dataStore = FakeDataStore()
+        val repo = DefaultPreferencesRepository(InstrumentationRegistry.getInstrumentation().targetContext, dataStore, backgroundScope)
+        runCurrent()
+        repo.setString("preexisting", "value")
+        runCurrent()
+        val updatesBefore = dataStore.updateCount
+
+        repo.edit {
+            setString("record_a", "a")
+            setLong("record_b", 7L)
+            setString("preexisting", null) // null removes, same as setString
+        }
+
+        // Read-your-writes holds across the whole batch, synchronously.
+        assertEquals("a", repo.getString("record_a", null))
+        assertEquals(7L, repo.getLong("record_b", 0L))
+        assertEquals(null, repo.getString("preexisting", null))
+
+        // The batch persists as ONE commit — the atomicity multi-slot records depend on — and the
+        // committed state carries every staged key.
+        runCurrent()
+        assertEquals(1, dataStore.updateCount - updatesBefore)
+        assertEquals("a", dataStore.committed[stringPreferencesKey("record_a")])
+        assertEquals(7L, dataStore.committed[longPreferencesKey("record_b")])
+        assertEquals(null, dataStore.committed[stringPreferencesKey("preexisting")])
+    }
+
     /**
      * A [DataStore] test double whose committed-state emissions are driven by the test (via [emit])
      * rather than emitted automatically on [updateData] — so a test can reproduce DataStore's real commit
@@ -72,8 +107,15 @@ class PreferencesRepositoryReadYourWritesTest {
     private class FakeDataStore(initial: Preferences = emptyPreferences()) : DataStore<Preferences> {
         private val emissions = MutableSharedFlow<Preferences>(replay = 1, extraBufferCapacity = 64)
 
+        /** The state the last [updateData] committed. */
         @Volatile
-        private var committed = initial
+        var committed: Preferences = initial
+            private set
+
+        /** Number of [updateData] commits so far — one per DataStore edit, however many keys it carries. */
+        @Volatile
+        var updateCount = 0
+            private set
 
         init {
             emissions.tryEmit(initial)
@@ -83,6 +125,7 @@ class PreferencesRepositoryReadYourWritesTest {
 
         override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
             committed = transform(committed)
+            updateCount++
             return committed // deliberately does not emit; the test drives [emit] to model commit latency
         }
 

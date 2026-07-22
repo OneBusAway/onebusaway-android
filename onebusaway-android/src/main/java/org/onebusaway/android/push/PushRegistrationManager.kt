@@ -134,10 +134,6 @@ class PushRegistrationManager internal constructor(
 
     /** Reconciles the recorded registration with the currently desired one. */
     private suspend fun sync() = mutex.withLock {
-        // Settle any DELETE still owed from an earlier Reregister whose POST landed but whose DELETE
-        // didn't, before reconciling, so the stale registration can't linger past this pass.
-        drainPendingDelete()
-
         val desired = deriveDesiredRegistration(
             notificationsEnabled = notificationsEnabled(),
             region = regionRepository.region.value,
@@ -163,31 +159,23 @@ class PushRegistrationManager internal constructor(
 
     /**
      * DELETEs the stale registration, then POSTs the new one, recording only once the POST lands. Both
-     * calls can fail independently, and all four quadrants have to leave the device recoverable:
+     * calls can fail independently:
      *
      * - DELETE ok   + POST ok   → record(target): old gone, new on record.
      * - DELETE ok   + POST fail → clear(): the server holds nothing, so the next sync re-Registers.
      * - DELETE fail + POST fail → keep `previous`: the next sync retries the whole Reregister.
-     * - DELETE fail + POST ok   → record(target) AND queue `previous` for a retried DELETE, rather than
-     *   dropping it — otherwise the old region keeps pushing to a still-valid token until the server's
-     *   180-day prune.
+     * - DELETE fail + POST ok   → record(target); the failed DELETE is dropped, **best-effort by
+     *   design**: the old row lingers until the server's 180-day prune, which is the iOS client's
+     *   baseline for *every* region change (it never DELETEs, and issue #1957 marks the old-row DELETE
+     *   as optional). Persisting the miss for a retried DELETE was deliberately rejected as
+     *   machinery disproportionate to that corner (PR #1958 review).
      */
     private suspend fun applyReregister(action: PushRegistrationAction.Reregister) {
         val cleaned = client.unregister(action.previous)
         if (client.register(action.target)) {
             store.record(action.target)
-            if (!cleaned) store.queuePendingDelete(action.previous)
         } else if (cleaned) {
             store.clear()
         }
-    }
-
-    /**
-     * Retries the DELETE queued by an earlier Reregister. Runs at the top of every sync; a no-op (one
-     * prefs read, no network) when nothing is queued.
-     */
-    private suspend fun drainPendingDelete() {
-        val pending = store.pendingDelete() ?: return
-        if (client.unregister(pending)) store.clearPendingDelete()
     }
 }

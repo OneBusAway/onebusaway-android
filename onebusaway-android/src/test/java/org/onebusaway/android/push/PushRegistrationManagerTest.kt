@@ -200,11 +200,12 @@ class PushRegistrationManagerTest {
     }
 
     @Test
-    fun `reregister with a failed delete but successful post queues the delete for a later retry`() = runTest {
+    fun `reregister with a failed delete but successful post drops the delete, best-effort`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        // Region-change-style Reregister where DELETE(T1) fails but POST(T2) lands: T2 is live, yet
-        // the old T1 registration is still on the server. It must be queued, not dropped.
+        // Reregister where DELETE(T1) fails but POST(T2) lands: T2 is recorded and the missed DELETE is
+        // deliberately dropped — the old row falls back to the server's 180-day prune, which is the iOS
+        // client's baseline for every region change (see applyReregister).
         f.setToken("T2")
         f.service.onUnregister = { throw IOException("offline") }
         f.sync()
@@ -212,53 +213,11 @@ class PushRegistrationManagerTest {
         assertEquals(listOf("T1", "T2"), f.service.registerCalls.map { it.token })
         assertEquals(1, f.service.unregisterCalls.count { it.token == "T1" })
 
-        // Next sync, old host reachable again: the queued DELETE(T1) is retried and clears, while the
-        // live T2 registration is left untouched (no re-POST).
+        // T2 is settled on record: further syncs neither retry the DELETE nor re-POST.
         f.service.onUnregister = { Response.success(Unit) }
-        val postsBefore = f.service.registerCalls.size
         f.sync()
-        assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
-        assertEquals(postsBefore, f.service.registerCalls.size)
-
-        // Drained → a further sync neither DELETEs nor POSTs.
-        f.sync()
-        assertEquals(2, f.service.unregisterCalls.count { it.token == "T1" })
-        assertEquals(postsBefore, f.service.registerCalls.size)
-    }
-
-    @Test
-    fun `a queued delete never removes the live registration after returning to the old token`() = runTest {
-        val f = Fixture(this).registered("T1")
-
-        // T1 -> T2 with DELETE(T1) failing: T2 live, T1 queued for a retried DELETE.
-        f.setToken("T2")
-        f.service.onUnregister = { throw IOException("offline") }
-        f.sync()
-
-        // Return to T1 while the old host is still unreachable: the reconcile re-POSTs T1 (now live),
-        // and committing T1 must drop the still-queued DELETE(T1) so it can't later kill the live row
-        // (only the newly-stale T2 stays queued).
-        f.setToken("T1")
-        f.sync()
-
-        // Old host reachable again. Draining must NOT delete T1 (it's live); only DELETE(T2) fires.
-        f.service.onUnregister = { Response.success(Unit) }
-        val deletesT1Before = f.service.unregisterCalls.count { it.token == "T1" }
-        f.sync()
-
-        assertEquals(
-            "the live T1 registration must not be deleted",
-            deletesT1Before,
-            f.service.unregisterCalls.count { it.token == "T1" }
-        )
-        assertTrue("the stale T2 must be drained", f.service.unregisterCalls.any { it.token == "T2" })
-
-        // T1 remains the live, on-record registration → a further sync is a pure NoOp.
-        val posts = f.service.registerCalls.size
-        val deletes = f.service.unregisterCalls.size
-        f.sync()
-        assertEquals(posts, f.service.registerCalls.size)
-        assertEquals(deletes, f.service.unregisterCalls.size)
+        assertEquals(1, f.service.unregisterCalls.size)
+        assertEquals(2, f.service.registerCalls.size)
     }
 
     @Test

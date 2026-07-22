@@ -26,17 +26,24 @@ import org.onebusaway.android.region.Region
  * repository's resolution is `Context`-coupled (it calls `RegionUtils.getRegions` etc.), but the
  * holder is pure. The repository's `refresh`/`choose`/`applyRegion` writers feed it.
  *
- * [region] holds the last-set region (null when a custom API URL is configured); [state] adds the
- * transient [RegionState.Resolving] / [RegionState.NeedsManualChoice] / [RegionState.Failed] nuance.
- * [region] is left untouched by [resolving]/[needsChoice]/[failed] (the last region still applies while
- * a refresh is in flight or after a failure); only [activated] moves it.
+ * Both flows start empty — a null [region] and a [RegionState.Resolving] [state] — and [activated] is the
+ * only writer that installs a region; [region] is left untouched by [resolving]/[needsChoice]/[failed] (the
+ * last region still applies while a refresh is in flight or after a failure). [state] adds the transient
+ * [RegionState.Resolving] / [RegionState.NeedsManualChoice] / [RegionState.Failed] nuance ([region] is null
+ * whenever a custom API URL is configured).
+ *
+ * [state] starts [RegionState.Resolving], **not** [RegionState.Active]: at construction no resolution has
+ * completed, so a consumer that takes a one-shot action on the first state it sees can tell "not resolved
+ * yet" (transient — a value is coming) apart from a deliberate `Active(null)` (a custom API URL is
+ * configured, so there is no region). [DefaultRegionRepository]'s `init` settles this once the persisted
+ * region has loaded — see its `init` block (#1969).
  */
-class RegionStateHolder(seed: Region?) {
+class RegionStateHolder {
 
-    private val _region = MutableStateFlow(seed)
+    private val _region = MutableStateFlow<Region?>(null)
     val region: StateFlow<Region?> = _region.asStateFlow()
 
-    private val _state = MutableStateFlow<RegionState>(RegionState.Active(seed))
+    private val _state = MutableStateFlow<RegionState>(RegionState.Resolving)
     val state: StateFlow<RegionState> = _state.asStateFlow()
 
     /** A region (or null for a custom API URL) became active: moves both [region] and [state]. */

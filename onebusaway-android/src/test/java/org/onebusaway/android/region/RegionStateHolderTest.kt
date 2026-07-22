@@ -23,23 +23,17 @@ import org.junit.Test
 class RegionStateHolderTest {
 
     @Test
-    fun `the seed region is the initial value and Active`() {
-        // Region equality is id-based, so region(1) matches the seeded region(1).
-        val holder = RegionStateHolder(region(1))
-        assertEquals(region(1), holder.region.value)
-        assertEquals(RegionState.Active(region(1)), holder.state.value)
-    }
-
-    @Test
-    fun `a null seed yields a null Active`() {
-        val holder = RegionStateHolder(null)
+    fun `starts with a null region and a Resolving state`() {
+        // The state starts Resolving (not Active) so cold-start consumers can tell "not resolved yet" from
+        // a real Active (#1969); the repository's init settles it via activated().
+        val holder = RegionStateHolder()
         assertNull(holder.region.value)
-        assertEquals(RegionState.Active(null), holder.state.value)
+        assertEquals(RegionState.Resolving, holder.state.value)
     }
 
     @Test
     fun `activated updates region and state, including back to null`() {
-        val holder = RegionStateHolder(region(1))
+        val holder = RegionStateHolder()
         holder.activated(region(2))
         assertEquals(region(2), holder.region.value)
         assertEquals(RegionState.Active(region(2)), holder.state.value)
@@ -50,7 +44,8 @@ class RegionStateHolderTest {
 
     @Test
     fun `resolving and failed change state but keep the last region`() {
-        val holder = RegionStateHolder(region(1))
+        // Region equality is id-based, so region(1) matches the activated region(1).
+        val holder = RegionStateHolder().apply { activated(region(1)) }
         holder.resolving()
         assertEquals(region(1), holder.region.value)
         assertEquals(RegionState.Resolving, holder.state.value)
@@ -61,7 +56,7 @@ class RegionStateHolderTest {
 
     @Test
     fun `needsChoice carries the regions and keeps the last region`() {
-        val holder = RegionStateHolder(null)
+        val holder = RegionStateHolder()
         val regions = listOf(region(1), region(2))
         holder.needsChoice(regions)
         assertNull(holder.region.value)

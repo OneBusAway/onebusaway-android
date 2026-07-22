@@ -83,6 +83,29 @@ class RegionOtpResetTest {
     }
 
     @Test
+    fun `a Resolving state does not prematurely satisfy the await`() = runTest {
+        // Regression guard for #1969: the region flow now seeds RegionState.Resolving (not Active(null)),
+        // so a one-shot await for a terminal resolution must treat Resolving as "not resolved yet" and keep
+        // waiting — the old Active(null) seed would have resolved the await against a region that had not
+        // actually resolved.
+        val regions = listOf(region(1), region(2))
+        val state = MutableStateFlow<RegionState>(RegionState.Resolving)
+        var reset = false
+
+        val job = launch {
+            resetOtpVersionOnRegionChange(RegionStatus.NeedsManualSelection(regions), state) { reset = true }
+        }
+        advanceUntilIdle()
+        assertFalse("Resolving is not a terminal resolution; the await must keep waiting", reset)
+        assertFalse("the await must still be suspended on Resolving", job.isCompleted)
+
+        state.value = RegionState.Active(regions[0]) // a region finally resolves
+        advanceUntilIdle()
+        assertTrue("resets once the region actually becomes Active", reset)
+        job.cancel()
+    }
+
+    @Test
     fun `a forced manual selection that fails resolves without resetting`() = runTest {
         val regions = listOf(region(1), region(2))
         val state = MutableStateFlow<RegionState>(RegionState.NeedsManualChoice(regions))

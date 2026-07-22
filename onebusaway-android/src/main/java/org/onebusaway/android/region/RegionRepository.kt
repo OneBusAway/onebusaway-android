@@ -154,14 +154,25 @@ class DefaultRegionRepository @Inject constructor(
     // Seeded null and then asynchronously from the region cache once the one-time import has run — the
     // Room cache read is suspend and must wait on the importer, so the @Singleton constructor can't read
     // it synchronously anymore. region.value is briefly null at cold start until the seed resolves; the
-    // region-derived subsystems collect the flow and re-init on emit, so they pick it up.
-    private val holder = RegionStateHolder(null)
+    // region-derived subsystems collect the flow and re-init on emit, so they pick it up. [state] starts
+    // Resolving (not Active(null)) so a one-shot consumer can tell "not resolved yet" from "no region" —
+    // the init block below settles it (#1969).
+    private val holder = RegionStateHolder()
 
     init {
         appScope.launch {
             val seeded = loadPersistedRegion()
-            // Don't clobber a region a concurrent refresh() may have already set.
-            if (seeded != null && holder.region.value == null) holder.activated(seeded)
+            // Settle the initial Resolving state now that the persisted region (if any) has loaded — to the
+            // persisted region, or to a deliberate Active(null) when a custom OBA API URL is configured
+            // (the rider set a custom endpoint, so there genuinely is no region). With neither, leave
+            // Resolving for refresh() to settle. Only while the state is still that untouched Resolving
+            // seed: a concurrent refresh() that has already resolved to Active/NeedsManualChoice/Failed owns
+            // the state and must not be clobbered (refresh's own transient Resolving is fine to override —
+            // it settles the state again itself). `seeded` is null in the custom-URL branch, so the single
+            // activated(seeded) covers both cases.
+            if (holder.state.value == RegionState.Resolving && (seeded != null || hasCustomObaApiUrl())) {
+                holder.activated(seeded)
+            }
         }
     }
 
@@ -184,6 +195,9 @@ class DefaultRegionRepository @Inject constructor(
         return regionCache.cachedRegion(id)
     }
 
+    /** Whether a custom OBA API URL is configured — the "deliberately no region" case (used by init + [refresh]). */
+    private fun hasCustomObaApiUrl(): Boolean = prefs.getString(R.string.preference_key_oba_api_url, null)?.isNotEmpty() == true
+
     override fun applyRegion(region: Region?, regionChanged: Boolean) {
         // The canonical region write: this holder is the single source of truth for the current region
         // (every reader observes [region] or reads its value), plus the persisted region-id pref and the
@@ -204,7 +218,7 @@ class DefaultRegionRepository @Inject constructor(
         holder.resolving()
 
         // A custom API URL means we don't use the Regions API at all (region stays null).
-        if (prefs.getString(R.string.preference_key_oba_api_url, null)?.isNotEmpty() == true) {
+        if (hasCustomObaApiUrl()) {
             holder.activated(null)
             return@withContext RegionStatus.Skipped
         }

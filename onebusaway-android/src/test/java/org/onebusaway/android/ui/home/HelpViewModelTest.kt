@@ -18,13 +18,11 @@ package org.onebusaway.android.ui.home
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.FakePreferencesRepository
-import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.home.help.HelpDialog
 import org.onebusaway.android.ui.home.help.HelpViewModel
 
@@ -34,11 +32,6 @@ import org.onebusaway.android.ui.home.help.HelpViewModel
  * package info from Application, so it's verified by equivalence rather than here.
  */
 class HelpViewModelTest {
-
-    // HelpViewModel launches a region collector in its init (the regionReady gate), so viewModelScope
-    // needs the test Main dispatcher even though these dialog tests don't advance it.
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
 
     private fun viewModel(
         prefs: FakePreferencesRepository = FakePreferencesRepository(),

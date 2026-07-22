@@ -97,19 +97,10 @@ class SurveyViewModel @Inject constructor(
     private val _state = MutableStateFlow(SurveyUiState())
     val state: StateFlow<SurveyUiState> = _state.asStateFlow()
 
-    // Whether a region has resolved — the survey needs one to build its study URL. Reads the shared
-    // [RegionRepository.regionPresent] predicate; [SurveyFeature] uses it to re-trigger [maybeRequestSurvey]
-    // once a region is present. Mirrors the manual collect-into-MutableStateFlow idiom used by the other
-    // feature VMs (WeatherViewModel) rather than a SharingStarted.Eagerly stateIn, whose never-completing
-    // collector leaks across JVM unit tests.
-    private val _regionReady = MutableStateFlow(regionRepository.region.value != null)
-    val regionReady: StateFlow<Boolean> = _regionReady.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            regionRepository.regionPresent.collect { _regionReady.value = it }
-        }
-    }
+    // Whether a region has resolved — the survey needs one to build its study URL. The repository owns this
+    // hot predicate ([RegionRepository.regionPresent]); [SurveyFeature] collects it to re-trigger
+    // [maybeRequestSurvey] once a region is present. Re-exposed verbatim (no local mirror needed).
+    val regionReady: StateFlow<Boolean> get() = regionRepository.regionPresent
 
     private val _effects = MutableSharedFlow<SurveyEffect>(extraBufferCapacity = 1)
     val effects: SharedFlow<SurveyEffect> = _effects.asSharedFlow()

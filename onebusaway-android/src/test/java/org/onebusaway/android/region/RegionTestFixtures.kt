@@ -28,6 +28,8 @@ import org.onebusaway.android.region.Region
 internal class FakeRegionRepository(initial: Region? = null) : RegionRepository {
     private val _region = MutableStateFlow(initial)
     override val region: StateFlow<Region?> = _region
+    private val _regionPresent = MutableStateFlow(initial != null)
+    override val regionPresent: StateFlow<Boolean> = _regionPresent
     private val _state = MutableStateFlow<RegionState>(RegionState.Active(initial))
     override val state: StateFlow<RegionState> = _state
 
@@ -56,6 +58,7 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
 
     fun emit(region: Region?) {
         _region.value = region
+        _regionPresent.value = region != null
         _state.value = RegionState.Active(region)
     }
 

@@ -25,6 +25,7 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
+import org.onebusaway.android.app.di.PushRegistrationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.region.RegionSubsystems
@@ -73,6 +74,10 @@ class Application : android.app.Application() {
         PreferencesEntryPoint.get(this).incrementAppLaunchCount()
 
         FirebaseMessagingEntryPoint.get(this).fetchAndStoreToken()
+
+        // Keep this device's OBACloud push registration in sync (register on launch / token rotation /
+        // opt-in, unregister on opt-out) so service alerts reach riders who never set a trip alarm (#1957).
+        PushRegistrationEntryPoint.get(this).start()
     }
 
     /**

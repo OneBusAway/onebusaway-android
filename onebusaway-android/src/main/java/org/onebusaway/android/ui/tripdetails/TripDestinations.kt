@@ -17,12 +17,9 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
-import android.Manifest
-import android.os.Build
 import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.app.ActivityCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -33,6 +30,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
+import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.dataview.TripTrajectoryRoute
 import org.onebusaway.android.ui.dataview.TripTrajectoryViewModel
@@ -41,7 +39,6 @@ import org.onebusaway.android.ui.tripinfo.TripInfoEvent
 import org.onebusaway.android.ui.tripinfo.TripInfoRoute
 import org.onebusaway.android.ui.tripinfo.TripInfoViewModel
 import org.onebusaway.android.ui.tripinfo.confirmDeleteReminder
-import org.onebusaway.android.util.PermissionUtils
 
 /**
  * The trip navigation cluster: a trip's stops + live vehicle ([NavRoutes.TRIP_DETAILS]) and the
@@ -168,6 +165,8 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
         val infoStopId =
             backStackEntry.arguments?.getString(NavRoutes.ARG_STOP_ID).orEmpty()
         val infoVm: TripInfoViewModel = hiltViewModel()
+        // Requests POST_NOTIFICATIONS and resyncs the push registration on the result (see the helper).
+        val requestNotificationPermission = rememberNotificationPermissionRequest()
         LaunchedEffect(infoVm) {
             infoVm.events.collect { event ->
                 when (event) {
@@ -192,14 +191,7 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 viewModel = infoVm,
                 onBack = { navController.popBackStack() },
                 onSave = {
-                    // POST_NOTIFICATIONS is a runtime permission only on API 33+; older versions grant it implicitly.
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        ActivityCompat.requestPermissions(
-                            activity,
-                            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                            PermissionUtils.NOTIFICATION_PERMISSION_REQUEST
-                        )
-                    }
+                    requestNotificationPermission()
                     infoVm.save()
                 },
                 onDelete = {

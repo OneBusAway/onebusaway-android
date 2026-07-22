@@ -96,6 +96,8 @@ fun AdvancedSettingsRoute(
         onBack = onBack,
         onExperimentalToggle = onExperimentalToggle,
         onDisplayTestAlerts = viewModel::onDisplayTestAlertsChanged,
+        onPushTestDevice = viewModel::onPushTestDeviceChanged,
+        onPushTestDeviceName = viewModel::onPushTestDeviceNameChanged,
         onObaUrlChange = { url ->
             when (viewModel.onCustomObaApiUrlChanged(url)) {
                 UrlChangeResult.InvalidObaUrl -> {
@@ -150,6 +152,8 @@ fun AdvancedSettingsScreen(
     onBack: () -> Unit,
     onExperimentalToggle: (Boolean) -> Unit,
     onDisplayTestAlerts: (Boolean) -> Unit,
+    onPushTestDevice: (Boolean) -> Unit,
+    onPushTestDeviceName: (String) -> Boolean,
     onObaUrlChange: (String) -> Boolean,
     onOtpUrlChange: (String) -> Boolean,
     onOtpUrlUsesGraphQlChange: (Boolean) -> Unit,
@@ -185,6 +189,30 @@ fun AdvancedSettingsScreen(
                     summary = stringResource(R.string.display_test_wide_alerts_for_regions),
                     checked = state.displayTestAlerts,
                     onCheckedChange = onDisplayTestAlerts
+                )
+                SwitchPreferenceItem(
+                    title = stringResource(R.string.preferences_push_test_device_title),
+                    // On-but-unnamed is the one state where the toggle silently has no effect (the
+                    // device registers normally until a name is set — see PushRegistrationManager),
+                    // so say exactly that instead of the generic description.
+                    summary = if (state.pushTestDevice && state.pushTestDeviceName == null) {
+                        stringResource(R.string.preferences_push_test_device_unnamed_summary)
+                    } else {
+                        stringResource(R.string.preferences_push_test_device_summary)
+                    },
+                    checked = state.pushTestDevice,
+                    onCheckedChange = onPushTestDevice
+                )
+                EditTextPreferenceItem(
+                    title = stringResource(R.string.preferences_push_test_device_name_title),
+                    summary = state.pushTestDeviceName
+                        ?: stringResource(R.string.preferences_push_test_device_name_summary),
+                    currentValue = state.pushTestDeviceName,
+                    hint = stringResource(R.string.preferences_push_test_device_name_title),
+                    onValueChange = onPushTestDeviceName,
+                    // The name only matters while registering as a test device, so it follows the toggle.
+                    enabled = state.pushTestDevice,
+                    keyboardType = KeyboardType.Text
                 )
                 EditTextPreferenceItem(
                     title = stringResource(R.string.preferences_map_stop_cache_size_title),

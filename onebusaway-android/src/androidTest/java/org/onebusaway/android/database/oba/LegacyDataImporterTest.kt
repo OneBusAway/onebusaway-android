@@ -32,6 +32,7 @@ import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.survey.entity.Study
 import org.onebusaway.android.database.survey.entity.Survey
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
+import org.onebusaway.android.preferences.PreferencesEditor
 import org.onebusaway.android.preferences.PreferencesRepository
 
 /**
@@ -381,4 +382,5 @@ private object NoopPreferences : PreferencesRepository {
     override fun setLong(key: String, value: Long) = Unit
     override fun setFloat(keyRes: Int, value: Float) = Unit
     override fun setFloat(key: String, value: Float) = Unit
+    override fun edit(block: PreferencesEditor.() -> Unit) = block(this)
 }

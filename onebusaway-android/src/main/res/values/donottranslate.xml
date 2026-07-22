@@ -63,6 +63,8 @@
     <string name="preference_key_never_show_destination_reminder_beta_dialog">preference_never_show_destination_reminder_beta_dialog</string>
     <string name="preferences_key_user_denied_location_permissions">preferences_key_user_denied_location_permissions</string>
     <string name="preferences_display_test_alerts">preferences_display_test_alerts</string>
+    <string name="preference_key_push_test_device">preference_push_test_device</string>
+    <string name="preference_key_push_test_device_name">preference_push_test_device_name</string>
     <!-- Regions API URL -->
     <string name="regions_api_url">https://regions.onebusaway.org/regions-v3.json</string>
 

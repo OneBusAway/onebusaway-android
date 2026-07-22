@@ -428,6 +428,8 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
+    // ProcessLifecycleOwner: app-foreground (ON_START) trigger for push re-registration (#1957).
+    implementation(libs.androidx.lifecycle.process)
     // Navigation-Compose backbone, on the 2.9.x line (minSdk 23).
     // hilt-navigation-compose bridges hiltViewModel() to @HiltViewModel + SavedStateHandle nav-args.
     implementation(libs.androidx.navigation.compose)

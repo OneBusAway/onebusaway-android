@@ -18,6 +18,7 @@ package org.onebusaway.android.preferences
 import android.content.Context
 import androidx.annotation.StringRes
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -38,6 +39,22 @@ import kotlinx.coroutines.runBlocking
 import org.onebusaway.android.app.di.AppScope
 
 /**
+ * The String-keyed setters, split out as the receiver of [PreferencesRepository.edit] so a batch block
+ * is statically restricted to staging writes. [PreferencesRepository] extends this, so the same methods
+ * double as the repository's one-shot String-keyed setters. The `@StringRes` key form is deliberately
+ * omitted here until a batch caller needs it — batching so far only involves const-string record slots.
+ */
+interface PreferencesEditor {
+    fun setBoolean(key: String, value: Boolean)
+
+    /** Null removes the key. */
+    fun setString(key: String, value: String?)
+    fun setInt(key: String, value: Int)
+    fun setLong(key: String, value: Long)
+    fun setFloat(key: String, value: Float)
+}
+
+/**
  * Injected access to user preferences — the single seam in front of the persisted store (replacing
  * scattered `Application.getPrefs()` / `PreferenceUtils` reads).
  *
@@ -49,9 +66,10 @@ import org.onebusaway.android.app.di.AppScope
  * Every accessor comes in two key forms. The `@StringRes` overload lets a caller name a pref by its
  * resource id and stay Context-free / JVM-testable (the implementation resolves it); the `String`
  * overload handles keys that are const or runtime strings rather than resources (e.g. the
- * region-version slots, a map layer's preference key).
+ * region-version slots, a map layer's preference key). The String-keyed setters are inherited from
+ * [PreferencesEditor], which also serves as [edit]'s batch receiver.
  */
-interface PreferencesRepository {
+interface PreferencesRepository : PreferencesEditor {
 
     /** Emits the current value of the boolean pref [keyRes] and re-emits on every change. */
     fun observeBoolean(@StringRes keyRes: Int, default: Boolean): Flow<Boolean>
@@ -98,19 +116,28 @@ interface PreferencesRepository {
     }
 
     fun setBoolean(@StringRes keyRes: Int, value: Boolean)
-    fun setBoolean(key: String, value: Boolean)
 
     fun setString(@StringRes keyRes: Int, value: String?)
-    fun setString(key: String, value: String?)
 
     fun setInt(@StringRes keyRes: Int, value: Int)
-    fun setInt(key: String, value: Int)
 
     fun setLong(@StringRes keyRes: Int, value: Long)
-    fun setLong(key: String, value: Long)
 
     fun setFloat(@StringRes keyRes: Int, value: Float)
-    fun setFloat(key: String, value: Float)
+
+    /**
+     * Applies every write staged in [block] as **one commit** — for [DefaultPreferencesRepository] a
+     * single cache swap and a single DataStore edit (one file rewrite + fsync, one `data` emission)
+     * instead of one per key (#1978). That makes the batch atomic: a multi-slot record written through
+     * here persists whole or not at all across a process death, where the same slots written via
+     * individual `setX` calls could tear. Use it whenever several slots form one logical record;
+     * independent single writes should keep using `setX`.
+     *
+     * Deliberately has no default body: the atomicity IS the contract, so each implementation must
+     * decide how it honors it rather than silently inheriting a per-key replay that can tear. An
+     * in-memory test fake, which has no commit to tear, honestly implements it as `block(this)`.
+     */
+    fun edit(block: PreferencesEditor.() -> Unit)
 
     companion object {
         /** Preference key for the persisted app-launch counter. Preserves the original value so counts
@@ -198,13 +225,48 @@ class DefaultPreferencesRepository @Inject constructor(
     override fun setFloat(keyRes: Int, value: Float) = setFloat(context.getString(keyRes), value)
     override fun setFloat(key: String, value: Float) = put(floatPreferencesKey(key), value)
 
+    override fun edit(block: PreferencesEditor.() -> Unit) {
+        val ops = mutableListOf<(MutablePreferences) -> Unit>()
+        object : PreferencesEditor {
+            override fun setBoolean(key: String, value: Boolean) {
+                ops += stage(booleanPreferencesKey(key), value)
+            }
+            override fun setString(key: String, value: String?) {
+                ops += stage(stringPreferencesKey(key), value)
+            }
+            override fun setInt(key: String, value: Int) {
+                ops += stage(intPreferencesKey(key), value)
+            }
+            override fun setLong(key: String, value: Long) {
+                ops += stage(longPreferencesKey(key), value)
+            }
+            override fun setFloat(key: String, value: Float) {
+                ops += stage(floatPreferencesKey(key), value)
+            }
+        }.block()
+        commit { prefs -> ops.forEach { it(prefs) } }
+    }
+
     /** Apply [value] (or remove the key when null) to the cache immediately, then persist async. */
-    private fun <T : Any> put(key: Preferences.Key<T>, value: T?) {
-        cache = cache.toMutablePreferences().apply {
-            if (value == null) remove(key) else set(key, value)
-        }.toPreferences()
+    private fun <T : Any> put(key: Preferences.Key<T>, value: T?) = commit(stage(key, value))
+
+    /** A staged write: sets [value] (null removes the key) on whatever preferences it is applied to. */
+    private fun <T : Any> stage(key: Preferences.Key<T>, value: T?): (MutablePreferences) -> Unit = { prefs -> if (value == null) prefs.remove(key) else prefs[key] = value }
+
+    // Guards the cache read-modify-write in [commit]: @Volatile gives readers visibility but not
+    // atomicity, so two unsynchronized commits could snapshot the same cache and the later swap would
+    // silently drop the earlier one's keys — forever, since the cache is never re-mirrored from
+    // DataStore. Reads stay lock-free; the async persist stays outside (DataStore serializes its own
+    // edits).
+    private val cacheLock = Any()
+
+    /** Apply [op] to the cache in one swap, then persist it as one async DataStore edit. */
+    private fun commit(op: (MutablePreferences) -> Unit) {
+        synchronized(cacheLock) {
+            cache = cache.toMutablePreferences().also(op).toPreferences()
+        }
         scope.launch {
-            dataStore.edit { prefs -> if (value == null) prefs.remove(key) else prefs[key] = value }
+            dataStore.edit { prefs -> op(prefs) }
         }
     }
 }

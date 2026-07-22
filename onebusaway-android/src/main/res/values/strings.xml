@@ -1192,6 +1192,11 @@
     <string name="more_info">More Info</string>
     <string name="display_test_alerts">Display test alerts</string>
     <string name="display_test_wide_alerts_for_regions">Display test-wide alerts for regions</string>
+    <string name="preferences_push_test_device_title">Register as test device</string>
+    <string name="preferences_push_test_device_summary">Register this device in the test-only audience for previewing service-alert push notifications. Requires a test device name.</string>
+    <string name="preferences_push_test_device_unnamed_summary">Not in effect yet &#8212; set a test device name below. Until then, this device registers normally.</string>
+    <string name="preferences_push_test_device_name_title">Test device name</string>
+    <string name="preferences_push_test_device_name_summary">Identifies this device to transit agency admins, for example &#8220;Sam&#8217;s Pixel 9&#8221;. Until this is set, the device registers normally instead of as a test device.</string>
     <string name="no_description_available">No description available</string>
     <string name="close_donation_card">Close donation card</string>
     <string name="map_option_zoom_out">Zoom out</string>

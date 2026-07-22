@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.ReminderWebService
+import org.onebusaway.android.api.contract.sidecarRegionUrl
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.StopDao
@@ -260,10 +261,12 @@ class DefaultTripInfoRepository @Inject constructor(
         // push registration completes); the legacy builder returned null in that case.
         val userPushId = firebaseMessagingManager.userPushId()
         if (userPushId.isEmpty()) return null
-        val url = base +
-            context.getString(R.string.arrivals_reminders_api_endpoint) +
-            region.id +
-            "/alarms"
+        val url = sidecarRegionUrl(
+            sidecarBaseUrl = base,
+            regionsPath = context.getString(R.string.arrivals_reminders_api_endpoint),
+            regionId = region.id,
+            resource = "alarms"
+        )
         // runCatchingCancellable keeps a cancelled save from being reported to the UI as a save failure.
         return runCatchingCancellable {
             reminderService.createAlarm(

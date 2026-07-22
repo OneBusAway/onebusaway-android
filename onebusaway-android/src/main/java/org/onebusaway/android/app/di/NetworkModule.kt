@@ -28,6 +28,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.api.contract.BikeWebService
 import org.onebusaway.android.api.contract.OtpWebService
+import org.onebusaway.android.api.contract.PushRegistrationWebService
 import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
@@ -111,6 +112,14 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideReminderWebService(json: Json): ReminderWebService = plainRetrofit(json).create(ReminderWebService::class.java)
+
+    /**
+     * The OBACloud push-registration client (#1957). Targets the region's sidecar host via `@Url`, so
+     * like the reminders client it uses a plain client without [ApiParamsInterceptor].
+     */
+    @Provides
+    @Singleton
+    fun providePushRegistrationWebService(json: Json): PushRegistrationWebService = plainRetrofit(json).create(PushRegistrationWebService::class.java)
 
     /**
      * The OpenTripPlanner trip-planner client. Like [provideBikeWebService] it targets the region's OTP

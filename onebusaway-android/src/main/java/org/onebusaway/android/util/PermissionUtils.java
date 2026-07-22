@@ -23,8 +23,6 @@ import androidx.core.content.ContextCompat;
 
 public class PermissionUtils {
 
-  public static final int NOTIFICATION_PERMISSION_REQUEST = 5;
-
   public static final String[] LOCATION_PERMISSIONS = {
     Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION
   };

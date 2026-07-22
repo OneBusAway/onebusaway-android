@@ -126,6 +126,8 @@ class SettingsUiStateTest {
     private val advPrefs = AdvancedPrefSnapshot(
         experimentalRegionsEnabled = false,
         displayTestAlerts = false,
+        pushTestDevice = false,
+        pushTestDeviceName = null,
         customObaApiUrl = null,
         customOtpApiUrl = null,
         customOtpApiUrlUsesGraphQl = false,

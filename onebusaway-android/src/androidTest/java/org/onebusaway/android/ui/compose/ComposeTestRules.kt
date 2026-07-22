@@ -31,12 +31,12 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
  * is to drop that deprecation suppression suite-wide (issue #1792) without changing test behavior.
  *
  * Note on the v2 default (`StandardTestDispatcher`, which *queues* composition coroutines rather than
- * running them eagerly): when #1792 was filed, the `onGloballyPositioned` -> `LaunchedEffect` ->
- * `animateScrollTo` chains in `EtaStrip`/`SlideBox` never advanced to completion under it. That
+ * running them eagerly): when #1792 was filed, some composition-coroutine chains (e.g. the ETA
+ * strip's now-removed measure -> effect -> scroll settle) never advanced to completion under it. That
  * upstream gap is gone on compose-ui-test 1.11.4 (the rule's `waitUntil`/idle machinery now pumps the
- * dispatcher) and all six tests pass under the plain default too — but we pin Unconfined because
- * `SlideBoxTest` is an `@SmokeTest` on the API 23 floor emulator, whose StandardTestDispatcher timing
- * is unvalidated.
+ * dispatcher) and the tests pass under the plain default too — but we pin Unconfined because
+ * `EtaStripRenderTest` is an `@SmokeTest` on the API 23 floor emulator, whose StandardTestDispatcher
+ * timing is unvalidated.
  *
  * See https://github.com/OneBusAway/onebusaway-android/issues/1792 for the investigation.
  */

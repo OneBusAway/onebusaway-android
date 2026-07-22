@@ -24,6 +24,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.PushRegistrationWebService
+import org.onebusaway.android.api.contract.sidecarRegionUrl
 import org.onebusaway.android.util.runCatchingCancellable
 import retrofit2.Response
 
@@ -92,11 +93,13 @@ class PushRegistrationClient internal constructor(
         removed
     }.onFailure { logTransportFailure("unregister", previous, it) }.getOrDefault(false)
 
-    /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations` — mirrors the alarms URL build. */
-    private fun registrationUrl(registration: PushRegistration): String = registration.sidecarBaseUrl +
-        registrationsEndpointPath +
-        registration.regionId +
-        "/push_registrations"
+    /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations`. */
+    private fun registrationUrl(registration: PushRegistration): String = sidecarRegionUrl(
+        sidecarBaseUrl = registration.sidecarBaseUrl,
+        regionsPath = registrationsEndpointPath,
+        regionId = registration.regionId,
+        resource = "push_registrations"
+    )
 
     /**
      * Reports a non-2xx response. Without this an HTTP error would be *invisible*: a failed status is a

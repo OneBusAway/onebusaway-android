@@ -16,8 +16,8 @@
 package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,28 +27,33 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.MultiContentMeasurePolicy
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -56,9 +61,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
@@ -68,7 +74,6 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
-import org.onebusaway.android.ui.compose.components.SlideBox
 import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
@@ -76,29 +81,19 @@ import org.onebusaway.android.util.DisplayFormat
 // The ETA strip: a route/direction's per-trip ETA pills in a horizontally-scrollable, overflow-aware
 // row (the scroll + "there's more" chevron), each pill carrying its long-press menu. Split out of
 // ArrivalRows.kt so the strip is a self-contained unit; RouteArrivalRow supplies the
-// badge/divider/heading scaffold around it. The scroll/glide gestures themselves live in SlideBox.kt
-// (one scroll owner, issue #1801) — this file declares WHAT the strip rests on (the pinned pill) and
-// renders the pills. "Load more arrivals" is a footer button below the whole list (ArrivalsScreen),
+// badge/divider/heading scaffold around it. Scrolling is a stock LazyRow / LazyListState the user
+// drives; the strip never scrolls itself (the only programmatic move is a chevron tap's one-shot
+// jump), so there is no glide to contend with a fling — the #1801/#1974 main-thread cancel-storm is
+// gone by construction. "Load more arrivals" is a footer button below the whole list (ArrivalsScreen),
 // not a gesture on this strip.
 
 /**
- * Index of the soonest *upcoming* pill (first trip whose live ETA hasn't gone negative against
- * [now]), or -1 when every trip is recent-past. The single source of the "which pill leads" rule,
- * shared by the strip's first-display pin and its live-departure BOOKKEEPER so the two can't disagree.
- */
-private fun List<ArrivalInfo>.firstUpcomingIndex(now: ServerTime): Int = indexOfFirst { it.liveEta(now) >= 0 }
-
-/**
- * The horizontally-scrollable strip of per-trip ETA pills below the direction name. When the pills
- * overflow the row, a chevron appears at that edge to signal there's more to scroll to; tapping it
- * moves the strip one strip-width further that direction (or to the end, whichever is closer). The
- * chevron's own tap target is a narrow side gutter separate from the pills, so it never blocks the
- * strip's own drag-to-scroll.
- *
- * The strip also keeps its soonest *upcoming* pill pinned to the leading edge over time: it snaps
- * there instantly on first display, then as the shared live clock ticks a trip's ETA past zero
- * between polls, glides the strip left so the just-departed pill visibly slides into the left
- * overflow instead of sitting there stale until the next poll.
+ * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
+ * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
+ * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
+ * that edge to signal there's more to scroll to; tapping it moves the strip one viewport that
+ * direction (or to the end, whichever is closer). The chevron's own tap target is a narrow side
+ * gutter separate from the pills, so it never blocks the strip's own drag-to-scroll.
  */
 @Composable
 internal fun EtaStrip(
@@ -107,73 +102,30 @@ internal fun EtaStrip(
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
     firstPillModifier: Modifier = Modifier,
-    // Hoisted so callers (and previews) can control/observe the scroll — e.g. a preview starts it
-    // mid-scroll to show both edge chevrons.
-    scrollState: ScrollState = rememberScrollState()
+    // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
+    // the strip mid-scroll.
+    state: LazyListState = rememberLazyListState()
 ) {
-    val canScrollForward by remember { derivedStateOf { scrollState.canScrollForward } }
-    val canScrollBackward by remember { derivedStateOf { scrollState.canScrollBackward } }
-
     // All of this strip's trips share one poll (one route/direction group from a single
     // ConvertArrivals pass), so their serverNow is identical — tick ONE shared clock here rather than
     // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
     // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
 
-    // The pinned pill's own content-x (positionInParent is scroll-independent, so it's the offset from
-    // the content's start), -1 until measured. Only the currently-pinned pill is ever measured — see
-    // the pill loop below — so this holds one live value rather than a map of every pill's offset.
-    var pinnedOffsetPx by remember { mutableIntStateOf(-1) }
+    // The strip viewport width in px, for the one-viewport chevron jump below.
+    var viewportPx by remember { mutableIntStateOf(0) }
 
-    // The pill currently pinned to the strip's leading edge — earlier (recent-past) pills overflow off
-    // the left, reachable via the left chevron. Initialized to the first-upcoming index so the strip
-    // justifies there on first display (0 — already the strip's start — when the first pill is itself
-    // upcoming, or when none is; `firstUpcomingIndex` returns -1 there, floored to 0). Uses the SAME
-    // `firstUpcomingIndex` helper the BOOKKEEPER effect uses below, so first-display and steady-state
-    // agree and no caller can desync them by forgetting to pass it (#1973). Thereafter only ever
-    // advances forward, from the BOOKKEEPER — never yanked backward by an ordinary poll data reshuffle.
-    var pinnedIndex by remember {
-        mutableIntStateOf(trips.firstUpcomingIndex(liveNow).coerceAtLeast(0))
-    }
+    // Read directly — LazyListState.canScroll* are already snapshot-backed and only flip at the
+    // scrollable/not boundary.
+    val canScrollForward = state.canScrollForward
+    val canScrollBackward = state.canScrollBackward
 
-    // A one-shot scroll target (absolute, same units as pinnedOffsetPx) set by tapping an overflow
-    // chevron; takes priority over the pinned-pill anchor below. Left in place once reached — like an
-    // ordinary drag, an arrow tap should stick rather than snap back — and cleared only when the pin
-    // itself next advances (see the BOOKKEEPER effect), so live departure-tracking still wins over a
-    // stale manual position exactly as it already does against a plain drag.
-    var arrowOverridePx by remember { mutableStateOf<Int?>(null) }
-
-    // A later poll can SHRINK `trips` (recent-past trips aging out of the feed), which the
-    // forward-only ratchet above can't fix on its own — clamp back onto the new list's bounds so the
-    // pin always names a real pill instead of freezing `pinnedOffsetPx` on one that no longer exists.
-    pinnedIndex = pinnedIndex.coerceAtMost(trips.lastIndex.coerceAtLeast(0))
-
-    // Bridges values that change across recompositions into the long-lived effect below, which
-    // otherwise would close over a stale snapshot the moment it first suspends — the same idiom as
-    // `versionState` a few lines down.
-    val tripsState = rememberUpdatedState(trips)
-    val liveNowState = rememberUpdatedState(liveNow)
-
-    // BOOKKEEPER: advances `pinnedIndex` as `liveNow` ticks a trip's countdown past zero between
-    // polls — a single long-lived collector (not re-launched per tick), so a departure is observed
-    // exactly once as a level change, not by polling a recomposition-derived key. Never backward, so
-    // an ordinary poll data reshuffle can't yank the pin; only a live departure moves it.
-    LaunchedEffect(Unit) {
-        snapshotFlow { tripsState.value.firstUpcomingIndex(liveNowState.value) }
-            .collect { current ->
-                if (current > pinnedIndex) {
-                    pinnedIndex = current
-                    arrowOverridePx = null
-                }
-            }
-    }
-
-    // Jumps the strip one viewport toward the given direction (or to the end, whichever is
-    // closer) by setting the one-shot arrow override above; SlideBox's own glide clamps the
-    // result to [0, maxValue], so no clamping is needed here.
+    // Jumps the strip one viewport toward the given direction; animateScrollBy clamps at the content
+    // ends, giving "or to the end, whichever is closer" for free.
+    val scope = rememberCoroutineScope()
     fun jumpArrow(forward: Boolean) {
-        val delta = if (forward) scrollState.viewportSize else -scrollState.viewportSize
-        arrowOverridePx = scrollState.value + delta
+        val delta = if (forward) viewportPx.toFloat() else -viewportPx.toFloat()
+        scope.launch { state.animateScrollBy(delta) }
     }
 
     Row(modifier, verticalAlignment = Alignment.Bottom) {
@@ -186,50 +138,46 @@ internal fun EtaStrip(
             onClick = { jumpArrow(forward = false) }
         )
 
-        // The scrollable pill content, inside the gesture-owning SlideBox: the strip DECLARES what it
-        // rests on (the pinned pill) and the box does all scrolling/gliding itself with a single
-        // scroll owner (issue #1801).
-        SlideBox(
-            scroll = scrollState,
-            anchorPx = { arrowOverridePx ?: pinnedOffsetPx.takeIf { it >= 0 } },
-            // Keep the pinned pill's offset scroll-reachable so the strip justifies to it even when
-            // the pills fit the viewport (horizontalScroll would otherwise cap maxValue below it and
-            // the justify would silently no-op, leaving the recent-past pills on screen). The
-            // persistent pinned offset, deliberately NOT the arrow override — a chevron jump should
-            // stop at the real content end, not stretch it.
-            minReachablePx = { pinnedOffsetPx.takeIf { it >= 0 } },
-            // height(IntrinsicSize.Max) fixes the scrolling row to its tallest pill, so a shorter
-            // pill — the single-line "NOW" pill, which has no clock subline — can fillMaxHeight up to
-            // match its neighbours. The layout does the leveling; no pill guesses another's height.
-            modifier = Modifier.weight(1f).height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            // Bottom-align so a smaller recent-past pill sits on the same baseline as the full-size ones.
-            verticalAlignment = Alignment.Bottom
+        // The scrollable pill content. The reference frame fixes the LazyRow's height to the tallest
+        // pill variant so the shorter single-line "NOW" pill levels up to its neighbours (see
+        // ReferencePillHeightFrame); it also shields the intrinsic passes the hosts run (a LazyRow is
+        // a SubcomposeLayout, whose intrinsics throw).
+        ReferencePillHeightFrame(
+            modifier = Modifier.weight(1f),
+            reference = {
+                // An invisible tallest-variant pill (two-line ETA + clock subline), measured to size
+                // the row and never placed — so it's never drawn, takes no input, adds no semantics.
+                // Constant params, so it never recomposes on the live clock tick.
+                EtaPill(eta = 10, color = Color.Transparent, predicted = false, clockTime = "0:00")
+            }
         ) {
-            trips.forEachIndexed { index, trip ->
-                // Only the currently-pinned pill measures its content-space offset — it's the one
-                // pill the SlideBox anchor ever reads, and re-measuring continuously (not just once)
-                // catches its own width shifting as its digit count changes. As `pinnedIndex`
-                // advances, this modifier simply moves to the new pill on the next recomposition.
-                val measureOffset = if (index == pinnedIndex) {
-                    Modifier.onGloballyPositioned { coords ->
-                        // Offset within the scroll content Row (its direct parent), which is
-                        // content-space and so scroll-independent.
-                        coords.parentLayoutCoordinates?.let { parent ->
-                            pinnedOffsetPx = parent.localPositionOf(coords, Offset.Zero).x.roundToInt()
-                        }
-                    }
-                } else {
-                    Modifier
+            LazyRow(
+                state = state,
+                modifier = Modifier.onSizeChanged { viewportPx = it.width },
+                horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
+                // Bottom-align so a smaller pill sits on the same baseline as the full-size ones.
+                verticalAlignment = Alignment.Bottom
+            ) {
+                itemsIndexed(
+                    trips,
+                    // Trip-instance identity, so a poll that drops an aged-out leading trip keeps the
+                    // viewport on the surviving pills instead of shifting by an index. It's the SAME
+                    // (tripId, serviceDate, stopSequence) triple the arrivals dedup treats as one
+                    // instance (see collapseBlockIdPhantoms) — tripId alone is NOT unique (a loop
+                    // route's two genuine visits to one stop share it), and a duplicate LazyRow key
+                    // throws.
+                    key = { _, trip -> "${trip.tripId} ${trip.serviceDate} ${trip.stopSequence}" }
+                ) { index, trip ->
+                    // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
+                    val pillModifier = if (index == 0) firstPillModifier else Modifier
+                    EtaPillWithMenu(
+                        trip = trip,
+                        liveNow = liveNow,
+                        actions = actionsFor(trip),
+                        callbacks = callbacks,
+                        modifier = pillModifier
+                    )
                 }
-                val pillModifier = if (index == 0) firstPillModifier.then(measureOffset) else measureOffset
-                EtaPillWithMenu(
-                    trip = trip,
-                    liveNow = liveNow,
-                    actions = actionsFor(trip),
-                    callbacks = callbacks,
-                    modifier = pillModifier
-                )
             }
         }
 
@@ -241,6 +189,70 @@ internal fun EtaStrip(
             onClick = { jumpArrow(forward = true) }
         )
     }
+}
+
+/** The gap between adjacent ETA pills, for the LazyRow's [Arrangement.spacedBy]. */
+private val PILL_SPACING = 6.dp
+
+/**
+ * Wraps [content] (the strip's LazyRow) in a layout whose height is fixed to a measured [reference]
+ * pill — the tallest pill variant — so the shorter single-line "NOW" pill (via its own fillMaxHeight)
+ * levels up to its neighbours without any pill guessing another's height.
+ *
+ * It also shields the strip from the intrinsic-measurement passes its hosts run (RouteArrivalRow's
+ * `height(IntrinsicSize.Min)` row; the preview frame): a LazyRow is a SubcomposeLayout, whose
+ * intrinsic queries throw. This policy answers every intrinsic from the reference alone and never
+ * touches the LazyRow measurable off the measure path, so the throw can't happen. The reference is
+ * measured but never placed — so it's never drawn and contributes only its height.
+ */
+@Composable
+private fun ReferencePillHeightFrame(
+    reference: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Layout(
+        contents = listOf(reference, content),
+        modifier = modifier,
+        measurePolicy = remember {
+            object : MultiContentMeasurePolicy {
+                override fun MeasureScope.measure(
+                    measurables: List<List<Measurable>>,
+                    constraints: Constraints
+                ): MeasureResult {
+                    val ghost = measurables[0].first().measure(
+                        constraints.copy(minWidth = 0, minHeight = 0)
+                    )
+                    val height = ghost.height.coerceIn(constraints.minHeight, constraints.maxHeight)
+                    val row = measurables[1].first().measure(
+                        constraints.copy(minHeight = height, maxHeight = height)
+                    )
+                    return layout(row.width, height) { row.place(0, 0) }
+                }
+
+                // All four intrinsics answer from the reference (slot 0) only — never the LazyRow.
+                override fun IntrinsicMeasureScope.minIntrinsicHeight(
+                    measurables: List<List<IntrinsicMeasurable>>,
+                    width: Int
+                ): Int = measurables[0].first().minIntrinsicHeight(width)
+
+                override fun IntrinsicMeasureScope.maxIntrinsicHeight(
+                    measurables: List<List<IntrinsicMeasurable>>,
+                    width: Int
+                ): Int = measurables[0].first().maxIntrinsicHeight(width)
+
+                override fun IntrinsicMeasureScope.minIntrinsicWidth(
+                    measurables: List<List<IntrinsicMeasurable>>,
+                    height: Int
+                ): Int = measurables[0].first().minIntrinsicWidth(height)
+
+                override fun IntrinsicMeasureScope.maxIntrinsicWidth(
+                    measurables: List<List<IntrinsicMeasurable>>,
+                    height: Int
+                ): Int = measurables[0].first().maxIntrinsicWidth(height)
+            }
+        }
+    )
 }
 
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
@@ -263,8 +275,8 @@ private fun EtaPillWithMenu(
         DisplayFormat.formatTime(context, trip.displayTime.epochMs)
     }
     // fillMaxHeight here and on the pill so the colored Surface stretches to the strip's tallest pill
-    // (fixed by the SlideBox's IntrinsicSize.Max modifier — see EtaStrip), levelling the shorter
-    // single-line NOW pill up to its neighbours.
+    // (the strip fixes its row height to the tallest pill via ReferencePillHeightFrame — see
+    // EtaStrip), levelling the shorter single-line NOW pill up to its neighbours.
     Box(modifier.fillMaxHeight()) {
         EtaPill(
             modifier = Modifier.fillMaxHeight(),
@@ -315,11 +327,10 @@ internal fun TripActionsMenu(
  * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
  * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([eta] == 0) always
  * omits it too — it's a single centered label — so it's shorter by content; the strip levels it back
- * to its neighbours' height with fillMaxHeight (see EtaStrip's SlideBox modifier / EtaPillWithMenu).
+ * to its neighbours' height with fillMaxHeight (see EtaStrip's ReferencePillHeightFrame / EtaPillWithMenu).
  *
- * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip is
- * distinguished from upcoming ones by the strip's own scroll position (it's justified off the leading
- * edge, reachable via the left chevron) rather than a smaller pill.
+ * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip shows
+ * its negative countdown in place at the same size as the upcoming ones, not a smaller pill.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -445,8 +456,9 @@ internal fun EtaPill(
 // ---------------------------------------------------------------------------------------------
 // Previews.
 
-/** [count] "40 Northgate" pills with increasing upcoming ETAs, for the strip previews. */
-private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8) }
+/** [count] "40 Northgate" pills with increasing upcoming ETAs, for the strip previews. Each gets a
+ *  distinct trip id so the strip's LazyRow key is unique across the row (see EtaStrip's itemsIndexed). */
+private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8, tripId = "trip_$it") }
 
 /**
  * Shared strip-preview scaffold. height(IntrinsicSize.Min) bounds the row to the pill height — as
@@ -456,16 +468,19 @@ private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Nor
 @Composable
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
-    scrollState: ScrollState = rememberScrollState()
+    state: LazyListState = rememberLazyListState()
 ) {
     ObaTheme {
         Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+            // height(IntrinsicSize.Min) bounds the row to the pill height AND doubles as the
+            // intrinsics canary: the strip's LazyRow is a SubcomposeLayout (its intrinsics throw), so
+            // a render here fails loudly if ReferencePillHeightFrame ever stops answering them.
             Box(Modifier.height(IntrinsicSize.Min).padding(8.dp)) {
                 EtaStrip(
                     trips = trips,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
-                    scrollState = scrollState
+                    state = state
                 )
             }
         }
@@ -482,9 +497,12 @@ private fun EtaStripOverflowPreview() {
 @Preview(showBackground = true, widthDp = 240, name = "EtaStrip · scrolled (both chevrons)")
 @Composable
 private fun EtaStripScrolledPreview() {
-    // Started part-way scrolled (content hanging off BOTH ends), so both the left- and right-edge
-    // chevrons show. The initial offset clamps to the range after layout.
-    EtaStripPreviewFrame(trips = northgatePills(7), scrollState = rememberScrollState(initial = 300))
+    // Started part-way scrolled (content hanging off BOTH ends) via a hoisted list state, so both the
+    // left- and right-edge chevrons show.
+    EtaStripPreviewFrame(
+        trips = northgatePills(7),
+        state = remember { LazyListState(firstVisibleItemIndex = 2, firstVisibleItemScrollOffset = 30) }
+    )
 }
 
 @Preview(showBackground = true, widthDp = 240, name = "EtaStrip · fits (no chevron)")
@@ -494,7 +512,7 @@ private fun EtaStripFitsPreview() {
     EtaStripPreviewFrame(
         trips = listOf(
             previewArrival("8", "Rainier Beach", etaMinutes = 4),
-            previewArrival("8", "Rainier Beach", etaMinutes = 12)
+            previewArrival("8", "Rainier Beach", etaMinutes = 12, tripId = "trip_2")
         )
     )
 }
@@ -511,8 +529,7 @@ private fun EtaPillVariantsPreview() {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
-                // A recent-past arrival: same size as the upcoming ones — negative ETAs are
-                // distinguished by strip scroll position, not pill size.
+                // A recent-past arrival: same size as the upcoming ones — negative ETAs aren't shrunk.
                 EtaPill(-3, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "2:57pm")
                 EtaPill(0, colorResource(R.color.stop_info_ontime), predicted = true, clockTime = "3:00pm")
                 EtaPill(5, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "3:05pm")

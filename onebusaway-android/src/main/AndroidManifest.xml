@@ -64,7 +64,7 @@
              Services' Maps dynamite module (loaded in-process on the API-33 emulator) references
              org.apache.http.* and crashes the instrumentation process with a NoClassDefFoundError
              for org.apache.http.ProtocolVersion when it isn't present, flaking the connected tests
-             (e.g. FocusBannerTest, EtaStripJustifyTest). required="false" so it's a no-op on
+             (e.g. FocusBannerTest, EtaStripRenderTest). required="false" so it's a no-op on
              devices/images that lack it. See #1819 CI flakiness. -->
         <uses-library
             android:name="org.apache.http.legacy"

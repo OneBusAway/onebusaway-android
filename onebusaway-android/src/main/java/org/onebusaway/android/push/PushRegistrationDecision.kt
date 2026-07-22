@@ -73,13 +73,14 @@ fun PushRegistration.sameEndpoint(other: PushRegistration): Boolean = regionId =
     token == other.token
 
 /**
- * The registration this device should have, derived from the current inputs. Three-valued, not a
- * nullable [PushRegistration], because "no registration" genuinely means two different things here and
- * conflating them under one `null` is exactly how a stale registration leaks: an *unresolved* answer
- * must freeze reconciliation (deciding on a half-read state fires spurious DELETEs), while a *resolved*
- * "none" must drive it (a registration on record that shouldn't exist has to be unregistered). The
- * split is enforced at the type level — [decidePushRegistration] accepts only [Resolved], so the only
- * way to skip reconciling is an explicit match on [Unresolved].
+ * The registration this device should have, derived from the current inputs. Four-valued, not a
+ * nullable [PushRegistration], because "no registration" genuinely means three different things here
+ * and conflating them is exactly how a registration bug leaks: an *unresolved* answer must freeze
+ * reconciliation (deciding on a half-read state fires spurious DELETEs), an [OptedOut] answer must
+ * leave the server row alone (issue #1957: an OS-level disable needs no DELETE), and only a
+ * [NoSidecar] answer actively unregisters what is on record. The splits are enforced at the type
+ * level — [decidePushRegistration] accepts only [Resolved], so the only way to skip reconciling is an
+ * explicit match on [Unresolved].
  */
 sealed interface DesiredRegistration {
 
@@ -94,11 +95,23 @@ sealed interface DesiredRegistration {
     sealed interface Resolved : DesiredRegistration
 
     /**
-     * Definitively, no registration should exist: the rider opted out, or the current region has no
-     * sidecar host to register with. Reconciling this *unregisters* whatever is on record — a rider who
-     * moves from a sidecar region to a sidecar-less one must stop receiving the old region's alerts.
+     * The rider has notifications off at the OS level — nothing should be POSTed, and the server row
+     * (if any) is deliberately left in place. Issue #1957: an OS-level disable "doesn't need a DELETE —
+     * FCM bounces feed back to the server and it cleans up unregistered tokens itself"; DELETE is
+     * reserved for an *in-app* opt-out, which this app doesn't have. The iOS client behaves the same
+     * way (its `PushRegistrationManager` never DELETEs). Deleting here would also risk dropping the
+     * delivery target of an already-scheduled trip alarm the moment the rider toggles notifications
+     * off, if the server couples alarm delivery to the registration row.
      */
-    data object None : Resolved
+    data object OptedOut : Resolved
+
+    /**
+     * The current region has no sidecar host to register with, so no registration should exist here —
+     * and one on record from a *previous* region must be unregistered, or the rider who moved keeps
+     * receiving the old region's alerts until the server's 180-day prune (the iOS docs sanction exactly
+     * this old-row DELETE on a region change).
+     */
+    data object NoSidecar : Resolved
 
     /** Definitively, [target] should be registered. */
     data class Wanted(val target: PushRegistration) : Resolved
@@ -106,11 +119,12 @@ sealed interface DesiredRegistration {
 
 /**
  * The pure derivation of [DesiredRegistration] from the raw inputs (issue #1957). Every early exit
- * names which of the three answers it is — there is no `null` through which "this region has no
- * sidecar" (a resolved fact, [DesiredRegistration.None]) can masquerade as "the region hasn't loaded
- * yet" (an unresolved one) — see [DesiredRegistration] for why that distinction is load-bearing.
- * Notifications off at the OS level is the **only opt-out signal** (there is no in-app toggle), and it
- * is definitive regardless of every other input.
+ * names which of the four answers it is — there is no `null` through which "this region has no
+ * sidecar" (a resolved fact, [DesiredRegistration.NoSidecar]) can masquerade as "the region hasn't
+ * loaded yet" (an unresolved one) — see [DesiredRegistration] for why that distinction is load-bearing.
+ * Notifications off at the OS level is the **only opt-out signal** (there is no in-app toggle), it is
+ * definitive regardless of every other input, and it deliberately does not unregister — see
+ * [DesiredRegistration.OptedOut].
  *
  * The test-device [description][PushRegistration.description] is honoured only once the rider has
  * named the device: the server rejects a `test_device=true` registration with a blank `description`
@@ -134,9 +148,9 @@ fun deriveDesiredRegistration(
     testDeviceEnabled: Boolean,
     testDeviceName: String?
 ): DesiredRegistration {
-    if (!notificationsEnabled) return DesiredRegistration.None
+    if (!notificationsEnabled) return DesiredRegistration.OptedOut
     if (region == null) return DesiredRegistration.Unresolved
-    val base = region.sidecarBaseUrl?.takeIf { it.isNotBlank() } ?: return DesiredRegistration.None
+    val base = region.sidecarBaseUrl?.takeIf { it.isNotBlank() } ?: return DesiredRegistration.NoSidecar
     if (token.isEmpty()) return DesiredRegistration.Unresolved
     val description = testDeviceName
         ?.takeIf { testDeviceEnabled }
@@ -166,7 +180,10 @@ sealed interface PushRegistrationAction {
     /** POST [target]: either the first registration, or a metadata refresh on the same token+region. */
     data class Register(val target: PushRegistration) : PushRegistrationAction
 
-    /** DELETE [previous]: the rider opted out (or the token/region became unavailable). */
+    /**
+     * DELETE [previous]: its destination no longer applies (the rider's region has no sidecar). Never
+     * produced for an OS-level opt-out — see [DesiredRegistration.OptedOut].
+     */
     data class Unregister(val previous: PushRegistration) : PushRegistrationAction
 
     /**
@@ -197,7 +214,10 @@ fun decidePushRegistration(
     last: PushRegistration?,
     sinceLastSent: Duration?
 ): PushRegistrationAction = when (desired) {
-    DesiredRegistration.None ->
+    // The server row is left alone on an OS-level opt-out (issue #1957; iOS parity) — the record is
+    // kept too, so re-enabling reads as "unchanged" rather than a fresh registration.
+    DesiredRegistration.OptedOut -> PushRegistrationAction.NoOp
+    DesiredRegistration.NoSidecar ->
         if (last == null) PushRegistrationAction.NoOp else PushRegistrationAction.Unregister(last)
     is DesiredRegistration.Wanted -> {
         val target = desired.target

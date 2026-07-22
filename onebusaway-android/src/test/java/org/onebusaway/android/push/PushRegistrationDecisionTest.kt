@@ -21,7 +21,8 @@ import kotlin.time.Duration.Companion.hours
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.push.DesiredRegistration.None
+import org.onebusaway.android.push.DesiredRegistration.NoSidecar
+import org.onebusaway.android.push.DesiredRegistration.OptedOut
 import org.onebusaway.android.push.DesiredRegistration.Wanted
 
 /**
@@ -50,7 +51,8 @@ class PushRegistrationDecisionTest {
 
     @Test
     fun `nothing desired and nothing on record is a no-op`() {
-        assertEquals(PushRegistrationAction.NoOp, decide(None, last = null))
+        assertEquals(PushRegistrationAction.NoOp, decide(OptedOut, last = null))
+        assertEquals(PushRegistrationAction.NoOp, decide(NoSidecar, last = null))
     }
 
     @Test
@@ -59,8 +61,20 @@ class PushRegistrationDecisionTest {
     }
 
     @Test
-    fun `opting out unregisters the recorded registration`() {
-        assertEquals(PushRegistrationAction.Unregister(base), decide(None, last = base))
+    fun `opting out leaves the recorded registration and its server row alone`() {
+        // Issue #1957: an OS-level disable needs no DELETE — FCM bounces and the server's prune own
+        // that cleanup, and the iOS client never DELETEs. A DELETE here could also drop the delivery
+        // target of an already-scheduled trip alarm.
+        assertEquals(PushRegistrationAction.NoOp, decide(OptedOut, last = base))
+        // Stale record while opted out changes nothing: no keep-alive POST either.
+        assertEquals(PushRegistrationAction.NoOp, decide(OptedOut, last = base, sinceLastSent = 30.days))
+    }
+
+    @Test
+    fun `losing the sidecar unregisters the recorded registration`() {
+        // Unlike an opt-out, a rider who moved to a sidecar-less region must stop receiving the old
+        // region's alerts — the sanctioned old-row DELETE on a region change.
+        assertEquals(PushRegistrationAction.Unregister(base), decide(NoSidecar, last = base))
     }
 
     @Test

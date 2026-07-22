@@ -22,10 +22,13 @@ import org.onebusaway.android.region.region
 
 /**
  * Unit tests for [deriveDesiredRegistration] — the pure classification of the raw inputs into
- * wanted / none / not-yet-resolved. The load-bearing distinction is [DesiredRegistration.None] vs
- * [DesiredRegistration.Unresolved]: `None` reconciles a stale registration away, `Unresolved` freezes
- * reconciliation until the input settles, and collapsing the two (a nullable target) is exactly the
- * bug that let a region-A registration outlive a switch to a sidecar-less region B.
+ * wanted / opted-out / no-sidecar / not-yet-resolved. The load-bearing distinctions:
+ * [DesiredRegistration.NoSidecar] vs [DesiredRegistration.Unresolved] (`NoSidecar` reconciles a stale
+ * registration away, `Unresolved` freezes reconciliation until the input settles — collapsing the two
+ * under a nullable target is exactly the bug that let a region-A registration outlive a switch to a
+ * sidecar-less region B), and [DesiredRegistration.OptedOut] vs `NoSidecar` (an OS-level opt-out must
+ * NOT unregister — issue #1957 leaves that cleanup to FCM bounces and the server prune, and the iOS
+ * client never DELETEs).
  */
 class DeriveDesiredRegistrationTest {
 
@@ -65,9 +68,9 @@ class DeriveDesiredRegistrationTest {
 
     @Test
     fun `notifications off is a definitive opt-out regardless of the other inputs`() {
-        assertEquals(DesiredRegistration.None, derive(notificationsEnabled = false))
+        assertEquals(DesiredRegistration.OptedOut, derive(notificationsEnabled = false))
         // Definitive even while the async inputs are still settling: opting out never waits.
-        assertEquals(DesiredRegistration.None, derive(notificationsEnabled = false, region = null, token = ""))
+        assertEquals(DesiredRegistration.OptedOut, derive(notificationsEnabled = false, region = null, token = ""))
     }
 
     @Test
@@ -78,12 +81,12 @@ class DeriveDesiredRegistrationTest {
     }
 
     @Test
-    fun `a region without a sidecar host is definitively none, not unresolved`() {
+    fun `a region without a sidecar host is definitively no-sidecar, not unresolved`() {
         // The regression this type exists to prevent: a resolved region whose sidecarBaseUrl is blank
         // (the field defaults to "") is a fact — there is nowhere to be registered — so a registration
         // left over from a sidecar region must be reconciled away, not frozen in place.
-        assertEquals(DesiredRegistration.None, derive(region = region(2).copy(sidecarBaseUrl = "")))
-        assertEquals(DesiredRegistration.None, derive(region = region(2).copy(sidecarBaseUrl = null)))
+        assertEquals(DesiredRegistration.NoSidecar, derive(region = region(2).copy(sidecarBaseUrl = "")))
+        assertEquals(DesiredRegistration.NoSidecar, derive(region = region(2).copy(sidecarBaseUrl = null)))
     }
 
     @Test

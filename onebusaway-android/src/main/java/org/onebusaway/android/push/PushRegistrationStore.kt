@@ -27,9 +27,9 @@ import org.onebusaway.android.time.WallTime
  * since the push_registrations API offers no GET. Two records live here:
  *
  * - **The live registration** ([last]) plus when it was sent ([sinceLastSent]). Needed to address the
- *   DELETE on opt-out (by which point the current token/region may already have changed), to skip
- *   redundant POSTs against a 30 req/min/IP endpoint, and to drive the [PUSH_REFRESH_INTERVAL]
- *   keep-alive.
+ *   DELETE of a stale row when the endpoint changes or the region loses its sidecar (by which point
+ *   the current token/region may already have changed), to skip redundant POSTs against a
+ *   30 req/min/IP endpoint, and to drive the [PUSH_REFRESH_INTERVAL] keep-alive.
  * - **A pending delete** ([pendingDelete]) — a registration whose DELETE is still owed. See
  *   [queuePendingDelete].
  *

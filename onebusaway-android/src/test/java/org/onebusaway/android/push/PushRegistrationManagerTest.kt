@@ -98,19 +98,24 @@ class PushRegistrationManagerTest {
     }
 
     @Test
-    fun `opt-out unregisters the recorded token and clears the record`() = runTest {
+    fun `opt-out leaves the server row alone - FCM bounces and the server prune own that cleanup`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        // Rider turns notifications off in system settings; the ON_START resync reconciles. This is the
-        // ONLY definitive opt-out — contrast the missing-region case below, which must not DELETE.
+        // Rider turns notifications off in system settings; the ON_START resync reconciles. Per issue
+        // #1957 an OS-level disable needs no DELETE (and the iOS client never DELETEs) — one here could
+        // drop the delivery target of an already-scheduled trip alarm.
         f.notificationsEnabled = false
         f.sync()
 
-        assertEquals("T1", f.service.unregisterCalls.single().token)
+        assertTrue("opt-out must not DELETE", f.service.unregisterCalls.isEmpty())
+        assertEquals("opt-out must not POST either", 1, f.service.registerCalls.size)
 
-        // Record cleared → a further resync is a NoOp (no duplicate DELETE).
+        // Re-enabling within the refresh window: the kept record still matches → pure NoOp, no
+        // spurious re-POST of an unchanged registration whose server row never went away.
+        f.notificationsEnabled = true
         f.sync()
-        assertEquals(1, f.service.unregisterCalls.size)
+        assertEquals(1, f.service.registerCalls.size)
+        assertTrue(f.service.unregisterCalls.isEmpty())
     }
 
     @Test
@@ -261,7 +266,8 @@ class PushRegistrationManagerTest {
     fun `unregister treats a 404 as already-gone and clears the record`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        f.notificationsEnabled = false
+        // Moving to a sidecar-less region is the path that unregisters (an OS opt-out doesn't).
+        f.regions.emit(region(2).copy(sidecarBaseUrl = ""))
         f.service.onUnregister = { Response.error(404, "".toResponseBody(null)) }
         f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
@@ -460,7 +466,7 @@ class PushRegistrationManagerTest {
     fun `a failed unregister response is logged too, and a 5xx is not reported remotely`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        f.notificationsEnabled = false
+        f.regions.emit(region(2).copy(sidecarBaseUrl = ""))
         f.service.onUnregister = { Response.error(500, "boom".toResponseBody(null)) }
         f.sync()
 

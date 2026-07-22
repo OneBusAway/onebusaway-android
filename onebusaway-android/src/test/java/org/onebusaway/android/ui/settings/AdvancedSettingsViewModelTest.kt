@@ -145,6 +145,11 @@ class AdvancedSettingsViewModelTest {
         applyPushTestDeviceName("N".repeat(300), prefs)
 
         assertEquals("N".repeat(PUSH_DESCRIPTION_MAX_LENGTH), prefs.getString(pushTestDeviceName, null))
+
+        // The cap counts UTF-16 units but never splits a surrogate pair: an emoji straddling the
+        // boundary is dropped whole rather than stored as a lone (mangled) surrogate.
+        applyPushTestDeviceName("N".repeat(PUSH_DESCRIPTION_MAX_LENGTH - 1) + "😀", prefs)
+        assertEquals("N".repeat(PUSH_DESCRIPTION_MAX_LENGTH - 1), prefs.getString(pushTestDeviceName, null))
     }
 
     @Test

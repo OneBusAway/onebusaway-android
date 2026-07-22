@@ -58,11 +58,34 @@ val PUSH_REFRESH_INTERVAL: Duration = 24.hours
 
 /**
  * The server's cap on a test device's `description` (OBACloud's push-notifications documentation:
- * "Free text ≤255 chars identifying the device to admins"). Enforced client-side so a long name is
- * truncated rather than POSTed and rejected — a `description` that violates this is a 422, and since a
- * failed registration persists nothing, the doomed request would otherwise repeat on every foreground.
+ * "Free text ≤255 chars identifying the device to admins"). Enforced client-side — via
+ * [truncatedToDescriptionCap] — so a long name is truncated rather than POSTed and rejected: a
+ * `description` that violates this is a 422, and since a failed registration persists nothing, the
+ * doomed request would otherwise repeat on every foreground.
  */
 const val PUSH_DESCRIPTION_MAX_LENGTH = 255
+
+/**
+ * Truncates to at most [PUSH_DESCRIPTION_MAX_LENGTH] UTF-16 units without ever splitting a surrogate
+ * pair — a bare `take()` counts code units and can cut between a pair's halves, sending a lone
+ * surrogate (mangled to `?`/U+FFFD by the form encoding) as the final character. When the cut would
+ * land mid-pair, the pair is dropped whole.
+ *
+ * The budget deliberately stays in UTF-16 units: it is the strictest of the plausible readings of the
+ * server's documented "≤255 chars" (the OBACloud source is private, so its exact counting can't be
+ * read) — a string of at most N UTF-16 units also has at most N code points, so the result is legal
+ * under either interpretation. Grapheme clusters (ZWJ emoji sequences, combining marks) can still be
+ * cut between code points; that renders imperfectly but is valid Unicode and within the server limit.
+ */
+fun String.truncatedToDescriptionCap(): String {
+    if (length <= PUSH_DESCRIPTION_MAX_LENGTH) return this
+    val end = if (this[PUSH_DESCRIPTION_MAX_LENGTH - 1].isHighSurrogate()) {
+        PUSH_DESCRIPTION_MAX_LENGTH - 1
+    } else {
+        PUSH_DESCRIPTION_MAX_LENGTH
+    }
+    return substring(0, end)
+}
 
 /**
  * True when [this] and [other] address the same server row — the region, host, and token a DELETE (or an
@@ -155,7 +178,7 @@ fun deriveDesiredRegistration(
     val description = testDeviceName
         ?.takeIf { testDeviceEnabled }
         ?.trim()
-        ?.take(PUSH_DESCRIPTION_MAX_LENGTH)
+        ?.truncatedToDescriptionCap()
         ?.takeIf { it.isNotEmpty() }
     return DesiredRegistration.Wanted(
         PushRegistration(

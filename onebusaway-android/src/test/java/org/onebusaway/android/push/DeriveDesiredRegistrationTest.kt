@@ -125,4 +125,19 @@ class DeriveDesiredRegistrationTest {
             (desired as DesiredRegistration.Wanted).target.description
         )
     }
+
+    @Test
+    fun `truncation never splits a surrogate pair`() {
+        // 254 single-unit chars + a two-unit emoji = 256 UTF-16 units: a bare take(255) would cut the
+        // pair in half, sending a lone surrogate (mangled to '?'/U+FFFD) as the final character.
+        val desired = derive(testDeviceEnabled = true, testDeviceName = "N".repeat(254) + "😀")
+        assertEquals("N".repeat(254), (desired as DesiredRegistration.Wanted).target.description)
+    }
+
+    @Test
+    fun `an emoji that fits exactly within the limit is kept whole`() {
+        val name = "N".repeat(PUSH_DESCRIPTION_MAX_LENGTH - 2) + "😀"
+        val desired = derive(testDeviceEnabled = true, testDeviceName = name)
+        assertEquals(name, (desired as DesiredRegistration.Wanted).target.description)
+    }
 }

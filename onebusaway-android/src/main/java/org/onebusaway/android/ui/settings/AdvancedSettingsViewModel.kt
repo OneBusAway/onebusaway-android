@@ -36,6 +36,7 @@ import org.onebusaway.android.donations.DonationsManager
 import org.onebusaway.android.map.StopsMapController
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.push.PUSH_DESCRIPTION_MAX_LENGTH
+import org.onebusaway.android.push.truncatedToDescriptionCap
 import org.onebusaway.android.region.ApiUrlValidator
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
@@ -244,7 +245,7 @@ internal fun applyMapStopCacheSize(text: String, prefs: PreferencesRepository): 
  * name, so unlike [applyMapStopCacheSize] there is no reject-on-invalid case.
  */
 internal fun applyPushTestDeviceName(value: String, prefs: PreferencesRepository): Boolean {
-    val name = value.trim().take(PUSH_DESCRIPTION_MAX_LENGTH).ifEmpty { null }
+    val name = value.trim().truncatedToDescriptionCap().ifEmpty { null }
     prefs.setString(R.string.preference_key_push_test_device_name, name)
     return true
 }

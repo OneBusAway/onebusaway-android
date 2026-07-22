@@ -158,7 +158,16 @@ internal fun EtaStrip(
                 // Bottom-align so a smaller pill sits on the same baseline as the full-size ones.
                 verticalAlignment = Alignment.Bottom
             ) {
-                itemsIndexed(trips) { index, trip ->
+                itemsIndexed(
+                    trips,
+                    // Trip-instance identity, so a poll that drops an aged-out leading trip keeps the
+                    // viewport on the surviving pills instead of shifting by an index. It's the SAME
+                    // (tripId, serviceDate, stopSequence) triple the arrivals dedup treats as one
+                    // instance (see collapseBlockIdPhantoms) — tripId alone is NOT unique (a loop
+                    // route's two genuine visits to one stop share it), and a duplicate LazyRow key
+                    // throws.
+                    key = { _, trip -> "${trip.tripId} ${trip.serviceDate} ${trip.stopSequence}" }
+                ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
                     val pillModifier = if (index == 0) firstPillModifier else Modifier
                     EtaPillWithMenu(
@@ -447,8 +456,9 @@ internal fun EtaPill(
 // ---------------------------------------------------------------------------------------------
 // Previews.
 
-/** [count] "40 Northgate" pills with increasing upcoming ETAs, for the strip previews. */
-private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8) }
+/** [count] "40 Northgate" pills with increasing upcoming ETAs, for the strip previews. Each gets a
+ *  distinct trip id so the strip's LazyRow key is unique across the row (see EtaStrip's itemsIndexed). */
+private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Northgate", etaMinutes = 3L + it * 8, tripId = "trip_$it") }
 
 /**
  * Shared strip-preview scaffold. height(IntrinsicSize.Min) bounds the row to the pill height — as
@@ -502,7 +512,7 @@ private fun EtaStripFitsPreview() {
     EtaStripPreviewFrame(
         trips = listOf(
             previewArrival("8", "Rainier Beach", etaMinutes = 4),
-            previewArrival("8", "Rainier Beach", etaMinutes = 12)
+            previewArrival("8", "Rainier Beach", etaMinutes = 12, tripId = "trip_2")
         )
     )
 }

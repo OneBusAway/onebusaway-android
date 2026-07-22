@@ -18,8 +18,7 @@ package org.onebusaway.android.ui.arrivals
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import org.junit.Rule
 import org.junit.Test
@@ -30,10 +29,10 @@ import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
- * On-device render smoke for the ETA strip: renders the real [EtaStrip] and asserts its pills compose
- * and lay out (each pill is tappable, so a clickable node proves the strip built). Carries
- * `@SmokeTest` (moved here from the retired SlideBoxTest/EtaStripJustifyTest): the API-23 floor smoke
- * subset (#1818) needs one strip test exercising Compose rendering on a 2015-era runtime.
+ * On-device render smoke for the ETA strip: renders the real [EtaStrip] and asserts a pill's ETA text
+ * actually composed. Carries `@SmokeTest` (moved here from the retired SlideBoxTest/EtaStripJustifyTest):
+ * the API-23 floor smoke subset (#1818) needs one strip test exercising Compose rendering on a 2015-era
+ * runtime.
  */
 @SmokeTest
 class EtaStripRenderTest {
@@ -47,10 +46,12 @@ class EtaStripRenderTest {
         composeRule.setContent {
             Box(Modifier.width(320.dp)) {
                 EtaStrip(
+                    // Distinct trip ids per pill: the strip's LazyRow keys on trip-instance identity
+                    // and a duplicate key throws (see EtaStrip's itemsIndexed).
                     trips = listOf(
-                        previewArrival("8", "Rainier Beach", etaMinutes = -2),
-                        previewArrival("8", "Rainier Beach", etaMinutes = 5),
-                        previewArrival("40", "Northgate", etaMinutes = 12)
+                        previewArrival("8", "Rainier Beach", etaMinutes = -2, tripId = "trip_1"),
+                        previewArrival("8", "Rainier Beach", etaMinutes = 5, tripId = "trip_2"),
+                        previewArrival("40", "Northgate", etaMinutes = 12, tripId = "trip_3")
                     ),
                     actionsFor = { null },
                     callbacks = previewRowCallbacks()
@@ -58,7 +59,12 @@ class EtaStripRenderTest {
             }
         }
 
-        // The pills are tappable (onEtaClick), so a clickable node existing means the strip rendered.
-        composeRule.onAllNodes(hasClickAction()).onFirst().assertExists()
+        // Assert on a pill's ETA text, not just any clickable node: the flanking chevron gutters are
+        // clickable even when hidden, so a bare hasClickAction() match would pass with zero pills
+        // composed. The recent-past "-2" countdown is the strip's only "-2" — the gutters render only an
+        // icon, and no clock subline contains it — so this uniquely proves the LazyRow built its items.
+        // The value is stable for the test's duration: previewArrival anchors serverNow at 0 and
+        // liveEta divides each side into whole minutes, so the pill reads exactly -2 for the first 60s.
+        composeRule.onNodeWithText("-2", substring = true).assertExists()
     }
 }

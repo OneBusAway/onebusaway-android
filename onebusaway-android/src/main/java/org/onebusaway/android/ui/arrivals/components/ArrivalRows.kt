@@ -601,7 +601,12 @@ internal fun previewArrival(
     status: Status = Status.DEFAULT,
     routeId: String = "route_$shortName",
     routeLongName: String? = null,
-    directionId: Int? = null
+    directionId: Int? = null,
+    // Trip-instance identity for the strip's LazyRow key (see EtaStrip). Callers that build a
+    // multi-pill strip must pass a distinct id per pill — the default alone collides, and a duplicate
+    // key throws. Not derived from etaMinutes on purpose: two pills legitimately share an ETA (a loop
+    // route's two visits, a pre-dedup phantom), so identity must stay independent of it.
+    tripId: String = "trip"
 ): ArrivalInfo {
     val predictedMs = etaMinutes * PREVIEW_MIN_MS
     val scheduledMs = (etaMinutes - scheduleDeviationMinutes) * PREVIEW_MIN_MS
@@ -616,7 +621,8 @@ internal fun previewArrival(
             predictedArrivalTime = if (predicted) ServerTime(predictedMs) else null,
             predicted = predicted,
             status = status,
-            routeLongName = routeLongName
+            routeLongName = routeLongName,
+            tripId = tripId
         ),
         now = ServerTime(0L),
         includeArrivalDepartureInStatusLabel = false
@@ -661,9 +667,11 @@ private fun RouteArrivalRowPreview() {
                 RouteArrivalRow(
                     group = RouteRowGroup(
                         listOf(
+                            // Representative keeps the default "trip" id so the actions map (keyed
+                            // there) resolves the badge; the rest get distinct ids for the strip key.
                             previewArrival("40", "Northgate", etaMinutes = 3),
-                            previewArrival("40", "Northgate", etaMinutes = 11, scheduleDeviationMinutes = 2),
-                            previewArrival("40", "Northgate", etaMinutes = 24, predicted = false)
+                            previewArrival("40", "Northgate", etaMinutes = 11, scheduleDeviationMinutes = 2, tripId = "trip_2"),
+                            previewArrival("40", "Northgate", etaMinutes = 24, predicted = false, tripId = "trip_3")
                         )
                     ),
                     actionsFor = { actions[it.tripId] },
@@ -675,7 +683,7 @@ private fun RouteArrivalRowPreview() {
                     group = RouteRowGroup(
                         listOf(
                             previewArrival("8", "Rainier Beach", etaMinutes = -2),
-                            previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3)
+                            previewArrival("8", "Rainier Beach", etaMinutes = 9, scheduleDeviationMinutes = -3, tripId = "trip_2")
                         )
                     ),
                     actionsFor = {

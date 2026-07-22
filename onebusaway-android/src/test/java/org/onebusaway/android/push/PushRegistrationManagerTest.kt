@@ -436,7 +436,28 @@ class PushRegistrationManagerTest {
     }
 
     @Test
-    fun `a failed unregister response is logged too`() = runTest {
+    fun `a throttled register is logged locally but not reported, and retries next sync`() = runTest {
+        val f = Fixture(this)
+        f.setToken("T1")
+        // The endpoint is rate-limited per IP and unauthenticated, so on a shared-NAT network (public
+        // wifi, carrier CGNAT) a 429 says nothing about this client. Since a failed register persists
+        // nothing, every foreground would re-report it — flooding Crashlytics with throttling noise and
+        // drowning the systematic-rejection signal the reporting exists to carry.
+        f.service.onRegister = { Response.error(429, "".toResponseBody(null)) }
+
+        f.sync()
+
+        assertTrue("throttle must still be logged", f.loggedWarnings.single().contains("429"))
+        assertTrue("throttle must not be reported remotely", f.reportedErrors.isEmpty())
+
+        // Transient means the next reconcile retries; once the throttle lifts, registration succeeds.
+        f.service.onRegister = { Response.success(Unit) }
+        f.sync()
+        assertEquals(2, f.service.registerCalls.size)
+    }
+
+    @Test
+    fun `a failed unregister response is logged too, and a 5xx is not reported remotely`() = runTest {
         val f = Fixture(this).registered("T1")
 
         f.notificationsEnabled = false
@@ -445,6 +466,8 @@ class PushRegistrationManagerTest {
 
         val warning = f.loggedWarnings.single()
         assertTrue("status code must be logged: $warning", warning.contains("500"))
+        // Server-side trouble is transient and shared-fate across the fleet — local log only.
+        assertTrue("a 5xx must not be reported remotely", f.reportedErrors.isEmpty())
     }
 
     /**

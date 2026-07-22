@@ -37,8 +37,8 @@ class PushRegistrationException(message: String) : Exception(message)
  * Performs the two push_registrations calls (issue #1957) and answers a single question about each:
  * **did the server end up in the state we wanted?** Everything a caller would otherwise have to get
  * right about an unreliable network lives here — URL assembly, which non-2xx codes still count as
- * success, and making failures visible — so [PushRegistrationManager] can reason about reconciliation
- * rather than about HTTP.
+ * success, and which failures are visible where (all log locally; only systematic rejections report
+ * remotely) — so [PushRegistrationManager] can reason about reconciliation rather than about HTTP.
  *
  * Nothing here retries. A false return means "not achieved this time"; the manager's next reconcile
  * pass tries again, which is the only retry policy the feature needs given it already runs on every
@@ -105,9 +105,11 @@ class PushRegistrationClient internal constructor(
      * same doomed request then repeats on every foreground — which is exactly how the missing-
      * `description` 422 went unnoticed until a packet capture.
      *
-     * Server rejections also go to the remote channel: registrations are the server's ONLY audience
-     * source for service alerts, so a systematic failure — a field added server-side, a contract change,
-     * a throttle — must not be visible solely in one developer's logcat.
+     * Systematic rejections also go to the remote channel: registrations are the server's ONLY audience
+     * source for service alerts, so a contract failure — a field added server-side, a schema change —
+     * must not be visible solely in one developer's logcat. [Transient][isTransient] statuses stay
+     * local-only, like transport failures: they heal on a later reconcile, and reporting each one would
+     * flood the channel and drown the systematic signal it exists to carry.
      */
     private fun reportHttpFailure(
         operation: String,
@@ -119,8 +121,17 @@ class PushRegistrationClient internal constructor(
         val detail = if (body.isEmpty()) "" else " $body"
         val message = "${failurePrefix(operation, registration)}: HTTP ${response.code()}$detail"
         logWarning(message, null)
-        reportError(PushRegistrationException(message))
+        if (!isTransient(response.code())) reportError(PushRegistrationException(message))
     }
+
+    /**
+     * Whether [code] signals a transient condition rather than a systematic rejection: throttling (429 —
+     * the endpoint is unauthenticated and limited per IP, so on a shared-NAT network — public wifi,
+     * carrier CGNAT — other clients can spend this device's budget) or server-side trouble (5xx). A
+     * later reconcile pass retries both; only statuses that indicate *this request* can never succeed
+     * are worth a remote report.
+     */
+    private fun isTransient(code: Int): Boolean = code == HTTP_TOO_MANY_REQUESTS || code in 500..599
 
     /**
      * Logs a transport-level failure. Local only — being offline is ordinary and self-healing, and
@@ -140,5 +151,8 @@ class PushRegistrationClient internal constructor(
 
     private companion object {
         const val TAG = "PushRegistration"
+
+        /** RFC 6585 Too Many Requests — [HttpURLConnection] predates it and has no constant. */
+        const val HTTP_TOO_MANY_REQUESTS = 429
     }
 }

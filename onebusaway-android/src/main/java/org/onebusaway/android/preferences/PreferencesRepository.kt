@@ -253,9 +253,18 @@ class DefaultPreferencesRepository @Inject constructor(
     /** A staged write: sets [value] (null removes the key) on whatever preferences it is applied to. */
     private fun <T : Any> stage(key: Preferences.Key<T>, value: T?): (MutablePreferences) -> Unit = { prefs -> if (value == null) prefs.remove(key) else prefs[key] = value }
 
+    // Guards the cache read-modify-write in [commit]: @Volatile gives readers visibility but not
+    // atomicity, so two unsynchronized commits could snapshot the same cache and the later swap would
+    // silently drop the earlier one's keys — forever, since the cache is never re-mirrored from
+    // DataStore. Reads stay lock-free; the async persist stays outside (DataStore serializes its own
+    // edits).
+    private val cacheLock = Any()
+
     /** Apply [op] to the cache in one swap, then persist it as one async DataStore edit. */
     private fun commit(op: (MutablePreferences) -> Unit) {
-        cache = cache.toMutablePreferences().also(op).toPreferences()
+        synchronized(cacheLock) {
+            cache = cache.toMutablePreferences().also(op).toPreferences()
+        }
         scope.launch {
             dataStore.edit { prefs -> op(prefs) }
         }

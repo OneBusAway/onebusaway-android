@@ -88,9 +88,7 @@ private val RECENT_WINDOW_MS = 7 * DateUtils.DAY_IN_MILLIS
 internal fun recentCutoff(): Long = System.currentTimeMillis() - RECENT_WINDOW_MS
 
 private fun StopListRow.toStopItem(context: Context): StopListItem {
-    val directionText = direction?.takeIf { it.isNotEmpty() }
-        ?.let { context.getString(DisplayFormat.getStopDirectionText(it)) }
-        ?.takeIf { it.isNotEmpty() }
+    val directionText = DisplayFormat.stopDirectionText(context, direction)
     return StopListItem(
         id = id,
         name = uiName.orEmpty(),

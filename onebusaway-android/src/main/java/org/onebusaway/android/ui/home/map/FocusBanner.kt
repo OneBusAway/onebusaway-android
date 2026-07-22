@@ -45,19 +45,24 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
@@ -69,6 +74,7 @@ import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.util.DisplayFormat
 
 // The banner's route action icons (switch-direction / cancel) share one size + tint so they read as
 // one control group: a larger-than-default 36dp icon in a deliberately tightened 40dp touch box
@@ -76,6 +82,9 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
+
+// The stop name shrinks to fit within this many lines before ellipsizing; see ShrinkToFitStopTitle.
+private const val MAX_TITLE_LINES = 2
 
 /**
  * Presentation state for the map's shared focus banner.
@@ -96,6 +105,7 @@ sealed interface FocusBannerState {
     data class Stop(
         val title: String,
         val direction: String?,
+        val stopCode: String?,
         override val isFavorite: Boolean,
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
@@ -224,22 +234,26 @@ private fun StopFocusBanner(
                 .padding(start = 8.dp, top = 4.dp, end = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val name = if (!state.direction.isNullOrBlank()) {
-                "${state.title} (${state.direction.trim()})"
-            } else {
-                state.title
-            }
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            val subtitle = stopSubtitleText(state.stopCode, state.direction)
+            Column(
                 modifier = Modifier.weight(1f).clickable(
                     onClickLabel = stringResource(R.string.stop_info_recenter),
                     role = Role.Button,
                     onClick = onRecenter
                 )
-            )
+            ) {
+                ShrinkToFitStopTitle(state.title)
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
             if (state.hasAlerts) {
                 BannerAlertAction(onClick = onShowAlerts)
             }
@@ -282,6 +296,66 @@ private fun StopFocusBanner(
             }
         }
     }
+}
+
+/**
+ * The stop name at [MaterialTheme.typography.titleLarge], shrinking down to [MaterialTheme.typography.titleMedium]'s
+ * size (in 1sp steps) so the name fits within [MAX_TITLE_LINES] lines before it has to ellipsize, and capped at
+ * [MAX_TITLE_LINES] lines.
+ *
+ * Measures via [TextMeasurer] rather than `BoxWithConstraints`: this sits inside [FocusBanner]'s
+ * `Modifier.height(IntrinsicSize.Min)` row, and `BoxWithConstraints` is a `SubcomposeLayout`, which throws when
+ * asked for intrinsic measurements. `fillMaxWidth` + `onSizeChanged` reports the available width without one.
+ *
+ * [LineBadge] hand-rolls the same shrink-to-fit idea, but against a fixed known width so it can measure
+ * synchronously during composition; this variant fits an unknown fill-available width, hence the `onSizeChanged`
+ * round-trip below. Kept file-private for its single call site — if a second fill-width shrink consumer appears,
+ * that's the trigger to promote a shared `ShrinkToFitText` into the components package.
+ *
+ * `maxWidthPx` is reported through `onSizeChanged`, so it lags the actual available width by a layout→recompose
+ * round-trip: when the width shrinks (e.g. the alert icon arrives asynchronously after the arrivals load and
+ * narrows this column) the font resolved for the previous, wider width is momentarily a touch too large for the new
+ * width. The two-line budget absorbs that — the transient is at worst a brief extra line or ellipsis that the next
+ * recomposition resolves as the font steps down — rather than the hard one-line edge-truncation an earlier revision
+ * showed.
+ */
+@Composable
+private fun ShrinkToFitStopTitle(title: String) {
+    val fullStyle = MaterialTheme.typography.titleLarge
+    val floorSize = MaterialTheme.typography.titleMedium.fontSize
+    val textMeasurer = rememberTextMeasurer()
+    var maxWidthPx by remember { mutableIntStateOf(0) }
+
+    fun fitsWithinLineCap(fontSize: TextUnit) = maxWidthPx <= 0 ||
+        textMeasurer.measure(
+            text = title,
+            style = fullStyle.copy(fontSize = fontSize),
+            constraints = Constraints(maxWidth = maxWidthPx)
+        ).lineCount <= MAX_TITLE_LINES
+
+    val resolvedSize = remember(title, maxWidthPx) {
+        var candidate = fullStyle.fontSize
+        while (candidate > floorSize && !fitsWithinLineCap(candidate)) {
+            candidate = (candidate.value - 1).sp
+        }
+        candidate
+    }
+    Text(
+        text = title,
+        style = fullStyle.copy(fontSize = resolvedSize),
+        maxLines = MAX_TITLE_LINES,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.fillMaxWidth().onSizeChanged { maxWidthPx = it.width }
+    )
+}
+
+/** The stop's identity line: passenger-facing stop number and formatted direction, joined when both are known. */
+@Composable
+private fun stopSubtitleText(stopCode: String?, direction: String?): String? {
+    val codeText = stopCode?.takeIf { it.isNotBlank() }
+        ?.let { stringResource(R.string.stop_details_code, it) }
+    val directionText = DisplayFormat.stopDirectionText(LocalContext.current, direction)
+    return listOfNotNull(codeText, directionText).takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
 
 /** A deliberately tiny route chip: only enough padding to distinguish the route from its headsign. */
@@ -504,6 +578,7 @@ private fun FocusBannerPreview() {
                 state = FocusBannerState.Stop(
                     title = "Pine St & 3rd Ave",
                     direction = "N",
+                    stopCode = "12345",
                     isFavorite = true,
                     favoriteEnabled = true,
                     hasAlerts = true,

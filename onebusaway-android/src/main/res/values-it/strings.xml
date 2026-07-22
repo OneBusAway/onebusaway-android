@@ -375,7 +375,6 @@
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Sei su questo autobus?</string>
     <string name="report_problem_uservehicle_hint">Numero autobus (facoltativo)</string>
-    <string name="report_problem_report">Segnala</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -699,7 +698,6 @@
 
 
     <string name="tripplanner_no_server_selected_error">Nessuna area selezionata</string>
-    <string name="tripplanner_error_dialog_title">Impossibile pianificare</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Spiacenti, qualcosa è andato storto. Riprova.</string>
     <string name="tripplanner_error_request_timeout">Controlla la tua connessione Internet e riprova.</string>
@@ -720,10 +718,8 @@
     <!-- When routing from my location -->
     <string name="tripplanner_current_location">Posizione attuale</string>
 
-    <string name="tripplanner_no_contact">Non c’è un contatto per la pianificazione del viaggio in ques’area.</string>
 
     <string name="tripplanner_reverse">Inverti</string>
-    <string name="tripplanner_report_trip_problem">Segnala problema con piano di viaggio</string>
 
 
     <!-- Instructions generation -->

@@ -65,8 +65,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -149,7 +151,11 @@ fun DirectionsFormCard(
     val activity = context.findActivity()
     var showAdvanced by remember { mutableStateOf(false) }
 
-    val maxHeight = (LocalConfiguration.current.screenHeightDp * 0.6f).dp
+    // containerSize (px) reflects the actual available window; Configuration.screenHeightDp is lint-flagged
+    // as unreliable across insets/multi-window. Match the HomeScreen peek-cap pattern.
+    val maxHeight = with(LocalDensity.current) {
+        (LocalWindowInfo.current.containerSize.height * 0.6f).toDp()
+    }
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -271,7 +277,10 @@ fun DirectionsResultsSheet(
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
     // stranded under the gesture pill / 3-button bar. Collapsed height includes it so the handle fits.
     val navBottom = navigationBarBottomPadding()
-    val fullHeight = (LocalConfiguration.current.screenHeightDp * 0.4f).dp
+    // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
+    val fullHeight = with(LocalDensity.current) {
+        (LocalWindowInfo.current.containerSize.height * 0.4f).toDp()
+    }
     var collapsed by rememberSaveable { mutableStateOf(false) }
     val sheetHeight by animateDpAsState(
         targetValue = if (collapsed) DIRECTIONS_SHEET_PEEK + navBottom else fullHeight,
@@ -547,11 +556,12 @@ private fun DirectionsAdvancedSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val imperial = remember { !PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
     // (display label, trip-mode code) for each option, dropping bikeshare modes when unavailable.
-    val options = remember {
-        val typed = context.resources.obtainTypedArray(R.array.transit_mode_array)
-        val labels = context.resources.getStringArray(R.array.transit_mode_array)
+    val options = remember(resources) {
+        val typed = resources.obtainTypedArray(R.array.transit_mode_array)
+        val labels = resources.getStringArray(R.array.transit_mode_array)
         val all = (0 until typed.length()).map { i ->
             labels[i] to TripModes.getTripModeCodeFromSelection(typed.getResourceId(i, 0))
         }
@@ -578,6 +588,13 @@ private fun DirectionsAdvancedSettingsDialog(
         )
     }
     var expanded by remember { mutableStateOf(false) }
+
+    // Preference keys resolved in composition (stringResource) so the confirm handler doesn't read
+    // resource values off LocalContext.current (lint: LocalContextGetResourceValueCall).
+    val prefKeyTravelBy = stringResource(R.string.preference_key_trip_plan_travel_by)
+    val prefKeyMaxWalk = stringResource(R.string.preference_key_trip_plan_maximum_walking_distance)
+    val prefKeyMinimizeTransfers = stringResource(R.string.preference_key_trip_plan_minimize_transfers)
+    val prefKeyAvoidStairs = stringResource(R.string.preference_key_trip_plan_avoid_stairs)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -643,22 +660,10 @@ private fun DirectionsAdvancedSettingsDialog(
                 viewModel.applyAdvancedSettings(
                     AdvancedSettings(selectedMode, maxWalkMeters, minimizeTransfers, wheelchair)
                 )
-                PreferenceUtils.saveInt(
-                    context.getString(R.string.preference_key_trip_plan_travel_by),
-                    selectedMode
-                )
-                PreferenceUtils.saveDouble(
-                    context.getString(R.string.preference_key_trip_plan_maximum_walking_distance),
-                    maxWalkMeters ?: Double.MAX_VALUE
-                )
-                PreferenceUtils.saveBoolean(
-                    context.getString(R.string.preference_key_trip_plan_minimize_transfers),
-                    minimizeTransfers
-                )
-                PreferenceUtils.saveBoolean(
-                    context.getString(R.string.preference_key_trip_plan_avoid_stairs),
-                    wheelchair
-                )
+                PreferenceUtils.saveInt(prefKeyTravelBy, selectedMode)
+                PreferenceUtils.saveDouble(prefKeyMaxWalk, maxWalkMeters ?: Double.MAX_VALUE)
+                PreferenceUtils.saveBoolean(prefKeyMinimizeTransfers, minimizeTransfers)
+                PreferenceUtils.saveBoolean(prefKeyAvoidStairs, wheelchair)
                 onDismiss()
             }) { Text(stringResource(R.string.ok)) }
         }

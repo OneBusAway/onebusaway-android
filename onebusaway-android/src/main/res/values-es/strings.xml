@@ -450,7 +450,6 @@
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">¿Estas en este bus?</string>
     <string name="report_problem_uservehicle_hint">Número del bus (opcional)</string>
-    <string name="report_problem_report">Reportar</string>
 
     <!-- Region list -->
     <plurals name="distance_miles">
@@ -853,7 +852,6 @@
 
 
     <string name="tripplanner_no_server_selected_error">No hay ninguna región seleccionada</string>
-    <string name="tripplanner_error_dialog_title">No fue posible realizar la Planeación</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Lo sentimos, algo salió mal. Por favor, inténtalo de nuevo.</string>
     <string name="tripplanner_error_request_timeout">Por favor verifica tu conexión a Internet e intentalo
@@ -877,11 +875,8 @@
     <!-- When routing from my location -->
     <string name="tripplanner_current_location">Ubicación actual</string>
 
-    <string name="tripplanner_no_contact">No existe un contacto del planeador de viajes para esta región.
-    </string>
 
     <string name="tripplanner_reverse">Invertir</string>
-    <string name="tripplanner_report_trip_problem">Reportar un Problema al Planear el Viaje</string>
 
     <!-- Instructions generation -->
 

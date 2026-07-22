@@ -125,9 +125,9 @@ fun MapFeature(
     // The sheet-driven FAB lift, computed by HomeScreen from its live SheetState (the map composes only
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
+    modifier: Modifier = Modifier,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
-    onMapLongPress: (GeoPoint) -> Unit = {},
-    modifier: Modifier = Modifier
+    onMapLongPress: (GeoPoint) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current

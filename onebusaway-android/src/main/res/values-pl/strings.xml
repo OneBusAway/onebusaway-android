@@ -417,7 +417,6 @@
     <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Jesteś w autobusie?</string>
     <string name="report_problem_uservehicle_hint">opcjonalnie</string>
-    <string name="report_problem_report">Zgłoś</string>
 
     <!-- Region list -->
     <plurals name="distance_miles" tools:ignore="MissingQuantity">
@@ -851,7 +850,6 @@
     <string name="trip_plan_time">Czas</string>
 
     <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
-    <string name="tripplanner_error_dialog_title">Planowanie niemożliwe</string>
     <!-- Errors -->
     <string name="tripplanner_error_not_defined">Przepraszamy, coś poszło nie tak. Spróbuj ponownie.</string>
     <string name="tripplanner_error_request_timeout">Sprawdź połączenie internetowe i spróbuj ponownie.
@@ -873,10 +871,7 @@
     <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje roweru i spróbuj ponownie</string>
     <!-- When routing from my location -->
     <string name="tripplanner_current_location">Aktualna lokalizacja</string>
-    <string name="tripplanner_no_contact">Brak kontaktu do planowania podróży dla tego regionu.
-    </string>
     <string name="tripplanner_reverse">Odwróć</string>
-    <string name="tripplanner_report_trip_problem">Zgłoś problem z planowaniem podróży</string>
 
 
     <!-- Step-by-step screen -->

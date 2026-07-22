@@ -108,8 +108,7 @@ class PushRegistrationClient internal constructor(
      * Systematic rejections also go to the remote channel: registrations are the server's ONLY audience
      * source for service alerts, so a contract failure — a field added server-side, a schema change —
      * must not be visible solely in one developer's logcat. [Transient][isTransient] statuses stay
-     * local-only, like transport failures: they heal on a later reconcile, and reporting each one would
-     * flood the channel and drown the systematic signal it exists to carry.
+     * local-only, like transport failures.
      */
     private fun reportHttpFailure(
         operation: String,
@@ -128,8 +127,9 @@ class PushRegistrationClient internal constructor(
      * Whether [code] signals a transient condition rather than a systematic rejection: throttling (429 —
      * the endpoint is unauthenticated and limited per IP, so on a shared-NAT network — public wifi,
      * carrier CGNAT — other clients can spend this device's budget) or server-side trouble (5xx). A
-     * later reconcile pass retries both; only statuses that indicate *this request* can never succeed
-     * are worth a remote report.
+     * later reconcile pass retries both, so reporting each occurrence would flood the remote channel
+     * and drown the systematic signal it exists to carry; only statuses that indicate *this request*
+     * can never succeed are worth a report.
      */
     private fun isTransient(code: Int): Boolean = code == HTTP_TOO_MANY_REQUESTS || code in 500..599
 

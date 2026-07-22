@@ -44,8 +44,8 @@ import org.onebusaway.android.region.RegionRepository
  *
  * 1. **Desired state** ([deriveDesiredRegistration]) — a pure classification of the raw inputs (OS
  *    notifications-enabled — the opt-in signal; there is no separate in-app toggle — the current
- *    region, the FCM token, the device locale, and the test-device settings) into wanted / none /
- *    not-yet-resolved. This class only gathers the inputs.
+ *    region, the FCM token, the device locale, and the test-device settings) into wanted / opted-out /
+ *    no-sidecar / not-yet-resolved. This class only gathers the inputs.
  * 2. **The decision** ([decidePushRegistration]) — a pure function comparing desired against the record
  *    of what was last sent, yielding register / re-register / unregister / no-op.
  * 3. **Applying it** — this class, which owns only the rule for *what to record given which calls
@@ -147,7 +147,8 @@ class PushRegistrationManager internal constructor(
             testDeviceName = prefs.getString(R.string.preference_key_push_test_device_name, null)
         )
         // Unresolved (an async input hasn't settled) is the only state that may skip the decision — a
-        // later trigger re-runs us. See DesiredRegistration for why it must never be read as an opt-out.
+        // later trigger re-runs us. See DesiredRegistration for why it must never be read as a resolved
+        // state (deciding on a half-read state fires spurious DELETEs).
         if (desired !is DesiredRegistration.Resolved) return@withLock
 
         when (val action = decidePushRegistration(desired, store.last(), store.sinceLastSent())) {

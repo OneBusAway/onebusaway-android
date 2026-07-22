@@ -62,9 +62,7 @@ class PushRegistrationDecisionTest {
 
     @Test
     fun `opting out leaves the recorded registration and its server row alone`() {
-        // Issue #1957: an OS-level disable needs no DELETE — FCM bounces and the server's prune own
-        // that cleanup, and the iOS client never DELETEs. A DELETE here could also drop the delivery
-        // target of an already-scheduled trip alarm.
+        // An OS-level disable never DELETEs — see [DesiredRegistration.OptedOut] for the rationale.
         assertEquals(PushRegistrationAction.NoOp, decide(OptedOut, last = base))
         // Stale record while opted out changes nothing: no keep-alive POST either.
         assertEquals(PushRegistrationAction.NoOp, decide(OptedOut, last = base, sinceLastSent = 30.days))

@@ -77,14 +77,10 @@ const val PUSH_DESCRIPTION_MAX_LENGTH = 255
  * under either interpretation. Grapheme clusters (ZWJ emoji sequences, combining marks) can still be
  * cut between code points; that renders imperfectly but is valid Unicode and within the server limit.
  */
-fun String.truncatedToDescriptionCap(): String {
-    if (length <= PUSH_DESCRIPTION_MAX_LENGTH) return this
-    val end = if (this[PUSH_DESCRIPTION_MAX_LENGTH - 1].isHighSurrogate()) {
-        PUSH_DESCRIPTION_MAX_LENGTH - 1
-    } else {
-        PUSH_DESCRIPTION_MAX_LENGTH
-    }
-    return substring(0, end)
+fun String.truncatedToDescriptionCap(): String = if (length <= PUSH_DESCRIPTION_MAX_LENGTH) {
+    this
+} else {
+    take(PUSH_DESCRIPTION_MAX_LENGTH).dropLastWhile { it.isHighSurrogate() }
 }
 
 /**

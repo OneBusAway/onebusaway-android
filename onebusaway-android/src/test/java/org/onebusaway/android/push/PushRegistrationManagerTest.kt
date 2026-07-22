@@ -101,9 +101,8 @@ class PushRegistrationManagerTest {
     fun `opt-out leaves the server row alone - FCM bounces and the server prune own that cleanup`() = runTest {
         val f = Fixture(this).registered("T1")
 
-        // Rider turns notifications off in system settings; the ON_START resync reconciles. Per issue
-        // #1957 an OS-level disable needs no DELETE (and the iOS client never DELETEs) — one here could
-        // drop the delivery target of an already-scheduled trip alarm.
+        // Rider turns notifications off in system settings; the ON_START resync reconciles. An OS-level
+        // disable never DELETEs — see [DesiredRegistration.OptedOut] for the rationale.
         f.notificationsEnabled = false
         f.sync()
 
@@ -377,11 +376,11 @@ class PushRegistrationManagerTest {
     }
 
     @Test
-    fun `a missing region is treated as not-yet-known rather than an opt-out`() = runTest {
+    fun `a missing region is treated as not-yet-known rather than resolved`() = runTest {
         val f = Fixture(this).registered("T1")
 
         // The region flow is briefly null at cold start (RegionRepository seeds it asynchronously).
-        // Treating that as an opt-out would DELETE the registration and re-POST seconds later.
+        // Treating that as no-sidecar would DELETE the registration and re-POST seconds later.
         f.regions.emit(null)
         f.sync()
 
@@ -445,10 +444,8 @@ class PushRegistrationManagerTest {
     fun `a throttled register is logged locally but not reported, and retries next sync`() = runTest {
         val f = Fixture(this)
         f.setToken("T1")
-        // The endpoint is rate-limited per IP and unauthenticated, so on a shared-NAT network (public
-        // wifi, carrier CGNAT) a 429 says nothing about this client. Since a failed register persists
-        // nothing, every foreground would re-report it — flooding Crashlytics with throttling noise and
-        // drowning the systematic-rejection signal the reporting exists to carry.
+        // A 429 says nothing about this client (see [PushRegistrationClient.isTransient]), and since a
+        // failed register persists nothing, every foreground would re-report it.
         f.service.onRegister = { Response.error(429, "".toResponseBody(null)) }
 
         f.sync()

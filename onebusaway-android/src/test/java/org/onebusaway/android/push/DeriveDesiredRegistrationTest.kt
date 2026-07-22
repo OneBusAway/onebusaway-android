@@ -27,8 +27,7 @@ import org.onebusaway.android.region.region
  * registration away, `Unresolved` freezes reconciliation until the input settles — collapsing the two
  * under a nullable target is exactly the bug that let a region-A registration outlive a switch to a
  * sidecar-less region B), and [DesiredRegistration.OptedOut] vs `NoSidecar` (an OS-level opt-out must
- * NOT unregister — issue #1957 leaves that cleanup to FCM bounces and the server prune, and the iOS
- * client never DELETEs).
+ * NOT unregister — see [DesiredRegistration.OptedOut] for the rationale).
  */
 class DeriveDesiredRegistrationTest {
 
@@ -74,9 +73,9 @@ class DeriveDesiredRegistrationTest {
     }
 
     @Test
-    fun `a missing region is unresolved, not an opt-out`() {
+    fun `a missing region is unresolved, not no-sidecar`() {
         // The region flow is briefly null at cold start (RegionRepository seeds it asynchronously);
-        // reading that as None would DELETE the registration and re-POST it seconds later.
+        // reading that as NoSidecar would DELETE the registration and re-POST it seconds later.
         assertEquals(DesiredRegistration.Unresolved, derive(region = null))
     }
 

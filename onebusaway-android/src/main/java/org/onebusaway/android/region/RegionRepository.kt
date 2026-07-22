@@ -162,14 +162,11 @@ class DefaultRegionRepository @Inject constructor(
     init {
         appScope.launch {
             val seeded = loadPersistedRegion()
-            // Settle the initial Resolving state now that the persisted region (if any) has loaded — to the
-            // persisted region, or to a deliberate Active(null) when a custom OBA API URL is configured
-            // (the rider set a custom endpoint, so there genuinely is no region). With neither, leave
-            // Resolving for refresh() to settle. settleIfResolving is a no-op once the state has settled,
-            // and its check-and-write is atomic with the other holder writers, so a concurrent refresh()
-            // that has resolved to Active/NeedsManualChoice/Failed is never clobbered (refresh's own
-            // transient Resolving is deliberately settled over — it publishes its result regardless).
-            // `seeded` is null in the custom-URL branch, so the single call covers both cases.
+            // Settle the initial Resolving state now that the persisted region (if any) has loaded — to
+            // the persisted region, or to a deliberate Active(null) when a custom OBA API URL is configured
+            // (the rider set a custom endpoint, so there genuinely is no region). With neither, leave it
+            // Resolving for refresh() to settle. `seeded` is null in the custom-URL branch, so the single
+            // call covers both cases; settleIfResolving handles the concurrent-refresh race (see its doc).
             if (seeded != null || hasCustomObaApiUrl()) holder.settleIfResolving(seeded)
         }
     }

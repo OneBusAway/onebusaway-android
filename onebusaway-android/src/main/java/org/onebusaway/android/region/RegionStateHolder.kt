@@ -37,6 +37,12 @@ import org.onebusaway.android.region.Region
  * yet" (transient — a value is coming) apart from a deliberate `Active(null)` (a custom API URL is
  * configured, so there is no region). [DefaultRegionRepository]'s `init` settles this once the persisted
  * region has loaded — see its `init` block (#1969).
+ *
+ * The writers are `@Synchronized` so a compound transition (the [settleIfResolving] check-and-write) is
+ * atomic with respect to the others. That serializes *writers* only: [region] and [state] are separate
+ * flows, so a reader collecting one can still momentarily observe it against the other's prior value.
+ * Readers that need both consistent should derive from [state] alone (its [RegionState.Active] carries the
+ * region), not pair [region] with [state].
  */
 class RegionStateHolder {
 
@@ -64,9 +70,7 @@ class RegionStateHolder {
      */
     @Synchronized
     fun settleIfResolving(region: Region?) {
-        if (_state.value != RegionState.Resolving) return
-        _region.value = region
-        _state.value = RegionState.Active(region)
+        if (_state.value == RegionState.Resolving) activated(region)
     }
 
     /** A resolution is in flight; [region] keeps its last value. */

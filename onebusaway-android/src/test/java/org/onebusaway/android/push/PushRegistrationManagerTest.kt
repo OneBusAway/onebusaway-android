@@ -55,7 +55,7 @@ class PushRegistrationManagerTest {
 
     @Before
     fun pinLocale() {
-        // buildTarget() sends Locale.getDefault().toLanguageTag(); pin it so the assertion is stable.
+        // sync() sends Locale.getDefault().toLanguageTag(); pin it so the assertion is stable.
         previousLocale = Locale.getDefault()
         Locale.setDefault(Locale.US)
     }
@@ -389,6 +389,28 @@ class PushRegistrationManagerTest {
     }
 
     @Test
+    fun `switching to a region without a sidecar unregisters the stale registration`() = runTest {
+        val f = Fixture(this).registered("T1")
+
+        // Region 2 has no sidecar host (the field defaults to ""). Unlike the null region above, this
+        // is a *resolved* fact, not a still-settling input — so the region-1 registration must be
+        // reconciled away, or the device keeps receiving region 1's alerts (and no region-2 ones)
+        // until the server's 180-day prune.
+        f.regions.emit(region(2).copy(sidecarBaseUrl = ""))
+        f.sync()
+
+        val delete = f.service.unregisterCalls.single()
+        assertEquals("T1", delete.token)
+        // The DELETE targets the *old* registration's host — the current region has none.
+        assertTrue(delete.url, delete.url.startsWith("https://sidecar.test"))
+
+        // Record cleared and nothing to register → settled: no re-POST, no duplicate DELETE.
+        f.sync()
+        assertEquals(1, f.service.unregisterCalls.size)
+        assertEquals(1, f.service.registerCalls.size)
+    }
+
+    @Test
     fun `an HTTP error response is logged and reported, not silently swallowed`() = runTest {
         val f = Fixture(this)
         f.setToken("T1")
@@ -434,7 +456,7 @@ class PushRegistrationManagerTest {
         val service = FakePushRegistrationWebService()
         val prefs = FakePreferencesRepository().apply {
             setBoolean(R.string.preference_key_push_test_device, true)
-            // Named, so the test-device flag is honoured rather than downgraded (see buildTarget).
+            // Named, so the test-device flag is honoured rather than downgraded (see deriveDesiredRegistration).
             setString(R.string.preference_key_push_test_device_name, DEVICE_DESCRIPTION)
         }
         val regions = FakeRegionRepository(region(1).copy(sidecarBaseUrl = "https://sidecar.test"))

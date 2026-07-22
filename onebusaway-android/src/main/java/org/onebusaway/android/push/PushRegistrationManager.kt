@@ -42,9 +42,10 @@ import org.onebusaway.android.region.RegionRepository
  *
  * A reconciler, in three parts:
  *
- * 1. **Desired state** ([buildTarget]) — derived from whether notifications are enabled at the OS level
- *    (the opt-in signal; there is no separate in-app toggle), the current region (its id + sidecar
- *    host), the FCM token, the device locale, and the test-device settings.
+ * 1. **Desired state** ([deriveDesiredRegistration]) — a pure classification of the raw inputs (OS
+ *    notifications-enabled — the opt-in signal; there is no separate in-app toggle — the current
+ *    region, the FCM token, the device locale, and the test-device settings) into wanted / none /
+ *    not-yet-resolved. This class only gathers the inputs.
  * 2. **The decision** ([decidePushRegistration]) — a pure function comparing desired against the record
  *    of what was last sent, yielding register / re-register / unregister / no-op.
  * 3. **Applying it** — this class, which owns only the rule for *what to record given which calls
@@ -137,19 +138,19 @@ class PushRegistrationManager internal constructor(
         // didn't, before reconciling, so the stale registration can't linger past this pass.
         drainPendingDelete()
 
-        // Notifications being off is the ONLY definitive "this device should not be registered" signal.
-        // A missing region or FCM token just means we can't tell yet — both resolve asynchronously, and
-        // the region flow is explicitly "briefly null at cold start" (see RegionRepository) — so treating
-        // that as an opt-out would fire a spurious DELETE on launch and re-POST seconds later, burning
-        // two requests against a rate-limited endpoint and leaving a window with no registration at all.
-        val target = if (notificationsEnabled()) {
-            // Inputs still settling — bail rather than decide; a later trigger re-runs us.
-            buildTarget() ?: return@withLock
-        } else {
-            null
-        }
+        val desired = deriveDesiredRegistration(
+            notificationsEnabled = notificationsEnabled(),
+            region = regionRepository.region.value,
+            token = firebaseMessagingManager.userPushId(),
+            locale = Locale.getDefault().toLanguageTag(),
+            testDeviceEnabled = prefs.getBoolean(R.string.preference_key_push_test_device, false),
+            testDeviceName = prefs.getString(R.string.preference_key_push_test_device_name, null)
+        )
+        // Unresolved (an async input hasn't settled) is the only state that may skip the decision — a
+        // later trigger re-runs us. See DesiredRegistration for why it must never be read as an opt-out.
+        if (desired !is DesiredRegistration.Resolved) return@withLock
 
-        when (val action = decidePushRegistration(target, store.last(), store.sinceLastSent())) {
+        when (val action = decidePushRegistration(desired, store.last(), store.sinceLastSent())) {
             PushRegistrationAction.NoOp -> Unit
             is PushRegistrationAction.Register ->
                 if (client.register(action.target)) store.record(action.target)
@@ -187,39 +188,5 @@ class PushRegistrationManager internal constructor(
     private suspend fun drainPendingDelete() {
         val pending = store.pendingDelete() ?: return
         if (client.unregister(pending)) store.clearPendingDelete()
-    }
-
-    /**
-     * The registration this device wants, or null when the inputs aren't all resolved yet (no region,
-     * no sidecar host, or no FCM token) — never an opt-out; see [sync]. The locale is the device's
-     * BCP-47 tag, sent as-is with no normalization.
-     *
-     * The test-device flag is honoured only once the rider has named the device: the server rejects a
-     * `test_device=true` registration with a blank `description` (422), so an unnamed device registers
-     * as an ordinary one rather than POSTing a request guaranteed to fail. The iOS client gates its
-     * "Test Device Name" the same way — and [PushRegistration.testDevice] derives the flag from the
-     * name, so that rule holds by construction.
-     *
-     * The name is capped when it is written (`AdvancedSettingsViewModel.onPushTestDeviceNameChanged`),
-     * which is what keeps the stored value legal; the [PUSH_DESCRIPTION_MAX_LENGTH] clamp here is a
-     * cheap guard on the wire boundary itself, so no path can put an over-long `description` on a
-     * request the server would reject outright.
-     */
-    private fun buildTarget(): PushRegistration? {
-        val region = regionRepository.region.value ?: return null
-        val base = region.sidecarBaseUrl?.takeIf { it.isNotBlank() } ?: return null
-        val token = firebaseMessagingManager.userPushId().takeIf { it.isNotEmpty() } ?: return null
-        val description = prefs.getString(R.string.preference_key_push_test_device_name, null)
-            ?.trim()
-            ?.take(PUSH_DESCRIPTION_MAX_LENGTH)
-            ?.takeIf { it.isNotEmpty() }
-            ?.takeIf { prefs.getBoolean(R.string.preference_key_push_test_device, false) }
-        return PushRegistration(
-            regionId = region.id,
-            sidecarBaseUrl = base,
-            token = token,
-            locale = Locale.getDefault().toLanguageTag(),
-            description = description
-        )
     }
 }

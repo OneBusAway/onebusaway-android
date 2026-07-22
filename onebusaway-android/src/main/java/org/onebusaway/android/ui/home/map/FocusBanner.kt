@@ -83,6 +83,9 @@ private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
 
+// The stop name shrinks to fit within this many lines before ellipsizing; see ShrinkToFitStopTitle.
+private const val MAX_TITLE_LINES = 2
+
 /**
  * Presentation state for the map's shared focus banner.
  */
@@ -297,12 +300,24 @@ private fun StopFocusBanner(
 
 /**
  * The stop name at [MaterialTheme.typography.titleLarge], shrinking down to [MaterialTheme.typography.titleMedium]'s
- * size (in 1sp steps) to stay on one line before falling back to wrapping — uncapped and untruncated, rather than
- * an ellipsis — at that floor size.
+ * size (in 1sp steps) so the name fits within [MAX_TITLE_LINES] lines before it has to ellipsize, and capped at
+ * [MAX_TITLE_LINES] lines.
  *
  * Measures via [TextMeasurer] rather than `BoxWithConstraints`: this sits inside [FocusBanner]'s
  * `Modifier.height(IntrinsicSize.Min)` row, and `BoxWithConstraints` is a `SubcomposeLayout`, which throws when
  * asked for intrinsic measurements. `fillMaxWidth` + `onSizeChanged` reports the available width without one.
+ *
+ * [LineBadge] hand-rolls the same shrink-to-fit idea, but against a fixed known width so it can measure
+ * synchronously during composition; this variant fits an unknown fill-available width, hence the `onSizeChanged`
+ * round-trip below. Kept file-private for its single call site — if a second fill-width shrink consumer appears,
+ * that's the trigger to promote a shared `ShrinkToFitText` into the components package.
+ *
+ * `maxWidthPx` is reported through `onSizeChanged`, so it lags the actual available width by a layout→recompose
+ * round-trip: when the width shrinks (e.g. the alert icon arrives asynchronously after the arrivals load and
+ * narrows this column) the font resolved for the previous, wider width is momentarily a touch too large for the new
+ * width. The two-line budget absorbs that — the transient is at worst a brief extra line or ellipsis that the next
+ * recomposition resolves as the font steps down — rather than the hard one-line edge-truncation an earlier revision
+ * showed.
  */
 @Composable
 private fun ShrinkToFitStopTitle(title: String) {
@@ -311,16 +326,16 @@ private fun ShrinkToFitStopTitle(title: String) {
     val textMeasurer = rememberTextMeasurer()
     var maxWidthPx by remember { mutableIntStateOf(0) }
 
-    fun fitsOneLine(fontSize: TextUnit) = maxWidthPx <= 0 || !textMeasurer.measure(
-        text = title,
-        style = fullStyle.copy(fontSize = fontSize),
-        maxLines = 1,
-        constraints = Constraints(maxWidth = maxWidthPx)
-    ).didOverflowWidth
+    fun fitsWithinLineCap(fontSize: TextUnit) = maxWidthPx <= 0 ||
+        textMeasurer.measure(
+            text = title,
+            style = fullStyle.copy(fontSize = fontSize),
+            constraints = Constraints(maxWidth = maxWidthPx)
+        ).lineCount <= MAX_TITLE_LINES
 
     val resolvedSize = remember(title, maxWidthPx) {
         var candidate = fullStyle.fontSize
-        while (candidate > floorSize && !fitsOneLine(candidate)) {
+        while (candidate > floorSize && !fitsWithinLineCap(candidate)) {
             candidate = (candidate.value - 1).sp
         }
         candidate
@@ -328,7 +343,8 @@ private fun ShrinkToFitStopTitle(title: String) {
     Text(
         text = title,
         style = fullStyle.copy(fontSize = resolvedSize),
-        maxLines = if (fitsOneLine(resolvedSize)) 1 else Int.MAX_VALUE,
+        maxLines = MAX_TITLE_LINES,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier.fillMaxWidth().onSizeChanged { maxWidthPx = it.width }
     )
 }

@@ -165,14 +165,12 @@ class DefaultRegionRepository @Inject constructor(
             // Settle the initial Resolving state now that the persisted region (if any) has loaded — to the
             // persisted region, or to a deliberate Active(null) when a custom OBA API URL is configured
             // (the rider set a custom endpoint, so there genuinely is no region). With neither, leave
-            // Resolving for refresh() to settle. Only while the state is still that untouched Resolving
-            // seed: a concurrent refresh() that has already resolved to Active/NeedsManualChoice/Failed owns
-            // the state and must not be clobbered (refresh's own transient Resolving is fine to override —
-            // it settles the state again itself). `seeded` is null in the custom-URL branch, so the single
-            // activated(seeded) covers both cases.
-            if (holder.state.value == RegionState.Resolving && (seeded != null || hasCustomObaApiUrl())) {
-                holder.activated(seeded)
-            }
+            // Resolving for refresh() to settle. settleIfResolving is a no-op once the state has settled,
+            // and its check-and-write is atomic with the other holder writers, so a concurrent refresh()
+            // that has resolved to Active/NeedsManualChoice/Failed is never clobbered (refresh's own
+            // transient Resolving is deliberately settled over — it publishes its result regardless).
+            // `seeded` is null in the custom-URL branch, so the single call covers both cases.
+            if (seeded != null || hasCustomObaApiUrl()) holder.settleIfResolving(seeded)
         }
     }
 

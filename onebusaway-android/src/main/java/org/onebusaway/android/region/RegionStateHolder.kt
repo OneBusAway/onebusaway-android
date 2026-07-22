@@ -47,22 +47,42 @@ class RegionStateHolder {
     val state: StateFlow<RegionState> = _state.asStateFlow()
 
     /** A region (or null for a custom API URL) became active: moves both [region] and [state]. */
+    @Synchronized
     fun activated(region: Region?) {
         _region.value = region
         _state.value = RegionState.Active(region)
     }
 
+    /**
+     * Settles the initial [RegionState.Resolving] seed to [RegionState.Active] — the repository init's
+     * persisted-region write. A no-op unless [state] is still [RegionState.Resolving], so a concurrent
+     * refresh that has already settled to Active/NeedsManualChoice/Failed is never clobbered — and unlike
+     * a bare check at the call site, the check and the write are atomic with the other writers (all
+     * `@Synchronized`), closing the interleaving where a refresh settles between them (#1969). A refresh's
+     * own transient [resolving] *is* settled over deliberately: it publishes its result regardless, so
+     * the early seed only fills the wait.
+     */
+    @Synchronized
+    fun settleIfResolving(region: Region?) {
+        if (_state.value != RegionState.Resolving) return
+        _region.value = region
+        _state.value = RegionState.Active(region)
+    }
+
     /** A resolution is in flight; [region] keeps its last value. */
+    @Synchronized
     fun resolving() {
         _state.value = RegionState.Resolving
     }
 
     /** No region could be auto-selected; the user must pick from [regions]. [region] keeps its value. */
+    @Synchronized
     fun needsChoice(regions: List<Region>) {
         _state.value = RegionState.NeedsManualChoice(regions)
     }
 
     /** Region info could not be loaded; [region] keeps its last value. */
+    @Synchronized
     fun failed() {
         _state.value = RegionState.Failed
     }

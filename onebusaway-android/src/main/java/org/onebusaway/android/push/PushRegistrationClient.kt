@@ -48,7 +48,8 @@ class PushRegistrationException(message: String) : Exception(message)
 @Singleton
 class PushRegistrationClient internal constructor(
     private val service: PushRegistrationWebService,
-    private val registrationsEndpointPath: String,
+    // The resolved /api/v2/regions/ segment (a string resource, so it can't be a compile-time const).
+    private val regionsPath: String,
     // Seams for the Android-only reporting sinks, so failure handling is assertable from a plain JVM
     // test: android.util.Log and Crashlytics are both unavailable there.
     private val logWarning: (String, Throwable?) -> Unit,
@@ -62,7 +63,7 @@ class PushRegistrationClient internal constructor(
         service: PushRegistrationWebService
     ) : this(
         service = service,
-        registrationsEndpointPath = context.getString(R.string.arrivals_reminders_api_endpoint),
+        regionsPath = context.getString(R.string.arrivals_reminders_api_endpoint),
         logWarning = { message, cause -> Log.w(TAG, message, cause) },
         reportError = { FirebaseCrashlytics.getInstance().recordException(it) }
     )
@@ -96,7 +97,7 @@ class PushRegistrationClient internal constructor(
     /** `{sidecarBaseUrl}/api/v2/regions/{regionId}/push_registrations`. */
     private fun registrationUrl(registration: PushRegistration): String = sidecarRegionUrl(
         sidecarBaseUrl = registration.sidecarBaseUrl,
-        regionsPath = registrationsEndpointPath,
+        regionsPath = regionsPath,
         regionId = registration.regionId,
         resource = "push_registrations"
     )

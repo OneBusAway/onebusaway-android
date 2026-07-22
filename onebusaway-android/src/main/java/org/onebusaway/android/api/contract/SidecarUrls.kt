@@ -16,15 +16,16 @@
 package org.onebusaway.android.api.contract
 
 /**
- * Assembles a region-scoped sidecar endpoint URL:
+ * Assembles a region-scoped **v2** sidecar endpoint URL:
  * `{sidecarBaseUrl}{regionsPath}{regionId}/{resource}` — e.g.
- * `https://sidecar.onebusaway.org/api/v2/regions/1/alarms`. The single source of the sidecar URL
- * shape, shared by the alarms client (`TripInfoRepository`) and `PushRegistrationClient`; a change to
- * the path scheme is made here once.
+ * `https://sidecar.onebusaway.org/api/v2/regions/1/alarms`. The one home of that shape, shared by the
+ * alarms client (`TripInfoRepository`) and `PushRegistrationClient`. (The v1 sidecar endpoints —
+ * weather, surveys — are a separate pre-existing idiom: each embeds the region id in its own string
+ * resource via a `regionID` placeholder.)
  *
  * [regionsPath] is the resolved `R.string.arrivals_reminders_api_endpoint` (`/api/v2/regions/`). It
- * stays a parameter rather than a constant because it is a string *resource* — a brand override
- * point — and because Context-free callers inject it for JVM testability.
+ * stays a parameter because the segment lives in that string resource — overridable per brand,
+ * though no brand overrides it today — and Context-free callers inject the resolved value.
  */
 fun sidecarRegionUrl(
     sidecarBaseUrl: String,

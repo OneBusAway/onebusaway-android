@@ -158,24 +158,14 @@ class PushRegistrationManager internal constructor(
     }
 
     /**
-     * DELETEs the stale registration, then POSTs the new one, recording only once the POST lands. Both
-     * calls can fail independently:
-     *
-     * - DELETE ok   + POST ok   → record(target): old gone, new on record.
-     * - DELETE ok   + POST fail → clear(): the server holds nothing, so the next sync re-Registers.
-     * - DELETE fail + POST fail → keep `previous`: the next sync retries the whole Reregister.
-     * - DELETE fail + POST ok   → record(target); the failed DELETE is dropped, **best-effort by
-     *   design**: the old row lingers until the server's 180-day prune, which is the iOS client's
-     *   baseline for *every* region change (it never DELETEs, and issue #1957 marks the old-row DELETE
-     *   as optional). Persisting the miss for a retried DELETE was deliberately rejected as
-     *   machinery disproportionate to that corner (PR #1958 review).
+     * The [PushRegistrationAction.Reregister] DELETE and POST as two independent steps, each
+     * persisting its own outcome exactly like the standalone Unregister/Register branches in [sync]:
+     * a cleared-but-unrecorded state re-Registers next sync, both calls failing keeps `previous` so
+     * the whole Reregister retries, and a missed DELETE alone is dropped — best-effort, see
+     * [PushRegistrationAction.Reregister].
      */
     private suspend fun applyReregister(action: PushRegistrationAction.Reregister) {
-        val cleaned = client.unregister(action.previous)
-        if (client.register(action.target)) {
-            store.record(action.target)
-        } else if (cleaned) {
-            store.clear()
-        }
+        if (client.unregister(action.previous)) store.clear()
+        if (client.register(action.target)) store.record(action.target)
     }
 }

@@ -207,7 +207,11 @@ sealed interface PushRegistrationAction {
 
     /**
      * The token or the region changed while still enabled: DELETE the stale [previous] registration
-     * (so the old region/token stops receiving) and POST the new [target].
+     * (so the old region/token stops receiving) and POST the new [target]. The DELETE is
+     * **best-effort by design**: a miss is dropped, and the old row lingers until the server's
+     * 180-day prune — the iOS client's baseline for *every* region change (it never DELETEs, and
+     * issue #1957 marks the old-row DELETE as optional). A persisted retry queue was deliberately
+     * rejected as disproportionate to that corner (PR #1958 review).
      */
     data class Reregister(
         val previous: PushRegistration,

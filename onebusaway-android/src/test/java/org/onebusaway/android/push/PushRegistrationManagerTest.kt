@@ -213,8 +213,8 @@ class PushRegistrationManagerTest {
         assertEquals(listOf("T1", "T2"), f.service.registerCalls.map { it.token })
         assertEquals(1, f.service.unregisterCalls.count { it.token == "T1" })
 
-        // T2 is settled on record: further syncs neither retry the DELETE nor re-POST.
-        f.service.onUnregister = { Response.success(Unit) }
+        // T2 is settled on record: further syncs neither retry the DELETE nor re-POST. (onUnregister is
+        // left throwing, so this pins that no DELETE is even *attempted*.)
         f.sync()
         assertEquals(1, f.service.unregisterCalls.size)
         assertEquals(2, f.service.registerCalls.size)
@@ -462,7 +462,7 @@ class PushRegistrationManagerTest {
         val manager = PushRegistrationManager(
             client = PushRegistrationClient(
                 service = service,
-                registrationsEndpointPath = "/api/v2/regions/",
+                regionsPath = "/api/v2/regions/",
                 logWarning = { message, _ -> loggedWarnings += message },
                 reportError = { reportedErrors += it }
             ),

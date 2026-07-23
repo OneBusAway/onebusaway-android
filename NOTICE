@@ -1,0 +1,215 @@
+OneBusAway for Android
+Copyright The OneBusAway Authors.
+
+This product is developed and maintained by the OneBusAway project, stewarded by
+the Open Transit Software Foundation (OTSF). It is licensed under the Apache
+License, Version 2.0. You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+--------------------------------------------------------------------------------
+About this file
+--------------------------------------------------------------------------------
+
+Every source file in this repository carries a single, uniform Apache-2.0 license
+header that names no individual copyright holder or year (see
+`tools/copyright-reform/`). This follows the convention documented by the Linux
+Foundation and practiced by the Apache Software Foundation and Kubernetes: one
+canonical header per file, with attribution consolidated here in NOTICE.
+
+The copyright notices below were previously carried in individual source-file
+headers. They have been relocated here, verbatim, with the authorization of their
+respective copyright holders (Apache-2.0 Section 4 and ASF source-header policy
+both permit a copyright owner to move their own notice to NOTICE). Relocation does
+not transfer or assign any copyright; each holder retains all rights in their
+contributions. Redistributors must carry this NOTICE forward under Section 4(d) of
+the License.
+
+>>> IN PROGRESS: the header migration is applied GRADUALLY, per copyright holder.
+>>> A file's notice is relocated here only once every holder it names has authorized
+>>> relocation; until then the file keeps its original in-file header. Holders still
+>>> awaiting consent are listed in EXCLUDED_HOLDERS in
+>>> tools/copyright-reform/apply-headers.py; authorizations are collected via
+>>> CONSENT-REQUEST.md and recorded under tools/copyright-reform/consents/. This
+>>> appendix therefore lists every notice that WILL be relocated; some are still
+>>> carried in-file until their holder signs off.
+
+--------------------------------------------------------------------------------
+Copyright holders
+--------------------------------------------------------------------------------
+
+Portions of this software are copyright of, and were contributed by, the following
+individuals and organizations (consolidated; see the verbatim appendix below for
+the exact notices as they appeared in the source):
+
+    Paul Watts (paulcwatts@gmail.com)
+    University of South Florida
+    Sean J. Barbeau (sjbarbeau@gmail.com)
+    Brian Ferris (bdferris@onebusaway.org)
+    Microsoft Corporation
+    Rodrigo Carvalho (carvalhorr@gmail.com)
+    Colin McDonough
+    Cambridge Systematics, Inc.
+    Benjamin Du (bendu@me.com)
+    Open Transit Software Foundation
+    ...and individual contributors.
+
+--------------------------------------------------------------------------------
+Third-party code (notices retained in-file, NOT relocated)
+--------------------------------------------------------------------------------
+
+This distribution includes code derived from the Android Open Source Project,
+licensed under the Apache License, Version 2.0. Under that license and ASF policy,
+third-party copyright notices are preserved in the source files themselves and are
+deliberately excluded from the header migration:
+
+    onebusaway-android/src/main/java/org/onebusaway/android/util/MathUtils.java
+        Copyright (C) 2013 The Android Open Source Project
+
+    onebusaway-android/src/main/java/org/onebusaway/android/util/PermissionUtils.java
+        Copyright (C) 2018 The Android Open Source Project,
+                           Sean J. Barbeau (sjbarbeau@gmail.com)
+
+    onebusaway-android/src/androidTest/java/org/onebusaway/android/api/test/LoaderTestCase.java
+        Copyright (C) 2010 The Android Open Source Project
+
+Note: PermissionUtils.java mingles a third-party (AOSP) notice with a contributor
+(Barbeau) notice on one line. Because we must not edit the third-party portion, the
+entire header of that file is retained in-file unchanged rather than partially
+relocated.
+
+================================================================================
+APPENDIX: relocated notices, verbatim as they appeared in source headers
+================================================================================
+
+The following are the exact, de-duplicated copyright notices lifted from the
+source-file headers prior to the migration. They are reproduced here without
+alteration (including original spelling and spacing) to preserve attribution
+faithfully. Ranges of years and the presence/absence of "(C)" are as originally
+written.
+
+    Copyright (C) 2005-2018 University of South Florida
+
+    Copyright (C) 2005-2019 University of South Florida
+
+    Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com)
+
+    Copyright (C) 2010 Paul Watts (paulcwatts@gmail.com),
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2010-2015 Paul Watts (paulcwatts@gmail.com), University of South Florida
+
+    Copyright (C) 2010-2016 Paul Watts (paulcwatts@gmail.com)
+    University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
+
+    Copyright (C) 2010-2017 Brian Ferris (bdferris@onebusaway.org),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation,
+    Open Transit Software Foundation
+
+    Copyright (C) 2010-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South  Florida (sjbarbeau@gmail.com), Microsoft Corporation
+
+    Copyright (C) 2011 individual contributors
+
+    Copyright (C) 2011-2026 Paul Watts (paulcwatts@gmail.com), University of South Florida,
+    Open Transit Software Foundation
+
+    Copyright (C) 2012 Paul Watts (paulcwatts@gmail.com)
+
+    Copyright (C) 2012 individual contributors.
+
+    Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
+
+    Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida (sjbarbeau@gmail.com), Microsoft Corporation
+
+    Copyright (C) 2012-2017 Paul Watts (paulcwatts@gmail.com),
+    University of South Florida, Microsoft Corporation.
+
+    Copyright (C) 2012-2026 Paul Watts (paulcwatts@gmail.com), Open Transit Software Foundation
+
+    Copyright (C) 2012-2026 Paul Watts (paulcwatts@gmail.com), University of South Florida,
+    Benjamin Du (bendu@me.com), Open Transit Software Foundation
+
+    Copyright (C) 2012-2026 Paul Watts (paulcwatts@gmail.com), University of South Florida,
+    Open Transit Software Foundation
+
+    Copyright (C) 2013 Paul Watts (paulcwatts@gmail.com)
+
+    Copyright (C) 2014 Sean J. Barbeau (sjbarbeau@gmail.com), University of South Florida
+
+    Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2014 University of South Florida (sjbarbeau@gmail.com),
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2014 University of South Florida,
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2014-2015 University of South Florida (sjbarbeau@gmail.com),
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2014-2017 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2014-2017 University of South Florida (sjbarbeau@gmail.com),
+    Microsoft Corporation
+
+    Copyright (C) 2014-2019 University of South Florida
+
+    Copyright (C) 2014-2024 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2015 Sean J. Barbeau (sjbarbeau@gmail.com)
+
+    Copyright (C) 2015 University of South Florida (sjbarbeau@gmail.com),
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2015 University of South Florida, Sean J. Barbeau (sjbarbeau@gmail.com)
+
+    Copyright (C) 2015-2017 Paul Watts,
+    University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2015-2017 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2015-2026 University of South Florida (sjbarbeau@gmail.com),
+    Open Transit Software Foundation
+
+    Copyright (C) 2016 Cambridge Systematics, Inc.
+
+    Copyright (C) 2016 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2016 University of South Florida,
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright (C) 2017 Rodrigo Carvalho (carvalhorr@gmail.com)
+
+    Copyright (C) 2017 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2018 Sean J. Barbeau (sjbarbeau@gmail.com)
+
+    Copyright (C) 2018 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2019 University of South Florida
+
+    Copyright (C) 2020 Sean J. Barbeau (sjbarbeau@gmail.com)
+
+    Copyright (C) 2024 University of South Florida (sjbarbeau@gmail.com)
+
+    Copyright (C) 2024-2026 Open Transit Software Foundation
+
+    Copyright (C) 2026 OneBusAway
+
+    Copyright (C) 2026 Open Transit Software Foundation
+
+    Copyright 2012 University of South Florida
+
+    Copyright 2013-2026 Colin McDonough, University of South Florida, Sean J. Barbeau,
+    Open Transit Software Foundation
+
+    Copyright 2026 University of South Florida

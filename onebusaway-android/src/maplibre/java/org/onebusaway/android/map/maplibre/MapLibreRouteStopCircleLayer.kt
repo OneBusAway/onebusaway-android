@@ -67,6 +67,7 @@ internal class MapLibreRouteStopCircleLayer(
     private var renderedStops: List<StopMarker> = emptyList()
     private var renderedFocusedStopId: String? = null
     private var renderedScaleWithZoom = false
+    private var renderedRecedeAdjacent = false
 
     init {
         style.addSource(source)
@@ -104,37 +105,56 @@ internal class MapLibreRouteStopCircleLayer(
         )
     }
 
-    fun render(stops: List<StopMarker>, focusedStopId: String?, scaleWithZoom: Boolean) {
+    fun render(
+        stops: List<StopMarker>,
+        focusedStopId: String?,
+        scaleWithZoom: Boolean,
+        recedeAdjacent: Boolean
+    ) {
         val routeStops = stops.filter(StopMarker::routeStop)
         if (
             routeStops == renderedStops &&
             focusedStopId == renderedFocusedStopId &&
-            scaleWithZoom == renderedScaleWithZoom
+            scaleWithZoom == renderedScaleWithZoom &&
+            recedeAdjacent == renderedRecedeAdjacent
         ) {
             return
         }
         renderedStops = routeStops
         renderedFocusedStopId = focusedStopId
         renderedScaleWithZoom = scaleWithZoom
+        renderedRecedeAdjacent = recedeAdjacent
         stopById = routeStops.associateBy(StopMarker::id)
 
         val stopFocusMinScale = if (scaleWithZoom) STOP_FOCUS_ROUTE_MIN_SCALE else 1f
         val features = routeStops.map { stop ->
-            val selectedScale = if (stop.id == focusedStopId) RouteStopCircles.FOCUSED_SCALE else 1f
+            val focused = stop.id == focusedStopId
+            // The focused stop grows; adjacent stops recede in stop focus. The stroke rides the
+            // selection-free radius so the focused ring keeps constant weight, but adjacent circles
+            // thin in proportion with their smaller radius.
+            val selectionScale = if (focused) RouteStopCircles.FOCUSED_SCALE else 1f
+            val adjacentScale = if (recedeAdjacent && !focused) RouteStopCircles.ADJACENT_SCALE else 1f
             Feature.fromGeometry(Point.fromLngLat(stop.point.longitude, stop.point.latitude)).apply {
                 addStringProperty(STOP_ID_PROPERTY, stop.id)
-                addBooleanProperty(SELECTED_PROPERTY, stop.id == focusedStopId)
+                addBooleanProperty(SELECTED_PROPERTY, focused)
                 addNumberProperty(
                     MIN_RADIUS_PROPERTY,
-                    RouteStopCircles.RADIUS_PX * stopFocusMinScale * selectedScale
+                    RouteStopCircles.RADIUS_PX * stopFocusMinScale * selectionScale * adjacentScale
                 )
-                addNumberProperty(MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX * selectedScale)
-                // Base radii without the selection scale, so the stroke-width ramp stays constant weight.
+                addNumberProperty(
+                    MAX_RADIUS_PROPERTY,
+                    RouteStopCircles.RADIUS_PX * selectionScale * adjacentScale
+                )
+                // Base radii without the selection scale, so the stroke-width ramp stays constant weight
+                // for the focused stop; the adjacent scale rides along so receded circles thin to match.
                 addNumberProperty(
                     STROKE_MIN_RADIUS_PROPERTY,
-                    RouteStopCircles.RADIUS_PX * stopFocusMinScale
+                    RouteStopCircles.RADIUS_PX * stopFocusMinScale * adjacentScale
                 )
-                addNumberProperty(STROKE_MAX_RADIUS_PROPERTY, RouteStopCircles.RADIUS_PX)
+                addNumberProperty(
+                    STROKE_MAX_RADIUS_PROPERTY,
+                    RouteStopCircles.RADIUS_PX * adjacentScale
+                )
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
@@ -161,6 +181,7 @@ internal class MapLibreRouteStopCircleLayer(
         renderedStops = emptyList()
         renderedFocusedStopId = null
         renderedScaleWithZoom = false
+        renderedRecedeAdjacent = false
     }
 
     /**

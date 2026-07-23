@@ -230,6 +230,18 @@ data class MapRenderSnapshot(
     /** Focused-stop adjacency and route focus use the same route-stop zoom scale. */
     val routeStopsScaleWithZoom: Boolean
         get() = routeModeScalesStopsWithZoom || focusedStopId != null
+
+    /**
+     * Stop focus with no route selected yet: a stop is focused but route mode isn't active, so the
+     * adjacent route-stop circles recede (half size) to set this mode apart from selected-route focus,
+     * where one route is thickened instead (#1985).
+     *
+     * Like [routeStopsScaleWithZoom] above, this reads [routeModeScalesStopsWithZoom] as the "route mode
+     * active" signal — the three presentation states (plain / stop-focus / route-focus) are decoded from
+     * two booleans. If a fourth state ever appears, that's the seam to promote to an explicit mode enum.
+     */
+    val stopFocusRecedesAdjacent: Boolean
+        get() = focusedStopId != null && !routeModeScalesStopsWithZoom
 }
 
 /**

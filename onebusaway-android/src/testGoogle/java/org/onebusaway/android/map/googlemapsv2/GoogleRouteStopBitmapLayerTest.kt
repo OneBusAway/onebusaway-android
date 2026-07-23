@@ -35,5 +35,19 @@ class GoogleRouteStopBitmapLayerTest {
         assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true))
     }
 
-    private fun diameter(zoom: Float, stopFocused: Boolean, selected: Boolean): Int = routeStopDiameterPx(zoom, stopFocused, selected, density = 3f)
+    @Test
+    fun `receding halves adjacent stops but never the focused stop`() {
+        // Adjacent (non-selected) stops recede to half the size they'd otherwise have.
+        assertEquals(30, diameter(zoom = 16f, stopFocused = true, selected = false, recedeAdjacent = true))
+        assertEquals(9, diameter(zoom = 10f, stopFocused = true, selected = false, recedeAdjacent = true))
+        // The focused stop keeps its emphasized size — it's the one being highlighted.
+        assertEquals(108, diameter(zoom = 18f, stopFocused = true, selected = true, recedeAdjacent = true))
+    }
+
+    private fun diameter(
+        zoom: Float,
+        stopFocused: Boolean,
+        selected: Boolean,
+        recedeAdjacent: Boolean = false
+    ): Int = routeStopDiameterPx(zoom, stopFocused, selected, recedeAdjacent, density = 3f)
 }

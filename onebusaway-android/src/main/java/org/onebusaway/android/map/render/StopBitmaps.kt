@@ -194,19 +194,11 @@ object StopBitmaps {
         starOutlineWidthPx: Float
     ): Bitmap {
         val circleRadius = basePx / 2f
-        val arrowWidth = basePx / 2f
-        val arrowHeight = basePx / 3f
-        val cutout = basePx / 12f
-        val tuck = basePx / 10f
-        // Radial distances from the marker center to the arrow's tip and base, matching the plain
-        // marker's arrow-vs-circle geometry (the arrow base tucks slightly under the circle edge).
-        val tipDistance = circleRadius + arrowHeight - tuck
-        val baseDistance = circleRadius - tuck
         val starRadius = starDiameterPx / 2f
 
         // Square canvas big enough for whichever reaches further from center — the inflated star or the
         // arrow tip — so the arrow fits at any rotation. +2 leaves room for the anti-aliased outline.
-        val reach = max(starRadius, if (hasArrow) tipDistance else 0f)
+        val reach = max(starRadius, if (hasArrow) directionArrowReach(circleRadius) else 0f)
         val size = ceil(2 * reach).toInt() + 2
         val bm = createBitmap(size, size)
         val canvas = Canvas(bm)
@@ -223,41 +215,95 @@ object StopBitmaps {
         )
 
         if (hasArrow) {
-            // A north-pointing arrow about the center; rotating the whole canvas turns both the path and
-            // its gradient to the compass direction in one step.
-            val path = Path().apply {
-                fillType = Path.FillType.EVEN_ODD
-                moveTo(center, center - tipDistance) // tip
-                lineTo(center - arrowWidth / 2, center - baseDistance) // lower left
-                lineTo(center, center - baseDistance - cutout) // cutout notch
-                lineTo(center + arrowWidth / 2, center - baseDistance) // lower right
-                lineTo(center, center - tipDistance)
-                close()
-            }
-            canvas.withRotation(directionAngleDeg, center, center) {
-                val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    style = Paint.Style.FILL
-                    // Darkest at the tip, matching the plain markers' arrow shading.
-                    shader = LinearGradient(
-                        center,
-                        center - tipDistance,
-                        center,
-                        center - tipDistance + arrowHeight,
-                        arrowTipColor,
-                        arrowBaseColor,
-                        Shader.TileMode.MIRROR
-                    )
-                }
-                drawPath(path, fill)
-                val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    style = Paint.Style.STROKE
-                    strokeWidth = 1f
-                    color = Color.WHITE
-                }
-                drawPath(path, stroke)
-            }
+            drawDirectionArrow(canvas, center, center, circleRadius, arrowTipColor, arrowBaseColor, directionAngleDeg)
         }
         return bm
+    }
+
+    /**
+     * How far the tip of a [drawDirectionArrow] reaches from the circle center, for a circle of
+     * [circleRadiusPx] with the arrow scaled by [arrowScale] and pushed out by [radialOffsetPx]. Callers
+     * use it to size a bitmap that fits the arrow at any rotation (it overhangs the circle on one side).
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun directionArrowReach(circleRadiusPx: Float, arrowScale: Float = 1f, radialOffsetPx: Float = 0f): Float {
+        val baseDistance = circleRadiusPx - circleRadiusPx / 5f + radialOffsetPx
+        val arrowHeight = circleRadiusPx * 2f / 3f * arrowScale
+        return baseDistance + arrowHeight
+    }
+
+    /**
+     * Draws the shared stop direction arrow — a north-pointing arrowhead tucked at the edge of a circle
+     * of [circleRadiusPx] centered at ([cx], [cy]), rotated [angleDeg] clockwise, filled with the
+     * [arrowTipColor]→[arrowBaseColor] gradient (darkest at the tip; pass the same colour twice for a
+     * solid fill). It matches the arrowhead the plain directional stop markers ([directionalStopMarker])
+     * draw, and is the shared builder the starred marker ([favoriteMarker]) and the focused route-stop
+     * (#1985) render through. [arrowScale] enlarges the arrowhead and [radialOffsetPx] pushes it farther
+     * from center — the focused route-stop passes both so its arrow reads bigger and clears the enlarged
+     * selected circle. Its outer stroke is [outlineColor] at [outlineWidthPx] (default a thin white edge;
+     * the focused route-stop passes the marker's own ring colour and width so the arrow matches it). The
+     * caller centers the circle and sizes the canvas from [directionArrowReach] so the arrow fits at any
+     * [angleDeg].
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun drawDirectionArrow(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        circleRadiusPx: Float,
+        arrowTipColor: Int,
+        arrowBaseColor: Int,
+        angleDeg: Float,
+        arrowScale: Float = 1f,
+        radialOffsetPx: Float = 0f,
+        outlineColor: Int = Color.WHITE,
+        outlineWidthPx: Float = 1f
+    ) {
+        val arrowWidth = circleRadiusPx * arrowScale
+        val arrowHeight = circleRadiusPx * 2f / 3f * arrowScale
+        val cutout = circleRadiusPx / 6f * arrowScale
+        // Radial distances to the arrow's base and tip; the base tucks under the circle edge (a fifth of
+        // the radius), then [radialOffsetPx] pushes the whole arrow outward. The tip distance is the
+        // reach the caller sizes the canvas from — single-sourced so drawing and sizing can't diverge.
+        val baseDistance = circleRadiusPx - circleRadiusPx / 5f + radialOffsetPx
+        val tipDistance = directionArrowReach(circleRadiusPx, arrowScale, radialOffsetPx)
+        // A north-pointing arrow about the center; rotating the whole canvas turns both the path and its
+        // gradient to the compass direction in one step.
+        val path = Path().apply {
+            fillType = Path.FillType.EVEN_ODD
+            moveTo(cx, cy - tipDistance) // tip
+            lineTo(cx - arrowWidth / 2, cy - baseDistance) // lower left
+            lineTo(cx, cy - baseDistance - cutout) // cutout notch
+            lineTo(cx + arrowWidth / 2, cy - baseDistance) // lower right
+            lineTo(cx, cy - tipDistance)
+            close()
+        }
+        canvas.withRotation(angleDeg, cx, cy) {
+            val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                // Darkest at the tip, matching the plain markers' arrow shading.
+                shader = LinearGradient(
+                    cx,
+                    cy - tipDistance,
+                    cx,
+                    cy - tipDistance + arrowHeight,
+                    arrowTipColor,
+                    arrowBaseColor,
+                    Shader.TileMode.MIRROR
+                )
+            }
+            drawPath(path, fill)
+            val stroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = outlineWidthPx
+                // Rounded joins so a thicker stroke doesn't spike out at the arrow's sharp tip.
+                strokeJoin = Paint.Join.ROUND
+                color = outlineColor
+            }
+            drawPath(path, stroke)
+        }
     }
 
     /** Builds the 10-vertex path of a five-pointed star centered at ([cx], [cy]), tip up. */

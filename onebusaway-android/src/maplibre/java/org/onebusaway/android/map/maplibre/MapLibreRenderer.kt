@@ -197,7 +197,8 @@ class MapLibreRenderer(
         routeStopCircleLayer.render(
             snapshot.stops,
             snapshot.focusedStopId,
-            snapshot.routeStopsScaleWithZoom
+            snapshot.routeStopsScaleWithZoom,
+            snapshot.stopFocusRecedesAdjacent
         )
 
         if (snapshot.bikeshareVisible) {

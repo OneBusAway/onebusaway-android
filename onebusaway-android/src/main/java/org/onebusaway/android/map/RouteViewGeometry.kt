@@ -8,10 +8,10 @@ package org.onebusaway.android.map
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
+import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
@@ -48,9 +48,10 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
 }
 
 /**
- * Convert exact trip shapes into uniform-width directional route lines. When [emphasizedRoute] is
- * set, that route-direction uses a 1.5x stroke while siblings use a thin, plain stroke and render
- * first, keeping the emphasized variant visually on top at shared segments.
+ * Convert exact trip shapes into route lines. When [emphasizedRoute] is null (stop focus, no route
+ * selected) every shape is a thin, plain adjacency line with no direction chevrons. When it's set,
+ * that route-direction uses a 1.5x directional stroke while siblings use a thin, plain stroke and
+ * render first, keeping the emphasized variant visually on top at shared segments.
  */
 internal fun FocusedTripGeometry.toRoutePolylines(
     emphasizedRoute: RouteDirectionKey? = null,
@@ -72,7 +73,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
             )
         } else {
             val widthProfile = if (emphasizedRoute == null) {
-                ROUTE_LINE_WIDTH_PROFILE
+                ADJACENT_ROUTE_LINE_WIDTH_PROFILE
             } else {
                 DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
             }
@@ -80,7 +81,9 @@ internal fun FocusedTripGeometry.toRoutePolylines(
                 routeColors[shape.routeDirection] ?: shape.routeColor,
                 shape.points,
                 widthProfile,
-                directional = emphasizedRoute == null,
+                // Adjacent routes in stop focus are plain thin lines — no direction chevrons — so the
+                // mode reads as "these routes pass here", reserving chevrons for a selected route (#1985).
+                directional = false,
                 transforms = ROUTE_VIEW_TRANSFORMS
             )
         }

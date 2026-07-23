@@ -64,7 +64,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavController
 import edu.usf.cutr.open311client.Open311
-import edu.usf.cutr.open311client.constants.Open311Constants
 import edu.usf.cutr.open311client.models.Service
 import java.io.File
 import java.io.FileOutputStream
@@ -321,9 +320,9 @@ fun InfrastructureIssueDestination(
         AlertDialog(
             onDismissRequest = leaveReportFlow,
             properties = DialogProperties(dismissOnClickOutside = false),
-            text = { Text(Open311Constants.M_REPORT_SUCCESS) },
+            text = { Text(stringResource(R.string.ri_successful_submit)) },
             confirmButton = {
-                TextButton(onClick = leaveReportFlow) { Text("OK") }
+                TextButton(onClick = leaveReportFlow) { Text(stringResource(R.string.ok)) }
             }
         )
     }

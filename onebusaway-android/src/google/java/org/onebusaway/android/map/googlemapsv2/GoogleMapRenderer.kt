@@ -262,6 +262,7 @@ class GoogleMapRenderer(
             snapshot.stops,
             snapshot.focusedStopId,
             snapshot.routeStopsScaleWithZoom,
+            snapshot.stopFocusRecedesAdjacent,
             map.cameraPosition.zoom
         )
 

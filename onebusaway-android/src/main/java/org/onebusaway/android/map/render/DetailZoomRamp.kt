@@ -51,6 +51,15 @@ data class RouteLineWidthProfile(
 /** Ordinary route presentation, before a route is selected from a focused stop. */
 val ROUTE_LINE_WIDTH_PROFILE = RouteLineWidthProfile(ROUTE_LINE_WIDTH_DP)
 
+/**
+ * Adjacent routes shown in stop focus, before any route is selected. They recede to half the ordinary
+ * stroke so stop focus reads distinctly from the selected-route state, where one route is thickened
+ * instead (#1985).
+ */
+val ADJACENT_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.5f
+)
+
 /** Shared by single-route view and a route selected from focused-stop mode. */
 val FOCUSED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 1.5f

@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
@@ -30,7 +31,7 @@ class RouteViewGeometryTest {
     }
 
     @Test
-    fun `focused trip shape uses one uniform directional line`() {
+    fun `focused trip shape uses one thin plain adjacency line without chevrons`() {
         val geometry = FocusedTripGeometry(
             listOf(
                 FocusedTripShape(
@@ -44,12 +45,12 @@ class RouteViewGeometryTest {
 
         val lines = geometry.toRoutePolylines()
 
-        assertEquals(listOf(ROUTE_LINE_WIDTH_PROFILE), lines.map { it.widthProfile })
+        assertEquals(listOf(ADJACENT_ROUTE_LINE_WIDTH_PROFILE), lines.map { it.widthProfile })
         assertEquals(
             listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0), GeoPoint(0.0, 2.0)),
             lines.single().points
         )
-        assertTrue(lines.all { it.directional })
+        assertTrue(lines.none { it.directional })
         lines.forEach {
             assertEquals(
                 setOf(RoutePolylineTransform.VIEWPORT_CLIP, RoutePolylineTransform.ZOOM_SIMPLIFY),

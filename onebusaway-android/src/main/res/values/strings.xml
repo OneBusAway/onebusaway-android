@@ -736,6 +736,7 @@
     <string name="ri_no_trip">No arrival times, please check back later.</string>
     <string name="ri_anonymous_checkbox">Keep it anonymous</string>
     <string name="ri_unsuccessful_submit">An error occurred during submission, please try again later.</string>
+    <string name="ri_successful_submit">Your issue has been successfully reported</string>
 
     <!-- report issue types screen-->
     <!-- Remove rt_infrastructure_problem and use rt_stop_problem -->

@@ -33,6 +33,7 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.ServiceAlertDao
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.database.oba.markStopUsed
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -139,8 +140,20 @@ interface ArrivalsRepository {
         minutesAfter: Int
     ): Result<ArrivalsData>
 
-    /** Marks (or unmarks) the stop as a favorite in the provider. */
-    suspend fun setStopFavorite(stopId: String, favorite: Boolean)
+    /**
+     * Stars (or unstars) the stop. Funnels through [StopFavoritesRepository] — the single owner of
+     * stop-favorite membership — so this surface gets the same ensure-the-row-exists guarantee as the
+     * map focus banner (#1996). The caller passes the loaded stop identity (code/name/coords) so the
+     * ensure-row insert has something to write when the row is somehow absent.
+     */
+    suspend fun setStopFavorite(
+        stopId: String,
+        code: String?,
+        name: String?,
+        latitude: Double,
+        longitude: Double,
+        favorite: Boolean
+    )
 
     /**
      * Stars (or unstars) a route wholesale (#1751), then backfills the route's full details
@@ -232,6 +245,7 @@ class DefaultArrivalsRepository @Inject constructor(
     private val stopArrivals: StopArrivalsDataSource,
     private val serviceAlertDao: ServiceAlertDao,
     private val stopDao: StopDao,
+    private val stopFavorites: StopFavoritesRepository,
     private val routeFavorites: RouteFavorites,
     private val importGate: ImportGate,
     private val preferences: PreferencesRepository,
@@ -424,9 +438,27 @@ class DefaultArrivalsRepository @Inject constructor(
             .map { getRouteDisplayName(it) }
     }
 
-    override suspend fun setStopFavorite(stopId: String, favorite: Boolean) {
-        importGate.awaitReady()
-        stopDao.setFavorite(stopId, if (favorite) 1 else 0)
+    override suspend fun setStopFavorite(
+        stopId: String,
+        code: String?,
+        name: String?,
+        latitude: Double,
+        longitude: Double,
+        favorite: Boolean
+    ) {
+        // Delegate to the shared owner (#1996): it gates on the import and ensures the `stops` row
+        // exists before flipping the flag — the same guarantee the map focus banner's star gets. On
+        // this path the on-load recordStop has already created the row, so the ensure is a no-op flag
+        // flip; the point is that the write no longer bypasses StopFavoritesRepository with a bare
+        // stopDao.setFavorite that silently no-ops when the row is missing.
+        stopFavorites.setFavorite(
+            id = stopId,
+            code = code,
+            name = name,
+            latitude = latitude,
+            longitude = longitude,
+            favorite = favorite
+        )
     }
 
     override suspend fun favoriteRoute(

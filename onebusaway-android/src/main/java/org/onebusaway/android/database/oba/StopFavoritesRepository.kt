@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.KeyedMutex
 
 /**
  * Stop starring for the shared focus banner, mirroring [RouteFavoritesRepository]. Exists so the
@@ -36,6 +37,11 @@ class StopFavoritesRepository @Inject constructor(
     private val regionRepository: RegionRepository,
     private val importGate: ImportGate
 ) {
+
+    // Serializes writes per stop id so two rapid taps on the same star (star then unstar) can't reach
+    // the store out of order and leave it disagreeing with the last tap (#2001). Both stop-star
+    // surfaces funnel through [setFavorite], so guarding here covers them uniformly.
+    private val writeGuard = KeyedMutex<String>()
 
     /** The starred stop ids, live and import-gated (so legacy favorites are visible on first read). */
     fun favoriteStopIds(): Flow<Set<String>> = stopDao.favoriteStopIds()
@@ -56,7 +62,7 @@ class StopFavoritesRepository @Inject constructor(
         latitude: Double,
         longitude: Double,
         favorite: Boolean
-    ) {
+    ) = writeGuard.withLock(id) {
         importGate.awaitReady()
         stopDao.setFavoriteEnsuringRow(
             identity = StopRecord(

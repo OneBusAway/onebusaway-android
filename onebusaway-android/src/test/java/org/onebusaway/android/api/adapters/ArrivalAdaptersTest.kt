@@ -29,9 +29,8 @@ import org.onebusaway.android.api.contract.TripStatus
  */
 class ArrivalAdaptersTest {
 
-    private fun arrival(tripId: String = "trip", tripStatus: TripStatus? = null) =
-        ArrivalDeparture(routeId = "route", tripId = tripId, stopId = "stop", tripStatus = tripStatus)
-            .asArrivalData(directionId = null)
+    private fun arrival(tripId: String = "trip", tripStatus: TripStatus? = null) = ArrivalDeparture(routeId = "route", tripId = tripId, stopId = "stop", tripStatus = tripStatus)
+        .asArrivalData(directionId = null)
 
     @Test
     fun `no trip status is not plottable`() {

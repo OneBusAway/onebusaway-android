@@ -641,15 +641,19 @@ internal fun previewArrival(
     )
 }
 
-/** No-op [ArrivalRowCallbacks] for previews (nothing is interactive in a static preview). */
-internal fun previewRowCallbacks() = ArrivalRowCallbacks(
+/** All-no-op [ArrivalRowCallbacks] for previews (nothing is interactive in a static preview) and for
+ *  tests, which override just the slots they observe — the one place to grow when a slot is added. */
+internal fun previewRowCallbacks(
+    onShowRouteOnMap: (ArrivalInfo) -> Unit = {},
+    onShowRouteSchedule: (String) -> Unit = {}
+) = ArrivalRowCallbacks(
     onRouteFavorite = {},
     onShowVehiclesOnMap = {},
-    onShowRouteOnMap = {},
+    onShowRouteOnMap = onShowRouteOnMap,
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},
-    onShowRouteSchedule = {},
+    onShowRouteSchedule = onShowRouteSchedule,
     onReportArrivalProblem = {},
     onShowAlert = {}
 )

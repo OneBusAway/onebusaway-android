@@ -358,7 +358,7 @@ fun HomeScreen(
                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                     tutorialState = tutorialState,
                     onArrivalsLoaded = onArrivalsLoaded,
-                    onShowRouteOnMap = { arrival, request ->
+                    revealRoute = { arrival, request ->
                         homeViewModel.selectArrivalRoute(
                             request = request,
                             shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },

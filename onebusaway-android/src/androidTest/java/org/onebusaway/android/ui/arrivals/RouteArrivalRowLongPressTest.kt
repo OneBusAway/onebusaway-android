@@ -33,6 +33,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.components.previewArrival
+import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class RouteArrivalRowLongPressTest {
@@ -48,7 +49,7 @@ class RouteArrivalRowLongPressTest {
         val scheduleUrl = "https://example.com/routes/40"
         setRow(
             scheduleUrl = scheduleUrl,
-            callbacks = testCallbacks(
+            callbacks = previewRowCallbacks(
                 onShowRouteOnMap = { routeOnMapId = it.routeId },
                 onShowRouteSchedule = { openedScheduleUrl = it }
             )
@@ -63,12 +64,10 @@ class RouteArrivalRowLongPressTest {
 
         openRouteMenu(context)
 
-        // The schedule item is present because the route has a schedule URL.
-        val scheduleLabel = context.getString(R.string.bus_options_menu_show_route_schedule)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(scheduleLabel).fetchSemanticsNodes().isNotEmpty()
-        }
-        composeRule.onNodeWithText(scheduleLabel).performClick()
+        // The schedule item is present (the click fails if not) because the route has a schedule URL.
+        composeRule.onNodeWithText(
+            context.getString(R.string.bus_options_menu_show_route_schedule)
+        ).performClick()
 
         assertEquals(scheduleUrl, openedScheduleUrl)
         assertEquals(null, routeOnMapId)
@@ -82,7 +81,7 @@ class RouteArrivalRowLongPressTest {
         // "Show route schedule" is not shown.
         val trip = setRow(
             scheduleUrl = null,
-            callbacks = testCallbacks(
+            callbacks = previewRowCallbacks(
                 onShowRouteOnMap = { routeOnMapId = it.routeId },
                 onShowRouteSchedule = { openedScheduleUrl = it }
             )
@@ -91,35 +90,17 @@ class RouteArrivalRowLongPressTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         openRouteMenu(context)
 
-        val showOnMapLabel = context.getString(R.string.bus_options_menu_show_route_on_map)
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(showOnMapLabel).fetchSemanticsNodes().isNotEmpty()
-        }
         // With no schedule URL, the schedule item is absent.
         composeRule.onAllNodesWithText(
             context.getString(R.string.bus_options_menu_show_route_schedule)
         ).assertCountEquals(0)
-        composeRule.onNodeWithText(showOnMapLabel).performClick()
+        composeRule.onNodeWithText(
+            context.getString(R.string.bus_options_menu_show_route_on_map)
+        ).performClick()
 
         assertEquals(trip.routeId, routeOnMapId)
         assertEquals(null, openedScheduleUrl)
     }
-
-    /** Callbacks with every action a no-op except the two the menu tests assert on. */
-    private fun testCallbacks(
-        onShowRouteOnMap: (ArrivalInfo) -> Unit = {},
-        onShowRouteSchedule: (String) -> Unit = {}
-    ) = ArrivalRowCallbacks(
-        onRouteFavorite = {},
-        onShowVehiclesOnMap = {},
-        onShowRouteOnMap = onShowRouteOnMap,
-        onEtaClick = {},
-        onShowTripStatus = {},
-        onSetReminder = {},
-        onShowRouteSchedule = onShowRouteSchedule,
-        onReportArrivalProblem = {},
-        onShowAlert = {}
-    )
 
     /** Renders a single route arrivals row (route "40") with the given [scheduleUrl], returning its trip. */
     private fun setRow(scheduleUrl: String?, callbacks: ArrivalRowCallbacks): ArrivalInfo {
@@ -146,13 +127,14 @@ class RouteArrivalRowLongPressTest {
     }
 
     /**
-     * Drive the long press through the row's OnLongClick *semantics action* rather than an injected
-     * longClick() gesture. combinedClickable registers the same lambda as both the gesture and the
-     * accessibility action, so invoking the action exercises the real wiring — but deterministically,
-     * without depending on the long-press timeout elapsing against the test's virtual frame clock
-     * (that timing was racy on the CI emulator: the hold sometimes registered as a plain tap, so the
-     * menu never opened). onLongClickLabel (the always-present "Show route on map" item) disambiguates
-     * the row's long press from the ETA pill's own trip-actions long press.
+     * Long-press the row and wait for its menu to be open. The long press is driven through the row's
+     * OnLongClick *semantics action* rather than an injected longClick() gesture. combinedClickable
+     * registers the same lambda as both the gesture and the accessibility action, so invoking the action
+     * exercises the real wiring — but deterministically, without depending on the long-press timeout
+     * elapsing against the test's virtual frame clock (that timing was racy on the CI emulator: the hold
+     * sometimes registered as a plain tap, so the menu never opened). onLongClickLabel (the
+     * always-present "Show route on map" item) disambiguates the row's long press from the ETA pill's
+     * own trip-actions long press.
      */
     private fun openRouteMenu(context: Context) {
         val menuLabel = context.getString(R.string.bus_options_menu_show_route_on_map)
@@ -161,5 +143,11 @@ class RouteArrivalRowLongPressTest {
                 node.config.getOrNull(SemanticsActions.OnLongClick)?.label == menuLabel
             }
         ).performSemanticsAction(SemanticsActions.OnLongClick)
+        // The centered menu opens in a Dialog (a separate window); on slower devices (e.g. the CI
+        // emulator) the main composition can report idle a frame before that window is laid out, so
+        // wait for the menu's always-present item to appear before returning.
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithText(menuLabel).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 }

@@ -125,6 +125,7 @@ internal fun rememberArrivalRowCallbacks(
     ArrivalRowCallbacks(
         onRouteFavorite = handler::onRouteFavorite,
         onShowVehiclesOnMap = handler::onShowVehiclesOnMap,
+        onShowRouteOnMap = handler::onShowRouteOnMap,
         onEtaClick = handler::onFocusVehicleOnMap,
         onShowTripStatus = handler::onShowTripStatus,
         onSetReminder = handler::onSetReminder,
@@ -142,6 +143,10 @@ internal fun rememberArrivalRowCallbacks(
 interface ArrivalActionHandler {
     fun onRouteFavorite(actions: ArrivalActions)
     fun onShowVehiclesOnMap(arrival: ArrivalInfo)
+
+    /** The badge long-press "Show route on map": frame the whole route as if searched from the search
+     *  bar — no stop/direction scoping, unlike the stop-scoped [onShowVehiclesOnMap] row-body tap. */
+    fun onShowRouteOnMap(arrival: ArrivalInfo)
 
     /** The ETA-pill tap: frame the arrival's live vehicle with its stop, or toast if none is tracked. */
     fun onFocusVehicleOnMap(arrival: ArrivalInfo)

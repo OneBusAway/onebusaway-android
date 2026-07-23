@@ -53,6 +53,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -88,6 +89,8 @@ import org.onebusaway.android.util.DisplayFormat
 class ArrivalRowCallbacks(
     val onRouteFavorite: (ArrivalActions) -> Unit,
     val onShowVehiclesOnMap: (ArrivalInfo) -> Unit,
+    /** Badge long-press "Show route on map" — the whole-route (unscoped) reveal; cf. [onShowVehiclesOnMap]. */
+    val onShowRouteOnMap: (ArrivalInfo) -> Unit,
     /** The ETA pill was tapped: focus that arrival's live vehicle + its stop (whole-route tap is the row body). */
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
@@ -248,7 +251,9 @@ internal fun ArrivalRowContent(
  * - The top-left corner star toggles the route favorite ([ArrivalRowCallbacks.onRouteFavorite]).
  * - The badge section's top-right corner (by the divider) shows a service-alert warning glyph when
  *   any trip in the group is affected by an active alert; tapping it opens that alert ([ArrivalRowCallbacks.onShowAlert]).
- * - Long-pressing the row body opens the route-level menu (schedule) when the route has a schedule URL.
+ * - Long-pressing the row body (badge included) opens the route-level menu: "Show route on map"
+ *   (always, framing the whole route as if searched — [ArrivalRowCallbacks.onShowRouteOnMap]) plus
+ *   "Show route schedule" when the route has a schedule URL.
  *
  * [actionsFor] resolves each trip's [ArrivalActions] (keyed by trip id upstream); the representative
  * trip's actions drive the badge color and the route menu. [etaAnchor] is attached to the first pill
@@ -275,11 +280,9 @@ fun RouteArrivalRow(
     val onAlertClick = alertClick(group, actionsFor, callbacks)
     val selectionColor = mapRouteColor ?: routeActions?.routeColor
     val scheduleUrl = routeActions?.scheduleUrl?.takeIf { it.isNotBlank() }
-    val scheduleActionLabel = if (scheduleUrl != null) {
-        stringResource(R.string.bus_options_menu_show_route_schedule)
-    } else {
-        null
-    }
+    // The menu's always-present item ("Show route on map") labels the long-press for accessibility, and
+    // disambiguates the row's long press from the ETA pill's own trip-actions long press.
+    val routeMenuLabel = stringResource(R.string.bus_options_menu_show_route_on_map)
     val displayedRouteNames = selectedRouteNames.takeIf { selected }.orEmpty()
     val compoundBadge = displayedRouteNames.size > 1
     val selectionBorder = selectionColor
@@ -292,12 +295,13 @@ fun RouteArrivalRow(
                     .fillMaxWidth()
                     // Give the row a definite height (its tallest child) so the divider can fill it.
                     .height(IntrinsicSize.Min)
-                    // Tap frames the whole route; long press opens its schedule menu. The ETA pills
-                    // remain independent children with their own trip-specific tap/long-press actions.
+                    // Tap frames the route scoped to this stop; long press opens the route menu (show on
+                    // map / schedule). The ETA pills remain independent children with their own
+                    // trip-specific tap/long-press actions.
                     .combinedClickable(
                         onClick = { callbacks.onShowVehiclesOnMap(representative) },
-                        onLongClickLabel = scheduleActionLabel,
-                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null
+                        onLongClickLabel = routeMenuLabel,
+                        onLongClick = { menuExpanded = true }
                     )
                     .padding(
                         start = 10.dp,
@@ -376,14 +380,12 @@ fun RouteArrivalRow(
                     )
                 }
             }
-            if (scheduleUrl != null) {
-                RouteActionsMenu(
-                    expanded = menuExpanded,
-                    onDismiss = { menuExpanded = false },
-                    scheduleUrl = scheduleUrl,
-                    callbacks = callbacks
-                )
-            }
+            RouteActionsMenu(
+                expanded = menuExpanded,
+                onDismiss = { menuExpanded = false },
+                onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
+                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } }
+            )
         }
     }
 }
@@ -407,20 +409,30 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** The route-level long-press menu: open the route's schedule. The route's star lives as the row's own
- *  corner toggle ([FavoriteStarButton]); per-trip actions live on each pill's long-press menu
- *  ([TripActionsMenu]). Shown only when the route has a [scheduleUrl]. */
+/** The route-level long-press menu: show the whole route on the map (always), and — when [onShowSchedule]
+ *  is non-null (the route has a schedule) — open its schedule. A dumb view: both actions arrive pre-bound.
+ *  The route's star lives as the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on
+ *  each pill's long-press menu ([TripActionsMenu]). */
 @Composable
 internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
-    scheduleUrl: String,
-    callbacks: ArrivalRowCallbacks
+    onShowRouteOnMap: () -> Unit,
+    onShowSchedule: (() -> Unit)?
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
-        MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+        MenuRow(
+            R.string.bus_options_menu_show_route_on_map,
+            ImageVector.vectorResource(R.drawable.ic_action_location_map)
+        ) {
             onDismiss()
-            callbacks.onShowRouteSchedule(scheduleUrl)
+            onShowRouteOnMap()
+        }
+        if (onShowSchedule != null) {
+            MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+                onDismiss()
+                onShowSchedule()
+            }
         }
     }
 }
@@ -633,6 +645,7 @@ internal fun previewArrival(
 internal fun previewRowCallbacks() = ArrivalRowCallbacks(
     onRouteFavorite = {},
     onShowVehiclesOnMap = {},
+    onShowRouteOnMap = {},
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},

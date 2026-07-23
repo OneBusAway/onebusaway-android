@@ -113,7 +113,7 @@ internal fun rememberArrivalsSession(
                 activity = activity,
                 viewModel = viewModel,
                 currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
-                onShowRouteOnMap = { arrival, request -> showRouteState.value(arrival, request) },
+                revealRoute = { arrival, request -> showRouteState.value(arrival, request) },
                 showUndoSnackbar = { messageRes, actionRes, onAction ->
                     undoSnackbarState.value(messageRes, actionRes, onAction)
                 },

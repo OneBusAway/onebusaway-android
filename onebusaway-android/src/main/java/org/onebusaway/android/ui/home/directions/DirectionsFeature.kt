@@ -373,7 +373,7 @@ fun DirectionStopEtaStrip(
         onArrivalsLoaded = {},
         // A pill tap (via the shared handler's onFocusVehicleOnMap) lands here with a focusTripId
         // request — hand it to the host to focus/animate/ping that vehicle, reusing the arrivals path.
-        onShowRouteOnMap = { _, request -> onFocusVehicle(request) },
+        revealRoute = { _, request -> onFocusVehicle(request) },
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
         showUndoSnackbar = { _, _, _ -> }

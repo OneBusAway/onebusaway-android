@@ -372,6 +372,31 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `an unscoped drawer route request enters standalone route focus`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        advanceUntilIdle()
+        map.sent.clear()
+
+        // The row menu's "Show route on map": a bare request with no stop scoping must behave like a
+        // searched route — standalone route focus, not a selection under the focused stop.
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65"),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+        advanceUntilIdle()
+
+        assertEquals(ShowRouteRequest("65"), map.routeRequests.single())
+        assertEquals(false, map.routeCommands.single().stopScoped)
+        assertEquals(CurrentFocus.Route(RouteTarget("65")), vm.currentFocus.value)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `clearing a subordinate route retains stop focus`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

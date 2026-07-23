@@ -83,7 +83,9 @@ internal fun rememberArrivalsSession(
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     tutorialState: TutorialState?,
     onArrivalsLoaded: (ArrivalsLoaded) -> Unit,
-    onShowRouteOnMap: (ArrivalInfo, ShowRouteRequest) -> Unit,
+    // The transport for every "show a route on the map" variant (row tap, ETA pill, menu item) — the
+    // request's own fields carry the stop/direction scoping, or its absence.
+    revealRoute: (ArrivalInfo, ShowRouteRequest) -> Unit,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (args: ReminderEditorArgs) -> Unit,
     showUndoSnackbar: (messageRes: Int, actionRes: Int?, onAction: (() -> Unit)?) -> Unit
@@ -104,7 +106,7 @@ internal fun rememberArrivalsSession(
             }
         )
         val activity = context.findActivity()
-        val showRouteState = rememberUpdatedState(onShowRouteOnMap)
+        val showRouteState = rememberUpdatedState(revealRoute)
         val showTripState = rememberUpdatedState(onShowTrip)
         val editReminderState = rememberUpdatedState(onEditReminder)
         val undoSnackbarState = rememberUpdatedState(showUndoSnackbar)
@@ -113,7 +115,7 @@ internal fun rememberArrivalsSession(
                 activity = activity,
                 viewModel = viewModel,
                 currentContent = { viewModel.state.value as? ArrivalsUiState.Content },
-                onShowRouteOnMap = { arrival, request -> showRouteState.value(arrival, request) },
+                revealRoute = { arrival, request -> showRouteState.value(arrival, request) },
                 showUndoSnackbar = { messageRes, actionRes, onAction ->
                     undoSnackbarState.value(messageRes, actionRes, onAction)
                 },

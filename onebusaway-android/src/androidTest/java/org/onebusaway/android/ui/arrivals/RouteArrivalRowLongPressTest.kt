@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import android.content.Context
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -32,6 +33,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.components.previewArrival
+import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class RouteArrivalRowLongPressTest {
@@ -42,19 +44,67 @@ class RouteArrivalRowLongPressTest {
 
     @Test
     fun longPressOpensScheduleWithoutOverflowButton() {
-        val trip = previewArrival("40", "Northgate", etaMinutes = 3)
-        val scheduleUrl = "https://example.com/routes/40"
         var openedScheduleUrl: String? = null
-        val callbacks = ArrivalRowCallbacks(
-            onRouteFavorite = {},
-            onShowVehiclesOnMap = {},
-            onEtaClick = {},
-            onShowTripStatus = {},
-            onSetReminder = {},
-            onShowRouteSchedule = { openedScheduleUrl = it },
-            onReportArrivalProblem = {},
-            onShowAlert = {}
+        var routeOnMapId: String? = null
+        val scheduleUrl = "https://example.com/routes/40"
+        setRow(
+            scheduleUrl = scheduleUrl,
+            callbacks = previewRowCallbacks(
+                onShowRouteOnMap = { routeOnMapId = it.routeId },
+                onShowRouteSchedule = { openedScheduleUrl = it }
+            )
         )
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        // The route-level action moved off a dedicated overflow button and onto the row's long press,
+        // so the overflow affordance must be gone.
+        composeRule.onAllNodesWithContentDescription(
+            context.getString(R.string.stop_info_item_options_title)
+        ).assertCountEquals(0)
+
+        openRouteMenu(context)
+
+        // The schedule item is present (the click fails if not) because the route has a schedule URL.
+        composeRule.onNodeWithText(
+            context.getString(R.string.bus_options_menu_show_route_schedule)
+        ).performClick()
+
+        assertEquals(scheduleUrl, openedScheduleUrl)
+        assertEquals(null, routeOnMapId)
+    }
+
+    @Test
+    fun longPressShowsRouteOnMapEvenWithoutSchedule() {
+        var routeOnMapId: String? = null
+        var openedScheduleUrl: String? = null
+        // No schedule URL: "Show route on map" is still available (it's the always-present item), while
+        // "Show route schedule" is not shown.
+        val trip = setRow(
+            scheduleUrl = null,
+            callbacks = previewRowCallbacks(
+                onShowRouteOnMap = { routeOnMapId = it.routeId },
+                onShowRouteSchedule = { openedScheduleUrl = it }
+            )
+        )
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        openRouteMenu(context)
+
+        // With no schedule URL, the schedule item is absent.
+        composeRule.onAllNodesWithText(
+            context.getString(R.string.bus_options_menu_show_route_schedule)
+        ).assertCountEquals(0)
+        composeRule.onNodeWithText(
+            context.getString(R.string.bus_options_menu_show_route_on_map)
+        ).performClick()
+
+        assertEquals(trip.routeId, routeOnMapId)
+        assertEquals(null, openedScheduleUrl)
+    }
+
+    /** Renders a single route arrivals row (route "40") with the given [scheduleUrl], returning its trip. */
+    private fun setRow(scheduleUrl: String?, callbacks: ArrivalRowCallbacks): ArrivalInfo {
+        val trip = previewArrival("40", "Northgate", etaMinutes = 3)
         val actions = ArrivalActions(
             tripId = trip.tripId,
             routeId = trip.routeId,
@@ -65,7 +115,6 @@ class RouteArrivalRowLongPressTest {
             agencyName = null,
             blockId = null
         )
-
         composeRule.setContent {
             RouteArrivalRow(
                 group = RouteRowGroup(listOf(trip)),
@@ -74,36 +123,31 @@ class RouteArrivalRowLongPressTest {
                 callbacks = callbacks
             )
         }
+        return trip
+    }
 
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        // The route-level action moved off a dedicated overflow button and onto the row's long press,
-        // so the overflow affordance must be gone.
-        composeRule.onAllNodesWithContentDescription(
-            context.getString(R.string.stop_info_item_options_title)
-        ).assertCountEquals(0)
-
-        // Drive the long press through the row's OnLongClick *semantics action* rather than an injected
-        // longClick() gesture. combinedClickable registers the same lambda as both the gesture and the
-        // accessibility action, so invoking the action exercises the real wiring — but deterministically,
-        // without depending on the long-press timeout elapsing against the test's virtual frame clock
-        // (that timing was racy on the CI emulator: the hold sometimes registered as a plain tap, so the
-        // menu never opened). onLongClickLabel disambiguates the row's schedule action from the ETA
-        // pill's own trip-actions long press.
-        val scheduleLabel = context.getString(R.string.bus_options_menu_show_route_schedule)
+    /**
+     * Long-press the row and wait for its menu to be open. The long press is driven through the row's
+     * OnLongClick *semantics action* rather than an injected longClick() gesture. combinedClickable
+     * registers the same lambda as both the gesture and the accessibility action, so invoking the action
+     * exercises the real wiring — but deterministically, without depending on the long-press timeout
+     * elapsing against the test's virtual frame clock (that timing was racy on the CI emulator: the hold
+     * sometimes registered as a plain tap, so the menu never opened). onLongClickLabel (the
+     * always-present "Show route on map" item) disambiguates the row's long press from the ETA pill's
+     * own trip-actions long press.
+     */
+    private fun openRouteMenu(context: Context) {
+        val menuLabel = context.getString(R.string.bus_options_menu_show_route_on_map)
         composeRule.onNode(
-            SemanticsMatcher("has long-press action labeled \"$scheduleLabel\"") { node ->
-                node.config.getOrNull(SemanticsActions.OnLongClick)?.label == scheduleLabel
+            SemanticsMatcher("has long-press action labeled \"$menuLabel\"") { node ->
+                node.config.getOrNull(SemanticsActions.OnLongClick)?.label == menuLabel
             }
         ).performSemanticsAction(SemanticsActions.OnLongClick)
-
         // The centered menu opens in a Dialog (a separate window); on slower devices (e.g. the CI
         // emulator) the main composition can report idle a frame before that window is laid out, so
-        // wait for the schedule item to appear before acting on it rather than asserting immediately.
+        // wait for the menu's always-present item to appear before returning.
         composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.onAllNodesWithText(scheduleLabel).fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(menuLabel).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText(scheduleLabel).performClick()
-
-        assertEquals(scheduleUrl, openedScheduleUrl)
     }
 }

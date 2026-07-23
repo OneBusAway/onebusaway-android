@@ -396,13 +396,22 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Select a drawer route and dispatch its map command as one atomic focus transition. */
+    /**
+     * Dispatch a route reveal from the arrivals drawer as one atomic focus transition. A stop-scoped
+     * [request] (it carries a `directionStopId`) becomes a route selection subordinate to the focused
+     * stop; an unscoped one enters standalone route focus (where [shortName]/[headsign] are unused —
+     * the standalone banner resolves the route itself).
+     */
     fun selectArrivalRoute(
         request: ShowRouteRequest,
         shortName: String,
         headsign: String?,
         undoViewport: MapViewport? = null
     ) {
+        if (request.directionStopId == null) {
+            focusStandaloneRoute(request, undoViewport)
+            return
+        }
         val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
         selectStopRoute(
             stopFocus = stopFocus,
@@ -413,7 +422,8 @@ class HomeViewModel @Inject constructor(
         )
     }
 
-    /** Enter route focus from a route-oriented surface (search, recents, deep link, route info). */
+    /** Enter route focus from a route-oriented surface (search, recents, deep link, route info) or an
+     *  unscoped drawer reveal (the row menu's "Show route on map", via [selectArrivalRoute]). */
     fun focusStandaloneRoute(request: ShowRouteRequest, undoViewport: MapViewport? = null) {
         pushFocus(CurrentFocus.Route(request.toRouteTarget()), undoViewport)
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))

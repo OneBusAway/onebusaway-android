@@ -44,16 +44,6 @@ sealed interface MapEffect {
     object WaitingForLocation : MapEffect
 
     /**
-     * An arrivals ETA-pill tap asked to frame that trip's live vehicle with its stop, but no vehicle is
-     * running that trip right now (a future block trip, or one the server isn't tracking) — show the
-     * "vehicle isn't on the map" toast. Raised by [RouteMapController] when a pending focus resolves to
-     * [FocusResolution.DROP]; the route itself is still shown, just not zoomed to a vehicle. The arrivals
-     * handler emits the same `R.string.stop_info_vehicle_not_on_map` toast directly for the degenerate
-     * blank-tripId case (see `ArrivalActionHandlers.onFocusVehicleOnMap`); keep the wording in sync.
-     */
-    object VehicleNotOnMap : MapEffect
-
-    /**
      * A viewport/route load failed — show the map error toast for OBA status [code] (an HTTP status or
      * an `ObaApi.OBA_*` sentinel). Rendered by the UI layer, so the cold controllers don't reach for a
      * `Context` just to present the toast.

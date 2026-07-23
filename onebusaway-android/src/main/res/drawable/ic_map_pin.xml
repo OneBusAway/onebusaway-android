@@ -1,0 +1,13 @@
+<!-- Material Symbols "location_on" (24dp). The "on the map right now" indicator on an ETA pill: a
+     filled map pin marking a trip whose live vehicle is currently drawn on the map, distinct from the
+     rss_feed glyph that marks any AVL-tracked arrival (#1992). Tinted at the call site via
+     Icon(tint = ...). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2c-3.87,0 -7,3.13 -7,7c0,5.25 7,13 7,13s7,-7.75 7,-13C19,5.13 15.87,2 12,2zM12,11.5c-1.38,0 -2.5,-1.12 -2.5,-2.5s1.12,-2.5 2.5,-2.5s2.5,1.12 2.5,2.5S13.38,11.5 12,11.5z" />
+</vector>

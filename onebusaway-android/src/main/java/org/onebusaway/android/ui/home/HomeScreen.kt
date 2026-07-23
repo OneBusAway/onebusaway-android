@@ -230,6 +230,8 @@ fun HomeScreen(
                 val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
                 val focusBannerViewModel = hiltViewModel<FocusBannerViewModel>()
                 val favoriteRouteIds by focusBannerViewModel.favoriteRouteIds.collectAsStateWithLifecycle()
+                val favoriteStopIds by focusBannerViewModel.favoriteStopIds.collectAsStateWithLifecycle()
+                val stopFavoritesReady by focusBannerViewModel.stopFavoritesReady.collectAsStateWithLifecycle()
                 val scope = rememberCoroutineScope()
                 val density = LocalDensity.current
                 val resources = LocalResources.current
@@ -390,8 +392,13 @@ fun HomeScreen(
                             ?: currentFocus.stop.name.orEmpty(),
                         direction = arrivalsContent?.header?.direction,
                         stopCode = arrivalsContent?.stopCode ?: currentFocus.stop.code,
-                        isFavorite = arrivalsContent?.header?.isFavorite == true,
-                        favoriteEnabled = arrivalsContent != null,
+                        // Star state + toggle come from the favorites store keyed by stop id, so the star
+                        // works the instant a stop is focused rather than only after its arrivals load (#684).
+                        // It's gated on the favorites store being ready (its one-time legacy import done),
+                        // not on arrivals, so a legacy-starred stop is never shown unstarred (and thus
+                        // un-unstarrable) during that window.
+                        isFavorite = currentFocus.stop.id in favoriteStopIds,
+                        favoriteEnabled = stopFavoritesReady,
                         hasAlerts = arrivalsContent?.hasAlerts == true,
                         subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
                             FocusBannerState.SubordinateRoute(
@@ -639,7 +646,9 @@ fun HomeScreen(
                                             onToggleFavorite = {
                                                 when (focusBannerState) {
                                                     is FocusBannerState.Stop ->
-                                                        arrivalsSession?.viewModel?.toggleFavorite()
+                                                        currentFocus.focusedStop?.let {
+                                                            focusBannerViewModel.toggleStopFavorite(it)
+                                                        }
                                                     is FocusBannerState.Route ->
                                                         focusBannerViewModel.toggleRouteFavorite(
                                                             focusBannerState.header

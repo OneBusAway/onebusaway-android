@@ -61,6 +61,23 @@ interface StopDao {
     @Query("UPDATE stops SET favorite = :favorite WHERE _id = :stopId")
     suspend fun setFavorite(stopId: String, favorite: Int)
 
+    /**
+     * Sets the favorite flag, first ensuring the stop row exists so a stop focused on the map before
+     * its arrivals have loaded can still be starred (#684). When the row is absent the [identity] row
+     * (id/name/coords/region from the focused stop) is inserted with the flag already set; when it
+     * already exists only the flag is flipped, so an existing row's user_name / use_count / access_time
+     * are never clobbered. A later arrivals load merges onto this row via [markStopUsed] and preserves
+     * the favorite.
+     */
+    @Transaction
+    suspend fun setFavoriteEnsuringRow(identity: StopRecord, favorite: Int) {
+        if (getStop(identity.id) == null) {
+            upsert(identity.copy(favorite = favorite))
+        } else {
+            setFavorite(identity.id, favorite)
+        }
+    }
+
     @Query("SELECT favorite, user_name FROM stops WHERE _id = :stopId LIMIT 1")
     suspend fun userInfo(stopId: String): StopUserInfoRow?
 

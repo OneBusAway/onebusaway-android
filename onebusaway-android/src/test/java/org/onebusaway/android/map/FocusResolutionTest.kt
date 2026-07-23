@@ -55,7 +55,7 @@ class FocusResolutionTest {
     @Test
     fun drops_when_no_vehicle_runs_the_trip() {
         // A real poll landed and the trip has no live vehicle (e.g. it's a future block trip): drop the
-        // focus so the caller can fall back to framing the whole route.
+        // focus so the caller leaves the camera put (no reframe, no toast — #1992).
         assertEquals(
             FocusResolution.DROP,
             resolveVehicleFocus(directionResolved = true, pollLanded = true, markerPresent = false)

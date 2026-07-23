@@ -66,4 +66,14 @@ private class DtoArrivalData(
     override val scheduleDeviation get() = d.tripStatus?.scheduleDeviation ?: 0L
     override val lastKnownLat get() = d.tripStatus?.lastKnownLocation?.lat
     override val lastKnownLon get() = d.tripStatus?.lastKnownLocation?.lon
+
+    // Drawable only when the vehicle is actively on THIS trip (activeTripId == this arrival's tripId) and
+    // has a location — the same source (lastKnownLocation ?: position) the map turns into a marker keyed
+    // by activeTripId (see TripExtrapolationBuilder.extrapolatedVehicles). If the block's vehicle is still
+    // upstream on an earlier trip, its activeTripId differs, the map draws no marker for this trip, and a
+    // pill tap wouldn't reframe — so this is correctly false there (#1992).
+    override val hasPlottableVehicle
+        get() = d.tripStatus?.let { ts ->
+            ts.activeTripId == d.tripId && (ts.lastKnownLocation != null || ts.position != null)
+        } ?: false
 }

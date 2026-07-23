@@ -84,7 +84,14 @@ private class FakeArrivalsRepository(
         return callResults.getOrNull(call) ?: result
     }
 
-    override suspend fun setStopFavorite(stopId: String, favorite: Boolean) {
+    override suspend fun setStopFavorite(
+        stopId: String,
+        code: String?,
+        name: String?,
+        latitude: Double,
+        longitude: Double,
+        favorite: Boolean
+    ) {
         lastFavoriteSet = stopId to favorite
     }
 

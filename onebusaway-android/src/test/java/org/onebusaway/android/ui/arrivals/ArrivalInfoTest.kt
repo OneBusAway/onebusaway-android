@@ -47,12 +47,14 @@ class ArrivalInfoTest {
     private fun arrival(
         predicted: Boolean,
         predictedArrivalTime: Long,
-        scheduledArrivalTime: Long = scheduledArrival
+        scheduledArrivalTime: Long = scheduledArrival,
+        hasPlottableVehicle: Boolean = false
     ): ArrivalData = FakeArrivalData(
         predicted = predicted,
         // Mirror the adapter's wire→domain mint: a non-positive predicted instant decodes to null.
         predictedArrivalTime = predictedArrivalTime.takeIf { it > 0L }?.let { ServerTime(it) },
-        scheduledArrivalTime = ServerTime(scheduledArrivalTime)
+        scheduledArrivalTime = ServerTime(scheduledArrivalTime),
+        hasPlottableVehicle = hasPlottableVehicle
     )
 
     private fun infoFor(data: ArrivalData) = ArrivalInfo(
@@ -125,6 +127,30 @@ class ArrivalInfoTest {
     }
 
     @Test
+    fun `vehicleOnMap is true only when a genuine prediction has a plottable vehicle (#1992)`() {
+        // The pin is a strict refinement of the rss cue: a drawable vehicle AND a real prediction.
+        assertTrue(
+            "genuine prediction + plottable vehicle shows the pin",
+            infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L, hasPlottableVehicle = true))
+                .vehicleOnMap
+        )
+        assertFalse(
+            "no plottable vehicle stays on the rss glyph",
+            infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L, hasPlottableVehicle = false))
+                .vehicleOnMap
+        )
+    }
+
+    @Test
+    fun `vehicleOnMap is false when the prediction is suppressed even with a plottable vehicle (#1992)`() {
+        // A closed-stop -1 sentinel normalizes predicted to false, so the pin can't outlive the rss cue
+        // it refines — no indicator at all here, not a pin.
+        assertFalse(
+            infoFor(arrival(predicted = true, predictedArrivalTime = -1L, hasPlottableVehicle = true)).vehicleOnMap
+        )
+    }
+
+    @Test
     fun `liveEta matches eta at the constructor's own now (issue #1781)`() {
         val info = genuinePrediction
 
@@ -170,5 +196,6 @@ private data class FakeArrivalData(
     override val hasTripStatus: Boolean = false,
     override val scheduleDeviation: Long = 0L,
     override val lastKnownLat: Double? = null,
-    override val lastKnownLon: Double? = null
+    override val lastKnownLon: Double? = null,
+    override val hasPlottableVehicle: Boolean = false
 ) : ArrivalData

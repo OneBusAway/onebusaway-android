@@ -68,6 +68,91 @@ class StopDaoMergeTest {
     }
 
     @Test
+    fun setFavoriteEnsuringRow_insertsIdentityRowWhenAbsent() = runBlocking {
+        // A stop focused on the map (only in cached_stops) has no user-state row yet — starring it
+        // must create the row with the flag already set (#684).
+        assertEquals(null, dao.getStop("s1"))
+
+        dao.setFavoriteEnsuringRow(
+            StopRecord(
+                id = "s1",
+                code = "100",
+                name = "Main St",
+                direction = "",
+                useCount = 0,
+                latitude = 47.0,
+                longitude = -122.0,
+                regionId = 1L
+            ),
+            favorite = 1
+        )
+
+        val s = dao.getStop("s1")!!
+        assertEquals(1, s.favorite)
+        assertEquals("Main St", s.name)
+        assertEquals("100", s.code)
+        assertEquals(1L, s.regionId)
+    }
+
+    @Test
+    fun setFavoriteEnsuringRow_onlyFlipsFlagWhenRowExists() = runBlocking {
+        // Existing row carries user state that a re-star must not clobber.
+        dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
+        dao.upsert(dao.getStop("s1")!!.copy(userName = "Home"))
+
+        // Ensure-row is handed the focused-stop identity (blank direction, no user state), but the row
+        // exists, so only the flag flips — user_name / use_count / access_time survive.
+        dao.setFavoriteEnsuringRow(
+            StopRecord(
+                id = "s1",
+                code = "100",
+                name = "Main St",
+                direction = "",
+                useCount = 0,
+                latitude = 47.0,
+                longitude = -122.0,
+                regionId = 1L
+            ),
+            favorite = 1
+        )
+
+        val s = dao.getStop("s1")!!
+        assertEquals(1, s.favorite)
+        assertEquals("Home", s.userName)
+        assertEquals("N", s.direction)
+        assertEquals(1, s.useCount)
+        assertEquals(100L, s.accessTime)
+    }
+
+    @Test
+    fun setFavoriteEnsuringRow_earlyStarSurvivesLaterArrivalsLoad() = runBlocking {
+        // Star before arrivals load (row inserted), then the arrivals load merges onto the row — the
+        // early star must stick and the identity/coords fill in (#684).
+        dao.setFavoriteEnsuringRow(
+            StopRecord(
+                id = "s1",
+                code = "",
+                name = "",
+                direction = "",
+                useCount = 0,
+                latitude = 47.0,
+                longitude = -122.0,
+                regionId = 1L
+            ),
+            favorite = 1
+        )
+
+        dao.markStopUsed("s1", "100", "Main Street", "N", 47.0, -122.0, regionId = 1L, now = 200)
+
+        val s = dao.getStop("s1")!!
+        assertEquals(1, s.favorite) // early star preserved by the merge
+        assertEquals("Main Street", s.name) // identity backfilled by the arrivals load
+        assertEquals("100", s.code)
+        assertEquals(1, s.useCount)
+        assertEquals(200L, s.accessTime)
+    }
+
+    @Test
     fun starredByName_scopesToRegion_andProjectsUiName() = runBlocking {
         // region 1, with a custom name (UI_NAME should be the user name)
         dao.markStopUsed("s1", "1", "Alpha", "N", 1.0, 1.0, regionId = 1L, now = 1)

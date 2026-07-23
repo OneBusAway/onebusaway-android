@@ -93,18 +93,11 @@ fun createArrivalActionHandler(
     override fun onFocusVehicleOnMap(arrival: ArrivalInfo) {
         recordRoute(arrival)
         // The ETA-pill tap: same route + direction as the row, plus the trip so the map fits that
-        // arrival's live vehicle together with this stop. When no live vehicle is running the trip, the map
-        // toasts "vehicle isn't on the map" and shows the route instead — that fallback lives in
-        // RouteMapController, keyed off focusTripId being set.
+        // arrival's live vehicle together with this stop. When no live vehicle is running the trip (or a
+        // partial response carries no tripId to key on), RouteMapController drops the focus silently — no
+        // camera move, no toast (#1992). The ETA strip's "on the map" pin already tells the user which
+        // pills reframe on tap, so a miss is expected rather than an error to announce.
         val tripId = arrival.tripId.ifBlank { null }
-        // A partial response with no tripId can't be focused at all, so the map has nothing to key on;
-        // toast up front (the pill must never be silently ignored) and still show the route for context.
-        // The other emitter of this same toast is RouteMapController's DROP path (via MapEffect.
-        // VehicleNotOnMap), for the case where a tripId exists but no live vehicle is running it — keep the
-        // two in sync via the shared R.string.stop_info_vehicle_not_on_map.
-        if (tripId == null) {
-            Toast.makeText(activity, R.string.stop_info_vehicle_not_on_map, Toast.LENGTH_SHORT).show()
-        }
         revealRoute(
             arrival,
             ShowRouteRequest(

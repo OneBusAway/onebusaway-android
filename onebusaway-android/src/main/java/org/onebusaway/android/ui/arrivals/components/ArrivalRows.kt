@@ -535,6 +535,23 @@ internal fun RealtimeIndicator(color: Color, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * The "on the map right now" indicator: a filled map pin that replaces the [RealtimeIndicator] rss glyph
+ * on an ETA pill whose live vehicle is currently drawn on the map (#1992). Both mean the arrival is
+ * real-time; the pin additionally says "tapping this pill reframes the map to that vehicle", where the
+ * rss glyph marks an AVL-tracked trip whose vehicle isn't drawn (so a tap does nothing). Shown only on
+ * the interactive ETA-strip pills, since only those drive a map reframe.
+ */
+@Composable
+internal fun OnMapIndicator(color: Color, modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(R.drawable.ic_map_pin),
+        contentDescription = null,
+        modifier = modifier,
+        tint = color
+    )
+}
+
 private fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
 
 /**
@@ -590,7 +607,8 @@ private data class PreviewArrivalData(
     override val hasTripStatus: Boolean = false,
     override val scheduleDeviation: Long = 0L,
     override val lastKnownLat: Double? = null,
-    override val lastKnownLon: Double? = null
+    override val lastKnownLon: Double? = null,
+    override val hasPlottableVehicle: Boolean = false
 ) : ArrivalData {
     override val scheduledDepartureTime: ServerTime get() = scheduledArrivalTime
     override val predictedDepartureTime: ServerTime? get() = predictedArrivalTime
@@ -614,6 +632,9 @@ internal fun previewArrival(
     routeId: String = "route_$shortName",
     routeLongName: String? = null,
     directionId: Int? = null,
+    // When true (and [predicted]), the arrival's live vehicle is drawn on the map for this trip, so its
+    // pill shows the "on the map" pin instead of the rss glyph (#1992).
+    hasPlottableVehicle: Boolean = false,
     // Trip-instance identity for the strip's LazyRow key (see EtaStrip). Callers that build a
     // multi-pill strip must pass a distinct id per pill — the default alone collides, and a duplicate
     // key throws. Not derived from etaMinutes on purpose: two pills legitimately share an ETA (a loop
@@ -634,7 +655,8 @@ internal fun previewArrival(
             predicted = predicted,
             status = status,
             routeLongName = routeLongName,
-            tripId = tripId
+            tripId = tripId,
+            hasPlottableVehicle = hasPlottableVehicle
         ),
         now = ServerTime(0L),
         includeArrivalDepartureInStatusLabel = false

@@ -190,17 +190,14 @@ class RouteMapController(
     // by collectLatest either way. Cancelled with the route session in [stop].
     private var selectionJob: Job? = null
 
-    // A pending arrivals ETA-pill focus: fit trip [tripId]'s live vehicle together with the originating
-    // stop once the vehicle appears. Held until the first vehicle set arrives, then resolved once by
-    // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box,
-    // otherwise it's dropped (the vehicle isn't running that trip right now) — we raise the
-    // [MapEffect.VehicleNotOnMap] toast so the tap isn't silently ignored, and, if [frameFallback], frame
-    // the whole route instead (the initial framing the launch deferred pending this decision). A pending
-    // focus only ever comes from the ETA-pill tap ([ShowRouteRequest.focusTripId]), so a DROP always maps
-    // to that toast. Held as one value (like [DirectionState]) so the id and the fallback flag can't drift.
-    private data class PendingFocus(val tripId: String, val frameFallback: Boolean)
-
-    private var pendingFocus: PendingFocus? = null
+    // A pending arrivals ETA-pill focus: the trip id whose live vehicle should be fit together with the
+    // originating stop once it appears. Held until the first vehicle set arrives, then resolved once by
+    // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box;
+    // otherwise it's dropped silently — the vehicle isn't running that trip right now, so we neither move
+    // the camera nor toast (#1992: a miss must not yank the map out to the whole-route extent, and the
+    // arrivals ETA strip's "on the map" pin already tells the user which pills reframe on tap). Only ever
+    // set from an ETA-pill tap ([ShowRouteRequest.focusTripId]).
+    private var pendingFocus: String? = null
 
     /**
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
@@ -225,7 +222,7 @@ class RouteMapController(
         this.directionStopId = directionStopId
         this.highlightedSegment = highlightedSegment
         this.initialDirectionOverride = initialDirectionId
-        this.pendingFocus = focusTripId?.let { PendingFocus(it, frameFallback = zoomToRoute) }
+        this.pendingFocus = focusTripId
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
         // a direction-anchored launch (an anchor stop or a restored direction) stays Pending until the
         // route load resolves the filter (below).
@@ -267,13 +264,13 @@ class RouteMapController(
     /**
      * Ask to fit trip [tripId]'s live vehicle + the originating stop on the already-shown route (the ETA
      * pill tapped for an arrival whose route the map is already parked on). Resolves immediately against
-     * the current vehicle set: when the vehicle isn't there, [tryFocusVehicle] raises the "vehicle isn't on
-     * the map" toast; a vehicle that only appears on a later poll still frames then, via [publishVehicleSet].
-     * The map already shows the route here, so there's no fallback frame ([PendingFocus.frameFallback] is
-     * false) — we don't yank the camera to the whole-route extent just because a specific vehicle is missing.
+     * the current vehicle set: when the vehicle isn't there, [tryFocusVehicle] drops the focus silently (no
+     * camera move, no toast); a vehicle that only appears on a later poll still frames then, via
+     * [publishVehicleSet]. We never yank the camera to the whole-route extent just because a specific
+     * vehicle is missing (#1992).
      */
     fun requestFocus(tripId: String) {
-        pendingFocus = PendingFocus(tripId, frameFallback = false)
+        pendingFocus = tripId
         tryFocusVehicle(currentVehicleLayer())
     }
 
@@ -305,13 +302,12 @@ class RouteMapController(
     // Resolve a pending focus against [layer] (the just-built vehicle set, threaded in so the poll path
     // doesn't re-run the extrapolation), once we actually have vehicles to check. With a marker for the
     // trip present, fit the vehicle together with the originating stop; absent, the pending focus is
-    // dropped — we raise the "vehicle isn't on the map" toast (the pill tap must not be silently ignored)
-    // and, when [PendingFocus.frameFallback], frame the route as the deferred fallback. A no-op until
-    // there's a resolved direction and a landed poll, so the decision waits for real data rather than
-    // firing on the empty pre-poll set.
+    // dropped silently — no live vehicle runs this trip right now, so we neither move the camera nor toast
+    // (#1992). A no-op until there's a resolved direction and a landed poll, so the decision waits for real
+    // data rather than firing on the empty pre-poll set.
     private fun tryFocusVehicle(layer: MapVehicles?) {
         val focus = pendingFocus ?: return
-        val marker = layer?.markers?.firstOrNull { it.activeTripId == focus.tripId }
+        val marker = layer?.markers?.firstOrNull { it.activeTripId == focus }
         when (resolveVehicleFocus(directionState is DirectionState.Resolved, latestPoll != null, marker != null)) {
             FocusResolution.WAIT -> Unit
             FocusResolution.FIT -> {
@@ -321,13 +317,12 @@ class RouteMapController(
                 host.frame(FramingIntent.Points(listOfNotNull(marker?.point, originatingStopPoint())))
                 // Radiate a ping from the vehicle so it's clear which one this arrival is querying (#1764);
                 // keyed by trip id so the ripple follows the marker as it settles onto its projected spot.
-                renderState.emitPing(focus.tripId)
+                renderState.emitPing(focus)
             }
-            FocusResolution.DROP -> {
-                pendingFocus = null
-                if (focus.frameFallback) host.frameRoute()
-                host.emitEffect(MapEffect.VehicleNotOnMap)
-            }
+            // No live vehicle runs this trip right now: drop the focus silently. We deliberately neither
+            // frame the whole route (#1992: a pill tap must not yank the camera out to the route extent) nor
+            // toast — the arrivals ETA strip's "on the map" pin already signals which pills reframe on tap.
+            FocusResolution.DROP -> pendingFocus = null
         }
     }
 

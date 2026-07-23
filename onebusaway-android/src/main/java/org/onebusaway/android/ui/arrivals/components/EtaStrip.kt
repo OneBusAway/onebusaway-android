@@ -283,6 +283,7 @@ private fun EtaPillWithMenu(
             eta = trip.liveEta(liveNow),
             color = colorResource(trip.color),
             predicted = trip.predicted,
+            onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clockTime = clockTime,
             onClick = { callbacks.onEtaClick(trip) },
@@ -339,6 +340,10 @@ internal fun EtaPill(
     color: Color,
     predicted: Boolean,
     modifier: Modifier = Modifier,
+    // The trip's live vehicle is drawn on the map right now (#1992): show the "on the map" pin instead of
+    // the rss glyph, cueing that a tap on this pill reframes the map to that vehicle. Implies [predicted]
+    // (a drawn vehicle is always real-time), so it wins when both would apply.
+    onMap: Boolean = false,
     canceled: Boolean = false,
     clockTime: String? = null,
     onClick: (() -> Unit)? = null,
@@ -353,7 +358,7 @@ internal fun EtaPill(
     // it back to their height via fillMaxHeight (see EtaStrip), and the label is centered within it.
     val nowSize = 26.sp
     val labelSize = 14.sp
-    val indicatorSize = 12.dp // 1.5× the base accent; overlaid, so the extra size overlaps, not widens
+    val indicatorSize = 13.8.dp // 1.5× the base accent, then +15%; overlaid, so the extra size overlaps, not widens
     val clockTimeSize = 10.sp
     val topPadding = 3.dp
     val bottomPadding = 3.5.dp
@@ -439,15 +444,17 @@ internal fun EtaPill(
                 }
             }
             // The live indicator, overlaid on the top-trailing corner so its 1.5× size overlaps the
-            // ETA text a little instead of widening the pill (drawn last = on top).
-            if (predicted) {
-                RealtimeIndicator(
-                    color = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 1.dp, end = 1.dp)
-                        .size(indicatorSize)
-                )
+            // ETA text a little instead of widening the pill (drawn last = on top). A vehicle that's drawn
+            // on the map now shows the "on the map" pin (a tap reframes to it); an AVL-tracked trip whose
+            // vehicle isn't drawn shows the rss glyph (#1992).
+            val indicatorModifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 1.dp, end = 1.dp)
+                .size(indicatorSize)
+            if (onMap) {
+                OnMapIndicator(color = Color.White, modifier = indicatorModifier)
+            } else if (predicted) {
+                RealtimeIndicator(color = Color.White, modifier = indicatorModifier)
             }
         }
     }

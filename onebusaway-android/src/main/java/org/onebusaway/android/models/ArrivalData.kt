@@ -59,6 +59,17 @@ interface ArrivalData {
     val scheduleDeviation: Long
     val lastKnownLat: Double?
     val lastKnownLon: Double?
+
+    /**
+     * True when a live vehicle is **actively serving this exact trip** right now and has reported a
+     * plottable position — i.e. the trip status's active trip is this arrival's trip and it carries a
+     * last-known-location/position. That is precisely the condition under which the map can draw a marker
+     * for the trip (keyed by its active trip id), so tapping the arrival's ETA pill would reframe the map
+     * to that vehicle (#1992). Distinct from [predicted], which is the bare real-time flag with no
+     * location requirement (a schedule-deviation-only prediction is [predicted] but not this). Defaults
+     * false for arrival sources that carry no trip-status detail.
+     */
+    val hasPlottableVehicle: Boolean get() = false
 }
 
 /** Headway-based (exact_times=0) service window; server-clock bounds, [headway] in seconds. */

@@ -93,6 +93,16 @@ class ArrivalInfo(
     val shortName: String? get() = data.shortName
     val routeLongName: String? get() = data.routeLongName
 
+    /**
+     * True when a live vehicle is actively serving this trip and has a plottable position right now
+     * (#1992): the ETA pill shows the "on the map" pin instead of the rss glyph, since tapping it would
+     * reframe the map to that vehicle. Implies [predicted] (a pin is always real-time), so the pin is a
+     * strict refinement of the rss "AVL-tracked" cue rather than a separate state. Derived from the
+     * arrival's own trip status, so it holds before the route is ever shown on the map — the row doesn't
+     * need to be selected first.
+     */
+    val vehicleOnMap: Boolean get() = predicted && data.hasPlottableVehicle
+
     /** The route-row sort/display name (#1822): short name falling back to the long name (the same
      *  [getRouteDisplayName] fallback used elsewhere for this route), then the route id — never
      *  blank, so it's always a valid [RouteRowGroup] sort key. */

@@ -176,7 +176,16 @@ class ArrivalsViewModel @AssistedInject constructor(
         val content = state.value as? ArrivalsUiState.Content ?: return
         val newValue = !content.header.isFavorite
         loaded.value?.let { loaded.value = it.copy(header = content.header.copy(isFavorite = newValue)) }
-        viewModelScope.launch { repository.setStopFavorite(content.header.stopId, newValue) }
+        viewModelScope.launch {
+            repository.setStopFavorite(
+                stopId = content.header.stopId,
+                code = content.stopCode,
+                name = content.header.name,
+                latitude = content.stopLat,
+                longitude = content.stopLon,
+                favorite = newValue
+            )
+        }
     }
 
     /** Opens the stop-details dialog (the overflow "show stop details" action). */

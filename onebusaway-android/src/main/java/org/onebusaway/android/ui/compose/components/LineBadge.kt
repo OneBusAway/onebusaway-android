@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.sp
 import com.google.android.material.color.utilities.Hct
 import kotlin.math.min
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.compose.theme.isDarkTheme
 
 /** Line height as a multiple of the font size, so multi-line badges shrink with the font. */
 private const val LINE_HEIGHT_RATIO = 1.1f
@@ -84,6 +86,48 @@ private const val CHIP_MAX_CHROMA_DARK = 60.0 // saturation cap in dark theme
 //  low caps mute vivid hues — e.g. orange → brown)
 private const val ACHROMATIC_CHROMA = 5.0 // below this the source is grey/black/white (no hue)
 
+// Route-*line* tones: the same hue re-derived to sit legibly ON the surface (rather than as a filled
+// chip), for a stroke/marker drawn directly on the background — Material's own accent tones, 40 in
+// light and 80 in dark.
+private const val LINE_TONE_LIGHT = 40.0
+private const val LINE_TONE_DARK = 80.0
+
+/**
+ * The route's GTFS color re-derived in HCT at [tone]: same hue, chroma capped for the active theme.
+ * Null when the source is absent or achromatic (grey/black/white — no hue to keep), which is every
+ * caller's cue to fall back to a neutral. The single place the agency-color policy lives, so a chip
+ * and a line can't drift apart on which colors count as "grey" or how saturated a route may get.
+ */
+@SuppressLint("RestrictedApi") // Hct is Material Components' vendored color-science util (LIBRARY_GROUP)
+private fun tonedRouteColor(routeColor: Int?, dark: Boolean, tone: Double): Color? {
+    val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) } ?: return null
+    if (source.chroma < ACHROMATIC_CHROMA) return null
+    val chroma = min(source.chroma, if (dark) CHIP_MAX_CHROMA_DARK else CHIP_MAX_CHROMA_LIGHT)
+    return Color(Hct.from(source.hue, chroma, tone).toInt())
+}
+
+/**
+ * A route color for drawing straight **on the surface** — a spine, stroke or filled marker — paired
+ * with the color for a glyph placed on top of it. Returned together (as [rememberRouteBadgeColors]
+ * does for its chip) so the contrast is guaranteed by construction rather than by a comment, on the
+ * fallback path as much as the route-colored one.
+ */
+data class RouteLineColors(val line: Color, val onLine: Color)
+
+/**
+ * The route's GTFS color re-toned to be legible on the surface, as opposed to
+ * [rememberRouteBadgeColors]'s filled chip: same hue and chroma caps, but at an accent tone
+ * ([LINE_TONE_LIGHT] / [LINE_TONE_DARK]) rather than a container tone, so an agency handing us
+ * near-black or near-white can't produce a stroke that vanishes into the theme's background. Because
+ * that tone is fixed by the theme, so is the glyph color on it — no per-color luminance test needed.
+ * An achromatic or absent route color yields [fallback] unchanged, glyph included.
+ */
+fun routeLineColors(routeColor: Int?, dark: Boolean, fallback: RouteLineColors): RouteLineColors {
+    val line = tonedRouteColor(routeColor, dark, if (dark) LINE_TONE_DARK else LINE_TONE_LIGHT)
+        ?: return fallback
+    return RouteLineColors(line, if (dark) Color.Black else Color.White)
+}
+
 /**
  * Resolves the (container, content) colors for a route-badge chip from the route's GTFS color. We keep
  * only its hue and regenerate the chip at a fixed HCT tone + capped chroma (see the tokens above), so
@@ -97,18 +141,13 @@ private const val ACHROMATIC_CHROMA = 5.0 // below this the source is grey/black
 fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
     val neutralContainer = MaterialTheme.colorScheme.surfaceVariant
     val neutralContent = MaterialTheme.colorScheme.onSurfaceVariant
-    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val dark = MaterialTheme.colorScheme.isDarkTheme()
     return remember(routeColor, dark, neutralContainer, neutralContent) {
-        val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) }
-        if (source == null || source.chroma < ACHROMATIC_CHROMA) {
-            neutralContainer to neutralContent
-        } else {
-            val chroma = min(source.chroma, if (dark) CHIP_MAX_CHROMA_DARK else CHIP_MAX_CHROMA_LIGHT)
-            val containerTone = if (dark) CHIP_TONE_DARK else CHIP_TONE_LIGHT
-            val contentTone = if (dark) CHIP_ON_TONE_DARK else CHIP_ON_TONE_LIGHT
-            Color(Hct.from(source.hue, chroma, containerTone).toInt()) to
-                Color(Hct.from(source.hue, chroma, contentTone).toInt())
-        }
+        val container = tonedRouteColor(routeColor, dark, if (dark) CHIP_TONE_DARK else CHIP_TONE_LIGHT)
+        val content = tonedRouteColor(routeColor, dark, if (dark) CHIP_ON_TONE_DARK else CHIP_ON_TONE_LIGHT)
+        // Both tones come from the same source, so they are null together — an achromatic or absent
+        // route color takes the neutral theme chip.
+        if (container == null || content == null) neutralContainer to neutralContent else container to content
     }
 }
 

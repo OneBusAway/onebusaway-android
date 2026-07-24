@@ -362,10 +362,10 @@ fun DirectionStopEtaStrip(
     val point = stop.point
     // Left-justified to the content column; the old start indent was a holdover from the indented-sub-row design.
     val rowPadding = Modifier.fillMaxWidth().padding(end = 12.dp, top = 2.dp, bottom = 8.dp)
-    if (stopId == null || point == null) {
-        NoEtasText(rowPadding)
-        return
-    }
+    // Without an OBA id + location there is no stop to query, so draw nothing at all. "No upcoming
+    // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
+    // unidentifiable stop as one with no service.
+    if (stopId == null || point == null) return
     val session = rememberArrivalsSession(
         focusedStop = FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point),
         sheetVisible = true,

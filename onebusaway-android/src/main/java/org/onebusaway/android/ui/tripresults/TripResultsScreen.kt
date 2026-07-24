@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.tripresults
 
 import android.app.Activity
 import android.content.Context
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,12 +26,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,6 +38,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -53,14 +51,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -69,11 +67,12 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -83,6 +82,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import java.util.Locale
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
@@ -94,9 +94,12 @@ import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
+import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.compose.theme.isDarkTheme
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
@@ -292,30 +295,15 @@ fun TripResultsList(
                     .padding(32.dp)
             )
 
-            // The surface reaches the bottom edge; a bottom content padding lets the final leg card
-            // be scrolled clear of the nav chrome without an empty strip below the list.
-            is TripResultsUiState.Success -> LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = bottomInset)
-            ) {
-                // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
-                item {
-                    TripResultsHeader(state, onSelectOption)
-                    HorizontalDivider()
-                }
-                // The whole itinerary as one continuous timeline "log" — a single item so the spine and
-                // per-leg bands can be drawn across the leg boundaries (the list is small: a handful of
-                // legs plus their stops/steps).
-                item {
-                    TripLog(
-                        entries = state.directions,
-                        onFocusRouteLeg = onFocusRouteLeg,
-                        onFocusLeg = onFocusLeg,
-                        onFocusPoint = onFocusPoint,
-                        stopEtaStrip = stopEtaStrip
-                    )
-                }
-            }
+            is TripResultsUiState.Success -> TripLogList(
+                state = state,
+                bottomInset = bottomInset,
+                onSelectOption = onSelectOption,
+                onFocusRouteLeg = onFocusRouteLeg,
+                onFocusLeg = onFocusLeg,
+                onFocusPoint = onFocusPoint,
+                stopEtaStrip = stopEtaStrip
+            )
         }
     }
 }
@@ -417,59 +405,85 @@ private val RAIL_WIDTH = 34.dp
 private val RAIL_SPLIT = 22.dp // node centre, measured from the row's top — where the spine's colour flips
 private val ROW_TOP = 10.dp
 private val ROW_BOTTOM = 10.dp
+private val RAIL_STROKE = 3.dp
+private val BAND_RADIUS = 13.dp
+private val BAND_INSET = 2.dp
+private val BAND_END = 4.dp
+
+/** The minimum height of a row's content — the platform's 48dp target when the row is a tap target. */
+private val ROW_MIN_HEIGHT = 36.dp
+private val ROW_MIN_TOUCH_HEIGHT = 48.dp
+
+/** The gap between the option-card header and the log, and below the log's last row. */
+private val LOG_EDGE_GAP = 4.dp
 
 /**
- * The width of the ledger (time) column. [TIME_WIDTH] is sized for the default font scale, so it grows
- * with the user's — the clock time is the ledger's primary information and mustn't clip at an
- * accessibility text size. It stays one shared width for every row so the spine still lines up, and is
- * capped at the platform's 2× ceiling so the column can't crowd out the content on a narrow screen.
+ * How far the timeline's fixed metrics stretch with the user's font scale, capped at the platform's 2×
+ * ceiling so a large text size can't crowd the content off a narrow screen. [TIME_WIDTH] is sized for
+ * the default scale, so the ledger's clock time — its primary information — can't clip at an
+ * accessibility text size, and [RAIL_SPLIT] tracks it so each node stays centred on its row's first
+ * text line. One shared scale for every row, so the spine still lines up.
  */
 @Composable
-private fun timeWidth(): Dp = TIME_WIDTH * LocalDensity.current.fontScale.coerceIn(1f, 2f)
+private fun timelineScale(): Float = LocalDensity.current.fontScale.coerceIn(1f, 2f)
 
-/** Left edge of a leg's band — it sits behind the content only, never over the spine. */
+/** Where the spine's colour flips and each node centres, measured from the row's top. */
 @Composable
-private fun bandLeft(): Dp = timeWidth() + RAIL_WIDTH
+private fun railSplit(): Dp = RAIL_SPLIT * timelineScale()
 
 /**
- * The itinerary as one continuous timeline. Expansion is per-leg local state, keyed on [entries] so a
- * new plan resets it. The spine's per-node connector colours are derived here from the entry sequence
- * ([flattenLog]); each leg's rows are grouped so a faint band can unite them and one tap can expand the
- * leg's minor events while highlighting it on the map.
+ * The itinerary as one continuous timeline, one lazy list row per event. Expansion is per-leg state,
+ * keyed on the entries so a new plan resets it. The spine's per-node connector colours and each leg's
+ * band are derived up front by [flattenLog] from the entry sequence; the rows themselves compose lazily,
+ * so expanding a long walk leg doesn't compose every one of its steps at once.
  */
 @Composable
-private fun TripLog(
-    entries: List<TripLogEntry>,
+private fun TripLogList(
+    state: TripResultsUiState.Success,
+    bottomInset: Dp,
+    onSelectOption: (Int) -> Unit,
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
-    val neutral = MaterialTheme.colorScheme.outline
-    val transitFallback = MaterialTheme.colorScheme.primary
-    val expanded = remember(entries) { mutableStateMapOf<Int, Boolean>() }
-    fun isExpanded(i: Int) = expanded[i] == true
-    fun toggle(i: Int) {
-        expanded[i] = !isExpanded(i)
+    val entries = state.directions
+    val dark = MaterialTheme.colorScheme.isDarkTheme()
+    // A walk's spine and any route whose colour we can't use: an outline-toned line, with the surface
+    // showing through as the glyph so a filled neutral node still reads.
+    val neutral = RouteLineColors(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.surface)
+    val expanded = remember(entries) { mutableStateSetOf<Int>() }
+    val onToggle: (Int) -> Unit = remember(expanded) { { i -> if (!expanded.add(i)) expanded.remove(i) } }
+    // Snapshotted to a plain Set so it can key the memo below — reading it here is also what makes a
+    // toggle recompose this list.
+    val expandedEntries = expanded.toSet()
+    val rows = remember(entries, expandedEntries, neutral, dark) {
+        flattenLog(
+            entries = entries,
+            expandedEntries = expandedEntries,
+            neutral = neutral,
+            // The agency's GTFS colour re-toned to stay legible on this theme's surface, so a near-black
+            // or near-white route can't hand us an invisible spine. Same system as the leg's route badge.
+            rideColors = { routeLineColors(routeColorInt(it.routeColorHex), dark, neutral) }
+        )
     }
 
-    val rows = flattenLog(entries, ::isExpanded, neutral, transitFallback)
-    val bandLeft = bandLeft()
-
-    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        var idx = 0
-        while (idx < rows.size) {
-            val entryIndex = rows[idx].entryIndex
-            var end = idx
-            while (end < rows.size && rows[end].entryIndex == entryIndex) end++
-            val group = rows.subList(idx, end)
-            // A leg's rows are united behind a faint band; a terminal (bandColor == null) stands alone.
-            val band = group.first().bandColor
-            val rowsOf: @Composable () -> Unit = {
-                group.forEach { LogRow(it, ::isExpanded, ::toggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip) }
-            }
-            if (band == null) rowsOf() else Column(Modifier.drawBehind { drawBand(band, bandLeft) }) { rowsOf() }
-            idx = end
+    // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled
+    // clear of the nav chrome without an empty strip below the list.
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(bottom = bottomInset + LOG_EDGE_GAP)
+    ) {
+        // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
+        item {
+            TripResultsHeader(state, onSelectOption)
+            HorizontalDivider()
+            Spacer(Modifier.height(LOG_EDGE_GAP))
+        }
+        // Keyed by row identity, not position, so opening a leg doesn't discard the subcompositions of
+        // every row below it — a board row's live ETA session survives the insert.
+        items(rows, key = { it.key }) { row ->
+            LogRow(row, onToggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
         }
     }
 }
@@ -478,7 +492,6 @@ private fun TripLog(
 @Composable
 private fun LogRow(
     model: LogRowModel,
-    isExpanded: (Int) -> Boolean,
     onToggle: (Int) -> Unit,
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
@@ -498,9 +511,12 @@ private fun LogRow(
                 model = model,
                 onClick = {
                     if (walk.legPoints.isNotEmpty()) onFocusLeg(walk.legPoints) else walk.focusPoint?.let(onFocusPoint)
-                    if (walk.steps.isNotEmpty()) onToggle(i)
-                }
-            ) { WalkHeaderContent(walk, isExpanded(i)) }
+                    if (model.expandable) onToggle(i)
+                },
+                // The row is one control that both frames the leg and unfolds its steps, so the expand
+                // wording rides on the row's own click label rather than on a decorative chevron.
+                onClickLabel = expandLabel(model)
+            ) { WalkHeaderContent(walk, model) }
         }
 
         is RowContent.Step ->
@@ -518,10 +534,10 @@ private fun LogRow(
             LogRowScaffold(model, onClick = null) {
                 BoardContent(
                     entry = transit,
-                    expanded = isExpanded(i),
+                    model = model,
                     onToggle = {
                         focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint)
-                        if (transit.intermediateStops.isNotEmpty()) onToggle(i)
+                        if (model.expandable) onToggle(i)
                     },
                     onFocusPoint = onFocusPoint,
                     stopEtaStrip = stopEtaStrip
@@ -547,6 +563,17 @@ private fun LogRow(
 }
 
 /**
+ * The accessibility label for a leg header's tap: what the tap will *do* to the steps. Null when the leg
+ * has nothing to reveal, leaving the row's plain "activate" affordance.
+ */
+@Composable
+private fun expandLabel(model: LogRowModel): String? = when {
+    !model.expandable -> null
+    model.expanded -> stringResource(R.string.trip_plan_collapse_leg)
+    else -> stringResource(R.string.trip_plan_expand_leg)
+}
+
+/**
  * Tapping a transit leg: highlight its route on the map when the route id resolved (the usual case),
  * else frame the leg polyline, else recentre on the board stop. Mirrors the old leg-body behaviour.
  */
@@ -564,120 +591,32 @@ private fun focusTransit(
     }
 }
 
-/** A drawn spine segment: its [color] and whether it's dashed (a walk) or solid (a ride). */
-private data class RailSeg(val color: Color, val dashed: Boolean)
-
-/** What a single timeline row shows. */
-private sealed interface RowContent {
-    data class Terminal(val entry: TripLogEntry.Terminal) : RowContent
-    data class WalkHeader(val entry: TripLogEntry.Walk) : RowContent
-    data class Step(val step: LogStep) : RowContent
-
-    /** The distance travelled between one walk maneuver and the next — a nodeless row on the spine. */
-    data class StepDistance(val distanceMeters: Double) : RowContent
-    data class BoardHeader(val entry: TripLogEntry.Transit) : RowContent
-    data class Stop(val stop: LogStop) : RowContent
-    data class Transition(val transition: InterlineTransition) : RowContent
-    data class ExitNode(val entry: TripLogEntry.Transit) : RowContent
-}
-
-/**
- * One rendered row: its [content], the parent leg (via [entryIndex]), the spine above/below its node
- * ([top]/[bottom]), the resolved [nodeColor] the node's route-coloured parts use (parsed once per leg,
- * not re-parsed per node), and the leg's [bandColor] tint (null for a terminal, which has no band).
- */
-private data class LogRowModel(
-    val entryIndex: Int,
-    val content: RowContent,
-    val top: RailSeg?,
-    val bottom: RailSeg?,
-    val nodeColor: Color,
-    val bandColor: Color?
-)
-
-/**
- * Flattens the [entries] into rows with the spine coloured. Each node's `bottom` is the travel *leaving*
- * it (a walk stays dashed-neutral through its steps; a ride stays route-coloured board→stops→exit; a
- * node's exit hands off to the next leg's colour), and `top` chains from the previous node's `bottom`, so
- * the colour flips exactly at each node — a walk-to-board node reads neutral above, route colour below.
- */
-private fun flattenLog(
-    entries: List<TripLogEntry>,
-    isExpanded: (Int) -> Boolean,
-    neutral: Color,
-    transitFallback: Color
-): List<LogRowModel> {
-    val rows = ArrayList<LogRowModel>()
-    var prevBottom: RailSeg? = null
-    fun push(i: Int, content: RowContent, bottom: RailSeg?, nodeColor: Color, bandColor: Color?) {
-        rows += LogRowModel(i, content, top = prevBottom, bottom = bottom, nodeColor = nodeColor, bandColor = bandColor)
-        prevBottom = bottom
-    }
-
-    // The segment travelled when leaving [entry] toward the next node (null for a terminal/no travel):
-    // a walk is dashed neutral, a ride is the solid route colour.
-    fun leading(entry: TripLogEntry?): RailSeg? = when (entry) {
-        is TripLogEntry.Walk -> RailSeg(neutral, dashed = true)
-        is TripLogEntry.Transit -> RailSeg(routeColor(entry.routeColorHex, transitFallback), dashed = false)
-        else -> null
-    }
-    entries.forEachIndexed { i, entry ->
-        when (entry) {
-            is TripLogEntry.Terminal -> {
-                val bottom = if (entry.kind == TerminalKind.START) leading(entries.getOrNull(i + 1)) else null
-                push(i, RowContent.Terminal(entry), bottom, nodeColor = transitFallback, bandColor = null)
-            }
-            is TripLogEntry.Walk -> {
-                val seg = leading(entry) // dashed neutral
-                val band = neutral.copy(alpha = 0.07f)
-                push(i, RowContent.WalkHeader(entry), seg, nodeColor = neutral, bandColor = band)
-                if (isExpanded(i)) {
-                    entry.steps.forEach { step ->
-                        push(i, RowContent.Step(step), seg, neutral, band)
-                        // A step's distance is the travel from *this* maneuver to the next, so it reads as
-                        // a delta row sitting between the two instructions.
-                        if (step.distanceMeters > 0.0) {
-                            push(i, RowContent.StepDistance(step.distanceMeters), seg, neutral, band)
-                        }
-                    }
-                }
-            }
-            is TripLogEntry.Transit -> {
-                val ride = leading(entry) // solid route colour
-                val color = ride?.color ?: transitFallback // the leg's colour, parsed once for band + nodes
-                val band = color.copy(alpha = 0.08f)
-                push(i, RowContent.BoardHeader(entry), ride, color, band)
-                if (isExpanded(i)) entry.intermediateStops.forEach { push(i, RowContent.Stop(it), ride, color, band) }
-                // Stay-aboard interline changes (#2000) are always shown — they're an instruction to the
-                // rider ("stay on board, it becomes route X"), not a minor stop hidden behind expansion.
-                entry.routeLeg.interlineTransitions.forEach { push(i, RowContent.Transition(it), ride, color, band) }
-                push(i, RowContent.ExitNode(entry), leading(entries.getOrNull(i + 1)), color, band)
-            }
-        }
-    }
-    return rows
-}
-
-/** Parse a GTFS colour hex to a Compose [Color], falling back to a neutral transit colour. */
-private fun routeColor(hex: String?, fallback: Color): Color = parseObaHexColor(hex?.removePrefix("#"))?.let { Color(it) } ?: fallback
-
-/** The GTFS colour as the nullable ARGB int a [RouteBadgeChip] wants (null → the chip's own default). */
+/** The GTFS colour as the nullable ARGB int the route-colour helpers want (null → their fallback). */
 private fun routeColorInt(hex: String?): Int? = parseObaHexColor(hex?.removePrefix("#"))
 
 /**
  * One timeline row: the time column, the spine cell (drawn from [LogRowModel.top]/[bottom] with the node
- * on top), and the [content]. The whole row is the tap target when [onClick] is set. [compact] tightens
- * the row for a nodeless annotation (the between-steps distance) so it reads as an interval, not an event.
+ * on top), and the [content]. The whole row is the tap target when [onClick] is set, labelled for
+ * accessibility by [onClickLabel]. [compact] tightens the row for a nodeless annotation (the
+ * between-steps distance) so it reads as an interval, not an event.
+ *
+ * The spine and the leg's band are drawn by the row itself ([drawRowChrome]) rather than by a
+ * full-height child, so the row needs no intrinsic measurement and each one can stand alone as a lazy
+ * list item.
  */
 @Composable
 private fun LogRowScaffold(
     model: LogRowModel,
     onClick: (() -> Unit)?,
+    onClickLabel: String? = null,
     compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
-    val density = LocalDensity.current
+    val scale = timelineScale()
+    val timeWidth = TIME_WIDTH * scale
+    val rowTop = ROW_TOP * scale
+    val railSplit = RAIL_SPLIT * scale
     // The time column shows a node's clock time and, in the gap below it, the leg's elapsed "delta".
     // (A walk step's distance is not shown here — it rides between the steps in the content column.)
     val (time, delta) = when (val c = model.content) {
@@ -691,15 +630,26 @@ private fun LogRowScaffold(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+            // drawWithCache, not drawBehind: the dash effect and every Dp→px conversion are resolved
+            // once per size/metric change instead of on every frame this row is drawn.
+            .drawWithCache {
+                val chrome = RowChrome(this, model, timeWidth, railSplit)
+                onDrawBehind { chrome.draw(this) }
+            }
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClickLabel = onClickLabel, onClick = onClick)
+                } else {
+                    Modifier
+                }
+            ),
         verticalAlignment = Alignment.Top
     ) {
         // Centered in the time column — halfway between the screen edge and the spine.
         Column(
             modifier = Modifier
-                .width(timeWidth())
-                .padding(top = ROW_TOP),
+                .width(timeWidth)
+                .padding(top = rowTop),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
@@ -725,23 +675,23 @@ private fun LogRowScaffold(
                 )
             }
         }
-        Box(Modifier.width(RAIL_WIDTH).fillMaxHeight()) {
-            Canvas(Modifier.matchParentSize()) {
-                val cx = size.width / 2f
-                val split = with(density) { RAIL_SPLIT.toPx() }
-                val stroke = with(density) { 3.dp.toPx() }
-                model.top?.let { drawSegment(it, cx, 0f, split, stroke, density) }
-                model.bottom?.let { drawSegment(it, cx, split, size.height, stroke, density) }
-            }
-            LogNode(model.content, model.nodeColor)
+        Box(Modifier.width(RAIL_WIDTH)) {
+            LogNode(model.content, model.nodeColors)
         }
         Column(
             modifier = Modifier
                 .weight(1f)
-                .defaultMinSize(minHeight = if (compact) 0.dp else 36.dp)
+                .defaultMinSize(
+                    minHeight = when {
+                        compact -> 0.dp
+                        // A tappable row keeps the platform's minimum touch target.
+                        onClick != null -> ROW_MIN_TOUCH_HEIGHT
+                        else -> ROW_MIN_HEIGHT
+                    }
+                )
                 .padding(
                     start = 8.dp,
-                    top = if (compact) 0.dp else ROW_TOP,
+                    top = if (compact) 0.dp else rowTop,
                     bottom = if (compact) 0.dp else ROW_BOTTOM,
                     end = 10.dp
                 ),
@@ -750,29 +700,60 @@ private fun LogRowScaffold(
     }
 }
 
-private fun DrawScope.drawSegment(seg: RailSeg, cx: Float, y0: Float, y1: Float, stroke: Float, density: Density) {
-    val effect = if (seg.dashed) {
-        val on = with(density) { 1.dp.toPx() }
-        val off = with(density) { 7.dp.toPx() }
-        PathEffect.dashPathEffect(floatArrayOf(on, off))
-    } else {
-        null
+/**
+ * A row's background — its leg band, then the spine above and below the row's node — with every
+ * measurement resolved up front. Built once per size/metric change by `drawWithCache` and replayed on
+ * each frame, so the draw phase does no unit conversion and allocates no [PathEffect].
+ */
+private class RowChrome(density: Density, private val model: LogRowModel, timeWidth: Dp, railSplit: Dp) {
+    private val railLeft = with(density) { timeWidth.toPx() }
+    private val railWidth = with(density) { RAIL_WIDTH.toPx() }
+    private val centreX = railLeft + railWidth / 2f
+    private val split = with(density) { railSplit.toPx() }
+    private val stroke = with(density) { RAIL_STROKE.toPx() }
+    private val bandRadius = with(density) { BAND_RADIUS.toPx() }
+    private val bandInset = with(density) { BAND_INSET.toPx() }
+    private val bandEnd = with(density) { BAND_END.toPx() }
+    private val dash = with(density) {
+        PathEffect.dashPathEffect(floatArrayOf(1.dp.toPx(), 7.dp.toPx()))
     }
-    drawLine(seg.color, Offset(cx, y0), Offset(cx, y1), stroke, cap = StrokeCap.Round, pathEffect = effect)
-}
 
-/** The faint rounded band uniting a leg — drawn behind the content column only, so the spine stays clean. */
-private fun DrawScope.drawBand(color: Color, bandLeft: Dp) {
-    val left = bandLeft.toPx()
-    val insetY = 2.dp.toPx()
-    val right = 4.dp.toPx()
-    val radius = 13.dp.toPx()
-    drawRoundRect(
-        color = color,
-        topLeft = Offset(left, insetY),
-        size = Size(size.width - left - right, (size.height - insetY * 2).coerceAtLeast(0f)),
-        cornerRadius = CornerRadius(radius, radius)
+    fun draw(scope: DrawScope) = with(scope) {
+        model.band?.let { drawBand(it) }
+        model.top?.let { drawSegment(it, 0f, split) }
+        model.bottom?.let { drawSegment(it, split, size.height) }
+    }
+
+    private fun DrawScope.drawSegment(seg: RailSeg, y0: Float, y1: Float) = drawLine(
+        color = seg.color,
+        start = Offset(centreX, y0),
+        end = Offset(centreX, y1),
+        strokeWidth = stroke,
+        cap = StrokeCap.Round,
+        pathEffect = if (seg.dashed) dash else null
     )
+
+    /**
+     * This row's slice of the faint band uniting its leg — drawn behind the content column only, so the
+     * spine stays clean. An interior row's rect is extended a corner radius past the row edge and
+     * clipped back, so only the leg's outermost rows show rounded corners and the slices read as one.
+     */
+    private fun DrawScope.drawBand(band: BandEdge) {
+        val left = railLeft + railWidth
+        val top = if (band.first) bandInset else -bandRadius
+        val bottom = if (band.last) size.height - bandInset else size.height + bandRadius
+        clipRect {
+            drawRoundRect(
+                color = band.color,
+                topLeft = Offset(left, top),
+                size = Size(
+                    width = (size.width - left - bandEnd).coerceAtLeast(0f),
+                    height = (bottom - top).coerceAtLeast(0f)
+                ),
+                cornerRadius = CornerRadius(bandRadius, bandRadius)
+            )
+        }
+    }
 }
 
 /**
@@ -780,8 +761,9 @@ private fun DrawScope.drawBand(color: Color, bandLeft: Dp) {
  * coloured nodes use [nodeColor] (the leg's colour, already parsed once in [flattenLog]).
  */
 @Composable
-private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
+private fun BoxScope.LogNode(content: RowContent, nodeColors: RouteLineColors) {
     val muted = MaterialTheme.colorScheme.outline
+    val (nodeColor, onNode) = nodeColors
     when (content) {
         // The trip endpoints are plain dots: a green origin and a red destination, no inset icon.
         is RowContent.Terminal -> DotNode(
@@ -796,23 +778,16 @@ private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
         is RowContent.WalkHeader ->
             RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = R.drawable.ic_directions_walk)
         is RowContent.BoardHeader ->
-            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, onNodeColor(nodeColor), 16.dp, shape = RoundedCornerShape(8.dp))
+            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, onNode, 16.dp, shape = RoundedCornerShape(8.dp))
         is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
         is RowContent.Stop -> RingNode(11.dp, 2.dp, nodeColor)
         is RowContent.Transition ->
-            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, onNodeColor(nodeColor), 14.dp)
+            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, onNode, 14.dp)
         is RowContent.Step -> RingNode(8.dp, 2.dp, muted.copy(alpha = 0.7f))
         // The between-steps distance is an interval, not an event — the spine runs through unbroken.
         is RowContent.StepDistance -> Unit
     }
 }
-
-/**
- * The glyph colour for an icon drawn on a filled route-coloured node. The node keeps the agency's raw
- * GTFS colour (so the spine, band and node all read as one line), and those run the whole range from
- * near-black to a bright yellow — so the icon takes whichever of black/white contrasts with it.
- */
-private fun onNodeColor(color: Color): Color = if (color.luminance() > 0.5f) Color.Black else Color.White
 
 /** A hollow node: a surface-filled circle with a [color] border, optionally with a muted centre [iconRes]. */
 @Composable
@@ -855,13 +830,13 @@ private fun BoxScope.DotNode(color: Color) {
     }
 }
 
-/** Places a [size]-square node so its centre lands on [RAIL_SPLIT] (the spine's colour-flip point). */
+/** Places a [size]-square node so its centre lands on [railSplit] (the spine's colour-flip point). */
 @Composable
 private fun BoxScope.NodeSlot(size: Dp, content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier = Modifier
             .align(Alignment.TopCenter)
-            .padding(top = RAIL_SPLIT - size / 2)
+            .padding(top = (railSplit() - size / 2).coerceAtLeast(0.dp))
             .size(size),
         contentAlignment = Alignment.Center,
         content = content
@@ -871,9 +846,11 @@ private fun BoxScope.NodeSlot(size: Dp, content: @Composable BoxScope.() -> Unit
 @Composable
 private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
     Text(
+        // Locale-aware uppercasing: the bare uppercase() overload is Locale.ROOT, which gets Turkish
+        // dotted/dotless I wrong on a string we just localized.
         text = stringResource(
             if (entry.kind == TerminalKind.START) R.string.trip_plan_leaving else R.string.trip_plan_arriving
-        ).uppercase(),
+        ).uppercase(Locale.getDefault()),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -886,7 +863,7 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
 }
 
 @Composable
-private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, expanded: Boolean) {
+private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, model: LogRowModel) {
     val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
@@ -897,7 +874,7 @@ private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, expanded: Bo
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
-        if (entry.steps.isNotEmpty()) Chevron(expanded)
+        if (model.expandable) Chevron(model.expanded)
     }
     val meta = walkMeta(entry, context)
     if (meta.isNotEmpty()) {
@@ -935,7 +912,7 @@ private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
 @Composable
 private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
-    expanded: Boolean,
+    model: LogRowModel,
     onToggle: () -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
@@ -943,7 +920,7 @@ private fun ColumnScope.BoardContent(
     val context = LocalContext.current
     // The route/headsign/meta block toggles the leg (and highlights it on the map); the board stop + ETA
     // strip below is its own tap target that zooms to the stop.
-    Column(Modifier.clickable(onClick = onToggle)) {
+    Column(Modifier.clickable(onClickLabel = expandLabel(model), onClick = onToggle)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
             if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
@@ -958,7 +935,7 @@ private fun ColumnScope.BoardContent(
             } else {
                 Spacer(Modifier.weight(1f))
             }
-            if (entry.intermediateStops.isNotEmpty()) Chevron(expanded)
+            if (model.expandable) Chevron(model.expanded)
         }
         entry.headsign?.let {
             Text(
@@ -1070,9 +1047,11 @@ private fun RealtimeChip(state: RealtimeState) {
         RealtimeState.OnTime -> colorResource(R.color.trip_realtime_on_time) to
             stringResource(R.string.trip_plan_realtime_on_time)
         is RealtimeState.Late -> colorResource(R.color.trip_realtime_delayed) to
-            stringResource(R.string.trip_plan_realtime_late, state.minutes.toInt())
-        is RealtimeState.Early -> colorResource(R.color.trip_realtime_on_time) to
-            stringResource(R.string.trip_plan_realtime_early, state.minutes.toInt())
+            pluralStringResource(R.plurals.trip_plan_realtime_late, state.minutes.toInt(), state.minutes.toInt())
+        // Early gets its own colour, not the on-time green: a vehicle running ahead of schedule is a
+        // risk to the rider (they can miss it), not a reassurance.
+        is RealtimeState.Early -> colorResource(R.color.trip_realtime_early) to
+            pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
     }
     Spacer(Modifier.width(8.dp))
     Row(
@@ -1088,14 +1067,16 @@ private fun RealtimeChip(state: RealtimeState) {
     }
 }
 
-/** The expand/collapse chevron shown on a leg with minor events; rotates via the up/down glyph. */
+/**
+ * The expand/collapse chevron shown on a leg with minor events; rotates via the up/down glyph. Purely
+ * decorative (no content description) — it isn't its own control, it just pictures what the row's tap
+ * will do, which the row announces through its own click label (see [expandLabel]).
+ */
 @Composable
 private fun Chevron(expanded: Boolean) {
     Icon(
         imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
-        contentDescription = stringResource(
-            if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
-        ),
+        contentDescription = null,
         tint = MaterialTheme.colorScheme.outline,
         modifier = Modifier.size(24.dp)
     )
@@ -1163,13 +1144,12 @@ private fun TripResultsPreview() {
                     headsign = "Rainier Beach",
                     boardTime = ServerTime(4 * 60_000L),
                     exitTime = ServerTime(20 * 60_000L),
-                    stopCount = 3,
                     durationMinutes = 16,
                     realtime = RealtimeState.OnTime,
-                    intermediateStops = listOf(
-                        LogStop("Capitol Hill Station"),
-                        LogStop("23rd Ave & E Union St"),
-                        LogStop("Mount Baker Transit Center")
+                    rideEvents = listOf(
+                        RideEvent.Stop(LogStop("Capitol Hill Station")),
+                        RideEvent.Stop(LogStop("23rd Ave & E Union St")),
+                        RideEvent.Stop(LogStop("Mount Baker Transit Center"))
                     ),
                     routeLeg = RouteLegRef(
                         routeId = "1_100",

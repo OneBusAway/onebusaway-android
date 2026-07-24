@@ -110,7 +110,7 @@ class DefaultTripResultsRepository @Inject constructor(
         val refs = MutableList<RouteLegRef?>(legs.size) { null }
         for (chain in Interlines.chains(legs)) {
             val leader = legs[chain.leaderIndex]
-            val transitions = chain.transitionLegIndices.map { j ->
+            val transitions = chain.transitionLegIndices.associateWith { j ->
                 InterlineTransition(
                     routeShortName = Interlines.badgeShortName(legs[j]),
                     headsign = legs[j].headsign,

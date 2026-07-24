@@ -97,11 +97,12 @@ sealed interface TripLogEntry {
 
     /**
      * A transit leg — a Board node and an Exit node uniting the ride, its solid route-coloured segment
-     * running between them. Expands to the [intermediateStops] passed on the way (empty on the OTP2 path,
-     * which doesn't fetch them). Board/Exit stop identity + the route id ride on [routeLeg]: tapping the
-     * leg highlights the route ([routeLeg] + [legPoints]) and the Board node shows that stop's live ETA
-     * strip. [routeColorHex] is the raw GTFS colour (nullable); the renderer parses it for the badge and
-     * the spine, falling back to a neutral transit colour.
+     * running between them. Everything that happens *aboard* — the stops passed and any stay-aboard
+     * route change — is [rideEvents], **in travel order**, so a folded interline chain (#2000) keeps its
+     * post-seam stops after the seam they follow. Board/Exit stop identity + the route id ride on
+     * [routeLeg]: tapping the leg highlights the route ([routeLeg] + [legPoints]) and the Board node
+     * shows that stop's live ETA strip. [routeColorHex] is the raw GTFS colour (nullable); the renderer
+     * re-tones it for the badge and the spine, falling back to a neutral transit colour.
      */
     data class Transit(
         val routeShortName: String,
@@ -110,13 +111,30 @@ sealed interface TripLogEntry {
         val headsign: String?,
         val boardTime: ServerTime,
         val exitTime: ServerTime,
-        val stopCount: Int,
         val durationMinutes: Long,
         val realtime: RealtimeState,
-        val intermediateStops: List<LogStop>,
+        val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
         val legPoints: List<GeoPoint> = emptyList()
-    ) : TripLogEntry
+    ) : TripLogEntry {
+        /**
+         * How many intermediate stops the ride passes — derived from [rideEvents] rather than stored, so
+         * the "N stops" summary can't disagree with the list the leg expands to (it did when a folded
+         * interline continuation's stops were merged but its count wasn't).
+         */
+        val stopCount: Int get() = rideEvents.count { it is RideEvent.Stop }
+    }
+}
+
+/**
+ * Something that happens between boarding and exiting a ride, in travel order: an intermediate [Stop]
+ * passed, or a stay-aboard [Transition] onto another route mid-vehicle (#2000). They interleave — a
+ * folded interline chain is `stops… → transition → stops… → transition → stops…` — which is why they
+ * share one ordered list rather than sitting in two parallel ones.
+ */
+sealed interface RideEvent {
+    data class Stop(val stop: LogStop) : RideEvent
+    data class Transition(val transition: InterlineTransition) : RideEvent
 }
 
 /** Which trip endpoint a [TripLogEntry.Terminal] marks. */
@@ -137,7 +155,8 @@ data class LogStop(val name: String, val point: GeoPoint? = null)
 
 /**
  * The real-time state of a transit board, shown as an on-time / delayed chip. [Unknown] (no real-time
- * data) renders no chip; [OnTime] within a minute of schedule; [Late]/[Early] carry whole minutes.
+ * data) renders no chip; [OnTime] when the delay rounds to zero whole minutes (i.e. within 30s of
+ * schedule either way); [Late]/[Early] carry whole minutes.
  */
 sealed interface RealtimeState {
     data object Unknown : RealtimeState
@@ -159,9 +178,12 @@ data class RouteLegRef(
     val board: RouteStopRef?,
     val alight: RouteStopRef?,
     // Mid-ride route changes on one continuous vehicle (stay-aboard interlines onto a *different*
-    // route, #2000), in order between [board] and [alight]. Empty for an ordinary transit leg and for
-    // a self-interline (a route reversing onto itself) — whose seam is folded away silently.
-    val interlineTransitions: List<InterlineTransition> = emptyList(),
+    // route, #2000), between [board] and [alight], **keyed by the itinerary leg index the change
+    // happens at**. Keyed rather than positional because the consumer has to place each seam among
+    // that leg's stops; the resolver knows the index, so nothing downstream has to recover it. Empty
+    // for an ordinary transit leg and for a self-interline (a route reversing onto itself) — whose
+    // seam is folded away silently.
+    val interlineTransitions: Map<Int, InterlineTransition> = emptyMap(),
     // The *additional* ridden legs beyond the leader ([routeId] + [board]) when this card folds a
     // stay-aboard interline (#2000): each names the route continued onto and the seam stop boarded
     // there. The map focus draws each segment's shape + stops and the shared vehicle across them.

@@ -926,8 +926,15 @@
     <string name="trip_plan_walk_transfer">Walk to transfer</string>
     <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
     <string name="trip_plan_realtime_on_time">On time</string>
-    <string name="trip_plan_realtime_late">%1$d min late</string>
-    <string name="trip_plan_realtime_early">%1$d min early</string>
+    <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->
+    <plurals name="trip_plan_realtime_late">
+        <item quantity="one">%1$d min late</item>
+        <item quantity="other">%1$d min late</item>
+    </plurals>
+    <plurals name="trip_plan_realtime_early">
+        <item quantity="one">%1$d min early</item>
+        <item quantity="other">%1$d min early</item>
+    </plurals>
     <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
     <plurals name="trip_plan_intermediate_stops">
         <item quantity="one">%1$d stop</item>

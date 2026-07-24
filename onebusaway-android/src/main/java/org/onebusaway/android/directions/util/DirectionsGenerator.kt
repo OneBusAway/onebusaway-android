@@ -285,12 +285,13 @@ class DirectionsGenerator(
             // sub-direction
             val stopIcon = getStopIcon(leg.mode)
             val subDirections = ArrayList<Direction>()
-            for (i in stopsInBetween.indices) {
+            for (stop in stopsInBetween) {
                 val subDirection = Direction()
 
-                val stop = stopsInBetween[i]
                 val extraStopInformation = stop.stopCode
-                var subDirectionText = "${i + 1}. ${stop.name}"
+                // No ordinal prefix: the trip-log already places each stop as its own node in travel
+                // order down the spine, so a baked-in "3." would just be a second, redundant numbering.
+                var subDirectionText = stop.name.orEmpty()
                 if (!TextUtils.isEmpty(extraStopInformation)) {
                     subDirectionText += " ($extraStopInformation)"
                 }

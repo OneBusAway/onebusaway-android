@@ -53,8 +53,11 @@ class TripLogBuilderTest {
         endTime = ServerTime(4 * 60_000L),
         from = TripPlace(name = "Origin", lat = origin.latitude, lon = origin.longitude),
         to = TripPlace(name = "Pine St & 3rd Ave", lat = boardFrom.latitude, lon = boardFrom.longitude),
-        // One structured step, aligned to the generator's single sub-direction below.
-        steps = listOf(TripStep(distance = 61.0, streetName = "Pike St")),
+        // Structured steps, aligned by index to the generator's sub-directions below.
+        steps = listOf(
+            TripStep(distance = 61.0, streetName = "Pike St"),
+            TripStep(distance = 145.0, streetName = "3rd Ave")
+        ),
         legGeometry = TripLegGeometry(points = encoded, length = 3)
     )
 
@@ -84,6 +87,11 @@ class TripLogBuilderTest {
                 directionText = "Turn left onto Pike St"
                 focusLat = stopMid.latitude
                 focusLon = stopMid.longitude
+            },
+            Direction().apply {
+                directionText = "Turn right onto 3rd Ave"
+                focusLat = boardFrom.latitude
+                focusLon = boardFrom.longitude
             }
         )
     }
@@ -93,14 +101,31 @@ class TripLogBuilderTest {
         service = "Get on BUS Route 8"
         subDirections = arrayListOf(
             Direction().apply {
-                directionText = "1. Capitol Hill Station"
+                directionText = "Capitol Hill Station"
                 focusLat = stopMid.latitude
                 focusLon = stopMid.longitude
             }
         )
     }
 
+    // The continuation leg's own board direction — a distinct stop name, so a folded chain's event
+    // ordering is observable rather than two identical rows.
+    private val continuationBoardDir = Direction().apply {
+        isTransit = true
+        service = "Get on BUS Route 49"
+        subDirections = arrayListOf(
+            Direction().apply {
+                directionText = "Rainier Beach Station"
+                focusLat = alightTo.latitude
+                focusLon = alightTo.longitude
+            }
+        )
+    }
+
     private val alightDir = Direction().apply { isTransit = true }
+
+    /** The names of the intermediate stops in [TripLogEntry.Transit.rideEvents], in travel order. */
+    private fun TripLogEntry.Transit.stopNames(): List<String> = rideEvents.filterIsInstance<RideEvent.Stop>().map { it.stop.name }
 
     private val transitRef = RouteLegRef(
         routeId = "1_100",
@@ -142,10 +167,15 @@ class TripLogBuilderTest {
         assertEquals(4L, walk.durationMinutes)
         assertEquals(320.0, walk.distanceMeters, 0.0)
         assertFalse(walk.isTransfer)
-        assertEquals(1, walk.steps.size)
-        assertEquals("Turn left onto Pike St", walk.steps.single().text) // no distance baked into the text
-        assertEquals(61.0, walk.steps.single().distanceMeters, 0.0) // distance comes from the structured step
-        assertEquals(stopMid, walk.steps.single().point)
+        // Each localized instruction pairs with the structured step of the SAME index — the generator
+        // emits one sub-direction per leg.step, in order, and nothing else may shift that alignment.
+        assertEquals(2, walk.steps.size)
+        assertEquals("Turn left onto Pike St", walk.steps[0].text) // no distance baked into the text
+        assertEquals(61.0, walk.steps[0].distanceMeters, 0.0) // distance comes from the structured step
+        assertEquals(stopMid, walk.steps[0].point)
+        assertEquals("Turn right onto 3rd Ave", walk.steps[1].text)
+        assertEquals(145.0, walk.steps[1].distanceMeters, 0.0)
+        assertEquals(boardFrom, walk.steps[1].point)
         assertEquals(3, walk.legPoints.size) // decoded from the leg geometry, for body-tap framing
     }
 
@@ -163,7 +193,7 @@ class TripLogBuilderTest {
         assertEquals(ServerTime(20 * 60_000L), transit.exitTime)
         assertEquals(16L, transit.durationMinutes)
         assertEquals(1, transit.stopCount)
-        assertEquals("1. Capitol Hill Station", transit.intermediateStops.single().name)
+        assertEquals("Capitol Hill Station", transit.stopNames().single())
         assertEquals(RealtimeState.Late(2), transit.realtime)
         assertEquals(transitRef, transit.routeLeg)
     }
@@ -195,14 +225,15 @@ class TripLogBuilderTest {
         // destination, plus the cross-route transition); the continuation leg's ref is null.
         val chainRef = transitRef.copy(
             alight = RouteStopRef("1_700", "700", "Final Dest", alightTo),
-            interlineTransitions = listOf(
-                InterlineTransition("49", "Downtown", RouteStopRef("1_600", "600", "Seam Stop", alightTo))
+            // Keyed by the leg the change happens at — leg 1, the continuation.
+            interlineTransitions = mapOf(
+                1 to InterlineTransition("49", "Downtown", RouteStopRef("1_600", "600", "Seam Stop", alightTo))
             )
         )
 
         val entries = TripLogBuilder.build(
             legs = listOf(transitLeg, continuation),
-            flatDirections = listOf(boardDir, alightDir, boardDir, alightDir),
+            flatDirections = listOf(boardDir, alightDir, continuationBoardDir, alightDir),
             routeLegRefs = listOf(chainRef, null)
         )
 
@@ -211,7 +242,39 @@ class TripLogBuilderTest {
         // The ledger delta must span board → exit (4 → 28 min), not just the leader leg.
         assertEquals(24L, transit.durationMinutes)
         assertEquals(chainRef, transit.routeLeg)
-        assertEquals(1, transit.routeLeg.interlineTransitions.size)
+
+        // The whole chain's events, in travel order: the leader's stop, then the seam it is boarded
+        // across, then the stops passed *after* that seam — never the post-seam stops before it.
+        assertEquals(
+            listOf("stop:Capitol Hill Station", "transition:49", "stop:Rainier Beach Station"),
+            transit.rideEvents.map {
+                when (it) {
+                    is RideEvent.Stop -> "stop:${it.stop.name}"
+                    is RideEvent.Transition -> "transition:${it.transition.routeShortName}"
+                }
+            }
+        )
+        // …and the "N stops" summary counts the whole ride, not just the leader leg's share.
+        assertEquals(2, transit.stopCount)
+    }
+
+    @Test
+    fun selfInterline_foldsWithNoSeamRow() {
+        // Same route continuing on the same vehicle: the seam is real but invisible to the rider, so
+        // Interlines contributes no transition and the merged ride is a plain run of stops.
+        val continuation = transitLeg.copy(
+            interlineWithPreviousLeg = true,
+            startTime = ServerTime(20 * 60_000L),
+            endTime = ServerTime(28 * 60_000L)
+        )
+        val transit = TripLogBuilder.build(
+            legs = listOf(transitLeg, continuation),
+            flatDirections = listOf(boardDir, alightDir, continuationBoardDir, alightDir),
+            routeLegRefs = listOf(transitRef, null)
+        ).filterIsInstance<TripLogEntry.Transit>().single()
+
+        assertTrue("a self-interline shows no seam row", transit.rideEvents.none { it is RideEvent.Transition })
+        assertEquals(2, transit.stopCount)
     }
 
     @Test

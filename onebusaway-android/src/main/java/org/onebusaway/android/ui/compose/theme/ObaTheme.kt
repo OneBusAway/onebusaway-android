@@ -16,10 +16,12 @@
 package org.onebusaway.android.ui.compose.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.colorResource
 import org.onebusaway.android.R
 
@@ -61,3 +63,16 @@ fun ObaTheme(content: @Composable () -> Unit) {
     )
     MaterialTheme(colorScheme = colorScheme, content = content)
 }
+
+/**
+ * True when the color scheme in effect is a dark one.
+ *
+ * Deliberately measured from the scheme itself rather than read off [isSystemInDarkTheme]: callers use
+ * this to pick a tone that will contrast with the surface they are actually drawing on, and that is a
+ * property of the scheme in force — which is not always the system setting. A `@Preview` pinned to a
+ * dark scheme, a white-label brand whose `md_theme_surface` override lands on the other side of the
+ * line (see docs/REBRANDING.md), and any nested `MaterialTheme` all need the scheme's answer, not the
+ * device's.
+ */
+@Composable
+fun ColorScheme.isDarkTheme(): Boolean = surface.luminance() < 0.5f

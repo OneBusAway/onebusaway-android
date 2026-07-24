@@ -69,6 +69,11 @@ object TripLogBuilder {
         val foldedLegIndices = Interlines.chains(legs)
             .flatMap { (it.leaderIndex + 1)..it.alightIndex }
             .toSet()
+        // The seam each continuation leg is boarded across. Already keyed by leg index by the resolver
+        // (which had the index in hand), so there is nothing to re-derive here; chains are disjoint, so
+        // merging every leg's map is unambiguous.
+        val transitionByLeg = routeLegRefs.filterNotNull().flatMap { it.interlineTransitions.entries }
+            .associate { it.key to it.value }
 
         var cursor = 0
         legs.forEachIndexed { legIndex, leg ->
@@ -84,9 +89,9 @@ object TripLogBuilder {
                 if (legIndex in foldedLegIndices) {
                     // A stay-aboard interline continuation: the rider never leaves the vehicle. Extend the
                     // chain leader's ride to this leg's destination/time and geometry rather than starting a
-                    // new entry; the leader's routeLeg already carries the chain alight + cross-route
-                    // "stay aboard" transitions (built span-aware in TripResultsRepository).
-                    foldIntoLeader(entries, leg, legPoints)
+                    // new entry; the leader's routeLeg already carries the chain alight (built span-aware
+                    // in TripResultsRepository).
+                    foldIntoLeader(entries, leg, board, legPoints, transitionByLeg[legIndex])
                 } else {
                     entries += transitEntry(leg, board, legPoints, routeLegRefs.getOrNull(legIndex))
                 }
@@ -126,17 +131,27 @@ object TripLogBuilder {
      *
      * The duration is re-derived from the ride's own board→exit clock times rather than summing the legs'
      * durations, so the ledger's elapsed delta always agrees with the two times printed beside it (the
-     * rider is aboard for that whole span, seam dwell included). The continuation's intermediate stops are
-     * deliberately *not* merged: the renderer draws a ride's stops before its cross-route "stay aboard"
-     * rows, so appending post-seam stops would place them on the wrong side of the seam.
+     * rider is aboard for that whole span, seam dwell included). The continuation's own events append in
+     * travel order — its [transition] seam (when it changes route) first, then the stops it passes after
+     * that seam — so the merged ride reads `stops… → "stay aboard for route X" → stops…` and the leg's
+     * "N stops" summary counts the whole chain.
      */
-    private fun foldIntoLeader(entries: MutableList<TripLogEntry>, leg: TripLeg, legPoints: List<GeoPoint>) {
+    private fun foldIntoLeader(
+        entries: MutableList<TripLogEntry>,
+        leg: TripLeg,
+        board: Direction,
+        legPoints: List<GeoPoint>,
+        transition: InterlineTransition?
+    ) {
         val idx = entries.indexOfLast { it is TripLogEntry.Transit }
         if (idx < 0) return
         val leader = entries[idx] as TripLogEntry.Transit
         entries[idx] = leader.copy(
             exitTime = leg.endTime,
             durationMinutes = (leg.endTime - leader.boardTime).inWholeMinutes,
+            rideEvents = leader.rideEvents +
+                listOfNotNull(transition?.let { RideEvent.Transition(it) }) +
+                stopEvents(board),
             legPoints = leader.legPoints + legPoints
         )
     }
@@ -148,8 +163,6 @@ object TripLogBuilder {
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
-        // The board direction's sub-directions are the intermediate stops (localized "N. Name (code)").
-        val stops = board.subDirections?.map { LogStop(it.directionText.str(), it.focusPoint()) }.orEmpty()
         return TripLogEntry.Transit(
             routeShortName = leg.routeDisplayShortName().orEmpty(),
             routeDisplayName = leg.routeDisplayName(),
@@ -157,14 +170,17 @@ object TripLogBuilder {
             headsign = leg.headsign ?: routeLeg.headsign,
             boardTime = leg.startTime,
             exitTime = leg.endTime,
-            stopCount = stops.size,
             durationMinutes = leg.duration.inWholeMinutes,
             realtime = leg.realtimeState(),
-            intermediateStops = stops,
+            // Only this leg's own stops; a folded chain's later legs append theirs after their seam.
+            rideEvents = stopEvents(board),
             routeLeg = routeLeg,
             legPoints = legPoints
         )
     }
+
+    /** A transit leg's intermediate stops: the board direction's sub-directions, in travel order. */
+    private fun stopEvents(board: Direction): List<RideEvent> = board.subDirections?.map { RideEvent.Stop(LogStop(it.directionText.str(), it.focusPoint())) }.orEmpty()
 
     /** A minimal route identity when the repository couldn't resolve one (unknown agency / OTP1 path). */
     private fun fallbackRouteLeg(leg: TripLeg) = RouteLegRef(

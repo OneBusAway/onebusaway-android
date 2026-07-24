@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * A small route roundel — the route's short name on a chip tinted from its GTFS color (via
@@ -37,10 +36,13 @@ import androidx.compose.ui.unit.sp
 fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Modifier, scale: Float = 1f) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     val base = MaterialTheme.typography.labelMedium
-    // Scale the line box with the glyphs — labelMedium's 16sp line height would clip a 1.5x-scaled name.
+    // Scale every text metric together — the line box with the glyphs (labelMedium's 16sp line height
+    // would clip a 1.5x-scaled name) and the tracking with both. TextUnit's own `* Float` keeps each
+    // value's unit (and leaves an unspecified one unspecified), so no metric needs a special case.
     val style = base.copy(
-        fontSize = (base.fontSize.value * scale).sp,
-        lineHeight = if (base.lineHeight.isSp) (base.lineHeight.value * scale).sp else base.lineHeight
+        fontSize = base.fontSize * scale,
+        lineHeight = base.lineHeight * scale,
+        letterSpacing = base.letterSpacing * scale
     )
     Surface(
         modifier = modifier,

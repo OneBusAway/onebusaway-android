@@ -16,6 +16,9 @@
 package org.onebusaway.android.ui.tripresults
 
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
@@ -23,6 +26,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
@@ -35,6 +39,14 @@ import org.onebusaway.android.util.GeoPoint
  * wiring by node text, not coordinates.
  */
 class DirectionRowFocusTest {
+
+    /**
+     * The row's own accessibility label for what its tap does. The expand affordance is the row, not the
+     * chevron (which is decorative), so this is the only thing that announces "Show steps" to TalkBack.
+     */
+    private fun hasClickLabel(label: String?) = SemanticsMatcher("click label is $label") {
+        it.config.getOrElseNullable(SemanticsActions.OnClick) { null }?.label == label
+    }
 
     // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
@@ -75,10 +87,9 @@ class DirectionRowFocusTest {
         headsign = "Rainier Beach",
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
-        stopCount = 1,
         durationMinutes = 16,
         realtime = RealtimeState.OnTime,
-        intermediateStops = listOf(LogStop("Capitol Hill Station", stopMidPoint)),
+        rideEvents = listOf(RideEvent.Stop(LogStop("Capitol Hill Station", stopMidPoint))),
         routeLeg = routeLeg,
         legPoints = transitLegPoints
     )
@@ -100,6 +111,9 @@ class DirectionRowFocusTest {
 
     private val fullState = state(listOf(start, walk, transit, arrive))
 
+    private val walkAction = context.getString(R.string.step_by_step_non_transit_mode_walk_action)
+    private val midStopName = "Capitol Hill Station"
+
     @Test
     fun tappingWalkHeader_framesTheLeg_andRevealsItsSteps() {
         var framed: List<GeoPoint>? = null
@@ -112,8 +126,7 @@ class DirectionRowFocusTest {
         composeRule.onNodeWithText(walk.steps.single().text).assertDoesNotExist()
 
         // Tapping the walk header frames the leg and reveals its steps.
-        composeRule.onNodeWithText(context.getString(org.onebusaway.android.R.string.step_by_step_non_transit_mode_walk_action))
-            .performClick()
+        composeRule.onNodeWithText(walkAction).performClick()
         assertEquals(walkLegPoints, framed)
         composeRule.onNodeWithText(walk.steps.single().text).assertExists()
 
@@ -135,17 +148,43 @@ class DirectionRowFocusTest {
         }
 
         // The intermediate stop is collapsed to start.
-        composeRule.onNodeWithText(transit.intermediateStops.single().name).assertDoesNotExist()
+        composeRule.onNodeWithText(midStopName).assertDoesNotExist()
 
         // Tapping the transit header highlights the route and reveals the stops.
         composeRule.onNodeWithText(transit.routeDisplayName).performClick()
         assertEquals("1_100", captured?.first?.routeId)
         assertEquals(transitLegPoints, captured?.second)
-        composeRule.onNodeWithText(transit.intermediateStops.single().name).assertExists()
+        composeRule.onNodeWithText(midStopName).assertExists()
 
         // The revealed stop focuses its own point.
-        composeRule.onNodeWithText(transit.intermediateStops.single().name).performClick()
+        composeRule.onNodeWithText(midStopName).performClick()
         assertEquals(stopMidPoint, focused)
+    }
+
+    @Test
+    fun aLegHeaderAnnouncesWhatItsTapDoesToTheSteps() {
+        composeRule.setContent { TripResultsList(state = fullState) }
+
+        // Collapsed: both headers offer to reveal. The chevron itself is decorative — the label lives on
+        // the row, which is the actual control (an IconButton would be a second, competing target).
+        composeRule.onNodeWithText(walkAction)
+            .assert(hasClickLabel(context.getString(R.string.trip_plan_expand_leg)))
+        composeRule.onNodeWithText(transit.routeDisplayName)
+            .assert(hasClickLabel(context.getString(R.string.trip_plan_expand_leg)))
+
+        // …and once expanded it offers the inverse.
+        composeRule.onNodeWithText(walkAction).performClick()
+        composeRule.onNodeWithText(walkAction)
+            .assert(hasClickLabel(context.getString(R.string.trip_plan_collapse_leg)))
+    }
+
+    @Test
+    fun aLegWithNoMinorEventsOffersNoExpandLabel() {
+        val bare = walk.copy(steps = emptyList())
+        composeRule.setContent { TripResultsList(state = state(listOf(bare, arrive))) }
+
+        // Nothing to reveal, so the row keeps its plain "activate" affordance rather than promising steps.
+        composeRule.onNodeWithText(walkAction).assert(hasClickLabel(null))
     }
 
     @Test
@@ -197,10 +236,28 @@ class DirectionRowFocusTest {
             )
         }
 
-        composeRule.onNodeWithText(context.getString(org.onebusaway.android.R.string.step_by_step_non_transit_mode_walk_action))
-            .performClick()
+        composeRule.onNodeWithText(walkAction).performClick()
 
         assertNull(framed)
         assertEquals(boardPoint, focused)
+    }
+
+    @Test
+    fun walkLegWithNeitherPolylineNorPoint_movesTheMapNowhere() {
+        val inert = walk.copy(legPoints = emptyList(), focusPoint = null, steps = emptyList())
+        var framed: List<GeoPoint>? = null
+        var focused: GeoPoint? = null
+        composeRule.setContent {
+            TripResultsList(
+                state = state(listOf(inert, arrive)),
+                onFocusLeg = { framed = it },
+                onFocusPoint = { focused = it }
+            )
+        }
+
+        composeRule.onNodeWithText(walkAction).performClick()
+
+        assertNull(framed)
+        assertNull(focused)
     }
 }

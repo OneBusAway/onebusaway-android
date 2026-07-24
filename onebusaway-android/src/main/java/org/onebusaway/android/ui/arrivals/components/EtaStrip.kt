@@ -162,10 +162,11 @@ internal fun EtaStrip(
                     trips,
                     // Trip-instance identity, so a poll that drops an aged-out leading trip keeps the
                     // viewport on the surviving pills instead of shifting by an index. It's the SAME
-                    // (tripId, serviceDate, stopSequence) triple the arrivals dedup treats as one
-                    // instance (see collapseBlockIdPhantoms) — tripId alone is NOT unique (a loop
+                    // (tripId, serviceDate, stopSequence) triple the arrivals dedup collapses to one
+                    // entry (see collapseDuplicateTripInstances) — tripId alone is NOT unique (a loop
                     // route's two genuine visits to one stop share it), and a duplicate LazyRow key
-                    // throws.
+                    // is a fatal throw at measure time, so uniqueness here rests on that dedup rather
+                    // than on the feed being well-behaved (#2012).
                     key = { _, trip -> "${trip.tripId} ${trip.serviceDate} ${trip.stopSequence}" }
                 ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).

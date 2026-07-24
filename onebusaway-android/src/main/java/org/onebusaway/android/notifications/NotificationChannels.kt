@@ -33,7 +33,32 @@ object NotificationChannels {
 
     const val TRIP_PLAN_UPDATES_ID = "trip_plan_updates"
     const val ARRIVAL_REMINDERS_ID = "arrival_reminders"
+
+    /**
+     * Ongoing destination-reminder progress (the foreground-service distance notification) and the
+     * trip-feedback follow-ups. Deliberately quiet ([NotificationManager.IMPORTANCE_LOW], no
+     * vibration): the distance notification re-posts on every location update, so alerting on it
+     * would buzz continuously. The "act now" arrival alerts use [DESTINATION_ARRIVAL_ID] instead.
+     */
     const val DESTINATION_ALERT_ID = "destination_alerts"
+
+    /**
+     * The one-shot "get ready" / "pull the cord" alerts fired as the rider nears the destination
+     * stop. Distinct from [DESTINATION_ALERT_ID] so it can be high-importance and vibrate without
+     * making the continuously-updating progress notification buzz (#985). Vibration is owned by the
+     * channel on API 26+, so [DESTINATION_VIBRATION_PATTERN] is set here; the notification builders
+     * also call `setVibrate` for the pre-26 path.
+     */
+    const val DESTINATION_ARRIVAL_ID = "destination_arrival"
+
+    /**
+     * Vibration pattern for the destination arrival alerts, shared by the [DESTINATION_ARRIVAL_ID]
+     * channel (API 26+) and the notification builders' `setVibrate` (pre-26). Exposed as a
+     * `@JvmField` so the Java notification code (`NavigationServiceProvider`) reads the same source.
+     */
+    @JvmField
+    val DESTINATION_VIBRATION_PATTERN =
+        longArrayOf(2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000)
 
     /**
      * Registers the app's notification channels. A no-op below API 26 (channels didn't exist);
@@ -78,6 +103,17 @@ object NotificationChannels {
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "All notifications relating to Destination alerts"
+            }
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                DESTINATION_ARRIVAL_ID,
+                "Destination arrival alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Vibrates and alerts you when you are approaching your destination stop."
+                enableVibration(true)
+                vibrationPattern = DESTINATION_VIBRATION_PATTERN
             }
         )
     }

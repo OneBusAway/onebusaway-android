@@ -57,8 +57,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
   private static final int ALERT_STATE_ENDING_PATH_LINK = 1;
 
   public static final int NOTIFICATION_ID = 33620;
-  private static final long[] VIBRATION_PATTERN =
-      new long[] {2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
   public static final int DISTANCE_THRESHOLD = 200;
 
   // Number of times to repeat voice commands
@@ -709,14 +707,11 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
       }
 
-      mBuilder.setContentText(message);
-      mBuilder.setVibrate(VIBRATION_PATTERN);
-      mBuilder.setDeleteIntent(pDelIntent);
-
       NotificationManager mNotificationManager =
           (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
-      mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
+      mNotificationManager.notify(
+          NOTIFICATION_ID + 1, buildArrivalAlert(message, pIntent, pDelIntent));
 
     } else if (eventType == EVENT_TYPE_PULL_CORD) { // Pull the cord
       mFinished = true;
@@ -733,15 +728,12 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
           silence(500, TextToSpeech.QUEUE_ADD);
         }
       }
-      mBuilder.setContentText(message);
-      mBuilder.setVibrate(VIBRATION_PATTERN);
-      mBuilder.setDeleteIntent(pDelIntent);
-
       NotificationManager mNotificationManager =
           (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
       mNotificationManager.cancel(NOTIFICATION_ID + 1);
-      mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
+      mNotificationManager.notify(
+          NOTIFICATION_ID + 2, buildArrivalAlert(message, pIntent, pDelIntent));
 
       mBuilder =
           new NotificationCompat.Builder(mContext, NotificationChannels.DESTINATION_ALERT_ID)
@@ -757,6 +749,37 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
     }
     // If we reach this point then the event_type isn't initial startup
     return null;
+  }
+
+  /**
+   * Builds one of the two one-shot destination arrival alerts ("get ready" / "pull the cord").
+   *
+   * <p>Posted on the high-importance {@link NotificationChannels#DESTINATION_ARRIVAL_ID} channel
+   * rather than the shared DESTINATION_ALERT_ID one: on API 26+ the channel owns vibration and
+   * prominence, so an alert on the deliberately-quiet progress channel never buzzed (#985), and
+   * raising that channel instead would make the continuously re-posted distance notification buzz
+   * on every location update.
+   *
+   * <p>{@code setPriority} and {@code setVibrate} are the pre-26 equivalents of the channel's
+   * importance and vibration pattern — ignored on 26+, still required on the API 23-25 floor — so
+   * the alert is equally prominent across the supported range.
+   *
+   * @param message text shown in the notification body (also the spoken message)
+   * @param contentIntent fired when the rider taps the alert
+   * @param deleteIntent fired when the alert is dismissed, to stop the repeated voice commands
+   */
+  private Notification buildArrivalAlert(
+      String message, PendingIntent contentIntent, PendingIntent deleteIntent) {
+    return new NotificationCompat.Builder(mContext, NotificationChannels.DESTINATION_ARRIVAL_ID)
+        .setSmallIcon(R.drawable.ic_content_flag)
+        .setContentTitle(mContext.getResources().getString(R.string.destination_reminder_title))
+        .setContentIntent(contentIntent)
+        .setContentText(message)
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
+        .setDefaults(NotificationCompat.DEFAULT_SOUND)
+        .setVibrate(NotificationChannels.DESTINATION_VIBRATION_PATTERN)
+        .setDeleteIntent(deleteIntent)
+        .build();
   }
 
   /**

@@ -98,7 +98,36 @@ data class TripLeg(
     val intermediateStops: List<TripPlace>? = null,
     val stop: List<TripPlace>? = null,
     val steps: List<TripStep> = emptyList(),
-    val legGeometry: TripLegGeometry? = null
+    val legGeometry: TripLegGeometry? = null,
+    // Other departures OTP found between this leg's own board and alight stops, on any route
+    // (#2010) — the raw candidate set, straight off the wire. Includes later trips of this leg's own
+    // route. Which of them the drawer may present as interchangeable is decided by
+    // [interchangeableRoutes], not here. Always empty on the OTP1 path, which has no equivalent.
+    val alternatives: List<TripLegAlternative> = emptyList()
+)
+
+/**
+ * One departure from OTP's alternative-leg search for a [TripLeg] (OTP2 `Leg.nextLegs`, #2010): a
+ * single trip that runs between the same two stops as the leg it hangs off.
+ *
+ * [duration] is that trip's board→alight ride time — the field the interchangeability rule compares
+ * against the planned leg's, so a local can't be offered in place of an express. [fromStopId] and
+ * [toStopId] are OTP's GTFS stop ids for this trip's own boarding and alighting stops; the query asks
+ * OTP for exact-stop alternatives, and [interchangeableRoutes] re-checks them against the leg rather
+ * than trusting that, so a candidate can never send the rider to a different platform than the one
+ * the drawer names.
+ */
+@Serializable
+data class TripLegAlternative(
+    val routeId: String? = null,
+    val routeShortName: String? = null,
+    val routeColor: String? = null,
+    val agencyId: String? = null,
+    val agencyName: String? = null,
+    val headsign: String? = null,
+    @Serializable(with = DurationSerializer::class) val duration: Duration = Duration.ZERO,
+    val fromStopId: String? = null,
+    val toStopId: String? = null
 )
 
 @Serializable

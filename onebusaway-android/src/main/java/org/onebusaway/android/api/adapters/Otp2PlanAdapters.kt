@@ -24,6 +24,7 @@ import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripLegAlternative
 import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
@@ -57,12 +58,12 @@ private fun PlanQuery.Node.toTripItinerary(): TripItinerary = TripItinerary(
 private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     mode = mode?.rawValue.toEnum<TripMode>(),
     route = null, // No OTP2 equivalent of OTP1's flat display-string `route` field.
-    routeId = route?.gtfsId,
-    routeShortName = route?.shortName,
-    routeLongName = route?.longName,
-    routeColor = route?.color,
-    agencyId = route?.agency?.gtfsId,
-    agencyName = route?.agency?.name,
+    routeId = route?.routeFields?.gtfsId,
+    routeShortName = route?.routeFields?.shortName,
+    routeLongName = route?.routeFields?.longName,
+    routeColor = route?.routeFields?.color,
+    agencyId = route?.routeFields?.agency?.gtfsId,
+    agencyName = route?.routeFields?.agency?.name,
     headsign = trip?.tripHeadsign,
     tripId = trip?.gtfsId,
     realTime = realTime ?: false,
@@ -83,7 +84,25 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     intermediateStops = null,
     stop = null,
     steps = steps.orEmpty().filterNotNull().map { it.toTripStep() },
-    legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) }
+    legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) },
+    // OTP's own alternative-leg search for this leg (#2010) — null on a non-transit leg, and carried
+    // over unjudged: interchangeability is decided by `interchangeableRoutes()`, which needs the whole
+    // itinerary (the next leg's departure) and so can't be answered leg-at-a-time here.
+    alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() }
+)
+
+private fun PlanQuery.NextLeg.toTripLegAlternative(): TripLegAlternative = TripLegAlternative(
+    routeId = route?.alternativeRouteFields?.gtfsId,
+    routeShortName = route?.alternativeRouteFields?.shortName,
+    routeColor = route?.alternativeRouteFields?.color,
+    agencyId = route?.alternativeRouteFields?.agency?.gtfsId,
+    agencyName = route?.alternativeRouteFields?.agency?.name,
+    headsign = trip?.tripHeadsign,
+    // The alternative trip's own board→alight ride time, the quantity the interchangeability rule
+    // compares against the planned leg's.
+    duration = (duration ?: 0.0).seconds,
+    fromStopId = from.stop?.gtfsId,
+    toStopId = to.stop?.gtfsId
 )
 
 // PlaceFields backs both Leg.from and Leg.to (see the Plan.graphql fragment) — one mapping instead

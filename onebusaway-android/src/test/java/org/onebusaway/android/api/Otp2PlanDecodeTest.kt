@@ -25,7 +25,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.toTripItineraries
 import org.onebusaway.android.api.graphql.PlanQuery
+import org.onebusaway.android.api.graphql.fragment.AlternativeRouteFields
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
+import org.onebusaway.android.api.graphql.fragment.RouteFields
 import org.onebusaway.android.api.graphql.type.AbsoluteDirection
 import org.onebusaway.android.api.graphql.type.Mode
 import org.onebusaway.android.api.graphql.type.RelativeDirection
@@ -77,7 +79,9 @@ class Otp2PlanDecodeTest {
                     lat = 47.6,
                     lon = -122.3
                 )
-            )
+            ),
+            // A non-transit leg has no alternatives — OTP returns null rather than erroring.
+            nextLegs = null
         )
         val busLeg = PlanQuery.Leg(
             mode = Mode.BUS,
@@ -99,16 +103,28 @@ class Otp2PlanDecodeTest {
                 )
             ),
             to = to(place(name = "Stop B", lat = 47.62, lon = -122.32)),
-            route = PlanQuery.Route(
-                gtfsId = "1_5",
-                shortName = "5",
-                longName = "Fifth Ave",
-                color = "0000FF",
-                agency = PlanQuery.Agency(gtfsId = "1_1", name = "Metro", timezone = "America/Los_Angeles")
-            ),
+            route = PlanQuery.Route(__typename = "Route", routeFields = routeFields()),
             trip = PlanQuery.Trip(gtfsId = "1_trip_5", tripHeadsign = "Downtown"),
             legGeometry = null,
-            steps = null
+            steps = null,
+            // One alternative departure on another route between the same two stops (#2010).
+            nextLegs = listOf(
+                PlanQuery.NextLeg(
+                    duration = 540.0,
+                    route = PlanQuery.Route1(
+                        __typename = "Route",
+                        alternativeRouteFields = AlternativeRouteFields(
+                            gtfsId = "1_7",
+                            shortName = "7",
+                            color = "FF0000",
+                            agency = AlternativeRouteFields.Agency(gtfsId = "1_1", name = "Metro")
+                        )
+                    ),
+                    trip = PlanQuery.Trip1(tripHeadsign = "Downtown via 7th"),
+                    from = PlanQuery.From1(stop = PlanQuery.Stop(gtfsId = "1_1001")),
+                    to = PlanQuery.To1(stop = PlanQuery.Stop1(gtfsId = "1_1002"))
+                )
+            )
         )
         val node = PlanQuery.Node(
             start = "2026-07-11T10:00:00-07:00",
@@ -168,6 +184,22 @@ class Otp2PlanDecodeTest {
         assertEquals(30.seconds, bus.departureDelay)
         assertEquals(TripVertexType.BIKESHARE, bus.from.vertexType)
         assertEquals("bs_9", bus.from.bikeShareId)
+
+        // The leg's alternative departures (`nextLegs`) come across unjudged — route identity, the
+        // ride time the interchangeability rule compares, and both stop ids to check it against.
+        assertEquals(1, bus.alternatives.size)
+        val alternative = bus.alternatives[0]
+        assertEquals("1_7", alternative.routeId)
+        assertEquals("7", alternative.routeShortName)
+        assertEquals("FF0000", alternative.routeColor)
+        assertEquals("1_1", alternative.agencyId)
+        assertEquals("Metro", alternative.agencyName)
+        assertEquals("Downtown via 7th", alternative.headsign)
+        assertEquals(540.seconds, alternative.duration)
+        assertEquals("1_1001", alternative.fromStopId)
+        assertEquals("1_1002", alternative.toStopId)
+        // A walk leg's `nextLegs` is null on the wire, not an error — it maps to no alternatives.
+        assertTrue(walk.alternatives.isEmpty())
     }
 
     /** An unrecognized wire `Mode` (Apollo's `UNKNOWN__` sentinel) must degrade to null, not throw. */
@@ -205,7 +237,8 @@ class Otp2PlanDecodeTest {
             route = null,
             trip = null,
             legGeometry = null,
-            steps = null
+            steps = null,
+            nextLegs = null
         )
         val node = PlanQuery.Node(
             start = itineraryStart,
@@ -235,6 +268,21 @@ class Otp2PlanDecodeTest {
         vehicleParking: PlaceFields.VehicleParking? = null,
         vehicleRentalStation: PlaceFields.VehicleRentalStation? = null
     ): PlaceFields = PlaceFields(name, lat, lon, stop, rentalVehicle, vehicleParking, vehicleRentalStation)
+
+    /** Builds a [RouteFields] fixture (the fragment shared by the planned leg's route and each
+     *  alternative leg's — see Plan.graphql). */
+    private fun routeFields(
+        gtfsId: String = "1_5",
+        shortName: String? = "5",
+        longName: String? = "Fifth Ave",
+        color: String? = "0000FF"
+    ): RouteFields = RouteFields(
+        gtfsId = gtfsId,
+        shortName = shortName,
+        longName = longName,
+        color = color,
+        agency = RouteFields.Agency(gtfsId = "1_1", name = "Metro", timezone = "America/Los_Angeles")
+    )
 
     private fun from(fields: PlaceFields) = PlanQuery.From(__typename = "Place", placeFields = fields)
 

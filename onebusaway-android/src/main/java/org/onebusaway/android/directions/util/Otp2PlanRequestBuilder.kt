@@ -57,6 +57,21 @@ object Otp2PlanRequestBuilder {
      */
     private const val NUM_ITINERARIES = 5
 
+    /**
+     * How many upcoming departures OTP's alternative-leg search returns per transit leg
+     * (`Leg.nextLegs(numberOfLegs:)`, #2010). A response page size, not a tuning threshold on the
+     * data: OTP walks the same patterns and timetables either way and applies this as the final
+     * `.limit(…)` (see `AlternativeLegs.getAlternativeLegs`), so raising it costs response bytes
+     * rather than server work.
+     *
+     * It is still a **cap on what the rider is told**, and worth naming as such: the page is shared by
+     * every route serving the leg, so on a frequent corridor an infrequent-but-equivalent route can
+     * fall past it and simply not be offered. The failure is silent and one-directional — the badge
+     * under-reports, never over-reports — and which routes make the page varies with how often the
+     * planned one runs.
+     */
+    private const val ALTERNATIVE_LEGS = 12
+
     private val DATE_TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
 
     /**
@@ -100,7 +115,8 @@ object Otp2PlanRequestBuilder {
                 buildPreferences(builder.getWheelchairAccessible(), builder.getOptimizeTransfers())
             ),
             modes = buildModes(builder.getModeSetId(), BikeshareAvailability.isEnabled(context)),
-            numItineraries = NUM_ITINERARIES
+            numItineraries = NUM_ITINERARIES,
+            alternativeLegs = ALTERNATIVE_LEGS
         )
     }
 

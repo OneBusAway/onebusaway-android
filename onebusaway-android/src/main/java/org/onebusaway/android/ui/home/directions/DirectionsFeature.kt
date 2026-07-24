@@ -96,6 +96,7 @@ import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
 import org.onebusaway.android.ui.compose.components.DragHandleBar
+import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
@@ -347,6 +348,13 @@ private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) 
  * a pill to focus its vehicle, long-press for the trip menu — wired through [rememberArrivalRowCallbacks]).
  * Spins up a per-stop arrivals session keyed to [stop] — so it polls only while shown — and picks the
  * route group matching the leg (by route id, then headsign). Ids on [routeLeg]/[stop] are OBA-format.
+ *
+ * A leg with interchangeable routes ([RouteLegRef.alternatives], #2010) gets one further strip per such
+ * route below the planned one, each behind its own route badge so the pills can't be mistaken for the
+ * planned route's — that badge is the only thing distinguishing them, since a pill shows an ETA and no
+ * route. All of them read the one arrivals poll this stop already runs, so the extra routes cost no
+ * extra request. An alternative with no OBA id, or with nothing upcoming at this stop, is simply left
+ * out — its name still appears on the card's "or …" line.
  */
 @Composable
 fun DirectionStopEtaStrip(
@@ -383,23 +391,49 @@ fun DirectionStopEtaStrip(
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
 
     val content = state as? ArrivalsUiState.Content ?: return // nothing until the first load lands
-    val group = content.routeGroups.pickForLeg(routeLeg)
-    if (group == null) {
+    val plannedGroup = content.routeGroups.pickRoute(routeLeg.routeId, routeLeg.headsign)
+    val alternativeGroups = routeLeg.alternatives.mapNotNull { alternative ->
+        content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
+            ?.let { alternative to it }
+    }
+    if (plannedGroup == null && alternativeGroups.isEmpty()) {
         NoEtasText(rowPadding)
         return
     }
-    EtaStrip(
-        trips = group.trips,
-        actionsFor = { content.actions[it.tripId] },
-        callbacks = callbacks,
-        modifier = modifier.then(rowPadding)
-    )
+    Column(modifier) {
+        if (plannedGroup == null) {
+            NoEtasText(rowPadding)
+        } else {
+            EtaStrip(
+                trips = plannedGroup.trips,
+                actionsFor = { content.actions[it.tripId] },
+                callbacks = callbacks,
+                modifier = rowPadding
+            )
+        }
+        alternativeGroups.forEach { (alternative, group) ->
+            Row(
+                modifier = rowPadding,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RouteBadgeChip(alternative.shortName, alternative.routeColor)
+                Spacer(Modifier.width(8.dp))
+                EtaStrip(
+                    trips = group.trips,
+                    actionsFor = { content.actions[it.tripId] },
+                    callbacks = callbacks,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
 }
 
-/** The leg's route group at this stop: matched by OBA route id, preferring the leg's headsign. */
-private fun List<RouteRowGroup>.pickForLeg(routeLeg: RouteLegRef): RouteRowGroup? {
-    val forRoute = filter { it.routeId == routeLeg.routeId }
-    val headsign = routeLeg.headsign
+/** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
+ *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop. */
+private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? {
+    if (routeId == null) return null
+    val forRoute = filter { it.routeId == routeId }
     return forRoute.firstOrNull { headsign != null && it.headsign.equals(headsign, ignoreCase = true) }
         ?: forRoute.firstOrNull()
 }

@@ -122,7 +122,8 @@ class Otp2PlanResolveTest {
             route = null,
             trip = null,
             legGeometry = null,
-            steps = null
+            steps = null,
+            nextLegs = null
         )
         val node = PlanQuery.Node(
             start = "2026-07-11T10:00:00-07:00",

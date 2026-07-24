@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -39,8 +40,9 @@ data class ItineraryOption(
 
 /** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */
 sealed interface ModeSummary {
-    /** A transit trip: its legs' route roundels, in order. */
-    data class Routes(val badges: List<RouteBadge>) : ModeSummary
+    /** A transit trip: one roundel per leg, in order (a leg's roundel names every route that leg can
+     *  be ridden on — see [LegBadge]). */
+    data class Routes(val badges: List<LegBadge>) : ModeSummary
 
     /** A walk-only trip — shown as a walk glyph. */
     data object Walk : ModeSummary
@@ -49,8 +51,19 @@ sealed interface ModeSummary {
     data class Label(val text: String) : ModeSummary
 }
 
-/** A transit leg's route roundel data: its short name and (nullable) GTFS color as an ARGB int. */
-data class RouteBadge(val shortName: String, val routeColor: Int?)
+/**
+ * One transit leg's roundel: every route the leg can be ridden on — the planned route plus any
+ * interchangeable ones (#2010) — as a single joined chip, each route in its own color ("1 Line/2 Line"
+ * for the Lynnwood–downtown pair). An ordinary leg holds exactly one route and draws as the plain
+ * one-color chip it always did.
+ *
+ * [routes] is in natural route-name order rather than plan order, so a corridor reads the same way
+ * whichever of its lines the planner happened to pick.
+ */
+data class LegBadge(val routes: List<RouteBadge>) {
+    /** Whether this leg has more than one route to ride, i.e. the chip is a joined/multicolor one. */
+    val isInterchangeable: Boolean get() = routes.size > 1
+}
 
 /**
  * One entry in the trip **log** — the directions rendered as a single transit timeline the user reads
@@ -182,6 +195,11 @@ sealed interface RealtimeState {
  * **OBA-format** — resolved from OTP's GTFS ids at build time (see [org.onebusaway.android.directions
  * .OtpObaIdResolver]); [routeId]/[RouteStopRef.stopId] are null when they couldn't be resolved (an
  * unknown agency, or the OTP1 path). [headsign] disambiguates which direction group's ETAs to show.
+ *
+ * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop shows each
+ * one's live ETA strip under the planned route's, so the rider can see which of them comes first.
+ * [badge] is the leg's finished roundel (planned route joined by those alternatives), built once by
+ * the repository rather than re-derived per row while composing.
  */
 data class RouteLegRef(
     val routeId: String?,
@@ -199,7 +217,9 @@ data class RouteLegRef(
     // stay-aboard interline (#2000): each names the route continued onto and the seam stop boarded
     // there. The map focus draws each segment's shape + stops and the shared vehicle across them.
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
-    val extraSegments: List<RiddenSegment> = emptyList()
+    val extraSegments: List<RiddenSegment> = emptyList(),
+    val alternatives: List<AlternativeRouteRef> = emptyList(),
+    val badge: LegBadge = LegBadge(emptyList())
 )
 
 /**
@@ -213,6 +233,20 @@ data class InterlineTransition(
     val routeShortName: String?,
     val headsign: String?,
     val stop: RouteStopRef
+)
+
+/**
+ * An interchangeable route on a transit leg: its display name and color for the badge beside its ETA
+ * strip, plus the same OBA-id/headsign pair [RouteLegRef] carries for the planned route, used to pick
+ * that route's direction group out of the board stop's arrivals. [routeId] is null when the OTP route
+ * couldn't be resolved onto an OBA id — the route still names itself on the leg's badge, but has no
+ * ETA strip to show.
+ */
+data class AlternativeRouteRef(
+    val routeId: String?,
+    val headsign: String?,
+    val shortName: String,
+    val routeColor: Int?
 )
 
 /** A transit stop reached on a leg — its OBA id (for arrivals), display name, code, and location. */

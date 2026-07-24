@@ -15,9 +15,11 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.model.routeDisplayShortName
-import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * Pure interline analysis over a trip's legs (#2000) — no `Context` / OBA-id resolution, so it's
@@ -76,24 +78,38 @@ internal object Interlines {
     }
 
     /**
-     * One [RouteBadge] per distinct vehicle-and-route the transit legs use, in order: a self-interline
-     * folds to a single badge, a cross-route interline keeps both routes' badges.
+     * One [LegBadge] per distinct vehicle-and-route the transit legs use, in order: a self-interline
+     * folds to a single badge, a cross-route interline keeps both routes' badges. Each badge names
+     * every route that ride can be taken on — its own, joined by whatever [substitutable] (index-
+     * aligned to [legs]) says is interchangeable with it (#2010).
      */
-    fun routeBadges(legs: List<TripLeg>): List<RouteBadge> {
-        val badges = ArrayList<RouteBadge>()
+    fun routeBadges(legs: List<TripLeg>, substitutable: List<List<InterchangeableRoute>>): List<LegBadge> {
+        val badges = ArrayList<LegBadge>()
         legs.forEachIndexed { i, leg ->
             if (leg.mode?.isTransit != true) return@forEachIndexed
             val selfInterline = leg.interlineWithPreviousLeg && i > 0 && leg.routeId == legs[i - 1].routeId
             if (selfInterline) return@forEachIndexed
-            badges += RouteBadge(
-                shortName = badgeShortName(leg),
-                // routeColor is a bare wire hex; tolerate a leading '#' just in case.
-                routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#"))
-            )
+            badges += legBadge(leg, substitutable[i])
         }
         return badges
     }
 
     /** The route's display short name, or empty — see [routeDisplayShortName]. */
     fun badgeShortName(leg: TripLeg): String = leg.routeDisplayShortName().orEmpty()
+}
+
+/**
+ * The interchangeable routes ([interchangeableRoutes]) the rider may actually be offered, index-aligned
+ * to the itinerary's legs — that set, emptied for any leg belonging to a stay-aboard interline chain of
+ * more than one leg (#2000 × #2010).
+ *
+ * The interchangeability rule reasons about one leg: another route between *this* leg's board and
+ * alight stops, arriving in time for what the plan does next. On an interlined ride the plan's next act
+ * is to stay seated past that alight stop, so a different vehicle over the same two stops is not a
+ * substitute at all — it would put the rider off at the seam with no instruction. Rather than teach the
+ * rule about chains, drop the offer for those legs: the ride is still shown, just without alternatives.
+ */
+internal fun TripItinerary.substitutableRoutes(): List<List<InterchangeableRoute>> {
+    val ridesAlone = Interlines.chains(legs).filter { it.leaderIndex == it.alightIndex }.map { it.leaderIndex }.toSet()
+    return interchangeableRoutes().mapIndexed { index, routes -> if (index in ridesAlone) routes else emptyList() }
 }

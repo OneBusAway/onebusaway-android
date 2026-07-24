@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -26,12 +26,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.feedback.FeedbackScreen
 import org.onebusaway.android.ui.feedback.FeedbackSubmitter
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.customerservice.CustomerServiceDestination
+import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueDestination
 
 /**
  * The report / feedback navigation cluster: the report chooser ([NavRoutes.REPORT]) and its customer

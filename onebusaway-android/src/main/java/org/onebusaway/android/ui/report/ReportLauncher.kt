@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report
 
 import android.content.Context
 import android.content.Intent
@@ -40,8 +40,6 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.region.Region
-import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity

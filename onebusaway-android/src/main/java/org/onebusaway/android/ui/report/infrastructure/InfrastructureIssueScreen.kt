@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report.infrastructure
 
 import android.content.Context
 import android.net.Uri
@@ -85,19 +85,12 @@ import org.onebusaway.android.map.StopsMapViewModel
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.report.infrastructure.DefaultGeocodeAddressRepository
-import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
-import org.onebusaway.android.ui.report.infrastructure.DefaultServiceListRepository
-import org.onebusaway.android.ui.report.infrastructure.InfrastructureControls
-import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueEvent
-import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueViewModel
-import org.onebusaway.android.ui.report.infrastructure.ReportTarget
+import org.onebusaway.android.ui.report.ReportContext
+import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.ui.report.open311.DefaultOpen311Repository
 import org.onebusaway.android.ui.report.open311.Open311IssueContext
 import org.onebusaway.android.ui.report.open311.Open311ProblemViewModel

@@ -21,10 +21,10 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.report.ui.InfrastructureIssueLauncher
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
+import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueLauncher
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.util.ExternalIntents

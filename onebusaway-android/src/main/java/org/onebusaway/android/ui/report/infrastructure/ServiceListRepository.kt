@@ -24,8 +24,8 @@ import edu.usf.cutr.open311client.models.ServiceListRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.report.constants.ReportConstants
-import org.onebusaway.android.report.ui.util.ServiceUtils
+import org.onebusaway.android.ui.report.ReportConstants
+import org.onebusaway.android.ui.report.ServiceUtils
 
 /** Loads the Open311 issue categories available at a location. */
 interface ServiceListRepository {

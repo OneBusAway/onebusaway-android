@@ -93,7 +93,7 @@ object NavRoutes {
     // --- Report / problem-reporting flow (former ReportActivity /
     // CustomerServiceActivity / InfrastructureIssueActivity). The whole flow's stop/location/trip
     // context rides one nav-arg ([ARG_REPORT_CONTEXT] = an encoded
-    // [org.onebusaway.android.report.ReportContext]), so each destination reads its own back-stack args
+    // [org.onebusaway.android.ui.report.ReportContext]), so each destination reads its own back-stack args
     // (process-death safe) instead of the host activity intent. ---
 
     /** The encoded report context (stop/location/trip), carried by every report destination. */

@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report.infrastructure
 
 import android.app.Activity
-import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.ReportContext
+import org.onebusaway.android.ui.report.TripReportContext
 
 /**
  * Launcher facade for the infrastructure-issue (stop/trip problem) screen (former

@@ -57,8 +57,6 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
   private static final int ALERT_STATE_ENDING_PATH_LINK = 1;
 
   public static final int NOTIFICATION_ID = 33620;
-  private static final long[] VIBRATION_PATTERN =
-      new long[] {2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000};
   public static final int DISTANCE_THRESHOLD = 200;
 
   // Number of times to repeat voice commands
@@ -709,14 +707,22 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
         }
       }
 
-      mBuilder.setContentText(message);
-      mBuilder.setVibrate(VIBRATION_PATTERN);
-      mBuilder.setDeleteIntent(pDelIntent);
+      // Fire the "get ready" alert on the high-importance arrival channel so it vibrates (#985);
+      // the shared progress notification stays on the quiet DESTINATION_ALERT_ID channel.
+      NotificationCompat.Builder alertBuilder =
+          new NotificationCompat.Builder(mContext, NotificationChannels.DESTINATION_ARRIVAL_ID)
+              .setSmallIcon(R.drawable.ic_content_flag)
+              .setContentTitle(
+                  mContext.getResources().getString(R.string.destination_reminder_title))
+              .setContentIntent(pIntent)
+              .setContentText(message)
+              .setVibrate(NotificationChannels.DESTINATION_VIBRATION_PATTERN)
+              .setDeleteIntent(pDelIntent);
 
       NotificationManager mNotificationManager =
           (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
-      mNotificationManager.notify(NOTIFICATION_ID + 1, mBuilder.build());
+      mNotificationManager.notify(NOTIFICATION_ID + 1, alertBuilder.build());
 
     } else if (eventType == EVENT_TYPE_PULL_CORD) { // Pull the cord
       mFinished = true;
@@ -733,15 +739,23 @@ public class NavigationServiceProvider implements TextToSpeech.OnInitListener {
           silence(500, TextToSpeech.QUEUE_ADD);
         }
       }
-      mBuilder.setContentText(message);
-      mBuilder.setVibrate(VIBRATION_PATTERN);
-      mBuilder.setDeleteIntent(pDelIntent);
+      // Fire the "pull the cord" arrival alert on the high-importance arrival channel so it
+      // vibrates (#985); the shared progress notification stays on the quiet channel.
+      NotificationCompat.Builder alertBuilder =
+          new NotificationCompat.Builder(mContext, NotificationChannels.DESTINATION_ARRIVAL_ID)
+              .setSmallIcon(R.drawable.ic_content_flag)
+              .setContentTitle(
+                  mContext.getResources().getString(R.string.destination_reminder_title))
+              .setContentIntent(pIntent)
+              .setContentText(message)
+              .setVibrate(NotificationChannels.DESTINATION_VIBRATION_PATTERN)
+              .setDeleteIntent(pDelIntent);
 
       NotificationManager mNotificationManager =
           (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
       mNotificationManager.cancel(NOTIFICATION_ID + 1);
-      mNotificationManager.notify(NOTIFICATION_ID + 2, mBuilder.build());
+      mNotificationManager.notify(NOTIFICATION_ID + 2, alertBuilder.build());
 
       mBuilder =
           new NotificationCompat.Builder(mContext, NotificationChannels.DESTINATION_ALERT_ID)

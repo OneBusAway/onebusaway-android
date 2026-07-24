@@ -93,6 +93,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
@@ -197,8 +198,11 @@ private fun OptionCard(
             // The modes: transit route badges (no comma between), a walk glyph for a walk-only trip, or
             // a mode label for other non-transit trips.
             when (val mode = option.mode) {
-                is ModeSummary.Routes -> Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    mode.badges.forEach { RouteBadgeChip(it.shortName, it.routeColor) }
+                // One roundel per leg. The gap between legs is deliberately wide, so "two legs" and
+                // "one leg, two interchangeable routes" (which is one seamless chip) can't read as the
+                // same thing (#2010).
+                is ModeSummary.Routes -> Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    mode.badges.forEach { RouteBadgeChip(it.routes) }
                 }
                 ModeSummary.Walk -> Icon(
                     painterResource(R.drawable.ic_directions_walk),
@@ -956,8 +960,15 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClickLabel = expandLabel(model), onClick = onToggle)
     ) {
+        // A ride the rider may take on more than one route (#2010) badges them all as one joined
+        // roundel; an ordinary ride badges its own route exactly as before.
+        val badge = entry.routeLeg.badge
         Row(verticalAlignment = Alignment.CenterVertically) {
-            RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
+            if (badge.isInterchangeable) {
+                RouteBadgeChip(badge.routes, scale = 1.5f)
+            } else {
+                RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
+            }
             if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
                 Spacer(Modifier.width(8.dp))
                 Text(
@@ -975,6 +986,15 @@ private fun ColumnScope.BoardContent(
         entry.headsign?.let {
             Text(
                 text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        // What the joined badge means: any of those routes will do, so board the first to arrive. Each
+        // one's own ETA strip sits under the board stop below (#2010).
+        if (badge.isInterchangeable) {
+            Text(
+                text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1153,14 +1173,27 @@ private fun TripResultsPreview() {
         val state = TripResultsUiState.Success(
             options = listOf(
                 ItineraryOption(
-                    mode = ModeSummary.Routes(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
+                    // A bus leg, then an interchangeable rail pair drawn as one joined badge (#2010).
+                    mode = ModeSummary.Routes(
+                        listOf(
+                            LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
+                            LegBadge(
+                                listOf(
+                                    RouteBadge("1 Line", 0xFF00A651.toInt()),
+                                    RouteBadge("2 Line", 0xFF0075C4.toInt())
+                                )
+                            )
+                        )
+                    ),
                     durationMinutes = 32,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(32 * 60_000L),
                     walkDistanceMeters = 800.0
                 ),
                 ItineraryOption(
-                    mode = ModeSummary.Routes(listOf(RouteBadge("48", null), RouteBadge("11", null))),
+                    mode = ModeSummary.Routes(
+                        listOf(LegBadge(listOf(RouteBadge("48", null))), LegBadge(listOf(RouteBadge("11", null))))
+                    ),
                     durationMinutes = 41,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(41 * 60_000L),

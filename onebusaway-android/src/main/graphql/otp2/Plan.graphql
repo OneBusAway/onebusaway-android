@@ -16,6 +16,25 @@ fragment PlaceFields on Place {
     vehicleRentalStation { stationId name }
 }
 
+# RouteFields is the planned leg's route. AlternativeRouteFields is the deliberately smaller set an
+# alternative leg needs (below): a plan asks for alternatives on every transit leg of every itinerary,
+# so each field there is paid for many times over — it carries only what names the route on a badge
+# and what resolves it onto an OBA id, with no long name or agency timezone.
+fragment RouteFields on Route {
+    gtfsId
+    shortName
+    longName
+    color
+    agency { gtfsId name timezone }
+}
+
+fragment AlternativeRouteFields on Route {
+    gtfsId
+    shortName
+    color
+    agency { gtfsId name }
+}
+
 query Plan(
     $origin: PlanLabeledLocationInput!
     $destination: PlanLabeledLocationInput!
@@ -23,6 +42,7 @@ query Plan(
     $modes: PlanModesInput
     $preferences: PlanPreferencesInput
     $numItineraries: Int!
+    $alternativeLegs: Int!
 ) {
     planConnection(
         origin: $origin
@@ -65,15 +85,33 @@ query Plan(
                         ...PlaceFields
                     }
                     route {
-                        gtfsId
-                        shortName
-                        longName
-                        color
-                        agency { gtfsId name timezone }
+                        ...RouteFields
                     }
                     trip {
                         gtfsId
                         tripHeadsign
+                    }
+                    # Interleaved/interchangeable routes (#2010): OTP's own alternative-leg search,
+                    # which returns the next departures that serve this leg's *exact* board and alight
+                    # stops on ANY route (the GTFS GraphQL API runs it with
+                    # AlternativeLegsFilter.NO_FILTER — verified in OTP's LegImpl.alternativeLegs), so
+                    # a corridor's other lines come back alongside later trips of this leg's own route.
+                    # The parent-station arguments are deliberately omitted: their default keeps the
+                    # search on the exact stops, so an alternative is boardable at the very stop the
+                    # drawer tells the rider to wait at — never a sibling platform across the station.
+                    # Null for a non-transit leg (OTP returns no alternatives rather than an error).
+                    # Which of these are actually interchangeable is decided by InterchangeableRoutes.kt,
+                    # not here; this is the raw candidate set.
+                    nextLegs(numberOfLegs: $alternativeLegs) {
+                        duration
+                        route {
+                            ...AlternativeRouteFields
+                        }
+                        trip {
+                            tripHeadsign
+                        }
+                        from { stop { gtfsId } }
+                        to { stop { gtfsId } }
                     }
                     legGeometry {
                         points

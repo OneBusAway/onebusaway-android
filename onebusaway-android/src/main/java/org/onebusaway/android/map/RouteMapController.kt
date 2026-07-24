@@ -21,6 +21,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -116,6 +118,13 @@ class RouteMapController(
     // focus draws each segment's shape + stops and shows the shared block vehicle across them. Empty for
     // every ordinary route launch. Set in start(); the maps/polls below are (re)built as the routes load.
     private var extraSegments: List<RiddenSegment> = emptyList()
+
+    // The distinct *other* routes an interline's [extraSegments] continue onto — the cross-route ids to
+    // load and poll alongside the leader. A self-interline segment reuses the leader's [routeId], so it's
+    // excluded here (its shape/stops/vehicles already come from the leader). Read by both the route load
+    // and the vehicle poll so the two can't silently diverge.
+    private val extraRouteIds: List<String>
+        get() = extraSegments.map { it.routeId }.distinct().filterNot { it == routeId }
 
     // Loaded route maps for the extra segments' *other* routes, keyed by routeId (a self-interline
     // segment reuses the leader's [routeShape], so only distinct cross-route ids land here). (Re)built by
@@ -328,10 +337,13 @@ class RouteMapController(
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
         // republish when it actually changes.
-        if (highlightedSegment != request.highlightedSegment) {
+        if (highlightedSegment != request.highlightedSegment || extraSegments != request.extraSegments) {
             highlightedSegment = request.highlightedSegment
-            // No reload here (reframe contract), so extra-interline routes aren't re-fetched — this
-            // reframe path is only hit for a same-route+direction re-tap, where the extras are unchanged.
+            // Move both segment fields together so a redraw can't key off a fresh highlightedSegment while
+            // extraSegments stays stale (or vice versa). No reload here (reframe contract), so extra-interline
+            // routes aren't re-fetched — in practice this path is only hit for a same-route+direction re-tap,
+            // where any changed extras continue onto already-loaded routes (a genuinely new cross-route id
+            // would need a full re-enter, per the reframe/re-enter split in MapViewModel.toRoute).
             extraSegments = request.extraSegments
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
@@ -778,15 +790,19 @@ class RouteMapController(
         val id = routeId ?: return
         routeJob?.cancel()
         routeJob = scope.launch {
-            // The repository narrows the stops (and the vehicle direction id) to directionStopId's
-            // direction when set; a whole-route launch passes null and gets the full route back.
-            val result = routeRepository.getRoute(id, directionStopId)
-            // Load each *other* route a stay-aboard interline continues onto (a self-interline segment
-            // reuses the leader's map, so it's excluded here), so their shapes/stops/vehicles can be drawn
-            // alongside (#2000). A failed extra load is dropped — the leg still frames its geometry.
-            val extras = extraSegments.map { it.routeId }.distinct().filter { it != id }
-                .mapNotNull { extraRouteId -> routeRepository.getRoute(extraRouteId).getOrNull()?.let { extraRouteId to it } }
-                .toMap()
+            // Fetch the leader and every *other* interline route (a self-interline segment reuses the
+            // leader's map, so [extraRouteIds] excludes it) concurrently, so an N-route interline is one
+            // round trip's wait rather than N+1 sequential ones (#2000). The repository narrows the leader's
+            // stops (and the vehicle direction id) to directionStopId's direction when set; a whole-route
+            // launch passes null and gets the full route back. A failed extra load is dropped — the leg
+            // still frames its geometry.
+            val (result, extras) = coroutineScope {
+                val leader = async { routeRepository.getRoute(id, directionStopId) }
+                val extraLoads = extraRouteIds.map { extraRouteId ->
+                    async { routeRepository.getRoute(extraRouteId).getOrNull()?.let { extraRouteId to it } }
+                }
+                leader.await() to extraLoads.awaitAll().filterNotNull().toMap()
+            }
             // Clear the spinner once the load resolves — before dispatching, so it's cleared on the
             // error path too (mirrors StopsMapController). A cancelled load never reaches here; the
             // view transition that cancelled it clears progress via leaveCurrentView().
@@ -996,7 +1012,7 @@ class RouteMapController(
         // A cross-route interline (#2000) polls each other route too, so the one shared block vehicle
         // shows through every phase; sampleVehicles merges these polls. (A self-interline segment shares
         // the leader's route, so it's excluded — the leader poll already covers it.)
-        extraVehicleJobs = extraSegments.map { it.routeId }.distinct().filter { it != id }.map { extraRouteId ->
+        extraVehicleJobs = extraRouteIds.map { extraRouteId ->
             scope.launch {
                 if (initialDelayMs > 0L) {
                     delay(initialDelayMs)

@@ -59,12 +59,12 @@ class FocusBannerViewModelTest {
             longName: String?,
             url: String?,
             favorite: Boolean
-        ) {}
+        ) = Unit
     }
 
     private object NoopImportGate : ImportGate {
-        override suspend fun awaitReady() {}
-        override fun start() {}
+        override suspend fun awaitReady() = Unit
+        override fun start() = Unit
     }
 
     /**
@@ -127,12 +127,12 @@ class FocusBannerViewModelTest {
  */
 private abstract class FakeStopDaoBase : StopDao {
     override suspend fun userInfo(stopId: String): StopUserInfoRow? = null
-    override suspend fun setFavorite(stopId: String, favorite: Int) {}
+    override suspend fun setFavorite(stopId: String, favorite: Int) = Unit
     override suspend fun userInfoMap(): List<StopUserInfoMapRow> = emptyList()
     override suspend fun location(stopId: String): StopLocationRow? = null
     override suspend fun nameForStop(stopId: String): String? = null
     override suspend fun getStop(stopId: String): StopRecord? = null
-    override suspend fun upsert(stop: StopRecord) {}
+    override suspend fun upsert(stop: StopRecord) = Unit
     override suspend fun markStopUsed(
         id: String,
         code: String,
@@ -142,13 +142,13 @@ private abstract class FakeStopDaoBase : StopDao {
         longitude: Double,
         regionId: Long?,
         now: Long
-    ) {}
+    ) = Unit
     override fun recents(cutoff: Long, regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
     override fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>> = flowOf(emptyList())
     override fun starredByName(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
     override fun starredByFrequency(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
     override fun favoriteStopIds(): Flow<List<String>> = flowOf(emptyList())
-    override suspend fun markUnused(stopId: String) {}
-    override suspend fun markAllUnused() {}
-    override suspend fun clearAllFavorites() {}
+    override suspend fun markUnused(stopId: String) = Unit
+    override suspend fun markAllUnused() = Unit
+    override suspend fun clearAllFavorites() = Unit
 }

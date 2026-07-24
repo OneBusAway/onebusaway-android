@@ -19,6 +19,7 @@ import java.io.IOException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,6 +28,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.location.SearchCenter
@@ -35,6 +38,9 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.util.TimeProvider
+
+/** What OTP calls a trip's origin when it was asked to route from a bare coordinate. */
+private const val OTP_PLACEHOLDER_ORIGIN = "Origin"
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripPlanViewModelTest {
@@ -46,12 +52,38 @@ class TripPlanViewModelTest {
     private val origin = TripEndpoint.Geocoded("Origin", lat = 47.6, lon = -122.3)
     private val destination = TripEndpoint.Geocoded("Destination", lat = 47.7, lon = -122.2)
 
-    private class FakeGeocodeRepository(var result: Result<List<TripEndpoint.Geocoded>>) : GeocodeRepository {
+    /** A two-leg itinerary named the way OTP names one planned between bare coordinates. */
+    private val plannedTrip = listOf(
+        TripItinerary(
+            legs = listOf(
+                TripLeg(from = TripPlace(name = OTP_PLACEHOLDER_ORIGIN), to = TripPlace(name = "Pine St & 3rd Ave")),
+                TripLeg(from = TripPlace(name = "Pine St & 3rd Ave"), to = TripPlace(name = "Destination"))
+            )
+        )
+    )
+
+    private class FakeGeocodeRepository(
+        var result: Result<List<TripEndpoint.Geocoded>>,
+        var reverseResult: Result<String?> = Result.success(null)
+    ) : GeocodeRepository {
         var lastQuery: String? = null
+        val reverseCalls = mutableListOf<Pair<Double, Double>>()
+
         override suspend fun suggest(query: String): Result<List<TripEndpoint.Geocoded>> {
             lastQuery = query
             return result
         }
+
+        override suspend fun reverse(lat: Double, lon: Double): Result<String?> {
+            reverseCalls.add(lat to lon)
+            return reverseResult
+        }
+    }
+
+    /** A geocoder whose reverse lookup never answers, to exercise the plan's naming timeout. */
+    private class StalledGeocodeRepository : GeocodeRepository {
+        override suspend fun suggest(query: String) = Result.success(emptyList<TripEndpoint.Geocoded>())
+        override suspend fun reverse(lat: Double, lon: Double): Result<String?> = CompletableDeferred<Result<String?>>().await()
     }
 
     private class FakeTripPlanRepository(var result: Result<List<TripItinerary>>) : TripPlanRepository {
@@ -285,6 +317,110 @@ class TripPlanViewModelTest {
         val vm = viewModel(plan = FakeTripPlanRepository(Result.failure(IOException("boom"))))
         setBothEndpoints(vm)
         advanceUntilIdle()
+        assertEquals(PlanResult.Error(TripPlanError.Unknown), vm.planState.value)
+    }
+
+    /** The name the surfaced result gives the trip's origin — the first leg's origin. */
+    private fun plannedOriginName(vm: TripPlanViewModel): String? = (vm.planState.value as PlanResult.Success).itineraries.first().legs.first().from.name
+
+    @Test
+    fun `a coordinate-only endpoint is reverse-geocoded onto the itineraries`() = runTest {
+        val geocode = FakeGeocodeRepository(
+            Result.success(emptyList()),
+            reverseResult = Result.success("Pike Place Market")
+        )
+        val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
+
+        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setTo(TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        advanceUntilIdle()
+
+        val legs = (vm.planState.value as PlanResult.Success).itineraries.first().legs
+        assertEquals("Pike Place Market", legs.first().from.name)
+        assertEquals("Pike Place Market", legs.last().to.name)
+        assertEquals(listOf(47.6 to -122.3, 47.7 to -122.2), geocode.reverseCalls.sortedBy { it.first })
+        // The form's own pill keeps its fixed "My Location" label.
+        assertEquals(null, vm.formState.value.from.displayText)
+    }
+
+    @Test
+    fun `an endpoint the user named labels the trip without a lookup`() = runTest {
+        val geocode = FakeGeocodeRepository(
+            Result.success(emptyList()),
+            reverseResult = Result.success("Somewhere Else")
+        )
+        val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        assertEquals("Origin", plannedOriginName(vm))
+        assertTrue(geocode.reverseCalls.isEmpty())
+    }
+
+    @Test
+    fun `a failed reverse lookup keeps OTP's own name and still plans`() = runTest {
+        val geocode = FakeGeocodeRepository(
+            Result.success(emptyList()),
+            reverseResult = Result.failure(IOException("boom"))
+        )
+        val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
+
+        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setTo(destination)
+        advanceUntilIdle()
+
+        assertEquals(OTP_PLACEHOLDER_ORIGIN, plannedOriginName(vm))
+    }
+
+    @Test
+    fun `a stalled reverse lookup does not hold the route back`() = runTest {
+        val vm = viewModel(
+            geocode = StalledGeocodeRepository(),
+            plan = FakeTripPlanRepository(Result.success(plannedTrip))
+        )
+
+        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setTo(destination)
+        advanceUntilIdle()
+
+        assertTrue(vm.planState.value is PlanResult.Success)
+        assertEquals(OTP_PLACEHOLDER_ORIGIN, plannedOriginName(vm))
+    }
+
+    @Test
+    fun `a re-plan reuses the name already looked up for the same point`() = runTest {
+        val geocode = FakeGeocodeRepository(
+            Result.success(emptyList()),
+            reverseResult = Result.success("Pike Place Market")
+        )
+        val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
+        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setTo(destination)
+        advanceUntilIdle()
+        assertEquals(1, geocode.reverseCalls.size)
+
+        // Nudging the time re-plans the same two points; the geocoder must not be asked again.
+        vm.setDateTime(90_000L)
+        vm.setArriving(true)
+        advanceUntilIdle()
+
+        assertEquals(1, geocode.reverseCalls.size)
+        assertEquals("Pike Place Market", plannedOriginName(vm))
+    }
+
+    @Test
+    fun `a plan failure surfaces without waiting on the naming lookup`() = runTest {
+        val vm = viewModel(
+            geocode = StalledGeocodeRepository(),
+            plan = FakeTripPlanRepository(Result.failure(IOException("boom")))
+        )
+
+        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setTo(destination)
+        // No advanceUntilIdle: only the plan is allowed to complete. A naming lookup still in flight must
+        // not hold the error behind its timeout.
+        runCurrent()
+
         assertEquals(PlanResult.Error(TripPlanError.Unknown), vm.planState.value)
     }
 

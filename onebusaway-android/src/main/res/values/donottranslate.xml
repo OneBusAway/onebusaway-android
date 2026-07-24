@@ -100,6 +100,9 @@
     <!-- Pelias API URL for geocoding -->
     <string name="pelias_api_url">https://api.geocode.earth/v1/autocomplete</string>
 
+    <!-- Pelias API URL for reverse geocoding (coordinates to a place name) -->
+    <string name="pelias_reverse_api_url">https://api.geocode.earth/v1/reverse</string>
+
     <!-- Oba Analytics Messages -->
     <string name="analytics_problem">report_problem</string>
     <string name="analytics_accessibility">accessibility</string>

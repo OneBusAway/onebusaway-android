@@ -797,9 +797,10 @@ private fun BoxScope.FilledNode(
 /** A solid [color] dot with a surface halo separating it from the spine — the timeline's trip endpoints. */
 @Composable
 private fun BoxScope.DotNode(color: Color) {
-    NodeSlot(14.dp) {
+    // ~1.75x the ordinary node dot so the trip endpoints read as the timeline's anchors.
+    NodeSlot(24.dp) {
         Box(Modifier.matchParentSize().clip(CircleShape).background(MaterialTheme.colorScheme.surface))
-        Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+        Box(Modifier.size(18.dp).clip(CircleShape).background(color))
     }
 }
 

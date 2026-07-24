@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home
 
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -26,7 +27,10 @@ data class FocusedStop(
     val id: String,
     val name: String?,
     val code: String?,
-    val point: GeoPoint
+    val point: GeoPoint,
+    // The tapped stop's accessibility, carried through so the focus banner can show it (#1029);
+    // [WheelchairBoarding.UNKNOWN] for focuses minted without an ObaStop (intent extras, restore).
+    val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
 ) {
     // Empty companion so intent/extras parsing can hang off it as a `FocusedStop.fromIntent(...)`
     // extension where that contract lives (HomeActivity), without this model knowing about intents.

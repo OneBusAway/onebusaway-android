@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -68,6 +69,7 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
@@ -82,6 +84,10 @@ import org.onebusaway.android.util.DisplayFormat
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 private val FOCUS_RAIL_ICON_SIZE = 26.4.dp
+
+// Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
+private val SUBTITLE_ICON_SIZE = 16.dp
+private val SUBTITLE_ICON_OPTICAL_LIFT = 1.dp
 
 // The stop name shrinks to fit within this many lines before ellipsizing; see ShrinkToFitStopTitle.
 private const val MAX_TITLE_LINES = 2
@@ -109,6 +115,7 @@ sealed interface FocusBannerState {
         override val isFavorite: Boolean,
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
+        val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN,
         val subordinateRoutes: List<SubordinateRoute> = emptyList(),
         val subordinateHeadsign: String? = null
     ) : FocusBannerState {
@@ -243,15 +250,27 @@ private fun StopFocusBanner(
                 )
             ) {
                 ShrinkToFitStopTitle(state.title)
-                if (subtitle != null) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
+                val wheelchairGlyph = wheelchairGlyph(state.wheelchairBoarding)
+                if (subtitle != null || wheelchairGlyph != null) {
+                    Row(
+                        modifier = Modifier.padding(top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        if (subtitle != null) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
+                        }
+                        if (wheelchairGlyph != null) {
+                            WheelchairBoardingIndicator(wheelchairGlyph)
+                        }
+                    }
                 }
             }
             if (state.hasAlerts) {
@@ -484,6 +503,41 @@ private fun BannerFavoriteAction(
     )
 }
 
+/**
+ * The icon and its description for a stop's GTFS wheelchair boarding (#1029), or null when there is
+ * nothing to show: [WheelchairBoarding.UNKNOWN] draws no glyph, since most feeds leave the field unset
+ * and a stream of "unknown" glyphs would be noise. Resolving it once — rather than at both the layout
+ * guard and the glyph — keeps the "what's worth showing" rule in a single exhaustive `when`.
+ */
+private fun wheelchairGlyph(boarding: WheelchairBoarding): Pair<Int, Int>? = when (boarding) {
+    WheelchairBoarding.ACCESSIBLE ->
+        R.drawable.ic_wheelchair_accessible to R.string.stop_wheelchair_accessible
+    WheelchairBoarding.NOT_ACCESSIBLE ->
+        R.drawable.not_accessible_24 to R.string.stop_wheelchair_not_accessible
+    WheelchairBoarding.UNKNOWN -> null
+}
+
+/**
+ * A non-interactive [wheelchairGlyph] on the stop's subtitle line, sized and tinted to read as part of
+ * the subtitle rather than as an action.
+ *
+ * Nudged up by [SUBTITLE_ICON_OPTICAL_LIFT]: the row centers the icon against the subtitle's *layout*
+ * box, which reserves descender space the stop code and direction never use, so a box-centered glyph
+ * reads slightly low against the text beside it.
+ */
+@Composable
+private fun WheelchairBoardingIndicator(glyph: Pair<Int, Int>) {
+    val (iconRes, descriptionRes) = glyph
+    Icon(
+        painter = painterResource(iconRes),
+        contentDescription = stringResource(descriptionRes),
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .offset(y = -SUBTITLE_ICON_OPTICAL_LIFT)
+            .size(SUBTITLE_ICON_SIZE)
+    )
+}
+
 @Composable
 private fun BannerAlertAction(onClick: () -> Unit) {
     Icon(
@@ -582,6 +636,7 @@ private fun FocusBannerPreview() {
                     isFavorite = true,
                     favoriteEnabled = true,
                     hasAlerts = true,
+                    wheelchairBoarding = WheelchairBoarding.ACCESSIBLE,
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65", 0xFF26823B.toInt()),
                         FocusBannerState.SubordinateRoute("75", 0xFF125BA8.toInt())

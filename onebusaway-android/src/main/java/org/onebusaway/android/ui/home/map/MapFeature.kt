@@ -150,7 +150,7 @@ fun MapFeature(
             override fun onStopClick(marker: StopMarker) {
                 val stop = marker.stop
                 val transition = homeViewModel.onStopFocused(
-                    FocusedStop(stop.id, stop.name, stop.stopCode, marker.point),
+                    FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding),
                     continuingRoutes = marker.presentedRoutes
                 )
                 if (transition == StopFocusTransition.ReplacePresentation) {

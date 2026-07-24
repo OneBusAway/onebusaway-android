@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home
 
 import androidx.lifecycle.SavedStateHandle
 import org.onebusaway.android.map.MapParams
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.util.GeoPoint
 
 /** Mechanical SavedStateHandle encoding for [CurrentFocus], kept out of focus transition logic. */
@@ -27,6 +28,7 @@ internal object CurrentFocusPersistence {
     private const val KEY_STOP_CODE = "home.focusedStop.code"
     private const val KEY_STOP_LAT = "home.focusedStop.lat"
     private const val KEY_STOP_LON = "home.focusedStop.lon"
+    private const val KEY_STOP_WHEELCHAIR = "home.focusedStop.wheelchairBoarding"
     private const val KEY_BIKE_STATION = "home.focusedBikeStation.id"
     private const val KEY_ROUTE_ID = "home.currentFocus.route.id"
     private const val KEY_ROUTE_STOP_ID = "home.currentFocus.route.stopId"
@@ -73,6 +75,7 @@ internal object CurrentFocusPersistence {
         state[KEY_STOP_CODE] = stop?.code
         state[KEY_STOP_LAT] = stop?.point?.latitude
         state[KEY_STOP_LON] = stop?.point?.longitude
+        state[KEY_STOP_WHEELCHAIR] = stop?.wheelchairBoarding?.name
         state[KEY_BIKE_STATION] = (focus as? CurrentFocus.BikeStation)?.id
 
         val target = (focus as? CurrentFocus.Route)?.target
@@ -145,7 +148,8 @@ internal object CurrentFocusPersistence {
             point = GeoPoint(
                 state.get<Double>(KEY_STOP_LAT) ?: 0.0,
                 state.get<Double>(KEY_STOP_LON) ?: 0.0
-            )
+            ),
+            wheelchairBoarding = WheelchairBoarding.fromString(state[KEY_STOP_WHEELCHAIR])
         )
     }
 }

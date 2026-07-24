@@ -20,6 +20,7 @@ import android.location.Location;
 import java.util.HashMap;
 import org.onebusaway.android.models.ObaRoute;
 import org.onebusaway.android.models.ObaStop;
+import org.onebusaway.android.models.WheelchairBoarding;
 import org.onebusaway.android.util.Locations;
 
 /** Provides a mock ObaStop to use in testing */
@@ -90,6 +91,11 @@ public class MockObaStop {
     @Override
     public String getId() {
       return "Hillsborough Area Regional Transit_26";
+    }
+
+    @Override
+    public WheelchairBoarding getWheelchairBoarding() {
+      return WheelchairBoarding.UNKNOWN;
     }
   }
 

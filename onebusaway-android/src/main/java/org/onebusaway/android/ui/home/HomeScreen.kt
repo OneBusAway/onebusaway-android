@@ -70,6 +70,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RouteHeader
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -400,6 +401,13 @@ fun HomeScreen(
                         isFavorite = currentFocus.stop.id in favoriteStopIds,
                         favoriteEnabled = stopFavoritesReady,
                         hasAlerts = arrivalsContent?.hasAlerts == true,
+                        // Like the stop code and direction above: the loaded arrivals are the source, with
+                        // the focus as the pre-load fallback. Only a map tap mints a focus from a full
+                        // ObaStop — a search result, deep link or directions stop carries just an id — so
+                        // without the arrivals source the glyph would be missing on most entry points.
+                        wheelchairBoarding = arrivalsContent?.header?.wheelchairBoarding
+                            ?.takeIf { it != WheelchairBoarding.UNKNOWN }
+                            ?: currentFocus.stop.wheelchairBoarding,
                         subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
                             FocusBannerState.SubordinateRoute(
                                 shortName = leg.shortName,

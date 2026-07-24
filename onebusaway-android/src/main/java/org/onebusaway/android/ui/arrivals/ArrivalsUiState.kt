@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals
 
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.time.ServerTime
 
 /** The stop being viewed, for the arrivals screen header. */
@@ -22,7 +23,8 @@ data class StopHeader(
     val stopId: String,
     val name: String,
     val direction: String?,
-    val isFavorite: Boolean
+    val isFavorite: Boolean,
+    val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
 )
 
 /**

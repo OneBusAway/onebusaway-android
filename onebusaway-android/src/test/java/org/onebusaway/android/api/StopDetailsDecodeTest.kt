@@ -22,6 +22,7 @@ import org.junit.Test
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.StopReference
+import org.onebusaway.android.models.WheelchairBoarding
 
 /**
  * Ports the legacy StopRequestTest onto the modernized `stop` endpoint: decodes a real Puget Sound
@@ -36,8 +37,9 @@ class StopDetailsDecodeTest {
         coerceInputValues = true
     }
 
-    // Captured from api.pugetsound.onebusaway.org/api/where/stop/1_29261.json (trimmed; extra
-    // entry fields parent/staticRouteIds/wheelchairBoarding and ref kinds are ignored by the model).
+    // Captured from api.pugetsound.onebusaway.org/api/where/stop/1_29261.json (trimmed; extra entry
+    // fields parent/staticRouteIds and unmodeled ref kinds are ignored by the model, but
+    // wheelchairBoarding is now decoded — see the assertion below).
     private val body = """
         {
           "version": 2, "code": 200, "currentTime": 1782347930000, "text": "OK",
@@ -73,6 +75,8 @@ class StopDetailsDecodeTest {
         // locationType 0 == a stop (vs. a station).
         assertEquals(0, stop.locationType)
         assertEquals(listOf("1_100275", "1_100009", "1_100223", "1_102650"), stop.routeIds)
+        assertEquals("ACCESSIBLE", stop.wheelchairBoarding)
+        assertEquals(WheelchairBoarding.ACCESSIBLE, WheelchairBoarding.fromString(stop.wheelchairBoarding))
 
         // Every routeId resolves to a route in the references (legacy asserted routes.size == routeIds).
         val routes = stop.routeIds.map { data.references.route(it) }

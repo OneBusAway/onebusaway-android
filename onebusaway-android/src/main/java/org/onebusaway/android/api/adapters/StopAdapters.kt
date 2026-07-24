@@ -19,6 +19,7 @@ package org.onebusaway.android.api.adapters
 import android.location.Location
 import org.onebusaway.android.api.contract.StopReference
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.util.locationOf
 
 /**
@@ -37,6 +38,8 @@ internal class DtoStop(private val ref: StopReference) : ObaStop {
     override val direction: String? get() = ref.direction
     override val locationType: Int get() = ref.locationType
     override val routeIds: Array<String> get() = ref.routeIds.toTypedArray()
+    override val wheelchairBoarding: WheelchairBoarding
+        get() = WheelchairBoarding.fromString(ref.wheelchairBoarding)
 }
 
 /**
@@ -50,7 +53,8 @@ class ObaStopElement @JvmOverloads constructor(
     private val code: String = "",
     override val direction: String = "",
     override val locationType: Int = ObaStop.LOCATION_STOP,
-    override val routeIds: Array<String> = EMPTY_ROUTES
+    override val routeIds: Array<String> = EMPTY_ROUTES,
+    override val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
 ) : ObaStop {
 
     override val stopCode: String get() = code

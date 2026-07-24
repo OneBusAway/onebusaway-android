@@ -153,7 +153,11 @@ data class StopReference(
     val lat: Double = 0.0,
     val lon: Double = 0.0,
     val locationType: Int = 0,
-    val routeIds: List<String> = emptyList()
+    val routeIds: List<String> = emptyList(),
+    // The GTFS wheelchair-boarding accessibility state as a wire string ("ACCESSIBLE" /
+    // "NOT_ACCESSIBLE" / "UNKNOWN"); null on servers/feeds that omit it. Minted to the
+    // WheelchairBoarding domain enum by the adapter.
+    val wheelchairBoarding: String? = null
 )
 
 /**

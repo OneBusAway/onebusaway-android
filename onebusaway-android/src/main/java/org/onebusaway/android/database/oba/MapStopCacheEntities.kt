@@ -51,6 +51,9 @@ data class CachedStopRecord(
     @ColumnInfo(name = "longitude") val longitude: Double,
     @ColumnInfo(name = "location_type") val locationType: Int,
     @ColumnInfo(name = "route_ids") val routeIds: String,
+    // The GTFS wheelchair-boarding state as a WheelchairBoarding enum name, or NULL for rows cached
+    // before this column existed / stops whose feed omits it (both read back as UNKNOWN).
+    @ColumnInfo(name = "wheelchair_boarding") val wheelchairBoarding: String?,
     @ColumnInfo(name = "region_id") val regionId: Long,
     @ColumnInfo(name = "last_seen") val lastSeen: Long
 )

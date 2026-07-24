@@ -46,6 +46,9 @@ interface ObaStop : ObaElement {
     /** The list of route IDs serving this stop. */
     val routeIds: Array<String>
 
+    /** The wheelchair-boarding accessibility of the stop; [WheelchairBoarding.UNKNOWN] when unstated. */
+    val wheelchairBoarding: WheelchairBoarding
+
     companion object {
         const val LOCATION_STOP = 0
         const val LOCATION_STATION = 1

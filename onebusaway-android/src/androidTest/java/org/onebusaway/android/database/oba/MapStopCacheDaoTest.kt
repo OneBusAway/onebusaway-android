@@ -190,6 +190,6 @@ class MapStopCacheDaoTest {
     ) = CachedStopRecord(
         id = id, code = "code", name = "name", direction = "N",
         latitude = lat, longitude = lon, locationType = 0,
-        routeIds = routeIds, regionId = regionId, lastSeen = lastSeen
+        routeIds = routeIds, wheelchairBoarding = null, regionId = regionId, lastSeen = lastSeen
     )
 }

@@ -16,15 +16,23 @@
 package org.onebusaway.android.ui.tripresults
 
 import android.app.Activity
+import android.content.Context
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,12 +41,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,21 +53,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -82,6 +100,7 @@ import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The results header: the (1–3) itinerary option cards. Shown above the directions list, pinned at the
@@ -283,9 +302,17 @@ fun TripResultsList(
                     TripResultsHeader(state, onSelectOption)
                     HorizontalDivider()
                 }
-                // One card per leg; the cards' own spacing separates them (no divider between).
-                itemsIndexed(state.directions) { _, item ->
-                    DirectionRow(item, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip)
+                // The whole itinerary as one continuous timeline "log" — a single item so the spine and
+                // per-leg bands can be drawn across the leg boundaries (the list is small: a handful of
+                // legs plus their stops/steps).
+                item {
+                    TripLog(
+                        entries = state.directions,
+                        onFocusRouteLeg = onFocusRouteLeg,
+                        onFocusLeg = onFocusLeg,
+                        onFocusPoint = onFocusPoint,
+                        stopEtaStrip = stopEtaStrip
+                    )
                 }
             }
         }
@@ -376,193 +403,538 @@ private fun maybeStartTripUpdates(
     TripPlanMonitor.start(activity, params, itinerary, activity.javaClass)
 }
 
+// ---- Trip-log timeline ----------------------------------------------------------------------------
+//
+// The directions render as a single vertical "log": a monospaced clock-time column, a continuous spine
+// with a node per event (start / walk / board / stop / exit / arrive), and the event text. Walk segments
+// are a dashed neutral; a transit ride is solid in the route's colour. Each leg is united behind a faint
+// tinted band and, where it has minor events (turn steps for a walk, intermediate stops for a ride),
+// expands them inline on tap.
+
+private val TIME_WIDTH = 66.dp // wide enough for a locale 12-hour time ("12:00 AM") without clipping
+private val RAIL_WIDTH = 34.dp
+private val RAIL_SPLIT = 22.dp // node centre, measured from the row's top — where the spine's colour flips
+private val ROW_TOP = 10.dp
+private val ROW_BOTTOM = 10.dp
+private val BAND_LEFT = TIME_WIDTH + RAIL_WIDTH // band sits behind the content only, never over the spine
+
 /**
- * One itinerary leg, as a card. Tapping the card **body**:
- *  - a transit leg highlights its route on the map (the whole route + the traveled segment thick); its
- *    two sub-items are **Board** and **Alight**; the Board stop shows its live ETA strip inline
- *    ([stopEtaStrip]) — pills wired like the arrivals drawer. These are **always shown**.
- *  - a walk/other leg frames the leg (falling back to its representative point when it has no polyline);
- *    its sub-items are the turn-by-turn steps, each recentring the map on its own point. These would be
- *    mostly noise, so they stay **collapsed** behind a chevron **expand button** — tapping it only
- *    toggles the drawer (never moves the map).
+ * The itinerary as one continuous timeline. Expansion is per-leg local state, keyed on [entries] so a
+ * new plan resets it. The spine's per-node connector colours are derived here from the entry sequence
+ * ([flattenLog]); each leg's rows are grouped so a faint band can unite them and one tap can expand the
+ * leg's minor events while highlighting it on the map.
  */
 @Composable
-private fun DirectionRow(
-    item: DirectionItem,
+private fun TripLog(
+    entries: List<TripLogEntry>,
     onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
     onFocusLeg: (List<GeoPoint>) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
-    // A transit leg with a resolvable route id highlights its route (and its Board/Alight sub-items);
-    // otherwise the body frames the leg polyline, or (no geometry) recenters on the representative point.
-    val routeLeg = item.routeLeg?.takeIf { it.routeId != null }
-    val canFrame = item.legPoints.isNotEmpty()
-    val point = item.focusPoint
-    val bodyClickable = routeLeg != null || canFrame || point != null
-    // Only walk/other legs collapse their turn-by-turn steps behind a chevron — a transit leg's
-    // Board/Alight strips are always shown. Rows are keyed by index in the LazyColumn, so key the
-    // expansion state on the item to reset it when this slot is reused for a different itinerary's leg.
-    val collapsibleSteps = routeLeg == null && item.subItems.isNotEmpty()
-    var expanded by remember(item) { mutableStateOf(false) }
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-    ) {
-        Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = bodyClickable) {
-                        when {
-                            routeLeg != null -> onFocusRouteLeg(routeLeg, item.legPoints)
-                            canFrame -> onFocusLeg(item.legPoints)
-                            else -> point?.let(onFocusPoint)
-                        }
-                    }
-                    .padding(
-                        start = 12.dp,
-                        top = 10.dp,
-                        bottom = 10.dp,
-                        end = if (collapsibleSteps) 4.dp else 12.dp
-                    )
-            ) {
-                DirectionIcon(item.iconRes)
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        text = item.text,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (item.isTransit) FontWeight.Medium else FontWeight.Normal
-                    )
-                    item.placeAndHeadsign?.let {
-                        Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    item.agency?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    item.extra?.let {
-                        Text(
-                            text = it,
-                            style = MaterialTheme.typography.bodySmall,
-                            fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-                if (collapsibleSteps) {
-                    // ~1.75x the default chevron so the expand/collapse control reads clearly.
-                    IconButton(onClick = { expanded = !expanded }, modifier = Modifier.size(56.dp)) {
-                        Icon(
-                            imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
-                            contentDescription = stringResource(
-                                if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
-                            ),
-                            // Match the row's leading step icons (see DirectionIcon).
-                            tint = colorResource(R.color.trip_option_icon_tint),
-                            modifier = Modifier.size(42.dp)
-                        )
-                    }
-                }
+    val neutral = MaterialTheme.colorScheme.outline
+    val transitFallback = MaterialTheme.colorScheme.primary
+    val expanded = remember(entries) { mutableStateMapOf<Int, Boolean>() }
+    fun isExpanded(i: Int) = expanded[i] == true
+    fun toggle(i: Int) {
+        expanded[i] = !isExpanded(i)
+    }
+
+    val rows = flattenLog(entries, ::isExpanded, neutral, transitFallback)
+
+    Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+        var idx = 0
+        while (idx < rows.size) {
+            val entryIndex = rows[idx].entryIndex
+            var end = idx
+            while (end < rows.size && rows[end].entryIndex == entryIndex) end++
+            val group = rows.subList(idx, end)
+            // A leg's rows are united behind a faint band; a terminal (bandColor == null) stands alone.
+            val band = group.first().bandColor
+            val rowsOf: @Composable () -> Unit = {
+                group.forEach { LogRow(it, ::isExpanded, ::toggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip) }
             }
-            if (routeLeg != null) {
-                // A transit leg's Board and Alight are always shown — each a tap target that zooms to
-                // its stop. Only the Board stop carries a live ETA strip.
-                routeLeg.board?.let { stop ->
-                    RouteStopLabel(
-                        R.string.step_by_step_transit_get_on,
-                        stop.name,
-                        onClick = { stop.point?.let(onFocusPoint) }
-                    )
-                    stopEtaStrip(routeLeg, stop, item.legPoints)
-                }
-                // Stay-aboard interlines onto a different route (#2000): the rider stays seated while
-                // the vehicle changes route, so this reads "Stay on board…" rather than get-off/get-on.
-                routeLeg.interlineTransitions.forEach { transition ->
-                    InterlineRow(transition, onFocusPoint)
-                }
-                routeLeg.alight?.let { stop ->
-                    RouteStopLabel(
-                        R.string.step_by_step_transit_get_off,
-                        stop.name,
-                        onClick = { stop.point?.let(onFocusPoint) }
-                    )
-                }
-                Spacer(Modifier.height(4.dp))
-            } else if (expanded) {
-                // A walk/other leg's turn-by-turn steps, revealed only when the user expands them.
-                item.subItems.forEach { sub -> SubDirectionRow(sub, onFocusPoint) }
-                Spacer(Modifier.height(4.dp))
-            }
+            if (band == null) rowsOf() else Column(Modifier.drawBehind { drawBand(band) }) { rowsOf() }
+            idx = end
         }
     }
 }
 
+/** Renders one flattened [model] row — its map-focus tap wiring and body — dispatched by content kind. */
 @Composable
-private fun SubDirectionRow(item: DirectionItem, onFocusPoint: (GeoPoint) -> Unit) {
-    val point = item.focusPoint
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = point != null) {
-                point?.let(onFocusPoint)
+private fun LogRow(
+    model: LogRowModel,
+    isExpanded: (Int) -> Boolean,
+    onToggle: (Int) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+) {
+    val i = model.entryIndex
+    when (val content = model.content) {
+        is RowContent.Terminal ->
+            LogRowScaffold(model, onClick = content.entry.point?.let { { onFocusPoint(it) } }) {
+                TerminalContent(content.entry)
             }
-            .padding(start = 36.dp, end = 12.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DirectionIcon(item.iconRes)
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = item.text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
+
+        is RowContent.WalkHeader -> {
+            val walk = content.entry
+            LogRowScaffold(
+                model = model,
+                onClick = {
+                    if (walk.legPoints.isNotEmpty()) onFocusLeg(walk.legPoints) else walk.focusPoint?.let(onFocusPoint)
+                    if (walk.steps.isNotEmpty()) onToggle(i)
+                }
+            ) { WalkHeaderContent(walk, isExpanded(i)) }
+        }
+
+        is RowContent.Step ->
+            LogRowScaffold(model, onClick = content.step.point?.let { { onFocusPoint(it) } }) {
+                StepContent(content.step)
+            }
+
+        is RowContent.BoardHeader -> {
+            val transit = content.entry
+            LogRowScaffold(model, onClick = null) {
+                BoardContent(
+                    entry = transit,
+                    expanded = isExpanded(i),
+                    onToggle = {
+                        focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint)
+                        if (transit.intermediateStops.isNotEmpty()) onToggle(i)
+                    },
+                    onFocusPoint = onFocusPoint,
+                    stopEtaStrip = stopEtaStrip
+                )
+            }
+        }
+
+        is RowContent.Stop ->
+            LogRowScaffold(model, onClick = content.stop.point?.let { { onFocusPoint(it) } }) {
+                StopContent(content.stop)
+            }
+
+        is RowContent.Transition ->
+            LogRowScaffold(model, onClick = content.transition.stop.point?.let { { onFocusPoint(it) } }) {
+                TransitionContent(content.transition)
+            }
+
+        is RowContent.ExitNode ->
+            LogRowScaffold(model, onClick = content.entry.routeLeg.alight?.point?.let { { onFocusPoint(it) } }) {
+                ExitContent(content.entry)
+            }
     }
 }
 
 /**
- * A transit leg's Board / Alight label: the boarding action ([actionRes] — "Get on" / "Get off") and
- * its [stopName]. The Board label is shown above that stop's inline ETA strip; the Alight label stands
- * alone. Its own tap target — tapping zooms the map to that stop ([onClick]).
+ * Tapping a transit leg: highlight its route on the map when the route id resolved (the usual case),
+ * else frame the leg polyline, else recentre on the board stop. Mirrors the old leg-body behaviour.
+ */
+private fun focusTransit(
+    entry: TripLogEntry.Transit,
+    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
+    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit
+) {
+    val routeLeg = entry.routeLeg.takeIf { it.routeId != null }
+    when {
+        routeLeg != null -> onFocusRouteLeg(routeLeg, entry.legPoints)
+        entry.legPoints.isNotEmpty() -> onFocusLeg(entry.legPoints)
+        else -> entry.routeLeg.board?.point?.let(onFocusPoint)
+    }
+}
+
+/** A drawn spine segment: its [color] and whether it's dashed (a walk) or solid (a ride). */
+private data class RailSeg(val color: Color, val dashed: Boolean)
+
+/** What a single timeline row shows. */
+private sealed interface RowContent {
+    data class Terminal(val entry: TripLogEntry.Terminal) : RowContent
+    data class WalkHeader(val entry: TripLogEntry.Walk) : RowContent
+    data class Step(val step: LogStep) : RowContent
+    data class BoardHeader(val entry: TripLogEntry.Transit) : RowContent
+    data class Stop(val stop: LogStop) : RowContent
+    data class Transition(val transition: InterlineTransition) : RowContent
+    data class ExitNode(val entry: TripLogEntry.Transit) : RowContent
+}
+
+/**
+ * One rendered row: its [content], the parent leg (via [entryIndex]), the spine above/below its node
+ * ([top]/[bottom]), the resolved [nodeColor] the node's route-coloured parts use (parsed once per leg,
+ * not re-parsed per node), and the leg's [bandColor] tint (null for a terminal, which has no band).
+ */
+private data class LogRowModel(
+    val entryIndex: Int,
+    val content: RowContent,
+    val top: RailSeg?,
+    val bottom: RailSeg?,
+    val nodeColor: Color,
+    val bandColor: Color?
+)
+
+/**
+ * Flattens the [entries] into rows with the spine coloured. Each node's `bottom` is the travel *leaving*
+ * it (a walk stays dashed-neutral through its steps; a ride stays route-coloured board→stops→exit; a
+ * node's exit hands off to the next leg's colour), and `top` chains from the previous node's `bottom`, so
+ * the colour flips exactly at each node — a walk-to-board node reads neutral above, route colour below.
+ */
+private fun flattenLog(
+    entries: List<TripLogEntry>,
+    isExpanded: (Int) -> Boolean,
+    neutral: Color,
+    transitFallback: Color
+): List<LogRowModel> {
+    val rows = ArrayList<LogRowModel>()
+    var prevBottom: RailSeg? = null
+    fun push(i: Int, content: RowContent, bottom: RailSeg?, nodeColor: Color, bandColor: Color?) {
+        rows += LogRowModel(i, content, top = prevBottom, bottom = bottom, nodeColor = nodeColor, bandColor = bandColor)
+        prevBottom = bottom
+    }
+
+    // The segment travelled when leaving [entry] toward the next node (null for a terminal/no travel):
+    // a walk is dashed neutral, a ride is the solid route colour.
+    fun leading(entry: TripLogEntry?): RailSeg? = when (entry) {
+        is TripLogEntry.Walk -> RailSeg(neutral, dashed = true)
+        is TripLogEntry.Transit -> RailSeg(routeColor(entry.routeColorHex, transitFallback), dashed = false)
+        else -> null
+    }
+    entries.forEachIndexed { i, entry ->
+        when (entry) {
+            is TripLogEntry.Terminal -> {
+                val bottom = if (entry.kind == TerminalKind.START) leading(entries.getOrNull(i + 1)) else null
+                push(i, RowContent.Terminal(entry), bottom, nodeColor = transitFallback, bandColor = null)
+            }
+            is TripLogEntry.Walk -> {
+                val seg = leading(entry) // dashed neutral
+                val band = neutral.copy(alpha = 0.07f)
+                push(i, RowContent.WalkHeader(entry), seg, nodeColor = neutral, bandColor = band)
+                if (isExpanded(i)) entry.steps.forEach { push(i, RowContent.Step(it), seg, neutral, band) }
+            }
+            is TripLogEntry.Transit -> {
+                val ride = leading(entry) // solid route colour
+                val color = ride?.color ?: transitFallback // the leg's colour, parsed once for band + nodes
+                val band = color.copy(alpha = 0.08f)
+                push(i, RowContent.BoardHeader(entry), ride, color, band)
+                if (isExpanded(i)) entry.intermediateStops.forEach { push(i, RowContent.Stop(it), ride, color, band) }
+                // Stay-aboard interline changes (#2000) are always shown — they're an instruction to the
+                // rider ("stay on board, it becomes route X"), not a minor stop hidden behind expansion.
+                entry.routeLeg.interlineTransitions.forEach { push(i, RowContent.Transition(it), ride, color, band) }
+                push(i, RowContent.ExitNode(entry), leading(entries.getOrNull(i + 1)), color, band)
+            }
+        }
+    }
+    return rows
+}
+
+/** Parse a GTFS colour hex to a Compose [Color], falling back to a neutral transit colour. */
+private fun routeColor(hex: String?, fallback: Color): Color = parseObaHexColor(hex?.removePrefix("#"))?.let { Color(it) } ?: fallback
+
+/** The GTFS colour as the nullable ARGB int a [RouteBadgeChip] wants (null → the chip's own default). */
+private fun routeColorInt(hex: String?): Int? = parseObaHexColor(hex?.removePrefix("#"))
+
+/**
+ * One timeline row: the [time] column, the spine cell (drawn from [LogRowModel.top]/[bottom] with the
+ * node on top), and the [content]. The whole row is the tap target when [onClick] is set.
  */
 @Composable
-private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Unit) {
+private fun LogRowScaffold(
+    model: LogRowModel,
+    onClick: (() -> Unit)?,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val context = LocalContext.current
+    val density = LocalDensity.current
+    // The time column shows the node's clock time and, in the gap below it, the leg's elapsed "delta".
+    val (time, delta) = when (val c = model.content) {
+        is RowContent.Terminal -> DisplayFormat.formatTime(context, c.entry.time.epochMs) to null
+        is RowContent.BoardHeader ->
+            DisplayFormat.formatTime(context, c.entry.boardTime.epochMs) to deltaText(c.entry.durationMinutes, context)
+        is RowContent.ExitNode -> DisplayFormat.formatTime(context, c.entry.exitTime.epochMs) to null
+        is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
+        else -> null to null
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(start = 36.dp, end = 12.dp, top = 12.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .height(IntrinsicSize.Min)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+        verticalAlignment = Alignment.Top
     ) {
-        Text(
-            text = stringResource(actionRes),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        Spacer(Modifier.width(6.dp))
-        Text(
-            text = stopName.orEmpty(),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+        // Centered in the time column — halfway between the screen edge and the spine.
+        Column(
+            modifier = Modifier
+                .width(TIME_WIDTH)
+                .padding(top = ROW_TOP),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            time?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            delta?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.outline,
+                    maxLines = 1
+                )
+            }
+        }
+        Box(Modifier.width(RAIL_WIDTH).fillMaxHeight()) {
+            Canvas(Modifier.matchParentSize()) {
+                val cx = size.width / 2f
+                val split = with(density) { RAIL_SPLIT.toPx() }
+                val stroke = with(density) { 3.dp.toPx() }
+                model.top?.let { drawSegment(it, cx, 0f, split, stroke, density) }
+                model.bottom?.let { drawSegment(it, cx, split, size.height, stroke, density) }
+            }
+            LogNode(model.content, model.nodeColor)
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .defaultMinSize(minHeight = 36.dp)
+                .padding(start = 8.dp, top = ROW_TOP, bottom = ROW_BOTTOM, end = 10.dp),
+            content = content
         )
     }
 }
 
+private fun DrawScope.drawSegment(seg: RailSeg, cx: Float, y0: Float, y1: Float, stroke: Float, density: Density) {
+    val effect = if (seg.dashed) {
+        val on = with(density) { 1.dp.toPx() }
+        val off = with(density) { 7.dp.toPx() }
+        PathEffect.dashPathEffect(floatArrayOf(on, off))
+    } else {
+        null
+    }
+    drawLine(seg.color, Offset(cx, y0), Offset(cx, y1), stroke, cap = StrokeCap.Round, pathEffect = effect)
+}
+
+/** The faint rounded band uniting a leg — drawn behind the content column only, so the spine stays clean. */
+private fun DrawScope.drawBand(color: Color) {
+    val left = BAND_LEFT.toPx()
+    val insetY = 2.dp.toPx()
+    val right = 4.dp.toPx()
+    val radius = 13.dp.toPx()
+    drawRoundRect(
+        color = color,
+        topLeft = Offset(left, insetY),
+        size = Size(size.width - left - right, (size.height - insetY * 2).coerceAtLeast(0f)),
+        cornerRadius = CornerRadius(radius, radius)
+    )
+}
+
 /**
- * A stay-aboard interline row (#2000): the vehicle keeps going but its route changes, so the rider is
- * told to stay on board — never to get off and reboard. Shows the new route label (short name + "to
- * headsign") and the seam stop where the change happens; tapping zooms the map to that stop.
+ * The node graphic for a row, positioned so its centre sits on the spine's colour-flip point. Route-
+ * coloured nodes use [nodeColor] (the leg's colour, already parsed once in [flattenLog]).
  */
 @Composable
-private fun InterlineRow(transition: InterlineTransition, onFocusPoint: (GeoPoint) -> Unit) {
+private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
+    val surface = MaterialTheme.colorScheme.surface
+    val muted = MaterialTheme.colorScheme.outline
+    when (content) {
+        is RowContent.Terminal -> when (content.entry.kind) {
+            TerminalKind.START -> NodeSlot(14.dp) {
+                Box(Modifier.matchParentSize().clip(CircleShape).background(surface))
+                Box(Modifier.size(10.dp).clip(CircleShape).background(muted))
+            }
+            TerminalKind.ARRIVE -> FilledNode(
+                26.dp,
+                MaterialTheme.colorScheme.primary,
+                R.drawable.ic_map_pin,
+                MaterialTheme.colorScheme.onPrimary,
+                15.dp
+            )
+        }
+        is RowContent.WalkHeader ->
+            RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = R.drawable.ic_directions_walk)
+        is RowContent.BoardHeader ->
+            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, Color.White, 16.dp, shape = RoundedCornerShape(8.dp))
+        is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
+        is RowContent.Stop -> RingNode(11.dp, 2.dp, nodeColor)
+        is RowContent.Transition ->
+            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, Color.White, 14.dp)
+        is RowContent.Step -> RingNode(8.dp, 2.dp, muted.copy(alpha = 0.7f))
+    }
+}
+
+/** A hollow node: a surface-filled circle with a [color] border, optionally with a muted centre [iconRes]. */
+@Composable
+private fun BoxScope.RingNode(size: Dp, border: Dp, color: Color, iconRes: Int? = null, iconSize: Dp = 14.dp) {
+    NodeSlot(size) {
+        Box(
+            Modifier.matchParentSize().clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+                .border(border, color, CircleShape)
+        )
+        iconRes?.let {
+            Icon(painterResource(it), null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(iconSize))
+        }
+    }
+}
+
+/** A filled node: a [color] [shape] with a centred [iconRes] tinted [iconTint]. */
+@Composable
+private fun BoxScope.FilledNode(
+    size: Dp,
+    color: Color,
+    iconRes: Int,
+    iconTint: Color,
+    iconSize: Dp,
+    shape: Shape = CircleShape
+) {
+    NodeSlot(size) {
+        Box(Modifier.matchParentSize().clip(shape).background(color))
+        Icon(painterResource(iconRes), null, tint = iconTint, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** Places a [size]-square node so its centre lands on [RAIL_SPLIT] (the spine's colour-flip point). */
+@Composable
+private fun BoxScope.NodeSlot(size: Dp, content: @Composable BoxScope.() -> Unit) {
+    Box(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .padding(top = RAIL_SPLIT - size / 2)
+            .size(size),
+        contentAlignment = Alignment.Center,
+        content = content
+    )
+}
+
+@Composable
+private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
+    Text(
+        text = stringResource(
+            if (entry.kind == TerminalKind.START) R.string.trip_plan_leaving else R.string.trip_plan_arriving
+        ).uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+    Text(
+        text = entry.place,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+}
+
+@Composable
+private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, expanded: Boolean) {
+    val context = LocalContext.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = stringResource(
+                if (entry.isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
+            ),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+        if (entry.steps.isNotEmpty()) Chevron(expanded)
+    }
+    val meta = walkMeta(entry, context)
+    if (meta.isNotEmpty()) {
+        Text(
+            text = meta,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.StepContent(step: LogStep) {
+    Text(
+        text = step.text,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+@Composable
+private fun ColumnScope.BoardContent(
+    entry: TripLogEntry.Transit,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onFocusPoint: (GeoPoint) -> Unit,
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+) {
+    val context = LocalContext.current
+    // The route/headsign/meta block toggles the leg (and highlights it on the map); the board stop + ETA
+    // strip below is its own tap target that zooms to the stop.
+    Column(Modifier.clickable(onClick = onToggle)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex))
+            if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = entry.routeDisplayName,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            if (entry.intermediateStops.isNotEmpty()) Chevron(expanded)
+        }
+        entry.headsign?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            val meta = transitMeta(entry, context)
+            if (meta.isNotEmpty()) {
+                Text(
+                    text = meta,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            RealtimeChip(entry.realtime)
+        }
+    }
+    entry.routeLeg.board?.let { stop ->
+        Spacer(Modifier.height(6.dp))
+        StopActionLabel(
+            actionRes = R.string.step_by_step_transit_get_on,
+            stopName = stop.name,
+            onClick = { stop.point?.let(onFocusPoint) }
+        )
+        stopEtaStrip(entry.routeLeg, stop, entry.legPoints)
+    }
+}
+
+@Composable
+private fun ColumnScope.StopContent(stop: LogStop) {
+    Text(
+        text = stop.name,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * A stay-aboard interline (#2000): the vehicle keeps going but its route changes, so the rider is told
+ * to stay on board — never to get off and reboard. Shows the new route label (short name + "to headsign")
+ * and the seam stop where the change happens.
+ */
+@Composable
+private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     val routeLabel = buildString {
         append(transition.routeShortName.orEmpty())
         if (!transition.headsign.isNullOrEmpty()) {
@@ -572,47 +944,111 @@ private fun InterlineRow(transition: InterlineTransition, onFocusPoint: (GeoPoin
             append(transition.headsign)
         }
     }.trim()
-    val stop = transition.stop
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { stop.point?.let(onFocusPoint) }
-            .padding(start = 36.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        DirectionIcon(R.drawable.ic_continue)
-        Spacer(Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.step_by_step_transit_interline, routeLabel),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            stop.name?.let { name ->
-                Text(
-                    text = "${stringResource(R.string.step_by_step_transit_connector_stop_name)} $name",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+    Text(
+        text = stringResource(R.string.step_by_step_transit_interline, routeLabel),
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+    transition.stop.name?.let { name ->
+        Text(
+            text = "${stringResource(R.string.step_by_step_transit_connector_stop_name)} $name",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
-/** A 24dp step icon (gray-tinted, matching the legacy adapter), or blank space to keep alignment. */
 @Composable
-private fun DirectionIcon(iconRes: Int) {
-    if (iconRes != DirectionItem.NO_ICON) {
-        Icon(
-            painter = painterResource(iconRes),
-            contentDescription = null,
-            tint = colorResource(R.color.trip_option_icon_tint),
-            modifier = Modifier.size(24.dp)
+private fun ColumnScope.ExitContent(entry: TripLogEntry.Transit) {
+    StopActionLabel(
+        actionRes = R.string.step_by_step_transit_get_off,
+        stopName = entry.routeLeg.alight?.name,
+        onClick = null
+    )
+}
+
+/** A "Get on / Get off <stop>" line — the boarding verb plus the stop name, optionally tappable. */
+@Composable
+private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> Unit)?) {
+    Row(
+        modifier = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(actionRes),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
         )
-    } else {
-        Spacer(Modifier.size(24.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(
+            text = stopName.orEmpty(),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
+        )
     }
+}
+
+/** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
+@Composable
+private fun RealtimeChip(state: RealtimeState) {
+    val (color, text) = when (state) {
+        RealtimeState.Unknown -> return
+        RealtimeState.OnTime -> colorResource(R.color.trip_realtime_on_time) to
+            stringResource(R.string.trip_plan_realtime_on_time)
+        is RealtimeState.Late -> colorResource(R.color.trip_realtime_delayed) to
+            stringResource(R.string.trip_plan_realtime_late, state.minutes.toInt())
+        is RealtimeState.Early -> colorResource(R.color.trip_realtime_on_time) to
+            stringResource(R.string.trip_plan_realtime_early, state.minutes.toInt())
+    }
+    Spacer(Modifier.width(8.dp))
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(color.copy(alpha = 0.14f))
+            .padding(horizontal = 8.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(Modifier.size(6.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(5.dp))
+        Text(text = text, style = MaterialTheme.typography.labelMedium, color = color)
+    }
+}
+
+/** The expand/collapse chevron shown on a leg with minor events; rotates via the up/down glyph. */
+@Composable
+private fun Chevron(expanded: Boolean) {
+    Icon(
+        imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
+        contentDescription = stringResource(
+            if (expanded) R.string.trip_plan_collapse_leg else R.string.trip_plan_expand_leg
+        ),
+        tint = MaterialTheme.colorScheme.outline,
+        modifier = Modifier.size(24.dp)
+    )
+}
+
+/**
+ * The leg's elapsed duration as a compact delta ("14 min") for the narrow time column — always the
+ * abbreviated unit, unlike [ConversionUtils.getFormattedDurationTextNoSeconds] which spells out
+ * "minutes" for plural values (too wide here). Hours fold into its "1h 30min" form.
+ */
+private fun deltaText(minutes: Long, context: Context): String = if (minutes >= 60) {
+    ConversionUtils.getFormattedDurationTextNoSeconds(minutes * 60, false, context)
+} else {
+    "$minutes ${context.getString(R.string.minutes_abbreviation)}"
+}
+
+/** The walk leg's distance ("0.2 mi"); blank when the leg carries no distance. Its duration is the delta. */
+private fun walkMeta(entry: TripLogEntry.Walk, context: Context): String = if (entry.distanceMeters > 0.0) ConversionUtils.getFormattedDistance(entry.distanceMeters, context) else ""
+
+/** The transit leg's stop count ("5 stops"); blank when unknown (e.g. the OTP2 path). Duration is the delta. */
+private fun transitMeta(entry: TripLogEntry.Transit, context: Context): String = if (entry.stopCount > 0) {
+    context.resources.getQuantityString(R.plurals.trip_plan_intermediate_stops, entry.stopCount, entry.stopCount)
+} else {
+    ""
 }
 
 @Preview(showBackground = true)
@@ -638,19 +1074,46 @@ private fun TripResultsPreview() {
             ),
             selectedIndex = 0,
             directions = listOf(
-                DirectionItem(NO_ICON_PREVIEW, "1. Walk to Pine St & 3rd Ave"),
-                DirectionItem(
-                    NO_ICON_PREVIEW,
-                    "2. Route 8 3:52p",
-                    placeAndHeadsign = "Toward Rainier Beach",
-                    agency = "Metro Transit",
-                    isTransit = true,
-                    subItems = listOf(DirectionItem(NO_ICON_PREVIEW, "Capitol Hill Station"))
+                TripLogEntry.Terminal(
+                    kind = TerminalKind.START,
+                    time = ServerTime(0L),
+                    place = "5th Ave & Pine St"
+                ),
+                TripLogEntry.Walk(
+                    durationMinutes = 4,
+                    distanceMeters = 320.0,
+                    isTransfer = false,
+                    steps = listOf(LogStep("Head north on 5th Ave (350 ft)"))
+                ),
+                TripLogEntry.Transit(
+                    routeShortName = "8",
+                    routeDisplayName = "Route 8",
+                    routeColorHex = "1B6EF3",
+                    headsign = "Rainier Beach",
+                    boardTime = ServerTime(4 * 60_000L),
+                    exitTime = ServerTime(20 * 60_000L),
+                    stopCount = 3,
+                    durationMinutes = 16,
+                    realtime = RealtimeState.OnTime,
+                    intermediateStops = listOf(
+                        LogStop("Capitol Hill Station"),
+                        LogStop("23rd Ave & E Union St"),
+                        LogStop("Mount Baker Transit Center")
+                    ),
+                    routeLeg = RouteLegRef(
+                        routeId = "1_100",
+                        headsign = "Rainier Beach",
+                        board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
+                        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", null)
+                    )
+                ),
+                TripLogEntry.Terminal(
+                    kind = TerminalKind.ARRIVE,
+                    time = ServerTime(32 * 60_000L),
+                    place = "Rainier & Alaska"
                 )
             )
         )
         TripResultsList(state)
     }
 }
-
-private const val NO_ICON_PREVIEW = -1

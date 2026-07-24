@@ -91,6 +91,9 @@
     <color name="trip_plan_header_text">@color/md_theme_onSurface</color>
     <color name="trip_plan_card_background_selected">@color/md_theme_secondaryContainer</color>
     <color name="trip_plan_header_text_selected">@color/md_theme_onSecondaryContainer</color>
+    <!-- Trip-log real-time status chips (semantic, not the accent) -->
+    <color name="trip_realtime_on_time">#1A8F52</color>
+    <color name="trip_realtime_delayed">#9A6A12</color>
 
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>

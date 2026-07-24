@@ -39,6 +39,9 @@
     <!-- Arrival times header -->
 
     <!-- Trip Planning -->
+    <!-- Trip-log real-time status chips (lightened for dark ground) -->
+    <color name="trip_realtime_on_time">#5CC98A</color>
+    <color name="trip_realtime_delayed">#E0A83C</color>
 
     <color name="md_theme_primary">#A1D39A</color>
     <color name="md_theme_onPrimary">#0A390F</color>

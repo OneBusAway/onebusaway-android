@@ -53,35 +53,97 @@ sealed interface ModeSummary {
 data class RouteBadge(val shortName: String, val routeColor: Int?)
 
 /**
- * One row in the directions list. Top-level items are **legs** — one card per itinerary leg (a walk
- * leg, or a transit leg with its board→alight steps folded in); [subItems] holds that leg's
- * expandable sub-steps (turn-by-turn for a walk leg; board / intermediate stops / alight for a transit
- * leg). [text] is the primary line (prefixed with the leg number and, for transit, the time); transit
- * legs add [placeAndHeadsign]/[agency]/[extra] detail lines. [iconRes] is -1 when there's no icon.
+ * One entry in the trip **log** — the directions rendered as a single transit timeline the user reads
+ * top-to-bottom, each event on a shared vertical spine next to its clock time (see [TripResultsList]).
+ * The list is the trip in order: a [Terminal] Start, then one [Walk] or [Transit] per leg, then a
+ * [Terminal] Arrive. The spine's per-node connector colours (route colour for a ride, a dashed neutral
+ * for a walk) are derived by the renderer from the entry *sequence*, so each entry carries only its own
+ * identity — never its neighbours' or the spine geometry.
  *
- * [focusPoint] is the geographic point a sub-step refers to (an intermediate stop, a turn, or an
- * alight) — non-null when tapping it can recenter the map, null when the underlying place had no
- * coordinates. [legPoints] is the leg's full decoded polyline, set only on a leg card so tapping the
- * card body can frame the whole leg. [routeLeg] is set only on a transit leg card and carries the
- * route/stop identity a later "focus this route" interaction needs (Phase 2); it is unused by the
- * drawer today.
+ * Times are [ServerTime] (the OTP server clock), unwrapped only at the time formatter; distances are
+ * metres and durations whole minutes, formatted to the user's units by the renderer. The route colour
+ * rides as its raw wire hex ([Transit.routeColorHex]) rather than a parsed ARGB int, so this model — and
+ * the builder that makes it — stay Android-free and JVM-unit-testable (colour parsing needs
+ * `android.graphics`); the renderer parses it once for the badge and the spine.
  */
-data class DirectionItem(
-    val iconRes: Int,
-    val text: String,
-    val placeAndHeadsign: String? = null,
-    val agency: String? = null,
-    val extra: String? = null,
-    val isTransit: Boolean = false,
-    val subItems: List<DirectionItem> = emptyList(),
-    val focusPoint: GeoPoint? = null,
-    val legPoints: List<GeoPoint> = emptyList(),
-    val routeLeg: RouteLegRef? = null
-) {
-    companion object {
-        /** Sentinel for "no icon", matching the legacy Direction.getIcon() contract. */
-        const val NO_ICON = -1
-    }
+sealed interface TripLogEntry {
+
+    /**
+     * A trip endpoint — the origin ([TerminalKind.START]) or destination ([TerminalKind.ARRIVE]). A
+     * single node with its [time] and [place] name; [point] recentres the map when tapped (null when the
+     * endpoint carried no coordinates). Not expandable.
+     */
+    data class Terminal(
+        val kind: TerminalKind,
+        val time: ServerTime,
+        val place: String,
+        val point: GeoPoint? = null
+    ) : TripLogEntry
+
+    /**
+     * A walk (or bike/car) leg — one node on the spine, its dashed-neutral segment running to the next
+     * node. Expands to its turn-by-turn [steps]. [isTransfer] is true for a walk *between* two transit
+     * legs (vs. the first/last-mile walk), letting the renderer label it accordingly. Tapping the leg
+     * frames [legPoints] (or, with no geometry, recentres on [focusPoint]).
+     */
+    data class Walk(
+        val durationMinutes: Long,
+        val distanceMeters: Double,
+        val isTransfer: Boolean,
+        val steps: List<LogStep>,
+        val legPoints: List<GeoPoint> = emptyList(),
+        val focusPoint: GeoPoint? = null
+    ) : TripLogEntry
+
+    /**
+     * A transit leg — a Board node and an Exit node uniting the ride, its solid route-coloured segment
+     * running between them. Expands to the [intermediateStops] passed on the way (empty on the OTP2 path,
+     * which doesn't fetch them). Board/Exit stop identity + the route id ride on [routeLeg]: tapping the
+     * leg highlights the route ([routeLeg] + [legPoints]) and the Board node shows that stop's live ETA
+     * strip. [routeColorHex] is the raw GTFS colour (nullable); the renderer parses it for the badge and
+     * the spine, falling back to a neutral transit colour.
+     */
+    data class Transit(
+        val routeShortName: String,
+        val routeDisplayName: String,
+        val routeColorHex: String?,
+        val headsign: String?,
+        val boardTime: ServerTime,
+        val exitTime: ServerTime,
+        val stopCount: Int,
+        val durationMinutes: Long,
+        val realtime: RealtimeState,
+        val intermediateStops: List<LogStop>,
+        val routeLeg: RouteLegRef,
+        val legPoints: List<GeoPoint> = emptyList()
+    ) : TripLogEntry
+}
+
+/** Which trip endpoint a [TripLogEntry.Terminal] marks. */
+enum class TerminalKind { START, ARRIVE }
+
+/**
+ * One turn-by-turn step of a walk leg: its localized instruction [text] (already includes the step
+ * distance, from the legacy directions generator) and the map [point] it refers to (null when the step
+ * carried no coordinates).
+ */
+data class LogStep(val text: String, val point: GeoPoint? = null)
+
+/**
+ * One intermediate transit stop passed on a leg — its display [name] and map [point]. Carries no time:
+ * the trip-plan model has no per-intermediate-stop timestamp (only the board/exit times are known).
+ */
+data class LogStop(val name: String, val point: GeoPoint? = null)
+
+/**
+ * The real-time state of a transit board, shown as an on-time / delayed chip. [Unknown] (no real-time
+ * data) renders no chip; [OnTime] within a minute of schedule; [Late]/[Early] carry whole minutes.
+ */
+sealed interface RealtimeState {
+    data object Unknown : RealtimeState
+    data object OnTime : RealtimeState
+    data class Late(val minutes: Long) : RealtimeState
+    data class Early(val minutes: Long) : RealtimeState
 }
 
 /**
@@ -141,7 +203,7 @@ sealed interface TripResultsUiState {
     data class Success(
         val options: List<ItineraryOption>,
         val selectedIndex: Int,
-        val directions: List<DirectionItem>
+        val directions: List<TripLogEntry>
     ) : TripResultsUiState
 
     data class Error(val message: String) : TripResultsUiState

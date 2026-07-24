@@ -919,9 +919,20 @@
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>
-    <!-- Content descriptions for the button that expands/collapses a walking leg's turn-by-turn steps in the directions list -->
+    <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->
     <string name="trip_plan_expand_leg">Show steps</string>
     <string name="trip_plan_collapse_leg">Hide steps</string>
+    <!-- A walking leg that connects two transit rides (a transfer), vs. a first/last-mile walk -->
+    <string name="trip_plan_walk_transfer">Walk to transfer</string>
+    <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
+    <string name="trip_plan_realtime_on_time">On time</string>
+    <string name="trip_plan_realtime_late">%1$d min late</string>
+    <string name="trip_plan_realtime_early">%1$d min early</string>
+    <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
+    <plurals name="trip_plan_intermediate_stops">
+        <item quantity="one">%1$d stop</item>
+        <item quantity="other">%1$d stops</item>
+    </plurals>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>

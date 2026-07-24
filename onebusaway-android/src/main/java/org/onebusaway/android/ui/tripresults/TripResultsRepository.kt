@@ -41,8 +41,8 @@ interface TripResultsRepository {
     /** Summarizes each itinerary into an option card ([ItineraryOption]). */
     suspend fun summarize(itineraries: List<TripItinerary>): Result<List<ItineraryOption>>
 
-    /** Builds the turn-by-turn directions for a single itinerary. */
-    suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>>
+    /** Builds the trip-log timeline entries for a single itinerary. */
+    suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>>
 }
 
 class DefaultTripResultsRepository @Inject constructor(
@@ -82,15 +82,19 @@ class DefaultTripResultsRepository @Inject constructor(
 
     override suspend fun directionsFor(
         itinerary: TripItinerary
-    ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
+    ): Result<List<TripLogEntry>> = withContext(Dispatchers.IO) {
         runCatchingCancellable {
-            // The legacy generator supplies the localized step text (needs a Context for resources);
-            // the pure grouping re-shapes its flat output into one card per leg (JVM-testable). Each
-            // transit leg's OTP route/stop ids are resolved to OBA ids here (a suspend, network-backed
-            // step) so the drawer can highlight the route and show each stop's live ETAs.
+            // The legacy generator supplies the localized step / intermediate-stop text (needs a Context
+            // for resources); the pure builder re-shapes its flat output — plus the legs' structured
+            // times/distances/colours — into the trip-log timeline (JVM-testable). Each transit leg's OTP
+            // route/stop ids are resolved to OBA ids here (a suspend, network-backed step) so the drawer
+            // can highlight the route and show each stop's live ETAs.
             val flat = DirectionsGenerator(itinerary.legs, context).directions
+            // One RouteLegRef per transit chain (a stay-aboard interline folds its continuation legs into
+            // the chain leader, #2000); the builder folds the same continuation legs into the leader's
+            // Transit entry so the two agree.
             val routeLegRefs = resolveRouteLegRefs(itinerary.legs)
-            DirectionCardGrouping.groupByLeg(itinerary.legs, flat, routeLegRefs)
+            TripLogBuilder.build(itinerary.legs, flat, routeLegRefs)
         }
     }
 

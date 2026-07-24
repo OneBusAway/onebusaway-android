@@ -98,7 +98,9 @@ private const val LINE_TONE_DARK = 80.0
  * caller's cue to fall back to a neutral. The single place the agency-color policy lives, so a chip
  * and a line can't drift apart on which colors count as "grey" or how saturated a route may get.
  */
-@SuppressLint("RestrictedApi") // Hct is Material Components' vendored color-science util (LIBRARY_GROUP)
+// Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
+// exists, so this is deliberate long-term use, not a migration to track (same as AdjacencyRouteColors).
+@SuppressLint("RestrictedApi")
 private fun tonedRouteColor(routeColor: Int?, dark: Boolean, tone: Double): Color? {
     val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) } ?: return null
     if (source.chroma < ACHROMATIC_CHROMA) return null
@@ -136,7 +138,9 @@ fun routeLineColors(routeColor: Int?, dark: Boolean, fallback: RouteLineColors):
  * or a route with no color falls back to a neutral theme chip. Callers pass the pair straight to
  * [LineBadge]'s `containerColor` / `color`.
  */
-@SuppressLint("RestrictedApi") // Hct is Material Components' vendored color-science util (LIBRARY_GROUP)
+// Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
+// exists, so this is deliberate long-term use, not a migration to track (same as AdjacencyRouteColors).
+@SuppressLint("RestrictedApi")
 @Composable
 fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
     val neutralContainer = MaterialTheme.colorScheme.surfaceVariant

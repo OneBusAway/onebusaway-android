@@ -55,14 +55,16 @@ class StopArrivals internal constructor(
     val stop: ObaStop? get() = refs.stop(stopId)?.let(::DtoStop)
 
     /**
-     * The arrivals/departures, adapted to the [ArrivalData] model (display-ready), with block-id
-     * "phantom" duplicates collapsed (see [collapseBlockIdPhantoms] / #1710).
+     * The arrivals/departures, adapted to the [ArrivalData] model (display-ready), collapsed to one
+     * entry per trip instance (see [collapseDuplicateTripInstances] / #1710 / #2012). Downstream may
+     * rely on `(tripId, serviceDate, stopSequence)` being unique across this list — the ETA strip
+     * keys its pills by exactly that triple.
      */
     val arrivals: List<ArrivalData>
         get() = entry.arrivalsAndDepartures.map {
             it.asArrivalData(refs.trip(it.tripId)?.directionId?.toIntOrNull())
         }
-            .collapseBlockIdPhantoms { tripId -> refs.trip(tripId)?.blockId }
+            .collapseDuplicateTripInstances { tripId -> refs.trip(tripId)?.blockId }
 
     /** Every referenced route (for the map overlay). */
     val routes: List<ObaRoute> get() = refs.routes.map(::DtoRoute)

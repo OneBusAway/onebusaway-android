@@ -16,6 +16,7 @@
 package org.onebusaway.android.api.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Test
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
@@ -24,9 +25,11 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 
 /**
- * Unit tests for [collapseBlockIdPhantoms]. It drops the OBA server's block-id "phantom" duplicate
- * (an entry whose `vehicleId` is the trip's block id) when a real-vehicle sibling shares the trip
- * instance, and leaves everything else alone (#1710 / onebusaway-application-modules#469).
+ * Unit tests for [collapseDuplicateTripInstances]. It reduces the OBA server's duplicate
+ * vehicle-matched entries to one per `(tripId, serviceDate, stopSequence)` — the block-id "phantom"
+ * (#1710 / onebusaway-application-modules#469) and the two-coach-ids-on-one-block shape (#2012) —
+ * preferring the non-phantom, then the AVL-located entry, then feed order, and leaves genuinely
+ * distinct trip instances alone.
  */
 class ArrivalDedupTest {
 
@@ -34,6 +37,7 @@ class ArrivalDedupTest {
         const val TRIP = "1_801565550"
         const val BLOCK = "1_8110104" // block id of TRIP; the phantom's vehicleId equals this
         const val COACH = "1_7099" // a real coach number
+        const val OTHER_COACH = "1_7033" // a second real coach matched to the same block
         val blockIds: (String) -> String? = { tripId -> if (tripId == TRIP) BLOCK else null }
     }
 
@@ -41,8 +45,17 @@ class ArrivalDedupTest {
     fun `collapses the phantom (vehicleId == block id) when a real sibling shares the trip instance`() {
         val real = arrival(vehicleId = COACH)
         val phantom = arrival(vehicleId = BLOCK)
-        assertEquals(listOf(real), listOf(real, phantom).collapseBlockIdPhantoms(blockIds))
-        assertEquals(listOf(real), listOf(phantom, real).collapseBlockIdPhantoms(blockIds))
+        assertEquals(listOf(real), listOf(real, phantom).collapseDuplicateTripInstances(blockIds))
+        assertEquals(listOf(real), listOf(phantom, real).collapseDuplicateTripInstances(blockIds))
+    }
+
+    @Test
+    fun `prefers the non-phantom over the AVL fix (block-id signal outranks position)`() {
+        // The phantom happens to carry a location and the real coach hasn't reported one yet: the
+        // exact block-id rule still decides, since it identifies the stand-in rather than inferring it.
+        val real = arrival(vehicleId = COACH, hasAvl = false)
+        val phantom = arrival(vehicleId = BLOCK, hasAvl = true)
+        assertEquals(listOf(real), listOf(phantom, real).collapseDuplicateTripInstances(blockIds))
     }
 
     @Test
@@ -51,31 +64,50 @@ class ArrivalDedupTest {
         // phantom is still identifiable by vehicleId == block id.
         val real = arrival(vehicleId = COACH, hasAvl = false)
         val phantom = arrival(vehicleId = BLOCK, hasAvl = false)
-        assertEquals(listOf(real), listOf(real, phantom).collapseBlockIdPhantoms(blockIds))
+        assertEquals(listOf(real), listOf(real, phantom).collapseDuplicateTripInstances(blockIds))
     }
 
     @Test
-    fun `keeps a genuine second vehicle that has not reported a position (real vehicleId, no AVL)`() {
-        // Two real coaches on one trip instance (the rare genuine double); one hasn't reported GPS
-        // yet. Neither vehicleId is the block id, so neither is a phantom — both survive.
+    fun `collapses two ordinary coach ids on one block, keeping the located one (issue 2012)`() {
+        // The shape that crashed the ETA strip: Everett Transit stop 97_256, trip 97_108567,
+        // stopSequence 23, block 97_119, vehicles 97_737 (reported a fix) and 97_143 (never did).
+        // Neither vehicleId is the block id, so the #1710 rule can't see this duplicate at all.
         val located = arrival(vehicleId = COACH, hasAvl = true)
-        val notYetLocated = arrival(vehicleId = "1_7033", hasAvl = false)
-        val input = listOf(located, notYetLocated)
-        assertEquals(input, input.collapseBlockIdPhantoms(blockIds))
+        val notYetLocated = arrival(vehicleId = OTHER_COACH, hasAvl = false)
+        assertEquals(
+            listOf(located),
+            listOf(located, notYetLocated).collapseDuplicateTripInstances(blockIds)
+        )
+        assertEquals(
+            listOf(located),
+            listOf(notYetLocated, located).collapseDuplicateTripInstances(blockIds)
+        )
     }
 
     @Test
-    fun `keeps both when the block id can't be resolved (trip absent from references)`() {
-        val a = arrival(vehicleId = BLOCK)
-        val b = arrival(vehicleId = COACH)
-        val input = listOf(a, b)
-        assertEquals(input, input.collapseBlockIdPhantoms { null })
+    fun `collapses when the block id can't be resolved (trip absent from references)`() {
+        // Crash-safety can't depend on the references pool: with no block id resolvable, nothing is a
+        // phantom, so the AVL tie-break decides and the instance still yields exactly one entry.
+        val notYetLocated = arrival(vehicleId = BLOCK, hasAvl = false)
+        val located = arrival(vehicleId = COACH, hasAvl = true)
+        assertEquals(
+            listOf(located),
+            listOf(notYetLocated, located).collapseDuplicateTripInstances { null }
+        )
     }
 
     @Test
-    fun `keeps a lone phantom when no non-phantom sibling survives it`() {
+    fun `falls back to feed order when neither preference discriminates`() {
+        val first = arrival(vehicleId = COACH, hasAvl = true)
+        val second = arrival(vehicleId = OTHER_COACH, hasAvl = true)
+        assertEquals(listOf(first), listOf(first, second).collapseDuplicateTripInstances(blockIds))
+        assertEquals(listOf(second), listOf(second, first).collapseDuplicateTripInstances(blockIds))
+    }
+
+    @Test
+    fun `keeps a lone phantom when no sibling shares its trip instance`() {
         val phantomOnly = listOf(arrival(vehicleId = BLOCK))
-        assertEquals(phantomOnly, phantomOnly.collapseBlockIdPhantoms(blockIds))
+        assertEquals(phantomOnly, phantomOnly.collapseDuplicateTripInstances(blockIds))
     }
 
     @Test
@@ -83,7 +115,7 @@ class ArrivalDedupTest {
         val realA = arrival(tripId = TRIP, vehicleId = COACH)
         val phantomB = arrival(tripId = "1_other", vehicleId = BLOCK)
         val input = listOf(realA, phantomB)
-        assertEquals(input, input.collapseBlockIdPhantoms(blockIds))
+        assertEquals(input, input.collapseDuplicateTripInstances(blockIds))
     }
 
     @Test
@@ -94,15 +126,50 @@ class ArrivalDedupTest {
         // The phantom collapses against the first visit; both real visits survive.
         assertEquals(
             listOf(first, second),
-            listOf(first, phantomFirst, second).collapseBlockIdPhantoms(blockIds)
+            listOf(first, phantomFirst, second).collapseDuplicateTripInstances(blockIds)
         )
     }
 
     @Test
+    fun `does not collapse the same stop_time on two service dates`() {
+        val today = arrival(vehicleId = COACH, serviceDate = 1_784_876_400_000L)
+        val yesterday = arrival(vehicleId = COACH, serviceDate = 1_784_790_000_000L)
+        val input = listOf(yesterday, today)
+        assertEquals(input, input.collapseDuplicateTripInstances(blockIds))
+    }
+
+    @Test
+    fun `a duplicate-free list is returned untouched`() {
+        val input = listOf(
+            arrival(vehicleId = COACH, stopSequence = 5),
+            arrival(vehicleId = OTHER_COACH, stopSequence = 42)
+        )
+        assertSame(input, input.collapseDuplicateTripInstances(blockIds))
+    }
+
+    @Test
+    fun `every surviving trip instance is unique (the ETA strip's LazyRow key invariant)`() {
+        val input = listOf(
+            arrival(vehicleId = COACH, stopSequence = 5),
+            arrival(vehicleId = BLOCK, stopSequence = 5),
+            arrival(vehicleId = COACH, stopSequence = 23),
+            arrival(vehicleId = OTHER_COACH, stopSequence = 23, hasAvl = false),
+            arrival(tripId = "1_other", vehicleId = COACH, stopSequence = 23)
+        )
+        val instances = input.collapseDuplicateTripInstances(blockIds)
+            .map { Triple(it.tripId, it.serviceDate, it.stopSequence) }
+        assertEquals(instances.distinct(), instances)
+        assertEquals(3, instances.size)
+    }
+
+    @Test
     fun `empty and singleton lists pass through unchanged`() {
-        assertEquals(emptyList<ArrivalData>(), emptyList<ArrivalData>().collapseBlockIdPhantoms(blockIds))
+        assertEquals(
+            emptyList<ArrivalData>(),
+            emptyList<ArrivalData>().collapseDuplicateTripInstances(blockIds)
+        )
         val one = listOf(arrival(vehicleId = BLOCK))
-        assertEquals(one, one.collapseBlockIdPhantoms(blockIds))
+        assertEquals(one, one.collapseDuplicateTripInstances(blockIds))
     }
 
     private fun arrival(
@@ -122,7 +189,7 @@ class ArrivalDedupTest {
     )
 }
 
-/** Minimal [ArrivalData] stub; only trip-instance identity + vehicleId matter here. */
+/** Minimal [ArrivalData] stub; only trip-instance identity, vehicleId, and the AVL fix matter here. */
 private data class FakeArrivalData(
     override val tripId: String,
     override val serviceDate: Long,

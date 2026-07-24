@@ -65,6 +65,7 @@ class DirectionRowFocusTest {
     private val start = TripLogEntry.Terminal(TerminalKind.START, ServerTime(0L), "Origin Plaza", startPoint)
 
     private val walk = TripLogEntry.Walk(
+        mode = StreetMode.WALK,
         durationMinutes = 4,
         distanceMeters = 320.0,
         isTransfer = false,

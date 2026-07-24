@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.tripresults
 import kotlin.math.roundToLong
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.util.GeoPoint
@@ -114,6 +115,7 @@ object TripLogBuilder {
         legPoints: List<GeoPoint>,
         isTransfer: Boolean
     ) = TripLogEntry.Walk(
+        mode = leg.mode.streetMode(),
         durationMinutes = leg.duration.inWholeMinutes,
         distanceMeters = leg.distance,
         isTransfer = isTransfer,
@@ -179,8 +181,18 @@ object TripLogBuilder {
         )
     }
 
-    /** A transit leg's intermediate stops: the board direction's sub-directions, in travel order. */
-    private fun stopEvents(board: Direction): List<RideEvent> = board.subDirections?.map { RideEvent.Stop(LogStop(it.directionText.str(), it.focusPoint())) }.orEmpty()
+    /**
+     * A transit leg's intermediate stops: the board direction's sub-directions, in travel order.
+     *
+     * A stop the generator could label neither by name nor by code is dropped rather than carried as an
+     * empty string — the timeline would otherwise draw a node and a blank line for it. Dropping it here
+     * rather than at the renderer also keeps [TripLogEntry.Transit.stopCount] honest: the "N stops"
+     * summary counts exactly the stops the leg can actually list.
+     */
+    private fun stopEvents(board: Direction): List<RideEvent> = board.subDirections.orEmpty()
+        .map { LogStop(it.directionText.str(), it.focusPoint()) }
+        .filter { it.name.isNotBlank() }
+        .map { RideEvent.Stop(it) }
 
     /** A minimal route identity when the repository couldn't resolve one (unknown agency / OTP1 path). */
     private fun fallbackRouteLeg(leg: TripLeg) = RouteLegRef(
@@ -189,6 +201,18 @@ object TripLogBuilder {
         board = RouteStopRef(null, leg.from.stopCode, leg.from.name, geoPointOrNull(leg.from.lat, leg.from.lon)),
         alight = RouteStopRef(null, leg.to.stopCode, leg.to.name, geoPointOrNull(leg.to.lat, leg.to.lon))
     )
+
+    /**
+     * How this on-street leg is travelled. Mirrors the generator's own action pick in
+     * [DirectionsGenerator.generateNonTransitDirections][org.onebusaway.android.directions.util
+     * .DirectionsGenerator] — bicycle and car each get their own verb, everything else walks — so the
+     * timeline's header can't disagree with the step text the same leg produced.
+     */
+    private fun TripMode?.streetMode(): StreetMode = when (this) {
+        TripMode.BICYCLE -> StreetMode.BIKE
+        TripMode.CAR -> StreetMode.CAR
+        else -> StreetMode.WALK
+    }
 
     /** True for a walk leg flanked by transit on both sides — a transfer, vs. a first/last-mile walk. */
     private fun List<TripLeg>.isTransferAt(i: Int): Boolean = getOrNull(i - 1)?.mode?.isTransit == true && getOrNull(i + 1)?.mode?.isTransit == true

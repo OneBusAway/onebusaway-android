@@ -73,6 +73,9 @@ fun ObaTheme(content: @Composable () -> Unit) {
  * dark scheme, a white-label brand whose `md_theme_surface` override lands on the other side of the
  * line (see docs/REBRANDING.md), and any nested `MaterialTheme` all need the scheme's answer, not the
  * device's.
+ *
+ * Not `@Composable`: it reads nothing from composition, only its receiver. Obtaining that receiver
+ * (`MaterialTheme.colorScheme`) is the composable part, so call sites are unaffected — but a
+ * non-composable caller that already holds a scheme can use it too.
  */
-@Composable
 fun ColorScheme.isDarkTheme(): Boolean = surface.luminance() < 0.5f

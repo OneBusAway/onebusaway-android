@@ -81,12 +81,16 @@ sealed interface TripLogEntry {
     ) : TripLogEntry
 
     /**
-     * A walk (or bike/car) leg — one node on the spine, its dashed-neutral segment running to the next
-     * node. Expands to its turn-by-turn [steps]. [isTransfer] is true for a walk *between* two transit
-     * legs (vs. the first/last-mile walk), letting the renderer label it accordingly. Tapping the leg
-     * frames [legPoints] (or, with no geometry, recentres on [focusPoint]).
+     * An on-street leg — one node on the spine, its dashed-neutral segment running to the next node.
+     * Expands to its turn-by-turn [steps]. [mode] is how the rider covers it, and picks the header's
+     * verb and node glyph — a bike leg must not read "Walk". [isTransfer] is true for a leg *between*
+     * two transit legs (vs. the first/last-mile one), letting the renderer label it accordingly.
+     * Tapping the leg frames [legPoints] (or, with no geometry, recentres on [focusPoint]).
+     *
+     * Named `Walk` because walking is overwhelmingly the case; [mode] carries the rest.
      */
     data class Walk(
+        val mode: StreetMode,
         val durationMinutes: Long,
         val distanceMeters: Double,
         val isTransfer: Boolean,
@@ -139,6 +143,13 @@ sealed interface RideEvent {
 
 /** Which trip endpoint a [TripLogEntry.Terminal] marks. */
 enum class TerminalKind { START, ARRIVE }
+
+/**
+ * How a rider covers a [TripLogEntry.Walk] leg — the three modes
+ * [TripMode.isOnStreetNonTransit][org.onebusaway.android.directions.model.TripMode] admits, narrowed
+ * to just those so the renderer's verb/glyph choice is total and a transit mode can't reach it.
+ */
+enum class StreetMode { WALK, BIKE, CAR }
 
 /**
  * One turn-by-turn step of a walk leg: its localized instruction [text] (the maneuver only — the

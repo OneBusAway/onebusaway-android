@@ -177,6 +177,22 @@ class TripLogBuilderTest {
         assertEquals(145.0, walk.steps[1].distanceMeters, 0.0)
         assertEquals(boardFrom, walk.steps[1].point)
         assertEquals(3, walk.legPoints.size) // decoded from the leg geometry, for body-tap framing
+        assertEquals(StreetMode.WALK, walk.mode)
+    }
+
+    @Test
+    fun onStreetLegCarriesItsTravelMode_soABikeLegIsNotLabelledAsAWalk() {
+        // The renderer picks the header verb ("Walk"/"Bike"/"Drive") and node glyph from this, so
+        // dropping it silently relabels a bikeshare leg as walking.
+        fun modeOf(mode: TripMode) = TripLogBuilder
+            .build(listOf(walkLeg.copy(mode = mode)), listOf(walkDir), listOf(null))
+            .filterIsInstance<TripLogEntry.Walk>()
+            .single()
+            .mode
+
+        assertEquals(StreetMode.BIKE, modeOf(TripMode.BICYCLE))
+        assertEquals(StreetMode.CAR, modeOf(TripMode.CAR))
+        assertEquals(StreetMode.WALK, modeOf(TripMode.WALK))
     }
 
     @Test
@@ -196,6 +212,27 @@ class TripLogBuilderTest {
         assertEquals("Capitol Hill Station", transit.stopNames().single())
         assertEquals(RealtimeState.Late(2), transit.realtime)
         assertEquals(transitRef, transit.routeLeg)
+    }
+
+    @Test
+    fun anUnlabelledIntermediateStop_isDroppedRatherThanDrawnBlank() {
+        // A stop the generator could name neither by name nor code yields empty text; carrying it would
+        // put a node and an empty line on the spine, and inflate the "N stops" summary past what the
+        // expanded leg can actually show.
+        val withNameless = Direction().apply {
+            isTransit = true
+            subDirections = arrayListOf(
+                Direction().apply { directionText = "Capitol Hill Station" },
+                Direction().apply { directionText = "" }
+            )
+        }
+        val transit = TripLogBuilder
+            .build(listOf(transitLeg), listOf(withNameless, alightDir), listOf(transitRef))
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(listOf("Capitol Hill Station"), transit.stopNames())
+        assertEquals(1, transit.stopCount)
     }
 
     @Test

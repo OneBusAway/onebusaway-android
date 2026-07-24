@@ -704,6 +704,12 @@ private fun LogRowScaffold(
  * A row's background — its leg band, then the spine above and below the row's node — with every
  * measurement resolved up front. Built once per size/metric change by `drawWithCache` and replayed on
  * each frame, so the draw phase does no unit conversion and allocates no [PathEffect].
+ *
+ * **LTR only.** These x offsets are measured from the row's left edge, while the [Row] laying the
+ * columns out would mirror under RTL — so the spine would part company with the nodes it threads. That
+ * is unreachable today (the app declares no `android:supportsRtl` and ships no RTL locale), and is left
+ * unhandled rather than written blind: enabling RTL means mirroring every x here against `size.width`
+ * and verifying it on a real RTL locale, not just flipping a sign.
  */
 private class RowChrome(density: Density, private val model: LogRowModel, timeWidth: Dp, railSplit: Dp) {
     private val railLeft = with(density) { timeWidth.toPx() }
@@ -757,6 +763,17 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 }
 
 /**
+ * The glyph inside an on-street leg's node. Null for [StreetMode.CAR]: the app ships no car drawable
+ * because its planner never asks OTP for car modes (see `TripModes`), and a bare ring is honest where
+ * a walking figure would be wrong. Add `ic_directions_car` here if car planning is ever offered.
+ */
+private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {
+    StreetMode.WALK -> R.drawable.ic_directions_walk
+    StreetMode.BIKE -> R.drawable.ic_directions_bike
+    StreetMode.CAR -> null
+}
+
+/**
  * The node graphic for a row, positioned so its centre sits on the spine's colour-flip point. Route-
  * coloured nodes use [nodeColor] (the leg's colour, already parsed once in [flattenLog]).
  */
@@ -776,7 +793,7 @@ private fun BoxScope.LogNode(content: RowContent, nodeColors: RouteLineColors) {
             )
         )
         is RowContent.WalkHeader ->
-            RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = R.drawable.ic_directions_walk)
+            RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = streetModeIcon(content.entry.mode))
         is RowContent.BoardHeader ->
             FilledNode(26.dp, nodeColor, R.drawable.ic_bus, onNode, 16.dp, shape = RoundedCornerShape(8.dp))
         is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
@@ -862,14 +879,26 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
     )
 }
 
+/**
+ * The header verb for an on-street leg: its travel mode, and whether the leg merely connects two rides.
+ * Each combination is its own string rather than an assembled "<verb> to transfer" — how the two ideas
+ * combine is a translator's call, not a concatenation.
+ */
+private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (mode) {
+    StreetMode.WALK ->
+        if (isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
+    StreetMode.BIKE ->
+        if (isTransfer) R.string.trip_plan_bike_transfer else R.string.step_by_step_non_transit_mode_bicycle_action
+    StreetMode.CAR ->
+        if (isTransfer) R.string.trip_plan_car_transfer else R.string.step_by_step_non_transit_mode_car_action
+}
+
 @Composable
 private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, model: LogRowModel) {
     val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(
-            text = stringResource(
-                if (entry.isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
-            ),
+            text = stringResource(streetActionRes(entry.mode, entry.isTransfer)),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
@@ -919,8 +948,14 @@ private fun ColumnScope.BoardContent(
 ) {
     val context = LocalContext.current
     // The route/headsign/meta block toggles the leg (and highlights it on the map); the board stop + ETA
-    // strip below is its own tap target that zooms to the stop.
-    Column(Modifier.clickable(onClickLabel = expandLabel(model), onClick = onToggle)) {
+    // strip below is its own tap target that zooms to the stop. Because the control is this inner block
+    // rather than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its
+    // own. (Its content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
+    Column(
+        Modifier
+            .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
+            .clickable(onClickLabel = expandLabel(model), onClick = onToggle)
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
             if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
@@ -1083,14 +1118,22 @@ private fun Chevron(expanded: Boolean) {
 }
 
 /**
- * The leg's elapsed duration as a compact delta ("14 min") for the narrow time column — always the
- * abbreviated unit, unlike [ConversionUtils.getFormattedDurationTextNoSeconds] which spells out
- * "minutes" for plural values (too wide here). Hours fold into its "1h 30min" form.
+ * The leg's elapsed duration as a compact delta ("14min", "1h 30min") for the narrow time column.
+ * Always the abbreviated unit, unlike [ConversionUtils.getFormattedDurationTextNoSeconds], which
+ * spells out "minutes" below the hour (too wide here) — and which is also why the two forms are
+ * assembled from their own format resources rather than by delegating the hours case to that helper:
+ * it puts no space before its "min", so borrowing it left one column printing both "45 min" and
+ * "1h 30min". The unit rides inside each resource, so spacing and order stay a translator's call.
  */
-private fun deltaText(minutes: Long, context: Context): String = if (minutes >= 60) {
-    ConversionUtils.getFormattedDurationTextNoSeconds(minutes * 60, false, context)
-} else {
-    "$minutes ${context.getString(R.string.minutes_abbreviation)}"
+private fun deltaText(minutes: Long, context: Context): String {
+    // Int args, matching the plural call sites below — a leg is never long enough to overflow, and %d
+    // format args are checked against Integer.
+    val hours = (minutes / 60).toInt()
+    return if (hours > 0) {
+        context.getString(R.string.trip_plan_delta_hours_minutes, hours, (minutes % 60).toInt())
+    } else {
+        context.getString(R.string.trip_plan_delta_minutes, minutes.toInt())
+    }
 }
 
 /** The walk leg's distance ("0.2 mi"); blank when the leg carries no distance. Its duration is the delta. */
@@ -1132,6 +1175,7 @@ private fun TripResultsPreview() {
                     place = "5th Ave & Pine St"
                 ),
                 TripLogEntry.Walk(
+                    mode = StreetMode.WALK,
                     durationMinutes = 4,
                     distanceMeters = 320.0,
                     isTransfer = false,

@@ -41,6 +41,7 @@ class TripLogRowsTest {
     private val arrive = TripLogEntry.Terminal(TerminalKind.ARRIVE, ServerTime(32 * 60_000L), "Alaska Junction")
 
     private val walk = TripLogEntry.Walk(
+        mode = StreetMode.WALK,
         durationMinutes = 4,
         distanceMeters = 320.0,
         isTransfer = false,

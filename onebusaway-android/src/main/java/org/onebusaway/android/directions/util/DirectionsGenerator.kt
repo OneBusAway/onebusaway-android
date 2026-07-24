@@ -295,7 +295,10 @@ class DirectionsGenerator(
                 if (!TextUtils.isEmpty(extraStopInformation)) {
                     subDirectionText += " ($extraStopInformation)"
                 }
-                subDirection.directionText = subDirectionText
+                // Trimmed so a stop with a code but no name reads "(500)" rather than leading with the
+                // separator space — and so a stop with neither is empty, which the trip-log drops
+                // outright instead of drawing a nameless node (see TripLogBuilder.stopEvents).
+                subDirection.directionText = subDirectionText.trim()
                 subDirection.icon = stopIcon
                 subDirection.focusLat = stop.lat
                 subDirection.focusLon = stop.lon

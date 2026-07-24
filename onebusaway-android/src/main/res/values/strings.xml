@@ -922,8 +922,19 @@
     <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->
     <string name="trip_plan_expand_leg">Show steps</string>
     <string name="trip_plan_collapse_leg">Hide steps</string>
-    <!-- A walking leg that connects two transit rides (a transfer), vs. a first/last-mile walk -->
+    <!-- An on-street leg that connects two transit rides (a transfer), vs. a first/last-mile one. One
+         string per travel mode, rather than assembling a verb and "to transfer" at runtime, so the
+         phrasing stays a translator's call. -->
     <string name="trip_plan_walk_transfer">Walk to transfer</string>
+    <string name="trip_plan_bike_transfer">Bike to transfer</string>
+    <string name="trip_plan_car_transfer">Drive to transfer</string>
+    <!-- A leg's elapsed duration in the trip-log's narrow time column. Abbreviated units, kept inside
+         the format string (rather than appended in code) so spacing and word order stay translatable.
+         Keep the two forms spaced alike — they share one column. -->
+    <!-- Under an hour: %1$d is whole minutes -->
+    <string name="trip_plan_delta_minutes">%1$dmin</string>
+    <!-- An hour or more: %1$d is whole hours, %2$d the remaining minutes -->
+    <string name="trip_plan_delta_hours_minutes">%1$dh %2$dmin</string>
     <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
     <string name="trip_plan_realtime_on_time">On time</string>
     <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->

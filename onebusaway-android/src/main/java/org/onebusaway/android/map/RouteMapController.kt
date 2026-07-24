@@ -110,6 +110,26 @@ class RouteMapController(
     // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
     private var highlightedSegment: List<GeoPoint> = emptyList()
 
+    // The additional ridden legs of a stay-aboard interline (#2000) drilled into route focus, beyond the
+    // leader route/direction: each names a route continued onto (the same route in another direction for
+    // a self-interline, or a different route to load for a cross-route interline) and its seam stop. The
+    // focus draws each segment's shape + stops and shows the shared block vehicle across them. Empty for
+    // every ordinary route launch. Set in start(); the maps/polls below are (re)built as the routes load.
+    private var extraSegments: List<RiddenSegment> = emptyList()
+
+    // Loaded route maps for the extra segments' *other* routes, keyed by routeId (a self-interline
+    // segment reuses the leader's [routeShape], so only distinct cross-route ids land here). (Re)built by
+    // onRouteLoaded; read by the extra-segment shape/stop helpers.
+    private var extraRouteMaps: Map<String, RouteMap> = emptyMap()
+
+    // The latest vehicle poll per extra route id — a cross-route interline polls each route so the one
+    // shared block vehicle shows through every phase. Merged with [latestPoll] in sampleVehicles; empty
+    // otherwise.
+    private var extraPolls: Map<String, VehiclePoll> = emptyMap()
+
+    // The per-extra-route vehicle poll jobs, cancelled alongside [vehicleJob].
+    private var extraVehicleJobs: List<Job> = emptyList()
+
     // A restore/deep-link override for the initial direction (the user-selected direction persisted
     // across process death); when set and still valid it wins over the anchor stop's direction.
     private var initialDirectionOverride: Int? = null
@@ -152,6 +172,18 @@ class RouteMapController(
     // resolved (it reads null during the Pending window, which no caller relies on).
     private val currentDirectionId: Int?
         get() = (directionState as? DirectionState.Resolved)?.directionId
+
+    /** True while a stay-aboard interline is drilled in — the ride spans more than the leader leg (#2000);
+     *  the focus then draws each extra segment's route/direction and shows the shared vehicle across all. */
+    private val isInterlineComposite: Boolean
+        get() = extraSegments.isNotEmpty()
+
+    /** The loaded [RouteMap] backing an extra segment: the leader's own route when the ids match (a
+     *  self-interline's other direction), else its separately-loaded route (null until it loads). */
+    private fun RiddenSegment.routeMap(): RouteMap? = if (routeId == this@RouteMapController.routeId) routeShape else extraRouteMaps[routeId]
+
+    /** The direction an extra segment rides, resolved from its seam anchor against its route's stops. */
+    private fun RiddenSegment.directionId(): Int? = routeMap()?.stops?.anchorDirectionId(anchorStopId)
 
     private val presentationDirectionId: Int?
         get() = when (val state = directionState) {
@@ -216,11 +248,17 @@ class RouteMapController(
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
-        highlightedSegment: List<GeoPoint> = emptyList()
+        highlightedSegment: List<GeoPoint> = emptyList(),
+        extraSegments: List<RiddenSegment> = emptyList()
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
         this.highlightedSegment = highlightedSegment
+        this.extraSegments = extraSegments
+        // (Re)built as the extra routes load / poll in onRouteLoaded + startVehiclePolling; cleared here
+        // so a prior focus's routes/polls can't leak into this one during the load window.
+        this.extraRouteMaps = emptyMap()
+        this.extraPolls = emptyMap()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
@@ -292,8 +330,13 @@ class RouteMapController(
         // republish when it actually changes.
         if (highlightedSegment != request.highlightedSegment) {
             highlightedSegment = request.highlightedSegment
+            // No reload here (reframe contract), so extra-interline routes aren't re-fetched — this
+            // reframe path is only hit for a same-route+direction re-tap, where the extras are unchanged.
+            extraSegments = request.extraSegments
+            // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
+            // call publishes.
             showDirectionStops()
-            publishMapPresentation()
+            showDirectionPolylines()
         }
         request.initialDirectionId?.let { selectDirection(it) }
         request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
@@ -342,15 +385,38 @@ class RouteMapController(
         val id = routeId ?: return null
         val resolved = directionState as? DirectionState.Resolved ?: return null
         val poll = latestPoll ?: return null
+        // A stay-aboard interline is one shared block vehicle running consecutive trips across the ridden
+        // routes/directions, so don't direction-filter and merge each extra route's poll — the vehicle
+        // must show through every phase, not vanish when it flips direction/route at a seam (#2000).
+        val directionFilter = if (isInterlineComposite) null else resolved.directionId
+        val leaderVehicles = extrapolatedVehicles(
+            poll.response,
+            setOf(id),
+            now,
+            directionFilter,
+            includeDataFixPoint,
+            tripObservationRepository::lookupTripState
+        )
+        val extraVehicles = if (isInterlineComposite) {
+            extraPolls.flatMap { (extraRouteId, extraPoll) ->
+                extrapolatedVehicles(
+                    extraPoll.response,
+                    setOf(extraRouteId),
+                    now,
+                    null,
+                    includeDataFixPoint,
+                    tripObservationRepository::lookupTripState
+                )
+            }
+        } else {
+            emptyList()
+        }
+        val merged = leaderVehicles + extraVehicles
+        // Dedup only in the composite case (the one shared vehicle can briefly surface in two routes'
+        // polls at a seam); the plain path stays byte-identical to before.
+        val vehicles = if (isInterlineComposite) merged.distinctBy { it.status.activeTripId } else merged
         return MapVehicles(
-            markers = extrapolatedVehicles(
-                poll.response,
-                setOf(id),
-                now,
-                resolved.directionId,
-                includeDataFixPoint,
-                tripObservationRepository::lookupTripState
-            ).map { it.toMarker() },
+            markers = vehicles.map { it.toMarker() },
             response = poll.response
         )
     }
@@ -474,13 +540,18 @@ class RouteMapController(
     fun stop() {
         routeJob?.cancel()
         vehicleJob?.cancel()
+        extraVehicleJobs.forEach { it.cancel() }
         selectionJob?.cancel()
         routeJob = null
         vehicleJob = null
+        extraVehicleJobs = emptyList()
         selectionJob = null
         routeId = null
         directionStopId = null
         highlightedSegment = emptyList()
+        extraSegments = emptyList()
+        extraRouteMaps = emptyMap()
+        extraPolls = emptyMap()
         initialDirectionOverride = null
         routeStops = emptyList()
         routeStopRoutes = emptyList()
@@ -710,15 +781,21 @@ class RouteMapController(
             // The repository narrows the stops (and the vehicle direction id) to directionStopId's
             // direction when set; a whole-route launch passes null and gets the full route back.
             val result = routeRepository.getRoute(id, directionStopId)
+            // Load each *other* route a stay-aboard interline continues onto (a self-interline segment
+            // reuses the leader's map, so it's excluded here), so their shapes/stops/vehicles can be drawn
+            // alongside (#2000). A failed extra load is dropped — the leg still frames its geometry.
+            val extras = extraSegments.map { it.routeId }.distinct().filter { it != id }
+                .mapNotNull { extraRouteId -> routeRepository.getRoute(extraRouteId).getOrNull()?.let { extraRouteId to it } }
+                .toMap()
             // Clear the spinner once the load resolves — before dispatching, so it's cleared on the
             // error path too (mirrors StopsMapController). A cancelled load never reaches here; the
             // view transition that cancelled it clears progress via leaveCurrentView().
             host.setProgress(false)
-            onRouteLoaded(result, zoomToRoute)
+            onRouteLoaded(result, extras, zoomToRoute)
         }
     }
 
-    private fun onRouteLoaded(result: Result<RouteMap?>, zoomToRoute: Boolean) {
+    private fun onRouteLoaded(result: Result<RouteMap?>, extraRoutes: Map<String, RouteMap>, zoomToRoute: Boolean) {
         // The route load has resolved (success or failure), so release the vehicle layer the sampler held
         // back in direction mode: fall back to Resolved(null) — vehicles unfiltered — and publish the set
         // so the renderer reconciles them, rather than leaving them hidden until the next poll. The
@@ -739,6 +816,9 @@ class RouteMapController(
         // Retain the full route so a later direction switch re-filters locally (no reload). The shown
         // direction prefers a valid restore override (a persisted user switch), else the anchor stop's.
         routeStops = routeMap.stops
+        // Retain the interline's other loaded routes so the extra-segment shape/stop/vehicle helpers can
+        // read them (a self-interline segment reads the leader's routeShape instead) (#2000).
+        extraRouteMaps = extraRoutes
         routeStopRoutes = routeMap.routes
         directions = routeMap.directions
         routeShape = routeMap
@@ -770,17 +850,49 @@ class RouteMapController(
         if (segment.isDrawableSegment()) host.frameItineraryLeg(segment) else host.frameRoute()
     }
 
-    /** Retain the route's stops narrowed to [currentDirectionId] as the base route presentation. */
+    /**
+     * Retain the ride's stops as the base route presentation: the leader route's stops narrowed to
+     * [currentDirectionId], plus — for a stay-aboard interline (#2000) — each extra segment's route/
+     * direction stops, all clipped to the ridden [highlightedSegment]. Each stop keeps its own
+     * route+direction key so cross-route stops colour correctly.
+     */
     private fun showDirectionStops() {
-        val route = routeId ?: return
-        val stops = routeStops.stopsForDirection(currentDirectionId).onSegment(highlightedSegment)
+        val leaderRoute = routeId ?: return
+        val stopsById = LinkedHashMap<String, ObaStop>()
+        val keysById = HashMap<String, MutableSet<RouteDirectionKey>>()
+        fun collect(stops: List<ObaStop>, key: RouteDirectionKey) {
+            for (stop in stops) {
+                stopsById.putIfAbsent(stop.id, stop)
+                keysById.getOrPut(stop.id) { mutableSetOf() }.add(key)
+            }
+        }
+        collect(
+            routeStops.stopsForDirection(currentDirectionId).onSegment(highlightedSegment),
+            RouteDirectionKey(leaderRoute, currentDirectionId)
+        )
+        // Extra interline legs contribute their own route/direction's stops on the ridden segment; a
+        // self-interline segment reads the leader's route (its other direction), a cross-route one its
+        // separately-loaded route.
+        for (segment in extraSegments) {
+            val route = segment.routeMap() ?: continue
+            val directionId = segment.directionId()
+            collect(
+                route.stops.stopsForDirection(directionId).onSegment(highlightedSegment),
+                RouteDirectionKey(segment.routeId, directionId)
+            )
+        }
+        val stops = stopsById.values.toList()
         baseStopPresentation = RouteStopPresentation(
             stops = stops,
-            routes = routeStopRoutes,
-            routeDirectionsByStopId = stops.associate {
-                it.id to setOf(RouteDirectionKey(route, currentDirectionId))
-            },
-            projectedPoints = projectStopsOntoShape(stops)
+            routes = (routeStopRoutes + extraRouteMaps.values.flatMap { it.routes }).distinctBy { it.id },
+            routeDirectionsByStopId = keysById.mapValues { it.value.toSet() },
+            // An interline ride spans multiple direction shapes, so project onto the ridden segment (the
+            // emphasized line every leg's stops sit on); a plain leg keeps projecting onto its own shape.
+            projectedPoints = if (isInterlineComposite) {
+                projectStopsOntoPolylines(stops, listOf(highlightedSegment))
+            } else {
+                projectStopsOntoShape(stops)
+            }
         )
         publishMapPresentation()
     }
@@ -804,8 +916,10 @@ class RouteMapController(
      * arrows are stamped only when the direction's own travel-ordered shape is used — never on the
      * whole-route merged fallback (a direction that carried no shape on the wire).
      */
-    private fun directionPolylines(directionId: Int?): List<RoutePolyline> {
-        val route = routeShape ?: return emptyList()
+    private fun directionPolylines(directionId: Int?): List<RoutePolyline> = routeShape?.let { directionPolylines(it, directionId) }.orEmpty()
+
+    /** [directionPolylines] against an explicit [route] map — used to draw an interline's extra routes. */
+    private fun directionPolylines(route: RouteMap, directionId: Int?): List<RoutePolyline> {
         val shape = route.shapeForDirection(directionId)
         return shape.polylines.map { points ->
             focusedRoutePolyline(
@@ -819,7 +933,13 @@ class RouteMapController(
     /** Re-draw the base route for [currentDirectionId]. Called on load and on every direction switch. */
     private fun showDirectionPolylines() {
         if (routeShape == null) return
-        basePolylines = directionPolylines(currentDirectionId)
+        // A stay-aboard interline (#2000) draws each extra segment's own route/direction shape alongside
+        // the leader's, as faint context, so the routes/directions the rider stays aboard through are all
+        // visible. An ordinary leg draws only its single direction.
+        basePolylines = directionPolylines(currentDirectionId) +
+            extraSegments.flatMap { segment ->
+                segment.routeMap()?.let { directionPolylines(it, segment.directionId()) }.orEmpty()
+            }
         publishMapPresentation()
     }
 
@@ -856,6 +976,7 @@ class RouteMapController(
      */
     private fun startVehiclePolling(initialDelayMs: Long) {
         vehicleJob?.cancel()
+        extraVehicleJobs.forEach { it.cancel() }
         val id = routeId ?: return
         vehicleJob = scope.launch {
             if (initialDelayMs > 0L) {
@@ -870,6 +991,20 @@ class RouteMapController(
             tripObservationRepository.routeVehiclesStream(id, VEHICLE_REFRESH_PERIOD_MS).collect { response ->
                 latestPoll = VehiclePoll(response, SystemClock.elapsedRealtimeNanos())
                 publishVehicleSet()
+            }
+        }
+        // A cross-route interline (#2000) polls each other route too, so the one shared block vehicle
+        // shows through every phase; sampleVehicles merges these polls. (A self-interline segment shares
+        // the leader's route, so it's excluded — the leader poll already covers it.)
+        extraVehicleJobs = extraSegments.map { it.routeId }.distinct().filter { it != id }.map { extraRouteId ->
+            scope.launch {
+                if (initialDelayMs > 0L) {
+                    delay(initialDelayMs)
+                }
+                tripObservationRepository.routeVehiclesStream(extraRouteId, VEHICLE_REFRESH_PERIOD_MS).collect { response ->
+                    extraPolls = extraPolls + (extraRouteId to VehiclePoll(response, SystemClock.elapsedRealtimeNanos()))
+                    publishVehicleSet()
+                }
             }
         }
     }

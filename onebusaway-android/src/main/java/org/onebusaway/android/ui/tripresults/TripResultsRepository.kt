@@ -26,8 +26,8 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.util.DirectionsGenerator
+import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.util.geoPointOrNull
-import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
@@ -60,19 +60,11 @@ class DefaultTripResultsRepository @Inject constructor(
 
     /** Projects one [TripItinerary] into the structured [ItineraryOption] the card renders. */
     private fun summarize(itinerary: TripItinerary): ItineraryOption {
-        val transitLegs = itinerary.legs.filter { it.mode?.isTransit == true }
+        val badges = Interlines.routeBadges(itinerary.legs)
         // A transit trip shows route badges; a walk-only trip shows the walk glyph; anything else
         // (bike/car) keeps the legacy mode-label title.
         val mode = when {
-            transitLegs.isNotEmpty() -> ModeSummary.Routes(
-                transitLegs.map { leg ->
-                    RouteBadge(
-                        shortName = leg.badgeShortName(),
-                        // routeColor is a bare wire hex; tolerate a leading '#' just in case.
-                        routeColor = parseObaHexColor(leg.routeColor?.removePrefix("#"))
-                    )
-                }
-            )
+            badges.isNotEmpty() -> ModeSummary.Routes(badges)
             itinerary.legs.all { it.mode == TripMode.WALK } -> ModeSummary.Walk
             else -> ModeSummary.Label(DirectionsGenerator(itinerary.legs, context).itineraryTitle)
         }
@@ -88,9 +80,6 @@ class DefaultTripResultsRepository @Inject constructor(
         )
     }
 
-    /** The route's display short name (short name, else the route, else the id). */
-    private fun TripLeg.badgeShortName(): String = listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }.orEmpty()
-
     override suspend fun directionsFor(
         itinerary: TripItinerary
     ): Result<List<DirectionItem>> = withContext(Dispatchers.IO) {
@@ -100,20 +89,53 @@ class DefaultTripResultsRepository @Inject constructor(
             // transit leg's OTP route/stop ids are resolved to OBA ids here (a suspend, network-backed
             // step) so the drawer can highlight the route and show each stop's live ETAs.
             val flat = DirectionsGenerator(itinerary.legs, context).directions
-            val routeLegRefs = itinerary.legs.map { leg ->
-                if (leg.mode?.isOnStreetNonTransit == true) null else resolveRouteLeg(leg)
-            }
+            val routeLegRefs = resolveRouteLegRefs(itinerary.legs)
             DirectionCardGrouping.groupByLeg(itinerary.legs, flat, routeLegRefs)
         }
     }
 
-    /** Resolve a transit leg's OTP route/stop ids onto the OBA ids the drawer's map + ETA strips need. */
-    private suspend fun resolveRouteLeg(leg: TripLeg): RouteLegRef = RouteLegRef(
-        routeId = otpObaIdResolver.obaRouteId(leg.routeId, leg.agencyId, leg.agencyName),
-        headsign = leg.headsign,
-        board = leg.from.resolveStop(leg),
-        alight = leg.to.resolveStop(leg)
-    )
+    /**
+     * Resolves one [RouteLegRef] per transit chain ([Interlines.chains]), aligned to [legs] (non-transit
+     * legs and interlined continuations are null). A stay-aboard interline (#2000) collapses into the
+     * chain leader's ref: it boards at the leader's origin, alights at the *last* leg's destination, and
+     * lists each cross-route change ([RouteLegRef.interlineTransitions]) so the rider is told to stay
+     * aboard rather than get off and reboard. A self-interline (same route) leaves no transition, hiding
+     * the seam entirely.
+     */
+    private suspend fun resolveRouteLegRefs(legs: List<TripLeg>): List<RouteLegRef?> {
+        val refs = MutableList<RouteLegRef?>(legs.size) { null }
+        for (chain in Interlines.chains(legs)) {
+            val leader = legs[chain.leaderIndex]
+            val transitions = chain.transitionLegIndices.map { j ->
+                InterlineTransition(
+                    routeShortName = Interlines.badgeShortName(legs[j]),
+                    headsign = legs[j].headsign,
+                    stop = legs[j].from.resolveStop(legs[j])
+                )
+            }
+            // The ride's legs beyond the leader — each continued onto on the same vehicle, boarding at
+            // its own seam stop. The map focus loads/draws each (reusing the leader's route when the id
+            // matches — a self-interline) and shows the shared vehicle across them (#2000). A leg whose
+            // route can't be resolved to an OBA id is dropped (it can't be loaded), same as the leader.
+            val extraSegments = ((chain.leaderIndex + 1)..chain.alightIndex).mapNotNull { j ->
+                val routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName)
+                    ?: return@mapNotNull null
+                RiddenSegment(
+                    routeId = routeId,
+                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName)
+                )
+            }
+            refs[chain.leaderIndex] = RouteLegRef(
+                routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
+                headsign = leader.headsign,
+                board = leader.from.resolveStop(leader),
+                alight = legs[chain.alightIndex].to.resolveStop(legs[chain.alightIndex]),
+                interlineTransitions = transitions,
+                extraSegments = extraSegments
+            )
+        }
+        return refs
+    }
 
     private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(
         stopId = otpObaIdResolver.obaStopId(stopId, leg.agencyId, leg.agencyName),

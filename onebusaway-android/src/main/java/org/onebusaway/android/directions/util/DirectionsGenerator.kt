@@ -28,6 +28,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
+import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.time.ServerTime
 
 /**
@@ -362,11 +363,6 @@ class DirectionsGenerator(
 
     /* Added for Trip Plan titles */
 
-    private fun getTransitTitle(leg: TripLeg): String? {
-        // As a work-around for #662, we don't use leg.tripShortName
-        return arrayOf(leg.routeShortName, leg.route, leg.routeId).firstOrNull { !it.isNullOrEmpty() }
-    }
-
     val itineraryTitle: String
         get() {
             if (legs.size == 1) {
@@ -384,7 +380,7 @@ class DirectionsGenerator(
             for (leg in legs) {
                 val mode = leg.mode
                 if (mode?.isTransit == true) {
-                    tokens.add(getTransitTitle(leg))
+                    tokens.add(leg.routeDisplayShortName())
                 } else {
                     if (mode == TripMode.BICYCLE) {
                         tokens.add(applicationContext.getString(R.string.transit_directions_bikeshare_label))

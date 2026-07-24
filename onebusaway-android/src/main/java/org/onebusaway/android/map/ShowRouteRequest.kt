@@ -39,11 +39,17 @@ import org.onebusaway.android.util.GeoPoint
  * @property highlightedSegment when non-empty (a trip-plan transit leg drilled into route focus), the
  *   polyline of the board→alight portion the user rides — drawn as a thick line over the full route so
  *   the traveled segment stands out. Empty for every non-directions "show route" caller.
+ * @property extraSegments the *additional* ridden legs of a stay-aboard interline (#2000), beyond the
+ *   leader ([routeId] + [directionStopId]). Non-empty only for a folded interline card: a self-interline
+ *   (12→12) carries a segment with the same [routeId] (its other direction); a cross-route interline
+ *   (45→75) carries a different route to load and draw alongside. The route focus draws each segment's
+ *   shape + stops and shows the shared block vehicle across them all. Empty for every ordinary caller.
  */
 data class ShowRouteRequest(
     val routeId: String,
     val directionStopId: String? = null,
     val focusTripId: String? = null,
     val initialDirectionId: Int? = null,
-    val highlightedSegment: List<GeoPoint> = emptyList()
+    val highlightedSegment: List<GeoPoint> = emptyList(),
+    val extraSegments: List<RiddenSegment> = emptyList()
 )

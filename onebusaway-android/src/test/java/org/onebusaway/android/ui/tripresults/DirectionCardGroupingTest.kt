@@ -166,4 +166,37 @@ class DirectionCardGroupingTest {
             .groupByLeg(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef)).single()
         assertEquals(transitRef, transit.routeLeg)
     }
+
+    // A stay-aboard continuation of [transitLeg] onto a second leg — the interlined leg the repository
+    // would fold away. Its own routeLegRef is null (the chain leader's ref spans the whole ride).
+    private val interlinedLeg = transitLeg.copy(interlineWithPreviousLeg = true)
+
+    @Test
+    fun interlinedLeg_isFoldedIntoTheLeaderCard_notItsOwn() {
+        // Two transit legs sharing a vehicle (a self-interline) render as ONE card, so the directions
+        // never say "get off … get on" at the seam (#2000).
+        val cards = DirectionCardGrouping.groupByLeg(
+            legs = listOf(transitLeg, interlinedLeg),
+            flatDirections = listOf(boardDir, alightDir, boardDir, alightDir),
+            routeLegRefs = listOf(transitRef, null)
+        )
+        assertEquals(1, cards.size)
+        assertTrue(cards.single().isTransit)
+        assertEquals(transitRef, cards.single().routeLeg)
+    }
+
+    @Test
+    fun foldedCard_concatenatesTheChainPolyline_andNumbersSequentially() {
+        val cards = DirectionCardGrouping.groupByLeg(
+            legs = listOf(walkLeg, transitLeg, interlinedLeg),
+            flatDirections = listOf(walkDir, boardDir, alightDir, boardDir, alightDir),
+            routeLegRefs = listOf(null, transitRef, null)
+        )
+        assertEquals(2, cards.size)
+        // Walk card is "1.", the folded transit chain is "2." — numbering counts emitted cards, not legs.
+        assertTrue(cards[0].text.startsWith("1. "))
+        assertTrue(cards[1].text.startsWith("2. "))
+        // The chain card frames both legs' geometry (3 + 3 decoded points).
+        assertEquals(6, cards[1].legPoints.size)
+    }
 }

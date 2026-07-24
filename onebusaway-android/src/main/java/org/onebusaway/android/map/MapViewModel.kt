@@ -301,7 +301,8 @@ class MapViewModel @Inject constructor(
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
-        highlightedSegment: List<GeoPoint> = emptyList()
+        highlightedSegment: List<GeoPoint> = emptyList(),
+        extraSegments: List<RiddenSegment> = emptyList()
     ) {
         leaveCurrentView(clearStopFocus = !preserveStopFocus)
         persistRoute(routeId, directionStopId, initialDirectionId)
@@ -311,7 +312,8 @@ class MapViewModel @Inject constructor(
             directionStopId,
             initialDirectionId,
             focusTripId,
-            highlightedSegment
+            highlightedSegment,
+            extraSegments
         )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
@@ -456,7 +458,8 @@ class MapViewModel @Inject constructor(
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
-                highlightedSegment = request.highlightedSegment
+                highlightedSegment = request.highlightedSegment,
+                extraSegments = request.extraSegments
             )
         }
     }

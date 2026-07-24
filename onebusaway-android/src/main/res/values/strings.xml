@@ -974,6 +974,9 @@
     <!-- Transit instruction start -->
     <string name="step_by_step_transit_get_on">Get on</string>
     <string name="step_by_step_transit_get_off">Get off</string>
+    <!-- Shown when the trip stays aboard the same vehicle but its route changes (a stay-aboard
+         interline, #2000); %1$s is the new route label, e.g. "12 to Downtown". -->
+    <string name="step_by_step_transit_interline">Stay on board — the vehicle becomes %1$s</string>
     <!--                This is exactly the formula that should be used, because the app won't include
                     the destination stop under this text, so would be best to avoid expressions like
                      "stops to destination". For example in the trip Barcelona/Paris/London/New York,

@@ -81,6 +81,12 @@ data class TripLeg(
     val headsign: String? = null,
     val tripId: String? = null,
     val realTime: Boolean = false,
+    // OTP2 `Leg.interlineWithPreviousLeg`: true when the same vehicle continues from the previous leg
+    // and the passenger stays aboard (a self-interline where a route reverses onto itself, or a
+    // stay-aboard interline onto a different route). The directions layer folds such a leg into the
+    // previous leg's card instead of emitting a spurious get-off/get-on pair (#2000). Always false on
+    // the OTP1 path.
+    val interlineWithPreviousLeg: Boolean = false,
     val distance: Double = 0.0,
     @Serializable(with = DurationSerializer::class) val duration: Duration = Duration.ZERO,
     @Serializable(with = DurationSerializer::class) val departureDelay: Duration = Duration.ZERO,
@@ -120,6 +126,14 @@ data class TripStep(
     val lat: Double = 0.0,
     val lon: Double = 0.0
 )
+
+/**
+ * The leg's display short name: its route short name, else the OTP1 flat route string, else the route
+ * id; null when the leg carries none. As a #662 work-around this deliberately never uses the trip short
+ * name. Shared by the directions generator's itinerary title and the interline badge/label logic so the
+ * fallback lives in one place.
+ */
+fun TripLeg.routeDisplayShortName(): String? = listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }
 
 @Serializable
 data class TripLegGeometry(val points: String? = null, val length: Int = 0)

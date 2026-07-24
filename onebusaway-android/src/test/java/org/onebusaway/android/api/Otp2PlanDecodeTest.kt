@@ -18,6 +18,7 @@ package org.onebusaway.android.api
 import java.time.OffsetDateTime
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -50,6 +51,7 @@ class Otp2PlanDecodeTest {
             duration = 120.0,
             distance = 123.4,
             realTime = null,
+            interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:02:00-07:00", estimated = null),
             from = from(place(name = "Origin", lat = 47.6, lon = -122.3)),
@@ -82,6 +84,7 @@ class Otp2PlanDecodeTest {
             duration = 600.0,
             distance = null,
             realTime = true,
+            interlineWithPreviousLeg = true,
             start = PlanQuery.Start(
                 scheduledTime = "2026-07-11T10:02:00-07:00",
                 estimated = PlanQuery.Estimated(time = "2026-07-11T10:02:30-07:00", delay = "PT30S")
@@ -136,6 +139,8 @@ class Otp2PlanDecodeTest {
         assertEquals(iso("2026-07-11T10:00:00-07:00"), walk.startTime)
         assertEquals(iso("2026-07-11T10:02:00-07:00"), walk.endTime)
         assertEquals("Origin", walk.from.name)
+        // A null wire `interlineWithPreviousLeg` maps to false (an ordinary leg, no stay-aboard seam).
+        assertFalse(walk.interlineWithPreviousLeg)
         assertEquals(47.6, walk.from.lat!!, 1e-6)
         // No stop/rentalVehicle/vehicleParking/vehicleRentalStation on the origin place -> NORMAL.
         assertEquals(TripVertexType.NORMAL, walk.from.vertexType)
@@ -157,6 +162,7 @@ class Otp2PlanDecodeTest {
         assertEquals("Metro", bus.agencyName)
         assertEquals("Downtown", bus.headsign)
         assertEquals("1_trip_5", bus.tripId)
+        assertTrue("interlineWithPreviousLeg maps through from the wire", bus.interlineWithPreviousLeg)
         // start.estimated is present (real-time delay) — endTime/startTime prefer estimated.time.
         assertEquals(iso("2026-07-11T10:02:30-07:00"), bus.startTime)
         assertEquals(30.seconds, bus.departureDelay)
@@ -191,6 +197,7 @@ class Otp2PlanDecodeTest {
             duration = 60.0,
             distance = 10.0,
             realTime = false,
+            interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:01:00-07:00", estimated = null),
             from = from(place(name = "X", lat = 1.0, lon = 2.0)),

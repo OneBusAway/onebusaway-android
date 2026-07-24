@@ -31,6 +31,7 @@ import org.onebusaway.android.analytics.PlausibleAnalytics
 import org.onebusaway.android.api.data.RouteDataSource
 import org.onebusaway.android.app.di.AppScope
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.util.KeyedMutex
 import org.onebusaway.android.util.routeDisplayNames
 
 /**
@@ -72,6 +73,11 @@ class RouteFavoritesRepository @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) : RouteFavorites {
 
+    // Serializes writes per route id so two rapid taps on the same star (star then unstar) can't reach
+    // the store out of order and leave it disagreeing with the last tap (#2001). Every route-star
+    // surface funnels through [setFavorite], so guarding here covers them uniformly.
+    private val writeGuard = KeyedMutex<String>()
+
     /** The starred route ids, live: import-gated, and deduped so an unrelated `routes` write (a route
      *  recorded on an arrivals load) doesn't re-emit an identical set. */
     override fun favoriteRouteIds(): Flow<Set<String>> = routeDao.favoriteRouteIds()
@@ -93,7 +99,7 @@ class RouteFavoritesRepository @Inject constructor(
         longName: String?,
         url: String?,
         favorite: Boolean
-    ) {
+    ) = writeGuard.withLock(routeId) {
         importGate.awaitReady()
         val regionId = regionRepository.region.value?.id
         // Ensure the row for the folder JOIN without counting a "use" — a favorite toggle must not bump

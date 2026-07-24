@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.onebusaway.android.database.oba.RouteFavoritesRepository
+import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.StopFavoritesRepository
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.ui.home.FocusedStop
@@ -36,7 +36,9 @@ import org.onebusaway.android.util.runCatchingCancellable
 /** Route- and stop-favorite state for the shared focus banner. */
 @HiltViewModel
 class FocusBannerViewModel @Inject constructor(
-    private val routeFavorites: RouteFavoritesRepository,
+    // The narrow route-star seam (not the concrete repository) so the banner's overlay reconcile is
+    // JVM-unit-testable with a fake (#2001); Hilt binds it to RouteFavoritesRepository.
+    private val routeFavorites: RouteFavorites,
     private val stopFavorites: StopFavoritesRepository
 ) : ViewModel() {
 

@@ -34,15 +34,17 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
 /**
- * Pixel-level checks on the joined route badge (#2010) — the two things that make it read as one chip
- * of several routes rather than as separate badges:
- *  - its route colors meet **directly**, with none of the surface behind showing through as a seam;
- *  - they meet along a **slash-like diagonal**, not a vertical edge.
+ * Pixel-level checks on the joined route badge (#2010) — what makes it read as one bounded chip of
+ * several routes rather than as separate badges, or as one long name:
+ *  - its route colors meet **directly**, with none of the surface behind showing through as a gap;
+ *  - they meet along a **slash-like diagonal**, not a vertical edge;
+ *  - that meeting line, and the badge's outline, are drawn in black.
  *
  * Rendering assertions, so they live on-device: the badge is drawn over a garish background that must
  * not appear anywhere inside it, and the color boundary is located on a high and a low scan line to
- * confirm which way it leans. Reading a run of one color (rather than the first pixel that differs)
- * keeps the glyphs drawn on top of that color from being mistaken for the boundary.
+ * confirm which way it leans. Scans start inside the outline ([EDGE_INSET]) and read a *run* of one
+ * color rather than the first pixel that differs, so neither the outline nor the glyphs drawn on a
+ * band are mistaken for the boundary.
  */
 class RouteBadgeChipRenderTest {
 
@@ -83,7 +85,7 @@ class RouteBadgeChipRenderTest {
 
         val pixels = badgePixels()
         val leaked = interiorRows(pixels).flatMap { y ->
-            (1 until pixels.width - 1).filter { x -> pixels[x, y] == backdrop }.map { x -> x to y }
+            (EDGE_INSET until pixels.width - EDGE_INSET).filter { x -> pixels[x, y] == backdrop }.map { x -> x to y }
         }
 
         assertEquals("backdrop visible inside the badge at $leaked", emptyList<Pair<Int, Int>>(), leaked)
@@ -109,16 +111,48 @@ class RouteBadgeChipRenderTest {
         )
     }
 
-    /** A single-route badge is still one flat color — the diagonal is only for a joined one. */
+    /** A single-route badge is still one flat color inside its outline — no diagonal, no second color. */
     @Test
     fun singleRouteBadgeIsOneSolidColor() {
         renderJoinedBadge(routes = listOf(link1))
 
         val pixels = badgePixels()
-        val leftEdge = pixels[1, pixels.height / 2]
-        val rightEdge = pixels[pixels.width - 2, pixels.height / 2]
+        val middle = pixels.height / 2
+        val leftEdge = pixels[EDGE_INSET, middle]
+        val rightEdge = pixels[pixels.width - 1 - EDGE_INSET, middle]
 
         assertEquals(leftEdge, rightEdge)
+    }
+
+    /** The badge is bounded by a black outline, so it reads as one object against any background. */
+    @Test
+    fun badgeIsOutlinedInBlack() {
+        renderJoinedBadge()
+
+        val pixels = badgePixels()
+        val middleRow = pixels.height / 2
+        val middleColumn = pixels.width / 2
+
+        assertEquals("left edge", Color.Black, pixels[0, middleRow])
+        assertEquals("right edge", Color.Black, pixels[pixels.width - 1, middleRow])
+        assertEquals("top edge", Color.Black, pixels[middleColumn, 0])
+        assertEquals("bottom edge", Color.Black, pixels[middleColumn, pixels.height - 1])
+    }
+
+    /**
+     * The routes are separated by a black line inside the badge — the thing that keeps two routes
+     * sharing a color (or having none) from reading as a single name.
+     */
+    @Test
+    fun routesAreSeparatedByABlackLine() {
+        renderJoinedBadge(routes = listOf(link1, link1.copy(shortName = "2 Line")))
+
+        val pixels = badgePixels()
+        val interior = interiorRows(pixels).flatMap { y ->
+            (EDGE_INSET until pixels.width - EDGE_INSET).map { x -> pixels[x, y] }
+        }
+
+        assertTrue("no black separating line found inside the badge", interior.any { it == Color.Black })
     }
 
     /** The rows to scan: the badge's middle band, clear of its rounded corners. */
@@ -130,8 +164,9 @@ class RouteBadgeChipRenderTest {
      * route name drawn on top of that color.
      */
     private fun boundaryX(pixels: PixelMap, y: Int): Int {
-        val first = pixels[1, y]
-        return (1 until pixels.width - 1).last { x -> pixels[x, y] == first }
+        val scan = EDGE_INSET until pixels.width - EDGE_INSET
+        val first = pixels[scan.first, y]
+        return scan.last { x -> pixels[x, y] == first }
     }
 
     private companion object {
@@ -139,5 +174,8 @@ class RouteBadgeChipRenderTest {
 
         /** The lean has to be visible, not a rounding artifact — a couple of pixels at minimum. */
         const val MIN_LEAN_PX = 2
+
+        /** Scans start this far inside the badge, clear of its outline (1dp, so a few px at any density). */
+        const val EDGE_INSET = 6
     }
 }

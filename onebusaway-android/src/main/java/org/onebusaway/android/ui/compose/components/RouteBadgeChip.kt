@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -45,6 +48,17 @@ private val BADGE_SHAPE = RoundedCornerShape(1.dp)
  * rather than as a vertical seam.
  */
 private const val SLASH_SLANT_RATIO = 0.5f
+
+/** The width of the badge's outline and of the line where two routes meet inside it. */
+private val BADGE_LINE_WIDTH = 1.dp
+
+/**
+ * The badge's outline, and the line where two of its routes meet: black in either theme. The chips
+ * themselves are pale in light mode and deep in dark mode ([rememberRouteBadgeColors]) but always
+ * colored, so a black line reads against any of them — and keeps two routes that happen to share a
+ * color (or have none) from running together into one name.
+ */
+private val BADGE_LINE_COLOR = Color.Black
 
 /**
  * A small route roundel — the route's short name on a chip tinted from its GTFS color (via
@@ -88,18 +102,23 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
  * the badge reads as one choice of several routes rather than as a sequence of separate legs.
  *
  * Each segment paints its own band, overhanging its neighbours by half the lean; siblings paint left to
- * right, so each band's left edge cleanly overwrites the previous band's overhang and the two colors
- * meet along the diagonal with nothing between them. The whole chip is clipped to [BADGE_SHAPE], which
+ * right, so each band's left edge cleanly overwrites the previous band's overhang and the colors meet
+ * exactly on the diagonal. A [BADGE_LINE_COLOR] hairline is then drawn along that meeting line, and the
+ * whole chip is outlined in the same color — so the badge reads as one bounded object holding two
+ * names, even when its routes share a color or have none. The chip is clipped to [BADGE_SHAPE], which
  * trims the outermost bands' overhang back to the badge's own edges.
  *
- * A single-route list is exactly the plain chip above. [scale] enlarges everything proportionally, as
- * on the plain chip.
+ * A single-route list is the plain chip above, outlined to match: these badges sit side by side in the
+ * trip planner (`[2] [1 Line/2 Line]`), so they have to be bounded the same way. The plain chip's other
+ * callers keep their un-outlined roundel. [scale] enlarges everything proportionally, as on the plain
+ * chip.
  */
 @Composable
 fun RouteBadgeChip(routes: List<RouteBadge>, modifier: Modifier = Modifier, scale: Float = 1f) {
+    val outlined = modifier.border(BADGE_LINE_WIDTH, BADGE_LINE_COLOR, BADGE_SHAPE)
     if (routes.size == 1) {
         val route = routes.first()
-        RouteBadgeChip(route.shortName, route.routeColor, modifier, scale)
+        RouteBadgeChip(route.shortName, route.routeColor, outlined, scale)
         return
     }
     val base = MaterialTheme.typography.labelMedium
@@ -108,7 +127,7 @@ fun RouteBadgeChip(routes: List<RouteBadge>, modifier: Modifier = Modifier, scal
         lineHeight = base.lineHeight * scale,
         letterSpacing = base.letterSpacing * scale
     )
-    Row(modifier.clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
+    Row(outlined.clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
         routes.forEachIndexed { index, route ->
             val (container, content) = rememberRouteBadgeColors(route.routeColor)
             Text(
@@ -117,18 +136,33 @@ fun RouteBadgeChip(routes: List<RouteBadge>, modifier: Modifier = Modifier, scal
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 color = content,
-                // Wider than the plain chip's padding: the divider leans through the segment edges, so
-                // the extra breathing room keeps a name clear of the neighbouring color.
+                // Wider than the plain chip's padding: the meeting line leans through the segment edges,
+                // so the extra breathing room keeps a name clear of it and of the neighbouring color.
                 modifier = Modifier
                     .fillMaxHeight()
-                    // drawWithCache, not drawBehind: the band's Path depends only on the segment's
-                    // size, so it's built once per size change instead of on every draw pass.
+                    // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
+                    // on the segment's size, so they're built once per size change, not per draw pass.
                     .drawWithCache {
                         val band = slantedBandPath(
                             extendStart = index == 0,
                             extendEnd = index == routes.lastIndex
                         )
-                        onDrawBehind { drawPath(band, container) }
+                        val lean = leanPx()
+                        val lineWidth = BADGE_LINE_WIDTH.toPx()
+                        onDrawBehind {
+                            drawPath(band, container)
+                            // Only the leading edge, and never on the first segment: each segment draws
+                            // its line after its band, so it lands on top of the neighbouring band this
+                            // one just overwrote.
+                            if (index > 0) {
+                                drawLine(
+                                    color = BADGE_LINE_COLOR,
+                                    start = Offset(lean, 0f),
+                                    end = Offset(-lean, size.height),
+                                    strokeWidth = lineWidth
+                                )
+                            }
+                        }
                     }
                     .padding(horizontal = 5.dp * scale, vertical = 1.dp * scale)
             )

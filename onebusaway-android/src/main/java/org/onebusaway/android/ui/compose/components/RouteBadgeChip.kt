@@ -24,16 +24,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 /**
  * A small route roundel — the route's short name on a chip tinted from its GTFS color (via
  * [rememberRouteBadgeColors]), or a neutral chip when the route has no color. The compact form used
  * where several routes sit in a row (the stop-focus header's subordinate routes, the trip-plan option
- * cards), as opposed to the large square [LineBadge].
+ * cards), as opposed to the large square [LineBadge]. [scale] enlarges the whole chip (text + padding)
+ * proportionally — e.g. the directions board badge uses 1.5×.
  */
 @Composable
-fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Modifier) {
+fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Modifier, scale: Float = 1f) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
+    val base = MaterialTheme.typography.labelMedium
     Surface(
         modifier = modifier,
         color = container,
@@ -42,10 +45,10 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
     ) {
         Text(
             text = shortName,
-            style = MaterialTheme.typography.labelMedium,
+            style = base.copy(fontSize = (base.fontSize.value * scale).sp),
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp)
+            modifier = Modifier.padding(horizontal = 3.dp * scale, vertical = 1.dp * scale)
         )
     }
 }

@@ -739,22 +739,18 @@ private fun DrawScope.drawBand(color: Color) {
  */
 @Composable
 private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
-    val surface = MaterialTheme.colorScheme.surface
     val muted = MaterialTheme.colorScheme.outline
     when (content) {
-        is RowContent.Terminal -> when (content.entry.kind) {
-            TerminalKind.START -> NodeSlot(14.dp) {
-                Box(Modifier.matchParentSize().clip(CircleShape).background(surface))
-                Box(Modifier.size(10.dp).clip(CircleShape).background(muted))
-            }
-            TerminalKind.ARRIVE -> FilledNode(
-                26.dp,
-                MaterialTheme.colorScheme.primary,
-                R.drawable.ic_map_pin,
-                MaterialTheme.colorScheme.onPrimary,
-                15.dp
+        // The trip endpoints are plain dots: a green origin and a red destination, no inset icon.
+        is RowContent.Terminal -> DotNode(
+            colorResource(
+                if (content.entry.kind == TerminalKind.START) {
+                    R.color.trip_origin_marker
+                } else {
+                    R.color.trip_destination_marker
+                }
             )
-        }
+        )
         is RowContent.WalkHeader ->
             RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = R.drawable.ic_directions_walk)
         is RowContent.BoardHeader ->
@@ -795,6 +791,15 @@ private fun BoxScope.FilledNode(
     NodeSlot(size) {
         Box(Modifier.matchParentSize().clip(shape).background(color))
         Icon(painterResource(iconRes), null, tint = iconTint, modifier = Modifier.size(iconSize))
+    }
+}
+
+/** A solid [color] dot with a surface halo separating it from the spine — the timeline's trip endpoints. */
+@Composable
+private fun BoxScope.DotNode(color: Color) {
+    NodeSlot(14.dp) {
+        Box(Modifier.matchParentSize().clip(CircleShape).background(MaterialTheme.colorScheme.surface))
+        Box(Modifier.size(10.dp).clip(CircleShape).background(color))
     }
 }
 
@@ -874,7 +879,7 @@ private fun ColumnScope.BoardContent(
     // strip below is its own tap target that zooms to the stop.
     Column(Modifier.clickable(onClick = onToggle)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex))
+            RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
             if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
                 Spacer(Modifier.width(8.dp))
                 Text(

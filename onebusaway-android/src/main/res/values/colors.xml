@@ -94,6 +94,9 @@
     <!-- Trip-log real-time status chips (semantic, not the accent) -->
     <color name="trip_realtime_on_time">#1A8F52</color>
     <color name="trip_realtime_delayed">#9A6A12</color>
+    <!-- Trip-log timeline endpoint dots: green origin, red destination -->
+    <color name="trip_origin_marker">#1E8E3E</color>
+    <color name="trip_destination_marker">#D93025</color>
 
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>

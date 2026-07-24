@@ -56,7 +56,7 @@ class DirectionRowFocusTest {
         durationMinutes = 4,
         distanceMeters = 320.0,
         isTransfer = false,
-        steps = listOf(LogStep("Turn left onto Pike St", stepPoint)),
+        steps = listOf(LogStep("Turn left onto Pike St", point = stepPoint)),
         legPoints = walkLegPoints,
         focusPoint = walkLegPoints.first()
     )

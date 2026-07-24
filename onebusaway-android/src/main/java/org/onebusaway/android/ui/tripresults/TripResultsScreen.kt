@@ -645,13 +645,16 @@ private fun LogRowScaffold(
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    // The time column shows the node's clock time and, in the gap below it, the leg's elapsed "delta".
+    // The time column shows a node's clock time and, in the gap below it, a "delta": the leg's elapsed
+    // duration for a header row, or the step's distance for a turn-by-turn walk step.
     val (time, delta) = when (val c = model.content) {
         is RowContent.Terminal -> DisplayFormat.formatTime(context, c.entry.time.epochMs) to null
         is RowContent.BoardHeader ->
             DisplayFormat.formatTime(context, c.entry.boardTime.epochMs) to deltaText(c.entry.durationMinutes, context)
         is RowContent.ExitNode -> DisplayFormat.formatTime(context, c.entry.exitTime.epochMs) to null
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
+        is RowContent.Step ->
+            null to c.step.distanceMeters.takeIf { it > 0.0 }?.let { ConversionUtils.getFormattedDistance(it, context) }
         else -> null to null
     }
     Row(
@@ -1089,7 +1092,7 @@ private fun TripResultsPreview() {
                     durationMinutes = 4,
                     distanceMeters = 320.0,
                     isTransfer = false,
-                    steps = listOf(LogStep("Head north on 5th Ave (350 ft)"))
+                    steps = listOf(LogStep("Head north on 5th Ave", distanceMeters = 107.0))
                 ),
                 TripLogEntry.Transit(
                     routeShortName = "8",

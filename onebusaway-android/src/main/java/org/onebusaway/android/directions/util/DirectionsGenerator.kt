@@ -212,12 +212,9 @@ class DirectionsGenerator(
                 getLocalizedStreetName(streetName, applicationContext.resources) +
                 " "
 
-            subDirectionText += "\n[" +
-                ConversionUtils
-                    .getFormattedDistance(step.distance, applicationContext) +
-                " ]"
-
-            dir.directionText = subDirectionText
+            // The step distance is *not* baked into the text — the trip-log renders it separately from
+            // the structured TripStep.distance (as a per-step delta in the time column). See TripLogBuilder.
+            dir.directionText = subDirectionText.trim()
 
             dir.icon = subdirectionIcon
 

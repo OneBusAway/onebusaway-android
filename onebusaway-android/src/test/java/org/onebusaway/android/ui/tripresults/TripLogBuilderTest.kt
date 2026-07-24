@@ -25,6 +25,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.TripStep
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 
@@ -52,6 +53,8 @@ class TripLogBuilderTest {
         endTime = ServerTime(4 * 60_000L),
         from = TripPlace(name = "Origin", lat = origin.latitude, lon = origin.longitude),
         to = TripPlace(name = "Pine St & 3rd Ave", lat = boardFrom.latitude, lon = boardFrom.longitude),
+        // One structured step, aligned to the generator's single sub-direction below.
+        steps = listOf(TripStep(distance = 61.0, streetName = "Pike St")),
         legGeometry = TripLegGeometry(points = encoded, length = 3)
     )
 
@@ -78,7 +81,7 @@ class TripLogBuilderTest {
         focusLon = origin.longitude
         subDirections = arrayListOf(
             Direction().apply {
-                directionText = "Turn left (200 ft)"
+                directionText = "Turn left onto Pike St"
                 focusLat = stopMid.latitude
                 focusLon = stopMid.longitude
             }
@@ -140,7 +143,8 @@ class TripLogBuilderTest {
         assertEquals(320.0, walk.distanceMeters, 0.0)
         assertFalse(walk.isTransfer)
         assertEquals(1, walk.steps.size)
-        assertEquals("Turn left (200 ft)", walk.steps.single().text)
+        assertEquals("Turn left onto Pike St", walk.steps.single().text) // no distance baked into the text
+        assertEquals(61.0, walk.steps.single().distanceMeters, 0.0) // distance comes from the structured step
         assertEquals(stopMid, walk.steps.single().point)
         assertEquals(3, walk.legPoints.size) // decoded from the leg geometry, for body-tap framing
     }

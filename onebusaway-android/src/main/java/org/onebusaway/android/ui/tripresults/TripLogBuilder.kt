@@ -112,7 +112,11 @@ object TripLogBuilder {
         durationMinutes = leg.duration.inWholeMinutes,
         distanceMeters = leg.distance,
         isTransfer = isTransfer,
-        steps = walk.subDirections?.map { LogStep(it.directionText.str(), it.focusPoint()) }.orEmpty(),
+        // The generator emits one sub-direction per leg.step (in order), so the localized instruction and
+        // the structured step distance line up by index.
+        steps = walk.subDirections.orEmpty().mapIndexed { i, sub ->
+            LogStep(sub.directionText.str(), leg.steps.getOrNull(i)?.distance ?: 0.0, sub.focusPoint())
+        },
         legPoints = legPoints,
         focusPoint = walk.focusPoint()
     )

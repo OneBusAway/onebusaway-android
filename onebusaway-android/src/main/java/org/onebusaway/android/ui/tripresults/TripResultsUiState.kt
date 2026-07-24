@@ -123,11 +123,11 @@ sealed interface TripLogEntry {
 enum class TerminalKind { START, ARRIVE }
 
 /**
- * One turn-by-turn step of a walk leg: its localized instruction [text] (already includes the step
- * distance, from the legacy directions generator) and the map [point] it refers to (null when the step
- * carried no coordinates).
+ * One turn-by-turn step of a walk leg: its localized instruction [text] (the maneuver only — the
+ * distance is *not* baked in), the step's [distanceMeters] (rendered as a per-step delta in the time
+ * column, in the user's units), and the map [point] it refers to (null when the step had no coordinates).
  */
-data class LogStep(val text: String, val point: GeoPoint? = null)
+data class LogStep(val text: String, val distanceMeters: Double = 0.0, val point: GeoPoint? = null)
 
 /**
  * One intermediate transit stop passed on a leg — its display [name] and map [point]. Carries no time:

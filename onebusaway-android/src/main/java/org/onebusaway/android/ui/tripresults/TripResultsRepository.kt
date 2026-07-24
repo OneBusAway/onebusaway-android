@@ -21,10 +21,12 @@ import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.directions.OtpObaIdResolver
+import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.util.geoPointOrNull
@@ -60,7 +62,10 @@ class DefaultTripResultsRepository @Inject constructor(
 
     /** Projects one [TripItinerary] into the structured [ItineraryOption] the card renders. */
     private fun summarize(itinerary: TripItinerary): ItineraryOption {
-        val badges = Interlines.routeBadges(itinerary.legs)
+        // A badge per distinct vehicle-and-route (#2000), each naming every route that ride can be
+        // taken on, so an interchangeable pair reads as one joined "1 Line/2 Line" roundel rather than
+        // picking a winner (#2010).
+        val badges = Interlines.routeBadges(itinerary.legs, itinerary.substitutableRoutes())
         // A transit trip shows route badges; a walk-only trip shows the walk glyph; anything else
         // (bike/car) keeps the legacy mode-label title.
         val mode = when {
@@ -93,7 +98,7 @@ class DefaultTripResultsRepository @Inject constructor(
             // One RouteLegRef per transit chain (a stay-aboard interline folds its continuation legs into
             // the chain leader, #2000); the builder folds the same continuation legs into the leader's
             // Transit entry so the two agree.
-            val routeLegRefs = resolveRouteLegRefs(itinerary.legs)
+            val routeLegRefs = resolveRouteLegRefs(itinerary.legs, itinerary.substitutableRoutes())
             TripLogBuilder.build(itinerary.legs, flat, routeLegRefs)
         }
     }
@@ -105,8 +110,14 @@ class DefaultTripResultsRepository @Inject constructor(
      * lists each cross-route change ([RouteLegRef.interlineTransitions]) so the rider is told to stay
      * aboard rather than get off and reboard. A self-interline (same route) leaves no transition, hiding
      * the seam entirely.
+     *
+     * [substitutable] is index-aligned to [legs] and supplies the chain leader's interchangeable routes
+     * (#2010) — already empty for an interlined chain, see [TripItinerary.substitutableRoutes].
      */
-    private suspend fun resolveRouteLegRefs(legs: List<TripLeg>): List<RouteLegRef?> {
+    private suspend fun resolveRouteLegRefs(
+        legs: List<TripLeg>,
+        substitutable: List<List<InterchangeableRoute>>
+    ): List<RouteLegRef?> {
         val refs = MutableList<RouteLegRef?>(legs.size) { null }
         for (chain in Interlines.chains(legs)) {
             val leader = legs[chain.leaderIndex]
@@ -129,16 +140,32 @@ class DefaultTripResultsRepository @Inject constructor(
                     anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName)
                 )
             }
+            val alternatives = substitutable[chain.leaderIndex]
             refs[chain.leaderIndex] = RouteLegRef(
                 routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
                 headsign = leader.headsign,
                 board = leader.from.resolveStop(leader),
                 alight = legs[chain.alightIndex].to.resolveStop(legs[chain.alightIndex]),
                 interlineTransitions = transitions,
-                extraSegments = extraSegments
+                extraSegments = extraSegments,
+                alternatives = alternatives.map { it.resolve() },
+                // Built here, alongside the option cards' badges, so the drawer renders one rather than
+                // deriving it per row (#2010).
+                badge = legBadge(leader, alternatives)
             )
         }
         return refs
+    }
+
+    /** The same OTP-route-id → OBA-route-id resolution the planned route gets, for an alternative. */
+    private suspend fun InterchangeableRoute.resolve(): AlternativeRouteRef {
+        val badge = badge()
+        return AlternativeRouteRef(
+            routeId = otpObaIdResolver.obaRouteId(routeId, agencyId, agencyName),
+            headsign = headsign,
+            shortName = badge.shortName,
+            routeColor = badge.routeColor
+        )
     }
 
     private suspend fun TripPlace.resolveStop(leg: TripLeg) = RouteStopRef(

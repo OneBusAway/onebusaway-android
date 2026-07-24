@@ -917,6 +917,9 @@
     <string name="directions_to_here">Directions to here</string>
     <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
+    <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
+         stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
+    <string name="directions_whichever_comes_first">whichever comes first</string>
     <string name="trip_plan_clear_endpoint">Clear</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>

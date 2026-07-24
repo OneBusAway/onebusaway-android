@@ -24,6 +24,14 @@ import org.onebusaway.util.comparators.AlphanumComparator
 data class RouteDisplayNames(val shortName: String, val longName: String?)
 
 /**
+ * The app's one route-name order: numeric-aware ("natural"), so "8" sorts before "40" before "550"
+ * rather than lexicographically. Everywhere a list of route names is shown in name order — the
+ * arrivals rows, [formatRouteDisplayNames], a trip leg's interchangeable routes (#2010) — sorts with
+ * this, so the same set of routes reads the same way wherever it appears.
+ */
+val ROUTE_NAME_ORDER: Comparator<String> = AlphanumComparator()
+
+/**
  * Resolves a route's display names with the same short→long→description fallbacks the legacy
  * UIUtils.setRouteView applied: the short name falls back to the long name, and the secondary
  * line is the long name (or the description when the long name is missing or equals the short
@@ -90,7 +98,7 @@ fun getRouteDescription(shortName: String?, longName: String?, description: Stri
 fun formatRouteDisplayNames(
     routeDisplayNames: List<String>,
     nextArrivalRouteShortNames: List<String>
-): String = routeDisplayNames.sortedWith(AlphanumComparator()).joinToString(", ") { name ->
+): String = routeDisplayNames.sortedWith(ROUTE_NAME_ORDER).joinToString(", ") { name ->
     // Highlight (with "*") names that match one of the next X identical arrivals.
     if (nextArrivalRouteShortNames.any { it.equals(name, ignoreCase = true) }) "$name*" else name
 }

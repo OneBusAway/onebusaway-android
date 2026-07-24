@@ -494,6 +494,11 @@ private fun LogRow(
                 StepContent(content.step)
             }
 
+        is RowContent.StepDistance ->
+            LogRowScaffold(model, onClick = null, compact = true) {
+                StepDistanceContent(content.distanceMeters)
+            }
+
         is RowContent.BoardHeader -> {
             val transit = content.entry
             LogRowScaffold(model, onClick = null) {
@@ -553,6 +558,9 @@ private sealed interface RowContent {
     data class Terminal(val entry: TripLogEntry.Terminal) : RowContent
     data class WalkHeader(val entry: TripLogEntry.Walk) : RowContent
     data class Step(val step: LogStep) : RowContent
+
+    /** The distance travelled between one walk maneuver and the next — a nodeless row on the spine. */
+    data class StepDistance(val distanceMeters: Double) : RowContent
     data class BoardHeader(val entry: TripLogEntry.Transit) : RowContent
     data class Stop(val stop: LogStop) : RowContent
     data class Transition(val transition: InterlineTransition) : RowContent
@@ -609,7 +617,16 @@ private fun flattenLog(
                 val seg = leading(entry) // dashed neutral
                 val band = neutral.copy(alpha = 0.07f)
                 push(i, RowContent.WalkHeader(entry), seg, nodeColor = neutral, bandColor = band)
-                if (isExpanded(i)) entry.steps.forEach { push(i, RowContent.Step(it), seg, neutral, band) }
+                if (isExpanded(i)) {
+                    entry.steps.forEach { step ->
+                        push(i, RowContent.Step(step), seg, neutral, band)
+                        // A step's distance is the travel from *this* maneuver to the next, so it reads as
+                        // a delta row sitting between the two instructions.
+                        if (step.distanceMeters > 0.0) {
+                            push(i, RowContent.StepDistance(step.distanceMeters), seg, neutral, band)
+                        }
+                    }
+                }
             }
             is TripLogEntry.Transit -> {
                 val ride = leading(entry) // solid route colour
@@ -634,27 +651,27 @@ private fun routeColor(hex: String?, fallback: Color): Color = parseObaHexColor(
 private fun routeColorInt(hex: String?): Int? = parseObaHexColor(hex?.removePrefix("#"))
 
 /**
- * One timeline row: the [time] column, the spine cell (drawn from [LogRowModel.top]/[bottom] with the
- * node on top), and the [content]. The whole row is the tap target when [onClick] is set.
+ * One timeline row: the time column, the spine cell (drawn from [LogRowModel.top]/[bottom] with the node
+ * on top), and the [content]. The whole row is the tap target when [onClick] is set. [compact] tightens
+ * the row for a nodeless annotation (the between-steps distance) so it reads as an interval, not an event.
  */
 @Composable
 private fun LogRowScaffold(
     model: LogRowModel,
     onClick: (() -> Unit)?,
+    compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
-    // The time column shows a node's clock time and, in the gap below it, a "delta": the leg's elapsed
-    // duration for a header row, or the step's distance for a turn-by-turn walk step.
+    // The time column shows a node's clock time and, in the gap below it, the leg's elapsed "delta".
+    // (A walk step's distance is not shown here — it rides between the steps in the content column.)
     val (time, delta) = when (val c = model.content) {
         is RowContent.Terminal -> DisplayFormat.formatTime(context, c.entry.time.epochMs) to null
         is RowContent.BoardHeader ->
             DisplayFormat.formatTime(context, c.entry.boardTime.epochMs) to deltaText(c.entry.durationMinutes, context)
         is RowContent.ExitNode -> DisplayFormat.formatTime(context, c.entry.exitTime.epochMs) to null
         is RowContent.WalkHeader -> null to deltaText(c.entry.durationMinutes, context)
-        is RowContent.Step ->
-            null to c.step.distanceMeters.takeIf { it > 0.0 }?.let { ConversionUtils.getFormattedDistance(it, context) }
         else -> null to null
     }
     Row(
@@ -704,8 +721,13 @@ private fun LogRowScaffold(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .defaultMinSize(minHeight = 36.dp)
-                .padding(start = 8.dp, top = ROW_TOP, bottom = ROW_BOTTOM, end = 10.dp),
+                .defaultMinSize(minHeight = if (compact) 0.dp else 36.dp)
+                .padding(
+                    start = 8.dp,
+                    top = if (compact) 0.dp else ROW_TOP,
+                    bottom = if (compact) 0.dp else ROW_BOTTOM,
+                    end = 10.dp
+                ),
             content = content
         )
     }
@@ -763,6 +785,8 @@ private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
         is RowContent.Transition ->
             FilledNode(22.dp, nodeColor, R.drawable.ic_continue, Color.White, 14.dp)
         is RowContent.Step -> RingNode(8.dp, 2.dp, muted.copy(alpha = 0.7f))
+        // The between-steps distance is an interval, not an event — the spine runs through unbroken.
+        is RowContent.StepDistance -> Unit
     }
 }
 
@@ -867,6 +891,20 @@ private fun ColumnScope.StepContent(step: LogStep) {
         text = step.text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant
+    )
+}
+
+/**
+ * The distance walked between one maneuver and the next — a quiet monospaced annotation sitting between
+ * the two step rows, in the same column as the instructions.
+ */
+@Composable
+private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
+    Text(
+        text = ConversionUtils.getFormattedDistance(distanceMeters, LocalContext.current),
+        style = MaterialTheme.typography.labelSmall,
+        fontFamily = FontFamily.Monospace,
+        color = MaterialTheme.colorScheme.outline
     )
 }
 

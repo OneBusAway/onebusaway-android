@@ -44,6 +44,7 @@ import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.types.ReportAction
 import org.onebusaway.android.ui.report.types.ReportTypeListRoute
 import org.onebusaway.android.util.BuildFlavorUtils
@@ -183,10 +184,7 @@ private fun onReportActionSelected(
 
         ReportAction.STOP_PROBLEM -> {
             navController.navigate(
-                NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_stop),
-                    encodedContext
-                )
+                NavRoutes.infrastructureIssue(DefaultIssueType.STOP.name, encodedContext)
             )
             reportEvent(
                 activity,
@@ -197,10 +195,7 @@ private fun onReportActionSelected(
 
         ReportAction.ARRIVAL_PROBLEM -> {
             navController.navigate(
-                NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_trip),
-                    encodedContext
-                )
+                NavRoutes.infrastructureIssue(DefaultIssueType.TRIP.name, encodedContext)
             )
             reportEvent(
                 activity,

@@ -18,6 +18,10 @@ package org.onebusaway.android.ui.report.problem
 import android.location.Location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,13 +32,29 @@ import kotlinx.coroutines.launch
  * Holds the editable [ProblemFormState] and drives a single submit through
  * [ProblemReportRepository]. The host supplies the user's [Location] at submit time
  * (kept out of the ViewModel so it stays free of platform location plumbing).
+ *
+ * Assisted-injected: [repository] comes from Dagger, while what is being reported ([params], the
+ * selectable [ProblemCode]s, and the [headsign] shown above the form) are runtime values the issue
+ * screen derives from the focused stop / picked arrival — they are sibling-ViewModel state, not
+ * nav-args, so they can't come from a SavedStateHandle. The screen builds it with
+ * `hiltViewModel(key = …) { it.create(…) }`, one instance per reported stop/trip.
  */
-class ProblemReportViewModel(
-    private val params: ProblemParams,
-    codes: List<ProblemCode>,
-    headsign: String?,
+@HiltViewModel(assistedFactory = ProblemReportViewModel.Factory::class)
+class ProblemReportViewModel @AssistedInject constructor(
+    @Assisted private val params: ProblemParams,
+    @Assisted codes: List<ProblemCode>,
+    @Assisted headsign: String?,
     private val repository: ProblemReportRepository
 ) : ViewModel() {
+
+    @AssistedFactory
+    interface Factory {
+        fun create(
+            params: ProblemParams,
+            codes: List<ProblemCode>,
+            headsign: String?
+        ): ProblemReportViewModel
+    }
 
     private val _formState = MutableStateFlow(
         ProblemFormState(

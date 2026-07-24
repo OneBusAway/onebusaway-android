@@ -80,15 +80,11 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
             },
             reportContextArg()
         )
-    ) { backStackEntry ->
-        val selectedService =
-            backStackEntry.arguments?.getString(NavRoutes.ARG_SELECTED_SERVICE)
+    ) { _ ->
+        // No args read here: the destination's ViewModel takes both this route's args
+        // (ARG_SELECTED_SERVICE + the encoded ReportContext) off its own SavedStateHandle.
         ObaTheme {
-            InfrastructureIssueDestination(
-                navController = navController,
-                selectedService = selectedService,
-                reportContext = backStackEntry.decodeReportContext()
-            )
+            InfrastructureIssueDestination(navController = navController)
         }
     }
     // Feedback destination: the post-trip destination-reminder feedback screen.

@@ -16,8 +16,11 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,10 +30,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.ReportConstants
+import org.onebusaway.android.ui.report.ReportContext
 import org.onebusaway.android.ui.report.TripReportContext
-import org.onebusaway.android.util.GeoPoint
 
 /**
  * Orchestrates the infrastructure-issue container: tracks the [IssueLocation], loads Open311
@@ -42,23 +47,38 @@ import org.onebusaway.android.util.GeoPoint
  * as opaque values ([open311], [ServiceListItem.Category.raw]) that the host casts when launching
  * the Open311 form, so this ViewModel never imports edu.usf.cutr.
  */
-class InfrastructureIssueViewModel(
+@HiltViewModel
+class InfrastructureIssueViewModel @Inject constructor(
+    savedState: SavedStateHandle,
     private val serviceListRepository: ServiceListRepository,
-    private val geocodeRepository: GeocodeAddressRepository,
-    initialLocation: GeoPoint,
-    initialStop: ObaStop?,
-    private val defaultIssueType: DefaultIssueType,
-    private var arrivalInfo: TripReportContext?,
-    private val agencyName: String?,
-    private val blockId: String?
+    private val geocodeRepository: GeocodeAddressRepository
 ) : ViewModel() {
 
+    // Launch args arrive via SavedStateHandle from the INFRASTRUCTURE_ISSUE destination's nav-args:
+    // the whole stop/location/trip context rides one encoded [ReportContext], and the issue type the
+    // report was started for rides [NavRoutes.ARG_SELECTED_SERVICE] as a [DefaultIssueType] name.
+    // Decoding here (rather than in the destination) keeps the args process-death-safe and lets the
+    // screen be a plain hiltViewModel() call — same shape as TripInfoViewModel / RouteInfoViewModel.
+    private val reportContext =
+        ReportContext.decode(savedState.get<String>(NavRoutes.ARG_REPORT_CONTEXT))
+
+    private val defaultIssueType = savedState.get<String>(NavRoutes.ARG_SELECTED_SERVICE)
+        ?.let { name -> DefaultIssueType.entries.firstOrNull { it.name == name } }
+        ?: DefaultIssueType.NONE
+
+    private var arrivalInfo: TripReportContext? = reportContext.trip
+    private val agencyName: String? = reportContext.agencyName
+    private val blockId: String? = reportContext.blockId
+
     private val _uiState = MutableStateFlow(
-        InfrastructureIssueUiState(
-            location = IssueLocation(initialLocation.latitude, initialLocation.longitude, initialStop),
-            busStopName = initialStop?.name,
-            servicesVisible = initialStop != null
-        )
+        run {
+            val initialStop = reportContext.initialStop()
+            InfrastructureIssueUiState(
+                location = IssueLocation(reportContext.lat, reportContext.lon, initialStop),
+                busStopName = initialStop?.name,
+                servicesVisible = initialStop != null
+            )
+        }
     )
     val uiState: StateFlow<InfrastructureIssueUiState> = _uiState.asStateFlow()
 
@@ -290,4 +310,12 @@ class InfrastructureIssueViewModel(
             }
         }
     }
+}
+
+/**
+ * The stop the report was started on, rebuilt from the scalar nav-arg fields, or null for a
+ * context-free (map-pin) report. The context carries one coordinate, so the stop sits at it.
+ */
+private fun ReportContext.initialStop(): ObaStop? = stopId?.let { id ->
+    ObaStopElement(id, lat, lon, stopName.orEmpty(), stopCode.orEmpty())
 }

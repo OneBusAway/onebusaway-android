@@ -53,6 +53,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -75,11 +76,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.ArrivalsViewModelFactoryEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
-import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.StopsMapViewModel
 import org.onebusaway.android.map.compose.ObaMap
@@ -97,7 +96,6 @@ import org.onebusaway.android.ui.report.open311.Open311ProblemViewModel
 import org.onebusaway.android.ui.report.open311.Open311Route
 import org.onebusaway.android.ui.report.open311.Open311SubmitState
 import org.onebusaway.android.ui.report.open311.Open311TripContext
-import org.onebusaway.android.ui.report.problem.DefaultProblemReportRepository
 import org.onebusaway.android.ui.report.problem.ProblemCodes
 import org.onebusaway.android.ui.report.problem.ProblemKind
 import org.onebusaway.android.ui.report.problem.ProblemParams
@@ -115,16 +113,12 @@ import org.onebusaway.android.util.MyTextUtils
  * [InfrastructureControls], and the inline stop/trip form, arrivals picker, and Open311 dynamic form
  * (Tier 1) — the whole report flow is pure Compose now, with no fragments.
  *
- * The [InfrastructureIssueViewModel] is built once (back-stack-entry-scoped) from the nav-args
- * `selectedService` and the decoded [ReportContext] (lat/lon, stop id/name/code, the scalar trip
- * context, agency name, block id), reproducing the former Activity's hand-built factory.
+ * The [InfrastructureIssueViewModel] is back-stack-entry-scoped and reads its own launch args
+ * (`selectedService` plus the encoded [ReportContext] — lat/lon, stop id/name/code, the scalar trip
+ * context, agency name, block id) from this entry's nav-args via SavedStateHandle.
  */
 @Composable
-fun InfrastructureIssueDestination(
-    navController: NavController,
-    selectedService: String?,
-    reportContext: ReportContext
-) {
+fun InfrastructureIssueDestination(navController: NavController) {
     val activity = LocalContext.current.findActivity()
 
     // Entry-scoped map view model (distinct from HomeActivity's own; this is a separate back-stack
@@ -132,14 +126,10 @@ fun InfrastructureIssueDestination(
     // machinery), starting in stop mode so nearby stops load + are tappable.
     val mapViewModel = hiltViewModel<StopsMapViewModel>()
 
-    // Build the InfrastructureIssueViewModel once, scoped to this back-stack entry (so its
-    // viewModelScope is cancelled when the destination leaves). Reads selectedService and the rest of
-    // the context from the decoded nav-args — the former Activity's createViewModel.
-    val viewModel: InfrastructureIssueViewModel = viewModel(
-        factory = viewModelFactory {
-            initializer { createInfrastructureIssueViewModel(activity, selectedService, reportContext) }
-        }
-    )
+    // Scoped to this back-stack entry (so its viewModelScope is cancelled when the destination
+    // leaves). It reads selectedService and the encoded ReportContext straight off the entry's
+    // nav-args via SavedStateHandle, so there's nothing to hand it here.
+    val viewModel: InfrastructureIssueViewModel = hiltViewModel()
 
     // The "report submitted" dialog (Tier 1: was ReportSuccessDialog, a DialogFragment).
     var showSuccess by remember { mutableStateOf(false) }
@@ -326,41 +316,6 @@ fun InfrastructureIssueDestination(
 // The former map FrameLayout was 200dp tall (infrastructure_issue.xml).
 private const val MAP_HEIGHT = 200
 
-/**
- * Builds the [InfrastructureIssueViewModel] from the nav-arg [selectedService] and the decoded
- * [reportContext] (port of InfrastructureIssueActivity.createViewModel). The stop/location context,
- * the scalar trip context, and the agency/block ids all ride on the nav-arg now.
- */
-private fun createInfrastructureIssueViewModel(
-    activity: AppCompatActivity,
-    selectedService: String?,
-    reportContext: ReportContext
-): InfrastructureIssueViewModel {
-    val latitude = reportContext.lat
-    val longitude = reportContext.lon
-
-    val initialStop: ObaStop? = reportContext.stopId?.let { stopId ->
-        ObaStopElement(stopId, latitude, longitude, reportContext.stopName.orEmpty(), reportContext.stopCode.orEmpty())
-    }
-
-    val defaultIssueType = when (selectedService) {
-        activity.getString(R.string.ri_selected_service_stop) -> DefaultIssueType.STOP
-        activity.getString(R.string.ri_selected_service_trip) -> DefaultIssueType.TRIP
-        else -> DefaultIssueType.NONE
-    }
-
-    return InfrastructureIssueViewModel(
-        serviceListRepository = DefaultServiceListRepository(activity.applicationContext),
-        geocodeRepository = DefaultGeocodeAddressRepository(activity.applicationContext),
-        initialLocation = GeoPoint(latitude, longitude),
-        initialStop = initialStop,
-        defaultIssueType = defaultIssueType,
-        arrivalInfo = reportContext.trip,
-        agencyName = reportContext.agencyName,
-        blockId = reportContext.blockId
-    )
-}
-
 // --- Inline report forms (Tier 1, P3a: were ProblemReportFragment / SimpleArrivalsPickerFragment) -----
 
 /**
@@ -377,12 +332,33 @@ private fun StopTripProblemForm(
     onSubmit: ((() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
-    val vm: ProblemReportViewModel = viewModel(
-        key = "problem:${arrival?.tripId ?: stop.id}",
-        factory = viewModelFactory {
-            initializer { createProblemReportViewModel(context, stop, arrival) }
+    // The codes are a resource array, so they're read in composition and handed to the assisted
+    // factory; the repository comes from the graph.
+    val stopCodes = stringArrayResource(R.array.report_stop_problem_code).toList()
+    val tripCodes = stringArrayResource(R.array.report_trip_problem_code_bus).toList()
+    val vm: ProblemReportViewModel =
+        hiltViewModel<ProblemReportViewModel, ProblemReportViewModel.Factory>(
+            key = "problem:${arrival?.tripId ?: stop.id}"
+        ) { factory ->
+            if (arrival != null) {
+                factory.create(
+                    params = ProblemParams.Trip(
+                        tripId = arrival.tripId,
+                        stopId = arrival.stopId,
+                        vehicleId = arrival.vehicleId,
+                        serviceDate = arrival.serviceDate
+                    ),
+                    codes = ProblemCodes.trip(tripCodes),
+                    headsign = MyTextUtils.formatDisplayText(arrival.headsign)
+                )
+            } else {
+                factory.create(
+                    params = ProblemParams.Stop(stop.id),
+                    codes = ProblemCodes.stop(stopCodes),
+                    headsign = null
+                )
+            }
         }
-    )
 
     LaunchedEffect(vm) {
         vm.submitState.collect { state ->
@@ -430,6 +406,10 @@ private fun ArrivalsPickerInline(
     activity: AppCompatActivity,
     issueViewModel: InfrastructureIssueViewModel
 ) {
+    // Not hiltViewModel(): ArrivalsViewModel is deliberately plain @AssistedInject rather than
+    // @HiltViewModel, because the home sheet builds it against a non-Hilt-aware per-stop
+    // ViewModelStoreOwner — see ArrivalsViewModelFactoryEntryPoint. Nothing is hand-constructed here;
+    // the factory (and its repository) still come from the graph.
     val arrivalsViewModel: ArrivalsViewModel = viewModel(
         key = "picker:${stop.id}",
         factory = viewModelFactory {
@@ -440,40 +420,6 @@ private fun ArrivalsPickerInline(
     )
     SimpleArrivalsPicker(arrivalsViewModel) { arrival ->
         issueViewModel.onArrivalSelected(arrival.toTripReportContext())
-    }
-}
-
-/** Port of ProblemReportFragment.createViewModel — stop or trip params + codes + repository. */
-private fun createProblemReportViewModel(
-    context: Context,
-    stop: ObaStop,
-    arrival: TripReportContext?
-): ProblemReportViewModel {
-    val repository =
-        DefaultProblemReportRepository(NetworkEntryPoint.getProblemReport(context.applicationContext))
-    return if (arrival != null) {
-        ProblemReportViewModel(
-            params = ProblemParams.Trip(
-                tripId = arrival.tripId,
-                stopId = arrival.stopId,
-                vehicleId = arrival.vehicleId,
-                serviceDate = arrival.serviceDate
-            ),
-            codes = ProblemCodes.trip(
-                context.resources.getStringArray(R.array.report_trip_problem_code_bus).toList()
-            ),
-            headsign = MyTextUtils.formatDisplayText(arrival.headsign),
-            repository = repository
-        )
-    } else {
-        ProblemReportViewModel(
-            params = ProblemParams.Stop(stop.id),
-            codes = ProblemCodes.stop(
-                context.resources.getStringArray(R.array.report_stop_problem_code).toList()
-            ),
-            headsign = null,
-            repository = repository
-        )
     }
 }
 
@@ -521,6 +467,11 @@ private fun Open311FormInline(
     // Read the analytics label in composition (stringResource) rather than context.getString() inside
     // the submit callback below, which lint flags (LocalContextGetResourceValueCall, #1692).
     val analyticsProblem = stringResource(R.string.analytics_problem)
+    // The one report ViewModel still built by hand, and deliberately so: its DefaultOpen311Repository
+    // takes the chosen category's opaque library `Service` and the issue VM's `Open311` endpoint —
+    // runtime values off a sibling ViewModel's state — plus a closure reading that VM's live location.
+    // Nothing in it comes from the graph, so binding it would be ceremony (see RepositoryModule's
+    // KDoc: "Repos with runtime-arg constructors (e.g. Open311) are not here").
     val vm: Open311ProblemViewModel = viewModel(
         key = "open311:${target.category.code ?: target.category.name}",
         factory = viewModelFactory {

@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
+import androidx.lifecycle.SavedStateHandle
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -28,6 +29,8 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.ReportContext
 import org.onebusaway.android.util.GeoPoint
 
 private class FakeServiceListRepository(private val result: ServiceListResult) : ServiceListRepository {
@@ -60,22 +63,33 @@ class InfrastructureIssueViewModelTest {
 
     private val stop: ObaStop = ObaStopElement("1_75403", 47.6, -122.3, "Pine St & 3rd Ave", "75403")
 
+    /**
+     * Builds the VM the way the NavHost does — through its nav-args. The launch context goes in as the
+     * encoded [ReportContext] the destination's route carries, so these tests exercise the real
+     * SavedStateHandle decode rather than a constructor the app no longer uses.
+     */
     private fun viewModel(
         stop: ObaStop? = null,
         default: DefaultIssueType = DefaultIssueType.NONE,
         areaManaged: Boolean = true,
         heuristic: Boolean = false
     ) = InfrastructureIssueViewModel(
+        savedState = SavedStateHandle(
+            mapOf(
+                NavRoutes.ARG_SELECTED_SERVICE to default.name,
+                NavRoutes.ARG_REPORT_CONTEXT to ReportContext(
+                    stopId = stop?.id,
+                    stopName = stop?.name,
+                    stopCode = stop?.stopCode,
+                    lat = 47.6,
+                    lon = -122.3
+                ).encode()
+            )
+        ),
         serviceListRepository = FakeServiceListRepository(
             ServiceListResult(items, open311 = "endpoint", areaManaged, heuristic)
         ),
-        geocodeRepository = FakeGeocodeAddressRepository(),
-        initialLocation = GeoPoint(47.6, -122.3),
-        initialStop = stop,
-        defaultIssueType = default,
-        arrivalInfo = null,
-        agencyName = null,
-        blockId = null
+        geocodeRepository = FakeGeocodeAddressRepository()
     )
 
     @Test

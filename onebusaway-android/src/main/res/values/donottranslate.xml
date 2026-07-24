@@ -194,8 +194,6 @@
     <string name="ri_static_user_last_name">User</string>
     <string name="ri_static_user_email">issue-report@onebusaway.org</string>
     <string name="ri_static_user_phone"></string>
-    <string name="ri_selected_service_stop">stop</string>
-    <string name="ri_selected_service_trip">trip</string>
     <string name="ri_app_feedback_email">android-app@onebusaway.org</string>
 
 

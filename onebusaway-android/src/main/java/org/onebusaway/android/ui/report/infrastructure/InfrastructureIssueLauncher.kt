@@ -32,11 +32,15 @@ import org.onebusaway.android.ui.report.TripReportContext
  */
 object InfrastructureIssueLauncher {
 
+    /**
+     * @param issueType which problem the report was started for; rides the route as its enum name so
+     *   the destination's ViewModel can resolve it from nav-args without touching resources.
+     */
     @JvmStatic
     @JvmOverloads
     fun startWithService(
         activity: Activity,
-        serviceKeyword: String,
+        issueType: DefaultIssueType,
         stopId: String?,
         stopName: String?,
         stopCode: String?,
@@ -59,7 +63,7 @@ object InfrastructureIssueLauncher {
         activity.startActivity(
             HomeActivity.navIntent(
                 activity,
-                NavRoutes.infrastructureIssue(serviceKeyword, context.encode())
+                NavRoutes.infrastructureIssue(issueType.name, context.encode())
             )
         )
     }

@@ -73,6 +73,12 @@ import org.onebusaway.android.ui.home.widealert.DefaultWideAlertsRepository
 import org.onebusaway.android.ui.home.widealert.WideAlertsRepository
 import org.onebusaway.android.ui.regions.DefaultRegionsRepository
 import org.onebusaway.android.ui.regions.RegionsRepository
+import org.onebusaway.android.ui.report.infrastructure.DefaultGeocodeAddressRepository
+import org.onebusaway.android.ui.report.infrastructure.DefaultServiceListRepository
+import org.onebusaway.android.ui.report.infrastructure.GeocodeAddressRepository
+import org.onebusaway.android.ui.report.infrastructure.ServiceListRepository
+import org.onebusaway.android.ui.report.problem.DefaultProblemReportRepository
+import org.onebusaway.android.ui.report.problem.ProblemReportRepository
 import org.onebusaway.android.ui.report.types.DefaultReportTypeRepository
 import org.onebusaway.android.ui.report.types.ReportTypeRepository
 import org.onebusaway.android.ui.routeinfo.DefaultRouteInfoRepository
@@ -146,6 +152,22 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindReportTypeRepository(impl: DefaultReportTypeRepository): ReportTypeRepository
+
+    // The report flow's graph-constructible collaborators. The Open311 *category* repository stays
+    // factory-built (see the class KDoc above) — it takes opaque library values off the issue VM's
+    // runtime state — but these three take only a Context or an already-bound data source.
+    @Binds
+    abstract fun bindServiceListRepository(impl: DefaultServiceListRepository): ServiceListRepository
+
+    @Binds
+    abstract fun bindGeocodeAddressRepository(
+        impl: DefaultGeocodeAddressRepository
+    ): GeocodeAddressRepository
+
+    @Binds
+    abstract fun bindProblemReportRepository(
+        impl: DefaultProblemReportRepository
+    ): ProblemReportRepository
 
     @Binds
     abstract fun bindTripResultsRepository(impl: DefaultTripResultsRepository): TripResultsRepository

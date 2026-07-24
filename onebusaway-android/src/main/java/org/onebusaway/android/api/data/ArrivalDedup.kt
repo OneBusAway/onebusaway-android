@@ -42,19 +42,31 @@ import org.onebusaway.android.models.ArrivalData
  * gives the ETA strip's `LazyRow` its key uniqueness *by construction*: the strip keys pills by this
  * exact triple, and a duplicate key is a fatal `IllegalArgumentException` at measure time (#2012).
  *
- * Which duplicate survives is decided by an explicit preference order, not by guesswork:
+ * Which duplicate survives is decided by an explicit preference order — two exact rules and, between
+ * them, one flagged inference:
  *
  * 1. **Not the block-id phantom** ([blockIdOf]) — the #1710 rule, unchanged and exact: an entry whose
  *    `vehicleId` is the trip's own block id is the server's schedule-only stand-in. When the block id
  *    can't be resolved (trip absent from the references) no entry is treated as a phantom.
- * 2. **Backed by a real AVL fix** — an entry carrying a last-known location is the one whose coach
- *    genuinely reported, so its vehicle id and position are the ones worth attaching to a problem
- *    report. Both duplicates typically carry the same *interpolated* position, so the last-known
- *    location (not the position) is what distinguishes them. Assumption, stated plainly: when two
- *    entries describe one arrival event, the located one is the better representative. If that's ever
- *    wrong the failure is cosmetic and bounded — the pill's ETA, color, and status come from the
- *    shared scheduled/predicted times, which are identical between duplicates; only the reported
- *    vehicle id and position differ.
+ * 2. **Backed by a real AVL fix** — ⚠️ **the one soft rule here; suspect it first.** An entry carrying
+ *    a last-known location is taken to be the one whose coach genuinely reported, so its vehicle id
+ *    and position are the ones worth carrying downstream. Note the field: both duplicates typically
+ *    share the same *interpolated* `position`, so it is the last-known location — not `position`, and
+ *    not [org.onebusaway.android.models.ArrivalData.hasPlottableVehicle], which would tie — that
+ *    distinguishes them.
+ *
+ *    Nothing in the payload states which entry is real; this infers it from a correlation observed
+ *    across a handful of live duplicate pairs (#2012), so it is the one step in this function that
+ *    could simply be wrong. Human-approved on the #2012 PR rather than decided unilaterally, per
+ *    CLAUDE.md's heuristic gate.
+ *
+ *    **If you are debugging a wrong coach number on a problem report
+ *    ([org.onebusaway.android.ui.arrivals.ArrivalInfo.toTripReportContext]), a stale/absent vehicle
+ *    position, or an ETA pill showing the wrong on-map pin state (`hasPlottableVehicle`, #1992) —
+ *    start here.** Picking the wrong duplicate would produce exactly those symptoms and nothing else:
+ *    the ETA, color, and status all come from the scheduled/predicted times, which are identical
+ *    between duplicates, so a bug in *those* is not this rule's doing. Dropping the rule entirely is
+ *    a safe fallback — rules 1 and 3 alone are exact and still yield one entry per instance.
  * 3. **Feed order** — first entry wins, so the result is deterministic whatever order the server used.
  *
  * Order is preserved, and a list with no duplicate trip instance is returned untouched.
@@ -69,6 +81,10 @@ internal fun List<ArrivalData>.collapseDuplicateTripInstances(
     if (byInstance.size == size) return this
 
     fun ArrivalData.isBlockIdPhantom(): Boolean = vehicleId != null && vehicleId == blockIdOf(tripId)
+
+    // ⚠️ The soft rule — see preference 2 in the KDoc. Everything else in this function is exact;
+    // this one infers "the coach that reported a position is the real one" and is the first thing to
+    // suspect if a duplicate-prone stop shows the wrong vehicle id, position, or on-map pin.
     fun ArrivalData.hasAvlFix(): Boolean = lastKnownLat != null && lastKnownLon != null
     // Lowest wins, so each key is phrased "false sorts first": not-a-phantom before phantom, located
     // before unlocated, then the earliest feed position.

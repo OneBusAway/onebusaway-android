@@ -20,9 +20,9 @@ import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -46,10 +46,13 @@ class NotificationChannelsTest {
 
     @Before
     fun setUp() {
-        // A channel's importance/vibration are locked to its first registration, so clear any left by
-        // a prior run/install to assert the code's intended configuration from a clean slate.
-        manager.deleteNotificationChannel(NotificationChannels.DESTINATION_ARRIVAL_ID)
-        manager.deleteNotificationChannel(NotificationChannels.DESTINATION_ALERT_ID)
+        // Registering an already-registered channel cannot lower its importance or change its
+        // vibration — those are the user's to change once the channel exists — so what's asserted
+        // below is the configuration of a *first* registration. That holds on a fresh install (CI),
+        // which is the contract under test. Deleting first does not buy a clean slate: Android
+        // deliberately resurrects a deleted channel's previous settings when the same id is
+        // recreated, so on a device where these channels were already tweaked the assertions can
+        // fail. Reinstall the app in that case rather than treating it as a regression.
         NotificationChannels.registerAll(context)
     }
 
@@ -60,9 +63,9 @@ class NotificationChannelsTest {
         ) { "Destination arrival channel should be registered" }
         assertEquals(NotificationManager.IMPORTANCE_HIGH, channel.importance)
         assertTrue("Arrival channel must vibrate (#985)", channel.shouldVibrate())
-        assertNotNull(channel.vibrationPattern)
-        assertTrue(
-            NotificationChannels.DESTINATION_VIBRATION_PATTERN.contentEquals(channel.vibrationPattern)
+        assertArrayEquals(
+            NotificationChannels.DESTINATION_VIBRATION_PATTERN,
+            channel.vibrationPattern
         )
     }
 

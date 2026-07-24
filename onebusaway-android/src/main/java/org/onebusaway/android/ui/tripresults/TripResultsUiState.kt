@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 
@@ -94,7 +95,29 @@ data class RouteLegRef(
     val routeId: String?,
     val headsign: String?,
     val board: RouteStopRef?,
-    val alight: RouteStopRef?
+    val alight: RouteStopRef?,
+    // Mid-ride route changes on one continuous vehicle (stay-aboard interlines onto a *different*
+    // route, #2000), in order between [board] and [alight]. Empty for an ordinary transit leg and for
+    // a self-interline (a route reversing onto itself) — whose seam is folded away silently.
+    val interlineTransitions: List<InterlineTransition> = emptyList(),
+    // The *additional* ridden legs beyond the leader ([routeId] + [board]) when this card folds a
+    // stay-aboard interline (#2000): each names the route continued onto and the seam stop boarded
+    // there. The map focus draws each segment's shape + stops and the shared vehicle across them.
+    // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
+    val extraSegments: List<RiddenSegment> = emptyList()
+)
+
+/**
+ * A stay-aboard interline onto a **different** route within one continuous vehicle ride (#2000): at
+ * [stop] the vehicle changes to route [routeShortName] (heading to [headsign]) and the passenger stays
+ * seated. Rendered as a distinct row between Board and Alight so the directions never tell the rider to
+ * get off and reboard. Self-interlines (same route reversing onto itself) produce no transition — the
+ * seam vanishes entirely.
+ */
+data class InterlineTransition(
+    val routeShortName: String?,
+    val headsign: String?,
+    val stop: RouteStopRef
 )
 
 /** A transit stop reached on a leg — its OBA id (for arrivals), display name, code, and location. */

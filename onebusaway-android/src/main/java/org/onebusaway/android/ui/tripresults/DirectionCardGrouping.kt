@@ -56,18 +56,39 @@ object DirectionCardGrouping {
     ): List<DirectionItem> {
         val cards = ArrayList<DirectionItem>(legs.size)
         var cursor = 0
+        // Which legs fold into their chain leader — derived from Interlines.chains() (the same source of
+        // truth resolveRouteLegRefs uses) rather than the raw interlineWithPreviousLeg flag, so the two
+        // agree on exactly which legs merge. chains() defensively drops a leading/malformed continuation
+        // flag that has no valid transit predecessor; keying off it here means such a leg gets its own
+        // transit card (with its own route/board/alight info) instead of being silently folded into an
+        // unrelated preceding card (e.g. a walk) (#2000).
+        val foldedLegIndices = Interlines.chains(legs)
+            .flatMap { chain -> (chain.leaderIndex + 1)..chain.alightIndex }
+            .toSet()
+        // Card numbers count *emitted* cards, not legs — an interlined leg is folded into the previous
+        // card rather than getting its own number (#2000), so numbering stays gap-free.
+        var cardNumber = 0
         legs.forEachIndexed { legIndex, leg ->
-            val cardNumber = legIndex + 1
             val legPoints = leg.decodedPoints()
             if (leg.mode?.isOnStreetNonTransit == true) {
                 val walk = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
-                cards += walkCard(cardNumber, walk, legPoints)
+                cards += walkCard(++cardNumber, walk, legPoints)
             } else {
                 val board = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
                 // Consume the generator's "get off" direction to keep the cursor aligned; the Board and
                 // Alight stops ride on the pre-resolved routeLeg and are rendered as the card's sub-items.
                 flatDirections.getOrNull(cursor++)
-                cards += transitCard(cardNumber, board, legPoints, routeLegRefs.getOrNull(legIndex))
+                if (legIndex in foldedLegIndices && cards.isNotEmpty()) {
+                    // A stay-aboard interline: the rider never leaves the vehicle. Fold this leg into the
+                    // previous (chain-leading) card — its polyline extends the card's frame; the chain's
+                    // final alight and any route-change rows already ride on that card's routeLeg (built
+                    // span-aware in TripResultsRepository). The generator's board/off directions here are
+                    // consumed only to keep the cursor aligned.
+                    val last = cards[cards.lastIndex]
+                    cards[cards.lastIndex] = last.copy(legPoints = last.legPoints + legPoints)
+                } else {
+                    cards += transitCard(++cardNumber, board, legPoints, routeLegRefs.getOrNull(legIndex))
+                }
             }
         }
         return cards

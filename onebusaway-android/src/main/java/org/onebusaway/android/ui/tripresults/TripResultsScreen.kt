@@ -481,6 +481,11 @@ private fun DirectionRow(
                     )
                     stopEtaStrip(routeLeg, stop, item.legPoints)
                 }
+                // Stay-aboard interlines onto a different route (#2000): the rider stays seated while
+                // the vehicle changes route, so this reads "Stay on board…" rather than get-off/get-on.
+                routeLeg.interlineTransitions.forEach { transition ->
+                    InterlineRow(transition, onFocusPoint)
+                }
                 routeLeg.alight?.let { stop ->
                     RouteStopLabel(
                         R.string.step_by_step_transit_get_off,
@@ -548,6 +553,50 @@ private fun RouteStopLabel(actionRes: Int, stopName: String?, onClick: () -> Uni
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
+    }
+}
+
+/**
+ * A stay-aboard interline row (#2000): the vehicle keeps going but its route changes, so the rider is
+ * told to stay on board — never to get off and reboard. Shows the new route label (short name + "to
+ * headsign") and the seam stop where the change happens; tapping zooms the map to that stop.
+ */
+@Composable
+private fun InterlineRow(transition: InterlineTransition, onFocusPoint: (GeoPoint) -> Unit) {
+    val routeLabel = buildString {
+        append(transition.routeShortName.orEmpty())
+        if (!transition.headsign.isNullOrEmpty()) {
+            append(" ")
+            append(stringResource(R.string.step_by_step_transit_connector_headsign))
+            append(" ")
+            append(transition.headsign)
+        }
+    }.trim()
+    val stop = transition.stop
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { stop.point?.let(onFocusPoint) }
+            .padding(start = 36.dp, end = 12.dp, top = 8.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        DirectionIcon(R.drawable.ic_continue)
+        Spacer(Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.step_by_step_transit_interline, routeLabel),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            stop.name?.let { name ->
+                Text(
+                    text = "${stringResource(R.string.step_by_step_transit_connector_stop_name)} $name",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

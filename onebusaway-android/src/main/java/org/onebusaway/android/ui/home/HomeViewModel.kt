@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
@@ -618,11 +619,14 @@ class HomeViewModel @Inject constructor(
             focusItineraryLegOnMap(fallbackLegPoints)
             return
         }
-        // Anchor to the boarding stop so the route shows only the ridden direction.
+        // Anchor to the boarding stop so the route shows only the ridden direction. A folded interline
+        // (#2000) carries its extra ridden legs so the map draws each continued-onto route/direction and
+        // the shared vehicle across them; empty for an ordinary leg (plain single-route focus).
         focusItineraryRouteLegOnMap(
             routeId,
             segment = fallbackLegPoints,
-            directionStopId = routeLeg.board?.stopId
+            directionStopId = routeLeg.board?.stopId,
+            extraSegments = routeLeg.extraSegments
         )
     }
 
@@ -646,6 +650,7 @@ class HomeViewModel @Inject constructor(
         segment: List<GeoPoint> = emptyList(),
         directionStopId: String? = null,
         directionId: Int? = null,
+        extraSegments: List<RiddenSegment> = emptyList(),
         undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(
@@ -653,7 +658,8 @@ class HomeViewModel @Inject constructor(
                 routeId = routeId,
                 directionStopId = directionStopId,
                 initialDirectionId = directionId,
-                highlightedSegment = segment
+                highlightedSegment = segment,
+                extraSegments = extraSegments
             ),
             undoViewport
         )

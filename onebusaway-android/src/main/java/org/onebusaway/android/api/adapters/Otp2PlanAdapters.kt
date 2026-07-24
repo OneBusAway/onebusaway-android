@@ -66,6 +66,7 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     headsign = trip?.tripHeadsign,
     tripId = trip?.gtfsId,
     realTime = realTime ?: false,
+    interlineWithPreviousLeg = interlineWithPreviousLeg ?: false,
     distance = distance ?: 0.0,
     duration = (duration ?: 0.0).seconds,
     departureDelay = start.estimated?.delay.toDelayDuration(),

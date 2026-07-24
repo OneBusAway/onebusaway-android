@@ -49,6 +49,7 @@ query Plan(
                     duration
                     distance
                     realTime
+                    interlineWithPreviousLeg
                     start {
                         scheduledTime
                         estimated { time delay }

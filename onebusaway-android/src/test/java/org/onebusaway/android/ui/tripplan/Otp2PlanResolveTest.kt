@@ -114,6 +114,7 @@ class Otp2PlanResolveTest {
             duration = 2400.0,
             distance = 3200.0,
             realTime = null,
+            interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:40:00-07:00", estimated = null),
             from = from("Origin", 47.60, -122.30),

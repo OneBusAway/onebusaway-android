@@ -37,6 +37,11 @@ import androidx.compose.ui.unit.sp
 fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Modifier, scale: Float = 1f) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     val base = MaterialTheme.typography.labelMedium
+    // Scale the line box with the glyphs — labelMedium's 16sp line height would clip a 1.5x-scaled name.
+    val style = base.copy(
+        fontSize = (base.fontSize.value * scale).sp,
+        lineHeight = if (base.lineHeight.isSp) (base.lineHeight.value * scale).sp else base.lineHeight
+    )
     Surface(
         modifier = modifier,
         color = container,
@@ -45,7 +50,7 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
     ) {
         Text(
             text = shortName,
-            style = base.copy(fontSize = (base.fontSize.value * scale).sp),
+            style = style,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             modifier = Modifier.padding(horizontal = 3.dp * scale, vertical = 1.dp * scale)

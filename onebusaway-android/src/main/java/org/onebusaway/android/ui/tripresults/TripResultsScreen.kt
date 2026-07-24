@@ -69,6 +69,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
@@ -411,12 +412,24 @@ private fun maybeStartTripUpdates(
 // tinted band and, where it has minor events (turn steps for a walk, intermediate stops for a ride),
 // expands them inline on tap.
 
-private val TIME_WIDTH = 66.dp // wide enough for a locale 12-hour time ("12:00 AM") without clipping
+private val TIME_WIDTH = 66.dp // fits a locale 12-hour time ("12:00 AM") at the default font scale
 private val RAIL_WIDTH = 34.dp
 private val RAIL_SPLIT = 22.dp // node centre, measured from the row's top — where the spine's colour flips
 private val ROW_TOP = 10.dp
 private val ROW_BOTTOM = 10.dp
-private val BAND_LEFT = TIME_WIDTH + RAIL_WIDTH // band sits behind the content only, never over the spine
+
+/**
+ * The width of the ledger (time) column. [TIME_WIDTH] is sized for the default font scale, so it grows
+ * with the user's — the clock time is the ledger's primary information and mustn't clip at an
+ * accessibility text size. It stays one shared width for every row so the spine still lines up, and is
+ * capped at the platform's 2× ceiling so the column can't crowd out the content on a narrow screen.
+ */
+@Composable
+private fun timeWidth(): Dp = TIME_WIDTH * LocalDensity.current.fontScale.coerceIn(1f, 2f)
+
+/** Left edge of a leg's band — it sits behind the content only, never over the spine. */
+@Composable
+private fun bandLeft(): Dp = timeWidth() + RAIL_WIDTH
 
 /**
  * The itinerary as one continuous timeline. Expansion is per-leg local state, keyed on [entries] so a
@@ -441,6 +454,7 @@ private fun TripLog(
     }
 
     val rows = flattenLog(entries, ::isExpanded, neutral, transitFallback)
+    val bandLeft = bandLeft()
 
     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         var idx = 0
@@ -454,7 +468,7 @@ private fun TripLog(
             val rowsOf: @Composable () -> Unit = {
                 group.forEach { LogRow(it, ::isExpanded, ::toggle, onFocusRouteLeg, onFocusLeg, onFocusPoint, stopEtaStrip) }
             }
-            if (band == null) rowsOf() else Column(Modifier.drawBehind { drawBand(band) }) { rowsOf() }
+            if (band == null) rowsOf() else Column(Modifier.drawBehind { drawBand(band, bandLeft) }) { rowsOf() }
             idx = end
         }
     }
@@ -684,7 +698,7 @@ private fun LogRowScaffold(
         // Centered in the time column — halfway between the screen edge and the spine.
         Column(
             modifier = Modifier
-                .width(TIME_WIDTH)
+                .width(timeWidth())
                 .padding(top = ROW_TOP),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -695,7 +709,10 @@ private fun LogRowScaffold(
                     style = MaterialTheme.typography.labelMedium,
                     fontFamily = FontFamily.Monospace,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1
+                    textAlign = TextAlign.Center,
+                    // The column is sized for the common short time; a locale with a wide am/pm marker
+                    // ("12:00 nachm.") wraps rather than losing the clock time to an ellipsis.
+                    maxLines = 2
                 )
             }
             delta?.let {
@@ -745,8 +762,8 @@ private fun DrawScope.drawSegment(seg: RailSeg, cx: Float, y0: Float, y1: Float,
 }
 
 /** The faint rounded band uniting a leg — drawn behind the content column only, so the spine stays clean. */
-private fun DrawScope.drawBand(color: Color) {
-    val left = BAND_LEFT.toPx()
+private fun DrawScope.drawBand(color: Color, bandLeft: Dp) {
+    val left = bandLeft.toPx()
     val insetY = 2.dp.toPx()
     val right = 4.dp.toPx()
     val radius = 13.dp.toPx()
@@ -779,16 +796,23 @@ private fun BoxScope.LogNode(content: RowContent, nodeColor: Color) {
         is RowContent.WalkHeader ->
             RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = R.drawable.ic_directions_walk)
         is RowContent.BoardHeader ->
-            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, Color.White, 16.dp, shape = RoundedCornerShape(8.dp))
+            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, onNodeColor(nodeColor), 16.dp, shape = RoundedCornerShape(8.dp))
         is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
         is RowContent.Stop -> RingNode(11.dp, 2.dp, nodeColor)
         is RowContent.Transition ->
-            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, Color.White, 14.dp)
+            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, onNodeColor(nodeColor), 14.dp)
         is RowContent.Step -> RingNode(8.dp, 2.dp, muted.copy(alpha = 0.7f))
         // The between-steps distance is an interval, not an event — the spine runs through unbroken.
         is RowContent.StepDistance -> Unit
     }
 }
+
+/**
+ * The glyph colour for an icon drawn on a filled route-coloured node. The node keeps the agency's raw
+ * GTFS colour (so the spine, band and node all read as one line), and those run the whole range from
+ * near-black to a bright yellow — so the icon takes whichever of black/white contrasts with it.
+ */
+private fun onNodeColor(color: Color): Color = if (color.luminance() > 0.5f) Color.Black else Color.White
 
 /** A hollow node: a surface-filled circle with a [color] border, optionally with a muted centre [iconRes]. */
 @Composable

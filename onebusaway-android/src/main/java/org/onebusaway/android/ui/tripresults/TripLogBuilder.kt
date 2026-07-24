@@ -121,13 +121,22 @@ object TripLogBuilder {
         focusPoint = walk.focusPoint()
     )
 
-    /** Extend the most recent transit ride (the chain leader) over a folded interline continuation leg. */
+    /**
+     * Extend the most recent transit ride (the chain leader) over a folded interline continuation leg.
+     *
+     * The duration is re-derived from the ride's own board→exit clock times rather than summing the legs'
+     * durations, so the ledger's elapsed delta always agrees with the two times printed beside it (the
+     * rider is aboard for that whole span, seam dwell included). The continuation's intermediate stops are
+     * deliberately *not* merged: the renderer draws a ride's stops before its cross-route "stay aboard"
+     * rows, so appending post-seam stops would place them on the wrong side of the seam.
+     */
     private fun foldIntoLeader(entries: MutableList<TripLogEntry>, leg: TripLeg, legPoints: List<GeoPoint>) {
         val idx = entries.indexOfLast { it is TripLogEntry.Transit }
         if (idx < 0) return
         val leader = entries[idx] as TripLogEntry.Transit
         entries[idx] = leader.copy(
             exitTime = leg.endTime,
+            durationMinutes = (leg.endTime - leader.boardTime).inWholeMinutes,
             legPoints = leader.legPoints + legPoints
         )
     }

@@ -208,6 +208,8 @@ class TripLogBuilderTest {
 
         val transit = entries.filterIsInstance<TripLogEntry.Transit>().single()
         assertEquals("one ride for the whole chain", ServerTime(28 * 60_000L), transit.exitTime)
+        // The ledger delta must span board → exit (4 → 28 min), not just the leader leg.
+        assertEquals(24L, transit.durationMinutes)
         assertEquals(chainRef, transit.routeLeg)
         assertEquals(1, transit.routeLeg.interlineTransitions.size)
     }

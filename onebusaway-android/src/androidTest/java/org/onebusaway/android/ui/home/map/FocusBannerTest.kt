@@ -15,15 +15,21 @@
  */
 package org.onebusaway.android.ui.home.map
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.math.abs
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -65,6 +71,7 @@ class FocusBannerTest {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
+                onShowSchedule = {},
                 onHeight = {}
             )
         }
@@ -89,17 +96,21 @@ class FocusBannerTest {
         assertTrue((alertBounds.bottom - alertBounds.top).value >= 47.5f)
     }
 
-    @Test
-    fun routeBannerUsesRouteOrientationIcon() {
+    private fun setRouteBanner(
+        scheduleUrl: String? = null,
+        onShowSchedule: (String) -> Unit = {},
+        onFrameRoute: () -> Unit = {}
+    ) {
         composeRule.setContent {
             FocusBanner(
                 state = FocusBannerState.Route(
                     header = org.onebusaway.android.map.RouteHeader(
                         loading = false,
                         shortName = "40",
-                        longName = "Downtown - Northgate",
+                        longName = ROUTE_LONG_NAME,
                         agency = "Metro",
-                        routeId = "1_40"
+                        routeId = "1_40",
+                        scheduleUrl = scheduleUrl
                     ),
                     isFavorite = false
                 ),
@@ -109,10 +120,16 @@ class FocusBannerTest {
                 onClearSubordinateRoute = {},
                 onRecenterStop = {},
                 onSelectDirection = {},
-                onFrameRoute = {},
+                onFrameRoute = onFrameRoute,
+                onShowSchedule = onShowSchedule,
                 onHeight = {}
             )
         }
+    }
+
+    @Test
+    fun routeBannerUsesRouteOrientationIcon() {
+        setRouteBanner()
 
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.route_shortcut)
@@ -120,6 +137,32 @@ class FocusBannerTest {
         composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertIsDisplayed().assertHasClickAction()
+    }
+
+    @Test
+    fun longPressingRouteBannerOpensTheSchedule() {
+        var opened: String? = null
+        setRouteBanner(scheduleUrl = SCHEDULE_URL, onShowSchedule = { opened = it })
+
+        composeRule.onNodeWithText(ROUTE_LONG_NAME).performTouchInput { longClick() }
+
+        composeRule.onNodeWithText(
+            context.getString(R.string.bus_options_menu_show_route_schedule)
+        ).performClick()
+
+        assertEquals(SCHEDULE_URL, opened)
+    }
+
+    /** Tapping still frames the route, but with no schedule page there is nothing to long-press for. */
+    @Test
+    fun routeBannerHasNoLongPressWithoutASchedule() {
+        var framed = false
+        setRouteBanner(onFrameRoute = { framed = true })
+
+        val row = composeRule.onNodeWithText(ROUTE_LONG_NAME)
+        row.assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
+        row.performClick()
+        assertTrue(framed)
     }
 
     @Test
@@ -168,6 +211,7 @@ class FocusBannerTest {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
+                onShowSchedule = {},
                 onHeight = {}
             )
         }
@@ -186,5 +230,10 @@ class FocusBannerTest {
         val stopNameCenter = (stopName.top.value + stopName.bottom.value) / 2f
         val railCenter = (typeIconCenter + starCenter) / 2f
         assertTrue(abs(stopNameCenter - railCenter) < 1f)
+    }
+
+    private companion object {
+        const val ROUTE_LONG_NAME = "Downtown - Northgate"
+        const val SCHEDULE_URL = "https://example.org/route/40/schedule"
     }
 }

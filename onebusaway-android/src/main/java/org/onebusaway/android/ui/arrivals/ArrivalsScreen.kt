@@ -81,10 +81,10 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
-import org.onebusaway.android.ui.arrivals.components.MenuRow
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nightlight.NightLightLauncher
 import org.onebusaway.android.util.DisplayFormat

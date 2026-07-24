@@ -73,6 +73,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
+import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme

@@ -17,7 +17,9 @@ package org.onebusaway.android.ui.home.map
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +37,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,8 +73,11 @@ import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.WheelchairBoarding
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
+import org.onebusaway.android.ui.compose.components.MaterialSymbols
+import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
@@ -148,6 +154,7 @@ fun FocusBanner(
     onRecenterStop: () -> Unit,
     onSelectDirection: (Int) -> Unit,
     onFrameRoute: () -> Unit,
+    onShowSchedule: (String) -> Unit,
     onHeight: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -183,6 +190,7 @@ fun FocusBanner(
                         state = state,
                         onSelectDirection = onSelectDirection,
                         onFrameRoute = onFrameRoute,
+                        onShowSchedule = onShowSchedule,
                         onClose = onClose
                     )
                 }
@@ -396,14 +404,19 @@ private fun CompactRouteDismissAction(onClick: () -> Unit) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RouteFocusBanner(
     state: FocusBannerState.Route,
     onSelectDirection: (Int) -> Unit,
     onFrameRoute: () -> Unit,
+    onShowSchedule: (String) -> Unit,
     onClose: () -> Unit
 ) {
     val header = state.header
+    val scheduleUrl = header.scheduleUrl
+    var menuExpanded by remember { mutableStateOf(false) }
+    val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
     Row(
         Modifier.fillMaxWidth().padding(if (header.loading) 8.dp else 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -419,9 +432,14 @@ private fun RouteFocusBanner(
             Row(
                 Modifier
                     .weight(1f)
-                    .clickable(
+                    // Tap frames the route; long press opens the route menu — the same gesture
+                    // pairing the arrivals drawer's route rows use. A route with no schedule page
+                    // has nothing to put in the menu, so it stays tap-only.
+                    .combinedClickable(
                         onClickLabel = stringResource(R.string.route_header_frame_route),
                         role = Role.Button,
+                        onLongClickLabel = if (scheduleUrl != null) scheduleLabel else null,
+                        onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
                         onClick = onFrameRoute
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -474,6 +492,17 @@ private fun RouteFocusBanner(
             contentDescription = stringResource(android.R.string.cancel),
             onClick = onClose
         )
+    }
+    if (scheduleUrl != null) {
+        CenteredLongPressMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
+                menuExpanded = false
+                onShowSchedule(scheduleUrl)
+            }
+        }
     }
 }
 
@@ -650,6 +679,7 @@ private fun FocusBannerPreview() {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
+                onShowSchedule = {},
                 onHeight = {}
             )
             Spacer(Modifier.size(12.dp))
@@ -660,6 +690,7 @@ private fun FocusBannerPreview() {
                         shortName = "40",
                         longName = "Downtown Seattle - Northgate",
                         agency = "King County Metro",
+                        scheduleUrl = "https://example.org/route/40/schedule",
                         directions = listOf(
                             RouteMapDirection(0, "to Downtown Seattle"),
                             RouteMapDirection(1, "to Northgate")
@@ -675,6 +706,7 @@ private fun FocusBannerPreview() {
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
+                onShowSchedule = {},
                 onHeight = {}
             )
         }

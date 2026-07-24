@@ -128,6 +128,7 @@ import org.onebusaway.android.ui.tutorial.TutorialOverlay
 import org.onebusaway.android.ui.tutorial.WelcomeTutorial
 import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
+import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
 
@@ -987,6 +988,7 @@ private fun BoxScope.HomeMapOverlays(
     // clearance, but the map's top-padding derivation needs the card's bottom edge in map coordinates,
     // so add both the status-bar inset and chrome clearance back onto its reported height.
     if (focusBannerState != null) {
+        val context = LocalContext.current
         FocusBanner(
             state = focusBannerState,
             onClose = onCloseFocus,
@@ -996,6 +998,9 @@ private fun BoxScope.HomeMapOverlays(
             onRecenterStop = onRecenterStop,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,
+            // Same destination as the arrivals drawer's route menu, wired locally rather than through
+            // HomeActivityActions — the browser hand-off needs nothing but a Context.
+            onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
             onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
             modifier = Modifier
                 .align(Alignment.TopCenter)

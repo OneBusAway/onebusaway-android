@@ -166,8 +166,10 @@ internal fun EtaStrip(
                     // entry (see collapseDuplicateTripInstances) — tripId alone is NOT unique (a loop
                     // route's two genuine visits to one stop share it), and a duplicate LazyRow key
                     // is a fatal throw at measure time, so uniqueness here rests on that dedup rather
-                    // than on the feed being well-behaved (#2012).
-                    key = { _, trip -> "${trip.tripId} ${trip.serviceDate} ${trip.stopSequence}" }
+                    // than on the feed being well-behaved (#2012). The NUL separator is the same
+                    // can't-occur-in-an-id joiner routeRowKey uses, written as an escape rather than pasted
+                    // raw, which had made this file binary to grep and code review (#2012).
+                    key = { _, trip -> "${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
                 ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
                     val pillModifier = if (index == 0) firstPillModifier else Modifier

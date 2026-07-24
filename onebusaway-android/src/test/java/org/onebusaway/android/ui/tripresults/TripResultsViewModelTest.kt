@@ -50,11 +50,11 @@ class TripResultsViewModelTest {
     /** Treats itineraries as opaque tokens (as the ViewModel does) and returns canned projections. */
     private class FakeTripResultsRepository(
         var summary: Result<List<ItineraryOption>>,
-        var directions: Result<List<DirectionItem>> = Result.success(emptyList())
+        var directions: Result<List<TripLogEntry>> = Result.success(emptyList())
     ) : TripResultsRepository {
         val directionsForCalls = mutableListOf<TripItinerary>()
         override suspend fun summarize(itineraries: List<TripItinerary>) = summary
-        override suspend fun directionsFor(itinerary: TripItinerary): Result<List<DirectionItem>> {
+        override suspend fun directionsFor(itinerary: TripItinerary): Result<List<TripLogEntry>> {
             directionsForCalls.add(itinerary)
             return directions
         }

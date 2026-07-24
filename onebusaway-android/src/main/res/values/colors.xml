@@ -86,11 +86,20 @@
     <color name="tutorial_background">#df4CAF50</color>
 
     <!-- Trip Planning -->
-    <color name="trip_option_icon_tint">#888</color>
     <color name="trip_plan_card_background">@color/md_theme_surfaceContainer</color>
     <color name="trip_plan_header_text">@color/md_theme_onSurface</color>
     <color name="trip_plan_card_background_selected">@color/md_theme_secondaryContainer</color>
     <color name="trip_plan_header_text_selected">@color/md_theme_onSecondaryContainer</color>
+    <!-- Trip-log real-time status chips (semantic, not the accent). The chip draws this colour as text
+         over a 14%-alpha tint of itself, so both clear 4.5:1 against that tinted surface, not just the
+         bare background. "Early" is its own colour, not the on-time green: a vehicle running ahead of
+         schedule is something the rider has to act on, not a reassurance. -->
+    <color name="trip_realtime_on_time">#136B39</color>
+    <color name="trip_realtime_delayed">#7E560E</color>
+    <color name="trip_realtime_early">#1F5E8C</color>
+    <!-- Trip-log timeline endpoint dots: green origin, red destination -->
+    <color name="trip_origin_marker">#1E8E3E</color>
+    <color name="trip_destination_marker">#D93025</color>
 
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>

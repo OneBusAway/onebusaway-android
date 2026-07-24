@@ -212,12 +212,9 @@ class DirectionsGenerator(
                 getLocalizedStreetName(streetName, applicationContext.resources) +
                 " "
 
-            subDirectionText += "\n[" +
-                ConversionUtils
-                    .getFormattedDistance(step.distance, applicationContext) +
-                " ]"
-
-            dir.directionText = subDirectionText
+            // The step distance is *not* baked into the text — the trip-log renders it separately from
+            // the structured TripStep.distance (as a per-step delta in the time column). See TripLogBuilder.
+            dir.directionText = subDirectionText.trim()
 
             dir.icon = subdirectionIcon
 
@@ -288,16 +285,20 @@ class DirectionsGenerator(
             // sub-direction
             val stopIcon = getStopIcon(leg.mode)
             val subDirections = ArrayList<Direction>()
-            for (i in stopsInBetween.indices) {
+            for (stop in stopsInBetween) {
                 val subDirection = Direction()
 
-                val stop = stopsInBetween[i]
                 val extraStopInformation = stop.stopCode
-                var subDirectionText = "${i + 1}. ${stop.name}"
+                // No ordinal prefix: the trip-log already places each stop as its own node in travel
+                // order down the spine, so a baked-in "3." would just be a second, redundant numbering.
+                var subDirectionText = stop.name.orEmpty()
                 if (!TextUtils.isEmpty(extraStopInformation)) {
                     subDirectionText += " ($extraStopInformation)"
                 }
-                subDirection.directionText = subDirectionText
+                // Trimmed so a stop with a code but no name reads "(500)" rather than leading with the
+                // separator space — and so a stop with neither is empty, which the trip-log drops
+                // outright instead of drawing a nameless node (see TripLogBuilder.stopEvents).
+                subDirection.directionText = subDirectionText.trim()
                 subDirection.icon = stopIcon
                 subDirection.focusLat = stop.lat
                 subDirection.focusLon = stop.lon

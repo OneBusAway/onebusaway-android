@@ -20,10 +20,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
@@ -51,4 +56,14 @@ internal fun CenteredLongPressMenu(
             Column(Modifier.padding(vertical = 8.dp), content = content)
         }
     }
+}
+
+/** A labelled menu item with an optional decorative leading [icon]. */
+@Composable
+internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = onClick,
+        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } }
+    )
 }

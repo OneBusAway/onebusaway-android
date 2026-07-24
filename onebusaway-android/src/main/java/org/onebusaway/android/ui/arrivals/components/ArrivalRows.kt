@@ -78,6 +78,7 @@ import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
+import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
@@ -435,16 +436,6 @@ internal fun RouteActionsMenu(
             }
         }
     }
-}
-
-/** A labelled menu item with an optional decorative leading [icon]. */
-@Composable
-internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(stringResource(textRes)) },
-        onClick = onClick,
-        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } }
-    )
 }
 
 private val PillShape = RoundedCornerShape(6.dp)

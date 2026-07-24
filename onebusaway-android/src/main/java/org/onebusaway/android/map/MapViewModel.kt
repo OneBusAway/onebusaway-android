@@ -71,6 +71,9 @@ data class RouteHeader(
     /** The route's GTFS color (ARGB), or null when the agency didn't set one — the header's route
      *  badge chip takes its hue, matching the arrival rows. */
     val routeColor: Int? = null,
+    /** The route's schedule page ([ObaRoute.url]), or null when the agency publishes none — the
+     *  banner's long-press menu offers it when present. */
+    val scheduleUrl: String? = null,
     val directions: List<RouteMapDirection> = emptyList(),
     val currentDirectionId: Int? = null
 ) {
@@ -267,6 +270,7 @@ class MapViewModel @Inject constructor(
             agency = agencyName ?: "",
             routeId = route.id,
             routeColor = route.color,
+            scheduleUrl = route.url?.takeIf { it.isNotBlank() },
             directions = directions,
             currentDirectionId = currentDirectionId
         )

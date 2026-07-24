@@ -23,20 +23,24 @@ package org.onebusaway.android.models
  * A stop with no `wheelchairBoarding` on the wire (an older server, or a feed that omits the field)
  * decodes to [UNKNOWN] — the GTFS default of "no accessibility information", not a guess.
  */
-enum class WheelchairBoarding(private val value: String) {
-    ACCESSIBLE("ACCESSIBLE"),
-    NOT_ACCESSIBLE("NOT_ACCESSIBLE"),
-    UNKNOWN("UNKNOWN");
-
-    override fun toString(): String = value
+enum class WheelchairBoarding {
+    ACCESSIBLE,
+    NOT_ACCESSIBLE,
+    UNKNOWN;
 
     companion object {
         /**
          * Maps the wire string to the enum. A null (field absent) or unrecognized value is treated as
          * [UNKNOWN] — the GTFS default when accessibility is unstated — so callers get a total,
          * non-null domain to switch on.
+         *
+         * The wire strings are exactly the constant names, so [name] round-trips a value back onto the
+         * wire (and into storage) without a second spelling of each constant to keep in sync.
          */
-        @JvmStatic
-        fun fromString(value: String?): WheelchairBoarding = entries.firstOrNull { it.value == value } ?: UNKNOWN
+        fun fromString(value: String?): WheelchairBoarding = when (value) {
+            ACCESSIBLE.name -> ACCESSIBLE
+            NOT_ACCESSIBLE.name -> NOT_ACCESSIBLE
+            else -> UNKNOWN
+        }
     }
 }

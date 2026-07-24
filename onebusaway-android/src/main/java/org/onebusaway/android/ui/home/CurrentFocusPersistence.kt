@@ -75,8 +75,7 @@ internal object CurrentFocusPersistence {
         state[KEY_STOP_CODE] = stop?.code
         state[KEY_STOP_LAT] = stop?.point?.latitude
         state[KEY_STOP_LON] = stop?.point?.longitude
-        // The wire representation (toString()) — the exact string WheelchairBoarding.fromString reads back.
-        state[KEY_STOP_WHEELCHAIR] = stop?.wheelchairBoarding?.toString()
+        state[KEY_STOP_WHEELCHAIR] = stop?.wheelchairBoarding?.name
         state[KEY_BIKE_STATION] = (focus as? CurrentFocus.BikeStation)?.id
 
         val target = (focus as? CurrentFocus.Route)?.target

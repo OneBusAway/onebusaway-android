@@ -39,6 +39,7 @@ import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.models.contentKey
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
@@ -362,7 +363,8 @@ class DefaultArrivalsRepository @Inject constructor(
             stopId = snapshot.stopId,
             name = MyTextUtils.formatDisplayText(stop?.name).orEmpty(),
             direction = stop?.direction,
-            isFavorite = userInfo?.favorite == 1
+            isFavorite = userInfo?.favorite == 1,
+            wheelchairBoarding = stop?.wheelchairBoarding ?: WheelchairBoarding.UNKNOWN
         )
         val routeDisplayNames = buildRouteDisplayNames(snapshot, stop)
         // Pure grouping; no store write. Hidden state is derived in the ViewModel from [alertHideState]

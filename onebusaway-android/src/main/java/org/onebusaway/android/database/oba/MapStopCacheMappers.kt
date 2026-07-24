@@ -103,9 +103,7 @@ fun ObaStop.toCachedRecord(regionId: Long, now: Long): CachedStopRecord = Cached
     longitude = longitude,
     locationType = locationType,
     routeIds = joinRouteIds(routeIds),
-    // Persist the wire representation (WheelchairBoarding.toString()), the exact string
-    // WheelchairBoarding.fromString reads back — so write and read can't drift apart.
-    wheelchairBoarding = wheelchairBoarding.toString(),
+    wheelchairBoarding = wheelchairBoarding.name,
     regionId = regionId,
     lastSeen = now
 )

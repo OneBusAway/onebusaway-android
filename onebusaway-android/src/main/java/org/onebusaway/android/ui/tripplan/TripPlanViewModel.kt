@@ -23,9 +23,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,6 +38,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
@@ -95,6 +99,13 @@ class TripPlanViewModel @Inject constructor(
     private val fromQueries = MutableStateFlow("")
     private val toQueries = MutableStateFlow("")
 
+    // Reverse-geocoded names, keyed by the coordinate that produced them. Re-planning re-submits the same
+    // points — a date or arrive-by change, an advanced-settings apply, or editing *the other* endpoint all
+    // re-plan — and what a point is called doesn't change between them, so the lookup is worth exactly
+    // once. Only successes are remembered, so a failed lookup is retried rather than cached as "unnamed".
+    // Read and written only from the plan collector, which runs on the main dispatcher.
+    private val reverseNames = mutableMapOf<Pair<Double, Double>, String>()
+
     // Plan submissions, driven reactively. Each user action that can change the plan sends its params
     // (or null when the form isn't submittable) here; the collector below [mapLatest]-cancels the plan
     // in flight as soon as the next input arrives, so a slow plan that outlives its edit can't publish a
@@ -122,18 +133,55 @@ class TripPlanViewModel @Inject constructor(
                     if (_planState.value !is PlanResult.Idle) _planState.value = PlanResult.Idle
                 } else {
                     _planState.value = PlanResult.Loading
-                    planRepository.plan(params).fold(
-                        // Carry the request that produced the results so the host can arm the
-                        // trip-plan-change monitor to re-plan it (see PlanResult.Success.params).
-                        onSuccess = { _planState.value = PlanResult.Success(it, params) },
-                        onFailure = { _planState.value = PlanResult.Error(it.toTripPlanError()) }
-                    )
+                    coroutineScope {
+                        // Naming the endpoints is an independent network call, so it runs alongside the
+                        // plan rather than before it: it costs no wall clock beyond the plan itself
+                        // unless the geocoder is slower, and [REVERSE_GEOCODE_TIMEOUT] caps even that.
+                        val origin = async { placeNameOf(params.from) }
+                        val destination = async { placeNameOf(params.to) }
+                        planRepository.plan(params).fold(
+                            // Carry the request that produced the results so the host can arm the
+                            // trip-plan-change monitor to re-plan it (see PlanResult.Success.params).
+                            onSuccess = { itineraries ->
+                                _planState.value = PlanResult.Success(
+                                    itineraries.withTerminalPlaceNames(origin.await(), destination.await()),
+                                    params
+                                )
+                            },
+                            onFailure = {
+                                // Nothing left to name — don't hold the error behind a lookup whose answer
+                                // is about to be discarded ("outside the transit network" is a routine
+                                // failure for exactly the map-picked endpoints that need one).
+                                origin.cancel()
+                                destination.cancel()
+                                _planState.value = PlanResult.Error(it.toTripPlanError())
+                            }
+                        )
+                    }
                 }
             }
             .launchIn(viewModelScope)
     }
 
     private suspend fun suggestionsFor(query: String): List<TripEndpoint.Geocoded> = if (query.isBlank()) emptyList() else geocode.suggest(query).getOrDefault(emptyList())
+
+    /**
+     * What to call a plan endpoint: an endpoint the user picked by name already answers for itself, but
+     * "my location" or a point on the map is only a coordinate — and OTP, sent bare coordinates, echoes
+     * them back as its own "Origin" placeholder, which is what the directions used to be left labelling
+     * their first node with (#2006). Reverse-geocodes that case.
+     *
+     * Best-effort: a failed, timed-out, or empty lookup returns null and the timeline keeps OTP's name,
+     * so a plan is never blocked or failed by geocoding.
+     */
+    private suspend fun placeNameOf(endpoint: TripEndpoint): String? {
+        endpoint.displayText?.takeIf { it.isNotBlank() }?.let { return it }
+        val lat = endpoint.lat ?: return null
+        val lon = endpoint.lon ?: return null
+        reverseNames[lat to lon]?.let { return it }
+        val name = withTimeoutOrNull(REVERSE_GEOCODE_TIMEOUT) { geocode.reverse(lat, lon).getOrNull() }
+        return name?.also { reverseNames[lat to lon] = it }
+    }
 
     fun onFromQueryChange(query: String) {
         _formState.update { it.copy(from = TripEndpoint.FreeText(query)) }
@@ -257,8 +305,49 @@ class TripPlanViewModel @Inject constructor(
     private companion object {
         const val SUGGEST_DEBOUNCE_MS = 350L
 
+        /**
+         * How long a plan will wait on the endpoint-naming lookups it runs alongside the OTP call.
+         * Naming is a cosmetic upgrade of the directions' first/last node, so a slow geocoder must not
+         * hold the route back — past this the plan publishes with OTP's own names.
+         */
+        val REVERSE_GEOCODE_TIMEOUT = 4.seconds
+
         // Mirror OTPConstants.TRIP_PLAN_DATE/TIME_STRING_FORMAT (inlined to keep this JVM-pure).
         const val DATE_PATTERN = "MMMM dd"
         const val TIME_PATTERN = "hh:mm a"
+    }
+}
+
+/**
+ * Names the trip's two ends on the itineraries themselves — the first leg's origin and the last leg's
+ * destination — leaving OTP's own name wherever we have nothing better (#2006).
+ *
+ * OTP is sent bare coordinates for *every* endpoint (`TripRequestBuilder.getAddressString`), so what it
+ * echoes back for the two terminals is its "Origin"/"Destination" placeholder, never a real place. The
+ * requester is the only party that knows what the user actually picked, so it stamps that in here, once,
+ * where the request and its results meet — rather than handing every downstream reader a second channel
+ * to consult. Everything that reads an itinerary afterwards (the trip log, the map focus, the trip-update
+ * notification, which serializes these very objects and restores them on re-entry) then sees one
+ * self-describing trip.
+ *
+ * Top-level and `internal` so this stays JVM-unit-testable, like the OTP-side [otpPlanUrl].
+ */
+internal fun List<TripItinerary>.withTerminalPlaceNames(origin: String?, destination: String?): List<TripItinerary> {
+    val originName = origin?.takeIf { it.isNotBlank() }
+    val destinationName = destination?.takeIf { it.isNotBlank() }
+    if (originName == null && destinationName == null) return this
+    return map { itinerary ->
+        if (itinerary.legs.isEmpty()) {
+            itinerary
+        } else {
+            val legs = itinerary.legs.toMutableList()
+            // A single-leg trip is both terminals, so these apply in order to the same leg.
+            originName?.let { legs[0] = legs[0].let { leg -> leg.copy(from = leg.from.copy(name = it)) } }
+            destinationName?.let {
+                val last = legs.lastIndex
+                legs[last] = legs[last].let { leg -> leg.copy(to = leg.to.copy(name = it)) }
+            }
+            itinerary.copy(legs = legs)
+        }
     }
 }

@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.R
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.RadioOptionList
@@ -109,6 +110,7 @@ sealed interface FocusBannerState {
         override val isFavorite: Boolean,
         override val favoriteEnabled: Boolean,
         val hasAlerts: Boolean,
+        val wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN,
         val subordinateRoutes: List<SubordinateRoute> = emptyList(),
         val subordinateHeadsign: String? = null
     ) : FocusBannerState {
@@ -253,6 +255,9 @@ private fun StopFocusBanner(
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
+            }
+            if (state.wheelchairBoarding == WheelchairBoarding.ACCESSIBLE) {
+                WheelchairAccessibleIndicator()
             }
             if (state.hasAlerts) {
                 BannerAlertAction(onClick = onShowAlerts)
@@ -484,6 +489,24 @@ private fun BannerFavoriteAction(
     )
 }
 
+/**
+ * A non-interactive badge marking the focused stop as wheelchair accessible (#1029). Shown only for
+ * [WheelchairBoarding.ACCESSIBLE]; the "not accessible"/"unknown" states render nothing, since most
+ * feeds leave the GTFS field unset and a stream of "unknown" badges would be noise.
+ */
+@Composable
+private fun WheelchairAccessibleIndicator() {
+    Icon(
+        painter = painterResource(R.drawable.ic_wheelchair_accessible),
+        contentDescription = stringResource(R.string.stop_wheelchair_accessible),
+        tint = MaterialTheme.colorScheme.primary,
+        // 12dp padding + 24dp icon = a 48dp footprint, matching the alert/close actions it sits beside.
+        modifier = Modifier
+            .padding(12.dp)
+            .size(24.dp)
+    )
+}
+
 @Composable
 private fun BannerAlertAction(onClick: () -> Unit) {
     Icon(
@@ -582,6 +605,7 @@ private fun FocusBannerPreview() {
                     isFavorite = true,
                     favoriteEnabled = true,
                     hasAlerts = true,
+                    wheelchairBoarding = WheelchairBoarding.ACCESSIBLE,
                     subordinateRoutes = listOf(
                         FocusBannerState.SubordinateRoute("65", 0xFF26823B.toInt()),
                         FocusBannerState.SubordinateRoute("75", 0xFF125BA8.toInt())

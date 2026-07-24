@@ -31,8 +31,9 @@ import org.onebusaway.android.SmokeTest
  * empty — the data import from the legacy ContentProvider DB is a separate slice); and that
  * [MIGRATION_3_4] reconciles `routes.favorite` from the authoritative `route_headsign_favorites` table
  * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
- * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); and
- * that [MIGRATION_6_7] drops the retired `stop_routes_filter` table.
+ * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); that
+ * [MIGRATION_6_7] drops the retired `stop_routes_filter` table; and that [MIGRATION_7_8] adds
+ * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029).
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -180,6 +181,27 @@ class AppDatabaseMigrationTest {
         db.query(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='stop_routes_filter'"
         ).use { c -> assertEquals("stop_routes_filter should be dropped", 0, c.count) }
+        db.close()
+    }
+
+    @Test
+    fun migrate7To8_addsWheelchairBoardingColumnNullForExistingStops() {
+        helper.createDatabase(TEST_DB, 7).use { db ->
+            // A pre-existing cached stop with no wheelchair column yet.
+            db.execSQL(
+                "INSERT INTO cached_stops " +
+                    "(_id, code, name, direction, latitude, longitude, location_type, route_ids, region_id, last_seen) " +
+                    "VALUES ('1_100', '100', 'Pine St', 'N', 47.6, -122.3, 0, '', 1, 0)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 8.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 8, true, MIGRATION_7_8)
+
+        db.query("SELECT wheelchair_boarding FROM cached_stops WHERE _id = '1_100'").use { c ->
+            c.moveToFirst()
+            assertTrue("pre-existing cached stop should have NULL wheelchair_boarding (UNKNOWN)", c.isNull(0))
+        }
         db.close()
     }
 

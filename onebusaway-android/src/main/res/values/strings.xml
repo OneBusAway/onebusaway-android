@@ -330,6 +330,7 @@
 
     <!-- Stop Details -->
     <string name="stop_details_code">Stop # %1$s</string>
+    <string name="stop_wheelchair_accessible">Wheelchair accessible</string>
 
     <!-- Arrival Time Style B -->
 

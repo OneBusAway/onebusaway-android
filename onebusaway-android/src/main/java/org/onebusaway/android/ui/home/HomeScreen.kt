@@ -400,6 +400,7 @@ fun HomeScreen(
                         isFavorite = currentFocus.stop.id in favoriteStopIds,
                         favoriteEnabled = stopFavoritesReady,
                         hasAlerts = arrivalsContent?.hasAlerts == true,
+                        wheelchairBoarding = currentFocus.stop.wheelchairBoarding,
                         subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
                             FocusBannerState.SubordinateRoute(
                                 shortName = leg.shortName,

@@ -20,6 +20,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.time.WallTime
 
 /** JVM unit tests for the pure map-stop-cache mappers ([MapStopCacheMappers]). */
@@ -75,7 +76,8 @@ class MapStopCacheMappersTest {
             locationType = ObaStop.LOCATION_STOP,
             lat = 47.61,
             lon = -122.34,
-            routeIds = arrayOf("1_100", "1_101")
+            routeIds = arrayOf("1_100", "1_101"),
+            wheelchairBoarding = WheelchairBoarding.ACCESSIBLE
         )
 
         val record = stop.toCachedRecord(regionId = 3L, now = 500L)
@@ -91,6 +93,7 @@ class MapStopCacheMappersTest {
         assertEquals(47.61, back.latitude, 1e-9)
         assertEquals(-122.34, back.longitude, 1e-9)
         assertArrayEquals(arrayOf("1_100", "1_101"), back.routeIds)
+        assertEquals(WheelchairBoarding.ACCESSIBLE, back.wheelchairBoarding)
     }
 
     @Test
@@ -113,6 +116,8 @@ class MapStopCacheMappersTest {
         assertEquals(null, back.name)
         assertEquals(ObaStop.LOCATION_STATION, back.locationType)
         assertArrayEquals(emptyArray<String>(), back.routeIds)
+        // No accessibility given → the default UNKNOWN round-trips (not null).
+        assertEquals(WheelchairBoarding.UNKNOWN, back.wheelchairBoarding)
     }
 
     private fun fakeStop(
@@ -123,7 +128,8 @@ class MapStopCacheMappersTest {
         locationType: Int,
         lat: Double,
         lon: Double,
-        routeIds: Array<String>
+        routeIds: Array<String>,
+        wheelchairBoarding: WheelchairBoarding = WheelchairBoarding.UNKNOWN
     ): ObaStop = object : ObaStop {
         override val id = id
         override val stopCode = code
@@ -133,6 +139,7 @@ class MapStopCacheMappersTest {
         override val latitude = lat
         override val longitude = lon
         override val routeIds = routeIds
+        override val wheelchairBoarding = wheelchairBoarding
 
         // Never touched by the mappers (would need Android); guard so a regression is loud.
         override val location: Location get() = throw UnsupportedOperationException()

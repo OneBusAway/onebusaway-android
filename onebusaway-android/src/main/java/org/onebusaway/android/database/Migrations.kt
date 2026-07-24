@@ -180,3 +180,16 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
         db.execSQL("DROP TABLE IF EXISTS `stop_routes_filter`")
     }
 }
+
+/**
+ * Adds `cached_stops.wheelchair_boarding` (#1029): the stop's GTFS wheelchair-boarding accessibility as
+ * a WheelchairBoarding enum name. NULL (every existing cached row) reads back as UNKNOWN. Purely
+ * additive, no other v7 table/column changes. Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `cached_stops` ADD COLUMN `wheelchair_boarding` TEXT"
+        )
+    }
+}

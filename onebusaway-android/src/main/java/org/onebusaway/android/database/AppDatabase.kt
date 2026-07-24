@@ -50,6 +50,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  *
  * v7 retires the per-stop route filter (#1807-era arrivals cleanup): the `stop_routes_filter` table is
  * dropped now that arrivals are grouped by route and the "show only this route" filter is gone.
+ *
+ * v8 adds `cached_stops.wheelchair_boarding` (#1029): the stop's GTFS wheelchair-boarding accessibility
+ * (a WheelchairBoarding enum name), so the map focus banner can show an accessibility indicator for
+ * cached stops too. NULL (every existing cached row) reads back as UNKNOWN.
  */
 @Database(
     entities = [
@@ -68,7 +72,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         CachedStopRecord::class,
         CachedRouteTypeRecord::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

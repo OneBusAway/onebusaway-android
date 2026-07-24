@@ -19,6 +19,7 @@ import android.location.Location
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.locationOf
 
@@ -85,6 +86,8 @@ private class CachedObaStop(private val record: CachedStopRecord) : ObaStop {
     override val direction: String? get() = record.direction
     override val locationType: Int get() = record.locationType
     override val routeIds: Array<String> get() = splitRouteIds(record.routeIds)
+    override val wheelchairBoarding: WheelchairBoarding
+        get() = WheelchairBoarding.fromString(record.wheelchairBoarding)
 }
 
 /** Presents this cached row as an [ObaStop] for the map overlay. */
@@ -100,6 +103,9 @@ fun ObaStop.toCachedRecord(regionId: Long, now: Long): CachedStopRecord = Cached
     longitude = longitude,
     locationType = locationType,
     routeIds = joinRouteIds(routeIds),
+    // Persist the wire representation (WheelchairBoarding.toString()), the exact string
+    // WheelchairBoarding.fromString reads back — so write and read can't drift apart.
+    wheelchairBoarding = wheelchairBoarding.toString(),
     regionId = regionId,
     lastSeen = now
 )

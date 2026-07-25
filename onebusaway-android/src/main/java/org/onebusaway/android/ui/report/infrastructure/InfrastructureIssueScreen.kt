@@ -332,32 +332,31 @@ private fun StopTripProblemForm(
     onSubmit: ((() -> Unit)?) -> Unit
 ) {
     val context = LocalContext.current
-    // The codes are a resource array, so they're read in composition and handed to the assisted
-    // factory; the repository comes from the graph.
-    val stopCodes = stringArrayResource(R.array.report_stop_problem_code).toList()
-    val tripCodes = stringArrayResource(R.array.report_trip_problem_code_bus).toList()
+    // The code labels are a resource array, so they have to be read in composition rather than in the
+    // creation callback below — but only the array for the kind actually being reported.
+    val codes = if (arrival != null) {
+        ProblemCodes.trip(stringArrayResource(R.array.report_trip_problem_code_bus).toList())
+    } else {
+        ProblemCodes.stop(stringArrayResource(R.array.report_stop_problem_code).toList())
+    }
     val vm: ProblemReportViewModel =
         hiltViewModel<ProblemReportViewModel, ProblemReportViewModel.Factory>(
             key = "problem:${arrival?.tripId ?: stop.id}"
         ) { factory ->
-            if (arrival != null) {
-                factory.create(
-                    params = ProblemParams.Trip(
+            factory.create(
+                params = if (arrival != null) {
+                    ProblemParams.Trip(
                         tripId = arrival.tripId,
                         stopId = arrival.stopId,
                         vehicleId = arrival.vehicleId,
                         serviceDate = arrival.serviceDate
-                    ),
-                    codes = ProblemCodes.trip(tripCodes),
-                    headsign = MyTextUtils.formatDisplayText(arrival.headsign)
-                )
-            } else {
-                factory.create(
-                    params = ProblemParams.Stop(stop.id),
-                    codes = ProblemCodes.stop(stopCodes),
-                    headsign = null
-                )
-            }
+                    )
+                } else {
+                    ProblemParams.Stop(stop.id)
+                },
+                codes = codes,
+                headsign = arrival?.let { MyTextUtils.formatDisplayText(it.headsign) }
+            )
         }
 
     LaunchedEffect(vm) {

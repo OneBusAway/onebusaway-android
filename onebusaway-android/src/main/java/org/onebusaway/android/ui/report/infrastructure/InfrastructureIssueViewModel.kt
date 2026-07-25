@@ -66,9 +66,8 @@ class InfrastructureIssueViewModel @Inject constructor(
         ?.let { name -> DefaultIssueType.entries.firstOrNull { it.name == name } }
         ?: DefaultIssueType.NONE
 
+    /** The arrival being reported on — re-set when the picker chooses one, so not just an arg. */
     private var arrivalInfo: TripReportContext? = reportContext.trip
-    private val agencyName: String? = reportContext.agencyName
-    private val blockId: String? = reportContext.blockId
 
     private val _uiState = MutableStateFlow(
         run {
@@ -256,7 +255,7 @@ class InfrastructureIssueViewModel @Inject constructor(
     }
 
     /** Trip context for the host when launching the trip / Open311-trip forms. */
-    fun tripContext(): Triple<TripReportContext?, String?, String?> = Triple(arrivalInfo, agencyName, blockId)
+    fun tripContext(): Triple<TripReportContext?, String?, String?> = Triple(arrivalInfo, reportContext.agencyName, reportContext.blockId)
 
     /**
      * The current issue location/address/stop, for the hosted Open311 form (was the host activity's

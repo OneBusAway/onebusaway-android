@@ -18,8 +18,14 @@ package org.onebusaway.android.map.render
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.ObaTripDetails
+import org.onebusaway.android.models.RouteTrips
 
-/** Pure-logic guards for [VehicleBitmaps]'s route-type normalization (the cablecar→tram promise). */
+/**
+ * Pure-logic guards for [VehicleBitmaps]'s route-type resolution: the cablecar→tram promise, and the
+ * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020).
+ */
 class VehicleBitmapsTest {
 
     /**
@@ -52,5 +58,73 @@ class VehicleBitmapsTest {
         )) {
             assertEquals(type.toLong(), VehicleBitmaps.normalizeVehicleType(type).toLong())
         }
+    }
+
+    @Test
+    fun resolvesTheRouteTypeWhenReferencesCarryTripAndRoute() {
+        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_FERRY))
+        assertEquals(ObaRoute.TYPE_FERRY, VehicleBitmaps.routeTypeFor(response, "trip1"))
+    }
+
+    /**
+     * #2020: a vehicle mid-block-interline reports an activeTripId this route's poll never fetched, so
+     * the references pool can't resolve it. That used to be a `!!` and killed the process on the
+     * reactive poll path; it must now degrade to the default glyph.
+     */
+    @Test
+    fun missingTripFallsBackToTheDefaultGlyphInsteadOfThrowing() {
+        val response = routeTrips(trip = null, route = FakeRoute(ObaRoute.TYPE_RAIL))
+        assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, "absent-trip"))
+    }
+
+    /** The trip resolved but its route didn't — the second half of the old `!!` chain. */
+    @Test
+    fun missingRouteFallsBackToTheDefaultGlyphInsteadOfThrowing() {
+        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = null)
+        assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, "trip1"))
+    }
+
+    /** A blank/absent id (cf. #2003, where OBA sends "" rather than null for block-edge trip ids). */
+    @Test
+    fun blankOrNullTripIdFallsBackToTheDefaultGlyph() {
+        val response = routeTrips(trip = null, route = null)
+        assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, ""))
+        assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, null))
+    }
+
+    /** Cablecar still collapses onto tram when it *is* resolvable, fallback path notwithstanding. */
+    @Test
+    fun resolvedCablecarStillNormalizesToTram() {
+        val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_CABLECAR))
+        assertEquals(ObaRoute.TYPE_TRAM, VehicleBitmaps.routeTypeFor(response, "trip1"))
+    }
+
+    /** A [RouteTrips] whose references pool holds at most the given trip/route. */
+    private fun routeTrips(trip: ObaTrip?, route: ObaRoute?): RouteTrips = object : RouteTrips {
+        override val trips: List<ObaTripDetails> = emptyList()
+        override fun trip(tripId: String?): ObaTrip? = trip.takeIf { !tripId.isNullOrEmpty() }
+        override fun route(routeId: String): ObaRoute? = route
+        override val currentTimeMs: Long = 0L
+    }
+
+    private class FakeTrip(override val id: String, override val routeId: String) : ObaTrip {
+        override val shortName: String? = null
+        override val shapeId: String? = null
+        override val directionId: Int = 0
+        override val serviceId: String? = null
+        override val headsign: String? = null
+        override val timezone: String? = null
+        override val blockId: String? = null
+    }
+
+    private class FakeRoute(override val type: Int) : ObaRoute {
+        override val id: String = "routeA"
+        override val shortName: String? = null
+        override val longName: String? = null
+        override val description: String? = null
+        override val url: String? = null
+        override val color: Int? = null
+        override val textColor: Int? = null
+        override val agencyId: String = "agency"
     }
 }

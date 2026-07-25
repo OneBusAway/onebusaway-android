@@ -116,11 +116,28 @@ object VehicleBitmaps {
         )
 
     /** The vehicle's route type, normalizing cablecar to tram so both the bitmap and key paths agree. */
-    private fun vehicleType(vehicle: VehicleMarker, response: RouteTrips): Int {
-        val status = vehicle.status
-        // Non-null chain matches the former Java (it NPE'd on a missing trip/route too).
-        val type = response.route(response.trip(status.activeTripId)!!.routeId)!!.type
-        return normalizeVehicleType(type)
+    private fun vehicleType(vehicle: VehicleMarker, response: RouteTrips): Int = routeTypeFor(response, vehicle.status.activeTripId)
+
+    /**
+     * The route type behind [activeTripId], or [DEFAULT_VEHICLE_TYPE] when it can't be resolved.
+     *
+     * Both hops are nullable **by contract** — [RouteTrips.trip] and [RouteTrips.route] resolve out of
+     * whatever `references` the poll happened to carry — and a vehicle mid-block-interline can
+     * legitimately report an `activeTripId` this route's poll never fetched (which is why
+     * `TripVehiclesDataSource.trip` exists at all, #1691); a blank id does it too (#2003). This was a
+     * `!!` chain inherited from the former Java, which turned that ordinary data gap into a foreground
+     * process death on the reactive poll path (#2020) — even though `vehicleTitle`, called one line
+     * away in the same reconcile loop, already degraded to "".
+     *
+     * Falling back to the default glyph keeps a real vehicle on the map rather than dropping it, and
+     * because `iconKey` and `vehicleBitmap` both come through here they can't disagree about which
+     * bitmap the fallback names.
+     */
+    @VisibleForTesting
+    internal fun routeTypeFor(response: RouteTrips, activeTripId: String?): Int {
+        val trip = response.trip(activeTripId) ?: return DEFAULT_VEHICLE_TYPE
+        val route = response.route(trip.routeId) ?: return DEFAULT_VEHICLE_TYPE
+        return normalizeVehicleType(route.type)
     }
 
     /**

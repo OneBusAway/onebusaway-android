@@ -127,6 +127,7 @@ data class RegionRecord(
     @ColumnInfo(name = "otp_contact_email") val otpContactEmail: String? = null,
     @ColumnInfo(name = "supports_otp_bikeshare") val supportsOtpBikeshare: Int? = null,
     @ColumnInfo(name = "otp_base_graphql_url") val otpBaseGraphqlUrl: String? = null,
+    @ColumnInfo(name = "supports_otp_graphql_bikeshare") val supportsOtpGraphqlBikeshare: Int? = null,
     @ColumnInfo(name = "supports_embedded_social") val supportsEmbeddedSocial: Int? = null,
     @ColumnInfo(name = "payment_android_app_id") val paymentAndroidAppId: String? = null,
     @ColumnInfo(name = "payment_warning_title") val paymentWarningTitle: String? = null,

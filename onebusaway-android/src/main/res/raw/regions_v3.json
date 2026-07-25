@@ -133,6 +133,7 @@
         "otpContactEmail": "otp-pugetsound@onebusaway.org",
         "supportsEmbeddedSocial": false,
         "supportsOtpBikeshare": false,
+        "supportsOtpGraphqlBikeshare": true,
         "paymentAndroidAppId": "co.bytemark.tgt",
         "paymentWarningTitle": "Check before you buy!",
         "paymentWarningBody": "The mobile fare payment app for Puget Sound does not support all transit service shown in OneBusAway. Please check that a ticket is eligible for your agency and route before you purchase!",

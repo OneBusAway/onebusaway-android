@@ -468,6 +468,10 @@ data class RegionDto(
     // A distinct field because a region's GraphQL endpoint is a different host from its OTP1
     // `otpBaseUrl` (e.g. Puget Sound), so the two URLs can't share one field.
     val otpBaseGraphqlUrl: String? = null,
+    // Bike-rental support on the OTP2 GraphQL server, published separately from
+    // [supportsOtpBikeshare] (which describes the OTP1 REST server) because they are facts about two
+    // different hosts and genuinely differ — see Region.supportsOtpGraphqlBikeshare.
+    val supportsOtpGraphqlBikeshare: Boolean = false,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,

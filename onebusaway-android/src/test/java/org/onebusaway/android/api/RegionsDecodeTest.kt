@@ -74,6 +74,34 @@ class RegionsDecodeTest {
             .forEach { assertNull(it.otpBaseGraphqlUrl) }
     }
 
+    /**
+     * The per-protocol bikeshare flags decode off the wire and stay distinct, **and each region is
+     * paired with the protocol that makes its flag the one consulted** (`Region.usesOtp2`). The
+     * bundled fail-safe file is the first-launch/offline source, so either half going missing there
+     * silently reinstates the bug even once the live directory is right — a dropped
+     * `supportsOtpGraphqlBikeshare` (the DTO default is false), or a dropped `otpBaseGraphqlUrl`,
+     * which sends Puget Sound back to its `false` OTP1 flag. That is exactly how its bikeshare trip
+     * planning stayed hidden.
+     */
+    @Test
+    fun bundledRegionsCarryPerProtocolBikeshareFlags() {
+        val regions = decode("src/main/res/raw/regions_v3.json").map { it.toObaRegion() }
+
+        val pugetSound = regions.single { it.name == "Puget Sound" }
+        assertTrue("Puget Sound plans over OTP2, so its GraphQL flag is the one that answers", pugetSound.usesOtp2)
+        assertFalse("Puget Sound's OTP1 /bike_rental is empty", pugetSound.supportsOtpBikeshare)
+        assertTrue("Puget Sound's OTP2 server plans bikeshare", pugetSound.supportsOtpGraphqlBikeshare)
+
+        // The mirror case, so the two flags can't be collapsed back onto one. Tampa Bay plans over
+        // OTP1, so its OTP1 flag is the one that answers; the bundled entry omits
+        // supportsOtpGraphqlBikeshare entirely, which decodes to the same false the live directory
+        // states explicitly.
+        val tampa = regions.single { it.name == "Tampa Bay" }
+        assertFalse("Tampa Bay plans over OTP1, so its OTP1 flag is the one that answers", tampa.usesOtp2)
+        assertTrue(tampa.supportsOtpBikeshare)
+        assertFalse(tampa.supportsOtpGraphqlBikeshare)
+    }
+
     /** Ports testUmamiAnalyticsParsing: the nested umamiAnalytics object maps onto the region. */
     @Test
     fun mapsUmamiAnalyticsConfig() {

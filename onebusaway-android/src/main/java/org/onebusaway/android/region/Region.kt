@@ -50,6 +50,13 @@ data class Region(
     // from [otpBaseUrl] because the GraphQL endpoint is a different host than the OTP1 REST server.
     // Never sniffed/inferred from the URL shape or a failed request.
     val otpBaseGraphqlUrl: String? = null,
+    // Whether the region's OTP **2.x GraphQL** server has bike-rental data — the sibling of
+    // [supportsOtpBikeshare], which describes the OTP1 REST server only. The directory publishes them
+    // separately because they are independent facts about two different hosts, and they genuinely
+    // differ: Puget Sound is false + true (its OTP1 `/bike_rental` really is empty, while its OTP2
+    // `planConnection` returns rented-bike + Link itineraries); Tampa Bay is the exact mirror.
+    // Collapsing them onto one flag is what hid bikeshare trip planning in Seattle.
+    val supportsOtpGraphqlBikeshare: Boolean = false,
     val supportsEmbeddedSocial: Boolean = false,
     val paymentAndroidAppId: String? = null,
     val paymentWarningTitle: String? = null,
@@ -60,6 +67,14 @@ data class Region(
 ) {
     val umamiAnalyticsUrl: String? get() = umamiAnalytics?.url
     val umamiAnalyticsId: String? get() = umamiAnalytics?.id
+
+    /**
+     * Whether this region's trip planning speaks OTP 2.x GraphQL — true exactly when it publishes an
+     * [otpBaseGraphqlUrl]. The single definition of that protocol signal, shared by the request
+     * builder's endpoint resolution and the bikeshare capability gate so the two can't disagree about
+     * which server a plan will hit.
+     */
+    val usesOtp2: Boolean get() = !otpBaseGraphqlUrl.isNullOrBlank()
 
     // A region is an entity identified by [id]: the selection logic and tests compare by id, and
     // structural equality over all fields (incl. the cached bounds/servers) would be wrong here.

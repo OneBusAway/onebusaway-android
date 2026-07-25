@@ -193,3 +193,18 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
         )
     }
 }
+
+/**
+ * Adds `regions.supports_otp_graphql_bikeshare`: whether the region's OTP **2.x GraphQL** server has
+ * bike-rental data, as distinct from the existing `supports_otp_bikeshare`, which only ever described
+ * the OTP1 REST server. NULL (every existing cached row) reads back as false, and the next regions
+ * refresh fills in the directory's real value. Purely additive, no other v9 table/column changes.
+ * Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `regions` ADD COLUMN `supports_otp_graphql_bikeshare` INTEGER"
+        )
+    }
+}

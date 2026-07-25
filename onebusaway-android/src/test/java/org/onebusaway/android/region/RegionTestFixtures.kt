@@ -75,30 +75,31 @@ internal fun region(
     twitterUrl: String? = null,
     otpContactEmail: String? = null
 ): Region = Region(
-    id, // id
-    "Region $id", // name
-    true, // active
-    null, // obaBaseUrl
-    null, // siriBaseUrl
-    emptyArray(), // bounds
-    emptyArray(), // open311Servers
-    null, // lang
-    null, // contactEmail
-    true, // supportsObaDiscoveryApis
-    true, // supportsObaRealtimeApis
-    false, // supportsSiriRealtimeApis
-    twitterUrl, // twitterUrl
-    false, // experimental
-    null, // stopInfoUrl
-    null, // otpBaseUrl
-    otpContactEmail, // otpContactEmail
-    supportsOtpBikeshare, // supportsOtpBikeshare
-    null, // otpBaseGraphqlUrl
-    false, // supportsEmbeddedSocial
-    null, // paymentAndroidAppId
-    null, // paymentWarningTitle
-    null, // paymentWarningBody
-    null, // sidecarBaseUrl
-    null, // plausibleAnalyticsServerUrl
-    null // umamiAnalytics (UmamiAnalyticsConfig)
+    id = id,
+    name = "Region $id",
+    active = true,
+    obaBaseUrl = null,
+    siriBaseUrl = null,
+    bounds = emptyArray(),
+    open311Servers = emptyArray(),
+    language = null,
+    contactEmail = null,
+    supportsObaDiscoveryApis = true,
+    supportsObaRealtimeApis = true,
+    supportsSiriRealtimeApis = false,
+    twitterUrl = twitterUrl,
+    experimental = false,
+    stopInfoUrl = null,
+    otpBaseUrl = null,
+    otpContactEmail = otpContactEmail,
+    supportsOtpBikeshare = supportsOtpBikeshare,
+    otpBaseGraphqlUrl = null,
+    supportsOtpGraphqlBikeshare = false,
+    supportsEmbeddedSocial = false,
+    paymentAndroidAppId = null,
+    paymentWarningTitle = null,
+    paymentWarningBody = null,
+    sidecarBaseUrl = null,
+    plausibleAnalyticsServerUrl = null,
+    umamiAnalytics = null
 )

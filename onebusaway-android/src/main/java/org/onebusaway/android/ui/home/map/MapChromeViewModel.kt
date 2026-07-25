@@ -67,9 +67,10 @@ class MapChromeViewModel @Inject constructor(
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
             ) { zoomControls, leftHand, bikeVisible, region, otpUrl ->
                 // Reactive re-derivation of bikeshare availability for this consumer, tracking region +
-                // the OTP-URL pref. Shares the one predicate ([BikeshareAvailability]) with the trip/layer
-                // call sites, so this stays a live flow while they resolve it per-call from a Context.
-                val bikeshareEnabled = BikeshareAvailability.isEnabled(region, otpUrl)
+                // the OTP-URL pref, so this stays a live flow while the trip-planning call sites
+                // resolve theirs per-call from a Context. This chrome drives the bike-*station* layer
+                // (FAB + toggle), hence the station-layer question rather than the trip-planning one.
+                val bikeshareEnabled = BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
                 MapChromeState(
                     zoomControls = zoomControls,
                     leftHand = leftHand,

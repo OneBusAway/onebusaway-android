@@ -32,8 +32,9 @@ import org.onebusaway.android.SmokeTest
  * [MIGRATION_3_4] reconciles `routes.favorite` from the authoritative `route_headsign_favorites` table
  * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
  * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); that
- * [MIGRATION_6_7] drops the retired `stop_routes_filter` table; and that [MIGRATION_7_8] adds
- * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029).
+ * [MIGRATION_6_7] drops the retired `stop_routes_filter` table; that [MIGRATION_7_8] adds
+ * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029); and that [MIGRATION_8_9] adds
+ * `regions.supports_otp_graphql_bikeshare` as NULL (reading back as false) for existing rows.
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -201,6 +202,32 @@ class AppDatabaseMigrationTest {
         db.query("SELECT wheelchair_boarding FROM cached_stops WHERE _id = '1_100'").use { c ->
             c.moveToFirst()
             assertTrue("pre-existing cached stop should have NULL wheelchair_boarding (UNKNOWN)", c.isNull(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate8To9_addsGraphqlBikeshareColumnNullForExistingRegions() {
+        helper.createDatabase(TEST_DB, 8).use { db ->
+            // A pre-existing region cached before the OTP2 bikeshare flag existed.
+            db.execSQL(
+                "INSERT INTO regions " +
+                    "(_id, name, oba_base_url, siri_base_url, lang, contact_email, " +
+                    "supports_api_discovery, supports_api_realtime, supports_siri_realtime, " +
+                    "supports_otp_bikeshare) " +
+                    "VALUES (1, 'Puget Sound', 'https://oba', 'https://siri', 'en_US', 'a@b.c', 1, 1, 1, 0)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 9.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 9, true, MIGRATION_8_9)
+
+        db.query("SELECT supports_otp_graphql_bikeshare FROM regions WHERE _id = 1").use { c ->
+            c.moveToFirst()
+            assertTrue(
+                "pre-existing region should have NULL supports_otp_graphql_bikeshare (reads back false)",
+                c.isNull(0)
+            )
         }
         db.close()
     }

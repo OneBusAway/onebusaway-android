@@ -120,7 +120,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
                 listOf(TripMode.TRANSIT.name, TripMode.WALK.name)
             // Transit & bikeshare
             TripModes.TRANSIT_AND_BIKE ->
-                if (BikeshareAvailability.isEnabled(mContext)) {
+                if (BikeshareAvailability.isTripPlanningEnabled(mContext)) {
                     listOf(
                         TripMode.TRANSIT.name,
                         TripMode.WALK.name,
@@ -158,7 +158,7 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
     fun getModeSetId(): Int {
         // IF bike mode is selected in the trip plan additional preferences but bikeshare is not
         // enabled use the default mode (TRANSIT)
-        if (TripModes.BIKESHARE == mModeId && !BikeshareAvailability.isEnabled(mContext)) {
+        if (TripModes.BIKESHARE == mModeId && !BikeshareAvailability.isTripPlanningEnabled(mContext)) {
             return TripModes.TRANSIT_ONLY
         }
         return mModeId
@@ -238,9 +238,13 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             // (TripPlanRepository) surfaces a "no server selected" error instead of crashing.
             val region = RegionEntryPoint.get(mContext).currentRegion() ?: return OtpTarget(null, false)
             // An OTP2 region publishes its GraphQL endpoint separately (a different host than the
-            // OTP1 REST server); route to it when present, else the OTP1 REST base URL.
-            val graphqlBase = region.otpBaseGraphqlUrl?.takeUnless { it.isBlank() }
-            return OtpTarget(baseUrl = graphqlBase ?: region.otpBaseUrl, usesOtp2 = graphqlBase != null)
+            // OTP1 REST server); route to it when present, else the OTP1 REST base URL. Reads
+            // [Region.usesOtp2] rather than re-deriving it, so a region's endpoint and its
+            // per-protocol capability flags are resolved from one definition.
+            return OtpTarget(
+                baseUrl = if (region.usesOtp2) region.otpBaseGraphqlUrl else region.otpBaseUrl,
+                usesOtp2 = region.usesOtp2
+            )
         }
 
     /**

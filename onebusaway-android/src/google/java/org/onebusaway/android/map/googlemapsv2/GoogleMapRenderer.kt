@@ -296,7 +296,7 @@ class GoogleMapRenderer(
         }
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
-        renderRouteBadges(snapshot.routeBadges)
+        renderRouteBadges(snapshot.allRouteBadges)
     }
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
@@ -314,7 +314,7 @@ class GoogleMapRenderer(
     }
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
-    fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
+    fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.allRoutePolylines) {
         routePolylineReconciler.reconcile(next, map.cameraPosition.zoom)
     }
 

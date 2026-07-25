@@ -215,7 +215,7 @@ fun MapFeature(
                 routeShortName: String,
                 directionId: Int?
             ) {
-                homeViewModel.requestShowFocusedStopRouteOnMap(
+                homeViewModel.requestShowRouteBadgeOnMap(
                     routeId,
                     directionId,
                     routeShortName,

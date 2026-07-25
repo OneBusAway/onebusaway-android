@@ -397,6 +397,48 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a nearby-routes hoop badge enters standalone route focus`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+
+        // The hoop (#2004) only draws on the plain base map, so a badge tap with no focus is one of
+        // its badges: it labels a whole route with no stop to anchor a direction to.
+        vm.requestShowRouteBadgeOnMap("65", directionId = null, shortName = "65")
+        advanceUntilIdle()
+
+        assertEquals(ShowRouteRequest("65"), map.routeRequests.single())
+        assertEquals(false, map.routeCommands.single().stopScoped)
+        assertEquals(CurrentFocus.Route(RouteTarget("65")), vm.currentFocus.value)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `the same badge tap inside stop focus stays scoped to the focused stop`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        // In stop focus the badge is an adjacency badge (#1827): it carries the line's direction and
+        // keeps the stop as the anchor, so the adjacency layer survives underneath.
+        vm.requestShowRouteBadgeOnMap("65", directionId = 1, shortName = "65")
+        advanceUntilIdle()
+
+        assertEquals(
+            ShowRouteRequest("65", directionStopId = "stop", initialDirectionId = 1),
+            map.routeRequests.single()
+        )
+        assertEquals(true, map.routeCommands.single().stopScoped)
+        mapJob.cancel()
+    }
+
+    @Test
     fun `clearing a subordinate route retains stop focus`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

@@ -72,7 +72,7 @@ internal fun routePolylineRenderFlow(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     pipeline: RoutePolylineRenderPipeline = DEFAULT_ROUTE_POLYLINE_PIPELINE
 ): Flow<List<RoutePolyline>> = combine(
-    snapshot.map { it.routePolylines }.distinctUntilChanged(),
+    snapshot.map { it.allRoutePolylines }.distinctUntilChanged(),
     camera
 ) { polylines, viewport -> polylines to viewport }
     .mapLatest { (polylines, viewport) ->

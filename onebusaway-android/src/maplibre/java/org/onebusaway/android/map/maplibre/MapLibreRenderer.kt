@@ -235,7 +235,7 @@ class MapLibreRenderer(
             )
         }
 
-        renderRouteBadges(snapshot.routeBadges)
+        renderRouteBadges(snapshot.allRouteBadges)
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
@@ -264,7 +264,7 @@ class MapLibreRenderer(
     )
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
-    fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
+    fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.allRoutePolylines) {
         routePolylineReconciler.reconcile(next, map.cameraPosition.zoom.toFloat())
     }
 

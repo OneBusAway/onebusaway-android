@@ -65,6 +65,25 @@ val FOCUSED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 1.5f
 )
 
+/**
+ * The ambient "routes near here" hoop layer on the base map (#2004). Thinner than stop-focus
+ * adjacency (0.5x) and — unlike it — also drawn at reduced alpha: adjacency is the thing the user
+ * just asked for, whereas the hoop is unrequested context that has to sit under the basemap's own
+ * labels without competing with them.
+ */
+val NEARBY_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.4f
+)
+
+/**
+ * The hoop's own ring (#2004): a hairline that keeps its width at every zoom — it marks a fixed
+ * geographic radius, so it shouldn't thicken as the camera closes in the way a route line does.
+ */
+val NEARBY_ROUTES_HOOP_WIDTH_PROFILE = RouteLineWidthProfile(
+    thicknessDp = 2f,
+    distantThicknessMultiplier = 1f
+)
+
 /** Contextual sibling routes shown underneath a route selected from focused-stop mode. */
 val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 0.275f

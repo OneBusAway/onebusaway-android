@@ -469,6 +469,29 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * A route badge on the map was tapped. The map draws badges in two states, and which focus is
+     * active tells them apart: inside stop focus they label the focused stop's adjacent routes
+     * (#1827), so the tap behaves like the matching arrivals row ([requestShowFocusedStopRouteOnMap]);
+     * on the plain base map they label the ambient "routes near here" hoop (#2004), which has no stop
+     * to anchor to, so the tap enters plain route focus.
+     */
+    fun requestShowRouteBadgeOnMap(
+        routeId: String,
+        directionId: Int?,
+        shortName: String = routeId,
+        undoViewport: MapViewport? = null
+    ) {
+        if (_currentFocus.value is CurrentFocus.Stop) {
+            requestShowFocusedStopRouteOnMap(routeId, directionId, shortName, undoViewport)
+        } else {
+            focusStandaloneRoute(
+                ShowRouteRequest(routeId = routeId, initialDirectionId = directionId),
+                undoViewport
+            )
+        }
+    }
+
+    /**
      * A focused-stop route badge behaves like its arrivals-drawer row: carry the focused stop as the
      * direction anchor so route mode preserves adjacency focus underneath it. The badge additionally
      * supplies the direction of the line it labels, which wins over stop-based direction resolution.

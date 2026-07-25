@@ -199,7 +199,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
-                    .map { it.copy(routePolylines = emptyList()) }
+                    .map { it.withoutRouteGeometry() }
                     .distinctUntilChanged()
                     .collect { activeRenderer.renderStatic(it) }
             }

@@ -208,6 +208,13 @@ data class RouteContinuation(val polyline: RoutePolyline, val arrow: Continuatio
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
     val routeBadges: List<RouteBadge> = emptyList(),
+    // The ambient "routes near here" hoop layer (#2004): the ring + the nearby routes' lines clipped to
+    // it, and one badge per drawn route. Kept in its own pair of fields rather than merged into the
+    // route layer above because a different producer owns it (NearbyRoutesController vs
+    // RouteMapController) and the two are mutually exclusive — the hoop shows only on the plain base
+    // map. Consumers read [allRoutePolylines] / [allRouteBadges] and never have to know which is which.
+    val nearbyRoutePolylines: List<RoutePolyline> = emptyList(),
+    val nearbyRouteBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val bikeStations: List<BikeMarker> = emptyList(),
     val bikeshareVisible: Boolean = false,
@@ -227,6 +234,35 @@ data class MapRenderSnapshot(
     // the 20Hz vehicle-motion sampler.
     val routeContinuation: RouteContinuation? = null
 ) {
+    /**
+     * Every route line to draw, hoop layer first so it sits beneath a focused route's own geometry.
+     * Returns the non-empty list itself whenever one side is empty — the usual case, since the two
+     * layers never coexist — so the renderers' identity fast path (see [RoutePolylineReconciler]) is
+     * preserved rather than defeated by a fresh concatenation on every emission.
+     */
+    val allRoutePolylines: List<RoutePolyline>
+        get() = when {
+            nearbyRoutePolylines.isEmpty() -> routePolylines
+            routePolylines.isEmpty() -> nearbyRoutePolylines
+            else -> nearbyRoutePolylines + routePolylines
+        }
+
+    /** Every route badge to draw — focused-stop adjacency (#1827) and the hoop layer (#2004). */
+    val allRouteBadges: List<RouteBadge>
+        get() = when {
+            nearbyRouteBadges.isEmpty() -> routeBadges
+            routeBadges.isEmpty() -> nearbyRouteBadges
+            else -> routeBadges + nearbyRouteBadges
+        }
+
+    /**
+     * This snapshot without any route geometry — what the flavor adapters compare for distinctness
+     * before redrawing the *static* layer (stops / bikes / generics / badges), so a line-only change
+     * doesn't churn those annotations. The route lines have their own change boundary (see
+     * [routePolylineRenderFlow]).
+     */
+    fun withoutRouteGeometry(): MapRenderSnapshot = copy(routePolylines = emptyList(), nearbyRoutePolylines = emptyList())
+
     /** Focused-stop adjacency and route focus use the same route-stop zoom scale. */
     val routeStopsScaleWithZoom: Boolean
         get() = routeModeScalesStopsWithZoom || focusedStopId != null
@@ -428,6 +464,18 @@ class MapRenderState {
     fun setRouteBadges(badges: List<RouteBadge>) {
         _snapshot.update { it.copy(routeBadges = badges) }
     }
+
+    /**
+     * Publishes the "routes near here" hoop layer (#2004) — its ring + clipped route lines and the
+     * badges that label them — as one atomic update, so a redraw can never pair one refresh's lines
+     * with another's badges.
+     */
+    fun setNearbyRoutes(polylines: List<RoutePolyline>, badges: List<RouteBadge>) {
+        _snapshot.update { it.copy(nearbyRoutePolylines = polylines, nearbyRouteBadges = badges) }
+    }
+
+    /** Clears the hoop layer (leaving the base map, or a focus taking over the route geometry). */
+    fun clearNearbyRoutes() = setNearbyRoutes(emptyList(), emptyList())
 
     // --- Generic markers (the old SimpleMarkerOverlay): monotonic int IDs the caller keeps to ---
     // --- remove the marker later. Unlike the old overlay, these survive until the map renders, ---

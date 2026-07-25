@@ -169,6 +169,16 @@ class MapViewModel @Inject constructor(
         stopCache = stopCache
     )
 
+    // The ambient "routes near here" hoop drawn on the plain base map (#2004). It reads the stop layer
+    // the controller above publishes (its route catalog supplies the badge labels), so it adds no stop
+    // query of its own — only the shared, cached per-route shape fetch.
+    private val nearbyRoutesController = NearbyRoutesController(
+        host = mapHost,
+        routeRepository = routeRepository,
+        routesById = stopsController::cachedRoutes,
+        scope = viewModelScope
+    )
+
     // ----- Map-host surface (delegated) -----
     // These live on [mapHost]; the view model re-exposes them so existing callers (the flavor adapter,
     // MapFeature, the trip-results / picker screens) are unaffected by the extraction.
@@ -291,6 +301,7 @@ class MapViewModel @Inject constructor(
         // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
         if (routeController.focusedStopId == null) stopsController.start()
         bikeController.start(directions = false, selectedBikeStationIds = null)
+        nearbyRoutesController.start()
     }
 
     /**
@@ -356,6 +367,9 @@ class MapViewModel @Inject constructor(
         stopsController.stop()
         routeController.stop()
         bikeController.stop()
+        // The hoop belongs to the plain base map only; any focus (stop route lines, a single route,
+        // directions) owns the route geometry instead. [showNearbyStops]/[clearAllFocus] restart it.
+        nearbyRoutesController.stop()
         if (routeController.focusedStopId != null) {
             stopsController.start()
         } else {
@@ -542,6 +556,7 @@ class MapViewModel @Inject constructor(
         stopsController.clearFocus()
         stopsController.start()
         bikeController.start(directions = false, selectedBikeStationIds = null)
+        nearbyRoutesController.start()
     }
 
     /**

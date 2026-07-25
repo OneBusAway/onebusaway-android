@@ -113,8 +113,8 @@ import org.onebusaway.android.util.MyTextUtils
  * [InfrastructureControls], and the inline stop/trip form, arrivals picker, and Open311 dynamic form
  * (Tier 1) — the whole report flow is pure Compose now, with no fragments.
  *
- * The [InfrastructureIssueViewModel] is back-stack-entry-scoped and reads its own launch args
- * (`selectedService` plus the encoded [ReportContext] — lat/lon, stop id/name/code, the scalar trip
+ * The [InfrastructureIssueViewModel] is back-stack-entry-scoped and reads its own launch args (the
+ * [DefaultIssueType] plus the encoded [ReportContext] — lat/lon, stop id/name/code, the scalar trip
  * context, agency name, block id) from this entry's nav-args via SavedStateHandle.
  */
 @Composable
@@ -127,7 +127,7 @@ fun InfrastructureIssueDestination(navController: NavController) {
     val mapViewModel = hiltViewModel<StopsMapViewModel>()
 
     // Scoped to this back-stack entry (so its viewModelScope is cancelled when the destination
-    // leaves). It reads selectedService and the encoded ReportContext straight off the entry's
+    // leaves). It reads the issue type and the encoded ReportContext straight off the entry's
     // nav-args via SavedStateHandle, so there's nothing to hand it here.
     val viewModel: InfrastructureIssueViewModel = hiltViewModel()
 
@@ -333,11 +333,15 @@ private fun StopTripProblemForm(
 ) {
     val context = LocalContext.current
     // The code labels are a resource array, so they have to be read in composition rather than in the
-    // creation callback below — but only the array for the kind actually being reported.
-    val codes = if (arrival != null) {
-        ProblemCodes.trip(stringArrayResource(R.array.report_trip_problem_code_bus).toList())
-    } else {
-        ProblemCodes.stop(stringArrayResource(R.array.report_stop_problem_code).toList())
+    // creation callback below — but only the array for the kind actually being reported. Remembered
+    // because the form recomposes on every keystroke while the list is only read once, when the
+    // ViewModel is created; the labels re-resolve (and the codes rebuild) if the locale changes.
+    val isTrip = arrival != null
+    val codeLabels = stringArrayResource(
+        if (isTrip) R.array.report_trip_problem_code_bus else R.array.report_stop_problem_code
+    ).toList()
+    val codes = remember(isTrip, codeLabels) {
+        if (isTrip) ProblemCodes.trip(codeLabels) else ProblemCodes.stop(codeLabels)
     }
     val vm: ProblemReportViewModel =
         hiltViewModel<ProblemReportViewModel, ProblemReportViewModel.Factory>(

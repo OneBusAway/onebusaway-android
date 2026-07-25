@@ -73,7 +73,7 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
     composable(
         NavRoutes.INFRASTRUCTURE_ISSUE,
         arguments = listOf(
-            navArgument(NavRoutes.ARG_SELECTED_SERVICE) {
+            navArgument(NavRoutes.ARG_ISSUE_TYPE) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
@@ -82,7 +82,7 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
         )
     ) { _ ->
         // No args read here: the destination's ViewModel takes both this route's args
-        // (ARG_SELECTED_SERVICE + the encoded ReportContext) off its own SavedStateHandle.
+        // (ARG_ISSUE_TYPE + the encoded ReportContext) off its own SavedStateHandle.
         ObaTheme {
             InfrastructureIssueDestination(navController = navController)
         }

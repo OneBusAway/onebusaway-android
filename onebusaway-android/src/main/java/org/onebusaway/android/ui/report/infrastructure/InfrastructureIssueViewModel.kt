@@ -49,25 +49,39 @@ import org.onebusaway.android.ui.report.TripReportContext
  */
 @HiltViewModel
 class InfrastructureIssueViewModel @Inject constructor(
-    savedState: SavedStateHandle,
+    private val savedState: SavedStateHandle,
     private val serviceListRepository: ServiceListRepository,
     private val geocodeRepository: GeocodeAddressRepository
 ) : ViewModel() {
 
     // Launch args arrive via SavedStateHandle from the INFRASTRUCTURE_ISSUE destination's nav-args:
     // the whole stop/location/trip context rides one encoded [ReportContext], and the issue type the
-    // report was started for rides [NavRoutes.ARG_SELECTED_SERVICE] as a [DefaultIssueType] name.
+    // report was started for rides [NavRoutes.ARG_ISSUE_TYPE] as a [DefaultIssueType] name.
     // Decoding here (rather than in the destination) keeps the args process-death-safe and lets the
     // screen be a plain hiltViewModel() call — same shape as TripInfoViewModel / RouteInfoViewModel.
     private val reportContext =
         ReportContext.decode(savedState.get<String>(NavRoutes.ARG_REPORT_CONTEXT))
 
-    private val defaultIssueType = savedState.get<String>(NavRoutes.ARG_SELECTED_SERVICE)
-        ?.let { name -> DefaultIssueType.entries.firstOrNull { it.name == name } }
-        ?: DefaultIssueType.NONE
+    private val defaultIssueType =
+        DefaultIssueType.fromNavArg(savedState.get<String>(NavRoutes.ARG_ISSUE_TYPE))
 
-    /** The arrival being reported on — re-set when the picker chooses one, so not just an arg. */
-    private var arrivalInfo: TripReportContext? = reportContext.trip
+    /**
+     * The arrival being reported on: the launch context's trip, replaced when the picker chooses one.
+     * Unlike the launch args it's written after construction, so it's saved back to [savedState] to
+     * survive process death along with them — otherwise a restore mid-report drops the user back to
+     * the picker with their choice silently gone. Stored through [ReportContext]'s codec (its trip
+     * half) rather than teaching this one field a second serialization.
+     */
+    private var arrivalInfo: TripReportContext? =
+        if (savedState.contains(KEY_PICKED_ARRIVAL)) {
+            ReportContext.decode(savedState[KEY_PICKED_ARRIVAL]).trip
+        } else {
+            reportContext.trip
+        }
+        set(value) {
+            field = value
+            savedState[KEY_PICKED_ARRIVAL] = value?.let { ReportContext(trip = it).encode() }
+        }
 
     private val _uiState = MutableStateFlow(
         run {
@@ -318,3 +332,6 @@ class InfrastructureIssueViewModel @Inject constructor(
 private fun ReportContext.initialStop(): ObaStop? = stopId?.let { id ->
     ObaStopElement(id, lat, lon, stopName.orEmpty(), stopCode.orEmpty())
 }
+
+/** [SavedStateHandle] key for the picker's chosen arrival (not a nav-arg — written by this VM). */
+private const val KEY_PICKED_ARRIVAL = "pickedArrival"

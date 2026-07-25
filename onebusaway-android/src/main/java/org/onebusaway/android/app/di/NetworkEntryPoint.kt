@@ -23,7 +23,6 @@ import dagger.hilt.components.SingletonComponent
 import org.onebusaway.android.api.contract.RegionsWebService
 import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.data.LocationSearchDataSource
-import org.onebusaway.android.api.data.ProblemReportDataSource
 import org.onebusaway.android.api.data.StopArrivalsDataSource
 
 /**
@@ -53,8 +52,6 @@ interface NetworkEntryPoint {
 
     fun stopArrivalsDataSource(): StopArrivalsDataSource
 
-    fun problemReportDataSource(): ProblemReportDataSource
-
     companion object {
         /** Resolves the shared [RegionsWebService] from any [context] (its application is used). */
         @JvmStatic
@@ -75,10 +72,5 @@ interface NetworkEntryPoint {
         @JvmStatic
         fun getStopArrivals(context: Context): StopArrivalsDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
             .stopArrivalsDataSource()
-
-        /** Resolves the shared [ProblemReportDataSource] from any [context] (its application is used). */
-        @JvmStatic
-        fun getProblemReport(context: Context): ProblemReportDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
-            .problemReportDataSource()
     }
 }

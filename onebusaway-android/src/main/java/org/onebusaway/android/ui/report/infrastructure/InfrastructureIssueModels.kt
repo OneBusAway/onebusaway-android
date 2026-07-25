@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.report.infrastructure
 
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.GeoPoint
 
@@ -52,7 +53,29 @@ sealed interface ReportTarget {
 }
 
 /** The category to auto-select when the screen opens, from the report type list. */
-enum class DefaultIssueType { NONE, STOP, TRIP }
+enum class DefaultIssueType {
+    NONE,
+    STOP,
+    TRIP;
+
+    companion object {
+
+        /**
+         * Resolves the [NavRoutes.ARG_ISSUE_TYPE] nav-arg. The two non-matching cases are
+         * deliberately distinct: an **absent** arg is the ordinary "started without a category"
+         * launch ([NONE]), while a **present-but-unrecognized** one can only be a bug, since every
+         * producer of this route writes an enum [name] — so it throws rather than degrading to
+         * [NONE], where it would be indistinguishable from a launch that never asked for a category
+         * and would surface only as a category that mysteriously stopped pre-selecting.
+         */
+        fun fromNavArg(name: String?): DefaultIssueType {
+            if (name == null) return NONE
+            return requireNotNull(entries.firstOrNull { it.name == name }) {
+                "Unrecognized ${NavRoutes.ARG_ISSUE_TYPE} nav-arg \"$name\"; expected one of $entries"
+            }
+        }
+    }
+}
 
 /** Complete UI state for the infrastructure-issue container. */
 data class InfrastructureIssueUiState(

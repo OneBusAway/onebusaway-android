@@ -26,7 +26,6 @@ import org.onebusaway.android.map.render.NEARBY_ROUTES_HOOP_WIDTH_PROFILE
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
@@ -34,8 +33,8 @@ import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * The "routes near here" hoop (#2004): a fixed-radius circle around a point on the base map, inside
- * which the routes that pass through are drawn lightly. [center] is where the layer was last surveyed
+ * The "routes near here" hoop (#2004): a fixed-radius circle around a point on the base map, selecting
+ * the routes that pass through it — which are then drawn lightly in full, well beyond the circle. [center] is where the layer was last surveyed
  * — deliberately *not* the live camera centre, so the ring marks the area actually queried and stays
  * put until the camera drifts far enough to warrant a refresh (see [NearbyRoutesController]).
  */
@@ -48,7 +47,7 @@ internal data class NearbyRouteShapes(
     val shapes: List<List<GeoPoint>>
 )
 
-/** The hoop layer's complete render plan: the ring + each route's clipped lines, and one badge per route. */
+/** The hoop layer's complete render plan: the ring + each qualifying route's full shape, and one badge per route. */
 internal data class NearbyRoutesPresentation(
     val polylines: List<RoutePolyline>,
     val badges: List<RouteBadge>
@@ -90,14 +89,20 @@ internal fun nearbyRouteIds(
 }
 
 /**
- * Build the hoop layer: the ring, then each route's shapes clipped to the hoop, then one badge per
- * route. A route whose shape doesn't actually enter the hoop is dropped entirely — its stop is inside
- * but the line only passes nearby — so the layer never badges a route it hasn't drawn.
+ * Build the hoop layer: the ring, then the **whole** shape of every route that enters the hoop, then
+ * one badge per route.
+ *
+ * The hoop selects; it doesn't crop. A route qualifies only if its shape actually passes through the
+ * circle (a route whose stop is inside but whose line only skirts it is dropped, never badged), and
+ * once it qualifies its entire geometry is drawn — so the layer answers "where do the routes running
+ * past me actually go", not just "what does the half mile around me look like". Badges stay anchored
+ * on the in-hoop portion, though: a whole-route midpoint would strand a label miles off screen, away
+ * from the place the user is actually looking.
  *
  * Every direction of a route shares one [colors] entry, per #2004: the hoop answers "what runs through
- * here", a question the direction split doesn't change. Lines are drawn at reduced alpha and half the
- * ordinary stroke so the layer reads as ambient context under the basemap's labels; the badge keeps
- * the palette colour at full opacity, since it is both the legend and the tap target.
+ * here", a question the direction split doesn't change. Lines are drawn at reduced alpha and a thin
+ * stroke so the layer reads as ambient context under the basemap's labels; the badge keeps the palette
+ * colour at full opacity, since it is both the legend and the tap target.
  *
  * Pure, so the clipping and the badge/line plan are unit-tested without the controller.
  */
@@ -114,28 +119,30 @@ internal fun assembleNearbyRoutesPresentation(
     }
     val polylines = buildList {
         add(hoopRingPolyline(hoop))
-        for ((route, segments) in drawn) {
+        for ((route, _) in drawn) {
             val color = colors[route.routeId] ?: DEFAULT_ROUTE_LINE_COLOR
-            for (segment in segments) {
+            for (shape in route.shapes) {
                 add(
                     RoutePolyline(
                         color = withAlpha(color, NEARBY_ROUTE_LINE_ALPHA),
-                        points = segment,
+                        points = shape,
                         widthProfile = NEARBY_ROUTE_LINE_WIDTH_PROFILE,
-                        // No viewport clip: the hoop already bounds these to a half-mile circle.
-                        transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY)
+                        // Whole-route geometry, so it needs the same viewport clip + zoom
+                        // simplification route view uses to stay cheap to draw.
+                        transforms = ROUTE_VIEW_TRANSFORMS
                     )
                 )
             }
         }
     }
     val placements = layoutRouteBadges(
-        drawn.map { (route, segments) ->
+        drawn.map { (route, inHoop) ->
             RouteBadgeLayoutInput(
                 // The hoop badges a whole route, not one of its directions, so the badge carries no
                 // direction: a tap enters route focus on the route's own default direction.
                 RouteDirectionKey(route.routeId, null),
-                segments.map(::RouteBadgePath)
+                // Anchored on the in-hoop geometry only — see the note above.
+                inHoop.map(::RouteBadgePath)
             )
         }
     ).associateBy { it.route.routeId }
@@ -170,9 +177,12 @@ internal fun hoopRing(hoop: NearbyRoutesHoop, segments: Int = HOOP_RING_SEGMENTS
 
 /**
  * The portions of [points] that lie inside [hoop], as separate polylines — a route that crosses the
- * circle twice yields two. Entry/exit points are interpolated onto the circle so each drawn line ends
- * exactly on the ring; interior vertices are passed through untouched. Runs shorter than two points
- * are dropped.
+ * circle twice yields two. Entry/exit points are interpolated onto the circle so each run ends exactly
+ * on the ring; interior vertices are passed through untouched. Runs shorter than two points are
+ * dropped, so an empty result means "this shape never enters the hoop".
+ *
+ * The layer draws whole routes, so this is not what gets rendered: it is the membership test (does the
+ * route pass through?) and the badge anchor (where inside the hoop to label it).
  */
 internal fun clipToHoop(points: List<GeoPoint>, hoop: NearbyRoutesHoop): List<List<GeoPoint>> {
     if (points.size < 2) return emptyList()

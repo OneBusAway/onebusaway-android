@@ -43,10 +43,11 @@ import org.onebusaway.android.util.getRouteDisplayName
 
 /**
  * The "routes near here" hoop (#2004): while the home map is showing the plain base map, draws a
- * fixed half-mile ring around where the camera settled and, lightly inside it, the routes that pass
- * through — each route's directions sharing one colour, each labelled with a tappable badge that
- * enters route focus. It gives the otherwise-spare base map some situational awareness, reusing the
- * minimal presentation focused-stop adjacency established (#1827).
+ * fixed half-mile ring around where the camera settled and, lightly, the full shape of every route
+ * that passes through it — each route's directions sharing one colour, each labelled inside the hoop
+ * with a tappable badge that enters route focus. The hoop selects; it doesn't crop, so the layer shows
+ * where the routes running past you actually go. It gives the otherwise-spare base map some
+ * situational awareness, reusing the minimal presentation focused-stop adjacency established (#1827).
  *
  * **Where the routes come from.** The route *set* is derived from the nearby-stop layer the map has
  * already loaded (see [nearbyRouteIds] for why that is the same set `routes-for-location` defines,
@@ -150,8 +151,9 @@ class NearbyRoutesController(
      * Superseded by [flatMapLatest] when a newer request arrives, which cancels any shape fetch still
      * in flight.
      *
-     * Runs on [Dispatchers.Default]: clipping a dozen whole-route shapes to the hoop is real CPU work
-     * and must not land on the frame-producing main thread.
+     * Runs on [Dispatchers.Default]: testing a dozen whole-route shapes against the hoop (for
+     * membership and badge anchors) is real CPU work and must not land on the frame-producing main
+     * thread.
      */
     private fun presentations(request: NearbyRoutesRequest): Flow<NearbyRoutesPresentation> = flow {
         if (request.routeIds.isEmpty()) {

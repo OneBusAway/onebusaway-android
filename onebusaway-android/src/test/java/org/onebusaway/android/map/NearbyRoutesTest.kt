@@ -8,6 +8,7 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.NEARBY_ROUTES_HOOP_WIDTH_PROFILE
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.ObaRoute
@@ -146,6 +147,27 @@ class NearbyRoutesTest {
         assertEquals(1, presentation.polylines.size)
         assertEquals(NEARBY_ROUTES_HOOP_WIDTH_PROFILE, presentation.polylines.single().widthProfile)
         assertEquals(emptyList<Any>(), presentation.badges)
+    }
+
+    @Test
+    fun `a qualifying route is drawn in full, far beyond the hoop`() {
+        // Enters the hoop from the west and runs 4 km past it: the hoop selects the route, it does
+        // not crop it, so the drawn line keeps every point.
+        val shape = listOf(offsetMeters(-200.0, 0.0), offsetMeters(4000.0, 0.0))
+        val presentation = assembleNearbyRoutesPresentation(
+            hoop,
+            listOf(NearbyRouteShapes("3", "3", listOf(shape))),
+            colors = mapOf("3" to RED)
+        )
+
+        val routeLine = presentation.polylines.last()
+        assertEquals(shape, routeLine.points)
+        assertEquals(
+            setOf(RoutePolylineTransform.VIEWPORT_CLIP, RoutePolylineTransform.ZOOM_SIMPLIFY),
+            routeLine.transforms
+        )
+        // The badge stays on the in-hoop stretch rather than at the whole route's distant midpoint.
+        assertTrue(haversineMeters(center, presentation.badges.single().point) <= hoop.radiusMeters)
     }
 
     @Test

@@ -87,7 +87,7 @@ class BikeLayerController(
             ) { camera, layerVisible -> camera to layerVisible }
                 // collectLatest so a newer viewport cancels an in-flight station load (the old loadJob?.cancel()).
                 .collectLatest { (camera, layerVisible) ->
-                    if (!BikeshareAvailability.isEnabled(
+                    if (!BikeshareAvailability.isStationLayerEnabled(
                             regionRepository.currentRegion(),
                             prefsRepository.getString(R.string.preference_key_otp_api_url, null)
                         )

@@ -382,6 +382,7 @@ public class RegionUtils {
             BuildConfig.FIXED_REGION_OTP_CONTACT_EMAIL,
             BuildConfig.FIXED_REGION_SUPPORTS_OTP_BIKESHARE,
             null, // otpBaseGraphqlUrl: the fixed-region build flavor doesn't support OTP2 yet
+            false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
             false,
             BuildConfig.FIXED_REGION_PAYMENT_ANDROID_APP_ID,
             BuildConfig.FIXED_REGION_PAYMENT_WARNING_TITLE,

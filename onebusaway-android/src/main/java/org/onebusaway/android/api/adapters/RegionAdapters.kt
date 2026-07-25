@@ -25,34 +25,37 @@ import org.onebusaway.android.region.Region
  * the fetch/decode boundary without touching any [Region] consumer.
  */
 fun RegionDto.toObaRegion(): Region = Region(
-    id,
-    regionName,
-    active,
-    obaBaseUrl,
-    siriBaseUrl,
-    bounds.map { Region.Bounds(it.lat, it.lon, it.latSpan, it.lonSpan) }
+    // Named rather than positional: the constructor's tail is a run of same-typed capability fields,
+    // where inserting one at the wrong offset binds silently instead of failing to compile.
+    id = id,
+    name = regionName,
+    active = active,
+    obaBaseUrl = obaBaseUrl,
+    siriBaseUrl = siriBaseUrl,
+    bounds = bounds.map { Region.Bounds(it.lat, it.lon, it.latSpan, it.lonSpan) }
         .toTypedArray(),
-    open311Servers.map { Region.Open311Server(it.jurisdictionId, it.apiKey, it.baseUrl) }
+    open311Servers = open311Servers.map { Region.Open311Server(it.jurisdictionId, it.apiKey, it.baseUrl) }
         .toTypedArray(),
-    language,
-    contactEmail,
-    supportsObaDiscoveryApis,
-    supportsObaRealtimeApis,
-    supportsSiriRealtimeApis,
-    twitterUrl,
-    experimental,
-    stopInfoUrl,
-    otpBaseUrl,
-    otpContactEmail,
-    supportsOtpBikeshare,
-    otpBaseGraphqlUrl,
-    supportsEmbeddedSocial,
-    paymentAndroidAppId,
-    paymentWarningTitle,
-    paymentWarningBody,
-    sidecarBaseUrl,
-    plausibleAnalyticsServerUrl,
+    language = language,
+    contactEmail = contactEmail,
+    supportsObaDiscoveryApis = supportsObaDiscoveryApis,
+    supportsObaRealtimeApis = supportsObaRealtimeApis,
+    supportsSiriRealtimeApis = supportsSiriRealtimeApis,
+    twitterUrl = twitterUrl,
+    experimental = experimental,
+    stopInfoUrl = stopInfoUrl,
+    otpBaseUrl = otpBaseUrl,
+    otpContactEmail = otpContactEmail,
+    supportsOtpBikeshare = supportsOtpBikeshare,
+    otpBaseGraphqlUrl = otpBaseGraphqlUrl,
+    supportsOtpGraphqlBikeshare = supportsOtpGraphqlBikeshare,
+    supportsEmbeddedSocial = supportsEmbeddedSocial,
+    paymentAndroidAppId = paymentAndroidAppId,
+    paymentWarningTitle = paymentWarningTitle,
+    paymentWarningBody = paymentWarningBody,
+    sidecarBaseUrl = sidecarBaseUrl,
+    plausibleAnalyticsServerUrl = plausibleAnalyticsServerUrl,
     // Match getRegionsFromProvider: only build a config when something is actually set.
-    umamiAnalytics?.takeIf { it.url != null || it.id != null }
+    umamiAnalytics = umamiAnalytics?.takeIf { it.url != null || it.id != null }
         ?.let { Region.UmamiAnalyticsConfig(it.url, it.id) }
 )

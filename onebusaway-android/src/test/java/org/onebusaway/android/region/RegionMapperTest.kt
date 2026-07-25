@@ -47,6 +47,7 @@ class RegionMapperTest {
                 otpBaseUrl = "https://otp",
                 otpContactEmail = "otp@b.c",
                 supportsOtpBikeshare = 1,
+                supportsOtpGraphqlBikeshare = 1,
                 supportsEmbeddedSocial = 0,
                 paymentAndroidAppId = "app.id",
                 paymentWarningTitle = "title",
@@ -71,6 +72,7 @@ class RegionMapperTest {
         assertTrue(region.supportsSiriRealtimeApis)
         assertTrue(region.experimental)
         assertTrue(region.supportsOtpBikeshare)
+        assertTrue(region.supportsOtpGraphqlBikeshare)
         assertFalse(region.supportsEmbeddedSocial)
         assertEquals(1, region.bounds.size)
         assertEquals(47.6, region.bounds[0].lat, 0.0)
@@ -87,7 +89,8 @@ class RegionMapperTest {
             region = RegionRecord(
                 id = 1L, name = "R", obaBaseUrl = "", siriBaseUrl = "", language = "", contactEmail = "",
                 supportsObaDiscovery = 0, supportsObaRealtime = 0, supportsSiriRealtime = 0,
-                experimental = null, supportsOtpBikeshare = null, supportsEmbeddedSocial = null,
+                experimental = null, supportsOtpBikeshare = null, supportsOtpGraphqlBikeshare = null,
+                supportsEmbeddedSocial = null,
                 umamiAnalyticsUrl = null, umamiAnalyticsId = null
             ),
             bounds = emptyList(),
@@ -98,6 +101,8 @@ class RegionMapperTest {
 
         assertFalse(region.experimental)
         assertFalse(region.supportsOtpBikeshare)
+        // A pre-v9 cached row has no GraphQL bikeshare column; it reads as false until the next refresh.
+        assertFalse(region.supportsOtpGraphqlBikeshare)
         assertNull(region.umamiAnalytics)
     }
 
@@ -119,6 +124,8 @@ class RegionMapperTest {
             twitterUrl = "https://twitter",
             experimental = false,
             supportsOtpBikeshare = true,
+            otpBaseGraphqlUrl = "https://otp2/otp",
+            supportsOtpGraphqlBikeshare = true,
             supportsEmbeddedSocial = true,
             umamiAnalytics = Region.UmamiAnalyticsConfig("https://umami", "id")
         )
@@ -132,6 +139,8 @@ class RegionMapperTest {
         assertEquals(original.supportsObaRealtimeApis, back.supportsObaRealtimeApis)
         assertEquals(original.experimental, back.experimental)
         assertEquals(original.supportsOtpBikeshare, back.supportsOtpBikeshare)
+        assertEquals(original.otpBaseGraphqlUrl, back.otpBaseGraphqlUrl)
+        assertEquals(original.supportsOtpGraphqlBikeshare, back.supportsOtpGraphqlBikeshare)
         assertEquals(original.language, back.language)
         assertEquals(original.contactEmail, back.contactEmail)
         assertEquals(original.siriBaseUrl, back.siriBaseUrl)

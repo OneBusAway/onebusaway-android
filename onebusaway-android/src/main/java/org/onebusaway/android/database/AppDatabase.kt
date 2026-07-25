@@ -54,6 +54,11 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * v8 adds `cached_stops.wheelchair_boarding` (#1029): the stop's GTFS wheelchair-boarding accessibility
  * (a WheelchairBoarding enum name), so the map focus banner can show an accessibility indicator for
  * cached stops too. NULL (every existing cached row) reads back as UNKNOWN.
+ *
+ * v9 adds `regions.supports_otp_graphql_bikeshare`: bike-rental support on the region's OTP2 GraphQL
+ * server, which the directory publishes separately from the OTP1 `supports_otp_bikeshare` because the
+ * two servers genuinely differ. NULL (every existing cached row) reads back as false until the next
+ * regions refresh.
  */
 @Database(
     entities = [
@@ -72,7 +77,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         CachedStopRecord::class,
         CachedRouteTypeRecord::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

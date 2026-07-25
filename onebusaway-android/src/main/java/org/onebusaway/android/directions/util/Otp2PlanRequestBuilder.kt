@@ -114,7 +114,7 @@ object Otp2PlanRequestBuilder {
             preferences = Optional.present(
                 buildPreferences(builder.getWheelchairAccessible(), builder.getOptimizeTransfers())
             ),
-            modes = buildModes(builder.getModeSetId(), BikeshareAvailability.isEnabled(context)),
+            modes = buildModes(builder.getModeSetId(), BikeshareAvailability.isTripPlanningEnabled(context)),
             numItineraries = NUM_ITINERARIES,
             alternativeLegs = ALTERNATIVE_LEGS
         )
@@ -156,7 +156,7 @@ object Otp2PlanRequestBuilder {
      * (and an invalid id, matching that method's fallback) leaves `modes` unset entirely — the
      * schema's own default ("all transit modes usable, WALK for access/egress") already matches
      * that mode's OTP1 semantics, so there's nothing to express. Takes [bikeshareEnabled] rather
-     * than a `Context` (see [BikeshareAvailability.isEnabled]'s pure overload) so this mapping is a
+     * than a `Context` (see [BikeshareAvailability.isTripPlanningEnabled]'s pure overload) so this mapping is a
      * plain, JVM-unit-testable function; `internal` for `Otp2PlanRequestBuilderTest`.
      */
     internal fun buildModes(modeId: Int, bikeshareEnabled: Boolean): Optional<PlanModesInput?> = when (modeId) {

@@ -601,7 +601,7 @@ private fun DirectionsAdvancedSettingsDialog(
             labels[i] to TripModes.getTripModeCodeFromSelection(typed.getResourceId(i, 0))
         }
         typed.recycle()
-        if (BikeshareAvailability.isEnabled(context)) {
+        if (BikeshareAvailability.isTripPlanningEnabled(context)) {
             all
         } else {
             all.filter { it.second != TripModes.BIKESHARE && it.second != TripModes.TRANSIT_AND_BIKE }

@@ -86,6 +86,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -127,6 +128,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         null,
         null,
@@ -169,6 +171,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -211,6 +214,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -253,6 +257,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -295,6 +300,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -335,6 +341,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,
@@ -375,6 +382,7 @@ public class MockRegion {
         null,
         false,
         null, // otpBaseGraphqlUrl (#1780): OTP1 REST region
+        false, // supportsOtpGraphqlBikeshare: moot without an OTP2 endpoint, above
         false,
         "co.bytemark.hart",
         null,

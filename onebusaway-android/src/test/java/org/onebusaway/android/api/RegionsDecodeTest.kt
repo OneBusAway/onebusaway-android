@@ -74,6 +74,26 @@ class RegionsDecodeTest {
             .forEach { assertNull(it.otpBaseGraphqlUrl) }
     }
 
+    /**
+     * The per-protocol bikeshare flags decode off the wire and stay distinct. The bundled fail-safe
+     * file is the first-launch/offline source, so a missing `supportsOtpGraphqlBikeshare` key there
+     * silently reinstates the bug (the DTO default is false) even once the live directory is right —
+     * which is exactly how Puget Sound's bikeshare trip planning stayed hidden.
+     */
+    @Test
+    fun bundledRegionsCarryPerProtocolBikeshareFlags() {
+        val regions = decode("src/main/res/raw/regions_v3.json").map { it.toObaRegion() }
+
+        val pugetSound = regions.single { it.name == "Puget Sound" }
+        assertFalse("Puget Sound's OTP1 /bike_rental is empty", pugetSound.supportsOtpBikeshare)
+        assertTrue("Puget Sound's OTP2 server plans bikeshare", pugetSound.supportsOtpGraphqlBikeshare)
+
+        // The mirror case, so the two flags can't be collapsed back onto one.
+        val tampa = regions.single { it.name == "Tampa Bay" }
+        assertTrue(tampa.supportsOtpBikeshare)
+        assertFalse(tampa.supportsOtpGraphqlBikeshare)
+    }
+
     /** Ports testUmamiAnalyticsParsing: the nested umamiAnalytics object maps onto the region. */
     @Test
     fun mapsUmamiAnalyticsConfig() {

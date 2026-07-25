@@ -32,7 +32,7 @@ public class LayerUtils {
    * @return true if the bikeshare layer is active and visible
    */
   public static boolean isBikeshareLayerVisible(@NonNull Context context) {
-    return BikeshareAvailability.isEnabled(context)
+    return BikeshareAvailability.isStationLayerEnabled(context)
         && PreferencesEntryPoint.get(context)
             .getBoolean(R.string.preference_key_layer_bikeshare_visible, true);
   }

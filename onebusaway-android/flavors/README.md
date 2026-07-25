@@ -131,10 +131,19 @@ buildConfigField "boolean", "USE_FIXED_REGION", "false"
 
 ```groovy
 buildConfigField "boolean", "USE_FIXED_REGION", "true"
+// Required: the app cannot start without a region name.
 buildConfigField "String", "FIXED_REGION_NAME", "\"Your Region\""
+// Not required to launch, but the fixed region can't reach a server without it.
 buildConfigField "String", "FIXED_REGION_OBA_BASE_URL", "\"https://api.example.com/api\""
 // ... configure all region bounds and features
 ```
+
+`FIXED_REGION_NAME` is the only one of these the app will refuse to launch without — it's non-null
+on the region model, so leaving it `null` throws from `RegionUtils.getRegionFromBuildFlavor()` on
+first launch. The rest degrade quietly instead of crashing, which is worse to debug: a null
+`FIXED_REGION_OBA_BASE_URL` installs cleanly and then can't load anything. `FIXED_REGION_OPEN311_*`
+is genuinely optional — a brand with no Open311 endpoint leaves the base URL `null` and gets a
+region with no Open311 servers.
 
 ## Benefits of This Architecture
 

@@ -343,11 +343,20 @@ public class RegionUtils {
    * flavor omitting {@code FIXED_REGION_OPEN311_BASE_URL} is an ordinary configuration — "this
    * agency has no Open311 endpoint" — not an error, so it must produce a region with no Open311
    * servers rather than no region at all.
+   *
+   * <p>Blank counts as unconfigured alongside null. A {@code buildConfigField} is written by hand
+   * in a Groovy flavor file, where "no endpoint" is spelled {@code "null"} by convention but {@code
+   * "\"\""} is the equally natural typo, and the two must not mean different things — an empty base
+   * URL would otherwise register a live-but-broken endpoint with {@code Open311Manager}. This is
+   * normalizing two spellings of "unset" at the config boundary, not inferring intent from the
+   * value: the same rule is already applied to the sibling field one layer down (Open311Subsystem's
+   * {@code jurisdictionId?.takeIf { it.isNotEmpty() }}) and to the OTP2 endpoint's configured/not
+   * test ({@code Region.usesOtp2}).
    */
   @VisibleForTesting
   static @NonNull Region.Open311Server[] open311ServersFrom(
       @Nullable String jurisdictionId, @Nullable String apiKey, @Nullable String baseUrl) {
-    if (baseUrl == null) {
+    if (baseUrl == null || baseUrl.trim().isEmpty()) {
       return new Region.Open311Server[0];
     }
     return new Region.Open311Server[] {new Region.Open311Server(jurisdictionId, apiKey, baseUrl)};

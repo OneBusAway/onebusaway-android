@@ -43,6 +43,18 @@ class RegionUtilsOpen311Test {
         assertEquals("a region with no Open311 servers still builds", 0, Region(open311Servers = servers).open311Servers.size)
     }
 
+    /**
+     * A blank base URL is the same fact as a missing one. `buildConfigField` values are hand-written
+     * in a Groovy flavor file, where "no endpoint" is spelled `null` by convention but `""` is the
+     * equally natural typo; letting the two diverge would register an endpoint with an empty base URL
+     * against `Open311Manager` — live, and broken — instead of registering none.
+     */
+    @Test
+    fun aBlankBaseUrlCountsAsNoBaseUrl() {
+        assertEquals(0, RegionUtils.open311ServersFrom("jurisdiction", "key", "").size)
+        assertEquals(0, RegionUtils.open311ServersFrom("jurisdiction", "key", "   ").size)
+    }
+
     @Test
     fun aBaseUrlYieldsThatOneServer() {
         val servers = RegionUtils.open311ServersFrom("jurisdiction", "key", "https://example.org/open311/v2/")

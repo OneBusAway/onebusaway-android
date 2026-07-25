@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report
 
 import android.content.Context
 import android.content.Intent
@@ -40,12 +40,11 @@ import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.region.Region
-import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.constants.ReportConstants
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.types.ReportAction
 import org.onebusaway.android.ui.report.types.ReportTypeListRoute
 import org.onebusaway.android.util.BuildFlavorUtils
@@ -185,10 +184,7 @@ private fun onReportActionSelected(
 
         ReportAction.STOP_PROBLEM -> {
             navController.navigate(
-                NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_stop),
-                    encodedContext
-                )
+                NavRoutes.infrastructureIssue(DefaultIssueType.STOP.name, encodedContext)
             )
             reportEvent(
                 activity,
@@ -199,10 +195,7 @@ private fun onReportActionSelected(
 
         ReportAction.ARRIVAL_PROBLEM -> {
             navController.navigate(
-                NavRoutes.infrastructureIssue(
-                    activity.getString(R.string.ri_selected_service_trip),
-                    encodedContext
-                )
+                NavRoutes.infrastructureIssue(DefaultIssueType.TRIP.name, encodedContext)
             )
             reportEvent(
                 activity,

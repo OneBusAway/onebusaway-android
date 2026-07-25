@@ -23,8 +23,8 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.getRouteDisplayName

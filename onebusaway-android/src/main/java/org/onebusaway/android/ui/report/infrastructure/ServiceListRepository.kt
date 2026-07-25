@@ -17,15 +17,17 @@
 package org.onebusaway.android.ui.report.infrastructure
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import edu.usf.cutr.open311client.Open311
 import edu.usf.cutr.open311client.Open311Manager
 import edu.usf.cutr.open311client.models.Service
 import edu.usf.cutr.open311client.models.ServiceListRequest
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
-import org.onebusaway.android.report.constants.ReportConstants
-import org.onebusaway.android.report.ui.util.ServiceUtils
+import org.onebusaway.android.ui.report.ReportConstants
+import org.onebusaway.android.ui.report.ServiceUtils
 
 /** Loads the Open311 issue categories available at a location. */
 interface ServiceListRepository {
@@ -39,7 +41,9 @@ interface ServiceListRepository {
  * prepareServiceList; the transit-marking heuristic stays in [ServiceUtils.markTransitServices]
  * (it needs resources) and the pure sectioning is delegated to [ServiceListMapper].
  */
-class DefaultServiceListRepository(private val context: Context) : ServiceListRepository {
+class DefaultServiceListRepository @Inject constructor(
+    @ApplicationContext private val context: Context
+) : ServiceListRepository {
 
     override suspend fun loadServices(
         latitude: Double,

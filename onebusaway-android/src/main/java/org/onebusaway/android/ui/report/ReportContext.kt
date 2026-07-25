@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report
+package org.onebusaway.android.ui.report
 
 /**
  * The trip context a "report a problem" launch carries, as plain scalars — every field the report

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report
 
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -26,12 +26,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.report.ReportContext
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.feedback.FeedbackScreen
 import org.onebusaway.android.ui.feedback.FeedbackSubmitter
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.customerservice.CustomerServiceDestination
+import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueDestination
 
 /**
  * The report / feedback navigation cluster: the report chooser ([NavRoutes.REPORT]) and its customer
@@ -72,22 +73,18 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
     composable(
         NavRoutes.INFRASTRUCTURE_ISSUE,
         arguments = listOf(
-            navArgument(NavRoutes.ARG_SELECTED_SERVICE) {
+            navArgument(NavRoutes.ARG_ISSUE_TYPE) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
             },
             reportContextArg()
         )
-    ) { backStackEntry ->
-        val selectedService =
-            backStackEntry.arguments?.getString(NavRoutes.ARG_SELECTED_SERVICE)
+    ) { _ ->
+        // No args read here: the destination's ViewModel takes both this route's args
+        // (ARG_ISSUE_TYPE + the encoded ReportContext) off its own SavedStateHandle.
         ObaTheme {
-            InfrastructureIssueDestination(
-                navController = navController,
-                selectedService = selectedService,
-                reportContext = backStackEntry.decodeReportContext()
-            )
+            InfrastructureIssueDestination(navController = navController)
         }
     }
     // Feedback destination: the post-trip destination-reminder feedback screen.

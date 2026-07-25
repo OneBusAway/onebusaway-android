@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.onebusaway.android.report.constants;
+package org.onebusaway.android.ui.report;
 
 /**
  * Constants used in report implementation

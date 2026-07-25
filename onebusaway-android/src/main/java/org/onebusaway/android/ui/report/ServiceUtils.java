@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui.util;
+package org.onebusaway.android.ui.report;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
@@ -22,7 +22,6 @@ import edu.usf.cutr.open311client.models.Service;
 import java.util.List;
 import java.util.Locale;
 import org.onebusaway.android.R;
-import org.onebusaway.android.report.constants.ReportConstants;
 
 public class ServiceUtils {
 

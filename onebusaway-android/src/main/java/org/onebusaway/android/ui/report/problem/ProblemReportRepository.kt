@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.report.problem
 
 import android.location.Location
+import javax.inject.Inject
 import org.onebusaway.android.api.data.ProblemReportDataSource
 
 /** Submits stop/trip problem reports to the OBA REST API. */
@@ -43,7 +44,7 @@ interface ProblemReportRepository {
  * api [ProblemReportDataSource] takes, keeping the wire call (and the legacy `data` param) inside
  * io. A non-OK app-level code or a transport failure maps to [Result.failure] in the service.
  */
-class DefaultProblemReportRepository(
+class DefaultProblemReportRepository @Inject constructor(
     private val reportService: ProblemReportDataSource
 ) : ProblemReportRepository {
 

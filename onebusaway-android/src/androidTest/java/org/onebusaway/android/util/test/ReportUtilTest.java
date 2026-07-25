@@ -19,7 +19,7 @@ import android.test.AndroidTestCase;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.onebusaway.android.report.ui.util.ServiceUtils;
+import org.onebusaway.android.ui.report.ServiceUtils;
 
 /** Tests to evaluate issue reporting utilities */
 @RunWith(AndroidJUnit4.class)

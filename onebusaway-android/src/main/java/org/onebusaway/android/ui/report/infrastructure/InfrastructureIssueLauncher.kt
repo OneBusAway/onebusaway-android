@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report.infrastructure
 
 import android.app.Activity
-import org.onebusaway.android.report.ReportContext
-import org.onebusaway.android.report.TripReportContext
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.ReportContext
+import org.onebusaway.android.ui.report.TripReportContext
 
 /**
  * Launcher facade for the infrastructure-issue (stop/trip problem) screen (former
@@ -32,11 +32,17 @@ import org.onebusaway.android.ui.nav.NavRoutes
  */
 object InfrastructureIssueLauncher {
 
+    /**
+     * @param issueType which problem the report was started for; rides the route as its enum name so
+     *   the destination's ViewModel can resolve it from nav-args without touching resources.
+     */
+    // @JvmStatic to match the other launcher facades, which legacy Java callers still reach. No
+    // @JvmOverloads: the trailing defaults are only used from Kotlin, and generating Java overloads
+    // of a method taking a Kotlin enum earns nothing.
     @JvmStatic
-    @JvmOverloads
     fun startWithService(
         activity: Activity,
-        serviceKeyword: String,
+        issueType: DefaultIssueType,
         stopId: String?,
         stopName: String?,
         stopCode: String?,
@@ -59,7 +65,7 @@ object InfrastructureIssueLauncher {
         activity.startActivity(
             HomeActivity.navIntent(
                 activity,
-                NavRoutes.infrastructureIssue(serviceKeyword, context.encode())
+                NavRoutes.infrastructureIssue(issueType.name, context.encode())
             )
         )
     }

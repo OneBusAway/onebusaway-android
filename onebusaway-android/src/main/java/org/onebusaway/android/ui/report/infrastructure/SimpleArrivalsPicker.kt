@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.report.ui
+package org.onebusaway.android.ui.report.infrastructure
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

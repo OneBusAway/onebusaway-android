@@ -18,8 +18,10 @@ package org.onebusaway.android.ui.report.infrastructure
 
 import android.content.Context
 import android.location.Geocoder
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.util.Locale
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.util.GeoPoint
@@ -37,7 +39,9 @@ interface GeocodeAddressRepository {
     suspend fun forwardGeocode(query: String): Result<GeoPoint>
 }
 
-class DefaultGeocodeAddressRepository(private val context: Context) : GeocodeAddressRepository {
+class DefaultGeocodeAddressRepository @Inject constructor(
+    @ApplicationContext private val context: Context
+) : GeocodeAddressRepository {
 
     @Suppress("DEPRECATION") // Synchronous Geocoder API, run off the main thread.
     override suspend fun reverseGeocode(

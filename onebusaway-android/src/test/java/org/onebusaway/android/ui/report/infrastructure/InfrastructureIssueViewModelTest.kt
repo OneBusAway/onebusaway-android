@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.report.infrastructure
 
+import androidx.lifecycle.SavedStateHandle
 import java.io.IOException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -22,12 +23,16 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.report.ReportContext
+import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.GeoPoint
 
 private class FakeServiceListRepository(private val result: ServiceListResult) : ServiceListRepository {
@@ -60,22 +65,71 @@ class InfrastructureIssueViewModelTest {
 
     private val stop: ObaStop = ObaStopElement("1_75403", 47.6, -122.3, "Pine St & 3rd Ave", "75403")
 
+    private val arrival = TripReportContext(
+        tripId = "1_trip",
+        routeId = "1_100",
+        shortName = "40",
+        routeLongName = "Downtown",
+        headsign = "DOWNTOWN SEATTLE",
+        vehicleId = "1_4321",
+        stopId = "1_75403",
+        serviceDate = 1_700_000_000_000L,
+        predicted = true,
+        predictedArrivalTime = 1_700_000_600_000L,
+        predictedDepartureTime = 1_700_000_600_000L,
+        scheduledArrivalTime = 1_700_000_500_000L,
+        scheduledDepartureTime = 1_700_000_500_000L,
+        hasTripStatus = true,
+        scheduleDeviation = 60L,
+        lastKnownLat = 47.61,
+        lastKnownLon = -122.33
+    )
+
+    /**
+     * The nav-args the INFRASTRUCTURE_ISSUE route carries. [issueTypeArg] is the raw string so tests
+     * can cover the absent and unrecognized cases, not just a well-formed [DefaultIssueType] name.
+     */
+    private fun navArgs(
+        stop: ObaStop? = null,
+        issueTypeArg: String? = DefaultIssueType.NONE.name,
+        trip: TripReportContext? = null,
+        agencyName: String? = null,
+        blockId: String? = null
+    ) = SavedStateHandle(
+        mapOf(
+            NavRoutes.ARG_ISSUE_TYPE to issueTypeArg,
+            NavRoutes.ARG_REPORT_CONTEXT to ReportContext(
+                stopId = stop?.id,
+                stopName = stop?.name,
+                stopCode = stop?.stopCode,
+                lat = 47.6,
+                lon = -122.3,
+                agencyName = agencyName,
+                blockId = blockId,
+                trip = trip
+            ).encode()
+        )
+    )
+
+    /**
+     * Builds the VM the way the NavHost does — through its nav-args. The launch context goes in as the
+     * encoded [ReportContext] the destination's route carries, so these tests exercise the real
+     * SavedStateHandle decode rather than a constructor the app no longer uses. Pass [savedState]
+     * explicitly to re-create the VM over a handle a previous instance wrote to (a process-death
+     * restore).
+     */
     private fun viewModel(
         stop: ObaStop? = null,
         default: DefaultIssueType = DefaultIssueType.NONE,
         areaManaged: Boolean = true,
-        heuristic: Boolean = false
+        heuristic: Boolean = false,
+        savedState: SavedStateHandle = navArgs(stop, default.name)
     ) = InfrastructureIssueViewModel(
+        savedState = savedState,
         serviceListRepository = FakeServiceListRepository(
             ServiceListResult(items, open311 = "endpoint", areaManaged, heuristic)
         ),
-        geocodeRepository = FakeGeocodeAddressRepository(),
-        initialLocation = GeoPoint(47.6, -122.3),
-        initialStop = stop,
-        defaultIssueType = default,
-        arrivalInfo = null,
-        agencyName = null,
-        blockId = null
+        geocodeRepository = FakeGeocodeAddressRepository()
     )
 
     @Test
@@ -170,6 +224,63 @@ class InfrastructureIssueViewModelTest {
 
         assertEquals(ReportTarget.None, vm.uiState.value.target)
         assertEquals(0, vm.uiState.value.selectedIndex)
+    }
+
+    @Test
+    fun `the launch context's trip and agency ids ride through to the trip context`() = runTest {
+        val vm = viewModel(
+            savedState = navArgs(stop, trip = arrival, agencyName = "Metro", blockId = "1_block")
+        )
+
+        advanceUntilIdle()
+
+        assertEquals(Triple(arrival, "Metro", "1_block"), vm.tripContext())
+    }
+
+    @Test
+    fun `a launch trip context pre-fills the trip form without the picker`() = runTest {
+        val vm = viewModel(savedState = navArgs(stop, trip = arrival))
+        advanceUntilIdle()
+
+        vm.onServiceSelected(3)
+
+        val target = vm.uiState.value.target
+        assertTrue(target is ReportTarget.TripProblem)
+        assertEquals(arrival, (target as ReportTarget.TripProblem).arrival)
+    }
+
+    @Test
+    fun `a picked arrival survives a process-death restore`() = runTest {
+        val savedState = navArgs(stop)
+        val vm = viewModel(savedState = savedState)
+        advanceUntilIdle()
+        vm.onArrivalSelected(arrival)
+
+        // Same handle, new instance: what Hilt hands the destination after the process is restored.
+        val restored = viewModel(savedState = savedState)
+        advanceUntilIdle()
+
+        assertEquals(arrival, restored.tripContext().first)
+    }
+
+    @Test
+    fun `an absent issue type pre-selects nothing`() = runTest {
+        val vm = viewModel(savedState = navArgs(stop, issueTypeArg = null))
+
+        advanceUntilIdle()
+
+        assertEquals(ReportTarget.None, vm.uiState.value.target)
+        assertEquals(0, vm.uiState.value.selectedIndex)
+    }
+
+    @Test
+    fun `an unrecognized issue type is a programming error, not a silent NONE`() {
+        // "stop" is the retired resource token the route used to carry; a producer still writing it
+        // should be a hard failure, not a category that quietly stops pre-selecting.
+        val thrown = assertThrows(IllegalArgumentException::class.java) {
+            viewModel(savedState = navArgs(stop, issueTypeArg = "stop"))
+        }
+        assertTrue(thrown.message!!.contains("stop"))
     }
 
     @Test

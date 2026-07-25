@@ -93,7 +93,7 @@ object NavRoutes {
     // --- Report / problem-reporting flow (former ReportActivity /
     // CustomerServiceActivity / InfrastructureIssueActivity). The whole flow's stop/location/trip
     // context rides one nav-arg ([ARG_REPORT_CONTEXT] = an encoded
-    // [org.onebusaway.android.report.ReportContext]), so each destination reads its own back-stack args
+    // [org.onebusaway.android.ui.report.ReportContext]), so each destination reads its own back-stack args
     // (process-death safe) instead of the host activity intent. ---
 
     /** The encoded report context (stop/location/trip), carried by every report destination. */
@@ -111,17 +111,19 @@ object NavRoutes {
     /** Builds a navigable [CUSTOMER_SERVICE] route, optionally carrying the encoded [reportContext]. */
     fun customerService(reportContext: String? = null): String = "customerService" + reportContextQuery(reportContext)
 
-    // The infrastructure-issue (stop/trip problem) hybrid map+form screen: the selected-service keyword
-    // ("stop"/"trip") plus the encoded report context, both as nav-args.
-    const val ARG_SELECTED_SERVICE = "selectedService"
+    // The infrastructure-issue (stop/trip problem) hybrid map+form screen: which problem the report was
+    // started for, plus the encoded report context, both as nav-args. The issue type rides as a
+    // DefaultIssueType name ("STOP"/"TRIP"); absent means no category is pre-selected. Parsed by
+    // DefaultIssueType.fromNavArg — nav keeps it a plain String so it needn't know the report feature.
+    const val ARG_ISSUE_TYPE = "issueType"
     const val INFRASTRUCTURE_ISSUE =
-        "infrastructureIssue?$ARG_SELECTED_SERVICE={$ARG_SELECTED_SERVICE}" +
+        "infrastructureIssue?$ARG_ISSUE_TYPE={$ARG_ISSUE_TYPE}" +
             "&$ARG_REPORT_CONTEXT={$ARG_REPORT_CONTEXT}"
 
-    /** Builds a navigable [INFRASTRUCTURE_ISSUE] route, optionally carrying [selectedService] + context. */
-    fun infrastructureIssue(selectedService: String? = null, reportContext: String? = null): String = "infrastructureIssue" +
+    /** Builds a navigable [INFRASTRUCTURE_ISSUE] route, optionally carrying [issueType] + context. */
+    fun infrastructureIssue(issueType: String? = null, reportContext: String? = null): String = "infrastructureIssue" +
         buildList {
-            if (selectedService != null) add("$ARG_SELECTED_SERVICE=${Uri.encode(selectedService)}")
+            if (issueType != null) add("$ARG_ISSUE_TYPE=${Uri.encode(issueType)}")
             if (reportContext != null) add("$ARG_REPORT_CONTEXT=${Uri.encode(reportContext)}")
         }.let { if (it.isEmpty()) "" else "?" + it.joinToString("&") }
 

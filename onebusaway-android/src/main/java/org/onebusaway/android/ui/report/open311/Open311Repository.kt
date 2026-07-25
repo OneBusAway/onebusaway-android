@@ -37,9 +37,9 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.models.ObaStop
-import org.onebusaway.android.report.TripReportContext
-import org.onebusaway.android.report.constants.ReportConstants
-import org.onebusaway.android.report.ui.util.ServiceUtils
+import org.onebusaway.android.ui.report.ReportConstants
+import org.onebusaway.android.ui.report.ServiceUtils
+import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.BitmapUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils

@@ -255,6 +255,13 @@ class MapViewModel @Inject constructor(
             .map { it?.toRouteHeader() }
             .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    /**
+     * The nearby-routes hoop being shown, or null when that layer is off (#2004). The map overlay
+     * draws its ring in screen space at the centre of the viewport — so a drag carries it along with
+     * the gesture, while the survey behind it waits for the camera to settle.
+     */
+    val nearbyRoutesHoop: StateFlow<NearbyRoutesHoop?> get() = nearbyRoutesController.hoop
+
     /** The actual palette used for routes around the focused stop. */
     val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
 

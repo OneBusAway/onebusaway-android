@@ -6,7 +6,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
-import org.onebusaway.android.map.render.NEARBY_ROUTES_HOOP_WIDTH_PROFILE
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.StopMarker
@@ -103,12 +102,20 @@ class NearbyRoutesTest {
         assertEquals(listOf(line), clipToHoop(line, hoop))
     }
 
-    @Test
-    fun `the ring closes on itself at the hoop radius`() {
-        val ring = hoopRing(hoop)
+    // ----- The ring's on-screen size (it is drawn in screen space, not as map geometry) -----
 
-        assertEquals(ring.first(), ring.last())
-        ring.forEach { assertEquals(800.0, haversineMeters(center, it), 1.0) }
+    @Test
+    fun `the ring's radius follows the zoom's ground resolution`() {
+        // Web Mercator at zoom 15, latitude 47.6: 156543.03 * cos(47.6) / 2^15 = 3.22 m per dp.
+        assertEquals(800.0 / 3.222, hoopRadiusDp(800.0, 15.0, 47.6).toDouble(), 0.5)
+        // One zoom level in doubles the size on screen.
+        assertEquals(
+            2f * hoopRadiusDp(800.0, 15.0, 47.6),
+            hoopRadiusDp(800.0, 16.0, 47.6),
+            0.01f
+        )
+        // Mercator stretches away from the equator, so the same radius covers fewer metres per dp.
+        assertTrue(hoopRadiusDp(800.0, 15.0, 60.0) > hoopRadiusDp(800.0, 15.0, 0.0))
     }
 
     // ----- The render plan -----
@@ -130,7 +137,7 @@ class NearbyRoutesTest {
             colors = mapOf("44" to RED)
         )
 
-        val routeLines = presentation.polylines.drop(1)
+        val routeLines = presentation.polylines
         assertEquals(2, routeLines.size)
         assertEquals(1, routeLines.map { it.resolvedColor }.distinct().size)
         assertEquals(listOf("44"), presentation.badges.map { it.routeShortName })
@@ -141,11 +148,10 @@ class NearbyRoutesTest {
     }
 
     @Test
-    fun `the ring is drawn first so route lines sit on top of it`() {
+    fun `a survey with no routes draws nothing`() {
         val presentation = assembleNearbyRoutesPresentation(hoop, emptyList(), emptyMap())
 
-        assertEquals(1, presentation.polylines.size)
-        assertEquals(NEARBY_ROUTES_HOOP_WIDTH_PROFILE, presentation.polylines.single().widthProfile)
+        assertEquals(emptyList<Any>(), presentation.polylines)
         assertEquals(emptyList<Any>(), presentation.badges)
     }
 
@@ -183,7 +189,7 @@ class NearbyRoutesTest {
 
         assertEquals(listOf("5"), presentation.badges.map { it.routeShortName })
         assertEquals(
-            listOf(NEARBY_ROUTES_HOOP_WIDTH_PROFILE, NEARBY_ROUTE_LINE_WIDTH_PROFILE),
+            listOf(NEARBY_ROUTE_LINE_WIDTH_PROFILE),
             presentation.polylines.map { it.widthProfile }
         )
     }

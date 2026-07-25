@@ -24,6 +24,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -37,7 +40,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -56,11 +58,12 @@ import org.onebusaway.android.util.getRouteDisplayName
  * ([RouteMapRepository] over `StopsForRouteRepository`), so a route already opened this session — or
  * already drawn by a neighbouring hoop — costs nothing.
  *
- * **When it refreshes.** The hoop stays anchored where it was last surveyed until the camera drifts
- * [NEARBY_ROUTES_REFRESH_METERS] away; a smaller pan neither moves the ring nor re-queries, so the
- * ring always marks the area the drawn routes were actually gathered from. It hides entirely below
- * [NEARBY_ROUTES_MIN_ZOOM] (where a half-mile circle is a speck and the route density is unreadable)
- * and while a stop is focused (stop-focus adjacency owns the route geometry then).
+ * **When it refreshes.** The ring is drawn in screen space at the centre of the viewport (see
+ * [hoop] and `hoopRadiusDp`), so a drag carries it along with the gesture for free — but the *survey*
+ * fires only once the camera settles, at the settled centre, so panning never turns into a burst of
+ * queries. It hides entirely below [NEARBY_ROUTES_MIN_ZOOM] (where a half-mile circle is a speck and
+ * the route density is unreadable) and while a stop is focused (stop-focus adjacency owns the route
+ * geometry then).
  *
  * A cold driver over a [MapHost] like the other use-case controllers: it reacts to [MapHost.camera]
  * plus the published stop layer and writes [MapHost.renderState], with no map-SDK dependency.
@@ -80,6 +83,16 @@ class NearbyRoutesController(
 
     private var job: Job? = null
 
+    private val _hoop = MutableStateFlow<NearbyRoutesHoop?>(null)
+
+    /**
+     * The hoop being shown, or null when the layer is off. The ring is *not* map geometry: the map
+     * overlay draws it in screen space at the centre of the viewport, so a drag slides it with the
+     * gesture instead of leaving it planted on the ground. Only the radius (constant) and whether the
+     * layer is on are read from here — the centre stays for the survey the drawn routes came from.
+     */
+    val hoop: StateFlow<NearbyRoutesHoop?> = _hoop.asStateFlow()
+
     // The hue assigned to each drawn route, retained across refreshes so a route that stays in the
     // hoop keeps its colour as neighbours come and go (the same retention adjacency uses). Keyed by
     // route id, not route+direction: every direction of a route shares one colour (#2004).
@@ -96,14 +109,11 @@ class NearbyRoutesController(
         job?.cancel()
         job = null
         colors = emptyMap()
+        _hoop.value = null
         renderState.clearNearbyRoutes()
     }
 
     private fun launchLoader(): Job = scope.launch {
-        // The hoop's anchor, held across emissions: kept until the camera drifts far enough (or the
-        // layer hides), so pans smaller than a refresh neither move the ring nor re-query.
-        var hoop: NearbyRoutesHoop? = null
-
         combine(
             host.camera.filterNotNull(),
             // The published stop layer is the route set's source, so a fresh viewport load is a
@@ -117,17 +127,17 @@ class NearbyRoutesController(
             .filter { !host.cameraInteracting.value }
             .map { (camera, stops, stopFocused) ->
                 if (stopFocused || camera.zoom < NEARBY_ROUTES_MIN_ZOOM) {
-                    // Drop the anchor as well: re-entering the layer should survey afresh from
-                    // wherever the camera then is, not resume the pre-hide hoop.
-                    hoop = null
+                    _hoop.value = null
                     return@map null
                 }
-                val anchored = hoop
-                    ?.takeIf { haversineMeters(it.center, camera.center) < NEARBY_ROUTES_REFRESH_METERS }
-                    ?: NearbyRoutesHoop(camera.center, NEARBY_ROUTES_RADIUS_METERS).also { hoop = it }
-                val routeIds = nearbyRouteIds(anchored, stops, MAX_NEARBY_ROUTES)
+                // The camera has settled, so survey from exactly where it came to rest — which is
+                // also where the overlay has been drawing the ring all through the drag. No drift
+                // threshold: the two must agree at rest, and a settle costs only cached shapes.
+                val hoop = NearbyRoutesHoop(camera.center, NEARBY_ROUTES_RADIUS_METERS)
+                _hoop.value = hoop
+                val routeIds = nearbyRouteIds(hoop, stops, MAX_NEARBY_ROUTES)
                 NearbyRoutesRequest(
-                    hoop = anchored,
+                    hoop = hoop,
                     routeIds = routeIds,
                     colors = adjacencyRouteColors(routeIds, retained = colors).also { colors = it }
                 )
@@ -145,11 +155,12 @@ class NearbyRoutesController(
     }
 
     /**
-     * The layer's presentations for one [request], emitted progressively: the bare ring first (so the
-     * hoop appears the moment the camera settles rather than after the slowest shape), then a fresh
-     * plan as each route's shape resolves. A request with no routes in it draws nothing at all.
-     * Superseded by [flatMapLatest] when a newer request arrives, which cancels any shape fetch still
-     * in flight.
+     * The layer's presentations for one [request], emitted progressively as each route's shape
+     * resolves. It deliberately does *not* open with an empty plan: since every settle re-surveys, that
+     * would blink the whole layer off and back on after each pan. The previous survey's routes stay on
+     * screen until the first route of this one lands, and an empty plan is emitted only when this
+     * survey genuinely has nothing to draw. Superseded by [flatMapLatest] when a newer request
+     * arrives, which cancels any shape fetch still in flight.
      *
      * Runs on [Dispatchers.Default]: testing a dozen whole-route shapes against the hoop (for
      * membership and badge anchors) is real CPU work and must not land on the frame-producing main
@@ -164,7 +175,6 @@ class NearbyRoutesController(
         }
         val metadata = routesById()
         val drawn = mutableListOf<NearbyRouteShapes>()
-        emit(assembleNearbyRoutesPresentation(request.hoop, drawn, request.colors))
         val permits = Semaphore(MAX_CONCURRENT_NEARBY_ROUTE_FETCHES)
         coroutineScope {
             val fetches = request.routeIds.map { routeId ->
@@ -177,6 +187,9 @@ class NearbyRoutesController(
                 emit(assembleNearbyRoutesPresentation(request.hoop, drawn, request.colors))
             }
         }
+        // Every candidate failed to load or missed the hoop: clear, rather than stranding the previous
+        // survey's routes on screen.
+        if (drawn.isEmpty()) emit(NearbyRoutesPresentation(emptyList(), emptyList()))
     }.flowOn(Dispatchers.Default)
 
     /**
@@ -216,13 +229,6 @@ private data class NearbyRoutesRequest(
  * too dense and too thin to read. A display decision, tunable to taste.
  */
 private const val NEARBY_ROUTES_MIN_ZOOM = 14.0
-
-/**
- * How far the camera centre must drift from the surveyed hoop before it is re-anchored and re-queried
- * — half the hoop's own radius, so the ring is never showing an area the camera has largely left, and
- * an ordinary nudge of the map costs nothing.
- */
-private const val NEARBY_ROUTES_REFRESH_METERS = 400.0
 
 /** Matches the stop loader's settle window: one survey per pan, not one per intermediate idle. */
 private const val NEARBY_ROUTES_DEBOUNCE_MS = 400L

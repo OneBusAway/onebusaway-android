@@ -37,6 +37,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.map.render.CameraCommand
+import org.onebusaway.android.map.render.CameraLens
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.FramingIntent
 import org.onebusaway.android.map.render.MIN_FRAMING_SPAN_DEG
@@ -136,8 +137,22 @@ class MapHost(
         _cameraInteracting.value = false
     }
 
+    // The camera's live scale (zoom + latitude), republished on every camera *move* — unlike [camera],
+    // which only emits on idle. Screen-space overlays that must track a pinch in real time read this;
+    // see [CameraLens] for why it isn't the whole snapshot.
+    private val _cameraLens = MutableStateFlow<CameraLens?>(null)
+
+    val cameraLens: StateFlow<CameraLens?> = _cameraLens.asStateFlow()
+
+    /** The flavor adapter reports a camera move (continuously, mid-gesture). */
+    fun onCameraMove(zoom: Double, latitude: Double) {
+        _cameraLens.value = CameraLens(zoom, latitude)
+    }
+
     fun onCameraIdle(snapshot: CameraSnapshot) {
         _camera.value = snapshot
+        // Keep the lens fresh even for a camera change that emitted no move (a programmatic jump).
+        onCameraMove(snapshot.zoom, snapshot.center.latitude)
         onCameraSettled()
         // Persist the live viewport so a process-death restore (and MapLibre, which has no rememberSaveable
         // backstop) re-seeds here via [cameraSeed]. Same keys as the intent extras, so they interoperate.

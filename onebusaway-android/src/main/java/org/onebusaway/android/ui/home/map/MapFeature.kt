@@ -395,6 +395,11 @@ fun MapFeature(
         initialZoom = seed.zoom
     )
 
+    // The nearby-routes hoop's ring (#2004), drawn over the map in screen space so a drag carries it
+    // along with the gesture. Composed right after the map so the chrome overlays below still draw on
+    // top of it.
+    NearbyRoutesHoopRing(mapViewModel)
+
     // The nearby-stops info notice: "zoom in to see more stops" when the load was truncated (the API's
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.

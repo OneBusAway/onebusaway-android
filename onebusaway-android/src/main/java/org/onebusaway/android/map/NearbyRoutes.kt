@@ -16,13 +16,13 @@
 package org.onebusaway.android.map
 
 import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.pow
 import kotlin.math.sqrt
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
-import org.onebusaway.android.map.render.NEARBY_ROUTES_HOOP_WIDTH_PROFILE
+import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
@@ -47,7 +47,7 @@ internal data class NearbyRouteShapes(
     val shapes: List<List<GeoPoint>>
 )
 
-/** The hoop layer's complete render plan: the ring + each qualifying route's full shape, and one badge per route. */
+/** The hoop layer's complete render plan: each qualifying route's full shape, and one badge per route. */
 internal data class NearbyRoutesPresentation(
     val polylines: List<RoutePolyline>,
     val badges: List<RouteBadge>
@@ -89,8 +89,9 @@ internal fun nearbyRouteIds(
 }
 
 /**
- * Build the hoop layer: the ring, then the **whole** shape of every route that enters the hoop, then
- * one badge per route.
+ * Build the hoop layer: the **whole** shape of every route that enters the hoop, and one badge per
+ * route. (The ring itself isn't here — it is drawn in screen space over the map, so that a pan slides
+ * it with the gesture; see [hoopRadiusDp].)
  *
  * The hoop selects; it doesn't crop. A route qualifies only if its shape actually passes through the
  * circle (a route whose stop is inside but whose line only skirts it is dropped, never badged), and
@@ -118,7 +119,6 @@ internal fun assembleNearbyRoutesPresentation(
             ?.let { route to it }
     }
     val polylines = buildList {
-        add(hoopRingPolyline(hoop))
         for ((route, _) in drawn) {
             val color = colors[route.routeId] ?: DEFAULT_ROUTE_LINE_COLOR
             for (shape in route.shapes) {
@@ -159,20 +159,20 @@ internal fun assembleNearbyRoutesPresentation(
     return NearbyRoutesPresentation(polylines, badges)
 }
 
-/** The hoop's own ring: a faint closed circle marking the extent the layer surveyed. */
-internal fun hoopRingPolyline(hoop: NearbyRoutesHoop): RoutePolyline = RoutePolyline(
-    color = NEARBY_ROUTES_HOOP_COLOR,
-    points = hoopRing(hoop),
-    widthProfile = NEARBY_ROUTES_HOOP_WIDTH_PROFILE
-)
-
-/** The hoop's circumference as a closed polyline (first point repeated last). */
-internal fun hoopRing(hoop: NearbyRoutesHoop, segments: Int = HOOP_RING_SEGMENTS): List<GeoPoint> {
-    val projection = LocalMeters(hoop.center)
-    return (0..segments).map { step ->
-        val angle = 2.0 * Math.PI * step / segments
-        projection.toGeoPoint(hoop.radiusMeters * cos(angle), hoop.radiusMeters * sin(angle))
-    }
+/**
+ * The hoop's on-screen radius, in dp, at [zoom] and [latitude] — Web Mercator's ground resolution,
+ * which is what a map zoom level means.
+ *
+ * The ring is drawn in screen space at the centre of the viewport rather than as map geometry, so that
+ * a pan carries it along with the gesture (a geographic circle would slide away under the drag) while
+ * the route survey waits for the camera to settle. Mercator is conformal, so at this scale a circle on
+ * the ground really is a circle on screen — only its radius changes, and only with zoom.
+ */
+internal fun hoopRadiusDp(radiusMeters: Double, zoom: Double, latitude: Double): Float {
+    val metersPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
+        cos(Math.toRadians(latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE))) /
+        2.0.pow(zoom.coerceIn(0.0, MAX_MAP_ZOOM))
+    return (radiusMeters / metersPerPixel).toFloat()
 }
 
 /**
@@ -260,11 +260,6 @@ private class LocalMeters(private val origin: GeoPoint) {
         x = Math.toRadians(point.longitude - origin.longitude) * longitudeScale,
         y = Math.toRadians(point.latitude - origin.latitude) * latitudeScale
     )
-
-    fun toGeoPoint(x: Double, y: Double) = GeoPoint(
-        latitude = origin.latitude + Math.toDegrees(y / latitudeScale),
-        longitude = origin.longitude + Math.toDegrees(x / longitudeScale)
-    )
 }
 
 /** Applies [alpha01] (`0..1`) to [baseColor]'s RGB, producing an ARGB colour. */
@@ -287,8 +282,8 @@ internal const val MAX_NEARBY_ROUTES = 12
 /** How lightly the route lines are drawn — ambient context beneath the basemap's own labels. */
 private const val NEARBY_ROUTE_LINE_ALPHA = 0.65f
 
-/** The ring's colour: neutral grey at low alpha, legible over both the light and dark basemaps. */
-private const val NEARBY_ROUTES_HOOP_COLOR = 0x59757575
+/** Mercator is undefined at the poles; clamp like the route-render pipeline does. */
+private const val MAX_MERCATOR_LATITUDE = 85.05112878
 
-/** Enough segments that the ring reads as a circle at any zoom the layer is shown at. */
-private const val HOOP_RING_SEGMENTS = 96
+/** A defensive clamp on the zoom exponent, mirroring the route-render pipeline's. */
+private const val MAX_MAP_ZOOM = 30.0

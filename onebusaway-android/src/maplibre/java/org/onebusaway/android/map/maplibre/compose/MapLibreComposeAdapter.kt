@@ -170,6 +170,13 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                             host.onCameraGestureStarted()
                         }
                     }
+                    // The live camera scale, reported continuously so screen-space overlays (the
+                    // nearby-routes hoop ring) track a pinch instead of snapping at the end. Skipped
+                    // while the target is unresolved, as the idle listener below also guards.
+                    map.addOnCameraMoveListener {
+                        val position = map.cameraPosition
+                        position.target?.let { host.onCameraMove(position.zoom, it.latitude) }
+                    }
                     map.addOnCameraIdleListener {
                         r.onCameraSettled(map.cameraPosition.zoom.toFloat())
                         // Always settle the gesture gate on idle; publish a snapshot only when the camera

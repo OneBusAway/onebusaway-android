@@ -176,6 +176,14 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
                         host.onCameraGestureStarted()
                     }
                 }
+                // The live camera scale, reported continuously so screen-space overlays (the
+                // nearby-routes hoop ring) track a pinch instead of snapping at the end. Deliberately
+                // just zoom + latitude — a full CameraSnapshot would project the visible region on
+                // every frame of every gesture.
+                map.setOnCameraMoveListener {
+                    val position = map.cameraPosition
+                    host.onCameraMove(position.zoom.toDouble(), position.target.latitude)
+                }
                 map.setOnCameraIdleListener {
                     r.onCameraSettled(map.cameraPosition.zoom)
                     host.onCameraIdle(snapshot(map))

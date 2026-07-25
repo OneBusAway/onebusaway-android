@@ -37,6 +37,18 @@ data class CameraSnapshot(
     val northEast: GeoPoint
 )
 
+/**
+ * The camera's live *scale*, republished continuously **during** a gesture (not just on idle like
+ * [CameraSnapshot]) — the two fields that decide how many screen pixels a metre covers.
+ *
+ * Deliberately not the whole [CameraSnapshot]: building one costs a `visibleRegion` projection, which
+ * is fine once per idle but not once per frame. This is the cheap subset for screen-space overlays that
+ * must track a pinch in real time — today, the nearby-routes hoop ring (#2004), which is drawn at the
+ * centre of the viewport in Compose rather than as map geometry, so panning moves it for free and only
+ * a zoom changes its size.
+ */
+data class CameraLens(val zoom: Double, val latitude: Double)
+
 /** The camera fields needed to restore a prior viewport after undoing one semantic map action. */
 data class MapViewport(
     val center: GeoPoint,

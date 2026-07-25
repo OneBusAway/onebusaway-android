@@ -169,13 +169,13 @@ class MapViewModel @Inject constructor(
         stopCache = stopCache
     )
 
-    // The ambient "routes near here" hoop drawn on the plain base map (#2004). It reads the stop layer
-    // the controller above publishes (its route catalog supplies the badge labels), so it adds no stop
-    // query of its own — only the shared, cached per-route shape fetch.
+    // The ambient "routes near here" hoop drawn on the plain base map (#2004). It runs its own small
+    // hoop-sized stop query rather than reading the viewport stop layer above, so it means the same
+    // thing at every zoom (that layer is a truncated citywide sample once you pull back).
     private val nearbyRoutesController = NearbyRoutesController(
         host = mapHost,
+        mapDataSource = mapDataSource,
         routeRepository = routeRepository,
-        routesById = stopsController::cachedRoutes,
         scope = viewModelScope
     )
 

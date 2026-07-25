@@ -2,13 +2,13 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolylineTransform
-import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.GeoPoint
@@ -18,44 +18,76 @@ class NearbyRoutesTest {
     private val center = GeoPoint(47.6, -122.33)
     private val hoop = NearbyRoutesHoop(center, 800.0)
 
-    // ----- The route set -----
-
-    @Test
-    fun `only routes serving a stop inside the hoop are drawn`() {
-        val ids = nearbyRouteIds(
-            hoop,
-            listOf(
-                stopMarker("inside", offsetMeters(0.0, 100.0), "inner"),
-                stopMarker("outside", offsetMeters(0.0, 2000.0), "outer")
-            ),
-            limit = 10
-        )
-
-        assertEquals(listOf("inner"), ids)
-    }
+    // ----- Ranking the route set down to the cap -----
 
     @Test
     fun `routes rank by their nearest serving stop and the cap keeps the closest`() {
-        val ids = nearbyRouteIds(
+        val ranked = rankRoutesByNearestStop(
             hoop,
-            listOf(
-                stopMarker("far", offsetMeters(0.0, 700.0), "far-route"),
-                stopMarker("near", offsetMeters(0.0, 50.0), "near-route"),
+            routes = listOf(route("far-route"), route("near-route"), route("mid-route")),
+            stops = listOf(
+                stop("far", offsetMeters(0.0, 700.0), "far-route"),
+                stop("near", offsetMeters(0.0, 50.0), "near-route"),
                 // The same route served twice: its *nearest* stop decides its rank.
-                stopMarker("mid-far", offsetMeters(0.0, 600.0), "mid-route"),
-                stopMarker("mid-near", offsetMeters(0.0, 300.0), "mid-route")
+                stop("mid-far", offsetMeters(0.0, 600.0), "mid-route"),
+                stop("mid-near", offsetMeters(0.0, 300.0), "mid-route")
             ),
             limit = 2
         )
 
-        assertEquals(listOf("near-route", "mid-route"), ids)
+        assertEquals(listOf("near-route", "mid-route"), ranked.map { it.id })
+    }
+
+    @Test
+    fun `a stop outside the hoop doesn't rank its route`() {
+        val ranked = rankRoutesByNearestStop(
+            hoop,
+            routes = listOf(route("inner"), route("outer")),
+            stops = listOf(
+                stop("inside", offsetMeters(0.0, 100.0), "inner"),
+                stop("outside", offsetMeters(0.0, 2000.0), "outer")
+            ),
+            limit = 10
+        )
+
+        // Both stay in the set — routes-for-location is authoritative about membership — but the one
+        // the sample places nowhere near the centre sorts last.
+        assertEquals(listOf("inner", "outer"), ranked.map { it.id })
+    }
+
+    @Test
+    fun `a route the stop sample never mentions keeps its place and sorts last`() {
+        val ranked = rankRoutesByNearestStop(
+            hoop,
+            routes = listOf(route("unsampled"), route("sampled")),
+            stops = listOf(stop("known", offsetMeters(0.0, 100.0), "sampled")),
+            limit = 10
+        )
+
+        assertEquals(listOf("sampled", "unsampled"), ranked.map { it.id })
     }
 
     @Test
     fun `equidistant routes break ties on id so the drawn set is stable`() {
-        val stops = listOf(stopMarker("shared", offsetMeters(0.0, 100.0), "b-route", "a-route"))
+        val ranked = rankRoutesByNearestStop(
+            hoop,
+            routes = listOf(route("b-route"), route("a-route")),
+            stops = listOf(stop("shared", offsetMeters(0.0, 100.0), "b-route", "a-route")),
+            limit = 10
+        )
 
-        assertEquals(listOf("a-route", "b-route"), nearbyRouteIds(hoop, stops, limit = 10))
+        assertEquals(listOf("a-route", "b-route"), ranked.map { it.id })
+    }
+
+    @Test
+    fun `the hoop's query box squares the circle and widens with latitude`() {
+        val (latSpan, lonSpan) = hoop.spanDegrees()
+
+        // A 1.6 km box: 2 x 800 m of latitude.
+        assertEquals(1600.0 / 111_195.0, latSpan, 1e-5)
+        // Longitude degrees are shorter at 47.6 N, so the box spans more of them.
+        assertTrue(lonSpan > latSpan)
+        assertEquals(latSpan / Math.cos(Math.toRadians(47.6)), lonSpan, 1e-9)
     }
 
     // ----- Clipping to the hoop -----
@@ -195,6 +227,27 @@ class NearbyRoutesTest {
     }
 
     @Test
+    fun `badges spread along the routes when the ring is too small to hold them`() {
+        // A route running 4 km east, clipping the hoop's western edge.
+        val shape = listOf(offsetMeters(-700.0, 0.0), offsetMeters(4000.0, 0.0))
+        val routes = listOf(NearbyRouteShapes("3", "3", listOf(shape)))
+
+        val inHoop = assembleNearbyRoutesPresentation(hoop, routes, mapOf("3" to RED), badgesInHoop = true)
+        val alongRoute = assembleNearbyRoutesPresentation(hoop, routes, mapOf("3" to RED), badgesInHoop = false)
+
+        assertTrue(haversineMeters(center, inHoop.badges.single().point) <= hoop.radiusMeters)
+        // Anchored on the whole route, the badge lands at its distant midpoint instead.
+        assertTrue(haversineMeters(center, alongRoute.badges.single().point) > hoop.radiusMeters)
+    }
+
+    @Test
+    fun `the ring has to be about a badge wide before labels go inside it`() {
+        // Zoomed in, the ring is most of the screen; zoomed out to a city it is barely a dot.
+        assertTrue(badgesFitInHoop(hoopRadiusDp(800.0, 15.0, 47.6)))
+        assertFalse(badgesFitInHoop(hoopRadiusDp(800.0, 11.0, 47.6)))
+    }
+
+    @Test
     fun `a hoop badge carries no direction so a tap enters the route's default`() {
         val presentation = assembleNearbyRoutesPresentation(
             hoop,
@@ -217,18 +270,24 @@ class NearbyRoutesTest {
         )
     }
 
-    private fun stopMarker(id: String, point: GeoPoint, vararg routeIds: String) = StopMarker(
-        id,
-        point,
-        "null",
-        ObaRoute.TYPE_BUS,
-        ObaStopElement(
-            id = id,
-            lat = point.latitude,
-            lon = point.longitude,
-            routeIds = arrayOf(*routeIds)
-        )
+    private fun stop(id: String, point: GeoPoint, vararg routeIds: String) = ObaStopElement(
+        id = id,
+        lat = point.latitude,
+        lon = point.longitude,
+        routeIds = arrayOf(*routeIds)
     )
+
+    private fun route(routeId: String) = object : ObaRoute {
+        override val id = routeId
+        override val shortName = routeId
+        override val longName: String? = null
+        override val description: String? = null
+        override val type = ObaRoute.TYPE_BUS
+        override val url: String? = null
+        override val color: Int? = null
+        override val textColor: Int? = null
+        override val agencyId = "agency"
+    }
 
     private companion object {
         const val RED = 0xFFCC0000.toInt()

@@ -34,6 +34,9 @@ import org.onebusaway.android.region.Region
  *
  * A custom OTP API URL enables both, unchanged: it's the advanced-setting hatch for testing against a
  * bikeshare-capable OTP, and there's no [Region] to carry a capability flag for a hand-entered server.
+ * The hatch answers **true unconditionally** — the custom server's own protocol setting (the
+ * `preference_key_otp_api_url_is_graphql` preference that `TripRequestBuilder.otpTarget` reads) is not
+ * consulted, so "whichever server the plan will hit" above describes the *region* case only.
  */
 object BikeshareAvailability {
 
@@ -50,7 +53,7 @@ object BikeshareAvailability {
         // The flag for whichever OTP server the plan will actually be sent to. This selection is app
         // routing policy, not a fact about the region, so it lives here rather than on [Region] —
         // which can't see the custom-URL half of the same decision either way.
-        region?.let { if (it.usesOtp2) it.supportsOtpGraphqlBikeshare else it.supportsOtpBikeshare },
+        region?.let { if (it.usesOtp2) it.supportsOtpGraphqlBikeshare else it.supportsOtpBikeshare } ?: false,
         customOtpApiUrl
     )
 
@@ -64,13 +67,13 @@ object BikeshareAvailability {
      * OTP2-only bikeshare region has no stations to draw even though it can plan bike trips.
      */
     @JvmStatic
-    fun isStationLayerEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(region?.supportsOtpBikeshare, customOtpApiUrl)
+    fun isStationLayerEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(region?.supportsOtpBikeshare ?: false, customOtpApiUrl)
 
     /**
      * The shape both predicates share: the region's own per-server flag, or the custom-OTP-URL hatch.
      * Written once so the hatch rule can't drift between the two — only [regionSupports] differs.
      */
-    private fun enabled(regionSupports: Boolean?, customOtpApiUrl: String?): Boolean = regionSupports == true || !customOtpApiUrl.isNullOrEmpty()
+    private fun enabled(regionSupports: Boolean, customOtpApiUrl: String?): Boolean = regionSupports || !customOtpApiUrl.isNullOrEmpty()
 
     private fun region(context: Context): Region? = RegionEntryPoint.get(context).currentRegion()
 

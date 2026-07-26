@@ -23,12 +23,13 @@ import org.onebusaway.android.api.graphql.type.CyclingOptimizationType
 import org.onebusaway.android.api.graphql.type.PlanAccessMode
 import org.onebusaway.android.api.graphql.type.PlanDirectMode
 import org.onebusaway.android.api.graphql.type.PlanEgressMode
+import org.onebusaway.android.api.graphql.type.PlanPreferencesInput
+import org.onebusaway.android.api.graphql.type.PlanStreetPreferencesInput
 import org.onebusaway.android.api.graphql.type.TransitMode
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.ui.tripplan.WalkPreference
-import org.onebusaway.android.ui.tripplan.enumValueOrDefault
 
 /**
  * Covers [Otp2PlanRequestBuilder.buildModes]/[Otp2PlanRequestBuilder.buildPreferences]/
@@ -99,23 +100,19 @@ class Otp2PlanRequestBuilderTest {
     @Test
     fun preferencesCarryTheWheelchairFlagEitherWay() {
         val enabled = requirePresent(
-            requirePresent(
-                Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = true, optimizeTransfers = false).accessibility
-            ).wheelchair
+            requirePresent(preferences(wheelchairAccessible = true, optimizeTransfers = false).accessibility).wheelchair
         ).enabled
         assertEquals(true, requirePresent(enabled))
 
         val disabled = requirePresent(
-            requirePresent(
-                Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = false).accessibility
-            ).wheelchair
+            requirePresent(preferences(wheelchairAccessible = false, optimizeTransfers = false).accessibility).wheelchair
         ).enabled
         assertEquals(false, requirePresent(disabled))
     }
 
     @Test
     fun optimizeTransfersSetsTheHistoricalOtp1TransferCost() {
-        val prefs = Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = true)
+        val prefs = preferences(wheelchairAccessible = false, optimizeTransfers = true)
         val transferCost = requirePresent(requirePresent(requirePresent(prefs.transit).transfer).cost)
         // 1800s (30 min) is what OTP1's optimize=TRANSFERS actually added to transferPenalty —
         // see the sourced comment on Otp2PlanRequestBuilder.OPTIMIZE_TRANSFERS_COST_SECONDS.
@@ -124,32 +121,45 @@ class Otp2PlanRequestBuilderTest {
 
     @Test
     fun defaultTransfersLeaveTransitPreferencesUnset() {
-        val prefs = Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = false)
+        val prefs = preferences(wheelchairAccessible = false, optimizeTransfers = false)
         assertEquals(Optional.Absent, prefs.transit)
     }
 
+    /** [Otp2PlanRequestBuilder.buildPreferences] with the street preferences on their neutral stops. */
+    private fun preferences(wheelchairAccessible: Boolean, optimizeTransfers: Boolean): PlanPreferencesInput = Otp2PlanRequestBuilder.buildPreferences(
+        wheelchairAccessible = wheelchairAccessible,
+        optimizeTransfers = optimizeTransfers,
+        walkPreference = WalkPreference.MEDIUM,
+        cyclingPreference = CyclingPreference.DEFAULT,
+        bikePreference = BikePreference.MEDIUM
+    )
+
+    /**
+     * The neutral stop is stated on the wire, not omitted: both reluctances carry OTP's own
+     * documented 2.0 default so the five-point scales keep their ordering on a region that tuned its
+     * own reluctance (see `Otp2PlanRequestBuilder.RELUCTANCE_MEDIUM`). `bicycle.optimization` is the
+     * one piece still left unset at its default stop — it is an "unset" option, not a midpoint, so
+     * there is no ordering for a region's own value to invert.
+     */
     @Test
-    fun defaultStreetPreferencesAreOmittedEntirely() {
-        // Both defaults means "let the region's own router-config decide" — send no `street` block
-        // at all rather than an empty one, which is also what this app sent before these settings
-        // existed.
-        assertEquals(
-            Optional.Absent,
-            Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MEDIUM, CyclingPreference.DEFAULT)
-        )
-        val prefs = Otp2PlanRequestBuilder.buildPreferences(wheelchairAccessible = false, optimizeTransfers = false)
-        assertEquals(Optional.Absent, prefs.street)
+    fun theNeutralStopStatesOtpsOwnDefaultsAndLeavesOptimizationUnset() {
+        val street = street()
+        assertEquals(2.0, requirePresent(requirePresent(street.walk).reluctance), 1e-9)
+        val bicycle = requirePresent(street.bicycle)
+        assertEquals(2.0, requirePresent(bicycle.reluctance), 1e-9)
+        assertEquals(Optional.Absent, bicycle.optimization)
     }
 
     /**
-     * The scale is 8 / 4 / (unset) / 1.4 / 1.0 — OTP2's documented 2.0 default at the neutral stop,
-     * stepped by a factor of two above it and split geometrically down to the 1.0 floor below it.
-     * Pinned exactly because these are the numbers that actually reach the server.
+     * The scale is 8 / 4 / 2 / 1.4 / 1.0 — OTP2's documented 2.0 default at the neutral stop, stepped
+     * by a factor of two above it and split geometrically down to the 1.0 floor below it. Pinned
+     * exactly because these are the numbers that actually reach the server.
      */
     @Test
     fun walkPreferenceWalksTheFivePointReluctanceScale() {
         assertEquals(8.0, walkReluctanceFor(WalkPreference.MINIMUM), 1e-9)
         assertEquals(4.0, walkReluctanceFor(WalkPreference.LOW), 1e-9)
+        assertEquals(2.0, walkReluctanceFor(WalkPreference.MEDIUM), 1e-9)
         assertEquals(1.4, walkReluctanceFor(WalkPreference.HIGH), 1e-9)
         assertEquals(1.0, walkReluctanceFor(WalkPreference.MAXIMUM), 1e-9)
     }
@@ -159,8 +169,46 @@ class Otp2PlanRequestBuilderTest {
     fun bikePreferenceWalksTheSameFivePointScale() {
         assertEquals(8.0, bikeReluctanceFor(BikePreference.MINIMUM), 1e-9)
         assertEquals(4.0, bikeReluctanceFor(BikePreference.LOW), 1e-9)
+        assertEquals(2.0, bikeReluctanceFor(BikePreference.MEDIUM), 1e-9)
         assertEquals(1.4, bikeReluctanceFor(BikePreference.HIGH), 1e-9)
         assertEquals(1.0, bikeReluctanceFor(BikePreference.MAXIMUM), 1e-9)
+    }
+
+    /**
+     * The scale is inverted on purpose — *less* of the mode is a *higher* multiplier — and it must
+     * decrease **strictly**, across *every* stop including the neutral one. Two things ride on that:
+     * two slider positions must never send the same value, and no stop may be out of order with its
+     * neighbours (the reason the neutral stop states its multiplier rather than deferring to whatever
+     * the region configured, which could sit anywhere on or off the scale).
+     *
+     * Every stop must also stay strictly inside the schema's "should be greater than 0" contract. A 0
+     * would make street time free, letting an arbitrarily long walk beat any transit itinerary.
+     */
+    @Test
+    fun bothScalesDecreaseStrictlyAcrossEveryStopAndStayAboveZero() {
+        for (scale in listOf(walkScale(), bikeScale())) {
+            assertEquals("every stop must be on the wire", 5, scale.size)
+            assertTrue("every stop must stay > 0", scale.all { it > 0.0 })
+            assertTrue(
+                "more of the mode must always cost strictly less: $scale",
+                scale.zipWithNext().all { (higher, lower) -> higher > lower }
+            )
+        }
+    }
+
+    /**
+     * No stop may drop below 1.0, OTP's neutral point. Below it the schema says the mode is
+     * "preferred over transit", and OTP acts on that by deleting transit itineraries — measured
+     * against a live server, rail + own bike returns nothing at 0.9 and a real itinerary at 1.0.
+     * This is stricter than the scalar's own 0.1 validation floor, and unlike that one it fails
+     * silently, as an empty result rather than an error.
+     */
+    @Test
+    fun noStopAsksTheRouterToPreferStreetOverTransit() {
+        assertTrue(
+            "every reluctance must be >= 1.0 (OTP's neutral point)",
+            (walkScale() + bikeScale()).all { it >= 1.0 }
+        )
     }
 
     /**
@@ -173,94 +221,12 @@ class Otp2PlanRequestBuilderTest {
      * An out-of-range value fails the whole plan with a GraphQL validation error, so this guards
      * anyone re-deriving the scale (e.g. changing RELUCTANCE_STEP) from silently breaking planning.
      */
-
-    /**
-     * No stop may drop below 1.0, OTP's neutral point. Below it the schema says the mode is
-     * "preferred over transit", and OTP acts on that by deleting transit itineraries — measured
-     * against a live server, rail + own bike returns nothing at 0.9 and a real itinerary at 1.0.
-     * This is stricter than the scalar's own 0.1 validation floor, and unlike that one it fails
-     * silently, as an empty result rather than an error.
-     */
-    @Test
-    fun noStopAsksTheRouterToPreferStreetOverTransit() {
-        val all = WalkPreference.entries.mapNotNull { walkReluctanceFor2(it) } +
-            BikePreference.entries.mapNotNull { bikeReluctanceFor2(it) }
-        assertTrue("every reluctance must be >= 1.0 (OTP's neutral point)", all.all { it >= 1.0 })
-    }
-
     @Test
     fun everyStopIsInsideTheRangeTheServerAccepts() {
-        val all = WalkPreference.entries.mapNotNull { walkReluctanceFor2(it) } +
-            BikePreference.entries.mapNotNull { bikeReluctanceFor2(it) }
-        assertEquals("all five stops, both scales, minus the two neutral ones", 8, all.size)
+        val all = walkScale() + bikeScale()
+        assertEquals("all five stops of both scales", 10, all.size)
         assertTrue("every reluctance must be >= 0.1", all.all { it >= 0.1 })
         assertTrue("every reluctance must be <= 100000.0", all.all { it <= 100_000.0 })
-    }
-
-    /** Null at the neutral stop (which sends nothing), else the reluctance. */
-    private fun walkReluctanceFor2(preference: WalkPreference): Double? {
-        val street = Otp2PlanRequestBuilder.buildStreetPreferences(preference, CyclingPreference.DEFAULT, BikePreference.MEDIUM)
-        if (street == Optional.Absent) return null
-        return requirePresent(requirePresent(requirePresent(street).walk).reluctance)
-    }
-
-    private fun bikeReluctanceFor2(preference: BikePreference): Double? {
-        val street = Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MEDIUM, CyclingPreference.DEFAULT, preference)
-        if (street == Optional.Absent) return null
-        return requirePresent(requirePresent(requirePresent(street).bicycle).reluctance)
-    }
-
-    /**
-     * The scale is inverted on purpose — *less* walking is a *higher* multiplier — and every stop
-     * must stay strictly inside the schema's "should be greater than 0" contract. A 0 would make
-     * street time free, letting an arbitrarily long walk beat any transit itinerary.
-     */
-    @Test
-    fun theScaleDecreasesMonotonicallyAndStaysAboveZero() {
-        val ordered = listOf(
-            WalkPreference.MINIMUM,
-            WalkPreference.LOW,
-            WalkPreference.HIGH,
-            WalkPreference.MAXIMUM
-        ).map { walkReluctanceFor(it) }
-        assertEquals("more walking must never cost more", ordered.sortedDescending(), ordered)
-        assertTrue("every stop must stay > 0", ordered.all { it > 0.0 })
-    }
-
-    /** The neutral stop sends nothing, so a region's own router-config reluctance survives. */
-    @Test
-    fun theMediumStopSendsNoReluctanceAtAll() {
-        assertEquals(
-            Optional.Absent,
-            Otp2PlanRequestBuilder.buildStreetPreferences(
-                WalkPreference.MEDIUM,
-                CyclingPreference.DEFAULT,
-                BikePreference.MEDIUM
-            )
-        )
-    }
-
-    @Test
-    fun defaultWalkPreferenceLeavesWalkUnsetEvenWhenCyclingIsSet() {
-        // The two halves are independent: choosing a cycling optimization must not pin a walk
-        // reluctance the rider never asked for.
-        val street = requirePresent(
-            Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MEDIUM, CyclingPreference.FASTEST)
-        )
-        assertEquals(Optional.Absent, street.walk)
-        assertEquals(
-            CyclingOptimizationType.SHORTEST_DURATION,
-            requirePresent(requirePresent(requirePresent(street.bicycle).optimization).type)
-        )
-    }
-
-    @Test
-    fun defaultCyclingPreferenceLeavesBicycleUnsetEvenWhenWalkIsSet() {
-        val street = requirePresent(
-            Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MINIMUM, CyclingPreference.DEFAULT)
-        )
-        assertEquals(Optional.Absent, street.bicycle)
-        assertEquals(8.0, requirePresent(requirePresent(street.walk).reluctance), 1e-9)
     }
 
     @Test
@@ -270,59 +236,32 @@ class Otp2PlanRequestBuilderTest {
         assertEquals(CyclingOptimizationType.FLAT_STREETS, cyclingOptimizationFor(CyclingPreference.FLATTEST))
     }
 
-    @Test
-    fun unknownStoredPreferenceNameFallsBackToTheServerDefault() {
-        // Persisted by name, so a value written by a build that knows an option this one doesn't
-        // must degrade to "send nothing" rather than to some arbitrary neighbouring option.
-        assertEquals(WalkPreference.MEDIUM, enumValueOrDefault("MODERATE_WALKS", WalkPreference.MEDIUM))
-        assertEquals(WalkPreference.MEDIUM, enumValueOrDefault(null, WalkPreference.MEDIUM))
-        assertEquals(CyclingPreference.SAFEST, enumValueOrDefault("SAFEST", CyclingPreference.DEFAULT))
-    }
-
     /**
-     * The two bicycle knobs share one `BicyclePreferencesInput`, so each must be able to travel
-     * without the other — picking a route optimization must not pin a reluctance the rider never
-     * chose, and vice versa.
+     * The walk and bicycle halves travel independently: choosing a cycling optimization must not
+     * disturb the walk reluctance, and choosing a walk reluctance must not invent an optimization the
+     * rider never picked.
      */
     @Test
-    fun theTwoBicycleSettingsTravelIndependently() {
-        val reluctanceOnly = requirePresent(
-            requirePresent(
-                Otp2PlanRequestBuilder.buildStreetPreferences(
-                    WalkPreference.MEDIUM,
-                    CyclingPreference.DEFAULT,
-                    BikePreference.MAXIMUM
-                )
-            ).bicycle
-        )
-        assertEquals(1.0, requirePresent(reluctanceOnly.reluctance), 1e-9)
-        assertEquals(Optional.Absent, reluctanceOnly.optimization)
-
-        val optimizationOnly = requirePresent(
-            requirePresent(
-                Otp2PlanRequestBuilder.buildStreetPreferences(
-                    WalkPreference.MEDIUM,
-                    CyclingPreference.SAFEST,
-                    BikePreference.MEDIUM
-                )
-            ).bicycle
-        )
-        assertEquals(Optional.Absent, optimizationOnly.reluctance)
+    fun theWalkAndBicycleHalvesTravelIndependently() {
+        val cyclingOnly = street(cyclingPreference = CyclingPreference.FASTEST)
+        assertEquals(2.0, requirePresent(requirePresent(cyclingOnly.walk).reluctance), 1e-9)
         assertEquals(
-            CyclingOptimizationType.SAFEST_STREETS,
-            requirePresent(requirePresent(optimizationOnly.optimization).type)
+            CyclingOptimizationType.SHORTEST_DURATION,
+            requirePresent(requirePresent(requirePresent(cyclingOnly.bicycle).optimization).type)
         )
+
+        val walkOnly = street(walkPreference = WalkPreference.MINIMUM)
+        assertEquals(8.0, requirePresent(requirePresent(walkOnly.walk).reluctance), 1e-9)
+        assertEquals(Optional.Absent, requirePresent(walkOnly.bicycle).optimization)
     }
 
+    /** The two bicycle knobs share one `BicyclePreferencesInput`, so both must fit in it at once. */
     @Test
     fun bothBicycleSettingsRideInOneInputWhenBothAreSet() {
         val bicycle = requirePresent(
-            requirePresent(
-                Otp2PlanRequestBuilder.buildStreetPreferences(
-                    WalkPreference.MEDIUM,
-                    CyclingPreference.FLATTEST,
-                    BikePreference.MINIMUM
-                )
+            street(
+                cyclingPreference = CyclingPreference.FLATTEST,
+                bikePreference = BikePreference.MINIMUM
             ).bicycle
         )
         assertEquals(8.0, requirePresent(bicycle.reluctance), 1e-9)
@@ -332,34 +271,31 @@ class Otp2PlanRequestBuilderTest {
         )
     }
 
-    @Test
-    fun allThreeDefaultsStillOmitStreetPreferencesEntirely() {
-        assertEquals(
-            Optional.Absent,
-            Otp2PlanRequestBuilder.buildStreetPreferences(
-                WalkPreference.MEDIUM,
-                CyclingPreference.DEFAULT,
-                BikePreference.MEDIUM
-            )
-        )
-    }
+    /** Both reluctance scales, ordered least → most of the mode, as they reach the server. */
+    private fun walkScale(): List<Double> = WalkPreference.entries.map { walkReluctanceFor(it) }
 
-    private fun bikeReluctanceFor(preference: BikePreference): Double {
-        val street = requirePresent(
-            Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MEDIUM, CyclingPreference.DEFAULT, preference)
-        )
-        return requirePresent(requirePresent(street.bicycle).reluctance)
-    }
+    private fun bikeScale(): List<Double> = BikePreference.entries.map { bikeReluctanceFor(it) }
 
-    private fun walkReluctanceFor(preference: WalkPreference): Double {
-        val street = requirePresent(Otp2PlanRequestBuilder.buildStreetPreferences(preference, CyclingPreference.DEFAULT))
-        return requirePresent(requirePresent(street.walk).reluctance)
-    }
+    private fun walkReluctanceFor(preference: WalkPreference): Double = requirePresent(requirePresent(street(walkPreference = preference).walk).reluctance)
 
-    private fun cyclingOptimizationFor(preference: CyclingPreference): CyclingOptimizationType {
-        val street = requirePresent(Otp2PlanRequestBuilder.buildStreetPreferences(WalkPreference.MEDIUM, preference))
-        return requirePresent(requirePresent(requirePresent(street.bicycle).optimization).type)
-    }
+    private fun bikeReluctanceFor(preference: BikePreference): Double = requirePresent(requirePresent(street(bikePreference = preference).bicycle).reluctance)
+
+    private fun cyclingOptimizationFor(preference: CyclingPreference): CyclingOptimizationType = requirePresent(
+        requirePresent(requirePresent(street(cyclingPreference = preference).bicycle).optimization).type
+    )
+
+    /**
+     * [Otp2PlanRequestBuilder.buildStreetPreferences] with every unnamed preference on its neutral
+     * stop. The neutral defaults live here rather than on the production function, so a real call
+     * site that forgets a preference fails to compile instead of silently sending neutral.
+     */
+    private fun street(
+        walkPreference: WalkPreference = WalkPreference.MEDIUM,
+        cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
+        bikePreference: BikePreference = BikePreference.MEDIUM
+    ): PlanStreetPreferencesInput = requirePresent(
+        Otp2PlanRequestBuilder.buildStreetPreferences(walkPreference, cyclingPreference, bikePreference)
+    )
 
     /** Unwraps an [Optional.Present]'s non-null value, failing the test on [Optional.Absent] or a
      * present-but-null value (mirrors `dataOrThrow` elsewhere: absent-when-a-value-was-expected is a

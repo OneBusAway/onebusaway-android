@@ -45,7 +45,6 @@ data class OtpTarget(val baseUrl: String?, val usesOtp2: Boolean) {
          * from the URL shape or a failed request. [baseUrl] is null when neither a custom URL nor a
          * region is available.
          */
-        @JvmStatic
         fun resolve(context: Context): OtpTarget {
             val appContext = context.applicationContext
             val customUrl = customOtpApiUrl(appContext)

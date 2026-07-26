@@ -96,15 +96,24 @@ object Otp2PlanRequestBuilder {
     private const val OPTIMIZE_TRANSFERS_COST_SECONDS = 1800
 
     /**
-     * The neutral point of both reluctance scales — OTP2's own documented default for
+     * The neutral point of both reluctance scales: **2.0**, OTP2's own documented default for
      * `walk.reluctance` *and* `bicycle.reluctance` ("A multiplier for how bad walking/cycling is,
      * compared to being in transit for equal lengths of time" — RouteRequest docs, v2.9.0, the
-     * version this directory's schema is pinned to).
+     * version this directory's schema is pinned to). It is the anchor the other four stops are
+     * derived from, and the value [WalkPreference.MEDIUM]/[BikePreference.MEDIUM] send.
      *
-     * Never actually sent: [WalkPreference.MEDIUM]/[BikePreference.MEDIUM] omit the field, so a
-     * region that tuned its own value in `router-config.json` keeps it, and an all-default request
-     * stays byte-identical to what this app sent before these settings existed. It is the anchor the
-     * other four stops are derived from.
+     * **Sent explicitly rather than omitted**, which is a deliberate trade. Omitting it would let a
+     * region that tuned its own reluctance in `router-config.json` keep that tuning — but it would
+     * also make the middle of a five-point slider mean "whatever this region configured", so the
+     * rider-visible ordering could invert: against a region at 6.0, "Low" (4.0) would produce *more*
+     * walking than "Medium". A slider whose labels can run backwards is worse than one that
+     * overrides a server default, so every stop states its multiplier and the scale is monotonic on
+     * every region.
+     *
+     * The cost is real and worth naming: on an OTP2 region this app no longer inherits a
+     * region-configured walk/bike reluctance, even for a rider who never opened the dialog.
+     * [CyclingPreference.DEFAULT] is *not* a midpoint — there is no ordering for it to invert — so it
+     * still omits `bicycle.optimization` and leaves that piece of the region's tuning alone.
      */
     private const val RELUCTANCE_MEDIUM = 2.0
 
@@ -116,9 +125,10 @@ object Otp2PlanRequestBuilder {
      * the point where the setting stops meaning "less of this mode" and starts producing nonsense:
      * measured against the live server, a direct bike trip at `bicycle.reluctance` 50 comes back at
      * **4.7 km/h** — OTP routes the rider to *push the bike on foot* the whole way, because at a 50x
-     * penalty walking it is cheaper than riding it. At 2 and 10 the same trip is a normal 14-15 km/h
-     * ride. A "minimum cycling" setting that silently converts the trip to a walk is worse than one
-     * that merely discourages it.
+     * penalty walking it is cheaper than riding it. The same trip is a normal 14-15 km/h ride at a
+     * reluctance of 2 and still at 10, so the nonsense is specific to the far end of that old scale.
+     * A "minimum cycling" setting that silently converts the trip to a walk is worse than one that
+     * merely discourages it.
      */
     private const val RELUCTANCE_STEP = 2.0
 
@@ -139,9 +149,9 @@ object Otp2PlanRequestBuilder {
      *
      * An earlier version of this scale ran down to 0.1 and so put its top two stops inside that
      * region: asking for *more* cycling made bike-and-transit itineraries vanish entirely, which is
-     * the exact opposite of the label's promise. The app already has a legible way to say "no
-     * transit" — [org.onebusaway.android.ui.tripplan.VehicleMode.NONE] — and two controls that both
-     * mean that, one of them by accident, is worse than one that does.
+     * the exact opposite of the label's promise. Nothing in the advanced-settings dialog offers
+     * "street only, no transit" on purpose, so a slider stop that silently becomes one is a trap
+     * rather than a feature.
      *
      * (At exactly 1.0 a short trip can still come back street-only with
      * `WALKING_BETTER_THAN_TRANSIT`. That is a correct answer to "walking is as good as transit to
@@ -159,8 +169,9 @@ object Otp2PlanRequestBuilder {
     private const val RELUCTANCE_HIGH = 1.4
 
     /**
-     * The four non-neutral stops: 50 / 10 / (unset) / 1.4 / 1.0. Both scales share one table — the
-     * rider-facing meaning is the same either way, and OTP documents the same 2.0 default for both.
+     * The two stops above the neutral point, completing the scale: **8 / 4 / 2 / 1.4 / 1.0**. Both
+     * scales share one table — the rider-facing meaning is the same either way, and OTP documents the
+     * same 2.0 default for both.
      *
      * Note the inversion: *less* of the mode is a *higher* multiplier. It lives here, at the wire
      * boundary, so the preference enums can stay in plain rider terms.
@@ -169,20 +180,20 @@ object Otp2PlanRequestBuilder {
     private const val RELUCTANCE_LOW = RELUCTANCE_MEDIUM * RELUCTANCE_STEP
     private const val RELUCTANCE_MAXIMUM = RELUCTANCE_FLOOR
 
-    /** The reluctance for [preference], or null at the neutral stop (see [RELUCTANCE_MEDIUM]). */
-    private fun reluctanceFor(preference: WalkPreference): Double? = when (preference) {
+    /** The reluctance for [preference]; every stop states one (see [RELUCTANCE_MEDIUM]). */
+    private fun reluctanceFor(preference: WalkPreference): Double = when (preference) {
         WalkPreference.MINIMUM -> RELUCTANCE_MINIMUM
         WalkPreference.LOW -> RELUCTANCE_LOW
-        WalkPreference.MEDIUM -> null
+        WalkPreference.MEDIUM -> RELUCTANCE_MEDIUM
         WalkPreference.HIGH -> RELUCTANCE_HIGH
         WalkPreference.MAXIMUM -> RELUCTANCE_MAXIMUM
     }
 
-    /** The reluctance for [preference], or null at the neutral stop (see [RELUCTANCE_MEDIUM]). */
-    private fun reluctanceFor(preference: BikePreference): Double? = when (preference) {
+    /** The reluctance for [preference]; every stop states one (see [RELUCTANCE_MEDIUM]). */
+    private fun reluctanceFor(preference: BikePreference): Double = when (preference) {
         BikePreference.MINIMUM -> RELUCTANCE_MINIMUM
         BikePreference.LOW -> RELUCTANCE_LOW
-        BikePreference.MEDIUM -> null
+        BikePreference.MEDIUM -> RELUCTANCE_MEDIUM
         BikePreference.HIGH -> RELUCTANCE_HIGH
         BikePreference.MAXIMUM -> RELUCTANCE_MAXIMUM
     }
@@ -241,9 +252,9 @@ object Otp2PlanRequestBuilder {
     internal fun buildPreferences(
         wheelchairAccessible: Boolean,
         optimizeTransfers: Boolean,
-        walkPreference: WalkPreference = WalkPreference.MEDIUM,
-        cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
-        bikePreference: BikePreference = BikePreference.MEDIUM
+        walkPreference: WalkPreference,
+        cyclingPreference: CyclingPreference,
+        bikePreference: BikePreference
     ): PlanPreferencesInput = PlanPreferencesInput(
         accessibility = Optional.present(
             AccessibilityPreferencesInput(
@@ -267,11 +278,13 @@ object Otp2PlanRequestBuilder {
     )
 
     /**
-     * `preferences.street` — walk reluctance, bike reluctance and cycling optimization, each omitted
-     * when the rider left it on its neutral stop ([WalkPreference.MEDIUM]/[BikePreference.MEDIUM]/
-     * [CyclingPreference.DEFAULT]) so the region's own router-config values survive. When *all three*
-     * are neutral the whole `street` block is absent rather than sent empty, which is also exactly
-     * what this app did before these settings existed.
+     * `preferences.street` — walk reluctance, bike reluctance and cycling optimization.
+     *
+     * Both reluctances are always present, including at the neutral stop, so the five-point scales
+     * keep their rider-visible ordering on every region; see [RELUCTANCE_MEDIUM] for that trade-off
+     * and what it costs. `bicycle.optimization` is the exception: [CyclingPreference.DEFAULT] is an
+     * "unset" option rather than the midpoint of a scale, so it is omitted and the region's own
+     * `bicycle.optimization` tuning survives.
      *
      * The cycling half is sent regardless of the selected trip mode: it only bears on legs
      * OTP actually plans by bike, so it is inert on a walk-and-transit plan, and gating it on the
@@ -280,42 +293,30 @@ object Otp2PlanRequestBuilder {
     internal fun buildStreetPreferences(
         walkPreference: WalkPreference,
         cyclingPreference: CyclingPreference,
-        bikePreference: BikePreference = BikePreference.MEDIUM
+        bikePreference: BikePreference
     ): Optional<PlanStreetPreferencesInput?> {
-        val walkReluctance = reluctanceFor(walkPreference)
-        val bikeReluctance = reluctanceFor(bikePreference)
         val optimization = when (cyclingPreference) {
             CyclingPreference.DEFAULT -> null
             CyclingPreference.FASTEST -> CyclingOptimizationType.SHORTEST_DURATION
             CyclingPreference.SAFEST -> CyclingOptimizationType.SAFEST_STREETS
             CyclingPreference.FLATTEST -> CyclingOptimizationType.FLAT_STREETS
         }
-        if (walkReluctance == null && bikeReluctance == null && optimization == null) {
-            return Optional.Absent
-        }
-        // The two bicycle knobs share one input object, so build it once from whichever are set —
-        // choosing an optimization must not pin a reluctance the rider never asked for, or vice versa.
-        val bicycle = if (bikeReluctance == null && optimization == null) {
-            Optional.Absent
-        } else {
-            Optional.present(
-                BicyclePreferencesInput(
-                    reluctance = bikeReluctance?.let { Optional.present(it) } ?: Optional.Absent,
-                    // CyclingOptimizationInput is a @oneOf input — exactly one of `type`/`triangle`
-                    // may be present, and Apollo's generated `init` asserts it. Only `type` is ever
-                    // set here.
-                    optimization = optimization?.let {
-                        Optional.present(CyclingOptimizationInput(type = Optional.present(it)))
-                    } ?: Optional.Absent
-                )
-            )
-        }
         return Optional.present(
             PlanStreetPreferencesInput(
-                walk = walkReluctance?.let {
-                    Optional.present(WalkPreferencesInput(reluctance = Optional.present(it)))
-                } ?: Optional.Absent,
-                bicycle = bicycle
+                walk = Optional.present(
+                    WalkPreferencesInput(reluctance = Optional.present(reluctanceFor(walkPreference)))
+                ),
+                bicycle = Optional.present(
+                    BicyclePreferencesInput(
+                        reluctance = Optional.present(reluctanceFor(bikePreference)),
+                        // CyclingOptimizationInput is a @oneOf input — exactly one of `type`/`triangle`
+                        // may be present, and Apollo's generated `init` asserts it. Only `type` is ever
+                        // set here.
+                        optimization = optimization?.let {
+                            Optional.present(CyclingOptimizationInput(type = Optional.present(it)))
+                        } ?: Optional.Absent
+                    )
+                )
             )
         )
     }

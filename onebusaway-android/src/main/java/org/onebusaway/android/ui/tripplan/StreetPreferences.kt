@@ -36,7 +36,7 @@ enum class WalkPreference {
     MINIMUM,
     LOW,
 
-    /** The neutral point — sends nothing, so the region's own configured reluctance applies. */
+    /** The neutral point — OTP's own documented default reluctance, stated explicitly. */
     MEDIUM,
     HIGH,
     MAXIMUM
@@ -59,7 +59,7 @@ enum class BikePreference {
     MINIMUM,
     LOW,
 
-    /** The neutral point — sends nothing, so the region's own configured reluctance applies. */
+    /** The neutral point — OTP's own documented default reluctance, stated explicitly. */
     MEDIUM,
     HIGH,
     MAXIMUM
@@ -97,9 +97,9 @@ enum class CyclingPreference {
 /**
  * The [T] whose name is [name], or [default] when [name] is null or unrecognized.
  *
- * Both preferences are persisted (and carried through Bundles) by enum *name*, so reordering an
- * enum can't reinterpret a stored value the way an ordinal would. An unrecognized name means the
- * value was written by a build that knows an option this one doesn't — falling back to the
- * "send nothing, let the server decide" default is the only reading that can't misroute.
+ * Every one of these preferences is persisted (and carried through Bundles) by enum *name*, so
+ * reordering an enum can't reinterpret a stored value the way an ordinal would. An unrecognized name
+ * means the value was written by a build that knows an option this one doesn't — falling back to the
+ * neutral/unset default is the only reading that can't misroute.
  */
 internal inline fun <reified T : Enum<T>> enumValueOrDefault(name: String?, default: T): T = enumValues<T>().firstOrNull { it.name == name } ?: default

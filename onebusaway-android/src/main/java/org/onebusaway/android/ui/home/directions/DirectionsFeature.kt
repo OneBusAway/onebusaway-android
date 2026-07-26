@@ -87,6 +87,7 @@ import com.google.android.material.timepicker.TimeFormat
 import java.util.Calendar
 import java.util.TimeZone
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
@@ -629,10 +630,13 @@ private fun DirectionsAdvancedSettingsDialog(
     }
     var minimizeTransfers by remember { mutableStateOf(current.optimizeTransfers) }
     var wheelchair by remember { mutableStateOf(current.wheelchair) }
+    // Rounded, not truncated: the field's value is converted back to metres on confirm, so
+    // truncating here would shave a little off the stored distance every time the dialog is opened
+    // and confirmed (1600 m -> 5249 ft -> 1599.8 m -> 5248 ft -> …).
     var maxWalk by remember {
         mutableStateOf(
             current.maxWalkMeters?.let {
-                (if (imperial) ConversionUtils.metersToFeet(it) else it).toLong().toString()
+                (if (imperial) ConversionUtils.metersToFeet(it) else it).roundToLong().toString()
             }.orEmpty()
         )
     }
@@ -640,11 +644,10 @@ private fun DirectionsAdvancedSettingsDialog(
     var cyclingPreference by remember { mutableStateOf(current.cyclingPreference) }
     var bikePreference by remember { mutableStateOf(current.bikePreference) }
 
-    // One shared five-stop label set, ordered least -> most, matching the enums' declaration order
-    // so the slider index maps straight onto them.
-    // Generated from the enums rather than written out, so the slider's index->label mapping can't
-    // drift from the declaration order it depends on. The `when`s below are exhaustive, so adding a
-    // stop to either enum is a compile error here rather than a silently mislabelled slider.
+    // One shared five-stop label set, ordered least -> most. Generated from the enums rather than
+    // written out, so the slider's index->label mapping can't drift from the declaration order it
+    // depends on, and the `when`s below are exhaustive, so adding a stop to either enum is a compile
+    // error here rather than a silently mislabelled slider.
     val walkStopLabels = WalkPreference.entries.map { it.label() }
     val bikeStopLabels = BikePreference.entries.map { it.label() }
     val cyclingOptions = listOf(
@@ -738,8 +741,15 @@ private fun DirectionsAdvancedSettingsDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                val maxWalkMeters: Double? = maxWalk.takeIf { it.isNotEmpty() }?.toDouble()?.let {
-                    if (imperial) ConversionUtils.feetToMeters(it) else it
+                // On an OTP2 region the metres field was never shown, so there is no edited value to
+                // read: carry the stored one through untouched rather than round-tripping it through
+                // an unshown field, which would erode a setting the rider can't see.
+                val maxWalkMeters: Double? = if (usesOtp2) {
+                    current.maxWalkMeters
+                } else {
+                    maxWalk.takeIf { it.isNotEmpty() }?.toDouble()?.let {
+                        if (imperial) ConversionUtils.feetToMeters(it) else it
+                    }
                 }
                 viewModel.applyAdvancedSettings(
                     AdvancedSettings(

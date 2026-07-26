@@ -222,22 +222,20 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         // OTP expects date/time in this format
         val zoned = d.atZone(ZoneId.systemDefault())
 
-        val parameters = mutableMapOf(
-            "fromPlace" to fromParam,
-            "toPlace" to toParam,
-            "optimize" to getOptimizeType(),
-            "wheelchair" to getWheelchairAccessible().toString(),
-            "arriveBy" to arriveBy.toString(),
-            "date" to DATE_FORMATTER.format(zoned),
-            "time" to TIME_FORMATTER.format(zoned),
-            // Our default. This could be configurable.
-            "showIntermediateStops" to true.toString()
+        return TripPlanRequest(
+            otp1PlanParameters(
+                fromPlace = fromParam,
+                toPlace = toParam,
+                optimize = getOptimizeType(),
+                wheelchair = getWheelchairAccessible(),
+                arriveBy = arriveBy,
+                date = DATE_FORMATTER.format(zoned),
+                time = TIME_FORMATTER.format(zoned),
+                maxWalkDistanceMeters = getMaxWalkDistance(),
+                // Request mode set does not work properly
+                modeString = getModeString()
+            )
         )
-        getMaxWalkDistance()?.let { parameters["maxWalkDistance"] = it.toString() }
-        // Request mode set does not work properly
-        mBundle.getString(MODE_SET)?.let { parameters["mode"] = it }
-
-        return TripPlanRequest(parameters)
     }
 
     /** The OTP server this request targets; see [OtpTarget.resolve]. */
@@ -415,4 +413,45 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             return TripRequestBuilder(context, target)
         }
     }
+}
+
+/**
+ * The OTP 1.x REST query parameters, assembled from already-parsed values — the whole of what an OTP1
+ * plan request carries. Split out of [TripRequestBuilder.buildRequest] (which stays the thin
+ * `Bundle`-reading half) so the wire contract is a pure function a JVM unit test can pin, the way
+ * [Otp2PlanRequestBuilder]'s `build*` helpers already are.
+ *
+ * Worth pinning because the two protocols share one builder while accepting disjoint settings: OTP1
+ * takes [maxWalkDistanceMeters], which OTP2 removed from its routing API, and OTP2 takes the street
+ * preferences ([WalkPreference]/[BikePreference]/[CyclingPreference]), which have no OTP1 equivalent
+ * that doesn't collide with [optimize]. Neither protocol may leak the other's settings into a request
+ * the server will reject or silently ignore.
+ *
+ * @param optimize OTP1's single-valued `optimize` — `TRANSFERS` or `QUICK`; the reason
+ * [CyclingPreference] has no OTP1 form, since `SAFE`/`FLAT` here would displace it.
+ * @param maxWalkDistanceMeters omitted when null, i.e. when the rider set no cap.
+ * @param modeString the built mode-set token list, omitted when unset.
+ */
+internal fun otp1PlanParameters(
+    fromPlace: String,
+    toPlace: String,
+    optimize: String,
+    wheelchair: Boolean,
+    arriveBy: Boolean,
+    date: String,
+    time: String,
+    maxWalkDistanceMeters: Double?,
+    modeString: String?
+): Map<String, String> = buildMap {
+    put("fromPlace", fromPlace)
+    put("toPlace", toPlace)
+    put("optimize", optimize)
+    put("wheelchair", wheelchair.toString())
+    put("arriveBy", arriveBy.toString())
+    put("date", date)
+    put("time", time)
+    // Our default. This could be configurable.
+    put("showIntermediateStops", true.toString())
+    maxWalkDistanceMeters?.let { put("maxWalkDistance", it.toString()) }
+    modeString?.let { put("mode", it) }
 }

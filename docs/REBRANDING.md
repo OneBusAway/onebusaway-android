@@ -294,6 +294,16 @@ Users can change the sorting style using the "Sort by" button regardless of the 
 * `false` - The app works across various regions defined in the Regions API (recommended for most brands)
 * `true` - The app is fixed to the region information provided in the flavor configuration
 
+**When `USE_FIXED_REGION` is `true`, `FIXED_REGION_NAME` is required** - it is the one
+`FIXED_REGION_*` field the app cannot start without, and leaving it `null` (the value every
+multi-region flavor uses) crashes on the first launch. Every other `FIXED_REGION_*` field is
+optional in the sense that it will not crash: `FIXED_REGION_OBA_BASE_URL` in particular is
+*silently* accepted as `null`, which builds and installs fine and then simply cannot reach a
+server — so set it too, and set the bounds, or the fixed region will not work.
+
+When `USE_FIXED_REGION` is `false`, the `FIXED_REGION_*` fields are unread; leave them `null` as
+`agencyX.gradle` does.
+
 ### Geocoding Provider
 
 `USE_PELIAS_GEOCODING` - Controls which service is used for searching origins and destinations in trip planning:

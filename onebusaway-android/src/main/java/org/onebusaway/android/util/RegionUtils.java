@@ -22,10 +22,12 @@ import android.location.Location;
 import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.onebusaway.android.BuildConfig;
 import org.onebusaway.android.R;
 import org.onebusaway.android.api.bridge.RegionsClient;
@@ -333,13 +335,54 @@ public class RegionUtils {
   }
 
   /**
+   * The region's Open311 servers, or an <em>empty</em> array when the flavor configures no Open311
+   * base URL.
+   *
+   * <p>Empty rather than null on purpose: {@link Region#getOpen311Servers()} is a non-null Kotlin
+   * property (defaulting to {@code emptyArray()}), so handing it null crashes the constructor. A
+   * flavor omitting {@code FIXED_REGION_OPEN311_BASE_URL} is an ordinary configuration — "this
+   * agency has no Open311 endpoint" — not an error, so it must produce a region with no Open311
+   * servers rather than no region at all.
+   *
+   * <p>Blank counts as unconfigured alongside null. A {@code buildConfigField} is written by hand
+   * in a Groovy flavor file, where "no endpoint" is spelled {@code "null"} by convention but {@code
+   * "\"\""} is the equally natural typo, and the two must not mean different things — an empty base
+   * URL would otherwise register a live-but-broken endpoint with {@code Open311Manager}. This is
+   * normalizing two spellings of "unset" at the config boundary, not inferring intent from the
+   * value: the same rule is already applied to the sibling field one layer down (Open311Subsystem's
+   * {@code jurisdictionId?.takeIf { it.isNotEmpty() }}) and to the OTP2 endpoint's configured/not
+   * test ({@code Region.usesOtp2}).
+   */
+  @VisibleForTesting
+  static @NonNull Region.Open311Server[] open311ServersFrom(
+      @Nullable String jurisdictionId, @Nullable String apiKey, @Nullable String baseUrl) {
+    if (baseUrl == null || baseUrl.trim().isEmpty()) {
+      return new Region.Open311Server[0];
+    }
+    return new Region.Open311Server[] {new Region.Open311Server(jurisdictionId, apiKey, baseUrl)};
+  }
+
+  /**
    * Retrieves hard-coded region information from the build flavor defined in build.gradle. If a
    * fixed region is defined in a build flavor, it does not allow region roaming.
    *
+   * <p>Only reached when {@code USE_FIXED_REGION} is true, so every {@code FIXED_REGION_*} field
+   * the non-null half of {@link Region} depends on must actually be configured. The one that isn't
+   * nullable in {@code Region} — and is literally {@code null} in the flavors that don't use a
+   * fixed region — is the name, so it is checked by hand: R8 rewrites Kotlin's parameter null-check
+   * into {@code Object.getClass()}, which in a release build reports only "Attempt to invoke
+   * virtual method 'java.lang.Class java.lang.Object.getClass()' on a null object reference" and
+   * names no field. A rebrander who forgets a {@code buildConfigField} should be told which one.
+   *
    * @return hard-coded region information from the build flavor defined in build.gradle
+   * @throws NullPointerException if the flavor sets USE_FIXED_REGION without a region name
    */
   public static @NonNull Region getRegionFromBuildFlavor() {
     final int regionId = Integer.MAX_VALUE; // This doesn't get used, but needs to be positive
+    final String name =
+        Objects.requireNonNull(
+            BuildConfig.FIXED_REGION_NAME,
+            "FIXED_REGION_NAME must be set in the build flavor when USE_FIXED_REGION is true");
     Region.Bounds[] boundsArray = new Region.Bounds[1];
     Region.Bounds bounds =
         new Region.Bounds(
@@ -347,24 +390,16 @@ public class RegionUtils {
             BuildConfig.FIXED_REGION_BOUNDS_LAT_SPAN, BuildConfig.FIXED_REGION_BOUNDS_LON_SPAN);
     boundsArray[0] = bounds;
 
-    Region.Open311Server[] open311Array = new Region.Open311Server[1];
-    Region.Open311Server open311Server;
-
-    if (BuildConfig.FIXED_REGION_OPEN311_BASE_URL != null) {
-      open311Server =
-          new Region.Open311Server(
-              BuildConfig.FIXED_REGION_OPEN311_JURISDICTION_ID,
-              BuildConfig.FIXED_REGION_OPEN311_API_KEY,
-              BuildConfig.FIXED_REGION_OPEN311_BASE_URL);
-      open311Array[0] = open311Server;
-    } else {
-      open311Array = null;
-    }
+    Region.Open311Server[] open311Array =
+        open311ServersFrom(
+            BuildConfig.FIXED_REGION_OPEN311_JURISDICTION_ID,
+            BuildConfig.FIXED_REGION_OPEN311_API_KEY,
+            BuildConfig.FIXED_REGION_OPEN311_BASE_URL);
 
     Region region =
         new Region(
             regionId,
-            BuildConfig.FIXED_REGION_NAME,
+            name,
             true,
             BuildConfig.FIXED_REGION_OBA_BASE_URL,
             BuildConfig.FIXED_REGION_SIRI_BASE_URL,

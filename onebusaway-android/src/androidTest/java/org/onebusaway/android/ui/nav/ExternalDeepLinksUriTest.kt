@@ -36,8 +36,11 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class ExternalDeepLinksUriTest {
 
+    // Method names are camelCase, not the backtick-with-spaces style the JVM unit tests use: these get
+    // dexed, and D8 rejects spaces in a SimpleName below DEX version 040.
+
     @Test
-    fun `a custom-scheme stop URI parses`() {
+    fun customSchemeStopUri_parses() {
         assertEquals(
             ExternalDeepLinks.Target.Stop("1_75403"),
             ExternalDeepLinks.parse("onebusaway://view-stop?stopID=1_75403&regionID=1".toUri())
@@ -45,7 +48,7 @@ class ExternalDeepLinksUriTest {
     }
 
     @Test
-    fun `a percent-encoded stop id is decoded`() {
+    fun percentEncodedStopId_isDecoded() {
         assertEquals(
             ExternalDeepLinks.Target.Stop("1_7 5403"),
             ExternalDeepLinks.parse("onebusaway://view-stop?stopID=1_7%205403".toUri())
@@ -53,7 +56,7 @@ class ExternalDeepLinksUriTest {
     }
 
     @Test
-    fun `a web trip URI parses`() {
+    fun webTripUri_parses() {
         assertEquals(
             ExternalDeepLinks.Target.Trip(tripId = "1_18196913", stopId = "1_75403"),
             ExternalDeepLinks.parse(
@@ -66,7 +69,7 @@ class ExternalDeepLinksUriTest {
     }
 
     @Test
-    fun `an opaque URI is rejected rather than throwing`() {
+    fun opaqueUri_isRejected_ratherThanThrowing() {
         // No `//`, so this is opaque: Uri.getQueryParameterNames() throws UnsupportedOperationException
         // on it. toLink() guards that with isHierarchical; without the guard this test crashes.
         assertNull(ExternalDeepLinks.parse("onebusaway:view-stop?stopID=1_75403".toUri()))
@@ -74,7 +77,7 @@ class ExternalDeepLinksUriTest {
     }
 
     @Test
-    fun `scheme and host are matched case-insensitively`() {
+    fun schemeAndHost_matchCaseInsensitively() {
         // IntentFilter matches these case-insensitively, so a link that reaches us may carry any case;
         // toLink() normalizes before the parser's equality comparisons.
         assertEquals(
@@ -90,14 +93,14 @@ class ExternalDeepLinksUriTest {
     }
 
     @Test
-    fun `the app's internal content URIs are not external deep links`() {
+    fun internalContentUri_isNotAnExternalDeepLink() {
         val internal = "content://com.joulespersecond.oba/stops/1_75403".toUri()
         assertNull(ExternalDeepLinks.parse(internal))
         assertFalse(ExternalDeepLinks.isUnhandledWebLink(internal))
     }
 
     @Test
-    fun `a claimed but unroutable web URI is reported as an unhandled web link`() {
+    fun claimedButUnroutableWebUri_isUnhandledWebLink() {
         // The intent-filter can't require trip_id, so this URL launches the app with nowhere to go;
         // HomeActivity hands it back to the browser on the strength of this predicate.
         val trimmed = "https://onebusaway.co/regions/1/stops/1_75403/trips".toUri()

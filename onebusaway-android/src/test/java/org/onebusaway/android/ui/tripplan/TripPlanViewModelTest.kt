@@ -304,6 +304,30 @@ class TripPlanViewModelTest {
     }
 
     @Test
+    fun `applyAdvancedSettings carries the street preferences into the plan request`() = runTest {
+        val vm = viewModel()
+        setBothEndpoints(vm)
+        vm.applyAdvancedSettings(
+            AdvancedSettings(
+                modeId = TripModes.TRANSIT_AND_BIKE,
+                maxWalkMeters = null,
+                optimizeTransfers = false,
+                wheelchair = false,
+                walkPreference = WalkPreference.MINIMUM,
+                cyclingPreference = CyclingPreference.FLATTEST,
+                bikePreference = BikePreference.MAXIMUM
+            )
+        )
+        advanceUntilIdle()
+        // They must reach TripPlanParams, not just the form: the params are what builds the request
+        // and what the trip-plan-change monitor re-plans with.
+        val params = (vm.planState.value as PlanResult.Success).params
+        assertEquals(WalkPreference.MINIMUM, params?.walkPreference)
+        assertEquals(CyclingPreference.FLATTEST, params?.cyclingPreference)
+        assertEquals(BikePreference.MAXIMUM, params?.bikePreference)
+    }
+
+    @Test
     fun `a classified plan failure surfaces its TripPlanError`() = runTest {
         val error = TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_no_transit_times)
         val vm = viewModel(plan = FakeTripPlanRepository(Result.failure(TripPlanException(error))))

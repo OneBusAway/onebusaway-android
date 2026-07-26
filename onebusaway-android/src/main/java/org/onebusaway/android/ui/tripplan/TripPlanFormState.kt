@@ -78,12 +78,23 @@ sealed interface TripEndpoint {
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
 }
 
-/** The advanced trip options, persisted in preferences by the host. */
+/**
+ * The advanced trip options, persisted in preferences by the host.
+ *
+ * [maxWalkMeters] and [walkPreference] express the same wish through the two protocols' different
+ * vocabularies — a hard cap OTP1 accepts, a reluctance OTP2 accepts — and neither server sees the
+ * other's field. Both are carried (and persisted) at all times so switching regions doesn't discard
+ * whichever one the previous region used; the advanced-settings dialog shows only the one the
+ * current region's server can act on.
+ */
 data class AdvancedSettings(
     val modeId: Int,
     val maxWalkMeters: Double?,
     val optimizeTransfers: Boolean,
-    val wheelchair: Boolean
+    val wheelchair: Boolean,
+    val walkPreference: WalkPreference = WalkPreference.MEDIUM,
+    val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
+    val bikePreference: BikePreference = BikePreference.MEDIUM
 )
 
 /** A fully-specified plan request handed to [TripPlanRepository]. */
@@ -95,7 +106,10 @@ data class TripPlanParams(
     val modeId: Int,
     val wheelchair: Boolean,
     val optimizeTransfers: Boolean,
-    val maxWalkMeters: Double?
+    val maxWalkMeters: Double?,
+    val walkPreference: WalkPreference = WalkPreference.MEDIUM,
+    val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
+    val bikePreference: BikePreference = BikePreference.MEDIUM
 )
 
 /** The trip-plan form (origin/destination, when, and the advanced options). */
@@ -111,7 +125,10 @@ data class TripPlanFormState(
     val modeId: Int = 0,
     val wheelchair: Boolean = false,
     val optimizeTransfers: Boolean = false,
-    val maxWalkMeters: Double? = null
+    val maxWalkMeters: Double? = null,
+    val walkPreference: WalkPreference = WalkPreference.MEDIUM,
+    val cyclingPreference: CyclingPreference = CyclingPreference.DEFAULT,
+    val bikePreference: BikePreference = BikePreference.MEDIUM
 ) {
     /** Mirrors TripRequestBuilder.ready(): both endpoints must resolve to coordinates. */
     val canSubmit: Boolean
@@ -119,7 +136,15 @@ data class TripPlanFormState(
 
     /** The current advanced options, for persistence by the host. */
     val advancedSettings: AdvancedSettings
-        get() = AdvancedSettings(modeId, maxWalkMeters, optimizeTransfers, wheelchair)
+        get() = AdvancedSettings(
+            modeId = modeId,
+            maxWalkMeters = maxWalkMeters,
+            optimizeTransfers = optimizeTransfers,
+            wheelchair = wheelchair,
+            walkPreference = walkPreference,
+            cyclingPreference = cyclingPreference,
+            bikePreference = bikePreference
+        )
 
     /** Builds the plan request; only call when [canSubmit] is true. */
     fun toParams(): TripPlanParams = TripPlanParams(
@@ -130,7 +155,10 @@ data class TripPlanFormState(
         modeId = modeId,
         wheelchair = wheelchair,
         optimizeTransfers = optimizeTransfers,
-        maxWalkMeters = maxWalkMeters
+        maxWalkMeters = maxWalkMeters,
+        walkPreference = walkPreference,
+        cyclingPreference = cyclingPreference,
+        bikePreference = bikePreference
     )
 }
 

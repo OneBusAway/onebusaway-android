@@ -270,7 +270,8 @@ internal fun modeStringRequestsBikeRental(modeString: String?, bikeRentalToken: 
 /**
  * Assembles a [TripRequestBuilder] from these [TripPlanParams]. Shared by the UI plan path
  * ([DefaultTripPlanRepository]) and the trip-plan-change monitor, so the request that produced the
- * results is re-planned identically (same modes / wheelchair / optimize / max-walk).
+ * results is re-planned identically (same modes / wheelchair / optimize / max-walk / street
+ * preferences).
  */
 internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuilder {
     val params = this
@@ -285,6 +286,9 @@ internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuild
         setWheelchairAccessible(params.wheelchair)
         setOptimizeTransfers(params.optimizeTransfers)
         params.maxWalkMeters?.let { setMaxWalkDistance(it) }
+        setWalkPreference(params.walkPreference)
+        setCyclingPreference(params.cyclingPreference)
+        setBikePreference(params.bikePreference)
     }
 }
 

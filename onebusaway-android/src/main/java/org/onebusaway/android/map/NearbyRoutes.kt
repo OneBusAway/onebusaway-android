@@ -18,7 +18,6 @@ package org.onebusaway.android.map
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sqrt
-import org.onebusaway.android.map.layout.DEFAULT_BADGE_SEPARATION_METERS as BADGE_SEPARATION_METERS
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
@@ -33,9 +32,9 @@ import org.onebusaway.android.util.GeoPoint
 
 /**
  * The "routes near here" hoop (#2004): a fixed-radius circle around a point on the base map, selecting
- * the routes that pass through it — which are then drawn lightly in full, well beyond the circle. [center] is where the layer was last surveyed
- * — deliberately *not* the live camera centre, so the ring marks the area actually queried and stays
- * put until the camera drifts far enough to warrant a refresh (see [NearbyRoutesController]).
+ * the routes that pass through it — which are then drawn lightly in full, well beyond the circle.
+ * [center] is where the layer was last surveyed, which is what the drawn routes answer for; the ring a
+ * rider sees is drawn in screen space at the viewport centre and never reads it (see [hoopRadiusDp]).
  */
 data class NearbyRoutesHoop(val center: GeoPoint, val radiusMeters: Double)
 
@@ -57,39 +56,29 @@ internal data class NearbyRoutesPresentation(
  * route. (The ring itself isn't here — it is drawn in screen space over the map, so that a pan slides
  * it with the gesture; see [hoopRadiusDp].)
  *
- * The hoop selects; it doesn't crop. A route qualifies only if its shape actually passes through the
- * circle (a route whose stop is inside but whose line only skirts it is dropped, never badged), and
- * once it qualifies its entire geometry is drawn — so the layer answers "where do the routes running
- * past me actually go", not just "what does the half mile around me look like".
+ * [routes] are the ones that already qualified — the hoop selects, it doesn't crop, and that selection
+ * ([entersHoop]) is made once per route as its shape resolves rather than re-derived here. Everything
+ * passed in is drawn *in full*, so the layer answers "where do the routes running past me actually go",
+ * not just "what does the half mile around me look like".
  *
- * [badgesInHoop] decides where the labels go, and it is a question of on-screen room rather than
- * taste. Zoomed in, the hoop is most of the screen and the badges belong on the in-hoop stretch, next
- * to the user: a whole-route midpoint would strand the label miles away. Zoomed out to a city the ring
- * is barely wider than one badge, so anchoring there would pile all of them into an unreadable stack —
- * there they spread along the routes instead, the way a transit map labels its lines. See
- * [badgesFitInHoop].
+ * Badges are laid out along the routes' **whole** shapes, spread across the map the way a transit map
+ * labels its lines — never anchored inside the ring. The hoop is a selector, not a legend box: piling
+ * every label into it stacks them on one spot, and a label sitting on the line it names is what makes
+ * the line readable where the rider is looking at it.
  *
  * Every direction of a route shares one [colors] entry, per #2004: the hoop answers "what runs through
  * here", a question the direction split doesn't change. Lines are drawn at reduced alpha and a thin
  * stroke so the layer reads as ambient context under the basemap's labels; the badge keeps the palette
  * colour at full opacity, since it is both the legend and the tap target.
  *
- * Pure, so the clipping and the badge/line plan are unit-tested without the controller.
+ * Pure, so the badge/line plan is unit-tested without the controller.
  */
 internal fun assembleNearbyRoutesPresentation(
-    hoop: NearbyRoutesHoop,
     routes: List<NearbyRouteShapes>,
-    colors: Map<String, Int>,
-    badgesInHoop: Boolean = true
+    colors: Map<String, Int>
 ): NearbyRoutesPresentation {
-    val drawn = routes.mapNotNull { route ->
-        route.shapes
-            .flatMap { shape -> clipToHoop(shape, hoop) }
-            .takeIf { it.isNotEmpty() }
-            ?.let { route to it }
-    }
     val polylines = buildList {
-        for ((route, _) in drawn) {
+        for (route in routes) {
             val color = colors[route.routeId] ?: DEFAULT_ROUTE_LINE_COLOR
             for (shape in route.shapes) {
                 add(
@@ -105,24 +94,17 @@ internal fun assembleNearbyRoutesPresentation(
             }
         }
     }
-    // The ring being big enough on screen ([badgesInHoop]) is necessary but not sufficient: the labels
-    // also have to physically fit inside it. Anchoring more of them than the hoop can hold
-    // ([hoopBadgeCapacity]) piles the surplus onto the least-conflicting spot it can find, which is the
-    // stack the in-hoop mode exists to avoid — so past that count they spread along the routes instead.
-    val anchorInHoop = badgesInHoop && drawn.size <= hoopBadgeCapacity(hoop)
     val placements = layoutRouteBadges(
-        drawn.map { (route, inHoop) ->
+        routes.map { route ->
             RouteBadgeLayoutInput(
                 // The hoop badges a whole route, not one of its directions, so the badge carries no
                 // direction: a tap enters route focus on the route's own default direction.
                 RouteDirectionKey(route.routeId, null),
-                // In-hoop next to the user when the ring has room for the labels; along the whole
-                // route when it doesn't — see the note above.
-                (if (anchorInHoop) inHoop else route.shapes).map(::RouteBadgePath)
+                route.shapes.map(::RouteBadgePath)
             )
         }
     ).associateBy { it.route.routeId }
-    val badges = drawn.mapNotNull { (route, _) ->
+    val badges = routes.mapNotNull { route ->
         val placement = placements[route.routeId] ?: return@mapNotNull null
         RouteBadge(
             routeId = route.routeId,
@@ -144,32 +126,6 @@ internal fun assembleNearbyRoutesPresentation(
  * the route survey waits for the camera to settle. Mercator is conformal, so at this scale a circle on
  * the ground really is a circle on screen — only its radius changes, and only with zoom.
  */
-
-/**
- * Whether the ring is wide enough on screen to hold the badges of the routes it selects. Compared
- * against the ring's *drawn* radius rather than a zoom number, so it tracks the real constraint: a
- * badge is roughly [BADGE_WIDTH_DP] wide, and a ring that can't fit a couple of them side by side
- * would stack every label on one spot.
- */
-internal fun badgesFitInHoop(radiusDp: Float): Boolean = radiusDp >= BADGE_WIDTH_DP
-
-/**
- * The most badges that can sit inside [hoop] without stacking: the ring's area over the area each
- * badge claims, which is a disc of the badge layout's own [BADGE_SEPARATION_METERS] minimum
- * separation. So it answers the layout's question in the layout's own terms — "can this many points be
- * placed that far apart in a circle this big?" — rather than guessing a limit.
- *
- * Deliberately a *geographic* bound, not a screen one, so it doesn't move with zoom: the badge mode
- * flipping as the camera scales is exactly the inconsistency the count check is here to remove. It is
- * an upper bound — the layout must also find those spots on the routes' in-hoop stretches, and it
- * staggers only a few steps along each — so it errs toward spreading the labels, which degrades far
- * more gracefully than piling them up.
- */
-internal fun hoopBadgeCapacity(hoop: NearbyRoutesHoop): Int {
-    val badgeRadius = BADGE_SEPARATION_METERS / 2.0
-    return (hoop.radiusMeters / badgeRadius).pow(2).toInt()
-}
-
 internal fun hoopRadiusDp(radiusMeters: Double, zoom: Double, latitude: Double): Float {
     val metersPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
         cos(Math.toRadians(latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE))) /
@@ -178,47 +134,23 @@ internal fun hoopRadiusDp(radiusMeters: Double, zoom: Double, latitude: Double):
 }
 
 /**
- * The portions of [points] that lie inside [hoop], as separate polylines — a route that crosses the
- * circle twice yields two. Entry/exit points are interpolated onto the circle so each run ends exactly
- * on the ring; interior vertices are passed through untouched. Runs shorter than two points are
- * dropped, so an empty result means "this shape never enters the hoop".
+ * Whether any part of [points] lies inside [hoop] — the layer's membership test, and the only question
+ * the hoop's geometry is asked. A route qualifies by its *shape* passing through the circle, not merely
+ * by serving a stop inside it, so a line that only skirts the ring is never drawn or badged.
  *
- * The layer draws whole routes, so this is not what gets rendered: it is the membership test (does the
- * route pass through?) and the badge anchor (where inside the hoop to label it).
+ * The whole route is what gets drawn and labelled, so the intersection itself is of no interest and is
+ * never built: this walks the segments and stops at the first one that reaches the circle.
  */
-internal fun clipToHoop(points: List<GeoPoint>, hoop: NearbyRoutesHoop): List<List<GeoPoint>> {
-    if (points.size < 2) return emptyList()
+internal fun entersHoop(points: List<GeoPoint>, hoop: NearbyRoutesHoop): Boolean {
+    if (points.size < 2) return false
     val projection = LocalMeters(hoop.center)
-    val projected = points.map(projection::toMeters)
-    val runs = mutableListOf<List<GeoPoint>>()
-    var current: MutableList<GeoPoint>? = null
-
-    fun flush() {
-        current?.takeIf { it.size >= 2 }?.let(runs::add)
-        current = null
-    }
-
+    var previous = projection.toMeters(points[0])
     for (index in 0 until points.lastIndex) {
-        val span = insideCircleSpan(projected[index], projected[index + 1], hoop.radiusMeters)
-        if (span == null) {
-            flush()
-            continue
-        }
-        val (entry, exit) = span
-        val start = if (entry <= 0.0) points[index] else interpolate(points[index], points[index + 1], entry)
-        val end = if (exit >= 1.0) points[index + 1] else interpolate(points[index], points[index + 1], exit)
-        val run = current
-        if (run == null || entry > 0.0) {
-            flush()
-            current = mutableListOf(start, end)
-        } else {
-            run.add(end)
-        }
-        // The segment left the circle here, so the run ends at this exit point.
-        if (exit < 1.0) flush()
+        val next = projection.toMeters(points[index + 1])
+        if (insideCircleSpan(previous, next, hoop.radiusMeters) != null) return true
+        previous = next
     }
-    flush()
-    return runs
+    return false
 }
 
 /**
@@ -241,12 +173,6 @@ private fun insideCircleSpan(start: MeterPoint, end: MeterPoint, radiusMeters: D
     val exit = ((-b + root) / (2.0 * a)).coerceAtMost(1.0)
     return if (exit > entry) entry to exit else null
 }
-
-/** Straight-line interpolation in lat/lon — exact enough over the hoop's sub-kilometre segments. */
-private fun interpolate(start: GeoPoint, end: GeoPoint, fraction: Double) = GeoPoint(
-    start.latitude + (end.latitude - start.latitude) * fraction,
-    start.longitude + (end.longitude - start.longitude) * fraction
-)
 
 private data class MeterPoint(val x: Double, val y: Double)
 
@@ -276,12 +202,6 @@ internal const val NEARBY_ROUTES_RADIUS_METERS = 800.0
 
 /** How lightly the route lines are drawn — ambient context beneath the basemap's own labels. */
 private const val NEARBY_ROUTE_LINE_ALPHA = 0.65f
-
-/**
- * A route badge's rough drawn width. Not read by the renderer (each badge is measured from its own
- * text) — it is the yardstick [badgesFitInHoop] uses to ask whether the ring has room for labels.
- */
-private const val BADGE_WIDTH_DP = 56f
 
 /** Mercator is undefined at the poles; clamp like the route-render pipeline does. */
 private const val MAX_MERCATOR_LATITUDE = 85.05112878

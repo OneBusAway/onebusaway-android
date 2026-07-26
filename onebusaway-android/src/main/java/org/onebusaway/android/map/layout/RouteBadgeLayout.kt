@@ -145,10 +145,5 @@ private fun interpolate(start: GeoPoint, end: GeoPoint, fraction: Double): GeoPo
     return GeoPoint(Math.toDegrees(atan2(z, sqrt(x * x + y * y))), Math.toDegrees(atan2(y, x)))
 }
 
-/**
- * How far apart two badges must sit before the layout stops treating them as colliding. Exposed
- * because a caller deciding *where* to anchor its badges has to know the spacing they'll be laid out
- * at — see `hoopBadgeCapacity`.
- */
-internal const val DEFAULT_BADGE_SEPARATION_METERS = 300.0
+private const val DEFAULT_BADGE_SEPARATION_METERS = 300.0
 private const val DEFAULT_MAX_STAGGER_STEPS = 4

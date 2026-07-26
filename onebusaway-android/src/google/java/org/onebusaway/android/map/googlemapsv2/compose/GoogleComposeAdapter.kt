@@ -62,6 +62,7 @@ import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapProjector
 import org.onebusaway.android.map.render.ScreenOffset
+import org.onebusaway.android.map.render.routeBadgeRenderFlow
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.compose.findActivity
@@ -207,7 +208,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
-                    .map { it.withoutRouteGeometry() }
+                    .map { it.withoutIndependentlyRenderedLayers() }
                     .distinctUntilChanged()
                     .collect { activeRenderer.renderStatic(it) }
             }
@@ -222,9 +223,7 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             // resolves, and rebuilding the static layer per arrival blinked the whole map. Their anchors
             // are laid out in geographic space, so unlike the lines this needs no camera input.
             LaunchedEffect(activeRenderer) {
-                renderState.snapshot
-                    .map { it.allRouteBadges }
-                    .distinctUntilChanged()
+                routeBadgeRenderFlow(renderState.snapshot)
                     .collect { activeRenderer.renderRouteBadges(it) }
             }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's

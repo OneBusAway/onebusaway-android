@@ -53,7 +53,7 @@ class MapRenderStateNearbyRoutesTest {
             routeBadges = listOf(badge("40")),
             nearbyRouteBadges = listOf(badge("8")),
             focusedStopId = "stop"
-        ).withoutRouteGeometry()
+        ).withoutIndependentlyRenderedLayers()
 
         assertEquals(emptyList<RoutePolyline>(), stripped.routePolylines)
         assertEquals(emptyList<RoutePolyline>(), stripped.nearbyRoutePolylines)

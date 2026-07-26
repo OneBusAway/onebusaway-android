@@ -136,12 +136,10 @@ class DefaultStopsForRouteRepository internal constructor(
     private val cache = BoundedLruCache<String, EntryWithReferences<StopsForRoute>>(cacheSize)
     private val fetches = SingleFlight<String, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
 
-    // The shapes-only projection ([routeShapes]) and its own flight. Kept apart from `fetches` so the
-    // two paths can't hand each other the wrong retention: joining a flight the heavy path started
-    // would cache an entry this one deliberately drops, and vice versa. Racing the same route down
-    // both paths at once is the rare case anyway — the hoop hides while a stop or route is focused.
+    // The shapes-only projection's cache ([routeShapes]). It shares the one flight above: retention is
+    // applied by each caller *after* the fetch resolves, not inside it, so the two paths can hand each
+    // other the same payload without handing each other the wrong retention.
     private val shapes = BoundedLruCache<String, List<List<GeoPoint>>>(shapeCacheSize)
-    private val shapeFetches = SingleFlight<String, Result<List<List<GeoPoint>>?>>(fetchScope)
 
     override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
 
@@ -159,14 +157,11 @@ class DefaultStopsForRouteRepository internal constructor(
         // A route the route/stop screens already loaded: decode its shape off the entry they cached
         // rather than going back to the wire for a payload we already hold.
         cache.get(routeId)?.let { return decodeShapes(routeId, it) }
-        return shapeFetches.run(routeId) {
-            shapes.get(routeId)?.let { return@run Result.success(it) }
-            val fetched = fetch(routeId).getOrElse { return@run Result.failure(it) }
-                ?: return@run Result.success(null) // no endpoint — nothing to show
-            // Deliberately not `cache.put`: see [StopsForRouteRepository.routeShapes]. Only the shapes
-            // decoded below are retained; the rest of the entry is dropped with this scope.
-            decodeShapes(routeId, fetched)
-        } ?: Result.failure(IllegalStateException("stops-for-route shape fetch failed unexpectedly for $routeId"))
+        // Note the absent `cache.put`: this path retains only the shapes decoded below, and drops the
+        // rest of the entry. See [StopsForRouteRepository.routeShapes].
+        val fetched = fetchEntry(routeId).getOrElse { return Result.failure(it) }
+            ?: return Result.success(null) // no endpoint — nothing to show
+        return decodeShapes(routeId, fetched)
     }
 
     /**
@@ -177,8 +172,8 @@ class DefaultStopsForRouteRepository internal constructor(
     private suspend fun decodeShapes(
         routeId: String,
         entry: EntryWithReferences<StopsForRoute>
-    ): Result<List<List<GeoPoint>>?> = runCatchingCancellable {
-        withContext(Dispatchers.Default) { entry.entry.polylines.map { it.decode() } }
+    ): Result<List<List<GeoPoint>>> = runCatchingCancellable {
+        withContext(Dispatchers.Default) { entry.wholeRouteShapes() }
             .also { shapes.put(routeId, it) }
     }
 
@@ -192,11 +187,18 @@ class DefaultStopsForRouteRepository internal constructor(
      */
     private suspend fun entry(routeId: String): Result<EntryWithReferences<StopsForRoute>?> {
         cache.get(routeId)?.let { return Result.success(it) }
-        return fetches.run(routeId) {
-            cache.get(routeId)?.let { return@run Result.success(it) }
-            fetch(routeId).onSuccess { fetched -> fetched?.let { cache.put(routeId, it) } }
-        } ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
+        return fetchEntry(routeId).onSuccess { fetched -> fetched?.let { cache.put(routeId, it) } }
     }
+
+    /**
+     * One wire fetch per route, shared by every caller in flight — including callers wanting different
+     * projections of it. Retention is deliberately *not* applied here but by each caller afterwards, so
+     * that joining a flight another path started can never impose that path's retention: the shapes
+     * caller keeps only the decoded shapes, [entry] keeps the whole payload, and both are served by the
+     * single fetch.
+     */
+    private suspend fun fetchEntry(routeId: String): Result<EntryWithReferences<StopsForRoute>?> = fetches.run(routeId) { fetch(routeId) }
+        ?: Result.failure(IllegalStateException("stops-for-route fetch failed unexpectedly for $routeId"))
 
     private fun noEndpoint() = IOException("No OBA API endpoint: no current region and no custom API URL set")
 }
@@ -233,7 +235,7 @@ internal fun EntryWithReferences<StopsForRoute>.toRouteMapData(routeId: String):
     // Both the whole-route merged set and each direction's own (cleaner, travel-ordered) shape are
     // decoded; the controller draws the merged set for the whole route and a direction's own shape once
     // one is selected.
-    val wholeRoute = entry.polylines.map { it.decode() }
+    val wholeRoute = wholeRouteShapes()
     // distinct() drops a shape a direction listed under more than one group, so it isn't drawn (and
     // arrow-stamped) twice over itself.
     val byDirection = dirs.polylinesByDirection.mapValues { (_, shapes) -> shapes.distinct().map { it.decode() } }
@@ -248,6 +250,9 @@ internal fun EntryWithReferences<StopsForRoute>.toRouteMapData(routeId: String):
         polylinesByDirection = byDirection
     )
 }
+
+/** The route's whole-route (merged, undirected) shape, decoded — the projection both readers share. */
+internal fun EntryWithReferences<StopsForRoute>.wholeRouteShapes(): List<List<GeoPoint>> = entry.polylines.map { it.decode() }
 
 private fun ShapeEntry.decode(): List<GeoPoint> = PolylineDecoder.decode(points, length)
 

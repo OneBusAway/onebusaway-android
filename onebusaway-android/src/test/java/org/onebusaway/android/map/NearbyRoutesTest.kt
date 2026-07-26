@@ -16,48 +16,51 @@ class NearbyRoutesTest {
     private val center = GeoPoint(47.6, -122.33)
     private val hoop = NearbyRoutesHoop(center, 800.0)
 
-    // ----- Clipping to the hoop -----
+    // ----- Selecting the routes that pass through the hoop -----
 
     @Test
-    fun `a line crossing the hoop is clipped to the portion inside it`() {
-        val line = listOf(offsetMeters(-2000.0, 0.0), offsetMeters(2000.0, 0.0))
-
-        val clipped = clipToHoop(line, hoop).single()
-
-        assertEquals(2, clipped.size)
-        clipped.forEach { assertEquals(800.0, haversineMeters(center, it), 1.0) }
+    fun `a line crossing the hoop enters it`() {
+        assertTrue(entersHoop(listOf(offsetMeters(-2000.0, 0.0), offsetMeters(2000.0, 0.0)), hoop))
     }
 
     @Test
-    fun `a line that enters twice yields one polyline per pass`() {
-        // Out and back: in from the west, out to the north, back in from the north, out to the east.
+    fun `a line that only reaches the hoop on a later segment still enters it`() {
+        // The first segments run well clear of the ring; only the last one crosses. A membership test
+        // that gave up before walking the whole shape would miss a route that passes the rider late.
         val line = listOf(
-            offsetMeters(-2000.0, 0.0),
-            offsetMeters(0.0, 0.0),
+            offsetMeters(-4000.0, 3000.0),
+            offsetMeters(-2000.0, 3000.0),
             offsetMeters(0.0, 3000.0),
-            offsetMeters(400.0, 3000.0),
-            offsetMeters(400.0, 0.0),
-            offsetMeters(400.0, -3000.0)
+            offsetMeters(0.0, 0.0)
         )
 
-        val clipped = clipToHoop(line, hoop)
-
-        assertEquals(2, clipped.size)
-        clipped.flatten().forEach { assertTrue(haversineMeters(center, it) <= 801.0) }
+        assertTrue(entersHoop(line, hoop))
     }
 
     @Test
-    fun `a line entirely outside the hoop is dropped`() {
-        val line = listOf(offsetMeters(2000.0, 2000.0), offsetMeters(3000.0, 3000.0))
-
-        assertEquals(emptyList<List<GeoPoint>>(), clipToHoop(line, hoop))
+    fun `a line entirely outside the hoop does not enter it`() {
+        assertFalse(entersHoop(listOf(offsetMeters(2000.0, 2000.0), offsetMeters(3000.0, 3000.0)), hoop))
     }
 
     @Test
-    fun `a line entirely inside the hoop passes through untouched`() {
+    fun `a line that passes near the hoop without reaching it does not enter it`() {
+        // Parallel to the ring and just outside it: the nearest approach matters, not the endpoints.
+        val line = listOf(offsetMeters(-3000.0, 900.0), offsetMeters(3000.0, 900.0))
+
+        assertFalse(entersHoop(line, hoop))
+    }
+
+    @Test
+    fun `a line entirely inside the hoop enters it`() {
         val line = listOf(offsetMeters(-100.0, 0.0), offsetMeters(0.0, 100.0), offsetMeters(100.0, 0.0))
 
-        assertEquals(listOf(line), clipToHoop(line, hoop))
+        assertTrue(entersHoop(line, hoop))
+    }
+
+    @Test
+    fun `a degenerate shape enters nothing`() {
+        assertFalse(entersHoop(listOf(center), hoop))
+        assertFalse(entersHoop(emptyList(), hoop))
     }
 
     // ----- The ring's on-screen size (it is drawn in screen space, not as map geometry) -----
@@ -81,7 +84,6 @@ class NearbyRoutesTest {
     @Test
     fun `every direction of a route shares one colour and one badge`() {
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
             listOf(
                 NearbyRouteShapes(
                     "44",
@@ -107,7 +109,7 @@ class NearbyRoutesTest {
 
     @Test
     fun `a survey with no routes draws nothing`() {
-        val presentation = assembleNearbyRoutesPresentation(hoop, emptyList(), emptyMap())
+        val presentation = assembleNearbyRoutesPresentation(emptyList(), emptyMap())
 
         assertEquals(emptyList<Any>(), presentation.polylines)
         assertEquals(emptyList<Any>(), presentation.badges)
@@ -119,7 +121,6 @@ class NearbyRoutesTest {
         // not crop it, so the drawn line keeps every point.
         val shape = listOf(offsetMeters(-200.0, 0.0), offsetMeters(4000.0, 0.0))
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
             listOf(NearbyRouteShapes("3", "3", listOf(shape))),
             colors = mapOf("3" to RED)
         )
@@ -130,19 +131,26 @@ class NearbyRoutesTest {
             setOf(RoutePolylineTransform.VIEWPORT_CLIP, RoutePolylineTransform.ZOOM_SIMPLIFY),
             routeLine.transforms
         )
-        // The badge stays on the in-hoop stretch rather than at the whole route's distant midpoint.
-        assertTrue(haversineMeters(center, presentation.badges.single().point) <= hoop.radiusMeters)
+        // And it is labelled along that full shape, at the whole route's midpoint — well past the ring.
+        assertTrue(haversineMeters(center, presentation.badges.single().point) > hoop.radiusMeters)
     }
 
     @Test
-    fun `a route whose shape misses the hoop is neither drawn nor badged`() {
+    fun `a route whose shape only skirts the hoop is not selected`() {
+        // Serving a stop inside the ring is not enough — the shape has to pass through — and this is
+        // what the survey filters on before a route ever reaches the render plan.
+        val through = listOf(offsetMeters(-500.0, 0.0), offsetMeters(500.0, 0.0))
+        val elsewhere = listOf(offsetMeters(3000.0, 0.0), offsetMeters(4000.0, 0.0))
+
+        assertTrue(entersHoop(through, hoop))
+        assertFalse(entersHoop(elsewhere, hoop))
+    }
+
+    @Test
+    fun `everything handed to the render plan is drawn in full`() {
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
-            listOf(
-                NearbyRouteShapes("passing", "5", listOf(listOf(offsetMeters(-500.0, 0.0), offsetMeters(500.0, 0.0)))),
-                NearbyRouteShapes("elsewhere", "6", listOf(listOf(offsetMeters(3000.0, 0.0), offsetMeters(4000.0, 0.0))))
-            ),
-            colors = mapOf("passing" to RED, "elsewhere" to RED)
+            listOf(NearbyRouteShapes("passing", "5", listOf(listOf(offsetMeters(-500.0, 0.0), offsetMeters(500.0, 0.0))))),
+            colors = mapOf("passing" to RED)
         )
 
         assertEquals(listOf("5"), presentation.badges.map { it.routeShortName })
@@ -153,89 +161,44 @@ class NearbyRoutesTest {
     }
 
     @Test
-    fun `badges spread along the routes when more of them run through than the hoop can hold`() {
-        // Every route crosses the hoop, so on the screen-room test alone all of them would be anchored
-        // inside it — but there are more than the ring can hold at the layout's own spacing.
-        val overCapacity = hoopBadgeCapacity(hoop) + 1
-        // 20 km long, so that even the layout's widest collision stagger off the whole-route midpoint
-        // stays far outside the ring — the assertion is about which mode was chosen, and this keeps it
-        // from being confounded by how far a crowded layout wanders looking for a clear spot.
-        val routes = (1..overCapacity).map { index ->
+    fun `badges ride the whole route, never the stretch inside the hoop`() {
+        // Two routes, each clipping the hoop's western edge and running 20 km east.
+        val routes = (1..2).map { index ->
             NearbyRouteShapes(
                 "route-$index",
                 "$index",
-                listOf(listOf(offsetMeters(-700.0, index.toDouble()), offsetMeters(20_000.0, index.toDouble())))
+                listOf(listOf(offsetMeters(-700.0, index * 100.0), offsetMeters(20_000.0, index * 100.0)))
             )
         }
 
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
             routes,
-            colors = routes.associate { it.routeId to RED },
-            badgesInHoop = true
+            colors = routes.associate { it.routeId to RED }
         )
 
-        assertEquals(overCapacity, presentation.badges.size)
-        // Spread along the routes instead of stacked in the ring: a whole-route midpoint on a line
-        // running 4 km east lands well outside the hoop.
+        assertEquals(2, presentation.badges.size)
+        // Anchored at the whole route's midpoint, far out along the line — not stacked in the ring.
         assertTrue(presentation.badges.all { haversineMeters(center, it.point) > hoop.radiusMeters })
     }
 
     @Test
-    fun `a hoop's badge capacity is the count it can hold at the layout's own spacing`() {
-        // 800 m of radius at 300 m of separation: each badge claims a 150 m-radius disc.
-        assertEquals(28, hoopBadgeCapacity(hoop))
-        // A bigger ring holds more, quadratically — it's an area ratio, not a diameter one.
-        assertEquals(113, hoopBadgeCapacity(NearbyRoutesHoop(center, 1600.0)))
-    }
-
-    @Test
-    fun `a set within capacity still anchors its badges inside the hoop`() {
-        val routes = (1..hoopBadgeCapacity(hoop)).map { index ->
-            NearbyRouteShapes(
-                "route-$index",
-                "$index",
-                listOf(listOf(offsetMeters(-700.0, index.toDouble()), offsetMeters(4000.0, index.toDouble())))
-            )
-        }
+    fun `a route lying entirely within the hoop still gets its badge`() {
+        // The whole-route anchoring must not assume the route leaves the circle: a short route that
+        // begins and ends inside it is still drawn, so it still has to be labelled.
+        val shape = listOf(offsetMeters(-300.0, 0.0), offsetMeters(300.0, 0.0))
 
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
-            routes,
-            colors = routes.associate { it.routeId to RED },
-            badgesInHoop = true
+            listOf(NearbyRouteShapes("short", "9", listOf(shape))),
+            colors = mapOf("short" to RED)
         )
 
-        // At capacity the in-hoop anchoring still applies — the check is a ceiling, not a nudge toward
-        // spreading whenever the layer gets busy.
-        assertTrue(presentation.badges.any { haversineMeters(center, it.point) <= hoop.radiusMeters })
-    }
-
-    @Test
-    fun `badges spread along the routes when the ring is too small to hold them`() {
-        // A route running 4 km east, clipping the hoop's western edge.
-        val shape = listOf(offsetMeters(-700.0, 0.0), offsetMeters(4000.0, 0.0))
-        val routes = listOf(NearbyRouteShapes("3", "3", listOf(shape)))
-
-        val inHoop = assembleNearbyRoutesPresentation(hoop, routes, mapOf("3" to RED), badgesInHoop = true)
-        val alongRoute = assembleNearbyRoutesPresentation(hoop, routes, mapOf("3" to RED), badgesInHoop = false)
-
-        assertTrue(haversineMeters(center, inHoop.badges.single().point) <= hoop.radiusMeters)
-        // Anchored on the whole route, the badge lands at its distant midpoint instead.
-        assertTrue(haversineMeters(center, alongRoute.badges.single().point) > hoop.radiusMeters)
-    }
-
-    @Test
-    fun `the ring has to be about a badge wide before labels go inside it`() {
-        // Zoomed in, the ring is most of the screen; zoomed out to a city it is barely a dot.
-        assertTrue(badgesFitInHoop(hoopRadiusDp(800.0, 15.0, 47.6)))
-        assertFalse(badgesFitInHoop(hoopRadiusDp(800.0, 11.0, 47.6)))
+        assertEquals(listOf("9"), presentation.badges.map { it.routeShortName })
+        assertTrue(haversineMeters(center, presentation.badges.single().point) <= hoop.radiusMeters)
     }
 
     @Test
     fun `a hoop badge carries no direction so a tap enters the route's default`() {
         val presentation = assembleNearbyRoutesPresentation(
-            hoop,
             listOf(NearbyRouteShapes("8", "8", listOf(listOf(offsetMeters(-400.0, 0.0), offsetMeters(400.0, 0.0))))),
             colors = mapOf("8" to RED)
         )

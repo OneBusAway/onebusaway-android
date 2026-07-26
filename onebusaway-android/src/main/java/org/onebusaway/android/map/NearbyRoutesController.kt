@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
@@ -48,9 +48,10 @@ import org.onebusaway.android.util.getRouteDisplayName
 /**
  * The "routes near here" hoop (#2004): while the home map is showing the plain base map, draws a
  * fixed half-mile ring around where the camera settled and, lightly, the full shape of every route
- * that passes through it — each route's directions sharing one colour, each labelled inside the hoop
- * with a tappable badge that enters route focus. The hoop selects; it doesn't crop, so the layer shows
- * where the routes running past you actually go. It gives the otherwise-spare base map some
+ * that passes through it — each route's directions sharing one colour, each carrying a tappable badge
+ * that enters route focus. The hoop selects; it doesn't crop, so the layer shows where the routes
+ * running past you actually go, and the badges ride the lines out across the map rather than stacking
+ * inside the ring. It gives the otherwise-spare base map some
  * situational awareness, reusing the minimal presentation focused-stop adjacency established (#1827).
  *
  * **Where the routes come from.** Each settle asks OBA the question directly: `routes-for-location`
@@ -70,9 +71,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  * [hoop] and `hoopRadiusDp`), so a drag carries it along with the gesture for free — but the *survey*
  * fires only once the camera settles, at the settled centre, so panning never turns into a burst of
  * queries. It stays on well past a citywide view — down to [NEARBY_ROUTES_MIN_ZOOM], where the routes
- * near you are drawn across the whole city and the badges spread along them rather than crowding the
- * (by then tiny) ring. It hides while a stop is focused, where stop-focus adjacency owns the route
- * geometry.
+ * near you are drawn across the whole city. It hides while a stop is focused, where stop-focus
+ * adjacency owns the route geometry.
  *
  * A cold driver over a [MapHost] like the other use-case controllers: it reacts to [MapHost.camera]
  * plus the published stop layer and writes [MapHost.renderState], with no map-SDK dependency.
@@ -122,62 +122,76 @@ class NearbyRoutesController(
     }
 
     private fun launchLoader(): Job = scope.launch {
-        combine(
-            host.camera.filterNotNull(),
-            // Stop focus hides the layer. Mapped to just that flag before dedup, so the controller's
-            // own writes to the snapshot can't re-trigger it.
-            renderState.snapshot.map { it.focusedStopId != null }.distinctUntilChanged()
-        ) { camera, stopFocused -> camera to stopFocused }
-            .debounce(NEARBY_ROUTES_DEBOUNCE_MS)
-            // Settle on drag-end, like the stop loader: a viewport reached mid-gesture is superseded
-            // by the gesture's own terminating idle.
-            .filter { !host.cameraInteracting.value }
-            .map { (camera, stopFocused) ->
-                if (stopFocused || camera.zoom < NEARBY_ROUTES_MIN_ZOOM) {
-                    _hoop.value = null
-                    return@map null
-                }
-                // The camera has settled, so survey from exactly where it came to rest — which is
-                // also where the overlay has been drawing the ring all through the drag. No drift
-                // threshold: the two must agree at rest, and a settle costs one small query.
-                val hoop = NearbyRoutesHoop(camera.center, NEARBY_ROUTES_RADIUS_METERS)
-                _hoop.value = hoop
-                NearbyRoutesRequest(
-                    hoop = hoop,
-                    badgesInHoop = badgesFitInHoop(
-                        hoopRadiusDp(hoop.radiusMeters, camera.zoom, camera.center.latitude)
-                    )
-                )
+        host.cameraInteracting
+            .flatMapLatest { interacting ->
+                // The whole settled pipeline exists only between gestures, so the moment the user
+                // takes the camera it is cancelled outright — along with whatever survey was in
+                // flight and every shape fetch it had running. A survey for where the map *was* is
+                // wasted work the instant a pan starts; without this it would keep fetching until the
+                // gesture ended and the next settle superseded it, which on a long drag is seconds of
+                // requests for a viewport already gone.
+                //
+                // [emptyFlow] and not a null: emitting nothing leaves the routes already drawn on
+                // screen (the layer never blinks off mid-gesture), where a null would clear them.
+                if (interacting) emptyFlow() else settledSurveys()
             }
-            .distinctUntilChanged()
-            .flatMapLatest { request -> request?.let(::survey) ?: flowOf(null) }
             .collect { presentation ->
-                renderState.setNearbyRoutes(
-                    presentation?.polylines.orEmpty(),
-                    presentation?.badges.orEmpty()
-                )
+                renderState.setNearbyRoutes(presentation.polylines, presentation.badges)
             }
     }
 
     /**
-     * The layer's presentations for one [request], emitted progressively as each route's shape
+     * Surveys driven by the camera coming to rest — the layer's normal cadence, subscribed afresh
+     * after each gesture. Stop focus, or zooming out past the layer, yields [NO_NEARBY_ROUTES].
+     *
+     * Re-subscribing per gesture is what makes an interrupted survey recoverable: [host.camera] is a
+     * StateFlow, so a fresh collection replays where the camera came to rest, and the
+     * [distinctUntilChanged] below starts empty rather than remembering the hoop whose survey was just
+     * cancelled. A gesture that returns the camera to exactly where it started therefore re-surveys and
+     * completes the layer, instead of being dedup'd away and leaving it half-drawn.
+     */
+    private fun settledSurveys(): Flow<NearbyRoutesPresentation> = combine(
+        host.camera.filterNotNull(),
+        // Stop focus hides the layer. Mapped to just that flag before dedup, so the controller's
+        // own writes to the snapshot can't re-trigger it.
+        renderState.snapshot.map { it.focusedStopId != null }.distinctUntilChanged()
+    ) { camera, stopFocused -> camera to stopFocused }
+        // Coalesce the intermediate idles a fling emits after the gesture proper has ended.
+        .debounce(NEARBY_ROUTES_DEBOUNCE_MS)
+        .map { (camera, stopFocused) ->
+            if (stopFocused || camera.zoom < NEARBY_ROUTES_MIN_ZOOM) {
+                _hoop.value = null
+                return@map null
+            }
+            // The camera has settled, so survey from exactly where it came to rest — which is
+            // also where the overlay has been drawing the ring all through the drag. No drift
+            // threshold: the two must agree at rest, and a settle costs one small query.
+            val hoop = NearbyRoutesHoop(camera.center, NEARBY_ROUTES_RADIUS_METERS)
+            _hoop.value = hoop
+            hoop
+        }
+        .distinctUntilChanged()
+        .flatMapLatest { hoop -> hoop?.let(::survey) ?: flowOf(NO_NEARBY_ROUTES) }
+
+    /**
+     * The layer's presentations for one [hoop], emitted progressively as each route's shape
      * resolves. It deliberately does *not* open with an empty plan: since every settle re-surveys, that
      * would blink the whole layer off and back on after each pan. The previous survey's routes stay on
      * screen until the first route of this one lands, and an empty plan is emitted only when this
      * survey genuinely has nothing to draw. Superseded by [flatMapLatest] when a newer request
      * arrives, which cancels any shape fetch still in flight.
      *
-     * Runs on [Dispatchers.Default]: testing every whole-route shape against the hoop (for membership
-     * and badge anchors) is real CPU work — and grows with the size of the uncapped set — so it must
-     * not land on the frame-producing main thread.
+     * Runs on [Dispatchers.Default]: testing a whole-route shape against the hoop and laying out the
+     * badges along it is real CPU work — and grows with the size of the uncapped set — so it must not
+     * land on the frame-producing main thread.
      */
-    private fun survey(request: NearbyRoutesRequest): Flow<NearbyRoutesPresentation> = flow {
+    private fun survey(hoop: NearbyRoutesHoop): Flow<NearbyRoutesPresentation> = flow {
         // The routes running through the hoop. A failed query leaves the previous survey on screen
         // rather than blanking the layer over one dropped request.
-        val routes = routesInHoop(request.hoop) ?: return@flow
+        val routes = routesInHoop(hoop) ?: return@flow
         if (routes.isEmpty()) {
             // Nothing runs through here. Draw nothing at all.
-            emit(NearbyRoutesPresentation(emptyList(), emptyList()))
+            emit(NO_NEARBY_ROUTES)
             return@flow
         }
         val palette = adjacencyRouteColors(routes.map(ObaRoute::id), retained = colors).also { colors = it }
@@ -193,13 +207,16 @@ class NearbyRoutesController(
             // drawn, so one more route adds one line and one badge rather than rebuilding the layer.
             for (fetch in fetches) {
                 val route = fetch.await() ?: continue
+                // Membership is settled once, here, as the shape arrives — not re-derived for every
+                // already-drawn route on each of the survey's emissions.
+                if (route.shapes.none { entersHoop(it, hoop) }) continue
                 drawn += route
-                emit(assembleNearbyRoutesPresentation(request.hoop, drawn, palette, request.badgesInHoop))
+                emit(assembleNearbyRoutesPresentation(drawn, palette))
             }
         }
         // Every candidate failed to load or missed the hoop: clear, rather than stranding the previous
         // survey's routes on screen.
-        if (drawn.isEmpty()) emit(NearbyRoutesPresentation(emptyList(), emptyList()))
+        if (drawn.isEmpty()) emit(NO_NEARBY_ROUTES)
     }.flowOn(Dispatchers.Default)
 
     /**
@@ -249,12 +266,6 @@ class NearbyRoutesController(
     }
 }
 
-/** One survey of the hoop: where it sits, and whether its ring has room to hold the badges. */
-private data class NearbyRoutesRequest(
-    val hoop: NearbyRoutesHoop,
-    val badgesInHoop: Boolean
-)
-
 /**
  * Below this zoom the layer hides. Set well past a citywide view (zoom 11 is roughly a city across a
  * phone screen) so you can pull back and see where the routes running past you actually go; below it
@@ -271,6 +282,9 @@ private const val NEARBY_ROUTES_MIN_ZOOM = 11.0
  * downtown than that still comes back truncated, flagged only by the response's `limitExceeded`.
  */
 private const val NEARBY_ROUTES_MAX_COUNT = 200
+
+/** The layer drawing nothing — stop focus, zoomed out past it, or a survey that found no routes. */
+private val NO_NEARBY_ROUTES = NearbyRoutesPresentation(emptyList(), emptyList())
 
 /** Matches the stop loader's settle window: one survey per pan, not one per intermediate idle. */
 private const val NEARBY_ROUTES_DEBOUNCE_MS = 400L

@@ -16,12 +16,15 @@
 package org.onebusaway.android.map.render
 
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.models.ObaStop
@@ -29,6 +32,18 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.GeoPoint
+
+/**
+ * The badge layer's change boundary: every route badge to draw, deduped so an unrelated snapshot change
+ * doesn't reach [RouteBadgeReconciler].
+ *
+ * The badge counterpart to [routePolylineRenderFlow], and shared by both flavor adapters for the same
+ * reason — the set of fields this derives from has to agree with what
+ * [MapRenderSnapshot.withoutIndependentlyRenderedLayers] strips, and keeping the two in one file is what
+ * makes that checkable. Needs no camera input: badge anchors are laid out in geographic space, so a pan
+ * or zoom moves them without changing this list.
+ */
+internal fun routeBadgeRenderFlow(snapshot: StateFlow<MapRenderSnapshot>): Flow<List<RouteBadge>> = snapshot.map { it.allRouteBadges }.distinctUntilChanged()
 
 /** A screen pixel position in the composition's root coordinate space (flavor-neutral). */
 data class ScreenOffset(val x: Float, val y: Float)
@@ -256,17 +271,20 @@ data class MapRenderSnapshot(
         }
 
     /**
-     * This snapshot without any route geometry — what the flavor adapters compare for distinctness
-     * before redrawing the *static* layer (stops / bikes / generics), so a route-layer change doesn't
-     * churn those annotations. Both route layers have their own change boundary: the lines via
-     * [routePolylineRenderFlow], the badges via [allRouteBadges] straight into
-     * [RouteBadgeReconciler].
+     * This snapshot without the layers that are reconciled on their own change boundary — what the
+     * flavor adapters compare for distinctness before redrawing the *static* layer (stops / bikes /
+     * generics), so a route-layer change doesn't churn those annotations.
      *
-     * Badges are stripped here for the same reason the lines are, and it matters most for the
-     * nearby-routes hoop (#2004), which publishes progressively: while they were part of the static
-     * comparison, each newly-resolved route rebuilt every annotation on the map.
+     * What the stripped fields share is not "geometry" (a badge is a label) but an independent
+     * renderer: the lines via [routePolylineRenderFlow] into `RoutePolylineReconciler`, the badges via
+     * [routeBadgeRenderFlow] into [RouteBadgeReconciler]. The route-continuation overlay deliberately
+     * stays, badge and all — it is driven by vehicle selection, not by a progressive publisher.
+     *
+     * Badges are stripped for the same reason the lines are, and it matters most for the nearby-routes
+     * hoop (#2004), which publishes progressively: while they were part of the static comparison, each
+     * newly-resolved route rebuilt every annotation on the map.
      */
-    fun withoutRouteGeometry(): MapRenderSnapshot = copy(
+    fun withoutIndependentlyRenderedLayers(): MapRenderSnapshot = copy(
         routePolylines = emptyList(),
         nearbyRoutePolylines = emptyList(),
         routeBadges = emptyList(),

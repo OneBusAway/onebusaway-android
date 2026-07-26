@@ -12,3 +12,4 @@ play-store-upload-key.json
 .project
 .classpath
 bin/
+__pycache__/

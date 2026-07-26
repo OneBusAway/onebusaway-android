@@ -61,13 +61,19 @@ class RegionsDecodeTest {
      * base; the client appends `/gtfs/v1`). Puget Sound is pointed at its OTP2 GraphQL server;
      * every other bundled region stays on OTP1 REST (null). Guards both the intended flip and
      * against an accidental one elsewhere.
+     *
+     * The host asserted here is pinned against the *bundled* file only — by construction this test
+     * can't notice the bundled value drifting away from the live regions directory, which is how
+     * Puget Sound came to ship a stale `execute-api` host (#2019). That comparison belongs to
+     * `tools/check-regions-drift.py`, run by the nightly `regions-drift` job because it needs
+     * network. When that job reports drift, sync the bundled file and update this expectation.
      */
     @Test
     fun bundledRegionsSelectOtpProtocolByGraphqlUrl() {
         val regions = decode("src/main/res/raw/regions_v3.json").map { it.toObaRegion() }
         val pugetSound = regions.single { it.name == "Puget Sound" }
         assertEquals(
-            "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp",
+            "https://sound-transit-otp.ibi-transit.com/otp/",
             pugetSound.otpBaseGraphqlUrl
         )
         regions.filter { it.name != "Puget Sound" }

@@ -33,44 +33,6 @@ first. The one-time bulk reformat is listed in `.git-blame-ignore-revs`; enable 
 `git config blame.ignoreRevsFile .git-blame-ignore-revs` so `git blame` skips it (GitHub does this
 automatically).
 
-## Changelog entries
-
-Pull requests are squashed when they merge, so your PR becomes one commit on `main`, and that commit
-message is what the release notes are built from. Two things follow from that:
-
-**Write the subject as a changelog line.** Imperative, plain language, issue number at the end — it
-gets read by people scanning a release, not just by people reading `git log`:
-
-```
-Offer bikeshare trips where the OTP2 server supports them (#2017)
-```
-
-**If a rider would notice the change, add a `Changelog:` trailer** at the very end of the message,
-describing the effect in their words rather than the code's:
-
-```
-Changelog: Bikeshare trips now show up in the trip planner.
-```
-
-Most PRs don't need one — refactors, dependency bumps, test changes and internal cleanups are covered
-by their subject line alone. The trailer is for the few changes per release that a rider would notice,
-because "Fold report/ into ui/report/ and wire its ViewModels through Hilt" is the right subject and
-the wrong sentence to show someone waiting for a bus. Keep it to one sentence: a release's trailers
-share a 500-character Google Play budget.
-
-The trailer must be in the trailer block at the end of the message or git won't read it as one. If
-your branch has several commits, check the squashed message in the merge box before merging —
-GitHub concatenates the individual commit messages, which can leave the trailer stranded mid-body.
-`tools/release-notes.sh` warns when that happens.
-
-To have the format in front of you when you commit, opt into the message template:
-
-```bash
-git config commit.template .gitmessage
-```
-
-See [BUILD.md](../docs/BUILD.md#release-notes) for how the notes are generated at release time.
-
 ## Closing policy for issues and pull requests
 
 OneBusAway for Android is a popular project and the capacity to deal with issues and pull requests is limited. Out of respect for our volunteers, issues and pull requests not in line with the guidelines listed in this document may be closed without notice.

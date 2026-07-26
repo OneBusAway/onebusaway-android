@@ -61,6 +61,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
+import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -270,13 +271,11 @@ class HomeActivity : AppCompatActivity() {
      */
     private fun applyIntentSideEffects(intent: Intent?) {
         if (intent == null) return
-        val data = intent.data
-        if (data != null && IntentRouteMapper.isAddRegionUri(data)) {
-            // Validating and applying the URLs is the region domain's job; we just parse them off the URI.
-            regionRepository.applyCustomApiUrls(
-                obaUrl = data.getQueryParameter("oba-url"),
-                otpUrl = data.getQueryParameter("otp-url")
-            )
+        val deepLink = intent.data?.let { ExternalDeepLinks.parse(it) }
+        if (deepLink is ExternalDeepLinks.Target.AddRegion) {
+            // Validating and applying the URLs is the region domain's job; ExternalDeepLinks just read
+            // them off the URI.
+            regionRepository.applyCustomApiUrls(obaUrl = deepLink.obaUrl, otpUrl = deepLink.otpUrl)
             return
         }
         intent.getStringExtra(ReminderUtils.ARRIVAL_PAYLOAD_KEY)?.let { arrivalJson ->

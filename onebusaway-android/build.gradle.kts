@@ -60,6 +60,14 @@ android {
 
         // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
         buildConfigField("String", "CI", "\"" + System.getenv("CI") + "\"")
+
+        // The custom deep-link scheme the app answers to (#2027), consumed by the manifest's
+        // custom-scheme intent-filter. Every brand answers to the cross-platform `onebusaway` scheme,
+        // so this default is all most brands need; a brand with its own scheme (KiedyBus) overrides the
+        // placeholder in its flavor file. Declared ONLY here — BuildConfig.DEEP_LINK_SCHEME is derived
+        // from it below, so the manifest and the Kotlin side (ExternalDeepLinks.APP_SCHEMES) cannot
+        // disagree about which scheme a brand advertises.
+        manifestPlaceholders["deepLinkScheme"] = "onebusaway"
     }
 
     // Expose the exported Room schemas to instrumented tests so MigrationTestHelper can load them.
@@ -307,6 +315,27 @@ androidComponents {
 // Load brand flavor configurations from flavors/ directory
 // See flavors/README.md for instructions on adding new white-label brands
 apply(from = "flavors/load-flavors.gradle")
+
+/*
+ * Derive each brand's BuildConfig.DEEP_LINK_SCHEME from its `deepLinkScheme` manifest placeholder
+ * (defaulted in defaultConfig, overridden by the one brand that has its own scheme). The scheme is
+ * therefore declared exactly ONCE per brand: the manifest's custom-scheme intent-filter and the Kotlin
+ * side that parses those links (org.onebusaway.android.ui.nav.ExternalDeepLinks.APP_SCHEMES) read the
+ * same value by construction, so a brand can't advertise a scheme it then refuses to parse (#2027).
+ *
+ * Runs after the flavor files above have been applied, and reads the DSL rather than the variant API
+ * because `Variant.manifestPlaceholders` is a lazy MapProperty that can't be queried during
+ * configuration (and BuildConfigField takes a value, not a Provider).
+ */
+android.productFlavors.filter { it.dimension == "brand" }.forEach { flavor ->
+    val scheme = flavor.manifestPlaceholders["deepLinkScheme"]
+        ?: android.defaultConfig.manifestPlaceholders["deepLinkScheme"]
+        ?: throw GradleException(
+            "No `deepLinkScheme` manifest placeholder for brand '${flavor.name}' or in defaultConfig; " +
+                "see onebusaway-android/flavors/README.md"
+        )
+    flavor.buildConfigField("String", "DEEP_LINK_SCHEME", "\"" + scheme + "\"")
+}
 
 // Exclude all classes from dependencies that conflict with Android platform classes (#849)
 configurations.all {

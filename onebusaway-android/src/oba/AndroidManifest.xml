@@ -1,28 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  OBA-brand-only manifest additions, merged into src/main/AndroidManifest.xml for the `oba`
-  brand flavor only.
+  Android App Links for the OneBusAway web/sidecar hosts, merged into src/main's HomeActivity for
+  the `oba` brand only. Parsed by org.onebusaway.android.ui.nav.ExternalDeepLinks (whose WEB_HOSTS
+  must list the same hosts); see docs/DEEP_LINKING.md for the link format, the outstanding
+  assetlinks.json step that autoVerify depends on, and how to test these links.
 
-  Android App Links for the OneBusAway web/sidecar hosts — the Android half of the iOS app's
-  associated domains (applinks:onebusaway.co, applinks:www.onebusaway.co,
-  applinks:sidecar.onebusaway.org), so a trip link shared from either app opens the same screen
-  (#2027):
+  Why this is in the `oba` source set and not src/main: these hosts belong to the OBA deployment. A
+  white-label brand can never verify them — verification matches the *installed app's* signing
+  certificate against the host's assetlinks.json — and on API < 31 an unverifiable filter would
+  still put that brand in the link-handling chooser for someone else's links. A brand with its own
+  web host should add its own flavor manifest with the same shape.
 
-      https://<host>/regions/{regionID}/stops/{stopID}/trips?trip_id=…&service_date=…&stop_sequence=…
-
-  Parsed by org.onebusaway.android.ui.nav.ExternalDeepLinks, whose WEB_HOSTS must list the same
-  hosts. The pathPrefix keeps the filter off the rest of the site (the marketing pages).
-
-  This lives in the `oba` source set rather than src/main because these hosts belong to the OBA
-  deployment: a white-label brand can never verify them (verification matches the *installed app's*
-  signing certificate against the host's assetlinks.json), and on API < 31 an unverifiable filter
-  would still put that brand in the link-handling chooser for someone else's links. A brand with its
-  own web host should add its own flavor manifest with the same shape.
-
-  autoVerify requires https://<host>/.well-known/assetlinks.json to list this app's package name and
-  release signing-certificate SHA-256 fingerprint. Until those files are published, verification
-  fails and the links keep opening in the browser (nothing regresses); `adb shell am start -a
-  android.intent.action.VIEW -d '<url>' <package>` exercises the filter regardless.
+  The pathPrefix keeps the filter off the rest of the site (the marketing pages).
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 

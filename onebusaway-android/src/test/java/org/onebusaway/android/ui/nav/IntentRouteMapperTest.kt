@@ -56,7 +56,13 @@ class IntentRouteMapperTest {
         // The URLs apply as a side effect (HomeActivity); routing stays on the home/map path.
         assertEquals(
             RouteDecision.None,
-            decide(RouteIntent(isAddRegion = true, isSearch = true, searchQuery = "x"))
+            decide(
+                RouteIntent(
+                    deepLink = ExternalDeepLinks.Target.AddRegion("https://api.example.com", null),
+                    isSearch = true,
+                    searchQuery = "x"
+                )
+            )
         )
     }
 
@@ -178,7 +184,7 @@ class IntentRouteMapperTest {
     fun `a view-stop deep link opens that stop's arrivals`() {
         assertEquals(
             RouteDecision.Arrivals("1_75403"),
-            decide(RouteIntent(deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403")))
+            decide(RouteIntent(deepLink = ExternalDeepLinks.Target.Stop("1_75403")))
         )
     }
 
@@ -188,25 +194,10 @@ class IntentRouteMapperTest {
             RouteDecision.TripDetails("1_18196913", "1_75403", TripDetailsLauncher.SCROLL_MODE_STOP),
             decide(
                 RouteIntent(
-                    deepLinkTarget = ExternalDeepLinks.Target.Trip(
+                    deepLink = ExternalDeepLinks.Target.Trip(
                         tripId = "1_18196913",
                         stopId = "1_75403"
                     )
-                )
-            )
-        )
-    }
-
-    @Test
-    fun `add-region still wins over a deep-link target on the same URI`() {
-        // Belt-and-braces on the branch order: add-region's URLs apply as a side effect and it stays
-        // on the home/map path, so it must not be overtaken by a later routing branch.
-        assertEquals(
-            RouteDecision.None,
-            decide(
-                RouteIntent(
-                    isAddRegion = true,
-                    deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403")
                 )
             )
         )
@@ -218,7 +209,7 @@ class IntentRouteMapperTest {
             RouteDecision.Arrivals("1_75403"),
             decide(
                 RouteIntent(
-                    deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403"),
+                    deepLink = ExternalDeepLinks.Target.Stop("1_75403"),
                     pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224")
                 )
             )

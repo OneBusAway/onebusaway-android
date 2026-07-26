@@ -87,9 +87,30 @@ class ExternalDeepLinksTest {
         assertNull(parse(appLink("view-stop", mapOf("stopID" to "")), schemes))
     }
 
+    // --- add-region (recognized here, but applied as a side effect rather than routed) ---
+
     @Test
-    fun `add-region is not a route - its URLs apply as a side effect`() {
-        assertNull(parse(appLink("add-region", mapOf("oba-url" to "https://api.example.com")), schemes))
+    fun `add-region carries the custom API URLs`() {
+        val target = parse(
+            appLink(
+                "add-region",
+                mapOf("oba-url" to "https://api.example.com", "otp-url" to "https://otp.example.com")
+            ),
+            schemes
+        )
+        assertEquals(
+            Target.AddRegion(obaUrl = "https://api.example.com", otpUrl = "https://otp.example.com"),
+            target
+        )
+    }
+
+    @Test
+    fun `add-region reports absent and blank URLs alike as null`() {
+        // Validating and applying the URLs is the region domain's job; absent means "don't touch it".
+        assertEquals(
+            Target.AddRegion(obaUrl = "https://api.example.com", otpUrl = null),
+            parse(appLink("add-region", mapOf("oba-url" to "https://api.example.com", "otp-url" to "")), schemes)
+        )
     }
 
     @Test
@@ -147,31 +168,17 @@ class ExternalDeepLinksTest {
     }
 
     @Test
-    fun `a stop-only web path is not a deep link`() {
-        // Matches iOS: only the /trips endpoint decodes; a stop page falls through to the browser.
-        assertNull(parse(webLink(pathSegments = listOf("regions", "1", "stops", "1_75403")), schemes))
-    }
-
-    @Test
-    fun `a trip path with a trailing segment is not a deep link`() {
-        val path = listOf("regions", "1", "stops", "1_75403", "trips", "extra")
-        assertNull(parse(webLink(pathSegments = path), schemes))
-    }
-
-    @Test
-    fun `a misspelled trip path is not a deep link`() {
-        val path = listOf("regions", "1", "stations", "1_75403", "trips")
-        assertNull(parse(webLink(pathSegments = path), schemes))
-    }
-
-    @Test
-    fun `a trip link with a blank stop id in its path is not a deep link`() {
-        val path = listOf("regions", "1", "stops", "", "trips")
-        assertNull(parse(webLink(pathSegments = path), schemes))
-    }
-
-    @Test
-    fun `a bare host with no path is not a deep link`() {
-        assertNull(parse(webLink(pathSegments = emptyList(), params = emptyMap()), schemes))
+    fun `only the exact trips path shape is a deep link`() {
+        val rejected = listOf(
+            // Matches iOS: only the /trips endpoint decodes; a stop page falls through to the browser.
+            listOf("regions", "1", "stops", "1_75403"),
+            listOf("regions", "1", "stops", "1_75403", "trips", "extra"),
+            listOf("regions", "1", "stations", "1_75403", "trips"),
+            listOf("regions", "1", "stops", "", "trips"),
+            emptyList()
+        )
+        rejected.forEach { path ->
+            assertNull("path $path", parse(webLink(pathSegments = path), schemes))
+        }
     }
 }

@@ -15,9 +15,11 @@ Two families of link, both handled by `HomeActivity` (the app's single Activity)
 ## Custom-scheme links
 
 Every brand answers to the cross-platform `onebusaway://` scheme **and** to its own scheme
-(`kiedybus://` for KiedyBus) — set per brand as the `deepLinkScheme` manifest placeholder plus the
-matching `DEEP_LINK_SCHEME` build-config field in `onebusaway-android/flavors/<brand>.gradle`.
-`IntentRouteMapper.APP_SCHEMES` is the Kotlin-side copy of that set.
+(`kiedybus://` for KiedyBus). A brand's scheme is declared once, as the `deepLinkScheme` manifest
+placeholder — defaulted to `onebusaway` in `defaultConfig` and overridden in
+`onebusaway-android/flavors/<brand>.gradle`. `BuildConfig.DEEP_LINK_SCHEME` (and through it
+`ExternalDeepLinks.APP_SCHEMES`) is derived from that placeholder in `build.gradle.kts`, so the
+manifest filter and the parser can't disagree about which scheme a brand advertises.
 
 `view-stop` needs `stopID` (an agency-qualified stop id such as `1_75403`, percent-encoded).
 
@@ -77,10 +79,11 @@ adb shell am start -a android.intent.action.VIEW \
 
 ## Implementation
 
-- `ui/nav/ExternalDeepLinks.kt` — the pure link → target-screen parser (unit-tested in
-  `ExternalDeepLinksTest`); `WEB_HOSTS` must match the manifest filter's hosts.
-- `ui/nav/IntentRouteMapper.kt` — decomposes the intent's `Uri`, then decides the NavHost route
-  (`decide`, unit-tested in `IntentRouteMapperTest`).
+- `ui/nav/ExternalDeepLinks.kt` — owns this whole vocabulary (schemes, hosts, path shape, parameter
+  names) and parses a link into what it means; `parse` is pure and unit-tested in
+  `ExternalDeepLinksTest`. `WEB_HOSTS` must match the manifest filter's hosts.
+- `ui/nav/IntentRouteMapper.kt` — maps the parsed link to a NavHost route (`decide`, unit-tested in
+  `IntentRouteMapperTest`).
 - `ui/HomeActivity.kt` — runs the side effect `add-region` implies (`applyIntentSideEffects`).
 - `ui/nav/DeepLinkUris.kt` — separate concern: the app's *internal* `content://` stop/route
   vocabulary, used by pinned launcher shortcuts and in-app launches.

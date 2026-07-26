@@ -98,8 +98,9 @@
                    <scheme>://view-stop?stopID=…&regionID=… — opens that stop's arrivals.
 
                  `onebusaway` is the cross-platform scheme every brand answers to; ${deepLinkScheme} is
-                 the brand's own (identical for the OBA brand, `kiedybus` for KiedyBus — set per brand in
-                 flavors/*.gradle). IntentRouteMapper.APP_SCHEMES is the Kotlin-side copy of this set. -->
+                 the brand's own (identical for the OBA brand, `kiedybus` for KiedyBus). The placeholder
+                 is the single declaration of that scheme — ExternalDeepLinks.APP_SCHEMES is derived
+                 from it via BuildConfig.DEEP_LINK_SCHEME (see build.gradle.kts). -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 

@@ -53,11 +53,28 @@ class DefaultAdvancedSettingsRepository @Inject constructor(
             context.getString(R.string.preference_key_trip_plan_avoid_stairs),
             false
         )
+        // Stored by enum name; an absent or unrecognized value falls back to "let the server
+        // decide" (see enumValueOrDefault).
+        val walkPreference = enumValueOrDefault(
+            PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_walk_preference)),
+            WalkPreference.MEDIUM
+        )
+        val cyclingPreference = enumValueOrDefault(
+            PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_cycling_preference)),
+            CyclingPreference.DEFAULT
+        )
+        val bikePreference = enumValueOrDefault(
+            PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_bike_preference)),
+            BikePreference.MEDIUM
+        )
         return AdvancedSettings(
             modeId = modeId,
             maxWalkMeters = maxWalk.takeIf { it != 0.0 && it != Double.MAX_VALUE },
             optimizeTransfers = optimize,
-            wheelchair = wheelchair
+            wheelchair = wheelchair,
+            walkPreference = walkPreference,
+            cyclingPreference = cyclingPreference,
+            bikePreference = bikePreference
         )
     }
 }

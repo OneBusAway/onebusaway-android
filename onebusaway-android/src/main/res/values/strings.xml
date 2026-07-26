@@ -1153,6 +1153,25 @@
     <string name="maximum_walk_distance">Maximum walk distance: </string>
     <string name="wheelchair_accessible">Avoid stairs</string>
 
+    <!-- Walking / biking amount, a shared five-point scale. Shown instead of "Maximum walk
+         distance" on OTP2 regions, whose routing API has no distance cap at all - the rider states
+         how much of the mode they want, so the wording must not promise a limit. The five stop
+         names are shared by both scales. -->
+    <string name="walk_preference_label">Walking</string>
+    <string name="bike_preference_label">Biking</string>
+    <string name="street_preference_minimum">Minimum</string>
+    <string name="street_preference_low">Low</string>
+    <string name="street_preference_medium">Medium</string>
+    <string name="street_preference_high">High</string>
+    <string name="street_preference_maximum">Maximum</string>
+
+    <!-- Which streets a bike leg should use. Shown alongside the biking preference above. -->
+    <string name="cycling_preference_label">Bike route</string>
+    <string name="cycling_preference_default">Normal</string>
+    <string name="cycling_preference_fastest">Fastest route</string>
+    <string name="cycling_preference_safest">Safest route</string>
+    <string name="cycling_preference_flattest">Flattest route</string>
+
     <string name="travel_by_label">Travel by: </string>
     <string name="transit_mode_transit_only">Transit only</string>
     <string name="transit_mode_transit_and_bikeshare">Transit &amp; bikeshare</string>

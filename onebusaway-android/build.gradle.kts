@@ -334,6 +334,10 @@ apollo {
         // Cost (TransferPreferencesInput.cost) is seconds, per OTP's own
         // TransferPreferences.cost()/withCost(int) — genuinely numeric, not a string.
         mapScalar("Cost", "kotlin.Int")
+        // Reluctance (walk/bicycle preferences) is a floating-point cost multiplier — schema.graphqls
+        // describes it as "a cost multiplier … The value should be greater than 0. 1 means neutral",
+        // so map it to Double rather than leaving it as Apollo's untyped `Any`.
+        mapScalar("Reluctance", "kotlin.Double")
     }
 }
 

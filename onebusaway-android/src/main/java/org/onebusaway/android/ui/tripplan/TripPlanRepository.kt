@@ -285,6 +285,9 @@ internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuild
         setWheelchairAccessible(params.wheelchair)
         setOptimizeTransfers(params.optimizeTransfers)
         params.maxWalkMeters?.let { setMaxWalkDistance(it) }
+        setWalkPreference(params.walkPreference)
+        setCyclingPreference(params.cyclingPreference)
+        setBikePreference(params.bikePreference)
     }
 }
 

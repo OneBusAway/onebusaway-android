@@ -52,6 +52,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -73,8 +74,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -83,10 +86,12 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import java.util.Calendar
 import java.util.TimeZone
+import kotlin.math.roundToInt
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -105,6 +110,8 @@ import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.tripplan.AdvancedSettings
+import org.onebusaway.android.ui.tripplan.BikePreference
+import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripModes
 import org.onebusaway.android.ui.tripplan.TripPlanError
@@ -112,6 +119,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanForm
 import org.onebusaway.android.ui.tripplan.TripPlanFormState
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.WalkPreference
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
@@ -607,6 +615,12 @@ private fun DirectionsAdvancedSettingsDialog(
             all.filter { it.second != TripModes.BIKESHARE && it.second != TripModes.TRANSIT_AND_BIKE }
         }
     }
+    // Which street preferences this region's OTP server can actually act on. OTP2 deleted
+    // `maxWalkDistance` from its routing API, so the distance field would be silently ignored there
+    // (#1780 wired the OTP2 path without it); OTP1 in turn has no cycling-optimization knob that
+    // doesn't collide with the `optimize` parameter "Minimize transfers" already uses. Rather than
+    // show a control the server will drop, each protocol gets the one it honours.
+    val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
     val current = remember { viewModel.formState.value }
     var selectedMode by remember {
         mutableIntStateOf(
@@ -622,12 +636,31 @@ private fun DirectionsAdvancedSettingsDialog(
             }.orEmpty()
         )
     }
-    var expanded by remember { mutableStateOf(false) }
+    var walkPreference by remember { mutableStateOf(current.walkPreference) }
+    var cyclingPreference by remember { mutableStateOf(current.cyclingPreference) }
+    var bikePreference by remember { mutableStateOf(current.bikePreference) }
+
+    // One shared five-stop label set, ordered least -> most, matching the enums' declaration order
+    // so the slider index maps straight onto them.
+    // Generated from the enums rather than written out, so the slider's index->label mapping can't
+    // drift from the declaration order it depends on. The `when`s below are exhaustive, so adding a
+    // stop to either enum is a compile error here rather than a silently mislabelled slider.
+    val walkStopLabels = WalkPreference.entries.map { it.label() }
+    val bikeStopLabels = BikePreference.entries.map { it.label() }
+    val cyclingOptions = listOf(
+        stringResource(R.string.cycling_preference_default) to CyclingPreference.DEFAULT,
+        stringResource(R.string.cycling_preference_fastest) to CyclingPreference.FASTEST,
+        stringResource(R.string.cycling_preference_safest) to CyclingPreference.SAFEST,
+        stringResource(R.string.cycling_preference_flattest) to CyclingPreference.FLATTEST
+    )
 
     // Preference keys resolved in composition (stringResource) so the confirm handler doesn't read
     // resource values off LocalContext.current (lint: LocalContextGetResourceValueCall).
     val prefKeyTravelBy = stringResource(R.string.preference_key_trip_plan_travel_by)
     val prefKeyMaxWalk = stringResource(R.string.preference_key_trip_plan_maximum_walking_distance)
+    val prefKeyWalkPreference = stringResource(R.string.preference_key_trip_plan_walk_preference)
+    val prefKeyCyclingPreference = stringResource(R.string.preference_key_trip_plan_cycling_preference)
+    val prefKeyBikePreference = stringResource(R.string.preference_key_trip_plan_bike_preference)
     val prefKeyMinimizeTransfers = stringResource(R.string.preference_key_trip_plan_minimize_transfers)
     val prefKeyAvoidStairs = stringResource(R.string.preference_key_trip_plan_avoid_stairs)
 
@@ -635,45 +668,61 @@ private fun DirectionsAdvancedSettingsDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.trip_plan_advanced_settings)) },
         text = {
-            Column {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.travel_by_label))
-                    Spacer(Modifier.width(8.dp))
-                    Box {
-                        TextButton(onClick = { expanded = true }) {
-                            Text(options.firstOrNull { it.second == selectedMode }?.first.orEmpty())
-                        }
-                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            options.forEach { (label, code) ->
-                                DropdownMenuItem(
-                                    text = { Text(label) },
-                                    onClick = {
-                                        selectedMode = code
-                                        expanded = false
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-                Row(
-                    modifier = Modifier.padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(stringResource(R.string.maximum_walk_distance), modifier = Modifier.weight(1f))
-                    OutlinedTextField(
-                        value = maxWalk,
-                        onValueChange = { new -> maxWalk = new.filter { it.isDigit() } },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.width(96.dp)
+            // Scrollable: the OTP2 branch adds two sliders and a dropdown on top of the existing
+            // rows, and AlertDialog content doesn't scroll on its own — at large font scales the
+            // switches at the bottom would otherwise be unreachable.
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                PreferenceDropdownRow(
+                    label = stringResource(R.string.travel_by_label),
+                    options = options,
+                    selected = selectedMode,
+                    onSelected = { selectedMode = it }
+                )
+                if (usesOtp2) {
+                    PreferenceSliderRow(
+                        label = stringResource(R.string.walk_preference_label),
+                        stopLabels = walkStopLabels,
+                        selectedIndex = walkPreference.ordinal,
+                        onSelectedIndex = { walkPreference = WalkPreference.entries[it] },
+                        modifier = Modifier.padding(top = 8.dp)
                     )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        stringResource(
-                            if (imperial) R.string.feet_abbreviation else R.string.meters_abbreviation
+                    // Only meaningful when the plan can contain a bike leg at all.
+                    if (selectedMode == TripModes.TRANSIT_AND_BIKE || selectedMode == TripModes.BIKESHARE) {
+                        PreferenceSliderRow(
+                            label = stringResource(R.string.bike_preference_label),
+                            stopLabels = bikeStopLabels,
+                            selectedIndex = bikePreference.ordinal,
+                            onSelectedIndex = { bikePreference = BikePreference.entries[it] },
+                            modifier = Modifier.padding(top = 8.dp)
                         )
-                    )
+                        PreferenceDropdownRow(
+                            label = stringResource(R.string.cycling_preference_label),
+                            options = cyclingOptions,
+                            selected = cyclingPreference,
+                            onSelected = { cyclingPreference = it },
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                } else {
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.maximum_walk_distance), modifier = Modifier.weight(1f))
+                        OutlinedTextField(
+                            value = maxWalk,
+                            onValueChange = { new -> maxWalk = new.filter { it.isDigit() } },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.width(96.dp)
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            stringResource(
+                                if (imperial) R.string.feet_abbreviation else R.string.meters_abbreviation
+                            )
+                        )
+                    }
                 }
                 SwitchRow(
                     label = stringResource(R.string.minimize_transfers),
@@ -693,14 +742,136 @@ private fun DirectionsAdvancedSettingsDialog(
                     if (imperial) ConversionUtils.feetToMeters(it) else it
                 }
                 viewModel.applyAdvancedSettings(
-                    AdvancedSettings(selectedMode, maxWalkMeters, minimizeTransfers, wheelchair)
+                    AdvancedSettings(
+                        modeId = selectedMode,
+                        maxWalkMeters = maxWalkMeters,
+                        optimizeTransfers = minimizeTransfers,
+                        wheelchair = wheelchair,
+                        walkPreference = walkPreference,
+                        cyclingPreference = cyclingPreference,
+                        bikePreference = bikePreference
+                    )
                 )
                 PreferenceUtils.saveInt(prefKeyTravelBy, selectedMode)
+                // Every option is saved whether or not this region's protocol showed its control, so
+                // the value survives a move to a region that can use it (see [AdvancedSettings]).
                 PreferenceUtils.saveDouble(prefKeyMaxWalk, maxWalkMeters ?: Double.MAX_VALUE)
+                PreferenceUtils.saveString(prefKeyWalkPreference, walkPreference.name)
+                PreferenceUtils.saveString(prefKeyCyclingPreference, cyclingPreference.name)
+                PreferenceUtils.saveString(prefKeyBikePreference, bikePreference.name)
                 PreferenceUtils.saveBoolean(prefKeyMinimizeTransfers, minimizeTransfers)
                 PreferenceUtils.saveBoolean(prefKeyAvoidStairs, wheelchair)
                 onDismiss()
             }) { Text(stringResource(R.string.ok)) }
         }
     )
+}
+
+/** The rider-facing name of this stop. Exhaustive so a new stop can't be added without a label. */
+@Composable
+private fun WalkPreference.label(): String = when (this) {
+    WalkPreference.MINIMUM -> stringResource(R.string.street_preference_minimum)
+    WalkPreference.LOW -> stringResource(R.string.street_preference_low)
+    WalkPreference.MEDIUM -> stringResource(R.string.street_preference_medium)
+    WalkPreference.HIGH -> stringResource(R.string.street_preference_high)
+    WalkPreference.MAXIMUM -> stringResource(R.string.street_preference_maximum)
+}
+
+/** As [WalkPreference.label]; the two scales share one set of stop names. */
+@Composable
+private fun BikePreference.label(): String = when (this) {
+    BikePreference.MINIMUM -> stringResource(R.string.street_preference_minimum)
+    BikePreference.LOW -> stringResource(R.string.street_preference_low)
+    BikePreference.MEDIUM -> stringResource(R.string.street_preference_medium)
+    BikePreference.HIGH -> stringResource(R.string.street_preference_high)
+    BikePreference.MAXIMUM -> stringResource(R.string.street_preference_maximum)
+}
+
+/**
+ * A labelled discrete slider for an ordinal preference: the label with the current stop's name
+ * right-aligned above the track, and the two extremes named beneath it.
+ *
+ * [stopLabels] is ordered least → most and its indices are the enum's `ordinal`s, so the slider
+ * position *is* the enum value — no separate value table to keep in step. [Slider.steps] counts the
+ * stops *between* the ends, hence `size - 2`.
+ */
+@Composable
+private fun PreferenceSliderRow(
+    label: String,
+    stopLabels: List<String>,
+    selectedIndex: Int,
+    onSelectedIndex: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, modifier = Modifier.weight(1f))
+            Text(
+                stopLabels.getOrElse(selectedIndex) { "" },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Slider(
+            value = selectedIndex.toFloat(),
+            onValueChange = { onSelectedIndex(it.roundToInt().coerceIn(stopLabels.indices)) },
+            valueRange = 0f..(stopLabels.size - 1).toFloat(),
+            steps = stopLabels.size - 2,
+            // The stop name lives in a sibling Text, so without these a screen reader announces the
+            // raw position ("2 of 4") and nothing about what the control is.
+            modifier = Modifier.semantics {
+                contentDescription = label
+                stateDescription = stopLabels.getOrElse(selectedIndex) { "" }
+            }
+        )
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                stopLabels.first(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                stopLabels.last(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+/**
+ * A labelled dropdown row in the advanced-settings dialog: the label, then a button showing the
+ * selected option's label that opens the menu. [options] pairs each display label with the value it
+ * selects; the button falls back to blank if [selected] isn't among them.
+ */
+@Composable
+private fun <T> PreferenceDropdownRow(
+    label: String,
+    options: List<Pair<String, T>>,
+    selected: T,
+    onSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Text(label)
+        Spacer(Modifier.width(8.dp))
+        Box {
+            TextButton(onClick = { expanded = true }) {
+                Text(options.firstOrNull { it.second == selected }?.first.orEmpty())
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { (optionLabel, value) ->
+                    DropdownMenuItem(
+                        text = { Text(optionLabel) },
+                        onClick = {
+                            onSelected(value)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
 }

@@ -88,7 +88,10 @@ class TripPlanViewModel @Inject constructor(
             modeId = initialSettings.modeId,
             maxWalkMeters = initialSettings.maxWalkMeters,
             optimizeTransfers = initialSettings.optimizeTransfers,
-            wheelchair = initialSettings.wheelchair
+            wheelchair = initialSettings.wheelchair,
+            walkPreference = initialSettings.walkPreference,
+            cyclingPreference = initialSettings.cyclingPreference,
+            bikePreference = initialSettings.bikePreference
         )
     )
     val formState: StateFlow<TripPlanFormState> = _formState.asStateFlow()
@@ -238,7 +241,10 @@ class TripPlanViewModel @Inject constructor(
                 modeId = settings.modeId,
                 maxWalkMeters = settings.maxWalkMeters,
                 optimizeTransfers = settings.optimizeTransfers,
-                wheelchair = settings.wheelchair
+                wheelchair = settings.wheelchair,
+                walkPreference = settings.walkPreference,
+                cyclingPreference = settings.cyclingPreference,
+                bikePreference = settings.bikePreference
             )
         }
         replanOrClearResult()

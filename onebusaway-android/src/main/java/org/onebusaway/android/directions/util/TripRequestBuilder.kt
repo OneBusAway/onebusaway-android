@@ -29,10 +29,12 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import org.onebusaway.android.R
 import org.onebusaway.android.api.contract.TripPlanRequest
-import org.onebusaway.android.app.di.PreferencesEntryPoint
-import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.ui.tripplan.BikePreference
+import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.TripModes
+import org.onebusaway.android.ui.tripplan.WalkPreference
+import org.onebusaway.android.ui.tripplan.enumValueOrDefault
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.RegionUtils
 
@@ -96,6 +98,10 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
 
     fun getWheelchairAccessible(): Boolean = mBundle.getBoolean(WHEELCHAIR_ACCESSIBLE)
 
+    /**
+     * OTP1 only. OTP2 removed `maxWalkDistance` from its routing API, so the OTP2 request path
+     * ignores this and reads [getWalkPreference] instead — see [WalkPreference].
+     */
     fun setMaxWalkDistance(walkDistance: Double): TripRequestBuilder {
         mBundle.putDouble(MAX_WALK_DISTANCE, walkDistance)
         return this
@@ -105,6 +111,36 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         val d = mBundle.getDouble(MAX_WALK_DISTANCE)
         return if (d != 0.0 && d != Double.MAX_VALUE) d else null
     }
+
+    /**
+     * OTP2 only (see [WalkPreference]); the OTP1 request path uses [setMaxWalkDistance]. Stored by
+     * enum *name* rather than ordinal so reordering the enum can't silently reinterpret a value
+     * already sitting in a saved Bundle or in preferences.
+     */
+    fun setWalkPreference(preference: WalkPreference): TripRequestBuilder {
+        mBundle.putString(WALK_PREFERENCE, preference.name)
+        return this
+    }
+
+    fun getWalkPreference(): WalkPreference = enumValueOrDefault(mBundle.getString(WALK_PREFERENCE), WalkPreference.MEDIUM)
+
+    /** OTP2 only — OTP1's single `optimize` parameter is already spent on [setOptimizeTransfers]
+     * (see [CyclingPreference]). */
+    fun setCyclingPreference(preference: CyclingPreference): TripRequestBuilder {
+        mBundle.putString(CYCLING_PREFERENCE, preference.name)
+        return this
+    }
+
+    fun getCyclingPreference(): CyclingPreference = enumValueOrDefault(mBundle.getString(CYCLING_PREFERENCE), CyclingPreference.DEFAULT)
+
+    /** OTP2 only — the nearest thing to a bike-distance setting, which no OTP version has
+     * (see [BikePreference]). */
+    fun setBikePreference(preference: BikePreference): TripRequestBuilder {
+        mBundle.putString(BIKE_PREFERENCE, preference.name)
+        return this
+    }
+
+    fun getBikePreference(): BikePreference = enumValueOrDefault(mBundle.getString(BIKE_PREFERENCE), BikePreference.MEDIUM)
 
     // Built in TraverseModeSet does not work properly so we cannot use request.setMode
     // This is built from examining dropdown on the OTP webapp
@@ -204,48 +240,9 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         return TripPlanRequest(parameters)
     }
 
-    /**
-     * The user's custom OTP API URL preference, or null if unset/blank — the "is a custom server
-     * configured" signal [otpTarget] branches on.
-     */
-    private val customOtpApiUrl: String?
-        get() = PreferencesEntryPoint.get(mContext)
-            .getString(mContext.getString(R.string.preference_key_otp_api_url), null as String?)
-            ?.takeUnless { TextUtils.isEmpty(it) }
-
-    /** The OTP server a request targets: its [baseUrl] and whether it speaks OTP 2.x GraphQL. */
-    private data class OtpTarget(val baseUrl: String?, val usesOtp2: Boolean)
-
-    /**
-     * Resolves the custom-URL-or-region branch once so [formattedOtpBaseUrl] and [usesOtp2] can't
-     * disagree (#1780). Protocol selection is explicit — a custom server's manual `..._is_graphql`
-     * preference, or a region publishing an `otpBaseGraphqlUrl` — never sniffed from the URL shape
-     * or a failed request. [baseUrl] is null when neither a custom URL nor a region is available.
-     */
+    /** The OTP server this request targets; see [OtpTarget.resolve]. */
     private val otpTarget: OtpTarget
-        get() {
-            val customUrl = customOtpApiUrl
-            if (customUrl != null) {
-                Log.d(TAG, "Using custom OTP API URL set by user '$customUrl'.")
-                // No [Region] to carry the setting for a custom server, so the user sets it.
-                return OtpTarget(
-                    baseUrl = customUrl,
-                    usesOtp2 = PreferencesEntryPoint.get(mContext)
-                        .getBoolean(R.string.preference_key_otp_api_url_is_graphql, false)
-                )
-            }
-            // No custom URL and no selected region: baseUrl stays null so the caller
-            // (TripPlanRepository) surfaces a "no server selected" error instead of crashing.
-            val region = RegionEntryPoint.get(mContext).currentRegion() ?: return OtpTarget(null, false)
-            // An OTP2 region publishes its GraphQL endpoint separately (a different host than the
-            // OTP1 REST server); route to it when present, else the OTP1 REST base URL. Reads
-            // [Region.usesOtp2] rather than re-deriving it, so a region's endpoint and its
-            // per-protocol capability flags are resolved from one definition.
-            return OtpTarget(
-                baseUrl = if (region.usesOtp2) region.otpBaseGraphqlUrl else region.otpBaseUrl,
-                usesOtp2 = region.usesOtp2
-            )
-        }
+        get() = OtpTarget.resolve(mContext)
 
     /**
      * The [otpTarget] base URL with a scheme ensured and formatted, or null if no server is
@@ -313,6 +310,9 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())
         target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible())
         getMaxWalkDistance()?.let { target.putDouble(MAX_WALK_DISTANCE, it) }
+        target.putString(WALK_PREFERENCE, getWalkPreference().name)
+        target.putString(CYCLING_PREFERENCE, getCyclingPreference().name)
+        target.putString(BIKE_PREFERENCE, getBikePreference().name)
         target.putString(MODE_SET, getModeString())
         dateTime?.let { target.putLong(DATE_TIME, it.toEpochMilli()) }
     }
@@ -335,6 +335,9 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())
         target.putBoolean(WHEELCHAIR_ACCESSIBLE, getWheelchairAccessible())
         getMaxWalkDistance()?.let { target.putDouble(MAX_WALK_DISTANCE, it) }
+        target.putString(WALK_PREFERENCE, getWalkPreference().name)
+        target.putString(CYCLING_PREFERENCE, getCyclingPreference().name)
+        target.putString(BIKE_PREFERENCE, getBikePreference().name)
         target.putString(MODE_SET, getModeString())
         dateTime?.let { target.putLong(DATE_TIME, it.toEpochMilli()) }
     }
@@ -366,6 +369,9 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         private const val OPTIMIZE_TRANSFERS = ".OPTIMIZE_TRANSFERS"
         private const val WHEELCHAIR_ACCESSIBLE = ".WHEELCHAIR_ACCESSIBLE"
         private const val MAX_WALK_DISTANCE = ".MAX_WALK_DISTANCE"
+        private const val WALK_PREFERENCE = ".WALK_PREFERENCE"
+        private const val CYCLING_PREFERENCE = ".CYCLING_PREFERENCE"
+        private const val BIKE_PREFERENCE = ".BIKE_PREFERENCE"
         private const val MODE_SET = ".MODE_SET"
         private const val DATE_TIME = ".DATE_TIME"
 
@@ -399,6 +405,9 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             target.putBoolean(OPTIMIZE_TRANSFERS, bundle.getBoolean(OPTIMIZE_TRANSFERS))
             target.putBoolean(WHEELCHAIR_ACCESSIBLE, bundle.getBoolean(WHEELCHAIR_ACCESSIBLE))
             target.putDouble(MAX_WALK_DISTANCE, bundle.getDouble(MAX_WALK_DISTANCE))
+            target.putString(WALK_PREFERENCE, bundle.getString(WALK_PREFERENCE))
+            target.putString(CYCLING_PREFERENCE, bundle.getString(CYCLING_PREFERENCE))
+            target.putString(BIKE_PREFERENCE, bundle.getString(BIKE_PREFERENCE))
 
             target.putString(MODE_SET, bundle.getString(MODE_SET))
             target.putLong(DATE_TIME, bundle.getLong(DATE_TIME))

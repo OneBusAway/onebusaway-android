@@ -6,11 +6,11 @@ opens the same screen on the other ([#2027](https://github.com/OneBusAway/onebus
 
 Two families of link, both handled by `HomeActivity` (the app's single Activity):
 
-| Link | Opens |
+| Link | What it does |
 | --- | --- |
-| `onebusaway://view-stop?stopID=1_75403&regionID=1` | That stop's arrivals |
-| `onebusaway://add-region?oba-url=…&otp-url=…` | Applies custom API URLs, stays on the map |
-| `https://onebusaway.co/regions/1/stops/1_75403/trips?trip_id=1_18196913&service_date=1698307200.0&stop_sequence=5` | That trip's details, scrolled to the stop in the path |
+| `onebusaway://view-stop?stopID=1_75403&regionID=1` | Opens that stop's arrivals |
+| `onebusaway://add-region?oba-url=…&otp-url=…` | Points the app at those API servers. Opens no screen — see below |
+| `https://onebusaway.co/regions/1/stops/1_75403/trips?trip_id=1_18196913&service_date=1698307200.0&stop_sequence=5` | Opens that trip's details, scrolled to the stop in the path |
 
 ## Custom-scheme links
 
@@ -26,6 +26,19 @@ brand advertises.
 
 `add-region` reads `oba-url` and `otp-url`; each is applied only if it validates. Ampersands inside a
 nested URL must be percent-encoded as `%26`.
+
+Unlike the other two links, `add-region` names no destination — it's a settings change, not a screen.
+It navigates nowhere (`IntentRouteMapper` returns `RouteDecision.None`), so the app simply opens on its
+usual home screen, the map. What changed is where the app's requests go:
+
+- **`oba-url`** becomes the OBA API server, and applying it **clears the selected region** — the app
+  stops resolving a region at all and talks to that server directly. This is the same state the
+  Settings custom-API-URL path produces; see [`CUSTOM_SERVERS.md`](CUSTOM_SERVERS.md).
+- **`otp-url`** becomes the trip-planning (OTP) server. On its own it leaves the region alone.
+
+The name `add-region` is inherited from iOS, where the link really does add a named region. Android has
+no custom-region model, so it can only set these URLs — which is also why `name`, `sidecar-url`,
+`umami-url` and `umami-id` are ignored (below).
 
 > Note that "validates" here means *well-formed*, not *trusted*, and this filter is `BROWSABLE` — so any
 > web page can repoint the app's API server with no confirmation. That predates this vocabulary (it was

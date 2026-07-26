@@ -21,6 +21,7 @@ import org.onebusaway.android.ui.mylists.MyTabs
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteDecision
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteIntent
 import org.onebusaway.android.ui.nav.IntentRouteMapper.decide
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 
 /**
  * Unit tests for the pure route-precedence decision [IntentRouteMapper.decide] — the branch order +
@@ -168,6 +169,59 @@ class IntentRouteMapperTest {
         assertEquals(
             RouteDecision.None,
             decide(RouteIntent(pathSegments = listOf("service_alerts", "abc")))
+        )
+    }
+
+    // --- cross-platform (iOS-parity) deep links; the URI parsing itself is ExternalDeepLinksTest ---
+
+    @Test
+    fun `a view-stop deep link opens that stop's arrivals`() {
+        assertEquals(
+            RouteDecision.Arrivals("1_75403"),
+            decide(RouteIntent(deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403")))
+        )
+    }
+
+    @Test
+    fun `a web trip deep link opens the trip scrolled to the shared stop`() {
+        assertEquals(
+            RouteDecision.TripDetails("1_18196913", "1_75403", TripDetailsLauncher.SCROLL_MODE_STOP),
+            decide(
+                RouteIntent(
+                    deepLinkTarget = ExternalDeepLinks.Target.Trip(
+                        tripId = "1_18196913",
+                        stopId = "1_75403"
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `add-region still wins over a deep-link target on the same URI`() {
+        // Belt-and-braces on the branch order: add-region's URLs apply as a side effect and it stays
+        // on the home/map path, so it must not be overtaken by a later routing branch.
+        assertEquals(
+            RouteDecision.None,
+            decide(
+                RouteIntent(
+                    isAddRegion = true,
+                    deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403")
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `a deep-link target beats the content data-URI path branches`() {
+        assertEquals(
+            RouteDecision.Arrivals("1_75403"),
+            decide(
+                RouteIntent(
+                    deepLinkTarget = ExternalDeepLinks.Target.Stop("1_75403"),
+                    pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224")
+                )
+            )
         )
     }
 }

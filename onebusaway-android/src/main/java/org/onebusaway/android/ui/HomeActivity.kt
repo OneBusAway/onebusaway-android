@@ -271,9 +271,7 @@ class HomeActivity : AppCompatActivity() {
     private fun applyIntentSideEffects(intent: Intent?) {
         if (intent == null) return
         val data = intent.data
-        if (data?.scheme == IntentRouteMapper.ADD_REGION_SCHEME &&
-            data.host == IntentRouteMapper.ADD_REGION_HOST
-        ) {
+        if (data != null && IntentRouteMapper.isAddRegionUri(data)) {
             // Validating and applying the URLs is the region domain's job; we just parse them off the URI.
             regionRepository.applyCustomApiUrls(
                 obaUrl = data.getQueryParameter("oba-url"),

@@ -32,6 +32,10 @@ Edit the file and update:
 2. **Application ID** - Your unique package name (e.g., `com.mybrand.transit`)
 3. **Pelias key reference** - Update `getPeliasKey(name)` (or use empty string)
 4. **Region settings** - Set `USE_FIXED_REGION` and related fields
+5. **Deep-link scheme** - Set the `deepLinkScheme` manifest placeholder and the matching
+   `DEEP_LINK_SCHEME` build-config field to your brand's own custom URL scheme (see
+   [`docs/DEEP_LINKING.md`](../../docs/DEEP_LINKING.md)). Both are **required** — the manifest
+   won't merge without the placeholder.
 
 ### Step 2: Create Resource Directory
 

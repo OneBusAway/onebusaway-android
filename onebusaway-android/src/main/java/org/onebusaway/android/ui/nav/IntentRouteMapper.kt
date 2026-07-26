@@ -17,8 +17,11 @@ package org.onebusaway.android.ui.nav
 
 import android.app.SearchManager
 import android.content.Intent
+import android.net.Uri
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.ui.arrivals.ArrivalsIntents
 import org.onebusaway.android.ui.mylists.MyTabs
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.ReminderUtils
 
 /**
@@ -28,14 +31,23 @@ import org.onebusaway.android.util.ReminderUtils
  * `Intent`/`Uri`/JSON reads ([routeForIntent] -> [read]).
  *
  * Routing only — side-effect free: the domain mutations some intents imply (the `add-region` URL apply,
- * the FCM arrival-reminder clear) run in `HomeActivity.applyIntentSideEffects`, which shares the
- * [ADD_REGION_SCHEME]/[ADD_REGION_HOST] constants from here and [ReminderUtils.ARRIVAL_PAYLOAD_KEY].
+ * the FCM arrival-reminder clear) run in `HomeActivity.applyIntentSideEffects`, which shares
+ * [isAddRegionUri] from here and reads [ReminderUtils.ARRIVAL_PAYLOAD_KEY].
+ *
+ * The externally-reachable deep-link vocabulary itself lives in [ExternalDeepLinks].
  */
 object IntentRouteMapper {
 
-    /** The exported `onebusaway://add-region` deep link (an exported manifest intent-filter). */
-    const val ADD_REGION_SCHEME = "onebusaway"
+    /** Host of the exported `<app-scheme>://add-region` deep link (a manifest intent-filter). */
     const val ADD_REGION_HOST = "add-region"
+
+    /**
+     * The custom schemes this build answers to: the cross-platform `onebusaway` scheme (shared with
+     * OneBusAway for iOS, so every brand answers to it) plus the brand's own
+     * (`BuildConfig.DEEP_LINK_SCHEME` — `kiedybus` for KiedyBus, the same string for the OBA brand).
+     * Must stay in step with the manifest's custom-scheme intent-filter (`${deepLinkScheme}`).
+     */
+    val APP_SCHEMES: Set<String> = setOf("onebusaway", BuildConfig.DEEP_LINK_SCHEME)
 
     private const val NIGHT_LIGHT_ACTIVITY = "NightLightActivity"
 
@@ -45,6 +57,8 @@ object IntentRouteMapper {
         val navRoute: String? = null,
         /** The exported add-region deep link — routes nowhere (stays on home/map; URLs apply as a side effect). */
         val isAddRegion: Boolean = false,
+        /** The screen a cross-platform (iOS-parity) deep link targets; null if the data URI isn't one. */
+        val deepLinkTarget: ExternalDeepLinks.Target? = null,
         /** System search ([Intent.ACTION_SEARCH]); [searchQuery] is the (possibly empty) query. */
         val isSearch: Boolean = false,
         val searchQuery: String = "",
@@ -86,6 +100,15 @@ object IntentRouteMapper {
     fun routeForIntent(intent: Intent?): String? = intent?.let { decide(read(it)).toRoute() }
 
     /**
+     * Whether [uri] is the `add-region` deep link, i.e. the intent carries custom API URLs to apply.
+     * Shared with `HomeActivity.applyIntentSideEffects`, which runs that (side-effecting) apply.
+     */
+    fun isAddRegionUri(uri: Uri?): Boolean {
+        val scheme = uri?.scheme ?: return false
+        return scheme in APP_SCHEMES && uri.host == ADD_REGION_HOST
+    }
+
+    /**
      * The pure route-precedence decision over [input] — the exact branch order of the former
      * `HomeActivity.routeForIntent`.
      */
@@ -95,6 +118,17 @@ object IntentRouteMapper {
         // The exported add-region deep link applies custom API URLs as a side effect (HomeActivity); for
         // routing it stays on the home/map path (the legacy handler went Home).
         if (input.isAddRegion) return RouteDecision.None
+        // The other exported deep links — the cross-platform (iOS-parity) stop / trip links. A web trip
+        // link names the stop it was shared from, so open the trip scrolled to that stop.
+        when (val target = input.deepLinkTarget) {
+            is ExternalDeepLinks.Target.Stop -> return RouteDecision.Arrivals(target.stopId)
+            is ExternalDeepLinks.Target.Trip -> return RouteDecision.TripDetails(
+                tripId = target.tripId,
+                stopId = target.stopId,
+                scrollMode = TripDetailsLauncher.SCROLL_MODE_STOP
+            )
+            null -> Unit
+        }
         // System search (HomeActivity is the default_searchable target): open the search destination.
         if (input.isSearch) return RouteDecision.Search(input.searchQuery)
         // The FCM arrival payload clears its fired reminder as a side effect; here it just opens arrivals
@@ -148,7 +182,8 @@ object IntentRouteMapper {
         val tabTag = data?.let { MyTabs.defaultTabFromUri(it) }
         return RouteIntent(
             navRoute = intent.getStringExtra(NavRoutes.EXTRA_NAV_ROUTE),
-            isAddRegion = data?.scheme == ADD_REGION_SCHEME && data.host == ADD_REGION_HOST,
+            isAddRegion = isAddRegionUri(data),
+            deepLinkTarget = data?.let { ExternalDeepLinks.parse(it.toLink(), APP_SCHEMES) },
             isSearch = intent.action == Intent.ACTION_SEARCH,
             searchQuery = intent.getStringExtra(SearchManager.QUERY).orEmpty(),
             hasArrivalPayload = arrivalJson != null,
@@ -167,4 +202,22 @@ object IntentRouteMapper {
             arrivalsStopName = intent.getStringExtra(ArrivalsIntents.STOP_NAME)
         )
     }
+
+    /**
+     * Decomposes this data URI into the plain parts [ExternalDeepLinks.parse] reads. Query values come
+     * out percent-decoded (`Uri.getQueryParameter`); a parameter present with no value reads as `""`,
+     * which the parser rejects the same way it rejects an absent one.
+     */
+    private fun Uri.toLink(): ExternalDeepLinks.Link = ExternalDeepLinks.Link(
+        scheme = scheme,
+        host = host,
+        pathSegments = pathSegments.orEmpty(),
+        // getQueryParameterNames()/getQueryParameter() throw on an opaque URI (no hierarchical part);
+        // isHierarchical guards that — `onebusaway:view-stop?...` (no `//`) is opaque, for instance.
+        params = if (isHierarchical) {
+            queryParameterNames.associateWith { getQueryParameter(it).orEmpty() }
+        } else {
+            emptyMap()
+        }
+    )
 }

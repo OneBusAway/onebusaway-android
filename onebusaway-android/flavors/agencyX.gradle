@@ -11,7 +11,10 @@ android.productFlavors {
     agencyX {
         dimension "brand"
         applicationId "org.agencyx.android" // Unique listing of this brand on app store
-        manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+        manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider', deepLinkScheme: "onebusaway"]
+        // The brand's own custom deep-link scheme, matching OneBusAway for iOS. Kept in step
+        // with the deepLinkScheme manifest placeholder above (IntentRouteMapper.APP_SCHEMES).
+        buildConfigField "String", "DEEP_LINK_SCHEME", "\"onebusaway\""
         buildConfigField "boolean", "USE_FIXED_REGION", "false" // Supports multi-region
         buildConfigField "boolean", "USE_PELIAS_GEOCODING", "true"
         buildConfigField "String", "PELIAS_API_KEY", "\"" + getPeliasKey("agencyX") + "\""

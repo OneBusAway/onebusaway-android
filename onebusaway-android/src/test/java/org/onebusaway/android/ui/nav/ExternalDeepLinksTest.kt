@@ -16,23 +16,31 @@
 package org.onebusaway.android.ui.nav
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.Link
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.Target
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.parse
 
 /**
- * Unit tests for the cross-platform (iOS-parity) deep-link parser (#2027). The `Uri` decomposition
- * lives in `IntentRouteMapper.read`, so these exercise the pure vocabulary: which links are
- * recognized, which are deliberately not, and what each maps to.
+ * Unit tests for the cross-platform (iOS-parity) deep-link parser (#2027). These exercise the pure
+ * vocabulary — which links are recognized, which are deliberately not, and what each maps to. The
+ * `Uri` decomposition that feeds it (`ExternalDeepLinks.toLink`) needs a real `android.net.Uri`, so it
+ * is covered by the instrumented `ExternalDeepLinksUriTest` instead.
  */
 class ExternalDeepLinksTest {
 
     /** Both schemes the OBA brand answers to; a brand build adds its own (e.g. `kiedybus`). */
     private val schemes = setOf("onebusaway", "kiedybus")
 
-    private fun appLink(host: String, params: Map<String, String> = emptyMap(), scheme: String = "onebusaway") = Link(scheme = scheme, host = host, pathSegments = emptyList(), params = params)
+    private fun appLink(
+        host: String,
+        params: Map<String, String> = emptyMap(),
+        scheme: String = "onebusaway"
+    ) = Link(scheme = scheme, host = host, pathSegments = emptyList(), params = params)
 
     private fun webLink(
         host: String = "onebusaway.co",
@@ -181,11 +189,64 @@ class ExternalDeepLinksTest {
             listOf("regions", "1", "stops", "1_75403"),
             listOf("regions", "1", "stops", "1_75403", "trips", "extra"),
             listOf("regions", "1", "stations", "1_75403", "trips"),
+            // Unreachable from a real Uri (getPathSegments() drops empty segments); guards the pure
+            // entry point, which any caller may hand a directly-constructed Link.
             listOf("regions", "1", "stops", "", "trips"),
             emptyList()
         )
         rejected.forEach { path ->
             assertNull("path $path", parse(webLink(pathSegments = path), schemes))
         }
+    }
+
+    // --- links the manifest filter claims but the parser can't route (handed back to the browser) ---
+
+    @Test
+    fun `a claimed web link the parser can't route is an unhandled web link`() {
+        // The intent-filter can't see the query string, so a trip URL stripped of its trip_id still
+        // launches the app; it must go back to the browser rather than land on the map.
+        assertTrue(ExternalDeepLinks.isUnhandledWebLink(webLink(params = emptyMap())))
+        // pathPattern's `.*` spans '/', so a deeper path clears the filter too.
+        assertTrue(
+            ExternalDeepLinks.isUnhandledWebLink(
+                webLink(pathSegments = listOf("regions", "1", "x", "stops", "1_75403", "trips"))
+            )
+        )
+    }
+
+    @Test
+    fun `a routable web link is not an unhandled web link`() {
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(webLink()))
+    }
+
+    @Test
+    fun `links we were never claiming are not unhandled web links`() {
+        // Only the web filter is broader than the parser. A foreign host never reached us, an http URL
+        // isn't in the filter, and an unrecognized custom-scheme link is a dead link, not a web page —
+        // handing any of these to a browser would be wrong.
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(webLink(host = "example.com")))
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(webLink().copy(scheme = "http")))
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(appLink("view-route")))
+    }
+
+    // --- the per-brand scheme derived from the deepLinkScheme manifest placeholder ---
+
+    @Test
+    fun `this build answers to the shared scheme and to its own`() {
+        // Guards the Gradle wiring itself (deepLinkScheme placeholder -> BuildConfig.DEEP_LINK_SCHEME ->
+        // APP_SCHEMES), which every other test in this class bypasses by passing an explicit scheme set.
+        // A placeholder that failed to resolve would surface here as a blank or literal-"${…}" scheme.
+        assertTrue("shared scheme missing", "onebusaway" in ExternalDeepLinks.APP_SCHEMES)
+        assertTrue("brand scheme is blank", BuildConfig.DEEP_LINK_SCHEME.isNotBlank())
+        assertFalse("placeholder unresolved", BuildConfig.DEEP_LINK_SCHEME.contains("$"))
+        assertTrue(BuildConfig.DEEP_LINK_SCHEME in ExternalDeepLinks.APP_SCHEMES)
+    }
+
+    @Test
+    fun `the default appSchemes overload accepts this build's own scheme`() {
+        assertEquals(
+            Target.Stop("1_75403"),
+            parse(appLink("view-stop", mapOf("stopID" to "1_75403"), scheme = BuildConfig.DEEP_LINK_SCHEME))
+        )
     }
 }

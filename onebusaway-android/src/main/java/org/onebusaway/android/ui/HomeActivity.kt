@@ -267,16 +267,27 @@ class HomeActivity : AppCompatActivity() {
     /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s
      * pure route mapping so that stays a side-effect-free translator: the `add-region` deep link applies
-     * custom API URLs (clearing the region), and the FCM payload clears the now-fired reminder.
+     * custom API URLs (clearing the region), an unroutable web link goes back to the browser, and the FCM
+     * payload clears the now-fired reminder.
      */
     private fun applyIntentSideEffects(intent: Intent?) {
         if (intent == null) return
-        val deepLink = intent.data?.let { ExternalDeepLinks.parse(it) }
+        val data = intent.data
+        val deepLink = data?.let { ExternalDeepLinks.parse(it) }
         if (deepLink is ExternalDeepLinks.Target.AddRegion) {
             // Validating and applying the URLs is the region domain's job; ExternalDeepLinks just read
             // them off the URI.
             regionRepository.applyCustomApiUrls(obaUrl = deepLink.obaUrl, otpUrl = deepLink.otpUrl)
             return
+        }
+        // The web intent-filter is necessarily broader than the parser (it can't see the query string,
+        // and pathPattern globs span '/'), so we can be launched for a onebusaway.co URL that routes
+        // nowhere. Give it back to the browser instead of stranding the user on the map. This activity
+        // deliberately stays alive behind it: the same call runs for warm relaunches (LaunchIntentEffect
+        // feeds it both cold and onNewIntent intents), and finishing there would tear down a session the
+        // user is in the middle of. If no browser will take it we fall through and land on home/map.
+        if (data != null && ExternalDeepLinks.isUnhandledWebLink(data)) {
+            if (ExternalIntents.openInBrowser(this, data)) return
         }
         intent.getStringExtra(ReminderUtils.ARRIVAL_PAYLOAD_KEY)?.let { arrivalJson ->
             reminderRepository.deleteReminderFromPayload(arrivalJson)

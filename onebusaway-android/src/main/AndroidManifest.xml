@@ -49,6 +49,17 @@
         android:glEsVersion="0x00020000"
         android:required="true"/>
 
+    <!-- Package visibility (API 30+): ExternalIntents.openInBrowser enumerates the device's browsers so
+         it can hand back a web deep link this app was launched for but can't route
+         (ExternalDeepLinks.isUnhandledWebLink). Without this it would see no browser and give up. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:name="org.onebusaway.android.app.Application"
@@ -100,7 +111,12 @@
                  `onebusaway` is the cross-platform scheme every brand answers to; ${deepLinkScheme} is
                  the brand's own (identical for the OBA brand, `kiedybus` for KiedyBus). The placeholder
                  is the single declaration of that scheme — ExternalDeepLinks.APP_SCHEMES is derived
-                 from it via BuildConfig.DEEP_LINK_SCHEME (see build.gradle.kts). -->
+                 from it via BuildConfig.DEEP_LINK_SCHEME (see build.gradle.kts).
+
+                 For every brand except KiedyBus the two <data> schemes below therefore resolve to the
+                 same string, and the merged manifest carries `onebusaway` twice. That is intentional and
+                 inert (a filter's scheme set is a set), and it's the price of declaring the brand scheme
+                 in exactly one place: a manifest can't emit an element conditionally. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 

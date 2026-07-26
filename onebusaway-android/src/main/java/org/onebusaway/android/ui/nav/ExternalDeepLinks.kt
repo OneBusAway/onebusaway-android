@@ -28,13 +28,15 @@ import org.onebusaway.android.BuildConfig
  *     `https://onebusaway.co/regions/{regionID}/stops/{stopID}/trips?trip_id=…`.
  *
  * Every recognized link becomes a [Target]. [parse] is pure — [Link] is an already-decomposed URI with
- * no Android or app-state dependency — so the whole vocabulary is JVM-unit-testable; the `Uri` overload
- * is the thin Android-facing entry point its two callers use ([IntentRouteMapper] to route, and
- * `HomeActivity.applyIntentSideEffects` to run the domain mutation [Target.AddRegion] implies).
+ * no Android or app-state dependency — so the whole vocabulary is JVM-unit-testable; the `Uri` overloads
+ * are the thin Android-facing entry points its callers use ([IntentRouteMapper] to route, and
+ * `HomeActivity.applyIntentSideEffects` to run the domain mutation [Target.AddRegion] implies and to
+ * hand [isUnhandledWebLink] URLs back to the browser).
  *
  * The manifest's intent-filters are the gate that decides which of these links reach the app at all, and
  * must stay in step with the scheme/host sets here — see `src/main/AndroidManifest.xml` (custom scheme)
- * and `src/oba/AndroidManifest.xml` (web links).
+ * and `src/oba/AndroidManifest.xml` (web links). The web filter is necessarily *broader* than [parse]
+ * (see [isUnhandledWebLink]); the custom-scheme filter matches it exactly.
  *
  * Distinct from [DeepLinkUris], the app's *internal* `content://` stop/route vocabulary (pinned launcher
  * shortcuts and in-app launches). `docs/DEEP_LINKING.md` documents this vocabulary for link authors,
@@ -72,6 +74,12 @@ object ExternalDeepLinks {
     /**
      * Hosts whose [WEB_SCHEME] links are app links, mirroring the iOS app's associated domains
      * (`applinks:onebusaway.co`, `applinks:www.onebusaway.co`, `applinks:sidecar.onebusaway.org`).
+     *
+     * These are the OneBusAway deployment's own hosts, and deliberately not a per-brand value: only a
+     * brand that owns a host can verify it (App Links verification matches the *installed* app's signing
+     * certificate), so the matching intent-filter lives in `src/oba/AndroidManifest.xml` alone. A brand
+     * wanting web links of its own needs both a flavor manifest and a host set — that's a real feature,
+     * not a config tweak, so it isn't half-wired here. See `docs/DEEP_LINKING.md`.
      */
     val WEB_HOSTS = setOf("onebusaway.co", "www.onebusaway.co", "sidecar.onebusaway.org")
 
@@ -122,8 +130,30 @@ object ExternalDeepLinks {
         else -> null
     }
 
+    /**
+     * True when [uri] is a link the web intent-filter claims but [parse] can't turn into a screen.
+     *
+     * That gap is unavoidable, not a bug to close in the manifest: an intent-filter can't see the query
+     * string at all (so it can't require `trip_id`), and `pathPattern` is a `PATTERN_SIMPLE_GLOB` whose
+     * `.*` spans `/` (so it can't require exactly one segment per wildcard; `pathAdvancedPattern` would,
+     * but it is API 31+ and `minSdk` is 23). The filter is therefore a superset of this parser, and the
+     * app can be launched for a URL that routes nowhere. `HomeActivity.applyIntentSideEffects` hands
+     * those back to the browser rather than silently dropping the user on the map.
+     *
+     * Custom-scheme links are deliberately excluded: their filter matches [parse] exactly (scheme × host,
+     * no path or query involved), nothing else on the device would handle a `onebusaway://` URL, and
+     * they are not web pages — an unrecognized one is a dead link either way, so home/map is the right
+     * landing.
+     */
+    fun isUnhandledWebLink(uri: Uri): Boolean = isUnhandledWebLink(uri.toLink())
+
+    /** @see isUnhandledWebLink */
+    fun isUnhandledWebLink(link: Link): Boolean = link.scheme == WEB_SCHEME && link.host in WEB_HOSTS && parseWebLink(link) == null
+
     /** `/regions/{regionID}/stops/{stopID}/trips?trip_id=…` — the only recognized web path shape. */
     private fun parseWebLink(link: Link): Target? {
+        // `Uri.getPathSegments()` drops empty segments, so a real URI can't produce a blank stopId; the
+        // check guards the directly-constructed [Link]s that [parse]'s pure entry point also accepts.
         val (regions, _, stops, stopId, trips) = link.pathSegments.takeIf { it.size == 5 } ?: return null
         if (regions != "regions" || stops != "stops" || trips != "trips" || stopId.isBlank()) return null
         val tripId = link.params.nonBlank(PARAM_TRIP_ID) ?: return null
@@ -136,12 +166,17 @@ object ExternalDeepLinks {
     /**
      * Decomposes a data URI into the plain parts [parse] reads.
      *
+     * Scheme and host are lowercased (locale-independently), because they are case-*insensitive* per
+     * RFC 3986 while `Uri` reports them verbatim and this parser compares them by equality. The
+     * intent-filter that let the URI in matched case-insensitively too, so without this a
+     * `HTTPS://OneBusAway.co/…` link would clear the filter and then fail to parse.
+     *
      * `getQueryParameterNames()`/`getQueryParameter()` throw on an opaque URI (one with no hierarchical
      * part, e.g. `onebusaway:view-stop?…` without the `//`), so [Uri.isHierarchical] guards them.
      */
     private fun Uri.toLink(): Link = Link(
-        scheme = scheme,
-        host = host,
+        scheme = scheme?.lowercase(),
+        host = host?.lowercase(),
         pathSegments = pathSegments,
         params = if (isHierarchical) {
             queryParameterNames.associateWith { getQueryParameter(it).orEmpty() }

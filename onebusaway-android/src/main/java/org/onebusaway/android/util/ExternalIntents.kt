@@ -23,6 +23,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.widget.Toast
@@ -47,6 +48,78 @@ object ExternalIntents {
             Toast.makeText(context, context.getString(R.string.browser_error), Toast.LENGTH_SHORT)
                 .show()
         }
+    }
+
+    /**
+     * A scheme-only `https` URI, used to enumerate the device's browsers. Every browser's web filter is
+     * a bare `<data android:scheme="https"/>` with no authority, so they all match it — while the app's
+     * own web-link filter, which requires a host and a path, cannot. That asymmetry is what keeps
+     * [openInBrowser] from resolving back to this app and looping.
+     */
+    private val BROWSER_PROBE_URI = "https:".toUri()
+
+    /**
+     * Opens [uri] in a browser, explicitly excluding this app, and reports whether it could.
+     *
+     * A plain `ACTION_VIEW` (as [goToUrl] fires) is wrong for a URL this app was *launched* for: it
+     * would match our own web-link intent-filter again and bounce straight back. So the target browser
+     * is resolved up front and set as the intent's package. Used to hand back an App Link the manifest
+     * filter claims but the parser can't route — see `ExternalDeepLinks.isUnhandledWebLink`.
+     *
+     * Browsers are enumerated rather than assumed so the user's default is honoured; when the device has
+     * browsers but no default among them, the chooser is restricted to those explicit intents (a plain
+     * `createChooser` over the URL would list this app again).
+     */
+    fun openInBrowser(context: Context, uri: Uri): Boolean {
+        val manager = context.packageManager
+        val probe = Intent(Intent.ACTION_VIEW, BROWSER_PROBE_URI)
+            .addCategory(Intent.CATEGORY_BROWSABLE)
+        val browsers = manager.browserPackages(probe)
+            .filterNot { it == context.packageName }
+            .distinct()
+        if (browsers.isEmpty()) return false
+
+        val open = Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
+        val preferred = manager.defaultBrowserPackage(probe)?.takeIf { it in browsers }
+        val launch = if (preferred != null) {
+            Intent(open).setPackage(preferred)
+        } else {
+            val explicit = browsers.map { Intent(open).setPackage(it) }
+            Intent.createChooser(explicit.first(), null).apply {
+                putExtra(Intent.EXTRA_INITIAL_INTENTS, explicit.drop(1).toTypedArray())
+            }
+        }
+        return try {
+            context.startActivity(launch)
+            true
+        } catch (e: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    /** Package names of every activity that handles [probe] (see [BROWSER_PROBE_URI]). */
+    private fun PackageManager.browserPackages(probe: Intent): List<String> {
+        val matches = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            queryIntentActivities(probe, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
+        } else {
+            // The ResolveInfoFlags overload is API 33+ and minSdk is 23, so the pre-33 path has to use
+            // the int overload that API 33 deprecated.
+            @Suppress("DEPRECATION")
+            queryIntentActivities(probe, PackageManager.MATCH_DEFAULT_ONLY)
+        }
+        return matches.map { it.activityInfo.packageName }
+    }
+
+    /** The user's default browser, or null if the device has none set (the chooser would show). */
+    private fun PackageManager.defaultBrowserPackage(probe: Intent): String? {
+        val match = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            resolveActivity(probe, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
+        } else {
+            // See browserPackages: the typed-flags overload needs API 33.
+            @Suppress("DEPRECATION")
+            resolveActivity(probe, PackageManager.MATCH_DEFAULT_ONLY)
+        }
+        return match?.activityInfo?.packageName
     }
 
     fun goToPhoneDialer(context: Context, url: String) {

@@ -52,9 +52,18 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$SINCE" ]; then
-    SINCE="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+    # The release tag is normally cut before the notes are generated, so HEAD is
+    # usually the new release. Measuring from the tag on HEAD would give an empty
+    # range and silently produce no notes — measure from the release before it.
+    if git describe --exact-match --tags --match 'v*' HEAD > /dev/null 2>&1; then
+        DESCRIBE_FROM="HEAD^"
+    else
+        DESCRIBE_FROM="HEAD"
+    fi
+
+    SINCE="$(git describe --tags --abbrev=0 --match 'v*' "$DESCRIBE_FROM" 2>/dev/null || true)"
     if [ -z "$SINCE" ]; then
-        echo "Error: no v* tag found to measure from. Pass --since <ref> explicitly." >&2
+        echo "Error: no earlier v* tag found to measure from. Pass --since <ref> explicitly." >&2
         exit 1
     fi
 fi
@@ -106,7 +115,10 @@ case "$COMMAND" in
 
         notes="$(printf '%s\n' "$highlights" | sed 's/^/• /')"
 
-        char_count=${#notes}
+        # Count what actually gets written: the bullets plus the trailing newline
+        # the writes below add, so a payload that lands on the cap is not accepted
+        # here and then rejected by Play.
+        char_count=$(( ${#notes} + 1 ))
         if [ "$char_count" -gt "$PLAY_MAX_CHARS" ]; then
             over=$((char_count - PLAY_MAX_CHARS))
             echo "Error: release notes are $char_count characters, $over over the Play Store limit of $PLAY_MAX_CHARS." >&2

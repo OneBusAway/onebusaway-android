@@ -195,7 +195,7 @@ After you've created the release on GitHub, head to the [Google Play developer c
 1. Go to OneBusAway main app and then "Testing->Open testing"
 2. Create a new release and upload the new `obaGoogleRelease-vx.y.z.apk` APK
 3. Keep all the existing APKs that are already there as "Included", except the current production release. This makes sure that everyone with older version Android devices can still download the app. So only the current production release should be under "Not Included".
-4. Type in the version number `vx.y.z` in the release name. For the "What's new" text, paste the output of `tools/release-notes.sh play` (see [Release notes](#release-notes)) — if you published with GPP rather than by hand, that text was already uploaded from `release-notes/en-US/default.txt` and there is nothing to paste.
+4. Type in the version number `vx.y.z` in the release name, and paste the output of `tools/release-notes.sh play` into the "What's new" section (see [Release notes](#release-notes)). Check what the console already shows before pasting — depending on which GPP task you ran, the notes may have been uploaded from `release-notes/en-US/default.txt` already.
 5. Review and publish release to beta testing group (I usually immediately push to all beta testing users)
 6. Announce beta release on the [onebusaway-developers Google Group](https://groups.google.com/g/onebusaway-developers).
 

@@ -1,0 +1,16 @@
+# Subject: what the change does, in the imperative, with the issue number.
+#   Offer bikeshare trips where the OTP2 server supports them (#2017)
+#
+# Body: why, and anything a reviewer or a future archaeologist would want.
+#
+# If a rider would notice this change, end the message with a Changelog trailer
+# describing the effect in their words, not the code's. Most commits don't need
+# one — the subject line above is already the developer-facing entry.
+#
+#   Changelog: Bikeshare trips now show up in the trip planner.
+#
+# Keep it to one sentence; a release's trailers share a character budget that
+# tools/release-notes.sh enforces. The trailer has to be in the block at the
+# very end of the message or git won't read it.
+#
+# See .github/CONTRIBUTING.md#changelog-entries.

@@ -20,6 +20,7 @@ import org.onebusaway.android.models.RouteMapData
 import org.onebusaway.android.models.RouteStopGroup
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.models.TripRouteInfo
+import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -49,6 +50,7 @@ class FocusedTripRepositoryTest {
         val catalogs = mutableMapOf<String, Result<List<RouteStopGroup>>>()
         override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = catalogs[routeId] ?: Result.success(emptyList())
         override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
+        override suspend fun routeShapes(routeId: String): Result<List<List<GeoPoint>>?> = Result.success(null)
     }
 
     @Test

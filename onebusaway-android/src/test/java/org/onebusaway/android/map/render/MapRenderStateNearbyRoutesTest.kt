@@ -46,18 +46,22 @@ class MapRenderStateNearbyRoutesTest {
     }
 
     @Test
-    fun `the static-layer comparison strips both route line layers`() {
+    fun `the static-layer comparison strips every route layer, lines and badges alike`() {
         val stripped = MapRenderSnapshot(
             routePolylines = listOf(focusLine),
             nearbyRoutePolylines = listOf(hoopLine),
+            routeBadges = listOf(badge("40")),
             nearbyRouteBadges = listOf(badge("8")),
             focusedStopId = "stop"
         ).withoutRouteGeometry()
 
         assertEquals(emptyList<RoutePolyline>(), stripped.routePolylines)
         assertEquals(emptyList<RoutePolyline>(), stripped.nearbyRoutePolylines)
-        // Badges + focus are static-layer content, so they must survive the strip.
-        assertEquals(listOf("8"), stripped.allRouteBadges.map { it.routeShortName })
+        // Badges are reconciled on their own change boundary, so they must NOT reach the static
+        // comparison: while they did, the hoop's progressive publish rebuilt every annotation on the
+        // map once per resolved route.
+        assertEquals(emptyList<RouteBadge>(), stripped.allRouteBadges)
+        // Focus is genuinely static-layer content and still has to survive the strip.
         assertEquals("stop", stripped.focusedStopId)
     }
 

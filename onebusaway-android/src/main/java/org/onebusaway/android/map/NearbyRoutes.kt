@@ -18,6 +18,7 @@ package org.onebusaway.android.map
 import kotlin.math.cos
 import kotlin.math.pow
 import kotlin.math.sqrt
+import org.onebusaway.android.map.layout.DEFAULT_BADGE_SEPARATION_METERS as BADGE_SEPARATION_METERS
 import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.layoutRouteBadges
@@ -26,9 +27,6 @@ import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.map.render.haversineMeters
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
@@ -53,56 +51,6 @@ internal data class NearbyRoutesPresentation(
     val polylines: List<RoutePolyline>,
     val badges: List<RouteBadge>
 )
-
-/**
- * The [limit] of [routes] whose nearest stop inside [hoop] is closest to its centre.
- *
- * The hoop's route *set* comes straight from `routes-for-location` over the circle, which is the
- * direct question and the authoritative answer. This exists only because that endpoint can't answer
- * the follow-up one: it returns the set out of a `HashSet`, in no order and with no distances, so when
- * more routes run through the hoop than the layer will draw there is nothing in it to choose by.
- * Ranking each route by its nearest serving stop gives [limit] a meaning — the routes closest to the
- * centre win, which are the ones a rider can actually walk to.
- *
- * [stops] is the hoop's own stops-for-location sample, so it may be incomplete; a route it doesn't
- * mention keeps its place in the set and sorts last rather than being dropped. Ties (and unmentioned
- * routes) break on route id, so the drawn set is stable across refreshes.
- */
-internal fun rankRoutesByNearestStop(
-    hoop: NearbyRoutesHoop,
-    routes: List<ObaRoute>,
-    stops: Collection<ObaStop>,
-    limit: Int
-): List<ObaRoute> {
-    val nearestStopMeters = HashMap<String, Double>()
-    for (stop in stops) {
-        val distance = haversineMeters(hoop.center, GeoPoint(stop.latitude, stop.longitude))
-        if (distance > hoop.radiusMeters) continue
-        for (routeId in stop.routeIds) {
-            val best = nearestStopMeters[routeId]
-            if (best == null || distance < best) nearestStopMeters[routeId] = distance
-        }
-    }
-    return routes
-        .sortedWith(
-            compareBy(
-                { nearestStopMeters[it.id] ?: Double.MAX_VALUE },
-                { it.id }
-            )
-        )
-        .take(limit)
-}
-
-/**
- * The hoop's bounding box, as the (latitude, longitude) spans stops-for-location takes. A square
- * around the circle: the corners reach past the ring, and [nearbyRouteIds] drops what falls outside.
- */
-internal fun NearbyRoutesHoop.spanDegrees(): Pair<Double, Double> {
-    val latSpan = Math.toDegrees(2.0 * radiusMeters / EARTH_RADIUS_METERS)
-    // Longitude degrees shrink toward the poles; guard the division for a camera parked at one.
-    val cosLatitude = cos(Math.toRadians(center.latitude)).coerceAtLeast(MIN_LONGITUDE_SCALE)
-    return latSpan to latSpan / cosLatitude
-}
 
 /**
  * Build the hoop layer: the **whole** shape of every route that enters the hoop, and one badge per
@@ -157,6 +105,11 @@ internal fun assembleNearbyRoutesPresentation(
             }
         }
     }
+    // The ring being big enough on screen ([badgesInHoop]) is necessary but not sufficient: the labels
+    // also have to physically fit inside it. Anchoring more of them than the hoop can hold
+    // ([hoopBadgeCapacity]) piles the surplus onto the least-conflicting spot it can find, which is the
+    // stack the in-hoop mode exists to avoid — so past that count they spread along the routes instead.
+    val anchorInHoop = badgesInHoop && drawn.size <= hoopBadgeCapacity(hoop)
     val placements = layoutRouteBadges(
         drawn.map { (route, inHoop) ->
             RouteBadgeLayoutInput(
@@ -165,7 +118,7 @@ internal fun assembleNearbyRoutesPresentation(
                 RouteDirectionKey(route.routeId, null),
                 // In-hoop next to the user when the ring has room for the labels; along the whole
                 // route when it doesn't — see the note above.
-                (if (badgesInHoop) inHoop else route.shapes).map(::RouteBadgePath)
+                (if (anchorInHoop) inHoop else route.shapes).map(::RouteBadgePath)
             )
         }
     ).associateBy { it.route.routeId }
@@ -199,6 +152,23 @@ internal fun assembleNearbyRoutesPresentation(
  * would stack every label on one spot.
  */
 internal fun badgesFitInHoop(radiusDp: Float): Boolean = radiusDp >= BADGE_WIDTH_DP
+
+/**
+ * The most badges that can sit inside [hoop] without stacking: the ring's area over the area each
+ * badge claims, which is a disc of the badge layout's own [BADGE_SEPARATION_METERS] minimum
+ * separation. So it answers the layout's question in the layout's own terms — "can this many points be
+ * placed that far apart in a circle this big?" — rather than guessing a limit.
+ *
+ * Deliberately a *geographic* bound, not a screen one, so it doesn't move with zoom: the badge mode
+ * flipping as the camera scales is exactly the inconsistency the count check is here to remove. It is
+ * an upper bound — the layout must also find those spots on the routes' in-hoop stretches, and it
+ * staggers only a few steps along each — so it errs toward spreading the labels, which degrades far
+ * more gracefully than piling them up.
+ */
+internal fun hoopBadgeCapacity(hoop: NearbyRoutesHoop): Int {
+    val badgeRadius = BADGE_SEPARATION_METERS / 2.0
+    return (hoop.radiusMeters / badgeRadius).pow(2).toInt()
+}
 
 internal fun hoopRadiusDp(radiusMeters: Double, zoom: Double, latitude: Double): Float {
     val metersPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
@@ -304,13 +274,6 @@ private fun withAlpha(baseColor: Int, alpha01: Float): Int = ((alpha01.coerceIn(
  */
 internal const val NEARBY_ROUTES_RADIUS_METERS = 800.0
 
-/**
- * How many routes the hoop draws. A display + network budget, not a data rule: each route costs one
- * (cached, shared) stops-for-route fetch, and a downtown hoop can contain far more routes than read
- * legibly at once. [nearbyRouteIds] spends the budget on the routes nearest the centre.
- */
-internal const val MAX_NEARBY_ROUTES = 12
-
 /** How lightly the route lines are drawn — ambient context beneath the basemap's own labels. */
 private const val NEARBY_ROUTE_LINE_ALPHA = 0.65f
 
@@ -319,9 +282,6 @@ private const val NEARBY_ROUTE_LINE_ALPHA = 0.65f
  * text) — it is the yardstick [badgesFitInHoop] uses to ask whether the ring has room for labels.
  */
 private const val BADGE_WIDTH_DP = 56f
-
-/** Guards the longitude-span division for a camera parked at a pole. */
-private const val MIN_LONGITUDE_SCALE = 1e-6
 
 /** Mercator is undefined at the poles; clamp like the route-render pipeline does. */
 private const val MAX_MERCATOR_LATITUDE = 85.05112878

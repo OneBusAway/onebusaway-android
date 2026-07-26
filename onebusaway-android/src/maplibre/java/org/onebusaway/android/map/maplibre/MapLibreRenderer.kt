@@ -49,6 +49,7 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeReconciler
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.StopMarker
@@ -128,6 +129,17 @@ class MapLibreRenderer(
         setWidth = { line, width -> line.width = width }
     )
 
+    // Route badges are reconciled independently too, for the same reason the lines are: the hoop layer
+    // (#2004) publishes its routes progressively, and rebuilding every annotation per arrival blinked.
+    // The create/remove callbacks own [routeBadgeByMarker], so the tap lookup tracks the drawn set.
+    private val routeBadgeReconciler = RouteBadgeReconciler<Marker>(
+        createMarker = ::addRouteBadge,
+        removeMarkers = { markers ->
+            markers.forEach { routeBadgeByMarker.remove(it) }
+            map.removeAnnotations(markers)
+        }
+    )
+
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
     // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
@@ -189,9 +201,9 @@ class MapLibreRenderer(
             staticAnnotations.clear()
         }
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
-        // the bike / route-badge tap maps are cleared here.
+        // the bike tap map is cleared here. Route badges are on their own change boundary, so neither
+        // their markers nor their tap lookup are touched by a static redraw.
         bikeByMarker.clear()
-        routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
         routeStopCircleLayer.render(
@@ -235,24 +247,38 @@ class MapLibreRenderer(
             )
         }
 
-        renderRouteBadges(snapshot.allRouteBadges)
+        raiseRouteBadges()
     }
 
-    // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its
-    // icon on the point by default, so no anchor call is needed here (contrast Google's explicit
-    // .anchor(0.5f, 0.5f)). Draw order is add-order in maplibre (no z-index on classic markers), so
-    // adding these last keeps them on top of the stops/bikes/generics drawn above.
-    private fun renderRouteBadges(badges: List<RouteBadge>) {
-        for (badge in badges) {
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routeShortName, badge.color))
-            )
-            staticAnnotations.add(marker)
-            routeBadgeByMarker[marker] = badge
-        }
+    /** Reconcile the independently collected route-badge layer, retaining unchanged badge markers. */
+    fun renderRouteBadges(next: List<RouteBadge> = renderState.snapshot.value.allRouteBadges) {
+        routeBadgeReconciler.reconcile(next)
     }
+
+    /**
+     * Re-add the badge markers so they sit above the annotations [renderStatic] just drew. Draw order
+     * is add-order in maplibre (classic markers carry no z-index, unlike the Google flavor's explicit
+     * [ROUTE_BADGE_Z_INDEX]), so a static redraw would otherwise bury them under the stops and bikes.
+     *
+     * This is the one place badges are rebuilt without having changed, and it is deliberately tied to
+     * the *static* layer's cadence — a stop or bike update — not the badge layer's. The blink this
+     * whole boundary exists to stop came from the hoop's per-route emissions, which no longer reach
+     * here at all.
+     */
+    private fun raiseRouteBadges() {
+        val badges = renderState.snapshot.value.allRouteBadges
+        if (badges.isEmpty()) return
+        routeBadgeReconciler.clear()
+        routeBadgeReconciler.reconcile(badges)
+    }
+
+    // Parity with the Google flavor (#1827/#1913): the classic Marker centers its icon on the point by
+    // default, so no anchor call is needed here (contrast Google's explicit .anchor(0.5f, 0.5f)).
+    private fun addRouteBadge(badge: RouteBadge): Marker = map.addMarker(
+        MarkerOptions()
+            .position(badge.point.toLatLng())
+            .icon(routeBadgeIcon(badge.routeShortName, badge.color))
+    ).also { routeBadgeByMarker[it] = badge }
 
     private fun routeBadgeIcon(routeShortName: String, color: Int): Icon = iconFactory.fromBitmap(
         ContinuationBadgeBitmaps.badge(
@@ -299,8 +325,9 @@ class MapLibreRenderer(
         clearPing()
         stopMarkerLayer.dispose()
         routeStopCircleLayer.dispose()
-        // Clear the route lines first (removes them from the map), then mass-remove the rest.
+        // Clear the route lines and badges first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
+        routeBadgeReconciler.clear()
         map.removeAnnotations()
 
         staticAnnotations.clear()

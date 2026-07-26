@@ -257,11 +257,21 @@ data class MapRenderSnapshot(
 
     /**
      * This snapshot without any route geometry — what the flavor adapters compare for distinctness
-     * before redrawing the *static* layer (stops / bikes / generics / badges), so a line-only change
-     * doesn't churn those annotations. The route lines have their own change boundary (see
-     * [routePolylineRenderFlow]).
+     * before redrawing the *static* layer (stops / bikes / generics), so a route-layer change doesn't
+     * churn those annotations. Both route layers have their own change boundary: the lines via
+     * [routePolylineRenderFlow], the badges via [allRouteBadges] straight into
+     * [RouteBadgeReconciler].
+     *
+     * Badges are stripped here for the same reason the lines are, and it matters most for the
+     * nearby-routes hoop (#2004), which publishes progressively: while they were part of the static
+     * comparison, each newly-resolved route rebuilt every annotation on the map.
      */
-    fun withoutRouteGeometry(): MapRenderSnapshot = copy(routePolylines = emptyList(), nearbyRoutePolylines = emptyList())
+    fun withoutRouteGeometry(): MapRenderSnapshot = copy(
+        routePolylines = emptyList(),
+        nearbyRoutePolylines = emptyList(),
+        routeBadges = emptyList(),
+        nearbyRouteBadges = emptyList()
+    )
 
     /** Focused-stop adjacency and route focus use the same route-stop zoom scale. */
     val routeStopsScaleWithZoom: Boolean

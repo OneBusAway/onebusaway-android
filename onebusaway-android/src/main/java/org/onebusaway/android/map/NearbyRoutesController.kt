@@ -41,8 +41,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -60,13 +60,11 @@ import org.onebusaway.android.util.getRouteDisplayName
  * says almost nothing about any particular half mile, and the hoop has to mean the same thing at every
  * zoom).
  *
- * The one thing that endpoint can't do is choose *which* routes when more run through the hoop than
- * [MAX_NEARBY_ROUTES]: it returns an unordered set with no distances. Only in that case does the layer
- * also run a stops-for-location query over the hoop, to rank by nearest stop (see
- * [rankRoutesByNearestStop]) — so the extra query is paid for exactly where it buys something, and
- * most places never pay it. Each drawn route then costs one `stops-for-route` fetch for its shape,
- * through the shared cache ([RouteMapRepository] over `StopsForRouteRepository`), so a route already
- * opened this session — or already drawn by a neighbouring hoop — costs nothing.
+ * Every route in that answer is drawn — the layer doesn't cap the set, so downtown shows the whole
+ * dozens rather than a chosen few. Each costs one shape, taken from the shared shapes cache
+ * ([StopsForRouteRepository.routeShapes]), so a route already drawn by a neighbouring hoop — or opened
+ * on the route screen this session — costs nothing; the rest are fetched a couple at a time
+ * ([MAX_CONCURRENT_NEARBY_ROUTE_FETCHES]) and the layer fills in as they land.
  *
  * **When it refreshes.** The ring is drawn in screen space at the centre of the viewport (see
  * [hoop] and `hoopRadiusDp`), so a drag carries it along with the gesture for free — but the *survey*
@@ -83,7 +81,7 @@ import org.onebusaway.android.util.getRouteDisplayName
 class NearbyRoutesController(
     private val host: MapHost,
     private val mapDataSource: MapDataSource,
-    private val routeRepository: RouteMapRepository,
+    private val stopsForRoute: StopsForRouteRepository,
     private val scope: CoroutineScope
 ) {
 
@@ -169,9 +167,9 @@ class NearbyRoutesController(
      * survey genuinely has nothing to draw. Superseded by [flatMapLatest] when a newer request
      * arrives, which cancels any shape fetch still in flight.
      *
-     * Runs on [Dispatchers.Default]: testing a dozen whole-route shapes against the hoop (for
-     * membership and badge anchors) is real CPU work and must not land on the frame-producing main
-     * thread.
+     * Runs on [Dispatchers.Default]: testing every whole-route shape against the hoop (for membership
+     * and badge anchors) is real CPU work — and grows with the size of the uncapped set — so it must
+     * not land on the frame-producing main thread.
      */
     private fun survey(request: NearbyRoutesRequest): Flow<NearbyRoutesPresentation> = flow {
         // The routes running through the hoop. A failed query leaves the previous survey on screen
@@ -189,7 +187,10 @@ class NearbyRoutesController(
             val fetches = routes.map { route ->
                 async { permits.withPermit { loadShapes(route) } }
             }
-            // Awaited in request order (nearest route first) so the layer fills in from the centre out.
+            // Awaited in request order, so the layer fills in deterministically rather than in
+            // whatever order the shape fetches happen to return. Emitting per route is cheap for the
+            // renderers to absorb: both the lines and the badges are reconciled against what's already
+            // drawn, so one more route adds one line and one badge rather than rebuilding the layer.
             for (fetch in fetches) {
                 val route = fetch.await() ?: continue
                 drawn += route
@@ -202,57 +203,45 @@ class NearbyRoutesController(
     }.flowOn(Dispatchers.Default)
 
     /**
-     * The routes to draw for [hoop], nearest first, at most [MAX_NEARBY_ROUTES] — or null when the
-     * query failed / there is no endpoint yet, which leaves the previous survey on screen rather than
-     * clearing the layer over one dropped request. Failures are logged and swallowed: this is ambient
-     * context, not something to toast about.
+     * Every route `routes-for-location` reports through [hoop] — or null when the query failed / there
+     * is no endpoint yet, which leaves the previous survey on screen rather than clearing the layer over
+     * one dropped request. Failures are logged and swallowed: this is ambient context, not something to
+     * toast about.
      *
-     * Answered by `routes-for-location` alone whenever the hoop holds no more routes than the layer
-     * will draw — the usual case. Past that the choice of *which* has to come from somewhere, so a
-     * stops-for-location query over the hoop supplies the nearest-stop ranking; if that second query
-     * fails, the routes fall back to id order, which at least keeps the drawn set stable between
-     * settles instead of reshuffling.
+     * The whole set is drawn, with no cap: the hoop's promise is "what runs near here", and a layer that
+     * silently drops the thirteenth route downtown doesn't keep it. Sorted by id only because the
+     * endpoint answers out of a `HashSet` — arbitrary order would reshuffle the palette and the
+     * fill-in order between settles of the same corner.
      */
-    private suspend fun routesInHoop(hoop: NearbyRoutesHoop): List<ObaRoute>? {
-        val routes = mapDataSource
-            .routesNearby(hoop.center.latitude, hoop.center.longitude, hoop.radiusMeters.toInt())
-            .onFailure { Log.w(TAG, "Nearby-routes query failed", it) }
-            .getOrNull()
-            ?: return null
-        if (routes.size <= MAX_NEARBY_ROUTES) return routes
-        val stops = stopsInHoop(hoop) ?: return routes.sortedBy(ObaRoute::id).take(MAX_NEARBY_ROUTES)
-        return rankRoutesByNearestStop(hoop, routes, stops, MAX_NEARBY_ROUTES)
-    }
-
-    /** The stops inside [hoop]'s bounding box — the ranking input, fetched only when it's needed. */
-    private suspend fun stopsInHoop(hoop: NearbyRoutesHoop): List<ObaStop>? {
-        val (latSpan, lonSpan) = hoop.spanDegrees()
-        return mapDataSource
-            .nearbyStops(hoop.center.latitude, hoop.center.longitude, latSpan, lonSpan, HOOP_STOP_LIMIT)
-            .onFailure { Log.w(TAG, "Nearby-routes ranking stop query failed", it) }
-            .getOrNull()
-            ?.stops
-    }
+    private suspend fun routesInHoop(hoop: NearbyRoutesHoop): List<ObaRoute>? = mapDataSource
+        .routesNearby(
+            hoop.center.latitude,
+            hoop.center.longitude,
+            hoop.radiusMeters.toInt(),
+            maxCount = NEARBY_ROUTES_MAX_COUNT
+        )
+        .onFailure { Log.w(TAG, "Nearby-routes query failed", it) }
+        .getOrNull()
+        ?.sortedBy(ObaRoute::id)
 
     /**
      * One route's whole-route (all-directions) shape plus the label its badge shows, or null when the
-     * route can't be drawn: no endpoint / a failed fetch, no shape on the wire, or no display name on
-     * the fetched route. A failure is logged and skipped — one unreachable route must not blank the
-     * whole ambient layer.
+     * route can't be drawn: no endpoint / a failed fetch, no shape on the wire, or no display name. A
+     * failure is logged and skipped — one unreachable route must not blank the whole ambient layer.
+     *
+     * Asks for the shape alone ([StopsForRouteRepository.routeShapes]), not the whole route map: the
+     * badge's label is already on the routes-for-location reference this was called with, so the stops,
+     * directions and reference pool that come back with a route map would be fetched, decoded and
+     * cached only to be thrown away — at the scale of every route through a downtown block.
      */
     private suspend fun loadShapes(route: ObaRoute): NearbyRouteShapes? {
-        val loaded = routeRepository.getRoute(route.id)
+        val name = getRouteDisplayName(route).takeIf(String::isNotBlank) ?: return null
+        val shapes = stopsForRoute.routeShapes(route.id)
             .onFailure { Log.w(TAG, "Nearby route ${route.id} shape fetch failed", it) }
             .getOrNull()
+            ?.filter { it.size >= 2 }
             ?: return null
-        val shapes = loaded.polylines.filter { it.size >= 2 }
-        if (shapes.isEmpty()) return null
-        // The name comes from the routes-for-location reference; the loaded route is the fallback for
-        // a reference that carried neither a short nor a long name.
-        val name = getRouteDisplayName(route).takeIf(String::isNotBlank)
-            ?: loaded.route?.let(::getRouteDisplayName)?.takeIf(String::isNotBlank)
-            ?: return null
-        return NearbyRouteShapes(route.id, name, shapes)
+        return if (shapes.isEmpty()) null else NearbyRouteShapes(route.id, name, shapes)
     }
 
     private companion object {
@@ -275,12 +264,13 @@ private data class NearbyRoutesRequest(
 private const val NEARBY_ROUTES_MIN_ZOOM = 11.0
 
 /**
- * The cap on the ranking stop query. Generous, because it covers only the hoop's bounding box (a mile
- * square) rather than the viewport: the server truncates by *shuffling*, so a query that fits under
- * the cap is also a stable one. It degrades gently past it anyway — the route *set* is already known
- * from routes-for-location, so a partial stop sample only costs precision in the ordering.
+ * What the hoop asks routes-for-location for. Not a display budget — the layer draws whatever comes
+ * back — but a deliberate ask past every server's own ceiling, because the endpoint's *default* is 10
+ * and a downtown block silently answers with an arbitrary handful of the routes running through it.
+ * Each server clamps this to its own hard limit (50 on the Puget Sound deployment), so a denser
+ * downtown than that still comes back truncated, flagged only by the response's `limitExceeded`.
  */
-private const val HOOP_STOP_LIMIT = 250
+private const val NEARBY_ROUTES_MAX_COUNT = 200
 
 /** Matches the stop loader's settle window: one survey per pan, not one per intermediate idle. */
 private const val NEARBY_ROUTES_DEBOUNCE_MS = 400L

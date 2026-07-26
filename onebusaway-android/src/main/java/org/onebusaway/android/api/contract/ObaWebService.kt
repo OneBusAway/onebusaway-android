@@ -69,13 +69,18 @@ interface ObaWebService {
      * routes-for-location — routes near [lat]/[lon], optionally filtered by a short-name [query]
      * and bounded by [radius] (meters). Omitted (null) parameters are dropped from the request.
      * {http://developer.onebusaway.org/.../api/where/methods/routes-for-location.html}
+     *
+     * [maxCount] raises how many routes come back. Leaving it null does **not** mean "all of them":
+     * the server's default is a mere 10, so a dense downtown answers with a small arbitrary handful
+     * and sets `limitExceeded`. The server clamps the request to its own hard limit.
      */
     @GET("api/where/routes-for-location.json")
     suspend fun routesForLocation(
         @Query("lat") lat: Double,
         @Query("lon") lon: Double,
         @Query("query") query: String? = null,
-        @Query("radius") radius: Int? = null
+        @Query("radius") radius: Int? = null,
+        @Query("maxCount") maxCount: Int? = null
     ): ObaEnvelope<ListWithReferences<RouteReference>>
 
     /**

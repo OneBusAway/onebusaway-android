@@ -24,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.References
+import org.onebusaway.android.api.contract.ShapeEntry
 import org.onebusaway.android.api.contract.StopGroup
 import org.onebusaway.android.api.contract.StopGroupName
 import org.onebusaway.android.api.contract.StopGrouping
@@ -99,14 +100,94 @@ class StopsForRouteRepositoryTest {
         assertTrue(repository.routeStopGroups("r").isFailure)
     }
 
+    // ----- The shapes-only projection (the nearby-routes hoop, #2004) -----
+
+    @Test
+    fun `a route's shape is decoded and then served from cache without refetching`() = runTest {
+        val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"), ENCODED_SHAPE)) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        val first = repository.routeShapes("r").getOrThrow()
+        val second = repository.routeShapes("r").getOrThrow()
+
+        assertEquals(3, first!!.single().size)
+        assertEquals(first, second)
+        assertEquals(listOf("r"), fake.calls)
+    }
+
+    @Test
+    fun `a route the route screens already cached yields its shape with no fetch of its own`() = runTest {
+        val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"), ENCODED_SHAPE)) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        repository.routeMap("r")
+        val shapes = repository.routeShapes("r").getOrThrow()
+
+        assertEquals(3, shapes!!.single().size)
+        // The heavy entry was already held, so the shape came off it rather than off the wire.
+        assertEquals(listOf("r"), fake.calls)
+    }
+
+    @Test
+    fun `the shapes path does not retain the heavy entry`() = runTest {
+        val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("a"), ENCODED_SHAPE)) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        repository.routeShapes("r")
+        repository.routeMap("r")
+
+        // The whole point of the split: a downtown hoop's worth of routes must not evict what the
+        // route/stop screens are using, so their projection re-fetches rather than being served from
+        // an entry the hoop parked in the shared cache.
+        assertEquals(listOf("r", "r"), fake.calls)
+    }
+
+    @Test
+    fun `a shape fetch failure is not cached`() = runTest {
+        val fake = FakeFetch().apply { default = Result.failure(IOException("boom")) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        assertEquals("boom", repository.routeShapes("r").exceptionOrNull()?.message)
+        assertTrue(repository.routeShapes("r").isFailure)
+        assertEquals(listOf("r", "r"), fake.calls)
+    }
+
+    @Test
+    fun `no endpoint yields a null shape rather than an error`() = runTest {
+        val fake = FakeFetch() // default success(null) = no endpoint
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        assertNull(repository.routeShapes("r").getOrThrow())
+    }
+
+    @Test
+    fun `an evicted shape is refetched`() = runTest {
+        val fake = FakeFetch().apply {
+            results["r"] = Result.success(entryWith(listOf("a"), ENCODED_SHAPE))
+            results["other"] = Result.success(entryWith(listOf("b"), ENCODED_SHAPE))
+        }
+        // A one-entry shape cache, so "other" evicts "r".
+        val repository = DefaultStopsForRouteRepository(backgroundScope, shapeCacheSize = 1, fetch = fake::get)
+
+        repository.routeShapes("r")
+        repository.routeShapes("other")
+        repository.routeShapes("r")
+
+        assertEquals(listOf("r", "other", "r"), fake.calls)
+    }
+
     // Not covered here: an unexpected crash *inside* the fetch block (the fetch lambda throwing rather
     // than returning Result.failure) coalesces to a null out of SingleFlight, which `entry` now surfaces
     // as a Result.failure instead of masking it as the benign no-endpoint success(null). That path logs
     // via android.util.Log.e inside SingleFlight, which is unmocked in plain JVM tests (this module
     // avoids Robolectric/mocking), so — like the same branch in SingleFlightTest — it stays untested.
 
-    private fun entryWith(stopIds: List<String>): EntryWithReferences<StopsForRoute> = EntryWithReferences(
+    private fun entryWith(
+        stopIds: List<String>,
+        encodedShape: String? = null
+    ): EntryWithReferences<StopsForRoute> = EntryWithReferences(
         entry = StopsForRoute(
+            polylines = listOfNotNull(encodedShape?.let { ShapeEntry(points = it, length = 3) }),
             stopGroupings = listOf(
                 StopGrouping(
                     stopGroups = listOf(
@@ -125,4 +206,9 @@ class StopsForRouteRepositoryTest {
             }
         )
     )
+
+    private companion object {
+        /** Google's canonical 3-point encoded-polyline example. */
+        const val ENCODED_SHAPE = "_p~iF~ps|U_ulLnnqC_mqNvxq`@"
+    }
 }

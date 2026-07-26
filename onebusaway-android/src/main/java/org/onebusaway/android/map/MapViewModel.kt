@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
 import org.onebusaway.android.api.data.MapDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.directions.model.TripItinerary
@@ -115,6 +116,7 @@ class MapViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
+    private val stopsForRoute: StopsForRouteRepository,
     private val focusedTripRepository: FocusedTripRepository,
     private val bikeStationsRepository: BikeStationsRepository,
     private val regionRepo: RegionRepository,
@@ -175,7 +177,9 @@ class MapViewModel @Inject constructor(
     private val nearbyRoutesController = NearbyRoutesController(
         host = mapHost,
         mapDataSource = mapDataSource,
-        routeRepository = routeRepository,
+        // Straight to the shapes-only projection, not [routeRepository]: the hoop wants many routes'
+        // geometry and none of the stop/direction data a route map carries.
+        stopsForRoute = stopsForRoute,
         scope = viewModelScope
     )
 

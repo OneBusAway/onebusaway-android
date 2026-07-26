@@ -214,6 +214,15 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
                 routePolylineRenderFlow(renderState.snapshot, host.camera)
                     .collect { activeRenderer.renderRoutePolylines(it) }
             }
+            // Route badges likewise: the hoop layer publishes its routes progressively as each shape
+            // resolves, and rebuilding the static layer per arrival blinked the whole map. Their anchors
+            // are laid out in geographic space, so unlike the lines this needs no camera input.
+            LaunchedEffect(activeRenderer) {
+                renderState.snapshot
+                    .map { it.allRouteBadges }
+                    .distinctUntilChanged()
+                    .collect { activeRenderer.renderRouteBadges(it) }
+            }
             // The vehicle set (which vehicles exist + their icons): reconcile the markers whenever it's
             // pushed — a poll, a direction switch, or leaving route mode (null). Discrete, so it's reactive
             // (not inferred from the per-frame motion loop below), which is what makes a direction switch

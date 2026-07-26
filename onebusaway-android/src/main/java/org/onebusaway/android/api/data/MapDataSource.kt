@@ -54,10 +54,18 @@ interface MapDataSource {
      * uses, so it is the same set — asked for directly, and answered with route references rather than
      * every stop that produced them.
      *
-     * The list carries no order (the server builds it from a `HashSet`) and no distances, so a caller
-     * that can only draw some of them has to get its ranking elsewhere.
+     * [maxCount] is not optional in practice: the server's default is **10**, which a downtown block
+     * blows through without saying so beyond a `limitExceeded` flag. It clamps the ask to its own hard
+     * limit (50 on the Puget Sound deployment), so past that the set really is all this endpoint gives.
+     *
+     * The list carries no order (the server builds it from a `HashSet`) and no distances.
      */
-    suspend fun routesNearby(lat: Double, lon: Double, radiusMeters: Int): Result<List<ObaRoute>?>
+    suspend fun routesNearby(
+        lat: Double,
+        lon: Double,
+        radiusMeters: Int,
+        maxCount: Int? = null
+    ): Result<List<ObaRoute>?>
 }
 
 class DefaultMapDataSource @Inject constructor(
@@ -89,9 +97,10 @@ class DefaultMapDataSource @Inject constructor(
     override suspend fun routesNearby(
         lat: Double,
         lon: Double,
-        radiusMeters: Int
+        radiusMeters: Int,
+        maxCount: Int?
     ): Result<List<ObaRoute>?> = api.callOrNull { service ->
-        service.routesForLocation(lat = lat, lon = lon, radius = radiusMeters)
+        service.routesForLocation(lat = lat, lon = lon, radius = radiusMeters, maxCount = maxCount)
             .requireData()
             .list
             .map(::DtoRoute)

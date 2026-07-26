@@ -6,89 +6,15 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
-import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.GeoPoint
 
 class NearbyRoutesTest {
 
     private val center = GeoPoint(47.6, -122.33)
     private val hoop = NearbyRoutesHoop(center, 800.0)
-
-    // ----- Ranking the route set down to the cap -----
-
-    @Test
-    fun `routes rank by their nearest serving stop and the cap keeps the closest`() {
-        val ranked = rankRoutesByNearestStop(
-            hoop,
-            routes = listOf(route("far-route"), route("near-route"), route("mid-route")),
-            stops = listOf(
-                stop("far", offsetMeters(0.0, 700.0), "far-route"),
-                stop("near", offsetMeters(0.0, 50.0), "near-route"),
-                // The same route served twice: its *nearest* stop decides its rank.
-                stop("mid-far", offsetMeters(0.0, 600.0), "mid-route"),
-                stop("mid-near", offsetMeters(0.0, 300.0), "mid-route")
-            ),
-            limit = 2
-        )
-
-        assertEquals(listOf("near-route", "mid-route"), ranked.map { it.id })
-    }
-
-    @Test
-    fun `a stop outside the hoop doesn't rank its route`() {
-        val ranked = rankRoutesByNearestStop(
-            hoop,
-            routes = listOf(route("inner"), route("outer")),
-            stops = listOf(
-                stop("inside", offsetMeters(0.0, 100.0), "inner"),
-                stop("outside", offsetMeters(0.0, 2000.0), "outer")
-            ),
-            limit = 10
-        )
-
-        // Both stay in the set — routes-for-location is authoritative about membership — but the one
-        // the sample places nowhere near the centre sorts last.
-        assertEquals(listOf("inner", "outer"), ranked.map { it.id })
-    }
-
-    @Test
-    fun `a route the stop sample never mentions keeps its place and sorts last`() {
-        val ranked = rankRoutesByNearestStop(
-            hoop,
-            routes = listOf(route("unsampled"), route("sampled")),
-            stops = listOf(stop("known", offsetMeters(0.0, 100.0), "sampled")),
-            limit = 10
-        )
-
-        assertEquals(listOf("sampled", "unsampled"), ranked.map { it.id })
-    }
-
-    @Test
-    fun `equidistant routes break ties on id so the drawn set is stable`() {
-        val ranked = rankRoutesByNearestStop(
-            hoop,
-            routes = listOf(route("b-route"), route("a-route")),
-            stops = listOf(stop("shared", offsetMeters(0.0, 100.0), "b-route", "a-route")),
-            limit = 10
-        )
-
-        assertEquals(listOf("a-route", "b-route"), ranked.map { it.id })
-    }
-
-    @Test
-    fun `the hoop's query box squares the circle and widens with latitude`() {
-        val (latSpan, lonSpan) = hoop.spanDegrees()
-
-        // A 1.6 km box: 2 x 800 m of latitude.
-        assertEquals(1600.0 / 111_195.0, latSpan, 1e-5)
-        // Longitude degrees are shorter at 47.6 N, so the box spans more of them.
-        assertTrue(lonSpan > latSpan)
-        assertEquals(latSpan / Math.cos(Math.toRadians(47.6)), lonSpan, 1e-9)
-    }
 
     // ----- Clipping to the hoop -----
 
@@ -227,6 +153,65 @@ class NearbyRoutesTest {
     }
 
     @Test
+    fun `badges spread along the routes when more of them run through than the hoop can hold`() {
+        // Every route crosses the hoop, so on the screen-room test alone all of them would be anchored
+        // inside it — but there are more than the ring can hold at the layout's own spacing.
+        val overCapacity = hoopBadgeCapacity(hoop) + 1
+        // 20 km long, so that even the layout's widest collision stagger off the whole-route midpoint
+        // stays far outside the ring — the assertion is about which mode was chosen, and this keeps it
+        // from being confounded by how far a crowded layout wanders looking for a clear spot.
+        val routes = (1..overCapacity).map { index ->
+            NearbyRouteShapes(
+                "route-$index",
+                "$index",
+                listOf(listOf(offsetMeters(-700.0, index.toDouble()), offsetMeters(20_000.0, index.toDouble())))
+            )
+        }
+
+        val presentation = assembleNearbyRoutesPresentation(
+            hoop,
+            routes,
+            colors = routes.associate { it.routeId to RED },
+            badgesInHoop = true
+        )
+
+        assertEquals(overCapacity, presentation.badges.size)
+        // Spread along the routes instead of stacked in the ring: a whole-route midpoint on a line
+        // running 4 km east lands well outside the hoop.
+        assertTrue(presentation.badges.all { haversineMeters(center, it.point) > hoop.radiusMeters })
+    }
+
+    @Test
+    fun `a hoop's badge capacity is the count it can hold at the layout's own spacing`() {
+        // 800 m of radius at 300 m of separation: each badge claims a 150 m-radius disc.
+        assertEquals(28, hoopBadgeCapacity(hoop))
+        // A bigger ring holds more, quadratically — it's an area ratio, not a diameter one.
+        assertEquals(113, hoopBadgeCapacity(NearbyRoutesHoop(center, 1600.0)))
+    }
+
+    @Test
+    fun `a set within capacity still anchors its badges inside the hoop`() {
+        val routes = (1..hoopBadgeCapacity(hoop)).map { index ->
+            NearbyRouteShapes(
+                "route-$index",
+                "$index",
+                listOf(listOf(offsetMeters(-700.0, index.toDouble()), offsetMeters(4000.0, index.toDouble())))
+            )
+        }
+
+        val presentation = assembleNearbyRoutesPresentation(
+            hoop,
+            routes,
+            colors = routes.associate { it.routeId to RED },
+            badgesInHoop = true
+        )
+
+        // At capacity the in-hoop anchoring still applies — the check is a ceiling, not a nudge toward
+        // spreading whenever the layer gets busy.
+        assertTrue(presentation.badges.any { haversineMeters(center, it.point) <= hoop.radiusMeters })
+    }
+
+    @Test
     fun `badges spread along the routes when the ring is too small to hold them`() {
         // A route running 4 km east, clipping the hoop's western edge.
         val shape = listOf(offsetMeters(-700.0, 0.0), offsetMeters(4000.0, 0.0))
@@ -268,25 +253,6 @@ class NearbyRoutesTest {
             center.latitude + north / metersPerDegreeLatitude,
             center.longitude + east / (metersPerDegreeLatitude * Math.cos(Math.toRadians(center.latitude)))
         )
-    }
-
-    private fun stop(id: String, point: GeoPoint, vararg routeIds: String) = ObaStopElement(
-        id = id,
-        lat = point.latitude,
-        lon = point.longitude,
-        routeIds = arrayOf(*routeIds)
-    )
-
-    private fun route(routeId: String) = object : ObaRoute {
-        override val id = routeId
-        override val shortName = routeId
-        override val longName: String? = null
-        override val description: String? = null
-        override val type = ObaRoute.TYPE_BUS
-        override val url: String? = null
-        override val color: Int? = null
-        override val textColor: Int? = null
-        override val agencyId = "agency"
     }
 
     private companion object {

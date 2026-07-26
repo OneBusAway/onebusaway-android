@@ -58,6 +58,7 @@ import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeReconciler
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
@@ -144,6 +145,19 @@ class GoogleMapRenderer(
         createLine = ::addRoutePolyline,
         removeLines = { lines -> lines.forEach { it.remove() } },
         setWidth = { line, width -> line.width = width }
+    )
+
+    // Route badges are reconciled independently too, for the same reason the lines are: the hoop layer
+    // (#2004) publishes its routes progressively, and rebuilding every annotation per arrival blinked.
+    // The create/remove callbacks own [routeBadgeByMarker], so the tap lookup tracks the drawn set.
+    private val routeBadgeReconciler = RouteBadgeReconciler<Marker>(
+        createMarker = ::addRouteBadge,
+        removeMarkers = { markers ->
+            markers.forEach {
+                routeBadgeByMarker.remove(it)
+                it.remove()
+            }
+        }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
@@ -250,7 +264,8 @@ class GoogleMapRenderer(
         staticPolylines.clear()
         bikeByMarker.clear()
         continuationBadgeByMarker.clear()
-        routeBadgeByMarker.clear()
+        // Route badges are deliberately absent: they are reconciled on their own change boundary, so a
+        // static redraw must leave both their markers and their tap lookup alone.
     }
 
     /** Redraw the static layer (everything but the live vehicles + trip-focus overlay). */
@@ -296,22 +311,20 @@ class GoogleMapRenderer(
         }
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
-        renderRouteBadges(snapshot.allRouteBadges)
     }
 
-    private fun renderRouteBadges(badges: List<RouteBadge>) {
-        for (badge in badges) {
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routeShortName, badge.color))
-                    .anchor(0.5f, 0.5f)
-                    .zIndex(ROUTE_BADGE_Z_INDEX)
-            )!!
-            staticMarkers += marker
-            routeBadgeByMarker[marker] = badge
-        }
+    /** Reconcile the independently collected route-badge layer, retaining unchanged badge markers. */
+    fun renderRouteBadges(next: List<RouteBadge> = renderState.snapshot.value.allRouteBadges) {
+        routeBadgeReconciler.reconcile(next)
     }
+
+    private fun addRouteBadge(badge: RouteBadge): Marker = map.addMarker(
+        MarkerOptions()
+            .position(badge.point.toLatLng())
+            .icon(routeBadgeIcon(badge.routeShortName, badge.color))
+            .anchor(0.5f, 0.5f)
+            .zIndex(ROUTE_BADGE_Z_INDEX)
+    )!!.also { routeBadgeByMarker[it] = badge }
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.allRoutePolylines) {
@@ -421,6 +434,7 @@ class GoogleMapRenderer(
 
         clearStatic()
         routePolylineReconciler.clear()
+        routeBadgeReconciler.clear()
 
         stopMarkerLayer.dispose()
 

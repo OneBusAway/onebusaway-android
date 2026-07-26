@@ -51,6 +51,8 @@ import org.onebusaway.android.util.runCatchingCancellable
  * - [routeStopGroups] — the per-direction stop list (route info + a focused stop's trips).
  * - [routeMap] — the full route map: stops tagged with direction membership, selectable directions,
  *   and decoded shapes (the route overlay).
+ * - [routeShapes] — the whole-route shape alone, for a caller that wants many routes' geometry and
+ *   none of the rest (the nearby-routes hoop, #2004).
  *
  * The wire DTO stays encapsulated here; callers only ever see the model projections.
  */
@@ -69,6 +71,24 @@ interface StopsForRouteRepository {
      * IO / HTTP / non-OK code, matching the legacy `MapDataSource.routeMap`.
      */
     suspend fun routeMap(routeId: String): Result<RouteMapData?>
+
+    /**
+     * The route's whole-route (merged, undirected) decoded shape — and nothing else. `success(null)`
+     * when there is no endpoint to contact; [Result.failure] on IO / HTTP / non-OK code.
+     *
+     * Same wire call as [routeMap], but a different retention bargain, for the caller that wants
+     * *many* routes' geometry at once. Stops-for-route is a heavy payload of which the shape is a
+     * sliver — measured on a Seattle bus route, 2.2 KB of polyline inside 34.6 KB, the rest being stop
+     * and route references this caller never reads — so retaining whole entries for a downtown's worth
+     * of routes would both cost far more memory than the shapes and evict every entry the route/stop
+     * screens are using. This path therefore caches **only the decoded shapes**, under a bound sized
+     * for a dense survey rather than for browsing ([MAX_CACHED_ROUTE_SHAPES]), and leaves the heavy
+     * [routeMap]/[routeStopGroups] cache untouched.
+     *
+     * It still *reads* that cache: a route those screens already fetched yields its shape with no wire
+     * call at all.
+     */
+    suspend fun routeShapes(routeId: String): Result<List<List<GeoPoint>>?>
 }
 
 /**
@@ -82,10 +102,22 @@ interface StopsForRouteRepository {
  */
 private const val MAX_CACHED_ROUTE_STOPS = 32
 
+/**
+ * The shapes-only bound ([StopsForRouteRepository.routeShapes]). Far larger than
+ * [MAX_CACHED_ROUTE_STOPS] because it holds far less: one route's decoded whole-route shape, not its
+ * stop and route references. It is sized by its worst caller — the nearby-routes hoop, which surveys
+ * every route through a half mile and so can want ~50 routes from a single settle. A bound at or below
+ * that would thrash (each survey evicting the entries the next settle needs, leaving nothing warm);
+ * several surveys' worth means panning around a city centre keeps re-drawing off the cache. Immutable
+ * within a session for the same reason as the entry cache, so likewise no TTL.
+ */
+private const val MAX_CACHED_ROUTE_SHAPES = 256
+
 @Singleton
 class DefaultStopsForRouteRepository internal constructor(
     fetchScope: CoroutineScope,
     cacheSize: Int = MAX_CACHED_ROUTE_STOPS,
+    shapeCacheSize: Int = MAX_CACHED_ROUTE_SHAPES,
     // The one wire call, injected so the JVM tests can exercise caching/coalescing without a live
     // ObaApiProvider. `success(null)` = no endpoint; `failure` = IO / HTTP / non-OK code.
     private val fetch: suspend (routeId: String) -> Result<EntryWithReferences<StopsForRoute>?>
@@ -104,6 +136,13 @@ class DefaultStopsForRouteRepository internal constructor(
     private val cache = BoundedLruCache<String, EntryWithReferences<StopsForRoute>>(cacheSize)
     private val fetches = SingleFlight<String, Result<EntryWithReferences<StopsForRoute>?>>(fetchScope)
 
+    // The shapes-only projection ([routeShapes]) and its own flight. Kept apart from `fetches` so the
+    // two paths can't hand each other the wrong retention: joining a flight the heavy path started
+    // would cache an entry this one deliberately drops, and vice versa. Racing the same route down
+    // both paths at once is the rare case anyway — the hoop hides while a stop or route is focused.
+    private val shapes = BoundedLruCache<String, List<List<GeoPoint>>>(shapeCacheSize)
+    private val shapeFetches = SingleFlight<String, Result<List<List<GeoPoint>>?>>(fetchScope)
+
     override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = entry(routeId).mapCatching { it?.toRouteStopGroups() ?: throw noEndpoint() }
 
     override suspend fun routeMap(routeId: String): Result<RouteMapData?> {
@@ -113,6 +152,34 @@ class DefaultStopsForRouteRepository internal constructor(
         // runCatchingCancellable rethrows a CancellationException (raised by withContext if the caller is
         // cancelled mid-decode) rather than reporting the abandoned work as a failure.
         return runCatchingCancellable { withContext(Dispatchers.Default) { fetched.toRouteMapData(routeId) } }
+    }
+
+    override suspend fun routeShapes(routeId: String): Result<List<List<GeoPoint>>?> {
+        shapes.get(routeId)?.let { return Result.success(it) }
+        // A route the route/stop screens already loaded: decode its shape off the entry they cached
+        // rather than going back to the wire for a payload we already hold.
+        cache.get(routeId)?.let { return decodeShapes(routeId, it) }
+        return shapeFetches.run(routeId) {
+            shapes.get(routeId)?.let { return@run Result.success(it) }
+            val fetched = fetch(routeId).getOrElse { return@run Result.failure(it) }
+                ?: return@run Result.success(null) // no endpoint — nothing to show
+            // Deliberately not `cache.put`: see [StopsForRouteRepository.routeShapes]. Only the shapes
+            // decoded below are retained; the rest of the entry is dropped with this scope.
+            decodeShapes(routeId, fetched)
+        } ?: Result.failure(IllegalStateException("stops-for-route shape fetch failed unexpectedly for $routeId"))
+    }
+
+    /**
+     * Decodes [entry]'s whole-route shape and caches it. Decoding is the one bit of non-trivial CPU
+     * work here, so it goes to [Dispatchers.Default]; runCatchingCancellable rethrows the
+     * CancellationException a cancelled caller raises rather than reporting abandoned work as failure.
+     */
+    private suspend fun decodeShapes(
+        routeId: String,
+        entry: EntryWithReferences<StopsForRoute>
+    ): Result<List<List<GeoPoint>>?> = runCatchingCancellable {
+        withContext(Dispatchers.Default) { entry.entry.polylines.map { it.decode() } }
+            .also { shapes.put(routeId, it) }
     }
 
     /**

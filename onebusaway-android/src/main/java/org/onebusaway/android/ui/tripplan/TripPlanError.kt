@@ -81,6 +81,23 @@ data class TripPlanError(
 
         /** No route between the endpoints — also the (defensive) empty-results case. */
         val NoRoute = TripPlanError(Category.NO_ROUTE, R.string.tripplanner_error_path_not_found)
+
+        /**
+         * Couldn't reach the planner at all, on either planner path: OTP1's `REQUEST_TIMEOUT` and
+         * every OTP2 transport failure (connect/read timeout, DNS, refused connection). The detail
+         * string names the timeout case specifically because that is the one OTP1 ever reported and
+         * the overwhelmingly common one in practice; the category is what the UI leads with, and
+         * "couldn't reach the server" is right for all of them.
+         */
+        val Connectivity = TripPlanError(Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout)
+
+        /**
+         * The server refused the parameters we sent, and will refuse them identically on a retry — so
+         * the reason line points at the trip options rather than advising another attempt. OTP1's
+         * `BOGUS_PARAMETER` and OTP2's deterministic GraphQL rejections (#2023) are the same result,
+         * and live here so the two classifiers can't drift apart.
+         */
+        val RequestRejected = TripPlanError(Category.REQUEST, R.string.tripplanner_error_bogus_parameter)
     }
 }
 
@@ -88,8 +105,28 @@ data class TripPlanError(
  * Carries a classified [TripPlanError] through the throw-based planner contract. Extends [IOException]
  * so the existing `runCatching`/`runCatchingCancellable` wrapping in [DefaultTripPlanRepository] (and
  * the monitor's empty-list-on-failure `planBlocking`) handles it unchanged.
+ *
+ * [message] carries the server's *own* account of the failure when it sent one — untranslated,
+ * developer-facing text that is never shown to the rider (#2023), and redacted down to its structural
+ * half outside debug builds because the server quotes the arguments it rejected (see
+ * `otp2ErrorDiagnostic`). It rides on the exception rather than a synthesized `cause` so nothing is
+ * lost to a wrapper type's one-error-only rendering, and so anything that renders the throwable
+ * renders the explanation with it. Note that this exception is
+ * *not* itself what reaches a bug report today: both [DefaultTripPlanRepository] call paths
+ * deliberately swallow it (`runCatchingCancellable` into a `Result`, and `getOrDefault(emptyList())`
+ * in the monitor's `planBlocking`), so [Otp2Planner]'s log at the point the errors arrive is what
+ * actually surfaces them.
+ *
+ * Falling back to the [cause]'s own rendering when no [message] is given preserves what
+ * `IOException(Throwable)` did before the message parameter existed — that constructor derives
+ * `message` from `cause.toString()`, and `IOException(null, cause)` does not. [cause] keeps its
+ * position so existing positional call sites are unaffected.
  */
-class TripPlanException(val error: TripPlanError, cause: Throwable? = null) : IOException(cause)
+class TripPlanException(
+    val error: TripPlanError,
+    cause: Throwable? = null,
+    message: String? = null
+) : IOException(message ?: cause?.toString(), cause)
 
 /** The [TripPlanError] for a thrown [Throwable], falling back to [TripPlanError.Unknown]. */
 fun Throwable.toTripPlanError(): TripPlanError = (this as? TripPlanException)?.error ?: TripPlanError.Unknown

@@ -16,7 +16,9 @@
 package org.onebusaway.android.ui.tripplan
 
 import android.content.Context
+import android.util.Log
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.Error as GraphQlError
 import com.apollographql.apollo.exception.ApolloException
 import com.apollographql.apollo.exception.ApolloNetworkException
 import com.apollographql.apollo.network.okHttpClient
@@ -24,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toTripItineraries
 import org.onebusaway.android.api.graphql.PlanQuery
@@ -42,7 +45,9 @@ import org.onebusaway.android.directions.util.TripRequestBuilder
  * Apollo's `serverUrl` is fixed at client-construction time, so building a lightweight client per
  * distinct URL, reusing the shared [OkHttpClient], is the equivalent seam here), and adapts the
  * response onto the shared [TripItinerary] domain model. Mirrors [DefaultTripPlanRepository]'s OTP1
- * shape: throws a classified [TripPlanException] on any failure (see [otp2ErrorFor]), so
+ * shape: throws a classified [TripPlanException] on any failure — from one of the three tiers a plan
+ * can fail at, [otp2TransportErrorFor] (transport), [otp2GraphQlErrorFor] (GraphQL `errors`) and
+ * [otp2ErrorFor] (`routingErrors`), resolved in that order by [resolveOtp2Response] — so
  * [DefaultTripPlanRepository]'s existing `runCatching` wrapping in both `plan()` and `planBlocking()`
  * handles this path the same way as OTP1.
  */
@@ -81,23 +86,172 @@ class Otp2Planner @Inject constructor(
     fun plan(builder: TripRequestBuilder, baseUrl: String): List<TripItinerary> {
         val query = Otp2PlanRequestBuilder.build(builder)
         val apolloClient = apolloClientFor(otp2GraphQlEndpoint(baseUrl))
-        val data = try {
-            runBlocking { apolloClient.query(query).execute() }.dataOrThrow()
-        } catch (e: ApolloNetworkException) {
-            // Transport failure (connect/read timeout, DNS, etc.) — a connectivity problem.
-            throw TripPlanException(
-                TripPlanError(TripPlanError.Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout),
-                e
-            )
+        val response = try {
+            runBlocking { apolloClient.query(query).execute() }
         } catch (e: ApolloException) {
-            // A non-network ApolloException (HTTP status, parse failure, GraphQL-protocol error) isn't
-            // a timeout — surface it as an unclassified request failure, not a connectivity one.
-            throw TripPlanException(TripPlanError.Unknown, e)
+            // Apollo 4+ reports failures on the response rather than throwing (see
+            // [resolveOtp2Response]), so this only catches anything that escapes the interceptor
+            // chain — belt-and-braces, classified identically either way.
+            throw TripPlanException(otp2TransportErrorFor(e), e)
         }
 
-        return resolveOtp2Plan(data)
+        // #2023: a GraphQL `errors` array is the server telling us exactly what it objected to. This
+        // line is what actually surfaces it, since both repository call paths swallow the thrown
+        // exception (see [TripPlanException]). Logged even when the response also carried usable data,
+        // because GraphQL permits partial results and a plan we can still render is no reason to
+        // discard the explanation of what was left out of it. See [otp2ErrorDiagnostic] for what is
+        // and isn't included.
+        otp2ErrorDiagnostic(response.errors)?.let {
+            Log.e(TAG, "OTP2 planConnection returned GraphQL errors: $it")
+        }
+
+        return resolveOtp2Response(response.data, response.errors, response.exception)
+    }
+
+    private companion object {
+        const val TAG = "Otp2Planner"
     }
 }
+
+/**
+ * Resolves an executed OTP2 response — its [data], GraphQL [errors] and transport [exception], the
+ * three fields [com.apollographql.apollo.api.ApolloResponse] can report a plan through — into
+ * itineraries, or throws the [TripPlanException] classified from whichever tier actually failed.
+ *
+ * Takes the fields rather than the response so it stays a pure JVM function, constructible in a test
+ * without an Apollo `Query` instance, like its sibling classifiers.
+ */
+internal fun resolveOtp2Response(
+    data: PlanQuery.Data?,
+    errors: List<GraphQlError>?,
+    exception: ApolloException?
+): List<TripItinerary> {
+    val diagnostic = otp2ErrorDiagnostic(errors)
+
+    // What to raise when nothing resolves: the server's own account of the failure whenever it sent
+    // one, and only otherwise the plain no-route result.
+    val noResultFailure: () -> TripPlanException = if (diagnostic != null) {
+        { TripPlanException(otp2GraphQlErrorFor(errors.orEmpty()), message = diagnostic) }
+    } else {
+        { TripPlanException(TripPlanError.NoRoute) }
+    }
+
+    if (data != null) {
+        // `data` being non-null doesn't mean the query succeeded: a GraphQL error nulls only the field
+        // it hit, so an execution-tier failure on `planConnection` arrives as `{"planConnection":
+        // null}` *alongside* an `errors` entry. Handing [resolveOtp2Plan] the GraphQL failure keeps
+        // that case from surfacing as its defensive "no route", which would tell the rider we looked
+        // and found nothing when in fact we never got an answer.
+        return resolveOtp2Plan(data, noResultFailure)
+    }
+
+    // Nothing at all to show. Apollo reports transport/HTTP/parse failures on `exception` rather than
+    // throwing them (that is the point of its non-throwing `execute()`), so the transport tier has to
+    // be read off the response, not caught. A GraphQL-errors-only response leaves `exception` null and
+    // is classified from the errors themselves.
+    throw when {
+        exception != null -> TripPlanException(otp2TransportErrorFor(exception), exception)
+        diagnostic != null -> noResultFailure()
+        else -> TripPlanException(TripPlanError.Unknown)
+    }
+}
+
+/**
+ * Renders a GraphQL `errors` array for the log and the thrown exception, or null when the response
+ * carried no errors.
+ *
+ * **The server's message text is included only in debug builds.** A GraphQL error explains itself by
+ * quoting the argument it rejected — that is the whole point of surfacing it (#2023) — but the plan's
+ * arguments include the trip's origin and destination coordinates (`Otp2PlanRequestBuilder` sends them
+ * as `PlanCoordinateInput`), and graphql-java renders a rejected variable's value straight into the
+ * message. So the text can carry the rider's location, and it must not be written anywhere a release
+ * build might retain or forward it. Debug builds are where the message is actually read (a developer
+ * reproducing against a region — the #2023 workflow), so gating on the build type costs nothing real.
+ *
+ * What survives in every build is the *structural* half, which the server composes rather than quotes
+ * and which therefore cannot contain request values: the `classification`, the response `path`, and
+ * the document `locations`. Those name which query element failed and how, which is what the
+ * classification tiers act on. Other `extensions` keys are deliberately dropped rather than rendered:
+ * `classification` is the one this app has verified the meaning of, and an unexamined key could carry
+ * anything the server chose to put there.
+ *
+ * Scrubbing values out of the message text instead was rejected: recognizing "the coordinate part" of
+ * a free-text English sentence is exactly the kind of fuzzy inference CLAUDE.md's no-heuristics rule
+ * forbids, and it would fail silently the first time OTP reworded an error.
+ *
+ * [includeServerText] defaults to the build type and exists so both renderings are directly testable.
+ */
+internal fun otp2ErrorDiagnostic(
+    errors: List<GraphQlError>?,
+    includeServerText: Boolean = BuildConfig.DEBUG
+): String? = errors?.takeIf { it.isNotEmpty() }?.joinToString("; ") { it.toDiagnostic(includeServerText) }
+
+/** One error's [otp2ErrorDiagnostic] rendering. */
+private fun GraphQlError.toDiagnostic(includeServerText: Boolean): String = buildString {
+    append(classification() ?: "unclassified")
+    path?.takeIf { it.isNotEmpty() }?.let { append(" at ").append(it.joinToString(".")) }
+    locations?.takeIf { it.isNotEmpty() }?.let { at ->
+        append(at.joinToString(prefix = " (", postfix = ")") { "line ${it.line}:${it.column}" })
+    }
+    if (includeServerText) {
+        append(": ").append(message)
+    }
+}
+
+/**
+ * Classifies the transport tier — everything below the GraphQL response itself. An
+ * [ApolloNetworkException] is a connect/read timeout or DNS failure, i.e. a connectivity problem; any
+ * other kind (HTTP status, parse failure, protocol error) isn't a timeout, so it surfaces as an
+ * unclassified request failure rather than a connectivity one.
+ *
+ * Top-level and `internal`, and returning the [TripPlanError] rather than the exception, so it's
+ * JVM-unit-testable from a constructed exception like its sibling tiers [otp2GraphQlErrorFor] and
+ * [otp2ErrorFor].
+ */
+internal fun otp2TransportErrorFor(e: ApolloException): TripPlanError = if (e is ApolloNetworkException) {
+    TripPlanError.Connectivity
+} else {
+    TripPlanError.Unknown
+}
+
+/**
+ * The `extensions.classification` values that mean the server rejected *this query as written*, before
+ * ever routing anything: OTP2 runs on graphql-java, whose `graphql.ErrorType` enumerates exactly
+ * `InvalidSyntax`, `ValidationError`, `DataFetchingException`, `NullValueInNonNullableField`,
+ * `OperationNotSupported` and `ExecutionAborted`, and emits the constant's name verbatim under
+ * `extensions.classification` (confirmed against a live OTP2 response — see #2023). The first two are
+ * decided by the parser and the validator against the schema, so the same request will be refused
+ * identically forever; the rest happen during execution and may well be transient.
+ *
+ * This is an exact match on an explicitly-stated field with a documented, closed value set — not an
+ * inference from the message text — and an unrecognized or absent classification falls back to the
+ * generic result, so a server that stops sending the key simply behaves as it does today.
+ */
+private val DETERMINISTIC_REJECTION_CLASSIFICATIONS = setOf("InvalidSyntax", "ValidationError")
+
+/**
+ * Classifies a GraphQL-level `errors` array — the tier *above* the `routingErrors` that [otp2ErrorFor]
+ * handles, and the one that had no classification at all before #2023.
+ *
+ * A deterministic rejection ([DETERMINISTIC_REJECTION_CLASSIFICATIONS]) must not advise a retry:
+ * resending the identical query fails identically, forever. So it maps to the shared
+ * [TripPlanError.RequestRejected] — the same result OTP1's `BOGUS_PARAMETER` gets, because it means the
+ * same thing, and in practice the trigger is a trip-preference value the rider can actually change.
+ * Everything else keeps the generic try-again result, which is honest there: a server-side execution
+ * failure may not recur.
+ *
+ * Top-level and `internal` so it's JVM-unit-testable from a constructed error list, like [otp2ErrorFor].
+ */
+internal fun otp2GraphQlErrorFor(errors: List<GraphQlError>): TripPlanError {
+    val rejectedAsWritten = errors.any { it.classification() in DETERMINISTIC_REJECTION_CLASSIFICATIONS }
+    return if (rejectedAsWritten) TripPlanError.RequestRejected else TripPlanError.Unknown
+}
+
+/**
+ * The server-stated classification — `classification` being the GraphQL convention for it under
+ * `extensions` — or null when the key is absent or doesn't hold a string.
+ */
+private fun GraphQlError.classification(): String? = extensions?.get("classification") as? String
 
 /**
  * Resolves an OTP2 `planConnection` [PlanQuery.Data] into itineraries, or throws a classified
@@ -120,10 +274,19 @@ class Otp2Planner @Inject constructor(
  * `SameEdgeAdjuster`, … — because those always come back with empty `edges`, so consulting
  * `routingErrors` only when there are no itineraries still classifies them exactly as before.
  *
+ * [noResultFailure] is what to throw when the data explains nothing at all — no itineraries and no
+ * `routingErrors`. It defaults to the plain no-route result, and [resolveOtp2Response] overrides it
+ * with the GraphQL-tier failure when the response carried `errors`, because a response whose
+ * `planConnection` was nulled by a field error isn't a search that came back empty. Lazy so the
+ * success path never builds an exception it won't throw.
+ *
  * Top-level and `internal` (no [Context] dependency) so it's JVM-unit-testable from a
  * [PlanQuery.Data] fixture without Apollo, like [otp2ErrorFor].
  */
-internal fun resolveOtp2Plan(data: PlanQuery.Data): List<TripItinerary> {
+internal fun resolveOtp2Plan(
+    data: PlanQuery.Data,
+    noResultFailure: () -> TripPlanException = { TripPlanException(TripPlanError.NoRoute) }
+): List<TripItinerary> {
     val itineraries = data.toTripItineraries()
     if (itineraries.isNotEmpty()) {
         return itineraries
@@ -131,7 +294,7 @@ internal fun resolveOtp2Plan(data: PlanQuery.Data): List<TripItinerary> {
     data.planConnection?.routingErrors?.firstOrNull()?.let {
         throw TripPlanException(otp2ErrorFor(it.code, it.inputField))
     }
-    throw TripPlanException(TripPlanError.NoRoute)
+    throw noResultFailure()
 }
 
 /**

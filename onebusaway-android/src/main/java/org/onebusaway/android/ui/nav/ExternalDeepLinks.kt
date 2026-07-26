@@ -178,7 +178,28 @@ object ExternalDeepLinks {
     fun isUnhandledWebLink(uri: Uri): Boolean = isUnhandledWebLink(uri.toLink())
 
     /** @see isUnhandledWebLink */
-    fun isUnhandledWebLink(link: Link): Boolean = link.scheme == WEB_SCHEME && link.host in WEB_HOSTS && parseWebLink(link) == null
+    fun isUnhandledWebLink(link: Link): Boolean = link.scheme == WEB_SCHEME &&
+        link.host in WEB_HOSTS &&
+        isClaimedWebPath(link.pathSegments) &&
+        parseWebLink(link) == null
+
+    /**
+     * Whether the web intent-filter's `pathPattern` would match [pathSegments] — i.e. whether this app
+     * actually claims the URL. Must stay in step with `src/oba/AndroidManifest.xml`, like [WEB_HOSTS] does.
+     *
+     * An exact translation of `/regions/.*` + `/stops/.*` + `/trips` under `PATTERN_SIMPLE_GLOB`, where
+     * `.*` spans `/`: first segment `regions`, last segment `trips`, and a `stops` segment in between with
+     * at least one segment either side of it (each `.*` stands where a decoded path segment must exist).
+     *
+     * Without this, *every* `https` URL on an OBA host counted as "claimed", so an explicit intent for a
+     * URL the filter never claimed — `https://onebusaway.co/about`, say — would have been bounced out to a
+     * browser instead of simply opening the app.
+     */
+    private fun isClaimedWebPath(pathSegments: List<String>): Boolean {
+        if (pathSegments.size < 5) return false
+        if (pathSegments.first() != "regions" || pathSegments.last() != "trips") return false
+        return (2..pathSegments.size - 3).any { pathSegments[it] == "stops" }
+    }
 
     /** `/regions/{regionID}/stops/{stopID}/trips?trip_id=…` — the only recognized web path shape. */
     private fun parseWebLink(link: Link): Target? {

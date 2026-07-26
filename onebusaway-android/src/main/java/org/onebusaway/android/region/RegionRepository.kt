@@ -194,8 +194,10 @@ class DefaultRegionRepository @Inject constructor(
 
     /** Loads the persisted current region (by the saved region-id) from the cache, or null if none. */
     private suspend fun loadPersistedRegion(): Region? {
-        val id = prefs.getLong(R.string.preference_key_region, -1L)
-        if (id < 0) return null
+        // Only NO_REGION_ID means "nothing set". Testing the sign instead would discard every custom
+        // region (#2027), whose ids are <= -2 — the region would survive in the database but never be
+        // restored at cold start. See the id-space comment in CustomRegions.kt.
+        val id = persistedRegionId(prefs.getLong(R.string.preference_key_region, NO_REGION_ID)) ?: return null
         return regionCache.cachedRegion(id)
     }
 
@@ -207,7 +209,7 @@ class DefaultRegionRepository @Inject constructor(
         // (every reader observes [region] or reads its value), plus the persisted region-id pref and the
         // custom-URL clears. The region-derived subsystems (Plausible rebuild, Open311 re-init) react to
         // the published flow, not here.
-        prefs.setLong(R.string.preference_key_region, region?.id ?: -1L)
+        prefs.setLong(R.string.preference_key_region, region?.id ?: NO_REGION_ID)
         if (region != null) {
             prefs.setString(R.string.preference_key_oba_api_url, null) // using a region → clear custom OBA URL
             if (regionChanged && region.otpBaseUrl != null) {

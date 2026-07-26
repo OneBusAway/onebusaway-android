@@ -13,8 +13,9 @@
   that's a feature to design, not a file to copy.
 
   NOTE that the API < 31 caveat above applies to the OBA brand too, until the assetlinks.json files
-  are live: on API 23-30 an unverified filter still matches, so these links raise the
-  browser-or-OneBusAway chooser rather than going straight to the browser. On API 31+ an unverified
+  are live: on API 23-30 an unverified filter still matches, so these links fall into ordinary intent
+  disambiguation and may raise the browser-or-OneBusAway chooser rather than going straight to the
+  browser (a default handler the rider already chose is still respected). On API 31+ an unverified
   domain isn't offered to the app at all. docs/DEEP_LINKING.md spells this out.
 
   The pathPattern claims only the trip endpoint, so the rest of the site (the marketing pages, and a

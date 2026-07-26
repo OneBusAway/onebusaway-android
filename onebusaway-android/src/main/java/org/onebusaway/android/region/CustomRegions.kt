@@ -31,12 +31,35 @@ data class CustomRegionRequest(
     val umamiAnalyticsId: String? = null
 )
 
+/*
+ * The region id space, in one place, because custom regions are the reason it has structure at all:
+ *
+ *   >= 0   a region from the OBA regions directory (Tampa is 0)
+ *   -1     [NO_REGION_ID] — the region-id preference's "no region set" sentinel
+ *   <= -2  a user-added custom region (#2027)
+ *
+ * Anything reading or writing the region-id preference must go through [NO_REGION_ID] rather than
+ * testing the sign: `id < 0` would swallow every custom region, which is exactly the bug that shipped
+ * in the first draft of this feature (a custom region survived in the database but was never restored
+ * at cold start, so the app silently fell back to resolution on every launch).
+ */
+
+/** The region-id preference value meaning "no region is set". */
+internal const val NO_REGION_ID = -1L
+
 /**
- * The first id handed to a custom region. Directory ids are non-negative (Tampa is 0) and -1 is the
- * "no region" sentinel in the region-id preference, so custom regions count downwards from here and
- * can never collide with either. See [nextCustomRegionId].
+ * The first id handed to a custom region — one below [NO_REGION_ID], so the two can never be confused.
+ * See [nextCustomRegionId].
  */
 internal const val FIRST_CUSTOM_REGION_ID = -2L
+
+/**
+ * The region id stored in the preference, or null when it means "no region" ([NO_REGION_ID]).
+ *
+ * Pure so the sentinel rule is unit-tested rather than living inline in the `Context`-coupled
+ * repository — see `RegionRepository.loadPersistedRegion`, its only caller.
+ */
+internal fun persistedRegionId(stored: Long): Long? = stored.takeIf { it != NO_REGION_ID }
 
 /**
  * The next custom-region id given the lowest id already in the cache ([minId], null when empty) — one

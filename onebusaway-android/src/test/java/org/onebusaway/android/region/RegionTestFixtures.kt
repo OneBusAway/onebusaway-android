@@ -59,8 +59,10 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     override fun applyRegion(region: Region?, regionChanged: Boolean) = emit(region)
 
     override suspend fun addCustomRegion(request: CustomRegionRequest): Region? {
-        addedCustomRegions.add(request)
+        // Reject before recording, mirroring the real repository: an invalid request is never saved, so a
+        // fake that records it first would let a test pass on behaviour production doesn't have.
         if (!addCustomRegionSucceeds) return null
+        addedCustomRegions.add(request)
         // Mirror the real repo's observable effect: the new region becomes current.
         val added = customRegion(FIRST_CUSTOM_REGION_ID, request)
         emit(added)
@@ -68,6 +70,9 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     }
 
     override suspend fun deleteCustomRegion(region: Region) {
+        // The real repository ignores a directory region outright; so must this, or a test could rely on
+        // deleting one working.
+        if (!region.custom) return
         deletedCustomRegions.add(region)
         if (_region.value?.id == region.id) emit(null)
     }

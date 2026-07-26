@@ -534,6 +534,8 @@
     </string>
     <string name="add_region_server_oba">Transit data</string>
     <string name="add_region_server_otp">Trip planning</string>
+    <string name="add_region_server_sidecar">Alarms and shared links</string>
+    <string name="add_region_server_umami">Usage analytics</string>
     <string name="add_region_confirm">Add region</string>
     <string name="add_region_invalid_title">Couldn’t add region</string>
     <string name="add_region_invalid_message">That link’s server address isn’t a valid URL.</string>

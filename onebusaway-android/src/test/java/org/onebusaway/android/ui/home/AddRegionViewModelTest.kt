@@ -99,6 +99,7 @@ class AddRegionViewModelTest {
         advanceUntilIdle()
 
         assertTrue("an unusable server address must be reported, not swallowed", viewModel.invalid.value)
+        assertTrue("a rejected request must not have been saved", repo.addedCustomRegions.isEmpty())
 
         viewModel.dismissInvalid()
         assertFalse(viewModel.invalid.value)

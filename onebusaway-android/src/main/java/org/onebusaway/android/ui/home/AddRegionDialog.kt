@@ -36,9 +36,9 @@ import org.onebusaway.android.region.CustomRegionRequest
  * The consent gate for an `add-region` deep link (#2027, #2030), rendered at the activity's setContent
  * root alongside [RegionPickerHost] so it overlays whatever screen the link landed on.
  *
- * The dialog names the servers the link would switch to, because that host is the only thing the rider
- * can actually judge: the region *name* is attacker-controlled text and says nothing about where the
- * data comes from. Declining is the safe default, so Cancel is the dismiss action and back/scrim both
+ * The dialog names **every** server the link would configure, because those hosts are the only thing the
+ * rider can actually judge: the region *name* is attacker-controlled text and says nothing about where
+ * the data comes from. Declining is the safe default, so Cancel is the dismiss action and back/scrim both
  * decline rather than leaving the request hanging.
  */
 @Composable
@@ -71,6 +71,15 @@ private fun AddRegionConfirmDialog(
                 ServerRow(stringResource(R.string.add_region_server_oba), request.obaBaseUrl)
                 request.otpBaseUrl?.let {
                     ServerRow(stringResource(R.string.add_region_server_otp), it)
+                }
+                // Every endpoint the link would persist has to be on screen, not just the two the rider
+                // is most likely to think about: consenting to a region consents to all of them, and the
+                // analytics host in particular is one they'd want to see before agreeing.
+                request.sidecarBaseUrl?.let {
+                    ServerRow(stringResource(R.string.add_region_server_sidecar), it)
+                }
+                request.umamiAnalyticsUrl?.let {
+                    ServerRow(stringResource(R.string.add_region_server_umami), it)
                 }
             }
         },

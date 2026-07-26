@@ -19,8 +19,14 @@ There are two independent ways to point the app at a server you control:
    See [`DEEP_LINKING.md`](DEEP_LINKING.md). Better for a deployment you'll come back to, and the only
    one of the two that can carry a sidecar/analytics config.
 
-They don't stack: applying any region (including a custom one) clears the custom OBA URL preference, so
-whichever you did last is what's in effect.
+They mostly don't stack: applying any region (including a custom one) always clears the custom **OBA**
+URL preference, so whichever you did last decides where transit data comes from.
+
+The custom **OTP** URL is narrower — `RegionRepository.applyRegion` clears it only when the region being
+applied actually publishes an `otpBaseUrl`. So if you set a custom OTP URL and then switch to a region
+with no trip planner of its own (including a custom region added without `otp-url`), that custom OTP URL
+stays in effect. That is long-standing behaviour for every region, not something custom regions
+introduce; clear the preference by hand if you don't want it.
 
 ## Configuration
 

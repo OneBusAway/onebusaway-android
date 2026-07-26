@@ -51,12 +51,20 @@ object ExternalIntents {
     }
 
     /**
-     * A scheme-only `https` URI, used to enumerate the device's browsers. Every browser's web filter is
-     * a bare `<data android:scheme="https"/>` with no authority, so they all match it — while the app's
-     * own web-link filter, which requires a host and a path, cannot. That asymmetry is what keeps
-     * [openInBrowser] from resolving back to this app and looping.
+     * The URI used to enumerate the device's browsers.
+     *
+     * It carries a **host**, deliberately. A scheme-only `https:` URI is *opaque* — `getHost()` is null —
+     * and `IntentFilter.AuthorityEntry.match` fails any filter that declares a host, wildcard included.
+     * So a browser registering `<data android:scheme="https" android:host="*"/>` rather than a bare
+     * scheme would be missed entirely, and on a device where that was the only browser [openInBrowser]
+     * would find nothing to hand the link to.
+     *
+     * `example.com` is the IANA-reserved example domain: nothing is ever fetched (this URI only ever
+     * reaches `PackageManager`), no real site can claim it, and — the property that matters — it is not
+     * one of `ExternalDeepLinks.WEB_HOSTS`, so this app's own web-link filter cannot match it. That is
+     * what keeps [openInBrowser] from resolving back to us and looping.
      */
-    private val BROWSER_PROBE_URI = "https:".toUri()
+    private val BROWSER_PROBE_URI = "https://example.com".toUri()
 
     /**
      * Opens [uri] in a browser, explicitly excluding this app, and reports whether it could.
@@ -93,6 +101,9 @@ object ExternalIntents {
             context.startActivity(launch)
             true
         } catch (e: ActivityNotFoundException) {
+            // Nothing to log or surface: the browser was resolved a moment ago, so this is the narrow
+            // race where it was uninstalled/disabled in between. Reporting false is the whole contract —
+            // the caller falls back to opening the app normally.
             false
         }
     }

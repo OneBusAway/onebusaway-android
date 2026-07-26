@@ -17,6 +17,7 @@ package org.onebusaway.android.region
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -66,6 +67,36 @@ class CustomRegionsTest {
         ids.forEach { id ->
             assertTrue("id $id must be below the -1 sentinel", id < -1L)
         }
+    }
+
+    // --- the region-id preference sentinel ---
+
+    @Test
+    fun `the no-region sentinel reads back as no region`() {
+        assertNull(persistedRegionId(NO_REGION_ID))
+    }
+
+    @Test
+    fun `a custom region id survives a round trip through the preference`() {
+        // The bug this rule exists for: reading the preference as `id < 0` rather than
+        // `id != NO_REGION_ID` discarded every custom region at cold start — it stayed in the database
+        // but was never restored, so the app silently fell back to region resolution on each launch.
+        // The rule now lives only in persistedRegionId, which is what this pins; the repository call site
+        // itself is private and Context-coupled, so it isn't reachable from a JVM test.
+        assertEquals(FIRST_CUSTOM_REGION_ID, persistedRegionId(FIRST_CUSTOM_REGION_ID))
+        assertEquals(-7L, persistedRegionId(-7L))
+    }
+
+    @Test
+    fun `a directory region id survives a round trip through the preference`() {
+        assertEquals(0L, persistedRegionId(0L)) // Tampa
+        assertEquals(1L, persistedRegionId(1L))
+    }
+
+    @Test
+    fun `no allocated custom id can ever be mistaken for the sentinel`() {
+        val ids = generateSequence(nextCustomRegionId(null)) { nextCustomRegionId(it) }.take(50)
+        ids.forEach { id -> assertNotNull("id $id must survive the preference", persistedRegionId(id)) }
     }
 
     // --- the region built from a request ---

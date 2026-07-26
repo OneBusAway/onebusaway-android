@@ -117,10 +117,12 @@ design rather than a config knob, so it isn't half-wired.
 >
 > - **API 31+** — an unverified domain is not offered to the app at all, so the link opens in the
 >   browser exactly as before. No user-visible change.
-> - **API 23–30** — there is no such gating. The app still *matches* the filter, so tapping a
->   `onebusaway.co` link raises the browser-or-OneBusAway **disambiguation chooser** instead of going
->   straight to the browser. That is a real behaviour change for those users, and it persists until the
->   `assetlinks.json` files are live.
+> - **API 23–30** — there is no such gating. The app still *matches* the filter, so an unverified
+>   `onebusaway.co` link falls into ordinary intent disambiguation: tapping one **may raise** the
+>   browser-or-OneBusAway chooser rather than going straight to the browser. It won't if the rider
+>   already has a default handler set for those links — a default, once chosen, is respected. Either
+>   way it's a behaviour change for those users, and it persists until the `assetlinks.json` files are
+>   live.
 >
 > The filter can be exercised directly with `adb` (below) regardless of verification state.
 

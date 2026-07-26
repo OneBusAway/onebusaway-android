@@ -271,6 +271,20 @@ class ExternalDeepLinksTest {
     }
 
     @Test
+    fun `a web path the manifest filter never claims is not an unhandled web link`() {
+        // The filter only claims /regions/*/stops/*/trips. A URL outside that — reachable only via an
+        // explicit intent, since the OS wouldn't route it here — must simply open the app, not get
+        // bounced out to a browser.
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(webLink(pathSegments = listOf("about"))))
+        assertFalse(ExternalDeepLinks.isUnhandledWebLink(webLink(pathSegments = emptyList())))
+        assertFalse(
+            ExternalDeepLinks.isUnhandledWebLink(
+                webLink(pathSegments = listOf("regions", "1", "stops", "1_75403"))
+            )
+        )
+    }
+
+    @Test
     fun `links we were never claiming are not unhandled web links`() {
         // Only the web filter is broader than the parser. A foreign host never reached us, an http URL
         // isn't in the filter, and an unrecognized custom-scheme link is a dead link, not a web page —

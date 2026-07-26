@@ -26,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
+import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.toTripItineraries
 import org.onebusaway.android.api.graphql.PlanQuery
@@ -94,16 +95,13 @@ class Otp2Planner @Inject constructor(
             throw TripPlanException(otp2TransportErrorFor(e), e)
         }
 
-        // #2023: a GraphQL `errors` array is the server telling us, in its own words, exactly what it
-        // objected to — usually the offending argument, the rejected value, and the accepted range.
-        // It's untranslated, developer-facing English naming schema internals, so it can't be shown to
-        // the rider; this line is what actually surfaces it, since both repository call paths swallow
-        // the thrown exception (see [TripPlanException]). Logged even when the response also carried
-        // usable data, because GraphQL permits partial results and a plan we can still render is no
-        // reason to discard the explanation of what was left out of it. The server quotes the argument
-        // it rejected, so this can echo back request values including the trip's endpoints — logcat is
-        // app-private from Android 4.1, so it goes no further than the device.
-        otp2ServerWording(response.errors)?.let {
+        // #2023: a GraphQL `errors` array is the server telling us exactly what it objected to. This
+        // line is what actually surfaces it, since both repository call paths swallow the thrown
+        // exception (see [TripPlanException]). Logged even when the response also carried usable data,
+        // because GraphQL permits partial results and a plan we can still render is no reason to
+        // discard the explanation of what was left out of it. See [otp2ErrorDiagnostic] for what is
+        // and isn't included.
+        otp2ErrorDiagnostic(response.errors)?.let {
             Log.e(TAG, "OTP2 planConnection returned GraphQL errors: $it")
         }
 
@@ -128,12 +126,12 @@ internal fun resolveOtp2Response(
     errors: List<GraphQlError>?,
     exception: ApolloException?
 ): List<TripItinerary> {
-    val serverWording = otp2ServerWording(errors)
+    val diagnostic = otp2ErrorDiagnostic(errors)
 
     // What to raise when nothing resolves: the server's own account of the failure whenever it sent
     // one, and only otherwise the plain no-route result.
-    val noResultFailure: () -> TripPlanException = if (serverWording != null) {
-        { TripPlanException(otp2GraphQlErrorFor(errors.orEmpty()), message = serverWording) }
+    val noResultFailure: () -> TripPlanException = if (diagnostic != null) {
+        { TripPlanException(otp2GraphQlErrorFor(errors.orEmpty()), message = diagnostic) }
     } else {
         { TripPlanException(TripPlanError.NoRoute) }
     }
@@ -153,17 +151,52 @@ internal fun resolveOtp2Response(
     // is classified from the errors themselves.
     throw when {
         exception != null -> TripPlanException(otp2TransportErrorFor(exception), exception)
-        serverWording != null -> noResultFailure()
+        diagnostic != null -> noResultFailure()
         else -> TripPlanException(TripPlanError.Unknown)
     }
 }
 
 /**
- * The server's own wording for a GraphQL `errors` array — every error rendered in full, so the
- * message, the `extensions` (including `classification`) and the response path all survive — or null
- * when the response carried no errors.
+ * Renders a GraphQL `errors` array for the log and the thrown exception, or null when the response
+ * carried no errors.
+ *
+ * **The server's message text is included only in debug builds.** A GraphQL error explains itself by
+ * quoting the argument it rejected — that is the whole point of surfacing it (#2023) — but the plan's
+ * arguments include the trip's origin and destination coordinates (`Otp2PlanRequestBuilder` sends them
+ * as `PlanCoordinateInput`), and graphql-java renders a rejected variable's value straight into the
+ * message. So the text can carry the rider's location, and it must not be written anywhere a release
+ * build might retain or forward it. Debug builds are where the message is actually read (a developer
+ * reproducing against a region — the #2023 workflow), so gating on the build type costs nothing real.
+ *
+ * What survives in every build is the *structural* half, which the server composes rather than quotes
+ * and which therefore cannot contain request values: the `classification`, the response `path`, and
+ * the document `locations`. Those name which query element failed and how, which is what the
+ * classification tiers act on. Other `extensions` keys are deliberately dropped rather than rendered:
+ * `classification` is the one this app has verified the meaning of, and an unexamined key could carry
+ * anything the server chose to put there.
+ *
+ * Scrubbing values out of the message text instead was rejected: recognizing "the coordinate part" of
+ * a free-text English sentence is exactly the kind of fuzzy inference CLAUDE.md's no-heuristics rule
+ * forbids, and it would fail silently the first time OTP reworded an error.
+ *
+ * [includeServerText] defaults to the build type and exists so both renderings are directly testable.
  */
-internal fun otp2ServerWording(errors: List<GraphQlError>?): String? = errors?.takeIf { it.isNotEmpty() }?.joinToString("; ")
+internal fun otp2ErrorDiagnostic(
+    errors: List<GraphQlError>?,
+    includeServerText: Boolean = BuildConfig.DEBUG
+): String? = errors?.takeIf { it.isNotEmpty() }?.joinToString("; ") { it.toDiagnostic(includeServerText) }
+
+/** One error's [otp2ErrorDiagnostic] rendering. */
+private fun GraphQlError.toDiagnostic(includeServerText: Boolean): String = buildString {
+    append(classification() ?: "unclassified")
+    path?.takeIf { it.isNotEmpty() }?.let { append(" at ").append(it.joinToString(".")) }
+    locations?.takeIf { it.isNotEmpty() }?.let { at ->
+        append(at.joinToString(prefix = " (", postfix = ")") { "line ${it.line}:${it.column}" })
+    }
+    if (includeServerText) {
+        append(": ").append(message)
+    }
+}
 
 /**
  * Classifies the transport tier — everything below the GraphQL response itself. An

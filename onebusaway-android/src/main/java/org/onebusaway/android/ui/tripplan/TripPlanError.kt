@@ -106,10 +106,12 @@ data class TripPlanError(
  * so the existing `runCatching`/`runCatchingCancellable` wrapping in [DefaultTripPlanRepository] (and
  * the monitor's empty-list-on-failure `planBlocking`) handles it unchanged.
  *
- * [message] carries the server's *own* wording for the failure when it sent any — untranslated,
- * developer-facing text that is never shown to the rider (#2023). It rides on the exception rather
- * than a synthesized `cause` so nothing is lost to a wrapper type's one-error-only rendering, and so
- * anything that renders the throwable renders the explanation with it. Note that this exception is
+ * [message] carries the server's *own* account of the failure when it sent one — untranslated,
+ * developer-facing text that is never shown to the rider (#2023), and redacted down to its structural
+ * half outside debug builds because the server quotes the arguments it rejected (see
+ * `otp2ErrorDiagnostic`). It rides on the exception rather than a synthesized `cause` so nothing is
+ * lost to a wrapper type's one-error-only rendering, and so anything that renders the throwable
+ * renders the explanation with it. Note that this exception is
  * *not* itself what reaches a bug report today: both [DefaultTripPlanRepository] call paths
  * deliberately swallow it (`runCatchingCancellable` into a `Result`, and `getOrDefault(emptyList())`
  * in the monitor's `planBlocking`), so [Otp2Planner]'s log at the point the errors arrive is what

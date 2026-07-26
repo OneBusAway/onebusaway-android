@@ -15,8 +15,12 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import com.apollographql.apollo.api.Error as GraphQlError
+import com.apollographql.apollo.exception.ApolloException
+import com.apollographql.apollo.exception.ApolloNetworkException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.api.graphql.PlanQuery
@@ -29,6 +33,8 @@ import org.onebusaway.android.directions.model.TripMode
 /**
  * Covers [resolveOtp2Plan]: the rule that OTP2 itineraries win over a coexisting `routingErrors`
  * entry, and that fatal errors (which always arrive with empty `edges`) still classify as before.
+ * Also covers [resolveOtp2Response] — the tier above it — which decides between a transport failure,
+ * the GraphQL `errors` array and the data itself, and which of those gets to explain an empty result.
  *
  * The regression this guards is #1947: OTP2 emits [RoutingErrorCode.WALKING_BETTER_THAN_TRANSIT]
  * *while keeping* the walk-only itinerary in the response, and the old code threw that advisory
@@ -93,7 +99,140 @@ class Otp2PlanResolveTest {
         assertEquals(TripPlanError.NoRoute, error)
     }
 
+    // ---- resolveOtp2Response: which tier explains the failure (#2023) ----
+
+    /**
+     * The tier order: a transport failure is reported on `exception` and outranks anything the server
+     * managed to say, because the response never really arrived.
+     */
+    @Test
+    fun transportFailure_outranksGraphQlErrors() {
+        val error = failureFrom(
+            data = null,
+            errors = listOf(graphQlError("ValidationError")),
+            exception = ApolloNetworkException("connect timed out")
+        ).error
+
+        assertEquals(TripPlanError.Connectivity, error)
+    }
+
+    /** A GraphQL-errors-only response classifies from the errors and carries the server's wording. */
+    @Test
+    fun graphQlErrorsOnly_classifyAndCarryTheServerWording() {
+        val message = "Validation error (WrongType@[planConnection]) : argument " +
+            "'preferences.street.walk.reluctance' with value 'FloatValue{value=0.08}' is not a valid " +
+            "'Reluctance' - Reluctance needs to be between 0.1 and 100000.0"
+
+        val failure = failureFrom(data = null, errors = listOf(graphQlError("ValidationError", message)))
+
+        assertEquals(TripPlanError.RequestRejected, failure.error)
+        // The whole error renders, so the classification and response path survive alongside the text.
+        assertTrue(failure.message.orEmpty().contains(message))
+        assertTrue(failure.message.orEmpty().contains("ValidationError"))
+    }
+
+    /**
+     * The case a `data != null` early return used to swallow: a GraphQL error nulls only the field it
+     * hit, so an execution-tier failure arrives as `{"planConnection": null}` *with* an `errors` entry.
+     * That is not a search that came back empty, and must not read as "cannot find route".
+     */
+    @Test
+    fun nulledPlanConnection_classifiesFromTheErrorsNotAsNoRoute() {
+        val failure = failureFrom(
+            data = PlanQuery.Data(planConnection = null),
+            errors = listOf(graphQlError("DataFetchingException"))
+        )
+
+        assertEquals(TripPlanError.Unknown, failure.error)
+        assertTrue(failure.message.orEmpty().contains("DataFetchingException"))
+    }
+
+    /** The same shape with a deterministic rejection points the rider at the trip options instead. */
+    @Test
+    fun nulledPlanConnection_withDeterministicRejection_advisesChangingTripOptions() {
+        val failure = failureFrom(
+            data = PlanQuery.Data(planConnection = null),
+            errors = listOf(graphQlError("ValidationError"))
+        )
+
+        assertEquals(TripPlanError.RequestRejected, failure.error)
+    }
+
+    /** GraphQL permits partial results: a renderable plan is returned even when errors accompany it. */
+    @Test
+    fun itineraries_outrankGraphQlErrors() {
+        val data = planData(routingErrors = emptyList(), edges = listOf(walkEdge()))
+
+        val itineraries = resolveOtp2Response(data, listOf(graphQlError("DataFetchingException")), null)
+
+        assertEquals(1, itineraries.size)
+        assertEquals(TripMode.WALK, itineraries[0].legs[0].mode)
+    }
+
+    /** A `routingErrors` entry is the most specific account there is, so it outranks the GraphQL tier. */
+    @Test
+    fun routingError_outranksGraphQlErrors() {
+        val data = planData(
+            routingErrors = listOf(routingError(RoutingErrorCode.LOCATION_NOT_FOUND, InputField.FROM)),
+            edges = emptyList()
+        )
+
+        val error = failureFrom(data, listOf(graphQlError("ValidationError"))).error
+
+        assertEquals(TripPlanError.Category.LOCATION, error.category)
+        assertEquals(R.string.tripplanner_error_geocode_from_not_found, error.detailRes)
+    }
+
+    /** With no errors of any kind, an empty result is still the plain no-route result. */
+    @Test
+    fun emptyResultWithoutErrors_isStillNoRoute() {
+        val data = planData(routingErrors = emptyList(), edges = emptyList())
+
+        assertEquals(TripPlanError.NoRoute, failureFrom(data).error)
+    }
+
+    /** A response with nothing on it at all — no data, no errors, no exception — stays unclassified. */
+    @Test
+    fun emptyResponse_isUnknown() {
+        assertEquals(TripPlanError.Unknown, failureFrom(data = null).error)
+    }
+
+    /**
+     * An empty `errors` array is not the server saying something: it must not be mistaken for wording,
+     * or an ordinary empty result would classify as an unknown failure instead of a no-route one.
+     */
+    @Test
+    fun emptyErrorsArray_readsAsNoErrorsAtAll() {
+        val data = planData(routingErrors = emptyList(), edges = emptyList())
+
+        assertEquals(TripPlanError.NoRoute, failureFrom(data, errors = emptyList()).error)
+    }
+
+    /**
+     * Without wording of its own the exception still renders its cause, as `IOException(Throwable)` did
+     * before [TripPlanException] took a message — otherwise wrapping a transport failure lost its text.
+     */
+    @Test
+    fun transportFailure_messageFallsBackToTheCause() {
+        val cause = ApolloNetworkException("connect timed out")
+
+        val failure = failureFrom(data = null, exception = cause)
+
+        assertEquals(cause, failure.cause)
+        assertEquals(cause.toString(), failure.message)
+    }
+
     // ---- fixtures ----
+
+    private fun failureFrom(
+        data: PlanQuery.Data?,
+        errors: List<GraphQlError>? = null,
+        exception: ApolloException? = null
+    ) = assertThrows(TripPlanException::class.java) { resolveOtp2Response(data, errors, exception) }
+
+    private fun graphQlError(classification: String, message: String = "boom") = GraphQlError.Builder(message)
+        .extensions(mapOf("classification" to classification))
+        .build()
 
     private fun planData(
         routingErrors: List<PlanQuery.RoutingError>,

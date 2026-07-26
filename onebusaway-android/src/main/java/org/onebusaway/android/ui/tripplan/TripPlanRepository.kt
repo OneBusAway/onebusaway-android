@@ -213,7 +213,7 @@ internal fun otp1ErrorFor(errorCode: Int): TripPlanError = when (errorCode) {
     OtpErrorId.PATH_NOT_FOUND.id -> TripPlanError.NoRoute
     OtpErrorId.NO_TRANSIT_TIMES.id ->
         TripPlanError(TripPlanError.Category.SCHEDULE, R.string.tripplanner_error_no_transit_times)
-    OtpErrorId.REQUEST_TIMEOUT.id -> TripPlanError.Timeout
+    OtpErrorId.REQUEST_TIMEOUT.id -> TripPlanError.Connectivity
     OtpErrorId.BOGUS_PARAMETER.id -> TripPlanError.RequestRejected
     OtpErrorId.GEOCODE_FROM_NOT_FOUND.id ->
         TripPlanError(TripPlanError.Category.LOCATION, R.string.tripplanner_error_geocode_from_not_found)

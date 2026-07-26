@@ -82,8 +82,14 @@ data class TripPlanError(
         /** No route between the endpoints — also the (defensive) empty-results case. */
         val NoRoute = TripPlanError(Category.NO_ROUTE, R.string.tripplanner_error_path_not_found)
 
-        /** Couldn't reach the planner at all: a transport failure or timeout, on either planner path. */
-        val Timeout = TripPlanError(Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout)
+        /**
+         * Couldn't reach the planner at all, on either planner path: OTP1's `REQUEST_TIMEOUT` and
+         * every OTP2 transport failure (connect/read timeout, DNS, refused connection). The detail
+         * string names the timeout case specifically because that is the one OTP1 ever reported and
+         * the overwhelmingly common one in practice; the category is what the UI leads with, and
+         * "couldn't reach the server" is right for all of them.
+         */
+        val Connectivity = TripPlanError(Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout)
 
         /**
          * The server refused the parameters we sent, and will refuse them identically on a retry — so
@@ -101,16 +107,24 @@ data class TripPlanError(
  * the monitor's empty-list-on-failure `planBlocking`) handles it unchanged.
  *
  * [message] carries the server's *own* wording for the failure when it sent any — untranslated,
- * developer-facing text that is never shown to the rider, but that is exactly what makes a bug report
- * diagnosable (#2023). It rides on the exception rather than a synthesized `cause` so nothing is lost
- * to a wrapper type's one-error-only rendering. [cause] stays last so existing positional call sites
- * are unaffected.
+ * developer-facing text that is never shown to the rider (#2023). It rides on the exception rather
+ * than a synthesized `cause` so nothing is lost to a wrapper type's one-error-only rendering, and so
+ * anything that renders the throwable renders the explanation with it. Note that this exception is
+ * *not* itself what reaches a bug report today: both [DefaultTripPlanRepository] call paths
+ * deliberately swallow it (`runCatchingCancellable` into a `Result`, and `getOrDefault(emptyList())`
+ * in the monitor's `planBlocking`), so [Otp2Planner]'s log at the point the errors arrive is what
+ * actually surfaces them.
+ *
+ * Falling back to the [cause]'s own rendering when no [message] is given preserves what
+ * `IOException(Throwable)` did before the message parameter existed — that constructor derives
+ * `message` from `cause.toString()`, and `IOException(null, cause)` does not. [cause] keeps its
+ * position so existing positional call sites are unaffected.
  */
 class TripPlanException(
     val error: TripPlanError,
     cause: Throwable? = null,
     message: String? = null
-) : IOException(message, cause)
+) : IOException(message ?: cause?.toString(), cause)
 
 /** The [TripPlanError] for a thrown [Throwable], falling back to [TripPlanError.Unknown]. */
 fun Throwable.toTripPlanError(): TripPlanError = (this as? TripPlanException)?.error ?: TripPlanError.Unknown

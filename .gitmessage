@@ -4,15 +4,13 @@
 # Body: why, and anything a reviewer or a future archaeologist would want.
 #
 # If a rider would notice this change, end the message with a Changelog trailer
-# describing the effect in their words, not the code's. It becomes a bullet in
-# the Play Store "What's new" text and in the GitHub release. Most commits do
-# not need one — the subject line above is already the developer-facing entry.
+# describing the effect in their words, not the code's. Most commits don't need
+# one — the subject line above is already the developer-facing entry.
 #
 #   Changelog: Bikeshare trips now show up in the trip planner.
 #
-# Keep it to one sentence: all of a release's trailers share a 500-character
-# budget, and tools/release-notes.sh fails the release if they overrun it.
+# Keep it to one sentence; a release's trailers share a character budget that
+# tools/release-notes.sh enforces. The trailer has to be in the block at the
+# very end of the message or git won't read it.
 #
-# The trailer must be in the trailer block at the very end of the message, or
-# git will not read it. Squashing a branch through the GitHub merge box
-# concatenates commit messages, so check the final message before merging.
+# See .github/CONTRIBUTING.md#changelog-entries.

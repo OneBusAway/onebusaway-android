@@ -104,10 +104,11 @@ class CheckError(Exception):
 
 
 def read_text(path):
+    """File contents as text, converting the OSError into this check's own failure channel."""
     try:
         return Path(path).read_text(encoding="utf-8")
     except OSError as e:
-        raise CheckError(f"could not read {path}: {e}")
+        raise CheckError(f"could not read {path}: {e}") from e
 
 
 def regions_directory_url(resource_path):
@@ -115,7 +116,7 @@ def regions_directory_url(resource_path):
     try:
         resources = ElementTree.fromstring(read_text(resource_path))
     except ElementTree.ParseError as e:
-        raise CheckError(f"could not parse {resource_path}: {e}")
+        raise CheckError(f"could not parse {resource_path}: {e}") from e
     for string in resources.iter("string"):
         if string.get("name") == REGIONS_URL_RESOURCE_NAME:
             return string.text
@@ -123,6 +124,7 @@ def regions_directory_url(resource_path):
 
 
 def fetch(url):
+    """Response body at `url` as text; an unreachable directory is a CheckError, not drift."""
     # An explicit User-Agent is required, not politeness: the directory host answers 403 to
     # urllib's default `Python-urllib/3.x`.
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -130,15 +132,23 @@ def fetch(url):
         with urllib.request.urlopen(request, timeout=60) as response:
             return response.read().decode("utf-8")
     except (urllib.error.URLError, OSError) as e:
-        raise CheckError(f"could not fetch {url}: {e}")
+        raise CheckError(f"could not fetch {url}: {e}") from e
 
 
 def load_regions(text, source):
     """Return {id: region} from a regions-vN.json envelope."""
     try:
-        return {r["id"]: r for r in json.loads(text)["data"]["list"]}
+        regions = {}
+        for region in json.loads(text)["data"]["list"]:
+            region_id = region["id"]
+            # Keying by id would otherwise let a duplicate silently shadow its twin, and the
+            # shadowed entry is the one that might have drifted -- a false "No drift".
+            if region_id in regions:
+                raise CheckError(f"{source} lists region id {region_id} more than once")
+            regions[region_id] = region
+        return regions
     except (ValueError, KeyError, TypeError) as e:
-        raise CheckError(f"{source} is not a regions directory envelope: {e}")
+        raise CheckError(f"{source} is not a regions directory envelope: {e}") from e
 
 
 def check_fields_exist(regions, source):
@@ -159,6 +169,7 @@ def effective(region, field):
 
 
 def describe(region_id, region):
+    """`[id] Name` — regions are keyed by id, but the name is what a reader recognizes."""
     return f"[{region_id}] {region.get('regionName', '?')}"
 
 
@@ -191,6 +202,7 @@ def find_drift(bundled, live):
 
 
 def main(argv):
+    """Run the check and return the process exit status: 0 no drift, 1 drift found."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--bundled", default=BUNDLED_REGIONS, help="path to the bundled regions file")
     parser.add_argument("--live-file", help="compare against this local file instead of fetching")

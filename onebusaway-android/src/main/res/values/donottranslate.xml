@@ -51,6 +51,8 @@
     <string name="preference_key_never_show_location_dialog">never_show_location_dialog</string>
     <string name="preference_key_layer_bikeshare_visible">layer_bike_selected</string>
     <string name="preference_key_trip_plan_travel_by">preference_trip_plan_travel_by</string>
+    <string name="preference_key_trip_plan_vehicle_mode">preference_trip_plan_vehicle_mode</string>
+    <string name="preference_key_trip_plan_street_mode">preference_trip_plan_street_mode</string>
     <string name="preference_key_trip_plan_maximum_walking_distance">preference_trip_plan_maximum_walking_distance</string>
     <string name="preference_key_trip_plan_walk_preference">preference_trip_plan_walk_preference</string>
     <string name="preference_key_trip_plan_cycling_preference">preference_trip_plan_cycling_preference</string>

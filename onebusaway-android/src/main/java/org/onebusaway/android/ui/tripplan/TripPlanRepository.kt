@@ -282,7 +282,7 @@ internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuild
         setTo(params.to.toCustomAddress(context))
         val instant = Instant.ofEpochMilli(params.dateTimeMillis)
         if (params.arriving) setArrivalTime(instant) else setDepartureTime(instant)
-        setModeSetById(params.modeId)
+        setModeSelection(params.modes)
         setWheelchairAccessible(params.wheelchair)
         setOptimizeTransfers(params.optimizeTransfers)
         params.maxWalkMeters?.let { setMaxWalkDistance(it) }

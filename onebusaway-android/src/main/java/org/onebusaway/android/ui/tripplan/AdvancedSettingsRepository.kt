@@ -37,10 +37,23 @@ class DefaultAdvancedSettingsRepository @Inject constructor(
 ) : AdvancedSettingsRepository {
 
     override fun load(): AdvancedSettings {
-        val modeId = PreferenceUtils.getInt(
-            context.getString(R.string.preference_key_trip_plan_travel_by),
-            0
-        )
+        // The two mode halves replaced a single flat `travel_by` id. When they are absent — a rider
+        // upgrading from a build that predates the split — derive the pair from the legacy id rather
+        // than resetting their choice. No migration write: the next save writes the new keys.
+        val storedVehicle = PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_vehicle_mode))
+        val modes = if (storedVehicle == null) {
+            TripModeSelection.fromLegacyModeId(
+                PreferenceUtils.getInt(context.getString(R.string.preference_key_trip_plan_travel_by), 0)
+            )
+        } else {
+            TripModeSelection(
+                vehicle = enumValueOrDefault(storedVehicle, VehicleMode.ALL_TRANSIT),
+                street = enumValueOrDefault(
+                    PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_street_mode)),
+                    StreetMode.WALK
+                )
+            )
+        }
         val maxWalk = PreferenceUtils.getDouble(
             context.getString(R.string.preference_key_trip_plan_maximum_walking_distance),
             0.0
@@ -68,7 +81,7 @@ class DefaultAdvancedSettingsRepository @Inject constructor(
             BikePreference.MEDIUM
         )
         return AdvancedSettings(
-            modeId = modeId,
+            modes = modes,
             maxWalkMeters = maxWalk.takeIf { it != 0.0 && it != Double.MAX_VALUE },
             optimizeTransfers = optimize,
             wheelchair = wheelchair,

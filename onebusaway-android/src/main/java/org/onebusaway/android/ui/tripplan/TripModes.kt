@@ -15,32 +15,88 @@
  */
 package org.onebusaway.android.ui.tripplan
 
-import org.onebusaway.android.R
+/**
+ * What the rider is willing to *ride*, paired with [StreetMode] to describe a whole trip.
+ *
+ * The two are genuinely independent — how you reach a stop says nothing about which vehicles you'll
+ * board — so they are chosen separately rather than enumerated as a flat list of combinations. That
+ * also reaches trips the old single list could not express at all: rail plus your own bike, bus plus
+ * bikeshare, or a plain walking route.
+ */
+enum class VehicleMode {
+    /** No transit at all — a direct street trip, walked or ridden end to end. */
+    NONE,
+
+    /** Any transit mode the region runs; the server's own default. */
+    ALL_TRANSIT,
+    BUS,
+
+    /** Rail, including light rail (OTP models those as separate `RAIL` and `TRAM` modes). */
+    RAIL
+}
 
 /**
- * Utility class to convert between the selected trip mode in the spinner and the trip mode code.
+ * How the rider covers the street portions — reaching the first stop, transferring, and leaving the
+ * last one — or the whole trip when [VehicleMode.NONE].
+ *
+ * The three are mutually exclusive from the router's point of view, and each maps to a different
+ * OTP2 access/egress shape with its own rules; see `Otp2PlanRequestBuilder.buildModes`.
  */
-object TripModes {
+enum class StreetMode {
+    /** On foot. OTP's own default, so it sends nothing. */
+    WALK,
 
-    const val TRANSIT_AND_BIKE = 0
-    const val BUS_ONLY = 1
-    const val RAIL_ONLY = 2
-    const val BIKESHARE = 3
-    const val TRANSIT_ONLY = 4
+    /** On foot plus a hired bike where one is available. Requires a rental network in the region. */
+    WALK_AND_BIKESHARE,
 
-    /**
-     * Return the trip mode code based on the selected label string resource id from the spinner
-     * that shows the trip mode options.
-     *
-     * @param selection string resource id of the selected trip mode in the UI
-     * @return corresponding trip mode code
-     */
-    fun getTripModeCodeFromSelection(selection: Int): Int = when (selection) {
-        R.string.transit_mode_transit_and_bikeshare -> TRANSIT_AND_BIKE
-        R.string.transit_mode_transit_only -> TRANSIT_ONLY
-        R.string.transit_mode_bus -> BUS_ONLY
-        R.string.transit_mode_rail -> RAIL_ONLY
-        R.string.transit_mode_bikeshare -> BIKESHARE
-        else -> -1
+    /** The rider's own bicycle, carried for the whole journey. OTP2-only. */
+    BICYCLE;
+
+    /** Whether a plan in this mode can contain a bike leg, and so has bike preferences worth showing. */
+    val usesBike: Boolean get() = this != WALK
+}
+
+/**
+ * The rider's full mode choice. Kept as one type so it can be threaded, persisted, and validated as a
+ * unit — the two halves constrain each other's availability (see [isAvailable]).
+ */
+data class TripModeSelection(
+    val vehicle: VehicleMode = VehicleMode.ALL_TRANSIT,
+    val street: StreetMode = StreetMode.WALK
+) {
+    companion object {
+
+        /**
+         * Whether this region can serve [street]: bikeshare needs a rental network, and the rider's
+         * own bike is expressible only in the OTP2 request shape (see
+         * `Otp2PlanRequestBuilder.buildModes`). [VehicleMode] has no such constraint — every region
+         * has transit, and "no transit" is always a valid ask.
+         */
+        fun isAvailable(street: StreetMode, bikeshareEnabled: Boolean, usesOtp2: Boolean): Boolean = when (street) {
+            StreetMode.WALK -> true
+            StreetMode.WALK_AND_BIKESHARE -> bikeshareEnabled
+            StreetMode.BICYCLE -> usesOtp2
+        }
+
+        /**
+         * The selection behind a legacy `preference_trip_plan_travel_by` value — the flat mode id this
+         * pair replaced. Read-only migration: [AdvancedSettingsRepository] falls back to it when the
+         * new preferences are absent, and the next save writes the new keys, so a rider's existing
+         * choice survives the upgrade without a migration step that could itself go wrong.
+         *
+         * The ids are the former `TripModes` constants, kept here rather than left scattered as bare
+         * numbers: 0 transit+bikeshare, 1 bus, 2 rail, 3 bikeshare-only, 4 transit-only, 5 transit +
+         * own bike.
+         */
+        fun fromLegacyModeId(modeId: Int): TripModeSelection = when (modeId) {
+            0 -> TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.WALK_AND_BIKESHARE)
+            1 -> TripModeSelection(VehicleMode.BUS, StreetMode.WALK)
+            2 -> TripModeSelection(VehicleMode.RAIL, StreetMode.WALK)
+            3 -> TripModeSelection(VehicleMode.NONE, StreetMode.WALK_AND_BIKESHARE)
+            5 -> TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.BICYCLE)
+            // 4 (transit-only) and anything unrecognized land on the default pair, which is what
+            // transit-only meant.
+            else -> TripModeSelection()
+        }
     }
 }

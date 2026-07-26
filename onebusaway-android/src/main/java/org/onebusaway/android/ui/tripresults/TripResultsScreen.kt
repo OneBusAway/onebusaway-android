@@ -768,7 +768,8 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 
 /**
  * The glyph inside an on-street leg's node. Null for [StreetMode.CAR]: the app ships no car drawable
- * because its planner never asks OTP for car modes (see `TripModes`), and a bare ring is honest where
+ * because its planner never asks OTP for car modes (the mode picker offers none — see
+ * `org.onebusaway.android.ui.tripplan.TripModeSelection`), and a bare ring is honest where
  * a walking figure would be wrong. Add `ic_directions_car` here if car planning is ever offered.
  */
 private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {

@@ -750,11 +750,6 @@
     <string name="floating_bike_title">Napauta varataksesi tämän pyörän</string>
     <string name="layers_speedial_bikeshare_label">Kaupunkipyörät</string>
     <string name="transit_directions_bikeshare_label">Kaupunkipyörä</string>
-    <string name="transit_mode_bikeshare">Vain kaupunkipyörä</string>
-    <string name="transit_mode_bus">Vain bussi</string>
-    <string name="transit_mode_rail">Vain juna</string>
-    <string name="transit_mode_transit_and_bikeshare">Joukkoliikenne ja kaupunkipyörä</string>
-    <string name="transit_mode_transit_only">Vain joukkoliikenne</string>
 
     <!-- Foreground service -->
 
@@ -805,7 +800,6 @@
     <string name="minimize_transfers">Minimoi vaihdot</string>
     <string name="maximum_walk_distance">Enimmäiskävelymatka:</string>
     <string name="wheelchair_accessible">Vältä portaita</string>
-    <string name="travel_by_label">Matkustustapa: </string>
     <string name="tripplanner_no_server_selected_error">Aluetta ei ole valittu</string>
     <string name="tripplanner_error_not_defined">Pahoittelut, jokin meni pieleen. Yritä uudelleen.</string>
     <string name="tripplanner_error_request_timeout">Tarkista internetyhteys ja yritä uudelleen.</string>

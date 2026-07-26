@@ -144,83 +144,32 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
 
     /**
      * Records the rider's [TripModeSelection] and, for the OTP1 path, the `mode` query string it
-     * composes to.
-     *
-     * OTP1 takes one flat comma-separated mode list, so the two halves are simply concatenated —
-     * vehicle tokens then street tokens. The mapping reproduces exactly the strings this app sent
-     * before the mode split (`TRANSIT,WALK`, `BUS,WALK`, `RAIL,TRAM,WALK`, and those plus
-     * `BICYCLE_RENT`), so no OTP1 region sees a changed request for a selection it could already
-     * express.
+     * composes to (see [otp1ModeTokens]).
      *
      * Both halves are stored in the bundle by enum *name*, so the selection survives the trip-plan
      * monitor's `copyIntoBundleSimple`/`initFromBundleSimple` round trip — the flat mode id it
-     * replaced was a plain field that did not, which is why `TripPlanRepository` has to re-derive
-     * bike-rental-ness from the mode string.
+     * replaced was a plain field that did not.
      */
     fun setModeSelection(selection: TripModeSelection): TripRequestBuilder {
         mBundle.putString(VEHICLE_MODE, selection.vehicle.name)
         mBundle.putString(STREET_MODE, selection.street.name)
-        mBundle.putString(MODE_SET, TextUtils.join(",", otp1ModeTokens(selection)))
+        val tokens = otp1ModeTokens(
+            selection,
+            mContext.getString(R.string.traverse_mode_bicycle_rent),
+            BikeshareAvailability.isTripPlanningEnabled(mContext)
+        )
+        mBundle.putString(MODE_SET, TextUtils.join(",", tokens))
         return this
     }
 
     /**
-     * The stored selection, with a street mode this region cannot serve degraded to walking.
-     *
-     * Both halves persist across a region change, so a rider who picks bikeshare or their own bike
-     * and then moves to a region without a rental network, or off OTP2, must not silently keep
-     * planning something the server will not do. See [TripModeSelection.isAvailable].
+     * The stored selection, as this region can serve it — the single point where the request path
+     * applies [TripModeSelection.availableIn], so everything downstream may take the result as valid.
      */
-    fun getModeSelection(): TripModeSelection {
-        val stored = TripModeSelection(
-            vehicle = enumValueOrDefault(mBundle.getString(VEHICLE_MODE), VehicleMode.ALL_TRANSIT),
-            street = enumValueOrDefault(mBundle.getString(STREET_MODE), StreetMode.WALK)
-        )
-        val available = TripModeSelection.isAvailable(
-            stored.street,
-            BikeshareAvailability.isTripPlanningEnabled(mContext),
-            usesOtp2
-        )
-        return if (available) stored else stored.copy(street = StreetMode.WALK)
-    }
-
-    /**
-     * The OTP1 `mode` tokens for [selection] — vehicle then street.
-     *
-     * [StreetMode.BICYCLE] has no verified OTP1 equivalent, so it walks instead; the dialog only
-     * offers it on OTP2, and [getModeSelection] already degrades it, so this is the belt to that
-     * braces. A bikeshare selection without a rental network likewise falls back to walking.
-     *
-     * The one non-compositional case is a direct bikeshare trip, which historically sent
-     * `BICYCLE_RENT` alone rather than `WALK,BICYCLE_RENT`. That exact string is preserved: adding
-     * WALK would arguably be more correct, but it is an untested change to every OTP1 region's
-     * bikeshare request, and this refactor is not the place to make it.
-     */
-    private fun otp1ModeTokens(selection: TripModeSelection): List<String> {
-        val bikeRental = mContext.getString(R.string.traverse_mode_bicycle_rent)
-        val street = when (selection.street) {
-            StreetMode.WALK_AND_BIKESHARE ->
-                if (BikeshareAvailability.isTripPlanningEnabled(mContext)) {
-                    listOf(TripMode.WALK.name, bikeRental)
-                } else {
-                    listOf(TripMode.WALK.name)
-                }
-
-            StreetMode.WALK, StreetMode.BICYCLE -> listOf(TripMode.WALK.name)
-        }
-        val vehicle = when (selection.vehicle) {
-            VehicleMode.NONE -> emptyList()
-            VehicleMode.ALL_TRANSIT -> listOf(TripMode.TRANSIT.name)
-            VehicleMode.BUS -> listOf(TripMode.BUS.name)
-            // TRAM is included to allow light rail.
-            VehicleMode.RAIL -> listOf(TripMode.RAIL.name, TripMode.TRAM.name)
-        }
-        // Historical exact string for a direct bikeshare trip (see the KDoc above).
-        if (vehicle.isEmpty() && street.contains(bikeRental)) {
-            return listOf(bikeRental)
-        }
-        return vehicle + street
-    }
+    fun getModeSelection(): TripModeSelection = TripModeSelection(
+        vehicle = enumValueOrDefault(mBundle.getString(VEHICLE_MODE), VehicleMode.ALL_TRANSIT),
+        street = enumValueOrDefault(mBundle.getString(STREET_MODE), StreetMode.WALK)
+    ).availableIn(BikeshareAvailability.isTripPlanningEnabled(mContext), usesOtp2)
 
     private fun getModeString(): String? = mBundle.getString(MODE_SET)
 
@@ -443,6 +392,46 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
             return TripRequestBuilder(context, target)
         }
     }
+}
+
+/**
+ * The OTP1 `mode` tokens for [selection] — vehicle then street.
+ *
+ * OTP1 takes one flat comma-separated mode list, so the two halves are simply concatenated. The
+ * mapping reproduces exactly the strings this app sent before the mode split (`TRANSIT,WALK`,
+ * `BUS,WALK`, `RAIL,TRAM,WALK`, and those plus `BICYCLE_RENT`), so no OTP1 region sees a changed
+ * request for a selection it could already express — which is what `TripRequestBuilderTest` pins.
+ *
+ * Degrades through [TripModeSelection.availableIn] with `usesOtp2 = false`, which is what makes
+ * [StreetMode.BICYCLE] walk here: the rider's own bike has no verified OTP1 equivalent. Stating it
+ * that way rather than by hand keeps one copy of the availability rule.
+ *
+ * The one non-compositional case is a direct bikeshare trip, which historically sent `BICYCLE_RENT`
+ * alone rather than `WALK,BICYCLE_RENT`. That exact string is preserved: adding WALK would arguably
+ * be more correct, but it is an untested change to every OTP1 region's bikeshare request, and this
+ * refactor is not the place to make it.
+ */
+internal fun otp1ModeTokens(
+    selection: TripModeSelection,
+    bikeRentalToken: String,
+    bikeshareEnabled: Boolean
+): List<String> {
+    val street = when (selection.availableIn(bikeshareEnabled, usesOtp2 = false).street) {
+        StreetMode.WALK_AND_BIKESHARE -> listOf(TripMode.WALK.name, bikeRentalToken)
+        StreetMode.WALK, StreetMode.BICYCLE -> listOf(TripMode.WALK.name)
+    }
+    val vehicle = when (selection.vehicle) {
+        VehicleMode.NONE -> emptyList()
+        VehicleMode.ALL_TRANSIT -> listOf(TripMode.TRANSIT.name)
+        VehicleMode.BUS -> listOf(TripMode.BUS.name)
+        // TRAM is included to allow light rail.
+        VehicleMode.RAIL -> listOf(TripMode.RAIL.name, TripMode.TRAM.name)
+    }
+    // Historical exact string for a direct bikeshare trip (see the KDoc above).
+    if (vehicle.isEmpty() && street.contains(bikeRentalToken)) {
+        return listOf(bikeRentalToken)
+    }
+    return vehicle + street
 }
 
 /**

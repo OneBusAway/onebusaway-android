@@ -79,7 +79,7 @@ class Otp2Planner @Inject constructor(
      * `@WorkerThread` by contract.
      */
     fun plan(builder: TripRequestBuilder, baseUrl: String): List<TripItinerary> {
-        val query = Otp2PlanRequestBuilder.build(builder, context)
+        val query = Otp2PlanRequestBuilder.build(builder)
         val apolloClient = apolloClientFor(otp2GraphQlEndpoint(baseUrl))
         val data = try {
             runBlocking { apolloClient.query(query).execute() }.dataOrThrow()

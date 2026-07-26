@@ -17,7 +17,6 @@ package org.onebusaway.android.directions.util
 
 import com.apollographql.apollo.api.Optional
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.graphql.type.CyclingOptimizationType
@@ -38,18 +37,14 @@ import org.onebusaway.android.ui.tripplan.WalkPreference
 /**
  * Covers [Otp2PlanRequestBuilder.buildModes]/[Otp2PlanRequestBuilder.buildPreferences]/
  * [Otp2PlanRequestBuilder.buildStreetPreferences] — the OTP2 `PlanModesInput`/`PlanPreferencesInput`
- * siblings of [TripRequestBuilder.setModeSetById]'s OTP1 mode-string mapping and the
+ * siblings of [otp1ModeTokens]'s OTP1 mode-string mapping and the
  * wheelchair/`optimize=TRANSFERS` request params (#1780), plus the walk/cycling street preferences.
  * A plain JVM unit test (mirrors `ModeStringRequestsBikeRentalTest`'s style): they take plain
  * booleans and enums rather than a `Context`, so no Robolectric/DI is needed.
  */
 class Otp2PlanRequestBuilderTest {
 
-    private fun modesFor(
-        vehicle: VehicleMode,
-        street: StreetMode,
-        bikeshareEnabled: Boolean = true
-    ) = Otp2PlanRequestBuilder.buildModes(TripModeSelection(vehicle, street), bikeshareEnabled)
+    private fun modesFor(vehicle: VehicleMode, street: StreetMode) = Otp2PlanRequestBuilder.buildModes(TripModeSelection(vehicle, street))
 
     @Test
     fun anyTransitOnFootLeavesModesUnset() {
@@ -83,14 +78,6 @@ class Otp2PlanRequestBuilderTest {
         assertEquals(Optional.Absent, transit.transfer)
     }
 
-    @Test
-    fun bikeshareFallsBackToWalkingWithoutARentalNetwork() {
-        assertEquals(
-            modesFor(VehicleMode.ALL_TRANSIT, StreetMode.WALK),
-            modesFor(VehicleMode.ALL_TRANSIT, StreetMode.WALK_AND_BIKESHARE, bikeshareEnabled = false)
-        )
-    }
-
     /**
      * The rider's own bike must request BICYCLE for **all three** phases and never WALK alongside it —
      * the exact inverse of BICYCLE_RENTAL. The schema is explicit that access "can use cycling only
@@ -103,15 +90,6 @@ class Otp2PlanRequestBuilderTest {
         assertEquals(listOf(PlanAccessMode.BICYCLE), requirePresent(transit.access))
         assertEquals(listOf(PlanEgressMode.BICYCLE), requirePresent(transit.egress))
         assertEquals(listOf(PlanTransferMode.BICYCLE), requirePresent(transit.transfer))
-    }
-
-    /** Your own bike needs no rental network, only a bike-routable graph. */
-    @Test
-    fun ownBikeIsUnaffectedByBikeshareAvailability() {
-        assertEquals(
-            modesFor(VehicleMode.ALL_TRANSIT, StreetMode.BICYCLE, bikeshareEnabled = true),
-            modesFor(VehicleMode.ALL_TRANSIT, StreetMode.BICYCLE, bikeshareEnabled = false)
-        )
     }
 
     /**
@@ -158,28 +136,6 @@ class Otp2PlanRequestBuilderTest {
 
         val ownBikeOnly = requirePresent(modesFor(VehicleMode.NONE, StreetMode.BICYCLE))
         assertEquals(listOf(PlanDirectMode.BICYCLE), requirePresent(ownBikeOnly.direct))
-    }
-
-    /** Availability is per street mode; the vehicle half is always offerable. */
-    @Test
-    fun streetModeAvailabilityFollowsTheRegionsCapabilities() {
-        assertTrue(TripModeSelection.isAvailable(StreetMode.WALK, bikeshareEnabled = false, usesOtp2 = false))
-        assertFalse(TripModeSelection.isAvailable(StreetMode.WALK_AND_BIKESHARE, bikeshareEnabled = false, usesOtp2 = true))
-        assertTrue(TripModeSelection.isAvailable(StreetMode.WALK_AND_BIKESHARE, bikeshareEnabled = true, usesOtp2 = false))
-        assertFalse(TripModeSelection.isAvailable(StreetMode.BICYCLE, bikeshareEnabled = true, usesOtp2 = false))
-        assertTrue(TripModeSelection.isAvailable(StreetMode.BICYCLE, bikeshareEnabled = false, usesOtp2 = true))
-    }
-
-    /** A rider's saved flat mode id must survive the split rather than resetting their choice. */
-    @Test
-    fun legacyModeIdsMigrateToTheEquivalentPair() {
-        assertEquals(TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.WALK_AND_BIKESHARE), TripModeSelection.fromLegacyModeId(0))
-        assertEquals(TripModeSelection(VehicleMode.BUS, StreetMode.WALK), TripModeSelection.fromLegacyModeId(1))
-        assertEquals(TripModeSelection(VehicleMode.RAIL, StreetMode.WALK), TripModeSelection.fromLegacyModeId(2))
-        assertEquals(TripModeSelection(VehicleMode.NONE, StreetMode.WALK_AND_BIKESHARE), TripModeSelection.fromLegacyModeId(3))
-        assertEquals(TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.WALK), TripModeSelection.fromLegacyModeId(4))
-        assertEquals(TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.BICYCLE), TripModeSelection.fromLegacyModeId(5))
-        assertEquals("an unknown id lands on the default pair", TripModeSelection(), TripModeSelection.fromLegacyModeId(-1))
     }
 
     @Test

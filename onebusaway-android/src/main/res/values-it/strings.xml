@@ -869,12 +869,6 @@
     <string name="maximum_walk_distance">Massima distanza a piedi:</string>
     <string name="wheelchair_accessible">Evita scale</string>
 
-    <string name="travel_by_label">Viaggia con:</string>
-    <string name="transit_mode_transit_only">Solo mezzi pubblici</string>
-    <string name="transit_mode_transit_and_bikeshare">Mezzi pubblici e bike sharing</string>
-    <string name="transit_mode_bus">Solo autobus</string>
-    <string name="transit_mode_rail">Solo treno</string>
-    <string name="transit_mode_bikeshare">Solo bike sharing</string>
     <string name="transit_directions_bikeshare_label">Bike sharing</string>
 
     <!-- Bikeshare info window -->

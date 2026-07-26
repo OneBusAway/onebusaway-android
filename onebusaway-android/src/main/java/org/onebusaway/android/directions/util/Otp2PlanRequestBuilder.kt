@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.directions.util
 
-import android.content.Context
 import com.apollographql.apollo.api.Optional
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -48,7 +47,6 @@ import org.onebusaway.android.ui.tripplan.StreetMode
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
-import org.onebusaway.android.util.BikeshareAvailability
 
 /**
  * Builds the OTP 2.x GraphQL [PlanQuery] variables from a [TripRequestBuilder]'s already-parsed
@@ -56,7 +54,7 @@ import org.onebusaway.android.util.BikeshareAvailability
  * protocol-agnostic getters ([TripRequestBuilder.from]/[TripRequestBuilder.to]/
  * [TripRequestBuilder.dateTime]/[TripRequestBuilder.arriveBy]/
  * [TripRequestBuilder.getWheelchairAccessible]/[TripRequestBuilder.getOptimizeTransfers]/
- * [TripRequestBuilder.getModeSetId]) rather than duplicating request state, so both protocols are
+ * [TripRequestBuilder.getModeSelection]) rather than duplicating request state, so both protocols are
  * driven from one shared bundle-backed builder.
  */
 object Otp2PlanRequestBuilder {
@@ -205,7 +203,7 @@ object Otp2PlanRequestBuilder {
      * @throws IllegalArgumentException if the origin/destination lack real coordinates or no
      * date/time was supplied — mirrors [TripRequestBuilder.buildRequest]'s own validation.
      */
-    fun build(builder: TripRequestBuilder, context: Context): PlanQuery {
+    fun build(builder: TripRequestBuilder): PlanQuery {
         val from = builder.from
         val to = builder.to
         if (from == null || !from.isSet || to == null || !to.isSet) {
@@ -234,7 +232,7 @@ object Otp2PlanRequestBuilder {
                     bikePreference = builder.getBikePreference()
                 )
             ),
-            modes = buildModes(builder.getModeSelection(), BikeshareAvailability.isTripPlanningEnabled(context)),
+            modes = buildModes(builder.getModeSelection()),
             numItineraries = NUM_ITINERARIES,
             alternativeLegs = ALTERNATIVE_LEGS
         )
@@ -336,18 +334,13 @@ object Otp2PlanRequestBuilder {
      * "all transit modes usable, WALK for access/egress", so there is nothing to express, and the
      * request stays byte-identical to what this app sent before the mode split.
      *
-     * Takes [bikeshareEnabled] rather than a `Context` (see
-     * [BikeshareAvailability.isTripPlanningEnabled]'s pure overload) so this mapping is a plain,
-     * JVM-unit-testable function; `internal` for `Otp2PlanRequestBuilderTest`. A bikeshare selection
-     * on a region without a rental network degrades to walking rather than being refused, matching
-     * what the dialog would have offered.
+     * Takes a [selection] the region can serve — `TripRequestBuilder.getModeSelection` degrades one
+     * it can't ([TripModeSelection.availableIn]), so that rule is not restated here. Plain values
+     * rather than a `Context`, so this mapping is a JVM-unit-testable function; `internal` for
+     * `Otp2PlanRequestBuilderTest`.
      */
-    internal fun buildModes(selection: TripModeSelection, bikeshareEnabled: Boolean): Optional<PlanModesInput?> {
-        val street = if (selection.street == StreetMode.WALK_AND_BIKESHARE && !bikeshareEnabled) {
-            StreetMode.WALK
-        } else {
-            selection.street
-        }
+    internal fun buildModes(selection: TripModeSelection): Optional<PlanModesInput?> {
+        val street = selection.street
 
         if (selection.vehicle == VehicleMode.NONE) {
             // A direct street trip: `directOnly` stops OTP also returning transit itineraries, which
@@ -360,15 +353,7 @@ object Otp2PlanRequestBuilder {
             )
         }
 
-        val transitModes = when (selection.vehicle) {
-            VehicleMode.BUS -> listOf(TransitMode.BUS)
-            // TRAM is included so light rail counts as rail.
-            VehicleMode.RAIL -> listOf(TransitMode.RAIL, TransitMode.TRAM)
-            // Every mode the region runs — the schema default, so send nothing.
-            VehicleMode.ALL_TRANSIT -> null
-            VehicleMode.NONE -> null // unreachable, handled above
-        }
-
+        val transitModes = transitModes(selection.vehicle)
         if (transitModes == null && street == StreetMode.WALK) {
             return Optional.Absent
         }
@@ -396,8 +381,19 @@ object Otp2PlanRequestBuilder {
         )
     }
 
+    /** The transit modes [vehicle] restricts the search to, or null for "whatever the region runs". */
+    private fun transitModes(vehicle: VehicleMode): List<TransitMode>? = when (vehicle) {
+        VehicleMode.BUS -> listOf(TransitMode.BUS)
+        // TRAM is included so light rail counts as rail.
+        VehicleMode.RAIL -> listOf(TransitMode.RAIL, TransitMode.TRAM)
+        // Every mode the region runs, and no transit at all, both send no transit-mode restriction —
+        // the schema default. VehicleMode.NONE is a `directOnly` search, handled in buildModes.
+        VehicleMode.ALL_TRANSIT, VehicleMode.NONE -> null
+    }
+
     /**
-     * Access modes for [street].
+     * How [street] is covered in one phase of the trip, in whichever of OTP2's four per-phase mode
+     * enums the caller needs — the tokens differ, the shape does not, so it is stated once here.
      *
      * The two bike modes have **opposite** requirements, which is the one genuinely subtle thing here:
      *  - `BICYCLE_RENTAL` must be accompanied by `WALK` in the same list — OTP2 rejects a bare rental
@@ -407,35 +403,39 @@ object Otp2PlanRequestBuilder {
      *    transfers and egress is also `BICYCLE`". Your own bike is with you the whole way, so there is
      *    no phase without it. A stray WALK here silently degrades the plan to walking.
      *
-     * [StreetMode.WALK] sends nothing, since WALK is the schema's default for every phase.
+     * Sharing one table is what keeps the phases in step: access, egress and the direct suggestion
+     * disagreeing is precisely the silent failure above.
      */
-    private fun accessModes(street: StreetMode): Optional<List<PlanAccessMode>?> = when (street) {
-        StreetMode.WALK -> Optional.Absent
-        StreetMode.WALK_AND_BIKESHARE -> Optional.present(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL))
-        StreetMode.BICYCLE -> Optional.present(listOf(PlanAccessMode.BICYCLE))
-    }
-
-    /** Egress modes for [street]; same rules as [accessModes]. */
-    private fun egressModes(street: StreetMode): Optional<List<PlanEgressMode>?> = when (street) {
-        StreetMode.WALK -> Optional.Absent
-        StreetMode.WALK_AND_BIKESHARE -> Optional.present(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL))
-        StreetMode.BICYCLE -> Optional.present(listOf(PlanEgressMode.BICYCLE))
+    private fun <T> streetModes(street: StreetMode, walk: T, rental: T, bicycle: T): List<T> = when (street) {
+        StreetMode.WALK -> listOf(walk)
+        StreetMode.WALK_AND_BIKESHARE -> listOf(walk, rental)
+        StreetMode.BICYCLE -> listOf(bicycle)
     }
 
     /**
-     * Transfer mode for [street]. Only [StreetMode.BICYCLE] sets one: `PlanTransferMode` has no
-     * rental option (a hired bike is returned before boarding, so transfers are walked), and WALK is
-     * already the default.
+     * [streetModes] for an access/egress phase, where [StreetMode.WALK] sends nothing at all since
+     * WALK is the schema's default for every phase.
+     */
+    private fun <T> streetPhase(street: StreetMode, walk: T, rental: T, bicycle: T): Optional<List<T>?> = if (street == StreetMode.WALK) {
+        Optional.Absent
+    } else {
+        Optional.present(streetModes(street, walk, rental, bicycle))
+    }
+
+    private fun accessModes(street: StreetMode): Optional<List<PlanAccessMode>?> = streetPhase(street, PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL, PlanAccessMode.BICYCLE)
+
+    private fun egressModes(street: StreetMode): Optional<List<PlanEgressMode>?> = streetPhase(street, PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL, PlanEgressMode.BICYCLE)
+
+    /**
+     * Transfer mode for [street] — the one phase that doesn't share [streetModes], because
+     * `PlanTransferMode` has no rental option: a hired bike is returned before boarding, so transfers
+     * are walked. Only [StreetMode.BICYCLE] sets anything; WALK is already the default.
      */
     private fun transferModes(street: StreetMode): Optional<List<PlanTransferMode>?> = when (street) {
         StreetMode.BICYCLE -> Optional.present(listOf(PlanTransferMode.BICYCLE))
         StreetMode.WALK, StreetMode.WALK_AND_BIKESHARE -> Optional.Absent
     }
 
-    /** Direct (no-transit) street modes for [street]; same rental-needs-WALK rule as [accessModes]. */
-    private fun directModes(street: StreetMode): List<PlanDirectMode> = when (street) {
-        StreetMode.WALK -> listOf(PlanDirectMode.WALK)
-        StreetMode.WALK_AND_BIKESHARE -> listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL)
-        StreetMode.BICYCLE -> listOf(PlanDirectMode.BICYCLE)
-    }
+    /** Direct (no-transit) street modes for [street]; unlike a phase, WALK is spelled out. */
+    private fun directModes(street: StreetMode): List<PlanDirectMode> = streetModes(street, PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL, PlanDirectMode.BICYCLE)
 }

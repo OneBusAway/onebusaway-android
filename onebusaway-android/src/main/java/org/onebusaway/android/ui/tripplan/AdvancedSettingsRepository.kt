@@ -40,20 +40,17 @@ class DefaultAdvancedSettingsRepository @Inject constructor(
         // The two mode halves replaced a single flat `travel_by` id. When they are absent — a rider
         // upgrading from a build that predates the split — derive the pair from the legacy id rather
         // than resetting their choice. No migration write: the next save writes the new keys.
-        val storedVehicle = PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_vehicle_mode))
-        val modes = if (storedVehicle == null) {
-            TripModeSelection.fromLegacyModeId(
-                PreferenceUtils.getInt(context.getString(R.string.preference_key_trip_plan_travel_by), 0)
-            )
-        } else {
+        val modes = PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_vehicle_mode))?.let { vehicle ->
             TripModeSelection(
-                vehicle = enumValueOrDefault(storedVehicle, VehicleMode.ALL_TRANSIT),
+                vehicle = enumValueOrDefault(vehicle, VehicleMode.ALL_TRANSIT),
                 street = enumValueOrDefault(
                     PreferenceUtils.getString(context.getString(R.string.preference_key_trip_plan_street_mode)),
                     StreetMode.WALK
                 )
             )
-        }
+        } ?: TripModeSelection.fromLegacyModeId(
+            PreferenceUtils.getInt(context.getString(R.string.preference_key_trip_plan_travel_by), 0)
+        )
         val maxWalk = PreferenceUtils.getDouble(
             context.getString(R.string.preference_key_trip_plan_maximum_walking_distance),
             0.0

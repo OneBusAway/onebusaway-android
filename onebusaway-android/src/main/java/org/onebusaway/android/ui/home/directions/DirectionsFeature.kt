@@ -59,7 +59,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -68,7 +67,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -602,7 +600,6 @@ private fun DirectionsAdvancedSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val resources = LocalResources.current
     val imperial = remember { !PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
     // Which options this region can actually serve. OTP2 deleted `maxWalkDistance` from its routing
     // API, so the distance field would be silently ignored there (#1780 wired the OTP2 path without
@@ -624,15 +621,18 @@ private fun DirectionsAdvancedSettingsDialog(
         stringResource(R.string.street_mode_walk) to StreetMode.WALK,
         stringResource(R.string.street_mode_walk_and_bikeshare) to StreetMode.WALK_AND_BIKESHARE,
         stringResource(R.string.street_mode_bicycle) to StreetMode.BICYCLE
-    ).filter { (_, mode) -> TripModeSelection.isAvailable(mode, bikeshare, usesOtp2) }
+    ).filter { (_, mode) -> mode.isAvailableIn(bikeshare, usesOtp2) }
 
     val current = remember { viewModel.formState.value }
     var vehicleMode by remember { mutableStateOf(current.modes.vehicle) }
-    // A street mode this region can't serve (a preference carried in from another region) falls back
-    // to walking, so the picker never shows a selection that isn't in its own list.
-    var streetMode by remember {
-        mutableStateOf(current.modes.street.takeIf { m -> streetOptions.any { it.second == m } } ?: StreetMode.WALK)
-    }
+    // Holds the rider's actual choice, including a street mode this region can't serve — a preference
+    // carried in from another region. Confirming the dialog must not overwrite that with the fallback
+    // below; like the max-walk field on OTP2, a setting the rider can't act on here is carried through
+    // untouched rather than eroded. The request degrades it at build time (TripModeSelection.availableIn).
+    var streetMode by remember { mutableStateOf(current.modes.street) }
+    // What the picker can show, by the same rule that filtered its options: an unofferable stored mode
+    // reads as the walking fallback the request will really use.
+    val offeredStreetMode = streetMode.takeIf { it.isAvailableIn(bikeshare, usesOtp2) } ?: StreetMode.WALK
     var minimizeTransfers by remember { mutableStateOf(current.optimizeTransfers) }
     var wheelchair by remember { mutableStateOf(current.wheelchair) }
     // Rounded, not truncated: the field's value is converted back to metres on confirm, so
@@ -690,7 +690,7 @@ private fun DirectionsAdvancedSettingsDialog(
                 PreferenceDropdownRow(
                     label = stringResource(R.string.street_mode_label),
                     options = streetOptions,
-                    selected = streetMode,
+                    selected = offeredStreetMode,
                     onSelected = { streetMode = it },
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -702,8 +702,9 @@ private fun DirectionsAdvancedSettingsDialog(
                         onSelectedIndex = { walkPreference = WalkPreference.entries[it] },
                         modifier = Modifier.padding(top = 8.dp)
                     )
-                    // Only meaningful when the plan can contain a bike leg at all.
-                    if (streetMode.usesBike) {
+                    // Only meaningful when the plan can contain a bike leg at all — the offered mode,
+                    // since a stored one this region can't serve won't produce one.
+                    if (offeredStreetMode.usesBike) {
                         PreferenceSliderRow(
                             label = stringResource(R.string.bike_preference_label),
                             stopLabels = bikeStopLabels,
@@ -775,10 +776,10 @@ private fun DirectionsAdvancedSettingsDialog(
                         bikePreference = bikePreference
                     )
                 )
-                PreferenceUtils.saveString(prefKeyVehicleMode, vehicleMode.name)
-                PreferenceUtils.saveString(prefKeyStreetMode, streetMode.name)
                 // Every option is saved whether or not this region's protocol showed its control, so
                 // the value survives a move to a region that can use it (see [AdvancedSettings]).
+                PreferenceUtils.saveString(prefKeyVehicleMode, vehicleMode.name)
+                PreferenceUtils.saveString(prefKeyStreetMode, streetMode.name)
                 PreferenceUtils.saveDouble(prefKeyMaxWalk, maxWalkMeters ?: Double.MAX_VALUE)
                 PreferenceUtils.saveString(prefKeyWalkPreference, walkPreference.name)
                 PreferenceUtils.saveString(prefKeyCyclingPreference, cyclingPreference.name)

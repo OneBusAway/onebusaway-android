@@ -48,7 +48,7 @@ class TripPlanViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
-    private val settings = AdvancedSettings(modeId = 4, maxWalkMeters = 1600.0, optimizeTransfers = true, wheelchair = false)
+    private val settings = AdvancedSettings(modes = TripModeSelection(), maxWalkMeters = 1600.0, optimizeTransfers = true, wheelchair = false)
     private val origin = TripEndpoint.Geocoded("Origin", lat = 47.6, lon = -122.3)
     private val destination = TripEndpoint.Geocoded("Destination", lat = 47.7, lon = -122.2)
 
@@ -135,7 +135,7 @@ class TripPlanViewModelTest {
     fun `initial state carries the injected settings and cannot submit`() = runTest {
         val vm = viewModel()
         val state = vm.formState.value
-        assertEquals(4, state.modeId)
+        assertEquals(TripModeSelection(), state.modes)
         assertEquals(1600.0, state.maxWalkMeters)
         assertTrue(state.optimizeTransfers)
         assertFalse(state.canSubmit)
@@ -293,11 +293,11 @@ class TripPlanViewModelTest {
     @Test
     fun `applyAdvancedSettings updates the form`() = runTest {
         val vm = viewModel()
-        val updated = AdvancedSettings(modeId = 1, maxWalkMeters = null, optimizeTransfers = false, wheelchair = true)
+        val updated = AdvancedSettings(modes = TripModeSelection(VehicleMode.BUS, StreetMode.WALK), maxWalkMeters = null, optimizeTransfers = false, wheelchair = true)
         vm.applyAdvancedSettings(updated)
         advanceUntilIdle()
         val state = vm.formState.value
-        assertEquals(1, state.modeId)
+        assertEquals(TripModeSelection(VehicleMode.BUS, StreetMode.WALK), state.modes)
         assertTrue(state.wheelchair)
         assertFalse(state.optimizeTransfers)
         assertEquals(null, state.maxWalkMeters)
@@ -309,7 +309,7 @@ class TripPlanViewModelTest {
         setBothEndpoints(vm)
         vm.applyAdvancedSettings(
             AdvancedSettings(
-                modeId = TripModes.TRANSIT_AND_BIKE,
+                modes = TripModeSelection(VehicleMode.ALL_TRANSIT, StreetMode.WALK_AND_BIKESHARE),
                 maxWalkMeters = null,
                 optimizeTransfers = false,
                 wheelchair = false,

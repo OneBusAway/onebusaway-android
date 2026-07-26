@@ -1172,12 +1172,19 @@
     <string name="cycling_preference_safest">Safest route</string>
     <string name="cycling_preference_flattest">Flattest route</string>
 
-    <string name="travel_by_label">Travel by: </string>
-    <string name="transit_mode_transit_only">Transit only</string>
-    <string name="transit_mode_transit_and_bikeshare">Transit &amp; bikeshare</string>
-    <string name="transit_mode_bus">Bus only</string>
-    <string name="transit_mode_rail">Rail only</string>
-    <string name="transit_mode_bikeshare">Bikeshare only</string>
+    <!-- Mode selection, split into two independent questions: which vehicles the rider will board,
+         and how they cover the street portions. Not every street option is offered everywhere -
+         bikeshare needs a rental network, and carrying your own bike needs an OTP2 region. -->
+    <string name="vehicle_mode_label">Ride</string>
+    <string name="vehicle_mode_all_transit">Any transit</string>
+    <string name="vehicle_mode_bus">Bus only</string>
+    <string name="vehicle_mode_rail">Rail only</string>
+    <string name="vehicle_mode_none">No transit</string>
+
+    <string name="street_mode_label">Getting around</string>
+    <string name="street_mode_walk">Walk</string>
+    <string name="street_mode_walk_and_bikeshare">Walk &amp; bikeshare</string>
+    <string name="street_mode_bicycle">My own bike</string>
     <string name="transit_directions_bikeshare_label">Bikeshare</string>
 
     <!-- Bikeshare info window -->

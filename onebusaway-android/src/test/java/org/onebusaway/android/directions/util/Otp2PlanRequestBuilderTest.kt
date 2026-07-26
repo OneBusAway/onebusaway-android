@@ -25,76 +25,117 @@ import org.onebusaway.android.api.graphql.type.PlanDirectMode
 import org.onebusaway.android.api.graphql.type.PlanEgressMode
 import org.onebusaway.android.api.graphql.type.PlanPreferencesInput
 import org.onebusaway.android.api.graphql.type.PlanStreetPreferencesInput
+import org.onebusaway.android.api.graphql.type.PlanTransferMode
 import org.onebusaway.android.api.graphql.type.TransitMode
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
-import org.onebusaway.android.ui.tripplan.TripModes
+import org.onebusaway.android.ui.tripplan.StreetMode
+import org.onebusaway.android.ui.tripplan.TripModeSelection
+import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
 
 /**
  * Covers [Otp2PlanRequestBuilder.buildModes]/[Otp2PlanRequestBuilder.buildPreferences]/
  * [Otp2PlanRequestBuilder.buildStreetPreferences] — the OTP2 `PlanModesInput`/`PlanPreferencesInput`
- * siblings of [TripRequestBuilder.setModeSetById]'s OTP1 mode-string mapping and the
+ * siblings of [otp1ModeTokens]'s OTP1 mode-string mapping and the
  * wheelchair/`optimize=TRANSFERS` request params (#1780), plus the walk/cycling street preferences.
  * A plain JVM unit test (mirrors `ModeStringRequestsBikeRentalTest`'s style): they take plain
  * booleans and enums rather than a `Context`, so no Robolectric/DI is needed.
  */
 class Otp2PlanRequestBuilderTest {
 
+    private fun modesFor(vehicle: VehicleMode, street: StreetMode) = Otp2PlanRequestBuilder.buildModes(TripModeSelection(vehicle, street))
+
     @Test
-    fun transitOnlyLeavesModesUnset() {
-        // The schema's own default (all transit modes, WALK access/egress) already matches
-        // TRANSIT_ONLY's OTP1 semantics — nothing to express.
-        assertEquals(Optional.Absent, Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_ONLY, bikeshareEnabled = true))
+    fun anyTransitOnFootLeavesModesUnset() {
+        // The schema's own default is "all transit modes usable, WALK for access/egress", so the
+        // default pair has nothing to express and must keep the request byte-identical to before.
+        assertEquals(Optional.Absent, modesFor(VehicleMode.ALL_TRANSIT, StreetMode.WALK))
     }
 
     @Test
     fun busOnlyRequestsOnlyBusTransitMode() {
-        val modes = requirePresent(Otp2PlanRequestBuilder.buildModes(TripModes.BUS_ONLY, bikeshareEnabled = false))
-        val transit = requirePresent(modes.transit)
-        val transitModes = requirePresent(transit.transit).map { it.mode }
-        assertEquals(listOf(TransitMode.BUS), transitModes)
+        val transit = requirePresent(requirePresent(modesFor(VehicleMode.BUS, StreetMode.WALK)).transit)
+        assertEquals(listOf(TransitMode.BUS), requirePresent(transit.transit).map { it.mode })
+        // Walking is the default for the street phases, so nothing is sent for them.
+        assertEquals(Optional.Absent, transit.access)
+        assertEquals(Optional.Absent, transit.egress)
     }
 
     @Test
     fun railOnlyRequestsRailAndTram() {
-        val modes = requirePresent(Otp2PlanRequestBuilder.buildModes(TripModes.RAIL_ONLY, bikeshareEnabled = false))
-        val transit = requirePresent(modes.transit)
-        val transitModes = requirePresent(transit.transit).map { it.mode }
-        assertEquals(listOf(TransitMode.RAIL, TransitMode.TRAM), transitModes)
+        val transit = requirePresent(requirePresent(modesFor(VehicleMode.RAIL, StreetMode.WALK)).transit)
+        assertEquals(listOf(TransitMode.RAIL, TransitMode.TRAM), requirePresent(transit.transit).map { it.mode })
     }
 
     @Test
-    fun transitAndBikeRequestsBicycleRentalAccessEgressWhenBikeshareEnabled() {
-        val modes = requirePresent(
-            Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_AND_BIKE, bikeshareEnabled = true)
-        )
-        val transit = requirePresent(modes.transit)
+    fun bikeshareRequestsWalkAlongsideRentalForAccessAndEgress() {
+        val transit = requirePresent(requirePresent(modesFor(VehicleMode.ALL_TRANSIT, StreetMode.WALK_AND_BIKESHARE)).transit)
         // WALK must accompany BICYCLE_RENTAL — OTP2 rejects a bare BICYCLE_RENTAL leg (#1780).
         assertEquals(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL), requirePresent(transit.access))
         assertEquals(listOf(PlanEgressMode.WALK, PlanEgressMode.BICYCLE_RENTAL), requirePresent(transit.egress))
+        // PlanTransferMode has no rental option — a hired bike is returned before boarding.
+        assertEquals(Optional.Absent, transit.transfer)
     }
 
+    /**
+     * The rider's own bike must request BICYCLE for **all three** phases and never WALK alongside it —
+     * the exact inverse of BICYCLE_RENTAL. The schema is explicit that access "can use cycling only
+     * if the mode used for transfers and egress is also `BICYCLE`", so a stray WALK here silently
+     * degrades the plan to walking rather than carrying the bike.
+     */
     @Test
-    fun transitAndBikeFallsBackToUnsetWhenBikeshareDisabled() {
-        // Mirrors setModeSetById's own fallback: TRANSIT_AND_BIKE without bikeshare == TRANSIT_ONLY.
-        assertEquals(
-            Optional.Absent,
-            Otp2PlanRequestBuilder.buildModes(TripModes.TRANSIT_AND_BIKE, bikeshareEnabled = false)
-        )
+    fun ownBikeRequestsBicycleForAccessTransferAndEgress() {
+        val transit = requirePresent(requirePresent(modesFor(VehicleMode.ALL_TRANSIT, StreetMode.BICYCLE)).transit)
+        assertEquals(listOf(PlanAccessMode.BICYCLE), requirePresent(transit.access))
+        assertEquals(listOf(PlanEgressMode.BICYCLE), requirePresent(transit.egress))
+        assertEquals(listOf(PlanTransferMode.BICYCLE), requirePresent(transit.transfer))
     }
 
+    /**
+     * The point of the split: street and vehicle choices compose, so combinations the old flat list
+     * could not express — rail plus your own bike, bus plus bikeshare — now work.
+     */
     @Test
-    fun bikeshareRequestsDirectBicycleRentalOnly() {
-        val modes = requirePresent(Otp2PlanRequestBuilder.buildModes(TripModes.BIKESHARE, bikeshareEnabled = true))
-        // WALK must accompany BICYCLE_RENTAL — OTP2 rejects a bare BICYCLE_RENTAL leg (#1780).
-        assertEquals(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL), requirePresent(modes.direct))
-        assertEquals(true, requirePresent(modes.directOnly))
+    fun theTwoHalvesCompose() {
+        val railAndOwnBike = requirePresent(requirePresent(modesFor(VehicleMode.RAIL, StreetMode.BICYCLE)).transit)
+        assertEquals(listOf(TransitMode.RAIL, TransitMode.TRAM), requirePresent(railAndOwnBike.transit).map { it.mode })
+        assertEquals(listOf(PlanAccessMode.BICYCLE), requirePresent(railAndOwnBike.access))
+
+        val busAndBikeshare = requirePresent(requirePresent(modesFor(VehicleMode.BUS, StreetMode.WALK_AND_BIKESHARE)).transit)
+        assertEquals(listOf(TransitMode.BUS), requirePresent(busAndBikeshare.transit).map { it.mode })
+        assertEquals(listOf(PlanAccessMode.WALK, PlanAccessMode.BICYCLE_RENTAL), requirePresent(busAndBikeshare.access))
     }
 
+    /**
+     * A transit search must also carry a direct suggestion matching how the rider travels. OTP falls
+     * back to it when no transit connection exists, and unset it defaults to WALK — which offered a
+     * cyclist a multi-hour walk when their requested vehicle had no service in range.
+     */
     @Test
-    fun invalidModeIdLeavesModesUnset() {
-        assertEquals(Optional.Absent, Otp2PlanRequestBuilder.buildModes(-1, bikeshareEnabled = true))
+    fun aTransitSearchCarriesADirectSuggestionMatchingTheStreetMode() {
+        val onBike = requirePresent(modesFor(VehicleMode.RAIL, StreetMode.BICYCLE))
+        assertEquals(listOf(PlanDirectMode.BICYCLE), requirePresent(onBike.direct))
+        // ...but it must NOT be directOnly, or the transit results would be suppressed.
+        assertEquals(Optional.Absent, onBike.directOnly)
+
+        val onFootWithRental = requirePresent(modesFor(VehicleMode.BUS, StreetMode.WALK_AND_BIKESHARE))
+        assertEquals(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL), requirePresent(onFootWithRental.direct))
+    }
+
+    /** No vehicle means a direct street trip, and `directOnly` keeps transit out of the results. */
+    @Test
+    fun noTransitRequestsADirectStreetTripOnly() {
+        val walkOnly = requirePresent(modesFor(VehicleMode.NONE, StreetMode.WALK))
+        assertEquals(listOf(PlanDirectMode.WALK), requirePresent(walkOnly.direct))
+        assertEquals(true, requirePresent(walkOnly.directOnly))
+        assertEquals("a direct trip must not also constrain transit", Optional.Absent, walkOnly.transit)
+
+        val bikeshareOnly = requirePresent(modesFor(VehicleMode.NONE, StreetMode.WALK_AND_BIKESHARE))
+        assertEquals(listOf(PlanDirectMode.WALK, PlanDirectMode.BICYCLE_RENTAL), requirePresent(bikeshareOnly.direct))
+
+        val ownBikeOnly = requirePresent(modesFor(VehicleMode.NONE, StreetMode.BICYCLE))
+        assertEquals(listOf(PlanDirectMode.BICYCLE), requirePresent(ownBikeOnly.direct))
     }
 
     @Test
@@ -199,7 +240,10 @@ class Otp2PlanRequestBuilderTest {
     /**
      * No stop may drop below 1.0, OTP's neutral point. Below it the schema says the mode is
      * "preferred over transit", and OTP acts on that by deleting transit itineraries — measured
-     * against a live server, rail + own bike returns nothing at 0.9 and a real itinerary at 1.0.
+     * against a live server, rail + own bike returns nothing at 0.9 and a real BICYCLE+TRAM+BICYCLE
+     * itinerary at 1.0. An earlier scale ran to 0.1 and so made "more cycling" produce *no*
+     * bike-and-transit results at all.
+     *
      * This is stricter than the scalar's own 0.1 validation floor, and unlike that one it fails
      * silently, as an empty result rather than an error.
      */

@@ -85,7 +85,7 @@ class TripPlanViewModel @Inject constructor(
             dateTimeMillis = initialDateTimeMillis,
             dateLabel = formatDate(initialDateTimeMillis),
             timeLabel = formatTime(initialDateTimeMillis),
-            modeId = initialSettings.modeId,
+            modes = initialSettings.modes,
             maxWalkMeters = initialSettings.maxWalkMeters,
             optimizeTransfers = initialSettings.optimizeTransfers,
             wheelchair = initialSettings.wheelchair,
@@ -238,7 +238,7 @@ class TripPlanViewModel @Inject constructor(
     fun applyAdvancedSettings(settings: AdvancedSettings) {
         _formState.update {
             it.copy(
-                modeId = settings.modeId,
+                modes = settings.modes,
                 maxWalkMeters = settings.maxWalkMeters,
                 optimizeTransfers = settings.optimizeTransfers,
                 wheelchair = settings.wheelchair,

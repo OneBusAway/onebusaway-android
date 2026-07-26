@@ -88,7 +88,7 @@ sealed interface TripEndpoint {
  * current region's server can act on.
  */
 data class AdvancedSettings(
-    val modeId: Int,
+    val modes: TripModeSelection,
     val maxWalkMeters: Double?,
     val optimizeTransfers: Boolean,
     val wheelchair: Boolean,
@@ -103,7 +103,7 @@ data class TripPlanParams(
     val to: TripEndpoint,
     val dateTimeMillis: Long,
     val arriving: Boolean,
-    val modeId: Int,
+    val modes: TripModeSelection,
     val wheelchair: Boolean,
     val optimizeTransfers: Boolean,
     val maxWalkMeters: Double?,
@@ -122,7 +122,7 @@ data class TripPlanFormState(
     val arriving: Boolean = false,
     val dateLabel: String = "",
     val timeLabel: String = "",
-    val modeId: Int = 0,
+    val modes: TripModeSelection = TripModeSelection(),
     val wheelchair: Boolean = false,
     val optimizeTransfers: Boolean = false,
     val maxWalkMeters: Double? = null,
@@ -137,7 +137,7 @@ data class TripPlanFormState(
     /** The current advanced options, for persistence by the host. */
     val advancedSettings: AdvancedSettings
         get() = AdvancedSettings(
-            modeId = modeId,
+            modes = modes,
             maxWalkMeters = maxWalkMeters,
             optimizeTransfers = optimizeTransfers,
             wheelchair = wheelchair,
@@ -152,7 +152,7 @@ data class TripPlanFormState(
         to = to,
         dateTimeMillis = dateTimeMillis,
         arriving = arriving,
-        modeId = modeId,
+        modes = modes,
         wheelchair = wheelchair,
         optimizeTransfers = optimizeTransfers,
         maxWalkMeters = maxWalkMeters,

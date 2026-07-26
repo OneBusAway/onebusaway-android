@@ -1025,12 +1025,6 @@
     <string name="maximum_walk_distance">Distancia máxima a pie: </string>
     <string name="wheelchair_accessible">Evitar las escaleras</string>
 
-    <string name="travel_by_label">Viajar por: </string>
-    <string name="transit_mode_transit_only">Tránsito</string>
-    <string name="transit_mode_transit_and_bikeshare">Tránsito &amp; bicicleta compartida</string>
-    <string name="transit_mode_bus">Solamente en Bus</string>
-    <string name="transit_mode_rail">Solamente en Tren</string>
-    <string name="transit_mode_bikeshare">Solamente Bicilceta Compartida</string>
     <string name="transit_directions_bikeshare_label">Bicicleta Compartida</string>
 
     <!-- Bikeshare info window -->

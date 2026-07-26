@@ -143,10 +143,10 @@ class DefaultTripPlanRepository @Inject constructor(
                 first = false
             }
         }.let { params ->
-            // Read from the built mode string, not TripRequestBuilder.mModeId: mModeId is unset after
-            // initFromBundleSimple (the trip-plan-monitor restore path never repopulates it), and even
-            // on the direct path TRANSIT_AND_BIKE only actually requests bike rental when bikeshare is
-            // enabled — the mode string is the one place both facts are already resolved.
+            // Read from the built mode string rather than the selection: what reaches here is a
+            // TripPlanRequest, not the builder, and the string is where the region's bikeshare
+            // availability has already been resolved (a bikeshare pick without a rental network walks
+            // instead — see otp1ModeTokens).
             val bikeRentalToken = context.getString(R.string.traverse_mode_bicycle_rent)
             if (modeStringRequestsBikeRental(request.parameters["mode"], bikeRentalToken)) {
                 // Pre-1.0 servers spell bike rental as "BICYCLE, WALK"; modern ones as "BICYCLE_RENT".
@@ -261,7 +261,7 @@ internal fun otpPlanUrl(baseUrl: String, query: String, oldServer: Boolean): Str
 
 /**
  * True when [modeString] (the OTP `mode` query value built by
- * [org.onebusaway.android.directions.util.TripRequestBuilder.setModeSetById]) includes the bike-rental
+ * [org.onebusaway.android.directions.util.otp1ModeTokens]) includes the bike-rental
  * wire token — pulled out as a standalone, `Context`-free function so this (previously never-true —
  * see #1778) derivation is unit-testable.
  */
@@ -282,7 +282,7 @@ internal fun TripPlanParams.toRequestBuilder(context: Context): TripRequestBuild
         setTo(params.to.toCustomAddress(context))
         val instant = Instant.ofEpochMilli(params.dateTimeMillis)
         if (params.arriving) setArrivalTime(instant) else setDepartureTime(instant)
-        setModeSetById(params.modeId)
+        setModeSelection(params.modes)
         setWheelchairAccessible(params.wheelchair)
         setOptimizeTransfers(params.optimizeTransfers)
         params.maxWalkMeters?.let { setMaxWalkDistance(it) }

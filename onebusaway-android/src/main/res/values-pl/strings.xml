@@ -983,12 +983,6 @@
     <string name="minimize_transfers">Minimalizuj przesiadki</string>
     <string name="maximum_walk_distance">Maksymalny dystans marszu: </string>
     <string name="wheelchair_accessible">Unikaj schodów</string>
-    <string name="travel_by_label">Podróżuj: </string>
-    <string name="transit_mode_transit_only">Tylko transport publiczny</string>
-    <string name="transit_mode_transit_and_bikeshare">Transport publiczny i rower miejski</string>
-    <string name="transit_mode_bus">Tylko autobus</string>
-    <string name="transit_mode_rail">Tylko kolej</string>
-    <string name="transit_mode_bikeshare">Tylko rower miejski</string>
     <string name="transit_directions_bikeshare_label">Rower miejski</string>
 
     <!-- Bikeshare -->

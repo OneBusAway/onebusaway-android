@@ -145,6 +145,13 @@ class ExternalDeepLinksTest {
     }
 
     @Test
+    fun `a plaintext http trip link is not a deep link`() {
+        // App links are https-only; the manifest filter grants no http scheme, and the same host over
+        // http is not one of our links.
+        assertNull(parse(webLink().copy(scheme = "http"), schemes))
+    }
+
+    @Test
     fun `a trip link carrying the full iOS parameter set ignores what no screen consumes`() {
         val target = parse(
             webLink(

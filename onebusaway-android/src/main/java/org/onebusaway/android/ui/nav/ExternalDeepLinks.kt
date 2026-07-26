@@ -66,8 +66,11 @@ object ExternalDeepLinks {
     private const val PARAM_OBA_URL = "oba-url"
     private const val PARAM_OTP_URL = "otp-url"
 
+    /** App links are `https` only — a plaintext link to one of [WEB_HOSTS] is not a deep link. */
+    private const val WEB_SCHEME = "https"
+
     /**
-     * Hosts whose `https://` links are app links, mirroring the iOS app's associated domains
+     * Hosts whose [WEB_SCHEME] links are app links, mirroring the iOS app's associated domains
      * (`applinks:onebusaway.co`, `applinks:www.onebusaway.co`, `applinks:sidecar.onebusaway.org`).
      */
     val WEB_HOSTS = setOf("onebusaway.co", "www.onebusaway.co", "sidecar.onebusaway.org")
@@ -106,7 +109,7 @@ object ExternalDeepLinks {
      */
     fun parse(link: Link, appSchemes: Set<String> = APP_SCHEMES): Target? = when {
         link.scheme in appSchemes -> parseAppSchemeLink(link)
-        link.host in WEB_HOSTS -> parseWebLink(link)
+        link.scheme == WEB_SCHEME && link.host in WEB_HOSTS -> parseWebLink(link)
         else -> null
     }
 

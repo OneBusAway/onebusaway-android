@@ -32,7 +32,7 @@ nested URL must be percent-encoded as `%26`.
 `sidecar.onebusaway.org` — mirroring the iOS app's associated domains. Only the trip endpoint is a
 deep link:
 
-```
+```text
 https://<host>/regions/{regionID}/stops/{stopID}/trips?trip_id=…&service_date=…&stop_sequence=…
 ```
 

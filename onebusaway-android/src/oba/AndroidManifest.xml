@@ -11,7 +11,13 @@
   still put that brand in the link-handling chooser for someone else's links. A brand with its own
   web host should add its own flavor manifest with the same shape.
 
-  The pathPrefix keeps the filter off the rest of the site (the marketing pages).
+  The pathPattern claims only the trip endpoint, so the rest of the site (the marketing pages, and a
+  region/stop page the parser doesn't recognize) keeps opening in the browser rather than launching
+  the app to land nowhere. It's a PATTERN_SIMPLE_GLOB, where `.` is any character and `*` is
+  zero-or-more of the preceding one, so `.*` spans `/` too — it can't require a *single* segment per
+  wildcard. ExternalDeepLinks.parse is the exact check (it requires precisely five path segments);
+  this filter just has to be no broader than it needs to be. Path shape doesn't affect autoVerify,
+  which matches on host.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -31,7 +37,7 @@
                 <data android:host="onebusaway.co" />
                 <data android:host="www.onebusaway.co" />
                 <data android:host="sidecar.onebusaway.org" />
-                <data android:pathPrefix="/regions/" />
+                <data android:pathPattern="/regions/.*/stops/.*/trips" />
             </intent-filter>
         </activity>
     </application>

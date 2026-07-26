@@ -7,6 +7,21 @@ Before doing anything, check out the [system architecture diagrams](SYSTEM_ARCHI
 
 Also, note that while you can test your OBA server with a HTTP URL (see section below), you'll need to enable SSL for HTTPS before launching in the Regions API.
  
+## Two mechanisms
+
+There are two independent ways to point the app at a server you control:
+
+1. **The API-URL preferences** documented below (Settings → Advanced). These set an OBA and/or OTP URL
+   directly and switch the app out of region resolution entirely — there is no region, just a pair of
+   URLs. Good for poking at a test server.
+2. **A custom region** — an `onebusaway://add-region?name=…&oba-url=…` deep link, which creates a real
+   named region that persists, appears in the region picker, and survives regions-directory refreshes.
+   See [`DEEP_LINKING.md`](DEEP_LINKING.md). Better for a deployment you'll come back to, and the only
+   one of the two that can carry a sidecar/analytics config.
+
+They don't stack: applying any region (including a custom one) clears the custom OBA URL preference, so
+whichever you did last is what's in effect.
+
 ## Configuration
 
 In the app, go to "Settings->Advanced".  You should see a screen like:

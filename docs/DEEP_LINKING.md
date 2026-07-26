@@ -9,7 +9,7 @@ Two families of link, both handled by `HomeActivity` (the app's single Activity)
 | Link | What it does |
 | --- | --- |
 | `onebusaway://view-stop?stopID=1_75403&regionID=1` | Opens that stop's arrivals |
-| `onebusaway://add-region?oba-url=…&otp-url=…` | Points the app at those API servers. Opens no screen — see below |
+| `onebusaway://add-region?name=…&oba-url=…` | Adds that named region and switches to it, after the rider confirms — see below |
 | `https://onebusaway.co/regions/1/stops/1_75403/trips?trip_id=1_18196913&service_date=1698307200.0&stop_sequence=5` | Opens that trip's details, scrolled to the stop in the path |
 
 ## Custom-scheme links
@@ -24,26 +24,70 @@ brand advertises.
 
 `view-stop` needs `stopID` (an agency-qualified stop id such as `1_75403`, percent-encoded).
 
-`add-region` reads `oba-url` and `otp-url`; each is applied only if it validates. Ampersands inside a
-nested URL must be percent-encoded as `%26`.
+### `add-region`
 
-Unlike the other two links, `add-region` names no destination — it's a settings change, not a screen.
-It navigates nowhere (`IntentRouteMapper` returns `RouteDecision.None`), so the app simply opens on its
-usual home screen, the map. What changed is where the app's requests go:
+Adds a **custom region** — a real, named, persisted region, the same thing the link creates on iOS — and
+makes it current. Ampersands inside a nested URL must be percent-encoded as `%26`.
 
-- **`oba-url`** becomes the OBA API server, and applying it **clears the selected region** — the app
-  stops resolving a region at all and talks to that server directly. This is the same state the
-  Settings custom-API-URL path produces; see [`CUSTOM_SERVERS.md`](CUSTOM_SERVERS.md).
-- **`otp-url`** becomes the trip-planning (OTP) server. On its own it leaves the region alone.
+| Parameter | Required | Becomes |
+| --- | --- | --- |
+| `name` | **yes** | The region's display name, as shown in the region picker |
+| `oba-url` | **yes** | `Region.obaBaseUrl` — the OBA REST server |
+| `otp-url` | no | `Region.otpBaseUrl` — the trip-planning server |
+| `sidecar-url` | no | `Region.sidecarBaseUrl` |
+| `umami-url` / `umami-id` | no | `Region.umamiAnalytics` |
 
-The name `add-region` is inherited from iOS, where the link really does add a named region. Android has
-no custom-region model, so it can only set these URLs — which is also why `name`, `sidecar-url`,
-`umami-url` and `umami-id` are ignored (below).
+A custom region behaves like a directory region with three deliberate differences:
 
-> Note that "validates" here means *well-formed*, not *trusted*, and this filter is `BROWSABLE` — so any
-> web page can repoint the app's API server with no confirmation. That predates this vocabulary (it was
-> the old `SettingsActivity` VIEW filter) and is tracked in
-> [#2030](https://github.com/OneBusAway/onebusaway-android/issues/2030).
+- **It survives regions-directory refreshes.** `RegionDao.replaceAll` deletes only `custom = 0` rows, so
+  a refresh can't take the rider's own region with it, and `RegionCache.loadRegions` unions custom
+  regions back into every result.
+- **It is never auto-selected, and never auto-*replaced*.** It carries no bounds, so `getClosestRegion`
+  can't measure a distance to it; and `resolveRegionStatus` leaves a current custom region alone
+  regardless of what's nearest, because following an `add-region` link is an explicit choice that
+  auto-selection must not silently undo.
+- **Its id is negative** (counting down from `-2`), so it can't collide with a directory id (those are
+  `>= 0`) or with the `-1` "no region" sentinel in the region-id preference. Ids are never reused, so a
+  stale reference resolves to nothing rather than to somebody else's server.
+
+Re-sending the same `oba-url` **updates that region in place** rather than adding a duplicate.
+
+Capability flags (`supportsObaDiscoveryApis`, `supportsObaRealtimeApis`) are set true because
+`RegionUtils.isRegionUsable` requires them — they are *declarations*, not observations: nothing has
+probed the server. If it doesn't serve those APIs, requests fail visibly like any unreachable server.
+`contactEmail` is left empty rather than filled with a placeholder (iOS hardcodes
+`example@example.com`), which correctly hides the "email a problem report" option instead of mailing a
+made-up address.
+
+Once added, a custom region appears in the region picker like any other. **Long-press it there to
+remove it** — the way back out of a link you regret. Removing the region you're currently on re-resolves
+as if none had been set.
+
+The pre-existing Settings → Advanced custom-API-URL preferences are a separate, unchanged mechanism (see
+[`CUSTOM_SERVERS.md`](CUSTOM_SERVERS.md)); a custom region supersedes them, since applying any region
+clears the custom OBA URL preference.
+
+#### The link is confirmed, not applied
+
+The filter is `BROWSABLE`, so **any web page can fire an `add-region` link at the app**, and accepting one
+repoints every transit request the app makes. `HomeActivity` therefore hands the parsed request to
+`AddRegionViewModel`, which stages it and writes nothing until the rider accepts a dialog naming the
+servers involved ([#2030](https://github.com/OneBusAway/onebusaway-android/issues/2030)). Declining
+writes nothing at all.
+
+This is a **deliberate divergence from iOS**, which applies the region with no prompt. The dialog leads
+with the server URLs rather than the region name, because the name is attacker-supplied text and says
+nothing about where the data would come from.
+
+#### Breaking change: `name` is now required
+
+Before this, `onebusaway://add-region?oba-url=…` (no `name`) set a pair of API-URL *preferences* and
+created no region. That link **no longer resolves at all** — matching iOS, which requires `name`. A
+nameless region has nothing to show in the picker, so there is no sensible region to build from it.
+Links in the wild that omit `name` need one added.
+
+It still navigates nowhere (`IntentRouteMapper` returns `RouteDecision.None`): the app opens on its usual
+home screen, the map, with the new region active.
 
 ## Web links (Android App Links)
 
@@ -97,10 +141,6 @@ opening the page they tapped.
 
 - **Stop-only web paths** (`/regions/{id}/stops/{id}` with no `/trips`) are not deep links, matching
   iOS; they fall through to the browser.
-- **`add-region`'s `name` / `sidecar-url` / `umami-url` / `umami-id` parameters** are ignored. Android's
-  custom-server mechanism is a pair of API-URL preferences (see
-  [`CUSTOM_SERVERS.md`](CUSTOM_SERVERS.md)), not a synthetic named region, so it has nowhere to put
-  them. Full parity here needs a real custom-region model.
 - **Parameters no Android screen consumes** are recognized and ignored rather than required, so any
   link iOS accepts is accepted here: `regionID` (iOS parses it but also only ever searches the current
   region — an incoming link for a stop outside the active region will fail to load), and the trip
@@ -115,6 +155,11 @@ An `adb` VIEW intent exercises a filter regardless of App Links verification:
 # Stop
 adb shell am start -a android.intent.action.VIEW \
   -d 'onebusaway://view-stop?stopID=1_75403&regionID=1' \
+  com.joulespersecond.seattlebusbot
+
+# Custom region (raises the confirmation dialog; nothing is written until you accept)
+adb shell am start -a android.intent.action.VIEW \
+  -d 'onebusaway://add-region?name=Test%20Deployment&oba-url=https://api.example.com' \
   com.joulespersecond.seattlebusbot
 
 # Trip (keep the URL single-quoted so the shell doesn't split on &)
@@ -132,8 +177,13 @@ adb shell am start -a android.intent.action.VIEW \
   normalization — that a JVM test can't reach.
 - `ui/nav/IntentRouteMapper.kt` — maps the parsed link to a NavHost route (`decide`, unit-tested in
   `IntentRouteMapperTest`).
-- `ui/HomeActivity.kt` — runs the side effects a link implies (`applyIntentSideEffects`): the
-  `add-region` URL apply, and the browser handoff for an unroutable web link.
+- `ui/HomeActivity.kt` — runs the side effects a link implies (`applyIntentSideEffects`): staging an
+  `add-region` request for confirmation, and the browser handoff for an unroutable web link.
+- `region/CustomRegions.kt` — the custom-region model (`CustomRegionRequest`, id allocation, and the
+  `Region` built from a link), unit-tested in `CustomRegionsTest`.
+- `ui/home/AddRegionViewModel.kt` + `ui/home/AddRegionDialog.kt` — the consent gate, unit-tested in
+  `AddRegionViewModelTest`.
+- `ui/home/RegionPickerHost.kt` — the picker, including long-press-to-remove for custom regions.
 - `util/ExternalIntents.kt` — `openInBrowser`, the explicit-package browser handoff (and the `<queries>`
   element in `src/main/AndroidManifest.xml` that makes browsers visible to it on API 30+).
 - `ui/nav/DeepLinkUris.kt` — separate concern: the app's *internal* `content://` stop/route

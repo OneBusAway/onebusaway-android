@@ -125,4 +125,42 @@ class RegionStatusTest {
             resolveRegionStatus(current = region(1), closest = region(2), autoSelect = false)
         )
     }
+
+    // --- custom regions (#2027) are never auto-replaced ---
+
+    @Test
+    fun `a current custom region survives a nearer directory region`() {
+        // The rider deliberately chose this server (an add-region link they confirmed, or a manual
+        // pick). Without this guard, auto-select would hand them straight back to whichever directory
+        // region is closest and silently undo it.
+        assertEquals(
+            RegionStatus.Unchanged,
+            resolveRegionStatus(
+                current = region(-2, custom = true),
+                closest = region(1),
+                autoSelect = true
+            )
+        )
+    }
+
+    @Test
+    fun `a current custom region is unchanged with auto-select off too`() {
+        assertEquals(
+            RegionStatus.Unchanged,
+            resolveRegionStatus(
+                current = region(-2, custom = true),
+                closest = null,
+                autoSelect = false
+            )
+        )
+    }
+
+    @Test
+    fun `a current directory region is still replaced by a nearer one`() {
+        // The guard must be scoped to custom regions — ordinary auto-select behaviour is unchanged.
+        assertEquals(
+            RegionStatus.Changed(region(2)),
+            resolveRegionStatus(current = region(1), closest = region(2), autoSelect = true)
+        )
+    }
 }

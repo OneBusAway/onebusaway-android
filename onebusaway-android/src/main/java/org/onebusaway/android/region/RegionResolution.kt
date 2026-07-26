@@ -79,6 +79,12 @@ internal fun resolveRegionStatus(
     closest: Region?,
     autoSelect: Boolean
 ): RegionStatus {
+    // A custom region (#2027) is a deliberate choice of server — the rider followed an `add-region`
+    // link and confirmed it, or picked it from the list. Auto-selection must not quietly hand them back
+    // to whichever directory region happens to be nearest, so it is left alone regardless of [closest].
+    // (A custom region carries no bounds, so it can never *be* the closest either.) Switching away is
+    // still possible; it just has to be explicit, through the picker.
+    if (current?.custom == true) return RegionStatus.Unchanged
     // The manual-selection cases carry an empty list here; the repository fills in the usable
     // regions (it alone holds the fetched results) before returning to the caller.
     if (!autoSelect) {

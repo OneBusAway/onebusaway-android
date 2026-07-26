@@ -68,6 +68,11 @@ class RegionCache @Inject constructor(
      * The legacy `RegionUtils.getRegions` source-fallback: prefer the cache (unless [forceReload]),
      * then the server, then — if forced — the cache again, then the bundled resource. A server or
      * resource result is persisted. Null only when every source failed.
+     *
+     * Every return path includes the user's custom regions (#2027). The cache paths get them for free
+     * (they're rows like any other); the server/bundled paths have to union them back in, since the
+     * regions directory has never heard of them — without that, a forced reload would drop the rider's
+     * own region out of the picker list.
      */
     suspend fun loadRegions(forceReload: Boolean): List<Region>? {
         if (!forceReload) {
@@ -88,6 +93,36 @@ class RegionCache @Inject constructor(
         }
 
         save(results)
-        return results
+        return results + customRegions()
+    }
+
+    /** The user-added custom regions (#2027); empty when there are none. */
+    suspend fun customRegions(): List<Region> {
+        importGate.awaitReady()
+        return regionDao.getCustomRegions().map { RegionMapper.toRegion(it) }
+    }
+
+    /**
+     * Persists [request] as a custom region and returns it.
+     *
+     * Re-adding a server already present updates that region in place — matched on the exact
+     * [Region.obaBaseUrl], so it keeps its id and stays the same entity to anything holding a reference
+     * (the persisted region-id preference, most of all). Otherwise it gets a fresh id from
+     * [nextCustomRegionId]. Deliberately does *not* go through [save], whose `isRegionUsable` filter and
+     * whole-cache replace are the directory refresh's business.
+     */
+    suspend fun saveCustom(request: CustomRegionRequest): Region {
+        importGate.awaitReady()
+        val existingId = regionDao.customRegionByObaUrl(request.obaBaseUrl)?.region?.id
+        val region = customRegion(existingId ?: nextCustomRegionId(regionDao.minRegionId()), request)
+        regionDao.upsertCustomRegion(RegionMapper.toEntities(region))
+        return region
+    }
+
+    /** Removes a custom region. A directory region is never deleted here — the refresh owns those rows. */
+    suspend fun deleteCustom(region: Region) {
+        importGate.awaitReady()
+        if (!region.custom) return
+        regionDao.deleteRegionById(region.id)
     }
 }

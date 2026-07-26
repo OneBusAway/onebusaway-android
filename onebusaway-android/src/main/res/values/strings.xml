@@ -525,6 +525,26 @@
     <string name="region_load_failed_title">Couldn’t load regions</string>
     <string name="region_load_failed_message">Check your connection and try again.</string>
 
+    <!-- Custom regions added by an `onebusaway://add-region` link (#2027). The confirmation is a
+         security gate, not a courtesy: any web page can fire one of these links, and accepting it
+         repoints every transit request the app makes. %1$s in the message is the app name. -->
+    <string name="add_region_title">Add “%1$s”?</string>
+    <string name="add_region_message">This link wants %1$s to get all of its transit data from a
+        different server. Only continue if you trust whoever sent you the link.
+    </string>
+    <string name="add_region_server_oba">Transit data</string>
+    <string name="add_region_server_otp">Trip planning</string>
+    <string name="add_region_confirm">Add region</string>
+    <string name="add_region_invalid_title">Couldn’t add region</string>
+    <string name="add_region_invalid_message">That link’s server address isn’t a valid URL.</string>
+    <string name="region_remove_custom_title">Remove “%1$s”?</string>
+    <string name="region_remove_custom_message">This removes the region you added from this list. The
+        transit agency’s own regions aren’t affected.
+    </string>
+    <string name="region_remove_custom_confirm">Remove</string>
+    <!-- Accessibility label for the long-press-to-remove affordance on a custom region row. -->
+    <string name="region_remove_custom_hint">Long press to remove</string>
+
     <!--  Bug report -->
     <!-- Note: %1$s is replaced with app_name for white-label support -->
     <string name="bug_report_subject">%1$s Android: Feedback</string>

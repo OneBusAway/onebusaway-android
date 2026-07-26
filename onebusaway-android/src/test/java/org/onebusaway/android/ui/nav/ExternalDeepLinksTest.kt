@@ -21,6 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.BuildConfig
+import org.onebusaway.android.region.CustomRegionRequest
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.Link
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.Target
 import org.onebusaway.android.ui.nav.ExternalDeepLinks.parse
@@ -95,29 +96,79 @@ class ExternalDeepLinksTest {
         assertNull(parse(appLink("view-stop", mapOf("stopID" to "")), schemes))
     }
 
-    // --- add-region (recognized here, but applied as a side effect rather than routed) ---
+    // --- add-region: a full custom-region request (#2027), applied only after the rider confirms ---
 
     @Test
-    fun `add-region carries the custom API URLs`() {
+    fun `add-region carries the whole region the link describes`() {
         val target = parse(
             appLink(
                 "add-region",
-                mapOf("oba-url" to "https://api.example.com", "otp-url" to "https://otp.example.com")
+                mapOf(
+                    "name" to "Test Deployment",
+                    "oba-url" to "https://api.example.com",
+                    "otp-url" to "https://otp.example.com",
+                    "sidecar-url" to "https://sidecar.example.com",
+                    "umami-url" to "https://umami.example.com",
+                    "umami-id" to "abc123"
+                )
             ),
             schemes
         )
         assertEquals(
-            Target.AddRegion(obaUrl = "https://api.example.com", otpUrl = "https://otp.example.com"),
+            Target.AddRegion(
+                CustomRegionRequest(
+                    name = "Test Deployment",
+                    obaBaseUrl = "https://api.example.com",
+                    otpBaseUrl = "https://otp.example.com",
+                    sidecarBaseUrl = "https://sidecar.example.com",
+                    umamiAnalyticsUrl = "https://umami.example.com",
+                    umamiAnalyticsId = "abc123"
+                )
+            ),
             target
         )
     }
 
     @Test
-    fun `add-region reports absent and blank URLs alike as null`() {
-        // Validating and applying the URLs is the region domain's job; absent means "don't touch it".
+    fun `add-region needs only a name and an oba-url`() {
         assertEquals(
-            Target.AddRegion(obaUrl = "https://api.example.com", otpUrl = null),
-            parse(appLink("add-region", mapOf("oba-url" to "https://api.example.com", "otp-url" to "")), schemes)
+            Target.AddRegion(
+                CustomRegionRequest(name = "Test", obaBaseUrl = "https://api.example.com")
+            ),
+            parse(
+                appLink("add-region", mapOf("name" to "Test", "oba-url" to "https://api.example.com")),
+                schemes
+            )
+        )
+    }
+
+    @Test
+    fun `add-region without a name is not a deep link`() {
+        // Matches iOS, which requires it. Note this is stricter than pre-#2027 Android, where a bare
+        // `add-region?oba-url=...` set a pair of API-URL preferences — see docs/DEEP_LINKING.md.
+        assertNull(parse(appLink("add-region", mapOf("oba-url" to "https://api.example.com")), schemes))
+    }
+
+    @Test
+    fun `add-region without an oba-url is not a deep link`() {
+        // A region with no OBA server can't answer anything, so there is nothing to add.
+        assertNull(parse(appLink("add-region", mapOf("name" to "Test")), schemes))
+    }
+
+    @Test
+    fun `add-region treats blank parameters as absent`() {
+        assertNull(parse(appLink("add-region", mapOf("name" to "", "oba-url" to "https://api.example.com")), schemes))
+        assertEquals(
+            Target.AddRegion(
+                CustomRegionRequest(name = "Test", obaBaseUrl = "https://api.example.com", otpBaseUrl = null)
+            ),
+            parse(
+                appLink(
+                    "add-region",
+                    mapOf("name" to "Test", "oba-url" to "https://api.example.com", "otp-url" to "")
+                ),
+                schemes
+            )
         )
     }
 

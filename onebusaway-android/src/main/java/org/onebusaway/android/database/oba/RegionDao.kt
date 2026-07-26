@@ -62,28 +62,75 @@ interface RegionDao {
     @Insert
     suspend fun insertOpen311Servers(servers: List<Open311ServerRecord>)
 
-    @Query("DELETE FROM regions")
-    suspend fun clearRegions()
+    /**
+     * Clears the *directory* regions, leaving user-added custom ones (#2027) in place — the regions
+     * directory has no opinion about them, so a refresh must not take them with it.
+     */
+    @Query("DELETE FROM regions WHERE custom = 0")
+    suspend fun clearDirectoryRegions()
 
     /**
      * The legacy open311_servers table has no foreign key (see [Open311ServerRecord]), so it must be
-     * cleared explicitly; region_bounds cascades off [clearRegions].
+     * cleared explicitly; region_bounds cascades off the region delete. Scoped to the rows whose region
+     * is going away, for the same reason as [clearDirectoryRegions]. (A custom region never has Open311
+     * servers today — the deep link can't supply any — but scoping it keeps the two deletes consistent.)
      */
-    @Query("DELETE FROM open311_servers")
-    suspend fun clearOpen311Servers()
+    @Query("DELETE FROM open311_servers WHERE region_id IN (SELECT _id FROM regions WHERE custom = 0)")
+    suspend fun clearDirectoryOpen311Servers()
+
+    /** The user-added custom regions (#2027), which [replaceAll] deliberately preserves. */
+    @Transaction
+    @Query("SELECT * FROM regions WHERE custom != 0")
+    suspend fun getCustomRegions(): List<RegionWithChildren>
 
     /**
-     * Atomically replaces the whole region cache (the legacy `saveToProvider`): clear all three
-     * tables, then insert each region with its children. Callers filter to usable regions first.
+     * The lowest region id in the table, or null when it's empty. Custom regions are numbered downwards
+     * from -2, so the next id is `min(this, -1) - 1` — see `RegionCache.saveCustom`. (-1 is the "no
+     * region" sentinel in the region-id preference, and directory ids are non-negative.)
+     */
+    @Query("SELECT MIN(_id) FROM regions")
+    suspend fun minRegionId(): Long?
+
+    /** The custom region served by [obaBaseUrl], or null — the key re-adding an existing region matches on. */
+    @Transaction
+    @Query("SELECT * FROM regions WHERE custom != 0 AND oba_base_url = :obaBaseUrl LIMIT 1")
+    suspend fun customRegionByObaUrl(obaBaseUrl: String): RegionWithChildren?
+
+    /** Removes one region and its children (region_bounds cascades; open311 has no FK, so it's explicit). */
+    @Transaction
+    suspend fun deleteRegionById(id: Long) {
+        deleteOpen311ServersForRegion(id)
+        deleteRegionRow(id)
+    }
+
+    @Query("DELETE FROM open311_servers WHERE region_id = :id")
+    suspend fun deleteOpen311ServersForRegion(id: Long)
+
+    @Query("DELETE FROM regions WHERE _id = :id")
+    suspend fun deleteRegionRow(id: Long)
+
+    /**
+     * Atomically replaces the *directory* region cache (the legacy `saveToProvider`): clear the
+     * directory rows and their children, then insert each region with its children. Callers filter to
+     * usable regions first. User-added custom regions are left untouched — see [clearDirectoryRegions].
      */
     @Transaction
     suspend fun replaceAll(regions: List<RegionWithChildren>) {
-        clearOpen311Servers()
-        clearRegions() // region_bounds cascades
+        clearDirectoryOpen311Servers()
+        clearDirectoryRegions() // region_bounds cascades
         for (entry in regions) {
             insertRegion(entry.region)
             insertBounds(entry.bounds)
             insertOpen311Servers(entry.open311Servers)
         }
+    }
+
+    /** Inserts or replaces one custom region and its children (there are no bounds to write today). */
+    @Transaction
+    suspend fun upsertCustomRegion(entry: RegionWithChildren) {
+        deleteRegionById(entry.region.id)
+        insertRegion(entry.region)
+        insertBounds(entry.bounds)
+        insertOpen311Servers(entry.open311Servers)
     }
 }

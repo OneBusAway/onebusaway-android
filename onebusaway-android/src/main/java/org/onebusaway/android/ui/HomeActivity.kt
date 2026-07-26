@@ -40,10 +40,11 @@ import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.home.AccessibilityAnalyticsEffect
+import org.onebusaway.android.ui.home.AddRegionDialog
+import org.onebusaway.android.ui.home.AddRegionViewModel
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeActivityActions
 import org.onebusaway.android.ui.home.HomeAnalyticsEffect
@@ -84,10 +85,6 @@ class HomeActivity : AppCompatActivity() {
     @Inject
     lateinit var arrivalsViewModelFactory: ArrivalsViewModel.Factory
 
-    // The add-region deep link applies custom API URLs through this (rather than reaching Application.get()).
-    @Inject
-    lateinit var regionRepository: RegionRepository
-
     @Inject
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
 
@@ -118,6 +115,9 @@ class HomeActivity : AppCompatActivity() {
 
     // The help / what's-new / legend dialogs feature module. Activity-scoped.
     private val helpViewModel: HelpViewModel by viewModels()
+
+    /** Holds an incoming `add-region` deep link until the rider confirms it (#2030). */
+    private val addRegionViewModel: AddRegionViewModel by viewModels()
 
     // Trip planner, now hosted on HOME (directions focus) rather than a standalone destination. Activity-
     // scoped so the reactive form + results survive config changes while HOME is on screen; TripPlanViewModel
@@ -168,6 +168,15 @@ class HomeActivity : AppCompatActivity() {
                     )
                 )
                 PaymentWarningDialog(viewModel.paymentWarning, viewModel::dismissPaymentWarning)
+                // The `add-region` consent gate, a sibling of the region picker below: it must overlay
+                // whatever screen the deep link landed on, so it lives at the setContent root too.
+                AddRegionDialog(
+                    pending = addRegionViewModel.pending,
+                    invalid = addRegionViewModel.invalid,
+                    onConfirm = addRegionViewModel::confirm,
+                    onDecline = addRegionViewModel::decline,
+                    onDismissInvalid = addRegionViewModel::dismissInvalid
+                )
                 // The forced region picker, driven reactively off the repository (RegionPickerViewModel). At the
                 // setContent root so its window overlays whatever screen triggered the re-resolve.
                 RegionPickerHost()
@@ -275,9 +284,10 @@ class HomeActivity : AppCompatActivity() {
         val data = intent.data
         val deepLink = data?.let { ExternalDeepLinks.parse(it) }
         if (deepLink is ExternalDeepLinks.Target.AddRegion) {
-            // Validating and applying the URLs is the region domain's job; ExternalDeepLinks just read
-            // them off the URI.
-            regionRepository.applyCustomApiUrls(obaUrl = deepLink.obaUrl, otpUrl = deepLink.otpUrl)
+            // Staged, not applied: adding a region repoints every API the app talks to, and this filter
+            // is BROWSABLE, so any web page can fire the link. The rider confirms it first (#2030) —
+            // AddRegionDialog. Validating the URLs is then the region domain's job.
+            addRegionViewModel.request(deepLink.request)
             return
         }
         // The web intent-filter is necessarily broader than the parser (it can't see the query string,

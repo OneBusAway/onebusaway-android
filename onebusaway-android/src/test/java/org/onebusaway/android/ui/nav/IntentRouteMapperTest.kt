@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.nav
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.region.CustomRegionRequest
 import org.onebusaway.android.ui.mylists.MyTabs
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteDecision
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteIntent
@@ -58,7 +59,9 @@ class IntentRouteMapperTest {
             RouteDecision.None,
             decide(
                 RouteIntent(
-                    deepLink = ExternalDeepLinks.Target.AddRegion("https://api.example.com", null),
+                    deepLink = ExternalDeepLinks.Target.AddRegion(
+                        CustomRegionRequest(name = "Test", obaBaseUrl = "https://api.example.com")
+                    ),
                     isSearch = true,
                     searchQuery = "x"
                 )

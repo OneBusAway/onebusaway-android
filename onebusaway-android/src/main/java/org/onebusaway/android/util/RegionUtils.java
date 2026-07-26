@@ -424,7 +424,8 @@ public class RegionUtils {
             BuildConfig.FIXED_REGION_PAYMENT_WARNING_BODY,
             BuildConfig.FIXED_REGION_SIDECAR_BASE_URL,
             BuildConfig.FIXED_REGION_PLAUSIBLE_ANALYTICS_SERVER_URL,
-            null); // No Umami config for the fixed-region build flavor
+            null, // No Umami config for the fixed-region build flavor
+            false); // custom: this is the build flavor's own region, not one a rider added (#2027)
     return region;
   }
 }

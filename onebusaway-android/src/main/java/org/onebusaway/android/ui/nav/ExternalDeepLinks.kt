@@ -17,13 +17,15 @@ package org.onebusaway.android.ui.nav
 
 import android.net.Uri
 import org.onebusaway.android.BuildConfig
+import org.onebusaway.android.region.CustomRegionRequest
 
 /**
  * The one place that knows the **externally reachable** OneBusAway deep-link vocabulary — schemes,
  * hosts, path shape and query-parameter names. It is the same vocabulary OneBusAway for iOS handles, so
  * a link shared from either app opens the same screen (#2027). Two families:
  *
- *  1. **Custom scheme** ([APP_SCHEMES]): `<scheme>://view-stop?stopID=…` and `<scheme>://add-region?…`.
+ *  1. **Custom scheme** ([APP_SCHEMES]): `<scheme>://view-stop?stopID=…` and
+ *     `<scheme>://add-region?name=…&oba-url=…`.
  *  2. **Web links** (iOS "universal links") on [WEB_HOSTS]:
  *     `https://onebusaway.co/regions/{regionID}/stops/{stopID}/trips?trip_id=…`.
  *
@@ -57,7 +59,7 @@ object ExternalDeepLinks {
     /** Custom-scheme host that opens a stop's arrivals. */
     private const val VIEW_STOP_HOST = "view-stop"
 
-    /** Custom-scheme host that applies custom API URLs. */
+    /** Custom-scheme host that adds a user-supplied region and switches to it. */
     private const val ADD_REGION_HOST = "add-region"
 
     // Query-parameter names. The custom-scheme links use iOS's camelCase spelling; the web links use
@@ -65,8 +67,12 @@ object ExternalDeepLinks {
     // recognized-and-ignored list in docs/DEEP_LINKING.md.
     private const val PARAM_STOP_ID = "stopID"
     private const val PARAM_TRIP_ID = "trip_id"
+    private const val PARAM_NAME = "name"
     private const val PARAM_OBA_URL = "oba-url"
     private const val PARAM_OTP_URL = "otp-url"
+    private const val PARAM_SIDECAR_URL = "sidecar-url"
+    private const val PARAM_UMAMI_URL = "umami-url"
+    private const val PARAM_UMAMI_ID = "umami-id"
 
     /** App links are `https` only — a plaintext link to one of [WEB_HOSTS] is not a deep link. */
     private const val WEB_SCHEME = "https"
@@ -100,10 +106,12 @@ object ExternalDeepLinks {
         data class Trip(val tripId: String, val stopId: String) : Target
 
         /**
-         * `add-region`: apply these custom API URLs. Routes nowhere — it's a domain mutation, run by
-         * `HomeActivity.applyIntentSideEffects`; validating the URLs is the region domain's job.
+         * `add-region`: add [request] as a custom region and switch to it. Routes nowhere — it's a
+         * domain mutation, and one that repoints every API the app talks to, so
+         * `HomeActivity.applyIntentSideEffects` hands it to `AddRegionViewModel` to confirm with the
+         * rider first (#2030) rather than applying it. Validating the URLs is the region domain's job.
          */
-        data class AddRegion(val obaUrl: String?, val otpUrl: String?) : Target
+        data class AddRegion(val request: CustomRegionRequest) : Target
     }
 
     /** Reads [uri] as a deep link, or null if it isn't one. */
@@ -123,11 +131,33 @@ object ExternalDeepLinks {
 
     private fun parseAppSchemeLink(link: Link): Target? = when (link.host) {
         VIEW_STOP_HOST -> link.params.nonBlank(PARAM_STOP_ID)?.let { Target.Stop(it) }
-        ADD_REGION_HOST -> Target.AddRegion(
-            obaUrl = link.params.nonBlank(PARAM_OBA_URL),
-            otpUrl = link.params.nonBlank(PARAM_OTP_URL)
-        )
+        ADD_REGION_HOST -> parseAddRegionLink(link)
         else -> null
+    }
+
+    /**
+     * `add-region?name=…&oba-url=…` — the rest is optional.
+     *
+     * Both `name` and `oba-url` are **required**, matching OneBusAway for iOS: the result is a named
+     * region the rider will later pick out of a list, so a nameless one has nothing to show, and a
+     * region with no OBA server can't answer anything. A link missing either is not a deep link.
+     *
+     * Note this is stricter than the pre-#2027 Android behaviour, where `add-region?oba-url=…` alone set
+     * a pair of API-URL preferences. Such a link no longer resolves — see `docs/DEEP_LINKING.md`.
+     */
+    private fun parseAddRegionLink(link: Link): Target? {
+        val name = link.params.nonBlank(PARAM_NAME) ?: return null
+        val obaUrl = link.params.nonBlank(PARAM_OBA_URL) ?: return null
+        return Target.AddRegion(
+            CustomRegionRequest(
+                name = name,
+                obaBaseUrl = obaUrl,
+                otpBaseUrl = link.params.nonBlank(PARAM_OTP_URL),
+                sidecarBaseUrl = link.params.nonBlank(PARAM_SIDECAR_URL),
+                umamiAnalyticsUrl = link.params.nonBlank(PARAM_UMAMI_URL),
+                umamiAnalyticsId = link.params.nonBlank(PARAM_UMAMI_ID)
+            )
+        )
     }
 
     /**

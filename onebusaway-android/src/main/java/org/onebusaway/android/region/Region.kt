@@ -63,7 +63,14 @@ data class Region(
     val paymentWarningBody: String? = null,
     val sidecarBaseUrl: String? = "",
     val plausibleAnalyticsServerUrl: String? = "",
-    val umamiAnalytics: UmamiAnalyticsConfig? = null
+    val umamiAnalytics: UmamiAnalyticsConfig? = null,
+    // A user-added region (the `add-region` deep link, #2027) rather than one from the OBA regions
+    // directory. Three things key off it: the cache preserves these rows across a directory refresh,
+    // their ids are negative so they can't collide with directory ids, and [resolveRegionStatus] never
+    // auto-replaces one — the rider chose this server deliberately, so a closer directory region
+    // silently taking over would undo that. Custom regions carry no [bounds], so they are also never
+    // auto-*selected* (getClosestRegion can't measure a distance to them).
+    val custom: Boolean = false
 ) {
     val umamiAnalyticsUrl: String? get() = umamiAnalytics?.url
     val umamiAnalyticsId: String? get() = umamiAnalytics?.id

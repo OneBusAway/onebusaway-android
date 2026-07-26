@@ -42,7 +42,7 @@ Exit status: 0 no drift, 1 drift found, 2 the check itself could not run.
 import argparse
 import json
 import sys
-import urllib.error
+import traceback
 import urllib.request
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
@@ -104,10 +104,10 @@ class CheckError(Exception):
 
 
 def read_text(path):
-    """File contents as text, converting the OSError into this check's own failure channel."""
+    """File contents as text, converting IO and decode failures into this check's failure channel."""
     try:
         return Path(path).read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, ValueError) as e:  # ValueError covers a non-UTF-8 file (UnicodeDecodeError)
         raise CheckError(f"could not read {path}: {e}") from e
 
 
@@ -119,19 +119,27 @@ def regions_directory_url(resource_path):
         raise CheckError(f"could not parse {resource_path}: {e}") from e
     for string in resources.iter("string"):
         if string.get("name") == REGIONS_URL_RESOURCE_NAME:
-            return string.text
+            # An empty element (`<string name="regions_api_url"/>`) parses to None, which would
+            # otherwise reach urlopen and crash rather than reporting what is actually wrong.
+            url = (string.text or "").strip()
+            if not url:
+                raise CheckError(f"<string name=\"{REGIONS_URL_RESOURCE_NAME}\"> in {resource_path} is empty")
+            return url
     raise CheckError(f"no <string name=\"{REGIONS_URL_RESOURCE_NAME}\"> in {resource_path}")
 
 
 def fetch(url):
     """Response body at `url` as text; an unreachable directory is a CheckError, not drift."""
-    # An explicit User-Agent is required, not politeness: the directory host answers 403 to
-    # urllib's default `Python-urllib/3.x`.
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
+        # An explicit User-Agent is required, not politeness: the directory host answers 403 to
+        # urllib's default `Python-urllib/3.x`. Built inside the try because a malformed URL fails
+        # here, at Request(), rather than at urlopen().
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(request, timeout=60) as response:
             return response.read().decode("utf-8")
-    except (urllib.error.URLError, OSError) as e:
+    # URLError/HTTPError are OSError subclasses; ValueError covers both a malformed URL and a
+    # non-UTF-8 response body.
+    except (OSError, ValueError) as e:
         raise CheckError(f"could not fetch {url}: {e}") from e
 
 
@@ -243,4 +251,11 @@ if __name__ == "__main__":
         sys.exit(main(sys.argv[1:]))
     except CheckError as e:
         print(f"error: {e}", file=sys.stderr)
+        sys.exit(2)
+    except Exception:
+        # Python exits 1 on an uncaught exception, and 1 is this script's "drift found" status --
+        # so a crash would be reported to CI as drift. Keep the traceback, but land on the
+        # documented "the check itself could not run" status instead of enumerating every
+        # exception type that could ever reach here.
+        traceback.print_exc()
         sys.exit(2)

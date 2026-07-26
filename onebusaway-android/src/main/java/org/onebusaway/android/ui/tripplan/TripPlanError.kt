@@ -81,6 +81,17 @@ data class TripPlanError(
 
         /** No route between the endpoints — also the (defensive) empty-results case. */
         val NoRoute = TripPlanError(Category.NO_ROUTE, R.string.tripplanner_error_path_not_found)
+
+        /** Couldn't reach the planner at all: a transport failure or timeout, on either planner path. */
+        val Timeout = TripPlanError(Category.CONNECTIVITY, R.string.tripplanner_error_request_timeout)
+
+        /**
+         * The server refused the parameters we sent, and will refuse them identically on a retry — so
+         * the reason line points at the trip options rather than advising another attempt. OTP1's
+         * `BOGUS_PARAMETER` and OTP2's deterministic GraphQL rejections (#2023) are the same result,
+         * and live here so the two classifiers can't drift apart.
+         */
+        val RequestRejected = TripPlanError(Category.REQUEST, R.string.tripplanner_error_bogus_parameter)
     }
 }
 
@@ -88,8 +99,18 @@ data class TripPlanError(
  * Carries a classified [TripPlanError] through the throw-based planner contract. Extends [IOException]
  * so the existing `runCatching`/`runCatchingCancellable` wrapping in [DefaultTripPlanRepository] (and
  * the monitor's empty-list-on-failure `planBlocking`) handles it unchanged.
+ *
+ * [message] carries the server's *own* wording for the failure when it sent any — untranslated,
+ * developer-facing text that is never shown to the rider, but that is exactly what makes a bug report
+ * diagnosable (#2023). It rides on the exception rather than a synthesized `cause` so nothing is lost
+ * to a wrapper type's one-error-only rendering. [cause] stays last so existing positional call sites
+ * are unaffected.
  */
-class TripPlanException(val error: TripPlanError, cause: Throwable? = null) : IOException(cause)
+class TripPlanException(
+    val error: TripPlanError,
+    cause: Throwable? = null,
+    message: String? = null
+) : IOException(message, cause)
 
 /** The [TripPlanError] for a thrown [Throwable], falling back to [TripPlanError.Unknown]. */
 fun Throwable.toTripPlanError(): TripPlanError = (this as? TripPlanException)?.error ?: TripPlanError.Unknown

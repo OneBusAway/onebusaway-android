@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import com.apollographql.apollo.api.Error as GraphQlError
+import com.apollographql.apollo.exception.ApolloNetworkException
+import com.apollographql.apollo.exception.DefaultApolloException
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.R
@@ -24,9 +27,11 @@ import org.onebusaway.android.api.graphql.type.RoutingErrorCode
 import org.onebusaway.android.ui.tripplan.TripPlanError.Category
 
 /**
- * Verifies both planner error classifiers ([otp1ErrorFor], [otp2ErrorFor]) map every wire code onto
- * the right [TripPlanError.Category] and preserve the specific detail string. Pure JVM — the res IDs
- * are compared as [R] constants (never resolved to text), so no Android runtime is needed.
+ * Verifies every planner error classifier — OTP1's [otp1ErrorFor] and OTP2's three tiers
+ * ([otp2TransportErrorFor], [otp2GraphQlErrorFor], [otp2ErrorFor]) — maps each wire code onto the right
+ * [TripPlanError.Category] and preserves the specific detail string. Pure JVM: the res IDs are compared
+ * as [R] constants (never resolved to text) and the Apollo values are constructed directly, so no
+ * Android runtime, Apollo client or HTTP is needed.
  */
 class TripPlanErrorMappingTest {
 
@@ -146,4 +151,87 @@ class TripPlanErrorMappingTest {
     fun otp2_unknown_falls_back() {
         assertEquals(TripPlanError.Unknown, otp2ErrorFor(RoutingErrorCode.UNKNOWN__, null))
     }
+
+    // ---- OTP2 (transport tier) ----
+
+    @Test
+    fun otp2_transport_classifies_network_failure_as_connectivity() {
+        assertError(
+            Category.CONNECTIVITY,
+            R.string.tripplanner_error_request_timeout,
+            otp2TransportErrorFor(ApolloNetworkException("connect timed out"))
+        )
+    }
+
+    @Test
+    fun otp2_transport_non_network_failure_falls_back() {
+        // An HTTP-status or parse failure isn't a timeout, so it must not read as a connectivity problem.
+        assertEquals(TripPlanError.Unknown, otp2TransportErrorFor(DefaultApolloException("HTTP 500")))
+    }
+
+    // ---- OTP2 (GraphQL `errors` tier, #2023) ----
+
+    // Every graphql-java `graphql.ErrorType` constant, as it arrives verbatim in
+    // `extensions.classification`, and the (category, detail) it must classify into. `InvalidSyntax` and
+    // `ValidationError` are decided by the parser and the validator against the schema, so the request
+    // can never succeed as sent and must not advise a retry; the execution-tier values may not recur, so
+    // they keep the generic try-again result.
+    private val otp2GraphQlExpected = mapOf(
+        "InvalidSyntax" to (Category.REQUEST to R.string.tripplanner_error_bogus_parameter),
+        "ValidationError" to (Category.REQUEST to R.string.tripplanner_error_bogus_parameter),
+        "DataFetchingException" to (Category.REQUEST to R.string.tripplanner_error_not_defined),
+        "NullValueInNonNullableField" to (Category.REQUEST to R.string.tripplanner_error_not_defined),
+        "OperationNotSupported" to (Category.REQUEST to R.string.tripplanner_error_not_defined),
+        "ExecutionAborted" to (Category.REQUEST to R.string.tripplanner_error_not_defined)
+    )
+
+    @Test
+    fun otp2GraphQl_classifies_every_classification() {
+        for ((classification, expected) in otp2GraphQlExpected) {
+            val (category, detail) = expected
+            assertError(category, detail, otp2GraphQlErrorFor(listOf(graphQlError(classification))))
+        }
+    }
+
+    /**
+     * The motivating case (#2023): an out-of-range `walk.reluctance` is rejected with this exact
+     * message. Retrying sends the identical query and fails identically, so the rider is pointed at the
+     * trip options instead.
+     */
+    @Test
+    fun otp2GraphQl_out_of_range_preference_advises_changing_trip_options() {
+        val errors = listOf(
+            graphQlError(
+                classification = "ValidationError",
+                message = "Validation error (WrongType@[planConnection]) : argument " +
+                    "'preferences.street.walk.reluctance' with value 'FloatValue{value=0.08}' is not a " +
+                    "valid 'Reluctance' - Reluctance needs to be between 0.1 and 100000.0"
+            )
+        )
+
+        assertEquals(TripPlanError.RequestRejected, otp2GraphQlErrorFor(errors))
+    }
+
+    @Test
+    fun otp2GraphQl_unusable_classification_falls_back() {
+        // Absent, unrecognized, or not a string: nothing here proves the request is deterministically
+        // doomed, so each behaves as the whole tier did before #2023.
+        for (classification in listOf(null, "SomeFutureClassification", 42)) {
+            assertEquals(TripPlanError.Unknown, otp2GraphQlErrorFor(listOf(graphQlError(classification))))
+        }
+        assertEquals(TripPlanError.Unknown, otp2GraphQlErrorFor(emptyList()))
+    }
+
+    @Test
+    fun otp2GraphQl_any_deterministic_rejection_in_the_list_wins() {
+        // One deterministic rejection anywhere means the request as sent can't succeed, whatever
+        // accompanies it.
+        val errors = listOf(graphQlError("DataFetchingException"), graphQlError("ValidationError"))
+
+        assertEquals(TripPlanError.RequestRejected, otp2GraphQlErrorFor(errors))
+    }
+
+    private fun graphQlError(classification: Any?, message: String = "boom") = GraphQlError.Builder(message)
+        .apply { classification?.let { extensions(mapOf("classification" to it)) } }
+        .build()
 }

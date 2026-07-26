@@ -71,7 +71,11 @@ Note that the paths in these files always use the Unix path separator `/`, even 
 
 Before doing each release build, you'll need to:
 1. Set `versionName` in `onebusaway-android/build.gradle.kts` to the appropriate next semantic version name. If you are using the automated publishing workflow (see below), `versionCode` is auto-incremented. Otherwise, bump `versionCode` by 1 manually.
-2. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew` to make sure that the latest changes we want to highlight for the user are entered there. After update, users see this in a dialog.
+2. Generate the Play Store release notes from the commit trailers (see [Release notes](#release-notes)):
+   ```
+   tools/release-notes.sh play --write
+   ```
+3. Check `onebusaway-android/src/main/res/values/strings.xml` element `main_help_whatsnew`. After update, users see this in a dialog. This string is deliberately generic and translated into four locales, so it normally does not change between releases — it points riders at the release notes rather than restating them.
 
 Then, to build all flavors run:
 
@@ -117,6 +121,46 @@ This creates a `src/obaGoogleRelease/play/` directory with your listing text, gr
 
 The default configuration (in `onebusaway-android/build.gradle.kts`) publishes App Bundles to the **beta** (open testing) track with auto-incrementing `versionCode`. To change the target track, update the `track` property in the `play {}` block to `"internal"`, `"alpha"`, or `"production"`.
 
+### Release notes
+
+Release notes are assembled from the commit messages on `main`. Every PR lands as a single squashed
+commit, so one commit is one change, and the commit message is where that change describes itself.
+
+A commit may end with an optional `Changelog:` trailer stating what the change means to a rider:
+
+```
+Offer bikeshare trips where the OTP2 server supports them (#2017)
+
+<body>
+
+Changelog: Bikeshare trips now show up in the trip planner.
+```
+
+Most commits should not have one. A commit subject is already a good developer-facing changelog line,
+and every subject appears in the GitHub release body regardless. The trailer exists only for the
+handful of changes per release that a rider would actually notice — those need different words than
+the subject line gives them. See [CONTRIBUTING.md](../.github/CONTRIBUTING.md#changelog-entries).
+
+`tools/release-notes.sh` turns those trailers into the two release artifacts:
+
+| Command | Output |
+|---|---|
+| `tools/release-notes.sh play` | The Play Store "What's new" text — the trailers as bullets |
+| `tools/release-notes.sh play --write` | ...and writes it to `src/obaGoogleRelease/play/release-notes/en-US/default.txt`, where GPP picks it up |
+| `tools/release-notes.sh github` | A GitHub release body: the trailers as "Highlights", then every commit subject under "All changes" |
+
+Both read the range since the most recent `v*` tag; pass `--since <ref>` to override.
+
+Google Play caps release notes at 500 characters per locale, and the script **fails** rather than
+truncating when the trailers overrun it — Play cuts from the end, which would drop an entry
+mid-word. Shorten or drop a trailer instead.
+
+The script also warns when a `Changelog:` line was written but not recognized. Git only reads a
+trailer in the block at the very end of a message, and squashing a multi-commit branch through the
+GitHub merge box concatenates the individual commit messages — which can strand a trailer in the
+middle of the body. Setting the repository's squash-merge default to "pull request title and
+description" makes the final message predictable and editable before merge, and avoids this.
+
 ### Release testing protocol
 
 Prior to uploading the app to Google Play, below is the release testing protocol. This effectively mirrors what a user would experience - installing the new release as an update to the existing release.
@@ -139,6 +183,16 @@ git push origin vx.y.z
 ```
 
 Then I create a new release on GitHub using https://github.com/OneBusAway/onebusaway-android/releases/new, and reference this tag. I also attach the compiled APKs. I'll also mark "This is a pre-release" because releases go to the [OBA beta testing group](BETA_TESTING.md) first.
+
+To draft the release body from the commit messages instead of writing it by hand (see
+[Release notes](#release-notes)), generate it before pushing the tag and pass it to `gh`:
+
+```
+tools/release-notes.sh github > /tmp/notes.md
+git push origin vx.y.z
+gh release create vx.y.z --title vx.y.z --notes-file /tmp/notes.md --prerelease \
+    onebusaway-android/build/outputs/apk/obaGoogle/release/obaGoogleRelease-vx.y.z.apk
+```
 
 ### Releasing to Google Play
 

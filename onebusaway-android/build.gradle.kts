@@ -337,6 +337,12 @@ apollo {
         // Reluctance (walk/bicycle preferences) is a floating-point cost multiplier — schema.graphqls
         // describes it as "a cost multiplier … The value should be greater than 0. 1 means neutral",
         // so map it to Double rather than leaving it as Apollo's untyped `Any`.
+        //
+        // The two-arg form needs no adapter registration, here or for the numeric scalars above:
+        // Apollo's CustomScalarAdapters.responseAdapterFor falls back on the *mapped class name* when
+        // nothing is registered, so "kotlin.Double" resolves to its built-in DoubleAdapter (and
+        // "kotlin.Int"/"kotlin.Long" likewise). mapScalarToKotlinDouble("Reluctance") is shorthand for
+        // exactly that, not a prerequisite for it. Verified against apollo-api 5.0.1's own bytecode.
         mapScalar("Reluctance", "kotlin.Double")
     }
 }

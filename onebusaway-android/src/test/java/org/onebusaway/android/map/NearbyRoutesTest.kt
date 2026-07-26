@@ -6,9 +6,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.NEARBY_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.GeoPoint
 
 class NearbyRoutesTest {
@@ -16,51 +18,97 @@ class NearbyRoutesTest {
     private val center = GeoPoint(47.6, -122.33)
     private val hoop = NearbyRoutesHoop(center, 800.0)
 
-    // ----- Selecting the routes that pass through the hoop -----
+    // ----- Ranking the nearby routes, and sizing the ring to them -----
 
     @Test
-    fun `a line crossing the hoop enters it`() {
-        assertTrue(entersHoop(listOf(offsetMeters(-2000.0, 0.0), offsetMeters(2000.0, 0.0)), hoop))
-    }
-
-    @Test
-    fun `a line that only reaches the hoop on a later segment still enters it`() {
-        // The first segments run well clear of the ring; only the last one crosses. A membership test
-        // that gave up before walking the whole shape would miss a route that passes the rider late.
-        val line = listOf(
-            offsetMeters(-4000.0, 3000.0),
-            offsetMeters(-2000.0, 3000.0),
-            offsetMeters(0.0, 3000.0),
-            offsetMeters(0.0, 0.0)
+    fun `routes rank by their nearest serving stop`() {
+        val ranked = rankRoutesByNearestStop(
+            center,
+            stops = listOf(
+                stop("far", offsetMeters(0.0, 700.0), "far-route"),
+                stop("near", offsetMeters(0.0, 50.0), "near-route"),
+                // The same route served twice: its *nearest* stop is the one that counts.
+                stop("mid-far", offsetMeters(0.0, 600.0), "mid-route"),
+                stop("mid-near", offsetMeters(0.0, 300.0), "mid-route")
+            ),
+            routes = listOf(route("far-route"), route("near-route"), route("mid-route"))
         )
 
-        assertTrue(entersHoop(line, hoop))
+        assertEquals(listOf("near-route", "mid-route", "far-route"), ranked.map { it.route.id })
+        assertEquals(50.0, ranked.first().meters, 1.0)
     }
 
     @Test
-    fun `a line entirely outside the hoop does not enter it`() {
-        assertFalse(entersHoop(listOf(offsetMeters(2000.0, 2000.0), offsetMeters(3000.0, 3000.0)), hoop))
+    fun `a route id the reference pool can't resolve is dropped rather than drawn nameless`() {
+        val ranked = rankRoutesByNearestStop(
+            center,
+            stops = listOf(stop("s", offsetMeters(0.0, 100.0), "known", "unknown")),
+            routes = listOf(route("known"))
+        )
+
+        assertEquals(listOf("known"), ranked.map { it.route.id })
     }
 
     @Test
-    fun `a line that passes near the hoop without reaching it does not enter it`() {
-        // Parallel to the ring and just outside it: the nearest approach matters, not the endpoints.
-        val line = listOf(offsetMeters(-3000.0, 900.0), offsetMeters(3000.0, 900.0))
+    fun `equidistant routes break ties on id so the drawn set is stable`() {
+        val ranked = rankRoutesByNearestStop(
+            center,
+            stops = listOf(stop("shared", offsetMeters(0.0, 100.0), "b-route", "a-route")),
+            routes = listOf(route("b-route"), route("a-route"))
+        )
 
-        assertFalse(entersHoop(line, hoop))
+        assertEquals(listOf("a-route", "b-route"), ranked.map { it.route.id })
     }
 
     @Test
-    fun `a line entirely inside the hoop enters it`() {
-        val line = listOf(offsetMeters(-100.0, 0.0), offsetMeters(0.0, 100.0), offsetMeters(100.0, 0.0))
-
-        assertTrue(entersHoop(line, hoop))
+    fun `the ring shows the searched radius when it holds no more than the target`() {
+        // The ring is the search area, so it stays at full reach and simply holds fewer routes. Hugging
+        // the farthest of them would misreport how far was searched — and would make the ring jitter
+        // between settles as the outermost route came and went.
+        assertEquals(MAX_RADIUS, hoopRadiusForTarget(emptyList(), 15, MAX_RADIUS), 0.001)
+        assertEquals(MAX_RADIUS, hoopRadiusForTarget(listOf(ranked("a", 100.0)), 15, MAX_RADIUS), 0.001)
+        // Exactly the target still fits, so it still shows the whole search area.
+        val atTarget = (1..15).map { ranked("route-$it", it * 100.0) }
+        assertEquals(MAX_RADIUS, hoopRadiusForTarget(atTarget, 15, MAX_RADIUS), 0.001)
     }
 
     @Test
-    fun `a degenerate shape enters nothing`() {
-        assertFalse(entersHoop(listOf(center), hoop))
-        assertFalse(entersHoop(emptyList(), hoop))
+    fun `the ring closes in only once the searched radius holds more than the target`() {
+        val ranked = (1..5).map { ranked("route-$it", it * 100.0) }
+
+        // Five routes, target three: too many to read, so it pulls in to the third.
+        assertEquals(300.0, hoopRadiusForTarget(ranked, 3, MAX_RADIUS), 0.001)
+        // The denser the surroundings, the tighter it closes — the whole point of deriving the radius.
+        assertEquals(60.0, hoopRadiusForTarget((1..5).map { ranked("r$it", it * 20.0) }, 3, MAX_RADIUS), 0.001)
+    }
+
+    @Test
+    fun `routes sharing a stop share a distance, so the ring takes them all`() {
+        // Downtown's shape: one busy stop puts several routes at the same distance. The radius lands on
+        // that distance, and everything at it is drawn — cutting to exactly the target would mean
+        // choosing arbitrarily between routes the data says are equally near.
+        val ranked = listOf(
+            ranked("a", 150.0),
+            ranked("b", 150.0),
+            ranked("c", 150.0),
+            ranked("d", 900.0)
+        )
+
+        val radius = hoopRadiusForTarget(ranked, 2, MAX_RADIUS)
+
+        assertEquals(150.0, radius, 0.001)
+        assertEquals(3, ranked.count { it.meters <= radius })
+    }
+
+    @Test
+    fun `the hoop's query box squares the circle and widens with latitude`() {
+        val (latSpan, lonSpan) = hoop.spanDegrees()
+
+        // A 1.6 km box: 2 x 800 m of latitude.
+        assertEquals(1600.0 / 111_195.0, latSpan, 1e-5)
+        // Longitude degrees are shorter at 47.6 N, so the box spans more of them.
+        assertTrue(lonSpan > latSpan)
+        assertEquals(latSpan / Math.cos(Math.toRadians(47.6)), lonSpan, 1e-9)
     }
 
     // ----- The ring's on-screen size (it is drawn in screen space, not as map geometry) -----
@@ -136,31 +184,6 @@ class NearbyRoutesTest {
     }
 
     @Test
-    fun `a route whose shape only skirts the hoop is not selected`() {
-        // Serving a stop inside the ring is not enough — the shape has to pass through — and this is
-        // what the survey filters on before a route ever reaches the render plan.
-        val through = listOf(offsetMeters(-500.0, 0.0), offsetMeters(500.0, 0.0))
-        val elsewhere = listOf(offsetMeters(3000.0, 0.0), offsetMeters(4000.0, 0.0))
-
-        assertTrue(entersHoop(through, hoop))
-        assertFalse(entersHoop(elsewhere, hoop))
-    }
-
-    @Test
-    fun `everything handed to the render plan is drawn in full`() {
-        val presentation = assembleNearbyRoutesPresentation(
-            listOf(NearbyRouteShapes("passing", "5", listOf(listOf(offsetMeters(-500.0, 0.0), offsetMeters(500.0, 0.0))))),
-            colors = mapOf("passing" to RED)
-        )
-
-        assertEquals(listOf("5"), presentation.badges.map { it.routeShortName })
-        assertEquals(
-            listOf(NEARBY_ROUTE_LINE_WIDTH_PROFILE),
-            presentation.polylines.map { it.widthProfile }
-        )
-    }
-
-    @Test
     fun `badges ride the whole route, never the stretch inside the hoop`() {
         // Two routes, each clipping the hoop's western edge and running 20 km east.
         val routes = (1..2).map { index ->
@@ -218,7 +241,29 @@ class NearbyRoutesTest {
         )
     }
 
+    private fun ranked(routeId: String, meters: Double) = RankedRoute(route(routeId), meters)
+
+    private fun stop(id: String, point: GeoPoint, vararg routeIds: String) = ObaStopElement(
+        id = id,
+        lat = point.latitude,
+        lon = point.longitude,
+        routeIds = arrayOf(*routeIds)
+    )
+
+    private fun route(routeId: String) = object : ObaRoute {
+        override val id = routeId
+        override val shortName = routeId
+        override val longName: String? = null
+        override val description: String? = null
+        override val type = ObaRoute.TYPE_BUS
+        override val url: String? = null
+        override val color: Int? = null
+        override val textColor: Int? = null
+        override val agencyId = "agency"
+    }
+
     private companion object {
         const val RED = 0xFFCC0000.toInt()
+        const val MAX_RADIUS = 2000.0
     }
 }

@@ -21,7 +21,6 @@ import org.onebusaway.android.api.adapters.DtoStop
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.NearbyStops
-import org.onebusaway.android.models.ObaRoute
 
 /**
  * Fetches stops-for-location (the map's nearby-stops layer) from the modernized OBA REST client,
@@ -47,25 +46,6 @@ interface MapDataSource {
         lonSpan: Double,
         maxCount: Int? = null
     ): Result<NearbyStops?>
-
-    /**
-     * routes-for-location: the routes serving any stop within [radiusMeters] of [lat]/[lon] (the
-     * nearby-routes hoop, #2004). The server resolves this from the same stop index the stops query
-     * uses, so it is the same set — asked for directly, and answered with route references rather than
-     * every stop that produced them.
-     *
-     * [maxCount] is not optional in practice: the server's default is **10**, which a downtown block
-     * blows through without saying so beyond a `limitExceeded` flag. It clamps the ask to its own hard
-     * limit (50 on the Puget Sound deployment), so past that the set really is all this endpoint gives.
-     *
-     * The list carries no order (the server builds it from a `HashSet`) and no distances.
-     */
-    suspend fun routesNearby(
-        lat: Double,
-        lon: Double,
-        radiusMeters: Int,
-        maxCount: Int? = null
-    ): Result<List<ObaRoute>?>
 }
 
 class DefaultMapDataSource @Inject constructor(
@@ -92,17 +72,5 @@ class DefaultMapDataSource @Inject constructor(
             outOfRange = data.outOfRange,
             limitExceeded = data.limitExceeded
         )
-    }
-
-    override suspend fun routesNearby(
-        lat: Double,
-        lon: Double,
-        radiusMeters: Int,
-        maxCount: Int?
-    ): Result<List<ObaRoute>?> = api.callOrNull { service ->
-        service.routesForLocation(lat = lat, lon = lon, radius = radiusMeters, maxCount = maxCount)
-            .requireData()
-            .list
-            .map(::DtoRoute)
     }
 }

@@ -24,21 +24,27 @@ import android.graphics.Path
 import androidx.annotation.DrawableRes
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
+import androidx.compose.ui.graphics.Color as ComposeColor
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withRotation
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.ui.compose.components.RouteLineColors
+import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.util.MathUtils
+import org.onebusaway.android.util.ThemeUtils
 
 /**
  * Flavor-neutral generation of vehicle marker bitmaps. Lives in `src/main` so both the Google flavor
  * (wrapping each Bitmap in a `BitmapDescriptor`) and the maplibre flavor (wrapping it in an `Icon`)
  * share one implementation + the LRU cache. This is the icon half of the old `VehicleOverlay`.
  *
- * The marker is composed at draw time — a disc filled with the vehicle's route color, a white mode
- * glyph (bus/rail/…) centered on it, and a white heading arrow at the rim — rather than decoding one of
+ * The marker is composed at draw time — a disc filled with the vehicle's route display color, a mode
+ * glyph (bus/rail/…) centered on it, and a heading arrow at the rim, both in the theme's paired
+ * on-disc color — rather than decoding one of
  * the ~225 pre-composited `ic_marker_with_*` rasters. It's a **centered** badge (anchored at its center,
  * not a teardrop tip) so a vehicle sits on the route centerline like the trip map's estimate marker,
  * rather than floating off the line as a pin (#1752).
@@ -73,9 +79,7 @@ object VehicleBitmaps {
     private val sColoredIconCache = LruCache<String, Bitmap>(MAX_CACHE_SIZE)
 
     // Lazy so loading this object for the pure-logic helpers (e.g. normalizeVehicleType, unit-tested on
-    // the JVM) doesn't touch android.graphics — only an on-device render allocates the Paints.
-    private val whitePaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE } }
-
+    // the JVM) doesn't touch android.graphics — only an on-device render allocates the Paint.
     private val blackPaint by lazy { Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK } }
 
     /**
@@ -94,7 +98,7 @@ object VehicleBitmaps {
     ): Bitmap = getBitmap(
         context,
         vehicleType(vehicle, response),
-        markerColor(context, vehicle, response),
+        markerColors(context, vehicle, response),
         directionIndex(vehicle),
         sizeScale
     )
@@ -108,7 +112,8 @@ object VehicleBitmaps {
      * The color component is the **resolved ARGB value**, not a color resource id: a route color
      * (#2043) is a raw ARGB int off the wire with no resource id to name it. Keying on the resolved
      * value also closes a latent staleness bug the resource-id key had — the same id resolves to a
-     * different color after a light/dark switch, which the old key could not tell apart.
+     * different color after a light/dark switch, which the old key could not tell apart. Both the
+     * disc and the glyph color take part, since the theme flips the glyph independently of the hue.
      */
     @JvmStatic
     fun iconKey(
@@ -120,7 +125,7 @@ object VehicleBitmaps {
         createBitmapCacheKey(
             vehicleType(vehicle, response),
             directionIndex(vehicle),
-            markerColor(context, vehicle, response),
+            markerColors(context, vehicle, response),
             sizeScale
         )
 
@@ -157,9 +162,12 @@ object VehicleBitmaps {
     @VisibleForTesting
     fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
+    /** The disc fill and the glyph/arrow color drawn on it, both as resolved ARGB values. */
+    internal data class MarkerColors(val disc: Int, val onDisc: Int)
+
     /**
-     * The disc color, as a resolved ARGB value: the vehicle's **route color** when it's live, gray
-     * when it isn't. So the marker encodes route identity + liveness, never punctuality (#2043).
+     * The marker's colors: the vehicle's **route color** when it's live, gray when it isn't. So the
+     * marker encodes route identity + liveness, never punctuality (#2043).
      *
      * At map zoom a colored disc reads as identity — "which line is this?" — not as a schedule
      * judgement, and a rider comparing two discs has no way to tell a hue that means "late" from one
@@ -167,19 +175,41 @@ object VehicleBitmaps {
      * which is where OBA iOS puts it too (its markers are route-colored and carry only a
      * realtime-vs-not distinction).
      *
+     * The color is the route's **display** color, not its raw GTFS value: it goes through
+     * [routeLineColors], the single place the agency-color policy lives, which keeps the hue but caps
+     * chroma and re-tones to a fixed accent tone for the active theme. So an agency handing us
+     * near-black, near-white or a screaming full-chroma hue can't produce a disc that vanishes into
+     * the basemap or glares against it, and the same route reads as the same color wherever the app
+     * draws it. That policy is documented for exactly this shape — "a spine, stroke or filled
+     * marker".
+     *
+     * Because the tone is fixed by the theme rather than by the agency, so is the glyph color on top
+     * of it: the dark-theme tone is a *light* disc, so the mode glyph and heading arrow flip to black
+     * there. Taking both from [RouteLineColors] is what keeps that contrast guaranteed by
+     * construction rather than by a comment.
+     *
      * The route is resolved per vehicle rather than from the shown route, because a cross-route
-     * interline (#2000) merges vehicles from other routes into the same poll. `ObaRoute.color` is
-     * nullable — plenty of feeds omit it — so an absent color falls back to the brand color, the same
-     * fallback [org.onebusaway.android.ui.tripdetails.TripDetailsRepository] uses for its line.
+     * interline (#2000) merges vehicles from other routes into the same poll. An absent or achromatic
+     * route color yields the brand fallback — the same one
+     * [org.onebusaway.android.ui.tripdetails.TripDetailsRepository] uses for its line.
      */
     @VisibleForTesting
-    internal fun markerColor(context: Context, vehicle: VehicleMarker, response: RouteTrips): Int {
+    internal fun markerColors(context: Context, vehicle: VehicleMarker, response: RouteTrips): MarkerColors {
         if (!vehicle.isRealtime) {
-            return ContextCompat.getColor(context, R.color.stop_info_scheduled_time)
+            return MarkerColors(
+                disc = ContextCompat.getColor(context, R.color.stop_info_scheduled_time),
+                onDisc = Color.WHITE
+            )
         }
-        val route = response.trip(vehicle.status.activeTripId)
+        val routeColor = response.trip(vehicle.status.activeTripId)
             ?.let { response.route(it.routeId) }
-        return route?.color ?: ContextCompat.getColor(context, R.color.theme_primary)
+            ?.color
+        val brandFallback = RouteLineColors(
+            line = ComposeColor(ContextCompat.getColor(context, R.color.theme_primary)),
+            onLine = ComposeColor.White
+        )
+        val colors = routeLineColors(routeColor, ThemeUtils.isInDarkMode(context), brandFallback)
+        return MarkerColors(disc = colors.line.toArgb(), onDisc = colors.onLine.toArgb())
     }
 
     /**
@@ -204,25 +234,25 @@ object VehicleBitmaps {
     private fun getBitmap(
         context: Context,
         vehicleType: Int,
-        color: Int,
+        colors: MarkerColors,
         halfWind: Int,
         sizeScale: Float
     ): Bitmap {
-        val key = createBitmapCacheKey(vehicleType, halfWind, color, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, halfWind, colors, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, halfWind, color, sizeScale)
+            ?: renderMarker(context, vehicleType, halfWind, colors, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
-    /** [color] is a resolved ARGB value — see [iconKey] for why it can't be a resource id. */
+    /** [colors] are resolved ARGB values — see [iconKey] for why they can't be resource ids. */
     private fun createBitmapCacheKey(
         vehicleType: Int,
         halfWind: Int,
-        color: Int,
+        colors: MarkerColors,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        return "$type $halfWind $color ${sizeScale.toBits()}"
+        return "$type $halfWind ${colors.disc} ${colors.onDisc} ${sizeScale.toBits()}"
     }
 
     /**
@@ -230,19 +260,28 @@ object VehicleBitmaps {
      * `@Preview` grid (and tests); the production path goes through [vehicleBitmap] which caches.
      */
     @VisibleForTesting
-    fun previewBitmap(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap = renderMarker(context, vehicleType, halfWind, color, 1f)
+    fun previewBitmap(
+        context: Context,
+        vehicleType: Int,
+        halfWind: Int,
+        color: Int,
+        onColor: Int = Color.WHITE
+    ): Bitmap = renderMarker(context, vehicleType, halfWind, MarkerColors(color, onColor), 1f)
 
     /**
-     * Composites the colored disc, white mode glyph, and (unless undirected) white heading arrow — each
+     * Composites the colored disc, the mode glyph, and (unless undirected) the heading arrow — each
      * with a hairline black outline (a cheap 8-way dilate: the element stamped black at [OUTLINE_GRID]
      * offsets, then the fill on top) so the disc, glyph, and arrow read distinctly against each other
      * and the map. The disc is centered in the padded bitmap, so consumers anchor it at its center.
+     *
+     * The glyph and arrow are drawn in [MarkerColors.onDisc] rather than a hardcoded white, because
+     * the dark theme re-tones a route color to a *light* disc, on which white would disappear.
      */
     private fun renderMarker(
         context: Context,
         vehicleType: Int,
         halfWind: Int,
-        color: Int,
+        colors: MarkerColors,
         sizeScale: Float
     ): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
@@ -260,11 +299,12 @@ object VehicleBitmaps {
         // this translated content origin.
         canvas.translate(pad, pad)
 
-        // Colored disc (the route's color, or gray when not real-time) + white mode glyph, each outlined.
-        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), Color.WHITE, GLYPH_SIZE, outline)
+        // Colored disc (the route's display color, or gray when not real-time) + mode glyph, outlined.
+        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, colors.disc, glyphRes(type), colors.onDisc, GLYPH_SIZE, outline)
 
-        // Heading arrow, white, rotated about the disc center by the octant (undirected = no arrow).
+        // Heading arrow, rotated about the disc center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {
+            val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = colors.onDisc }
             val center = MarkerRendering.GRID / 2f
             canvas.withRotation(halfWind * 45f, center * scale, center * scale) {
                 val arrow = Path().apply {
@@ -275,7 +315,7 @@ object VehicleBitmaps {
                     close()
                 }
                 MarkerRendering.stampOffsets(canvas, outline) { canvas.drawPath(arrow, blackPaint) }
-                canvas.drawPath(arrow, whitePaint)
+                canvas.drawPath(arrow, arrowPaint)
             }
         }
         return bitmap

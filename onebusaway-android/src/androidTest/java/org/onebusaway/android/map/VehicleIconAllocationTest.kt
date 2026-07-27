@@ -38,6 +38,9 @@ import org.onebusaway.android.map.googlemapsv2.BitmapDescriptorCache
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
+import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.ObaTrip
+import org.onebusaway.android.models.ObaTripDetails
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
@@ -314,6 +317,97 @@ class VehicleIconAllocationTest {
 
     /** A copy of [vehicle] with [isRealtime] forced and the bearing pinned, so only liveness varies. */
     private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f)
+
+    // --- The route display color on the disc (#2043) ---------------------------------------------
+
+    /**
+     * The disc takes the route's **display** color, not its raw GTFS value: it goes through
+     * `routeLineColors`, the shared agency-color policy, which keeps the hue but caps chroma and
+     * re-tones for the active theme. Asserted as "not the raw int" because the whole point is that an
+     * agency's literal choice never reaches the map unmediated — a full-chroma near-black would
+     * otherwise render a disc that vanishes into the basemap.
+     */
+    @Test
+    fun discUsesTheRouteDisplayColorNotTheRawGtfsColor() {
+        val raw = 0xFF1B6EF3.toInt() // a vivid, fully-saturated agency blue
+        val response = fakeResponse(routeColor = raw)
+        val colors = VehicleBitmaps.markerColors(context, liveVehicle(), response)
+
+        assertNotEquals("the raw GTFS int must not reach the disc", raw, colors.disc)
+        assertNotEquals("the glyph must contrast with the disc", colors.disc, colors.onDisc)
+    }
+
+    /** Two different agency colors must still produce two different discs — toning is not flattening. */
+    @Test
+    fun differentRouteColorsStayDistinct() {
+        val blue = VehicleBitmaps.markerColors(context, liveVehicle(), fakeResponse(0xFF1B6EF3.toInt()))
+        val orange = VehicleBitmaps.markerColors(context, liveVehicle(), fakeResponse(0xFFF37B1B.toInt()))
+
+        assertNotEquals(blue.disc, orange.disc)
+    }
+
+    /**
+     * An achromatic source (grey/black/white) has no hue to keep, and an absent one has nothing at
+     * all; both take the brand fallback rather than producing a grey disc that would read as the
+     * "no real-time" state.
+     */
+    @Test
+    fun achromaticOrAbsentRouteColorTakesTheBrandFallback() {
+        val brand = VehicleBitmaps.markerColors(context, liveVehicle(), fakeResponse(routeColor = null))
+        val grey = VehicleBitmaps.markerColors(context, liveVehicle(), fakeResponse(0xFF888888.toInt()))
+
+        assertEquals("an achromatic route color falls back like an absent one", brand.disc, grey.disc)
+        assertNotEquals(
+            "the fallback must not be the not-real-time grey",
+            VehicleBitmaps.markerColors(context, staleVehicle(), fakeResponse(null)).disc,
+            brand.disc
+        )
+    }
+
+    /** A vehicle without real-time is grey regardless of how colorful its route is. */
+    @Test
+    fun withoutRealtimeTheDiscIsGrey() {
+        val stale = VehicleBitmaps.markerColors(context, staleVehicle(), fakeResponse(0xFF1B6EF3.toInt()))
+        val live = VehicleBitmaps.markerColors(context, liveVehicle(), fakeResponse(0xFF1B6EF3.toInt()))
+
+        assertNotEquals(live.disc, stale.disc)
+    }
+
+    private fun liveVehicle(): VehicleMarker = withLiveness(vehicles(response()).first(), isRealtime = true)
+
+    private fun staleVehicle(): VehicleMarker = withLiveness(vehicles(response()).first(), isRealtime = false)
+
+    /** A references pool whose single route carries [routeColor], for the display-color assertions. */
+    private fun fakeResponse(routeColor: Int?): RouteTrips {
+        val vehicleTripId = vehicles(response()).first().activeTripId
+        return object : RouteTrips {
+            override val trips: List<ObaTripDetails> = emptyList()
+            override fun trip(tripId: String?): ObaTrip? = FakeTrip(vehicleTripId, "routeA").takeIf { !tripId.isNullOrEmpty() }
+            override fun route(routeId: String): ObaRoute = FakeRoute(routeColor)
+            override val currentTimeMs: Long = 0L
+        }
+    }
+
+    private class FakeTrip(override val id: String, override val routeId: String) : ObaTrip {
+        override val shortName: String? = null
+        override val shapeId: String? = null
+        override val directionId: Int = 0
+        override val serviceId: String? = null
+        override val headsign: String? = null
+        override val timezone: String? = null
+        override val blockId: String? = null
+    }
+
+    private class FakeRoute(override val color: Int?) : ObaRoute {
+        override val id: String = "routeA"
+        override val type: Int = ObaRoute.TYPE_BUS
+        override val shortName: String? = null
+        override val longName: String? = null
+        override val description: String? = null
+        override val url: String? = null
+        override val textColor: Int? = null
+        override val agencyId: String = "agency"
+    }
 
     companion object {
         // Sweep the bearing through all 8 octants within a few frames, then revisit them (no new icons) —

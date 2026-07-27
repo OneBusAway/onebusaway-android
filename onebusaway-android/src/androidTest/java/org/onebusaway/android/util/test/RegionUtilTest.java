@@ -81,6 +81,50 @@ public class RegionUtilTest {
   }
 
   @Test
+  public void testGetDistanceAwayWithNoBounds() {
+    // A region with no coverage area has an *unknown* distance, not an enormous one. Before the
+    // empty-array guard this returned the Float.MAX_VALUE seed, which the regions list rendered as
+    // ~2.1e35 miles, and which made getClosestRegion treat the region as measurable-but-farthest
+    // rather than skipping it. Custom regions from an `onebusaway://add-region` link have no
+    // bounds.
+    Region noBounds =
+        new Region(
+            -2,
+            "No Bounds",
+            true,
+            "https://api.example.com",
+            null,
+            new Region.Bounds[] {},
+            // Empty, not null: open311Servers is a non-null Kotlin Array, so null fails the
+            // constructor's checkNotNullParameter intrinsic at runtime — invisible to javac.
+            // The same trap #2022 fixed in the fixed-region flavor.
+            new Region.Open311Server[] {},
+            null,
+            "",
+            true,
+            true,
+            false,
+            null,
+            false,
+            null,
+            null,
+            null,
+            false,
+            null,
+            false,
+            false,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            true);
+
+    assertNull(RegionUtils.getDistanceAway(noBounds, mSeattleLoc));
+  }
+
+  @Test
   public void testGetClosestRegion() {
     ArrayList<Region> list = new ArrayList<>();
     list.add(mPsRegion);

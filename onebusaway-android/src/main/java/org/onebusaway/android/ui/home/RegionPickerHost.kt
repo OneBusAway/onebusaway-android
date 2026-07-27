@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home
 
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -37,6 +36,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.region.Region
+import org.onebusaway.android.ui.compose.components.RemoveCustomRegionDialog
+import org.onebusaway.android.ui.compose.components.regionRowClickable
 
 /**
  * Renders the forced-choice region picker when [RegionPickerViewModel] reports the repository needs a manual
@@ -58,7 +59,7 @@ fun RegionPickerHost() {
     if (failed) RegionLoadFailedDialog(onRetry = viewModel::retry)
     removing?.let { region ->
         RemoveCustomRegionDialog(
-            region = region,
+            regionName = region.name,
             onConfirm = {
                 removing = null
                 viewModel.remove(region)
@@ -66,28 +67,6 @@ fun RegionPickerHost() {
             onDismiss = { removing = null }
         )
     }
-}
-
-/**
- * Confirms removing a custom region (#2027). Separate from the picker's own dialog so a mis-hit
- * long-press can't delete anything, and worded to make clear only the rider's own added region goes —
- * the directory regions in the same list are untouched.
- */
-@Composable
-private fun RemoveCustomRegionDialog(region: Region, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.region_remove_custom_title, region.name)) },
-        text = { Text(stringResource(R.string.region_remove_custom_message)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.region_remove_custom_confirm))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
-        }
-    )
 }
 
 /**
@@ -157,12 +136,11 @@ private fun RegionRow(
         text = region.name,
         modifier = Modifier
             .fillMaxWidth()
-            // A null onLongClick behaves exactly like clickable, and onLongClickLabel is what announces
-            // the gesture to a screen reader — for which it is the only route to removal.
-            .combinedClickable(
+            .regionRowClickable(
+                isRemovable = region.custom,
+                removeHint = removeHint,
                 onClick = { onRegionChosen(region) },
-                onLongClickLabel = removeHint.takeIf { region.custom },
-                onLongClick = if (region.custom) ({ onRemoveCustom(region) }) else null
+                onRemove = { onRemoveCustom(region) }
             )
             .padding(vertical = 16.dp)
     )

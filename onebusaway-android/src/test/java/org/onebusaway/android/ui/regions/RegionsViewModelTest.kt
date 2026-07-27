@@ -21,9 +21,13 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.region.FakeRegionRepository
+import org.onebusaway.android.region.Region
+import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.ui.compose.ListUiState
 
@@ -36,6 +40,8 @@ private class FakeRegionsRepository(
 
     var selectedId: Long? = null
 
+    val removedIds = mutableListOf<Long>()
+
     override suspend fun getRegions(refresh: Boolean): Result<List<RegionItem>> {
         lastRefresh = refresh
         return result
@@ -45,7 +51,17 @@ private class FakeRegionsRepository(
         selectedId = id
         return selectRegionReturns
     }
+
+    override suspend fun removeRegion(id: Long) {
+        removedIds.add(id)
+    }
 }
+
+/** The VM under test, with a controllable domain repository supplying the current region. */
+private fun viewModel(
+    repository: RegionsRepository,
+    currentRegion: Region? = null
+) = RegionsViewModel(repository, FakeRegionRepository(currentRegion))
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RegionsViewModelTest {
@@ -54,14 +70,15 @@ class RegionsViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val regions = listOf(
-        RegionItem(1, "Puget Sound", 1500f, isCurrent = true),
-        RegionItem(2, "Tampa Bay", 4_500_000f, isCurrent = false),
-        RegionItem(3, "No-location Region", null, isCurrent = false)
+        RegionItem(1, "Puget Sound", 1500f),
+        RegionItem(2, "Tampa Bay", 4_500_000f),
+        RegionItem(3, "No-location Region", null),
+        RegionItem(-2, "Deep Link Bench", null, custom = true)
     )
 
     @Test
     fun `initial state is Loading before the load completes`() = runTest {
-        val viewModel = RegionsViewModel(FakeRegionsRepository(Result.success(regions)))
+        val viewModel = viewModel(FakeRegionsRepository(Result.success(regions)))
 
         assertEquals(ListUiState.Loading, viewModel.state.value)
     }
@@ -69,7 +86,7 @@ class RegionsViewModelTest {
     @Test
     fun `load emits Success with the repository's regions`() = runTest {
         val repository = FakeRegionsRepository(Result.success(regions))
-        val viewModel = RegionsViewModel(repository)
+        val viewModel = viewModel(repository)
 
         advanceUntilIdle()
 
@@ -79,7 +96,7 @@ class RegionsViewModelTest {
 
     @Test
     fun `load emits Error when the repository fails`() = runTest {
-        val viewModel = RegionsViewModel(FakeRegionsRepository(Result.failure(IOException())))
+        val viewModel = viewModel(FakeRegionsRepository(Result.failure(IOException())))
 
         advanceUntilIdle()
 
@@ -89,7 +106,7 @@ class RegionsViewModelTest {
     @Test
     fun `retry after a failure goes through Loading and recovers`() = runTest {
         val repository = FakeRegionsRepository(Result.failure(IOException()))
-        val viewModel = RegionsViewModel(repository)
+        val viewModel = viewModel(repository)
         advanceUntilIdle()
         assertEquals(ListUiState.Error, viewModel.state.value)
 
@@ -104,7 +121,7 @@ class RegionsViewModelTest {
     @Test
     fun `refresh forces a server fetch`() = runTest {
         val repository = FakeRegionsRepository(Result.success(regions))
-        val viewModel = RegionsViewModel(repository)
+        val viewModel = viewModel(repository)
         advanceUntilIdle()
 
         viewModel.load(refresh = true)
@@ -117,7 +134,7 @@ class RegionsViewModelTest {
     @Test
     fun `selectRegion delegates to the repository and returns its result`() = runTest {
         val repository = FakeRegionsRepository(Result.success(regions))
-        val viewModel = RegionsViewModel(repository)
+        val viewModel = viewModel(repository)
 
         repository.selectRegionReturns = true
         assertTrue(viewModel.selectRegion(regions[1]))
@@ -126,5 +143,48 @@ class RegionsViewModelTest {
         repository.selectRegionReturns = false
         assertFalse(viewModel.selectRegion(regions[0]))
         assertEquals(1L, repository.selectedId)
+    }
+
+    // --- removing a custom region (#2027) ---
+
+    @Test
+    fun `removeRegion removes the region and reloads the list`() = runTest {
+        val repo = FakeRegionsRepository(Result.success(regions))
+        val vm = viewModel(repo)
+        advanceUntilIdle()
+        repo.lastRefresh = null
+
+        vm.removeRegion(regions.last())
+        advanceUntilIdle()
+
+        assertEquals(listOf(-2L), repo.removedIds)
+        // Reloaded from the local cache: the removal is a local write, so forcing a server fetch
+        // would be wasted work.
+        assertEquals(false, repo.lastRefresh)
+    }
+
+    // --- the current-region mark tracks the live region, not the load (#2027 follow-up) ---
+
+    @Test
+    fun `the current region id follows the repository while the list stays put`() {
+        val repo = FakeRegionsRepository(Result.success(regions))
+        val domain = FakeRegionRepository(region(1))
+        runTest {
+            val vm = RegionsViewModel(repo, domain)
+            advanceUntilIdle()
+            assertEquals(1L, vm.currentRegionId.value)
+
+            // Removing the current region re-resolves, and with auto-selection off that raises the
+            // forced-choice picker over this screen — so the region changes without this list
+            // reloading. The check mark has to follow anyway; it used to be captured at load time.
+            domain.emit(null)
+            advanceUntilIdle()
+            assertNull(vm.currentRegionId.value)
+
+            domain.emit(region(2))
+            advanceUntilIdle()
+            assertEquals(2L, vm.currentRegionId.value)
+            assertEquals("the list itself must not have reloaded", false, repo.lastRefresh)
+        }
     }
 }

@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.regions
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +28,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -47,6 +48,8 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.ListScreenScaffold
+import org.onebusaway.android.ui.compose.components.RemoveCustomRegionDialog
+import org.onebusaway.android.ui.compose.components.regionRowClickable
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.RegionUtils
@@ -64,27 +67,46 @@ fun RegionsRoute(
     onRegionSelected: (autoSelectDisabled: Boolean) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentRegionId by viewModel.currentRegionId.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    // The custom region a long press has proposed removing, if any.
+    var removing by remember { mutableStateOf<RegionItem?>(null) }
     RegionsScreen(
         state = state,
+        currentRegionId = currentRegionId,
         onRetry = { viewModel.load() },
         onRefresh = { viewModel.load(refresh = true) },
         onRegionClick = { region ->
             scope.launch { onRegionSelected(viewModel.selectRegion(region)) }
         },
+        onRegionLongClick = { removing = it },
         onBack = onBack
     )
+    removing?.let { region ->
+        RemoveCustomRegionDialog(
+            regionName = region.name,
+            onConfirm = {
+                removing = null
+                scope.launch { viewModel.removeRegion(region) }
+            },
+            onDismiss = { removing = null }
+        )
+    }
 }
 
 /** Stateless screen content, fully driven by [ListUiState] — previewable and testable. */
 @Composable
 fun RegionsScreen(
     state: ListUiState<RegionItem>,
+    currentRegionId: Long?,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
     onRegionClick: (RegionItem) -> Unit,
+    onRegionLongClick: (RegionItem) -> Unit,
     onBack: () -> Unit
 ) {
+    // Read once for the whole list rather than per row: at most one row is custom.
+    val removeHint = stringResource(R.string.region_remove_custom_hint)
     ListScreenScaffold(
         title = stringResource(R.string.preferences_region_title),
         onBack = onBack,
@@ -101,17 +123,28 @@ fun RegionsScreen(
             }
         }
     ) { region ->
-        RegionRow(region, onRegionClick)
+        RegionRow(region, region.id == currentRegionId, removeHint, onRegionClick, onRegionLongClick)
     }
 }
 
 @Composable
-private fun RegionRow(region: RegionItem, onClick: (RegionItem) -> Unit) {
+private fun RegionRow(
+    region: RegionItem,
+    isCurrent: Boolean,
+    removeHint: String,
+    onClick: (RegionItem) -> Unit,
+    onLongClick: (RegionItem) -> Unit
+) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onClick(region) }
+                .regionRowClickable(
+                    isRemovable = region.custom,
+                    removeHint = removeHint,
+                    onClick = { onClick(region) },
+                    onRemove = { onLongClick(region) }
+                )
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -119,13 +152,13 @@ private fun RegionRow(region: RegionItem, onClick: (RegionItem) -> Unit) {
             // layout's INVISIBLE check mark
             Icon(
                 painter = painterResource(R.drawable.ic_checkmark_holo_light),
-                contentDescription = if (region.isCurrent) {
+                contentDescription = if (isCurrent) {
                     stringResource(R.string.checkmark_description)
                 } else {
                     null
                 },
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.alpha(if (region.isCurrent) 1f else 0f)
+                modifier = Modifier.alpha(if (isCurrent) 1f else 0f)
             )
             Spacer(Modifier.width(16.dp))
             Column {
@@ -172,14 +205,16 @@ private fun RegionsScreenSuccessPreview() {
         RegionsScreen(
             state = ListUiState.Success(
                 listOf(
-                    RegionItem(1, "Puget Sound", 1500f, isCurrent = true),
-                    RegionItem(2, "Tampa Bay", 4_500_000f, isCurrent = false),
-                    RegionItem(3, "No-location Region", null, isCurrent = false)
+                    RegionItem(1, "Puget Sound", 1500f),
+                    RegionItem(2, "Tampa Bay", 4_500_000f),
+                    RegionItem(3, "No-location Region", null)
                 )
             ),
             onRetry = {},
             onRefresh = {},
+            currentRegionId = 1L,
             onRegionClick = {},
+            onRegionLongClick = {},
             onBack = {}
         )
     }
@@ -193,7 +228,9 @@ private fun RegionsScreenLoadingPreview() {
             state = ListUiState.Loading,
             onRetry = {},
             onRefresh = {},
+            currentRegionId = 1L,
             onRegionClick = {},
+            onRegionLongClick = {},
             onBack = {}
         )
     }
@@ -207,7 +244,9 @@ private fun RegionsScreenErrorPreview() {
             state = ListUiState.Error,
             onRetry = {},
             onRefresh = {},
+            currentRegionId = 1L,
             onRegionClick = {},
+            onRegionLongClick = {},
             onBack = {}
         )
     }

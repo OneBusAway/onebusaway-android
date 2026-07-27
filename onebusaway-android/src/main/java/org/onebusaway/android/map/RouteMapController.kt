@@ -1120,7 +1120,7 @@ sealed interface LoadedRoute {
 
     /**
      * The route resolved: its [route] and serving [agencyName], the route's selectable [directions]
-     * (id + headsign, for the header's switch affordance), and the [currentDirectionId] shown now
+     * (id + headsign, for the header's direction menu), and the [currentDirectionId] shown now
      * (null = whole route).
      */
     data class Loaded(

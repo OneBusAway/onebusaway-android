@@ -35,8 +35,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,7 +44,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
@@ -55,12 +54,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,17 +77,18 @@ import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
+import org.onebusaway.android.ui.compose.components.DirectionBothWays
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.LineBadge
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
-import org.onebusaway.android.ui.compose.components.RadioOptionList
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rememberRouteBadgeColors
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.util.DisplayFormat
 
-// The banner's route action icons (switch-direction / cancel) share one size + tint so they read as
+// The banner's route action icons (direction menu / cancel) share one size + tint so they read as
 // one control group: a larger-than-default 36dp icon in a deliberately tightened 40dp touch box
 // (below Material's 48dp default — a conscious trade-off for a compact header banner).
 private val HEADER_ICON_SIZE = 36.dp
@@ -152,7 +156,7 @@ fun FocusBanner(
     onShowAlerts: () -> Unit,
     onClearSubordinateRoute: () -> Unit,
     onRecenterStop: () -> Unit,
-    onSelectDirection: (Int) -> Unit,
+    onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
     onHeight: (Int) -> Unit,
@@ -285,7 +289,7 @@ private fun StopFocusBanner(
                 BannerAlertAction(onClick = onShowAlerts)
             }
             HeaderIconButton(
-                iconRes = R.drawable.ic_navigation_close,
+                painter = painterResource(R.drawable.ic_navigation_close),
                 contentDescription = stringResource(android.R.string.cancel),
                 onClick = onClose
             )
@@ -408,7 +412,7 @@ private fun CompactRouteDismissAction(onClick: () -> Unit) {
 @Composable
 private fun RouteFocusBanner(
     state: FocusBannerState.Route,
-    onSelectDirection: (Int) -> Unit,
+    onSelectDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onShowSchedule: (String) -> Unit,
     onClose: () -> Unit
@@ -426,9 +430,12 @@ private fun RouteFocusBanner(
             Spacer(Modifier.weight(1f))
         } else {
             // The current direction's headsign (blank falls back to a generic label); null when the
-            // route is shown whole (no direction selected), so the subtitle is hidden.
+            // route is shown whole (no direction selected).
             val unnamed = stringResource(R.string.route_direction_unnamed)
             val directionLabel = header.currentDirection?.labelOr(unnamed)
+            // A route with a single direction has nothing to choose between — no menu, and no line
+            // stating a choice the user can't make.
+            val hasDirectionMenu = header.directions.size >= 2
             Row(
                 Modifier
                     .weight(1f)
@@ -467,10 +474,18 @@ private fun RouteFocusBanner(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                    // The direction line states the menu's current value; the chevron beside it is the
+                    // control that changes it. Deliberately not a trigger itself — it sits inside the
+                    // banner body, whose tap reframes the route and whose long press opens the
+                    // schedule, and a nested clickable would consume both on this line.
                     if (directionLabel != null) {
                         // The same arrow-glyph + tightened-monospace treatment as an arrivals row, so
                         // the headsign reads identically on both surfaces (#1823).
                         DirectionHeadsign(directionLabel)
+                    } else if (hasDirectionMenu) {
+                        // Set like a headsign, but with the two-way arrow: the whole route runs both
+                        // ways, so the one-way "toward" glyph would misdescribe it.
+                        DirectionBothWays(stringResource(R.string.route_header_all_directions))
                     }
                     if (header.agency.isNotEmpty()) {
                         // One type-scale step below the direction line so it recedes as secondary info.
@@ -478,9 +493,8 @@ private fun RouteFocusBanner(
                     }
                 }
             }
-            // A route with a single direction has nothing to switch to — the affordance is hidden.
-            if (header.directions.size >= 2) {
-                SwitchDirectionAction(
+            if (hasDirectionMenu) {
+                DirectionMenuAction(
                     directions = header.directions,
                     currentDirectionId = header.currentDirectionId,
                     onSelectDirection = onSelectDirection
@@ -488,7 +502,7 @@ private fun RouteFocusBanner(
             }
         }
         HeaderIconButton(
-            iconRes = R.drawable.ic_navigation_close,
+            painter = painterResource(R.drawable.ic_navigation_close),
             contentDescription = stringResource(android.R.string.cancel),
             onClick = onClose
         )
@@ -583,18 +597,18 @@ private fun BannerAlertAction(onClick: () -> Unit) {
 
 /**
  * A route-header action icon button in the shared header style: the [HEADER_ICON_SIZE] icon tinted with
- * the nav-drawer icon color, in the tightened [HEADER_ICON_BUTTON_SIZE] box. Used by the switch-direction
+ * the nav-drawer icon color, in the tightened [HEADER_ICON_BUTTON_SIZE] box. Used by the direction-menu
  * and cancel actions.
  */
 @Composable
 private fun HeaderIconButton(
-    @DrawableRes iconRes: Int,
+    painter: Painter,
     contentDescription: String,
     onClick: () -> Unit
 ) {
     IconButton(onClick = onClick, modifier = Modifier.size(HEADER_ICON_BUTTON_SIZE)) {
         Icon(
-            painter = painterResource(iconRes),
+            painter = painter,
             contentDescription = contentDescription,
             tint = colorResource(R.color.navdrawer_icon_tint),
             modifier = Modifier.size(HEADER_ICON_SIZE)
@@ -603,50 +617,65 @@ private fun HeaderIconButton(
 }
 
 /**
- * The swap-direction icon button. With exactly two directions a tap toggles to the other; with more it
- * opens a radio picker of the directions' headsigns. [currentDirectionId] is the shown direction (null
- * when the route is shown whole — a whole-route launch); a toggle from there picks the first direction.
+ * The direction picker: a caret button opening a menu whose first entry is "All directions" (the whole
+ * route), followed by each of the route's named directions. [currentDirectionId] is the shown direction,
+ * null when the route is shown whole.
+ *
+ * This replaced a swap button that *cycled* directions (#2033). Cycling could only ever land on a
+ * direction, so a route entered whole — or switched once — had no way back to both directions; the menu
+ * makes the whole route a first-class, always-reachable choice rather than only an entry state.
  */
 @Composable
-private fun SwitchDirectionAction(
+private fun DirectionMenuAction(
     directions: List<RouteMapDirection>,
     currentDirectionId: Int?,
-    onSelectDirection: (Int) -> Unit
+    onSelectDirection: (Int?) -> Unit
 ) {
-    var showPicker by remember { mutableStateOf(false) }
-    HeaderIconButton(
-        iconRes = R.drawable.ic_swap_direction,
-        contentDescription = stringResource(R.string.route_header_switch_direction),
-        onClick = {
-            if (directions.size == 2) {
-                onSelectDirection(directions.first { it.directionId != currentDirectionId }.directionId)
-            } else {
-                showPicker = true
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        HeaderIconButton(
+            painter = rememberVectorPainter(AppIcons.KeyboardArrowDown),
+            contentDescription = stringResource(R.string.route_header_select_direction),
+            onClick = { expanded = true }
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            val unnamed = stringResource(R.string.route_direction_unnamed)
+            DirectionMenuItem(
+                label = stringResource(R.string.route_header_all_directions),
+                selected = currentDirectionId == null
+            ) {
+                expanded = false
+                onSelectDirection(null)
+            }
+            directions.forEach { direction ->
+                DirectionMenuItem(
+                    label = direction.labelOr(unnamed),
+                    selected = direction.directionId == currentDirectionId
+                ) {
+                    expanded = false
+                    onSelectDirection(direction.directionId)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * One direction choice. The check glyph is decorative — the row carries its state as `selected`
+ * semantics, so a screen reader announces the current direction instead of relying on the icon.
+ */
+@Composable
+private fun DirectionMenuItem(label: String, selected: Boolean, onClick: () -> Unit) {
+    DropdownMenuItem(
+        modifier = Modifier.semantics { this.selected = selected },
+        text = { Text(label) },
+        onClick = onClick,
+        trailingIcon = {
+            if (selected) {
+                Icon(imageVector = AppIcons.Check, contentDescription = null)
             }
         }
     )
-    if (showPicker) {
-        val unnamed = stringResource(R.string.route_direction_unnamed)
-        AlertDialog(
-            onDismissRequest = { showPicker = false },
-            title = { Text(stringResource(R.string.route_header_switch_direction)) },
-            text = {
-                RadioOptionList(
-                    options = directions.map { it.labelOr(unnamed) }.toTypedArray(),
-                    selectedIndex = directions.indexOfFirst { it.directionId == currentDirectionId },
-                    onSelect = { index ->
-                        showPicker = false
-                        onSelectDirection(directions[index].directionId)
-                    }
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showPicker = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            }
-        )
-    }
 }
 
 /** The direction's headsign, or [unnamed] when the stop group carried no display name. */
@@ -696,6 +725,33 @@ private fun FocusBannerPreview() {
                             RouteMapDirection(1, "to Northgate")
                         ),
                         currentDirectionId = 0
+                    ),
+                    isFavorite = false
+                ),
+                onClose = {},
+                onToggleFavorite = {},
+                onShowAlerts = {},
+                onClearSubordinateRoute = {},
+                onRecenterStop = {},
+                onSelectDirection = {},
+                onFrameRoute = {},
+                onShowSchedule = {},
+                onHeight = {}
+            )
+            Spacer(Modifier.size(12.dp))
+            // The same route shown whole — the direction menu's default, which the subtitle states.
+            FocusBanner(
+                state = FocusBannerState.Route(
+                    RouteHeader(
+                        loading = false,
+                        shortName = "40",
+                        longName = "Downtown Seattle - Northgate",
+                        agency = "King County Metro",
+                        directions = listOf(
+                            RouteMapDirection(0, "to Downtown Seattle"),
+                            RouteMapDirection(1, "to Northgate")
+                        ),
+                        currentDirectionId = null
                     ),
                     isFavorite = false
                 ),

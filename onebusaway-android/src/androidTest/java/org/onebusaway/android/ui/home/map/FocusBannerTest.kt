@@ -18,11 +18,13 @@ package org.onebusaway.android.ui.home.map
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -30,10 +32,12 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class FocusBannerTest {
@@ -99,7 +103,10 @@ class FocusBannerTest {
     private fun setRouteBanner(
         scheduleUrl: String? = null,
         onShowSchedule: (String) -> Unit = {},
-        onFrameRoute: () -> Unit = {}
+        onFrameRoute: () -> Unit = {},
+        directions: List<RouteMapDirection> = emptyList(),
+        currentDirectionId: Int? = null,
+        onSelectDirection: (Int?) -> Unit = {}
     ) {
         composeRule.setContent {
             FocusBanner(
@@ -110,7 +117,9 @@ class FocusBannerTest {
                         longName = ROUTE_LONG_NAME,
                         agency = "Metro",
                         routeId = "1_40",
-                        scheduleUrl = scheduleUrl
+                        scheduleUrl = scheduleUrl,
+                        directions = directions,
+                        currentDirectionId = currentDirectionId
                     ),
                     isFavorite = false
                 ),
@@ -119,12 +128,71 @@ class FocusBannerTest {
                 onShowAlerts = {},
                 onClearSubordinateRoute = {},
                 onRecenterStop = {},
-                onSelectDirection = {},
+                onSelectDirection = onSelectDirection,
                 onFrameRoute = onFrameRoute,
                 onShowSchedule = onShowSchedule,
                 onHeight = {}
             )
         }
+    }
+
+    private fun openDirectionMenu() = composeRule.onNodeWithContentDescription(
+        context.getString(R.string.route_header_select_direction)
+    ).assertIsDisplayed().performClick()
+
+    /**
+     * The whole point of #2033: the menu always offers "All directions", so a route narrowed to one
+     * direction can be widened back. The old swap button could only cycle between directions.
+     */
+    @Test
+    fun directionMenuOffersAllDirectionsAlongsideTheNamedOnes() {
+        var selected: Int? = -1
+        setRouteBanner(
+            directions = TWO_DIRECTIONS,
+            currentDirectionId = 1,
+            onSelectDirection = { selected = it }
+        )
+        // The header states the menu's current value.
+        composeRule.onNodeWithText(NORTHGATE).assertIsDisplayed()
+
+        openDirectionMenu()
+        composeRule.onNodeWithText(DOWNTOWN).assertIsDisplayed()
+        // The shown direction is now on screen twice: the subtitle and its own (checked) menu row.
+        composeRule.onAllNodesWithText(NORTHGATE).assertCountEquals(2)
+
+        composeRule.onNodeWithText(context.getString(R.string.route_header_all_directions))
+            .performClick()
+        assertNull(selected)
+    }
+
+    /** Picking a named direction reports that direction's id. */
+    @Test
+    fun directionMenuSelectsANamedDirection() {
+        var selected: Int? = null
+        setRouteBanner(
+            directions = TWO_DIRECTIONS,
+            currentDirectionId = null,
+            onSelectDirection = { selected = it }
+        )
+        // Shown whole, the subtitle reads as the menu's default rather than a headsign.
+        composeRule.onNodeWithText(context.getString(R.string.route_header_all_directions))
+            .assertIsDisplayed()
+
+        openDirectionMenu()
+        composeRule.onNodeWithText(DOWNTOWN).performClick()
+        assertEquals(0, selected)
+    }
+
+    /** A route with nothing to choose between shows neither the menu nor a direction line. */
+    @Test
+    fun singleDirectionRouteHasNoDirectionMenu() {
+        setRouteBanner(directions = listOf(RouteMapDirection(0, DOWNTOWN)))
+
+        composeRule.onNodeWithContentDescription(
+            context.getString(R.string.route_header_select_direction)
+        ).assertDoesNotExist()
+        composeRule.onNodeWithText(context.getString(R.string.route_header_all_directions))
+            .assertDoesNotExist()
     }
 
     @Test
@@ -235,5 +303,8 @@ class FocusBannerTest {
     private companion object {
         const val ROUTE_LONG_NAME = "Downtown - Northgate"
         const val SCHEDULE_URL = "https://example.org/route/40/schedule"
+        const val DOWNTOWN = "to Downtown"
+        const val NORTHGATE = "to Northgate"
+        val TWO_DIRECTIONS = listOf(RouteMapDirection(0, DOWNTOWN), RouteMapDirection(1, NORTHGATE))
     }
 }

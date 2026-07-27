@@ -62,6 +62,18 @@ object AppIcons {
         }
     }
 
+    val Check: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
+        materialIcon(name = "check") {
+            moveTo(9f, 16.17f)
+            lineTo(4.83f, 12f)
+            lineToRelative(-1.42f, 1.41f)
+            lineTo(9f, 19f)
+            lineTo(21f, 7f)
+            lineToRelative(-1.41f, -1.41f)
+            close()
+        }
+    }
+
     val Info: ImageVector by lazy(LazyThreadSafetyMode.NONE) {
         materialIcon(name = "info") {
             moveTo(12.98f, 9f)

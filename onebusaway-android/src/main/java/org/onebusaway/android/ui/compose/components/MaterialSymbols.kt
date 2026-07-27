@@ -183,6 +183,31 @@ internal object MaterialSymbols {
         }
     }
 
+    /**
+     * The double-headed arrow — "both ways" — for a route direction line naming no single
+     * destination. Source glyph `arrow_range`, exported at the axes above plus ROND 50.
+     */
+    val BothDirections: ImageVector by lazy {
+        symbol("arrow_range") {
+            moveTo(7f, 17f)
+            lineTo(2f, 12f)
+            lineTo(7f, 7f)
+            lineTo(8.4f, 8.4f)
+            lineTo(5.83f, 11f)
+            horizontalLineTo(18.18f)
+            lineTo(15.6f, 8.4f)
+            lineTo(17f, 7f)
+            lineToRelative(5f, 5f)
+            lineToRelative(-5f, 5f)
+            lineTo(15.6f, 15.6f)
+            lineTo(18.18f, 13f)
+            horizontalLineTo(5.83f)
+            lineTo(8.4f, 15.6f)
+            lineTo(7f, 17f)
+            close()
+        }
+    }
+
     val Report: ImageVector by lazy {
         symbol("report") {
             moveTo(12f, 17f)

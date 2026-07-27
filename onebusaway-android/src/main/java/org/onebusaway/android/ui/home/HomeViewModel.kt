@@ -430,8 +430,8 @@ class HomeViewModel @Inject constructor(
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
     }
 
-    /** Persist a direction chosen from the standalone route banner. */
-    fun selectStandaloneRouteDirection(directionId: Int) {
+    /** Persist a direction chosen from the standalone route banner (null = the whole route). */
+    fun selectStandaloneRouteDirection(directionId: Int?) {
         val focus = _currentFocus.value as? CurrentFocus.Route ?: return
         replaceFocus(CurrentFocus.Route(focus.target.copy(directionId = directionId)))
     }

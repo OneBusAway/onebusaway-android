@@ -670,7 +670,7 @@ fun HomeScreen(
                                             onRecenterStop = {
                                                 homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
                                             },
-                                            // The switch-direction affordance calls straight into the map VM (which
+                                            // The direction menu calls straight into the map VM (which
                                             // re-filters stops/vehicles + persists the choice), like the height report below.
                                             onSelectRouteDirection = { directionId ->
                                                 homeViewModel.selectStandaloneRouteDirection(directionId)
@@ -949,7 +949,7 @@ private fun BoxScope.HomeMapOverlays(
     onShowAlerts: () -> Unit,
     onClearSubordinateRoute: () -> Unit,
     onRecenterStop: () -> Unit,
-    onSelectRouteDirection: (Int) -> Unit,
+    onSelectRouteDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,

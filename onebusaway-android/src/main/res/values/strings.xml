@@ -340,8 +340,10 @@
     <string name="route_info_context_showonmap">Show on map</string>
     <string name="route_info_no_shape_data">Sorry, map information isn’t available for this route
     </string>
-    <!-- Route map header: switch which direction of the route is shown -->
-    <string name="route_header_switch_direction">Switch direction</string>
+    <!-- Route map header: open the menu choosing which direction of the route is shown -->
+    <string name="route_header_select_direction">Select direction</string>
+    <!-- Route map header: the direction menu's default — show the whole route, both directions -->
+    <string name="route_header_all_directions">All directions</string>
     <!-- Route map header: tap the banner body to reframe the map to the route's full extent -->
     <string name="route_header_frame_route">Frame route on map</string>
     <!-- Fallback label for a route direction whose headsign is missing -->

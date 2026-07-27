@@ -62,6 +62,23 @@ enum class RoutePolylineTransform {
 }
 
 /**
+ * How a line's stroke is broken up. The rhythms are named for what they mean rather than for their
+ * lengths, which are the renderer's to choose:
+ *
+ *  - [NONE] — solid, the ordinary route line.
+ *  - [HINT] — a tight dash for a line that is a preview rather than the thing itself: the
+ *    route-continuation line (#1691), which shouldn't blend into a busy basemap the way a solid stroke
+ *    can, and shouldn't read as a route the rider can board either.
+ *  - [TRAIL] — a long, open stride for travel under the rider's own power (an itinerary's walking and
+ *    cycling legs, #2041), where the breaks say "path, not corridor" without fragmenting into dots.
+ */
+enum class RouteLineDash {
+    NONE,
+    HINT,
+    TRAIL
+}
+
+/**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
@@ -75,9 +92,9 @@ enum class RoutePolylineTransform {
  * renderer can honor it is flavor-specific (Google stamps a chevron texture; the maplibre classic
  * annotation has no arrow support yet).
  *
- * [dashed] asks the renderer to draw a dashed stroke instead of solid — set it for a preview/hint line
- * that should read as distinct from the primary route shown (the route-continuation line, #1691), so it
- * doesn't blend into a busy basemap the way a plain solid stroke can.
+ * [dash] asks the renderer to break the stroke up rather than draw it solid, in one of the rhythms
+ * [RouteLineDash] names. Whether a renderer honors it is flavor-specific (the maplibre classic
+ * annotation draws every line solid).
  *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
@@ -88,7 +105,7 @@ data class RoutePolyline(
     val points: List<GeoPoint>,
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
-    val dashed: Boolean = false,
+    val dash: RouteLineDash = RouteLineDash.NONE,
     val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */

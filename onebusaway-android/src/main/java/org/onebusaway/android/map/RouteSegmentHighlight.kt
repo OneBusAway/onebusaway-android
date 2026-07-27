@@ -15,7 +15,7 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.GeoPoint
@@ -39,8 +39,13 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 
 /**
  * Compose the route's polylines when [segment] is highlighted: the full route [base] de-emphasized
- * (thin, no arrows) under the segment drawn at normal width in [routeColor], last so it sits on top.
+ * (thin, no arrows) under the ridden segment in [routeColor], last so it sits on top.
  * Returns [base] unchanged when there's no drawable segment (plain route focus).
+ *
+ * The segment keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it
+ * was tapped from — so drilling into a leg thins the route around it without also thinning the ride
+ * itself. It's always a trip-plan leg that gets here, so that is the profile to match, not the ordinary
+ * route line's.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
@@ -48,7 +53,7 @@ internal fun routePolylinesWithSegment(
     routeColor: Int?
 ): List<RoutePolyline> {
     val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
-        RoutePolyline(color = routeColor, points = it, widthProfile = ROUTE_LINE_WIDTH_PROFILE, directional = true)
+        RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE, directional = true)
     } ?: return base
     return base.asDeemphasizedRouteUnderlay() + overlay
 }

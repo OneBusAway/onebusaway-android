@@ -43,6 +43,7 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_DP
 import org.onebusaway.android.map.render.RouteContinuation
+import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.VehicleMarker
@@ -474,8 +475,13 @@ class RouteMapController(
         publishMapPresentation()
     }
 
-    /** The shown route's GTFS color (the band tint's basis), or the default when it carries none. */
-    private fun currentRouteColor(): Int = (_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color ?: DEFAULT_ROUTE_LINE_COLOR
+    /**
+     * The shown route's colour as this map draws it (also the band tint's basis): the agency's hue put
+     * through the shared route-line policy, or the default when the route carries no usable colour. This
+     * is what a ridden directions leg's highlighted segment is drawn in, so tapping a leg in the drawer
+     * lands on the same colour the itinerary's own line had.
+     */
+    private fun currentRouteColor(): Int = mapRouteLineColorOrNull((_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -521,13 +527,13 @@ class RouteMapController(
         val badgePoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS / 2) ?: return null
         val endSeg = neighborShape.segmentIndex(CONTINUATION_LINE_LENGTH_METERS)
         val arrowPoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS, endSeg) ?: return null
-        val lineColor = neighbor.routeColor ?: CONTINUATION_FALLBACK_LINE_COLOR
+        val lineColor = mapRouteLineColorOrNull(neighbor.routeColor) ?: CONTINUATION_FALLBACK_LINE_COLOR
         return RouteContinuation(
             polyline = RoutePolyline(
                 color = lineColor,
                 points = listOf(anchor) + tail,
                 widthProfile = CONTINUATION_LINE_WIDTH_PROFILE,
-                dashed = true
+                dash = RouteLineDash.HINT
             ),
             arrow = ContinuationArrow(arrowPoint, neighborShape.bearingAt(endSeg)),
             badge = ContinuationBadge(
@@ -691,6 +697,9 @@ class RouteMapController(
     // state is resolved into plain data first ([selectedTripRenderInput]); the mode-merging policy lives
     // in the pure function, so this stays a plumb-through.
     private fun publishMapPresentation() {
+        // Both the selected trip's fallback and the ridden segment draw in the shown route's colour;
+        // resolve it once so a publish runs the colour policy a single time.
+        val routeColor = currentRouteColor()
         val plan = assembleRouteMapPresentation(
             isActive = isActive,
             emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) },
@@ -701,14 +710,14 @@ class RouteMapController(
             focusedStops = focusedStops,
             focusedRoutes = focusedRoutes,
             routeColors = _focusedRouteColors.value,
-            selected = selectedTripRenderInput(),
+            selected = selectedTripRenderInput(routeColor),
             projectedFocusStops = {
                 stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
             }
         )
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: thin the full route to context + the ridden span on top.
-            polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, currentRouteColor()),
+            polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, routeColor),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom
         )
@@ -719,14 +728,15 @@ class RouteMapController(
     /**
      * The selected vehicle's render inputs, or null when no vehicle is selected or its exact shape +
      * schedule haven't both resolved yet. Resolves the IO-backed pieces ([selectedTripPresentation],
-     * the GTFS colour fallback, the direction underlay, the projected stop presentation) so the pure
-     * assembler gets plain data.
+     * the direction underlay, the projected stop presentation) so the pure assembler gets plain data.
+     * [routeColor] is the shown route's drawn colour, passed in rather than re-resolved so one publish
+     * puts the route through the colour policy once.
      */
-    private fun selectedTripRenderInput(): SelectedTripRenderInput? {
+    private fun selectedTripRenderInput(routeColor: Int): SelectedTripRenderInput? {
         val selected = selectedTripPresentation() ?: return null
         return SelectedTripRenderInput(
             presentation = selected,
-            routeColorFallback = currentRouteColor(),
+            routeColorFallback = routeColor,
             // Deferred: the assembler resolves the underlay only when selectedTripStyle keeps it (stop
             // focus inactive) and the stop projection only for a drawable trip, so neither is computed on
             // the branches that skip it.
@@ -926,8 +936,8 @@ class RouteMapController(
     /**
      * The drawn lines for [directionId]'s shape: the selected direction's own travel-ordered shape
      * (with direction arrows), or the whole-route merged shape drawn undirected when [directionId] is
-     * null. Passes the route's raw GTFS color through; the render layer picks the fallback when it's
-     * absent. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
+     * null. Puts the route's GTFS colour through the map's route-line policy; the render layer picks the
+     * fallback when the route has no usable colour of its own. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
      * from focused-stop mode. shapeForDirection pairs the drawn shape with its directionality, so
      * arrows are stamped only when the direction's own travel-ordered shape is used — never on the
      * whole-route merged fallback (a direction that carried no shape on the wire).
@@ -937,12 +947,10 @@ class RouteMapController(
     /** [directionPolylines] against an explicit [route] map — used to draw an interline's extra routes. */
     private fun directionPolylines(route: RouteMap, directionId: Int?): List<RoutePolyline> {
         val shape = route.shapeForDirection(directionId)
+        // One colour for the whole shape — a gapped route draws several polylines, all the same route.
+        val color = mapRouteLineColorOrNull(route.route?.color)
         return shape.polylines.map { points ->
-            focusedRoutePolyline(
-                color = route.route?.color,
-                points = points,
-                directional = shape.directional
-            )
+            focusedRoutePolyline(color = color, points = points, directional = shape.directional)
         }
     }
 

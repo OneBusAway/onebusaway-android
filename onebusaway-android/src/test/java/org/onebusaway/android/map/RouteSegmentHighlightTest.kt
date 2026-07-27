@@ -20,7 +20,7 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
-import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.GeoPoint
 
@@ -55,7 +55,7 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
-    fun routePolylinesWithSegment_deemphasizesBase_andAddsNormalWidthOverlay() {
+    fun routePolylinesWithSegment_deemphasizesBase_andKeepsTheRideAtItsItineraryWeight() {
         val base = listOf(
             RoutePolyline(
                 color = null,
@@ -69,9 +69,10 @@ class RouteSegmentHighlightTest {
         assertEquals(2, result.size)
         // Base is thinned to context (and loses its arrows).
         assertEquals(DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE, result.first().widthProfile)
-        // The ridden span rides on top at normal width, in the route colour, directional.
+        // The ridden span rides on top at the weight it had as an itinerary leg, in the route colour,
+        // directional — so drilling in doesn't make the ride itself thinner than it just was.
         val overlay = result.last()
-        assertEquals(ROUTE_LINE_WIDTH_PROFILE, overlay.widthProfile)
+        assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, overlay.widthProfile)
         assertEquals(0xFF00FF00.toInt(), overlay.color)
         assertEquals(true, overlay.directional)
     }

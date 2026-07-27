@@ -58,6 +58,7 @@ import com.google.android.material.color.utilities.Hct
 import kotlin.math.min
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.compose.theme.isDarkTheme
+import org.onebusaway.android.util.routeColorHctOrNull
 
 /** Line height as a multiple of the font size, so multi-line badges shrink with the font. */
 private const val LINE_HEIGHT_RATIO = 1.1f
@@ -84,7 +85,6 @@ private const val CHIP_MAX_CHROMA_DARK = 60.0 // saturation cap in dark theme
 
 // (each hue still clamps to its own sRGB gamut limit;
 //  low caps mute vivid hues — e.g. orange → brown)
-private const val ACHROMATIC_CHROMA = 5.0 // below this the source is grey/black/white (no hue)
 
 // Route-*line* tones: the same hue re-derived to sit legibly ON the surface (rather than as a filled
 // chip), for a stroke/marker drawn directly on the background — Material's own accent tones, 40 in
@@ -95,15 +95,15 @@ private const val LINE_TONE_DARK = 80.0
 /**
  * The route's GTFS color re-derived in HCT at [tone]: same hue, chroma capped for the active theme.
  * Null when the source is absent or achromatic (grey/black/white — no hue to keep), which is every
- * caller's cue to fall back to a neutral. The single place the agency-color policy lives, so a chip
- * and a line can't drift apart on which colors count as "grey" or how saturated a route may get.
+ * caller's cue to fall back to a neutral. The single place the *chip and spine* color policy lives, so
+ * those two can't drift apart on how saturated a route may get; reading the agency color and rejecting a
+ * hueless one is [routeColorHctOrNull], shared with the map's own tone policy.
  */
 // Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
 // exists, so this is deliberate long-term use, not a migration to track (same as AdjacencyRouteColors).
 @SuppressLint("RestrictedApi")
 private fun tonedRouteColor(routeColor: Int?, dark: Boolean, tone: Double): Color? {
-    val source = routeColor?.let { Hct.fromInt(it or 0xFF000000.toInt()) } ?: return null
-    if (source.chroma < ACHROMATIC_CHROMA) return null
+    val source = routeColorHctOrNull(routeColor) ?: return null
     val chroma = min(source.chroma, if (dark) CHIP_MAX_CHROMA_DARK else CHIP_MAX_CHROMA_LIGHT)
     return Color(Hct.from(source.hue, chroma, tone).toInt())
 }

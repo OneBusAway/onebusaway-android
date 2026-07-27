@@ -33,7 +33,9 @@ import com.google.android.material.color.utilities.Hct
 fun parseObaHexColor(hex: String?): Int? = hex?.takeIf { it.isNotEmpty() }?.let {
     try {
         "#${it.trim().removePrefix("#")}".toColorInt()
-    } catch (e: IllegalArgumentException) {
+    } catch (_: IllegalArgumentException) {
+        // A malformed color is the caller's null case, not an error worth reporting: the wire is free to
+        // send nonsense and every consumer already has a fallback for a route with no usable color.
         null
     }
 }

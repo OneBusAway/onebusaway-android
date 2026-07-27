@@ -429,7 +429,7 @@ class RouteMapController(
         // polls at a seam); the plain path stays byte-identical to before.
         val vehicles = if (isInterlineComposite) merged.distinctBy { it.status.activeTripId } else merged
         return MapVehicles(
-            markers = vehicles.map { it.toMarker() },
+            markers = vehicles.map { it.toMarker(poll.response) },
             response = poll.response
         )
     }
@@ -1035,9 +1035,10 @@ class RouteMapController(
 
     /**
      * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
-     * draw-time live-vs-scheduled flag through (the renderer picks its icon from it).
+     * draw-time live-vs-scheduled flag through (the renderer picks its icon from it) and the color its
+     * route is currently drawn with (the disc rides its own line's color, #2043).
      */
-    private fun ExtrapolatedVehicle.toMarker(): VehicleMarker = VehicleMarker(
+    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips): VehicleMarker = VehicleMarker(
         // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
         activeTripId = status.activeTripId.orEmpty(),
         point = point,
@@ -1045,8 +1046,29 @@ class RouteMapController(
         status = status,
         fixTimeMs = fixTimeMs,
         bearing = bearing,
-        dataFixPoint = dataFixPoint
+        dataFixPoint = dataFixPoint,
+        routeColor = displayedRouteColor(response, status.activeTripId)
     )
+
+    /**
+     * The color the map is currently drawing [activeTripId]'s route with.
+     *
+     * This is deliberately the *displayed* color rather than the route's GTFS color. In stop-focus view
+     * [adjacencyRouteColors] hands every shown route a distinct synthesized hue so a rider can tell the
+     * lines apart, and the vehicle has to travel with the line it belongs to — a marker wearing the
+     * agency's nominal color there would point at the wrong line. The lookup mirrors what the polylines
+     * do (`routeColors[key] ?: gtfsColor`, see RouteViewGeometry), so a vehicle and its line resolve
+     * through the same map and can't disagree.
+     *
+     * Both reference hops are nullable by contract (the poll carries whatever `references` it carries,
+     * and a block-interlined vehicle can report a trip this route's poll never fetched), so an
+     * unresolvable route yields null and the renderer falls back like any uncolored line.
+     */
+    private fun displayedRouteColor(response: RouteTrips, activeTripId: String?): Int? {
+        val trip = response.trip(activeTripId) ?: return null
+        val assigned = _focusedRouteColors.value[RouteDirectionKey(trip.routeId, trip.directionId)]
+        return assigned ?: response.route(trip.routeId)?.color
+    }
 }
 
 /**

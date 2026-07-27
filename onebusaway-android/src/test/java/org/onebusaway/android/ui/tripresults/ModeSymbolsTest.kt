@@ -39,11 +39,20 @@ class ModeSymbolsTest {
 
     private fun walk(meters: Double) = TripLeg(mode = TripMode.WALK, distance = meters)
 
-    private fun bike(meters: Double, rented: Boolean = false) = TripLeg(
+    /**
+     * A bicycle leg. [rentedAt] says which endpoint (if either) is a vehicle-rental place — the whole
+     * signal that separates a shared bike from the rider's own.
+     */
+    private fun bike(meters: Double, rentedAt: Endpoint = Endpoint.NEITHER) = TripLeg(
         mode = TripMode.BICYCLE,
         distance = meters,
-        from = TripPlace(vertexType = if (rented) TripVertexType.BIKESHARE else TripVertexType.NORMAL)
+        from = TripPlace(vertexType = vertexTypeFor(rentedAt == Endpoint.FROM)),
+        to = TripPlace(vertexType = vertexTypeFor(rentedAt == Endpoint.TO))
     )
+
+    private enum class Endpoint { FROM, TO, NEITHER }
+
+    private fun vertexTypeFor(rental: Boolean) = if (rental) TripVertexType.BIKESHARE else TripVertexType.NORMAL
 
     /** The symbols as a readable sequence: a street glyph's mode, or a ride's route names. */
     private fun symbolsOf(legs: List<TripLeg>): List<Any> = ModeSymbols.forLegs(legs, legs.map { emptyList() }).map { it.describe() }
@@ -90,7 +99,7 @@ class ModeSymbolsTest {
     fun aStreetOnlyTripKeepsOneSymbolEvenBelowTheThreshold() {
         assertEquals(listOf(StreetMode.WALK), symbolsOf(listOf(walk(NEAR))))
         // The longest leg names the trip, so a stroll to a rented bike doesn't relabel the ride a walk.
-        assertEquals(listOf(StreetMode.BIKESHARE), symbolsOf(listOf(walk(NEAR), bike(NEAR * 2, rented = true), walk(NEAR))))
+        assertEquals(listOf(StreetMode.BIKESHARE), symbolsOf(listOf(walk(NEAR), bike(NEAR * 2, rentedAt = Endpoint.FROM), walk(NEAR))))
     }
 
     @Test
@@ -103,9 +112,19 @@ class ModeSymbolsTest {
     fun aBikeLegSaysWhetherTheBikeIsRented() {
         assertEquals(
             listOf(StreetMode.WALK, StreetMode.BIKESHARE, StreetMode.WALK),
-            symbolsOf(listOf(longWalk, bike(FAR, rented = true), longWalk))
+            symbolsOf(listOf(longWalk, bike(FAR, rentedAt = Endpoint.FROM), longWalk))
         )
         assertEquals(listOf(StreetMode.BIKE), symbolsOf(listOf(bike(FAR))))
+    }
+
+    /**
+     * Either endpoint marks the rental, not just the pick-up: a dockless bike can be left at a plain
+     * street corner and a docked one is returned to a station, so a leg that only *ends* at a rental
+     * place is the same act to the rider.
+     */
+    @Test
+    fun aBikeReturnedToARentalPlaceIsAlsoARentedBike() {
+        assertEquals(listOf(StreetMode.BIKESHARE), symbolsOf(listOf(bike(FAR, rentedAt = Endpoint.TO))))
     }
 
     /** Two street legs in a row are one act to the rider; the card must not stutter "walk, walk". */

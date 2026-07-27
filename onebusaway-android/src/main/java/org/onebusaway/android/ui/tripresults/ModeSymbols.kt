@@ -60,6 +60,13 @@ internal object ModeSymbols {
      * nothing.
      */
     fun forLegs(legs: List<TripLeg>, substitutable: List<List<InterchangeableRoute>>): List<ModeSymbol> {
+        // Stated rather than defended against: a shorter list read with getOrNull would quietly badge a
+        // ride with fewer routes than it can be taken on — the rider is told to wait for the 1 Line when
+        // the 2 Line would also do — and nothing downstream could tell that from a leg that genuinely has
+        // no alternatives. Misalignment is a caller bug, so say so where it happens.
+        require(substitutable.size == legs.size) {
+            "substitutable must be index-aligned to legs (${substitutable.size} vs ${legs.size})"
+        }
         // The legs that badge a ride: each chain's leader, plus every leg the vehicle changes route at.
         // A self-interlined continuation is in neither, so a 12 reversing onto itself badges once.
         val ridden = Interlines.chains(legs)

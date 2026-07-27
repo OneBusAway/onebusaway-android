@@ -195,14 +195,23 @@ class TripLogBuilderTest {
         assertEquals(StreetMode.BIKE, modeOf(walkLeg.copy(mode = TripMode.BICYCLE)))
         assertEquals(StreetMode.CAR, modeOf(walkLeg.copy(mode = TripMode.CAR)))
         assertEquals(StreetMode.WALK, modeOf(walkLeg.copy(mode = TripMode.WALK)))
-        // A bike picked up at a rental place is a *shared* bike, and draws the bikeshare glyph rather
-        // than the rider's-own-bike one (#2047).
+        // A bike picked up at — or returned to — a rental place is a *shared* bike, and draws the
+        // bikeshare glyph rather than the rider's-own-bike one (#2047).
         assertEquals(
             StreetMode.BIKESHARE,
             modeOf(
                 walkLeg.copy(
                     mode = TripMode.BICYCLE,
                     from = walkLeg.from.copy(vertexType = TripVertexType.BIKESHARE)
+                )
+            )
+        )
+        assertEquals(
+            StreetMode.BIKESHARE,
+            modeOf(
+                walkLeg.copy(
+                    mode = TripMode.BICYCLE,
+                    to = walkLeg.to.copy(vertexType = TripVertexType.BIKESHARE)
                 )
             )
         )

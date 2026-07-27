@@ -122,4 +122,34 @@ class RegionPickerViewModelTest {
         assertEquals(1, repo.refreshCount)
         assertFalse(vm.failed.value)
     }
+
+    // --- removing a custom region (#2027) ---
+
+    @Test
+    fun `remove deletes a custom region`() = runTest {
+        val custom = region(-2, custom = true)
+        val repo = FakeRegionRepository(custom)
+        val vm = RegionPickerViewModel(repo)
+        advanceUntilIdle()
+
+        vm.remove(custom)
+        advanceUntilIdle()
+
+        assertEquals(listOf(custom), repo.deletedCustomRegions)
+    }
+
+    @Test
+    fun `remove leaves a directory region alone`() = runTest {
+        // The only way out of an add-region link is long-pressing the region it added; a directory
+        // region has no such affordance, and the repository ignores one if it somehow arrives here.
+        val directory = region(1)
+        val repo = FakeRegionRepository(directory)
+        val vm = RegionPickerViewModel(repo)
+        advanceUntilIdle()
+
+        vm.remove(directory)
+        advanceUntilIdle()
+
+        assertTrue(repo.deletedCustomRegions.isEmpty())
+    }
 }

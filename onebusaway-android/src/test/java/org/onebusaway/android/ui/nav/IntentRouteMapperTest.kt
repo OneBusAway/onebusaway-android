@@ -17,10 +17,12 @@ package org.onebusaway.android.ui.nav
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.region.CustomRegionRequest
 import org.onebusaway.android.ui.mylists.MyTabs
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteDecision
 import org.onebusaway.android.ui.nav.IntentRouteMapper.RouteIntent
 import org.onebusaway.android.ui.nav.IntentRouteMapper.decide
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 
 /**
  * Unit tests for the pure route-precedence decision [IntentRouteMapper.decide] — the branch order +
@@ -55,7 +57,15 @@ class IntentRouteMapperTest {
         // The URLs apply as a side effect (HomeActivity); routing stays on the home/map path.
         assertEquals(
             RouteDecision.None,
-            decide(RouteIntent(isAddRegion = true, isSearch = true, searchQuery = "x"))
+            decide(
+                RouteIntent(
+                    deepLink = ExternalDeepLinks.Target.AddRegion(
+                        CustomRegionRequest(name = "Test", obaBaseUrl = "https://api.example.com")
+                    ),
+                    isSearch = true,
+                    searchQuery = "x"
+                )
+            )
         )
     }
 
@@ -168,6 +178,44 @@ class IntentRouteMapperTest {
         assertEquals(
             RouteDecision.None,
             decide(RouteIntent(pathSegments = listOf("service_alerts", "abc")))
+        )
+    }
+
+    // --- cross-platform (iOS-parity) deep links; the URI parsing itself is ExternalDeepLinksTest ---
+
+    @Test
+    fun `a view-stop deep link opens that stop's arrivals`() {
+        assertEquals(
+            RouteDecision.Arrivals("1_75403"),
+            decide(RouteIntent(deepLink = ExternalDeepLinks.Target.Stop("1_75403")))
+        )
+    }
+
+    @Test
+    fun `a web trip deep link opens the trip scrolled to the shared stop`() {
+        assertEquals(
+            RouteDecision.TripDetails("1_18196913", "1_75403", TripDetailsLauncher.SCROLL_MODE_STOP),
+            decide(
+                RouteIntent(
+                    deepLink = ExternalDeepLinks.Target.Trip(
+                        tripId = "1_18196913",
+                        stopId = "1_75403"
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `a deep-link target beats the content data-URI path branches`() {
+        assertEquals(
+            RouteDecision.Arrivals("1_75403"),
+            decide(
+                RouteIntent(
+                    deepLink = ExternalDeepLinks.Target.Stop("1_75403"),
+                    pathSegments = listOf(DeepLinkUris.ROUTES_PATH, "1_100224")
+                )
+            )
         )
     }
 }

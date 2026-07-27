@@ -19,6 +19,7 @@ import android.app.SearchManager
 import android.content.Intent
 import org.onebusaway.android.ui.arrivals.ArrivalsIntents
 import org.onebusaway.android.ui.mylists.MyTabs
+import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.ReminderUtils
 
 /**
@@ -28,14 +29,12 @@ import org.onebusaway.android.util.ReminderUtils
  * `Intent`/`Uri`/JSON reads ([routeForIntent] -> [read]).
  *
  * Routing only — side-effect free: the domain mutations some intents imply (the `add-region` URL apply,
- * the FCM arrival-reminder clear) run in `HomeActivity.applyIntentSideEffects`, which shares the
- * [ADD_REGION_SCHEME]/[ADD_REGION_HOST] constants from here and [ReminderUtils.ARRIVAL_PAYLOAD_KEY].
+ * the FCM arrival-reminder clear) run in `HomeActivity.applyIntentSideEffects`, which reads the same
+ * [ExternalDeepLinks.Target]/[ReminderUtils.ARRIVAL_PAYLOAD_KEY] the routing does.
+ *
+ * The externally-reachable deep-link vocabulary itself lives in [ExternalDeepLinks].
  */
 object IntentRouteMapper {
-
-    /** The exported `onebusaway://add-region` deep link (an exported manifest intent-filter). */
-    const val ADD_REGION_SCHEME = "onebusaway"
-    const val ADD_REGION_HOST = "add-region"
 
     private const val NIGHT_LIGHT_ACTIVITY = "NightLightActivity"
 
@@ -43,8 +42,12 @@ object IntentRouteMapper {
     data class RouteIntent(
         /** An explicit in-app route ([NavRoutes.EXTRA_NAV_ROUTE]); cross-screen launches carry it verbatim. */
         val navRoute: String? = null,
-        /** The exported add-region deep link — routes nowhere (stays on home/map; URLs apply as a side effect). */
-        val isAddRegion: Boolean = false,
+        /**
+         * What the data URI means as an exported deep link, or null if it isn't one. Classified by
+         * [ExternalDeepLinks] — the same shape of fact as [tabTag] (a URI recognized by the object that
+         * owns that vocabulary), so [decide] only has to dispatch it.
+         */
+        val deepLink: ExternalDeepLinks.Target? = null,
         /** System search ([Intent.ACTION_SEARCH]); [searchQuery] is the (possibly empty) query. */
         val isSearch: Boolean = false,
         val searchQuery: String = "",
@@ -92,9 +95,20 @@ object IntentRouteMapper {
     fun decide(input: RouteIntent): RouteDecision {
         // In-app / cross-screen launches carry their destination route verbatim (see [navIntent]).
         input.navRoute?.let { return RouteDecision.Verbatim(it) }
-        // The exported add-region deep link applies custom API URLs as a side effect (HomeActivity); for
-        // routing it stays on the home/map path (the legacy handler went Home).
-        if (input.isAddRegion) return RouteDecision.None
+        // The exported (iOS-parity) deep links. A web trip link names the stop it was shared from, so
+        // open the trip scrolled to that stop; add-region is staged for the rider's confirmation as a
+        // side effect (HomeActivity) and for routing stays on the home/map path.
+        input.deepLink?.let { target ->
+            return when (target) {
+                is ExternalDeepLinks.Target.Stop -> RouteDecision.Arrivals(target.stopId)
+                is ExternalDeepLinks.Target.Trip -> RouteDecision.TripDetails(
+                    tripId = target.tripId,
+                    stopId = target.stopId,
+                    scrollMode = TripDetailsLauncher.SCROLL_MODE_STOP
+                )
+                is ExternalDeepLinks.Target.AddRegion -> RouteDecision.None
+            }
+        }
         // System search (HomeActivity is the default_searchable target): open the search destination.
         if (input.isSearch) return RouteDecision.Search(input.searchQuery)
         // The FCM arrival payload clears its fired reminder as a side effect; here it just opens arrivals
@@ -148,7 +162,7 @@ object IntentRouteMapper {
         val tabTag = data?.let { MyTabs.defaultTabFromUri(it) }
         return RouteIntent(
             navRoute = intent.getStringExtra(NavRoutes.EXTRA_NAV_ROUTE),
-            isAddRegion = data?.scheme == ADD_REGION_SCHEME && data.host == ADD_REGION_HOST,
+            deepLink = data?.let { ExternalDeepLinks.parse(it) },
             isSearch = intent.action == Intent.ACTION_SEARCH,
             searchQuery = intent.getStringExtra(SearchManager.QUERY).orEmpty(),
             hasArrivalPayload = arrivalJson != null,

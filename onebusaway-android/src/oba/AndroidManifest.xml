@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android App Links for the OneBusAway web/sidecar hosts, merged into src/main's HomeActivity for
+  the `oba` brand only. Parsed by org.onebusaway.android.ui.nav.ExternalDeepLinks (whose WEB_HOSTS
+  must list the same hosts); see docs/DEEP_LINKING.md for the link format, the outstanding
+  assetlinks.json step that autoVerify depends on, and how to test these links.
+
+  Why this is in the `oba` source set and not src/main: these hosts belong to the OBA deployment. A
+  white-label brand can never verify them — verification matches the *installed app's* signing
+  certificate against the host's assetlinks.json — and on API < 31 an unverifiable filter would
+  still put that brand in the link-handling chooser for someone else's links. Giving a brand web
+  links of its own needs a brand-specific host set as well as a flavor manifest (see WEB_HOSTS);
+  that's a feature to design, not a file to copy.
+
+  NOTE that the API < 31 caveat above applies to the OBA brand too, until the assetlinks.json files
+  are live: on API 23-30 an unverified filter still matches, so these links fall into ordinary intent
+  disambiguation and may raise the browser-or-OneBusAway chooser rather than going straight to the
+  browser (a default handler the rider already chose is still respected). On API 31+ an unverified
+  domain isn't offered to the app at all. docs/DEEP_LINKING.md spells this out.
+
+  The pathPattern claims only the trip endpoint, so the rest of the site (the marketing pages, and a
+  region/stop page the parser doesn't recognize) keeps opening in the browser rather than launching
+  the app to land nowhere. It's a PATTERN_SIMPLE_GLOB, where `.` is any character and `*` is
+  zero-or-more of the preceding one, so `.*` spans `/` too — it can't require a *single* segment per
+  wildcard. ExternalDeepLinks.parse is the exact check (it requires precisely five path segments and
+  a trip_id, which a filter can't express at all); this filter just has to be no broader than it
+  needs to be. What slips through the gap is handed back to the browser —
+  ExternalDeepLinks.isUnhandledWebLink, applied in HomeActivity.applyIntentSideEffects. Path shape
+  doesn't affect autoVerify, which matches on host.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- exported is repeated from src/main (identical value, so it merges cleanly): lint checks
+             this source manifest on its own, and an intent-filter here without it is an error. -->
+        <activity
+            android:name="org.onebusaway.android.ui.HomeActivity"
+            android:exported="true">
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="onebusaway.co" />
+                <data android:host="www.onebusaway.co" />
+                <data android:host="sidecar.onebusaway.org" />
+                <data android:pathPattern="/regions/.*/stops/.*/trips" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

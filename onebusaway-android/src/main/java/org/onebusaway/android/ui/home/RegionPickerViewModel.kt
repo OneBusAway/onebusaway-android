@@ -74,4 +74,12 @@ class RegionPickerViewModel @Inject constructor(
     fun retry() {
         viewModelScope.launch { regionRepo.refresh() }
     }
+
+    /**
+     * Removes a custom region the rider added (#2027) — the escape hatch from an `add-region` link they
+     * regret. The repository ignores a directory region, and re-resolves if the removed one was current.
+     */
+    fun remove(region: Region) {
+        viewModelScope.launch { regionRepo.deleteCustomRegion(region) }
+    }
 }

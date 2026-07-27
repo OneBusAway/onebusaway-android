@@ -208,3 +208,18 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
         )
     }
 }
+
+/**
+ * Adds `regions.custom`: whether the row is a user-added custom region (the `add-region` deep link,
+ * #2027) rather than one from the OBA regions directory. Every existing cached row is a directory row,
+ * so the NOT NULL DEFAULT 0 is exactly right — and the default must be declared here *and* as
+ * `defaultValue = "0"` on the entity column, or Room's identity check fails against the exported
+ * `10.json`. Purely additive, no other v10 table/column changes. Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `regions` ADD COLUMN `custom` INTEGER NOT NULL DEFAULT 0"
+        )
+    }
+}

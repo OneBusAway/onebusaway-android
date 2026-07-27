@@ -93,7 +93,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -135,7 +136,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -178,7 +180,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -221,7 +224,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -264,7 +268,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -307,7 +312,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -348,7 +354,8 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 
   /**
@@ -389,6 +396,7 @@ public class MockRegion {
         null,
         "https://onebusaway.co",
         null,
-        null); // UmamiAnalyticsConfig — disabled in test regions
+        null, // UmamiAnalyticsConfig — disabled in test regions
+        false); // custom: mock regions stand in for directory regions, not rider-added ones
   }
 }

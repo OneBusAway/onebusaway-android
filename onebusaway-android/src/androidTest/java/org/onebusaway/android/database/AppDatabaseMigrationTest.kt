@@ -33,8 +33,10 @@ import org.onebusaway.android.SmokeTest
  * before dropping it (#1751) and adds the `surveys.study_id` foreign-key child index (#1739); and that
  * [MIGRATION_5_6] adds `regions.otp_base_graphql_url` defaulting existing rows to OTP1 (#1780); that
  * [MIGRATION_6_7] drops the retired `stop_routes_filter` table; that [MIGRATION_7_8] adds
- * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029); and that [MIGRATION_8_9] adds
- * `regions.supports_otp_graphql_bikeshare` as NULL (reading back as false) for existing rows.
+ * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029); that [MIGRATION_8_9] adds
+ * `regions.supports_otp_graphql_bikeshare` as NULL (reading back as false) for existing rows; and that
+ * [MIGRATION_9_10] adds `regions.custom` as 0, so every region cached before custom regions existed
+ * (#2027) reads back as a directory region and survives no differently than before.
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -227,6 +229,33 @@ class AppDatabaseMigrationTest {
             assertTrue(
                 "pre-existing region should have NULL supports_otp_graphql_bikeshare (reads back false)",
                 c.isNull(0)
+            )
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate9To10_addsCustomColumnDefaultingExistingRegionsToDirectory() {
+        helper.createDatabase(TEST_DB, 9).use { db ->
+            // A pre-existing region, cached before custom regions existed - so a directory region.
+            db.execSQL(
+                "INSERT INTO regions " +
+                    "(_id, name, oba_base_url, siri_base_url, lang, contact_email, " +
+                    "supports_api_discovery, supports_api_realtime, supports_siri_realtime) " +
+                    "VALUES (1, 'Puget Sound', 'https://oba', 'https://siri', 'en_US', 'a@b.c', 1, 1, 1)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 10.json - which is
+        // what pins the NOT NULL DEFAULT 0 to the entity's declared defaultValue.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 10, true, MIGRATION_9_10)
+
+        db.query("SELECT custom FROM regions WHERE _id = 1").use { c ->
+            c.moveToFirst()
+            assertEquals(
+                "a region cached before custom regions existed must read back as a directory region",
+                0,
+                c.getInt(0)
             )
         }
         db.close()

@@ -66,7 +66,8 @@ android.productFlavors {
     newBrandName {
         dimension "brand"
         applicationId "com.newbrandname.android"  // Your unique package name
-        manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider']
+        manifestPlaceholders = [databaseAuthority: applicationId.toString() + '.provider',
+                                deepLinkScheme: "newbrandname"]  // Optional: your own URL scheme
         buildConfigField "int", "ARRIVAL_INFO_STYLE", "0"
         buildConfigField "boolean", "USE_FIXED_REGION", "false"  // or "true" for single-region
         // ... other configuration options

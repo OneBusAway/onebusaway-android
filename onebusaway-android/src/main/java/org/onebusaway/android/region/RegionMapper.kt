@@ -67,7 +67,8 @@ object RegionMapper {
             paymentWarningBody = r.paymentWarningBody,
             sidecarBaseUrl = r.sidecarBaseUrl,
             plausibleAnalyticsServerUrl = r.plausibleAnalyticsServerUrl,
-            umamiAnalytics = umami
+            umamiAnalytics = umami,
+            custom = r.custom > 0
         )
     }
 
@@ -98,7 +99,8 @@ object RegionMapper {
             sidecarBaseUrl = region.sidecarBaseUrl,
             plausibleAnalyticsServerUrl = region.plausibleAnalyticsServerUrl,
             umamiAnalyticsUrl = region.umamiAnalyticsUrl,
-            umamiAnalyticsId = region.umamiAnalyticsId
+            umamiAnalyticsId = region.umamiAnalyticsId,
+            custom = region.custom.toInt()
         ),
         bounds = region.bounds.map {
             RegionBoundRecord(

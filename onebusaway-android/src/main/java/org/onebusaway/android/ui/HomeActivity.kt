@@ -40,10 +40,11 @@ import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.directions.util.TripRequestBuilder
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.MapViewModel
-import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.home.AccessibilityAnalyticsEffect
+import org.onebusaway.android.ui.home.AddRegionDialog
+import org.onebusaway.android.ui.home.AddRegionViewModel
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.HomeActivityActions
 import org.onebusaway.android.ui.home.HomeAnalyticsEffect
@@ -61,6 +62,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.help.HelpAction
 import org.onebusaway.android.ui.home.help.HelpViewModel
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
+import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
@@ -82,10 +84,6 @@ class HomeActivity : AppCompatActivity() {
     // stop id is runtime-dynamic.
     @Inject
     lateinit var arrivalsViewModelFactory: ArrivalsViewModel.Factory
-
-    // The add-region deep link applies custom API URLs through this (rather than reaching Application.get()).
-    @Inject
-    lateinit var regionRepository: RegionRepository
 
     @Inject
     lateinit var reminderRepository: org.onebusaway.android.reminders.ReminderRepository
@@ -117,6 +115,9 @@ class HomeActivity : AppCompatActivity() {
 
     // The help / what's-new / legend dialogs feature module. Activity-scoped.
     private val helpViewModel: HelpViewModel by viewModels()
+
+    /** Holds an incoming `add-region` deep link until the rider confirms it (#2030). */
+    private val addRegionViewModel: AddRegionViewModel by viewModels()
 
     // Trip planner, now hosted on HOME (directions focus) rather than a standalone destination. Activity-
     // scoped so the reactive form + results survive config changes while HOME is on screen; TripPlanViewModel
@@ -167,6 +168,15 @@ class HomeActivity : AppCompatActivity() {
                     )
                 )
                 PaymentWarningDialog(viewModel.paymentWarning, viewModel::dismissPaymentWarning)
+                // The `add-region` consent gate, a sibling of the region picker below: it must overlay
+                // whatever screen the deep link landed on, so it lives at the setContent root too.
+                AddRegionDialog(
+                    pending = addRegionViewModel.pending,
+                    invalid = addRegionViewModel.invalid,
+                    onConfirm = addRegionViewModel::confirm,
+                    onDecline = addRegionViewModel::decline,
+                    onDismissInvalid = addRegionViewModel::dismissInvalid
+                )
                 // The forced region picker, driven reactively off the repository (RegionPickerViewModel). At the
                 // setContent root so its window overlays whatever screen triggered the re-resolve.
                 RegionPickerHost()
@@ -265,20 +275,34 @@ class HomeActivity : AppCompatActivity() {
 
     /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s
-     * pure route mapping so that stays a side-effect-free translator: the `add-region` deep link applies
-     * custom API URLs (clearing the region), and the FCM payload clears the now-fired reminder.
+     * pure route mapping so that stays a side-effect-free translator: an `add-region` deep link is staged
+     * for the rider's confirmation, an unroutable web link goes back to the browser, and the FCM payload
+     * clears the now-fired reminder.
      */
     private fun applyIntentSideEffects(intent: Intent?) {
         if (intent == null) return
         val data = intent.data
-        if (data?.scheme == IntentRouteMapper.ADD_REGION_SCHEME &&
-            data.host == IntentRouteMapper.ADD_REGION_HOST
+        val deepLink = data?.let { ExternalDeepLinks.parse(it) }
+        if (deepLink is ExternalDeepLinks.Target.AddRegion) {
+            // Staged, not applied: adding a region repoints every API the app talks to, and this filter
+            // is BROWSABLE, so any web page can fire the link. The rider confirms it first (#2030) —
+            // AddRegionDialog. Validating the URLs is then the region domain's job.
+            addRegionViewModel.request(deepLink.request)
+            return
+        }
+        // The web intent-filter is necessarily broader than the parser (it can't see the query string,
+        // and pathPattern globs span '/'), so we can be launched for a onebusaway.co URL that routes
+        // nowhere. Give it back to the browser instead of stranding the user on the map. This activity
+        // deliberately stays alive behind it: the same call runs for warm relaunches (LaunchIntentEffect
+        // feeds it both cold and onNewIntent intents), and finishing there would tear down a session the
+        // user is in the middle of. If no browser will take it we fall through and land on home/map.
+        // `deepLink == null` short-circuits the check for anything that already routed — a link with a
+        // destination is by definition not unhandled, so the common case never re-reads the URI.
+        if (deepLink == null &&
+            data != null &&
+            ExternalDeepLinks.isUnhandledWebLink(data) &&
+            ExternalIntents.openInBrowser(this, data)
         ) {
-            // Validating and applying the URLs is the region domain's job; we just parse them off the URI.
-            regionRepository.applyCustomApiUrls(
-                obaUrl = data.getQueryParameter("oba-url"),
-                otpUrl = data.getQueryParameter("otp-url")
-            )
             return
         }
         intent.getStringExtra(ReminderUtils.ARRIVAL_PAYLOAD_KEY)?.let { arrivalJson ->

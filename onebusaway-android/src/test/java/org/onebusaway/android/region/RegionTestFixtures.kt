@@ -37,7 +37,15 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     var refreshResult: RegionStatus = RegionStatus.Unchanged
     var refreshCount = 0
     val chosen = mutableListOf<Region>()
-    val customApiUrls = mutableListOf<Pair<String?, String?>>()
+
+    /** Custom regions added via [addCustomRegion], in order. */
+    val addedCustomRegions = mutableListOf<CustomRegionRequest>()
+
+    /** Custom regions passed to [deleteCustomRegion], in order. */
+    val deletedCustomRegions = mutableListOf<Region>()
+
+    /** When false, [addCustomRegion] reports the request as unusable (the invalid-URL path). */
+    var addCustomRegionSucceeds = true
 
     override suspend fun refresh(): RegionStatus {
         refreshCount++
@@ -50,10 +58,23 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
     override fun clear() = emit(null)
     override fun applyRegion(region: Region?, regionChanged: Boolean) = emit(region)
 
-    override fun applyCustomApiUrls(obaUrl: String?, otpUrl: String?) {
-        customApiUrls.add(obaUrl to otpUrl)
-        // Mirror the real repo's observable effect: a custom OBA endpoint clears the current region.
-        if (obaUrl != null) emit(null)
+    override suspend fun addCustomRegion(request: CustomRegionRequest): Region? {
+        // Reject before recording, mirroring the real repository: an invalid request is never saved, so a
+        // fake that records it first would let a test pass on behaviour production doesn't have.
+        if (!addCustomRegionSucceeds) return null
+        addedCustomRegions.add(request)
+        // Mirror the real repo's observable effect: the new region becomes current.
+        val added = customRegion(FIRST_CUSTOM_REGION_ID, request)
+        emit(added)
+        return added
+    }
+
+    override suspend fun deleteCustomRegion(region: Region) {
+        // The real repository ignores a directory region outright; so must this, or a test could rely on
+        // deleting one working.
+        if (!region.custom) return
+        deletedCustomRegions.add(region)
+        if (_region.value?.id == region.id) emit(null)
     }
 
     fun emit(region: Region?) {
@@ -73,7 +94,8 @@ internal fun region(
     id: Long,
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
-    otpContactEmail: String? = null
+    otpContactEmail: String? = null,
+    custom: Boolean = false
 ): Region = Region(
     id = id,
     name = "Region $id",
@@ -101,5 +123,6 @@ internal fun region(
     paymentWarningBody = null,
     sidecarBaseUrl = null,
     plausibleAnalyticsServerUrl = null,
-    umamiAnalytics = null
+    umamiAnalytics = null,
+    custom = custom
 )

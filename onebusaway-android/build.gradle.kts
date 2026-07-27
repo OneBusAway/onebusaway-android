@@ -60,6 +60,14 @@ android {
 
         // This enables us to tell when we're running unit tests on CI (#1010 for Travis, #1072 for GitHub)
         buildConfigField("String", "CI", "\"" + System.getenv("CI") + "\"")
+
+        // The custom deep-link scheme the app answers to (#2027), consumed by the manifest's
+        // custom-scheme intent-filter. Every brand answers to the cross-platform `onebusaway` scheme,
+        // so this default is all most brands need; a brand with its own scheme (KiedyBus) overrides the
+        // placeholder in its flavor file. Declared ONLY here — BuildConfig.DEEP_LINK_SCHEME is derived
+        // from it in the androidComponents.onVariants block below, so the manifest and the Kotlin side
+        // (ExternalDeepLinks.APP_SCHEMES) cannot disagree about which scheme a brand advertises.
+        manifestPlaceholders["deepLinkScheme"] = "onebusaway"
     }
 
     // Expose the exported Room schemas to instrumented tests so MigrationTestHelper can load them.
@@ -292,6 +300,33 @@ androidComponents {
         variant.buildConfigFields?.put(
             "DATABASE_AUTHORITY",
             BuildConfigField("String", authority, null)
+        )
+    }
+
+    /*
+     * Derive BuildConfig.DEEP_LINK_SCHEME from the variant's `deepLinkScheme` manifest placeholder
+     * (defaulted in defaultConfig, overridden by a brand that has its own scheme). The scheme is
+     * therefore declared exactly ONCE per brand: the manifest's custom-scheme intent-filter and the
+     * Kotlin side that parses those links (org.onebusaway.android.ui.nav.ExternalDeepLinks.APP_SCHEMES)
+     * read the same value by construction, so a brand can't advertise a scheme it then refuses to
+     * parse (#2027).
+     *
+     * Done through the variant API rather than by walking `android.productFlavors` after
+     * `flavors/load-flavors.gradle`, so it carries no ordering dependency: a brand registered by
+     * anything applied later is still covered. `manifestPlaceholders` is a lazy MapProperty and
+     * `buildConfigFields` accepts a Provider, so the placeholder is read once the whole DSL is final.
+     */
+    onVariants(selector().all()) { variant ->
+        val scheme = variant.manifestPlaceholders.getting("deepLinkScheme")
+        variant.buildConfigFields?.put(
+            "DEEP_LINK_SCHEME",
+            scheme.map {
+                BuildConfigField(
+                    "String",
+                    "\"" + it + "\"",
+                    "This brand's custom deep-link scheme (see src/main/AndroidManifest.xml)."
+                )
+            }
         )
     }
 

@@ -49,6 +49,17 @@
         android:glEsVersion="0x00020000"
         android:required="true"/>
 
+    <!-- Package visibility (API 30+): ExternalIntents.openInBrowser enumerates the device's browsers so
+         it can hand back a web deep link this app was launched for but can't route
+         (ExternalDeepLinks.isUnhandledWebLink). Without this it would see no browser and give up. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
     <application
         android:allowBackup="false"
         android:name="org.onebusaway.android.app.Application"
@@ -88,18 +99,35 @@
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-            <!-- The `onebusaway://add-region` deep link (former SettingsActivity VIEW
-                 filter). HomeActivity.applyIntentSideEffects reads the oba-url/otp-url query params,
-                 applies the custom API URL(s), and stays on the home/map path (IntentRouteMapper). -->
+            <!-- Custom-scheme deep links, the same vocabulary OneBusAway for iOS handles
+                 (#2027) — see org.onebusaway.android.ui.nav.ExternalDeepLinks. Note that a filter's
+                 <data> attributes combine as a cross product, so every scheme below matches every host:
+
+                   <scheme>://add-region?name=…&oba-url=… — HomeActivity.applyIntentSideEffects stages
+                       the request for the rider's confirmation (AddRegionDialog); accepting it adds a
+                       custom region and switches to it. Routes nowhere, so the app stays on the
+                       home/map path (the former SettingsActivity VIEW filter).
+                   <scheme>://view-stop?stopID=…&regionID=… — opens that stop's arrivals.
+
+                 `onebusaway` is the cross-platform scheme every brand answers to; ${deepLinkScheme} is
+                 the brand's own (identical for the OBA brand, `kiedybus` for KiedyBus). The placeholder
+                 is the single declaration of that scheme — ExternalDeepLinks.APP_SCHEMES is derived
+                 from it via BuildConfig.DEEP_LINK_SCHEME (see build.gradle.kts).
+
+                 For every brand except KiedyBus the two <data> schemes below therefore resolve to the
+                 same string, and the merged manifest carries `onebusaway` twice. That is intentional and
+                 inert (a filter's scheme set is a set), and it's the price of declaring the brand scheme
+                 in exactly one place: a manifest can't emit an element conditionally. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data
-                    android:host="add-region"
-                    android:scheme="onebusaway" />
+                <data android:scheme="onebusaway" />
+                <data android:scheme="${deepLinkScheme}" />
+                <data android:host="add-region" />
+                <data android:host="view-stop" />
             </intent-filter>
             <meta-data
                 android:name="android.app.searchable"

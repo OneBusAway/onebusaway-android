@@ -92,12 +92,21 @@ interface RegionRepository {
     fun clear()
 
     /**
-     * Applies custom OBA / OTP API URLs (e.g. from the `onebusaway://add-region` deep link), validating
-     * each via [ApiUrlValidator]: a valid [obaUrl] is persisted and the current region is [clear]ed (a
-     * custom OBA endpoint replaces region resolution); a valid [otpUrl] is persisted. Null or invalid
-     * URLs are ignored. The caller is only responsible for parsing the URLs out of the intent.
+     * Persists [request] as a user-added custom region (the `add-region` deep link, #2027) and makes it
+     * current, returning it. Re-adding a server that is already a custom region updates it in place.
+     *
+     * The caller is responsible for having obtained the rider's consent first — this is a silent write
+     * that repoints every API the app talks to, so `AddRegionViewModel` gates it behind a confirmation
+     * dialog. Validating the URLs is this layer's job ([ApiUrlValidator]); an invalid [request] is
+     * rejected with null rather than half-applied.
      */
-    fun applyCustomApiUrls(obaUrl: String?, otpUrl: String?)
+    suspend fun addCustomRegion(request: CustomRegionRequest): Region?
+
+    /**
+     * Removes a user-added custom region. If it was the current region, the app falls back to
+     * resolution ([refresh]) as if none had been set. A directory region is ignored.
+     */
+    suspend fun deleteCustomRegion(region: Region)
 
     /**
      * Applies [region] as the active region directly — the canonical region write (A7): the OBA API
@@ -185,8 +194,10 @@ class DefaultRegionRepository @Inject constructor(
 
     /** Loads the persisted current region (by the saved region-id) from the cache, or null if none. */
     private suspend fun loadPersistedRegion(): Region? {
-        val id = prefs.getLong(R.string.preference_key_region, -1L)
-        if (id < 0) return null
+        // Only NO_REGION_ID means "nothing set". Testing the sign instead would discard every custom
+        // region (#2027), whose ids are <= -2 — the region would survive in the database but never be
+        // restored at cold start. See the id-space comment in CustomRegions.kt.
+        val id = persistedRegionId(prefs.getLong(R.string.preference_key_region, NO_REGION_ID)) ?: return null
         return regionCache.cachedRegion(id)
     }
 
@@ -198,7 +209,7 @@ class DefaultRegionRepository @Inject constructor(
         // (every reader observes [region] or reads its value), plus the persisted region-id pref and the
         // custom-URL clears. The region-derived subsystems (Plausible rebuild, Open311 re-init) react to
         // the published flow, not here.
-        prefs.setLong(R.string.preference_key_region, region?.id ?: -1L)
+        prefs.setLong(R.string.preference_key_region, region?.id ?: NO_REGION_ID)
         if (region != null) {
             prefs.setString(R.string.preference_key_oba_api_url, null) // using a region → clear custom OBA URL
             if (regionChanged && region.otpBaseUrl != null) {
@@ -264,9 +275,13 @@ class DefaultRegionRepository @Inject constructor(
                 applyRegion(status.region, true)
                 status
             }
-            // Same region as before: refresh its contents silently (auto-select only).
+            // Same region as before: refresh its contents silently (auto-select only). Re-applying
+            // `closest` is only a *contents* refresh while it really is the current region — which
+            // Unchanged no longer implies on its own, because a current custom region (#2027) is
+            // Unchanged without ever being the closest (it has no bounds to measure). So match on id;
+            // otherwise this would quietly switch the rider off the server they chose.
             RegionStatus.Unchanged -> {
-                if (autoSelect && closest != null) {
+                if (autoSelect && closest != null && closest.id == current?.id) {
                     applyRegion(closest, false)
                 } else {
                     holder.activated(current) // clear the transient Resolving; region is unchanged
@@ -291,15 +306,30 @@ class DefaultRegionRepository @Inject constructor(
         applyRegion(null, true)
     }
 
-    override fun applyCustomApiUrls(obaUrl: String?, otpUrl: String?) {
-        // Order matters: persist the OBA URL first, then clear() — clear() applies a null region, which
-        // leaves the custom OBA URL pref untouched (applyRegion only clears it when a region is set).
-        if (obaUrl != null && ApiUrlValidator.validateUrl(obaUrl)) {
-            prefs.setString(R.string.preference_key_oba_api_url, obaUrl)
-            clear()
-        }
-        if (otpUrl != null && ApiUrlValidator.validateUrl(otpUrl)) {
-            prefs.setString(R.string.preference_key_otp_api_url, otpUrl)
+    override suspend fun addCustomRegion(request: CustomRegionRequest): Region? = withContext(Dispatchers.IO) {
+        // Reject rather than half-apply: a region whose OBA URL doesn't parse can't serve anything,
+        // and an unusable OTP URL shouldn't drag the whole region down with it — so the OBA URL is a
+        // precondition and a bad OTP URL is simply dropped.
+        if (!ApiUrlValidator.validateUrl(request.obaBaseUrl)) return@withContext null
+        val sanitized = request.copy(
+            otpBaseUrl = request.otpBaseUrl?.takeIf { ApiUrlValidator.validateUrl(it) }
+        )
+        val region = regionCache.saveCustom(sanitized)
+        // A region supersedes the preference-based custom API URLs entirely (applyRegion clears the
+        // OBA one), so the two mechanisms can't both be half-active. See docs/CUSTOM_SERVERS.md.
+        applyRegion(region, true)
+        region
+    }
+
+    override suspend fun deleteCustomRegion(region: Region) = withContext(Dispatchers.IO) {
+        if (!region.custom) return@withContext
+        val wasCurrent = this@DefaultRegionRepository.region.value?.id == region.id
+        regionCache.deleteCustom(region)
+        // Deleting the region you're standing on leaves no region at all; re-resolve so the app lands
+        // somewhere real (auto-select, or the picker) instead of silently pointing at a deleted server.
+        if (wasCurrent) {
+            applyRegion(null, true)
+            refresh()
         }
     }
 

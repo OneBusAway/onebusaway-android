@@ -32,6 +32,7 @@ import org.onebusaway.android.database.MIGRATION_5_6
 import org.onebusaway.android.database.MIGRATION_6_7
 import org.onebusaway.android.database.MIGRATION_7_8
 import org.onebusaway.android.database.MIGRATION_8_9
+import org.onebusaway.android.database.MIGRATION_9_10
 import org.onebusaway.android.database.oba.DefaultImportGate
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
@@ -73,7 +74,8 @@ object DatabaseModule {
         MIGRATION_5_6,
         MIGRATION_6_7,
         MIGRATION_7_8,
-        MIGRATION_8_9
+        MIGRATION_8_9,
+        MIGRATION_9_10
     ).build()
 
     @Provides

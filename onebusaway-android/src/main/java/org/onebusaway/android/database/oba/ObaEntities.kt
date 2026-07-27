@@ -136,7 +136,12 @@ data class RegionRecord(
     val sidecarBaseUrl: String? = null,
     @ColumnInfo(name = "plausible_analytics_server_url") val plausibleAnalyticsServerUrl: String? = null,
     @ColumnInfo(name = "umami_analytics_url") val umamiAnalyticsUrl: String? = null,
-    @ColumnInfo(name = "umami_analytics_id") val umamiAnalyticsId: String? = null
+    @ColumnInfo(name = "umami_analytics_id") val umamiAnalyticsId: String? = null,
+    // Whether this row is a user-added custom region (the `add-region` deep link, #2027) rather than a
+    // row from the OBA regions directory. It is the flag that keeps the row out of the directory
+    // refresh's blast radius: RegionDao.replaceAll deletes only `custom = 0` rows, so a custom region
+    // survives every refresh, and custom ids are negative so they can never collide with directory ids.
+    @ColumnInfo(name = "custom", defaultValue = "0") val custom: Int = 0
 )
 
 @Entity(

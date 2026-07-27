@@ -70,6 +70,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -82,7 +83,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.util.Locale
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
@@ -932,10 +932,12 @@ private fun BoxScope.NodeSlot(size: Dp, content: @Composable BoxScope.() -> Unit
 private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
     Text(
         // Locale-aware uppercasing: the bare uppercase() overload is Locale.ROOT, which gets Turkish
-        // dotted/dotless I wrong on a string we just localized.
+        // dotted/dotless I wrong on a string we just localized. Read through LocalLocale rather than
+        // Locale.getDefault(): the latter isn't observable state, so this Text would keep the old
+        // casing after the rider changes their locale until something else recomposed it.
         text = stringResource(
             if (entry.kind == TerminalKind.START) R.string.trip_plan_leaving else R.string.trip_plan_arriving
-        ).uppercase(Locale.getDefault()),
+        ).uppercase(LocalLocale.current.platformLocale),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

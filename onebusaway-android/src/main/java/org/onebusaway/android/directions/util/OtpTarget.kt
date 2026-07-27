@@ -16,8 +16,8 @@
 package org.onebusaway.android.directions.util
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
@@ -52,7 +52,7 @@ data class OtpTarget(val baseUrl: String?, val usesOtp2: Boolean) {
                 // Host only, never the whole URL: a hand-entered one can carry credentials in its
                 // userinfo or a token in its query, and Log.d is not stripped from release builds.
                 // The host is the part that actually answers "which server am I talking to?".
-                Log.d(TAG, "Using custom OTP API URL set by user (host: ${Uri.parse(customUrl).host ?: "unparsed"}).")
+                Log.d(TAG, "Using custom OTP API URL set by user (host: ${customUrl.toUri().host ?: "unparsed"}).")
                 // No [Region] to carry the setting for a custom server, so the user sets it.
                 return OtpTarget(
                     baseUrl = customUrl,

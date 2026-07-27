@@ -107,12 +107,18 @@ class NearbyRoutesController(
     // route id, not route+direction: every direction of a route shares one colour (#2004).
     private var colors: Map<String, Int> = emptyMap()
 
+    // What the last survey drew, keyed by route id, so the next one can carry over the routes it also
+    // selects instead of re-fetching and re-creating them. Written only by the survey coroutine, like
+    // [colors], and reset in [start] for the same reason.
+    private var drawnLastSurvey: Map<String, NearbyRouteShapes> = emptyMap()
+
     /** Start drawing the hoop layer (the map entered the plain base-map view). */
     fun start() {
         job?.cancel()
-        // Reset the palette here rather than in [stop], so the field is only ever touched by the
-        // loader coroutine that follows (and never races a survey still winding down).
+        // Reset here rather than in [stop], so these are only ever touched by the loader coroutine
+        // that follows (and never race a survey still winding down).
         colors = emptyMap()
+        drawnLastSurvey = emptyMap()
         job = launchLoader()
     }
 
@@ -198,10 +204,22 @@ class NearbyRoutesController(
             return@flow
         }
         val palette = adjacencyRouteColors(routes.map(ObaRoute::id), retained = colors).also { colors = it }
-        val drawn = mutableListOf<NearbyRouteShapes>()
+
+        // Carried over from the last survey: a route this one also selects is already drawn, with the
+        // same (session-immutable) shape, so it neither needs re-fetching nor deserves to be torn down
+        // and re-created. Without this the first emission of every survey is a one-route plan, and the
+        // renderers dutifully reconcile fifteen routes down to one and back up again — a route that
+        // simply stayed put blinks on every pan.
+        val resolved = LinkedHashMap<String, NearbyRouteShapes>()
+        nearbyRoutePlan(routes, drawnLastSurvey).forEach { resolved[it.routeId] = it }
+        if (resolved.isNotEmpty()) {
+            drawnLastSurvey = resolved.toMap()
+            emit(assembleNearbyRoutesPresentation(nearbyRoutePlan(routes, resolved), palette))
+        }
+
         val permits = Semaphore(MAX_CONCURRENT_NEARBY_ROUTE_FETCHES)
         coroutineScope {
-            val fetches = routes.map { route ->
+            val fetches = routes.filterNot { it.id in resolved }.map { route ->
                 async { permits.withPermit { loadShapes(route) } }
             }
             // Awaited in request order, so the layer fills in deterministically rather than in
@@ -210,13 +228,14 @@ class NearbyRoutesController(
             // drawn, so one more route adds one line and one badge rather than rebuilding the layer.
             for (fetch in fetches) {
                 val route = fetch.await() ?: continue
-                drawn += route
-                emit(assembleNearbyRoutesPresentation(drawn, palette))
+                resolved[route.routeId] = route
+                drawnLastSurvey = resolved.toMap()
+                emit(assembleNearbyRoutesPresentation(nearbyRoutePlan(routes, resolved), palette))
             }
         }
         // Every selected route failed to load a shape: clear, rather than stranding the previous
         // survey's routes on screen.
-        if (drawn.isEmpty()) emit(NO_NEARBY_ROUTES)
+        if (resolved.isEmpty()) emit(NO_NEARBY_ROUTES)
     }.flowOn(Dispatchers.Default)
 
     /**

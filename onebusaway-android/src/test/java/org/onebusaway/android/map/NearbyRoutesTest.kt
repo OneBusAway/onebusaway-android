@@ -111,6 +111,48 @@ class NearbyRoutesTest {
         assertEquals(latSpan / Math.cos(Math.toRadians(47.6)), lonSpan, 1e-9)
     }
 
+    // ----- Carrying a survey's routes into the next one -----
+
+    @Test
+    fun `a re-survey carries over the routes it still selects, so they are never torn down`() {
+        val previouslyDrawn = mapOf(
+            "a" to shapes("a"),
+            "b" to shapes("b"),
+            "gone" to shapes("gone")
+        )
+        // The camera moved: "gone" is no longer near, "new" now is.
+        val selected = listOf(route("a"), route("b"), route("new"))
+
+        val carried = nearbyRoutePlan(selected, previouslyDrawn)
+
+        // The first emission of the new survey already holds both surviving routes, so the renderers
+        // reconcile to the genuine delta instead of tearing the layer down to one route and back up.
+        assertEquals(listOf("a", "b"), carried.map { it.routeId })
+    }
+
+    @Test
+    fun `the plan is in ranked order, not the order shapes happened to resolve in`() {
+        val selected = listOf(route("nearest"), route("middle"), route("farthest"))
+        // "farthest" came back first — a cached shape beating two live fetches.
+        val resolved = linkedMapOf(
+            "farthest" to shapes("farthest"),
+            "nearest" to shapes("nearest")
+        )
+
+        val plan = nearbyRoutePlan(selected, resolved)
+
+        // Badge layout is order-priority, so the plan has to follow rank or a route's label would move
+        // depending on network timing.
+        assertEquals(listOf("nearest", "farthest"), plan.map { it.routeId })
+    }
+
+    @Test
+    fun `a resolved route the survey no longer selects is left out`() {
+        val plan = nearbyRoutePlan(listOf(route("kept")), mapOf("kept" to shapes("kept"), "dropped" to shapes("dropped")))
+
+        assertEquals(listOf("kept"), plan.map { it.routeId })
+    }
+
     // ----- The ring's on-screen size (it is drawn in screen space, not as map geometry) -----
 
     @Test
@@ -242,6 +284,12 @@ class NearbyRoutesTest {
     }
 
     private fun ranked(routeId: String, meters: Double) = RankedRoute(route(routeId), meters)
+
+    private fun shapes(routeId: String) = NearbyRouteShapes(
+        routeId,
+        routeId,
+        listOf(listOf(offsetMeters(-100.0, 0.0), offsetMeters(100.0, 0.0)))
+    )
 
     private fun stop(id: String, point: GeoPoint, vararg routeIds: String) = ObaStopElement(
         id = id,

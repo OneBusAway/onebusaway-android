@@ -121,6 +121,19 @@ internal data class NearbyRouteShapes(
     val shapes: List<List<GeoPoint>>
 )
 
+/**
+ * The subset of [routes] whose shapes are in [resolved], in [routes]' own (nearest-first) order.
+ *
+ * Used both to seed a survey from what the previous one drew and to build each emission as shapes land,
+ * so the drawn order is always the ranked one. That matters because badge layout is order-priority —
+ * earlier entries are placed first and never moved — so ordering by rank keeps a route's label where it
+ * was as the plan fills in, instead of letting it depend on which fetch happened to return first.
+ */
+internal fun nearbyRoutePlan(
+    routes: List<ObaRoute>,
+    resolved: Map<String, NearbyRouteShapes>
+): List<NearbyRouteShapes> = routes.mapNotNull { resolved[it.id] }
+
 /** The hoop layer's complete render plan: each qualifying route's full shape, and one badge per route. */
 internal data class NearbyRoutesPresentation(
     val polylines: List<RoutePolyline>,

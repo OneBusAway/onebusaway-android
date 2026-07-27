@@ -148,7 +148,12 @@ public class RegionUtils {
    */
   public static @Nullable Float getDistanceAway(@NonNull Region region, double lat, double lon) {
     Region.Bounds[] bounds = region.getBounds();
-    if (bounds == null) {
+    // No bounds at all means the distance is unknown, not enormous. An *empty* array used to fall
+    // through the loop below and return the Float.MAX_VALUE seed, which is 2.1e35 miles once
+    // converted — the regions list rendered that verbatim, and getClosestRegion's "couldn't measure
+    // the distance" branch was unreachable for such a region. A custom region added by an
+    // `onebusaway://add-region` link (#2027) carries no bounds, which is how that surfaced.
+    if (bounds == null || bounds.length == 0) {
       return null;
     }
     float[] results = new float[1];

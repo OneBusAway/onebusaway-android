@@ -37,13 +37,14 @@ import org.onebusaway.android.util.RegionUtils
  *
  * @param distanceMeters distance from the user's last known location, or null when no
  * location (or no distance) is available
- * @param isCurrent whether this is the currently selected region
+ * @param custom whether the rider added this region themselves (an `onebusaway://add-region` link,
+ * #2027) rather than it coming from the OBA regions directory — the ones that can be removed
  */
 data class RegionItem(
     val id: Long,
     val name: String,
     val distanceMeters: Float?,
-    val isCurrent: Boolean
+    val custom: Boolean = false
 )
 
 /** Provides the list of available OBA regions and handles manual region selection. */
@@ -62,6 +63,13 @@ interface RegionsRepository {
      * @return true if this call disabled automatic region selection (drives the toast)
      */
     suspend fun selectRegion(id: Long): Boolean
+
+    /**
+     * Removes the custom region with the given id. A directory region is ignored — only regions the
+     * rider added themselves can be removed. Removing the current region re-resolves, so the app
+     * lands on a real region rather than pointing at one that no longer exists.
+     */
+    suspend fun removeRegion(id: Long)
 }
 
 /**
@@ -94,13 +102,12 @@ class DefaultRegionsRepository @Inject constructor(
         regionsById = usable.associateBy { it.id }
 
         val location = locationRepository.lastKnownLocation()
-        val currentRegionId = regionRepository.currentRegion()?.id
         val items = usable.map { region ->
             RegionItem(
                 id = region.id,
                 name = region.name,
                 distanceMeters = location?.let { RegionUtils.getDistanceAway(region, it) },
-                isCurrent = region.id == currentRegionId
+                custom = region.custom
             )
         }
         // Sort by distance only when we have a location, like the legacy picker
@@ -130,5 +137,12 @@ class DefaultRegionsRepository @Inject constructor(
             region.name
         )
         return wasAutoSelectEnabled
+    }
+
+    // deleteCustomRegion ignores a directory region itself, so there is nothing to check here beyond
+    // resolving the id. No analytics: the forced-choice picker deletes through the same domain call
+    // without reporting, and an event on only one of two entry points describes nothing.
+    override suspend fun removeRegion(id: Long) = withContext(Dispatchers.IO) {
+        regionsById[id]?.let { regionRepository.deleteCustomRegion(it) } ?: Unit
     }
 }

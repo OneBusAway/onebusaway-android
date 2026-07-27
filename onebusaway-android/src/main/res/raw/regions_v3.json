@@ -8,7 +8,11 @@
         "id": 0,
         "regionName": "Tampa Bay",
         "sidecarBaseUrl": "https://sidecar.onebusaway.org",
-        "plausibleAnalyticsServerUrl": "https://analytics.tampa.onebusawaycloud.com/api",
+        "plausibleAnalyticsServerUrl": null,
+        "umamiAnalytics": {
+          "url": "https://analytics.onebusawaycloud.com",
+          "id": "34c436d4-9df1-49ca-81a5-6a0dc0e2bfb1"
+        },
         "obaBaseUrl": "https://api.tampa.onebusawaycloud.com/",
         "siriBaseUrl": null,
         "bounds": [
@@ -58,6 +62,10 @@
         "regionName": "Puget Sound",
         "sidecarBaseUrl": "https://sidecar.onebusaway.org",
         "plausibleAnalyticsServerUrl": null,
+        "umamiAnalytics": {
+          "url": "https://analytics.onebusawaycloud.com",
+          "id": "1678b0f2-e7e7-46bf-9027-d609895f8d58"
+        },
         "obaBaseUrl": "https://api.pugetsound.onebusaway.org/",
         "siriBaseUrl": "https://pugetsound.onebusaway.org/onebusaway-api-webapp/siri/",
         "bounds": [
@@ -129,7 +137,7 @@
         "stopInfoUrl": null,
         "open311Servers": [],
         "otpBaseUrl": "https://otp.prod.sound.obaweb.org/otp/routers/default/",
-        "otpBaseGraphqlUrl": "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp",
+        "otpBaseGraphqlUrl": "https://sound-transit-otp.ibi-transit.com/otp/",
         "otpContactEmail": "otp-pugetsound@onebusaway.org",
         "supportsEmbeddedSocial": false,
         "supportsOtpBikeshare": false,
@@ -225,6 +233,10 @@
         "regionName": "San Diego",
         "sidecarBaseUrl": "https://sidecar.onebusaway.org",
         "plausibleAnalyticsServerUrl": null,
+        "umamiAnalytics": {
+          "url": "https://analytics.onebusawaycloud.com",
+          "id": "0f8e9d22-7ba2-4a3d-babf-796f4c9ed8d4"
+        },
         "obaBaseUrl": "https://realtime.sdmts.com/api/",
         "siriBaseUrl": null,
         "bounds": [
@@ -358,7 +370,11 @@
         "id": 16,
         "regionName": "Davis, CA",
         "sidecarBaseUrl": "https://sidecar.onebusaway.org",
-        "plausibleAnalyticsServerUrl": "https://analytics.unitrans.onebusawaycloud.com/api",
+        "plausibleAnalyticsServerUrl": null,
+        "umamiAnalytics": {
+          "url": "https://analytics.onebusawaycloud.com",
+          "id": "f934d27d-f349-4308-8917-6b4e35d340b4"
+        },
         "obaBaseUrl": "https://api.unitrans.onebusawaycloud.com",
         "siriBaseUrl": null,
         "bounds": [

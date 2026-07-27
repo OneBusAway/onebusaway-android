@@ -290,6 +290,25 @@ The app supports multiple OBA server deployments. Region configuration:
 - ObaRegionsTask handles async region discovery
 - Regions API auto-selects server based on device location
 
+### The bundled regions file is a live config source, not a stale copy (#2019)
+
+`onebusaway-android/src/main/res/raw/regions_v3.json` is the **first-launch and offline** source of
+region config (`RegionsClient.parseBundledRegions`), not a checked-in convenience copy of
+`https://regions.onebusaway.org/regions-v3.json`. A device that acts before its first directory
+fetch lands reads the bundled values, so any field the app branches on that has drifted there is a
+real behaviour difference — for exactly those users, and invisible to every device that has already
+refreshed its region cache.
+
+- **`tools/check-regions-drift.py`** diffs the two on the fields the app branches on (endpoints,
+  usability gates, OTP protocol + bikeshare flags, analytics config) plus region add/remove, using
+  *effective* values so an omitted key that decodes to the same default isn't reported. It runs in
+  the nightly `regions-drift` job (network, so not on PRs) and **fails on drift**.
+- When it reports drift, sync the bundled file and update `RegionsDecodeTest`, the one test that
+  pins a bundled value. It pins that value against itself and by construction cannot see directory
+  drift; that's the checker's job. Keep it the only such pin.
+- Branching on a **new** region field means adding it to `CHECKED_FIELDS` in that script, with the
+  default `RegionDto` decodes for it.
+
 ## White-Label / Branding
 
 The app supports white-labeling via Gradle product flavors. See `docs/REBRANDING.md` for full documentation.

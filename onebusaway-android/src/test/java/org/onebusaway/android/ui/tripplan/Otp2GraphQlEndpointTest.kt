@@ -27,14 +27,13 @@ class Otp2GraphQlEndpointTest {
 
     @Test
     fun appendsGtfsV1ToOtpBase() {
-        // The Puget Sound OTP2 server this wires up (#1780) — base verified to serve the OTP root,
-        // base + /gtfs/v1 verified to serve the GraphQL endpoint.
         assertEquals(
-            "https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp/gtfs/v1",
-            otp2GraphQlEndpoint("https://peq6qe6fei.execute-api.us-west-2.amazonaws.com/prod/otp")
+            "https://example.opentripplanner.org/otp/gtfs/v1",
+            otp2GraphQlEndpoint("https://example.opentripplanner.org/otp")
         )
     }
 
+    /** The directory publishes some OTP2 bases with a trailing slash, Puget Sound's among them. */
     @Test
     fun toleratesTrailingSlashWithoutDoublingIt() {
         assertEquals(

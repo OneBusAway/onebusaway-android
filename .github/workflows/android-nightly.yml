@@ -22,6 +22,14 @@ name: Android Nightly
 #    to run nightly and catches lint regressions (including `abortOnError` NewApi/minSdk violations
 #    the Kotlin warnings gate can't see) that would otherwise sit invisible until someone runs lint
 #    by hand. See issue #1901.
+#
+# 4. regions-drift — src/main/res/raw/regions_v3.json is the app's first-launch and offline region
+#    config, so a field that has drifted away from the live regions directory is a real behaviour
+#    difference for users who haven't refreshed their region cache yet — and invisible to everyone
+#    who has. Puget Sound's otpBaseGraphqlUrl silently drifted that way, and nothing compared the
+#    two files (the unit test pins the bundled value against itself). This leg diffs them on the
+#    fields the app branches on. It lives here rather than on the PR/push workflow because it needs
+#    network, and it fails on drift. See tools/check-regions-drift.py and issue #2019.
 
 on:
   schedule:
@@ -88,6 +96,23 @@ jobs:
           name: lint-report-obaGoogleDebug
           path: onebusaway-android/build/reports/lint-results-obaGoogleDebug.html
           retention-days: 14
+
+  regions-drift:
+    # No JDK, no Gradle, no emulator — it reads two JSON files. Independent of the other legs, so it
+    # runs in parallel and finishes in seconds. See the header for why this exists.
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          # This job only reads files and fetches a public URL; it never pushes, so don't leave the
+          # token in git config.
+          persist-credentials: false
+
+      # No report artifact: unlike the lint leg's HTML, this step's whole output is the plain-text
+      # report, and it's already in the job log.
+      - name: Bundled regions file vs. live regions directory
+        run: tools/check-regions-drift.py
 
   smoke-api23:
     # Boot the minSdk floor: install obaGoogleDebug on an API 23 emulator and run the @SmokeTest

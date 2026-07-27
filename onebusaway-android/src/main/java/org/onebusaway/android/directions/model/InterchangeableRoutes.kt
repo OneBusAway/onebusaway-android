@@ -56,15 +56,18 @@ import org.onebusaway.android.util.ROUTE_NAME_ORDER
  */
 data class InterchangeableRoute(
     val routeId: String,
-    val shortName: String?,
+    /**
+     * The name to show for this route: its short name, else its long name — never its id, for the
+     * reason spelled out on [routeDisplayShortName]. Non-null by construction: a route that publishes
+     * neither is not built at all, because "board any of these" is only actionable if the rider can
+     * tell which vehicle is which.
+     */
+    val displayName: String,
     val routeColor: String?,
     val agencyId: String?,
     val agencyName: String?,
     val headsign: String?
-) {
-    /** The name to show for this route, falling back to the OTP id when it has no short name. */
-    val displayName: String get() = shortName?.takeIf { it.isNotBlank() } ?: routeId
-}
+)
 
 /**
  * The interchangeable routes for each of [TripItinerary.legs], **index-aligned to that list** so a
@@ -89,10 +92,12 @@ private fun TripItinerary.interchangeableRoutesForLeg(index: Int): List<Intercha
         .mapValues { (_, trips) -> trips.maxBy { it.duration } }
         .values
         .filter { it.duration <= budget }
-        .map { candidate ->
+        // Resolving the name here rather than carrying its ingredients means a route the drawer can't
+        // name is never built — see [InterchangeableRoute.displayName].
+        .mapNotNull { candidate ->
             InterchangeableRoute(
                 routeId = requireNotNull(candidate.routeId),
-                shortName = candidate.routeShortName,
+                displayName = candidate.routeShortName ?: candidate.routeLongName ?: return@mapNotNull null,
                 routeColor = candidate.routeColor,
                 agencyId = candidate.agencyId,
                 agencyName = candidate.agencyName,

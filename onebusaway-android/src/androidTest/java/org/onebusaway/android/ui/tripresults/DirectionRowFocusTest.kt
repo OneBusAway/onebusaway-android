@@ -81,9 +81,12 @@ class DirectionRowFocusTest {
         alight = RouteStopRef("1_600", "600", "Rainier & Alaska", alightPoint)
     )
 
+    private val transitTitle = "Route 8 Line"
+
     private val transit = TripLogEntry.Transit(
         routeShortName = "8",
-        routeDisplayName = "Route 8 Line",
+        routeDisplayName = transitTitle,
+        mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
         boardTime = ServerTime(4 * 60_000L),
@@ -152,7 +155,7 @@ class DirectionRowFocusTest {
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()
 
         // Tapping the transit header highlights the route and reveals the stops.
-        composeRule.onNodeWithText(transit.routeDisplayName).performClick()
+        composeRule.onNodeWithText(transitTitle).performClick()
         assertEquals("1_100", captured?.first?.routeId)
         assertEquals(transitLegPoints, captured?.second)
         composeRule.onNodeWithText(midStopName).assertExists()
@@ -170,7 +173,7 @@ class DirectionRowFocusTest {
         // the row, which is the actual control (an IconButton would be a second, competing target).
         composeRule.onNodeWithText(walkAction)
             .assert(hasClickLabel(context.getString(R.string.trip_plan_expand_leg)))
-        composeRule.onNodeWithText(transit.routeDisplayName)
+        composeRule.onNodeWithText(transitTitle)
             .assert(hasClickLabel(context.getString(R.string.trip_plan_expand_leg)))
 
         // …and once expanded it offers the inverse.

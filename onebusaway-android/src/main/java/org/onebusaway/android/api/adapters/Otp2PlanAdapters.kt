@@ -59,8 +59,11 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     mode = mode?.rawValue.toEnum<TripMode>(),
     route = null, // No OTP2 equivalent of OTP1's flat display-string `route` field.
     routeId = route?.routeFields?.gtfsId,
-    routeShortName = route?.routeFields?.shortName,
-    routeLongName = route?.routeFields?.longName,
+    // Blank→null, same as the OTP1 adapter: GTFS routinely publishes an empty `route_short_name`
+    // (every Washington State Ferries route does), so absence arrives as both null and "".
+    // Normalizing here leaves the domain one representation of "this route has no short name".
+    routeShortName = route?.routeFields?.shortName?.ifBlank { null },
+    routeLongName = route?.routeFields?.longName?.ifBlank { null },
     routeColor = route?.routeFields?.color,
     agencyId = route?.routeFields?.agency?.gtfsId,
     agencyName = route?.routeFields?.agency?.name,
@@ -93,7 +96,8 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
 
 private fun PlanQuery.NextLeg.toTripLegAlternative(): TripLegAlternative = TripLegAlternative(
     routeId = route?.alternativeRouteFields?.gtfsId,
-    routeShortName = route?.alternativeRouteFields?.shortName,
+    routeShortName = route?.alternativeRouteFields?.shortName?.ifBlank { null },
+    routeLongName = route?.alternativeRouteFields?.longName?.ifBlank { null },
     routeColor = route?.alternativeRouteFields?.color,
     agencyId = route?.alternativeRouteFields?.agency?.gtfsId,
     agencyName = route?.alternativeRouteFields?.agency?.name,

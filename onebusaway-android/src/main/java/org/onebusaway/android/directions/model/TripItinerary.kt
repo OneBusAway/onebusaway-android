@@ -121,6 +121,9 @@ data class TripLeg(
 data class TripLegAlternative(
     val routeId: String? = null,
     val routeShortName: String? = null,
+    // Carried for the same reason the planned leg carries it: a route with no short name has to name
+    // itself somehow, and its id is not a name (see [routeDisplayShortName]).
+    val routeLongName: String? = null,
     val routeColor: String? = null,
     val agencyId: String? = null,
     val agencyName: String? = null,
@@ -157,12 +160,36 @@ data class TripStep(
 )
 
 /**
- * The leg's display short name: its route short name, else the OTP1 flat route string, else the route
- * id; null when the leg carries none. As a #662 work-around this deliberately never uses the trip short
- * name. Shared by the directions generator's itinerary title and the interline badge/label logic so the
- * fallback lives in one place.
+ * How a leg names its route, in the three forms the directions UI asks for. They differ only in which
+ * field wins, so they live together — reading one means reading the ordering it *didn't* choose:
+ *
+ *  - [routeDisplayShortName] — the badge. Short name only; null when there isn't one.
+ *  - [routeDisplayLabel] — prose and compact titles. Short name, else the long one.
+ *  - [routeDisplayName] — a row title that already has the badge beside it, so it leads with the long
+ *    name and falls back to the short one.
+ *
+ * None of them falls back to the route **id**. A GTFS id is an identifier, not a name: badging a
+ * Washington State Ferries run (`route_short_name` is empty; the route is named only
+ * "Seattle - Bremerton") as its OTP2 gtfsId `95:74` puts a string on screen that reads like a route
+ * number the rider could look for and will never find. A route with no short name simply has no badge;
+ * callers draw none and use one of the other two. The id fallback was near-harmless on OTP1, where the
+ * flat [TripLeg.route] display string usually caught the gap first; OTP2 has no equivalent field (its
+ * adapter sets `route = null`), which promoted the id from last resort to first.
+ *
+ * All three test null alone, not blankness: the adapters normalize a blank wire name to null on the way
+ * in, so absence has one representation by the time it reaches here.
  */
-fun TripLeg.routeDisplayShortName(): String? = listOf(routeShortName, route, routeId).firstOrNull { !it.isNullOrEmpty() }
+fun TripLeg.routeDisplayShortName(): String? = routeShortName ?: route
+
+/**
+ * The leg's route named as compactly as it can be — for prose and titles, where something has to be
+ * said, as opposed to [routeDisplayShortName], whose absence a badge can express by not being drawn.
+ * As a #662 work-around this deliberately never uses the trip short name.
+ */
+fun TripLeg.routeDisplayLabel(): String? = routeDisplayShortName() ?: routeLongName
+
+/** The fuller name for a row that shows the badge separately, so the long form leads. */
+fun TripLeg.routeDisplayName(): String? = routeLongName ?: routeDisplayShortName()
 
 @Serializable
 data class TripLegGeometry(val points: String? = null, val length: Int = 0)

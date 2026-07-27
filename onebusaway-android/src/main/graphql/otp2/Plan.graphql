@@ -18,8 +18,9 @@ fragment PlaceFields on Place {
 
 # RouteFields is the planned leg's route. AlternativeRouteFields is the deliberately smaller set an
 # alternative leg needs (below): a plan asks for alternatives on every transit leg of every itinerary,
-# so each field there is paid for many times over — it carries only what names the route on a badge
-# and what resolves it onto an OBA id, with no long name or agency timezone.
+# so each field there is paid for many times over — it carries only what names the route and what
+# resolves it onto an OBA id. `longName` is part of naming it: a route that publishes no short name
+# has nothing else to be called, and its id is not a name. Agency `timezone` stays the omission.
 fragment RouteFields on Route {
     gtfsId
     shortName
@@ -31,6 +32,7 @@ fragment RouteFields on Route {
 fragment AlternativeRouteFields on Route {
     gtfsId
     shortName
+    longName
     color
     agency { gtfsId name }
 }

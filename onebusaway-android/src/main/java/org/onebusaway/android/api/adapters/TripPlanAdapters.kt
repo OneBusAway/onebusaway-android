@@ -55,10 +55,13 @@ fun OtpItineraryDto.toTripItinerary(): TripItinerary = TripItinerary(
 
 fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
     mode = mode.toEnum<TripMode>(),
-    route = route,
+    // Blank→null: GTFS routinely publishes an empty `route_short_name` (every Washington State
+    // Ferries route does), so absence arrives as both null and "". Normalizing here leaves the domain
+    // one representation, instead of every consumer re-deciding whether "" counts as a name.
+    route = route?.ifBlank { null },
     routeId = routeId,
-    routeShortName = routeShortName,
-    routeLongName = routeLongName,
+    routeShortName = routeShortName?.ifBlank { null },
+    routeLongName = routeLongName?.ifBlank { null },
     routeColor = routeColor,
     agencyName = agencyName,
     headsign = headsign,

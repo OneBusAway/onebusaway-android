@@ -68,13 +68,15 @@ class DirectionRowAlternativeRoutesTest {
             listOf(
                 RouteBadge("1 Line", 0xFF00A651.toInt()),
                 RouteBadge("2 Line", 0xFF0075C4.toInt())
-            )
+            ),
+            TransitMode.RAIL
         )
     )
 
     private val ride = TripLogEntry.Transit(
         routeShortName = "2 Line",
         routeDisplayName = "2 Line",
+        mode = TransitMode.BUS,
         routeColorHex = "0075C4",
         headsign = "Downtown Redmond",
         boardTime = ServerTime(2 * 60_000L),
@@ -89,7 +91,7 @@ class DirectionRowAlternativeRoutesTest {
     private fun state(routeLeg: RouteLegRef) = TripResultsUiState.Success(
         options = listOf(
             ItineraryOption(
-                mode = ModeSummary.Routes(listOf(routeLeg.badge)),
+                mode = ModeSummary.Routes(listOfNotNull(routeLeg.badge)),
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
                 endTime = ServerTime(32 * 60_000L)
@@ -124,7 +126,7 @@ class DirectionRowAlternativeRoutesTest {
     fun rideWithoutInterchangeableRoutesBadgesOnlyItsOwnRoute() {
         val soloRef = interlinedLegRef.copy(
             alternatives = emptyList(),
-            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())))
+            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())), TransitMode.RAIL)
         )
         composeRule.setContent { TripResultsList(state = state(soloRef)) }
 
@@ -148,7 +150,7 @@ class DirectionRowAlternativeRoutesTest {
             routeColor = "#0075C4"
         ).plannedBadge()
 
-        assertEquals("2 Line", badge.shortName)
-        assertEquals(0xFF0075C4.toInt(), badge.routeColor)
+        assertEquals("2 Line", badge?.shortName)
+        assertEquals(0xFF0075C4.toInt(), badge?.routeColor)
     }
 }

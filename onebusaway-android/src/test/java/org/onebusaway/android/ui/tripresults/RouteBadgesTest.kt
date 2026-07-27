@@ -36,7 +36,8 @@ class RouteBadgesTest {
     fun joinsPlannedAndAlternativeRoutesInNaturalOrder() {
         val badge = legBadge(
             planned = RouteBadge("2 Line", null),
-            alternatives = listOf(RouteBadge("1 Line", null))
+            alternatives = listOf(RouteBadge("1 Line", null)),
+            mode = TransitMode.RAIL
         )
 
         assertEquals(listOf("1 Line", "2 Line"), badge.routes.map { it.shortName })
@@ -46,8 +47,8 @@ class RouteBadgesTest {
     /** …and the mirror-image plan produces the identical badge. */
     @Test
     fun badgeIsTheSameWhicheverRouteThePlanPicked() {
-        val plannedTwo = legBadge(RouteBadge("2 Line", null), listOf(RouteBadge("1 Line", null)))
-        val plannedOne = legBadge(RouteBadge("1 Line", null), listOf(RouteBadge("2 Line", null)))
+        val plannedTwo = legBadge(RouteBadge("2 Line", null), listOf(RouteBadge("1 Line", null)), TransitMode.RAIL)
+        val plannedOne = legBadge(RouteBadge("1 Line", null), listOf(RouteBadge("2 Line", null)), TransitMode.RAIL)
 
         assertEquals(plannedTwo, plannedOne)
     }
@@ -56,7 +57,8 @@ class RouteBadgesTest {
     fun naturalOrderSortsRouteNumbersNumerically() {
         val badge = legBadge(
             planned = RouteBadge("40", null),
-            alternatives = listOf(RouteBadge("550", null), RouteBadge("8", null))
+            alternatives = listOf(RouteBadge("550", null), RouteBadge("8", null)),
+            mode = TransitMode.BUS
         )
 
         assertEquals(listOf("8", "40", "550"), badge.routes.map { it.shortName })
@@ -65,7 +67,7 @@ class RouteBadgesTest {
     /** A leg with nothing interchangeable is a plain one-route badge. */
     @Test
     fun singleRouteLegIsNotInterchangeable() {
-        val badge = legBadge(planned = RouteBadge("8", null), alternatives = emptyList())
+        val badge = legBadge(planned = RouteBadge("8", null), alternatives = emptyList(), mode = TransitMode.BUS)
 
         assertEquals(listOf("8"), badge.routes.map { it.shortName })
         assertFalse(badge.isInterchangeable)
@@ -74,7 +76,7 @@ class RouteBadgesTest {
     /** A route can't appear twice in one badge, however it reached the list. */
     @Test
     fun dropsADuplicateOfThePlannedRoute() {
-        val badge = legBadge(RouteBadge("8", null), listOf(RouteBadge("8", null), RouteBadge("7", null)))
+        val badge = legBadge(RouteBadge("8", null), listOf(RouteBadge("8", null), RouteBadge("7", null)), TransitMode.BUS)
 
         assertEquals(listOf("7", "8"), badge.routes.map { it.shortName })
     }
@@ -90,16 +92,46 @@ class RouteBadgesTest {
             routeLongName = "Rainier Ave"
         ).plannedBadge()
 
-        assertEquals("8", badge.shortName)
+        assertEquals("8", badge?.shortName)
     }
 
-    /** No short name (some feeds only name a route long-form): fall back to the route/id, no color. */
+    /**
+     * A route that publishes no short name badges its long name — never its GTFS id, which is an
+     * identifier and not a name. Washington State Ferries' "Seattle - Bremerton" is the real case: it
+     * used to badge as its OTP2 gtfsId "95:74", which reads like a route number the rider could look
+     * for. (The renderer caps the roundel's width; the name it holds is this one, in full.)
+     */
     @Test
-    fun legBadgeFallsBackToTheRouteIdWhenUnnamed() {
-        val badge = TripLeg(mode = TripMode.BUS, routeId = "1_100").plannedBadge()
+    fun legWithNoShortNameBadgesItsLongNameNotItsRouteId() {
+        val badge = TripLeg(
+            mode = TripMode.FERRY,
+            routeId = "95:74",
+            routeLongName = "Seattle - Bremerton"
+        ).plannedBadge()
 
-        assertEquals("1_100", badge.shortName)
-        assertNull(badge.routeColor)
+        assertEquals("Seattle - Bremerton", badge?.shortName)
+    }
+
+    /** A route that names itself in no way at all has no badge; the card falls back to its mode. */
+    @Test
+    fun legWithNoNameAtAllYieldsAnUnnamedBadgeCarryingItsMode() {
+        val leg = TripLeg(mode = TripMode.FERRY, routeId = "95:74")
+
+        assertNull(leg.plannedBadge())
+
+        val badge = legBadge(leg, emptyList())
+
+        assertTrue(badge.routes.isEmpty())
+        assertTrue(badge.isUnnamed)
+        assertEquals(TransitMode.FERRY, badge.mode)
+    }
+
+    /** OTP1 legs carry a flat display string instead of a short name; it still badges. */
+    @Test
+    fun legBadgeUsesTheOtp1FlatRouteStringWhenThereIsNoShortName() {
+        val badge = TripLeg(mode = TripMode.BUS, routeId = "1_100", route = "8").plannedBadge()
+
+        assertEquals("8", badge?.shortName)
     }
 
     /** A leg's badge is its planned route joined by the routes ruled interchangeable with it. */
@@ -107,22 +139,25 @@ class RouteBadgesTest {
     fun legBadgeJoinsTheLegsRouteWithItsInterchangeableOnes() {
         val leg = TripLeg(mode = TripMode.BUS, routeId = "1_100", routeShortName = "8")
 
-        val badge = legBadge(leg, listOf(interchangeableRoute(shortName = "7")))
+        val badge = legBadge(leg, listOf(interchangeableRoute("7")))
 
         assertEquals(listOf("7", "8"), badge.routes.map { it.shortName })
     }
 
-    /** An interchangeable route badges the same way the planned one does; an unnamed one falls back
-     *  to its route id, so a badge segment is never blank. */
+    /**
+     * An interchangeable route badges the same way the planned one does — and names itself by its long
+     * name, not its id, when it publishes no short name. (A route with neither is dropped upstream by
+     * `interchangeableRoutes()`, so it never reaches a badge at all.)
+     */
     @Test
     fun interchangeableRouteBadgesItsDisplayName() {
-        assertEquals("1 Line", interchangeableRoute(shortName = "1 Line").badge().shortName)
-        assertEquals("40:100479", interchangeableRoute(shortName = null).badge().shortName)
+        assertEquals("1 Line", interchangeableRoute("1 Line").badge().shortName)
+        assertEquals("Seattle - Bremerton", interchangeableRoute("Seattle - Bremerton").badge().shortName)
     }
 
-    private fun interchangeableRoute(shortName: String?) = InterchangeableRoute(
+    private fun interchangeableRoute(displayName: String) = InterchangeableRoute(
         routeId = "40:100479",
-        shortName = shortName,
+        displayName = displayName,
         routeColor = null,
         agencyId = "40:1",
         agencyName = "Sound Transit",

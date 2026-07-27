@@ -28,7 +28,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
-import org.onebusaway.android.directions.model.routeDisplayShortName
+import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.time.ServerTime
 
 /**
@@ -376,12 +376,14 @@ class DirectionsGenerator(
                 }
             }
 
-            val tokens = ArrayList<String?>()
+            val tokens = ArrayList<String>()
 
             for (leg in legs) {
                 val mode = leg.mode
                 if (mode?.isTransit == true) {
-                    tokens.add(leg.routeDisplayShortName())
+                    // The label, not the badge name: a title has to say something for a route that
+                    // publishes no short name. A leg that names nothing at all is left out.
+                    leg.routeDisplayLabel()?.let(tokens::add)
                 } else {
                     if (mode == TripMode.BICYCLE) {
                         tokens.add(applicationContext.getString(R.string.transit_directions_bikeshare_label))
@@ -525,6 +527,11 @@ class DirectionsGenerator(
 
         /**
          * Gets the mode icon for the given mode
+         *
+         * Serves the legacy flat [Direction] list only. The Compose trip log has its own narrowed
+         * mapping (`TransitMode`/`transitModeIcon`), which is deliberately not the same: it is total
+         * (no `-1` miss), and it doesn't draw a GONDOLA — an aerial lift — as a boat. Don't reconcile
+         * the two by copying this one's answers onto that one.
          *
          * @return the mode icon for the given mode
          */

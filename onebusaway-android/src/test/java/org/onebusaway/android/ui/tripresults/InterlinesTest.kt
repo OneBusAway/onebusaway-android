@@ -129,7 +129,7 @@ class InterlinesTest {
 
     private fun interchangeable(shortName: String) = InterchangeableRoute(
         routeId = "route_$shortName",
-        shortName = shortName,
+        displayName = shortName,
         routeColor = null,
         agencyId = null,
         agencyName = null,

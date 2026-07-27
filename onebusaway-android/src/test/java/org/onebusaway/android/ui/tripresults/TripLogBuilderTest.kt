@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.tripresults
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.Direction
@@ -287,7 +288,7 @@ class TripLogBuilderTest {
             transit.rideEvents.map {
                 when (it) {
                     is RideEvent.Stop -> "stop:${it.stop.name}"
-                    is RideEvent.Transition -> "transition:${it.transition.routeShortName}"
+                    is RideEvent.Transition -> "transition:${it.transition.routeLabel}"
                 }
             }
         )
@@ -312,6 +313,44 @@ class TripLogBuilderTest {
 
         assertTrue("a self-interline shows no seam row", transit.rideEvents.none { it is RideEvent.Transition })
         assertEquals(2, transit.stopCount)
+    }
+
+    /**
+     * A ferry leg reaches the renderer as a ferry. The leg's mode used to stop here — the timeline drew
+     * a bus for every ride — so a Washington State Ferries crossing was a bus on a boat's schedule.
+     */
+    @Test
+    fun transitEntry_carriesTheLegsMode() {
+        val ferryLeg = transitLeg.copy(mode = TripMode.FERRY)
+
+        val transit = TripLogBuilder
+            .build(listOf(ferryLeg), listOf(boardDir, alightDir), listOf(transitRef))
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(TransitMode.FERRY, transit.mode)
+    }
+
+    /**
+     * A route with no short name reaches the renderer with no badge name — the cue to draw no roundel —
+     * but still names itself in full, so the row has a title. Its GTFS id never appears.
+     */
+    @Test
+    fun transitEntry_leavesTheBadgeNameAbsentForAnUnnamedRoute() {
+        val ferryLeg = transitLeg.copy(
+            mode = TripMode.FERRY,
+            routeId = "95:74",
+            routeShortName = null,
+            routeLongName = "Seattle - Bremerton"
+        )
+
+        val transit = TripLogBuilder
+            .build(listOf(ferryLeg), listOf(boardDir, alightDir), listOf(transitRef))
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertNull(transit.routeShortName)
+        assertEquals("Seattle - Bremerton", transit.routeDisplayName)
     }
 
     @Test

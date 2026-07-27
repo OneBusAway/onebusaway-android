@@ -116,6 +116,7 @@ class Otp2PlanDecodeTest {
                         alternativeRouteFields = AlternativeRouteFields(
                             gtfsId = "1_7",
                             shortName = "7",
+                            longName = "Rainier Beach - Downtown",
                             color = "FF0000",
                             agency = AlternativeRouteFields.Agency(gtfsId = "1_1", name = "Metro")
                         )

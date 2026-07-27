@@ -43,6 +43,7 @@ import argparse
 import json
 import sys
 import traceback
+import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ElementTree
 from pathlib import Path
@@ -124,6 +125,12 @@ def regions_directory_url(resource_path):
             url = (string.text or "").strip()
             if not url:
                 raise CheckError(f"<string name=\"{REGIONS_URL_RESOURCE_NAME}\"> in {resource_path} is empty")
+            # urlopen honours `file:`, so a resource pointing at a local path would be "fetched"
+            # into a comparison of the bundled file against itself -- reporting No drift forever.
+            # Refuse anything that isn't a real fetch, for the same reason check_fields_exist
+            # refuses a stale field name: this check failing loudly beats it rotting green.
+            if urllib.parse.urlparse(url).scheme not in ("http", "https"):
+                raise CheckError(f"{REGIONS_URL_RESOURCE_NAME} is not an http(s) URL: {url}")
             return url
     raise CheckError(f"no <string name=\"{REGIONS_URL_RESOURCE_NAME}\"> in {resource_path}")
 

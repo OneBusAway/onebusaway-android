@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripItinerary
@@ -110,6 +111,23 @@ class InterlinesTest {
         val badges = Interlines.routeBadges(legs, listOf(listOf(interchangeable("2 Line"))))
 
         assertEquals(listOf(listOf("1 Line", "2 Line")), badges.map { badge -> badge.routes.map { it.shortName } })
+    }
+
+    /**
+     * The transition sentence names the route the vehicle becomes: by its short name, else its long one
+     * — and null, not blank, when it has neither, so the renderer can say "continues on another route"
+     * rather than "the vehicle becomes ".
+     */
+    @Test
+    fun transitionRouteLabel_prefersShortNameThenLongNameThenNothing() {
+        assertEquals("12", Interlines.transitionRouteLabel(transit("12")))
+        assertEquals(
+            "Seattle - Bremerton",
+            Interlines.transitionRouteLabel(
+                TripLeg(mode = TripMode.FERRY, routeId = "95:74", routeLongName = "Seattle - Bremerton")
+            )
+        )
+        assertNull(Interlines.transitionRouteLabel(TripLeg(mode = TripMode.FERRY, routeId = "95:74")))
     }
 
     /**

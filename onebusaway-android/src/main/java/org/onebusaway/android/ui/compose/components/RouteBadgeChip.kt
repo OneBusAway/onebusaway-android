@@ -179,6 +179,10 @@ private fun BadgeContent(
  * trip planner (`[2] [1 Line/2 Line]`), so they have to be bounded the same way. The plain chip's other
  * callers keep their un-outlined roundel. [scale] enlarges everything proportionally, as on the plain
  * chip.
+ *
+ * [maxWidth] applies only to that single-route case — see the note at the joined `Row` below.
+ * [leadingIcon] heads the whole badge rather than each name in it: interchangeable routes are one ride
+ * on one mode, so a glyph per segment would read as several legs.
  */
 @Composable
 fun RouteBadgeChip(
@@ -195,7 +199,12 @@ fun RouteBadgeChip(
         RouteBadgeChip(route.shortName, route.routeColor, outlined, scale, maxWidth, leadingIcon, leadingIconDescription)
         return
     }
-    Row(outlined.widthIn(max = maxWidth).clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
+    // Deliberately uncapped, unlike the plain chip: this Row's children are unweighted, so a bounded max
+    // would be consumed by the first segment and leave the later ones measured at zero width — a route
+    // silently missing from a badge that means "any of these will do" is far worse than a wide chip, and
+    // the option-card row it sits in already scrolls horizontally. [maxWidth] therefore only reaches the
+    // single-route delegation above, which is the case it exists for.
+    Row(outlined.clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
         routes.forEachIndexed { index, route ->
             val (container, content) = rememberRouteBadgeColors(route.routeColor)
             BadgeContent(

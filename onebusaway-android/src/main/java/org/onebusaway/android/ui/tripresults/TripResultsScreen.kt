@@ -1104,17 +1104,18 @@ private fun ColumnScope.StopContent(stop: LogStop) {
  */
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
-    val routeLabel = buildString {
-        append(transition.routeLabel.orEmpty())
-        if (!transition.headsign.isNullOrEmpty()) {
-            append(" ")
-            append(stringResource(R.string.step_by_step_transit_connector_headsign))
-            append(" ")
-            append(transition.headsign)
-        }
-    }.trim()
+    val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
+    // "the vehicle becomes <X>" needs a subject. With a route name, X is that name (plus "to
+    // <headsign>" when there is one). With no name the headsign stands in alone — never behind the "to"
+    // connector, which would read "becomes to Bremerton" — and with neither, the sentence drops the
+    // subject entirely rather than trailing off into a blank.
+    val becomes = when (val route = transition.routeLabel) {
+        null -> headsign
+        else -> headsign?.let { "$route ${stringResource(R.string.step_by_step_transit_connector_headsign)} $it" } ?: route
+    }
     Text(
-        text = stringResource(R.string.step_by_step_transit_interline, routeLabel),
+        text = becomes?.let { stringResource(R.string.step_by_step_transit_interline, it) }
+            ?: stringResource(R.string.step_by_step_transit_interline_unknown_route),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface
@@ -1311,7 +1312,7 @@ private fun TripResultsPreview() {
                 // A Washington State Ferries run: no route short name, so no badge — the long name is
                 // the row's title and the boat glyph rides the spine.
                 TripLogEntry.Transit(
-                    routeShortName = "",
+                    routeShortName = null,
                     routeDisplayName = "Seattle - Bremerton",
                     mode = TransitMode.FERRY,
                     routeColorHex = null,

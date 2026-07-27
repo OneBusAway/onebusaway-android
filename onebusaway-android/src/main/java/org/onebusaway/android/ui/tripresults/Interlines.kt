@@ -98,8 +98,11 @@ internal object Interlines {
      * How a stay-aboard transition names the route the vehicle becomes ("stay on board for X"). The
      * prose label rather than the badge name — the sentence needs a name even where a badge would be
      * omitted — so a route with only a long name reads "stay on board for Seattle - Bremerton".
+     *
+     * Null when the route names itself in no way at all, so the renderer can reach for the headsign (or
+     * a generic) rather than building a sentence around a blank.
      */
-    fun transitionRouteLabel(leg: TripLeg): String = leg.routeDisplayLabel().orEmpty()
+    fun transitionRouteLabel(leg: TripLeg): String? = leg.routeDisplayLabel()
 }
 
 /**

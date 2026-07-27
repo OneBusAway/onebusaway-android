@@ -76,7 +76,7 @@ class DirectionRowAlternativeRoutesTest {
     private val ride = TripLogEntry.Transit(
         routeShortName = "2 Line",
         routeDisplayName = "2 Line",
-        mode = TransitMode.BUS,
+        mode = TransitMode.RAIL,
         routeColorHex = "0075C4",
         headsign = "Downtown Redmond",
         boardTime = ServerTime(2 * 60_000L),

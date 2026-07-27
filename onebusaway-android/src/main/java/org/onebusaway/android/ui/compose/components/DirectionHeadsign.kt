@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -43,16 +44,35 @@ import org.onebusaway.android.ui.icons.AppIcons
  */
 @Composable
 internal fun DirectionHeadsign(direction: String, modifier: Modifier = Modifier) {
+    DirectionLine(AppIcons.ArrowForward, direction, modifier)
+}
+
+/**
+ * The same line for a route shown whole, with a double-headed arrow in place of the one-way "toward"
+ * arrow: the whole route runs both ways and heads toward no single destination, so the one-way glyph
+ * would misdescribe it. Used for the map route header's "All directions".
+ */
+@Composable
+internal fun DirectionBothWays(label: String, modifier: Modifier = Modifier) {
+    DirectionLine(MaterialSymbols.BothDirections, label, modifier)
+}
+
+/**
+ * The shared layout + type treatment of a direction line, so the one-way and both-ways variants stay
+ * set identically (and start at the same x) rather than drifting apart.
+ */
+@Composable
+private fun DirectionLine(icon: ImageVector, text: String, modifier: Modifier) {
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Icon(
-            imageVector = AppIcons.ArrowForward,
+            imageVector = icon,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp)
         )
         Spacer(Modifier.width(4.dp))
         Text(
-            text = direction,
+            text = text,
             style = MaterialTheme.typography.bodyMedium,
             fontFamily = FontFamily.Monospace,
             letterSpacing = (-0.1).sp,

@@ -59,7 +59,7 @@ import org.onebusaway.android.util.getRouteDisplayName
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
  * agency, or a loading state while the route loads. Published while a route is shown and rendered
  * as a Compose overlay by the home screen. Null when not in route mode. [directions] +
- * [currentDirectionId] drive the header's switch-direction affordance (empty/size-1 = no switch).
+ * [currentDirectionId] drive the header's direction menu (empty/size-1 = nothing to choose, no menu).
  */
 data class RouteHeader(
     val loading: Boolean,
@@ -559,13 +559,15 @@ class MapViewModel @Inject constructor(
     fun restoreViewport(viewport: MapViewport) = mapHost.restoreViewport(viewport)
 
     /**
-     * Switch the shown route to another of its directions (one of the header's [RouteHeader.directions]
-     * ids) via the header's swap affordance. Re-filters the stops + vehicles in place (no reload /
-     * reframe). On a real switch, persists the choice and retires the launch anchor
-     * ([MapParams.ROUTE_DIRECTION_STOP_ID]) so a process-death restore honors this explicit selection
-     * rather than re-resolving the anchor stop.
+     * Switch the shown route to one of its directions (an id from the header's
+     * [RouteHeader.directions]), or to the whole route when [directionId] is null, via the header's
+     * direction menu. Re-filters the stops + vehicles in place (no reload / reframe). On a real switch,
+     * persists the choice and retires the launch anchor ([MapParams.ROUTE_DIRECTION_STOP_ID]) so a
+     * process-death restore honors this explicit selection rather than re-resolving the anchor stop —
+     * which matters most for the whole-route choice, where the anchor would otherwise re-narrow the map
+     * to the very direction the user just left.
      */
-    fun selectRouteDirection(directionId: Int) {
+    fun selectRouteDirection(directionId: Int?) {
         if (!routeController.selectDirection(directionId)) return
         savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID] = null
         savedStateHandle[MapParams.ROUTE_DIRECTION_ID] = directionId

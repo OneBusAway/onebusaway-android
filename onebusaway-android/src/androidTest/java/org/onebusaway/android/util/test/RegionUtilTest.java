@@ -95,7 +95,10 @@ public class RegionUtilTest {
             "https://api.example.com",
             null,
             new Region.Bounds[] {},
-            null,
+            // Empty, not null: `open311Servers` is a non-null Kotlin Array, so a null here fails the
+            // constructor's checkNotNullParameter intrinsic at runtime — invisible to javac. Same
+            // trap #2022 fixed in the fixed-region flavor.
+            new Region.Open311Server[] {},
             null,
             "",
             true,

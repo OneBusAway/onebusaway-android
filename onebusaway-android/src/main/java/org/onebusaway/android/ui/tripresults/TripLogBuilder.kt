@@ -20,6 +20,7 @@ import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.decodedPoints
+import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.geoPointOrNull
@@ -166,8 +167,9 @@ object TripLogBuilder {
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
         return TripLogEntry.Transit(
-            routeShortName = leg.routeDisplayShortName().orEmpty(),
+            routeShortName = leg.routeDisplayShortName(),
             routeDisplayName = leg.routeDisplayName(),
+            mode = leg.mode.transitMode(),
             routeColorHex = leg.routeColor,
             headsign = leg.headsign ?: routeLeg.headsign,
             boardTime = leg.startTime,
@@ -216,9 +218,6 @@ object TripLogBuilder {
 
     /** True for a walk leg flanked by transit on both sides — a transfer, vs. a first/last-mile walk. */
     private fun List<TripLeg>.isTransferAt(i: Int): Boolean = getOrNull(i - 1)?.mode?.isTransit == true && getOrNull(i + 1)?.mode?.isTransit == true
-
-    /** The route's fuller display name for the board title (long name, else the shared short-name fallback). */
-    private fun TripLeg.routeDisplayName(): String = routeLongName?.takeIf { it.isNotBlank() } ?: routeDisplayShortName().orEmpty()
 
     /** Real-time board state from the leg's [TripLeg.realTime] flag + [TripLeg.departureDelay]. */
     private fun TripLeg.realtimeState(): RealtimeState {

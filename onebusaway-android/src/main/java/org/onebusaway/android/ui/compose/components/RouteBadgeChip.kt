@@ -16,16 +16,21 @@
 package org.onebusaway.android.ui.compose.components
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.clip
@@ -33,7 +38,10 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** One route on a badge: its short name and (nullable) GTFS color as an ARGB int. */
@@ -52,6 +60,12 @@ private const val SLASH_SLANT_RATIO = 0.5f
 /** The width of the badge's outline and of the line where two routes meet inside it. */
 private val BADGE_LINE_WIDTH = 1.dp
 
+/** The mode glyph's size, and its gap from the name — sized to sit level with the name's cap height
+ *  rather than tower over it. Both scale with the chip. */
+private val BADGE_ICON_SIZE = 11.dp
+
+private val BADGE_ICON_GAP = 2.dp
+
 /**
  * The badge's outline, and the line where two of its routes meet: black in either theme. The chips
  * themselves are pale in light mode and deep in dark mode ([rememberRouteBadgeColors]) but always
@@ -66,10 +80,55 @@ private val BADGE_LINE_COLOR = Color.Black
  * where several routes sit in a row (the stop-focus header's subordinate routes, the trip-plan option
  * cards), as opposed to the large square [LineBadge]. [scale] enlarges the whole chip (text + padding)
  * proportionally — e.g. the directions board badge uses 1.5×.
+ *
+ * [maxWidth] caps the chip and ellipsizes the name past it. Unconstrained by default, since a route
+ * short name is a handful of characters; it's for callers that badge a route by its *long* name because
+ * it publishes no short one ("Seattle - Bremerton"), which would otherwise blow out a row of roundels.
+ *
+ * [leadingIcon] puts a glyph inside the chip, ahead of the name — the mode the route is ridden on, which
+ * a route number alone never says. [leadingIconDescription] labels it for TalkBack; the mode is real
+ * information, not decoration, so it is worth announcing.
  */
 @Composable
-fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Modifier, scale: Float = 1f) {
+fun RouteBadgeChip(
+    shortName: String,
+    routeColor: Int?,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+    maxWidth: Dp = Dp.Unspecified,
+    leadingIcon: Int? = null,
+    leadingIconDescription: String? = null
+) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
+    Surface(
+        modifier = modifier.widthIn(max = maxWidth),
+        color = container,
+        contentColor = content,
+        shape = BADGE_SHAPE
+    ) {
+        BadgeContent(
+            name = shortName,
+            contentColor = content,
+            scale = scale,
+            horizontalPadding = 3.dp * scale,
+            leadingIcon = leadingIcon,
+            leadingIconDescription = leadingIconDescription
+        )
+    }
+}
+
+/** The badge's inner row — an optional mode glyph, then the route's name. Shared by the plain chip and
+ *  by each segment of the joined one, so the two can't drift on metrics or truncation. */
+@Composable
+private fun BadgeContent(
+    name: String,
+    contentColor: Color,
+    scale: Float,
+    horizontalPadding: Dp,
+    leadingIcon: Int?,
+    leadingIconDescription: String?,
+    modifier: Modifier = Modifier
+) {
     val base = MaterialTheme.typography.labelMedium
     // Scale every text metric together — the line box with the glyphs (labelMedium's 16sp line height
     // would clip a 1.5x-scaled name) and the tracking with both. TextUnit's own `* Float` keeps each
@@ -79,18 +138,26 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
         lineHeight = base.lineHeight * scale,
         letterSpacing = base.letterSpacing * scale
     )
-    Surface(
-        modifier = modifier,
-        color = container,
-        contentColor = content,
-        shape = BADGE_SHAPE
+    Row(
+        modifier = modifier.padding(horizontal = horizontalPadding, vertical = 1.dp * scale),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BADGE_ICON_GAP * scale)
     ) {
+        if (leadingIcon != null) {
+            Icon(
+                painter = painterResource(leadingIcon),
+                contentDescription = leadingIconDescription,
+                tint = contentColor,
+                modifier = Modifier.size(BADGE_ICON_SIZE * scale)
+            )
+        }
         Text(
-            text = shortName,
+            text = name,
             style = style,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 3.dp * scale, vertical = 1.dp * scale)
+            overflow = TextOverflow.Ellipsis,
+            color = contentColor
         )
     }
 }
@@ -112,32 +179,45 @@ fun RouteBadgeChip(shortName: String, routeColor: Int?, modifier: Modifier = Mod
  * trip planner (`[2] [1 Line/2 Line]`), so they have to be bounded the same way. The plain chip's other
  * callers keep their un-outlined roundel. [scale] enlarges everything proportionally, as on the plain
  * chip.
+ *
+ * [maxWidth] applies only to that single-route case — see the note at the joined `Row` below.
+ * [leadingIcon] heads the whole badge rather than each name in it: interchangeable routes are one ride
+ * on one mode, so a glyph per segment would read as several legs.
  */
 @Composable
-fun RouteBadgeChip(routes: List<RouteBadge>, modifier: Modifier = Modifier, scale: Float = 1f) {
+fun RouteBadgeChip(
+    routes: List<RouteBadge>,
+    modifier: Modifier = Modifier,
+    scale: Float = 1f,
+    maxWidth: Dp = Dp.Unspecified,
+    leadingIcon: Int? = null,
+    leadingIconDescription: String? = null
+) {
     val outlined = modifier.border(BADGE_LINE_WIDTH, BADGE_LINE_COLOR, BADGE_SHAPE)
     if (routes.size == 1) {
         val route = routes.first()
-        RouteBadgeChip(route.shortName, route.routeColor, outlined, scale)
+        RouteBadgeChip(route.shortName, route.routeColor, outlined, scale, maxWidth, leadingIcon, leadingIconDescription)
         return
     }
-    val base = MaterialTheme.typography.labelMedium
-    val style = base.copy(
-        fontSize = base.fontSize * scale,
-        lineHeight = base.lineHeight * scale,
-        letterSpacing = base.letterSpacing * scale
-    )
+    // Deliberately uncapped, unlike the plain chip: this Row's children are unweighted, so a bounded max
+    // would be consumed by the first segment and leave the later ones measured at zero width — a route
+    // silently missing from a badge that means "any of these will do" is far worse than a wide chip, and
+    // the option-card row it sits in already scrolls horizontally. [maxWidth] therefore only reaches the
+    // single-route delegation above, which is the case it exists for.
     Row(outlined.clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
         routes.forEachIndexed { index, route ->
             val (container, content) = rememberRouteBadgeColors(route.routeColor)
-            Text(
-                text = route.shortName,
-                style = style,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                color = content,
+            BadgeContent(
+                name = route.shortName,
+                contentColor = content,
+                scale = scale,
                 // Wider than the plain chip's padding: the meeting line leans through the segment edges,
                 // so the extra breathing room keeps a name clear of it and of the neighbouring color.
+                horizontalPadding = 5.dp * scale,
+                // The glyph heads the badge, not each name in it: these routes are interchangeable, so
+                // they are one ride on one mode, and a glyph per segment would read as several.
+                leadingIcon = leadingIcon.takeIf { index == 0 },
+                leadingIconDescription = leadingIconDescription,
                 modifier = Modifier
                     .fillMaxHeight()
                     // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
@@ -164,7 +244,6 @@ fun RouteBadgeChip(routes: List<RouteBadge>, modifier: Modifier = Modifier, scal
                             }
                         }
                     }
-                    .padding(horizontal = 5.dp * scale, vertical = 1.dp * scale)
             )
         }
     }

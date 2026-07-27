@@ -57,6 +57,7 @@ class TripLogRowsTest {
     private fun transit(events: List<RideEvent>) = TripLogEntry.Transit(
         routeShortName = "8",
         routeDisplayName = "Route 8",
+        mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
         boardTime = ServerTime(4 * 60_000L),

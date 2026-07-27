@@ -201,6 +201,44 @@ class InterchangeableRoutesTest {
         assertEquals(emptyList<String>(), itinerary(leg).interchangeableRoutes()[0].map { it.displayName })
     }
 
+    /**
+     * A qualifying route with no short name names itself by its long name — never by its GTFS id, which
+     * would put "95:74" on a badge (see [routeDisplayShortName]).
+     */
+    @Test
+    fun alternativeWithNoShortNameIsNamedByItsLongName() {
+        val leg = transitLeg(
+            routeId = "1_100",
+            rideTime = 20.minutes,
+            alternatives = listOf(
+                alternative(
+                    routeId = "95:74",
+                    shortName = null,
+                    rideTime = 20.minutes,
+                    longName = "Seattle - Bremerton"
+                )
+            )
+        )
+
+        assertEquals(listOf("Seattle - Bremerton"), itinerary(leg).interchangeableRoutes()[0].map { it.displayName })
+    }
+
+    /**
+     * A route the drawer can name in no way at all is dropped rather than offered: "board any of these"
+     * is only actionable if the rider can tell the vehicles apart, and a nameless badge segment tells
+     * them nothing.
+     */
+    @Test
+    fun alternativeWithNoNameAtAllIsNotOffered() {
+        val leg = transitLeg(
+            routeId = "1_100",
+            rideTime = 20.minutes,
+            alternatives = listOf(alternative(routeId = "95:74", shortName = null, rideTime = 20.minutes))
+        )
+
+        assertEquals(emptyList<String>(), itinerary(leg).interchangeableRoutes()[0].map { it.displayName })
+    }
+
     private fun itinerary(vararg legs: TripLeg) = TripItinerary(startTime = t0, legs = legs.toList())
 
     private fun transitLeg(
@@ -223,13 +261,15 @@ class InterchangeableRoutesTest {
 
     private fun alternative(
         routeId: String,
-        shortName: String,
+        shortName: String?,
         rideTime: Duration,
+        longName: String? = null,
         fromStopId: String = BOARD_STOP,
         toStopId: String = ALIGHT_STOP
     ) = TripLegAlternative(
         routeId = routeId,
         routeShortName = shortName,
+        routeLongName = longName,
         duration = rideTime,
         fromStopId = fromStopId,
         toStopId = toStopId

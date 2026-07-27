@@ -123,7 +123,7 @@ class DefaultTripResultsRepository @Inject constructor(
             val leader = legs[chain.leaderIndex]
             val transitions = chain.transitionLegIndices.associateWith { j ->
                 InterlineTransition(
-                    routeShortName = Interlines.badgeShortName(legs[j]),
+                    routeLabel = Interlines.transitionRouteLabel(legs[j]),
                     headsign = legs[j].headsign,
                     stop = legs[j].from.resolveStop(legs[j])
                 )

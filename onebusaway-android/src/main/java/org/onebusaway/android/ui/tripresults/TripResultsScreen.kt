@@ -169,6 +169,15 @@ fun TripResultsHeader(
     }
 }
 
+/**
+ * How wide an option card's route roundel may grow before its name ellipsizes. Only bites on a route
+ * badged by its long name (one publishing no short name — see [plannedBadge]); a route number plus its
+ * mode glyph never comes near it. Sized to show enough of a long name to recognize it —
+ * "Seattle - Brem…" — without letting one leg crowd the rest off the card, with room for the glyph the
+ * badge now leads with. Tune here.
+ */
+private val OPTION_BADGE_MAX_WIDTH = 110.dp
+
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
@@ -201,14 +210,33 @@ private fun OptionCard(
                 // One roundel per leg. The gap between legs is deliberately wide, so "two legs" and
                 // "one leg, two interchangeable routes" (which is one seamless chip) can't read as the
                 // same thing (#2010).
-                is ModeSummary.Routes -> Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    mode.badges.forEach { RouteBadgeChip(it.routes) }
+                is ModeSummary.Routes -> Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Every badge leads with the mode it's ridden on, which a route number never says on
+                    // its own. A route publishing no short name badges its long name, capped to
+                    // [OPTION_BADGE_MAX_WIDTH] and ellipsized so one wordy name can't crowd the
+                    // other legs off the card; only a route that names itself in no way at all is left
+                    // with the bare glyph.
+                    mode.badges.forEach { badge ->
+                        val glyph = transitModeIcon(badge.mode)
+                        val glyphLabel = stringResource(transitModeLabel(badge.mode))
+                        if (badge.isUnnamed) {
+                            ModeGlyph(glyph, glyphLabel)
+                        } else {
+                            RouteBadgeChip(
+                                badge.routes,
+                                maxWidth = OPTION_BADGE_MAX_WIDTH,
+                                leadingIcon = glyph,
+                                leadingIconDescription = glyphLabel
+                            )
+                        }
+                    }
                 }
-                ModeSummary.Walk -> Icon(
-                    painterResource(R.drawable.ic_directions_walk),
-                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
-                    // Sized to the route-badge row height so a walk-only card's first line matches.
-                    modifier = Modifier.size(20.dp)
+                ModeSummary.Walk -> ModeGlyph(
+                    R.drawable.ic_directions_walk,
+                    stringResource(R.string.step_by_step_non_transit_mode_walk_action)
                 )
                 is ModeSummary.Label -> Text(
                     text = mode.text,
@@ -779,6 +807,41 @@ private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {
 }
 
 /**
+ * An option card's mode glyph, standing in for a route badge — the walk-only trip's walking figure, or
+ * the vehicle a leg with no route name is ridden on. Sized to the route-badge row height so a card's
+ * first line lines up whichever form it takes, and always labelled: with no badge beside it, this glyph
+ * is the only thing naming that leg.
+ */
+@Composable
+private fun ModeGlyph(iconRes: Int, contentDescription: String) {
+    Icon(painterResource(iconRes), contentDescription = contentDescription, modifier = Modifier.size(20.dp))
+}
+
+/**
+ * The glyph for a transit leg — its Board node on the spine, and the option card's stand-in for a leg
+ * whose route publishes no name. Total over [TransitMode] (which is already narrowed to the art the app
+ * ships), so unlike [streetModeIcon] there is no null case: a ride always draws something.
+ */
+private fun transitModeIcon(mode: TransitMode): Int = when (mode) {
+    TransitMode.BUS -> R.drawable.ic_bus
+    TransitMode.RAIL -> R.drawable.ic_directions_railway
+    TransitMode.SUBWAY -> R.drawable.ic_directions_subway
+    TransitMode.TRAM -> R.drawable.ic_tram
+    // ic_directions_boat, not the byte-identical ic_ferry: it's drawn to match the weight of the
+    // walk/railway/subway glyphs the spine already uses.
+    TransitMode.FERRY -> R.drawable.ic_directions_boat
+}
+
+/** What to call [mode] aloud, for a glyph standing in for a route name. */
+private fun transitModeLabel(mode: TransitMode): Int = when (mode) {
+    TransitMode.BUS -> R.string.step_by_step_transit_mode_bus
+    TransitMode.RAIL -> R.string.step_by_step_transit_mode_rail
+    TransitMode.SUBWAY -> R.string.step_by_step_transit_mode_subway
+    TransitMode.TRAM -> R.string.step_by_step_transit_mode_tram
+    TransitMode.FERRY -> R.string.step_by_step_transit_mode_ferry
+}
+
+/**
  * The node graphic for a row, positioned so its centre sits on the spine's colour-flip point. Route-
  * coloured nodes use [nodeColor] (the leg's colour, already parsed once in [flattenLog]).
  */
@@ -800,7 +863,7 @@ private fun BoxScope.LogNode(content: RowContent, nodeColors: RouteLineColors) {
         is RowContent.WalkHeader ->
             RingNode(24.dp, 1.5.dp, muted.copy(alpha = 0.6f), iconRes = streetModeIcon(content.entry.mode))
         is RowContent.BoardHeader ->
-            FilledNode(26.dp, nodeColor, R.drawable.ic_bus, onNode, 16.dp, shape = RoundedCornerShape(8.dp))
+            FilledNode(26.dp, nodeColor, transitModeIcon(content.entry.mode), onNode, 16.dp, shape = RoundedCornerShape(8.dp))
         is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
         is RowContent.Stop -> RingNode(11.dp, 2.dp, nodeColor)
         is RowContent.Transition ->
@@ -962,18 +1025,20 @@ private fun ColumnScope.BoardContent(
             .clickable(onClickLabel = expandLabel(model), onClick = onToggle)
     ) {
         // A ride the rider may take on more than one route (#2010) badges them all as one joined
-        // roundel; an ordinary ride badges its own route exactly as before.
-        val badge = entry.routeLeg.badge
+        // roundel; an ordinary ride badges its own route exactly as before. A route that publishes no
+        // short name gets no roundel and leads with its long name — see routeDisplayShortName.
+        val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
+        val title = entry.routeDisplayName?.takeIf { it != entry.routeShortName }
         Row(verticalAlignment = Alignment.CenterVertically) {
-            if (badge.isInterchangeable) {
-                RouteBadgeChip(badge.routes, scale = 1.5f)
-            } else {
-                RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
+            when {
+                joined != null -> RouteBadgeChip(joined.routes, scale = 1.5f)
+                entry.routeShortName != null ->
+                    RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
             }
-            if (entry.routeDisplayName.isNotEmpty() && entry.routeDisplayName != entry.routeShortName) {
-                Spacer(Modifier.width(8.dp))
+            if (joined != null || entry.routeShortName != null) Spacer(Modifier.width(8.dp))
+            if (title != null) {
                 Text(
-                    text = entry.routeDisplayName,
+                    text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -993,7 +1058,7 @@ private fun ColumnScope.BoardContent(
         }
         // What the joined badge means: any of those routes will do, so board the first to arrive. Each
         // one's own ETA strip sits under the board stop below (#2010).
-        if (badge.isInterchangeable) {
+        if (joined != null) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodyMedium,
@@ -1039,17 +1104,18 @@ private fun ColumnScope.StopContent(stop: LogStop) {
  */
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
-    val routeLabel = buildString {
-        append(transition.routeShortName.orEmpty())
-        if (!transition.headsign.isNullOrEmpty()) {
-            append(" ")
-            append(stringResource(R.string.step_by_step_transit_connector_headsign))
-            append(" ")
-            append(transition.headsign)
-        }
-    }.trim()
+    val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
+    // "the vehicle becomes <X>" needs a subject. With a route name, X is that name (plus "to
+    // <headsign>" when there is one). With no name the headsign stands in alone — never behind the "to"
+    // connector, which would read "becomes to Bremerton" — and with neither, the sentence drops the
+    // subject entirely rather than trailing off into a blank.
+    val becomes = when (val route = transition.routeLabel) {
+        null -> headsign
+        else -> headsign?.let { "$route ${stringResource(R.string.step_by_step_transit_connector_headsign)} $it" } ?: route
+    }
     Text(
-        text = stringResource(R.string.step_by_step_transit_interline, routeLabel),
+        text = becomes?.let { stringResource(R.string.step_by_step_transit_interline, it) }
+            ?: stringResource(R.string.step_by_step_transit_interline_unknown_route),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface
@@ -1177,12 +1243,13 @@ private fun TripResultsPreview() {
                     // A bus leg, then an interchangeable rail pair drawn as one joined badge (#2010).
                     mode = ModeSummary.Routes(
                         listOf(
-                            LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt()))),
+                            LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt())), TransitMode.BUS),
                             LegBadge(
                                 listOf(
                                     RouteBadge("1 Line", 0xFF00A651.toInt()),
                                     RouteBadge("2 Line", 0xFF0075C4.toInt())
-                                )
+                                ),
+                                TransitMode.RAIL
                             )
                         )
                     ),
@@ -1192,8 +1259,13 @@ private fun TripResultsPreview() {
                     walkDistanceMeters = 800.0
                 ),
                 ItineraryOption(
+                    // The second leg is a ferry, which publishes no route short name — so it badges its
+                    // long name, capped and ellipsized.
                     mode = ModeSummary.Routes(
-                        listOf(LegBadge(listOf(RouteBadge("48", null))), LegBadge(listOf(RouteBadge("11", null))))
+                        listOf(
+                            LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS),
+                            LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY)
+                        )
                     ),
                     durationMinutes = 41,
                     startTime = ServerTime(0L),
@@ -1218,6 +1290,7 @@ private fun TripResultsPreview() {
                 TripLogEntry.Transit(
                     routeShortName = "8",
                     routeDisplayName = "Route 8",
+                    mode = TransitMode.BUS,
                     routeColorHex = "1B6EF3",
                     headsign = "Rainier Beach",
                     boardTime = ServerTime(4 * 60_000L),
@@ -1236,10 +1309,30 @@ private fun TripResultsPreview() {
                         alight = RouteStopRef("1_600", "600", "Rainier & Alaska", null)
                     )
                 ),
+                // A Washington State Ferries run: no route short name, so no badge — the long name is
+                // the row's title and the boat glyph rides the spine.
+                TripLogEntry.Transit(
+                    routeShortName = null,
+                    routeDisplayName = "Seattle - Bremerton",
+                    mode = TransitMode.FERRY,
+                    routeColorHex = null,
+                    headsign = "Bremerton",
+                    boardTime = ServerTime(24 * 60_000L),
+                    exitTime = ServerTime(84 * 60_000L),
+                    durationMinutes = 60,
+                    realtime = RealtimeState.Unknown,
+                    rideEvents = emptyList(),
+                    routeLeg = RouteLegRef(
+                        routeId = "95_74",
+                        headsign = "Bremerton",
+                        board = RouteStopRef("95_1", null, "Seattle Ferry Terminal", null),
+                        alight = RouteStopRef("95_2", null, "Bremerton Ferry Terminal", null)
+                    )
+                ),
                 TripLogEntry.Terminal(
                     kind = TerminalKind.ARRIVE,
-                    time = ServerTime(32 * 60_000L),
-                    place = "Rainier & Alaska"
+                    time = ServerTime(90 * 60_000L),
+                    place = "Bremerton"
                 )
             )
         )

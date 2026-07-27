@@ -116,6 +116,7 @@ class Otp2PlanDecodeTest {
                         alternativeRouteFields = AlternativeRouteFields(
                             gtfsId = "1_7",
                             shortName = "7",
+                            longName = "Rainier Beach - Downtown",
                             color = "FF0000",
                             agency = AlternativeRouteFields.Agency(gtfsId = "1_1", name = "Metro")
                         )
@@ -191,6 +192,7 @@ class Otp2PlanDecodeTest {
         val alternative = bus.alternatives[0]
         assertEquals("1_7", alternative.routeId)
         assertEquals("7", alternative.routeShortName)
+        assertEquals("Rainier Beach - Downtown", alternative.routeLongName)
         assertEquals("FF0000", alternative.routeColor)
         assertEquals("1_1", alternative.agencyId)
         assertEquals("Metro", alternative.agencyName)

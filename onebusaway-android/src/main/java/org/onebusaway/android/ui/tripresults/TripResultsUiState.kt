@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
@@ -59,10 +60,17 @@ sealed interface ModeSummary {
  *
  * [routes] is in natural route-name order rather than plan order, so a corridor reads the same way
  * whichever of its lines the planner happened to pick.
+ *
+ * [routes] is **empty** for a leg whose route publishes no short name — there is no roundel to draw, so
+ * the option card falls back to the leg's [mode] glyph rather than an empty chip or a silently missing
+ * leg (a ferry ride still has to appear on the card).
  */
-data class LegBadge(val routes: List<RouteBadge>) {
+data class LegBadge(val routes: List<RouteBadge>, val mode: TransitMode) {
     /** Whether this leg has more than one route to ride, i.e. the chip is a joined/multicolor one. */
     val isInterchangeable: Boolean get() = routes.size > 1
+
+    /** True when the leg names no route at all, and can only be shown as its mode. */
+    val isUnnamed: Boolean get() = routes.isEmpty()
 }
 
 /**
@@ -120,10 +128,16 @@ sealed interface TripLogEntry {
      * [routeLeg]: tapping the leg highlights the route ([routeLeg] + [legPoints]) and the Board node
      * shows that stop's live ETA strip. [routeColorHex] is the raw GTFS colour (nullable); the renderer
      * re-tones it for the badge and the spine, falling back to a neutral transit colour.
+     *
+     * [routeShortName] is the badge name and is **null when the route publishes none** — the renderer
+     * then draws no roundel and leads with [routeDisplayName]; see
+     * [routeDisplayShortName][org.onebusaway.android.directions.model.routeDisplayShortName]. [mode] is
+     * what the rider boards, and picks the Board node's glyph — a ferry leg must not read as a bus.
      */
     data class Transit(
-        val routeShortName: String,
-        val routeDisplayName: String,
+        val routeShortName: String?,
+        val routeDisplayName: String?,
+        val mode: TransitMode,
         val routeColorHex: String?,
         val headsign: String?,
         val boardTime: ServerTime,
@@ -165,6 +179,33 @@ enum class TerminalKind { START, ARRIVE }
 enum class StreetMode { WALK, BIKE, CAR }
 
 /**
+ * What a [TripLogEntry.Transit] leg is ridden on, narrowed from [TripMode] to the vehicle families the
+ * app ships a glyph for — so the renderer's glyph choice is total and an on-street mode can't reach it.
+ *
+ * [BUS] doubles as the generic: OTP's own umbrella modes (`TRANSIT`/`BUSISH`) and anything unrecognized
+ * land there, which is the status quo for every transit leg and right far more often than not. The
+ * named cases exist so the modes a rider would notice being wrong — a boat drawn as a bus — are right.
+ */
+enum class TransitMode { BUS, RAIL, SUBWAY, TRAM, FERRY }
+
+/**
+ * The vehicle family a transit leg is ridden on, narrowed from the wire mode to the art the app
+ * actually ships.
+ *
+ * Collapsing a cable car onto the tram glyph matches how the map already normalizes route types
+ * (`VehicleBitmaps.normalizeVehicleType`). Aerial lifts and funiculars aren't named here for the same
+ * reason they aren't there: the app ships no art for them, so they take the generic rather than a glyph
+ * that asserts the wrong vehicle. OTP's umbrella modes and a leg with no mode land there too.
+ */
+fun TripMode?.transitMode(): TransitMode = when (this) {
+    TripMode.FERRY -> TransitMode.FERRY
+    TripMode.RAIL, TripMode.TRAINISH -> TransitMode.RAIL
+    TripMode.SUBWAY -> TransitMode.SUBWAY
+    TripMode.TRAM, TripMode.CABLE_CAR -> TransitMode.TRAM
+    else -> TransitMode.BUS
+}
+
+/**
  * One turn-by-turn step of a walk leg: its localized instruction [text] (the maneuver only — the
  * distance is *not* baked in), the step's [distanceMeters] (rendered as a per-step delta in the time
  * column, in the user's units), and the map [point] it refers to (null when the step had no coordinates).
@@ -199,7 +240,8 @@ sealed interface RealtimeState {
  * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop shows each
  * one's live ETA strip under the planned route's, so the rider can see which of them comes first.
  * [badge] is the leg's finished roundel (planned route joined by those alternatives), built once by
- * the repository rather than re-derived per row while composing.
+ * the repository rather than re-derived per row while composing; null where no badge was built at all
+ * (fixtures), which is not the same as a badge that found no route to name.
  */
 data class RouteLegRef(
     val routeId: String?,
@@ -219,18 +261,21 @@ data class RouteLegRef(
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
     val extraSegments: List<RiddenSegment> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
-    val badge: LegBadge = LegBadge(emptyList())
+    val badge: LegBadge? = null
 )
 
 /**
  * A stay-aboard interline onto a **different** route within one continuous vehicle ride (#2000): at
- * [stop] the vehicle changes to route [routeShortName] (heading to [headsign]) and the passenger stays
+ * [stop] the vehicle changes to route [routeLabel] (heading to [headsign]) and the passenger stays
  * seated. Rendered as a distinct row between Board and Alight so the directions never tell the rider to
  * get off and reboard. Self-interlines (same route reversing onto itself) produce no transition — the
  * seam vanishes entirely.
+ *
+ * [routeLabel] is the prose label ([Interlines.transitionRouteLabel]), not the badge name: this row is a
+ * sentence, so it names a short-name-less route by its long name rather than saying nothing.
  */
 data class InterlineTransition(
-    val routeShortName: String?,
+    val routeLabel: String?,
     val headsign: String?,
     val stop: RouteStopRef
 )

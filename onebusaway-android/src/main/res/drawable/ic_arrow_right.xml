@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="5dp"
+    android:height="10dp"
+    android:viewportWidth="5"
+    android:viewportHeight="10"
+    android:autoMirrored="true">
+    <!--
+      Material Symbols `arrow_right`, cropped to the glyph. The stock asset draws this triangle at
+      x[10,15] y[7,17] of a 24x24 viewport, i.e. two thirds of the icon is transparent margin — which
+      would make the caller's size the padding knob rather than the chevron knob (bigger chevron =
+      more space around it). Translated to a tight 5x10 box so the two are independent: the caller
+      sizes the chevron itself and spaces it with real layout. Draw it at a 1:2 box (see
+      [SymbolSeparator]); a square one would letterbox the margin straight back in.
+
+      autoMirrored because this chevron means "and then", so it has to follow the reading direction of
+      the row it punctuates. The app is LTR-only today (no android:supportsRtl, and es/fi/it/pl are all
+      LTR), so nothing mirrors it yet; declaring it on the asset is what keeps that true for free if an
+      RTL locale ever lands, rather than leaving the arrow to point back up the trip.
+    -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,10V0l5,5l-5,5Z"/>
+</vector>

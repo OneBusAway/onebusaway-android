@@ -78,23 +78,6 @@ internal object Interlines {
     }
 
     /**
-     * One [LegBadge] per distinct vehicle-and-route the transit legs use, in order: a self-interline
-     * folds to a single badge, a cross-route interline keeps both routes' badges. Each badge names
-     * every route that ride can be taken on — its own, joined by whatever [substitutable] (index-
-     * aligned to [legs]) says is interchangeable with it (#2010).
-     */
-    fun routeBadges(legs: List<TripLeg>, substitutable: List<List<InterchangeableRoute>>): List<LegBadge> {
-        val badges = ArrayList<LegBadge>()
-        legs.forEachIndexed { i, leg ->
-            if (leg.mode?.isTransit != true) return@forEachIndexed
-            val selfInterline = leg.interlineWithPreviousLeg && i > 0 && leg.routeId == legs[i - 1].routeId
-            if (selfInterline) return@forEachIndexed
-            badges += legBadge(leg, substitutable[i])
-        }
-        return badges
-    }
-
-    /**
      * How a stay-aboard transition names the route the vehicle becomes ("stay on board for X"). The
      * prose label rather than the badge name — the sentence needs a name even where a badge would be
      * omitted — so a route with only a long name reads "stay on board for Seattle - Bremerton".

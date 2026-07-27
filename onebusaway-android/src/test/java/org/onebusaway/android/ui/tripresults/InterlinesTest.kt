@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.tripresults
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegAlternative
@@ -97,22 +96,6 @@ class InterlinesTest {
         assertEquals(emptyList<Interlines.Chain>(), Interlines.chains(listOf(transit("12", interline = true))))
     }
 
-    @Test
-    fun routeBadges_foldSelfInterlineButKeepCrossRoute() {
-        assertEquals(listOf("12"), badgeNames(listOf(transit("12"), transit("12", interline = true))))
-        assertEquals(listOf("10", "12"), badgeNames(listOf(transit("10"), transit("12", interline = true))))
-        assertEquals(listOf("8", "48"), badgeNames(listOf(transit("8"), walk, transit("48"))))
-    }
-
-    /** A ride's badge names the routes it can be taken on, not just the planned one (#2010). */
-    @Test
-    fun routeBadges_nameTheLegsInterchangeableRoutes() {
-        val legs = listOf(transit("1 Line"))
-        val badges = Interlines.routeBadges(legs, listOf(listOf(interchangeable("2 Line"))))
-
-        assertEquals(listOf(listOf("1 Line", "2 Line")), badges.map { badge -> badge.routes.map { it.shortName } })
-    }
-
     /**
      * The transition sentence names the route the vehicle becomes: by its short name, else its long one
      * — and null, not blank, when it has neither, so the renderer can say "continues on another route"
@@ -142,17 +125,6 @@ class InterlinesTest {
         assertEquals(listOf(emptyList<String>(), emptyList()), interlined.substitutableRoutes().map { routes -> routes.map { it.displayName } })
         assertEquals(listOf(listOf("99")), standalone.substitutableRoutes().map { routes -> routes.map { it.displayName } })
     }
-
-    private fun badgeNames(legs: List<TripLeg>): List<String> = Interlines.routeBadges(legs, legs.map { emptyList() }).map { it.routes.single().shortName }
-
-    private fun interchangeable(shortName: String) = InterchangeableRoute(
-        routeId = "route_$shortName",
-        displayName = shortName,
-        routeColor = null,
-        agencyId = null,
-        agencyName = null,
-        headsign = null
-    )
 
     /** A transit leg between two stops, with one same-stops, same-ride-time alternative on route 99. */
     private fun withAlternative(route: String, interline: Boolean = false) = transit(route, interline).copy(

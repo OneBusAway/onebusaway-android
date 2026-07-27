@@ -27,6 +27,7 @@ import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 
@@ -185,15 +186,35 @@ class TripLogBuilderTest {
     fun onStreetLegCarriesItsTravelMode_soABikeLegIsNotLabelledAsAWalk() {
         // The renderer picks the header verb ("Walk"/"Bike"/"Drive") and node glyph from this, so
         // dropping it silently relabels a bikeshare leg as walking.
-        fun modeOf(mode: TripMode) = TripLogBuilder
-            .build(listOf(walkLeg.copy(mode = mode)), listOf(walkDir), listOf(null))
+        fun modeOf(leg: TripLeg) = TripLogBuilder
+            .build(listOf(leg), listOf(walkDir), listOf(null))
             .filterIsInstance<TripLogEntry.Walk>()
             .single()
             .mode
 
-        assertEquals(StreetMode.BIKE, modeOf(TripMode.BICYCLE))
-        assertEquals(StreetMode.CAR, modeOf(TripMode.CAR))
-        assertEquals(StreetMode.WALK, modeOf(TripMode.WALK))
+        assertEquals(StreetMode.BIKE, modeOf(walkLeg.copy(mode = TripMode.BICYCLE)))
+        assertEquals(StreetMode.CAR, modeOf(walkLeg.copy(mode = TripMode.CAR)))
+        assertEquals(StreetMode.WALK, modeOf(walkLeg.copy(mode = TripMode.WALK)))
+        // A bike picked up at — or returned to — a rental place is a *shared* bike, and draws the
+        // bikeshare glyph rather than the rider's-own-bike one (#2047).
+        assertEquals(
+            StreetMode.BIKESHARE,
+            modeOf(
+                walkLeg.copy(
+                    mode = TripMode.BICYCLE,
+                    from = walkLeg.from.copy(vertexType = TripVertexType.BIKESHARE)
+                )
+            )
+        )
+        assertEquals(
+            StreetMode.BIKESHARE,
+            modeOf(
+                walkLeg.copy(
+                    mode = TripMode.BICYCLE,
+                    to = walkLeg.to.copy(vertexType = TripVertexType.BIKESHARE)
+                )
+            )
+        )
     }
 
     @Test

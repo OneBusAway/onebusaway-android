@@ -66,6 +66,22 @@ private val BADGE_ICON_SIZE = 11.dp
 
 private val BADGE_ICON_GAP = 2.dp
 
+/** The padding above and below the badge's content. Scales with the chip. */
+private val BADGE_VERTICAL_PADDING = 1.dp
+
+/**
+ * The chip's height at [scale] 1 — its label's line box (`labelMedium`'s 16sp, which is taller than
+ * [BADGE_ICON_SIZE] and so sets the height) plus [BADGE_VERTICAL_PADDING] above and below. Public
+ * because a caller that has to line the chip up with something *else* needs it: the trip-plan option
+ * cards draw glyphs and roundels in one row and size both from a single height, deriving the chip's
+ * scale from this rather than hard-coding a number that would silently rot if these metrics changed.
+ *
+ * Holds at the default font scale. Under a larger accessibility font the sp line box — and the chip —
+ * grow while a dp-sized glyph beside it does not, so the two only drift apart in the direction of the
+ * text being bigger, which is what the setting asked for.
+ */
+val ROUTE_BADGE_HEIGHT = 16.dp + BADGE_VERTICAL_PADDING * 2
+
 /**
  * The badge's outline, and the line where two of its routes meet: black in either theme. The chips
  * themselves are pale in light mode and deep in dark mode ([rememberRouteBadgeColors]) but always
@@ -139,7 +155,7 @@ private fun BadgeContent(
         letterSpacing = base.letterSpacing * scale
     )
     Row(
-        modifier = modifier.padding(horizontal = horizontalPadding, vertical = 1.dp * scale),
+        modifier = modifier.padding(horizontal = horizontalPadding, vertical = BADGE_VERTICAL_PADDING * scale),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BADGE_ICON_GAP * scale)
     ) {

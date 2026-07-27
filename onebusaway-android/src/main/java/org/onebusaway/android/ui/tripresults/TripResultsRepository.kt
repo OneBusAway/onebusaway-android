@@ -35,7 +35,7 @@ import org.onebusaway.android.util.runCatchingCancellable
 /**
  * Projects [TripItinerary] objects onto the Compose results model. The turn-by-turn directions reuse
  * the legacy [DirectionsGenerator] (which needs a [Context] for resources), and the option cards carry
- * structured data (route badges / walk / duration / time range / walk distance) formatted by the UI. All
+ * structured data (mode symbols / duration / time range / walk distance) formatted by the UI. All
  * on the IO thread so [TripResultsViewModel] stays JVM-testable.
  */
 interface TripResultsRepository {
@@ -61,29 +61,19 @@ class DefaultTripResultsRepository @Inject constructor(
     }
 
     /** Projects one [TripItinerary] into the structured [ItineraryOption] the card renders. */
-    private fun summarize(itinerary: TripItinerary): ItineraryOption {
-        // A badge per distinct vehicle-and-route (#2000), each naming every route that ride can be
-        // taken on, so an interchangeable pair reads as one joined "1 Line/2 Line" roundel rather than
-        // picking a winner (#2010).
-        val badges = Interlines.routeBadges(itinerary.legs, itinerary.substitutableRoutes())
-        // A transit trip shows route badges; a walk-only trip shows the walk glyph; anything else
-        // (bike/car) keeps the legacy mode-label title.
-        val mode = when {
-            badges.isNotEmpty() -> ModeSummary.Routes(badges)
-            itinerary.legs.all { it.mode == TripMode.WALK } -> ModeSummary.Walk
-            else -> ModeSummary.Label(DirectionsGenerator(itinerary.legs, context).itineraryTitle)
-        }
-        return ItineraryOption(
-            mode = mode,
-            durationMinutes = itinerary.duration.inWholeMinutes,
-            startTime = itinerary.startTime,
-            endTime = itinerary.startTime + itinerary.duration,
-            // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
-            walkDistanceMeters = itinerary.legs
-                .filter { it.mode == TripMode.WALK }
-                .sumOf { it.distance }
-        )
-    }
+    private fun summarize(itinerary: TripItinerary): ItineraryOption = ItineraryOption(
+        // The trip as one sequence of mode symbols — the walks between the rides included (#2047),
+        // each ride badged with every route it can be taken on (#2010) and a stay-aboard interline
+        // folded to the routes actually ridden (#2000).
+        symbols = ModeSymbols.forLegs(itinerary.legs, itinerary.substitutableRoutes()),
+        durationMinutes = itinerary.duration.inWholeMinutes,
+        startTime = itinerary.startTime,
+        endTime = itinerary.startTime + itinerary.duration,
+        // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
+        walkDistanceMeters = itinerary.legs
+            .filter { it.mode == TripMode.WALK }
+            .sumOf { it.distance }
+    )
 
     override suspend fun directionsFor(
         itinerary: TripItinerary

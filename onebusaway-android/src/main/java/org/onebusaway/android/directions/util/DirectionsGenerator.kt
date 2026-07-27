@@ -28,7 +28,6 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
-import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.time.ServerTime
 
 /**
@@ -361,37 +360,6 @@ class DirectionsGenerator(
 
         return direction
     }
-
-    /* Added for Trip Plan titles */
-
-    val itineraryTitle: String
-        get() {
-            if (legs.size == 1) {
-                val mode = legs[0].mode
-                if (mode == null || !mode.isTransit) {
-                    // getLocalizedMode only names transit modes and WALK; for a lone bicycle/car leg
-                    // it returns null, so fall through to the general labeling below (which tags a
-                    // bicycle leg with the bikeshare label) rather than crashing.
-                    getLocalizedMode(mode, applicationContext.resources)?.let { return it }
-                }
-            }
-
-            val tokens = ArrayList<String>()
-
-            for (leg in legs) {
-                val mode = leg.mode
-                if (mode?.isTransit == true) {
-                    // The label, not the badge name: a title has to say something for a route that
-                    // publishes no short name. A leg that names nothing at all is left out.
-                    leg.routeDisplayLabel()?.let(tokens::add)
-                } else {
-                    if (mode == TripMode.BICYCLE) {
-                        tokens.add(applicationContext.getString(R.string.transit_directions_bikeshare_label))
-                    }
-                }
-            }
-            return TextUtils.join(", ", tokens)
-        }
 
     companion object {
 

@@ -489,16 +489,30 @@ dependencies {
 play {
     // Path to the Google Play service account JSON key file.
     // Set via gradle.properties: PLAY_STORE_JSON_KEY=/path/to/service-account-key.json
-    if (project.hasProperty("PLAY_STORE_JSON_KEY")) {
-        serviceAccountCredentials.set(file(project.property("PLAY_STORE_JSON_KEY") as String))
-    }
+    //
+    // Counts as configured only when the property actually names an existing file, mirroring how
+    // secure.properties is handled above. hasProperty() alone is true for a blank value, and a
+    // property left pointing at a key that hasn't been fetched yet names nothing; either would
+    // fail every release assemble at configuration time instead of falling back below.
+    val credentialsFile = project.findProperty("PLAY_STORE_JSON_KEY")
+        ?.toString()
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+        ?.let { file(it) }
+        ?.takeIf { it.isFile }
+    credentialsFile?.let { serviceAccountCredentials.set(it) }
+
+    // GPP reads credentials from this environment variable too, so it can still authenticate
+    // when the property is unset.
+    val hasCredentials = credentialsFile != null ||
+        !System.getenv("ANDROID_PUBLISHER_CREDENTIALS").isNullOrBlank()
 
     // Auto-increment versionCode from the highest code currently on the Play Store when Play
-    // credentials are configured. Without them, fall back to the versionCode in this file so a
+    // credentials are available. Without them, fall back to the versionCode in this file so a
     // release build works without Play API access — AUTO queries Play on every release assemble,
     // not just on publish, so it otherwise fails the build for anyone who can't reach the API.
     resolutionStrategy.set(
-        if (project.hasProperty("PLAY_STORE_JSON_KEY")) {
+        if (hasCredentials) {
             com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO
         } else {
             com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE

@@ -220,8 +220,9 @@ class ArrivalInfo(
         // values were exactly equal, so a bus 20 s late that happened to straddle a minute boundary
         // rendered in the late color and the green on-time state was nearly never shown.
         val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
-        color = ScheduleDeviation.statusColor(hasPrediction, deviation)
-        fillColor = ScheduleDeviation.fillColor(hasPrediction, deviation)
+        val deviationStatus = ScheduleDeviation.status(hasPrediction, deviation)
+        color = deviationStatus.colorRes
+        fillColor = deviationStatus.fillColorRes
 
         statusText = computeStatusLabel(
             context,

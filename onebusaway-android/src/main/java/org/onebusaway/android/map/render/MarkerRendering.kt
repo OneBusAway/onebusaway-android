@@ -41,6 +41,23 @@ object MarkerRendering {
     const val HEAD_CX = 12f
     const val HEAD_CY = 8f
 
+    /**
+     * Above this relative luminance a background is light enough that white-on-it washes out, so
+     * [legibleOn] flips to black.
+     */
+    private const val LEGIBLE_FLIP_LUMINANCE = 0.6
+
+    /**
+     * Black or white, whichever contrasts better against [background] by relative luminance.
+     *
+     * Shared so every route-colored map element — a vehicle disc, a continuation badge — makes the
+     * same call for the same color, rather than each keeping its own copy of the threshold.
+     */
+    fun legibleOn(background: Int): Int {
+        val luminance = (0.299 * Color.red(background) + 0.587 * Color.green(background) + 0.114 * Color.blue(background)) / 255
+        return if (luminance > LEGIBLE_FLIP_LUMINANCE) Color.BLACK else Color.WHITE
+    }
+
     /** 8-way unit offsets used to stamp a black outline around an element (a cheap dilate). */
     private val OUTLINE_OFFSETS = arrayOf(
         floatArrayOf(-1f, 0f),

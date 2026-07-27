@@ -217,6 +217,13 @@ class RouteMapController(
     // the remainder. Null until the first poll lands (the sampler then yields nothing to draw).
     private var latestPoll: VehiclePoll? = null
 
+    // Per-(poll, adjacency-assignment) memo behind [displayedRouteColor], which the per-frame vehicle
+    // sampler calls for every vehicle. Keyed by active trip id; holds nulls, so absence means "not yet
+    // resolved" rather than "no color". Invalidated by identity when either input is replaced.
+    private val routeColorMemo = HashMap<String, Int?>()
+    private var routeColorMemoResponse: RouteTrips? = null
+    private var routeColorMemoAssignment: Map<RouteDirectionKey, Int>? = null
+
     // routeJob is the one-shot route shape/stops/header load; vehicleJob is the long-running periodic
     // vehicle poll, suspended/resumed independently with the map lifecycle (onPause cancels only it).
     private var routeJob: Job? = null
@@ -1051,22 +1058,45 @@ class RouteMapController(
     )
 
     /**
-     * The color the map is currently drawing [activeTripId]'s route with.
+     * The color the map is currently drawing [activeTripId]'s route with — see
+     * [VehicleMarker.routeColor] for why that is deliberately not the route's GTFS color.
      *
-     * This is deliberately the *displayed* color rather than the route's GTFS color. In stop-focus view
-     * [adjacencyRouteColors] hands every shown route a distinct synthesized hue so a rider can tell the
-     * lines apart, and the vehicle has to travel with the line it belongs to — a marker wearing the
-     * agency's nominal color there would point at the wrong line. The lookup mirrors what the polylines
-     * do (`routeColors[key] ?: gtfsColor`, see RouteViewGeometry), so a vehicle and its line resolve
-     * through the same map and can't disagree.
+     * The lookup mirrors what the polylines do (`routeColors[key] ?: gtfsColor`, see
+     * RouteViewGeometry), so a vehicle and its line resolve through the same map and can't disagree.
      *
      * Both reference hops are nullable by contract (the poll carries whatever `references` it carries,
      * and a block-interlined vehicle can report a trip this route's poll never fetched), so an
      * unresolvable route yields null and the renderer falls back like any uncolored line.
+     *
+     * Memoized per (poll, assignment) because this sits on the **per-frame** sampler — [sampleVehicles]
+     * runs at 20 Hz on Google and the display rate on MapLibre, for every vehicle. Uncached, each call
+     * re-materializes reference DTOs and re-parses the route's hex color string, so a 15-vehicle route
+     * would churn thousands of throwaway allocations a second on the frame loop to recompute a value
+     * that can only change when a new poll lands (every 10-30 s).
      */
     private fun displayedRouteColor(response: RouteTrips, activeTripId: String?): Int? {
+        val assignment = _focusedRouteColors.value
+        // Identity compare: a new poll or a new adjacency assignment is always a fresh instance.
+        if (response !== routeColorMemoResponse || assignment !== routeColorMemoAssignment) {
+            routeColorMemoResponse = response
+            routeColorMemoAssignment = assignment
+            routeColorMemo.clear()
+        }
+        val tripId = activeTripId ?: return null
+        // Not getOrPut: a legitimately-null color must stay memoized rather than re-resolving forever.
+        if (!routeColorMemo.containsKey(tripId)) {
+            routeColorMemo[tripId] = resolveDisplayedRouteColor(response, assignment, tripId)
+        }
+        return routeColorMemo[tripId]
+    }
+
+    private fun resolveDisplayedRouteColor(
+        response: RouteTrips,
+        assignment: Map<RouteDirectionKey, Int>,
+        activeTripId: String
+    ): Int? {
         val trip = response.trip(activeTripId) ?: return null
-        val assigned = _focusedRouteColors.value[RouteDirectionKey(trip.routeId, trip.directionId)]
+        val assigned = assignment[RouteDirectionKey(trip.routeId, trip.directionId)]
         return assigned ?: response.route(trip.routeId)?.color
     }
 }

@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -36,15 +37,14 @@ import org.onebusaway.android.api.data.asRouteTrips
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.map.googlemapsv2.BitmapDescriptorCache
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
+import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
-import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.ObaTrip
-import org.onebusaway.android.models.ObaTripDetails
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps a gliding vehicle's icon on
@@ -326,53 +326,50 @@ class VehicleIconAllocationTest {
      * marker by the controller — not something re-derived here from the route's GTFS color. In
      * stop-focus view `adjacencyRouteColors` gives each shown route a distinct synthesized hue so the
      * lines can be told apart, and a vehicle wearing its agency's nominal color there would point at
-     * the wrong line.
+     * the wrong line. Asserted as exact equality, so distinctness between routes follows.
      */
     @Test
     fun discUsesTheCarriedRouteDisplayColor() {
         val assigned = 0xFF1B6EF3.toInt()
-        val colors = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = assigned))
 
-        assertEquals("the disc is the route's drawn color, unmodified", assigned, colors.disc)
+        assertEquals(
+            "the disc is the route's drawn color, unmodified",
+            assigned,
+            VehicleBitmaps.discColor(context, liveVehicle().copy(routeColor = assigned))
+        )
     }
 
     /** A vehicle whose route has no color falls back exactly as an uncolored polyline does. */
     @Test
     fun absentRouteColorFallsBackLikeAnUncoloredLine() {
-        val colors = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = null))
-
-        assertEquals(DEFAULT_ROUTE_LINE_COLOR, colors.disc)
-    }
-
-    /** Two routes drawn in different colors must render two different discs. */
-    @Test
-    fun differentRouteColorsStayDistinct() {
-        val blue = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = 0xFF1B6EF3.toInt()))
-        val orange = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = 0xFFF37B1B.toInt()))
-
-        assertNotEquals(blue.disc, orange.disc)
+        assertEquals(
+            DEFAULT_ROUTE_LINE_COLOR,
+            VehicleBitmaps.discColor(context, liveVehicle().copy(routeColor = null))
+        )
     }
 
     /**
-     * The glyph and arrow flip by the disc's luminance rather than by the theme, so a route drawn in a
-     * pale yellow doesn't get a white bus glyph washed out on it.
+     * A vehicle without real-time takes the shared "no prediction" gray, not its route's color — the
+     * marker's one remaining status meaning.
+     */
+    @Test
+    fun withoutRealtimeTheDiscIsTheScheduledGray() {
+        val stale = staleVehicle().copy(routeColor = 0xFF1B6EF3.toInt())
+
+        assertEquals(
+            context.getColor(ScheduleDeviation.Status.SCHEDULED.colorRes),
+            VehicleBitmaps.discColor(context, stale)
+        )
+    }
+
+    /**
+     * The glyph/arrow color flips by the disc's luminance, so a route drawn in a pale yellow doesn't
+     * get a white bus glyph washed out on it. Shared with the route badges via [MarkerRendering].
      */
     @Test
     fun glyphFlipsToStayLegibleOnLightAndDarkDiscs() {
-        val onDark = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = 0xFF0B1F55.toInt()))
-        val onLight = VehicleBitmaps.markerColors(context, liveVehicle().copy(routeColor = 0xFFFFEB3B.toInt()))
-
-        assertEquals("white glyph on a dark disc", android.graphics.Color.WHITE, onDark.onDisc)
-        assertEquals("black glyph on a light disc", android.graphics.Color.BLACK, onLight.onDisc)
-    }
-
-    /** A vehicle without real-time is grey regardless of how its route is drawn. */
-    @Test
-    fun withoutRealtimeTheDiscIsGrey() {
-        val route = 0xFF1B6EF3.toInt()
-        val stale = VehicleBitmaps.markerColors(context, staleVehicle().copy(routeColor = route))
-
-        assertNotEquals("liveness must still change the disc", route, stale.disc)
+        assertEquals("white glyph on a dark disc", Color.WHITE, MarkerRendering.legibleOn(0xFF0B1F55.toInt()))
+        assertEquals("black glyph on a light disc", Color.BLACK, MarkerRendering.legibleOn(0xFFFFEB3B.toInt()))
     }
 
     private fun liveVehicle(): VehicleMarker = withLiveness(vehicles(response()).first(), isRealtime = true)

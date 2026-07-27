@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home.help
 
-import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -44,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.EtaPill
 import org.onebusaway.android.util.ScheduleDeviation
+import org.onebusaway.android.util.ScheduleDeviation.Status
 
 /**
  * The help-menu options, in the order of the `main_help_options` string-array. Dialog-opening actions
@@ -188,28 +188,12 @@ private fun LegendDialog(onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.main_help_legend_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                LegendRow(Status.ON_TIME, predicted = true, label = R.string.main_help_legend_ontime)
+                LegendRow(Status.EARLY, predicted = true, label = R.string.main_help_legend_early)
+                LegendRow(Status.DELAYED, predicted = true, label = R.string.main_help_legend_late)
+                LegendRow(Status.SCHEDULED, predicted = false, label = R.string.main_help_legend_scheduled)
                 LegendRow(
-                    ScheduleDeviation.Status.ON_TIME.fillColorRes,
-                    predicted = true,
-                    label = R.string.main_help_legend_ontime
-                )
-                LegendRow(
-                    ScheduleDeviation.Status.EARLY.fillColorRes,
-                    predicted = true,
-                    label = R.string.main_help_legend_early
-                )
-                LegendRow(
-                    ScheduleDeviation.Status.DELAYED.fillColorRes,
-                    predicted = true,
-                    label = R.string.main_help_legend_late
-                )
-                LegendRow(
-                    ScheduleDeviation.Status.SCHEDULED.fillColorRes,
-                    predicted = false,
-                    label = R.string.main_help_legend_scheduled
-                )
-                LegendRow(
-                    ScheduleDeviation.Status.SCHEDULED.fillColorRes,
+                    Status.SCHEDULED,
                     predicted = false,
                     canceled = true,
                     label = R.string.main_help_legend_canceled
@@ -222,9 +206,10 @@ private fun LegendDialog(onDismiss: () -> Unit) {
     )
 }
 
+/** One legend swatch. Takes the [Status] rather than a color so the tier choice lives in one place. */
 @Composable
 private fun LegendRow(
-    @ColorRes color: Int,
+    status: Status,
     predicted: Boolean,
     @StringRes label: Int,
     canceled: Boolean = false
@@ -233,7 +218,8 @@ private fun LegendRow(
         modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        EtaPill(eta = 5L, color = colorResource(color), predicted = predicted, canceled = canceled)
+        // The pill paints white text on this, so it takes the on-fill tier — as [EtaPill] always does.
+        EtaPill(eta = 5L, color = colorResource(status.fillColorRes), predicted = predicted, canceled = canceled)
         Spacer(Modifier.width(16.dp))
         Text(stringResource(label), style = MaterialTheme.typography.bodyMedium)
     }

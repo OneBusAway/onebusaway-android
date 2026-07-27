@@ -1244,21 +1244,20 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
 /** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
 @Composable
 private fun RealtimeChip(state: RealtimeState) {
-    // The shared schedule-deviation palette, foreground tier — the chip draws this color as text and
-    // as a dot over a 14%-alpha tint of itself. It used to have its own trip_realtime_* palette whose
-    // polarity contradicted the arrivals drawer: blue meant "early" here and "late" there, in the
-    // same app (#2043). Early keeps its own color rather than the on-time green for the reason it
-    // always did — a vehicle running ahead of schedule is a risk to the rider (they can miss it), not
-    // a reassurance — it is now red, matching arrivals and OBA iOS.
-    val (color, text) = when (state) {
+    // The chip draws its color as text and as a dot over a 14%-alpha tint of itself, so it takes the
+    // foreground tier — off the state's own [ScheduleDeviation.Status] rather than named here, so a
+    // re-hue of the shared palette can't leave this screen behind. It used to carry its own
+    // trip_realtime_* palette whose polarity contradicted the arrivals drawer: blue meant "early"
+    // here and "late" there, in the same app (#2043).
+    val text = when (state) {
         RealtimeState.Unknown -> return
-        RealtimeState.OnTime -> colorResource(R.color.stop_info_ontime) to
-            stringResource(R.string.trip_plan_realtime_on_time)
-        is RealtimeState.Late -> colorResource(R.color.stop_info_delayed) to
+        RealtimeState.OnTime -> stringResource(R.string.trip_plan_realtime_on_time)
+        is RealtimeState.Late ->
             pluralStringResource(R.plurals.trip_plan_realtime_late, state.minutes.toInt(), state.minutes.toInt())
-        is RealtimeState.Early -> colorResource(R.color.stop_info_early) to
+        is RealtimeState.Early ->
             pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
     }
+    val color = colorResource(state.status.colorRes)
     Spacer(Modifier.width(8.dp))
     Row(
         modifier = Modifier

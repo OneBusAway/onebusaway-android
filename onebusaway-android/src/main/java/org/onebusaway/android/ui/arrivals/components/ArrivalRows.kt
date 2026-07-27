@@ -138,10 +138,9 @@ internal fun ArrivalCard(
  * JVM-testable without the [ArrivalInfo] model (which needs a `Context`/wire data to build).
  * [ArrivalRowContent] adapts the model onto it.
  *
- * The two lateness colors are the two tiers of the same deviation state (#2043): [statusColor] is
- * the foreground tier, used where the color *is* the text (the big ETA, which is large enough for
- * WCAG's 3:1 large-text threshold), and [statusFillColor] is the darkened on-fill tier, used where
- * white label text sits on the color (the status pill) and so needs the full 4.5:1.
+ * The two lateness colors are the two tiers of the same deviation state (#2043): [statusColor] for
+ * the big ETA, where the color *is* the text, and [statusFillColor] for the status pill, where white
+ * text sits on it.
  */
 @Composable
 private fun ArrivalRowVisual(

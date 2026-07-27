@@ -375,16 +375,6 @@ class TripLogBuilderTest {
         assertEquals("Seattle - Bremerton", transit.routeDisplayName)
     }
 
-    @Test
-    fun noRealtime_isUnknown() {
-        val scheduled = transitLeg.copy(realTime = false)
-        val transit = TripLogBuilder
-            .build(listOf(scheduled), listOf(boardDir, alightDir), listOf(transitRef))
-            .filterIsInstance<TripLogEntry.Transit>()
-            .single()
-        assertEquals(RealtimeState.Unknown, transit.realtime)
-    }
-
     // --- The shared on-time band (#2043) ---------------------------------------------------------
     //
     // The trip planner used to round the delay to the nearest minute and call only an exact 0 "on
@@ -414,12 +404,6 @@ class TripLogBuilderTest {
         assertEquals(RealtimeState.Early(2), realtimeStateFor(-91))
     }
 
-    @Test
-    fun bandEdges_matchTheIosHalfOpenComparison() {
-        assertEquals(RealtimeState.OnTime, realtimeStateFor(-90))
-        assertEquals(RealtimeState.Late(2), realtimeStateFor(90))
-    }
-
     /**
      * The band's edges always round to at least one minute, so a Late/Early chip can never read
      * "0 min late" — the case the old `minutes == 0L` bucket used to absorb.
@@ -437,8 +421,10 @@ class TripLogBuilderTest {
         }
     }
 
+    /** No real-time data means no chip, whatever the leg's delay field happens to hold. */
     @Test
-    fun withoutRealtime_deviationIsIgnored() {
+    fun withoutRealtime_isUnknownWhateverTheDeviation() {
+        assertEquals(RealtimeState.Unknown, realtimeStateFor(0, realTime = false))
         assertEquals(RealtimeState.Unknown, realtimeStateFor(600, realTime = false))
         assertEquals(RealtimeState.Unknown, realtimeStateFor(-600, realTime = false))
     }

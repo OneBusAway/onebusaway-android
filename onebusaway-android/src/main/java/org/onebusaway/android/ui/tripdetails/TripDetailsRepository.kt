@@ -225,10 +225,9 @@ class DefaultTripDetailsRepository @Inject constructor(
         isRealtime: Boolean
     ): TripHeader {
         val deviation = status?.scheduleDeviation ?: Duration.ZERO
-        // The on-fill tier: this color becomes the status pill's surface (white text on it) and the
-        // timeline's vehicle dot, not text. The old on-time → theme_primary remap is gone with
-        // #2043 — it existed only because on-time used to resolve to the brand color, which made it
-        // indistinguishable from the header on brand-tinted flavors.
+        // The on-fill tier — this becomes the status pill's surface and the timeline's vehicle dot,
+        // not text. The old on-time → theme_primary remap is gone with #2043: it existed only because
+        // on-time used to resolve to the brand color, colliding with the header on branded flavors.
         val statusColor = ScheduleDeviation.fillColor(isRealtime, deviation)
         return TripHeader(
             routeShortName = route?.shortName.orEmpty(),

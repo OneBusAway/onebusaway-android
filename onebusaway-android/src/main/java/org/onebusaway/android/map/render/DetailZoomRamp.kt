@@ -70,6 +70,24 @@ val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 0.275f
 )
 
+/**
+ * A trip-plan itinerary's transit legs (#2041). The itinerary is the only thing the directions map is
+ * showing — nothing competes with it — so a ride draws at the focused-route weight, and *is* that
+ * profile rather than a second copy of its multiplier. It carries its own name because the two are read
+ * against different backdrops (route focus sits over sibling routes and nearby stops, directions over a
+ * bare basemap), so directions is the thing to give a value of its own the day they should differ.
+ */
+val ITINERARY_RIDE_WIDTH_PROFILE = FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+
+/**
+ * An itinerary's on-street legs — walking, cycling, bikeshare. Drawn narrower than the ride it connects
+ * to: a sidewalk or bike lane is a thinner thing than a transit corridor, and the step down at each
+ * transition is a second cue (besides colour) for where one mode hands off to the next.
+ */
+val ITINERARY_STREET_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.9f
+)
+
 /** Route-line scale retained for unprofiled lines and vehicle markers. */
 fun routeLineWidthScale(zoom: Float): Float = ROUTE_LINE_WIDTH_PROFILE.multiplierAt(zoom)
 

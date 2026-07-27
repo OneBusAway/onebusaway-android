@@ -31,6 +31,30 @@ class RouteViewGeometryTest {
     }
 
     @Test
+    fun `a route draws the same colour whichever view shows it`() {
+        // The agency's own colour, as it arrives from the wire.
+        val gtfs = 0xFF8B0000.toInt()
+        val shape = FocusedTripShape("shape", "route", gtfs, listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)))
+
+        // Focused-stop geometry (the picker's full-route view goes through the same focusedRoutePolyline).
+        val adjacencyLine = FocusedTripGeometry(listOf(shape)).toRoutePolylines().single().color
+        // The ridden segment under a tapped directions leg, drawn in the shown route's colour.
+        val riddenSegment = routePolylinesWithSegment(
+            base = emptyList(),
+            segment = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            routeColor = mapRouteLineColorOrNull(gtfs)
+        ).single().color
+        // The same route ridden as an itinerary leg on the directions map.
+        val itineraryLeg = itineraryLegStyle(ItineraryLegKind.TRANSIT, gtfs).color
+
+        assertEquals(mapRouteLineColorOrNull(gtfs), adjacencyLine)
+        assertEquals(adjacencyLine, riddenSegment)
+        assertEquals(adjacencyLine, itineraryLeg)
+        // And it is not the raw hex: a dark red would otherwise sink into the basemap.
+        assertTrue(adjacencyLine != gtfs)
+    }
+
+    @Test
     fun `focused trip shape uses one thin plain adjacency line without chevrons`() {
         val geometry = FocusedTripGeometry(
             listOf(
@@ -145,26 +169,26 @@ class RouteViewGeometryTest {
         // adjacency map to begin with.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), gtfsColor = 99)
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = emptyMap(), routeColorFallback = 99)
         )
         // Stop focus, no adjacency entry for this exact direction (e.g. an opposite-direction vehicle
         // whose direction isn't among the focused stop's own trips, #1902): underlay still drops, but
         // the color falls back to GTFS since there's no adjacency color to carry instead.
         assertEquals(
             SelectedTripStyle(color = 99, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), gtfsColor = 99)
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = emptyMap(), routeColorFallback = 99)
         )
         // Whole-route mode with a stray adjacency entry (shouldn't occur in practice, since routeColors
         // is only ever populated during stop focus) still keeps the underlay — it is not proxied off
         // the color lookup.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = true),
-            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, gtfsColor = 99)
+            selectedTripStyle(stopFocusActive = false, direction, routeColors = withColor, routeColorFallback = 99)
         )
         // Stop focus with a matching adjacency entry: the ordinary case — adjacency color, no underlay.
         assertEquals(
             SelectedTripStyle(color = 10, includeUnderlay = false),
-            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, gtfsColor = 99)
+            selectedTripStyle(stopFocusActive = true, direction, routeColors = withColor, routeColorFallback = 99)
         )
     }
 

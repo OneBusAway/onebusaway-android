@@ -15,22 +15,20 @@
  */
 package org.onebusaway.android.map
 
-import android.graphics.Color
-import android.util.Log
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
-import org.onebusaway.android.directions.util.OTPConstants
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
- * (each polyline in its own mode color) plus start/end pins, and frames the whole itinerary. A
+ * (each polyline styled by [itineraryLegStyle]) plus start/end pins, and frames the whole itinerary. A
  * synchronous driver over [MapHost] — it has no loader of its own (the itinerary is handed in), so it
  * just writes polylines + markers and dispatches the framing camera command.
  *
@@ -78,17 +76,21 @@ class DirectionsMapController(private val host: MapHost) {
         val endLat = endPlace.lat
         val endLon = endPlace.lon
 
-        // Build every leg's polyline (each in its own mode color), then append them in one write —
+        // Build every leg's polyline (each in its own mode/route style), then append them in one write —
         // matching the legacy per-leg append but without rebuilding the polyline list n times.
         val legPolylines = legs.mapNotNull { leg ->
             val geometry = leg.legGeometry ?: return@mapNotNull null
             val shape = LegShape(geometry)
             if (shape.length > 0) {
-                // An itinerary leg is traversed one way; keep its travel-direction chevrons.
+                val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
+                // Every leg's points run in travel order, so whether it stamps chevrons is the style's
+                // call — a dashed on-street stroke declines them (see [itineraryLegStyle]).
                 RoutePolyline(
-                    resolveLegColor(leg),
+                    style.color,
                     shape.points,
-                    directional = true
+                    widthProfile = style.widthProfile,
+                    directional = style.directional,
+                    dash = style.dash
                 )
             } else {
                 null
@@ -151,23 +153,6 @@ class DirectionsMapController(private val host: MapHost) {
         return point?.let { EndpointMarker(it, host.addMarker(it.latitude, it.longitude, hue)) }
     }
 
-    private fun resolveLegColor(leg: TripLeg): Int {
-        // Color for transit routes when planning a trip.
-        if (leg.mode?.isTransit == true) {
-            return OTPConstants.OTP_TRANSIT_COLOR
-        }
-        // Use the route's custom color if available.
-        leg.routeColor?.let { hex ->
-            try {
-                return java.lang.Long.decode("0xFF$hex").toInt()
-            } catch (ex: Exception) {
-                Log.e(TAG, "Error parsing color=$hex: ${ex.message}")
-            }
-        }
-        // Defaults to grey, which represents walking.
-        return Color.GRAY
-    }
-
     /** An [ObaShape] over a [TripLegGeometry] (ported from the legacy DirectionsMapController). */
     private class LegShape(private val geometry: TripLegGeometry) : ObaShape {
         override val length: Int get() = geometry.length
@@ -176,8 +161,6 @@ class DirectionsMapController(private val host: MapHost) {
     }
 
     companion object {
-        private const val TAG = "DirectionsMapController"
-
         // BitmapDescriptorFactory hues for the directions start/end pins (green/red), kept as literals
         // since the map package can't depend on the Google Maps classes.
         private const val HUE_GREEN = 120.0f

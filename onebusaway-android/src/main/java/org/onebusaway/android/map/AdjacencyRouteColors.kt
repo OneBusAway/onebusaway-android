@@ -19,7 +19,8 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 
 /**
- * Assigns focused-stop route identities HCT hues at a common chroma and tone. Duplicate identities
+ * Assigns focused-stop route identities hues around the circle, rendered by [mapRouteLineColor] at the
+ * map's common route chroma and tone. Duplicate identities
  * retain their first position. Colors in [retained] survive a presentation handoff. Newly introduced
  * identities take the hue farthest from every color already in
  * use, successively filling the largest gaps around the circle. This keeps every continuing route
@@ -39,23 +40,18 @@ internal fun <K : Any> adjacencyRouteColors(
     if (assigned.isEmpty()) {
         val hueStep = HUE_CIRCLE_DEGREES / keys.size
         keys.forEachIndexed { index, key ->
-            assigned[key] = routeColor(index * hueStep)
+            assigned[key] = mapRouteLineColor(index * hueStep)
         }
     } else {
         val usedHues = assigned.values.mapTo(mutableListOf()) { Hct.fromInt(it).hue }
         keys.filterNot(assigned::containsKey).forEach { key ->
-            val color = routeColor(widestHueGapMidpoint(usedHues))
+            val color = mapRouteLineColor(widestHueGapMidpoint(usedHues))
             assigned[key] = color
             usedHues += Hct.fromInt(color).hue
         }
     }
     return keys.associateWith(assigned::getValue)
 }
-
-// Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
-// exists, so this is deliberate long-term use, not a migration to track (same as LineBadge).
-@SuppressLint("RestrictedApi")
-private fun routeColor(hue: Double): Int = Hct.from(hue, ADJACENCY_ROUTE_CHROMA, ADJACENCY_ROUTE_TONE).toInt()
 
 private fun widestHueGapMidpoint(hues: List<Double>): Double {
     val sorted = hues.sorted()
@@ -65,5 +61,3 @@ private fun widestHueGapMidpoint(hues: List<Double>): Double {
 }
 
 private const val HUE_CIRCLE_DEGREES = 360.0
-private const val ADJACENCY_ROUTE_CHROMA = 75.0
-private const val ADJACENCY_ROUTE_TONE = 55.0

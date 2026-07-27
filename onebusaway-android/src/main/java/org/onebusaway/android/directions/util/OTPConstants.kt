@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.directions.util
 
-import androidx.core.graphics.toColorInt
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -65,9 +64,6 @@ object OTPConstants {
 
     // flag to indicate intent sent by or on behalf of TripPlanActivity
     const val INTENT_SOURCE = "org.onebusaway.android.INTENT_SOURCE"
-
-    @JvmField
-    val OTP_TRANSIT_COLOR = "#006500".toColorInt()
 
     enum class Source { ACTIVITY, NOTIFICATION }
 }

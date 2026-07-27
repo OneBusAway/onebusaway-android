@@ -67,7 +67,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
         val emphasized = emphasizedRoute == shape.routeDirection
         val polyline = if (emphasized) {
             focusedRoutePolyline(
-                routeColors[shape.routeDirection] ?: shape.routeColor,
+                routeColors[shape.routeDirection] ?: mapRouteLineColorOrNull(shape.routeColor),
                 shape.points,
                 directional = true
             )
@@ -78,7 +78,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
                 DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
             }
             RoutePolyline(
-                routeColors[shape.routeDirection] ?: shape.routeColor,
+                routeColors[shape.routeDirection] ?: mapRouteLineColorOrNull(shape.routeColor),
                 shape.points,
                 widthProfile,
                 // Adjacent routes in stop focus are plain thin lines — no direction chevrons — so the
@@ -132,9 +132,12 @@ internal fun FocusedTripGeometry.toRouteBadges(
                 RouteBadge(
                     routeId = spec.key.routeId,
                     routeShortName = spec.name,
+                    // A badge takes its line's colour, so it goes through the same policy — an
+                    // adjacency colour is already in it, an agency's own has to be put through.
                     color = routeColors[spec.key]
-                        ?: spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor)
-                        ?: spec.route.color
+                        ?: mapRouteLineColorOrNull(
+                            spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
+                        )
                         ?: DEFAULT_ROUTE_LINE_COLOR,
                     point = placement.point,
                     directionId = spec.key.directionId
@@ -160,15 +163,17 @@ internal data class SelectedTripStyle(val color: Int, val includeUnderlay: Boole
  * isn't among the focused stop's own trips and [routeColors] carries no adjacency entry for it — that
  * combination used to fall back to a whole-route-style underlay (the #1899 regression fixed by #1902),
  * because the underlay decision was proxied off the color lookup instead of the real stop-focus state.
- * A color miss still falls back to [gtfsColor]; only the underlay must not follow it.
+ * A color miss still falls back to [routeColorFallback]; only the underlay must not follow it. Both
+ * inputs are already in the map's route-line colour policy ([mapRouteLineColor]) — this picks between
+ * them, it doesn't render either.
  */
 internal fun selectedTripStyle(
     stopFocusActive: Boolean,
     selectedRouteDirection: RouteDirectionKey,
     routeColors: Map<RouteDirectionKey, Int>,
-    gtfsColor: Int
+    routeColorFallback: Int
 ): SelectedTripStyle = SelectedTripStyle(
-    color = routeColors[selectedRouteDirection] ?: gtfsColor,
+    color = routeColors[selectedRouteDirection] ?: routeColorFallback,
     includeUnderlay = !stopFocusActive
 )
 

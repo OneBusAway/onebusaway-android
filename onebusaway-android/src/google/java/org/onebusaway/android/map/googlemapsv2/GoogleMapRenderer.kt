@@ -59,6 +59,7 @@ import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteContinuation
+import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.StopMarker
@@ -403,9 +404,12 @@ class GoogleMapRenderer(
     }
 
     private fun PolylineOptions.applyDashPattern(polyline: RoutePolyline): PolylineOptions {
-        if (polyline.dashed) {
-            pattern(listOf(Dash(CONTINUATION_DASH_LENGTH_PX), Gap(CONTINUATION_GAP_LENGTH_PX)))
+        val dashLengthPx = when (polyline.dash) {
+            RouteLineDash.NONE -> return this
+            RouteLineDash.HINT -> HINT_DASH_LENGTH_PX
+            RouteLineDash.TRAIL -> TRAIL_DASH_LENGTH_PX
         }
+        pattern(listOf(Dash(dashLengthPx), Gap(DASH_GAP_LENGTH_PX)))
         return this
     }
 
@@ -809,10 +813,14 @@ class GoogleMapRenderer(
         // The stamp bitmap is twice as long as its chevron, halving repetition without shrinking it.
         private const val CHEVRON_REPEAT_SCALE = 2
 
-        // The route-continuation line's dash pattern (#1691), in screen pixels like every other gms
-        // polyline dimension here.
-        private const val CONTINUATION_DASH_LENGTH_PX = 24f
-        private const val CONTINUATION_GAP_LENGTH_PX = 16f
+        // The dash rhythms named by RouteLineDash, in screen pixels like every other gms polyline
+        // dimension here. A TRAIL stride is twice a HINT's over the same gap, so an itinerary's walking
+        // and cycling legs read as a broken path rather than as the route-continuation line's tight
+        // preview dashes (#1691) — without the dashes running so long that a short leg draws as one
+        // unbroken stroke.
+        private const val HINT_DASH_LENGTH_PX = 24f
+        private const val TRAIL_DASH_LENGTH_PX = HINT_DASH_LENGTH_PX * 2f
+        private const val DASH_GAP_LENGTH_PX = 16f
 
         // The (arbitrary, constant) ease key for a TripEstimateMarker's single-marker easer.
         private const val ESTIMATE_EASE_KEY = "estimate"

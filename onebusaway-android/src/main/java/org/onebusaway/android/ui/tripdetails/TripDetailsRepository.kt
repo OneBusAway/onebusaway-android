@@ -45,10 +45,10 @@ import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.ServiceDate
-import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ObaRequestErrors
+import org.onebusaway.android.util.ScheduleDeviation
 
 /** A loaded snapshot of a trip's header + ordered stops, ready for the UI. */
 data class TripDetailsData(
@@ -225,13 +225,11 @@ class DefaultTripDetailsRepository @Inject constructor(
         isRealtime: Boolean
     ): TripHeader {
         val deviation = status?.scheduleDeviation ?: Duration.ZERO
-        val statusColor = when {
-            status == null || !status.isPredicted -> R.color.stop_info_scheduled_time
-            else -> {
-                val c = ArrivalInfoUtils.computeColorFromDeviation(deviation.inWholeMinutes)
-                if (c == R.color.stop_info_ontime) R.color.theme_primary else c
-            }
-        }
+        // The on-fill tier: this color becomes the status pill's surface (white text on it) and the
+        // timeline's vehicle dot, not text. The old on-time → theme_primary remap is gone with
+        // #2043 — it existed only because on-time used to resolve to the brand color, which made it
+        // indistinguishable from the header on brand-tinted flavors.
+        val statusColor = ScheduleDeviation.fillColor(isRealtime, deviation)
         return TripHeader(
             routeShortName = route?.shortName.orEmpty(),
             headsign = trip?.headsign.orEmpty(),

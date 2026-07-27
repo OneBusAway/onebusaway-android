@@ -120,7 +120,7 @@ class VehicleIconAllocationTest {
                 val octant = VehicleBitmaps.directionIndex(moved)
                 if (lastOctant.put(moved.activeTripId, octant) != octant) {
                     counts.requests++
-                    val key = VehicleBitmaps.iconKey(moved, response)
+                    val key = VehicleBitmaps.iconKey(context, moved, response)
                     counts.keys.add(key)
                     cache.get(key) {
                         counts.bitmapDecodes++
@@ -195,7 +195,7 @@ class VehicleIconAllocationTest {
         val samples = vehicles.flatMap { vehicle ->
             (0 until 8).map { octant ->
                 val moved = vehicle.copy(bearing = octant * 45f)
-                VehicleBitmaps.iconKey(moved, response) to
+                VehicleBitmaps.iconKey(context, moved, response) to
                     VehicleBitmaps.vehicleBitmap(context, moved, response)
             }
         }
@@ -214,13 +214,42 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * The replay holds `nowMs` fixed and only rotates bearing, so schedule-deviation color never varies —
-     * leaving the key's color dimension unexercised. Hold a vehicle's octant fixed and change only its
-     * deviation (early vs. late, distinct colors): the key must change and the cache must mint a second
-     * descriptor, proving color participates in the key.
+     * The replay only rotates bearing, leaving the key's color dimension unexercised. Hold a vehicle's
+     * octant fixed and flip only its **liveness**: a live vehicle draws in its route color, one without
+     * real-time draws gray (#2043), so the key must change and the cache must mint a second descriptor.
+     *
+     * This replaces an equivalent early-vs-late assertion. Schedule deviation no longer reaches the
+     * marker at all — punctuality now lives in the info window, and the disc means route identity +
+     * liveness — so the deviation variant would assert behavior the app deliberately dropped. The
+     * companion [scheduleDeviationDoesNotAffectTheIcon] pins that new contract from the other side.
      */
     @Test
-    fun changedScheduleDeviationMintsANewDescriptor() {
+    fun changedLivenessMintsANewDescriptor() {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+
+        val live = withLiveness(vehicle!!, isRealtime = true)
+        val stale = withLiveness(vehicle, isRealtime = false)
+
+        val liveKey = VehicleBitmaps.iconKey(context, live, response)
+        val staleKey = VehicleBitmaps.iconKey(context, stale, response)
+        assertNotEquals("liveness must be part of the icon key", liveKey, staleKey)
+
+        val counts = Counts()
+        val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
+        cache.get(liveKey) { VehicleBitmaps.vehicleBitmap(context, live, response) }
+        cache.get(staleKey) { VehicleBitmaps.vehicleBitmap(context, stale, response) }
+        assertEquals("a changed disc color must mint a second descriptor", 2, counts.allocations)
+    }
+
+    /**
+     * The other half of the #2043 contract: with liveness and heading held fixed, a wildly different
+     * schedule deviation must produce the *same* icon. A marker that still varied by punctuality would
+     * both re-introduce the meaning the issue removed and silently multiply the icon working set.
+     */
+    @Test
+    fun scheduleDeviationDoesNotAffectTheIcon() {
         val response = response()
         val vehicle = vehicles(response).firstOrNull()
         assertTrue("fixture must yield at least one vehicle", vehicle != null)
@@ -228,15 +257,16 @@ class VehicleIconAllocationTest {
         val early = withRealtimeDeviation(vehicle!!, TimeUnit.MINUTES.toSeconds(-10))
         val late = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(10))
 
-        val earlyKey = VehicleBitmaps.iconKey(early, response)
-        val lateKey = VehicleBitmaps.iconKey(late, response)
-        assertNotEquals("deviation color must be part of the icon key", earlyKey, lateKey)
-
-        val counts = Counts()
-        val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
-        cache.get(earlyKey) { VehicleBitmaps.vehicleBitmap(context, early, response) }
-        cache.get(lateKey) { VehicleBitmaps.vehicleBitmap(context, late, response) }
-        assertEquals("a changed deviation color must mint a second descriptor", 2, counts.allocations)
+        assertEquals(
+            "schedule deviation must not reach the marker icon",
+            VehicleBitmaps.iconKey(context, early, response),
+            VehicleBitmaps.iconKey(context, late, response)
+        )
+        assertTrue(
+            "an early and a late vehicle must render the identical disc",
+            VehicleBitmaps.vehicleBitmap(context, early, response)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, late, response))
+        )
     }
 
     /**
@@ -271,8 +301,8 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * Force the realtime color path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the
-     * bearing so the heading octant is fixed — only the deviation color varies between the variants.
+     * Force the realtime path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the bearing
+     * so the heading octant is fixed — only the schedule deviation varies between the variants.
      */
     private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = vehicle.copy(
         isRealtime = true,
@@ -282,6 +312,9 @@ class VehicleIconAllocationTest {
         }
     )
 
+    /** A copy of [vehicle] with [isRealtime] forced and the bearing pinned, so only liveness varies. */
+    private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f)
+
     companion object {
         // Sweep the bearing through all 8 octants within a few frames, then revisit them (no new icons) —
         // which is the property under test (revisited octants reuse the cached descriptor).
@@ -289,7 +322,7 @@ class VehicleIconAllocationTest {
         private const val SHORT_FRAMES = 60
         private const val LONG_FRAMES = 240
 
-        // Far larger than the snapshot's distinct icons (8 octants x a handful of type/deviation-color
+        // Far larger than the snapshot's distinct icons (8 octants x a handful of type/route-color
         // combos), so eviction never confounds the "allocations independent of frame count" invariant. The
         // production cap is deliberately smaller — it only needs to cover the live working set, not history.
         private const val CACHE_SIZE = 1024

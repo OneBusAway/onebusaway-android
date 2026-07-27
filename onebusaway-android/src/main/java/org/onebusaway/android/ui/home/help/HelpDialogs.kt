@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.components.EtaPill
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The help-menu options, in the order of the `main_help_options` string-array. Dialog-opening actions
@@ -174,6 +175,11 @@ private fun TutorialOptOutDialog(onYes: () -> Unit, onNo: () -> Unit, onDismiss:
  * The arrival-color legend. Each row reuses the drawer peek's [EtaPill] (white text on the deviation
  * color, with the pulsing real-time dot) so the sample matches a stop's ETA. Order mirrors the legacy
  * legend: on-time / early / late / scheduled / canceled.
+ *
+ * The swatches come from [ScheduleDeviation.Status] rather than being spelled out as color resources,
+ * so the legend cannot document a palette the app no longer paints (#2043). It takes the pill's
+ * on-fill tier for the same reason [EtaPill] does — white text sits on these. The row *labels* still
+ * have to be kept truthful by hand: they name both the hue and the ±1.5 minute on-time band.
  */
 @Composable
 private fun LegendDialog(onDismiss: () -> Unit) {
@@ -182,12 +188,28 @@ private fun LegendDialog(onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.main_help_legend_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                LegendRow(R.color.stop_info_ontime, predicted = true, label = R.string.main_help_legend_ontime)
-                LegendRow(R.color.stop_info_early, predicted = true, label = R.string.main_help_legend_early)
-                LegendRow(R.color.stop_info_delayed, predicted = true, label = R.string.main_help_legend_late)
-                LegendRow(R.color.stop_info_scheduled_time, predicted = false, label = R.string.main_help_legend_scheduled)
                 LegendRow(
-                    R.color.stop_info_scheduled_time,
+                    ScheduleDeviation.Status.ON_TIME.fillColorRes,
+                    predicted = true,
+                    label = R.string.main_help_legend_ontime
+                )
+                LegendRow(
+                    ScheduleDeviation.Status.EARLY.fillColorRes,
+                    predicted = true,
+                    label = R.string.main_help_legend_early
+                )
+                LegendRow(
+                    ScheduleDeviation.Status.DELAYED.fillColorRes,
+                    predicted = true,
+                    label = R.string.main_help_legend_late
+                )
+                LegendRow(
+                    ScheduleDeviation.Status.SCHEDULED.fillColorRes,
+                    predicted = false,
+                    label = R.string.main_help_legend_scheduled
+                )
+                LegendRow(
+                    ScheduleDeviation.Status.SCHEDULED.fillColorRes,
                     predicted = false,
                     canceled = true,
                     label = R.string.main_help_legend_canceled

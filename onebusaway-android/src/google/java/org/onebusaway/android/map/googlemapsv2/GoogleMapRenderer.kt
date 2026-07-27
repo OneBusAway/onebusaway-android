@@ -667,7 +667,7 @@ class GoogleMapRenderer(
         }
     }
 
-    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor = descriptorCache.get(VehicleBitmaps.iconKey(vehicle, response, renderedVehicleScale)) {
+    private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): BitmapDescriptor = descriptorCache.get(VehicleBitmaps.iconKey(context, vehicle, response, renderedVehicleScale)) {
         VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
     }
 

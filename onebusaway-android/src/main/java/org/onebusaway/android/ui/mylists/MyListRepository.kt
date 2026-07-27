@@ -18,7 +18,6 @@ package org.onebusaway.android.ui.mylists
 import android.content.Context
 import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
-import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -392,14 +391,9 @@ private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
             getRouteDisplayName(shortName, routeLongName),
             etaText
         ),
-        colorRes = badgeColor(color)
+        // The badge paints white text on this color, so it takes the on-fill tier directly off the
+        // arrival (#2043). This used to reverse-map the foreground color resource id back to a
+        // badge color, which silently fell through to "scheduled" for any id it didn't recognize.
+        colorRes = fillColor
     )
-}
-
-@ColorRes
-private fun badgeColor(@ColorRes arrivalColor: Int): Int = when (arrivalColor) {
-    R.color.stop_info_ontime -> R.color.badge_ontime
-    R.color.stop_info_delayed -> R.color.badge_delayed
-    R.color.stop_info_early -> R.color.badge_early
-    else -> R.color.badge_scheduled
 }

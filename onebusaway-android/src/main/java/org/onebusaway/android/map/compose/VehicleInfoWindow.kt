@@ -55,6 +55,7 @@ import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -76,8 +77,10 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
     val route = response.route(trip.routeId) ?: return
     val deviationMin = status.scheduleDeviation.inWholeMinutes
 
-    // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer), so the window can't
-    // disagree with the icon; the arrival listings share the scheduled-vs-deviation coloring via ArrivalInfoUtils.
+    // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer). Since #2043 the
+    // marker itself is colored by route identity rather than punctuality, so this window is where
+    // schedule deviation is expressed on the map — sharing the band and palette with the arrival
+    // listings via ScheduleDeviation.
     VehicleInfoWindowContent(
         title = getRouteDisplayName(route) +
             " " +
@@ -89,7 +92,10 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
         } else {
             stringResource(R.string.stop_info_scheduled)
         },
-        statusColor = colorResource(ArrivalInfoUtils.statusColor(isRealtime, deviationMin)),
+        // The chip is white text on this color, so it takes the on-fill tier.
+        statusColor = colorResource(
+            ScheduleDeviation.fillColor(isRealtime, status.scheduleDeviation)
+        ),
         occupancyDots = if (isRealtime) occupancyDots(status.occupancyStatus) else 0,
         lastUpdated = lastUpdatedText(res, isRealtime, status, now)
     )
@@ -231,7 +237,7 @@ private fun VehicleInfoWindowPreview() {
         VehicleInfoWindowContent(
             title = "44 — Ballard via Wallingford",
             statusLabel = "3 min late",
-            statusColor = colorResource(R.color.stop_info_delayed),
+            statusColor = colorResource(R.color.stop_info_delayed_fill),
             // Two silhouettes: FEW_SEATS_AVAILABLE / STANDING_ROOM_ONLY.
             occupancyDots = 2,
             lastUpdated = "Estimate from data updated 12 sec ago"

@@ -30,7 +30,6 @@ import androidx.core.graphics.withRotation
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteTrips
-import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.MathUtils
 
 /**
@@ -38,7 +37,7 @@ import org.onebusaway.android.util.MathUtils
  * (wrapping each Bitmap in a `BitmapDescriptor`) and the maplibre flavor (wrapping it in an `Icon`)
  * share one implementation + the LRU cache. This is the icon half of the old `VehicleOverlay`.
  *
- * The marker is composed at draw time — a disc filled with the schedule-deviation color, a white mode
+ * The marker is composed at draw time — a disc filled with the vehicle's route color, a white mode
  * glyph (bus/rail/…) centered on it, and a white heading arrow at the rim — rather than decoding one of
  * the ~225 pre-composited `ic_marker_with_*` rasters. It's a **centered** badge (anchored at its center,
  * not a teardrop tip) so a vehicle sits on the route centerline like the trip map's estimate marker,
@@ -95,23 +94,33 @@ object VehicleBitmaps {
     ): Bitmap = getBitmap(
         context,
         vehicleType(vehicle, response),
-        colorResource(vehicle),
+        markerColor(context, vehicle, response),
         directionIndex(vehicle),
         sizeScale
     )
 
     /**
      * A stable key identifying the icon [vehicleBitmap] returns for this vehicle — its type, heading
-     * octant, schedule-deviation color, and size scale, the only inputs that change the bitmap. A
-     * renderer caches one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames
-     * even when the bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
+     * octant, disc color, and size scale, the only inputs that change the bitmap. A renderer caches
+     * one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames even when the
+     * bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
+     *
+     * The color component is the **resolved ARGB value**, not a color resource id: a route color
+     * (#2043) is a raw ARGB int off the wire with no resource id to name it. Keying on the resolved
+     * value also closes a latent staleness bug the resource-id key had — the same id resolves to a
+     * different color after a light/dark switch, which the old key could not tell apart.
      */
     @JvmStatic
-    fun iconKey(vehicle: VehicleMarker, response: RouteTrips, sizeScale: Float = 1f): String = "veh:" +
+    fun iconKey(
+        context: Context,
+        vehicle: VehicleMarker,
+        response: RouteTrips,
+        sizeScale: Float = 1f
+    ): String = "veh:" +
         createBitmapCacheKey(
             vehicleType(vehicle, response),
             directionIndex(vehicle),
-            colorResource(vehicle),
+            markerColor(context, vehicle, response),
             sizeScale
         )
 
@@ -148,16 +157,36 @@ object VehicleBitmaps {
     @VisibleForTesting
     fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
-    /** The schedule-deviation color (realtime) or the scheduled color — constant between polls. */
-    private fun colorResource(vehicle: VehicleMarker): Int {
-        val deviationMin = vehicle.status.scheduleDeviation.inWholeMinutes
-        return ArrivalInfoUtils.statusColor(vehicle.isRealtime, deviationMin)
+    /**
+     * The disc color, as a resolved ARGB value: the vehicle's **route color** when it's live, gray
+     * when it isn't. So the marker encodes route identity + liveness, never punctuality (#2043).
+     *
+     * At map zoom a colored disc reads as identity — "which line is this?" — not as a schedule
+     * judgement, and a rider comparing two discs has no way to tell a hue that means "late" from one
+     * that means "the 44". Deviation still has a home on the map: the info window's status chip,
+     * which is where OBA iOS puts it too (its markers are route-colored and carry only a
+     * realtime-vs-not distinction).
+     *
+     * The route is resolved per vehicle rather than from the shown route, because a cross-route
+     * interline (#2000) merges vehicles from other routes into the same poll. `ObaRoute.color` is
+     * nullable — plenty of feeds omit it — so an absent color falls back to the brand color, the same
+     * fallback [org.onebusaway.android.ui.tripdetails.TripDetailsRepository] uses for its line.
+     */
+    @VisibleForTesting
+    internal fun markerColor(context: Context, vehicle: VehicleMarker, response: RouteTrips): Int {
+        if (!vehicle.isRealtime) {
+            return ContextCompat.getColor(context, R.color.stop_info_scheduled_time)
+        }
+        val route = response.trip(vehicle.status.activeTripId)
+            ?.let { response.route(it.routeId) }
+        return route?.color ?: ContextCompat.getColor(context, R.color.theme_primary)
     }
 
     /**
      * The 8-way heading slot (0..7) the icon for [vehicle] uses. Exposed so the renderer can cheaply
      * detect when a gliding vehicle's direction arrow needs re-stamping — the tinted bitmap only changes
-     * when this index does (the color is constant between polls). A live vehicle always has a heading, so
+     * when this index does (the disc color is the route's, so it doesn't change between polls). A live
+     * vehicle always has a heading, so
      * the undirected slot ([UNDIRECTED]) isn't reachable from here.
      */
     @JvmStatic
@@ -175,25 +204,25 @@ object VehicleBitmaps {
     private fun getBitmap(
         context: Context,
         vehicleType: Int,
-        colorResource: Int,
+        color: Int,
         halfWind: Int,
         sizeScale: Float
     ): Bitmap {
-        val color = ContextCompat.getColor(context, colorResource)
-        val key = createBitmapCacheKey(vehicleType, halfWind, colorResource, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, halfWind, color, sizeScale)
         return sColoredIconCache.get(key)
             ?: renderMarker(context, vehicleType, halfWind, color, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
+    /** [color] is a resolved ARGB value — see [iconKey] for why it can't be a resource id. */
     private fun createBitmapCacheKey(
         vehicleType: Int,
         halfWind: Int,
-        colorResource: Int,
+        color: Int,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        return "$type $halfWind $colorResource ${sizeScale.toBits()}"
+        return "$type $halfWind $color ${sizeScale.toBits()}"
     }
 
     /**
@@ -231,7 +260,7 @@ object VehicleBitmaps {
         // this translated content origin.
         canvas.translate(pad, pad)
 
-        // Colored disc (schedule-deviation color) + white mode glyph, each outlined.
+        // Colored disc (the route's color, or gray when not real-time) + white mode glyph, each outlined.
         MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), Color.WHITE, GLYPH_SIZE, outline)
 
         // Heading arrow, white, rotated about the disc center by the octant (undirected = no arrow).

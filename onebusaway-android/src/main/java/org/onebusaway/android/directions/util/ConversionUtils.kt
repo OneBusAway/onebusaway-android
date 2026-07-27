@@ -29,10 +29,11 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.Date
 import java.util.Locale
+import kotlin.time.Duration.Companion.milliseconds
 import org.onebusaway.android.R
-import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.PreferenceUtils
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * @author Khoa Tran
@@ -276,9 +277,16 @@ object ConversionUtils {
         val beforeTimeString: CharSequence =
             applicationContext.resources.getString(R.string.time_connector_before_time) + " "
 
+        // This is drawn as the text color of the updated time, so it takes the foreground tier.
+        // Before #2043 it passed a *millisecond* delta to a helper whose parameter was documented as
+        // minutes; that was harmless only because the helper was a bare sign test. The deviation is
+        // now an explicit Duration, so the units can't drift silently again.
         val color = ContextCompat.getColor(
             applicationContext,
-            ArrivalInfoUtils.computeColorFromDeviation(newTime - oldTime)
+            ScheduleDeviation.statusColor(
+                isRealtime = true,
+                deviation = (newTime - oldTime).milliseconds
+            )
         )
 
         val newTimeString = SpannableString(timeFormat.format(newDisplay) + " ")

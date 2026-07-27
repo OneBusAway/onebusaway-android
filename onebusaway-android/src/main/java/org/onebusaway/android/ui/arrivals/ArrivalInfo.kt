@@ -17,8 +17,10 @@
 package org.onebusaway.android.ui.arrivals
 
 import android.content.Context
+import androidx.annotation.ColorRes
 import java.text.DateFormat
 import java.util.Date
+import kotlin.time.Duration
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
@@ -27,6 +29,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -51,9 +54,19 @@ class ArrivalInfo(
     val notifyText: String
 
     /**
-     * The resource code for the color that should be used for the arrival time.
+     * The schedule-deviation color for the arrival time, as a color resource id. This is the
+     * **foreground** tier — use it where the color is the text itself.
      */
+    @get:ColorRes
     val color: Int
+
+    /**
+     * The same schedule-deviation state as [color], in the **on-fill** tier: darkened so white text
+     * drawn on top of it clears WCAG AA. Use it wherever the color becomes a filled surface — the
+     * ETA pills and the starred-stop badges — rather than the text.
+     */
+    @get:ColorRes
+    val fillColor: Int
 
     /**
      * True if there is real-time arrival info available for this trip, false if there is not.
@@ -179,7 +192,8 @@ class ArrivalInfo(
         }
 
         val scheduledMins = scheduled.epochMs / MS_IN_MINS
-        // 0 when there's no prediction, preserving the prior sentinel behavior into computeColor below.
+        // 0 when there's no prediction. Only the status label reads these whole-minute values now —
+        // the color is bucketed on the full-precision deviation below (#2043).
         val predictedMins = predictedTime?.let { it.epochMs / MS_IN_MINS } ?: 0L
 
         // A prediction is only usable when the server actually gave us one. A closed stop keeps
@@ -200,7 +214,14 @@ class ArrivalInfo(
         // #1781) exactly consistent with this poll-time value at t=0.
         eta = liveEta(now)
 
-        color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
+        // The deviation the color is bucketed on stays at full precision: a same-domain ServerTime
+        // subtraction, so no device clock can leak in (#1620). Flooring each instant to whole
+        // minutes first — what this did before #2043 — made "on time" mean the two minute-past-epoch
+        // values were exactly equal, so a bus 20 s late that happened to straddle a minute boundary
+        // rendered in the late color and the green on-time state was nearly never shown.
+        val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
+        color = ScheduleDeviation.statusColor(hasPrediction, deviation)
+        fillColor = ScheduleDeviation.fillColor(hasPrediction, deviation)
 
         statusText = computeStatusLabel(
             context,

@@ -247,7 +247,9 @@ private fun OptionCard(
             // [streetModeIcon]) and is dropped here rather than in the model, so it can't leave a
             // chevron pointing at nothing. The planner never asks OTP for car legs, so today this drops
             // nothing a rider can be shown.
-            val drawn = option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
+            val drawn = remember(option.symbols) {
+                option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
                 verticalAlignment = Alignment.CenterVertically

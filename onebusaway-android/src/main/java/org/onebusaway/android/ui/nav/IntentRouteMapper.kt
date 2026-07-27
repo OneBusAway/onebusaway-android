@@ -96,17 +96,18 @@ object IntentRouteMapper {
         // In-app / cross-screen launches carry their destination route verbatim (see [navIntent]).
         input.navRoute?.let { return RouteDecision.Verbatim(it) }
         // The exported (iOS-parity) deep links. A web trip link names the stop it was shared from, so
-        // open the trip scrolled to that stop; add-region applies its URLs as a side effect
-        // (HomeActivity) and for routing stays on the home/map path (the legacy handler went Home).
-        when (val target = input.deepLink) {
-            is ExternalDeepLinks.Target.Stop -> return RouteDecision.Arrivals(target.stopId)
-            is ExternalDeepLinks.Target.Trip -> return RouteDecision.TripDetails(
-                tripId = target.tripId,
-                stopId = target.stopId,
-                scrollMode = TripDetailsLauncher.SCROLL_MODE_STOP
-            )
-            is ExternalDeepLinks.Target.AddRegion -> return RouteDecision.None
-            null -> Unit
+        // open the trip scrolled to that stop; add-region is staged for the rider's confirmation as a
+        // side effect (HomeActivity) and for routing stays on the home/map path.
+        input.deepLink?.let { target ->
+            return when (target) {
+                is ExternalDeepLinks.Target.Stop -> RouteDecision.Arrivals(target.stopId)
+                is ExternalDeepLinks.Target.Trip -> RouteDecision.TripDetails(
+                    tripId = target.tripId,
+                    stopId = target.stopId,
+                    scrollMode = TripDetailsLauncher.SCROLL_MODE_STOP
+                )
+                is ExternalDeepLinks.Target.AddRegion -> RouteDecision.None
+            }
         }
         // System search (HomeActivity is the default_searchable target): open the search destination.
         if (input.isSearch) return RouteDecision.Search(input.searchQuery)

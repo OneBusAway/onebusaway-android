@@ -51,7 +51,7 @@ internal const val NO_REGION_ID = -1L
  * The first id handed to a custom region — one below [NO_REGION_ID], so the two can never be confused.
  * See [nextCustomRegionId].
  */
-internal const val FIRST_CUSTOM_REGION_ID = -2L
+internal const val FIRST_CUSTOM_REGION_ID = NO_REGION_ID - 1
 
 /**
  * The region id stored in the preference, or null when it means "no region" ([NO_REGION_ID]).
@@ -71,7 +71,7 @@ internal fun persistedRegionId(stored: Long): Long? = stored.takeIf { it != NO_R
  * `RegionRepository.deleteCustomRegion`) — there is no dangling id left to be re-pointed at a different
  * server. A monotonic counter would need its own persisted state to buy nothing.
  */
-internal fun nextCustomRegionId(minId: Long?): Long = if (minId == null || minId > FIRST_CUSTOM_REGION_ID) FIRST_CUSTOM_REGION_ID else minId - 1
+internal fun nextCustomRegionId(minId: Long?): Long = minOf(minId ?: NO_REGION_ID, NO_REGION_ID) - 1
 
 /**
  * Builds the [Region] for [request] under [id].

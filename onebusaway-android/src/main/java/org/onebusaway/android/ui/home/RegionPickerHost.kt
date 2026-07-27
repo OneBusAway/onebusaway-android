@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.home
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,8 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.onLongClick
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -133,8 +130,10 @@ private fun RegionChooserDialog(
         title = { Text(stringResource(R.string.region_choose_region)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                // Read once for the whole list, not once per row: at most one row is custom.
+                val removeHint = stringResource(R.string.region_remove_custom_hint)
                 regions.forEach { region ->
-                    RegionRow(region, onRegionChosen, onRemoveCustom)
+                    RegionRow(region, removeHint, onRegionChosen, onRemoveCustom)
                 }
             }
         },
@@ -150,27 +149,20 @@ private fun RegionChooserDialog(
 @Composable
 private fun RegionRow(
     region: Region,
+    removeHint: String,
     onRegionChosen: (Region) -> Unit,
     onRemoveCustom: (Region) -> Unit
 ) {
-    val removeHint = stringResource(R.string.region_remove_custom_hint)
     Text(
         text = region.name,
         modifier = Modifier
             .fillMaxWidth()
-            .then(
-                if (region.custom) {
-                    Modifier
-                        .combinedClickable(
-                            onClick = { onRegionChosen(region) },
-                            onLongClick = { onRemoveCustom(region) }
-                        )
-                        // The long-press is otherwise invisible to a screen reader, which is the only
-                        // route to removal — so announce it rather than leaving it discoverable by feel.
-                        .semantics { onLongClick(label = removeHint, action = null) }
-                } else {
-                    Modifier.clickable { onRegionChosen(region) }
-                }
+            // A null onLongClick behaves exactly like clickable, and onLongClickLabel is what announces
+            // the gesture to a screen reader — for which it is the only route to removal.
+            .combinedClickable(
+                onClick = { onRegionChosen(region) },
+                onLongClickLabel = removeHint.takeIf { region.custom },
+                onLongClick = if (region.custom) ({ onRemoveCustom(region) }) else null
             )
             .padding(vertical = 16.dp)
     )

@@ -23,7 +23,7 @@ import java.net.URL
 
 /**
  * Stateless validator for a custom OBA/OTP API URL — the rule for "is this a usable region API URL".
- * Used by the region domain ([RegionRepository.applyCustomApiUrls], applying the `add-region` deep
+ * Used by the region domain ([RegionRepository.addCustomRegion], validating an `add-region` deep
  * link) and by the advanced settings screen
  * ([org.onebusaway.android.ui.settings.AdvancedSettingsViewModel]) for live input validation. It lives
  * in the neutral `region` package so both can depend on it without a `region` → `ui` back-dependency.

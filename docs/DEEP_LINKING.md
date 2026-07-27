@@ -59,9 +59,13 @@ probed the server. If it doesn't serve those APIs, requests fail visibly like an
 `example@example.com`), which correctly hides the "email a problem report" option instead of mailing a
 made-up address.
 
-Once added, a custom region appears in the region picker like any other. **Long-press it there to
-remove it** — the way back out of a link you regret. Removing the region you're currently on re-resolves
-as if none had been set.
+Once added, a custom region appears in the region picker like any other. **Long-press it in the
+forced-choice picker (`RegionPickerHost`) to remove it** — the way back out of a link you regret.
+Removing the region you're currently on re-resolves as if none had been set.
+
+Note the Settings → Agencies region list is a separate surface (`ui/regions/`), whose `RegionItem`
+doesn't carry the `custom` flag, so it lists custom regions without marking them or offering removal.
+Plumbing the flag through it is worth doing and is not done here.
 
 The pre-existing Settings → Advanced custom-API-URL preferences are a separate, unchanged mechanism (see
 [`CUSTOM_SERVERS.md`](CUSTOM_SERVERS.md)); a custom region supersedes them, since applying any region

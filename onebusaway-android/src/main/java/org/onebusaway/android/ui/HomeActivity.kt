@@ -275,9 +275,9 @@ class HomeActivity : AppCompatActivity() {
 
     /**
      * Runs the domain mutations implied by certain incoming intents, kept out of [IntentRouteMapper]'s
-     * pure route mapping so that stays a side-effect-free translator: the `add-region` deep link applies
-     * custom API URLs (clearing the region), an unroutable web link goes back to the browser, and the FCM
-     * payload clears the now-fired reminder.
+     * pure route mapping so that stays a side-effect-free translator: an `add-region` deep link is staged
+     * for the rider's confirmation, an unroutable web link goes back to the browser, and the FCM payload
+     * clears the now-fired reminder.
      */
     private fun applyIntentSideEffects(intent: Intent?) {
         if (intent == null) return
@@ -296,8 +296,14 @@ class HomeActivity : AppCompatActivity() {
         // deliberately stays alive behind it: the same call runs for warm relaunches (LaunchIntentEffect
         // feeds it both cold and onNewIntent intents), and finishing there would tear down a session the
         // user is in the middle of. If no browser will take it we fall through and land on home/map.
-        if (data != null && ExternalDeepLinks.isUnhandledWebLink(data)) {
-            if (ExternalIntents.openInBrowser(this, data)) return
+        // `deepLink == null` short-circuits the check for anything that already routed — a link with a
+        // destination is by definition not unhandled, so the common case never re-reads the URI.
+        if (deepLink == null &&
+            data != null &&
+            ExternalDeepLinks.isUnhandledWebLink(data) &&
+            ExternalIntents.openInBrowser(this, data)
+        ) {
+            return
         }
         intent.getStringExtra(ReminderUtils.ARRIVAL_PAYLOAD_KEY)?.let { arrivalJson ->
             reminderRepository.deleteReminderFromPayload(arrivalJson)

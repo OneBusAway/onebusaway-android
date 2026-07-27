@@ -91,10 +91,13 @@ interface RegionDao {
     @Query("SELECT MIN(_id) FROM regions")
     suspend fun minRegionId(): Long?
 
-    /** The custom region served by [obaBaseUrl], or null — the key re-adding an existing region matches on. */
-    @Transaction
-    @Query("SELECT * FROM regions WHERE custom != 0 AND oba_base_url = :obaBaseUrl LIMIT 1")
-    suspend fun customRegionByObaUrl(obaBaseUrl: String): RegionWithChildren?
+    /**
+     * The id of the custom region served by [obaBaseUrl], or null — the key re-adding an existing region
+     * matches on. Reads only the id: the caller reuses it and nothing else, and selecting the whole
+     * [RegionWithChildren] would cost a transaction plus a query per `@Relation`.
+     */
+    @Query("SELECT _id FROM regions WHERE custom != 0 AND oba_base_url = :obaBaseUrl LIMIT 1")
+    suspend fun customRegionIdByObaUrl(obaBaseUrl: String): Long?
 
     /** Removes one region and its children (region_bounds cascades; open311 has no FK, so it's explicit). */
     @Transaction
@@ -118,17 +121,23 @@ interface RegionDao {
     suspend fun replaceAll(regions: List<RegionWithChildren>) {
         clearDirectoryOpen311Servers()
         clearDirectoryRegions() // region_bounds cascades
-        for (entry in regions) {
-            insertRegion(entry.region)
-            insertBounds(entry.bounds)
-            insertOpen311Servers(entry.open311Servers)
-        }
+        regions.forEach { insertEntry(it) }
     }
 
     /** Inserts or replaces one custom region and its children (there are no bounds to write today). */
     @Transaction
     suspend fun upsertCustomRegion(entry: RegionWithChildren) {
         deleteRegionById(entry.region.id)
+        insertEntry(entry)
+    }
+
+    /**
+     * Inserts one region and its children. Parent first: `region_bounds` has a foreign key onto
+     * `regions`, so the order is load-bearing — which is the reason both writers share this rather than
+     * each spelling out the three inserts.
+     */
+    @Transaction
+    suspend fun insertEntry(entry: RegionWithChildren) {
         insertRegion(entry.region)
         insertBounds(entry.bounds)
         insertOpen311Servers(entry.open311Servers)

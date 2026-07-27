@@ -103,8 +103,9 @@
                  (#2027) — see org.onebusaway.android.ui.nav.ExternalDeepLinks. Note that a filter's
                  <data> attributes combine as a cross product, so every scheme below matches every host:
 
-                   <scheme>://add-region?oba-url=… — HomeActivity.applyIntentSideEffects reads the
-                       oba-url/otp-url query params, applies the custom API URL(s), and stays on the
+                   <scheme>://add-region?name=…&oba-url=… — HomeActivity.applyIntentSideEffects stages
+                       the request for the rider's confirmation (AddRegionDialog); accepting it adds a
+                       custom region and switches to it. Routes nowhere, so the app stays on the
                        home/map path (the former SettingsActivity VIEW filter).
                    <scheme>://view-stop?stopID=…&regionID=… — opens that stop's arrivals.
 

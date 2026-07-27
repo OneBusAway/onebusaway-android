@@ -61,11 +61,12 @@ class CustomRegionsTest {
     }
 
     @Test
-    fun `custom ids never collide with the no-region sentinel or a directory id`() {
-        // -1 is what the region-id preference stores for "no region"; directory ids are >= 0.
-        val ids = generateSequence(nextCustomRegionId(null)) { nextCustomRegionId(it) }.take(50)
-        ids.forEach { id ->
-            assertTrue("id $id must be below the -1 sentinel", id < -1L)
+    fun `every allocated custom id stays below the sentinel and survives the preference`() {
+        // Two properties over one sequence: an allocated id can never be read as a directory id
+        // (`>= 0`) nor as the "no region" sentinel (`-1`), which is what makes it round-trip.
+        generateSequence(nextCustomRegionId(null), ::nextCustomRegionId).take(50).forEach { id ->
+            assertTrue("id $id must be below the sentinel", id < NO_REGION_ID)
+            assertNotNull("id $id must survive the preference", persistedRegionId(id))
         }
     }
 
@@ -91,12 +92,6 @@ class CustomRegionsTest {
     fun `a directory region id survives a round trip through the preference`() {
         assertEquals(0L, persistedRegionId(0L)) // Tampa
         assertEquals(1L, persistedRegionId(1L))
-    }
-
-    @Test
-    fun `no allocated custom id can ever be mistaken for the sentinel`() {
-        val ids = generateSequence(nextCustomRegionId(null)) { nextCustomRegionId(it) }.take(50)
-        ids.forEach { id -> assertNotNull("id $id must survive the preference", persistedRegionId(id)) }
     }
 
     // --- the region built from a request ---

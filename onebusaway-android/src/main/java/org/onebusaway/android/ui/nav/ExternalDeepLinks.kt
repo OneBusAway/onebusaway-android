@@ -125,9 +125,12 @@ object ExternalDeepLinks {
      */
     fun parse(link: Link, appSchemes: Set<String> = APP_SCHEMES): Target? = when {
         link.scheme in appSchemes -> parseAppSchemeLink(link)
-        link.scheme == WEB_SCHEME && link.host in WEB_HOSTS -> parseWebLink(link)
+        link.isWebLink -> parseWebLink(link)
         else -> null
     }
+
+    /** On one of [WEB_HOSTS] over [WEB_SCHEME] — the shared precondition of the two web-link readers. */
+    private val Link.isWebLink: Boolean get() = scheme == WEB_SCHEME && host in WEB_HOSTS
 
     private fun parseAppSchemeLink(link: Link): Target? = when (link.host) {
         VIEW_STOP_HOST -> link.params.nonBlank(PARAM_STOP_ID)?.let { Target.Stop(it) }

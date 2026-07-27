@@ -97,7 +97,7 @@ class RegionCache @Inject constructor(
     }
 
     /** The user-added custom regions (#2027); empty when there are none. */
-    suspend fun customRegions(): List<Region> {
+    private suspend fun customRegions(): List<Region> {
         importGate.awaitReady()
         return regionDao.getCustomRegions().map { RegionMapper.toRegion(it) }
     }
@@ -113,7 +113,7 @@ class RegionCache @Inject constructor(
      */
     suspend fun saveCustom(request: CustomRegionRequest): Region {
         importGate.awaitReady()
-        val existingId = regionDao.customRegionByObaUrl(request.obaBaseUrl)?.region?.id
+        val existingId = regionDao.customRegionIdByObaUrl(request.obaBaseUrl)
         val region = customRegion(existingId ?: nextCustomRegionId(regionDao.minRegionId()), request)
         regionDao.upsertCustomRegion(RegionMapper.toEntities(region))
         return region

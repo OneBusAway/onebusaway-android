@@ -47,7 +47,15 @@ internal object Interlines {
         val leaderIndex: Int,
         val alightIndex: Int,
         val transitionLegIndices: List<Int>
-    )
+    ) {
+        /**
+         * The legs whose route the rider is told about, in travel order: the one boarded, plus every leg
+         * the vehicle changes route at. A self-interlined continuation is in neither, so a 12 reversing
+         * onto itself names one route. This is what a ride's badge and its symbol are built from — the
+         * routes ridden, rather than the legs OTP happened to split the ride into.
+         */
+        val riddenLegIndices: List<Int> get() = listOf(leaderIndex) + transitionLegIndices
+    }
 
     /**
      * The transit chains in leg order. A chain leader is a transit leg that is not itself an interlined

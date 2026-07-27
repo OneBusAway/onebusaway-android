@@ -29,7 +29,7 @@ import org.onebusaway.android.directions.model.TripVertexType
  * means a walking option and the walk *inside* a transit option are the same symbol, and a card says
  * how a rider gets to the bus rather than only which bus it is.
  *
- * Pure (no `Context`), like [Interlines] and [legBadge], so `ModeSymbolsTest` covers the sequencing
+ * Pure (no `Context`), like [Interlines] and [rideBadge], so `ModeSymbolsTest` covers the sequencing
  * directly.
  */
 internal object ModeSymbols {
@@ -53,8 +53,10 @@ internal object ModeSymbols {
      * and supplies each transit leg's interchangeable routes (#2010), exactly as
      * [TripResultsRepository][DefaultTripResultsRepository] hands them to the drawer's badges.
      *
-     * A stay-aboard interline (#2000) contributes one symbol per *route* the vehicle runs as, not one
-     * per leg — the continuation legs the rider never acts on fold away — by reading the same
+     * A stay-aboard interline (#2000) is **one** symbol, not one per leg and not one per route: the
+     * rider boards once, so the card draws one roundel, and the routes the vehicle runs as are joined
+     * inside it by chevrons — `[5 > 12]` (#2049). Drawing them as separate roundels made an interline
+     * read exactly like a transfer, which is the one thing it isn't. It reads the same
      * [Interlines.chains] the directions do, so the card and the drawer can't disagree about how many
      * rides a trip has. Pseudo-legs (`BOARDING`/`ALIGHTING`/`TRANSFER`) are not travel and draw
      * nothing.
@@ -67,14 +69,14 @@ internal object ModeSymbols {
         require(substitutable.size == legs.size) {
             "substitutable must be index-aligned to legs (${substitutable.size} vs ${legs.size})"
         }
-        // The legs that badge a ride: each chain's leader, plus every leg the vehicle changes route at.
-        // A self-interlined continuation is in neither, so a 12 reversing onto itself badges once.
-        val ridden = Interlines.chains(legs)
-            .flatMap { chain -> listOf(chain.leaderIndex) + chain.transitionLegIndices }
-            .toSet()
+        // One badge per ride, at the leg it's boarded at; every other transit leg is a continuation the
+        // rider never acts on, and is already named inside its leader's badge.
+        val rides = Interlines.chains(legs).associate { chain ->
+            chain.leaderIndex to rideBadge(legs, chain, substitutable[chain.leaderIndex])
+        }
         val symbols = legs.mapIndexedNotNull { i, leg ->
             when {
-                leg.mode?.isTransit == true -> if (i in ridden) ModeSymbol.Transit(legBadge(leg, substitutable[i])) else null
+                leg.mode?.isTransit == true -> rides[i]?.let { ModeSymbol.Transit(it) }
                 leg.mode?.isOnStreetNonTransit == true -> leg.streetSymbolOrNull()
                 else -> null
             }

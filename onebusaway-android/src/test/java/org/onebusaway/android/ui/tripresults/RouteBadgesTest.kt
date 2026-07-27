@@ -24,10 +24,12 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 
 /**
- * JVM tests for the joined route badge a transit leg draws (#2010) — the planned route plus whatever
- * else the leg can be ridden on, shared by the itinerary option cards and the directions drawer.
+ * JVM tests for the joined route badge a ride draws — the planned route plus whatever else the leg can be
+ * ridden on (#2010), or plus whatever the vehicle becomes under the rider (#2049) — shared by the
+ * itinerary option cards and the directions drawer.
  */
 class RouteBadgesTest {
 
@@ -153,6 +155,73 @@ class RouteBadgesTest {
     fun interchangeableRouteBadgesItsDisplayName() {
         assertEquals("1 Line", interchangeableRoute("1 Line").badge().shortName)
         assertEquals("Seattle - Bremerton", interchangeableRoute("Seattle - Bremerton").badge().shortName)
+    }
+
+    /**
+     * A ride the vehicle changes route during badges every route it runs as, in ride order and joined by
+     * chevrons (#2049) — the picker used to promise a 5 all the way while the drawer's own "stay on
+     * board" row said the vehicle becomes the 12.
+     *
+     * Ride order, again on a pair natural name order would reverse: what the rider boards comes first.
+     */
+    @Test
+    fun rideBadgeChevronsTheRoutesAnInterlinedVehicleRunsAs() {
+        val badge = rideBadgeOf(transitLeg("12"), transitLeg("10", interline = true))
+
+        assertEquals(listOf("12", "10"), badge.routes.map { it.shortName })
+        assertEquals(RouteBadgeJoin.THEN, badge.join)
+        assertTrue(badge.isJoined)
+        // "Board either one" is the wrong instruction here: there is one vehicle, and it becomes the 10.
+        assertFalse(badge.isInterchangeable)
+    }
+
+    /** A self-interline is invisible to the rider — same route, same vehicle — so it badges once. */
+    @Test
+    fun rideBadgeOfASelfInterlineNamesTheRouteOnce() {
+        val badge = rideBadgeOf(transitLeg("12"), transitLeg("12", interline = true))
+
+        assertEquals(listOf("12"), badge.routes.map { it.shortName })
+        assertFalse(badge.isJoined)
+    }
+
+    /** A ride with no route change is the leg's own badge: its interchangeable routes, slashed. */
+    @Test
+    fun rideBadgeOfAnOrdinaryRideOffersItsInterchangeableRoutes() {
+        val legs = listOf(transitLeg("2 Line"))
+
+        val badge = rideBadge(legs, Interlines.chains(legs).single(), listOf(interchangeableRoute("1 Line")))
+
+        assertEquals(listOf("1 Line", "2 Line"), badge.routes.map { it.shortName })
+        assertEquals(RouteBadgeJoin.ANY_OF, badge.join)
+        assertTrue(badge.isInterchangeable)
+    }
+
+    /**
+     * A continuation whose route names itself in no way at all drops out of the badge rather than
+     * leaving it a blank segment; the ride still names every route that can be named, and the drawer's
+     * transition row still announces the change (falling back to the headsign).
+     */
+    @Test
+    fun rideBadgeDropsAContinuationThatNamesNoRoute() {
+        val unnamed = TripLeg(mode = TripMode.BUS, routeId = "1_999", interlineWithPreviousLeg = true)
+
+        val badge = rideBadgeOf(transitLeg("12"), unnamed)
+
+        assertEquals(listOf("12"), badge.routes.map { it.shortName })
+        assertEquals(TransitMode.BUS, badge.mode)
+    }
+
+    private fun transitLeg(shortName: String, interline: Boolean = false) = TripLeg(
+        mode = TripMode.BUS,
+        routeId = "1_$shortName",
+        routeShortName = shortName,
+        interlineWithPreviousLeg = interline
+    )
+
+    /** The badge for the single ride [legs] describe, with nothing interchangeable. */
+    private fun rideBadgeOf(vararg legs: TripLeg): LegBadge {
+        val ride = legs.toList()
+        return rideBadge(ride, Interlines.chains(ride).single(), emptyList())
     }
 
     private fun interchangeableRoute(displayName: String) = InterchangeableRoute(

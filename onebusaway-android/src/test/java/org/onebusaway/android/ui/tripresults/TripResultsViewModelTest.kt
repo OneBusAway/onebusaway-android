@@ -42,7 +42,7 @@ class TripResultsViewModelTest {
     )
 
     private fun option(shortName: String) = ItineraryOption(
-        mode = ModeSummary.Routes(listOf(LegBadge(listOf(RouteBadge(shortName, routeColor = null)), TransitMode.BUS))),
+        symbols = listOf(ModeSymbol.Transit(LegBadge(listOf(RouteBadge(shortName, routeColor = null)), TransitMode.BUS))),
         durationMinutes = 30,
         startTime = ServerTime(0L),
         endTime = ServerTime(30 * 60_000L)

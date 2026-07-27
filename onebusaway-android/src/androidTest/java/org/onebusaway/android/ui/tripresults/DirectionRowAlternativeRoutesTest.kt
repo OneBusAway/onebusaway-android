@@ -91,7 +91,7 @@ class DirectionRowAlternativeRoutesTest {
     private fun state(routeLeg: RouteLegRef) = TripResultsUiState.Success(
         options = listOf(
             ItineraryOption(
-                mode = ModeSummary.Routes(listOfNotNull(routeLeg.badge)),
+                symbols = listOfNotNull(routeLeg.badge).map { ModeSymbol.Transit(it) },
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
                 endTime = ServerTime(32 * 60_000L)

@@ -45,6 +45,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -94,6 +95,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
+import org.onebusaway.android.ui.compose.components.ROUTE_BADGE_HEIGHT
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.RouteLineColors
@@ -179,6 +181,37 @@ fun TripResultsHeader(
  */
 private val OPTION_BADGE_MAX_WIDTH = 110.dp
 
+/**
+ * The chevron between two of a card's mode symbols, and the gap on either side of it. Deliberately
+ * small and quiet: it is punctuation saying "then", not a step of the trip, so it must not compete
+ * with the glyphs and roundels it joins — hence a height well under [ModeGlyph]'s 20dp and a faded
+ * tint. The gap is tighter than the 6dp the symbols used alone, since the chevron now does the
+ * separating that whitespace used to. Tune all three here.
+ *
+ * [SYMBOL_SEPARATOR_HEIGHT] is the chevron's *drawn* height, not a box it floats inside: the drawable
+ * is cropped to the glyph (see `ic_arrow_right.xml`), so growing the chevron doesn't quietly grow the
+ * space around it and [SYMBOL_GAP] is the whole of that space.
+ */
+private val SYMBOL_SEPARATOR_HEIGHT = 8.dp
+
+/**
+ * The height every mode symbol on a card is drawn at — a bare glyph and a route roundel alike, so the
+ * card's first line reads as one row of equal-weight symbols rather than glyphs standing taller (or
+ * shorter) than the badges between them. Split the difference between the two forms' natural sizes:
+ * the glyph came down from 20dp and the roundel up from its unscaled [ROUTE_BADGE_HEIGHT].
+ */
+private val SYMBOL_HEIGHT = 19.dp
+
+/**
+ * What the roundel has to be scaled by to stand [SYMBOL_HEIGHT] tall. Derived rather than written as a
+ * number, so a change to the chip's own metrics re-levels the row instead of silently breaking it.
+ */
+private val SYMBOL_BADGE_SCALE = SYMBOL_HEIGHT / ROUTE_BADGE_HEIGHT
+
+private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
+
+private val SYMBOL_GAP = 4.dp
+
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
@@ -205,45 +238,50 @@ private fun OptionCard(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // The modes: transit route badges (no comma between), a walk glyph for a walk-only trip, or
-            // a mode label for other non-transit trips.
-            when (val mode = option.mode) {
-                // One roundel per leg. The gap between legs is deliberately wide, so "two legs" and
-                // "one leg, two interchangeable routes" (which is one seamless chip) can't read as the
-                // same thing (#2010).
-                is ModeSummary.Routes -> Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Every badge leads with the mode it's ridden on, which a route number never says on
-                    // its own. A route publishing no short name badges its long name, capped to
-                    // [OPTION_BADGE_MAX_WIDTH] and ellipsized so one wordy name can't crowd the
-                    // other legs off the card; only a route that names itself in no way at all is left
-                    // with the bare glyph.
-                    mode.badges.forEach { badge ->
-                        val glyph = transitModeIcon(badge.mode)
-                        val glyphLabel = stringResource(transitModeLabel(badge.mode))
-                        if (badge.isUnnamed) {
-                            ModeGlyph(glyph, glyphLabel)
-                        } else {
-                            RouteBadgeChip(
-                                badge.routes,
-                                maxWidth = OPTION_BADGE_MAX_WIDTH,
-                                leadingIcon = glyph,
-                                leadingIconDescription = glyphLabel
-                            )
+            // The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel
+            // per ride, chevron-separated (#2047). The gap between symbols is deliberately wide, so
+            // "two legs" and "one leg, two interchangeable routes" (which is one seamless chip) can't
+            // read as the same thing (#2010).
+            //
+            // Drawn from the symbols that actually render: a [StreetMode.CAR] leg has no glyph (see
+            // [streetModeIcon]) and is dropped here rather than in the model, so it can't leave a
+            // chevron pointing at nothing. The planner never asks OTP for car legs, so today this drops
+            // nothing a rider can be shown.
+            val drawn = option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                drawn.forEachIndexed { index, symbol ->
+                    if (index > 0) SymbolSeparator()
+                    when (symbol) {
+                        // A glyph alone — there is nothing to name about a walk.
+                        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
+                            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
+                        }
+                        // Every badge leads with the mode it's ridden on, which a route number never says
+                        // on its own. A route publishing no short name badges its long name, capped to
+                        // [OPTION_BADGE_MAX_WIDTH] and ellipsized so one wordy name can't crowd the
+                        // other legs off the card; only a route that names itself in no way at all is
+                        // left with the bare glyph.
+                        is ModeSymbol.Transit -> {
+                            val badge = symbol.badge
+                            val glyph = transitModeIcon(badge.mode)
+                            val glyphLabel = stringResource(transitModeLabel(badge.mode))
+                            if (badge.isUnnamed) {
+                                ModeGlyph(glyph, glyphLabel)
+                            } else {
+                                RouteBadgeChip(
+                                    badge.routes,
+                                    scale = SYMBOL_BADGE_SCALE,
+                                    maxWidth = OPTION_BADGE_MAX_WIDTH,
+                                    leadingIcon = glyph,
+                                    leadingIconDescription = glyphLabel
+                                )
+                            }
                         }
                     }
                 }
-                ModeSummary.Walk -> ModeGlyph(
-                    R.drawable.ic_directions_walk,
-                    stringResource(R.string.step_by_step_non_transit_mode_walk_action)
-                )
-                is ModeSummary.Label -> Text(
-                    text = mode.text,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1
-                )
             }
             // Duration + walk distance read as one stat group, so they sit tighter together than the
             // card's other lines.
@@ -803,26 +841,59 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 }
 
 /**
- * The glyph inside an on-street leg's node. Null for [StreetMode.CAR]: the app ships no car drawable
- * because its planner never asks OTP for car modes (the mode picker offers none — see
- * `org.onebusaway.android.ui.tripplan.TripModeSelection`), and a bare ring is honest where
- * a walking figure would be wrong. Add `ic_directions_car` here if car planning is ever offered.
+ * The glyph for an on-street leg — inside its node on the spine, and as its symbol on an option card.
+ * A rented bike takes a rental glyph (`ic_bike_rental`: Material Symbols' `car_rental` key over a
+ * bicycle instead of a car) rather than the plain bicycle, so a shared bike doesn't read as the one the
+ * rider brought — the same distinction the map draws between a bikeshare dock and a bike.
+ *
+ * Null for [StreetMode.CAR]: the app ships no car drawable because its planner never asks OTP for car
+ * modes (the mode picker offers none — see `org.onebusaway.android.ui.tripplan.TripModeSelection`), and
+ * a bare ring is honest where a walking figure would be wrong. Add `ic_directions_car` here if car
+ * planning is ever offered.
  */
 private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {
     StreetMode.WALK -> R.drawable.ic_directions_walk
     StreetMode.BIKE -> R.drawable.ic_directions_bike
+    StreetMode.BIKESHARE -> R.drawable.ic_bike_rental
     StreetMode.CAR -> null
 }
 
+/** What to call [mode] aloud, for a glyph standing on its own on an option card. */
+private fun streetModeLabel(mode: StreetMode): Int = when (mode) {
+    StreetMode.WALK -> R.string.step_by_step_non_transit_mode_walk_action
+    StreetMode.BIKE -> R.string.step_by_step_non_transit_mode_bicycle_action
+    StreetMode.BIKESHARE -> R.string.transit_directions_bikeshare_label
+    StreetMode.CAR -> R.string.step_by_step_non_transit_mode_car_action
+}
+
 /**
- * An option card's mode glyph, standing in for a route badge — the walk-only trip's walking figure, or
- * the vehicle a leg with no route name is ridden on. Sized to the route-badge row height so a card's
- * first line lines up whichever form it takes, and always labelled: with no badge beside it, this glyph
- * is the only thing naming that leg.
+ * An option card's bare mode glyph — an on-street leg (which has no route to badge), or the vehicle a
+ * leg with no route name is ridden on. Drawn at [SYMBOL_HEIGHT], the same height the roundels beside it
+ * are scaled to, so a card's first line lines up whichever form its symbols take. Always labelled: with
+ * no badge beside it, this glyph is the only thing naming that leg.
  */
 @Composable
 private fun ModeGlyph(iconRes: Int, contentDescription: String) {
-    Icon(painterResource(iconRes), contentDescription = contentDescription, modifier = Modifier.size(20.dp))
+    Icon(painterResource(iconRes), contentDescription = contentDescription, modifier = Modifier.size(SYMBOL_HEIGHT))
+}
+
+/**
+ * The chevron joining two mode symbols. Quietened by fading the card's *own* content colour rather
+ * than reaching for a theme grey: the card is tinted (and differently again when selected), so an
+ * unrelated `onSurfaceVariant` lands as an off-hue smudge on it.
+ *
+ * Unlabelled: the order it marks is already the order TalkBack reads the symbols in, so announcing it
+ * between every pair would only pad the card.
+ */
+@Composable
+private fun SymbolSeparator() {
+    Icon(
+        painterResource(R.drawable.ic_arrow_right),
+        contentDescription = null,
+        tint = LocalContentColor.current.copy(alpha = SYMBOL_SEPARATOR_ALPHA),
+        // The cropped glyph is 1:2, so the box must be too — a square one would pad it back out.
+        modifier = Modifier.size(SYMBOL_SEPARATOR_HEIGHT / 2, SYMBOL_SEPARATOR_HEIGHT)
+    )
 }
 
 /**
@@ -965,7 +1036,9 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
 private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (mode) {
     StreetMode.WALK ->
         if (isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
-    StreetMode.BIKE ->
+    // A rented bike is still ridden: the verb is the same as for the rider's own bike, and only the
+    // glyph (and the map's dock markers) say where it came from.
+    StreetMode.BIKE, StreetMode.BIKESHARE ->
         if (isTransfer) R.string.trip_plan_bike_transfer else R.string.step_by_step_non_transit_mode_bicycle_action
     StreetMode.CAR ->
         if (isTransfer) R.string.trip_plan_car_transfer else R.string.step_by_step_non_transit_mode_car_action
@@ -1247,10 +1320,12 @@ private fun TripResultsPreview() {
         val state = TripResultsUiState.Success(
             options = listOf(
                 ItineraryOption(
-                    // A bus leg, then an interchangeable rail pair drawn as one joined badge (#2010).
-                    mode = ModeSummary.Routes(
-                        listOf(
-                            LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt())), TransitMode.BUS),
+                    // Walk, a bus leg, then an interchangeable rail pair drawn as one joined badge
+                    // (#2010) — the transfer between them being too short to draw a glyph for (#2047).
+                    symbols = listOf(
+                        ModeSymbol.Street(StreetMode.WALK),
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt())), TransitMode.BUS)),
+                        ModeSymbol.Transit(
                             LegBadge(
                                 listOf(
                                     RouteBadge("1 Line", 0xFF00A651.toInt()),
@@ -1258,7 +1333,8 @@ private fun TripResultsPreview() {
                                 ),
                                 TransitMode.RAIL
                             )
-                        )
+                        ),
+                        ModeSymbol.Street(StreetMode.WALK)
                     ),
                     durationMinutes = 32,
                     startTime = ServerTime(0L),
@@ -1268,16 +1344,27 @@ private fun TripResultsPreview() {
                 ItineraryOption(
                     // The second leg is a ferry, which publishes no route short name — so it badges its
                     // long name, capped and ellipsized.
-                    mode = ModeSummary.Routes(
-                        listOf(
-                            LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS),
-                            LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY)
-                        )
+                    symbols = listOf(
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS)),
+                        ModeSymbol.Street(StreetMode.WALK),
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY))
                     ),
                     durationMinutes = 41,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(41 * 60_000L),
                     walkDistanceMeters = 400.0
+                ),
+                ItineraryOption(
+                    // A bikeshare trip: walk to the dock, ride, walk from it (#2047).
+                    symbols = listOf(
+                        ModeSymbol.Street(StreetMode.WALK),
+                        ModeSymbol.Street(StreetMode.BIKESHARE),
+                        ModeSymbol.Street(StreetMode.WALK)
+                    ),
+                    durationMinutes = 18,
+                    startTime = ServerTime(0L),
+                    endTime = ServerTime(18 * 60_000L),
+                    walkDistanceMeters = 500.0
                 )
             ),
             selectedIndex = 0,

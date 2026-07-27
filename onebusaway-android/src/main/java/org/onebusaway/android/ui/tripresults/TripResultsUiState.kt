@@ -23,33 +23,40 @@ import org.onebusaway.android.util.GeoPoint
 
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
- * (not pre-formatted strings) so the card can render route badges / a walk glyph, the ETA-pill duration,
- * and a device-localized time range:
- *  - [mode] — what the card's first line shows for the trip (route badges, a walk glyph, or a label).
+ * (not pre-formatted strings) so the card can render its mode symbols, the ETA-pill duration, and a
+ * device-localized time range:
+ *  - [symbols] — the trip as a left-to-right sequence of mode symbols (see [ModeSymbol]).
  *  - [durationMinutes] — whole-minute trip length, formatted like the arrivals ETA pill.
  *  - [startTime]/[endTime] — the server-clock trip endpoints, unwrapped only at the time formatter.
  *  - [walkDistanceMeters] — total walking across the trip's legs, in meters; the card formats it to the
  *    user's units (miles/km, or feet/meters for short walks). 0 when the trip has no walking.
  */
 data class ItineraryOption(
-    val mode: ModeSummary,
+    val symbols: List<ModeSymbol>,
     val durationMinutes: Long,
     val startTime: ServerTime,
     val endTime: ServerTime,
     val walkDistanceMeters: Double = 0.0
 )
 
-/** What an option card's first line shows for the trip's modes (mutually exclusive by construction). */
-sealed interface ModeSummary {
-    /** A transit trip: one roundel per leg, in order (a leg's roundel names every route that leg can
-     *  be ridden on — see [LegBadge]). */
-    data class Routes(val badges: List<LegBadge>) : ModeSummary
+/**
+ * One symbol on an option card's first line. A card reads as the whole trip in travel order —
+ * `[walk] [4] [walk] [40] [walk]` — rather than as transit routes alone, so a transit option and a
+ * walk/bike one are told in the same symbolic language instead of one being badges and the other prose
+ * (#2047). Built by [ModeSymbols].
+ */
+sealed interface ModeSymbol {
 
-    /** A walk-only trip — shown as a walk glyph. */
-    data object Walk : ModeSummary
+    /**
+     * An on-street leg, drawn as its mode's glyph alone — how the rider covers the ground between (or
+     * instead of) rides. Legs shorter than [ModeSymbols.NEGLIGIBLE_STREET_METERS] carry no symbol at
+     * all; see there for why.
+     */
+    data class Street(val mode: StreetMode) : ModeSymbol
 
-    /** Any other non-transit trip (bike/car), as the legacy mode-label title. */
-    data class Label(val text: String) : ModeSummary
+    /** A transit leg, drawn as its route roundel — which names every route the leg can be ridden on
+     *  (see [LegBadge]), or falls back to the mode glyph for a leg that names no route. */
+    data class Transit(val badge: LegBadge) : ModeSymbol
 }
 
 /**
@@ -172,11 +179,19 @@ sealed interface RideEvent {
 enum class TerminalKind { START, ARRIVE }
 
 /**
- * How a rider covers a [TripLogEntry.Walk] leg — the three modes
- * [TripMode.isOnStreetNonTransit][org.onebusaway.android.directions.model.TripMode] admits, narrowed
- * to just those so the renderer's verb/glyph choice is total and a transit mode can't reach it.
+ * How a rider covers ground off a vehicle — a [TripLogEntry.Walk] leg, or a [ModeSymbol.Street] on an
+ * option card. The three modes [TripMode.isOnStreetNonTransit][
+ * org.onebusaway.android.directions.model.TripMode] admits, narrowed to just those so the renderer's
+ * verb/glyph choice is total and a transit mode can't reach it — plus [BIKESHARE], which is a bicycle
+ * leg the rider *rents*, split out because the two are different acts to the rider (find a dock vs.
+ * take the bike you brought) and the app draws them with different symbols.
+ *
+ * [BIKESHARE] is not a wire mode: OTP calls such a leg `BICYCLE` like any other and says it's a rental
+ * by giving the leg a vehicle-rental endpoint ([TripVertexType.BIKESHARE][
+ * org.onebusaway.android.directions.model.TripVertexType]) — a structural fact off the wire, not a
+ * guess. See `ModeSymbols.streetMode`.
  */
-enum class StreetMode { WALK, BIKE, CAR }
+enum class StreetMode { WALK, BIKE, BIKESHARE, CAR }
 
 /**
  * What a [TripLogEntry.Transit] leg is ridden on, narrowed from [TripMode] to the vehicle families the

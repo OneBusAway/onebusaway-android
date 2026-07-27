@@ -44,6 +44,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -539,16 +540,15 @@ private fun LogRow(
 
         is RowContent.WalkHeader -> {
             val walk = content.entry
+            // The row's tap only frames the leg on the map; expanding its steps is the chevron's own
+            // tap target (#2040), not a side effect of this one.
             LogRowScaffold(
                 model = model,
                 onClick = {
                     if (walk.legPoints.isNotEmpty()) onFocusLeg(walk.legPoints) else walk.focusPoint?.let(onFocusPoint)
-                    if (model.expandable) onToggle(i)
                 },
-                // The row is one control that both frames the leg and unfolds its steps, so the expand
-                // wording rides on the row's own click label rather than on a decorative chevron.
-                onClickLabel = expandLabel(model)
-            ) { WalkHeaderContent(walk, model) }
+                onToggleExpand = { onToggle(i) }
+            ) { WalkHeaderContent(walk) }
         }
 
         is RowContent.Step ->
@@ -563,14 +563,10 @@ private fun LogRow(
 
         is RowContent.BoardHeader -> {
             val transit = content.entry
-            LogRowScaffold(model, onClick = null) {
+            LogRowScaffold(model, onClick = null, onToggleExpand = { onToggle(i) }) {
                 BoardContent(
                     entry = transit,
-                    model = model,
-                    onToggle = {
-                        focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint)
-                        if (model.expandable) onToggle(i)
-                    },
+                    onFocus = { focusTransit(transit, onFocusRouteLeg, onFocusLeg, onFocusPoint) },
                     onFocusPoint = onFocusPoint,
                     stopEtaStrip = stopEtaStrip
                 )
@@ -642,6 +638,7 @@ private fun LogRowScaffold(
     onClick: (() -> Unit)?,
     onClickLabel: String? = null,
     compact: Boolean = false,
+    onToggleExpand: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     val context = LocalContext.current
@@ -729,6 +726,17 @@ private fun LogRowScaffold(
                 ),
             content = content
         )
+        // Its own segment at the row's right edge — centred on the row's full height, not just the
+        // header line's — rather than sharing the content column's Row and bumping that line's height
+        // out to the chevron's touch target (#2040).
+        if (model.expandable && onToggleExpand != null) {
+            ExpandChevron(
+                expanded = model.expanded,
+                onToggle = onToggleExpand,
+                label = expandLabel(model),
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
+        }
     }
 }
 
@@ -964,17 +972,13 @@ private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (
 }
 
 @Composable
-private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk, model: LogRowModel) {
+private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk) {
     val context = LocalContext.current
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(
-            text = stringResource(streetActionRes(entry.mode, entry.isTransfer)),
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f)
-        )
-        if (model.expandable) Chevron(model.expanded)
-    }
+    Text(
+        text = stringResource(streetActionRes(entry.mode, entry.isTransfer)),
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurface
+    )
     val meta = walkMeta(entry, context)
     if (meta.isNotEmpty()) {
         Text(
@@ -1011,20 +1015,20 @@ private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
 @Composable
 private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
-    model: LogRowModel,
-    onToggle: () -> Unit,
+    onFocus: () -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
     val context = LocalContext.current
-    // The route/headsign/meta block toggles the leg (and highlights it on the map); the board stop + ETA
-    // strip below is its own tap target that zooms to the stop. Because the control is this inner block
-    // rather than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its
-    // own. (Its content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
+    // The route/headsign/meta block highlights the leg on the map; expanding its steps is the scaffold's
+    // own chevron segment (#2040), not a side effect of this tap. The board stop + ETA strip below is a
+    // third, separate tap target that zooms to the stop. Because this control is this inner block rather
+    // than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
+    // content clears 48dp on its own in practice; this is the guarantee, not the usual case.)
     Column(
         Modifier
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
-            .clickable(onClickLabel = expandLabel(model), onClick = onToggle)
+            .clickable(onClick = onFocus)
     ) {
         // A ride the rider may take on more than one route (#2010) badges them all as one joined
         // roundel; an ordinary ride badges its own route exactly as before. A route that publishes no
@@ -1049,7 +1053,6 @@ private fun ColumnScope.BoardContent(
             } else {
                 Spacer(Modifier.weight(1f))
             }
-            if (model.expandable) Chevron(model.expanded)
         }
         entry.headsign?.let {
             Text(
@@ -1192,18 +1195,20 @@ private fun RealtimeChip(state: RealtimeState) {
 }
 
 /**
- * The expand/collapse chevron shown on a leg with minor events; rotates via the up/down glyph. Purely
- * decorative (no content description) — it isn't its own control, it just pictures what the row's tap
- * will do, which the row announces through its own click label (see [expandLabel]).
+ * The expand/collapse control for a leg with minor events, shown as the up/down chevron glyph. This is
+ * its own tap target — separate from the row's tap, which frames the leg on the map — so opening the
+ * steps is never a side effect of a map-focus tap (#2040). [label] carries the expand/collapse wording
+ * since the glyph swap alone isn't announced to a screen reader.
  */
 @Composable
-private fun Chevron(expanded: Boolean) {
-    Icon(
-        imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
-        contentDescription = null,
-        tint = MaterialTheme.colorScheme.outline,
-        modifier = Modifier.size(24.dp)
-    )
+private fun ExpandChevron(expanded: Boolean, onToggle: () -> Unit, label: String?, modifier: Modifier = Modifier) {
+    IconButton(onClick = onToggle, modifier = modifier) {
+        Icon(
+            imageVector = if (expanded) AppIcons.KeyboardArrowUp else AppIcons.KeyboardArrowDown,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.outline
+        )
+    }
 }
 
 /**

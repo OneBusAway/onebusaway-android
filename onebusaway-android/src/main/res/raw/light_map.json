@@ -1,0 +1,26 @@
+[
+  {
+    "_comment": "POIs are redundant with, and noisier than, the transit content the map draws.",
+    "featureType": "poi",
+    "elementType": "all",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "_comment": "The basemap's own bus-stop icons duplicate our stop markers.",
+    "featureType": "transit.station.bus",
+    "elementType": "all",
+    "stylers": [{ "visibility": "off" }]
+  },
+  {
+    "_comment": "Freeways and their ramps, demoted to look like ordinary streets. road.highway is the parent of road.highway.controlled_access, so this covers the mainlines and the on/off ramps together - the ramps are what stayed at full strength when only controlled_access was styled. Relative stylers rather than a fixed colour, so this stays a demotion of whatever the basemap's own road palette is instead of a guess at it: saturation strips the orange, lightness pushes it back toward the street fill, weight takes off the extra width. Nobody plans a bus trip by freeway, so the widest, highest-contrast lines on the map were carrying the least information on it.",
+    "featureType": "road.highway",
+    "elementType": "geometry",
+    "stylers": [{ "saturation": -100 }, { "lightness": 45 }, { "weight": 1 }]
+  },
+  {
+    "_comment": "The shields and route numbers are the heaviest thing left once the lines are quiet, and they are pure driving chrome.",
+    "featureType": "road.highway",
+    "elementType": "labels",
+    "stylers": [{ "visibility": "off" }]
+  }
+]

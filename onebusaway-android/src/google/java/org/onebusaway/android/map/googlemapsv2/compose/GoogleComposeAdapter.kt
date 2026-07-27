@@ -437,14 +437,12 @@ private fun applyMyLocation(map: GoogleMap, context: Context, enabled: Boolean) 
     map.isMyLocationEnabled = enabled && granted
 }
 
-/** The map style for the current night-mode state: the dark theme, or POI removal in light mode. */
-private fun resolveMapStyle(context: Context): MapStyleOptions = if (ThemeUtils.isInDarkMode(context)) {
-    MapStyleOptions.loadRawResourceStyle(context, R.raw.dark_map)
-} else {
-    // Light mode: hide POIs (ported from GoogleMapHost.onMapReady) and bus-stop icons,
-    // which are redundant with our own stop markers.
-    MapStyleOptions(
-        "[{\"featureType\":\"poi\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}," +
-            "{\"featureType\":\"transit.station.bus\",\"elementType\":\"all\",\"stylers\":[{\"visibility\":\"off\"}]}]"
-    )
-}
+/**
+ * The map style for the current night-mode state. Both are raw resources rather than one being an
+ * inline string, so the two stay comparable — the rules that quiet the basemap (POIs, the basemap's own
+ * bus stops, freeways) have to be kept in step across them, and that is hard to see in escaped JSON.
+ */
+private fun resolveMapStyle(context: Context): MapStyleOptions = MapStyleOptions.loadRawResourceStyle(
+    context,
+    if (ThemeUtils.isInDarkMode(context)) R.raw.dark_map else R.raw.light_map
+)

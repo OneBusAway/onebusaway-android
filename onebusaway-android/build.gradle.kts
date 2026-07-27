@@ -493,8 +493,17 @@ play {
         serviceAccountCredentials.set(file(project.property("PLAY_STORE_JSON_KEY") as String))
     }
 
-    // Auto-increment versionCode based on the highest code currently on the Play Store
-    resolutionStrategy.set(com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO)
+    // Auto-increment versionCode from the highest code currently on the Play Store when Play
+    // credentials are configured. Without them, fall back to the versionCode in this file so a
+    // release build works without Play API access — AUTO queries Play on every release assemble,
+    // not just on publish, so it otherwise fails the build for anyone who can't reach the API.
+    resolutionStrategy.set(
+        if (project.hasProperty("PLAY_STORE_JSON_KEY")) {
+            com.github.triplet.gradle.androidpublisher.ResolutionStrategy.AUTO
+        } else {
+            com.github.triplet.gradle.androidpublisher.ResolutionStrategy.IGNORE
+        }
+    )
 
     // Upload to the open testing (beta) track, matching the existing release workflow
     defaultToAppBundles.set(true)

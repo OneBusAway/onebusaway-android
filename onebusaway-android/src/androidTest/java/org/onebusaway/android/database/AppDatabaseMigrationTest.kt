@@ -261,6 +261,32 @@ class AppDatabaseMigrationTest {
         db.close()
     }
 
+    @Test
+    fun migrate10To11_addsNavigationSessionsWithoutChangingLegacyNavigation() {
+        helper.createDatabase(TEST_DB, 10).use { db ->
+            db.execSQL(
+                "INSERT INTO nav_stops (nav_id, start_time, trip_id, destination_id, before_id, seq_num, is_active) " +
+                    "VALUES ('1', 100, 'trip', 'destination', 'before', 1, 1)"
+            )
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 11, true, MIGRATION_10_11)
+        db.query("SELECT count(*) FROM nav_stops").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals("legacy reminder must survive migration", 1, cursor.getInt(0))
+        }
+        db.execSQL(
+            "INSERT INTO navigation_sessions " +
+                "(session_id, format_version, plan_json, state_json, started_at_ms, updated_at_ms, log_file_path) " +
+                "VALUES ('session', 1, '{}', '{}', 100, 101, NULL)"
+        )
+        db.query("SELECT format_version FROM navigation_sessions WHERE session_id='session'").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+        db.close()
+    }
+
     private fun favoriteOf(
         db: androidx.sqlite.db.SupportSQLiteDatabase,
         routeId: String

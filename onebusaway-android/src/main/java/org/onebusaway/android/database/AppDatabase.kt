@@ -8,6 +8,8 @@ import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.MapStopCacheDao
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
+import org.onebusaway.android.database.oba.NavigationSessionDao
+import org.onebusaway.android.database.oba.NavigationSessionRecord
 import org.onebusaway.android.database.oba.Open311ServerRecord
 import org.onebusaway.android.database.oba.RegionBoundRecord
 import org.onebusaway.android.database.oba.RegionDao
@@ -74,10 +76,11 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         RegionBoundRecord::class,
         Open311ServerRecord::class,
         NavStopRecord::class,
+        NavigationSessionRecord::class,
         CachedStopRecord::class,
         CachedRouteTypeRecord::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -98,6 +101,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun regionDao(): RegionDao
     abstract fun navStopDao(): NavStopDao
+    abstract fun navigationSessionDao(): NavigationSessionDao
 
     // Map stop cache (#1754).
     abstract fun mapStopCacheDao(): MapStopCacheDao

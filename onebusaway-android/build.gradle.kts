@@ -75,6 +75,9 @@ android {
         getByName("androidTest") {
             assets.directories.add("$projectDir/schemas")
         }
+        getByName("test") {
+            resources.directories.add("src/androidTest/res/raw")
+        }
     }
 
     /**
@@ -435,8 +438,10 @@ dependencies {
     // for a hidden InputManager.getInstance() that Android 16 (API 36) removed, so Espresso.onIdle()
     // throws NoSuchMethodException on current devices before any test body runs.
     androidTestImplementation(libs.espresso.core)
-    // WorkManager (Java only)
+    // WorkManager and Hilt worker integration
     implementation(libs.androidx.work.runtime)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
     implementation(libs.androidx.core.ktx)
     // Preferences DataStore — the backing store behind PreferencesRepository.
     implementation(libs.androidx.datastore.preferences)

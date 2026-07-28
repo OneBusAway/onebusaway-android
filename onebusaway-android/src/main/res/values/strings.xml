@@ -292,12 +292,37 @@
     <string name="destination_reminder_cancel">Cancel</string>
     <string name="destination_reminder_title">Destination reminder is set</string>
     <string name="destination_reminder_cancel_trip">Cancel reminder</string>
+    <string name="destination_reminder_start">Start reminders</string>
+    <string name="destination_reminder_stop">Stop reminders</string>
+    <string name="destination_reminder_no_itinerary">No itinerary is selected.</string>
+    <string name="destination_reminder_location_required">Location permission is required for destination reminders.</string>
+    <string name="destination_reminder_enable_location">Turn on device location, then try again.</string>
+    <string name="destination_reminder_silence">Silence</string>
+    <string name="destination_reminder_starting">Starting destination reminders…</string>
+    <string name="destination_reminder_monitoring_rides">Monitoring %1$d transit rides</string>
+    <string name="destination_reminder_distance">Destination is about %1$d m away</string>
+    <string name="destination_reminder_transfer_at">Prepare to transfer at %1$s</string>
+    <string name="destination_reminder_request_stop_for">Request your stop for %1$s</string>
+    <string name="destination_reminder_prepare_to_exit">Prepare to exit at %1$s</string>
+    <string name="destination_reminder_arrived">You have arrived at your destination</string>
+    <plurals name="destination_reminder_confirm_rides">
+        <item quantity="one">Start reminders for %1$d transit ride?</item>
+        <item quantity="other">Start reminders for %1$d transit rides?</item>
+    </plurals>
+    <plurals name="destination_reminder_started_rides">
+        <item quantity="one">Monitoring %1$d transit ride</item>
+        <item quantity="other">Monitoring %1$d transit rides</item>
+    </plurals>
     <string name="destination_reminder_beta_title">Destination reminders are in beta</string>
     <string name="destination_reminder_beta_summary">Destination reminders rely on GPS, which is not always reliable and will not work indoors, underground, or in areas without a clear view of the sky. Always be aware of your surroundings.</string>
 
     <!-- Destination reminder voice commands -->
     <string name="destination_voice_get_ready">Get ready!</string>
+    <string name="destination_voice_get_ready_for">Get ready for %1$s.</string>
     <string name="destination_voice_request_stop">Exit at the next stop!</string>
+    <string name="destination_voice_request_stop_for">Request your stop for %1$s.</string>
+    <string name="destination_voice_prepare_to_exit">Prepare to exit at %1$s.</string>
+    <string name="destination_voice_transfer_at">Prepare to transfer at %1$s.</string>
     <string name="destination_voice_arriving_destination">Arriving at destination!</string>
 
     <!-- Destination reminder feedback notifications -->

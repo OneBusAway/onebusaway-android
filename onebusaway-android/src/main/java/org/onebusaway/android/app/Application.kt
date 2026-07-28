@@ -16,9 +16,12 @@
  */
 package org.onebusaway.android.app
 
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
 import java.util.UUID
+import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
@@ -34,7 +37,14 @@ import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
 
 @HiltAndroidApp
-class Application : android.app.Application() {
+class Application :
+    android.app.Application(),
+    Configuration.Provider {
+
+    @Inject lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()

@@ -24,6 +24,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import org.onebusaway.android.database.AppDatabase
+import org.onebusaway.android.database.MIGRATION_10_11
 import org.onebusaway.android.database.MIGRATION_1_2
 import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.MIGRATION_3_4
@@ -39,6 +40,7 @@ import org.onebusaway.android.database.oba.LegacyDataImporter
 import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.MapStopCacheDao
 import org.onebusaway.android.database.oba.NavStopDao
+import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
 import org.onebusaway.android.database.oba.ServiceAlertDao
@@ -75,7 +77,8 @@ object DatabaseModule {
         MIGRATION_6_7,
         MIGRATION_7_8,
         MIGRATION_8_9,
-        MIGRATION_9_10
+        MIGRATION_9_10,
+        MIGRATION_10_11
     ).build()
 
     @Provides
@@ -98,6 +101,9 @@ object DatabaseModule {
 
     @Provides
     fun provideNavStopDao(db: AppDatabase): NavStopDao = db.navStopDao()
+
+    @Provides
+    fun provideNavigationSessionDao(db: AppDatabase): NavigationSessionDao = db.navigationSessionDao()
 
     @Provides
     fun provideMapStopCacheDao(db: AppDatabase): MapStopCacheDao = db.mapStopCacheDao()

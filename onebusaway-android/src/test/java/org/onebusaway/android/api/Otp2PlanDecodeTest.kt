@@ -67,6 +67,7 @@ class Otp2PlanDecodeTest {
             ),
             route = null,
             trip = null,
+            stopCalls = emptyList(),
             legGeometry = PlanQuery.LegGeometry(points = "abc_def", length = 2),
             steps = listOf(
                 PlanQuery.Step(
@@ -105,6 +106,11 @@ class Otp2PlanDecodeTest {
             to = to(place(name = "Stop B", lat = 47.62, lon = -122.32)),
             route = PlanQuery.Route(__typename = "Route", routeFields = routeFields()),
             trip = PlanQuery.Trip(gtfsId = "1_trip_5", tripHeadsign = "Downtown"),
+            stopCalls = listOf(
+                stopCall("1_1001", "Stop A", 47.61, -122.31),
+                stopCall("1_1050", "Stop Before B", 47.619, -122.319),
+                stopCall("1_1002", "Stop B", 47.62, -122.32)
+            ),
             legGeometry = null,
             steps = null,
             // One alternative departure on another route between the same two stops (#2010).
@@ -185,6 +191,8 @@ class Otp2PlanDecodeTest {
         assertEquals(30.seconds, bus.departureDelay)
         assertEquals(TripVertexType.BIKESHARE, bus.from.vertexType)
         assertEquals("bs_9", bus.from.bikeShareId)
+        assertEquals(listOf("1_1001", "1_1050", "1_1002"), bus.stop?.map { it.stopId })
+        assertEquals(TripVertexType.TRANSIT, bus.stop?.get(1)?.vertexType)
 
         // The leg's alternative departures (`nextLegs`) come across unjudged — route identity, the
         // ride time the interchangeability rule compares, and both stop ids to check it against.
@@ -238,6 +246,7 @@ class Otp2PlanDecodeTest {
             to = to(place(name = "Y", lat = 3.0, lon = 4.0)),
             route = null,
             trip = null,
+            stopCalls = emptyList(),
             legGeometry = null,
             steps = null,
             nextLegs = null
@@ -257,6 +266,13 @@ class Otp2PlanDecodeTest {
             )
         )
     }
+
+    private fun stopCall(id: String, name: String, lat: Double, lon: Double) = PlanQuery.StopCall(
+        PlanQuery.StopLocation(
+            __typename = "Stop",
+            onStop = PlanQuery.OnStop(id, name, lat, lon)
+        )
+    )
 
     private fun iso(value: String): ServerTime = ServerTime(OffsetDateTime.parse(value).toInstant().toEpochMilli())
 

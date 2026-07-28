@@ -351,7 +351,8 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> }
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
+    reminderControl: @Composable () -> Unit = {}
 ) {
     Box(
         modifier
@@ -377,7 +378,8 @@ fun TripResultsList(
                 onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
-                stopEtaStrip = stopEtaStrip
+                stopEtaStrip = stopEtaStrip,
+                reminderControl = reminderControl
             )
         }
     }
@@ -442,7 +444,13 @@ fun TripResultsSheet(
         onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
-        stopEtaStrip = stopEtaStrip
+        stopEtaStrip = stopEtaStrip,
+        reminderControl = {
+            ItineraryReminderControl(
+                itineraries.getOrNull((state as? TripResultsUiState.Success)?.selectedIndex ?: 0),
+                Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+            )
+        }
     )
 }
 
@@ -520,7 +528,8 @@ private fun TripLogList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
     val dark = MaterialTheme.colorScheme.isDarkTheme()
@@ -552,6 +561,7 @@ private fun TripLogList(
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
             TripResultsHeader(state, onSelectOption)
+            reminderControl()
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))
         }

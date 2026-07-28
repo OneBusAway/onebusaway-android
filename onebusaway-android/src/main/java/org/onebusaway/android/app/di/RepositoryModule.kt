@@ -55,6 +55,18 @@ import org.onebusaway.android.map.FocusedTripRepository
 import org.onebusaway.android.map.RouteMapRepository
 import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.bike.DefaultBikeStationsRepository
+import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
+import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
+import org.onebusaway.android.nav.AndroidReminderSpeechController
+import org.onebusaway.android.nav.CsvNavigationLogRecorder
+import org.onebusaway.android.nav.FirebaseNavigationLogUploader
+import org.onebusaway.android.nav.NavigationFeedbackRepository
+import org.onebusaway.android.nav.NavigationLogRecorder
+import org.onebusaway.android.nav.NavigationLogUploader
+import org.onebusaway.android.nav.ReminderNotificationPresenter
+import org.onebusaway.android.nav.ReminderSessionStore
+import org.onebusaway.android.nav.ReminderSpeechController
+import org.onebusaway.android.nav.RoomReminderSessionStore
 import org.onebusaway.android.preferences.DefaultPreferencesRepository
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.DefaultRegionRepository
@@ -107,6 +119,33 @@ import org.onebusaway.android.ui.tripresults.TripResultsRepository
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    internal abstract fun bindReminderSessionStore(impl: RoomReminderSessionStore): ReminderSessionStore
+
+    @Binds
+    internal abstract fun bindReminderNotificationPresenter(
+        impl: AndroidReminderNotificationPresenter
+    ): ReminderNotificationPresenter
+
+    @Binds
+    internal abstract fun bindReminderSpeechController(
+        impl: AndroidReminderSpeechController
+    ): ReminderSpeechController
+
+    @Binds
+    internal abstract fun bindNavigationLogRecorder(impl: CsvNavigationLogRecorder): NavigationLogRecorder
+
+    @Binds
+    internal abstract fun bindNavigationLogUploader(
+        impl: FirebaseNavigationLogUploader
+    ): NavigationLogUploader
+
+    @Binds
+    internal abstract fun bindNavigationFeedbackRepository(
+        impl: AndroidNavigationFeedbackRepository
+    ): NavigationFeedbackRepository
 
     @Binds
     abstract fun bindRegionsRepository(impl: DefaultRegionsRepository): RegionsRepository

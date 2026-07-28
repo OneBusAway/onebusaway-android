@@ -90,6 +90,7 @@ internal fun <T : Any> requireField(name: String, value: T?): T = value ?: error
 
 fun OtpPlaceDto.toTripPlace(): TripPlace = TripPlace(
     name = name,
+    stopId = stopId,
     stopCode = stopCode,
     lat = lat,
     lon = lon,

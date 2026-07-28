@@ -27,6 +27,9 @@ import androidx.room.Transaction
 @Dao
 interface NavStopDao {
 
+    @Query("SELECT * FROM nav_stops WHERE is_active = 1 ORDER BY _id DESC LIMIT 1")
+    suspend fun active(): NavStopRecord?
+
     @Query("DELETE FROM nav_stops")
     suspend fun clearAll()
 

@@ -82,10 +82,18 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     endTime = requireField("leg.end", (end.estimated?.time ?: end.scheduledTime).toServerTime()),
     from = from.placeFields.toTripPlace(),
     to = to.placeFields.toTripPlace(),
-    // Not requested by Plan.graphql: OTP2's nearest equivalents (`stopCalls`/deprecated
-    // `intermediatePlaces`) have a materially different shape from OTP1's flat stop-place list.
     intermediateStops = null,
-    stop = null,
+    stop = stopCalls.mapNotNull { call ->
+        call.stopLocation.onStop?.let { stop ->
+            TripPlace(
+                name = stop.name,
+                stopId = stop.gtfsId,
+                lat = stop.lat,
+                lon = stop.lon,
+                vertexType = TripVertexType.TRANSIT
+            )
+        }
+    },
     steps = steps.orEmpty().filterNotNull().map { it.toTripStep() },
     legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) },
     // OTP's own alternative-leg search for this leg (#2010) — null on a non-transit leg, and carried

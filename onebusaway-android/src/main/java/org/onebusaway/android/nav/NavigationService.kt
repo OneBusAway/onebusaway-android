@@ -1,50 +1,22 @@
 /*
- * Copyright (C) 2005-2019 University of South Florida
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2005-2026 University of South Florida and Open Transit Software Foundation
+ * Licensed under the Apache License, Version 2.0
  */
 package org.onebusaway.android.nav
 
-import android.app.Notification
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.location.Location
-import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationCompat
-import androidx.core.app.PendingIntentCompat
-import androidx.core.app.RemoteInput
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
-import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.File
-import java.io.IOException
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,36 +24,28 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
-import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.database.oba.StopLocationRow
-import org.onebusaway.android.location.LocationFixes
-import org.onebusaway.android.nav.model.Path
-import org.onebusaway.android.nav.model.PathLink
-import org.onebusaway.android.notifications.NotificationChannels
-import org.onebusaway.android.time.ElapsedTime
-import org.onebusaway.android.ui.feedback.FeedbackLauncher
+import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
-import org.onebusaway.android.util.PreferenceUtils
 
-/**
- * Implements the "destination reminders" feature in the app that notifies the user as they
- * are approaching their destination stop on-board the transit vehicle.
- *
- * The NavigationService is started when the user begins a trip; it collects location fixes from the
- * shared [org.onebusaway.android.location.LocationRepository] feed (1 s cadence) and passes each one
- * to its [NavigationServiceProvider], which computes trip statuses and issues notifications/TTS. Once
- * the NavigationServiceProvider reports finished, the service stops itself.
- */
+/** Thin foreground-service orchestrator for the pure [ReminderEngine]. */
 @AndroidEntryPoint
 class NavigationService : Service() {
+    @Inject internal lateinit var sessionStore: ReminderSessionStore
+
+    @Inject internal lateinit var notificationPresenter: ReminderNotificationPresenter
+
+    @Inject internal lateinit var speechController: ReminderSpeechController
+
+    @Inject internal lateinit var logRecorder: NavigationLogRecorder
+
+    @Inject internal lateinit var feedbackRepository: NavigationFeedbackRepository
 
     @Inject lateinit var navStopDao: NavStopDao
 
@@ -91,464 +55,213 @@ class NavigationService : Service() {
 
     @Inject lateinit var obaAnalytics: ObaAnalytics
 
+    @Inject lateinit var locationRepository: LocationRepository
+
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-    private var navJob: Job? = null
-
-    private var lastLocation: Location? = null
-
-    private var destinationStopId: String? = null // Destination Stop ID
-    private var beforeStopId: String? = null // Before Destination Stop ID
-    private var tripId: String? = null // Trip ID
-
-    private var coordId = 0
-
-    private var navProvider: NavigationServiceProvider? = null
-    private var logFile: File? = null
-
-    // Monotonic anchor for the 30s trip-end debounce (null = trip not yet finished). Elapsed-realtime,
-    // not wall clock: the debounce measures a real interval and must survive NTP/user clock changes.
-    private var finishedTime: ElapsedTime? = null
+    private var navigationJob: Job? = null
+    private var plan: ReminderPlan? = null
+    private var engineState = ReminderEngineState()
+    private var explicitCancellation = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(TAG, "Starting Service")
-        // Device-clock timestamp for this nav session's path links; not compared against a server clock.
-        @Suppress("UnwrappedClockValue")
-        val currentTime = System.currentTimeMillis()
-        // The nav-stop read/write is now Room-backed (suspend), so the setup runs on the service scope
-        // after the one-time import gate. Dispatchers.Main.immediate keeps startForeground on the main
-        // thread; only the fast Room reads suspend, so it is still called promptly.
-        serviceScope.launch {
-            importGate.awaitReady()
-            if (intent != null) {
-                destinationStopId = intent.getStringExtra(DESTINATION_ID)
-                beforeStopId = intent.getStringExtra(BEFORE_STOP_ID)
-                tripId = intent.getStringExtra(TRIP_ID)
+        // Android requires foreground promotion immediately. Plan restoration and validation can safely
+        // suspend only after this process-visible notification exists.
+        promoteToForeground(notificationPresenter.foregroundNotification())
 
-                navStopDao.replaceActive(
-                    NavStopRecord(
-                        navId = "1",
-                        startTime = currentTime,
-                        tripId = tripId.orEmpty(),
-                        destinationId = destinationStopId.orEmpty(),
-                        beforeId = beforeStopId.orEmpty(),
-                        sequence = 1,
-                        active = 1
-                    )
-                )
-
-                navProvider = NavigationServiceProvider(this@NavigationService, tripId, destinationStopId)
-            } else {
-                val args = navStopDao.getDetails("1")
-                if (args != null) {
-                    tripId = args.tripId
-                    destinationStopId = args.destinationId
-                    beforeStopId = args.beforeId
-                    navProvider = NavigationServiceProvider(this@NavigationService, tripId, destinationStopId, 1)
+        when (intent?.action) {
+            ACTION_SILENCE -> {
+                speechController.silence()
+                if (plan == null && navigationJob?.isActive != true) {
+                    notificationPresenter.cancel()
+                    stopSelf(startId)
+                    return START_NOT_STICKY
                 }
+                return START_STICKY
             }
-
-            // No intent and no persisted nav to resume (a system restart of the sticky service after
-            // the trip ended): there's nothing to navigate, so stop cleanly instead of hitting the
-            // navProvider!! below with an NPE.
-            if (navProvider == null) {
-                Log.w(TAG, "No navigation data to resume; stopping service")
-                stopSelf()
-                return@launch
-            }
-
-            // Log in anonymously via Firebase
-            initAnonFirebaseLogin()
-
-            val dest = destinationStopId?.let { stopLocation(stopDao.location(it)) }
-            val last = beforeStopId?.let { stopLocation(stopDao.location(it)) }
-
-            // Setup file for logging.
-            if (logFile == null) {
-                setupLog(dest, last)
-            }
-
-            val pathLink = PathLink(currentTime, null, last, dest, tripId)
-
-            navProvider?.let {
-                // TODO Support more than one path link
-                val links = ArrayList<PathLink>(1)
-                links.add(pathLink)
-                it.navigate(Path(links))
-            }
-
-            // Collect the shared location feed (1 s cadence) instead of owning a private LocationHelper.
-            // Start it AFTER navigate() initializes the proximity calculator: the repository's StateFlow
-            // replays its seeded value immediately on collect, so handleLocation() -> locationUpdated()
-            // must not run before the provider is set up (the legacy LocationHelper delivered its first fix
-            // asynchronously, after navigate()).
-            if (navJob?.isActive != true) {
-                Log.d(TAG, "Requesting Location Updates")
-                navJob = serviceScope.launch {
-                    LocationEntryPoint.get(this@NavigationService)
-                        .locationUpdates(NAV_UPDATE_INTERVAL_SECONDS)
-                        .collect { handleLocation(it) }
+            ACTION_CANCEL -> {
+                explicitCancellation = true
+                serviceScope.launch {
+                    sessionStore.clear()
+                    logRecorder.cancel()
+                    speechController.silence()
+                    notificationPresenter.cancel()
+                    stopSelf()
                 }
-            }
-
-            val notification = navProvider!!.getForegroundStartingNotification()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(
-                    NavigationServiceProvider.NOTIFICATION_ID,
-                    notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
-                )
-            } else {
-                startForeground(NavigationServiceProvider.NOTIFICATION_ID, notification)
+                return START_NOT_STICKY
             }
         }
-        return Service.START_STICKY
+
+        if (navigationJob?.isActive != true) {
+            navigationJob = serviceScope.launch { initialize(intent) }
+        }
+        return START_STICKY
     }
 
-    /** Converts a stop's stored coordinates to a [Location] (the legacy Stops.getLocation shape). */
-    private fun stopLocation(row: StopLocationRow?): Location? = row?.let {
-        Location(LocationManager.GPS_PROVIDER).apply {
-            latitude = it.latitude
-            longitude = it.longitude
+    private suspend fun initialize(intent: Intent?) {
+        importGate.awaitReady()
+        val incomingPlan = intent?.getStringExtra(PLAN_JSON)?.let(ReminderPlanJson::decode)
+            ?: intent?.legacyPlan()
+        val restored = if (incomingPlan == null) sessionStore.restore() else null
+        val activePlan = incomingPlan ?: restored?.plan
+        if (activePlan == null) {
+            Log.w(TAG, "No valid reminder plan to start or restore")
+            notificationPresenter.cancel()
+            stopSelf()
+            return
         }
+
+        plan = activePlan
+        engineState = restored?.state ?: ReminderEngineState()
+        if (incomingPlan != null) {
+            sessionStore.start(activePlan, wallClockMs())
+            persistLegacyCompatibility(activePlan)
+        }
+        val logPath = logRecorder.start(activePlan, engineState, restored?.logFilePath)
+        sessionStore.persist(activePlan, engineState, wallClockMs(), restored?.logFilePath ?: logPath)
+        promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
+
+        locationRepository.locationUpdates(NAV_UPDATE_INTERVAL_SECONDS).collect(::handleLocation)
+    }
+
+    private suspend fun Intent.legacyPlan(): ReminderPlan? {
+        val destinationId = getStringExtra(DESTINATION_ID) ?: return null
+        val beforeId = getStringExtra(BEFORE_STOP_ID) ?: return null
+        val tripId = getStringExtra(TRIP_ID) ?: return null
+        val destination = stopDao.getStop(destinationId) ?: return null
+        val before = stopDao.getStop(beforeId) ?: return null
+        val beforeStop = ReminderStop(before.id, before.name, ReminderPoint(before.latitude, before.longitude))
+        val destinationStop = ReminderStop(
+            destination.id,
+            destination.name,
+            ReminderPoint(destination.latitude, destination.longitude)
+        )
+        val now = wallClockMs()
+        return (
+            ReminderPlanBuilder.buildSingleRide(
+                sessionId = "legacy-$now",
+                tripId = tripId,
+                board = beforeStop,
+                penultimate = beforeStop,
+                alight = destinationStop,
+                scheduledStart = now,
+                scheduledEnd = now
+            ) as? ReminderPlanResult.Success
+            )?.plan
+    }
+
+    private suspend fun persistLegacyCompatibility(plan: ReminderPlan) {
+        val ride = plan.rides.first()
+        navStopDao.replaceActive(
+            NavStopRecord(
+                navId = "1",
+                startTime = plan.rides.first().scheduledStart,
+                tripId = ride.tripId,
+                destinationId = ride.alight.id,
+                beforeId = ride.penultimate.id,
+                sequence = 1,
+                active = 1
+            )
+        )
+    }
+
+    private suspend fun handleLocation(location: Location) {
+        val activePlan = plan ?: return
+        val sample = ReminderLocationSample(
+            point = ReminderPoint(location.latitude, location.longitude),
+            accuracyMeters = location.accuracy,
+            speedMetersPerSecond = location.speed.takeIf { location.hasSpeed() },
+            timestampMs = location.time
+        )
+        val previous = engineState
+        val transition = ReminderEngine.reduce(activePlan, previous, sample)
+        if (transition.state == previous && transition.effects.isEmpty()) return
+        val progress = transition.effects.filterIsInstance<ReminderEffect.Progress>().lastOrNull()
+        if (progress != null) {
+            val logState = transition.state.copy(activeRideIndex = previous.activeRideIndex)
+            logRecorder.record(activePlan, logState, sample, progress.alightDistanceMeters)
+        }
+        engineState = transition.state
+        sessionStore.persist(
+            activePlan,
+            engineState,
+            wallClockMs(),
+            logRecorder.currentPath(engineState) ?: logRecorder.completedFiles().lastOrNull()?.absolutePath
+        )
+        transition.effects.forEach { dispatch(activePlan, it) }
+    }
+
+    private suspend fun dispatch(activePlan: ReminderPlan, effect: ReminderEffect) {
+        notificationPresenter.present(activePlan, effect)
+        speechController.speak(activePlan, effect)
+        when (effect) {
+            is ReminderEffect.GetReady -> report(R.string.analytics_label_destination_reminder_variant_get_ready)
+            is ReminderEffect.AlightNow -> report(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop)
+            ReminderEffect.SessionCompleted -> completeSession(activePlan)
+            else -> Unit
+        }
+    }
+
+    private suspend fun completeSession(activePlan: ReminderPlan) {
+        report(R.string.analytics_label_destination_reminder_variant_ended)
+        sessionStore.clear()
+        scheduleLogCleanup()
+        feedbackRepository.requestFeedback(logRecorder.completedFiles(), activePlan.rides.first().tripId)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            stopForeground(STOP_FOREGROUND_DETACH)
+        }
+        stopSelf()
+    }
+
+    private fun report(label: Int) {
+        obaAnalytics.reportUiEvent(
+            PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
+            getString(R.string.analytics_label_destination_reminder),
+            getString(label)
+        )
+    }
+
+    private fun promoteToForeground(notification: android.app.Notification) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun scheduleLogCleanup() {
+        val work = PeriodicWorkRequest.Builder(NavigationCleanupWorker::class.java, 24, TimeUnit.HOURS).build()
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            NavigationCleanupWorker.UNIQUE_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            work
+        )
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    override fun onUnbind(intent: Intent?): Boolean = false
-
-    override fun onRebind(intent: Intent?) {}
-
     override fun onDestroy() {
-        Log.d(TAG, "Destroying Service.")
-        serviceScope.cancel() // cancels the feed collection -> releases the shared-feed demand
-        super.onDestroy()
-
-        // Send Broadcast
-        broadcastServiceDestroyed()
-    }
-
-    /** Sends broadcast so that flag of destination alert is removed from trip detail screen. */
-    private fun broadcastServiceDestroyed() {
-        // Scope the broadcast to this app: the receiver is app-internal + non-exported, and an implicit
-        // (package-less) broadcast to a non-exported receiver is rejected on modern Android.
+        serviceScope.cancel()
+        speechController.silence()
+        if (explicitCancellation) notificationPresenter.cancel()
         sendBroadcast(Intent(TripDetailsLauncher.ACTION_SERVICE_DESTROYED).setPackage(packageName))
+        super.onDestroy()
     }
 
-    private fun handleLocation(location: Location) {
-        Log.d(TAG, "Location Updated")
-        val provider = navProvider ?: return
-        val last = lastLocation
-        if (last == null) {
-            provider.locationUpdated(location)
-        } else if (!LocationFixes.isDuplicate(last, location)) {
-            provider.locationUpdated(location)
-        }
-
-        if (provider.mSectoCurDistance <= RECORDING_THRESHOLD) {
-            writeToLog(location)
-        }
-        lastLocation = location
-
-        // Is trip is finished? If so end service.
-        if (provider.getFinished()) {
-            val finished = finishedTime
-            if (finished == null) {
-                finishedTime = ElapsedTime.now()
-            } else if (ElapsedTime.now() - finished >= 30.seconds) {
-                obaAnalytics.reportUiEvent(
-                    PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
-                    getString(R.string.analytics_label_destination_reminder),
-                    getString(R.string.analytics_label_destination_reminder_variant_ended)
-                )
-                getUserFeedback()
-                stopSelf()
-                setupLogCleanupTask()
-            }
-        }
-    }
-
-    private fun initAnonFirebaseLogin() {
-        val auth = FirebaseAuth.getInstance()
-        val numCores = Runtime.getRuntime().availableProcessors()
-        val executor = ThreadPoolExecutor(
-            numCores * 2,
-            numCores * 2,
-            60L,
-            TimeUnit.SECONDS,
-            LinkedBlockingQueue()
-        )
-        auth.signInAnonymously()
-            .addOnCompleteListener(executor) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success
-                    Log.d(TAG, "signInAnonymously:success")
-                } else {
-                    // Sign in failed
-                    Log.w(TAG, "signInAnonymously:failure", task.exception)
-                }
-            }
-    }
-
-    /**
-     * Creates the log file that GPS data and navigation performance is written to - see
-     * DESTINATION_ALERTS.md
-     */
-    private fun setupLog(dest: Location?, last: Location?) {
-        try {
-            // Get the counter that's incremented for each test
-            val navTestId = getString(R.string.preference_key_nav_test_id)
-            var counter = PreferenceUtils.getInt(navTestId, 0)
-            counter++
-            PreferenceUtils.saveInt(navTestId, counter)
-
-            val sdf = SimpleDateFormat("EEE, MMM d yyyy, hh:mm aaa", Locale.US)
-            val readableDate = sdf.format(Calendar.getInstance().time)
-
-            val subFolder = File(
-                applicationContext
-                    .filesDir.absolutePath +
-                    File.separator +
-                    LOG_DIRECTORY
-            )
-
-            if (!subFolder.exists()) {
-                subFolder.mkdirs()
-            }
-
-            val file = File(subFolder, "$counter-$readableDate.csv")
-            logFile = file
-
-            if (BuildConfig.DEBUG) Log.d(TAG, ":" + file.absolutePath)
-
-            val header = String.format(
-                Locale.US, "%s,%s,%f,%f,%s,%f,%f\n", tripId, destinationStopId,
-                dest?.latitude ?: 0.0, dest?.longitude ?: 0.0, beforeStopId,
-                last?.latitude ?: 0.0, last?.longitude ?: 0.0
-            )
-
-            file.writeText(header)
-        } catch (e: IOException) {
-            Log.e(TAG, "File write failed: $e")
-        }
-    }
-
-    private fun writeToLog(l: Location) {
-        try {
-            val nanoTime = l.elapsedRealtimeNanos.toString()
-
-            var satellites = 0
-            val extras = l.extras
-            if (extras != null) {
-                satellites = extras.getInt("satellites", 0)
-            }
-
-            val provider = navProvider!!
-            val log = String.format(
-                Locale.US, "%d,%s,%s,%s,%d,%f,%f,%f,%f,%f,%f,%d,%s\n",
-                coordId, provider.getGetReady(), provider.getFinished(), nanoTime, l.time,
-                l.latitude, l.longitude, l.altitude, l.speed,
-                l.bearing, l.accuracy, satellites, l.provider
-            )
-
-            // Increments the id for each coordinate
-            coordId++
-
-            val file = logFile
-            if (file != null && file.canWrite()) {
-                file.appendText(log)
-            } else {
-                Log.e(TAG, "Failed to write to file")
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "File write failed: $e")
-        }
-    }
-
-    fun getUserFeedback() {
-        val builder: NotificationCompat.Builder
-
-        val message = getString(R.string.feedback_notify_dialog_msg)
-        mFirstFeedback = PreferenceUtils.getBoolean(FIRST_FEEDBACK, true)
-
-        // Create delete intent to set flag for snackbar creation next time the app is opened.
-        val delIntent = Intent(applicationContext, FeedbackReceiver::class.java)
-        delIntent.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
-
-        if (mFirstFeedback ||
-            Build.VERSION.SDK_INT < Build.VERSION_CODES.N ||
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
-        ) {
-            // Feedback is a HomeActivity NavHost destination; makeIntent builds the
-            // explicit HomeActivity intent carrying the feedback route (with these args as nav-args).
-            var fdIntent = FeedbackLauncher.makeIntent(
-                applicationContext,
-                FeedbackLauncher.FEEDBACK_NO,
-                logFile!!.absolutePath,
-                tripId,
-                NavigationServiceProvider.NOTIFICATION_ID + 1
-            )
-            fdIntent.action = FeedbackReceiver.ACTION_REPLY
-
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
-            } else {
-                PendingIntent.FLAG_UPDATE_CURRENT
-            }
-
-            // Pending intent used to handle feedback when user taps on 'No'
-            val fdPendingIntentNo = PendingIntent.getActivity(applicationContext, 1, fdIntent, flags)
-
-            fdIntent = FeedbackLauncher.makeIntent(
-                applicationContext,
-                FeedbackLauncher.FEEDBACK_YES,
-                logFile!!.absolutePath,
-                tripId,
-                NavigationServiceProvider.NOTIFICATION_ID + 1
-            )
-            fdIntent.action = FeedbackReceiver.ACTION_REPLY
-
-            // Pending intent used to handle feedback when user taps on 'Yes'
-            val fdPendingIntentYes = PendingIntent.getActivity(applicationContext, 2, fdIntent, flags)
-
-            delIntent.action = FeedbackReceiver.ACTION_DISMISS_FEEDBACK
-            val delFlags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                PendingIntent.FLAG_MUTABLE
-            } else {
-                0
-            }
-            val pDelIntent = PendingIntent.getBroadcast(applicationContext, 0, delIntent, delFlags)
-
-            builder = NotificationCompat.Builder(
-                applicationContext,
-                NotificationChannels.DESTINATION_ALERT_ID
-            )
-                .setSmallIcon(R.drawable.ic_bus)
-                .setContentTitle(resources.getString(R.string.feedback_notify_title))
-                .setContentText(message)
-                .addAction(
-                    0,
-                    resources.getString(R.string.feedback_action_reply_no),
-                    fdPendingIntentNo
-                )
-                .addAction(
-                    0,
-                    resources.getString(R.string.feedback_action_reply_yes),
-                    fdPendingIntentYes
-                )
-                .setDeleteIntent(pDelIntent)
-                .setAutoCancel(true)
-        } else {
-            // Intent to handle user feedback when a user taps on 'No'
-            val intentNo = Intent(applicationContext, FeedbackReceiver::class.java)
-            intentNo.action = FeedbackReceiver.ACTION_REPLY
-            intentNo.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
-            intentNo.putExtra(FeedbackReceiver.TRIP_ID, tripId)
-            intentNo.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_NO)
-            intentNo.putExtra(FeedbackReceiver.LOG_FILE, logFile!!.absolutePath)
-
-            // PendingIntent to handle user feedback when a user taps on 'No'.
-            // Mutable so the RemoteInput reply can be written into it; PendingIntentCompat
-            // applies FLAG_MUTABLE/FLAG_IMMUTABLE per API level without an inlined S+ constant.
-            val fdPendingIntentNo = PendingIntentCompat.getBroadcast(
-                applicationContext,
-                100,
-                intentNo,
-                0,
-                true
-            )
-
-            val replyLabelNo = resources.getString(R.string.feedback_action_reply_no)
-
-            val remoteInput = RemoteInput.Builder(KEY_TEXT_REPLY).setLabel(replyLabelNo).build()
-
-            val replyActionNo = NotificationCompat.Action.Builder(0, replyLabelNo, fdPendingIntentNo)
-                .addRemoteInput(remoteInput)
-                .build()
-
-            // Intent to handle user feedback when a user taps on 'Yes'
-            val intentYes = Intent(applicationContext, FeedbackReceiver::class.java)
-            intentYes.action = FeedbackReceiver.ACTION_REPLY
-            intentYes.putExtra(FeedbackReceiver.NOTIFICATION_ID, NavigationServiceProvider.NOTIFICATION_ID + 1)
-            intentYes.putExtra(FeedbackReceiver.TRIP_ID, tripId)
-            intentYes.putExtra(FeedbackReceiver.RESPONSE, FeedbackReceiver.FEEDBACK_YES)
-            intentYes.putExtra(FeedbackReceiver.LOG_FILE, logFile!!.absolutePath)
-
-            // PendingIntent to handle user feedback when a user taps on 'Yes'
-            val fdPendingIntentYes = PendingIntentCompat.getBroadcast(
-                applicationContext,
-                101,
-                intentYes,
-                0,
-                true
-            )
-
-            val replyLabelYes = resources.getString(R.string.feedback_action_reply_yes)
-
-            val remoteInput1 = RemoteInput.Builder(KEY_TEXT_REPLY).setLabel(replyLabelYes).build()
-
-            val replyActionYes = NotificationCompat.Action.Builder(0, replyLabelYes, fdPendingIntentYes)
-                .addRemoteInput(remoteInput1)
-                .build()
-
-            delIntent.action = FeedbackReceiver.ACTION_DISMISS_FEEDBACK
-            val pDelIntent = PendingIntentCompat.getBroadcast(applicationContext, 0, delIntent, 0, true)
-
-            builder = NotificationCompat.Builder(
-                applicationContext,
-                NotificationChannels.DESTINATION_ALERT_ID
-            )
-                .setSmallIcon(R.drawable.ic_bus)
-                .setContentTitle(resources.getString(R.string.feedback_notify_title))
-                .setContentText(message)
-                .addAction(replyActionNo)
-                .addAction(replyActionYes)
-                .setDeleteIntent(pDelIntent)
-                .setAutoCancel(true)
-        }
-
-        builder.setOngoing(false)
-
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.notify(NavigationServiceProvider.NOTIFICATION_ID + 1, builder.build())
-    }
-
-    private fun setupLogCleanupTask() {
-        val cleanupLogsBuilder = PeriodicWorkRequest.Builder(
-            NavigationCleanupWorker::class.java,
-            24,
-            TimeUnit.HOURS
-        )
-
-        // Create the actual work object:
-        val cleanUpCheckWork = cleanupLogsBuilder.build()
-
-        // Then enqueue the recurring task under a unique name so repeated navigation starts keep a
-        // single cleanup chain instead of stacking one each time:
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            NavigationCleanupWorker.UNIQUE_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            cleanUpCheckWork
-        )
-    }
+    @Suppress("UnwrappedClockValue")
+    private fun wallClockMs(): Long = System.currentTimeMillis()
 
     companion object {
         const val TAG = "NavigationService"
-
+        const val NOTIFICATION_ID = 33620
         const val DESTINATION_ID = ".DestinationId"
         const val BEFORE_STOP_ID = ".BeforeId"
         const val TRIP_ID = ".TripId"
+        const val PLAN_JSON = ".ReminderPlanJson"
         const val FIRST_FEEDBACK = "firstFeedback"
         const val KEY_TEXT_REPLY = "trip_feedback"
-
         const val LOG_DIRECTORY = "ObaNavLog"
-
-        @JvmField
-        var mFirstFeedback = true
-
-        /** Nav-feed cadence (seconds) requested from the shared LocationRepository feed. */
+        const val ACTION_SILENCE = "org.onebusaway.android.nav.SILENCE"
+        const val ACTION_CANCEL = "org.onebusaway.android.nav.CANCEL"
         private const val NAV_UPDATE_INTERVAL_SECONDS = 1
-
-        private val RECORDING_THRESHOLD = NavigationServiceProvider.DISTANCE_THRESHOLD + 100
     }
 }

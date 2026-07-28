@@ -136,12 +136,12 @@ class DirectionsMapController(private val host: MapHost) {
     }
 
     /**
-     * The whole drawn itinerary thinned to context, for a transit leg's route sub-focus to keep beneath
-     * the route it drills into (#2048). Every leg is thinned — including the focused one, whose ridden
-     * segment the route view redraws at full weight directly over its own faint copy — so this needs no
-     * notion of which leg is focused and can't disagree with one.
+     * The whole drawn itinerary reduced to journey context, for a transit leg's route sub-focus (#2048).
+     * It remains stronger than the unused remainder of that route, since these are legs the rider will
+     * actually travel. Every leg is included — even the focused one, whose ridden segment the route view
+     * redraws at full weight over its context copy — so this needs no notion of the current focus.
      */
-    fun contextPolylines(): List<RoutePolyline> = legLines.map { it.line }.asDeemphasizedRouteUnderlay()
+    fun contextPolylines(): List<RoutePolyline> = legLines.map { it.line }.asItineraryContext()
 
     private fun publishLegs() {
         host.renderState.setRoutePolylines(legLines.withLegFocus(focusedLegIndices))

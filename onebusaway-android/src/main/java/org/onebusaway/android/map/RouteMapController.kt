@@ -113,10 +113,10 @@ class RouteMapController(
     // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
     private var highlightedSegment: List<GeoPoint> = emptyList()
 
-    // The trip whose leg was drilled into, already thinned to context (#2048) — drawn beneath everything
-    // this controller publishes so the rest of the journey stays on the map around the ridden segment,
-    // rather than the route arriving on an otherwise empty map. Empty for every non-directions launch.
-    // Set in start(); cleared in stop(), since the trip doesn't outlive the view that drilled into it.
+    // The trip whose leg was drilled into, already reduced to its middle journey-context weight (#2048).
+    // It draws above unused route geometry but below the ridden segment, keeping the rest of the journey
+    // visible around the selected leg. Empty for every non-directions launch. Set in start(); cleared in
+    // stop(), since the trip doesn't outlive the view that drilled into it.
     private var itineraryContext: List<RoutePolyline> = emptyList()
 
     // The additional ridden legs of a stay-aboard interline (#2000) drilled into route focus, beyond the
@@ -725,12 +725,15 @@ class RouteMapController(
             }
         )
         renderState.setRoutePolylines(
-            // Over a highlighted leg segment: thin the full route to context + the ridden span on top,
-            // all of it above the rest of the trip this leg belongs to (already thinned, #2048).
-            // The trip is context only, so it stays out of [framingPolylines] — drilling into a leg
-            // frames that leg, not the whole journey again.
-            polylines = itineraryContext +
-                routePolylinesWithSegment(plan.polylines, highlightedSegment, routeColor),
+            // Over a highlighted leg segment: unused route first, the rider's remaining itinerary at a
+            // middle weight, then the ridden span on top (#2048). The trip stays out of
+            // [framingPolylines] — drilling into a leg frames that leg, not the whole journey again.
+            polylines = routePolylinesWithSegment(
+                plan.polylines,
+                highlightedSegment,
+                routeColor,
+                itineraryContext
+            ),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom
         )

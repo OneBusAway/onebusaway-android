@@ -71,6 +71,26 @@ val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
 )
 
 /**
+ * The portion of a transit route outside the segment the rider will travel. It is only geographic
+ * reference beneath a focused itinerary leg, so it takes the faintest route weight on the map.
+ */
+val UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = 2f
+)
+
+/**
+ * The rest of a rider's itinerary retained around a focused transit leg. It sits between the selected
+ * ridden segment and the thinner, untraveled remainder of that transit route: still visibly part of the
+ * journey, but no longer competing with the leg being read.
+ *
+ * This deliberately has its own semantic profile even though it currently shares the adjacent-route
+ * value. The two presentations describe different things and can be tuned independently later.
+ */
+val ITINERARY_CONTEXT_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.5f
+)
+
+/**
  * A trip-plan itinerary's transit legs (#2041). The itinerary is the only thing the directions map is
  * showing — nothing competes with it — so a ride draws at the focused-route weight, and *is* that
  * profile rather than a second copy of its multiplier. It carries its own name because the two are read

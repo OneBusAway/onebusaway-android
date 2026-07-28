@@ -12,9 +12,12 @@ import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
+import org.onebusaway.android.map.render.UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
@@ -43,6 +46,27 @@ internal fun focusedRoutePolyline(
 internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyline> = map { line ->
     line.copy(
         widthProfile = DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE,
+        directional = false
+    )
+}
+
+/** The unused remainder of a route retained as the faintest reference beneath a ridden segment. */
+internal fun List<RoutePolyline>.asUntraveledRouteUnderlay(): List<RoutePolyline> = map { line ->
+    line.copy(
+        widthProfile = UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE,
+        directional = false,
+        dash = RouteLineDash.HINT
+    )
+}
+
+/**
+ * The rider's committed journey retained around a focused transit leg. It keeps each leg's mode/route
+ * colour and dash, but drops chevrons and takes a middle weight: stronger than unused route geometry,
+ * weaker than the selected ridden segment.
+ */
+internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map { line ->
+    line.copy(
+        widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
         directional = false
     )
 }

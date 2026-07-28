@@ -39,8 +39,10 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 
 /**
  * Compose the route's polylines when [segment] is highlighted: the full route [base] de-emphasized
- * (thin, no arrows) under the ridden segment in [routeColor], last so it sits on top.
- * Returns [base] unchanged when there's no drawable segment (plain route focus).
+ * (thin, no arrows), then the rider's [itineraryContext], then the ridden segment in [routeColor]. This
+ * order makes the visual hierarchy match the semantics: unused route, committed journey, current leg.
+ * Without a drawable segment, retains the ordinary plain-route ordering: itinerary context beneath
+ * [base], with no route deemphasis or selected overlay.
  *
  * The segment keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it
  * was tapped from — so drilling into a leg thins the route around it without also thinning the ride
@@ -50,12 +52,13 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
     segment: List<GeoPoint>,
-    routeColor: Int?
+    routeColor: Int?,
+    itineraryContext: List<RoutePolyline> = emptyList()
 ): List<RoutePolyline> {
     val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
         RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE, directional = true)
-    } ?: return base
-    return base.asDeemphasizedRouteUnderlay() + overlay
+    } ?: return itineraryContext + base
+    return base.asUntraveledRouteUnderlay() + itineraryContext + overlay
 }
 
 /**

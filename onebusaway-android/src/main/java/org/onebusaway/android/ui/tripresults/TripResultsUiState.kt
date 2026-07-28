@@ -81,6 +81,16 @@ data class LegBadge(val routes: List<RouteBadge>, val mode: TransitMode) {
 }
 
 /**
+ * A leg the rider has tapped, as the map needs it: the geometry to frame, plus [legIndices] — which of
+ * the itinerary's legs the tapped row actually covers. The indices are what let the map hold the *rest*
+ * of the trip as de-emphasized context around the focus (#2048) instead of drawing the leg alone.
+ *
+ * It's a set rather than one index because a folded interline chain (#2000) is several itinerary legs
+ * the rider reads — and taps — as a single ride, and every leg of it is part of what they focused.
+ */
+data class FocusedLeg(val points: List<GeoPoint>, val legIndices: Set<Int>)
+
+/**
  * One entry in the trip **log** — the directions rendered as a single transit timeline the user reads
  * top-to-bottom, each event on a shared vertical spine next to its clock time (see [TripResultsList]).
  * The list is the trip in order: a [Terminal] Start, then one [Walk] or [Transit] per leg, then a
@@ -124,8 +134,12 @@ sealed interface TripLogEntry {
         val isTransfer: Boolean,
         val steps: List<LogStep>,
         val legPoints: List<GeoPoint> = emptyList(),
-        val focusPoint: GeoPoint? = null
-    ) : TripLogEntry
+        val focusPoint: GeoPoint? = null,
+        val legIndices: Set<Int> = emptySet()
+    ) : TripLogEntry {
+        /** This leg as the map's focus target — see [FocusedLeg]. */
+        val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
+    }
 
     /**
      * A transit leg — a Board node and an Exit node uniting the ride, its solid route-coloured segment
@@ -153,8 +167,12 @@ sealed interface TripLogEntry {
         val realtime: RealtimeState,
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
-        val legPoints: List<GeoPoint> = emptyList()
+        val legPoints: List<GeoPoint> = emptyList(),
+        val legIndices: Set<Int> = emptySet()
     ) : TripLogEntry {
+        /** This ride as the map's focus target — every leg of a folded chain; see [FocusedLeg]. */
+        val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
+
         /**
          * How many intermediate stops the ride passes — derived from [rideEvents] rather than stored, so
          * the "N stops" summary can't disagree with the list the leg expands to (it did when a folded

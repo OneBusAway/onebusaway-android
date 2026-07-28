@@ -43,6 +43,7 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
+import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toGeoPoint
@@ -598,25 +599,28 @@ class HomeViewModel @Inject constructor(
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
     fun focusItineraryPointOnMap(point: GeoPoint) = emitMapDirective(MapDirective.FocusItineraryPoint(point))
 
-    /** Frame a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]). */
-    fun focusItineraryLegOnMap(points: List<GeoPoint>) {
+    /**
+     * Focus a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]): frame it,
+     * with the rest of the trip receding to context around it (#2048).
+     */
+    fun focusItineraryLegOnMap(leg: FocusedLeg) {
         // If a transit leg's route is in focus, drop back to the itinerary overview and redraw it first —
         // otherwise the framing would no-op in route mode (directionsActive is false).
         if (popRouteFocus()) shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
-        emitMapDirective(MapDirective.FocusItineraryLeg(points))
+        emitMapDirective(MapDirective.FocusItineraryLeg(leg.points, leg.legIndices))
     }
 
     /**
      * Tap a transit leg from the directions overview: highlight its route on the map (the whole route +
-     * the traveled [fallbackLegPoints] drawn thick), recording the overview as the back target so a
+     * the traveled [fallbackLeg] drawn thick), recording the overview as the back target so a
      * map-background tap (or Back) returns to the itinerary. [routeLeg]'s ids are already OBA-format
      * (resolved at build time); an unresolved route degrades to framing the leg. The per-stop ETAs are
      * shown inline in the drawer's Board/Alight rows, not here.
      */
-    fun focusItineraryRouteLeg(routeLeg: RouteLegRef, fallbackLegPoints: List<GeoPoint>) {
+    fun focusItineraryRouteLeg(routeLeg: RouteLegRef, fallbackLeg: FocusedLeg) {
         val routeId = routeLeg.routeId
         if (routeId == null) {
-            focusItineraryLegOnMap(fallbackLegPoints)
+            focusItineraryLegOnMap(fallbackLeg)
             return
         }
         // Anchor to the boarding stop so the route shows only the ridden direction. A folded interline
@@ -624,7 +628,7 @@ class HomeViewModel @Inject constructor(
         // the shared vehicle across them; empty for an ordinary leg (plain single-route focus).
         focusItineraryRouteLegOnMap(
             routeId,
-            segment = fallbackLegPoints,
+            segment = fallbackLeg.points,
             directionStopId = routeLeg.board?.stopId,
             extraSegments = routeLeg.extraSegments
         )
@@ -675,7 +679,9 @@ class HomeViewModel @Inject constructor(
         undoViewport: MapViewport? = null
     ) {
         pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request)), undoViewport)
-        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false))
+        // withinDirections: this route is drilled into *from* a trip plan, so the map keeps the rest of
+        // the trip beneath it as de-emphasized context (#2048).
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false, withinDirections = true))
     }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
@@ -778,12 +784,14 @@ class HomeViewModel @Inject constructor(
                 is CurrentFocus.Directions -> {
                     val routeFocus = target.routeFocus
                     if (routeFocus != null) {
-                        // Back into a route sub-focus: re-show that leg's route on the map.
+                        // Back into a route sub-focus: re-show that leg's route on the map, over the trip
+                        // it belongs to (still drawn, or restored by the sheet's own reconcile).
                         emitMapDirective(
                             MapDirective.ShowRoute(
                                 routeFocus.request,
                                 stopScoped = false,
-                                frameRoute = frameFocus
+                                frameRoute = frameFocus,
+                                withinDirections = true
                             )
                         )
                     } else {
@@ -870,11 +878,16 @@ sealed interface MapDirective {
     /** Animate the camera to recenter on the currently focused stop (sheet expanded). */
     data class RecenterOnFocusedStop(val point: GeoPoint) : MapDirective
 
-    /** Enter route mode for [request]'s route (the "show vehicles on map" action). */
+    /**
+     * Enter route mode for [request]'s route (the "show vehicles on map" action). [withinDirections]
+     * marks a drill-in from a trip plan's leg, which keeps the rest of the trip drawn beneath the route
+     * as de-emphasized context (#2048).
+     */
     data class ShowRoute(
         val request: ShowRouteRequest,
         val stopScoped: Boolean,
-        val frameRoute: Boolean = true
+        val frameRoute: Boolean = true,
+        val withinDirections: Boolean = false
     ) : MapDirective
 
     /** Restore the camera paired with an undone semantic action. */
@@ -918,8 +931,11 @@ sealed interface MapDirective {
     /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
     data class FocusItineraryPoint(val point: GeoPoint) : MapDirective
 
-    /** Frame a whole tapped itinerary leg (fit its polyline within the map's content padding). */
-    data class FocusItineraryLeg(val points: List<GeoPoint>) : MapDirective
+    /**
+     * Focus a whole tapped itinerary leg: fit its polyline within the map's content padding, and recede
+     * the trip's other legs — everything outside [legIndices] — to context (#2048).
+     */
+    data class FocusItineraryLeg(val points: List<GeoPoint>, val legIndices: Set<Int>) : MapDirective
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective

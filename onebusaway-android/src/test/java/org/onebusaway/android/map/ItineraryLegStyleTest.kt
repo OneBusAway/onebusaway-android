@@ -11,10 +11,13 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * The directions map's per-leg stroke policy (#2041). The point of these is the *distinctions*: before
@@ -120,6 +123,64 @@ class ItineraryLegStyleTest {
             val color = itineraryLegStyle(kind, routeColor = null).color
             assertTrue("$kind was achromatic", Hct.fromInt(color).chroma > ACHROMATIC_ROUTE_CHROMA)
         }
+    }
+
+    @Test
+    fun `focusing a leg recedes the rest of the trip instead of erasing it`() {
+        val lines = tripOf(walk = 0, ride = 1, walk2 = 2)
+
+        val focused = lines.withLegFocus(setOf(1))
+
+        // Nothing is dropped — the whole trip is still drawn, just no longer all at one weight.
+        assertEquals(lines.size, focused.size)
+        // The two on-street legs recede; the ride keeps the weight it had.
+        val (context, ride) = focused.partition { it.widthProfile == DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE }
+        assertEquals(2, context.size)
+        assertEquals(listOf(ITINERARY_RIDE_WIDTH_PROFILE), ride.map { it.widthProfile })
+        // The focused leg is last, so it draws over the context rather than under it.
+        assertEquals(ride.single(), focused.last())
+        // Only the weight changes: a leg keeps its mode/route colour, so the trip is still legible.
+        assertEquals(lines.map { it.line.color }.toSet(), focused.map { it.color }.toSet())
+    }
+
+    @Test
+    fun `a folded interline chain focuses as one ride, not as its first leg`() {
+        // #2000: several itinerary legs the rider stays aboard through, read (and tapped) as one ride.
+        val focused = tripOf(walk = 0, ride = 1, walk2 = 2).withLegFocus(setOf(1, 2))
+
+        assertEquals(1, focused.count { it.widthProfile == DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE })
+    }
+
+    @Test
+    fun `the overview draws every leg at its own weight`() {
+        val lines = tripOf(walk = 0, ride = 1, walk2 = 2)
+
+        // No focus at all, and a focus naming a leg that carried no geometry, are the same case: there
+        // is nothing to raise, so nothing is lowered.
+        listOf(emptySet<Int>(), setOf(7)).forEach { focus ->
+            assertEquals(lines.map { it.line }, lines.withLegFocus(focus))
+        }
+    }
+
+    /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
+    private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(
+        legLine(walk, ItineraryLegKind.WALK),
+        legLine(ride, ItineraryLegKind.TRANSIT),
+        legLine(walk2, ItineraryLegKind.BIKE)
+    )
+
+    private fun legLine(legIndex: Int, kind: ItineraryLegKind): ItineraryLegLine {
+        val style = itineraryLegStyle(kind, routeColor = null)
+        return ItineraryLegLine(
+            legIndex,
+            RoutePolyline(
+                style.color,
+                listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
+                widthProfile = style.widthProfile,
+                directional = style.directional,
+                dash = style.dash
+            )
+        )
     }
 
     private companion object {

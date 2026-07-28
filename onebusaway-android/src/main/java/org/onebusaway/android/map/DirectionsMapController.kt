@@ -33,14 +33,23 @@ import org.onebusaway.android.util.parseObaHexColor
  * just writes polylines + markers and dispatches the framing camera command.
  *
  * [start] draws an itinerary; [frameDirections] (re-appliable, since the [start]-time camera command
- * is lost before the adapter subscribes) fits it; [clear] removes its start/end pins. The leg
- * polylines are cleared generically by the owner (they share the render state's polyline list).
+ * is lost before the adapter subscribes) fits it; [focusLegs] recedes all but the leg the rider is
+ * reading; [clear] removes its start/end pins and forgets the itinerary. In directions mode the drawn
+ * itinerary *is* the render state's whole polyline list (the owner clears it before each [start]), so
+ * republishing here replaces it wholesale.
  * [setEndpoints] additionally draws standalone From/To pins as the endpoints resolve, before an
  * itinerary exists (superseded by the itinerary's own start/end pins once [start] runs).
  */
 class DirectionsMapController(private val host: MapHost) {
 
     private val directionsMarkerIds = HashSet<Int>()
+
+    // The drawn itinerary, retained so a leg focus can recompose it without rebuilding from the
+    // itinerary, and so a leg's route sub-focus can take it as context (see [contextPolylines]).
+    private var legLines: List<ItineraryLegLine> = emptyList()
+
+    // Which legs the rider is currently reading; empty is the itinerary overview (every leg full weight).
+    private var focusedLegIndices: Set<Int> = emptySet()
 
     // The directions framing intent, kept so [frameDirections] can (re)apply it once the map is ready
     // (the one-shot camera command dispatched at start time is lost before the adapter subscribes).
@@ -76,29 +85,32 @@ class DirectionsMapController(private val host: MapHost) {
         val endLat = endPlace.lat
         val endLon = endPlace.lon
 
-        // Build every leg's polyline (each in its own mode/route style), then append them in one write —
-        // matching the legacy per-leg append but without rebuilding the polyline list n times.
-        val legPolylines = legs.mapNotNull { leg ->
-            val geometry = leg.legGeometry ?: return@mapNotNull null
+        // Build every leg's polyline (each in its own mode/route style), keeping each one's leg index so
+        // a later focus can name legs rather than drawn positions (a leg without geometry draws nothing).
+        legLines = legs.mapIndexedNotNull { legIndex, leg ->
+            val geometry = leg.legGeometry ?: return@mapIndexedNotNull null
             val shape = LegShape(geometry)
             if (shape.length > 0) {
                 val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
                 // Every leg's points run in travel order, so whether it stamps chevrons is the style's
                 // call — a dashed on-street stroke declines them (see [itineraryLegStyle]).
-                RoutePolyline(
-                    style.color,
-                    shape.points,
-                    widthProfile = style.widthProfile,
-                    directional = style.directional,
-                    dash = style.dash
+                ItineraryLegLine(
+                    legIndex,
+                    RoutePolyline(
+                        style.color,
+                        shape.points,
+                        widthProfile = style.widthProfile,
+                        directional = style.directional,
+                        dash = style.dash
+                    )
                 )
             } else {
                 null
             }
         }
-        if (legPolylines.isNotEmpty()) {
-            host.renderState.setRoutePolylines(host.renderState.getRoutePolylines() + legPolylines)
-        }
+        // A freshly drawn itinerary is the overview: every leg at full weight until one is focused.
+        focusedLegIndices = emptySet()
+        publishLegs()
 
         if (startLat != null && startLon != null) {
             directionsMarkerIds.add(host.addMarker(startLat, startLon, HUE_GREEN))
@@ -107,9 +119,32 @@ class DirectionsMapController(private val host: MapHost) {
             directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
         }
 
-        directionsHasRoute = legPolylines.isNotEmpty()
+        directionsHasRoute = legLines.isNotEmpty()
         directionsStart = if (startLat != null && startLon != null) GeoPoint(startLat, startLon) else null
         frameDirections()
+    }
+
+    /**
+     * Recede all but [legIndices] — the leg (or folded interline chain) the rider has just focused —
+     * leaving the rest of the trip on the map as faint context instead of erasing it (#2048). An empty
+     * set restores the overview. A no-op when no itinerary is drawn.
+     */
+    fun focusLegs(legIndices: Set<Int>) {
+        if (legLines.isEmpty() || focusedLegIndices == legIndices) return
+        focusedLegIndices = legIndices
+        publishLegs()
+    }
+
+    /**
+     * The whole drawn itinerary thinned to context, for a transit leg's route sub-focus to keep beneath
+     * the route it drills into (#2048). Every leg is thinned — including the focused one, whose ridden
+     * segment the route view redraws at full weight directly over its own faint copy — so this needs no
+     * notion of which leg is focused and can't disagree with one.
+     */
+    fun contextPolylines(): List<RoutePolyline> = legLines.map { it.line }.asDeemphasizedRouteUnderlay()
+
+    private fun publishLegs() {
+        host.renderState.setRoutePolylines(legLines.withLegFocus(focusedLegIndices))
     }
 
     /**
@@ -127,10 +162,16 @@ class DirectionsMapController(private val host: MapHost) {
         }
     }
 
-    /** Remove the start/end pins (the owner clears the leg polylines via the shared polyline list). */
+    /**
+     * Forget the drawn itinerary: remove the start/end pins and drop the retained legs (the owner clears
+     * the leg polylines themselves via the shared polyline list). Called on every transition that leaves
+     * the trip behind — a leg's route sub-focus deliberately doesn't, so [contextPolylines] survives into it.
+     */
     fun clear() {
         directionsMarkerIds.forEach { host.removeMarker(it) }
         directionsMarkerIds.clear()
+        legLines = emptyList()
+        focusedLegIndices = emptySet()
     }
 
     /**

@@ -346,8 +346,8 @@ fun TripResultsList(
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
     onSelectOption: (Int) -> Unit = {},
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit = { _, _ -> },
-    onFocusLeg: (List<GeoPoint>) -> Unit = {},
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
+    onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> }
 ) {
@@ -398,8 +398,8 @@ fun TripResultsSheet(
     params: TripPlanParams?,
     resultsViewModel: TripResultsViewModel,
     showItinerary: (TripItinerary) -> Unit,
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
-    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
+    onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     modifier: Modifier = Modifier,
@@ -515,8 +515,8 @@ private fun TripLogList(
     state: TripResultsUiState.Success,
     bottomInset: Dp,
     onSelectOption: (Int) -> Unit,
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
-    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
+    onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
@@ -566,8 +566,8 @@ private fun TripLogList(
 private fun LogRow(
     model: LogRowModel,
     onToggle: (Int) -> Unit,
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
-    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
+    onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
 ) {
@@ -585,7 +585,7 @@ private fun LogRow(
             LogRowScaffold(
                 model = model,
                 onClick = {
-                    if (walk.legPoints.isNotEmpty()) onFocusLeg(walk.legPoints) else walk.focusPoint?.let(onFocusPoint)
+                    if (walk.legPoints.isNotEmpty()) onFocusLeg(walk.focus) else walk.focusPoint?.let(onFocusPoint)
                 },
                 onToggleExpand = { onToggle(i) }
             ) { WalkHeaderContent(walk) }
@@ -647,14 +647,14 @@ private fun expandLabel(model: LogRowModel): String? = when {
  */
 private fun focusTransit(
     entry: TripLogEntry.Transit,
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
-    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
+    onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit
 ) {
     val routeLeg = entry.routeLeg.takeIf { it.routeId != null }
     when {
-        routeLeg != null -> onFocusRouteLeg(routeLeg, entry.legPoints)
-        entry.legPoints.isNotEmpty() -> onFocusLeg(entry.legPoints)
+        routeLeg != null -> onFocusRouteLeg(routeLeg, entry.focus)
+        entry.legPoints.isNotEmpty() -> onFocusLeg(entry.focus)
         else -> entry.routeLeg.board?.point?.let(onFocusPoint)
     }
 }

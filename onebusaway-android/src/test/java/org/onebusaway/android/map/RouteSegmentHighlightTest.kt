@@ -27,7 +27,6 @@ import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.Polyline
 
 /** JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment], [routePolylinesWithSegment]). */
 class RouteSegmentHighlightTest {
@@ -120,12 +119,17 @@ class RouteSegmentHighlightTest {
 
     @Test
     fun containsRoutePoint_acceptsApproachingAndOnLegVehicles_andRejectsDownstreamVehicle() {
-        val throughSelectedLeg = listOf(
-            Polyline(listOf(GeoPoint(47.58, -122.33), GeoPoint(47.64, -122.33)))
+        val route = listOf(
+            RoutePolyline(
+                color = 1,
+                points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33))
+            )
         )
+        val throughSelectedLeg = route.boundedThrough(GeoPoint(47.64, -122.33))
 
         assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.60, -122.33))) // upstream
         assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.63, -122.33))) // selected leg
-        assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.66, -122.33))) // downstream
+        // Only ~11 m beyond alighting: spatial tolerance alone must not leak this downstream vehicle.
+        assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.6401, -122.33)))
     }
 }

@@ -166,11 +166,17 @@ class RouteMapController(
 
     // Eligible geometry by route while a directions leg is selected. Empty outside leg focus; spans
     // the approach and selected ride, but stops at alighting so downstream vehicles stay hidden.
-    private var focusedVehiclePathsByRoute: Map<String, List<Polyline>> = emptyMap()
+    private var focusedVehiclePathsByRoute: Map<String, List<BoundedRoutePath>> = emptyMap()
 
     private data class StopFocusSession(
         val stopId: String,
         val trips: Set<FocusedTrip>
+    )
+
+    private data class FocusedRouteLines(
+        val routeId: String,
+        val relationship: RouteFocusRelationship?,
+        val polylines: List<RoutePolyline>
     )
 
     private var stopFocusSession: StopFocusSession? = null
@@ -286,6 +292,7 @@ class RouteMapController(
         // so a prior focus's routes/polls can't leak into this one during the load window.
         this.extraRouteMaps = emptyMap()
         this.extraPolls = emptyMap()
+        this.focusedVehiclePathsByRoute = emptyMap()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
@@ -1002,28 +1009,31 @@ class RouteMapController(
     private fun showDirectionPolylines() {
         if (routeShape == null) return
         val boardPoint = highlightedSegment.firstOrNull()
-        val alightPoint = highlightedSegment.lastOrNull()
+        val isLegFocus = highlightedSegment.isDrawableSegment()
         val leaderRouteId = routeId ?: return
-        val additionalSegments = if (highlightedSegment.isDrawableSegment()) {
-            // Interchangeable routes approach the same platform. Stay-aboard continuations begin after
-            // boarding, so they are part of the selected ride rather than its upstream context.
-            extraSegments.filter { it.relationship == RouteFocusRelationship.INTERCHANGEABLE }
-        } else {
-            extraSegments
-        }
         fun RouteFocusSegment.polylines(): List<RoutePolyline> =
             routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
-        val approaches = (listOf(leaderRouteId to directionPolylines(currentDirectionId)) +
-            additionalSegments.map { it.routeId to it.polylines() })
-            .groupBy({ it.first }, { (_, lines) -> lines.upstreamTo(boardPoint) })
+        val focusedRouteLines = listOf(
+            FocusedRouteLines(leaderRouteId, null, directionPolylines(currentDirectionId))
+        ) + extraSegments.map { FocusedRouteLines(it.routeId, it.relationship, it.polylines()) }
+        val approaches = focusedRouteLines
+            // Interchangeable routes approach the same platform. Stay-aboard continuations begin after
+            // boarding, so they are part of the selected ride rather than its upstream context.
+            .filter { route ->
+                !isLegFocus || route.relationship != RouteFocusRelationship.STAY_ABOARD
+            }
+            .groupBy({ it.routeId }, { it.polylines.upstreamTo(boardPoint) })
             .mapValues { (_, lines) -> lines.flatten() }
-        focusedVehiclePathsByRoute = if (highlightedSegment.isDrawableSegment()) {
+        focusedVehiclePathsByRoute = if (isLegFocus) {
             // Unlike the drawn context, vehicle eligibility extends through the selected ride. Include
             // stay-aboard continuations too: their vehicles belong until the rider's alighting point.
-            (listOf(leaderRouteId to directionPolylines(currentDirectionId)) +
-                extraSegments.map { it.routeId to it.polylines() })
-                .groupBy({ it.first }, { (_, lines) -> lines.upstreamTo(alightPoint) })
-                .mapValues { (_, lines) -> lines.flatten().map { Polyline(it.points) } }
+            val alightPoint = highlightedSegment.last()
+            focusedRouteLines
+                .groupBy(
+                    { it.routeId },
+                    { it.polylines.boundedThrough(alightPoint) }
+                )
+                .mapValues { (_, paths) -> paths.flatten() }
         } else {
             emptyMap()
         }

@@ -64,12 +64,7 @@ internal fun routePolylinesWithSegment(
 /** Keep a direction's travel-ordered geometry only through [anchor], including a clipped final line. */
 internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyline> {
     anchor ?: return this
-    val match = mapIndexedNotNull { index, line ->
-        val projection = Polyline(line.points).nearestProjection(anchor.latitude, anchor.longitude)
-            ?: return@mapIndexedNotNull null
-        Triple(index, line, projection)
-    }.minByOrNull { (_, _, projection) -> projection.distanceToPoint } ?: return emptyList()
-    val (matchIndex, line, projection) = match
+    val (matchIndex, line, projection) = closestProjection(anchor) ?: return emptyList()
     val clipped = Polyline(line.points)
         .subPolyline(0.0, projection.distanceAlong)
         ?.takeIf { it.size >= 2 && it.first() != it.last() }
@@ -77,15 +72,34 @@ internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyli
     return take(matchIndex) + listOfNotNull(clipped)
 }
 
-/** Whether [point] lies on one of these upstream route lines. */
-internal fun List<Polyline>.containsRoutePoint(
+/** A route line whose eligible travel ends at [maxDistanceAlong]. */
+internal data class BoundedRoutePath(
+    val line: Polyline,
+    val maxDistanceAlong: Double
+)
+
+/** Preserve full geometry for projection while bounding travel at [anchor]. */
+internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedRoutePath> {
+    val (matchIndex, _, projection) = closestProjection(anchor) ?: return emptyList()
+    return take(matchIndex).map { BoundedRoutePath(Polyline(it.points), Double.POSITIVE_INFINITY) } +
+        BoundedRoutePath(Polyline(get(matchIndex).points), projection.distanceAlong)
+}
+
+/** Whether [point] is near one of these paths without exceeding its along-route boundary. */
+internal fun List<BoundedRoutePath>.containsRoutePoint(
     point: GeoPoint,
     toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
-): Boolean = any { line ->
-    val projection = line.nearestProjection(point.latitude, point.longitude)
+): Boolean = any { path ->
+    val projection = path.line.nearestProjection(point.latitude, point.longitude)
         ?: return@any false
-    projection.distanceToPoint <= toleranceMeters
+    projection.distanceToPoint <= toleranceMeters && projection.distanceAlong <= path.maxDistanceAlong
 }
+
+private fun List<RoutePolyline>.closestProjection(anchor: GeoPoint) = mapIndexedNotNull { index, line ->
+    val projection = Polyline(line.points).nearestProjection(anchor.latitude, anchor.longitude)
+        ?: return@mapIndexedNotNull null
+    Triple(index, line, projection)
+}.minByOrNull { (_, _, projection) -> projection.distanceToPoint }
 
 /**
  * Keep only the stops within [toleranceMeters] of [segment]'s path — the ride's stops, not the whole

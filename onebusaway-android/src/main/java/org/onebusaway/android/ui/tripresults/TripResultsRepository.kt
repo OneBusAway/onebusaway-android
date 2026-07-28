@@ -140,8 +140,9 @@ class DefaultTripResultsRepository @Inject constructor(
                 extraSegments = extraSegments,
                 alternatives = alternatives.map { it.resolve() },
                 // Built here, alongside the option cards' badges, so the drawer renders one rather than
-                // deriving it per row (#2010).
-                badge = legBadge(leader, alternatives)
+                // deriving it per row (#2010) — and so a ride that changes route under the rider is
+                // badged the same "5 > 12" in both places (#2049).
+                badge = rideBadge(legs, chain, alternatives)
             )
         }
         return refs

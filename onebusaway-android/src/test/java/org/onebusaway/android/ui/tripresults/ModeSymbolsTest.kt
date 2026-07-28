@@ -133,11 +133,28 @@ class ModeSymbolsTest {
         assertEquals(listOf(StreetMode.WALK, listOf("8")), symbolsOf(listOf(longWalk, longWalk, transit("8"))))
     }
 
-    /** Straight off [Interlines.chains]: a self-interline is one ride, a cross-route one is two. */
+    /**
+     * Straight off [Interlines.chains]: a self-interline is one ride on one route, a cross-route one is
+     * one ride on two. One symbol either way — the rider boards once, so the card draws one roundel, and
+     * the routes ridden are named inside it (#2049).
+     */
     @Test
-    fun interlinedRidesBadgeTheRoutesActuallyRidden() {
+    fun anInterlinedRideIsOneSymbolNamingEveryRouteItRunsAs() {
         assertEquals(listOf(listOf("12")), symbolsOf(listOf(transit("12"), transit("12", interline = true))))
-        assertEquals(listOf(listOf("10"), listOf("12")), symbolsOf(listOf(transit("10"), transit("12", interline = true))))
+        // Deliberately a pair that natural name order would reverse, so this also pins that the ride
+        // order survives the trip through the badge builder. What that order *means*, and that the badge
+        // chevrons rather than offers a choice, is `RouteBadgesTest`'s to assert — `rideBadge` owns the
+        // rule and this only checks that a card is handed the whole of it.
+        assertEquals(listOf(listOf("12", "10")), symbolsOf(listOf(transit("12"), transit("10", interline = true))))
+    }
+
+    /** A transfer stays two symbols: two boardings, so two roundels with a walk (or a gap) between. */
+    @Test
+    fun aTransferBetweenTwoRidesStaysTwoSymbols() {
+        assertEquals(
+            listOf(listOf("10"), listOf("12")),
+            symbolsOf(listOf(transit("10"), transit("12")))
+        )
     }
 
     /** A ride's badge names the routes it can be taken on, not just the planned one (#2010). */

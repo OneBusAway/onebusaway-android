@@ -27,6 +27,7 @@ import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
@@ -95,7 +96,7 @@ class DirectionRowFocusTest {
     private fun state(directions: List<TripLogEntry>) = TripResultsUiState.Success(
         options = listOf(
             ItineraryOption(
-                symbols = listOf(ModeSymbol.Transit(LegBadge(listOf(RouteBadge("8", routeColor = null)), TransitMode.BUS))),
+                symbols = listOf(ModeSymbol.Transit(LegBadge(listOf(RouteBadge("8", routeColor = null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF))),
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
                 endTime = ServerTime(32 * 60_000L)

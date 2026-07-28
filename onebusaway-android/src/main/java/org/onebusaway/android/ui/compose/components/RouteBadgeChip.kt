@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -47,6 +48,28 @@ import androidx.compose.ui.unit.dp
 /** One route on a badge: its short name and (nullable) GTFS color as an ARGB int. */
 data class RouteBadge(val shortName: String, val routeColor: Int?)
 
+/**
+ * How the routes sharing one badge relate to each other — and so what shape divides them. A badge is one
+ * or the other, never a mix: the two facts arise on different legs (see `TripItinerary.substitutableRoutes`,
+ * which drops the alternatives on an interlined ride), so nothing has to draw a slash and a chevron in the
+ * same chip.
+ */
+enum class RouteBadgeJoin {
+
+    /**
+     * Interchangeable routes (#2010) — any one of them will do, so the rider takes whichever comes
+     * first. Divided by a slash, the way a corridor's lines are written down: `1 Line / 2 Line`.
+     */
+    ANY_OF,
+
+    /**
+     * The routes one vehicle runs as in turn, ridden without alighting — a stay-aboard interline
+     * (#2000). Divided by a chevron, because the order is the whole point: `5 > 12` is one ride that
+     * changes its name at a seam, not a choice and not a transfer (#2049).
+     */
+    THEN
+}
+
 /** The badge's corner rounding — barely rounded, matching the roundels elsewhere in the app. */
 private val BADGE_SHAPE = RoundedCornerShape(1.dp)
 
@@ -54,8 +77,11 @@ private val BADGE_SHAPE = RoundedCornerShape(1.dp)
  * How far the divider between two routes leans, as a fraction of the badge's height: it sits at the
  * segment edge at mid-height and shifts by half this either way, so it reads as a "/" between the names
  * rather than as a vertical seam.
+ *
+ * The chevron ([RouteBadgeJoin.THEN]) is the same lean folded at mid-height — one constant for both, so
+ * the two joins are visibly the same badge family and only their *shape* says which relation they mean.
  */
-private const val SLASH_SLANT_RATIO = 0.5f
+private const val JOIN_LEAN_RATIO = 0.5f
 
 /** The width of the badge's outline and of the line where two routes meet inside it. */
 private val BADGE_LINE_WIDTH = 1.dp
@@ -89,6 +115,30 @@ val ROUTE_BADGE_HEIGHT = 16.dp + BADGE_VERTICAL_PADDING * 2
  * color (or have none) from running together into one name.
  */
 private val BADGE_LINE_COLOR = Color.Black
+
+/**
+ * How much room a name gets either side of it inside a joined badge, before allowing for the divider.
+ * Wider than the plain chip's padding, since the divider leans through the segment edges and the name has
+ * to stay clear of it. Scales with the chip.
+ */
+private val JOINED_SEGMENT_PADDING = 5.dp
+
+/**
+ * How far a chevron's point reaches past the segment edge, at [scale][RouteBadgeChip] 1 — the drawn lean
+ * ([JOIN_LEAN_RATIO] of the chip's height, halved) restated in layout units, so the padding can *allow*
+ * for it instead of guessing at a number that would rot if the lean changed.
+ *
+ * A notched segment adds this to its leading padding and nothing to its trailing one. That's the whole
+ * correction: the boundary is slanted, so a name's tightest clearance is not at mid-height (where the
+ * notch is deepest) but where the edge crosses the segment's nominal edge, a quarter of the way down —
+ * which for a notch is a full lean in from where the padding starts, and for a point is exactly at it.
+ * Without this the name sits a half-lean left of centre in the band a rider actually sees, with the slack
+ * left over as dead space after it.
+ *
+ * Exact at the default font scale. Above it the sp-driven chip grows while this dp allowance does not, so
+ * the clearance tightens a little — the same direction of drift [ROUTE_BADGE_HEIGHT] already notes.
+ */
+private val CHEVRON_LEAN_ALLOWANCE = ROUTE_BADGE_HEIGHT * JOIN_LEAN_RATIO / 2
 
 /**
  * A small route roundel — the route's short name on a chip tinted from its GTFS color (via
@@ -179,26 +229,36 @@ private fun BadgeContent(
 }
 
 /**
- * The same roundel for a set of routes that are ridden interchangeably (#2010) — "1 Line/2 Line" for a
- * pair of lines sharing the same track between two stops. One chip, not several: the names sit side by
- * side on a single background divided by a slash-like diagonal, each half in its own route color, so
- * the badge reads as one choice of several routes rather than as a sequence of separate legs.
+ * The same roundel for a set of routes ridden as one leg — "1 Line/2 Line" for a pair of lines sharing
+ * the same track between two stops ([RouteBadgeJoin.ANY_OF], #2010), or "5 > 12" for a bus that becomes
+ * another route with the rider still aboard ([RouteBadgeJoin.THEN], #2000/#2049). One chip, not several:
+ * the names sit side by side on a single background, each in its own route color, divided by the shape
+ * [join] calls for — so the badge reads as *one* ride however many routes it names, rather than as
+ * separate legs the rider gets off and on between.
  *
  * Each segment paints its own band, overhanging its neighbours by half the lean; siblings paint left to
  * right, so each band's left edge cleanly overwrites the previous band's overhang and the colors meet
- * exactly on the diagonal. A [BADGE_LINE_COLOR] hairline is then drawn along that meeting line, and the
+ * exactly on the divider. A [BADGE_LINE_COLOR] hairline is then drawn along that meeting line, and the
  * whole chip is outlined in the same color — so the badge reads as one bounded object holding two
  * names, even when its routes share a color or have none. The chip is clipped to [BADGE_SHAPE], which
  * trims the outermost bands' overhang back to the badge's own edges.
  *
+ * [routes] is in the order the badge reads. For [RouteBadgeJoin.THEN] that order *is* the information —
+ * `5 > 12` and `12 > 5` are different rides — so the caller sorts an [RouteBadgeJoin.ANY_OF] badge into
+ * natural name order and leaves a [RouteBadgeJoin.THEN] one in ride order (see `RouteBadges`).
+ *
  * A single-route list is the plain chip above, outlined to match: these badges sit side by side in the
- * trip planner (`[2] [1 Line/2 Line]`), so they have to be bounded the same way. The plain chip's other
- * callers keep their un-outlined roundel. [scale] enlarges everything proportionally, as on the plain
- * chip.
+ * trip planner (`[2] [1 Line/2 Line]`), so they have to be bounded the same way. It has no divider, so
+ * [join] doesn't reach it. The plain chip's other callers keep their un-outlined roundel. [scale]
+ * enlarges everything proportionally, as on the plain chip.
  *
  * [maxWidth] applies only to that single-route case — see the note at the joined `Row` below.
- * [leadingIcon] heads the whole badge rather than each name in it: interchangeable routes are one ride
- * on one mode, so a glyph per segment would read as several legs.
+ * [leadingIcon] heads the whole badge rather than each name in it: however its routes are joined, a badge
+ * is one ride on one mode, so a glyph per segment would read as several legs.
+ *
+ * The bands are laid out by a `Row` (which an RTL layout would reverse) but painted in raw draw-space
+ * offsets (which it would not), so a joined badge assumes an LTR reading order — as it has since #2010,
+ * and as the app does throughout, shipping no RTL locale.
  */
 @Composable
 fun RouteBadgeChip(
@@ -206,6 +266,7 @@ fun RouteBadgeChip(
     modifier: Modifier = Modifier,
     scale: Float = 1f,
     maxWidth: Dp = Dp.Unspecified,
+    join: RouteBadgeJoin = RouteBadgeJoin.ANY_OF,
     leadingIcon: Int? = null,
     leadingIconDescription: String? = null
 ) {
@@ -217,9 +278,9 @@ fun RouteBadgeChip(
     }
     // Deliberately uncapped, unlike the plain chip: this Row's children are unweighted, so a bounded max
     // would be consumed by the first segment and leave the later ones measured at zero width — a route
-    // silently missing from a badge that means "any of these will do" is far worse than a wide chip, and
-    // the option-card row it sits in already scrolls horizontally. [maxWidth] therefore only reaches the
-    // single-route delegation above, which is the case it exists for.
+    // silently missing from a badge whose whole point is naming every route on the ride is far worse than
+    // a wide chip, and the option-card row it sits in already scrolls horizontally. [maxWidth] therefore
+    // only reaches the single-route delegation above, which is the case it exists for.
     Row(outlined.clip(BADGE_SHAPE).height(IntrinsicSize.Min)) {
         routes.forEachIndexed { index, route ->
             val (container, content) = rememberRouteBadgeColors(route.routeColor)
@@ -227,11 +288,10 @@ fun RouteBadgeChip(
                 name = route.shortName,
                 contentColor = content,
                 scale = scale,
-                // Wider than the plain chip's padding: the meeting line leans through the segment edges,
-                // so the extra breathing room keeps a name clear of it and of the neighbouring color.
-                horizontalPadding = 5.dp * scale,
-                // The glyph heads the badge, not each name in it: these routes are interchangeable, so
-                // they are one ride on one mode, and a glyph per segment would read as several.
+                // Wider than the plain chip's, since the divider leans through the segment edges.
+                horizontalPadding = JOINED_SEGMENT_PADDING * scale,
+                // The glyph heads the badge, not each name in it: these routes are one ride on one mode,
+                // and a glyph per segment would read as several.
                 leadingIcon = leadingIcon.takeIf { index == 0 },
                 leadingIconDescription = leadingIconDescription,
                 modifier = Modifier
@@ -239,50 +299,90 @@ fun RouteBadgeChip(
                     // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
                     // on the segment's size, so they're built once per size change, not per draw pass.
                     .drawWithCache {
-                        val band = slantedBandPath(
+                        // One edge per segment, shared by the band it cuts and the line drawn along it —
+                        // the geometry is defined once (see [joinEdge]) and computed once too.
+                        val edge = joinEdge(join)
+                        val band = bandPath(
+                            edge = edge,
                             extendStart = index == 0,
                             extendEnd = index == routes.lastIndex
                         )
-                        val lean = leanPx()
-                        val lineWidth = BADGE_LINE_WIDTH.toPx()
+                        // Only the leading edge, and never on the first segment: each segment draws its
+                        // line after its band, so it lands on top of the neighbouring band this one just
+                        // overwrote. The first segment has no neighbour, so it builds no line at all.
+                        val divider = if (index > 0) edge.toPath() else null
+                        val line = Stroke(BADGE_LINE_WIDTH.toPx())
                         onDrawBehind {
                             drawPath(band, container)
-                            // Only the leading edge, and never on the first segment: each segment draws
-                            // its line after its band, so it lands on top of the neighbouring band this
-                            // one just overwrote.
-                            if (index > 0) {
-                                drawLine(
-                                    color = BADGE_LINE_COLOR,
-                                    start = Offset(lean, 0f),
-                                    end = Offset(-lean, size.height),
-                                    strokeWidth = lineWidth
-                                )
-                            }
+                            divider?.let { drawPath(it, BADGE_LINE_COLOR, style = line) }
                         }
                     }
+                    // Room for the notch the previous segment's divider cuts into this one, so the name
+                    // stays centred in the band the rider sees. Applied after the draw modifier, which
+                    // therefore still sizes the band to the whole segment.
+                    .padding(start = join.leadingInset(index) * scale)
             )
         }
     }
 }
 
 /**
- * This segment's background as a parallelogram: vertical at the badge's outer edges
- * ([extendStart]/[extendEnd] push those past the clip so no sliver of background shows through), and
- * leaning by [SLASH_SLANT_RATIO] of the height where it meets a neighbour. The lean is symmetric about
- * mid-height, so the divider crosses the segment edge exactly where the layout puts it.
+ * How much room this join's divider needs on the leading edge of the segment at [index] — nothing on the
+ * first segment, which has no neighbour to be cut by. Stated as a `when` over the join rather than as a
+ * test for one of them, so a third join shape has to answer the question instead of silently reserving
+ * nothing and drawing its name into its own divider.
  */
-private fun CacheDrawScope.slantedBandPath(extendStart: Boolean, extendEnd: Boolean): Path {
+private fun RouteBadgeJoin.leadingInset(index: Int): Dp = when {
+    index == 0 -> 0.dp
+    // A slash sits at the segment edge at mid-height, where the name's ink is, and leans away above and
+    // below it — so [JOINED_SEGMENT_PADDING] already clears it. Only a chevron's notch reaches inwards.
+    this == RouteBadgeJoin.ANY_OF -> 0.dp
+    else -> CHEVRON_LEAN_ALLOWANCE
+}
+
+/**
+ * Where two of the badge's routes meet, as a top-to-bottom polyline in offsets from the segment edge: a
+ * "/" for [RouteBadgeJoin.ANY_OF], a ">" for [RouteBadgeJoin.THEN]. Both are symmetric about the edge, so
+ * whichever shape divides them, the names sit where the layout put them and neither is pushed off centre.
+ *
+ * The single definition of the join's geometry: the hairline is drawn along it and the bands either side
+ * are cut by it ([bandPath]), so a band cannot drift away from the line dividing it.
+ */
+private fun CacheDrawScope.joinEdge(join: RouteBadgeJoin): List<Offset> {
     val lean = leanPx()
+    return when (join) {
+        RouteBadgeJoin.ANY_OF -> listOf(Offset(lean, 0f), Offset(-lean, size.height))
+        // A chevron pointing the way the row is read: the same lean, folded at mid-height.
+        RouteBadgeJoin.THEN -> listOf(Offset(-lean, 0f), Offset(lean, size.height / 2f), Offset(-lean, size.height))
+    }
+}
+
+/** This polyline as an open `Path` — the one walk from a list of points to something drawable, shared by
+ *  the divider hairline and by the band edges it cuts. */
+private fun List<Offset>.toPath(): Path = Path().apply {
+    moveTo(first().x, first().y)
+    for (i in 1..lastIndex) lineTo(this@toPath[i].x, this@toPath[i].y)
+}
+
+/**
+ * This segment's background: cut by [edge] where it meets a neighbour, and vertical at the badge's outer
+ * edges — [extendStart]/[extendEnd] push those well past the clip so no sliver of background shows
+ * through. Since a segment's trailing edge and its neighbour's leading edge are that same [edge],
+ * consecutive bands meet exactly along it with no gap and no double-painted overlap.
+ */
+private fun CacheDrawScope.bandPath(edge: List<Offset>, extendStart: Boolean, extendEnd: Boolean): Path {
     // Overhang the neighbouring segment far enough that an outer edge is always covered after clipping.
     val outer = size.height
-    return Path().apply {
-        moveTo(if (extendStart) -outer else lean, 0f)
-        lineTo(if (extendEnd) size.width + outer else size.width + lean, 0f)
-        lineTo(if (extendEnd) size.width + outer else size.width - lean, size.height)
-        lineTo(if (extendStart) -outer else -lean, size.height)
+    fun straightEdge(x: Float) = listOf(Offset(x, 0f), Offset(x, size.height))
+    val leading = if (extendStart) straightEdge(-outer) else edge
+    val trailing = if (extendEnd) straightEdge(size.width + outer) else edge.map { Offset(it.x + size.width, it.y) }
+    // Around the band: down the leading edge, across the bottom, back up the trailing edge, and closed
+    // across the top.
+    return leading.toPath().apply {
+        for (i in trailing.lastIndex downTo 0) lineTo(trailing[i].x, trailing[i].y)
         close()
     }
 }
 
 /** Half the lean, in px: how far the meeting line shifts either side of the segment edge. */
-private fun CacheDrawScope.leanPx(): Float = size.height * SLASH_SLANT_RATIO / 2f
+private fun CacheDrawScope.leanPx(): Float = size.height * JOIN_LEAN_RATIO / 2f

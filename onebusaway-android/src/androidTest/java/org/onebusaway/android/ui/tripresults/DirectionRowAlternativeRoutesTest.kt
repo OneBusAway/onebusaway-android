@@ -27,6 +27,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
@@ -69,7 +70,8 @@ class DirectionRowAlternativeRoutesTest {
                 RouteBadge("1 Line", 0xFF00A651.toInt()),
                 RouteBadge("2 Line", 0xFF0075C4.toInt())
             ),
-            TransitMode.RAIL
+            TransitMode.RAIL,
+            RouteBadgeJoin.ANY_OF
         )
     )
 
@@ -126,7 +128,7 @@ class DirectionRowAlternativeRoutesTest {
     fun rideWithoutInterchangeableRoutesBadgesOnlyItsOwnRoute() {
         val soloRef = interlinedLegRef.copy(
             alternatives = emptyList(),
-            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())), TransitMode.RAIL)
+            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())), TransitMode.RAIL, RouteBadgeJoin.ANY_OF)
         )
         composeRule.setContent { TripResultsList(state = state(soloRef)) }
 

@@ -19,6 +19,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.RiddenSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -54,29 +55,45 @@ sealed interface ModeSymbol {
      */
     data class Street(val mode: StreetMode) : ModeSymbol
 
-    /** A transit leg, drawn as its route roundel — which names every route the leg can be ridden on
-     *  (see [LegBadge]), or falls back to the mode glyph for a leg that names no route. */
+    /** A ride, drawn as one route roundel — which names every route it can be taken on, or becomes
+     *  along the way (see [LegBadge]), and falls back to the mode glyph for a ride that names no
+     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two. */
     data class Transit(val badge: LegBadge) : ModeSymbol
 }
 
 /**
- * One transit leg's roundel: every route the leg can be ridden on — the planned route plus any
- * interchangeable ones (#2010) — as a single joined chip, each route in its own color ("1 Line/2 Line"
- * for the Lynnwood–downtown pair). An ordinary leg holds exactly one route and draws as the plain
- * one-color chip it always did.
+ * One ride's roundel: every route the rider is on for it, as a single joined chip with each route in its
+ * own color. A ride names more than one route two ways, and [join] says which — the routes are
+ * interchangeable and any will do ("1 Line/2 Line" for the Lynnwood–downtown pair, #2010), or one vehicle
+ * runs as each in turn and the rider never gets off ("5 > 12", a stay-aboard interline, #2000/#2049). An
+ * ordinary ride holds exactly one route and draws as the plain one-color chip it always did.
  *
- * [routes] is in natural route-name order rather than plan order, so a corridor reads the same way
- * whichever of its lines the planner happened to pick.
+ * [routes] is in the order the badge reads, which [join] decides: natural route-name order for
+ * interchangeable routes, so a corridor reads the same way whichever of its lines the planner picked, and
+ * **ride order** for an interline, where the order is the information ("5 > 12" is not "12 > 5").
  *
- * [routes] is **empty** for a leg whose route publishes no short name — there is no roundel to draw, so
- * the option card falls back to the leg's [mode] glyph rather than an empty chip or a silently missing
+ * [routes] is **empty** for a ride whose route publishes no short name — there is no roundel to draw, so
+ * the option card falls back to the ride's [mode] glyph rather than an empty chip or a silently missing
  * leg (a ferry ride still has to appear on the card).
  */
-data class LegBadge(val routes: List<RouteBadge>, val mode: TransitMode) {
-    /** Whether this leg has more than one route to ride, i.e. the chip is a joined/multicolor one. */
-    val isInterchangeable: Boolean get() = routes.size > 1
+data class LegBadge(
+    val routes: List<RouteBadge>,
+    val mode: TransitMode,
+    // Stated at every construction, with no default. It is moot for the single-route badge most rides
+    // get — nothing to divide, so no relation to name — but a *joined* badge that forgot to say would
+    // take a default silently, and the join is not merely a divider shape: [isInterchangeable] reads it
+    // to decide whether the drawer tells the rider to board whichever route comes first. Getting that by
+    // omission is a wrong instruction, not a wrong pixel.
+    val join: RouteBadgeJoin
+) {
+    /** Whether this ride has more than one route on its badge, i.e. the chip is a joined/multicolor one. */
+    val isJoined: Boolean get() = routes.size > 1
 
-    /** True when the leg names no route at all, and can only be shown as its mode. */
+    /** Whether the badge offers a *choice* of routes — as opposed to naming a ride that becomes another
+     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. */
+    val isInterchangeable: Boolean get() = isJoined && join == RouteBadgeJoin.ANY_OF
+
+    /** True when the ride names no route at all, and can only be shown as its mode. */
     val isUnnamed: Boolean get() = routes.isEmpty()
 }
 

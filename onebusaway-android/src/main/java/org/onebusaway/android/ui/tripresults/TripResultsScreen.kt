@@ -98,6 +98,7 @@ import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.ROUTE_BADGE_HEIGHT
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.routeLineColors
@@ -277,6 +278,7 @@ private fun OptionCard(
                                     badge.routes,
                                     scale = SYMBOL_BADGE_SCALE,
                                     maxWidth = OPTION_BADGE_MAX_WIDTH,
+                                    join = badge.join,
                                     leadingIcon = glyph,
                                     leadingIconDescription = glyphLabel
                                 )
@@ -1105,14 +1107,16 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClick = onFocus)
     ) {
-        // A ride the rider may take on more than one route (#2010) badges them all as one joined
-        // roundel; an ordinary ride badges its own route exactly as before. A route that publishes no
-        // short name gets no roundel and leads with its long name — see routeDisplayShortName.
-        val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
+        // A ride naming more than one route badges them all as one joined roundel — the routes it may be
+        // taken on ("1 Line/2 Line", #2010) or the ones the vehicle becomes under the rider ("5 > 12",
+        // #2049), the badge's own join saying which. An ordinary ride badges its own route exactly as
+        // before. A route that publishes no short name gets no roundel and leads with its long name —
+        // see routeDisplayShortName.
+        val joined = entry.routeLeg.badge?.takeIf { it.isJoined }
         val title = entry.routeDisplayName?.takeIf { it != entry.routeShortName }
         Row(verticalAlignment = Alignment.CenterVertically) {
             when {
-                joined != null -> RouteBadgeChip(joined.routes, scale = 1.5f)
+                joined != null -> RouteBadgeChip(joined.routes, scale = 1.5f, join = joined.join)
                 entry.routeShortName != null ->
                     RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
             }
@@ -1136,9 +1140,11 @@ private fun ColumnScope.BoardContent(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        // What the joined badge means: any of those routes will do, so board the first to arrive. Each
-        // one's own ETA strip sits under the board stop below (#2010).
-        if (joined != null) {
+        // What an interchangeable badge means: any of those routes will do, so board the first to
+        // arrive. Each one's own ETA strip sits under the board stop below (#2010). A chevron badge is
+        // the opposite instruction — board this one and stay on it — and says so in its own row further
+        // down the ride (TransitionContent), so it must not pick this caption up.
+        if (joined?.isInterchangeable == true) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodyMedium,
@@ -1322,18 +1328,29 @@ private fun TripResultsPreview() {
         val state = TripResultsUiState.Success(
             options = listOf(
                 ItineraryOption(
-                    // Walk, a bus leg, then an interchangeable rail pair drawn as one joined badge
-                    // (#2010) — the transfer between them being too short to draw a glyph for (#2047).
+                    // Both joined badges side by side: a bus that becomes the 12 with the rider aboard,
+                    // chevroned (#2049), then an interchangeable rail pair, slashed (#2010) — the
+                    // transfer between them being too short to draw a glyph for (#2047).
                     symbols = listOf(
                         ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("8", 0xFF1B6EF3.toInt())), TransitMode.BUS)),
+                        ModeSymbol.Transit(
+                            LegBadge(
+                                listOf(
+                                    RouteBadge("8", 0xFF1B6EF3.toInt()),
+                                    RouteBadge("12", 0xFFD62828.toInt())
+                                ),
+                                TransitMode.BUS,
+                                RouteBadgeJoin.THEN
+                            )
+                        ),
                         ModeSymbol.Transit(
                             LegBadge(
                                 listOf(
                                     RouteBadge("1 Line", 0xFF00A651.toInt()),
                                     RouteBadge("2 Line", 0xFF0075C4.toInt())
                                 ),
-                                TransitMode.RAIL
+                                TransitMode.RAIL,
+                                RouteBadgeJoin.ANY_OF
                             )
                         ),
                         ModeSymbol.Street(StreetMode.WALK)
@@ -1347,9 +1364,9 @@ private fun TripResultsPreview() {
                     // The second leg is a ferry, which publishes no route short name — so it badges its
                     // long name, capped and ellipsized.
                     symbols = listOf(
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS)),
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF)),
                         ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY))
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY, RouteBadgeJoin.ANY_OF))
                     ),
                     durationMinutes = 41,
                     startTime = ServerTime(0L),
@@ -1393,16 +1410,33 @@ private fun TripResultsPreview() {
                     exitTime = ServerTime(20 * 60_000L),
                     durationMinutes = 16,
                     realtime = RealtimeState.OnTime,
+                    // The same ride the first option's chevron badge stands for: boarded once as the 8,
+                    // becoming the 12 at Mount Baker without the rider getting off (#2000/#2049).
                     rideEvents = listOf(
                         RideEvent.Stop(LogStop("Capitol Hill Station")),
                         RideEvent.Stop(LogStop("23rd Ave & E Union St")),
-                        RideEvent.Stop(LogStop("Mount Baker Transit Center"))
+                        RideEvent.Transition(
+                            InterlineTransition(
+                                routeLabel = "12",
+                                headsign = "Interlaken Park",
+                                stop = RouteStopRef("1_550", "550", "Mount Baker Transit Center", null)
+                            )
+                        ),
+                        RideEvent.Stop(LogStop("Rainier Ave S & S McClellan St"))
                     ),
                     routeLeg = RouteLegRef(
                         routeId = "1_100",
                         headsign = "Rainier Beach",
                         board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
-                        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", null)
+                        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", null),
+                        badge = LegBadge(
+                            listOf(
+                                RouteBadge("8", 0xFF1B6EF3.toInt()),
+                                RouteBadge("12", 0xFFD62828.toInt())
+                            ),
+                            TransitMode.BUS,
+                            RouteBadgeJoin.THEN
+                        )
                     )
                 ),
                 // A Washington State Ferries run: no route short name, so no badge — the long name is

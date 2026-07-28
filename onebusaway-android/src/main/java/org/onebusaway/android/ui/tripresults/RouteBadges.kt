@@ -20,17 +20,57 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.ROUTE_NAME_ORDER
 import org.onebusaway.android.util.parseObaHexColor
 
 /**
- * Builds the [LegBadge] a transit leg draws — the planned route plus whatever else the rider may ride
- * for that leg (#2010). Both places a leg's routes appear (the itinerary option cards and the
- * directions drawer) are fed from here by [TripResultsRepository], so the two can't name or order a
- * corridor's routes differently.
+ * Builds the [LegBadge] a ride draws — the planned route, plus whatever else the rider may ride for that
+ * leg (#2010) or whatever the vehicle goes on to become under them (#2000/#2049). Both places a ride's
+ * routes appear (the itinerary option cards and the directions drawer) are fed from here by
+ * [TripResultsRepository], so the two can't name, order, or join a ride's routes differently.
  *
  * Pure (no `Context`), so `RouteBadgesTest` covers the naming, ordering and color parsing directly.
  */
+
+/**
+ * The badge for one **ride** — a whole [Interlines.Chain] rather than a leg, because a stay-aboard
+ * interline is one ride the rider is never asked to act on. Which of the two joins it takes is decided
+ * here, once, for both places a ride is badged:
+ *  - a ride the vehicle changes route during badges those routes in travel order, joined by chevrons
+ *    (`5 > 12`, #2049) — the seam is a fact about the ride, so the badge has to carry it, or the picker
+ *    promises a 5 all the way and the drawer's own "stay on board" row contradicts it;
+ *  - any other ride badges its planned route joined by whatever is interchangeable with it (#2010).
+ *
+ * The two can't both apply, and this says so rather than trusting it: [substitutableRoutes] empties the
+ * alternatives of every leg in a chain longer than one leg, since a substitute vehicle would put the
+ * rider off at the seam. Stated as a `require` because the alternative is a silent drop — the chevron
+ * branch has no way to render an alternative, so a caller passing raw [interchangeableRoutes] instead
+ * would lose them with nothing downstream able to tell that from a ride that genuinely had none. Both
+ * call sites are wrapped in `runCatchingCancellable`, so a violation surfaces as a failed load, loudly,
+ * rather than as a badge quietly missing a route.
+ */
+internal fun rideBadge(
+    legs: List<TripLeg>,
+    chain: Interlines.Chain,
+    alternatives: List<InterchangeableRoute>
+): LegBadge = if (chain.transitionLegIndices.isEmpty()) {
+    legBadge(legs[chain.leaderIndex], alternatives)
+} else {
+    require(alternatives.isEmpty()) {
+        "a ride that changes route mid-vehicle admits no substitutes (leg ${chain.leaderIndex}, ${alternatives.size} offered)"
+    }
+    LegBadge(
+        // In travel order and *not* deduplicated: consecutive entries are legs OTP gave different route
+        // ids, so two that read alike are two routes that publish the same name — a real change the
+        // drawer's transition row announces too, and hiding it here would leave the two disagreeing.
+        // A leg whose route names itself in no way at all (a null badge) drops out rather than leaving a
+        // blank segment; the ride still names every route that can be named.
+        routes = chain.riddenLegIndices.mapNotNull { legs[it].plannedBadge() },
+        mode = legs[chain.leaderIndex].mode.transitMode(),
+        join = RouteBadgeJoin.THEN
+    )
+}
 
 /** The badge for one transit leg: its planned route joined by the routes ruled interchangeable with
  *  it ([org.onebusaway.android.directions.model.interchangeableRoutes]). */
@@ -49,7 +89,8 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
     (listOfNotNull(planned) + alternatives)
         .distinctBy { it.shortName }
         .sortedWith(compareBy(ROUTE_NAME_ORDER) { it.shortName }),
-    mode
+    mode,
+    RouteBadgeJoin.ANY_OF
 )
 
 /**

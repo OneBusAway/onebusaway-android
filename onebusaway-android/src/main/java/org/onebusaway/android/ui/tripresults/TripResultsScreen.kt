@@ -1244,11 +1244,11 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
 /** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
 @Composable
 private fun RealtimeChip(state: RealtimeState) {
-    // The chip draws its color as text and as a dot over a 14%-alpha tint of itself, so it takes the
-    // foreground tier — off the state's own [ScheduleDeviation.Status] rather than named here, so a
-    // re-hue of the shared palette can't leave this screen behind. It used to carry its own
-    // trip_realtime_* palette whose polarity contradicted the arrivals drawer: blue meant "early"
-    // here and "late" there, in the same app (#2043).
+    // labelMedium text over a 14%-alpha tint of itself, so it takes the text tier: the iOS display
+    // colors sit at 2.7-3.2:1 on that tint, which is what the retired trip_realtime_* palette had been
+    // hand-picked to avoid. Read off the state's own [ScheduleDeviation.Status] rather than named here,
+    // so a re-hue of the shared palette can't leave this screen behind. That palette's polarity
+    // contradicted the arrivals drawer: blue meant "early" here and "late" there, in one app (#2043).
     val text = when (state) {
         RealtimeState.Unknown -> return
         RealtimeState.OnTime -> stringResource(R.string.trip_plan_realtime_on_time)
@@ -1257,7 +1257,7 @@ private fun RealtimeChip(state: RealtimeState) {
         is RealtimeState.Early ->
             pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
     }
-    val color = colorResource(state.status.colorRes)
+    val color = colorResource(state.status.textColorRes)
     Spacer(Modifier.width(8.dp))
     Row(
         modifier = Modifier

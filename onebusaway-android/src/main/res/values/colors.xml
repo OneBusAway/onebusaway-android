@@ -62,11 +62,23 @@
          vehicle running ahead of schedule is a risk to the rider (they can miss it), not a
          reassurance.
 
-         FOREGROUND tier: drawn AS the text/glyph color on the app surface. -->
+         DISPLAY tier: the iOS values themselves. Only for large text and graphics, which WCAG holds
+         to 3:1 — the arrivals drawer's 30sp ETA is the one that matters, and it clears that in both
+         themes. These are NOT safe for small text; see the text tier below. -->
     <color name="stop_info_scheduled_time">#8E8E93</color>
     <color name="stop_info_ontime">#129900</color>
     <color name="stop_info_delayed">#007AFF</color>
     <color name="stop_info_early">#FF3B30</color>
+
+    <!-- TEXT tier: small text drawn on the app surface — the trip-planner's real-time chip and the
+         directions time span. Same hues, darkened until they clear 4.5:1 against the chip's own
+         14%-alpha tint of itself over md_theme_surface, which is the tightest ground any of them sits
+         on (the display tier is 2.7-3.2:1 there, so it can't be reused). Unlike the fill tier this is
+         mode-dependent — it has to contrast with the surface, which inverts between themes. -->
+    <color name="stop_info_scheduled_text">#636367</color>
+    <color name="stop_info_ontime_text">#0E7400</color>
+    <color name="stop_info_delayed_text">#0060C9</color>
+    <color name="stop_info_early_text">#BA2B23</color>
 
     <!-- stop_info_occupancy_background is same as navdrawer_background_color_selected, but without transparency so it works on non-white backgrounds -->
     <color name="stop_info_occupancy">@color/stop_info_scheduled_time</color>

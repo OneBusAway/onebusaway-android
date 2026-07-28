@@ -176,7 +176,7 @@ object VehicleBitmaps {
     internal fun discColor(context: Context, vehicle: VehicleMarker): Int = if (vehicle.isRealtime) {
         vehicle.routeColor ?: DEFAULT_ROUTE_LINE_COLOR
     } else {
-        ContextCompat.getColor(context, ScheduleDeviation.Status.SCHEDULED.colorRes)
+        ContextCompat.getColor(context, ScheduleDeviation.Status.SCHEDULED.displayColorRes)
     }
 
     /**

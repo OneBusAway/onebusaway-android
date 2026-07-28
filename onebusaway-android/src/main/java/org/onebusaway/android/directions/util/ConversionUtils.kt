@@ -277,13 +277,13 @@ object ConversionUtils {
         val beforeTimeString: CharSequence =
             applicationContext.resources.getString(R.string.time_connector_before_time) + " "
 
-        // This is drawn as the text color of the updated time, so it takes the foreground tier.
+        // Drawn as the text color of the updated time at a normal size, so it takes the text tier.
         // Before #2043 it passed a *millisecond* delta to a helper whose parameter was documented as
         // minutes; that was harmless only because the helper was a bare sign test. The deviation is
         // now an explicit Duration, so the units can't drift silently again.
         val color = ContextCompat.getColor(
             applicationContext,
-            ScheduleDeviation.statusColor(
+            ScheduleDeviation.textColor(
                 isRealtime = true,
                 deviation = (newTime - oldTime).milliseconds
             )

@@ -357,7 +357,7 @@ class VehicleIconAllocationTest {
         val stale = staleVehicle().copy(routeColor = 0xFF1B6EF3.toInt())
 
         assertEquals(
-            context.getColor(ScheduleDeviation.Status.SCHEDULED.colorRes),
+            context.getColor(ScheduleDeviation.Status.SCHEDULED.displayColorRes),
             VehicleBitmaps.discColor(context, stale)
         )
     }

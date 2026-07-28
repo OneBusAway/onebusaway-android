@@ -50,6 +50,14 @@
     <color name="stop_info_delayed">#0A84FF</color>
     <color name="stop_info_early">#FF453A</color>
 
+    <!-- On a dark ground the display tier is already legible as small text (4.7-7.2:1 against the
+         real-time chip's tint), so the text tier is the same color — except "delayed", where the iOS
+         dark blue lands at 4.39:1 and is nudged up to clear 4.5. -->
+    <color name="stop_info_scheduled_text">@color/stop_info_scheduled_time</color>
+    <color name="stop_info_ontime_text">@color/stop_info_ontime</color>
+    <color name="stop_info_delayed_text">#0A8BFF</color>
+    <color name="stop_info_early_text">@color/stop_info_early</color>
+
     <!-- Trip Planning -->
     <!-- Trip-log timeline endpoint dots (lightened for dark ground) -->
     <color name="trip_origin_marker">#5BB974</color>

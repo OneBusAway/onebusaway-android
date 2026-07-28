@@ -55,7 +55,8 @@ class ArrivalInfo(
 
     /**
      * The schedule-deviation color for the arrival time, as a color resource id. This is the
-     * **foreground** tier — use it where the color is the text itself.
+     * **display** tier — the ETA is set large enough to carry it; small text wants
+     * [ScheduleDeviation.Status.textColorRes] instead.
      */
     @get:ColorRes
     val color: Int
@@ -217,7 +218,7 @@ class ArrivalInfo(
         // [ScheduleDeviation.status] call below, so they can never contradict each other.
         val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
         val deviationStatus = ScheduleDeviation.status(hasPrediction, deviation)
-        color = deviationStatus.colorRes
+        color = deviationStatus.displayColorRes
         fillColor = deviationStatus.fillColorRes
 
         statusText = computeStatusLabel(

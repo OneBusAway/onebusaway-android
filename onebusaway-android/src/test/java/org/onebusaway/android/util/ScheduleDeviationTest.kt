@@ -97,10 +97,15 @@ class ScheduleDeviationTest {
 
     @Test
     fun `the color helpers agree with the bucketing`() {
-        assertEquals(R.color.stop_info_early, ScheduleDeviation.statusColor(true, (-91).seconds))
-        assertEquals(R.color.stop_info_ontime, ScheduleDeviation.statusColor(true, 89.seconds))
-        assertEquals(R.color.stop_info_delayed, ScheduleDeviation.statusColor(true, 91.seconds))
-        assertEquals(R.color.stop_info_scheduled_time, ScheduleDeviation.statusColor(false, 91.seconds))
+        assertEquals(R.color.stop_info_early, ScheduleDeviation.displayColor(true, (-91).seconds))
+        assertEquals(R.color.stop_info_ontime, ScheduleDeviation.displayColor(true, 89.seconds))
+        assertEquals(R.color.stop_info_delayed, ScheduleDeviation.displayColor(true, 91.seconds))
+        assertEquals(R.color.stop_info_scheduled_time, ScheduleDeviation.displayColor(false, 91.seconds))
+
+        assertEquals(R.color.stop_info_early_text, ScheduleDeviation.textColor(true, (-91).seconds))
+        assertEquals(R.color.stop_info_ontime_text, ScheduleDeviation.textColor(true, 89.seconds))
+        assertEquals(R.color.stop_info_delayed_text, ScheduleDeviation.textColor(true, 91.seconds))
+        assertEquals(R.color.stop_info_scheduled_text, ScheduleDeviation.textColor(false, 91.seconds))
 
         assertEquals(R.color.stop_info_early_fill, ScheduleDeviation.fillColor(true, (-91).seconds))
         assertEquals(R.color.stop_info_ontime_fill, ScheduleDeviation.fillColor(true, 89.seconds))
@@ -109,23 +114,33 @@ class ScheduleDeviationTest {
     }
 
     /**
-     * The four states must be four *distinct* colors in both tiers. This is what broke on the agencyY
+     * The four states must be four *distinct* colors in every tier. This is what broke on the agencyY
      * flavor, where on-time resolved through the brand color and collided with late — a rebrand could
      * make two states indistinguishable without any code change.
      */
     @Test
-    fun `every state has its own color in both tiers`() {
-        val foreground = Status.entries.map { it.colorRes }
-        val fill = Status.entries.map { it.fillColorRes }
-
-        assertEquals("foreground tier has a distinct color per state", Status.entries.size, foreground.toSet().size)
-        assertEquals("on-fill tier has a distinct color per state", Status.entries.size, fill.toSet().size)
-        for (state in Status.entries) {
-            assertNotEquals(
-                "${state.name} must not use the same resource for text and fill",
-                state.colorRes,
-                state.fillColorRes
-            )
+    fun `every state has its own color in every tier`() {
+        val tiers = mapOf(
+            "display" to Status.entries.map { it.displayColorRes },
+            "text" to Status.entries.map { it.textColorRes },
+            "fill" to Status.entries.map { it.fillColorRes }
+        )
+        for ((tier, colors) in tiers) {
+            assertEquals("$tier tier has a distinct color per state", Status.entries.size, colors.toSet().size)
         }
+    }
+
+    /**
+     * The three tiers exist because the same state is drawn against three different grounds with three
+     * different WCAG floors, so a state must not resolve two of them to one resource — that would mean
+     * a surface silently picked up a color that wasn't checked against its ground.
+     */
+    @Test
+    fun `each state keeps its three tiers separate`() {
+        for (state in Status.entries) {
+            val tiers = setOf(state.displayColorRes, state.textColorRes, state.fillColorRes)
+            assertEquals("${state.name} must resolve three distinct tier resources", 3, tiers.size)
+        }
+        assertNotEquals(Status.ON_TIME.displayColorRes, Status.ON_TIME.fillColorRes)
     }
 }

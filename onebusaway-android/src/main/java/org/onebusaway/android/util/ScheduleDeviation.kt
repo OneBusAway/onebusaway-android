@@ -79,11 +79,17 @@ object ScheduleDeviation {
     fun roundedMinutes(deviation: Duration): Long = (deviation.inWholeSeconds / 60.0).roundToLong()
 
     /**
-     * The **foreground** deviation color — drawn as the text or glyph color on the app surface.
-     * See [Status.colorRes].
+     * The **display** deviation color — the iOS value, for large text and graphics. See
+     * [Status.displayColorRes], and prefer [textColor] for anything set at a normal size.
      */
     @ColorRes
-    fun statusColor(isRealtime: Boolean, deviation: Duration): Int = status(isRealtime, deviation).colorRes
+    fun displayColor(isRealtime: Boolean, deviation: Duration): Int = status(isRealtime, deviation).displayColorRes
+
+    /**
+     * The **text** deviation color — small text drawn on the app surface. See [Status.textColorRes].
+     */
+    @ColorRes
+    fun textColor(isRealtime: Boolean, deviation: Duration): Int = status(isRealtime, deviation).textColorRes
 
     /**
      * The **on-fill** deviation color — for a filled surface that carries white text, such as an ETA
@@ -95,22 +101,40 @@ object ScheduleDeviation {
     /**
      * The four display states a schedule deviation can take.
      *
-     * Each state owns both of its colors, so a new state cannot be added without deciding what it
-     * looks like on both kinds of surface. (The starred-stop badge used to recover the state by
-     * reverse-matching the returned color resource id, which silently fell through to "scheduled"
-     * for anything unrecognized.)
+     * Each state owns all three of its colors, so a new state cannot be added without deciding what
+     * it looks like on every kind of surface. (The starred-stop badge used to recover the state by
+     * reverse-matching the returned color resource id, which silently fell through to "scheduled" for
+     * anything unrecognized.)
+     *
+     * The three tiers exist because the same state is drawn against three different grounds, each with
+     * its own WCAG floor — they are not stylistic variants:
+     *  - [displayColorRes] — the iOS color, for large text and graphics (3:1). The arrivals drawer's
+     *    30sp ETA, which is the most visible deviation surface in the app and so the one that carries
+     *    the parity.
+     *  - [textColorRes] — small text on the app surface (4.5:1); the trip-planner chip, the directions
+     *    time span. Mode-dependent, since it must contrast with a surface that inverts.
+     *  - [fillColorRes] — a filled surface with white text on it (4.5:1); the ETA pills, the
+     *    starred-stop badges, the status pills. Mode-independent, since white doesn't move.
      */
-    enum class Status(@param:ColorRes val colorRes: Int, @param:ColorRes val fillColorRes: Int) {
+    enum class Status(
+        @param:ColorRes val displayColorRes: Int,
+        @param:ColorRes val textColorRes: Int,
+        @param:ColorRes val fillColorRes: Int
+    ) {
         /** Running ahead of schedule — the rider can miss it, so this is a warning, not praise. */
-        EARLY(R.color.stop_info_early, R.color.stop_info_early_fill),
+        EARLY(R.color.stop_info_early, R.color.stop_info_early_text, R.color.stop_info_early_fill),
 
         /** Within [ON_TIME_BAND] of schedule. */
-        ON_TIME(R.color.stop_info_ontime, R.color.stop_info_ontime_fill),
+        ON_TIME(R.color.stop_info_ontime, R.color.stop_info_ontime_text, R.color.stop_info_ontime_fill),
 
         /** Running behind schedule. */
-        DELAYED(R.color.stop_info_delayed, R.color.stop_info_delayed_fill),
+        DELAYED(R.color.stop_info_delayed, R.color.stop_info_delayed_text, R.color.stop_info_delayed_fill),
 
         /** No real-time prediction — a timetable time, not a measurement. */
-        SCHEDULED(R.color.stop_info_scheduled_time, R.color.stop_info_scheduled_fill)
+        SCHEDULED(
+            R.color.stop_info_scheduled_time,
+            R.color.stop_info_scheduled_text,
+            R.color.stop_info_scheduled_fill
+        )
     }
 }

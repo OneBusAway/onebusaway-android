@@ -119,10 +119,13 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
-    fun containsRoutePoint_acceptsApproachingVehicle_andRejectsDownstreamVehicle() {
-        val upstream = listOf(Polyline(listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33))))
+    fun containsRoutePoint_acceptsApproachingAndOnLegVehicles_andRejectsDownstreamVehicle() {
+        val throughSelectedLeg = listOf(
+            Polyline(listOf(GeoPoint(47.58, -122.33), GeoPoint(47.64, -122.33)))
+        )
 
-        assertTrue(upstream.containsRoutePoint(GeoPoint(47.60, -122.33)))
-        assertFalse(upstream.containsRoutePoint(GeoPoint(47.64, -122.33)))
+        assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.60, -122.33))) // upstream
+        assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.63, -122.33))) // selected leg
+        assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.66, -122.33))) // downstream
     }
 }

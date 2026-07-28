@@ -164,9 +164,9 @@ class RouteMapController(
     private var basePolylines: List<RoutePolyline> = emptyList()
     private var baseStopPresentation: RouteStopPresentation? = null
 
-    // Approach geometry by route while a directions leg is selected. Empty outside leg focus; used to
-    // remove vehicles that have already reached or passed the boarding point.
-    private var upstreamVehiclePathsByRoute: Map<String, List<Polyline>> = emptyMap()
+    // Eligible geometry by route while a directions leg is selected. Empty outside leg focus; spans
+    // the approach and selected ride, but stops at alighting so downstream vehicles stay hidden.
+    private var focusedVehiclePathsByRoute: Map<String, List<Polyline>> = emptyMap()
 
     private data class StopFocusSession(
         val stopId: String,
@@ -428,7 +428,7 @@ class RouteMapController(
             directionFilter,
             includeDataFixPoint,
             tripObservationRepository::lookupTripState
-        ).filterUpstream(id).map { it to poll.response }
+        ).filterToFocusedRide(id).map { it to poll.response }
         val extraVehicles = if (extraSegments.isNotEmpty()) {
             extraPolls.flatMap { (extraRouteId, extraPoll) ->
                 val segment = extraSegments.singleOrNull { it.routeId == extraRouteId }
@@ -444,7 +444,7 @@ class RouteMapController(
                     extraDirectionFilter,
                     includeDataFixPoint,
                     tripObservationRepository::lookupTripState
-                ).filterUpstream(extraRouteId).map { it to extraPoll.response }
+                ).filterToFocusedRide(extraRouteId).map { it to extraPoll.response }
             }
         } else {
             emptyList()
@@ -469,11 +469,11 @@ class RouteMapController(
     // is the discrete set the renderer keeps, so it carries the shape-projected most-recent-data point.
     private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now(), includeDataFixPoint = true)
 
-    /** During selected-leg focus, retain only vehicles still approaching its boarding point. */
-    private fun List<ExtrapolatedVehicle>.filterUpstream(routeId: String): List<ExtrapolatedVehicle> {
+    /** During selected-leg focus, retain vehicles upstream of or currently on the ride. */
+    private fun List<ExtrapolatedVehicle>.filterToFocusedRide(routeId: String): List<ExtrapolatedVehicle> {
         if (!highlightedSegment.isDrawableSegment()) return this
-        val upstream = upstreamVehiclePathsByRoute[routeId] ?: return emptyList()
-        return filter { vehicle -> upstream.containsRoutePoint(vehicle.point) }
+        val eligiblePaths = focusedVehiclePathsByRoute[routeId] ?: return emptyList()
+        return filter { vehicle -> eligiblePaths.containsRoutePoint(vehicle.point) }
     }
 
     /**
@@ -606,7 +606,7 @@ class RouteMapController(
         extraSegments = emptyList()
         itineraryContext = emptyList()
         extraRouteMaps = emptyMap()
-        upstreamVehiclePathsByRoute = emptyMap()
+        focusedVehiclePathsByRoute = emptyMap()
         extraPolls = emptyMap()
         initialDirectionOverride = null
         routeStops = emptyList()
@@ -1002,6 +1002,7 @@ class RouteMapController(
     private fun showDirectionPolylines() {
         if (routeShape == null) return
         val boardPoint = highlightedSegment.firstOrNull()
+        val alightPoint = highlightedSegment.lastOrNull()
         val leaderRouteId = routeId ?: return
         val additionalSegments = if (highlightedSegment.isDrawableSegment()) {
             // Interchangeable routes approach the same platform. Stay-aboard continuations begin after
@@ -1010,15 +1011,19 @@ class RouteMapController(
         } else {
             extraSegments
         }
-        val approaches = buildMap {
-            put(leaderRouteId, directionPolylines(currentDirectionId).upstreamTo(boardPoint))
-            additionalSegments.forEach { segment ->
-                val lines = segment.routeMap()?.let { directionPolylines(it, segment.directionId()) }.orEmpty()
-                put(segment.routeId, lines.upstreamTo(boardPoint))
-            }
-        }
-        upstreamVehiclePathsByRoute = if (highlightedSegment.isDrawableSegment()) {
-            approaches.mapValues { (_, lines) -> lines.map { Polyline(it.points) } }
+        fun RouteFocusSegment.polylines(): List<RoutePolyline> =
+            routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
+        val approaches = (listOf(leaderRouteId to directionPolylines(currentDirectionId)) +
+            additionalSegments.map { it.routeId to it.polylines() })
+            .groupBy({ it.first }, { (_, lines) -> lines.upstreamTo(boardPoint) })
+            .mapValues { (_, lines) -> lines.flatten() }
+        focusedVehiclePathsByRoute = if (highlightedSegment.isDrawableSegment()) {
+            // Unlike the drawn context, vehicle eligibility extends through the selected ride. Include
+            // stay-aboard continuations too: their vehicles belong until the rider's alighting point.
+            (listOf(leaderRouteId to directionPolylines(currentDirectionId)) +
+                extraSegments.map { it.routeId to it.polylines() })
+                .groupBy({ it.first }, { (_, lines) -> lines.upstreamTo(alightPoint) })
+                .mapValues { (_, lines) -> lines.flatten().map { Polyline(it.points) } }
         } else {
             emptyMap()
         }

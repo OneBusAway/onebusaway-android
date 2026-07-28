@@ -112,9 +112,8 @@ internal fun List<RouteMapStop>.anchorDirectionId(anchorStopId: String?): Int? {
 
 /** Resolve an additional route segment to the one direction it should draw and poll. The anchor is
  * authoritative when unique; its headsign disambiguates a stop shared by several direction groups. */
-internal fun resolveRouteFocusSegmentDirection(segment: RouteFocusSegment, route: RouteMap): Int? =
-    route.stops.anchorDirectionId(segment.anchorStopId)
-        ?: route.directions.directionIdForHeadsign(segment.directionHeadsign)
+internal fun resolveRouteFocusSegmentDirection(segment: RouteFocusSegment, route: RouteMap): Int? = route.stops.anchorDirectionId(segment.anchorStopId)
+    ?: route.directions.directionIdForHeadsign(segment.directionHeadsign)
 
 /** Resolve an OTP trip headsign against OBA's direction labels when a shared stop cannot choose one. */
 internal fun List<RouteMapDirection>.directionIdForHeadsign(headsign: String?): Int? {

@@ -29,6 +29,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TripResultsViewModelTest {
@@ -42,7 +43,7 @@ class TripResultsViewModelTest {
     )
 
     private fun option(shortName: String) = ItineraryOption(
-        symbols = listOf(ModeSymbol.Transit(LegBadge(listOf(RouteBadge(shortName, routeColor = null)), TransitMode.BUS))),
+        symbols = listOf(ModeSymbol.Transit(LegBadge(listOf(RouteBadge(shortName, routeColor = null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF))),
         durationMinutes = 30,
         startTime = ServerTime(0L),
         endTime = ServerTime(30 * 60_000L)

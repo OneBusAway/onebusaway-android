@@ -176,8 +176,7 @@ fun RouteBadgeChip(
             name = shortName,
             contentColor = content,
             scale = scale,
-            startPadding = 3.dp * scale,
-            endPadding = 3.dp * scale,
+            horizontalPadding = 3.dp * scale,
             leadingIcon = leadingIcon,
             leadingIconDescription = leadingIconDescription
         )
@@ -191,8 +190,7 @@ private fun BadgeContent(
     name: String,
     contentColor: Color,
     scale: Float,
-    startPadding: Dp,
-    endPadding: Dp,
+    horizontalPadding: Dp,
     leadingIcon: Int?,
     leadingIconDescription: String?,
     modifier: Modifier = Modifier
@@ -207,7 +205,7 @@ private fun BadgeContent(
         letterSpacing = base.letterSpacing * scale
     )
     Row(
-        modifier = modifier.padding(start = startPadding, end = endPadding, top = BADGE_VERTICAL_PADDING * scale, bottom = BADGE_VERTICAL_PADDING * scale),
+        modifier = modifier.padding(horizontal = horizontalPadding, vertical = BADGE_VERTICAL_PADDING * scale),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BADGE_ICON_GAP * scale)
     ) {
@@ -290,10 +288,8 @@ fun RouteBadgeChip(
                 name = route.shortName,
                 contentColor = content,
                 scale = scale,
-                // Wider than the plain chip's, plus room for a chevron's notch where there is one, so
-                // every name sits centred in the band the rider sees — see the two constants.
-                startPadding = (JOINED_SEGMENT_PADDING + notchAllowance(join, index)) * scale,
-                endPadding = JOINED_SEGMENT_PADDING * scale,
+                // Wider than the plain chip's, since the divider leans through the segment edges.
+                horizontalPadding = JOINED_SEGMENT_PADDING * scale,
                 // The glyph heads the badge, not each name in it: these routes are one ride on one mode,
                 // and a glyph per segment would read as several.
                 leadingIcon = leadingIcon.takeIf { index == 0 },
@@ -303,29 +299,46 @@ fun RouteBadgeChip(
                     // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
                     // on the segment's size, so they're built once per size change, not per draw pass.
                     .drawWithCache {
+                        // One edge per segment, shared by the band it cuts and the line drawn along it —
+                        // the geometry is defined once (see [joinEdge]) and computed once too.
+                        val edge = joinEdge(join)
                         val band = bandPath(
-                            join = join,
+                            edge = edge,
                             extendStart = index == 0,
                             extendEnd = index == routes.lastIndex
                         )
-                        val divider = dividerPath(join)
+                        // Only the leading edge, and never on the first segment: each segment draws its
+                        // line after its band, so it lands on top of the neighbouring band this one just
+                        // overwrote. The first segment has no neighbour, so it builds no line at all.
+                        val divider = if (index > 0) edge.toPath() else null
                         val line = Stroke(BADGE_LINE_WIDTH.toPx())
                         onDrawBehind {
                             drawPath(band, container)
-                            // Only the leading edge, and never on the first segment: each segment draws
-                            // its line after its band, so it lands on top of the neighbouring band this
-                            // one just overwrote.
-                            if (index > 0) drawPath(divider, BADGE_LINE_COLOR, style = line)
+                            divider?.let { drawPath(it, BADGE_LINE_COLOR, style = line) }
                         }
                     }
+                    // Room for the notch the previous segment's divider cuts into this one, so the name
+                    // stays centred in the band the rider sees. Applied after the draw modifier, which
+                    // therefore still sizes the band to the whole segment.
+                    .padding(start = join.leadingInset(index) * scale)
             )
         }
     }
 }
 
-/** The leading padding a segment adds for the notch cut into it — a chevron's, and only where there is a
- *  segment before it to be notched by. Zero for the first segment and for every slashed one. */
-private fun notchAllowance(join: RouteBadgeJoin, index: Int): Dp = if (join == RouteBadgeJoin.THEN && index > 0) CHEVRON_LEAN_ALLOWANCE else 0.dp
+/**
+ * How much room this join's divider needs on the leading edge of the segment at [index] — nothing on the
+ * first segment, which has no neighbour to be cut by. Stated as a `when` over the join rather than as a
+ * test for one of them, so a third join shape has to answer the question instead of silently reserving
+ * nothing and drawing its name into its own divider.
+ */
+private fun RouteBadgeJoin.leadingInset(index: Int): Dp = when {
+    index == 0 -> 0.dp
+    // A slash sits at the segment edge at mid-height, where the name's ink is, and leans away above and
+    // below it — so [JOINED_SEGMENT_PADDING] already clears it. Only a chevron's notch reaches inwards.
+    this == RouteBadgeJoin.ANY_OF -> 0.dp
+    else -> CHEVRON_LEAN_ALLOWANCE
+}
 
 /**
  * Where two of the badge's routes meet, as a top-to-bottom polyline in offsets from the segment edge: a
@@ -344,34 +357,30 @@ private fun CacheDrawScope.joinEdge(join: RouteBadgeJoin): List<Offset> {
     }
 }
 
+/** This polyline as an open `Path` — the one walk from a list of points to something drawable, shared by
+ *  the divider hairline and by the band edges it cuts. */
+private fun List<Offset>.toPath(): Path = Path().apply {
+    moveTo(first().x, first().y)
+    for (i in 1..lastIndex) lineTo(this@toPath[i].x, this@toPath[i].y)
+}
+
 /**
- * This segment's background: cut by [joinEdge] where it meets a neighbour, and vertical at the badge's
- * outer edges — [extendStart]/[extendEnd] push those well past the clip so no sliver of background shows
- * through. Since both a segment's trailing edge and its neighbour's leading edge are the same [joinEdge],
+ * This segment's background: cut by [edge] where it meets a neighbour, and vertical at the badge's outer
+ * edges — [extendStart]/[extendEnd] push those well past the clip so no sliver of background shows
+ * through. Since a segment's trailing edge and its neighbour's leading edge are that same [edge],
  * consecutive bands meet exactly along it with no gap and no double-painted overlap.
  */
-private fun CacheDrawScope.bandPath(join: RouteBadgeJoin, extendStart: Boolean, extendEnd: Boolean): Path {
+private fun CacheDrawScope.bandPath(edge: List<Offset>, extendStart: Boolean, extendEnd: Boolean): Path {
     // Overhang the neighbouring segment far enough that an outer edge is always covered after clipping.
     val outer = size.height
     fun straightEdge(x: Float) = listOf(Offset(x, 0f), Offset(x, size.height))
-    val edge = joinEdge(join)
     val leading = if (extendStart) straightEdge(-outer) else edge
     val trailing = if (extendEnd) straightEdge(size.width + outer) else edge.map { Offset(it.x + size.width, it.y) }
-    return Path().apply {
-        // Around the band: from the leading top corner across the top, down the trailing edge, back
-        // across the bottom, then up the leading edge.
-        moveTo(leading.first().x, leading.first().y)
-        (trailing + leading.asReversed()).forEach { lineTo(it.x, it.y) }
+    // Around the band: down the leading edge, across the bottom, back up the trailing edge, and closed
+    // across the top.
+    return leading.toPath().apply {
+        for (i in trailing.lastIndex downTo 0) lineTo(trailing[i].x, trailing[i].y)
         close()
-    }
-}
-
-/** The hairline where this segment meets the one before it, along its leading [joinEdge]. */
-private fun CacheDrawScope.dividerPath(join: RouteBadgeJoin): Path {
-    val edge = joinEdge(join)
-    return Path().apply {
-        moveTo(edge.first().x, edge.first().y)
-        edge.drop(1).forEach { lineTo(it.x, it.y) }
     }
 }
 

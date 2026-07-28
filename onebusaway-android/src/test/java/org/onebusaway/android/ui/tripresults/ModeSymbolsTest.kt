@@ -16,14 +16,12 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVertexType
-import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 
 /**
  * JVM tests for [ModeSymbols]: an itinerary read as one left-to-right symbol sequence — the on-street
@@ -143,27 +141,11 @@ class ModeSymbolsTest {
     @Test
     fun anInterlinedRideIsOneSymbolNamingEveryRouteItRunsAs() {
         assertEquals(listOf(listOf("12")), symbolsOf(listOf(transit("12"), transit("12", interline = true))))
-        assertEquals(listOf(listOf("10", "12")), symbolsOf(listOf(transit("10"), transit("12", interline = true))))
-    }
-
-    /**
-     * …and those routes read in ride order, chevroned. Deliberately a pair that natural name order would
-     * reverse: an interline's order is the information ("12 > 10" is a different ride from "10 > 12"),
-     * unlike an interchangeable pair, which is sorted so a corridor reads the same either way.
-     */
-    @Test
-    fun anInterlinedRidesRoutesReadInRideOrderNotNameOrder() {
-        val legs = listOf(transit("12"), transit("10", interline = true))
-
-        val badge = ModeSymbols.forLegs(legs, legs.map { emptyList() })
-            .filterIsInstance<ModeSymbol.Transit>()
-            .single()
-            .badge
-
-        assertEquals(listOf("12", "10"), badge.routes.map { it.shortName })
-        assertEquals(RouteBadgeJoin.THEN, badge.join)
-        // The rider has one route to board, not a choice of two — the card must not offer the 10.
-        assertFalse(badge.isInterchangeable)
+        // Deliberately a pair that natural name order would reverse, so this also pins that the ride
+        // order survives the trip through the badge builder. What that order *means*, and that the badge
+        // chevrons rather than offers a choice, is `RouteBadgesTest`'s to assert — `rideBadge` owns the
+        // rule and this only checks that a card is handed the whole of it.
+        assertEquals(listOf(listOf("12", "10")), symbolsOf(listOf(transit("12"), transit("10", interline = true))))
     }
 
     /** A transfer stays two symbols: two boardings, so two roundels with a walk (or a gap) between. */

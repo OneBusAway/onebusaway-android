@@ -42,8 +42,13 @@ import org.onebusaway.android.util.parseObaHexColor
  *    promises a 5 all the way and the drawer's own "stay on board" row contradicts it;
  *  - any other ride badges its planned route joined by whatever is interchangeable with it (#2010).
  *
- * The two can't both apply: [substitutableRoutes] empties the alternatives of every leg in a chain
- * longer than one leg, since a substitute vehicle would put the rider off at the seam.
+ * The two can't both apply, and this says so rather than trusting it: [substitutableRoutes] empties the
+ * alternatives of every leg in a chain longer than one leg, since a substitute vehicle would put the
+ * rider off at the seam. Stated as a `require` because the alternative is a silent drop — the chevron
+ * branch has no way to render an alternative, so a caller passing raw [interchangeableRoutes] instead
+ * would lose them with nothing downstream able to tell that from a ride that genuinely had none. Both
+ * call sites are wrapped in `runCatchingCancellable`, so a violation surfaces as a failed load, loudly,
+ * rather than as a badge quietly missing a route.
  */
 internal fun rideBadge(
     legs: List<TripLeg>,
@@ -52,6 +57,9 @@ internal fun rideBadge(
 ): LegBadge = if (chain.transitionLegIndices.isEmpty()) {
     legBadge(legs[chain.leaderIndex], alternatives)
 } else {
+    require(alternatives.isEmpty()) {
+        "a ride that changes route mid-vehicle admits no substitutes (leg ${chain.leaderIndex}, ${alternatives.size} offered)"
+    }
     LegBadge(
         // In travel order and *not* deduplicated: consecutive entries are legs OTP gave different route
         // ids, so two that read alike are two routes that publish the same name — a real change the

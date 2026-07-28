@@ -1144,7 +1144,7 @@ private fun ColumnScope.BoardContent(
         // arrive. Each one's own ETA strip sits under the board stop below (#2010). A chevron badge is
         // the opposite instruction — board this one and stay on it — and says so in its own row further
         // down the ride (TransitionContent), so it must not pick this caption up.
-        if (entry.routeLeg.badge?.isInterchangeable == true) {
+        if (joined?.isInterchangeable == true) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodyMedium,
@@ -1349,7 +1349,8 @@ private fun TripResultsPreview() {
                                     RouteBadge("1 Line", 0xFF00A651.toInt()),
                                     RouteBadge("2 Line", 0xFF0075C4.toInt())
                                 ),
-                                TransitMode.RAIL
+                                TransitMode.RAIL,
+                                RouteBadgeJoin.ANY_OF
                             )
                         ),
                         ModeSymbol.Street(StreetMode.WALK)
@@ -1363,9 +1364,9 @@ private fun TripResultsPreview() {
                     // The second leg is a ferry, which publishes no route short name — so it badges its
                     // long name, capped and ellipsized.
                     symbols = listOf(
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS)),
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF)),
                         ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY))
+                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY, RouteBadgeJoin.ANY_OF))
                     ),
                     durationMinutes = 41,
                     startTime = ServerTime(0L),

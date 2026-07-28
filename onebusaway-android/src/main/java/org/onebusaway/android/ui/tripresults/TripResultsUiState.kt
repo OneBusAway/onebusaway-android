@@ -79,9 +79,12 @@ sealed interface ModeSymbol {
 data class LegBadge(
     val routes: List<RouteBadge>,
     val mode: TransitMode,
-    // Moot for the single-route badge that most rides get, hence a default: with nothing to divide,
-    // there is no relation to name. It matters only once a second route joins the chip.
-    val join: RouteBadgeJoin = RouteBadgeJoin.ANY_OF
+    // Stated at every construction, with no default. It is moot for the single-route badge most rides
+    // get — nothing to divide, so no relation to name — but a *joined* badge that forgot to say would
+    // take a default silently, and the join is not merely a divider shape: [isInterchangeable] reads it
+    // to decide whether the drawer tells the rider to board whichever route comes first. Getting that by
+    // omission is a wrong instruction, not a wrong pixel.
+    val join: RouteBadgeJoin
 ) {
     /** Whether this ride has more than one route on its badge, i.e. the chip is a joined/multicolor one. */
     val isJoined: Boolean get() = routes.size > 1

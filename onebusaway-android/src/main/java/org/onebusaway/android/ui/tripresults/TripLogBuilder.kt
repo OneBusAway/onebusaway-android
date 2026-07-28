@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import kotlin.math.roundToLong
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
@@ -217,7 +216,7 @@ object TripLogBuilder {
      * words it, and the band's edges (±90 s) always round to at least 1, so there is no "0 min late".
      */
     private fun TripLeg.realtimeState(): RealtimeState {
-        val minutes = (departureDelay.inWholeSeconds / 60.0).roundToLong()
+        val minutes = ScheduleDeviation.roundedMinutes(departureDelay)
         return when (ScheduleDeviation.status(realTime, departureDelay)) {
             ScheduleDeviation.Status.SCHEDULED -> RealtimeState.Unknown
             ScheduleDeviation.Status.ON_TIME -> RealtimeState.OnTime

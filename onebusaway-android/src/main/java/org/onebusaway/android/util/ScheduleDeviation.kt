@@ -17,6 +17,7 @@
 package org.onebusaway.android.util
 
 import androidx.annotation.ColorRes
+import kotlin.math.roundToLong
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.R
@@ -68,6 +69,14 @@ object ScheduleDeviation {
         deviation < ON_TIME_BAND -> Status.ON_TIME
         else -> Status.DELAYED
     }
+
+    /**
+     * The deviation rounded to the nearest whole minute — how a deviation is *worded* once [status]
+     * has decided which bucket it falls in. Rounding (rather than truncating) is what keeps the
+     * wording consistent with the band: the band's edges are at 1.5 minutes, so anything outside it
+     * words as at least "2 min", never a "1 min late" that reads as inside the on-time window.
+     */
+    fun roundedMinutes(deviation: Duration): Long = (deviation.inWholeSeconds / 60.0).roundToLong()
 
     /**
      * The **foreground** deviation color — drawn as the text or glyph color on the app surface.

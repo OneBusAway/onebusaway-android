@@ -75,7 +75,10 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
     // guard the unreachable null instead of dereferencing (the legacy getTrip/getRoute would NPE).
     val trip = response.trip(status.activeTripId) ?: return
     val route = response.route(trip.routeId) ?: return
-    val deviationMin = status.scheduleDeviation.inWholeMinutes
+    // One bucketing call feeds both halves of the chip, so its words and its color can never disagree
+    // — this is the site where that was starkest, since it produces the label and the fill side by side.
+    val deviationStatus = ScheduleDeviation.status(isRealtime, status.scheduleDeviation)
+    val deviationMinutes = ScheduleDeviation.roundedMinutes(status.scheduleDeviation.absoluteValue)
 
     // [isRealtime] is the drawn marker's live-vs-scheduled flag (from the renderer). Since #2043 the
     // marker itself is colored by route identity rather than punctuality, so this window is where
@@ -88,14 +91,12 @@ fun VehicleInfoWindow(status: ObaTripStatus, isRealtime: Boolean, response: Rout
             " " +
             MyTextUtils.formatDisplayText(trip.headsign),
         statusLabel = if (isRealtime) {
-            ArrivalInfoUtils.computeArrivalLabelFromDelay(res, deviationMin)
+            ArrivalInfoUtils.computeArrivalLabel(res, deviationStatus, deviationMinutes)
         } else {
             stringResource(R.string.stop_info_scheduled)
         },
         // The chip is white text on this color, so it takes the on-fill tier.
-        statusColor = colorResource(
-            ScheduleDeviation.fillColor(isRealtime, status.scheduleDeviation)
-        ),
+        statusColor = colorResource(deviationStatus.fillColorRes),
         occupancyDots = if (isRealtime) occupancyDots(status.occupancyStatus) else 0,
         lastUpdated = lastUpdatedText(res, isRealtime, status, now)
     )

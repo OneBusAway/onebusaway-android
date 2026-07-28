@@ -107,7 +107,7 @@
     <string name="main_help_legend_ontime">Green means “On time” - within a minute and a half of
         the schedule, either way
     </string>
-    <string name="main_help_legend_late">Blue means “Running late” - more than a minute and a half
+    <string name="main_help_legend_late">Blue means “Running late” - a minute and a half or more
         behind schedule
     </string>
     <string name="main_help_legend_early">Red means “Running early” - more than a minute and a half

@@ -828,7 +828,7 @@ class GoogleMapRenderer(
         private const val MOST_RECENT_DATA_TITLE = "Most recent data"
 
         // Comfortably covers a busy route's live working set — a vehicle type's 8 heading octants across a
-        // handful of schedule-deviation colors, times a few route types, plus the fast-estimate + dot icons
+        // handful of route colors, times a few route types, plus the fast-estimate + dot icons
         // — so descriptors are reused as vehicles turn, not thrashed. Bounded so a long, varied session
         // can't grow it without limit (evicting a still-shown icon just re-wraps it on next request).
         private const val DESCRIPTOR_CACHE_SIZE = 256

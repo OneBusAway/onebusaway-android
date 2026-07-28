@@ -21,6 +21,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.R
 import org.onebusaway.android.util.ScheduleDeviation.Status
@@ -77,6 +78,21 @@ class ScheduleDeviationTest {
         assertEquals(Status.SCHEDULED, status(Duration.ZERO, isRealtime = false))
         assertEquals(Status.SCHEDULED, status(30.minutes, isRealtime = false))
         assertEquals(Status.SCHEDULED, status((-30).minutes, isRealtime = false))
+    }
+
+    /**
+     * The wording rounds rather than truncates, which is what keeps it consistent with the band: the
+     * edges sit at 1.5 minutes, so anything bucketed early/late words as at least "2 min" and can
+     * never read as a magnitude that falls inside the on-time window.
+     */
+    @Test
+    fun `the worded magnitude never contradicts the band`() {
+        for (seconds in longArrayOf(90, 91, 120, 200)) {
+            val minutes = ScheduleDeviation.roundedMinutes(seconds.seconds)
+            assertEquals("$seconds s must bucket as late", Status.DELAYED, status(seconds.seconds))
+            assertTrue("$seconds s worded as $minutes min would read as on time", minutes >= 2)
+        }
+        assertEquals("just inside the band still rounds to 1", 1L, ScheduleDeviation.roundedMinutes(89.seconds))
     }
 
     @Test

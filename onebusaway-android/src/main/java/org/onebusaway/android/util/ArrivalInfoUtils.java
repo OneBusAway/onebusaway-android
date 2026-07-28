@@ -116,24 +116,26 @@ public class ArrivalInfoUtils {
   // replacement takes a full-precision kotlin.time.Duration and applies the shared on-time band.
 
   /**
-   * Computes the arrival status label from the delay (i.e., schedule deviation), where positive
-   * means the bus is running late and negative means the bus is running ahead of schedule
+   * Computes the arrival status label for an upcoming arrival.
    *
-   * @param delay schedule deviation, in minutes, for this vehicle where positive means the bus is
-   *     running late and negative means the bus is running ahead of schedule
-   * @return the arrival status label based on the deviation
+   * <p>The bucket comes from {@link ScheduleDeviation}, the same call that picks the color, so the
+   * words and the hue can't contradict each other — before #2043 this took the raw signed minutes
+   * and applied its own strict sign test, which after the on-time band landed meant a vehicle could
+   * read "1 min late" in the on-time green.
+   *
+   * @param status the deviation bucket, from {@link ScheduleDeviation#status}
+   * @param minutes how far off schedule, in whole minutes, unsigned — only read when [status] is
+   *     early or delayed
    */
-  public static @NonNull String computeArrivalLabelFromDelay(@NonNull Resources res, long delay) {
-    if (delay > 0) {
-      // Arriving delayed
-      return res.getQuantityString(R.plurals.stop_info_arrive_delayed, (int) delay, delay);
-    } else if (delay < 0) {
-      // Arriving early
-      delay = -delay;
-      return res.getQuantityString(R.plurals.stop_info_arrive_early, (int) delay, delay);
-    } else {
-      // Arriving on time
-      return res.getString(R.string.stop_info_ontime);
+  public static @NonNull String computeArrivalLabel(
+      @NonNull Resources res, @NonNull ScheduleDeviation.Status status, long minutes) {
+    switch (status) {
+      case DELAYED:
+        return res.getQuantityString(R.plurals.stop_info_arrive_delayed, (int) minutes, minutes);
+      case EARLY:
+        return res.getQuantityString(R.plurals.stop_info_arrive_early, (int) minutes, minutes);
+      default:
+        return res.getString(R.string.stop_info_ontime);
     }
   }
 }

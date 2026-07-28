@@ -35,7 +35,6 @@ import org.onebusaway.android.util.RegionUtils
 object MapNavigation {
 
     /** Opens TripDetails for the tapped vehicle, scoped to the focused stop when there is one. */
-    @JvmStatic
     fun openVehicleTripDetails(context: Context, status: ObaTripStatus, focusedStopId: String?) {
         val tripId = status.activeTripId ?: return
         val builder = TripDetailsLauncher.Builder(context, tripId)
@@ -48,7 +47,6 @@ object MapNavigation {
      * The bike info-window "more info" tap: a proof-of-concept deep link hard-coded to the Tampa
      * region's Hopr app (preserved verbatim from the legacy BikeStationOverlay.onInfoWindowClick).
      */
-    @JvmStatic
     fun openBikeDeepLink(context: Context, station: BikeStation) {
         val region = RegionEntryPoint.get(context).currentRegion() ?: return
         if (region.id != RegionUtils.TAMPA_REGION_ID.toLong()) {

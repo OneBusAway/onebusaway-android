@@ -26,7 +26,6 @@ import org.onebusaway.android.R
 
 /** Helper methods specific to proprietary Google Maps integration. */
 object ProprietaryMapHelpV2 {
-    @JvmStatic
     fun isMapsInstalled(context: Context): Boolean = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             context.packageManager.getApplicationInfo(
@@ -52,7 +51,6 @@ object ProprietaryMapHelpV2 {
         packageManager.getApplicationInfo("com.google.android.apps.maps", 0)
     }
 
-    @JvmStatic
     fun promptUserInstallMaps(context: Context) {
         MaterialAlertDialogBuilder(context)
             .setMessage(context.getString(R.string.please_install_google_maps_dialog_title))
@@ -75,7 +73,7 @@ object ProprietaryMapHelpV2 {
             .show()
     }
 
-    @JvmStatic fun setZIndex(marker: Marker, zIndex: Float) {
+    fun setZIndex(marker: Marker, zIndex: Float) {
         marker.zIndex = zIndex
     }
 }

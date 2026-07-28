@@ -51,7 +51,6 @@ object ArrivalsListLauncher {
         }
     }
 
-    @JvmStatic
     fun start(context: Context, stopId: String) {
         Builder(context, stopId).start()
     }

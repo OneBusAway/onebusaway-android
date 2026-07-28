@@ -78,7 +78,7 @@ fun SettingsRoute(
     ) { result ->
         if (result.resultCode == Activity.RESULT_OK && result.data != null) {
             @Suppress("DEPRECATION")
-            val uri: Uri? = result.data!!.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            val uri: Uri? = requireNotNull(result.data).getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             viewModel.onRingtonePicked(uri?.toString() ?: "")
         }
     }

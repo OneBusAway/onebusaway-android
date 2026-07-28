@@ -55,7 +55,7 @@ class AgencyDetailsDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<AgencyReference>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val agency = envelope.data!!.entry
+        val agency = requireNotNull(envelope.data).entry
         assertEquals("1", agency.id)
         assertEquals("Metro Transit", agency.name)
         assertEquals("https://kingcounty.gov/en/dept/metro", agency.url)

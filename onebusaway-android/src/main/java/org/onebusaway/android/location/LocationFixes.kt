@@ -38,7 +38,6 @@ object LocationFixes {
      *
      * @return true if [a] is "better" than [b], false if [b] is "better" than [a]
      */
-    @JvmStatic
     fun compareLocationsByTime(a: Location?, b: Location?): Boolean = a != null && (b == null || WallTime(a.time) > WallTime(b.time))
 
     /**
@@ -91,7 +90,6 @@ object LocationFixes {
      *
      * @return true if same, false otherwise
      */
-    @JvmStatic
     fun isDuplicate(a: Location, b: Location): Boolean = WallTime(a.time) == WallTime(b.time) &&
         a.latitude == b.latitude &&
         a.longitude == b.longitude

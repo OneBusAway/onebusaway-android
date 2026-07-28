@@ -65,7 +65,7 @@ internal class GoogleStopMarkerLayer(
                         .flat(true)
                         .anchor(anchorX, anchorY)
                         .zIndex(stopZIndex(routeStop = false, favorite = stop.favorite))
-                )!!
+                ).let(::requireNotNull)
                 markerByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
             } else {

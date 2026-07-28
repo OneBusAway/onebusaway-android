@@ -90,7 +90,7 @@ class ArrivalsDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<ArrivalsForStop>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = envelope.data!!
+        val data = requireNotNull(envelope.data)
         val entry = data.entry
         assertEquals("1_75403", entry.stopId)
         assertEquals(listOf("1_75404"), entry.nearbyStopIds)
@@ -103,13 +103,13 @@ class ArrivalsDecodeTest {
         assertEquals(1782348180000L, arrival.predictedArrivalTime)
         assertEquals("MANY_SEATS_AVAILABLE", arrival.occupancyStatus)
         assertEquals(listOf("1_sit"), arrival.situationIds)
-        assertEquals("default", arrival.tripStatus!!.status)
-        assertEquals(47.6, arrival.tripStatus.lastKnownLocation!!.lat, 0.0)
+        assertEquals("default", requireNotNull(arrival.tripStatus).status)
+        assertEquals(47.6, requireNotNull(arrival.tripStatus.lastKnownLocation).lat, 0.0)
     }
 
     @Test
     fun resolvesReferencesIncludingSituations() {
-        val data = json.decodeFromString<ObaEnvelope<EntryWithReferences<ArrivalsForStop>>>(body).data!!
+        val data = requireNotNull(json.decodeFromString<ObaEnvelope<EntryWithReferences<ArrivalsForStop>>>(body).data)
         val refs = data.references
 
         assertEquals("Pine St", refs.stop("1_75403")?.name)
@@ -117,7 +117,7 @@ class ArrivalsDecodeTest {
         assertEquals(3, refs.route("1_100")?.type)
         assertEquals("Metro", refs.agency("1")?.name)
 
-        val situation = refs.situation("1_sit")!!
+        val situation = refs.situation("1_sit").let(::requireNotNull)
         assertEquals("Reroute", situation.summary.value)
         assertEquals("Detour details", situation.description.value)
         assertEquals("noImpact", situation.severity)

@@ -21,7 +21,6 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 
 /** Utility methods related to optional map layers. */
 object LayerUtils {
-    @JvmStatic
     fun isBikeshareLayerVisible(context: Context): Boolean = BikeshareAvailability.isStationLayerEnabled(context) &&
         PreferencesEntryPoint.get(context)
             .getBoolean(R.string.preference_key_layer_bikeshare_visible, true)

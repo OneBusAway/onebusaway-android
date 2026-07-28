@@ -149,8 +149,8 @@ class ExtrapolatedVehiclesTest {
         // regardless of which order it appeared in (dup1: scheduled then GPS; dup2: GPS then scheduled).
         val trips = duplicateResponse().asRouteTrips().trips
         assertEquals(listOf("trip_dup1", "trip_dup2"), trips.map { it.id })
-        assertEquals(47.201, trips[0].status!!.lastKnownLocation!!.latitude, 1e-6)
-        assertEquals(47.202, trips[1].status!!.lastKnownLocation!!.latitude, 1e-6)
+        assertEquals(47.201, requireNotNull(requireNotNull(trips[0].status).lastKnownLocation).latitude, 1e-6)
+        assertEquals(47.202, requireNotNull(requireNotNull(trips[1].status).lastKnownLocation).latitude, 1e-6)
     }
 
     @Test

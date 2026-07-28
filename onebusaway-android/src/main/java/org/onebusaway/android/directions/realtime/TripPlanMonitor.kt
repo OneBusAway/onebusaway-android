@@ -86,7 +86,6 @@ object TripPlanMonitor {
      *
      * @param notificationTarget the activity to reopen from a change notification (HomeActivity).
      */
-    @JvmStatic
     fun start(
         context: Context,
         params: TripPlanParams,
@@ -184,7 +183,6 @@ object TripPlanMonitor {
     }
 
     /** Cancels a pending deferral alarm, if any. Safe to call when nothing is scheduled. */
-    @JvmStatic
     fun cancelScheduledStart(context: Context) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         alarmManager.cancel(alarmPendingIntent(context.applicationContext, Bundle()))

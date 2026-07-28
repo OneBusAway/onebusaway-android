@@ -96,7 +96,7 @@ class OtpPlanDecodeTest {
         val response = OtpPlanParser.parse(body)
         assertNull(response.error)
 
-        val itineraries = response.plan!!.itineraries.map { it.toTripItinerary() }
+        val itineraries = requireNotNull(response.plan).itineraries.map { it.toTripItinerary() }
         assertEquals(1, itineraries.size)
         val itinerary = itineraries[0]
         assertEquals(1500L, itinerary.duration.inWholeSeconds)
@@ -110,9 +110,9 @@ class OtpPlanDecodeTest {
         assertEquals(ServerTime(1700000100000), walk.endTime)
         val walkFrom = walk.from
         val walkTo = walk.to
-        val walkGeometry = walk.legGeometry!!
+        val walkGeometry = requireNotNull(walk.legGeometry)
         assertEquals("Origin", walkFrom.name)
-        assertEquals(47.6, walkFrom.lat!!, 1e-6)
+        assertEquals(47.6, requireNotNull(walkFrom.lat), 1e-6)
         assertEquals("1001", walkTo.stopCode)
         assertEquals(TripVertexType.TRANSIT, walkTo.vertexType)
         // legGeometry + walk steps flow through the mapped fields
@@ -133,7 +133,7 @@ class OtpPlanDecodeTest {
         // quoted-string endTime decodes the same as a bare number
         assertEquals(ServerTime(1700000700000), bus.endTime)
         val busFrom = bus.from
-        val intermediateStops = bus.intermediateStops!!
+        val intermediateStops = requireNotNull(bus.intermediateStops)
         assertEquals(TripVertexType.BIKESHARE, busFrom.vertexType)
         assertEquals("bs_9", busFrom.bikeShareId)
         assertEquals(1, intermediateStops.size)
@@ -146,7 +146,7 @@ class OtpPlanDecodeTest {
 
         val response = OtpPlanParser.parse(body)
         assertNull(response.plan)
-        val error = response.error!!
+        val error = requireNotNull(response.error)
         assertEquals(404, error.id)
         assertEquals("Path not found", error.msg)
     }
@@ -162,7 +162,7 @@ class OtpPlanDecodeTest {
         """.trimIndent()
 
         val response = OtpPlanParser.parse(body)
-        val leg = response.plan!!.itineraries[0].toTripItinerary().legs[0]
+        val leg = requireNotNull(response.plan).itineraries[0].toTripItinerary().legs[0]
         assertNull(leg.from.vertexType)
     }
 
@@ -179,7 +179,7 @@ class OtpPlanDecodeTest {
             ] } ] } }
         """.trimIndent()
 
-        val itinerary = OtpPlanParser.parse(body).plan!!.itineraries[0]
+        val itinerary = requireNotNull(OtpPlanParser.parse(body).plan).itineraries[0]
         assertThrows(IllegalStateException::class.java) { itinerary.toTripItinerary() }
     }
 

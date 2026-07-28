@@ -111,7 +111,7 @@ class FocusBannerViewModelTest {
         assertEquals(emptySet<String>(), viewModel.favoriteStopIds.value)
 
         // Release the parked star write.
-        dao.firstWriteGate!!.complete(Unit)
+        requireNotNull(dao.firstWriteGate).complete(Unit)
         advanceUntilIdle()
 
         // The persisted store converged to the last tap — the writes did not reorder.

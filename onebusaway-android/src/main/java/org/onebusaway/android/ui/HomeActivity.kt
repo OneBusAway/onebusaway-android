@@ -403,7 +403,6 @@ class HomeActivity : AppCompatActivity() {
          * be thin facades with no per-screen intent contract. (External contracts — shortcuts/FCM — use
          * [IntentRouteMapper]'s data-URI branches.)
          */
-        @JvmStatic
         fun navIntent(context: Context, route: String): Intent = Intent(context, HomeActivity::class.java).putExtra(NavRoutes.EXTRA_NAV_ROUTE, route)
     }
 }

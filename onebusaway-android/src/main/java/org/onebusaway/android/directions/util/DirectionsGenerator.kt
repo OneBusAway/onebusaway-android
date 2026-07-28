@@ -381,7 +381,6 @@ class DirectionsGenerator(
 
         // Dirty fix to avoid the presence of names for unnamed streets (as road, track, etc.) for
         // other languages than English
-        @JvmStatic
         fun getLocalizedStreetName(streetName: String?, resources: Resources): String {
             if (streetName == null) {
                 return resources.getString(R.string.street_type_sidewalk)
@@ -410,7 +409,6 @@ class DirectionsGenerator(
             }
         }
 
-        @JvmStatic
         fun getLocalizedRelativeDir(relDir: TripRelativeDirection?, resources: Resources): String? {
             if (relDir != null) {
                 return when (relDir) {
@@ -445,7 +443,6 @@ class DirectionsGenerator(
             return null
         }
 
-        @JvmStatic
         fun getLocalizedAbsoluteDir(absDir: TripAbsoluteDirection?, resources: Resources): String? {
             if (absDir != null) {
                 return when (absDir) {
@@ -470,7 +467,6 @@ class DirectionsGenerator(
             return null
         }
 
-        @JvmStatic
         fun getLocalizedMode(mode: TripMode?, resources: Resources): String? {
             if (mode != null) {
                 return when (mode) {
@@ -503,7 +499,6 @@ class DirectionsGenerator(
          *
          * @return the mode icon for the given mode
          */
-        @JvmStatic
         fun getModeIcon(mode: TripMode?): Int {
             // Order matters: the first matching mode wins, matching the legacy TraverseModeSet
             // priority (e.g. a SUBWAY+TRAM set resolved to subway, not railway).
@@ -527,7 +522,6 @@ class DirectionsGenerator(
          *
          * @return the transit stop icon for the given mode
          */
-        @JvmStatic
         fun getStopIcon(mode: TripMode?): Int {
             if (mode == TripMode.BUS || mode == TripMode.RAIL) {
                 return R.drawable.stop_flag
@@ -536,7 +530,6 @@ class DirectionsGenerator(
             return getModeIcon(mode)
         }
 
-        @JvmStatic
         fun getRelativeDirectionIcon(relDir: TripRelativeDirection, resources: Resources): Int = when (relDir) {
             TripRelativeDirection.CIRCLE_CLOCKWISE -> R.drawable.ic_rotary_clockwise
             TripRelativeDirection.CIRCLE_COUNTERCLOCKWISE -> R.drawable.ic_rotary_counterclockwise

@@ -39,7 +39,6 @@ object RegionSubsystems {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    @JvmStatic
     fun observe(app: Application) {
         scope.launch {
             RegionEntryPoint.get(app).region.collect { region ->

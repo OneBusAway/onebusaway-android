@@ -119,7 +119,7 @@ internal class GoogleRouteStopBitmapLayer(
                         .flat(true)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex(selected))
-                )!!
+                ).let(::requireNotNull)
                 marker.tag = stop.id
                 stopsById[stop.id] = RenderedStop(marker, stop)
             } else {

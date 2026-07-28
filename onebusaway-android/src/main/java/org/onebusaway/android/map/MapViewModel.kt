@@ -266,8 +266,8 @@ class MapViewModel @Inject constructor(
         )
         is LoadedRoute.Loaded -> RouteHeader(
             loading = false,
-            shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route))!!,
-            longName = MyTextUtils.formatDisplayText(getRouteDescription(route))!!,
+            shortName = MyTextUtils.formatDisplayText(getRouteDisplayName(route)).let(::requireNotNull),
+            longName = MyTextUtils.formatDisplayText(getRouteDescription(route)).let(::requireNotNull),
             agency = agencyName ?: "",
             routeId = route.id,
             routeColor = route.color,

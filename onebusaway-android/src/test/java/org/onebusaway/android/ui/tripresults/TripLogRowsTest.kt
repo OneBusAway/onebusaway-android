@@ -157,17 +157,17 @@ class TripLogRowsTest {
         assertTrue(rows.filter { it.content is RowContent.Terminal }.all { it.band == null })
         // The walk's rows are one continuous band: rounded at the run's two ends, square in between.
         assertEquals(4, banded.size)
-        assertTrue(banded.first().band!!.first)
-        assertTrue(banded.last().band!!.last)
-        assertTrue(banded.drop(1).none { it.band!!.first })
-        assertTrue(banded.dropLast(1).none { it.band!!.last })
+        assertTrue(requireNotNull(banded.first().band).first)
+        assertTrue(requireNotNull(banded.last().band).last)
+        assertTrue(banded.drop(1).none { requireNotNull(it.band).first })
+        assertTrue(banded.dropLast(1).none { requireNotNull(it.band).last })
     }
 
     @Test
     fun adjacentLegsGetTheirOwnBands() {
         val rows = flatten(listOf(walk, plainRide))
-        val walkBand = rows.first { it.content is RowContent.WalkHeader }.band!!
-        val boardBand = rows.first { it.content is RowContent.BoardHeader }.band!!
+        val walkBand = requireNotNull(rows.first { it.content is RowContent.WalkHeader }.band)
+        val boardBand = requireNotNull(rows.first { it.content is RowContent.BoardHeader }.band)
 
         // Back-to-back legs must not merge into one band — each run closes at its own boundary.
         assertTrue(walkBand.first && walkBand.last)

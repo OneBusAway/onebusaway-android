@@ -233,7 +233,7 @@ class VehicleIconAllocationTest {
         val vehicle = vehicles(response).firstOrNull()
         assertTrue("fixture must yield at least one vehicle", vehicle != null)
 
-        val live = withLiveness(vehicle!!, isRealtime = true)
+        val live = withLiveness(requireNotNull(vehicle), isRealtime = true)
         val stale = withLiveness(vehicle, isRealtime = false)
 
         val liveKey = VehicleBitmaps.iconKey(context, live, response)
@@ -258,7 +258,7 @@ class VehicleIconAllocationTest {
         val vehicle = vehicles(response).firstOrNull()
         assertTrue("fixture must yield at least one vehicle", vehicle != null)
 
-        val early = withRealtimeDeviation(vehicle!!, TimeUnit.MINUTES.toSeconds(-10))
+        val early = withRealtimeDeviation(requireNotNull(vehicle), TimeUnit.MINUTES.toSeconds(-10))
         val late = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(10))
 
         assertEquals(

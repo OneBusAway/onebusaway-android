@@ -111,7 +111,7 @@ internal object CurrentFocusPersistence {
             route != null -> CurrentFocus.Route(route)
             stop != null -> CurrentFocus.Stop(stop)
             state.get<String>(KEY_BIKE_STATION) != null ->
-                CurrentFocus.BikeStation(state.get<String>(KEY_BIKE_STATION)!!)
+                CurrentFocus.BikeStation(state.get<String>(KEY_BIKE_STATION).let(::requireNotNull))
             else -> CurrentFocus.None
         }
     }

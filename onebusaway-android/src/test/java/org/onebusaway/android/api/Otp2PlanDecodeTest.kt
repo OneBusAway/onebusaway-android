@@ -164,12 +164,12 @@ class Otp2PlanDecodeTest {
         assertEquals("Origin", walk.from.name)
         // A null wire `interlineWithPreviousLeg` maps to false (an ordinary leg, no stay-aboard seam).
         assertFalse(walk.interlineWithPreviousLeg)
-        assertEquals(47.6, walk.from.lat!!, 1e-6)
+        assertEquals(47.6, requireNotNull(walk.from.lat), 1e-6)
         // No stop/rentalVehicle/vehicleParking/vehicleRentalStation on the origin place -> NORMAL.
         assertEquals(TripVertexType.NORMAL, walk.from.vertexType)
         assertEquals("1001", walk.to.stopCode)
         assertEquals(TripVertexType.TRANSIT, walk.to.vertexType)
-        val walkGeometry = walk.legGeometry!!
+        val walkGeometry = requireNotNull(walk.legGeometry)
         assertEquals("abc_def", walkGeometry.points)
         assertEquals(2, walkGeometry.length)
         assertEquals(1, walk.steps.size)

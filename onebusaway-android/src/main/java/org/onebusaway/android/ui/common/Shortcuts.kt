@@ -96,7 +96,6 @@ object Shortcuts {
      *                   60dp (2dp of asset padding) for high resolution on launcher screens
      * @return ShortcutInfoCompat that can be used to request pinning the shortcut
      */
-    @JvmStatic
     fun makeShortcutInfo(
         context: Context,
         name: String?,
@@ -110,13 +109,13 @@ object Shortcuts {
         destIntent.action = Intent.ACTION_VIEW
 
         val drawableIcon: Drawable = ResourcesCompat
-            .getDrawable(context.resources, icon, context.theme)!!
+            .getDrawable(context.resources, icon, context.theme).let(::requireNotNull)
         drawableIcon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
             ContextCompat.getColor(context, R.color.shortcut_icon),
             BlendModeCompat.SRC_IN
         )
         val drawableBackground: Drawable = ResourcesCompat
-            .getDrawable(context.resources, R.drawable.launcher_background, context.theme)!!
+            .getDrawable(context.resources, R.drawable.launcher_background, context.theme).let(::requireNotNull)
 
         val layerDrawable = LayerDrawable(arrayOf(drawableBackground, drawableIcon))
 

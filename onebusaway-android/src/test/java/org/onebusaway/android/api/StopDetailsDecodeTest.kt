@@ -68,7 +68,7 @@ class StopDetailsDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<StopReference>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = envelope.data!!
+        val data = requireNotNull(envelope.data)
         val stop = data.entry
         assertEquals("1_29261", stop.id)
         assertEquals("29261", stop.code)

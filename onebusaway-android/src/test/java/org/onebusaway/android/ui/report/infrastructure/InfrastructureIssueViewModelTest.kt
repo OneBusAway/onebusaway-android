@@ -280,7 +280,7 @@ class InfrastructureIssueViewModelTest {
         val thrown = assertThrows(IllegalArgumentException::class.java) {
             viewModel(savedState = navArgs(stop, issueTypeArg = "stop"))
         }
-        assertTrue(thrown.message!!.contains("stop"))
+        assertTrue(requireNotNull(thrown.message).contains("stop"))
     }
 
     @Test

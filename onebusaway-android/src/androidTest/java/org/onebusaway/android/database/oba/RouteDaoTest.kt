@@ -57,7 +57,7 @@ class RouteDaoTest {
     fun markRouteUsed_freshRoute_startsAtUseCountOne() = runBlocking {
         dao.markRouteUsed("r2", "20", "Route 20", regionId = 2L, now = 50)
 
-        val r = dao.getRoute("r2")!!
+        val r = dao.getRoute("r2").let(::requireNotNull)
         assertEquals(1, r.useCount)
         assertEquals(50L, r.accessTime)
         assertEquals(2L, r.regionId)
@@ -68,11 +68,11 @@ class RouteDaoTest {
     fun markRouteUsed_incrementsAndPreservesUrlAndRegion() = runBlocking {
         // storeRouteDetails sets the URL; a later markRouteUsed must not wipe it.
         dao.storeRouteDetails("r1", "10", "Route 10", "http://u", regionId = 1L, now = 100)
-        assertEquals("http://u", dao.getRoute("r1")!!.url)
+        assertEquals("http://u", dao.getRoute("r1").let(::requireNotNull).url)
 
         dao.markRouteUsed("r1", "10", "Route 10 renamed", regionId = null, now = 200)
 
-        val r = dao.getRoute("r1")!!
+        val r = dao.getRoute("r1").let(::requireNotNull)
         assertEquals(2, r.useCount)
         assertEquals(200L, r.accessTime)
         assertEquals("http://u", r.url) // NOT clobbered by markRouteUsed
@@ -101,12 +101,12 @@ class RouteDaoTest {
         // A route the user has actually viewed twice.
         dao.storeRouteDetails("r5", "50", "Route 50", "http://u", regionId = 5L, now = 100)
         dao.markRouteUsed("r5", "50", "Route 50", regionId = 5L, now = 200)
-        assertEquals(2, dao.getRoute("r5")!!.useCount)
+        assertEquals(2, dao.getRoute("r5").let(::requireNotNull).useCount)
 
         // Favoriting ensures the row but must not bump use_count / access_time (#1727 review).
         dao.ensureRouteDetails("r5", "50", "Route 50", url = null, regionId = null)
 
-        val r = dao.getRoute("r5")!!
+        val r = dao.getRoute("r5").let(::requireNotNull)
         assertEquals(2, r.useCount) // unchanged — a favorite toggle is not a view
         assertEquals(200L, r.accessTime) // unchanged
         assertEquals("http://u", r.url) // null url preserves the existing one
@@ -114,7 +114,7 @@ class RouteDaoTest {
 
         // A brand-new (never-viewed) route starts at use_count 0, so it sorts last by frequency.
         dao.ensureRouteDetails("r6", "60", "Route 60", url = "http://v", regionId = 6L)
-        val fresh = dao.getRoute("r6")!!
+        val fresh = dao.getRoute("r6").let(::requireNotNull)
         assertEquals(0, fresh.useCount)
         assertNull(fresh.accessTime)
         assertEquals("http://v", fresh.url)
@@ -126,7 +126,7 @@ class RouteDaoTest {
 
         dao.refreshRouteShortName("r3", "30-express")
 
-        val r = dao.getRoute("r3")!!
+        val r = dao.getRoute("r3").let(::requireNotNull)
         assertEquals("30-express", r.shortName)
         assertEquals("http://u", r.url) // untouched
         assertEquals("Route 30", r.longName) // untouched

@@ -38,7 +38,6 @@ enum class Occupancy(private val value: String) {
          * Converts from the string representation of occupancy to the enumeration, or null if
          * [occupancy] isn't a recognized value.
          */
-        @JvmStatic
         fun fromString(occupancy: String?): Occupancy? = entries.firstOrNull { it.value == occupancy }
     }
 }

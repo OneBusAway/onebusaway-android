@@ -52,7 +52,7 @@ class StopsMapDecodeTest {
         // The stop's route + that route's agency resolve from the references pool.
         val route = data.references.route(first.routeIds[0])
         assertEquals("1_70", route?.id)
-        assertEquals("Metro Transit", data.references.agency(route!!.agencyId)?.name)
+        assertEquals("Metro Transit", data.references.agency(requireNotNull(route).agencyId)?.name)
     }
 
     @Test

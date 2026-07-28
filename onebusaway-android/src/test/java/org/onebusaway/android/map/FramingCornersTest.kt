@@ -25,7 +25,7 @@ class FramingCornersTest {
     @Test
     fun `a degenerate box is inflated to the minimum span, centered on the point`() {
         val p = GeoPoint(47.6, -122.3)
-        val corners = framingCorners(listOf(p))!!
+        val corners = framingCorners(listOf(p)).let(::requireNotNull)
         val (latSpan, lonSpan) = span(corners)
 
         assertEquals(MIN_FRAMING_SPAN_DEG, latSpan, 1e-9)
@@ -40,8 +40,8 @@ class FramingCornersTest {
         // A ~street-crossing hop: two points a few meters apart.
         val hop = listOf(GeoPoint(47.6000, -122.3000), GeoPoint(47.6001, -122.3001))
 
-        val walkCorners = framingCorners(hop, WALK_LEG_MIN_FRAMING_SPAN_DEG)!!
-        val defaultCorners = framingCorners(hop)!!
+        val walkCorners = framingCorners(hop, WALK_LEG_MIN_FRAMING_SPAN_DEG).let(::requireNotNull)
+        val defaultCorners = framingCorners(hop).let(::requireNotNull)
 
         val (walkLat, _) = span(walkCorners)
         val (defaultLat, _) = span(defaultCorners)
@@ -54,7 +54,7 @@ class FramingCornersTest {
     @Test
     fun `a box already larger than the floor is left as-is`() {
         val far = listOf(GeoPoint(47.60, -122.30), GeoPoint(47.70, -122.20))
-        val corners = framingCorners(far, WALK_LEG_MIN_FRAMING_SPAN_DEG)!!
+        val corners = framingCorners(far, WALK_LEG_MIN_FRAMING_SPAN_DEG).let(::requireNotNull)
         val (latSpan, lonSpan) = span(corners)
 
         assertEquals(0.10, latSpan, 1e-9)

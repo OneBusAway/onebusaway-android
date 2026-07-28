@@ -50,7 +50,7 @@ import org.onebusaway.android.util.PolylineDecoder
  * `from`/`to`/`startTime`/`endTime` are non-null: a well-formed OTP leg always has two endpoints and an
  * absolute start/end time (that's the point of a routing response), so the adapter — the one place that
  * knows whether a response is well-formed — asserts that once, instead of every consumer repeating a
- * `!!`/null-check whose answer was already known at parse time. Fixture construction (tests) can still
+ * redundant null-check whose answer was already known at parse time. Fixture construction (tests) can still
  * omit them; the field defaults below exist for that convenience only — production code always goes
  * through the adapter, which never relies on them.
  *

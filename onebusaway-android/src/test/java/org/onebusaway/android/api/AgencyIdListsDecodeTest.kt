@@ -45,7 +45,7 @@ class AgencyIdListsDecodeTest {
         val envelope: ObaEnvelope<ListWithReferences<String>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = envelope.data!!
+        val data = requireNotNull(envelope.data)
         assertEquals(listOf("1_100", "1_101", "1_102"), data.list)
         assertEquals(false, data.limitExceeded)
     }
@@ -60,7 +60,7 @@ class AgencyIdListsDecodeTest {
         """.trimIndent()
         val envelope: ObaEnvelope<ListWithReferences<String>> = json.decodeFromString(body)
 
-        val data = envelope.data!!
+        val data = requireNotNull(envelope.data)
         assertTrue(data.list.contains("1_75403"))
         assertEquals(true, data.limitExceeded)
     }

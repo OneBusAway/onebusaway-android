@@ -46,7 +46,6 @@ enum class StopDirection(
         private val byKey = entries.associateBy { it.key }
 
         /** Unknown directions fall back to [NONE] (index 8), matching the legacy default. */
-        @JvmStatic
         fun fromKey(key: String): StopDirection = byKey[key] ?: NONE
     }
 }

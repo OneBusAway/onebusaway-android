@@ -48,7 +48,6 @@ object Backup {
 
     private fun dbFile(context: Context): File = context.getDatabasePath(AppDatabase.DATABASE_NAME)
 
-    @JvmStatic
     fun backup(context: Context, uri: Uri) {
         try {
             // Fold committed WAL pages into the main file so the byte copy captures the latest state.
@@ -81,8 +80,6 @@ object Backup {
      * no close, so no consumer is left holding a stale/closed [AppDatabase] and the process is never
      * restarted.
      */
-    @JvmStatic
-    @Throws(IOException::class)
     fun restore(context: Context, uri: Uri) {
         val backupFile = uriToTempFile(context, uri)
             ?: throw IOException("Could not read backup file")

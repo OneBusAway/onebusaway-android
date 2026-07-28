@@ -46,21 +46,21 @@ class InterpolateAlongPolylineTest {
 
     @Test
     fun zeroDistanceReturnsFirstPoint() {
-        val result = poly.interpolate(0.0)!!
+        val result = poly.interpolate(0.0).let(::requireNotNull)
         assertEquals(0.0, result.latitude, 1e-12)
         assertEquals(0.0, result.longitude, 1e-12)
     }
 
     @Test
     fun negativeDistanceReturnsFirstPoint() {
-        val result = poly.interpolate(-10.0)!!
+        val result = poly.interpolate(-10.0).let(::requireNotNull)
         assertEquals(0.0, result.latitude, 1e-12)
         assertEquals(0.0, result.longitude, 1e-12)
     }
 
     @Test
     fun distanceBeyondEndReturnsLastPoint() {
-        val result = poly.interpolate(999_999.0)!!
+        val result = poly.interpolate(999_999.0).let(::requireNotNull)
         assertEquals(0.0, result.latitude, 1e-12)
         assertEquals(2.0, result.longitude, 1e-12)
     }
@@ -68,7 +68,7 @@ class InterpolateAlongPolylineTest {
     @Test
     fun midSegmentInterpolation() {
         // Halfway along the first segment should give ~0.5 degrees longitude.
-        val result = poly.interpolate(segLen / 2)!!
+        val result = poly.interpolate(segLen / 2).let(::requireNotNull)
         assertEquals(0.0, result.latitude, 1e-12)
         assertEquals(0.5, result.longitude, 0.01)
     }
@@ -76,7 +76,7 @@ class InterpolateAlongPolylineTest {
     @Test
     fun exactVertexDistance() {
         // At the exact distance of the second point.
-        val result = poly.interpolate(segLen)!!
+        val result = poly.interpolate(segLen).let(::requireNotNull)
         assertEquals(0.0, result.latitude, 1e-12)
         assertEquals(1.0, result.longitude, 1e-9)
     }
@@ -84,7 +84,7 @@ class InterpolateAlongPolylineTest {
     @Test
     fun singlePointPolyline() {
         val single = Polyline(listOf(gp(47.6, -122.3)))
-        val result = single.interpolate(50.0)!!
+        val result = single.interpolate(50.0).let(::requireNotNull)
         assertEquals(47.6, result.latitude, 1e-12)
         assertEquals(-122.3, result.longitude, 1e-12)
     }
@@ -93,7 +93,7 @@ class InterpolateAlongPolylineTest {
     fun subPolylineReturnsEndpoints() {
         val sub = poly.subPolyline(segLen * 0.25, segLen * 0.75)
         assertNotNull(sub)
-        assertEquals(0.25, sub!!.first().longitude, 0.01)
+        assertEquals(0.25, requireNotNull(sub).first().longitude, 0.01)
         assertEquals(0.75, sub.last().longitude, 0.01)
     }
 
@@ -172,9 +172,9 @@ class InterpolateAlongPolylineTest {
     @Test
     fun interpolateWithSegmentMatchesDirect() {
         val dist = segLen * 0.75
-        val direct = poly.interpolate(dist)!!
+        val direct = poly.interpolate(dist).let(::requireNotNull)
         val seg = poly.segmentIndex(dist)
-        val indexed = poly.interpolate(dist, seg)!!
+        val indexed = poly.interpolate(dist, seg).let(::requireNotNull)
         assertEquals(direct.latitude, indexed.latitude, 1e-12)
         assertEquals(direct.longitude, indexed.longitude, 1e-12)
     }

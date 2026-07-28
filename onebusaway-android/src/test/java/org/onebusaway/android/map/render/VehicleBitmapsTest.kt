@@ -24,7 +24,7 @@ import org.onebusaway.android.models.RouteTrips
 
 /**
  * Pure-logic guards for [VehicleBitmaps]'s route-type resolution: the cablecar→tram promise, and the
- * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020).
+ * unresolvable-trip/route fallback that replaced the crashing forced-null chain (#2020).
  */
 class VehicleBitmapsTest {
 
@@ -68,7 +68,7 @@ class VehicleBitmapsTest {
 
     /**
      * #2020: a vehicle mid-block-interline reports an activeTripId this route's poll never fetched, so
-     * the references pool can't resolve it. That used to be a `!!` and killed the process on the
+     * the references pool can't resolve it. That used to force a non-null value and killed the process on the
      * reactive poll path; it must now degrade to the default glyph.
      */
     @Test
@@ -77,7 +77,7 @@ class VehicleBitmapsTest {
         assertEquals(ObaRoute.TYPE_BUS, VehicleBitmaps.routeTypeFor(response, "absent-trip"))
     }
 
-    /** The trip resolved but its route didn't — the second half of the old `!!` chain. */
+    /** The trip resolved but its route didn't — the second half of the old forced-null chain. */
     @Test
     fun missingRouteFallsBackToTheDefaultGlyphInsteadOfThrowing() {
         val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = null)

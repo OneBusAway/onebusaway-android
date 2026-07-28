@@ -40,18 +40,16 @@ object ArrivalsFixtures {
     }
 
     /** Decodes a `res/raw` arrivals-and-departures fixture into the api/ envelope. */
-    @JvmStatic
     fun load(context: Context, fixture: String): ObaEnvelope<EntryWithReferences<ArrivalsForStop>> = Resources.read(context, Resources.getTestUri(fixture))
         .use { json.decodeFromString(it.readText()) }
 
-    private fun snapshot(env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>): StopArrivals = StopArrivals(env.data!!, env.currentTime, 0)
+    private fun snapshot(env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>): StopArrivals = StopArrivals(requireNotNull(env.data), env.currentTime, 0)
 
     /**
      * The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals].
      * Favorite state is no longer baked into [ArrivalInfo] — it's a live overlay keyed by route id — so
      * promotion tests pass a favorite-route-id set straight to `findPreferredArrivalIndexes`.
      */
-    @JvmStatic
     fun convert(
         context: Context,
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>,
@@ -66,17 +64,15 @@ object ArrivalsFixtures {
     )
 
     /** All situations (stop/agency + route alerts) for the fixture, via the production aggregation. */
-    @JvmStatic
     fun allSituations(
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>
     ): List<ObaSituation> = snapshot(env).situations()
 
     /** Just the stop/agency-level situations the entry references directly (not route alerts). */
-    @JvmStatic
     fun stopSituations(
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>
     ): List<ObaSituation> {
         val snapshot = snapshot(env)
-        return env.data!!.entry.situationIds.mapNotNull { snapshot.situation(it) }
+        return requireNotNull(env.data).entry.situationIds.mapNotNull { snapshot.situation(it) }
     }
 }

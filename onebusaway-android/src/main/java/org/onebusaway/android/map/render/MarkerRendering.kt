@@ -83,10 +83,8 @@ object MarkerRendering {
      * Rasterizes [resId] into a square [sizePx] bitmap, optionally recolored by [tint] and inset by
      * [insetPx] on every side (a positive inset shrinks the artwork; a negative one zooms/crops it).
      */
-    @JvmStatic
-    @JvmOverloads
     fun rasterize(context: Context, @DrawableRes resId: Int, sizePx: Int, tint: Int? = null, insetPx: Int = 0): Bitmap {
-        val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
+        val drawable = ContextCompat.getDrawable(context, resId).let(::requireNotNull).mutate()
         if (tint != null) drawable.setTint(tint)
         val bitmap = createBitmap(sizePx, sizePx)
         drawable.setBounds(insetPx, insetPx, sizePx - insetPx, sizePx - insetPx)
@@ -111,7 +109,7 @@ object MarkerRendering {
         glyphSize: Float,
         outline: Float
     ) {
-        val pin = ContextCompat.getDrawable(context, R.drawable.pin_base)!!.mutate()
+        val pin = ContextCompat.getDrawable(context, R.drawable.pin_base).let(::requireNotNull).mutate()
         pin.setBounds(0, 0, contentPx, contentPx)
         drawOutlined(canvas, pin, outline, pinColor)
 
@@ -167,7 +165,7 @@ object MarkerRendering {
         outline: Float,
         glyphColor: Int
     ) {
-        val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
+        val glyph = ContextCompat.getDrawable(context, glyphRes).let(::requireNotNull).mutate()
         glyph.setBounds(
             (cxPx - halfPx).toInt(),
             (cyPx - halfPx).toInt(),

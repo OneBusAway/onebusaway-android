@@ -59,7 +59,7 @@ class StopsForRouteRepositoryTest {
         val map = repository.routeMap("r").getOrThrow()
 
         assertEquals(listOf("a", "b"), groups.single().stops.map { it.id })
-        assertEquals(listOf("a", "b"), map!!.stops.map { it.stop.id })
+        assertEquals(listOf("a", "b"), requireNotNull(map).stops.map { it.stop.id })
         // The route was fetched once; the second projection came from the cache — no double fetch.
         assertEquals(listOf("r"), fake.calls)
     }

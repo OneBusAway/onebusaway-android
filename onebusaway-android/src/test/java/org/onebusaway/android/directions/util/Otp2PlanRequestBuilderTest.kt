@@ -344,5 +344,5 @@ class Otp2PlanRequestBuilderTest {
     /** Unwraps an [Optional.Present]'s non-null value, failing the test on [Optional.Absent] or a
      * present-but-null value (mirrors `dataOrThrow` elsewhere: absent-when-a-value-was-expected is a
      * test bug, not something to null-check around). */
-    private fun <T : Any> requirePresent(optional: Optional<T?>): T = (optional as Optional.Present<T?>).value!!
+    private fun <T : Any> requirePresent(optional: Optional<T?>): T = requireNotNull((optional as Optional.Present<T?>).value)
 }

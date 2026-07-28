@@ -24,17 +24,15 @@ import org.onebusaway.android.region.Region
 object MapHelpMapLibre {
     const val TAG = "MapHelpMapLibre"
 
-    @JvmStatic fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
+    fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
 
-    @JvmStatic fun makeLatLng(location: Location) = makeLatLng(location.latitude, location.longitude)
+    fun makeLatLng(location: Location) = makeLatLng(location.latitude, location.longitude)
 
-    @JvmStatic
     fun makeLocation(latLng: LatLng) = Location("FromLatLng").apply {
         latitude = latLng.latitude
         longitude = latLng.longitude
     }
 
-    @JvmStatic
     fun getRegionBounds(region: Region): LatLngBounds {
         var latMin = 90.0
         var latMax = -90.0
@@ -54,5 +52,5 @@ object MapHelpMapLibre {
             .build()
     }
 
-    @JvmStatic fun isMapsInstalled() = true
+    fun isMapsInstalled() = true
 }

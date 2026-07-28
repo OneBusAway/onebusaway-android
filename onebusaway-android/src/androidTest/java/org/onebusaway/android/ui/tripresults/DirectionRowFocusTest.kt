@@ -228,7 +228,7 @@ class DirectionRowFocusTest {
             TripResultsList(state = fullState, onFocusPoint = { focused = it })
         }
 
-        composeRule.onNodeWithText(routeLeg.board!!.name!!).performClick()
+        composeRule.onNodeWithText(requireNotNull(requireNotNull(routeLeg.board).name)).performClick()
         assertEquals(boardPoint, focused)
     }
 

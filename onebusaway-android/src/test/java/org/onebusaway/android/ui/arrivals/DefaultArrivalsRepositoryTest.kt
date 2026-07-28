@@ -280,7 +280,7 @@ class DefaultArrivalsRepositoryTest {
         val data = repository.getArrivals(STOP_ID, 65).getOrThrow()
 
         assertEquals(10L, data.arrivals.single().eta)
-        val loaded = repository.lastLoaded()!!
+        val loaded = repository.lastLoaded().let(::requireNotNull)
         assertEquals(STOP_ID, loaded.stop?.id)
         assertEquals(listOf("route-1"), loaded.routes?.map { it.id })
         assertTrue(loaded.hasArrivals)
@@ -354,7 +354,7 @@ class DefaultArrivalsRepositoryTest {
 
         val result = repository.getArrivals(STOP_ID, 65)
 
-        assertEquals("stop-error-404", result.exceptionOrNull()!!.message)
+        assertEquals("stop-error-404", result.exceptionOrNull().let(::requireNotNull).message)
         assertNull(repository.lastLoaded())
     }
 
@@ -386,7 +386,7 @@ class DefaultArrivalsRepositoryTest {
         val repository = repository(dataSource, clock = clock)
         dataSource.respond = { Result.success(snapshot()) }
         repository.getArrivals(STOP_ID, 65).getOrThrow()
-        assertEquals(1, repository.lastLoaded()!!.focusedTrips.size)
+        assertEquals(1, repository.lastLoaded().let(::requireNotNull).focusedTrips.size)
 
         // The 10-minute arrival's time passes; the re-projection drops it (negative ETA), so the
         // CAS-published refresh of [loaded] must show the focused trip gone.
@@ -396,7 +396,7 @@ class DefaultArrivalsRepositoryTest {
 
         assertTrue(stale.isStale)
         assertTrue(stale.arrivals.isEmpty())
-        val loaded = repository.lastLoaded()!!
+        val loaded = repository.lastLoaded().let(::requireNotNull)
         assertTrue(loaded.focusedTrips.isEmpty())
         // The rest of the holder is the same last good snapshot, unrolled.
         assertEquals(STOP_ID, loaded.stop?.id)
@@ -423,7 +423,7 @@ class DefaultArrivalsRepositoryTest {
         dataSource.respond = { Result.success(snapshot(tripId = "trip-B", shapeId = "shape-B")) }
         repository.getArrivals(STOP_ID, 65).getOrThrow()
         val freshTrips = setOf(FocusedTrip("trip-B", "route-1", "shape-B", null, directionId = 0))
-        assertEquals(freshTrips, repository.lastLoaded()!!.focusedTrips)
+        assertEquals(freshTrips, repository.lastLoaded().let(::requireNotNull).focusedTrips)
 
         // Release the stale path: its CAS must lose, leaving the fresh holder standing.
         gate.complete(Unit)
@@ -433,6 +433,6 @@ class DefaultArrivalsRepositoryTest {
         assertTrue(stale.isStale)
         assertEquals("trip-A", stale.arrivals.single().tripId)
         // ...but the published holder is NOT rolled back to it.
-        assertEquals(freshTrips, repository.lastLoaded()!!.focusedTrips)
+        assertEquals(freshTrips, repository.lastLoaded().let(::requireNotNull).focusedTrips)
     }
 }

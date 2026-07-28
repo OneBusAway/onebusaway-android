@@ -77,30 +77,30 @@ class TripDetailsDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<TripDetailsEntry>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = envelope.data!!
+        val data = requireNotNull(envelope.data)
         val entry = data.entry
         assertEquals("1_t", entry.tripId)
 
-        val status = entry.status!!
+        val status = requireNotNull(entry.status)
         assertTrue(status.predicted)
         assertEquals(-380L, status.scheduleDeviation)
         assertEquals("1_t", status.activeTripId)
         assertEquals("SCHEDULED", status.status)
         assertEquals("1_s2", status.nextStop)
 
-        assertEquals(2, entry.schedule!!.stopTimes.size)
+        assertEquals(2, requireNotNull(entry.schedule).stopTimes.size)
         assertEquals("1_s1", entry.schedule.stopTimes[0].stopId)
         // Wire DTO stays a raw Long of seconds-since-service-day (60180 = 16:43); the domain mint to
         // ScheduleTime happens later, in TripAdapters.toObaTripSchedule.
         assertEquals(60180L, entry.schedule.stopTimes[0].arrivalTime)
 
         // Trip ref uses the wire names tripHeadsign / tripShortName.
-        val trip = data.references.trip("1_t")!!
+        val trip = data.references.trip("1_t").let(::requireNotNull)
         assertEquals("1_r", trip.routeId)
         assertEquals("Downtown", trip.tripHeadsign)
         assertEquals("X", trip.tripShortName)
 
-        val route = data.references.route("1_r")!!
+        val route = data.references.route("1_r").let(::requireNotNull)
         assertEquals("FDB71A", route.color)
         assertEquals("Metro", data.references.agency(route.agencyId)?.name)
         assertEquals("Second", data.references.stop("1_s2")?.name)

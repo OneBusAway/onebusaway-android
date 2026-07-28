@@ -85,7 +85,6 @@ object VehicleBitmaps {
      * ([VehicleMarker.getBearing], compass degrees, 0°=N clockwise) when known — so it follows the
      * extrapolation glide — and falls back to the status's reported orientation off-shape (NaN bearing).
      */
-    @JvmStatic
     fun vehicleBitmap(
         context: Context,
         vehicle: VehicleMarker,
@@ -111,7 +110,6 @@ object VehicleBitmaps {
      * different color after a light/dark switch, which the old key could not tell apart. Only the
      * disc takes part — the glyph color is derived from it, so it adds no distinguishing power.
      */
-    @JvmStatic
     fun iconKey(
         context: Context,
         vehicle: VehicleMarker,
@@ -135,7 +133,7 @@ object VehicleBitmaps {
      * whatever `references` the poll happened to carry — and a vehicle mid-block-interline can
      * legitimately report an `activeTripId` this route's poll never fetched (which is why
      * `TripVehiclesDataSource.trip` exists at all, #1691); a blank id does it too (#2003). This was a
-     * `!!` chain inherited from the former Java, which turned that ordinary data gap into a foreground
+     * forced-null chain inherited from the former Java, which turned that ordinary data gap into a foreground
      * process death on the reactive poll path (#2020) — even though `vehicleTitle`, called one line
      * away in the same reconcile loop, already degraded to "".
      *
@@ -154,7 +152,6 @@ object VehicleBitmaps {
      * Collapses cablecar onto tram so a cablecar route and the equivalent tram route resolve to the same
      * icon (and therefore the same [iconKey]); every other type passes through unchanged.
      */
-    @JvmStatic
     @VisibleForTesting
     fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
@@ -186,12 +183,11 @@ object VehicleBitmaps {
      * vehicle always has a heading, so
      * the undirected slot ([UNDIRECTED]) isn't reachable from here.
      */
-    @JvmStatic
     fun directionIndex(vehicle: VehicleMarker): Int {
         // The path bearing is already a compass direction; the server orientation needs converting.
         val pathBearing = vehicle.bearing
         val direction = if (pathBearing.isNaN()) {
-            MathUtils.toDirection(vehicle.status.orientation!!)
+            MathUtils.toDirection(requireNotNull(vehicle.status.orientation))
         } else {
             pathBearing.toDouble()
         }

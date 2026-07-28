@@ -66,7 +66,7 @@ class ScheduleForStopDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<StopSchedule>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val schedule = envelope.data!!.entry
+        val schedule = requireNotNull(envelope.data).entry
         assertEquals("1_75403", schedule.stopId)
 
         val routeSchedules = schedule.stopRouteSchedules

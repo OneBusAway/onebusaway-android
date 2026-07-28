@@ -42,7 +42,6 @@ object BitmapUtils {
      *                   should be added
      * @return a JPEG image file with the current date/time as the name
      */
-    @Throws(IOException::class)
     fun createImageFile(context: Context, nameSuffix: String?): File {
         // Create an image file name
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
@@ -71,7 +70,6 @@ object BitmapUtils {
      * @param reqHeight desired height
      * @return a smaller version of the image at pathName, given the desired width and height
      */
-    @Throws(IOException::class)
     fun decodeSampledBitmapFromFile(pathName: String, reqWidth: Int, reqHeight: Int): Bitmap {
         // First decode with inJustDecodeBounds=true to check dimensions
         val options = BitmapFactory.Options()
@@ -148,7 +146,6 @@ object BitmapUtils {
      * @param imagePath Path to image
      * @return The resulted Bitmap after manipulation
      */
-    @Throws(IOException::class)
     private fun rotateImageIfRequired(img: Bitmap, imagePath: String): Bitmap {
         val ei = ExifInterface(imagePath)
         val orientation = ei

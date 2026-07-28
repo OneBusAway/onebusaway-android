@@ -51,7 +51,7 @@ class ScheduleReplayExtrapolatorTest {
     fun `travel within first segment`() {
         // Start at 0m, advance 50s → 50s * 10m/s = 500m
         val result = replay(schedule, 0.0, 50.0)
-        assertEquals(500.0, result!!, 1e-9)
+        assertEquals(500.0, requireNotNull(result), 1e-9)
     }
 
     @Test
@@ -61,7 +61,7 @@ class ScheduleReplayExtrapolatorTest {
         // Advance 50s → target schedule time 230s
         // Distance at 230s: 1000 + (230-130)/200 * 2000 = 1000 + 1000 = 2000m
         val result = replay(schedule, 1500.0, 50.0)
-        assertEquals(2000.0, result!!, 1e-9)
+        assertEquals(2000.0, requireNotNull(result), 1e-9)
     }
 
     // --- Crossing a segment boundary ---
@@ -74,7 +74,7 @@ class ScheduleReplayExtrapolatorTest {
         // At 130s: depart stop 1. Remaining: 200-130=70s into second segment.
         // 70s * 10m/s = 700m past stop 1 → 1700m
         val result = replay(schedule, 500.0, 150.0)
-        assertEquals(1700.0, result!!, 1e-9)
+        assertEquals(1700.0, requireNotNull(result), 1e-9)
     }
 
     // --- Dwell at a stop ---
@@ -85,7 +85,7 @@ class ScheduleReplayExtrapolatorTest {
         // Vehicle arrives at stop 1 at 100s and dwells until 130s.
         // At 110s, vehicle is dwelling → distance = 1000m (stop 1)
         val result = replay(schedule, 500.0, 60.0)
-        assertEquals(1000.0, result!!, 1e-9)
+        assertEquals(1000.0, requireNotNull(result), 1e-9)
     }
 
     @Test
@@ -94,7 +94,7 @@ class ScheduleReplayExtrapolatorTest {
         // Schedule time = departure[1] = 130s (dwell already happened).
         // Advance 20s → target = 150s. Travel in seg 1→2: (150-130)/200 * 2000 = 200m → 1200m.
         val result = replay(schedule, 1000.0, 20.0)
-        assertEquals(1200.0, result!!, 1e-9)
+        assertEquals(1200.0, requireNotNull(result), 1e-9)
     }
 
     // --- Past end of trip ---
@@ -103,7 +103,7 @@ class ScheduleReplayExtrapolatorTest {
     fun `past last stop clamps to end`() {
         // Start at 0m, advance 500s. Schedule ends at 330s, dist=3000m.
         val result = replay(schedule, 0.0, 500.0)
-        assertEquals(3000.0, result!!, 1e-9)
+        assertEquals(3000.0, requireNotNull(result), 1e-9)
     }
 
     // --- Zero elapsed time ---
@@ -111,7 +111,7 @@ class ScheduleReplayExtrapolatorTest {
     @Test
     fun `zero dt returns start distance`() {
         val result = replay(schedule, 750.0, 0.0)
-        assertEquals(750.0, result!!, 1e-9)
+        assertEquals(750.0, requireNotNull(result), 1e-9)
     }
 
     // --- Edge cases ---

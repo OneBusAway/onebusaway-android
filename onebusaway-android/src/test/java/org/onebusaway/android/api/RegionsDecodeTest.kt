@@ -45,7 +45,7 @@ class RegionsDecodeTest {
         val envelope: ObaEnvelope<ListWithReferences<RegionDto>> =
             json.decodeFromString(File(path).readText())
         assertEquals(200, envelope.code)
-        return envelope.data!!.list
+        return requireNotNull(envelope.data).list
     }
 
     /** Ports testRequest: the bundled fail-safe file decodes to named regions. */

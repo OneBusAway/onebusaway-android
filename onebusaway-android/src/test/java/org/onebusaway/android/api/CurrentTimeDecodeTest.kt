@@ -45,7 +45,7 @@ class CurrentTimeDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<CurrentTime>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val entry = envelope.data!!.entry
+        val entry = requireNotNull(envelope.data).entry
         assertEquals(1782347930000L, entry.time)
         assertEquals("2026-06-24T10:38:50-07:00", entry.readableTime)
     }

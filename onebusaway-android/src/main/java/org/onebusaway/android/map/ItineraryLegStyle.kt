@@ -181,7 +181,7 @@ private fun street(hueAnchor: Int) = ItineraryLegStyle(
 
 /**
  * A mode's hue [anchor] rendered at the map's route chroma and tone, so a mode leg carries exactly the
- * weight a route line does. The elvis stands in for a `!!`: [mapRouteLineColorOrNull] declines only an
+ * weight a route line does. The fallback handles the case where [mapRouteLineColorOrNull] declines an
  * achromatic source, and every anchor below is chromatic — which `ItineraryLegStyleTest` holds to, by
  * asserting every leg kind draws a colour above the achromatic floor.
  */

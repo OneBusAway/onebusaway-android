@@ -51,4 +51,11 @@ class RouteLineWidthProfileTest {
         assertEquals(2.5f, ADJACENT_ROUTE_LINE_WIDTH_PROFILE.thicknessAt(10f), 0f)
         assertEquals(5f, ADJACENT_ROUTE_LINE_WIDTH_PROFILE.thicknessAt(16f), 0f)
     }
+
+    @Test
+    fun `focused ride journey context and unused route form three distinct weights`() {
+        assertEquals(15f, ITINERARY_RIDE_WIDTH_PROFILE.thicknessDp, 0f)
+        assertEquals(5f, ITINERARY_CONTEXT_WIDTH_PROFILE.thicknessDp, 0f)
+        assertEquals(2f, UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE.thicknessDp, 0f)
+    }
 }

@@ -734,9 +734,7 @@ fun HomeScreen(
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
                                             showItinerary = homeViewModel::showItineraryOnMap,
-                                            onFocusRouteLeg = { routeLeg, legPoints ->
-                                                homeViewModel.focusItineraryRouteLeg(routeLeg, legPoints)
-                                            },
+                                            onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
                                             // Each transit leg's Board/Alight row shows that stop's live ETA strip inline.

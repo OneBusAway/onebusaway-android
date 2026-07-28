@@ -113,6 +113,12 @@ class RouteMapController(
     // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
     private var highlightedSegment: List<GeoPoint> = emptyList()
 
+    // The trip whose leg was drilled into, already reduced to its middle journey-context weight (#2048).
+    // It draws above unused route geometry but below the ridden segment, keeping the rest of the journey
+    // visible around the selected leg. Empty for every non-directions launch. Set in start(); cleared in
+    // stop(), since the trip doesn't outlive the view that drilled into it.
+    private var itineraryContext: List<RoutePolyline> = emptyList()
+
     // The additional ridden legs of a stay-aboard interline (#2000) drilled into route focus, beyond the
     // leader route/direction: each names a route continued onto (the same route in another direction for
     // a self-interline, or a different route to load for a cross-route interline) and its seam stop. The
@@ -269,12 +275,14 @@ class RouteMapController(
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
         highlightedSegment: List<GeoPoint> = emptyList(),
-        extraSegments: List<RiddenSegment> = emptyList()
+        extraSegments: List<RiddenSegment> = emptyList(),
+        itineraryContext: List<RoutePolyline> = emptyList()
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
         this.highlightedSegment = highlightedSegment
         this.extraSegments = extraSegments
+        this.itineraryContext = itineraryContext
         // (Re)built as the extra routes load / poll in onRouteLoaded + startVehiclePolling; cleared here
         // so a prior focus's routes/polls can't leak into this one during the load window.
         this.extraRouteMaps = emptyMap()
@@ -586,6 +594,7 @@ class RouteMapController(
         directionStopId = null
         highlightedSegment = emptyList()
         extraSegments = emptyList()
+        itineraryContext = emptyList()
         extraRouteMaps = emptyMap()
         extraPolls = emptyMap()
         initialDirectionOverride = null
@@ -734,8 +743,15 @@ class RouteMapController(
             }
         )
         renderState.setRoutePolylines(
-            // Over a highlighted leg segment: thin the full route to context + the ridden span on top.
-            polylines = routePolylinesWithSegment(plan.polylines, highlightedSegment, routeColor),
+            // Over a highlighted leg segment: unused route first, the rider's remaining itinerary at a
+            // middle weight, then the ridden span on top (#2048). The trip stays out of
+            // [framingPolylines] — drilling into a leg frames that leg, not the whole journey again.
+            polylines = routePolylinesWithSegment(
+                plan.polylines,
+                highlightedSegment,
+                routeColor,
+                itineraryContext
+            ),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom
         )

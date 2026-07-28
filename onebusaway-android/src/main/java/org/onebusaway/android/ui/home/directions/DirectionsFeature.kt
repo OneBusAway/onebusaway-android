@@ -121,6 +121,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
+import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
@@ -277,8 +278,8 @@ fun DirectionsResultsSheet(
     itineraries: List<TripItinerary>,
     params: TripPlanParams?,
     showItinerary: (TripItinerary) -> Unit,
-    onFocusRouteLeg: (RouteLegRef, List<GeoPoint>) -> Unit,
-    onFocusLeg: (List<GeoPoint>) -> Unit,
+    onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
+    onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     modifier: Modifier = Modifier

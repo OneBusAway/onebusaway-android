@@ -338,6 +338,32 @@ class TripLogBuilderTest {
     }
 
     /**
+     * Every leg row knows which itinerary leg(s) it is, so tapping it can tell the map what to keep as
+     * context around the focus (#2048) — and a folded chain claims every leg the rider stays aboard for,
+     * not just the leader's.
+     */
+    @Test
+    fun everyLegRowNamesTheItineraryLegsItCovers() {
+        val entries = TripLogBuilder.build(
+            legs = listOf(walkLeg, transitLeg, walkLeg),
+            flatDirections = listOf(walkDir, boardDir, alightDir, walkDir),
+            routeLegRefs = listOf(null, transitRef, null)
+        )
+        assertEquals(
+            listOf(setOf(0), setOf(2)),
+            entries.filterIsInstance<TripLogEntry.Walk>().map { it.legIndices }
+        )
+        assertEquals(setOf(1), entries.filterIsInstance<TripLogEntry.Transit>().single().legIndices)
+
+        val chained = TripLogBuilder.build(
+            legs = listOf(transitLeg, transitLeg.copy(interlineWithPreviousLeg = true)),
+            flatDirections = listOf(boardDir, alightDir, continuationBoardDir, alightDir),
+            routeLegRefs = listOf(transitRef, null)
+        ).filterIsInstance<TripLogEntry.Transit>().single()
+        assertEquals(setOf(0, 1), chained.legIndices)
+    }
+
+    /**
      * A ferry leg reaches the renderer as a ferry. The leg's mode used to stop here — the timeline drew
      * a bus for every ride — so a Washington State Ferries crossing was a bus on a boat's schedule.
      */

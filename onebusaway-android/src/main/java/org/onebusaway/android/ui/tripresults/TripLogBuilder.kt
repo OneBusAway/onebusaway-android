@@ -81,7 +81,7 @@ object TripLogBuilder {
             val legPoints = leg.legGeometry?.decodedPoints().orEmpty()
             if (leg.mode?.isOnStreetNonTransit == true) {
                 val walk = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
-                entries += walkEntry(leg, walk, legPoints, isTransfer = legs.isTransferAt(legIndex))
+                entries += walkEntry(leg, walk, legPoints, legIndex, isTransfer = legs.isTransferAt(legIndex))
             } else {
                 val board = flatDirections.getOrNull(cursor++) ?: return@forEachIndexed
                 // Consume the generator's "get off" direction to keep the cursor aligned; the Board/Exit
@@ -92,9 +92,9 @@ object TripLogBuilder {
                     // chain leader's ride to this leg's destination/time and geometry rather than starting a
                     // new entry; the leader's routeLeg already carries the chain alight (built span-aware
                     // in TripResultsRepository).
-                    foldIntoLeader(entries, leg, board, legPoints, transitionByLeg[legIndex])
+                    foldIntoLeader(entries, leg, board, legPoints, legIndex, transitionByLeg[legIndex])
                 } else {
-                    entries += transitEntry(leg, board, legPoints, routeLegRefs.getOrNull(legIndex))
+                    entries += transitEntry(leg, board, legPoints, legIndex, routeLegRefs.getOrNull(legIndex))
                 }
             }
         }
@@ -113,6 +113,7 @@ object TripLogBuilder {
         leg: TripLeg,
         walk: Direction,
         legPoints: List<GeoPoint>,
+        legIndex: Int,
         isTransfer: Boolean
     ) = TripLogEntry.Walk(
         mode = leg.streetMode(),
@@ -125,7 +126,8 @@ object TripLogBuilder {
             LogStep(sub.directionText.str(), leg.steps.getOrNull(i)?.distance ?: 0.0, sub.focusPoint())
         },
         legPoints = legPoints,
-        focusPoint = walk.focusPoint()
+        focusPoint = walk.focusPoint(),
+        legIndices = setOf(legIndex)
     )
 
     /**
@@ -143,6 +145,7 @@ object TripLogBuilder {
         leg: TripLeg,
         board: Direction,
         legPoints: List<GeoPoint>,
+        legIndex: Int,
         transition: InterlineTransition?
     ) {
         val idx = entries.indexOfLast { it is TripLogEntry.Transit }
@@ -154,7 +157,9 @@ object TripLogBuilder {
             rideEvents = leader.rideEvents +
                 listOfNotNull(transition?.let { RideEvent.Transition(it) }) +
                 stopEvents(board),
-            legPoints = leader.legPoints + legPoints
+            legPoints = leader.legPoints + legPoints,
+            // The rider stays aboard across the seam, so the whole chain is one focus target.
+            legIndices = leader.legIndices + legIndex
         )
     }
 
@@ -162,6 +167,7 @@ object TripLogBuilder {
         leg: TripLeg,
         board: Direction,
         legPoints: List<GeoPoint>,
+        legIndex: Int,
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
@@ -178,7 +184,8 @@ object TripLogBuilder {
             // Only this leg's own stops; a folded chain's later legs append theirs after their seam.
             rideEvents = stopEvents(board),
             routeLeg = routeLeg,
-            legPoints = legPoints
+            legPoints = legPoints,
+            legIndices = setOf(legIndex)
         )
     }
 

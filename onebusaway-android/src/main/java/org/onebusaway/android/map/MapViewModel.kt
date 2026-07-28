@@ -39,6 +39,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
 import org.onebusaway.android.models.FocusedTrip
@@ -306,9 +307,15 @@ class MapViewModel @Inject constructor(
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
         highlightedSegment: List<GeoPoint> = emptyList(),
-        extraSegments: List<RiddenSegment> = emptyList()
+        extraSegments: List<RiddenSegment> = emptyList(),
+        itineraryContext: List<RoutePolyline> = emptyList(),
+        preserveItinerary: Boolean = false
     ) {
-        leaveCurrentView(clearStopFocus = !preserveStopFocus)
+        // A leg's route sub-focus keeps the trip it came from (its context lines were read by the caller
+        // before this teardown, and its start/end pins are left standing); every other entry drops it.
+        // Preserve based on the transition's origin rather than the context list: an itinerary whose
+        // legs have no drawable geometry still has start/end pins and retained controller state to keep.
+        leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
         persistRoute(routeId, directionStopId, initialDirectionId)
         routeController.start(
             routeId,
@@ -317,7 +324,8 @@ class MapViewModel @Inject constructor(
             initialDirectionId,
             focusTripId,
             highlightedSegment,
-            extraSegments
+            extraSegments,
+            itineraryContext
         )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
@@ -341,18 +349,22 @@ class MapViewModel @Inject constructor(
     /**
      * Tears down whatever the map is currently showing: stops the loaders (each controller clears its
      * own overlays) and drops the accumulated stops (keeping the focused one). Shared by the transitions
-     * above.
+     * above. [keepItinerary] is the one exception — a trip-plan leg drilling into its route, which hands
+     * the drawn trip forward as context rather than leaving it behind (#2048).
      */
-    private fun leaveCurrentView(clearStopFocus: Boolean) {
+    private fun leaveCurrentView(clearStopFocus: Boolean, keepItinerary: Boolean = false) {
         if (clearStopFocus) routeController.clearStopFocus()
         // Endpoint pins belong only to the directions-before-a-plan state; drop them on any transition
         // out (they can exist without [directionsActive], which is only set once an itinerary draws).
         directionsController.clearEndpoints()
         if (directionsActive) {
-            directionsController.clear()
             renderState.clearRoutePolylines()
             directionsActive = false
         }
+        // The drawn trip (its start/end pins and the legs a route sub-focus takes as context, #2048)
+        // survives only into that sub-focus. Unconditional otherwise, since by then [directionsActive] is
+        // already false — the sub-focus is what turned it off — and the pins would otherwise be stranded.
+        if (!keepItinerary) directionsController.clear()
         stopsController.stop()
         routeController.stop()
         bikeController.stop()
@@ -436,11 +448,16 @@ class MapViewModel @Inject constructor(
      * that trip's live vehicle together with the originating stop instead of framing the whole route, and
      * raises the "vehicle isn't on the map" toast when no live vehicle is running that trip. A plain row
      * tap carries no [ShowRouteRequest.focusTripId] and just frames the whole route.
+     *
+     * [withinDirections] marks the one caller that drills in from a *trip plan* — a leg (or its inline
+     * ETA pill) tapped in the directions drawer. That entry keeps the drawn trip beneath the route as
+     * de-emphasized context (#2048) instead of clearing it; every other caller arrives with no trip to keep.
      */
     fun toRoute(
         request: ShowRouteRequest,
         stopScoped: Boolean = false,
-        frameRoute: Boolean = true
+        frameRoute: Boolean = true,
+        withinDirections: Boolean = false
     ) {
         // Same route AND same direction anchor: a plain re-tap (no focus) just reframes (the recent-routes
         // re-tap); an ETA-pill focus instead fits the vehicle+stop against the already-loaded vehicles (or
@@ -463,7 +480,11 @@ class MapViewModel @Inject constructor(
                 focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
                 highlightedSegment = request.highlightedSegment,
-                extraSegments = request.extraSegments
+                extraSegments = request.extraSegments,
+                // Read before entering: the transition tears the drawn itinerary down, and this is what
+                // survives it.
+                itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),
+                preserveItinerary = withinDirections
             )
         }
     }
@@ -473,7 +494,8 @@ class MapViewModel @Inject constructor(
      * session. The first call leaves the current view (dropping
      * stop/route focus + nearby stops) and enters directions mode; later calls (a different option
      * selected) just redraw the legs/pins. Deliberately does not restart the nearby-stops loader —
-     * directions hides nearby stops. Exiting (any other transition → [leaveCurrentView]) tears it down.
+     * directions hides nearby stops. Exiting (any other transition → [leaveCurrentView]) tears it down,
+     * except a leg's route sub-focus, which carries the trip on as context (#2048).
      */
     fun showItinerary(itinerary: TripItinerary) {
         if (!directionsActive) {
@@ -507,12 +529,15 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Frame a whole tapped itinerary leg: fit its polyline within the map's content padding, so the leg
-     * lands in the visible band above the directions results sheet. Guarded on an active directions
-     * session (like [focusItineraryPoint]); an empty point list is a no-op.
+     * Focus a whole tapped itinerary leg: recede the rest of the trip to context (#2048) and fit the
+     * leg's polyline within the map's content padding, so it lands in the visible band above the
+     * directions results sheet. [legIndices] names the itinerary legs the tapped row covers — more than
+     * one for a folded interline chain. Guarded on an active directions session (like
+     * [focusItineraryPoint]); an empty point list is a no-op.
      */
-    fun focusItineraryLeg(points: List<GeoPoint>) {
+    fun focusItineraryLeg(points: List<GeoPoint>, legIndices: Set<Int>) {
         if (!directionsActive || points.isEmpty()) return
+        directionsController.focusLegs(legIndices)
         // A short walking leg (crossing a street) frames to a block-level floor rather than the default
         // minimum, so the user doesn't have to zoom in further to read it.
         mapHost.frameItineraryLeg(points, WALK_LEG_MIN_FRAMING_SPAN_DEG)

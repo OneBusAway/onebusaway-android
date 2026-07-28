@@ -8,7 +8,9 @@ import org.junit.Test
 import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.map.render.haversineMeters
@@ -18,6 +20,26 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
 
 class RouteViewGeometryTest {
+
+    @Test
+    fun `itinerary context keeps leg identity at a middle plain weight`() {
+        val line = RoutePolyline(
+            color = 0xFF123456.toInt(),
+            points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
+            widthProfile = FOCUSED_ROUTE_LINE_WIDTH_PROFILE,
+            directional = true,
+            dash = RouteLineDash.TRAIL,
+            transforms = setOf(RoutePolylineTransform.ZOOM_SIMPLIFY)
+        )
+
+        val context = listOf(line).asItineraryContext().single()
+
+        assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE, context.widthProfile)
+        assertEquals(line.color, context.color)
+        assertEquals(line.dash, context.dash)
+        assertEquals(line.transforms, context.transforms)
+        assertEquals(false, context.directional)
+    }
 
     @Test
     fun `single route view and focused-stop route share the focused width profile`() {

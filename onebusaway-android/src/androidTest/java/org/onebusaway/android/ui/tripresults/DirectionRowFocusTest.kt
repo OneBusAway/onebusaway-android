@@ -64,7 +64,8 @@ class DirectionRowFocusTest {
         isTransfer = false,
         steps = listOf(LogStep("Turn left onto Pike St", point = stepPoint)),
         legPoints = walkLegPoints,
-        focusPoint = walkLegPoints.first()
+        focusPoint = walkLegPoints.first(),
+        legIndices = setOf(0)
     )
 
     private val routeLeg = RouteLegRef(
@@ -88,7 +89,8 @@ class DirectionRowFocusTest {
         realtime = RealtimeState.OnTime,
         rideEvents = listOf(RideEvent.Stop(LogStop("Capitol Hill Station", stopMidPoint))),
         routeLeg = routeLeg,
-        legPoints = transitLegPoints
+        legPoints = transitLegPoints,
+        legIndices = setOf(1)
     )
 
     private val arrive = TripLogEntry.Terminal(TerminalKind.ARRIVE, ServerTime(32 * 60_000L), "Alaska Junction", alightPoint)
@@ -118,7 +120,7 @@ class DirectionRowFocusTest {
 
     @Test
     fun tappingWalkHeader_framesTheLeg_withoutRevealingItsSteps() {
-        var framed: List<GeoPoint>? = null
+        var framed: FocusedLeg? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(state = walkOnlyState, onFocusLeg = { framed = it }, onFocusPoint = { focused = it })
@@ -130,7 +132,9 @@ class DirectionRowFocusTest {
         // Tapping the walk header frames the leg but does not reveal its steps (#2040) — that's the
         // chevron's job, checked separately below.
         composeRule.onNodeWithText(walkAction).performClick()
-        assertEquals(walkLegPoints, framed)
+        // The focus carries which itinerary leg it is, so the map can recede the rest of the trip
+        // around it rather than drawing this leg alone (#2048).
+        assertEquals(FocusedLeg(walkLegPoints, setOf(0)), framed)
         composeRule.onNodeWithText(walk.steps.single().text).assertDoesNotExist()
 
         // Tapping the chevron reveals the steps without re-framing the leg.
@@ -147,12 +151,12 @@ class DirectionRowFocusTest {
 
     @Test
     fun tappingTransitHeader_highlightsRoute_withoutRevealingIntermediateStops() {
-        var captured: Pair<RouteLegRef, List<GeoPoint>>? = null
+        var captured: Pair<RouteLegRef, FocusedLeg>? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(
                 state = transitOnlyState,
-                onFocusRouteLeg = { rl, pts -> captured = rl to pts },
+                onFocusRouteLeg = { rl, leg -> captured = rl to leg },
                 onFocusPoint = { focused = it }
             )
         }
@@ -163,7 +167,7 @@ class DirectionRowFocusTest {
         // Tapping the transit header highlights the route but does not reveal the stops (#2040).
         composeRule.onNodeWithText(transitTitle).performClick()
         assertEquals("1_100", captured?.first?.routeId)
-        assertEquals(transitLegPoints, captured?.second)
+        assertEquals(FocusedLeg(transitLegPoints, setOf(1)), captured?.second)
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()
 
         // Tapping the chevron reveals the stops without re-highlighting the route.
@@ -242,7 +246,7 @@ class DirectionRowFocusTest {
     @Test
     fun walkLegWithoutPolyline_fallsBackToFocusingItsPoint() {
         val noGeometry = walk.copy(legPoints = emptyList(), focusPoint = boardPoint, steps = emptyList())
-        var framed: List<GeoPoint>? = null
+        var framed: FocusedLeg? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(
@@ -261,7 +265,7 @@ class DirectionRowFocusTest {
     @Test
     fun walkLegWithNeitherPolylineNorPoint_movesTheMapNowhere() {
         val inert = walk.copy(legPoints = emptyList(), focusPoint = null, steps = emptyList())
-        var framed: List<GeoPoint>? = null
+        var framed: FocusedLeg? = null
         var focused: GeoPoint? = null
         composeRule.setContent {
             TripResultsList(

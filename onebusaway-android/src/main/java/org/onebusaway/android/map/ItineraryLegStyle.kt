@@ -22,6 +22,7 @@ import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
+import org.onebusaway.android.map.render.RoutePolyline
 
 /**
  * How one trip-plan itinerary leg is stroked on the directions map (#2041).
@@ -95,6 +96,32 @@ internal fun itineraryLegStyle(kind: ItineraryLegKind, routeColor: Int?): Itiner
     ItineraryLegKind.BIKE -> street(BIKE_HUE_ANCHOR)
     ItineraryLegKind.BIKESHARE -> street(BIKESHARE_HUE_ANCHOR)
     ItineraryLegKind.CAR -> street(CAR_HUE_ANCHOR)
+}
+
+/**
+ * One drawn itinerary leg, paired with its index in the itinerary. The pairing is what lets a focus be
+ * expressed in *leg* terms: a leg that carries no geometry draws no line, so a position in the drawn
+ * list is not a leg index.
+ */
+internal data class ItineraryLegLine(val legIndex: Int, val line: RoutePolyline)
+
+/**
+ * The drawn itinerary composed around a leg focus (#2048): every leg the rider isn't looking at thinned
+ * to the same faint context weight a route takes under its ridden segment, and the focused leg(s)
+ * re-appended last so they draw at full weight on top. Focusing a leg therefore *recedes* the rest of
+ * the trip rather than erasing it — the rider keeps where this leg sits in the whole journey, which is
+ * exactly what a leg drawn alone can't say.
+ *
+ * [focusedLegIndices] is a set of leg indices rather than one index because a folded interline chain
+ * (#2000) is several itinerary legs the rider reads — and taps — as a single ride.
+ *
+ * Returns the lines unchanged when nothing is focused (the itinerary overview), and when the focus names
+ * no drawn leg (a leg that carried no geometry): there is nothing to raise, so nothing is lowered.
+ */
+internal fun List<ItineraryLegLine>.withLegFocus(focusedLegIndices: Set<Int>): List<RoutePolyline> {
+    val (focused, rest) = partition { it.legIndex in focusedLegIndices }
+    if (focused.isEmpty()) return map { it.line }
+    return rest.map { it.line }.asDeemphasizedRouteUnderlay() + focused.map { it.line }
 }
 
 private fun street(hueAnchor: Int) = ItineraryLegStyle(

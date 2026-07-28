@@ -267,7 +267,8 @@ fun MapFeature(
                     mapViewModel.toRoute(
                         directive.request,
                         directive.stopScoped,
-                        directive.frameRoute
+                        directive.frameRoute,
+                        directive.withinDirections
                     )
                 is MapDirective.RestoreViewport ->
                     mapViewModel.restoreViewport(directive.viewport)
@@ -294,7 +295,7 @@ fun MapFeature(
                 is MapDirective.FocusItineraryPoint ->
                     mapViewModel.focusItineraryPoint(directive.point)
                 is MapDirective.FocusItineraryLeg ->
-                    mapViewModel.focusItineraryLeg(directive.points)
+                    mapViewModel.focusItineraryLeg(directive.points, directive.legIndices)
                 MapDirective.ClearItinerary -> mapViewModel.clearShownItinerary()
                 is MapDirective.SetDirectionsEndpoints ->
                     mapViewModel.setDirectionsEndpoints(directive.from, directive.to)

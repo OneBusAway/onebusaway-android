@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
@@ -169,6 +170,76 @@ class ArrivalInfoTest {
         val info = genuinePrediction
 
         assertEquals(info.eta, info.liveEta(ServerTime(now.epochMs + 30_000L)))
+    }
+
+    // --- Schedule-deviation color, end to end through the arrivals path (#2043) -------------------
+    //
+    // The band itself is pinned in ScheduleDeviationTest; these assert that ArrivalInfo actually
+    // *reaches* it at full precision. The old code floored each instant to whole minutes and
+    // subtracted, so a sub-minute deviation that straddled a minute boundary was reported as a full
+    // minute late — which is why a 60 s-late bus could never render on-time green.
+
+    /** An arrival [deviationSeconds] off its scheduled time, real-time unless told otherwise. */
+    private fun deviating(deviationSeconds: Long, predicted: Boolean = true) = infoFor(
+        arrival(
+            predicted = predicted,
+            predictedArrivalTime = scheduledArrival + deviationSeconds * 1_000L
+        )
+    )
+
+    @Test
+    fun `a deviation just inside the band renders on time`() {
+        assertEquals(R.color.stop_info_ontime, deviating(-89).color)
+        assertEquals(R.color.stop_info_ontime, deviating(89).color)
+    }
+
+    @Test
+    fun `a deviation just outside the band renders early or late`() {
+        assertEquals(R.color.stop_info_early, deviating(-91).color)
+        assertEquals(R.color.stop_info_delayed, deviating(91).color)
+    }
+
+    /**
+     * The headline acceptance case for #2043. A minute late used to land on the late color because
+     * the two epoch-minute floors differed by one; it is now comfortably inside the band.
+     */
+    @Test
+    fun `a bus one minute late is on time and a bus two minutes late is not`() {
+        assertEquals(R.color.stop_info_ontime, deviating(60).color)
+        assertEquals(R.color.stop_info_delayed, deviating(120).color)
+    }
+
+    /**
+     * A deviation straddling a minute boundary: the predicted instant lands in the next epoch-minute
+     * from the scheduled one despite being only a second late. Flooring first made this "late".
+     */
+    @Test
+    fun `a one-second deviation across a minute boundary is still on time`() {
+        val scheduled = 1_783_119_119_000L // :59 within its epoch-minute
+        val info = infoFor(
+            arrival(
+                predicted = true,
+                predictedArrivalTime = scheduled + 1_000L, // 1 s later, but the next epoch-minute
+                scheduledArrivalTime = scheduled
+            )
+        )
+
+        assertEquals(R.color.stop_info_ontime, info.color)
+    }
+
+    @Test
+    fun `without a prediction the color is scheduled regardless of deviation`() {
+        assertEquals(R.color.stop_info_scheduled_time, deviating(600, predicted = false).color)
+        assertEquals(R.color.stop_info_scheduled_time, deviating(-600, predicted = false).color)
+    }
+
+    /** The pill/badge tier tracks the same state, so the two can't disagree about what's on time. */
+    @Test
+    fun `the fill color tracks the same state as the foreground color`() {
+        assertEquals(R.color.stop_info_ontime_fill, deviating(89).fillColor)
+        assertEquals(R.color.stop_info_delayed_fill, deviating(91).fillColor)
+        assertEquals(R.color.stop_info_early_fill, deviating(-91).fillColor)
+        assertEquals(R.color.stop_info_scheduled_fill, deviating(600, predicted = false).fillColor)
     }
 }
 

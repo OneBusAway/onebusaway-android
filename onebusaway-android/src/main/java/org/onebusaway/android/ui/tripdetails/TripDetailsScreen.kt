@@ -419,7 +419,7 @@ private fun TransitRail(
 private fun TripDetailsPreview() {
     ObaTheme {
         val lineColor = colorResource(R.color.theme_primary)
-        val vehicleColor = colorResource(R.color.stop_info_delayed)
+        val vehicleColor = colorResource(R.color.stop_info_delayed_fill)
         Column {
             TripHeaderSection(
                 TripHeader(
@@ -429,7 +429,7 @@ private fun TripDetailsPreview() {
                     agencyName = "Metro Transit",
                     vehicleId = "1234",
                     statusText = "2 min, 30 sec late (updated 3:01 PM)",
-                    statusColor = R.color.stop_info_delayed,
+                    statusColor = R.color.stop_info_delayed_fill,
                     isRealtime = true
                 )
             )

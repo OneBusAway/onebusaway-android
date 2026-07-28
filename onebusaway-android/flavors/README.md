@@ -80,10 +80,12 @@ That's it! All other branded strings use `%1$s` placeholders that automatically 
     <!-- Primary color with a "df" alpha prefix (~87% opaque) -->
     <color name="tutorial_background">#dfYOUR_PRIMARY_COLOR</color>
     <color name="ic_launcher_background">#YOUR_PRIMARY_COLOR</color>
-    <!-- Keep on-time arrivals green even if your theme isn't green -->
-    <color name="stop_info_ontime">#4CAF50</color>
 </resources>
 ```
+
+Do **not** override the `stop_info_*` colors. They encode schedule deviation (early / on time /
+late / no real-time), which is semantic rather than brand identity, and they are intentionally
+independent of `brand_color` so a brand hue can never collide two states into the same color.
 To override material 3 colors, please checkout the [theme builder](https://material-foundation.github.io/material-theme-builder).
 
 #### do_not_translate.xml

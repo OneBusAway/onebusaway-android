@@ -109,72 +109,33 @@ public class ArrivalInfoUtils {
     return preferredIndexes;
   }
 
-  /**
-   * Returns the status color to be used, depending on whether the vehicle is running early, late,
-   * ontime, or if we don't have real-time info (i.e., scheduled)
-   *
-   * @param scheduled the scheduled time, in minutes past unix epoch
-   * @param predicted the predicted time, in minutes past unix epoch
-   * @return the status color to be used, depending on whether the vehicle is running early, late,
-   *     ontime, or if we don't have real-time info (i.e., scheduled)
-   */
-  public static int computeColor(final long scheduled, final long predicted) {
-    return statusColor(predicted != 0, predicted - scheduled);
-  }
+  // The schedule-deviation color methods that used to live here (computeColor, statusColor,
+  // computeColorFromDeviation) moved to org.onebusaway.android.util.ScheduleDeviation in #2043.
+  // They bucketed on a strict sign test over whole minutes, so "on time" required the predicted and
+  // scheduled minute-past-epoch to be exactly equal and was nearly unreachable on live data; the
+  // replacement takes a full-precision kotlin.time.Duration and applies the shared on-time band.
 
   /**
-   * The one live-vs-scheduled color choice shared by the map's vehicle markers/info windows and the
-   * arrival-list rows: the schedule-deviation color when real-time, otherwise the scheduled (gray)
-   * color. [deviationMinutes] is ignored when not real-time.
-   */
-  public static int statusColor(final boolean isRealtime, final long deviationMinutes) {
-    return isRealtime
-        ? computeColorFromDeviation(deviationMinutes)
-        : R.color.stop_info_scheduled_time;
-  }
-
-  /**
-   * Returns the status color to be used, depending on whether the vehicle is running early, late,
-   * ontime, or if we don't have real-time info (i.e., scheduled)
+   * Computes the arrival status label for an upcoming arrival.
    *
-   * @param delay the deviation from the scheduled time, in minutes - positive means bus is running
-   *     late, negative means early
-   * @return the status color to be used, depending on whether the vehicle is running early, late,
-   *     ontime, or if we don't have real-time info (i.e., scheduled)
-   */
-  public static int computeColorFromDeviation(final long delay) {
-    // Bus is arriving
-    if (delay > 0) {
-      // Arriving delayed
-      return R.color.stop_info_delayed;
-    } else if (delay < 0) {
-      // Arriving early
-      return R.color.stop_info_early;
-    } else {
-      // Arriving on time
-      return R.color.stop_info_ontime;
-    }
-  }
-
-  /**
-   * Computes the arrival status label from the delay (i.e., schedule deviation), where positive
-   * means the bus is running late and negative means the bus is running ahead of schedule
+   * <p>The bucket comes from {@link ScheduleDeviation}, the same call that picks the color, so the
+   * words and the hue can't contradict each other — before #2043 this took the raw signed minutes
+   * and applied its own strict sign test, which after the on-time band landed meant a vehicle could
+   * read "1 min late" in the on-time green.
    *
-   * @param delay schedule deviation, in minutes, for this vehicle where positive means the bus is
-   *     running late and negative means the bus is running ahead of schedule
-   * @return the arrival status label based on the deviation
+   * @param status the deviation bucket, from {@link ScheduleDeviation#status}
+   * @param minutes how far off schedule, in whole minutes, unsigned — only read when [status] is
+   *     early or delayed
    */
-  public static @NonNull String computeArrivalLabelFromDelay(@NonNull Resources res, long delay) {
-    if (delay > 0) {
-      // Arriving delayed
-      return res.getQuantityString(R.plurals.stop_info_arrive_delayed, (int) delay, delay);
-    } else if (delay < 0) {
-      // Arriving early
-      delay = -delay;
-      return res.getQuantityString(R.plurals.stop_info_arrive_early, (int) delay, delay);
-    } else {
-      // Arriving on time
-      return res.getString(R.string.stop_info_ontime);
+  public static @NonNull String computeArrivalLabel(
+      @NonNull Resources res, @NonNull ScheduleDeviation.Status status, long minutes) {
+    switch (status) {
+      case DELAYED:
+        return res.getQuantityString(R.plurals.stop_info_arrive_delayed, (int) minutes, minutes);
+      case EARLY:
+        return res.getQuantityString(R.plurals.stop_info_arrive_early, (int) minutes, minutes);
+      default:
+        return res.getString(R.string.stop_info_ontime);
     }
   }
 }

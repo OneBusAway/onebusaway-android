@@ -217,6 +217,16 @@ class RouteMapController(
     // the remainder. Null until the first poll lands (the sampler then yields nothing to draw).
     private var latestPoll: VehiclePoll? = null
 
+    // Memo behind [displayedRouteColor], which the per-frame vehicle sampler calls for every vehicle.
+    // Keyed by active trip id (unique across the polls in play); holds nulls, so absence means "not yet
+    // resolved" rather than "no color". Invalidated wholesale by [refreshRouteColorMemo] when any input
+    // is replaced — including extraPolls, since a composite's vehicles resolve out of several responses
+    // and a per-call identity check would clear the memo on every alternation.
+    private val routeColorMemo = HashMap<String, Int?>()
+    private var routeColorMemoPoll: VehiclePoll? = null
+    private var routeColorMemoExtras: Map<String, VehiclePoll>? = null
+    private var routeColorMemoAssignment: Map<RouteDirectionKey, Int> = emptyMap()
+
     // routeJob is the one-shot route shape/stops/header load; vehicleJob is the long-running periodic
     // vehicle poll, suspended/resumed independently with the map lifecycle (onPause cancels only it).
     private var routeJob: Job? = null
@@ -402,6 +412,9 @@ class RouteMapController(
         // routes/directions, so don't direction-filter and merge each extra route's poll — the vehicle
         // must show through every phase, not vanish when it flips direction/route at a seam (#2000).
         val directionFilter = if (isInterlineComposite) null else resolved.directionId
+        // Each vehicle is paired with the poll it came out of: an extra route's vehicle resolves its
+        // trip/route out of *that* route's references, not the leader's, which is the only place its
+        // color can be found (#2043).
         val leaderVehicles = extrapolatedVehicles(
             poll.response,
             setOf(id),
@@ -409,7 +422,7 @@ class RouteMapController(
             directionFilter,
             includeDataFixPoint,
             tripObservationRepository::lookupTripState
-        )
+        ).map { it to poll.response }
         val extraVehicles = if (isInterlineComposite) {
             extraPolls.flatMap { (extraRouteId, extraPoll) ->
                 extrapolatedVehicles(
@@ -419,7 +432,7 @@ class RouteMapController(
                     null,
                     includeDataFixPoint,
                     tripObservationRepository::lookupTripState
-                )
+                ).map { it to extraPoll.response }
             }
         } else {
             emptyList()
@@ -427,9 +440,14 @@ class RouteMapController(
         val merged = leaderVehicles + extraVehicles
         // Dedup only in the composite case (the one shared vehicle can briefly surface in two routes'
         // polls at a seam); the plain path stays byte-identical to before.
-        val vehicles = if (isInterlineComposite) merged.distinctBy { it.status.activeTripId } else merged
+        val vehicles = if (isInterlineComposite) {
+            merged.distinctBy { (vehicle, _) -> vehicle.status.activeTripId }
+        } else {
+            merged
+        }
+        refreshRouteColorMemo(poll, extraPolls, _focusedRouteColors.value)
         return MapVehicles(
-            markers = vehicles.map { it.toMarker() },
+            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source) },
             response = poll.response
         )
     }
@@ -1035,9 +1053,10 @@ class RouteMapController(
 
     /**
      * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
-     * draw-time live-vs-scheduled flag through (the renderer picks its icon from it).
+     * draw-time live-vs-scheduled flag through (the renderer picks its icon from it) and the color its
+     * route is currently drawn with (the disc rides its own line's color, #2043).
      */
-    private fun ExtrapolatedVehicle.toMarker(): VehicleMarker = VehicleMarker(
+    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips): VehicleMarker = VehicleMarker(
         // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
         activeTripId = status.activeTripId.orEmpty(),
         point = point,
@@ -1045,8 +1064,67 @@ class RouteMapController(
         status = status,
         fixTimeMs = fixTimeMs,
         bearing = bearing,
-        dataFixPoint = dataFixPoint
+        dataFixPoint = dataFixPoint,
+        routeColor = displayedRouteColor(response, status.activeTripId)
     )
+
+    /**
+     * The color the map is currently drawing [activeTripId]'s route with — see
+     * [VehicleMarker.routeColor] for why that is deliberately not the route's GTFS color.
+     *
+     * The lookup mirrors what the polylines do (`routeColors[key] ?: mapRouteLineColorOrNull(gtfs)`,
+     * see RouteViewGeometry), so a vehicle and its line resolve the same way and can't disagree.
+     *
+     * Both reference hops are nullable by contract (the poll carries whatever `references` it carries,
+     * and a block-interlined vehicle can report a trip this route's poll never fetched), so an
+     * unresolvable route yields null and the renderer falls back like any uncolored line.
+     *
+     * Memoized (see [refreshRouteColorMemo]) because this sits on the **per-frame** sampler —
+     * [sampleVehicles] runs at 20 Hz on Google and the display rate on MapLibre, for every vehicle.
+     * Uncached, each call re-materializes reference DTOs and re-parses the route's hex color string, so
+     * a 15-vehicle route would churn thousands of throwaway allocations a second on the frame loop to
+     * recompute a value that can only change when a new poll lands (every 10-30 s).
+     */
+    private fun displayedRouteColor(response: RouteTrips, activeTripId: String?): Int? {
+        val tripId = activeTripId ?: return null
+        // Not getOrPut: a legitimately-null color must stay memoized rather than re-resolving forever.
+        if (!routeColorMemo.containsKey(tripId)) {
+            routeColorMemo[tripId] = resolveDisplayedRouteColor(response, routeColorMemoAssignment, tripId)
+        }
+        return routeColorMemo[tripId]
+    }
+
+    /** Drops the [routeColorMemo] when anything it was derived from has been replaced. */
+    private fun refreshRouteColorMemo(
+        poll: VehiclePoll,
+        extras: Map<String, VehiclePoll>,
+        assignment: Map<RouteDirectionKey, Int>
+    ) {
+        // Identity compares: a new poll, extra-poll map or adjacency assignment is a fresh instance.
+        if (poll !== routeColorMemoPoll ||
+            extras !== routeColorMemoExtras ||
+            assignment !== routeColorMemoAssignment
+        ) {
+            routeColorMemoPoll = poll
+            routeColorMemoExtras = extras
+            routeColorMemoAssignment = assignment
+            routeColorMemo.clear()
+        }
+    }
+
+    private fun resolveDisplayedRouteColor(
+        response: RouteTrips,
+        assignment: Map<RouteDirectionKey, Int>,
+        activeTripId: String
+    ): Int? {
+        val trip = response.trip(activeTripId) ?: return null
+        val assigned = assignment[RouteDirectionKey(trip.routeId, trip.directionId)]
+        // Exactly what RouteViewGeometry does for the lines: an adjacency-assigned hue is already a
+        // drawn color and passes through, while an agency's GTFS color goes through the map's route-line
+        // policy (#2041) first. Skipping that policy here would put the disc on the raw agency color
+        // while its line drew the normalized one — the disagreement this resolution exists to prevent.
+        return assigned ?: mapRouteLineColorOrNull(response.route(trip.routeId)?.color)
+    }
 }
 
 /**

@@ -15,13 +15,13 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import kotlin.math.roundToLong
 import org.onebusaway.android.directions.model.Direction
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.geoPointOrNull
 
 /**
@@ -206,14 +206,22 @@ object TripLogBuilder {
     /** True for a walk leg flanked by transit on both sides — a transfer, vs. a first/last-mile walk. */
     private fun List<TripLeg>.isTransferAt(i: Int): Boolean = getOrNull(i - 1)?.mode?.isTransit == true && getOrNull(i + 1)?.mode?.isTransit == true
 
-    /** Real-time board state from the leg's [TripLeg.realTime] flag + [TripLeg.departureDelay]. */
+    /**
+     * Real-time board state from the leg's [TripLeg.realTime] flag + [TripLeg.departureDelay].
+     *
+     * Which bucket the leg falls in is [ScheduleDeviation]'s call, shared with the arrivals drawer
+     * (#2043); this used to round to the nearest minute and treat only an exact 0 as on time, giving
+     * the trip planner a ±30 s window where the rest of the app had none. The rounded minute count
+     * still supplies the "N min late/early" text — the band decides the bucket, the rounding only
+     * words it, and the band's edges (±90 s) always round to at least 1, so there is no "0 min late".
+     */
     private fun TripLeg.realtimeState(): RealtimeState {
-        if (!realTime) return RealtimeState.Unknown
-        val minutes = (departureDelay.inWholeSeconds / 60.0).roundToLong()
-        return when {
-            minutes == 0L -> RealtimeState.OnTime
-            minutes > 0L -> RealtimeState.Late(minutes)
-            else -> RealtimeState.Early(-minutes)
+        val minutes = ScheduleDeviation.roundedMinutes(departureDelay)
+        return when (ScheduleDeviation.status(realTime, departureDelay)) {
+            ScheduleDeviation.Status.SCHEDULED -> RealtimeState.Unknown
+            ScheduleDeviation.Status.ON_TIME -> RealtimeState.OnTime
+            ScheduleDeviation.Status.DELAYED -> RealtimeState.Late(minutes)
+            ScheduleDeviation.Status.EARLY -> RealtimeState.Early(-minutes)
         }
     }
 

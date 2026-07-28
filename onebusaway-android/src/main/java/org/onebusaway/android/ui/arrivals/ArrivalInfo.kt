@@ -17,8 +17,10 @@
 package org.onebusaway.android.ui.arrivals
 
 import android.content.Context
+import androidx.annotation.ColorRes
 import java.text.DateFormat
 import java.util.Date
+import kotlin.time.Duration
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
@@ -27,6 +29,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.getRouteDisplayName
 
 /**
@@ -51,9 +54,20 @@ class ArrivalInfo(
     val notifyText: String
 
     /**
-     * The resource code for the color that should be used for the arrival time.
+     * The schedule-deviation color for the arrival time, as a color resource id. This is the
+     * **display** tier — the ETA is set large enough to carry it; small text wants
+     * [ScheduleDeviation.Status.textColorRes] instead.
      */
+    @get:ColorRes
     val color: Int
+
+    /**
+     * The same schedule-deviation state as [color], in the **on-fill** tier: darkened so white text
+     * drawn on top of it clears WCAG AA. Use it wherever the color becomes a filled surface — the
+     * ETA pills and the starred-stop badges — rather than the text.
+     */
+    @get:ColorRes
+    val fillColor: Int
 
     /**
      * True if there is real-time arrival info available for this trip, false if there is not.
@@ -178,10 +192,6 @@ class ArrivalInfo(
             isArrival = false
         }
 
-        val scheduledMins = scheduled.epochMs / MS_IN_MINS
-        // 0 when there's no prediction, preserving the prior sentinel behavior into computeColor below.
-        val predictedMins = predictedTime?.let { it.epochMs / MS_IN_MINS } ?: 0L
-
         // A prediction is only usable when the server actually gave us one. A closed stop keeps
         // `predicted:true` but suppresses the near-term prediction (decoded to a null instant at the
         // wire→domain boundary, issue #1687); keying the ETA off the boolean alone would subtract a 0
@@ -200,14 +210,23 @@ class ArrivalInfo(
         // #1781) exactly consistent with this poll-time value at t=0.
         eta = liveEta(now)
 
-        color = ArrivalInfoUtils.computeColor(scheduledMins, predictedMins)
+        // The deviation stays at full precision: a same-domain ServerTime subtraction, so no device
+        // clock can leak in (#1620). Flooring each instant to whole minutes first — what this did
+        // before #2043 — made "on time" mean the two minute-past-epoch values were exactly equal, so a
+        // bus 20 s late that happened to straddle a minute boundary rendered late and the green
+        // on-time state was nearly never shown. The color and the status label both bucket on the one
+        // [ScheduleDeviation.status] call below, so they can never contradict each other.
+        val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
+        val deviationStatus = ScheduleDeviation.status(hasPrediction, deviation)
+        color = deviationStatus.displayColorRes
+        fillColor = deviationStatus.fillColorRes
 
         statusText = computeStatusLabel(
             context,
             now,
             hasPrediction,
-            scheduledMins,
-            predictedMins,
+            deviationStatus,
+            ScheduleDeviation.roundedMinutes(deviation.absoluteValue),
             includeArrivalDepartureInStatusLabel
         )
         timeText = computeTimeLabel(context)
@@ -223,12 +242,18 @@ class ArrivalInfo(
      * @param includeArrivalDeparture true if the arrival/departure label should be included, false
      *                                if it should not
      */
+
+    /**
+     * [deviationStatus] and [deviationMinutes] come from the same [ScheduleDeviation.status] call that
+     * picked [color], so the words and the hue always agree: [deviationMinutes] is the unsigned
+     * magnitude, read only when the status is early or delayed.
+     */
     private fun computeStatusLabel(
         context: Context?,
         now: ServerTime,
         hasPrediction: Boolean,
-        scheduledMins: Long,
-        predictedMins: Long,
+        deviationStatus: ScheduleDeviation.Status,
+        deviationMinutes: Long,
         includeArrivalDeparture: Boolean
     ): String {
         if (context == null) {
@@ -272,63 +297,48 @@ class ArrivalInfo(
         }
 
         if (hasPrediction) {
-            // Real-time info
-            var delay = predictedMins - scheduledMins
+            val minutes = deviationMinutes.toInt()
 
             if (eta >= 0) {
                 // Bus hasn't yet arrived/departed
-                return ArrivalInfoUtils.computeArrivalLabelFromDelay(res, delay)
+                return ArrivalInfoUtils.computeArrivalLabel(res, deviationStatus, deviationMinutes)
             }
 
             // Arrival/departure time has passed
             if (!includeArrivalDeparture) {
                 // Don't include "depart" or "arrive" in label
-                return if (delay > 0) {
-                    // Delayed
-                    res.getQuantityString(
+                return when (deviationStatus) {
+                    ScheduleDeviation.Status.DELAYED -> res.getQuantityString(
                         R.plurals.stop_info_status_late_without_arrive_depart,
-                        delay.toInt(),
-                        delay
+                        minutes,
+                        deviationMinutes
                     )
-                } else if (delay < 0) {
-                    // Early
-                    delay = -delay
-                    res.getQuantityString(
+                    ScheduleDeviation.Status.EARLY -> res.getQuantityString(
                         R.plurals.stop_info_status_early_without_arrive_depart,
-                        delay.toInt(),
-                        delay
+                        minutes,
+                        deviationMinutes
                     )
-                } else {
-                    // On time
-                    context.getString(R.string.stop_info_ontime)
+                    else -> context.getString(R.string.stop_info_ontime)
                 }
             }
 
             return if (isArrival) {
                 // Is an arrival time
-                if (delay > 0) {
-                    // Arrived late
-                    res.getQuantityString(R.plurals.stop_info_arrived_delayed, delay.toInt(), delay)
-                } else if (delay < 0) {
-                    // Arrived early
-                    delay = -delay
-                    res.getQuantityString(R.plurals.stop_info_arrived_early, delay.toInt(), delay)
-                } else {
-                    // Arrived on time
-                    context.getString(R.string.stop_info_arrived_ontime)
+                when (deviationStatus) {
+                    ScheduleDeviation.Status.DELAYED ->
+                        res.getQuantityString(R.plurals.stop_info_arrived_delayed, minutes, deviationMinutes)
+                    ScheduleDeviation.Status.EARLY ->
+                        res.getQuantityString(R.plurals.stop_info_arrived_early, minutes, deviationMinutes)
+                    else -> context.getString(R.string.stop_info_arrived_ontime)
                 }
             } else {
                 // Is a departure time
-                if (delay > 0) {
-                    // Departed late
-                    res.getQuantityString(R.plurals.stop_info_depart_delayed, delay.toInt(), delay)
-                } else if (delay < 0) {
-                    // Departed early
-                    delay = -delay
-                    res.getQuantityString(R.plurals.stop_info_depart_early, delay.toInt(), delay)
-                } else {
-                    // Departed on time
-                    context.getString(R.string.stop_info_departed_ontime)
+                when (deviationStatus) {
+                    ScheduleDeviation.Status.DELAYED ->
+                        res.getQuantityString(R.plurals.stop_info_depart_delayed, minutes, deviationMinutes)
+                    ScheduleDeviation.Status.EARLY ->
+                        res.getQuantityString(R.plurals.stop_info_depart_early, minutes, deviationMinutes)
+                    else -> context.getString(R.string.stop_info_departed_ontime)
                 }
             }
         } else {

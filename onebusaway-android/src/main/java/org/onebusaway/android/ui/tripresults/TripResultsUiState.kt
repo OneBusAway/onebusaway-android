@@ -21,6 +21,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
@@ -252,14 +253,31 @@ data class LogStop(val name: String, val point: GeoPoint? = null)
 
 /**
  * The real-time state of a transit board, shown as an on-time / delayed chip. [Unknown] (no real-time
- * data) renders no chip; [OnTime] when the delay rounds to zero whole minutes (i.e. within 30s of
- * schedule either way); [Late]/[Early] carry whole minutes.
+ * data) renders no chip; which of the others applies is [ScheduleDeviation]'s call, shared with the
+ * arrivals drawer (#2043); [Late]/[Early] carry the deviation worded in whole minutes.
+ *
+ * Each case names the [ScheduleDeviation.Status] it displays as, so the chip reads its color off the
+ * shared palette instead of re-spelling the state→color mapping — the same coupling that used to let
+ * this screen and the arrivals drawer disagree about which hue meant "early".
  */
 sealed interface RealtimeState {
-    data object Unknown : RealtimeState
-    data object OnTime : RealtimeState
-    data class Late(val minutes: Long) : RealtimeState
-    data class Early(val minutes: Long) : RealtimeState
+    val status: ScheduleDeviation.Status
+
+    data object Unknown : RealtimeState {
+        override val status = ScheduleDeviation.Status.SCHEDULED
+    }
+
+    data object OnTime : RealtimeState {
+        override val status = ScheduleDeviation.Status.ON_TIME
+    }
+
+    data class Late(val minutes: Long) : RealtimeState {
+        override val status = ScheduleDeviation.Status.DELAYED
+    }
+
+    data class Early(val minutes: Long) : RealtimeState {
+        override val status = ScheduleDeviation.Status.EARLY
+    }
 }
 
 /**

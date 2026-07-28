@@ -23,6 +23,7 @@ import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
@@ -40,6 +41,31 @@ object MarkerRendering {
     /** The pin_base head center (grid units) — where the mode/vehicle glyph is centered. */
     const val HEAD_CX = 12f
     const val HEAD_CY = 8f
+
+    /**
+     * Black or white, whichever actually contrasts better against [background].
+     *
+     * Measured with [ColorUtils.calculateContrast] (WCAG relative luminance) and compared, rather than
+     * cut over at a hand-picked luminance threshold: the two disagree across a wide band of mid-tones,
+     * where a gamma-space cutoff keeps white on backgrounds black would read better on. Comparing the
+     * real contrast ratios also means there is no magic number to justify or keep in sync.
+     *
+     * Shared so every route-colored map element — a vehicle disc, a continuation badge — makes the same
+     * call for the same color. [background] is forced opaque because a route color arrives from the wire
+     * and `calculateContrast` rejects a translucent background.
+     */
+    fun legibleOn(background: Int): Int {
+        val opaque = background or OPAQUE_ALPHA
+        return if (ColorUtils.calculateContrast(Color.BLACK, opaque) >
+            ColorUtils.calculateContrast(Color.WHITE, opaque)
+        ) {
+            Color.BLACK
+        } else {
+            Color.WHITE
+        }
+    }
+
+    private const val OPAQUE_ALPHA = 0xFF000000.toInt()
 
     /** 8-way unit offsets used to stamp a black outline around an element (a cheap dilate). */
     private val OUTLINE_OFFSETS = arrayOf(

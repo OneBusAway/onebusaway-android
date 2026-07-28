@@ -285,7 +285,9 @@ private fun EtaPillWithMenu(
         EtaPill(
             modifier = Modifier.fillMaxHeight(),
             eta = trip.liveEta(liveNow),
-            color = colorResource(trip.color),
+            // The on-fill tier, not `trip.color`: the pill paints this as a Surface with white text
+            // on top, so it needs the darkened variant to clear WCAG AA (#2043).
+            color = colorResource(trip.fillColor),
             predicted = trip.predicted,
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
@@ -541,21 +543,21 @@ private fun EtaPillVariantsPreview() {
                 verticalAlignment = Alignment.Bottom
             ) {
                 // A recent-past arrival: same size as the upcoming ones — negative ETAs aren't shrunk.
-                EtaPill(-3, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "2:57pm")
-                EtaPill(0, colorResource(R.color.stop_info_ontime), predicted = true, clockTime = "3:00pm")
-                EtaPill(5, colorResource(R.color.stop_info_delayed), predicted = true, clockTime = "3:05pm")
-                EtaPill(12, colorResource(R.color.stop_info_early), predicted = true, clockTime = "3:12pm")
-                EtaPill(22, colorResource(R.color.stop_info_scheduled_time), predicted = false, clockTime = "3:22pm")
+                EtaPill(-3, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "2:57pm")
+                EtaPill(0, colorResource(R.color.stop_info_ontime_fill), predicted = true, clockTime = "3:00pm")
+                EtaPill(5, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "3:05pm")
+                EtaPill(12, colorResource(R.color.stop_info_early_fill), predicted = true, clockTime = "3:12pm")
+                EtaPill(22, colorResource(R.color.stop_info_scheduled_fill), predicted = false, clockTime = "3:22pm")
                 EtaPill(
                     8,
-                    colorResource(R.color.stop_info_scheduled_time),
+                    colorResource(R.color.stop_info_scheduled_fill),
                     predicted = false,
                     canceled = true,
                     clockTime = "3:08pm"
                 )
                 // Past an hour: the number switches to hours, the leftover minutes fold into the label (#1777).
-                EtaPill(83, colorResource(R.color.stop_info_scheduled_time), predicted = true, clockTime = "4:23pm")
-                EtaPill(125, colorResource(R.color.stop_info_early), predicted = false, clockTime = "5:05pm")
+                EtaPill(83, colorResource(R.color.stop_info_scheduled_fill), predicted = true, clockTime = "4:23pm")
+                EtaPill(125, colorResource(R.color.stop_info_early_fill), predicted = false, clockTime = "5:05pm")
             }
         }
     }

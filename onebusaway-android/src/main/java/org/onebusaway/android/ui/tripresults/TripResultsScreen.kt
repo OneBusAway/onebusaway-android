@@ -1250,17 +1250,20 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
 /** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
 @Composable
 private fun RealtimeChip(state: RealtimeState) {
-    val (color, text) = when (state) {
+    // labelMedium text over a 14%-alpha tint of itself, so it takes the text tier: the iOS display
+    // colors sit at 2.7-3.2:1 on that tint, which is what the retired trip_realtime_* palette had been
+    // hand-picked to avoid. Read off the state's own [ScheduleDeviation.Status] rather than named here,
+    // so a re-hue of the shared palette can't leave this screen behind. That palette's polarity
+    // contradicted the arrivals drawer: blue meant "early" here and "late" there, in one app (#2043).
+    val text = when (state) {
         RealtimeState.Unknown -> return
-        RealtimeState.OnTime -> colorResource(R.color.trip_realtime_on_time) to
-            stringResource(R.string.trip_plan_realtime_on_time)
-        is RealtimeState.Late -> colorResource(R.color.trip_realtime_delayed) to
+        RealtimeState.OnTime -> stringResource(R.string.trip_plan_realtime_on_time)
+        is RealtimeState.Late ->
             pluralStringResource(R.plurals.trip_plan_realtime_late, state.minutes.toInt(), state.minutes.toInt())
-        // Early gets its own colour, not the on-time green: a vehicle running ahead of schedule is a
-        // risk to the rider (they can miss it), not a reassurance.
-        is RealtimeState.Early -> colorResource(R.color.trip_realtime_early) to
+        is RealtimeState.Early ->
             pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
     }
+    val color = colorResource(state.status.textColorRes)
     Spacer(Modifier.width(8.dp))
     Row(
         modifier = Modifier

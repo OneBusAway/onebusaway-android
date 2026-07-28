@@ -104,9 +104,15 @@
     <string name="main_help_whatsnew">• <b>Bug fixes</b> Several bug fixes and fit and finish improvements. - See https://bit.ly/oba-android-releases</string>
     <string name="main_help_close">Close</string>
     <string name="main_help_legend_title">Legend</string>
-    <string name="main_help_legend_ontime">Green means “On time”</string>
-    <string name="main_help_legend_late">Blue means “Running late”</string>
-    <string name="main_help_legend_early">Red means “Running early”</string>
+    <string name="main_help_legend_ontime">Green means “On time” - within a minute and a half of
+        the schedule, either way
+    </string>
+    <string name="main_help_legend_late">Blue means “Running late” - a minute and a half or more
+        behind schedule
+    </string>
+    <string name="main_help_legend_early">Red means “Running early” - more than a minute and a half
+        ahead of schedule, so it may leave before you get there
+    </string>
     <string name="main_help_legend_scheduled">Gray means “Scheduled arrival” - We don’t know
         where the bus is now, but the schedule says there is an upcoming arrival
     </string>

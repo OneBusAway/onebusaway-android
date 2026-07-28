@@ -136,8 +136,11 @@ internal fun ArrivalCard(
 /**
  * The visual content of a flat arrival row, driven by primitives so it stays trivially previewable and
  * JVM-testable without the [ArrivalInfo] model (which needs a `Context`/wire data to build).
- * [ArrivalRowContent] adapts the
- * model onto it; the colored status pill and ETA both take the lateness [statusColor].
+ * [ArrivalRowContent] adapts the model onto it.
+ *
+ * The two lateness colors are the two tiers of the same deviation state (#2043): [statusColor] for
+ * the big ETA, where the color *is* the text, and [statusFillColor] for the status pill, where white
+ * text sits on it.
  */
 @Composable
 private fun ArrivalRowVisual(
@@ -145,6 +148,7 @@ private fun ArrivalRowVisual(
     headsign: String,
     statusText: String,
     statusColor: Color,
+    statusFillColor: Color,
     timeText: String,
     eta: Long,
     predicted: Boolean,
@@ -174,7 +178,7 @@ private fun ArrivalRowVisual(
             )
             if (statusText.isNotEmpty()) {
                 Spacer(Modifier.height(4.dp))
-                StatusPill(statusText, statusColor)
+                StatusPill(statusText, statusFillColor)
             }
             if (timeText.isNotEmpty()) {
                 // The scheduled/predicted clock time: "Arriving/Departing/Arrived/Departed at 4:27 PM"
@@ -229,6 +233,7 @@ internal fun ArrivalRowContent(
         headsign = arrival.headsign.orEmpty(),
         statusText = arrival.statusText.orEmpty(),
         statusColor = colorResource(arrival.color),
+        statusFillColor = colorResource(arrival.fillColor),
         timeText = arrival.timeText.orEmpty(),
         eta = arrival.eta,
         predicted = arrival.predicted,

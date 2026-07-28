@@ -27,8 +27,8 @@
     <!-- Launcher icon background -->
     <color name="ic_launcher_background">#2196F3</color>
 
-    <!-- Keep on-time color green even though theme is blue -->
-    <color name="stop_info_ontime">#4CAF50</color>
+    <!-- No stop_info_* override: the schedule-deviation palette is semantic, not brand identity,
+         and is no longer derived from brand_color (#2043). -->
 
     <!-- Material 3 -->
     <color name="md_theme_primary">#36618E</color>

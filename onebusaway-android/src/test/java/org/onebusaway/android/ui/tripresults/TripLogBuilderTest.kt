@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripresults
 
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -374,13 +375,57 @@ class TripLogBuilderTest {
         assertEquals("Seattle - Bremerton", transit.routeDisplayName)
     }
 
-    @Test
-    fun noRealtime_isUnknown() {
-        val scheduled = transitLeg.copy(realTime = false)
-        val transit = TripLogBuilder
-            .build(listOf(scheduled), listOf(boardDir, alightDir), listOf(transitRef))
+    // --- The shared on-time band (#2043) ---------------------------------------------------------
+    //
+    // The trip planner used to round the delay to the nearest minute and call only an exact 0 "on
+    // time", giving it a ±30 s window while the arrivals drawer had none. Both now bucket through
+    // ScheduleDeviation, so the same vehicle can't read on-time in one screen and late in the other.
+
+    /** The realtime state for a transit leg whose departure is [delaySeconds] off schedule. */
+    private fun realtimeStateFor(delaySeconds: Long, realTime: Boolean = true): RealtimeState {
+        val leg = transitLeg.copy(realTime = realTime, departureDelay = delaySeconds.seconds)
+        return TripLogBuilder
+            .build(listOf(leg), listOf(boardDir, alightDir), listOf(transitRef))
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
-        assertEquals(RealtimeState.Unknown, transit.realtime)
+            .realtime
+    }
+
+    @Test
+    fun deviationJustInsideTheBand_isOnTime() {
+        // Both of these used to round to ±1 minute and render as late/early.
+        assertEquals(RealtimeState.OnTime, realtimeStateFor(89))
+        assertEquals(RealtimeState.OnTime, realtimeStateFor(-89))
+    }
+
+    @Test
+    fun deviationJustOutsideTheBand_isLateOrEarly() {
+        assertEquals(RealtimeState.Late(2), realtimeStateFor(91))
+        assertEquals(RealtimeState.Early(2), realtimeStateFor(-91))
+    }
+
+    /**
+     * The band's edges always round to at least one minute, so a Late/Early chip can never read
+     * "0 min late" — the case the old `minutes == 0L` bucket used to absorb.
+     */
+    @Test
+    fun lateAndEarlyChipsNeverReportZeroMinutes() {
+        for (seconds in longArrayOf(91, 120, 200, -91, -120, -200)) {
+            val state = realtimeStateFor(seconds)
+            val minutes = when (state) {
+                is RealtimeState.Late -> state.minutes
+                is RealtimeState.Early -> state.minutes
+                else -> error("$seconds s must bucket as late or early, was $state")
+            }
+            assertTrue("$seconds s must report at least a minute, was $minutes", minutes >= 1)
+        }
+    }
+
+    /** No real-time data means no chip, whatever the leg's delay field happens to hold. */
+    @Test
+    fun withoutRealtime_isUnknownWhateverTheDeviation() {
+        assertEquals(RealtimeState.Unknown, realtimeStateFor(0, realTime = false))
+        assertEquals(RealtimeState.Unknown, realtimeStateFor(600, realTime = false))
+        assertEquals(RealtimeState.Unknown, realtimeStateFor(-600, realTime = false))
     }
 }

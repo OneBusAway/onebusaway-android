@@ -139,7 +139,15 @@ data class VehicleMarker(
     // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
     // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported
     // lat/lng. Null when there's no shape/anchor; the renderer then falls back to the reported location.
-    val dataFixPoint: GeoPoint? = null
+    val dataFixPoint: GeoPoint? = null,
+    // The color this vehicle's route is currently *drawn* with, which is rarely its GTFS color: an
+    // agency hue goes through the map's route-line policy (#2041), and in stop-focus view
+    // adjacencyRouteColors assigns each shown route a distinct hue precisely so they can be told apart.
+    // Either way the vehicle has to travel with its own line rather than with the agency's nominal
+    // color (#2043). Resolved by the controller from the same map the polylines use, so the two
+    // cannot disagree. Null when the route carries no color and none was assigned; the renderer applies
+    // [DEFAULT_ROUTE_LINE_COLOR], exactly as [RoutePolyline.resolvedColor] does.
+    val routeColor: Int? = null
 )
 
 /**

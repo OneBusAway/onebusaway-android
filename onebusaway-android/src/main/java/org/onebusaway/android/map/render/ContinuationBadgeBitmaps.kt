@@ -53,7 +53,7 @@ object ContinuationBadgeBitmaps {
      */
     fun badge(routeShortName: String, color: Int, density: Float, darkMode: Boolean): Bitmap {
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.color = legibleTextColor(color)
+            this.color = MarkerRendering.legibleOn(color)
             textSize = TEXT_SIZE_PX
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
@@ -94,12 +94,6 @@ object ContinuationBadgeBitmaps {
         val baseline = height / 2f - (metrics.ascent + metrics.descent) / 2f
         canvas.drawText(routeShortName, width / 2f, baseline, textPaint)
         return bitmap
-    }
-
-    /** Black or white, whichever contrasts better against [background] by relative luminance. */
-    private fun legibleTextColor(background: Int): Int {
-        val luminance = (0.299 * Color.red(background) + 0.587 * Color.green(background) + 0.114 * Color.blue(background)) / 255
-        return if (luminance > 0.6) Color.BLACK else Color.WHITE
     }
 
     /**

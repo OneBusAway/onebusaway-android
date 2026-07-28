@@ -277,7 +277,9 @@ public class UIUtilTest extends ObaTestCase {
     assertEquals("Arrived at " + formatTime(1438804260000L), arrivalInfo.get(0).getTimeText());
     assertEquals("Departed 2 min late", arrivalInfo.get(1).getStatusText());
     assertEquals("Departed at " + formatTime(1438804320000L), arrivalInfo.get(1).getTimeText());
-    assertEquals("Departed 1 min early", arrivalInfo.get(2).getStatusText());
+    // 60 s early — inside the +/- 1.5 min on-time band adopted from OBA iOS (#2043), so this reads
+    // "on time" rather than "1 min early". Same for indexes 11, 13 (60 s early) and 14 (60 s late).
+    assertEquals("Departed on time", arrivalInfo.get(2).getStatusText());
     assertEquals("Departed at " + formatTime(1438804440000L), arrivalInfo.get(2).getTimeText());
     assertEquals("Arrived on time", arrivalInfo.get(3).getStatusText());
     assertEquals("Arrived at " + formatTime(1438804440000L), arrivalInfo.get(3).getTimeText());
@@ -296,13 +298,13 @@ public class UIUtilTest extends ObaTestCase {
     assertEquals("Departing at " + formatTime(1438804800000L), arrivalInfo.get(9).getTimeText());
     assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
     assertEquals("Arriving at " + formatTime(1438804860000L), arrivalInfo.get(10).getTimeText());
-    assertEquals("1 min early", arrivalInfo.get(11).getStatusText());
+    assertEquals("On time", arrivalInfo.get(11).getStatusText());
     assertEquals("Arriving at " + formatTime(1438804920000L), arrivalInfo.get(11).getTimeText());
     assertEquals("On time", arrivalInfo.get(12).getStatusText());
     assertEquals("Arriving at " + formatTime(1438805100000L), arrivalInfo.get(12).getTimeText());
-    assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
+    assertEquals("On time", arrivalInfo.get(13).getStatusText());
     assertEquals("Departing at " + formatTime(1438805340000L), arrivalInfo.get(13).getTimeText());
-    assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
+    assertEquals("On time", arrivalInfo.get(14).getStatusText());
     assertEquals("Arriving at " + formatTime(1438805520000L), arrivalInfo.get(14).getTimeText());
     assertEquals("On time", arrivalInfo.get(15).getStatusText());
     assertEquals("Arriving at " + formatTime(1438805700000L), arrivalInfo.get(15).getTimeText());
@@ -347,7 +349,7 @@ public class UIUtilTest extends ObaTestCase {
 
     assertEquals("On time", arrivalInfo.get(0).getStatusText());
     assertEquals("2 min late", arrivalInfo.get(1).getStatusText());
-    assertEquals("1 min early", arrivalInfo.get(2).getStatusText());
+    assertEquals("On time", arrivalInfo.get(2).getStatusText());
     assertEquals("On time", arrivalInfo.get(3).getStatusText());
     assertEquals("6 min early", arrivalInfo.get(4).getStatusText());
     // Arrivals and departures that will happen in the future
@@ -357,10 +359,10 @@ public class UIUtilTest extends ObaTestCase {
     assertEquals("On time", arrivalInfo.get(8).getStatusText());
     assertEquals("On time", arrivalInfo.get(9).getStatusText());
     assertEquals("10 min delay", arrivalInfo.get(10).getStatusText());
-    assertEquals("1 min early", arrivalInfo.get(11).getStatusText());
+    assertEquals("On time", arrivalInfo.get(11).getStatusText());
     assertEquals("On time", arrivalInfo.get(12).getStatusText());
-    assertEquals("1 min early", arrivalInfo.get(13).getStatusText());
-    assertEquals("1 min delay", arrivalInfo.get(14).getStatusText());
+    assertEquals("On time", arrivalInfo.get(13).getStatusText());
+    assertEquals("On time", arrivalInfo.get(14).getStatusText());
     assertEquals("On time", arrivalInfo.get(15).getStatusText());
     assertEquals("On time", arrivalInfo.get(16).getStatusText());
     assertEquals("4 min delay", arrivalInfo.get(17).getStatusText());

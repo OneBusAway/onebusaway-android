@@ -44,8 +44,6 @@ lint = "32.3.1"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseAnalytics = "23.2.0"
-firebaseAuth = "24.2.0"
-firebaseStorage = "22.0.1"
 firebaseCrashlytics = "20.1.0"
 firebaseMessaging = "25.1.1"
 playServicesLocation = "21.4.0"
@@ -63,9 +61,7 @@ work = "2.11.2"
 room = "2.8.4"
 lifecycle = "2.11.0"
 navigationCompose = "2.9.8"
-hiltNavigationCompose = "1.4.0"
-hiltWork = "1.0.0"
-hiltCompiler = "1.3.0"
+androidxHilt = "1.4.0"
 composeBom = "2026.06.01"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
@@ -86,8 +82,6 @@ desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 
 # --- Firebase / Google Play services ---
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
-firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
@@ -117,9 +111,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
-androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hiltWork" }
-androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hiltCompiler" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidxHilt" }
 
 # --- Jetpack Compose (versions from the BOM unless noted) ---
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }

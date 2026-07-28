@@ -58,11 +58,7 @@ import org.onebusaway.android.map.bike.DefaultBikeStationsRepository
 import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
 import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
 import org.onebusaway.android.nav.AndroidReminderSpeechController
-import org.onebusaway.android.nav.CsvNavigationLogRecorder
-import org.onebusaway.android.nav.FirebaseNavigationLogUploader
 import org.onebusaway.android.nav.NavigationFeedbackRepository
-import org.onebusaway.android.nav.NavigationLogRecorder
-import org.onebusaway.android.nav.NavigationLogUploader
 import org.onebusaway.android.nav.ReminderNotificationPresenter
 import org.onebusaway.android.nav.ReminderSessionStore
 import org.onebusaway.android.nav.ReminderSpeechController
@@ -133,14 +129,6 @@ abstract class RepositoryModule {
     internal abstract fun bindReminderSpeechController(
         impl: AndroidReminderSpeechController
     ): ReminderSpeechController
-
-    @Binds
-    internal abstract fun bindNavigationLogRecorder(impl: CsvNavigationLogRecorder): NavigationLogRecorder
-
-    @Binds
-    internal abstract fun bindNavigationLogUploader(
-        impl: FirebaseNavigationLogUploader
-    ): NavigationLogUploader
 
     @Binds
     internal abstract fun bindNavigationFeedbackRepository(

@@ -33,6 +33,7 @@ import org.onebusaway.android.database.oba.TripRecord
 import org.onebusaway.android.push.FirebaseMessagingManager
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.reminders.ReminderRepository
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -212,7 +213,11 @@ class DefaultTripInfoRepository @Inject constructor(
                 DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_NO_NOON or DateUtils.FORMAT_NO_MIDNIGHT
             )
         ),
-        reminderOptions = ReminderUtils.getReminderTimes(context, departTime, reminderNowMs).toList()
+        reminderOptions = ReminderUtils.getReminderTimes(
+            context,
+            ServerTime(departTime),
+            ServerTime(reminderNowMs)
+        ).toList()
     )
 
     override suspend fun save(

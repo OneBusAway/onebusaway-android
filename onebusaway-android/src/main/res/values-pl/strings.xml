@@ -250,8 +250,6 @@
     <string name="destination_reminder_beta_summary">Przypomnienia o celu podróży opierają się na GPS, który nie zawsze jest niezawodny i nie działa w pomieszczeniach, pod ziemią ani w miejscach bez widoku na niebo. Zawsze bądź świadomy swojego otoczenia.</string>
 
     <!-- Destination reminder voice commands -->
-    <string name="destination_voice_get_ready">Przygotuj się!</string>
-    <string name="destination_voice_request_stop">Wysiądź na następnym przystanku!</string>
     <string name="destination_voice_arriving_destination">Dojeżdżasz do celu!</string>
 
     <!-- Destination reminder feedback notifications -->
@@ -265,13 +263,8 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_msg">Czy zostałeś powiadomiony we właściwym czasie, aby wysiąść na swoim przystanku?</string>
     <string name="feedback_freeText">Napisz swoją opinię</string>
-    <string name="feedback_checkbox_text">Dołącz dziennik systemowy (Twój wybór zostanie zapisany dla przyszłych podróży)</string>
-    <string name="feedback_log_guide">Twoja opinia zostanie wysłana do %1$s. Jeśli zaznaczysz “Dołącz dzienniki systemowe”, informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia zarejestrowane podczas zbliżania się do przystanku docelowego zostaną udostępnione %1$s, aby deweloperzy mogli ulepszyć funkcję przypomnień o celu podróży.\n\nZmień swoje preferencje dotyczące udostępniania dzienników systemowych w Ustawieniach.</string>
 
     <!-- Destination reminder feedback Preferences -->
-    <string name="preferences_category_user_logs">Udostępnianie informacji do debugowania</string>
-    <string name="preferences_user_share_destination_logs_title">Dołącz dzienniki przypomnień o celu podróży</string>
-    <string name="preferences_user_share_destination_logs_summary">Anonimowe informacje o lokalizacji w czasie rzeczywistym z Twojego urządzenia będą udostępniane %1$s w celu ulepszenia funkcji przypomnień o celu podróży.</string>
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">Wysoka dokładność lokalizacji nie jest włączona</string>
@@ -423,28 +416,12 @@
             pozostało mil
         </item>
     </plurals>
-    <plurals name="distance_feet" tools:ignore="MissingQuantity">
-        <item quantity="one">Pozostała jedna stopa</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            pozostało stóp
-        </item>
-    </plurals>
     <plurals name="distance_kilometers" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostał 1 kilometr</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało kilometrów
-        </item>
-    </plurals>
-    <plurals name="distance_meters" tools:ignore="MissingQuantity">
-        <item quantity="one">Pozostał 1 metr</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            pozostało metrów
         </item>
     </plurals>
 

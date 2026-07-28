@@ -10,5 +10,5 @@ object BuildFlavorUtils {
 
     @JvmStatic fun isPeliasApiKeyDefined(): Boolean = BuildConfig.PELIAS_API_KEY.isNotEmpty()
 
-    @JvmStatic fun isOBABuildFlavor(): Boolean = BuildConfig.FLAVOR_brand.equals(OBA_FLAVOR_BRAND, ignoreCase = true)
+    @JvmStatic fun isOBABuildFlavor(): Boolean = BuildConfig.FLAVOR_brand == OBA_FLAVOR_BRAND
 }

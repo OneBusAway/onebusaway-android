@@ -10,21 +10,24 @@
 package org.onebusaway.android.nav
 
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.NavigationSessionRecord
 import org.onebusaway.android.database.oba.StopDao
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 
 internal data class ActiveReminderSession(
     val plan: ReminderPlan,
-    val state: ReminderEngineState,
-    val logFilePath: String?
+    val state: ReminderEngineState
 )
 
 internal interface ReminderSessionStore {
-    suspend fun start(plan: ReminderPlan, nowMs: Long, logFilePath: String? = null)
-    suspend fun restore(): ActiveReminderSession?
-    suspend fun persist(plan: ReminderPlan, state: ReminderEngineState, nowMs: Long, logFilePath: String?)
+    val hasActiveSession: Flow<Boolean>
+    suspend fun start(plan: ReminderPlan, now: WallTime)
+    suspend fun restore(now: WallTime): ActiveReminderSession?
+    suspend fun persist(plan: ReminderPlan, state: ReminderEngineState, now: WallTime)
     suspend fun clear()
 }
 
@@ -34,36 +37,40 @@ internal class RoomReminderSessionStore @Inject constructor(
     private val legacySessions: NavStopDao,
     private val stops: StopDao
 ) : ReminderSessionStore {
-    override suspend fun start(plan: ReminderPlan, nowMs: Long, logFilePath: String?) {
+    override val hasActiveSession: Flow<Boolean> = sessions.observeHasActiveSession()
+
+    override suspend fun start(plan: ReminderPlan, now: WallTime) {
         sessions.replace(
             NavigationSessionRecord(
                 sessionId = plan.sessionId,
                 formatVersion = plan.version,
                 planJson = ReminderPlanJson.encode(plan),
                 stateJson = ReminderPlanJson.encodeState(ReminderEngineState()),
-                startedAtMs = nowMs,
-                updatedAtMs = nowMs,
-                logFilePath = logFilePath
+                startedAtMs = now.epochMs,
+                updatedAtMs = now.epochMs
             )
         )
     }
 
-    override suspend fun restore(): ActiveReminderSession? {
+    override suspend fun restore(now: WallTime): ActiveReminderSession? {
         sessions.active()?.let { row ->
-            val plan = ReminderPlanJson.decode(row.planJson) ?: return@let
-            val state = ReminderPlanJson.decodeState(row.stateJson) ?: return@let
-            return ActiveReminderSession(plan, state, row.logFilePath)
+            val plan = ReminderPlanJson.decode(row.planJson)
+            if (plan == null) {
+                sessions.clear()
+                return@let
+            }
+            val state = ReminderPlanJson.decodeState(row.stateJson) ?: ReminderEngineState()
+            return ActiveReminderSession(plan, state)
         }
-        return restoreLegacy()
+        return restoreLegacy(now)
     }
 
     override suspend fun persist(
         plan: ReminderPlan,
         state: ReminderEngineState,
-        nowMs: Long,
-        logFilePath: String?
+        now: WallTime
     ) {
-        sessions.updateState(plan.sessionId, ReminderPlanJson.encodeState(state), nowMs, logFilePath)
+        sessions.updateState(plan.sessionId, ReminderPlanJson.encodeState(state), now.epochMs)
     }
 
     override suspend fun clear() {
@@ -71,7 +78,7 @@ internal class RoomReminderSessionStore @Inject constructor(
         legacySessions.clearAll()
     }
 
-    private suspend fun restoreLegacy(): ActiveReminderSession? {
+    private suspend fun restoreLegacy(now: WallTime): ActiveReminderSession? {
         val legacy = legacySessions.active() ?: return null
         val before = stops.getStop(legacy.beforeId) ?: return null
         val destination = stops.getStop(legacy.destinationId) ?: return null
@@ -92,11 +99,11 @@ internal class RoomReminderSessionStore @Inject constructor(
                 board = beforeStop,
                 penultimate = beforeStop,
                 alight = destinationStop,
-                scheduledStart = legacy.startTime,
-                scheduledEnd = legacy.startTime
+                scheduledStart = ServerTime(legacy.startTime),
+                scheduledEnd = ServerTime(legacy.startTime)
             ) as? ReminderPlanResult.Success
             )?.plan ?: return null
-        start(plan, legacy.startTime)
-        return ActiveReminderSession(plan, ReminderEngineState(), null)
+        start(plan, now)
+        return ActiveReminderSession(plan, ReminderEngineState())
     }
 }

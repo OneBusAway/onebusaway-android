@@ -186,12 +186,10 @@ class ObaAnalytics @Inject constructor(
      *
      * @param wasGoodReminder true if the reminder fired at the right time
      * @param feedbackText free-text feedback, or null if none was entered
-     * @param fileName name of the uploaded trip-data file, or null if nothing was uploaded
      */
     fun reportDestinationReminderFeedback(
         wasGoodReminder: Boolean,
-        feedbackText: String?,
-        fileName: String?
+        feedbackText: String?
     ) {
         if (!isAnalyticsActive()) return
         val bundle = Bundle().apply {
@@ -208,7 +206,6 @@ class ObaAnalytics @Inject constructor(
                 }
             )
             if (!feedbackText.isNullOrEmpty()) putString(FirebaseAnalytics.Param.CONTENT, feedbackText)
-            if (!fileName.isNullOrEmpty()) putString(FirebaseAnalytics.Param.LOCATION_ID, fileName)
         }
         firebase.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle)
     }

@@ -24,9 +24,7 @@ package org.onebusaway.android.ui.settings
  */
 
 // SDK gates (kept as plain ints so this file has no android.* dependency).
-private const val SDK_N = 24 // Android 7.0
 private const val SDK_O = 26 // Android 8.0
-private const val SDK_P = 28 // Android 9.0
 
 // ---------------------------------------------------------------------------------------------
 // Root settings
@@ -46,7 +44,6 @@ data class SettingsPrefSnapshot(
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val shareDestinationLogs: Boolean,
     val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
@@ -67,7 +64,6 @@ data class SettingsUiState(
     val showRegionCategory: Boolean,
     val showNotificationsCategory: Boolean,
     val showTripPlanNotifications: Boolean,
-    val showUserLogsCategory: Boolean,
     val showDonate: Boolean,
     val showPoweredByOba: Boolean,
     val regionSummary: String,
@@ -83,7 +79,6 @@ data class SettingsUiState(
     val vibrateAllowed: Boolean,
     val tripPlanNotifications: Boolean,
     val analyticsEnabled: Boolean,
-    val shareDestinationLogs: Boolean,
     val mapMode: String?,
     val preferredUnits: String?,
     val preferredTempUnits: String?,
@@ -104,7 +99,6 @@ fun buildSettingsUiState(
     showNotificationsCategory = env.sdkInt < SDK_O,
     // Trip-plan notifications are dropped only when a region is set but has no OTP endpoint.
     showTripPlanNotifications = region == null || region.hasOtp,
-    showUserLogsCategory = env.sdkInt in SDK_N until SDK_P,
     // OBA-branded builds solicit donations; white-label builds show "powered by OneBusAway" instead.
     showDonate = env.isObaFlavor,
     showPoweredByOba = !env.isObaFlavor,
@@ -121,7 +115,6 @@ fun buildSettingsUiState(
     vibrateAllowed = prefs.vibrateAllowed,
     tripPlanNotifications = prefs.tripPlanNotifications,
     analyticsEnabled = prefs.analyticsEnabled,
-    shareDestinationLogs = prefs.shareDestinationLogs,
     mapMode = prefs.mapMode,
     preferredUnits = prefs.preferredUnits,
     preferredTempUnits = prefs.preferredTempUnits,

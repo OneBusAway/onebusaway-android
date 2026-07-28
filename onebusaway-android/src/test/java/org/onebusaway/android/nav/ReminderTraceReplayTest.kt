@@ -7,8 +7,13 @@ package org.onebusaway.android.nav
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 
-/** Replays every field-recorded destination-reminder trace on the JVM; none are skipped on CI. */
+/**
+ * Replays every complete field recording on the JVM. Trip 19 is excluded because its recording is
+ * missing; the ten `*c` entries are excluded because their paired car traces are missing.
+ */
 class ReminderTraceReplayTest {
     @Test
     fun recordedTrips_emitOneOrderedAlertPairAndComplete() {
@@ -40,8 +45,8 @@ class ReminderTraceReplayTest {
                     board = penultimate,
                     penultimate = penultimate,
                     alight = destination,
-                    scheduledStart = 0,
-                    scheduledEnd = 0
+                    scheduledStart = ServerTime(0),
+                    scheduledEnd = ServerTime(0)
                 )
             )
         )
@@ -55,9 +60,12 @@ class ReminderTraceReplayTest {
                 point = ReminderPoint(values[5].toDouble(), values[6].toDouble()),
                 speedMetersPerSecond = values[8].toFloatOrNull(),
                 accuracyMeters = values[10].toFloat(),
-                timestampMs = values[4].toLong()
+                // The anonymized wall-clock column is constant within each legacy fixture. The
+                // elapsed-time column preserves sample ordering and duplicates, which is what the
+                // reducer needs for replay.
+                timestamp = WallTime(values[3].toLong())
             )
-            lastTimestamp = maxOf(lastTimestamp, sample.timestampMs)
+            lastTimestamp = maxOf(lastTimestamp, sample.timestamp.epochMs)
             val transition = ReminderEngine.reduce(plan, state, sample)
             transition.effects.filterIsInstance<ReminderEffect.AlightNow>().forEach {
                 val distance = ReminderEngine.distanceMeters(sample.point, destination.point)
@@ -74,7 +82,7 @@ class ReminderTraceReplayTest {
             val transition = ReminderEngine.reduce(
                 plan,
                 state,
-                ReminderLocationSample(destination.point, 5f, null, lastTimestamp + offset + 1)
+                ReminderLocationSample(destination.point, 5f, null, WallTime(lastTimestamp + offset + 1))
             )
             state = transition.state
             emitted += transition.effects.filterNot { it is ReminderEffect.Progress }

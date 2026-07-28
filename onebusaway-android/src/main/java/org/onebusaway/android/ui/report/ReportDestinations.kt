@@ -25,7 +25,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.feedback.FeedbackScreen
@@ -89,26 +88,12 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
     }
     // Feedback destination: the post-trip destination-reminder feedback screen.
     // Reached only from the post-trip notification's Yes/No actions (NavigationService →
-    // FeedbackActivity facade → HomeActivity → translator). On send it runs the submit/log
-    // glue (FeedbackSubmitter) then pops back. Non-exported; no alias.
+    // FeedbackActivity facade → HomeActivity → translator). On send it reports anonymous feedback
+    // without attaching a location trace, then pops back. Non-exported; no alias.
     composable(
         NavRoutes.FEEDBACK,
         arguments = listOf(
             navArgument(NavRoutes.ARG_FEEDBACK_RESPONSE) {
-                type = NavType.IntType
-                defaultValue = 0
-            },
-            navArgument(NavRoutes.ARG_LOG_FILE) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_TRIP_ID) {
-                type = NavType.StringType
-                nullable = true
-                defaultValue = null
-            },
-            navArgument(NavRoutes.ARG_NOTIFICATION_ID) {
                 type = NavType.IntType
                 defaultValue = 0
             }
@@ -117,16 +102,13 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
         val context = LocalContext.current
         val response =
             backStackEntry.arguments?.getInt(NavRoutes.ARG_FEEDBACK_RESPONSE) ?: 0
-        val logFile = backStackEntry.arguments?.getString(NavRoutes.ARG_LOG_FILE)
-        val submitter = remember(logFile) {
-            FeedbackSubmitter(context.applicationContext, PreferencesEntryPoint.get(context), logFile)
+        val submitter = remember {
+            FeedbackSubmitter(context.applicationContext)
         }
         ObaTheme {
             FeedbackScreen(
                 initialLiked = response == FeedbackLauncher.FEEDBACK_YES,
-                initialSendLogs = submitter.shareLogsPref(),
                 onBack = { navController.popBackStack() },
-                onSendLogsChanged = submitter::setShareLogs,
                 onSend = { liked, text ->
                     submitter.submit(liked, text)
                     navController.popBackStack()

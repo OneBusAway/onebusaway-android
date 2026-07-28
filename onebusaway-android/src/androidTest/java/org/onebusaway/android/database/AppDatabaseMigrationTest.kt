@@ -277,8 +277,8 @@ class AppDatabaseMigrationTest {
         }
         db.execSQL(
             "INSERT INTO navigation_sessions " +
-                "(session_id, format_version, plan_json, state_json, started_at_ms, updated_at_ms, log_file_path) " +
-                "VALUES ('session', 1, '{}', '{}', 100, 101, NULL)"
+                "(session_id, format_version, plan_json, state_json, started_at_ms, updated_at_ms) " +
+                "VALUES ('session', 1, '{}', '{}', 100, 101)"
         )
         db.query("SELECT format_version FROM navigation_sessions WHERE session_id='session'").use { cursor ->
             cursor.moveToFirst()

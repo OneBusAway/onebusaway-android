@@ -11,11 +11,7 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkManager
 import dagger.hilt.android.AndroidEntryPoint
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +28,8 @@ import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 
 /** Thin foreground-service orchestrator for the pure [ReminderEngine]. */
@@ -42,8 +40,6 @@ class NavigationService : Service() {
     @Inject internal lateinit var notificationPresenter: ReminderNotificationPresenter
 
     @Inject internal lateinit var speechController: ReminderSpeechController
-
-    @Inject internal lateinit var logRecorder: NavigationLogRecorder
 
     @Inject internal lateinit var feedbackRepository: NavigationFeedbackRepository
 
@@ -62,6 +58,7 @@ class NavigationService : Service() {
     private var plan: ReminderPlan? = null
     private var engineState = ReminderEngineState()
     private var explicitCancellation = false
+    private var mutedRequested = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Android requires foreground promotion immediately. Plan restoration and validation can safely
@@ -70,7 +67,18 @@ class NavigationService : Service() {
 
         when (intent?.action) {
             ACTION_SILENCE -> {
+                mutedRequested = true
+                engineState = engineState.copy(speechMuted = true)
                 speechController.silence()
+                plan?.let { activePlan ->
+                    serviceScope.launch {
+                        sessionStore.persist(
+                            activePlan,
+                            engineState,
+                            wallClock()
+                        )
+                    }
+                }
                 if (plan == null && navigationJob?.isActive != true) {
                     notificationPresenter.cancel()
                     stopSelf(startId)
@@ -82,8 +90,8 @@ class NavigationService : Service() {
                 explicitCancellation = true
                 serviceScope.launch {
                     sessionStore.clear()
-                    logRecorder.cancel()
                     speechController.silence()
+                    speechController.close()
                     notificationPresenter.cancel()
                     stopSelf()
                 }
@@ -91,17 +99,20 @@ class NavigationService : Service() {
             }
         }
 
-        if (navigationJob?.isActive != true) {
-            navigationJob = serviceScope.launch { initialize(intent) }
+        val incomingPlan = intent?.getStringExtra(PLAN_JSON)?.let(ReminderPlanJson::decode)
+        val supersedes = incomingPlan != null && incomingPlan.sessionId != plan?.sessionId
+        if (navigationJob?.isActive != true || supersedes) {
+            navigationJob?.cancel()
+            navigationJob = serviceScope.launch { initialize(intent, incomingPlan) }
         }
         return START_STICKY
     }
 
-    private suspend fun initialize(intent: Intent?) {
+    private suspend fun initialize(intent: Intent?, decodedIncomingPlan: ReminderPlan?) {
         importGate.awaitReady()
-        val incomingPlan = intent?.getStringExtra(PLAN_JSON)?.let(ReminderPlanJson::decode)
+        val incomingPlan = decodedIncomingPlan
             ?: intent?.legacyPlan()
-        val restored = if (incomingPlan == null) sessionStore.restore() else null
+        val restored = if (incomingPlan == null) sessionStore.restore(wallClock()) else null
         val activePlan = incomingPlan ?: restored?.plan
         if (activePlan == null) {
             Log.w(TAG, "No valid reminder plan to start or restore")
@@ -111,13 +122,14 @@ class NavigationService : Service() {
         }
 
         plan = activePlan
-        engineState = restored?.state ?: ReminderEngineState()
+        engineState = (restored?.state ?: ReminderEngineState()).let {
+            if (mutedRequested) it.copy(speechMuted = true) else it
+        }
         if (incomingPlan != null) {
-            sessionStore.start(activePlan, wallClockMs())
+            sessionStore.start(activePlan, wallClock())
             persistLegacyCompatibility(activePlan)
         }
-        val logPath = logRecorder.start(activePlan, engineState, restored?.logFilePath)
-        sessionStore.persist(activePlan, engineState, wallClockMs(), restored?.logFilePath ?: logPath)
+        sessionStore.persist(activePlan, engineState, wallClock())
         promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
 
         locationRepository.locationUpdates(NAV_UPDATE_INTERVAL_SECONDS).collect(::handleLocation)
@@ -135,16 +147,16 @@ class NavigationService : Service() {
             destination.name,
             ReminderPoint(destination.latitude, destination.longitude)
         )
-        val now = wallClockMs()
+        val now = wallClock()
         return (
             ReminderPlanBuilder.buildSingleRide(
-                sessionId = "legacy-$now",
+                sessionId = "legacy-${now.epochMs}",
                 tripId = tripId,
                 board = beforeStop,
                 penultimate = beforeStop,
                 alight = destinationStop,
-                scheduledStart = now,
-                scheduledEnd = now
+                scheduledStart = ServerTime(now.epochMs),
+                scheduledEnd = ServerTime(now.epochMs)
             ) as? ReminderPlanResult.Success
             )?.plan
     }
@@ -154,7 +166,7 @@ class NavigationService : Service() {
         navStopDao.replaceActive(
             NavStopRecord(
                 navId = "1",
-                startTime = plan.rides.first().scheduledStart,
+                startTime = plan.rides.first().scheduledStart.epochMs,
                 tripId = ride.tripId,
                 destinationId = ride.alight.id,
                 beforeId = ride.penultimate.id,
@@ -170,42 +182,32 @@ class NavigationService : Service() {
             point = ReminderPoint(location.latitude, location.longitude),
             accuracyMeters = location.accuracy,
             speedMetersPerSecond = location.speed.takeIf { location.hasSpeed() },
-            timestampMs = location.time
+            timestamp = WallTime(location.time)
         )
         val previous = engineState
         val transition = ReminderEngine.reduce(activePlan, previous, sample)
         if (transition.state == previous && transition.effects.isEmpty()) return
-        val progress = transition.effects.filterIsInstance<ReminderEffect.Progress>().lastOrNull()
-        if (progress != null) {
-            val logState = transition.state.copy(activeRideIndex = previous.activeRideIndex)
-            logRecorder.record(activePlan, logState, sample, progress.alightDistanceMeters)
-        }
         engineState = transition.state
-        sessionStore.persist(
-            activePlan,
-            engineState,
-            wallClockMs(),
-            logRecorder.currentPath(engineState) ?: logRecorder.completedFiles().lastOrNull()?.absolutePath
-        )
+        sessionStore.persist(activePlan, engineState, wallClock())
         transition.effects.forEach { dispatch(activePlan, it) }
     }
 
     private suspend fun dispatch(activePlan: ReminderPlan, effect: ReminderEffect) {
         notificationPresenter.present(activePlan, effect)
-        speechController.speak(activePlan, effect)
+        if (!engineState.speechMuted) speechController.speak(activePlan, effect)
         when (effect) {
             is ReminderEffect.GetReady -> report(R.string.analytics_label_destination_reminder_variant_get_ready)
             is ReminderEffect.AlightNow -> report(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop)
-            ReminderEffect.SessionCompleted -> completeSession(activePlan)
+            ReminderEffect.SessionCompleted -> completeSession()
             else -> Unit
         }
     }
 
-    private suspend fun completeSession(activePlan: ReminderPlan) {
+    private suspend fun completeSession() {
         report(R.string.analytics_label_destination_reminder_variant_ended)
         sessionStore.clear()
-        scheduleLogCleanup()
-        feedbackRepository.requestFeedback(logRecorder.completedFiles(), activePlan.rides.first().tripId)
+        speechController.close()
+        feedbackRepository.requestFeedback()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_DETACH)
         }
@@ -228,27 +230,17 @@ class NavigationService : Service() {
         }
     }
 
-    private fun scheduleLogCleanup() {
-        val work = PeriodicWorkRequest.Builder(NavigationCleanupWorker::class.java, 24, TimeUnit.HOURS).build()
-        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
-            NavigationCleanupWorker.UNIQUE_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            work
-        )
-    }
-
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         serviceScope.cancel()
-        speechController.silence()
+        speechController.close()
         if (explicitCancellation) notificationPresenter.cancel()
         sendBroadcast(Intent(TripDetailsLauncher.ACTION_SERVICE_DESTROYED).setPackage(packageName))
         super.onDestroy()
     }
 
-    @Suppress("UnwrappedClockValue")
-    private fun wallClockMs(): Long = System.currentTimeMillis()
+    private fun wallClock(): WallTime = WallTime.now()
 
     companion object {
         const val TAG = "NavigationService"
@@ -257,9 +249,6 @@ class NavigationService : Service() {
         const val BEFORE_STOP_ID = ".BeforeId"
         const val TRIP_ID = ".TripId"
         const val PLAN_JSON = ".ReminderPlanJson"
-        const val FIRST_FEEDBACK = "firstFeedback"
-        const val KEY_TEXT_REPLY = "trip_feedback"
-        const val LOG_DIRECTORY = "ObaNavLog"
         const val ACTION_SILENCE = "org.onebusaway.android.nav.SILENCE"
         const val ACTION_CANCEL = "org.onebusaway.android.nav.CANCEL"
         private const val NAV_UPDATE_INTERVAL_SECONDS = 1

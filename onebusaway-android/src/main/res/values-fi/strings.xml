@@ -382,28 +382,12 @@
             mailin päässä
         </item>
     </plurals>
-    <plurals name="distance_feet">
-        <item quantity="one">Yhden jalan päässä</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            jalan päässä
-        </item>
-    </plurals>
     <plurals name="distance_kilometers">
         <item quantity="one">Yhden kilometrin päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             kilometrin päässä
-        </item>
-    </plurals>
-    <plurals name="distance_meters">
-        <item quantity="one">Yhden metrin päässä</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            metrin päässä
         </item>
     </plurals>
 
@@ -519,7 +503,6 @@
     <string name="preferences_app_theme_option_light">Vaalea teema</string>
     <string name="preferences_app_theme_option_dark">Tumma teema</string>
     <string name="preferences_category_notifications">Ilmoitukset</string>
-    <string name="preferences_category_user_logs">Jaa virheenkorjaustiedot</string>
     <string name="preferences_hide_alerts_title">Piilota kaikki hälytykset</string>
     <string name="preferences_hide_alerts_summary">Kun valittu, kaikki palveluhälytykset näytetään oletuksena pienenä palkkina saapumisten näytön yläosassa täyden luettelon sijaan.</string>
     <string name="preferences_left_hand_mode_title">Vasenkätinen tila</string>
@@ -537,8 +520,6 @@
     <string name="preferences_preferred_sound_summary">Valitse %1$s-ilmoitusääni</string>
     <string name="preferences_trip_plan_notifications_title">Matkasuunnitelmailmoitukset (beta)</string>
     <string name="preferences_trip_plan_notifications_summary">Matkan suunnittelun jälkeen lähetä ilmoitukset, jos matka on myöhässä tai sitä ei enää suositella.</string>
-    <string name="preferences_user_share_destination_logs_title">Sisällytä määränpäämuistutuslokit</string>
-    <string name="preferences_user_share_destination_logs_summary">Anonyymit reaaliaikaiset sijaintitiedot laitteestasi jaetaan %1$sn kanssa määränpäämuistutusominaisuuden parantamiseksi.</string>
     <string name="preference_region_dialog_title">Tarkista alue</string>
     <string name="preference_region_dialog_message">Alueeksesi on tällä hetkellä asetettu %1$s. Jos tämä on väärin, muuta sitä napauttamalla ’Alueesi’!</string>
     <!-- Units -->
@@ -918,9 +899,7 @@
     <string name="destination_reminder_confirm">Kyllä</string>
     <string name="destination_reminder_cancel">Peruuta</string>
     <string name="destination_reminder_cancel_trip">Peruuta muistutus</string>
-    <string name="destination_voice_get_ready">Valmistaudu!</string>
     <string name="destination_voice_arriving_destination">Saapumassa määränpäähän!</string>
-    <string name="destination_voice_request_stop">Poistu seuraavalla pysäkillä!</string>
 
     <!-- Feedback -->
     <string name="feedback_action_reply_yes">Kyllä</string>
@@ -928,8 +907,6 @@
     <string name="feedback_label">Palaute</string>
     <string name="feedback_msg">Saitko ilmoituksen oikeaan aikaan poistuaksesi pysäkilläsi?</string>
     <string name="feedback_freeText">Kirjoita palautteesi</string>
-    <string name="feedback_checkbox_text">Sisällytä järjestelmäloki (valintasi tallennetaan tulevia matkoja varten)</string>
-    <string name="feedback_log_guide">Palautteesi lähetetään %1$slle. Jos valitset “Sisällytä järjestelmälokit”, laitteestasi tallennettu reaaliaikainen sijaintitieto määränpääpysäkille lähestyttäessä jaetaan %1$sn kanssa, jotta kehittäjät voivat parantaa määränpäämuistutusominaisuutta.\n\nVoit muuttaa järjestelmälokien jakamisasetusta Asetuksissa.</string>
     <string name="feedback_notify_title">Auta parantamaan määränpäämuistutuksia</string>
     <string name="feedback_notify_dialog_msg">Saitko ilmoituksen oikeaan aikaan?</string>
     <string name="feedback_notify_confirmation">Kiitos palautteesta!</string>

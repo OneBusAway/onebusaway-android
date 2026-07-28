@@ -16,12 +16,13 @@
  */
 package org.onebusaway.android.app
 
-import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.WorkManager
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import java.io.File
 import java.util.UUID
-import javax.inject.Inject
+import kotlin.concurrent.thread
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
@@ -41,15 +42,15 @@ class Application :
     android.app.Application(),
     Configuration.Provider {
 
-    @Inject lateinit var workerFactory: HiltWorkerFactory
-
     override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
+        get() = Configuration.Builder().build()
 
     override fun onCreate() {
         super.onCreate()
 
         mApp = this
+
+        removeLegacyNavigationTraces()
 
         // Seed the per-install app UID once, eagerly, before any reader needs it. It has multiple
         // independent direct readers (ObaEndpointResolver sends it as app_uid; the Open311 report path
@@ -112,6 +113,17 @@ class Application :
             RegionEntryPoint.get(this).currentRegion()?.name
         }
         label?.let { AnalyticsEntryPoint.get(this).setRegion(it) }
+    }
+
+    /** Removes files and queued jobs left by destination-reminder trace collection in older builds. */
+    private fun removeLegacyNavigationTraces() {
+        WorkManager.getInstance(this).run {
+            cancelUniqueWork("navigation_log_upload")
+            cancelUniqueWork("navigation_log_cleanup")
+        }
+        thread(name = "remove-navigation-traces") {
+            File(filesDir, "ObaNavLog").deleteRecursively()
+        }
     }
 
     companion object {

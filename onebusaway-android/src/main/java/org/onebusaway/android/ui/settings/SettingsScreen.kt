@@ -142,7 +142,6 @@ fun SettingsRoute(
         onVibrateAllowed = viewModel::onVibrateAllowedChanged,
         onTripPlanNotifications = viewModel::onTripPlanNotificationsChanged,
         onAnalytics = viewModel::onAnalyticsChanged,
-        onShareDestinationLogs = viewModel::onShareDestinationLogsChanged,
         onMapMode = viewModel::onMapModeChanged,
         onPreferredUnits = viewModel::onPreferredUnitsChanged,
         onPreferredTempUnits = viewModel::onPreferredTempUnitsChanged,
@@ -183,7 +182,6 @@ class SettingsActions(
     val onVibrateAllowed: (Boolean) -> Unit,
     val onTripPlanNotifications: (Boolean) -> Unit,
     val onAnalytics: (Boolean) -> Unit,
-    val onShareDestinationLogs: (Boolean) -> Unit,
     val onMapMode: (String) -> Unit,
     val onPreferredUnits: (String) -> Unit,
     val onPreferredTempUnits: (String) -> Unit,
@@ -392,20 +390,6 @@ fun SettingsScreen(
                     summary = stringResource(R.string.preferences_about_summary),
                     onClick = actions.onAboutClick
                 )
-            }
-
-            if (state.showUserLogsCategory) {
-                PreferenceCategory(stringResource(R.string.preferences_category_user_logs)) {
-                    SwitchPreferenceItem(
-                        title = stringResource(R.string.preferences_user_share_destination_logs_title),
-                        summary = stringResource(
-                            R.string.preferences_user_share_destination_logs_summary,
-                            appName
-                        ),
-                        checked = state.shareDestinationLogs,
-                        onCheckedChange = actions.onShareDestinationLogs
-                    )
-                }
             }
         }
     }

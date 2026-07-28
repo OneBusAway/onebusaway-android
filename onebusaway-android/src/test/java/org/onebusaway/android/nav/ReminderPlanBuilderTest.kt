@@ -57,13 +57,15 @@ class ReminderPlanBuilderTest {
             "id"
         )
         assertTrue(result is ReminderPlanResult.Error)
-        assertTrue((result as ReminderPlanResult.Error).message.contains("leg 2"))
+        result as ReminderPlanResult.Error
+        assertEquals(ReminderPlanError.INCOMPLETE_STOP_INFORMATION, result.reason)
+        assertEquals(2, result.legNumber)
     }
 
     @Test
     fun itineraryWithoutTransitHasUserVisibleError() {
         val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(leg(TripMode.WALK))), "id")
-        assertEquals("This itinerary has no transit rides to monitor.", (result as ReminderPlanResult.Error).message)
+        assertEquals(ReminderPlanError.NO_TRANSIT_RIDES, (result as ReminderPlanResult.Error).reason)
     }
 
     private fun leg(mode: TripMode, prefix: String = "x") = TripLeg(

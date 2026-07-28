@@ -8,7 +8,7 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 
 object ArrivalInfoUtils {
     class InfoComparator : Comparator<ArrivalInfo> {
-        override fun compare(lhs: ArrivalInfo, rhs: ArrivalInfo): Int = (lhs.eta - rhs.eta).toInt()
+        override fun compare(lhs: ArrivalInfo, rhs: ArrivalInfo): Int = lhs.eta.compareTo(rhs.eta)
     }
 
     @JvmStatic

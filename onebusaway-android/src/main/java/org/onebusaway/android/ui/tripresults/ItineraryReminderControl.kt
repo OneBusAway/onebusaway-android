@@ -4,10 +4,8 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,52 +15,51 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.isLocationEnabled
 import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.nav.ReminderPlan
 import org.onebusaway.android.nav.ReminderPlanBuilder
+import org.onebusaway.android.nav.ReminderPlanError
 import org.onebusaway.android.nav.ReminderPlanJson
 import org.onebusaway.android.nav.ReminderPlanResult
+import org.onebusaway.android.nav.ReminderSessionStore
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
-import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.util.PermissionUtils
 
 /** Full-width start/stop action for the currently selected itinerary. */
 @Composable
-internal fun ItineraryReminderControl(itinerary: TripItinerary?, modifier: Modifier = Modifier) {
+internal fun ItineraryReminderControl(
+    itinerary: TripItinerary?,
+    modifier: Modifier = Modifier,
+    viewModel: ReminderControlViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var pendingPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     var confirmationPlan by remember { mutableStateOf<ReminderPlan?>(null) }
-    var active by rememberSaveable { mutableStateOf(false) }
+    val active by viewModel.hasActiveSession.collectAsStateWithLifecycle()
     val requestNotifications = rememberNotificationPermissionRequest()
-
-    DisposableEffect(context) {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(receiverContext: Context?, intent: Intent?) {
-                if (intent?.action == TripDetailsLauncher.ACTION_SERVICE_DESTROYED) active = false
-            }
-        }
-        ContextCompat.registerReceiver(
-            context,
-            receiver,
-            IntentFilter(TripDetailsLauncher.ACTION_SERVICE_DESTROYED),
-            ContextCompat.RECEIVER_NOT_EXPORTED
-        )
-        onDispose { runCatching { context.unregisterReceiver(receiver) } }
-    }
 
     fun start(plan: ReminderPlan) {
         requestNotifications()
@@ -70,11 +67,10 @@ internal fun ItineraryReminderControl(itinerary: TripItinerary?, modifier: Modif
             putExtra(NavigationService.PLAN_JSON, ReminderPlanJson.encode(plan))
         }
         ContextCompat.startForegroundService(context, intent)
-        active = true
         pendingPlan = null
         Toast.makeText(
             context,
-            context.resources.getQuantityString(
+            resources.getQuantityString(
                 R.plurals.destination_reminder_started_rides,
                 plan.rides.size,
                 plan.rides.size
@@ -102,17 +98,20 @@ internal fun ItineraryReminderControl(itinerary: TripItinerary?, modifier: Modif
                     context,
                     Intent(context, NavigationService::class.java).setAction(NavigationService.ACTION_CANCEL)
                 )
-                active = false
                 return@Button
             }
-            val result = itinerary?.let(ReminderPlanBuilder::build)
-                ?: ReminderPlanResult.Error(context.getString(R.string.destination_reminder_no_itinerary))
+            val selectedItinerary = itinerary
+            if (selectedItinerary == null) {
+                Toast.makeText(context, R.string.destination_reminder_no_itinerary, Toast.LENGTH_LONG).show()
+                return@Button
+            }
+            val result = ReminderPlanBuilder.build(selectedItinerary)
             when (result) {
-                is ReminderPlanResult.Error -> Toast.makeText(context, result.message, Toast.LENGTH_LONG).show()
+                is ReminderPlanResult.Error -> Toast.makeText(context, result.userMessage(context), Toast.LENGTH_LONG).show()
                 is ReminderPlanResult.Success -> confirmationPlan = result.plan
             }
         },
-        enabled = itinerary != null,
+        enabled = active || itinerary != null,
         modifier = modifier.fillMaxWidth()
     ) {
         Text(stringResource(if (active) R.string.destination_reminder_stop else R.string.destination_reminder_start))
@@ -157,4 +156,22 @@ internal fun ItineraryReminderControl(itinerary: TripItinerary?, modifier: Modif
             }
         )
     }
+}
+
+@HiltViewModel
+internal class ReminderControlViewModel @Inject constructor(store: ReminderSessionStore) : ViewModel() {
+    val hasActiveSession = store.hasActiveSession.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        false
+    )
+}
+
+private fun ReminderPlanResult.Error.userMessage(context: Context): String = when (reason) {
+    ReminderPlanError.MISSING_TRIP -> context.getString(R.string.destination_reminder_missing_trip)
+    ReminderPlanError.INCOMPLETE_STOP_INFORMATION -> legNumber?.let {
+        context.getString(R.string.destination_reminder_incomplete_stop_information, it)
+    } ?: context.getString(R.string.destination_reminder_invalid_plan)
+    ReminderPlanError.NO_TRANSIT_RIDES -> context.getString(R.string.destination_reminder_no_transit_rides)
+    ReminderPlanError.INVALID_PLAN -> context.getString(R.string.destination_reminder_invalid_plan)
 }

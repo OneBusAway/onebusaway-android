@@ -458,18 +458,6 @@
             millas de distancia
         </item>
     </plurals>
-    <plurals name="distance_feet">
-        <item quantity="one">1 pie de distancia</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            pies de distancia
-        </item>
-        <item quantity="many">
-            <xliff:g id="count">%s</xliff:g>
-            pies de distancia
-        </item>
-    </plurals>
     <plurals name="distance_kilometers">
         <item quantity="one">1 kilómetros de distancia</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
@@ -480,18 +468,6 @@
         <item quantity="many">
             <xliff:g id="count">%s</xliff:g>
             kilómetros de distancia
-        </item>
-    </plurals>
-    <plurals name="distance_meters">
-        <item quantity="one">1 metro de distancia</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
-        <item quantity="other">
-            <xliff:g id="count">%s</xliff:g>
-            metros de distancia
-        </item>
-        <item quantity="many">
-            <xliff:g id="count">%s</xliff:g>
-            metros de distancia
         </item>
     </plurals>
 
@@ -643,11 +619,8 @@
     <string name="preferences_app_theme_option_light">Claro</string>
     <string name="preferences_app_theme_option_dark">Oscuro</string>
     <string name="preferences_app_theme_option_system_default">Predeterminado del sistema</string>
-    <string name="preferences_category_user_logs">Registros de usuario</string>
     <string name="preferences_hide_alerts_title">Ocultar alertas</string>
     <string name="preferences_hide_alerts_summary">Ocultar alertas de servicio para paradas y rutas</string>
-    <string name="preferences_user_share_destination_logs_title">Compartir registros de destino</string>
-    <string name="preferences_user_share_destination_logs_summary">La información anónima de ubicación en tiempo real de tu dispositivo será compartida con %1$s para mejorar la función de recordatorio de destino.</string>
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -1090,9 +1063,7 @@
     <string name="destination_reminder_confirm">Confirmar recordatorio de destino</string>
     <string name="destination_reminder_cancel">Cancelar recordatorio</string>
     <string name="destination_reminder_cancel_trip">Cancelar viaje</string>
-    <string name="destination_voice_get_ready">Prepárate para bajarte</string>
     <string name="destination_voice_arriving_destination">Llegando a tu destino</string>
-    <string name="destination_voice_request_stop">Solicita la parada</string>
 
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Sí, me avisaron en el momento oportuno</string>
@@ -1102,8 +1073,6 @@
     <string name="feedback_label">Comentarios</string>
     <string name="feedback_msg">Cuéntanos cómo estuvo tu experiencia</string>
     <string name="feedback_freeText">Escribe tus comentarios aquí</string>
-    <string name="feedback_checkbox_text">Acepto compartir mis comentarios</string>
-    <string name="feedback_log_guide">Tus comentarios serán enviados a %1$s. Si marcas “Incluir registros del sistema”, la información de ubicación en tiempo real de tu dispositivo registrada al acercarte a tu parada de destino será compartida con %1$s para que los desarrolladores puedan mejorar la función de recordatorio de destino.\n\nCambia tu preferencia para compartir registros del sistema en Configuración.</string>
     <string name="feedback_notify_title">Comentarios sobre el recordatorio</string>
     <string name="feedback_notify_dialog_msg">¿El recordatorio de destino te fue útil?</string>
     <string name="feedback_notify_confirmation">Gracias por compartir tus comentarios</string>

@@ -232,7 +232,7 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
                 "(`session_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, " +
                 "`plan_json` TEXT NOT NULL, `state_json` TEXT NOT NULL, " +
                 "`started_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, " +
-                "`log_file_path` TEXT, PRIMARY KEY(`session_id`))"
+                "PRIMARY KEY(`session_id`))"
         )
     }
 }

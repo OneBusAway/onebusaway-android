@@ -4,20 +4,32 @@ package org.onebusaway.android.map.googlemapsv2
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
+import android.os.Build
+import androidx.core.net.toUri
 import com.google.android.gms.maps.model.Marker
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import org.onebusaway.android.R
 
 /** Helper methods specific to proprietary Google Maps integration. */
 object ProprietaryMapHelpV2 {
-    @Suppress("DEPRECATION")
     @JvmStatic
     fun isMapsInstalled(context: Context): Boolean = try {
-        context.packageManager.getApplicationInfo("com.google.android.apps.maps", 0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getApplicationInfo(
+                "com.google.android.apps.maps",
+                PackageManager.ApplicationInfoFlags.of(0)
+            )
+        } else {
+            getApplicationInfoLegacy(context.packageManager)
+        }
         true
     } catch (_: PackageManager.NameNotFoundException) {
         false
+    }
+
+    @Suppress("DEPRECATION")
+    private fun getApplicationInfoLegacy(packageManager: PackageManager) {
+        packageManager.getApplicationInfo("com.google.android.apps.maps", 0)
     }
 
     @JvmStatic
@@ -28,7 +40,7 @@ object ProprietaryMapHelpV2 {
             .setPositiveButton(context.getString(R.string.install_google_maps_positive_button)) { _, _ ->
                 val intent = Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse(context.getString(R.string.android_maps_v2_market_url))
+                    context.getString(R.string.android_maps_v2_market_url).toUri()
                 )
                 if (context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
                     context.startActivity(intent)

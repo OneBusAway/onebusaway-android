@@ -17,7 +17,6 @@ package org.onebusaway.android.ui.feedback
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,25 +39,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequest
-import androidx.work.WorkManager
-import java.io.File
-import java.io.IOException
-import java.util.concurrent.TimeUnit
-import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
-import org.onebusaway.android.nav.NavigationService
-import org.onebusaway.android.nav.NavigationUploadWorker
-import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.compose.components.ObaTopAppBar
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -70,147 +57,42 @@ import org.onebusaway.android.ui.nav.NavRoutes
  *
  * Feedback is a NavHost destination hosted by [HomeActivity] (see [NavRoutes.FEEDBACK] and
  * the [FeedbackScreen] / [FeedbackSubmitter] below); this is no longer an Activity but a launcher
- * facade. It keeps the companion extra-key + response constants so [NavigationService] keeps compiling
- * unchanged, and exposes a [makeIntent] that builds an explicit [HomeActivity] intent carrying the
- * feedback route (which HomeActivity's translator navigates to). Non-exported; reached only from the
- * post-trip notification's Yes/No PendingIntents.
+ * facade. [makeIntent] builds an explicit [HomeActivity] intent carrying the feedback route, reached
+ * only from the post-trip notification's Yes/No actions.
  */
 object FeedbackLauncher {
-
-    const val TAG = "FeedbackLauncher"
-
-    const val TRIP_ID = ".TRIP_ID"
-    const val NOTIFICATION_ID = ".NOTIFICATION_ID"
-    const val RESPONSE = ".RESPONSE"
-    const val LOG_FILE = ".LOG_FILE"
 
     const val FEEDBACK_NO = 1
     const val FEEDBACK_YES = 2
 
-    /**
-     * Builds the explicit [HomeActivity] intent that opens the feedback destination. Mirrors the former
-     * `new Intent(context, FeedbackLauncher.class)` + extras; here the extras become the feedback route's
-     * nav-args. RESPONSE is required; the rest are optional.
-     */
+    /** Builds the explicit [HomeActivity] intent that opens the feedback destination. */
     @JvmStatic
-    @JvmOverloads
-    fun makeIntent(
-        context: Context,
-        response: Int,
-        logFile: String? = null,
-        tripId: String? = null,
-        notificationId: Int = 0
-    ): Intent = HomeActivity.navIntent(
-        context,
-        NavRoutes.feedback(response, logFile, tripId, notificationId)
-    )
+    fun makeIntent(context: Context, response: Int): Intent = HomeActivity.navIntent(context, NavRoutes.feedback(response))
 }
 
-/**
- * The submit/log glue formerly hosted by the FeedbackLauncher. Re-hosted here so the feedback NavHost
- * destination can run it on send: either append the feedback to the trip log and queue it for upload,
- * or delete the log and report the feedback to analytics only — matching the user's "share logs" choice.
- * Built with the application [Context], the [prefs] repository, and the trip's [logFile] (the
- * destination's nav-arg).
- */
-class FeedbackSubmitter(
-    private val context: Context,
-    private val prefs: PreferencesRepository,
-    private val logFile: String?
-) {
-
-    fun shareLogsPref(): Boolean = prefs.getBoolean(R.string.preferences_key_user_share_destination_logs, true)
-
-    fun setShareLogs(share: Boolean) {
-        prefs.setBoolean(R.string.preferences_key_user_share_destination_logs, share)
-    }
-
+/** Reports post-trip feedback without collecting or attaching rider location data. */
+class FeedbackSubmitter(private val context: Context) {
     fun submit(liked: Boolean, feedback: String) {
-        prefs.setBoolean(NavigationService.FIRST_FEEDBACK, false)
-        if (shareLogsPref()) {
-            moveLog(liked, feedback)
-        } else {
-            deleteLog()
-            logFeedback(liked, feedback)
-        }
+        AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(
+            liked,
+            feedback.ifEmpty { null }
+        )
         Toast.makeText(
             context,
             context.getString(R.string.feedback_notify_confirmation),
             Toast.LENGTH_SHORT
         ).show()
     }
-
-    /** Appends the feedback to the trip log and moves it to the upload folder for its response. */
-    private fun moveLog(liked: Boolean, feedback: String) {
-        val logFilePath = logFile ?: return
-        val response = context.getString(
-            if (liked) {
-                R.string.analytics_label_destination_reminder_yes
-            } else {
-                R.string.analytics_label_destination_reminder_no
-            }
-        )
-        try {
-            val file = File(logFilePath)
-            file.appendText(System.lineSeparator() + feedback)
-            val destFolder = File(
-                context.filesDir.absolutePath +
-                    File.separator +
-                    NavigationService.LOG_DIRECTORY +
-                    File.separator +
-                    response
-            )
-            try {
-                destFolder.mkdirs()
-                if (!file.renameTo(File(destFolder, file.name))) {
-                    throw IOException("Failed to move $file to $destFolder")
-                }
-            } catch (e: Exception) {
-                Log.e(FeedbackLauncher.TAG, "File move failed")
-            }
-            setupLogUploadTask()
-        } catch (e: IOException) {
-            Log.e(FeedbackLauncher.TAG, "File write failed: $e")
-        }
-    }
-
-    private fun deleteLog() {
-        val logFilePath = logFile ?: return
-        val deleted = File(logFilePath).delete()
-        if (BuildConfig.DEBUG) Log.d(FeedbackLauncher.TAG, "Log deleted $deleted")
-    }
-
-    private fun setupLogUploadTask() {
-        val uploadCheckWork = PeriodicWorkRequest
-            .Builder(NavigationUploadWorker::class.java, 24, TimeUnit.HOURS)
-            .build()
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-            NavigationUploadWorker.UNIQUE_WORK_NAME,
-            ExistingPeriodicWorkPolicy.KEEP,
-            uploadCheckWork
-        )
-    }
-
-    private fun logFeedback(liked: Boolean, feedbackText: String) {
-        AnalyticsEntryPoint.get(context).reportDestinationReminderFeedback(
-            liked,
-            feedbackText.ifEmpty { null },
-            null
-        )
-    }
 }
 
 @Composable
 internal fun FeedbackScreen(
     initialLiked: Boolean,
-    initialSendLogs: Boolean,
     onBack: () -> Unit,
-    onSendLogsChanged: (Boolean) -> Unit,
     onSend: (liked: Boolean, text: String) -> Unit
 ) {
     var liked by rememberSaveable { mutableStateOf(initialLiked) }
     var text by rememberSaveable { mutableStateOf("") }
-    var sendLogs by rememberSaveable { mutableStateOf(initialSendLogs) }
     Scaffold(
         topBar = {
             ObaTopAppBar(stringResource(R.string.feedback_label), onBack) {
@@ -255,26 +137,6 @@ internal fun FeedbackScreen(
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = sendLogs,
-                    onCheckedChange = {
-                        sendLogs = it
-                        onSendLogsChanged(it)
-                    }
-                )
-                Text(
-                    stringResource(R.string.feedback_checkbox_text),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.feedback_log_guide, stringResource(R.string.app_name)),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }
@@ -315,9 +177,7 @@ private fun FeedbackPreview() {
     ObaTheme {
         FeedbackScreen(
             initialLiked = true,
-            initialSendLogs = true,
             onBack = {},
-            onSendLogsChanged = {},
             onSend = { _, _ -> }
         )
     }

@@ -11,6 +11,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 
 class ReminderEngineTest {
     @Test
@@ -61,15 +63,22 @@ class ReminderEngineTest {
     }
 
     @Test
-    fun sparseFixNearAlight_emitsBothMissingAlertsOnce() {
+    fun sparseFixNearAlight_requiresEstablishedProgressThenEmitsBothAlertsOnce() {
         val plan = plan(ride())
         val first = ReminderEngine.reduce(plan, ReminderEngineState(), sample(700.0, 1))
-        assertEquals(1, first.effects.count { it is ReminderEffect.GetReady })
-        assertEquals(1, first.effects.count { it is ReminderEffect.AlightNow })
+        assertEquals(0, first.effects.count { it is ReminderEffect.GetReady })
+        assertEquals(0, first.effects.count { it is ReminderEffect.AlightNow })
 
         val second = ReminderEngine.reduce(plan, first.state, sample(710.0, 2))
         assertEquals(0, second.effects.count { it is ReminderEffect.GetReady })
         assertEquals(0, second.effects.count { it is ReminderEffect.AlightNow })
+        val third = ReminderEngine.reduce(plan, second.state, sample(720.0, 3))
+        assertEquals(1, third.effects.count { it is ReminderEffect.GetReady })
+        assertEquals(1, third.effects.count { it is ReminderEffect.AlightNow })
+
+        val fourth = ReminderEngine.reduce(plan, third.state, sample(730.0, 4))
+        assertEquals(0, fourth.effects.count { it is ReminderEffect.GetReady })
+        assertEquals(0, fourth.effects.count { it is ReminderEffect.AlightNow })
     }
 
     @Test
@@ -87,7 +96,7 @@ class ReminderEngineTest {
     @Test
     fun completingRide_activatesTransferThenCompletesSession() {
         val plan = plan(ride(), ride(penultimateMeters = 2_000.0, alightMeters = 3_000.0))
-        var state = ReminderEngineState()
+        var state = ReminderEngineState(rideProgressEstablished = true)
         state = ReminderEngine.reduce(plan, state, sample(995.0, 1)).state
         val firstCompletion = ReminderEngine.reduce(plan, state, sample(999.0, 2))
         assertEquals(1, firstCompletion.state.activeRideIndex)
@@ -95,7 +104,8 @@ class ReminderEngineTest {
         assertTrue(firstCompletion.effects.any { it is ReminderEffect.RideCompleted })
         assertFalse(firstCompletion.effects.any { it is ReminderEffect.SessionCompleted })
 
-        state = ReminderEngine.reduce(plan, firstCompletion.state, sample(2_995.0, 3)).state
+        state = firstCompletion.state.copy(rideProgressEstablished = true)
+        state = ReminderEngine.reduce(plan, state, sample(2_995.0, 3)).state
         val finalCompletion = ReminderEngine.reduce(plan, state, sample(2_999.0, 4))
         assertTrue(finalCompletion.state.completed)
         assertTrue(finalCompletion.effects.any { it is ReminderEffect.SessionCompleted })
@@ -121,7 +131,7 @@ class ReminderEngineTest {
     @Test
     fun stateAndPlan_roundTripForProcessRestoration() {
         val plan = plan(ride())
-        val state = ReminderEngineState(activeRideIndex = 0, getReadyEmitted = true, lastSampleTimestampMs = 42)
+        val state = ReminderEngineState(activeRideIndex = 0, getReadyEmitted = true, lastSampleTimestamp = WallTime(42))
         assertEquals(plan, ReminderPlanJson.decode(ReminderPlanJson.encode(plan)))
         assertEquals(state, ReminderPlanJson.decodeState(ReminderPlanJson.encodeState(state)))
         assertEquals(null, ReminderPlanJson.decode("{\"version\":99}"))
@@ -140,8 +150,8 @@ class ReminderEngineTest {
         board = stop("board", -1_000.0),
         penultimate = stop("before", penultimateMeters),
         alight = stop("destination", alightMeters),
-        scheduledStart = 1,
-        scheduledEnd = 2
+        scheduledStart = ServerTime(1),
+        scheduledEnd = ServerTime(2)
     )
 
     private fun stop(id: String, northMeters: Double) = ReminderStop(id, id, point(northMeters))
@@ -153,7 +163,7 @@ class ReminderEngineTest {
         timestamp: Long,
         accuracy: Float = 5f,
         speed: Float? = null
-    ) = ReminderLocationSample(point(northMeters), accuracy, speed, timestamp)
+    ) = ReminderLocationSample(point(northMeters), accuracy, speed, WallTime(timestamp))
 
     private companion object {
         const val METERS_PER_DEGREE = 111_195.0

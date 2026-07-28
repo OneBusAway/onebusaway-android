@@ -23,11 +23,14 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.time.ServerTime
 
 internal sealed interface ReminderPlanResult {
     data class Success(val plan: ReminderPlan) : ReminderPlanResult
-    data class Error(val message: String) : ReminderPlanResult
+    data class Error(val reason: ReminderPlanError, val legNumber: Int? = null) : ReminderPlanResult
 }
+
+internal enum class ReminderPlanError { MISSING_TRIP, INCOMPLETE_STOP_INFORMATION, NO_TRANSIT_RIDES, INVALID_PLAN }
 
 /** Converts either OTP protocol's normalized itinerary into an all-or-nothing reminder plan. */
 internal object ReminderPlanBuilder {
@@ -39,10 +42,10 @@ internal object ReminderPlanBuilder {
         alight: ReminderStop,
         mode: ReminderMode = ReminderMode.TRANSIT,
         routeLabel: String? = null,
-        scheduledStart: Long = 0,
-        scheduledEnd: Long = scheduledStart
+        scheduledStart: ServerTime = ServerTime(0),
+        scheduledEnd: ServerTime = scheduledStart
     ): ReminderPlanResult {
-        if (tripId.isBlank()) return ReminderPlanResult.Error("A reminder requires a transit trip.")
+        if (tripId.isBlank()) return ReminderPlanResult.Error(ReminderPlanError.MISSING_TRIP)
         return runCatching {
             ReminderPlan(
                 sessionId = sessionId,
@@ -61,7 +64,7 @@ internal object ReminderPlanBuilder {
             )
         }.fold(
             onSuccess = { ReminderPlanResult.Success(it) },
-            onFailure = { ReminderPlanResult.Error(it.message ?: "Unable to create destination reminders.") }
+            onFailure = { ReminderPlanResult.Error(ReminderPlanError.INVALID_PLAN) }
         )
     }
 
@@ -73,9 +76,8 @@ internal object ReminderPlanBuilder {
         itinerary.legs.forEachIndexed { legIndex, leg ->
             val mode = leg.mode ?: return@forEachIndexed
             if (!mode.isTransit) return@forEachIndexed
-            val ride = leg.toReminderRide() ?: return ReminderPlanResult.Error(
-                "Reminders are unavailable because transit leg ${legIndex + 1} has incomplete stop information."
-            )
+            val ride = leg.toReminderRide()
+                ?: return ReminderPlanResult.Error(ReminderPlanError.INCOMPLETE_STOP_INFORMATION, legIndex + 1)
             val immediatelyFollowsTransit = legIndex > 0 &&
                 itinerary.legs[legIndex - 1].mode?.isTransit == true
             if (leg.interlineWithPreviousLeg && immediatelyFollowsTransit && rides.isNotEmpty()) {
@@ -90,11 +92,11 @@ internal object ReminderPlanBuilder {
                 rides += ride
             }
         }
-        if (rides.isEmpty()) return ReminderPlanResult.Error("This itinerary has no transit rides to monitor.")
+        if (rides.isEmpty()) return ReminderPlanResult.Error(ReminderPlanError.NO_TRANSIT_RIDES)
         return runCatching { ReminderPlan(sessionId = sessionId, rides = rides) }
             .fold(
                 onSuccess = { ReminderPlanResult.Success(it) },
-                onFailure = { ReminderPlanResult.Error(it.message ?: "Unable to create destination reminders.") }
+                onFailure = { ReminderPlanResult.Error(ReminderPlanError.INVALID_PLAN) }
             )
     }
 
@@ -111,8 +113,8 @@ internal object ReminderPlanBuilder {
             board = orderedStops.first(),
             penultimate = orderedStops[orderedStops.lastIndex - 1],
             alight = orderedStops.last(),
-            scheduledStart = startTime.epochMs,
-            scheduledEnd = endTime.epochMs
+            scheduledStart = startTime,
+            scheduledEnd = endTime
         )
     }
 
@@ -138,7 +140,25 @@ internal object ReminderPlanBuilder {
 
     private fun ReminderStop.sameStop(other: ReminderStop): Boolean = id == other.id || point == other.point
 
-    private fun TripMode.toReminderMode(): ReminderMode? = runCatching { ReminderMode.valueOf(name) }.getOrNull()
+    private fun TripMode.toReminderMode(): ReminderMode? = when (this) {
+        TripMode.BUS -> ReminderMode.BUS
+        TripMode.BUSISH -> ReminderMode.BUSISH
+        TripMode.TRAM -> ReminderMode.TRAM
+        TripMode.SUBWAY -> ReminderMode.SUBWAY
+        TripMode.RAIL -> ReminderMode.RAIL
+        TripMode.FERRY -> ReminderMode.FERRY
+        TripMode.CABLE_CAR -> ReminderMode.CABLE_CAR
+        TripMode.GONDOLA -> ReminderMode.GONDOLA
+        TripMode.FUNICULAR -> ReminderMode.FUNICULAR
+        TripMode.TRANSIT -> ReminderMode.TRANSIT
+        TripMode.TRAINISH -> ReminderMode.TRAINISH
+        TripMode.WALK,
+        TripMode.BICYCLE,
+        TripMode.CAR,
+        TripMode.BOARDING,
+        TripMode.ALIGHTING,
+        TripMode.TRANSFER -> null
+    }
 }
 
 internal object ReminderPlanJson {

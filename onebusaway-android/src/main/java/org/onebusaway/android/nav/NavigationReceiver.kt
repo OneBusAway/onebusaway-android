@@ -8,14 +8,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 /** Handles explicit notification commands without reaching into static service or TTS state. */
-@AndroidEntryPoint
 class NavigationReceiver : BroadcastReceiver() {
-    @Inject internal lateinit var speechController: ReminderSpeechController
-
     override fun onReceive(context: Context, intent: Intent) {
         val command = intent.action ?: when (intent.getIntExtra(ACTION_NUM, 0)) {
             DISMISS_NOTIFICATION -> ACTION_SILENCE
@@ -23,7 +18,10 @@ class NavigationReceiver : BroadcastReceiver() {
             else -> null
         }
         when (command) {
-            ACTION_SILENCE -> speechController.silence()
+            ACTION_SILENCE -> ContextCompat.startForegroundService(
+                context,
+                Intent(context, NavigationService::class.java).setAction(NavigationService.ACTION_SILENCE)
+            )
             ACTION_CANCEL -> ContextCompat.startForegroundService(
                 context,
                 Intent(context, NavigationService::class.java).setAction(NavigationService.ACTION_CANCEL)

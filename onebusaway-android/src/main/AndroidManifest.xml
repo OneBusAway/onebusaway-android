@@ -338,11 +338,6 @@
                 <action android:name=".nav.NavigationReceiver" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".nav.FeedbackReceiver"
-            android:enabled="true">
-        </receiver>
-
         <!-- Trip-plan-change monitor: a foreground service running a coroutine poll loop while the
              user is within the pre-departure window. No platform foregroundServiceType fits "watch a
              planned trip for changes"; specialUse is the sanctioned catch-all (subtype documents it

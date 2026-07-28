@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 11,
-    "identityHash": "55570461b72685ea5877301bb18c6221",
+    "identityHash": "4c6eff3f5197ab91b9c021061155ab92",
     "entities": [
       {
         "tableName": "studies",
@@ -734,7 +734,7 @@
       },
       {
         "tableName": "navigation_sessions",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`session_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, `plan_json` TEXT NOT NULL, `state_json` TEXT NOT NULL, `started_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, `log_file_path` TEXT, PRIMARY KEY(`session_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`session_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, `plan_json` TEXT NOT NULL, `state_json` TEXT NOT NULL, `started_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, PRIMARY KEY(`session_id`))",
         "fields": [
           {
             "fieldPath": "sessionId",
@@ -771,11 +771,6 @@
             "columnName": "updated_at_ms",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "logFilePath",
-            "columnName": "log_file_path",
-            "affinity": "TEXT"
           }
         ],
         "primaryKey": {
@@ -933,7 +928,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '55570461b72685ea5877301bb18c6221')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4c6eff3f5197ab91b9c021061155ab92')"
     ]
   }
 }

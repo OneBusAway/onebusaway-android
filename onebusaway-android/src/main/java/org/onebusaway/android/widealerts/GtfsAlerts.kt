@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.transit.realtime.GtfsRealtime
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -11,6 +12,7 @@ import javax.inject.Singleton
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.PreferenceUtils
 
 /** Fetches and processes wide GTFS alerts. */
@@ -21,23 +23,28 @@ class GtfsAlerts @Inject constructor(
     private val fetchedRegions = ConcurrentHashMap.newKeySet<String>()
 
     fun fetchAlerts(regionId: String, callback: GtfsAlertCallBack) {
-        if (regionId in fetchedRegions) {
+        val pathUrl = getGtfsAlertsUrl(regionId) ?: return
+        if (!fetchedRegions.add(regionId)) {
             Log.d(TAG, "Alerts already fetched for region: $regionId")
             return
         }
-        val pathUrl = getGtfsAlertsUrl(regionId) ?: return
         if (BuildConfig.DEBUG) Log.d(TAG, "fetchAlerts for region: $regionId")
         Thread {
             try {
-                val feed = URL(pathUrl).openStream().use(GtfsRealtime.FeedMessage::parseFrom)
-                val nowMs = if (feed.hasHeader() && feed.header.hasTimestamp()) {
-                    feed.header.timestamp * 1_000L
-                } else {
-                    System.currentTimeMillis()
+                val connection = URL(pathUrl).openConnection() as HttpURLConnection
+                connection.connectTimeout = NETWORK_TIMEOUT_MS
+                connection.readTimeout = NETWORK_TIMEOUT_MS
+                val feed = try {
+                    connection.inputStream.use(GtfsRealtime.FeedMessage::parseFrom)
+                } finally {
+                    connection.disconnect()
                 }
-                processAlerts(feed.entityList, nowMs, callback)
-                fetchedRegions += regionId
+                if (!feed.hasHeader() || !feed.header.hasTimestamp()) {
+                    error("GTFS alert feed omitted its server timestamp")
+                }
+                processAlerts(feed.entityList, ServerTime(feed.header.timestamp * 1_000L), callback)
             } catch (error: Exception) {
+                fetchedRegions.remove(regionId)
                 Log.e(TAG, "Error fetching GTFS alert data for region: $regionId", error)
             }
         }.start()
@@ -45,11 +52,11 @@ class GtfsAlerts @Inject constructor(
 
     fun processAlerts(
         alerts: List<GtfsRealtime.FeedEntity>,
-        nowMs: Long,
+        now: ServerTime,
         callback: GtfsAlertCallBack
     ) {
         for (entity in alerts) {
-            if (!GtfsAlertsHelper.isValidEntity(context, entity, nowMs)) continue
+            if (!GtfsAlertsHelper.isValidEntity(context, entity, now.epochMs)) continue
             val alert = entity.alert
             val title = GtfsAlertsHelper.getAlertTitle(alert)
             val description = GtfsAlertsHelper.getAlertDescription(alert)
@@ -77,5 +84,6 @@ class GtfsAlerts @Inject constructor(
 
     private companion object {
         const val TAG = "GtfsAlerts"
+        const val NETWORK_TIMEOUT_MS = 15_000
     }
 }

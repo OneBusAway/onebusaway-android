@@ -17,6 +17,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "navigation_sessions")
 data class NavigationSessionRecord(
@@ -25,12 +26,14 @@ data class NavigationSessionRecord(
     @ColumnInfo(name = "plan_json") val planJson: String,
     @ColumnInfo(name = "state_json") val stateJson: String,
     @ColumnInfo(name = "started_at_ms") val startedAtMs: Long,
-    @ColumnInfo(name = "updated_at_ms") val updatedAtMs: Long,
-    @ColumnInfo(name = "log_file_path") val logFilePath: String?
+    @ColumnInfo(name = "updated_at_ms") val updatedAtMs: Long
 )
 
 @Dao
 interface NavigationSessionDao {
+    @Query("SELECT EXISTS(SELECT 1 FROM navigation_sessions)")
+    fun observeHasActiveSession(): Flow<Boolean>
+
     @Query("SELECT * FROM navigation_sessions ORDER BY updated_at_ms DESC LIMIT 1")
     suspend fun active(): NavigationSessionRecord?
 
@@ -46,14 +49,10 @@ interface NavigationSessionDao {
         upsert(record)
     }
 
-    @Query(
-        "UPDATE navigation_sessions SET state_json = :stateJson, updated_at_ms = :updatedAtMs, " +
-            "log_file_path = :logFilePath WHERE session_id = :sessionId"
-    )
+    @Query("UPDATE navigation_sessions SET state_json = :stateJson, updated_at_ms = :updatedAtMs WHERE session_id = :sessionId")
     suspend fun updateState(
         sessionId: String,
         stateJson: String,
-        updatedAtMs: Long,
-        logFilePath: String?
+        updatedAtMs: Long
     )
 }

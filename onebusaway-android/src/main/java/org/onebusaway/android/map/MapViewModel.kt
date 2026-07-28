@@ -307,7 +307,7 @@ class MapViewModel @Inject constructor(
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
         highlightedSegment: List<GeoPoint> = emptyList(),
-        extraSegments: List<RiddenSegment> = emptyList(),
+        extraSegments: List<RouteFocusSegment> = emptyList(),
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false
     ) {

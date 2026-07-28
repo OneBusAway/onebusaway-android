@@ -27,6 +27,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.location.FakeLocationRepository
+import org.onebusaway.android.map.RouteFocusRelationship
+import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
@@ -35,6 +37,10 @@ import org.onebusaway.android.region.FakeRegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.region.region
 import org.onebusaway.android.testing.MainDispatcherRule
+import org.onebusaway.android.ui.tripresults.AlternativeRouteRef
+import org.onebusaway.android.ui.tripresults.FocusedLeg
+import org.onebusaway.android.ui.tripresults.RouteLegRef
+import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.util.GeoPoint
 
 private class FakeStartupPreferencesRepository(
@@ -98,6 +104,48 @@ class HomeViewModelTest {
     // The raw stop payload onArrivalsLoaded forwards to the map; its identity is irrelevant to the
     // pending-focus gate, so one shared fixture suffices.
     private val obaStop = ObaStopElement("1", 47.6, -122.3, "Main St", "100")
+
+    @Test
+    fun `focusing an interchangeable itinerary leg shows every resolved route`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val board = RouteStopRef("40_N23-T2", "N23", "Lynnwood City Center", GeoPoint(47.8158, -122.2942))
+        val routeLeg = RouteLegRef(
+            routeId = "40_2LINE",
+            headsign = "Downtown Redmond",
+            board = board,
+            alight = null,
+            alternatives = listOf(
+                AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null),
+                // Still appears in the joined badge, but cannot be loaded without an OBA route id.
+                AlternativeRouteRef(null, "Tacoma Dome", "T Line", null)
+            )
+        )
+        val points = listOf(board.point!!, GeoPoint(47.6114, -122.3376))
+
+        vm.focusItineraryRouteLeg(routeLeg, FocusedLeg(points, setOf(1)))
+        advanceUntilIdle()
+
+        assertEquals(
+            ShowRouteRequest(
+                routeId = "40_2LINE",
+                directionStopId = board.stopId,
+                highlightedSegment = points,
+                extraSegments = listOf(
+                    RouteFocusSegment(
+                        "40_1LINE",
+                        board.stopId,
+                        relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                        directionHeadsign = "Federal Way Downtown"
+                    )
+                )
+            ),
+            map.routeRequests.single()
+        )
+        job.cancel()
+    }
 
     // --- arrivals sheet settled -> map padding / recenter ---
 

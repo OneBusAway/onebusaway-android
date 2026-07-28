@@ -22,6 +22,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.models.RouteMapStop
 import org.onebusaway.android.util.GeoPoint
 
@@ -68,6 +69,49 @@ class RouteDirectionFocusTest {
         // A stop with no direction membership (route without a numeric direction grouping) -> whole route.
         val withUngrouped = stops + stop("u")
         assertNull(withUngrouped.anchorDirectionId(anchorStopId = "u"))
+    }
+
+    @Test
+    fun headsignDisambiguatesASharedAnchorDirection() {
+        val directions = listOf(
+            RouteMapDirection(0, "to Lynnwood City Center"),
+            RouteMapDirection(1, "Federal Way Downtown")
+        )
+
+        assertEquals(1, directions.directionIdForHeadsign("Federal Way Downtown"))
+        assertEquals(0, directions.directionIdForHeadsign("Lynnwood City Center"))
+        assertEquals(0, directions.directionIdForHeadsign("TO LYNNWOOD CITY CENTER"))
+        assertNull(directions.directionIdForHeadsign("Angle Lake"))
+    }
+
+    @Test
+    fun segmentDirectionPrefersUniqueAnchorAndFallsBackToHeadsign() {
+        val directions = listOf(RouteMapDirection(0, "Northbound"), RouteMapDirection(1, "Southbound"))
+        val route = RouteMap(
+            route = null,
+            agencyName = null,
+            stops = listOf(stop("unique", 0), stop("shared", 0, 1)),
+            routes = emptyList(),
+            polylines = emptyList(),
+            polylinesByDirection = emptyMap(),
+            directions = directions,
+            initialDirectionId = null
+        )
+
+        assertEquals(
+            0,
+            resolveRouteFocusSegmentDirection(
+                RouteFocusSegment("route", "unique", directionHeadsign = "Southbound"),
+                route
+            )
+        )
+        assertEquals(
+            1,
+            resolveRouteFocusSegmentDirection(
+                RouteFocusSegment("route", "shared", directionHeadsign = "Southbound"),
+                route
+            )
+        )
     }
 
     // ----- stopsForDirection -----

@@ -110,6 +110,25 @@ internal fun List<RouteMapStop>.anchorDirectionId(anchorStopId: String?): Int? {
     return firstOrNull { it.stop.id == anchorStopId }?.directionIds?.singleOrNull()
 }
 
+/** Resolve an additional route segment to the one direction it should draw and poll. The anchor is
+ * authoritative when unique; its headsign disambiguates a stop shared by several direction groups. */
+internal fun resolveRouteFocusSegmentDirection(segment: RouteFocusSegment, route: RouteMap): Int? =
+    route.stops.anchorDirectionId(segment.anchorStopId)
+        ?: route.directions.directionIdForHeadsign(segment.directionHeadsign)
+
+/** Resolve an OTP trip headsign against OBA's direction labels when a shared stop cannot choose one. */
+internal fun List<RouteMapDirection>.directionIdForHeadsign(headsign: String?): Int? {
+    val target = headsign.normalizedHeadsign() ?: return null
+    return filter { it.label.normalizedHeadsign() == target }.map { it.directionId }.singleOrNull()
+}
+
+private fun String?.normalizedHeadsign(): String? = this
+    ?.trim()
+    ?.lowercase()
+    ?.removePrefix("to ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+
 /**
  * Narrows a route's [RouteMapStop]s to a single [directionId] (null = whole route). Source order is
  * preserved and stops shared between directions that also serve [directionId] are included. Pure;

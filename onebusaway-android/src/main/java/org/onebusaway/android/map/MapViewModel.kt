@@ -308,11 +308,14 @@ class MapViewModel @Inject constructor(
         preserveStopFocus: Boolean = false,
         highlightedSegment: List<GeoPoint> = emptyList(),
         extraSegments: List<RiddenSegment> = emptyList(),
-        itineraryContext: List<RoutePolyline> = emptyList()
+        itineraryContext: List<RoutePolyline> = emptyList(),
+        preserveItinerary: Boolean = false
     ) {
         // A leg's route sub-focus keeps the trip it came from (its context lines were read by the caller
         // before this teardown, and its start/end pins are left standing); every other entry drops it.
-        leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = itineraryContext.isNotEmpty())
+        // Preserve based on the transition's origin rather than the context list: an itinerary whose
+        // legs have no drawable geometry still has start/end pins and retained controller state to keep.
+        leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
         persistRoute(routeId, directionStopId, initialDirectionId)
         routeController.start(
             routeId,
@@ -480,7 +483,8 @@ class MapViewModel @Inject constructor(
                 extraSegments = request.extraSegments,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
-                itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList()
+                itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),
+                preserveItinerary = withinDirections
             )
         }
     }

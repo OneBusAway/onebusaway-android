@@ -1072,8 +1072,8 @@ class RouteMapController(
      * The color the map is currently drawing [activeTripId]'s route with — see
      * [VehicleMarker.routeColor] for why that is deliberately not the route's GTFS color.
      *
-     * The lookup mirrors what the polylines do (`routeColors[key] ?: gtfsColor`, see
-     * RouteViewGeometry), so a vehicle and its line resolve through the same map and can't disagree.
+     * The lookup mirrors what the polylines do (`routeColors[key] ?: mapRouteLineColorOrNull(gtfs)`,
+     * see RouteViewGeometry), so a vehicle and its line resolve the same way and can't disagree.
      *
      * Both reference hops are nullable by contract (the poll carries whatever `references` it carries,
      * and a block-interlined vehicle can report a trip this route's poll never fetched), so an
@@ -1119,7 +1119,11 @@ class RouteMapController(
     ): Int? {
         val trip = response.trip(activeTripId) ?: return null
         val assigned = assignment[RouteDirectionKey(trip.routeId, trip.directionId)]
-        return assigned ?: response.route(trip.routeId)?.color
+        // Exactly what RouteViewGeometry does for the lines: an adjacency-assigned hue is already a
+        // drawn color and passes through, while an agency's GTFS color goes through the map's route-line
+        // policy (#2041) first. Skipping that policy here would put the disc on the raw agency color
+        // while its line drew the normalized one — the disagreement this resolution exists to prevent.
+        return assigned ?: mapRouteLineColorOrNull(response.route(trip.routeId)?.color)
     }
 }
 

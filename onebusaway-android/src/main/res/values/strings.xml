@@ -127,12 +127,8 @@
 
     <string name="main_waiting_for_location">Trying to get a fix on your location&#8230;</string>
     <string name="no_location_permission">Unable to get your location.  Please give app location permissions via system settings.</string>
-    <string name="main_outofrange_title">Out of range</string>
-    <string name="main_outofrange">You’re looking at a place outside the %1$s service area.\n\nMove
-        map to %1$s now?
-    </string>
-    <string name="main_outofrange_yes">Take me there</string>
-    <string name="main_outofrange_no">Stay where I am</string>
+    <string name="map_outside_service_area">Outside %1$s service area</string>
+    <string name="map_view_service_area">View service area</string>
 
     <string name="bus_options_menu_add_star">Add star to route</string>
     <string name="bus_options_menu_remove_star">Remove star from route</string>

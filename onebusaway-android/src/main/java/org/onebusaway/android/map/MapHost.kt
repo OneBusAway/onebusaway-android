@@ -60,6 +60,9 @@ sealed interface StopsBanner {
 
     /** A load failed with cached stops on screen (offline, #1754): the map is showing saved stops. */
     data object ShowingSavedStops : StopsBanner
+
+    /** The viewport is outside the current region; offer to frame its service area. */
+    data object OutsideRegion : StopsBanner
 }
 
 /**
@@ -171,9 +174,10 @@ class MapHost(
 
     /**
      * The informational strip across the top of the nearby-stops map: prompt to zoom in when the load
-     * was truncated ([StopsBanner.MoreStopsAvailable]), or a "showing saved stops" notice when a load
-     * failed with cached stops on screen ([StopsBanner.ShowingSavedStops], #1754). Set by the stop
-     * loader on each load; cleared when leaving the nearby-stops view.
+     * was truncated ([StopsBanner.MoreStopsAvailable]), a "showing saved stops" notice when a load
+     * failed with cached stops on screen ([StopsBanner.ShowingSavedStops], #1754), or an action to
+     * return to the service area when the viewport is out of range ([StopsBanner.OutsideRegion]). Set
+     * by the stop loader on each load; cleared when leaving the nearby-stops view.
      */
     val stopsBanner: StateFlow<StopsBanner> = _stopsBanner.asStateFlow()
 
@@ -313,8 +317,11 @@ class MapHost(
 
     fun zoomOut() = dispatchGesture(CameraCommand.ZoomOut)
 
-    /** Frame the current region's bounds (the out-of-range dialog's "take me there"). */
-    fun zoomToRegion() = frame(FramingIntent.Region)
+    /** Clear the out-of-range banner and frame the current region's bounds. */
+    fun zoomToRegion() {
+        setStopsBanner(StopsBanner.None)
+        frame(FramingIntent.Region)
+    }
 
     // ----- Generic markers -----
 

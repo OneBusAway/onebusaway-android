@@ -619,7 +619,7 @@ class MapViewModel @Inject constructor(
 
     fun zoomOut() = mapHost.zoomOut()
 
-    /** Frame the current region's bounds (the out-of-range dialog's "take me there"). */
+    /** Clear the out-of-range banner and frame the current region's bounds. */
     fun zoomToRegion() = mapHost.zoomToRegion()
 
     // ----- Lifecycle (the owner forwards onPause/onResume) -----

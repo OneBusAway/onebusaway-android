@@ -23,13 +23,10 @@ import org.onebusaway.android.api.ObaApiException
  * A one-shot map event that needs an Activity to carry out (so it can't be plain state). [MapHost]
  * emits these on [MapHost.effects] (re-exposed by the map view models); the hosting Activity collects
  * them while STARTED and shows the corresponding UI (the dialog/toast bodies are the ones that used to
- * live in the flavor host's `showOutOfRangeDialog` / `showNoLocationDialog` /
- * `showLocationPermissionDialog` / the my-location toast + the permission-launcher relay).
+ * live in the flavor host's `showNoLocationDialog` / `showLocationPermissionDialog` / the my-location
+ * toast + the permission-launcher relay).
  */
 sealed interface MapEffect {
-
-    /** The viewport (or the device) is outside the current region — prompt the user to switch regions. */
-    object OutOfRange : MapEffect
 
     /** Location services are off — show the "enable location" dialog (with its never-ask-again opt-out). */
     object NoLocation : MapEffect

@@ -120,12 +120,6 @@
     <string name="main_changelocationmode_title">Cambiar modo de ubicación</string>
     <string name="main_waiting_for_location">Tratando de establecer tú ubicación&#8230;</string>
     <string name="no_location_permission">No se puede obtener tú ubicación.</string>
-    <string name="main_outofrange_title">Fuera de alcance</string>
-    <string name="main_outofrange">Usted esta fuera del área de servicio %1$s.\n\n¿Mover
-        el mapa a %1$s ahora?
-    </string>
-    <string name="main_outofrange_yes">Llévame allí</string>
-    <string name="main_outofrange_no">Quedarme donde estoy</string>
 
     <string name="bus_options_menu_add_star">Adicionar la ruta a favoritos</string>
     <string name="bus_options_menu_remove_star">Remover la ruta de favoritos</string>

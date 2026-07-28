@@ -336,7 +336,7 @@ class StopsMapController(
             return
         }
         if (nearby.outOfRange) {
-            notifyOutOfRange()
+            host.setStopsBanner(StopsBanner.OutsideRegion)
             return
         }
 
@@ -361,7 +361,7 @@ class StopsMapController(
             }
             if (!inRegion && nearby.stops.isEmpty()) {
                 Log.d(TAG, "Device location is outside region range, notifying...")
-                notifyOutOfRange()
+                host.setStopsBanner(StopsBanner.OutsideRegion)
                 return
             }
         }
@@ -373,11 +373,6 @@ class StopsMapController(
         val complete = !nearby.limitExceeded
         if (!complete) host.setStopsBanner(StopsBanner.MoreStopsAvailable)
         showStops(nearby.stops, nearby.routes, viewport = snapshot, complete = complete)
-    }
-
-    private fun notifyOutOfRange() {
-        host.setStopsBanner(StopsBanner.None)
-        host.emitEffect(MapEffect.OutOfRange)
     }
 
     // ----- Focus -----

@@ -118,10 +118,6 @@
     <string name="main_changelocationmode_title">Korkean tarkkuuden sijainti ei ole käytössä</string>
     <string name="main_changelocationmode">Laitteesi nykyinen “Sijaintimenetelmä”-asetus ei välttämättä ilmoita sinulle määränpäähän lähestymisestä epätarkan sijaintitiedon vuoksi. Haluatko muuttaa laitteesi “Sijaintimenetelmän” asetukseksi “Korkea tarkkuus” nyt?</string>
     <string name="no_location_permission">Sijaintiasi ei pystytty määrittämään.</string>
-    <string name="main_outofrange_title">Ulkona alueelta</string>
-    <string name="main_outofrange">Olet ulkona %1$s palvelualueelta.\n\nHaluatko siirtyä sinne?</string>
-    <string name="main_outofrange_yes">Siirry</string>
-    <string name="main_outofrange_no">Pysy täällä</string>
 
     <string name="bus_options_menu_add_star">Lisää reitti suosikiksi</string>
     <string name="bus_options_menu_remove_star">Poista reitti suosikeista</string>

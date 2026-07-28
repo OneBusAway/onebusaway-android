@@ -31,10 +31,13 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -109,7 +112,7 @@ private const val SHOW_DEBUG_ZOOM_INDICATOR = false
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue
  * in HomeActivity — the tap callbacks (focus -> the map view model + the home focused stop +
- * analytics; info-window taps -> navigation), the one-shot effects (the out-of-range / no-location /
+ * analytics; info-window taps -> navigation), the one-shot effects (the no-location /
  * permission-rationale dialogs + the my-location toast + the permission request, now Compose-native),
  * the eager first-launch permission prompt, and the resume/pause lifecycle. The visibility gates are a
  * self-wired [MapChromeViewModel]; the loading bar reads [MapViewModel.progress] directly. Mirrors the
@@ -308,7 +311,6 @@ fun MapFeature(
     LaunchedEffect(mapViewModel) {
         mapViewModel.effects.collect { effect ->
             when (effect) {
-                MapEffect.OutOfRange,
                 MapEffect.NoLocation,
                 MapEffect.ShowPermissionRationale -> dialog = effect
                 MapEffect.RequestLocationPermission ->
@@ -349,14 +351,6 @@ fun MapFeature(
     }
 
     when (dialog) {
-        MapEffect.OutOfRange -> OutOfRangeDialog(
-            regionName = mapViewModel.currentRegionName.orEmpty(),
-            onConfirm = {
-                mapViewModel.zoomToRegion()
-                dialog = null
-            },
-            onDismiss = { dialog = null }
-        )
         MapEffect.NoLocation -> NoLocationDialog(
             onEnable = {
                 context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
@@ -412,6 +406,8 @@ fun MapFeature(
     ) {
         StopsInfoBanner(
             banner = stopsBanner.forFocus(currentFocus),
+            regionName = mapViewModel.currentRegionName.orEmpty(),
+            onViewServiceArea = mapViewModel::zoomToRegion,
             modifier = Modifier.align(Alignment.TopCenter)
         )
         if (BuildConfig.DEBUG && SHOW_DEBUG_ZOOM_INDICATOR) {
@@ -496,25 +492,32 @@ fun MapFeature(
 internal fun StopsBanner.forFocus(focus: CurrentFocus): StopsBanner = if (this == StopsBanner.MoreStopsAvailable && focus is CurrentFocus.Stop) StopsBanner.None else this
 
 /**
- * The nearby-stops info notice: an extended-FAB-style pill (leading icon + text) at the top-center of the
- * map that slides down to appear and up to disappear. Shows either "zoom in to see more stops" (a
- * truncated load) or "showing saved stops" (a failed load with cached stops on screen, #1754); hidden on
- * [StopsBanner.None]. Purely state-driven and informational — no dismiss button, and no action on tap.
- * The caller applies the status-bar inset and the slide clipping (clipToBounds).
+ * The nearby-stops notice: a pill at the top-center of the map. Shows "zoom in to see more stops" (a
+ * truncated load), "showing saved stops" (a failed load with cached stops on screen, #1754), or an
+ * out-of-region message with an action that frames the service area. Hidden on [StopsBanner.None].
  */
 @Composable
-private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) {
+private fun StopsInfoBanner(
+    banner: StopsBanner,
+    regionName: String,
+    onViewServiceArea: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     // Retain the last shown banner so its label stays put during the slide-out (when banner -> None),
     // instead of blanking mid-animation. Seeded with the more-stops case; only ever set to a real one.
     var lastShown by remember { mutableStateOf<StopsBanner>(StopsBanner.MoreStopsAvailable) }
     if (banner != StopsBanner.None) lastShown = banner
-    val (labelRes, iconRes) = when (lastShown) {
-        StopsBanner.ShowingSavedStops -> R.string.map_showing_cached_stops to R.drawable.history_24
-        else -> R.string.map_zoom_in_for_more_stops to R.drawable.ic_zoom_in
+    val iconRes = when (lastShown) {
+        StopsBanner.None,
+        StopsBanner.MoreStopsAvailable -> R.drawable.ic_zoom_in
+        StopsBanner.ShowingSavedStops -> R.drawable.history_24
+        StopsBanner.OutsideRegion -> R.drawable.ic_action_location_map
     }
     AnimatedVisibility(
         visible = banner != StopsBanner.None,
-        modifier = modifier,
+        // The actionable banner is wider than the informational pills, so place it below the
+        // top-right weather chip instead of letting that sibling obscure its action.
+        modifier = modifier.padding(top = if (lastShown == StopsBanner.OutsideRegion) 56.dp else 0.dp),
         // Pop into place (scale up from ~80% with a little spring), rather than sliding down from the edge.
         enter = scaleIn(
             initialScale = 0.8f,
@@ -543,29 +546,33 @@ private fun StopsInfoBanner(banner: StopsBanner, modifier: Modifier = Modifier) 
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp)
             )
-            Text(
-                text = stringResource(labelRes),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (lastShown == StopsBanner.OutsideRegion) {
+                Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)) {
+                    Text(
+                        text = stringResource(R.string.map_outside_service_area, regionName),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    TextButton(
+                        onClick = onViewServiceArea,
+                        contentPadding = PaddingValues(0.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text(stringResource(R.string.map_view_service_area))
+                    }
+                }
+            } else {
+                Text(
+                    text = when (lastShown) {
+                        StopsBanner.ShowingSavedStops -> stringResource(R.string.map_showing_cached_stops)
+                        else -> stringResource(R.string.map_zoom_in_for_more_stops)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
-}
-
-/** The viewport (or device) is outside the current region (ported from GoogleMapHost.showOutOfRange). */
-@Composable
-private fun OutOfRangeDialog(regionName: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.main_outofrange_title)) },
-        text = { Text(stringResource(R.string.main_outofrange, regionName)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) { Text(stringResource(R.string.main_outofrange_yes)) }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.main_outofrange_no)) }
-        }
-    )
 }
 
 /** Location services are off (ported from GoogleMapHost.showNoLocationDialog + its never-ask opt-out). */

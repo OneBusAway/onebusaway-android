@@ -81,10 +81,6 @@
 
     <string name="main_waiting_for_location">Ricerca della posizione…</string>
     <string name="no_location_permission">Impossibile individuare la posizione. Fornisci all’app l’accesso alla posizione nelle impostazioni di sistema.</string>
-    <string name="main_outofrange_title">Fuori portata</string>
-    <string name="main_outofrange">Il servizio di trasporti di %1$s non copre il luogo in cui ti trovi.\n\nSpostare mappa su %1$s?</string>
-    <string name="main_outofrange_yes">Portami lì</string>
-    <string name="main_outofrange_no">Resta qui</string>
 
     <string name="bus_options_menu_add_star">Aggiungi linea ai preferiti</string>
     <string name="bus_options_menu_remove_star">Rimuovi linea dai preferiti</string>

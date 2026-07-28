@@ -37,6 +37,11 @@ class MapStopsBannerTest {
     }
 
     @Test
+    fun `stop focus preserves the outside-region banner`() {
+        assertEquals(StopsBanner.OutsideRegion, StopsBanner.OutsideRegion.forFocus(stopFocus))
+    }
+
+    @Test
     fun `nearby mode preserves the zoom-in banner`() {
         assertEquals(
             StopsBanner.MoreStopsAvailable,

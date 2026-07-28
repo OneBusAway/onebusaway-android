@@ -16,6 +16,8 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
@@ -25,6 +27,7 @@ import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.Polyline
 
 /** JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment], [routePolylinesWithSegment]). */
 class RouteSegmentHighlightTest {
@@ -100,5 +103,26 @@ class RouteSegmentHighlightTest {
         assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE, result[1].widthProfile)
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
+    }
+
+    @Test
+    fun upstreamTo_keepsOnlyTheApproachThroughTheBoardingPoint() {
+        val first = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.33)))
+        val second = RoutePolyline(color = 1, points = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.64, -122.33)))
+
+        val upstream = listOf(first, second).upstreamTo(GeoPoint(47.62, -122.33))
+
+        assertEquals(2, upstream.size)
+        assertEquals(first, upstream.first())
+        assertEquals(47.62, upstream.last().points.last().latitude, 0.000001)
+        assertFalse(upstream.last().points.any { it.latitude > 47.62 })
+    }
+
+    @Test
+    fun containsRoutePoint_acceptsApproachingVehicle_andRejectsDownstreamVehicle() {
+        val upstream = listOf(Polyline(listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33))))
+
+        assertTrue(upstream.containsRoutePoint(GeoPoint(47.60, -122.33)))
+        assertFalse(upstream.containsRoutePoint(GeoPoint(47.64, -122.33)))
     }
 }

@@ -26,6 +26,12 @@ import kotlin.math.cos
  */
 class Polyline(points: List<GeoPoint>) {
 
+    data class Projection(
+        val point: GeoPoint,
+        val distanceAlong: Double,
+        val distanceToPoint: Double
+    )
+
     /** Owned copy, so a caller mutating its list can't desync it from [cumulativeDistances]. */
     val points: List<GeoPoint> = points.toList()
 
@@ -98,9 +104,20 @@ class Polyline(points: List<GeoPoint>) {
      * to sit a route stop on the route centerline (#1752). This is an exact geometric projection, not a
      * magnitude guess; the planar approximation is negligible at the stop-to-line distances involved.
      */
-    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? {
+    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? =
+        nearestProjection(latitude, longitude)?.point
+
+    /** The closest point plus its distance along this polyline and distance from the query. */
+    fun nearestProjection(latitude: Double, longitude: Double): Projection? {
         if (points.isEmpty()) return null
-        if (points.size == 1) return points.first()
+        if (points.size == 1) {
+            val point = points.first()
+            return Projection(
+                point,
+                distanceAlong = 0.0,
+                distanceToPoint = haversineDistance(latitude, longitude, point.latitude, point.longitude)
+            )
+        }
         val cosLat = cos(Math.toRadians(latitude))
         // Query point in the local frame.
         val px = longitude * cosLat
@@ -108,6 +125,7 @@ class Polyline(points: List<GeoPoint>) {
         var bestLat = 0.0
         var bestLon = 0.0
         var bestDist2 = Double.MAX_VALUE
+        var bestDistanceAlong = 0.0
         for (i in 0 until points.size - 1) {
             val a = points[i]
             val b = points[i + 1]
@@ -126,9 +144,16 @@ class Polyline(points: List<GeoPoint>) {
                 bestDist2 = dist2
                 bestLat = projLat
                 bestLon = projLon
+                bestDistanceAlong = cumulativeDistances[i] +
+                    t * (cumulativeDistances[i + 1] - cumulativeDistances[i])
             }
         }
-        return GeoPoint(bestLat, bestLon)
+        val point = GeoPoint(bestLat, bestLon)
+        return Projection(
+            point,
+            distanceAlong = bestDistanceAlong,
+            distanceToPoint = haversineDistance(latitude, longitude, bestLat, bestLon)
+        )
     }
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */

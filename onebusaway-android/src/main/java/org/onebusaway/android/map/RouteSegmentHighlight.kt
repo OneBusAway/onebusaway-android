@@ -61,6 +61,32 @@ internal fun routePolylinesWithSegment(
     return base.asUntraveledRouteUnderlay() + itineraryContext + overlay
 }
 
+/** Keep a direction's travel-ordered geometry only through [anchor], including a clipped final line. */
+internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyline> {
+    anchor ?: return this
+    val match = mapIndexedNotNull { index, line ->
+        val projection = Polyline(line.points).nearestProjection(anchor.latitude, anchor.longitude)
+            ?: return@mapIndexedNotNull null
+        Triple(index, line, projection)
+    }.minByOrNull { (_, _, projection) -> projection.distanceToPoint } ?: return emptyList()
+    val (matchIndex, line, projection) = match
+    val clipped = Polyline(line.points)
+        .subPolyline(0.0, projection.distanceAlong)
+        ?.takeIf { it.size >= 2 && it.first() != it.last() }
+        ?.let { line.copy(points = it) }
+    return take(matchIndex) + listOfNotNull(clipped)
+}
+
+/** Whether [point] lies on one of these upstream route lines. */
+internal fun List<Polyline>.containsRoutePoint(
+    point: GeoPoint,
+    toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
+): Boolean = any { line ->
+    val projection = line.nearestProjection(point.latitude, point.longitude)
+        ?: return@any false
+    projection.distanceToPoint <= toleranceMeters
+}
+
 /**
  * Keep only the stops within [toleranceMeters] of [segment]'s path — the ride's stops, not the whole
  * route's. All stops are kept when there's no drawable segment (plain route focus). [segment] must be the

@@ -104,8 +104,7 @@ class Polyline(points: List<GeoPoint>) {
      * to sit a route stop on the route centerline (#1752). This is an exact geometric projection, not a
      * magnitude guess; the planar approximation is negligible at the stop-to-line distances involved.
      */
-    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? =
-        nearestProjection(latitude, longitude)?.point
+    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? = nearestProjection(latitude, longitude)?.point
 
     /** The closest point plus its distance along this polyline and distance from the query. */
     fun nearestProjection(latitude: Double, longitude: Double): Projection? {
@@ -145,7 +144,8 @@ class Polyline(points: List<GeoPoint>) {
                 bestLat = projLat
                 bestLon = projLon
                 bestDistanceAlong = cumulativeDistances[i] +
-                    t * (cumulativeDistances[i + 1] - cumulativeDistances[i])
+                    t *
+                    (cumulativeDistances[i + 1] - cumulativeDistances[i])
             }
         }
         val point = GeoPoint(bestLat, bestLon)

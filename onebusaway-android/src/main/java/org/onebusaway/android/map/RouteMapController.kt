@@ -1011,11 +1011,11 @@ class RouteMapController(
         val boardPoint = highlightedSegment.firstOrNull()
         val isLegFocus = highlightedSegment.isDrawableSegment()
         val leaderRouteId = routeId ?: return
-        fun RouteFocusSegment.polylines(): List<RoutePolyline> =
-            routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
+        fun RouteFocusSegment.polylines(): List<RoutePolyline> = routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
         val focusedRouteLines = listOf(
             FocusedRouteLines(leaderRouteId, null, directionPolylines(currentDirectionId))
-        ) + extraSegments.map { FocusedRouteLines(it.routeId, it.relationship, it.polylines()) }
+        ) +
+            extraSegments.map { FocusedRouteLines(it.routeId, it.relationship, it.polylines()) }
         val approaches = focusedRouteLines
             // Interchangeable routes approach the same platform. Stay-aboard continuations begin after
             // boarding, so they are part of the selected ride rather than its upstream context.

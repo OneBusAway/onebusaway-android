@@ -295,6 +295,8 @@
     <string name="destination_reminder_start">Start reminders</string>
     <string name="destination_reminder_stop">Stop reminders</string>
     <string name="destination_reminder_missing_trip">This transit ride does not include a trip identifier.</string>
+    <!-- Not a plural: %1$d identifies which leg of the itinerary is at fault, so it names one leg
+         however many there are. -->
     <string name="destination_reminder_incomplete_stop_information" tools:ignore="PluralsCandidate">Reminders are unavailable because transit leg %1$d has incomplete stop information.</string>
     <string name="destination_reminder_no_transit_rides">This itinerary has no transit rides to monitor.</string>
     <string name="destination_reminder_invalid_plan">Unable to create destination reminders.</string>

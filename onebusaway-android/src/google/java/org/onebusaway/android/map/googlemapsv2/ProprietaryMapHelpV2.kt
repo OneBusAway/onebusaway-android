@@ -41,6 +41,12 @@ object ProprietaryMapHelpV2 {
         false
     }
 
+    /**
+     * The pre-API-33 `getApplicationInfo(String, Int)`, isolated in its own function so the
+     * suppression covers exactly the deprecated call and nothing around it. The replacement
+     * overload takes an `ApplicationInfoFlags` that only exists on API 33+, so this stays until
+     * `minSdk` reaches it.
+     */
     @Suppress("DEPRECATION")
     private fun getApplicationInfoLegacy(packageManager: PackageManager) {
         packageManager.getApplicationInfo("com.google.android.apps.maps", 0)

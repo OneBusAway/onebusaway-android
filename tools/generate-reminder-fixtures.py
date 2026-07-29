@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import math
 import pathlib
 import random
@@ -38,7 +39,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20="
+# OneBusAway's publicly documented shared Android client key — not a secret, but every run spends
+# quota against the key all OBA Android users share. Override it with your own for repeated runs:
+#   OBA_API_KEY=... python3 tools/generate-reminder-fixtures.py
+API_KEY = os.environ.get("OBA_API_KEY", "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=")
 DEPLOYMENTS = [
     ("MTS", "https://realtime.sdmts.com/api/"),
     ("1", "https://api.tampa.onebusawaycloud.com/"),

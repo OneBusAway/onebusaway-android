@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 import time
@@ -44,8 +45,10 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-# The app's own key (ObaApi.API_KEY) — these are public read-only endpoints.
-API_KEY = "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20="
+# OneBusAway's publicly documented shared Android client key — not a secret, but every run spends
+# quota against the key all OBA Android users share. Override it with your own for repeated runs:
+#   OBA_API_KEY=... python3 tools/fetch-reminder-shapes.py
+API_KEY = os.environ.get("OBA_API_KEY", "v1_BktoDJ2gJlu6nLM6LsT9H8IUbWc=cGF1bGN3YXR0c0BnbWFpbC5jb20=")
 
 # Agency id prefix (from the trip id) -> that agency's OBA deployment.
 BASE_URLS = {

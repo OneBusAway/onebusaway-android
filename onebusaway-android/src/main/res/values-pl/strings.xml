@@ -416,12 +416,28 @@
             pozostało mil
         </item>
     </plurals>
+    <plurals name="distance_feet" tools:ignore="MissingQuantity">
+        <item quantity="one">Pozostała jedna stopa</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            pozostało stóp
+        </item>
+    </plurals>
     <plurals name="distance_kilometers" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostał 1 kilometr</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało kilometrów
+        </item>
+    </plurals>
+    <plurals name="distance_meters" tools:ignore="MissingQuantity">
+        <item quantity="one">Pozostał 1 metr</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            pozostało metrów
         </item>
     </plurals>
 

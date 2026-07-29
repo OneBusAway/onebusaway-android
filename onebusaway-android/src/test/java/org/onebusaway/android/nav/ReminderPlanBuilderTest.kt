@@ -6,6 +6,7 @@ package org.onebusaway.android.nav
 
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripItinerary
@@ -37,7 +38,7 @@ class ReminderPlanBuilderTest {
         val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(first, second)), "id") as ReminderPlanResult.Success
 
         assertEquals(1, result.plan.rides.size)
-        assertEquals("a-board", result.plan.rides.single().board.id)
+        assertEquals("a-board", result.plan.rides.single().board?.id)
         assertEquals("b-alight", result.plan.rides.single().alight.id)
         assertEquals("10 / 20", result.plan.rides.single().routeLabel)
     }
@@ -47,6 +48,23 @@ class ReminderPlanBuilderTest {
         val direct = leg(TripMode.BUS).copy(stop = emptyList())
         val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(direct)), "id") as ReminderPlanResult.Success
         assertEquals(result.plan.rides.single().board, result.plan.rides.single().penultimate)
+    }
+
+    @Test
+    fun legacySingleRideCarriesNoBoardingStop() {
+        val stop = ReminderStop("before", "Before", ReminderPoint(47.6, -122.3))
+        val destination = ReminderStop("destination", "Destination", ReminderPoint(47.61, -122.3))
+        val result = ReminderPlanBuilder.buildSingleRide(
+            sessionId = "legacy",
+            tripId = "trip",
+            board = null,
+            penultimate = stop,
+            alight = destination
+        ) as ReminderPlanResult.Success
+
+        // The legacy schema stores only the destination and the stop before it; inventing a
+        // boarding stop would misreport it to anything that later reads the field.
+        assertNull(result.plan.rides.single().board)
     }
 
     @Test

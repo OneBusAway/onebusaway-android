@@ -382,12 +382,28 @@
             mailin päässä
         </item>
     </plurals>
+    <plurals name="distance_feet">
+        <item quantity="one">Yhden jalan päässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            jalan päässä
+        </item>
+    </plurals>
     <plurals name="distance_kilometers">
         <item quantity="one">Yhden kilometrin päässä</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             kilometrin päässä
+        </item>
+    </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">Yhden metrin päässä</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            metrin päässä
         </item>
     </plurals>
 

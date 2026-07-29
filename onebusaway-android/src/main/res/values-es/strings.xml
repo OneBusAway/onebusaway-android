@@ -458,6 +458,18 @@
             millas de distancia
         </item>
     </plurals>
+    <plurals name="distance_feet">
+        <item quantity="one">1 pie de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            pies de distancia
+        </item>
+        <item quantity="many">
+            <xliff:g id="count">%s</xliff:g>
+            pies de distancia
+        </item>
+    </plurals>
     <plurals name="distance_kilometers">
         <item quantity="one">1 kilómetros de distancia</item>
         <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
@@ -468,6 +480,18 @@
         <item quantity="many">
             <xliff:g id="count">%s</xliff:g>
             kilómetros de distancia
+        </item>
+    </plurals>
+    <plurals name="distance_meters">
+        <item quantity="one">1 metro de distancia</item>
+        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
+        <item quantity="other">
+            <xliff:g id="count">%s</xliff:g>
+            metros de distancia
+        </item>
+        <item quantity="many">
+            <xliff:g id="count">%s</xliff:g>
+            metros de distancia
         </item>
     </plurals>
 

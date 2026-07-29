@@ -191,8 +191,11 @@ class Otp2PlanDecodeTest {
         assertEquals(30.seconds, bus.departureDelay)
         assertEquals(TripVertexType.BIKESHARE, bus.from.vertexType)
         assertEquals("bs_9", bus.from.bikeShareId)
-        assertEquals(listOf("1_1001", "1_1050", "1_1002"), bus.stop?.map { it.stopId })
-        assertEquals(TripVertexType.TRANSIT, bus.stop?.get(1)?.vertexType)
+        // OTP2's `stopCalls` include the boarding and alighting calls (1_1001 / 1_1002 here), but
+        // `TripLeg.stop` carries only the stops *in between* — what the drawer counts as "N stops
+        // in between" and what the reminder plan walks — so the two endpoints are dropped.
+        assertEquals(listOf("1_1050"), bus.stop?.map { it.stopId })
+        assertEquals(TripVertexType.TRANSIT, bus.stop?.single()?.vertexType)
 
         // The leg's alternative departures (`nextLegs`) come across unjudged — route identity, the
         // ride time the interchangeability rule compares, and both stop ids to check it against.
@@ -230,9 +233,30 @@ class Otp2PlanDecodeTest {
         assertThrows(IllegalStateException::class.java) { data.toTripItineraries() }
     }
 
+    /**
+     * `CallStopLocation` is a union — a flex leg's call can be a `Location`/`LocationGroup` this
+     * query cannot represent as a transit stop. Dropping just that call would leave a hole in the
+     * middle of the stop list, which shifts the reminder plan's penultimate stop and would alert
+     * the rider at the wrong place, so the whole list collapses to null instead.
+     */
+    @Test
+    fun unrepresentableStopCallCollapsesTheWholeStopList() {
+        val data = planDataWithSingleLeg(
+            mode = Mode.BUS,
+            stopCalls = listOf(
+                stopCall("1_1001", "Stop A", 47.61, -122.31),
+                PlanQuery.StopCall(PlanQuery.StopLocation(__typename = "LocationGroup", onStop = null)),
+                stopCall("1_1050", "Stop Before B", 47.619, -122.319),
+                stopCall("1_1002", "Stop B", 47.62, -122.32)
+            )
+        )
+        assertNull(data.toTripItineraries()[0].legs[0].stop)
+    }
+
     private fun planDataWithSingleLeg(
         mode: Mode,
-        itineraryStart: String? = "2026-07-11T10:00:00-07:00"
+        itineraryStart: String? = "2026-07-11T10:00:00-07:00",
+        stopCalls: List<PlanQuery.StopCall> = emptyList()
     ): PlanQuery.Data {
         val leg = PlanQuery.Leg(
             mode = mode,
@@ -246,7 +270,7 @@ class Otp2PlanDecodeTest {
             to = to(place(name = "Y", lat = 3.0, lon = 4.0)),
             route = null,
             trip = null,
-            stopCalls = emptyList(),
+            stopCalls = stopCalls,
             legGeometry = null,
             steps = null,
             nextLegs = null

@@ -55,7 +55,8 @@ internal data class ReminderRide(
     val mode: ReminderMode,
     val routeLabel: String?,
     val tripId: String,
-    val board: ReminderStop,
+    /** Where the rider gets on. Null for a legacy session, whose schema carried no boarding stop. */
+    val board: ReminderStop?,
     val penultimate: ReminderStop,
     val alight: ReminderStop,
     /** Server-scheduled boarding instant, or null when a legacy session did not carry it. */
@@ -110,11 +111,45 @@ internal data class ReminderEngineState(
     val previousAlightDistanceMeters: Double? = null,
     val towardAlightSamples: Int = 0,
     val rideProgressEstablished: Boolean = false,
+    /**
+     * Set when the session advances to a connecting ride: the rider is standing at the transfer
+     * stop and has not boarded yet, so that ride's alerts stay suppressed until departure is seen.
+     * False for the session's first ride, whose vehicle the rider is already on or about to board
+     * (and which is the only ride a legacy single-ride session has).
+     */
+    val awaitingBoarding: Boolean = false,
+    val boardInsideSamples: Int = 0,
     val speechMuted: Boolean = false,
     @Serializable(with = NullableReminderWallTimeSerializer::class)
     val lastSampleTimestamp: WallTime? = null,
     val completed: Boolean = false
-)
+) {
+    /**
+     * The state a following ride starts from. Progression is per-ride and resets, but the rider's
+     * mute choice and the out-of-order-fix guard belong to the session and must survive a transfer.
+     */
+    fun advancedToRide(index: Int): ReminderEngineState = ReminderEngineState(
+        activeRideIndex = index,
+        awaitingBoarding = true,
+        speechMuted = speechMuted,
+        lastSampleTimestamp = lastSampleTimestamp
+    )
+
+    /**
+     * The part of this state that a restored session must not lose: which ride is active, which
+     * alerts have already fired, and whether the rider silenced speech. The rest is per-sample
+     * filtering scratch that re-converges within a couple of fixes, so persisting on every change
+     * to it would mean a database write for every location update of the whole ride.
+     */
+    fun restorationKey(): List<Any?> = listOf(
+        activeRideIndex,
+        getReadyEmitted,
+        alightNowEmitted,
+        awaitingBoarding,
+        speechMuted,
+        completed
+    )
+}
 
 internal sealed interface ReminderEffect {
     data class Progress(
@@ -140,12 +175,19 @@ internal sealed interface ReminderEffect {
 internal data class ReminderTransition(val state: ReminderEngineState, val effects: List<ReminderEffect>)
 
 /**
- * Product policy for destination-reminder GPS filtering and alert confirmation. These values come
- * from the accepted destination-reminder design: reject fixes worse than 100 m, scale the early
- * warning to 90 seconds of travel within 300–1,200 m, require two consecutive fixes for geofence
- * transitions, and recover sparse traces inside 400 m only after forward ride progress is proven.
- * Accuracy-scaled radii reduce false positives from noisy fixes while their caps keep a poor fix
- * from turning into an unbounded geofence.
+ * Product policy for destination-reminder GPS filtering and alert confirmation: reject fixes worse
+ * than 100 m, scale the early warning to 90 seconds of travel within 300–1,200 m, require two
+ * consecutive fixes for geofence transitions, and recover sparse traces inside 400 m only after
+ * forward ride progress is proven. The same arrival/departure radii give the boarding gate its
+ * hysteresis (see `confirmBoarding`). Accuracy-scaled radii reduce false positives from noisy fixes
+ * while their caps keep a poor fix from turning into an unbounded geofence.
+ *
+ * These thresholds are a **new** design for the modernized engine, not a carry-over — the legacy
+ * provider used a different scheme (20/50/100 m bands with speed cutoffs, a fixed 300 m ready
+ * radius). Per the repository's "no unsanctioned heuristics" rule they are a human-sign-off gate:
+ * they are called out in the pull request for explicit approval, and changing them re-opens it.
+ * The two accuracy multipliers in particular infer a geofence size from a reported accuracy figure
+ * whose meaning varies by location provider.
  */
 internal object DestinationReminderPolicy {
     const val MAX_ACCEPTED_ACCURACY_METERS = 100f
@@ -215,6 +257,14 @@ internal object ReminderEngine {
         )
         val isTransfer = state.activeRideIndex < plan.rides.lastIndex
 
+        if (next.awaitingBoarding) {
+            next = next.confirmBoarding(ride, sample, alightDistance, arrivalRadius, departureRadius, movingTowardAlight)
+            // Until the connecting vehicle is under way, every proximity signal here is the rider
+            // waiting at the transfer stop — alerting on it would fire "prepare to exit" on a
+            // platform, and the latch would then suppress the alert when it actually matters.
+            if (next.awaitingBoarding) return ReminderTransition(next, effects)
+        }
+
         if (!next.getReadyEmitted && penultimateDistance <= getReadyRadius) {
             next = next.copy(getReadyEmitted = true)
             effects += ReminderEffect.GetReady(state.activeRideIndex, ride.alight, isTransfer)
@@ -279,11 +329,49 @@ internal object ReminderEngine {
                 next = next.copy(completed = true)
                 effects += ReminderEffect.SessionCompleted
             } else {
-                next = ReminderEngineState(activeRideIndex = state.activeRideIndex + 1)
+                next = next.advancedToRide(state.activeRideIndex + 1)
             }
         }
 
         return ReminderTransition(next, effects)
+    }
+
+    /**
+     * Clears [ReminderEngineState.awaitingBoarding] once the rider is under way on this ride,
+     * by either of two independent signals:
+     *
+     * - they were seen at the boarding stop and have since left it moving toward the destination
+     *   (the normal wait-then-board sequence, with the wider departure radius giving hysteresis); or
+     * - they are demonstrably further along the ride than the boarding stop is, which recovers the
+     *   case where fixes were sparse or absent while they waited.
+     */
+    private fun ReminderEngineState.confirmBoarding(
+        ride: ReminderRide,
+        sample: ReminderLocationSample,
+        alightDistance: Double,
+        arrivalRadius: Double,
+        departureRadius: Double,
+        movingTowardAlight: Boolean
+    ): ReminderEngineState {
+        // No boarding stop to gate on (a legacy single-ride session): nothing to wait for.
+        val board = ride.board ?: return copy(awaitingBoarding = false)
+        val boardDistance = distanceMeters(sample.point, board.point)
+        val insideSamples = if (boardDistance <= arrivalRadius) {
+            // Monotonic, not consecutive: a rider dwells at the stop, and one noisy fix in the
+            // middle of the wait should not discard the evidence that they were there.
+            min(boardInsideSamples + 1, DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES)
+        } else {
+            boardInsideSamples
+        }
+        val leftBoardingStop = insideSamples >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES &&
+            boardDistance > departureRadius &&
+            movingTowardAlight
+        val boardToAlight = distanceMeters(board.point, ride.alight.point)
+        val pastBoardingStop = rideProgressEstablished && alightDistance < boardToAlight - departureRadius
+        return copy(
+            boardInsideSamples = insideSamples,
+            awaitingBoarding = !(leftBoardingStop || pastBoardingStop)
+        )
     }
 
     internal fun distanceMeters(first: ReminderPoint, second: ReminderPoint): Double {

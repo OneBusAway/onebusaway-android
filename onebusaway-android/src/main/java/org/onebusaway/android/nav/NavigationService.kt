@@ -11,6 +11,7 @@ import android.location.Location
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
@@ -62,31 +63,11 @@ class NavigationService : Service() {
     private var mutedRequested = false
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Android requires foreground promotion immediately. Plan restoration and validation can safely
-        // suspend only after this process-visible notification exists.
-        promoteToForeground(notificationPresenter.foregroundNotification())
-
+        // The teardown commands are handled before any foreground promotion: promoting here would
+        // post a fresh ongoing notification only to cancel it a moment later, and on API 34+
+        // startForeground with a location type throws if the permission has since been revoked —
+        // which is exactly when a rider reaches for "cancel".
         when (intent?.action) {
-            ACTION_SILENCE -> {
-                mutedRequested = true
-                engineState = engineState.copy(speechMuted = true)
-                speechController.silence()
-                plan?.let { activePlan ->
-                    serviceScope.launch {
-                        sessionStore.persist(
-                            activePlan,
-                            engineState,
-                            wallClock()
-                        )
-                    }
-                }
-                if (plan == null && navigationJob?.isActive != true) {
-                    notificationPresenter.cancel()
-                    stopSelf(startId)
-                    return START_NOT_STICKY
-                }
-                return START_STICKY
-            }
             ACTION_CANCEL -> {
                 explicitCancellation = true
                 stopLocationCollection()
@@ -99,10 +80,42 @@ class NavigationService : Service() {
                 }
                 return START_NOT_STICKY
             }
+            ACTION_SILENCE -> {
+                mutedRequested = true
+                engineState = engineState.copy(speechMuted = true)
+                speechController.silence()
+                val activePlan = plan
+                if (activePlan == null && navigationJob?.isActive != true) {
+                    notificationPresenter.cancel()
+                    stopSelf(startId)
+                    return START_NOT_STICKY
+                }
+                promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
+                activePlan?.let {
+                    serviceScope.launch { sessionStore.persist(it, engineState, wallClock()) }
+                }
+                return START_STICKY
+            }
+        }
+
+        // Android requires foreground promotion immediately. Plan restoration and validation can safely
+        // suspend only after this process-visible notification exists.
+        if (!promoteToForeground(notificationPresenter.foregroundNotification())) {
+            // Without the location permission there is nothing this service can do; a sticky
+            // restart after the rider revoked it lands here.
+            serviceScope.launch { sessionStore.clear() }
+            notificationPresenter.cancel()
+            stopSelf(startId)
+            return START_NOT_STICKY
         }
 
         val incomingPlan = intent?.getStringExtra(PLAN_JSON)?.let(ReminderPlanJson::decode)
         val supersedes = incomingPlan != null && incomingPlan.sessionId != plan?.sessionId
+        if (supersedes) {
+            // A superseding session inherits nothing from the one it replaces, including the
+            // previous rider's "silence" choice.
+            mutedRequested = false
+        }
         if (navigationJob?.isActive != true || supersedes) {
             navigationJob?.cancel()
             navigationJob = serviceScope.launch { initialize(intent, incomingPlan) }
@@ -132,7 +145,12 @@ class NavigationService : Service() {
             persistLegacyCompatibility(activePlan, wallClock())
         }
         sessionStore.persist(activePlan, engineState, wallClock())
-        promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
+        if (!promoteToForeground(notificationPresenter.foregroundNotification(activePlan))) {
+            sessionStore.clear()
+            notificationPresenter.cancel()
+            stopSelf()
+            return
+        }
 
         locationRepository.locationUpdates(NAV_UPDATE_INTERVAL_SECONDS).collect(::handleLocation)
     }
@@ -154,7 +172,8 @@ class NavigationService : Service() {
             ReminderPlanBuilder.buildSingleRide(
                 sessionId = "legacy-${now.epochMs}",
                 tripId = tripId,
-                board = beforeStop,
+                // The legacy trip-details launch contract carries no boarding stop.
+                board = null,
                 penultimate = beforeStop,
                 alight = destinationStop,
                 scheduledStart = null,
@@ -190,7 +209,9 @@ class NavigationService : Service() {
         val transition = ReminderEngine.reduce(activePlan, previous, sample)
         if (transition.state == previous && transition.effects.isEmpty()) return
         engineState = transition.state
-        sessionStore.persist(activePlan, engineState, wallClock())
+        if (previous.restorationKey() != engineState.restorationKey()) {
+            sessionStore.persist(activePlan, engineState, wallClock())
+        }
         transition.effects.forEach { dispatch(activePlan, it) }
     }
 
@@ -212,9 +233,9 @@ class NavigationService : Service() {
             sessionStore.clear()
             speechController.close()
             feedbackRepository.requestFeedback()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                stopForeground(STOP_FOREGROUND_DETACH)
-            }
+            // Detach rather than remove, so the "you have arrived" summary outlives the service on
+            // every supported API level (the platform overload is API 24+; this compat call is not).
+            ServiceCompat.stopForeground(this@NavigationService, ServiceCompat.STOP_FOREGROUND_DETACH)
             stopSelf()
         }
     }
@@ -233,12 +254,22 @@ class NavigationService : Service() {
         )
     }
 
-    private fun promoteToForeground(notification: android.app.Notification) {
+    /**
+     * Promotes to the foreground, returning false when the platform refused. On API 34+ a
+     * location-typed foreground service throws if the app no longer holds a location permission,
+     * which the rider can revoke at any time — including while the service is stopped and awaiting
+     * a sticky restart.
+     */
+    private fun promoteToForeground(notification: android.app.Notification): Boolean = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
+        true
+    } catch (e: SecurityException) {
+        Log.w(TAG, "Cannot run destination reminders in the foreground; stopping", e)
+        false
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

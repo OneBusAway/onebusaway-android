@@ -75,9 +75,8 @@ android {
         getByName("androidTest") {
             assets.directories.add("$projectDir/schemas")
         }
-        getByName("test") {
-            resources.directories.add("src/androidTest/res/raw")
-        }
+        // src/test/resources is on the JVM unit-test classpath by convention; the recorded
+        // navigation traces the reminder replay test reads live there.
     }
 
     /**

@@ -13,6 +13,7 @@ import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.RegionEntryPoint
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.PreferenceUtils
 
 /** Fetches and processes wide GTFS alerts. */
@@ -39,10 +40,19 @@ class GtfsAlerts @Inject constructor(
                 } finally {
                     connection.disconnect()
                 }
-                if (!feed.hasHeader() || !feed.header.hasTimestamp()) {
-                    error("GTFS alert feed omitted its server timestamp")
+                // "Now" for the alert active-window check. The feed header timestamp is this feed's
+                // own server clock (GTFS-RT seconds), so preferring it cancels device clock skew
+                // (#1612). That field is optional in the spec, and a feed omitting it must still
+                // yield alerts, so the device clock is the documented fallback — a deliberate
+                // server/device crossing, resolved here at the boundary so the downstream check
+                // stays a pure function of its inputs.
+                val now = if (feed.hasHeader() && feed.header.hasTimestamp()) {
+                    ServerTime(feed.header.timestamp * 1_000L)
+                } else {
+                    Log.w(TAG, "GTFS alert feed for region $regionId omitted its timestamp; using the device clock")
+                    ServerTime(WallTime.now().epochMs)
                 }
-                processAlerts(feed.entityList, ServerTime(feed.header.timestamp * 1_000L), callback)
+                processAlerts(feed.entityList, now, callback)
             } catch (error: Exception) {
                 fetchedRegions.remove(regionId)
                 Log.e(TAG, "Error fetching GTFS alert data for region: $regionId", error)

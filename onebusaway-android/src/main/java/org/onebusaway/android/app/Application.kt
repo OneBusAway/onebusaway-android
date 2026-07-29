@@ -116,22 +116,36 @@ class Application :
         label?.let { AnalyticsEntryPoint.get(this).setRegion(it) }
     }
 
-    /** Removes files and queued jobs left by destination-reminder trace collection in older builds. */
+    /**
+     * Removes files and queued jobs left by destination-reminder trace collection in older builds.
+     * A one-shot upgrade cost: without the flag this would run `WorkManager.getInstance` (which
+     * forces WorkManager initialization, opening its database) on the main thread of every cold
+     * start, forever, long after the work and files are gone.
+     */
     private fun removeLegacyNavigationTraces() {
+        if (PreferenceUtils.getBoolean(LEGACY_NAV_TRACES_REMOVED, false)) return
         val workManager = WorkManager.getInstance(this)
         val cancellations = listOf(
             workManager.cancelUniqueWork("navigation_log_upload"),
             workManager.cancelUniqueWork("navigation_log_cleanup")
         )
         thread(name = "remove-navigation-traces") {
-            runCatching { cancellations.forEach { it.result.get() } }
-                .onSuccess { File(filesDir, "ObaNavLog").deleteRecursively() }
+            // Deleting the recorded traces is the privacy-relevant half and does not depend on the
+            // cancellations succeeding, so it is not gated on them.
+            val filesDeleted = File(filesDir, "ObaNavLog").deleteRecursively()
+            val cancelled = runCatching { cancellations.forEach { it.result.get() } }
                 .onFailure { Log.w(TAG, "Unable to cancel legacy navigation work", it) }
+                .isSuccess
+            // Only latch when everything is actually gone; otherwise retry on the next launch.
+            if (filesDeleted && cancelled) PreferenceUtils.saveBoolean(LEGACY_NAV_TRACES_REMOVED, true)
         }
     }
 
     companion object {
         private const val TAG = "Application"
+
+        /** Latched once the legacy trace files and their queued workers are confirmed gone. */
+        private const val LEGACY_NAV_TRACES_REMOVED = "legacy_navigation_traces_removed"
 
         // Set in onCreate, cleared in onTerminate (emulator-only). Nullable-backed rather than lateinit
         // precisely because onTerminate re-nulls it; get() unwraps it non-null since it's never read

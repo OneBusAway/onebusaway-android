@@ -182,12 +182,11 @@ class DefaultTripInfoRepository @Inject constructor(
      * — the correct reference for an edit-from-storage departure, which is a locally-reconstructed
      * scheduled time rather than a server timestamp.
      */
-    private fun TripInfoArgs.reminderTimeBasis(resolvedDepartureMs: Long): ReminderTimeBasis =
-        if (serverNowMs != 0L && departTime != 0L) {
-            ReminderTimeBasis.Server(ServerTime(resolvedDepartureMs), ServerTime(serverNowMs))
-        } else {
-            ReminderTimeBasis.Device(WallTime(resolvedDepartureMs), WallTime.now())
-        }
+    private fun TripInfoArgs.reminderTimeBasis(resolvedDepartureMs: Long): ReminderTimeBasis = if (serverNowMs != 0L && departTime != 0L) {
+        ReminderTimeBasis.Server(ServerTime(resolvedDepartureMs), ServerTime(serverNowMs))
+    } else {
+        ReminderTimeBasis.Device(WallTime(resolvedDepartureMs), WallTime.now())
+    }
 
     private fun toTripInfoData(
         routeId: String?,

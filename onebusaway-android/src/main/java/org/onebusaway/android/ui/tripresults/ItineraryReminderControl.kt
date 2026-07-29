@@ -4,8 +4,10 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,8 +45,6 @@ import org.onebusaway.android.nav.ReminderPlanError
 import org.onebusaway.android.nav.ReminderPlanJson
 import org.onebusaway.android.nav.ReminderPlanResult
 import org.onebusaway.android.nav.ReminderSessionStore
-import org.onebusaway.android.time.WallTime
-import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
 import org.onebusaway.android.util.PermissionUtils
 
 /** Full-width start/stop action for the currently selected itinerary. */
@@ -59,10 +59,8 @@ internal fun ItineraryReminderControl(
     var pendingPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     var confirmationPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     val active by viewModel.hasActiveSession.collectAsStateWithLifecycle()
-    val requestNotifications = rememberNotificationPermissionRequest()
 
     fun start(plan: ReminderPlan) {
-        requestNotifications()
         val intent = Intent(context, NavigationService::class.java).apply {
             putExtra(NavigationService.PLAN_JSON, ReminderPlanJson.encode(plan))
         }
@@ -71,7 +69,7 @@ internal fun ItineraryReminderControl(
         Toast.makeText(
             context,
             resources.getQuantityString(
-                R.plurals.destination_reminder_started_rides,
+                R.plurals.destination_reminder_monitoring_rides,
                 plan.rides.size,
                 plan.rides.size
             ),
@@ -79,16 +77,49 @@ internal fun ItineraryReminderControl(
         ).show()
     }
 
+    // Notifications carry the ongoing session and its Silence/Cancel actions, so a denial is worth
+    // telling the rider about — but reminders still work by voice, and this screen can still stop
+    // them, so the session starts either way.
+    val notificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        val plan = pendingPlan ?: return@rememberLauncherForActivityResult
+        if (!granted) {
+            Toast.makeText(context, R.string.destination_reminder_notifications_denied, Toast.LENGTH_LONG).show()
+        }
+        start(plan)
+    }
+
+    fun startAfterNotificationPermission(plan: ReminderPlan) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            PermissionUtils.hasGrantedPermission(context, Manifest.permission.POST_NOTIFICATIONS)
+        ) {
+            start(plan)
+            return
+        }
+        pendingPlan = plan
+        notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
         val plan = pendingPlan
-        if (plan != null && grants.values.any { it }) {
-            start(plan)
-        } else if (plan != null) {
-            Toast.makeText(context, R.string.destination_reminder_location_required, Toast.LENGTH_LONG).show()
-        }
         pendingPlan = null
+        if (plan == null) return@rememberLauncherForActivityResult
+        // Coarse location is roughly kilometre-scale; the engine rejects fixes worse than
+        // DestinationReminderPolicy.MAX_ACCEPTED_ACCURACY_METERS, so a coarse-only grant would
+        // silently never alert. Say so rather than starting a session that cannot work.
+        if (grants[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            startAfterNotificationPermission(plan)
+        } else {
+            val message = if (grants.values.any { it }) {
+                R.string.destination_reminder_precise_location_required
+            } else {
+                R.string.destination_reminder_location_required
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
     }
 
     Button(
@@ -132,12 +163,12 @@ internal fun ItineraryReminderControl(
                         confirmationPlan = null
                         if (!isLocationEnabled(context)) {
                             Toast.makeText(context, R.string.destination_reminder_enable_location, Toast.LENGTH_LONG).show()
-                        } else if (PermissionUtils.hasGrantedAtLeastOnePermission(
+                        } else if (PermissionUtils.hasGrantedPermission(
                                 context,
-                                PermissionUtils.LOCATION_PERMISSIONS
+                                Manifest.permission.ACCESS_FINE_LOCATION
                             )
                         ) {
-                            start(plan)
+                            startAfterNotificationPermission(plan)
                         } else {
                             pendingPlan = plan
                             locationPermission.launch(PermissionUtils.LOCATION_PERMISSIONS)

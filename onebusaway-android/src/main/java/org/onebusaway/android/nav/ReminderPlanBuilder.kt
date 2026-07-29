@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.nav
 
+import android.util.Log
 import java.util.UUID
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -37,7 +38,7 @@ internal object ReminderPlanBuilder {
     fun buildSingleRide(
         sessionId: String,
         tripId: String,
-        board: ReminderStop,
+        board: ReminderStop?,
         penultimate: ReminderStop,
         alight: ReminderStop,
         mode: ReminderMode = ReminderMode.TRANSIT,
@@ -46,26 +47,20 @@ internal object ReminderPlanBuilder {
         scheduledEnd: ServerTime? = null
     ): ReminderPlanResult {
         if (tripId.isBlank()) return ReminderPlanResult.Error(ReminderPlanError.MISSING_TRIP)
-        return runCatching {
-            ReminderPlan(
-                sessionId = sessionId,
-                rides = listOf(
-                    ReminderRide(
-                        mode,
-                        routeLabel,
-                        tripId,
-                        board,
-                        penultimate,
-                        alight,
-                        scheduledStart,
-                        scheduledEnd
-                    )
+        return buildPlan(sessionId) {
+            listOf(
+                ReminderRide(
+                    mode,
+                    routeLabel,
+                    tripId,
+                    board,
+                    penultimate,
+                    alight,
+                    scheduledStart,
+                    scheduledEnd
                 )
             )
-        }.fold(
-            onSuccess = { ReminderPlanResult.Success(it) },
-            onFailure = { ReminderPlanResult.Error(ReminderPlanError.INVALID_PLAN) }
-        )
+        }
     }
 
     fun build(
@@ -93,11 +88,19 @@ internal object ReminderPlanBuilder {
             }
         }
         if (rides.isEmpty()) return ReminderPlanResult.Error(ReminderPlanError.NO_TRANSIT_RIDES)
-        return runCatching { ReminderPlan(sessionId = sessionId, rides = rides) }
-            .fold(
-                onSuccess = { ReminderPlanResult.Success(it) },
-                onFailure = { ReminderPlanResult.Error(ReminderPlanError.INVALID_PLAN) }
-            )
+        return buildPlan(sessionId) { rides }
+    }
+
+    /**
+     * Assembles a plan, turning [ReminderPlan]'s own `require` failures into a typed error. Only
+     * [IllegalArgumentException] is caught: anything else (an `Error`, a bug in a caller's lambda)
+     * is not a rejected itinerary and must not be reported to the rider as one.
+     */
+    private inline fun buildPlan(sessionId: String, rides: () -> List<ReminderRide>): ReminderPlanResult = try {
+        ReminderPlanResult.Success(ReminderPlan(sessionId = sessionId, rides = rides()))
+    } catch (e: IllegalArgumentException) {
+        Log.w(TAG, "Rejecting reminder plan for session $sessionId", e)
+        ReminderPlanResult.Error(ReminderPlanError.INVALID_PLAN)
     }
 
     private fun TripLeg.toReminderRide(): ReminderRide? {
@@ -159,6 +162,8 @@ internal object ReminderPlanBuilder {
         TripMode.ALIGHTING,
         TripMode.TRANSFER -> null
     }
+
+    private const val TAG = "ReminderPlanBuilder"
 }
 
 internal object ReminderPlanJson {
@@ -169,9 +174,24 @@ internal object ReminderPlanJson {
 
     fun encode(plan: ReminderPlan): String = json.encodeToString(plan)
 
-    fun decode(value: String): ReminderPlan? = runCatching { json.decodeFromString<ReminderPlan>(value) }.getOrNull()
+    fun decode(value: String): ReminderPlan? = decodeOrNull { json.decodeFromString<ReminderPlan>(value) }
 
     fun encodeState(state: ReminderEngineState): String = json.encodeToString(state)
 
-    fun decodeState(value: String): ReminderEngineState? = runCatching { json.decodeFromString<ReminderEngineState>(value) }.getOrNull()
+    fun decodeState(value: String): ReminderEngineState? = decodeOrNull { json.decodeFromString<ReminderEngineState>(value) }
+
+    /**
+     * A decoding failure is recoverable — the caller discards the stored session rather than
+     * crashing the rider's app — so it comes back as null, and the caller reports it with the
+     * session it belongs to. Deliberately narrow: [IllegalArgumentException] covers malformed JSON
+     * (`SerializationException` is a subclass) and JSON that decodes but violates the model's own
+     * `require`s, such as an unsupported format version or a plan with no rides. Anything else is
+     * not a bad payload and must not be silenced. No Android dependencies, so the JVM tests can
+     * exercise this directly.
+     */
+    private inline fun <T> decodeOrNull(decode: () -> T): T? = try {
+        decode()
+    } catch (_: IllegalArgumentException) {
+        null
+    }
 }

@@ -53,10 +53,9 @@ object NotificationChannels {
 
     /**
      * Vibration pattern for the destination arrival alerts, shared by the [DESTINATION_ARRIVAL_ID]
-     * channel (API 26+) and the notification builders' `setVibrate` (pre-26). Exposed as a
-     * `@JvmField` for compatibility with Java notification callers during the Kotlin migration.
+     * channel (API 26+) and the arrival notification's `setVibrate` (the API 23-25 floor, where
+     * the channel does not exist).
      */
-    @JvmField
     val DESTINATION_VIBRATION_PATTERN =
         longArrayOf(2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000)
 

@@ -130,12 +130,15 @@ class Application :
             workManager.cancelUniqueWork("navigation_log_cleanup")
         )
         thread(name = "remove-navigation-traces") {
-            // Deleting the recorded traces is the privacy-relevant half and does not depend on the
-            // cancellations succeeding, so it is not gated on them.
-            val filesDeleted = File(filesDir, "ObaNavLog").deleteRecursively()
+            // Cancel first: cancelUniqueWork only *requests* cancellation, so deleting while a worker
+            // still ran could let it recreate the directory behind us. Awaiting the cancellations
+            // closes that window.
             val cancelled = runCatching { cancellations.forEach { it.result.get() } }
                 .onFailure { Log.w(TAG, "Unable to cancel legacy navigation work", it) }
                 .isSuccess
+            // Deleting the recorded traces is the privacy-relevant half, so it happens whether or not
+            // the cancellations resolved — it is ordered after them, not conditional on them.
+            val filesDeleted = File(filesDir, "ObaNavLog").deleteRecursively()
             // Only latch when everything is actually gone; otherwise retry on the next launch.
             if (filesDeleted && cancelled) PreferenceUtils.saveBoolean(LEGACY_NAV_TRACES_REMOVED, true)
         }

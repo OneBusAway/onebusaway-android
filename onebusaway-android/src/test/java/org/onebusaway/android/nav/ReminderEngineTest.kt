@@ -455,9 +455,9 @@ class ReminderEngineTest {
                 ReminderShape(
                     encodedPoints = encodePolyline(path),
                     pointCount = path.size,
-                    boardOffsetMeters = polyline.project(0.0, 0.0)!!.distanceAlongMeters,
-                    penultimateOffsetMeters = polyline.project(0.02, 0.005)!!.distanceAlongMeters,
-                    alightOffsetMeters = polyline.project(0.02, 0.0)!!.distanceAlongMeters
+                    boardOffsetMeters = polyline.nearestProjection(0.0, 0.0)!!.distanceAlong,
+                    penultimateOffsetMeters = polyline.nearestProjection(0.02, 0.005)!!.distanceAlong,
+                    alightOffsetMeters = polyline.nearestProjection(0.02, 0.0)!!.distanceAlong
                 )
             }
         )
@@ -473,7 +473,7 @@ class ReminderEngineTest {
         alightMeters: Double
     ): ReminderShape {
         val polyline = Polyline(path)
-        fun offsetAt(northMeters: Double) = polyline.project(northMeters / METERS_PER_DEGREE, 0.0)!!.distanceAlongMeters
+        fun offsetAt(northMeters: Double) = polyline.nearestProjection(northMeters / METERS_PER_DEGREE, 0.0)!!.distanceAlong
         return ReminderShape(
             encodedPoints = encodePolyline(path),
             pointCount = path.size,

@@ -21,11 +21,38 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Plain-JVM coverage for [Polyline.project] — the inverse of [Polyline.interpolate]: a position in,
- * an arc length along the line out. Geometry is built from equator segments so every expected
- * distance is analytic rather than a hard-coded metre count.
+ * Geometry for [Polyline], including [Polyline.nearestProjection] — the inverse of
+ * [Polyline.interpolate]: a position in, an arc length along the line out. The cases below build
+ * their geometry from equator segments so every expected distance is analytic rather than a
+ * hard-coded metre count.
  */
-class PolylineProjectionTest {
+class PolylineTest {
+
+    @Test
+    fun nearestProjection_reportsPointAndDistanceAlongLine() {
+        val line = Polyline(
+            listOf(
+                GeoPoint(47.60, -122.33),
+                GeoPoint(47.62, -122.33),
+                GeoPoint(47.64, -122.33)
+            )
+        )
+
+        val projection = requireNotNull(line.nearestProjection(47.63, -122.32))
+
+        assertEquals(47.63, projection.point.latitude, 0.000001)
+        assertEquals(-122.33, projection.point.longitude, 0.000001)
+        assertEquals(
+            haversineDistance(47.60, -122.33, 47.63, -122.33),
+            projection.distanceAlong,
+            0.1
+        )
+        assertEquals(
+            haversineDistance(47.63, -122.32, 47.63, -122.33),
+            projection.distanceToPoint,
+            0.1
+        )
+    }
 
     private fun gp(lat: Double, lng: Double) = GeoPoint(lat, lng)
 
@@ -37,66 +64,65 @@ class PolylineProjectionTest {
 
     @Test
     fun emptyPolylineProjectsToNull() {
-        assertNull(Polyline(emptyList()).project(0.0, 0.0))
+        assertNull(Polyline(emptyList()).nearestProjection(0.0, 0.0))
     }
 
     @Test
     fun singlePointPolylineProjectsToItsOnlyPointAtZero() {
         val single = Polyline(listOf(gp(0.0, 1.0)))
-        val projection = single.project(0.0, 0.0)!!
+        val projection = single.nearestProjection(0.0, 0.0)!!
 
-        assertEquals(0.0, projection.distanceAlongMeters, 1e-9)
+        assertEquals(0.0, projection.distanceAlong, 1e-9)
         assertEquals(1.0, projection.point.longitude, 1e-12)
-        assertEquals(segLen, projection.offsetMeters, segLen * 1e-6)
+        assertEquals(segLen, projection.distanceToPoint, segLen * 1e-6)
     }
 
     @Test
     fun pointOnTheLineProjectsToItsOwnArcLength() {
-        val projection = poly.project(0.0, 0.5)!!
+        val projection = poly.nearestProjection(0.0, 0.5)!!
 
-        assertEquals(segLen / 2, projection.distanceAlongMeters, segLen * 1e-6)
-        assertEquals(0.0, projection.offsetMeters, 1e-6)
+        assertEquals(segLen / 2, projection.distanceAlong, segLen * 1e-6)
+        assertEquals(0.0, projection.distanceToPoint, 1e-6)
     }
 
     @Test
     fun exactVertexProjectsToTheVertexDistance() {
-        val projection = poly.project(0.0, 1.0)!!
+        val projection = poly.nearestProjection(0.0, 1.0)!!
 
-        assertEquals(segLen, projection.distanceAlongMeters, segLen * 1e-6)
-        assertEquals(0.0, projection.offsetMeters, 1e-6)
+        assertEquals(segLen, projection.distanceAlong, segLen * 1e-6)
+        assertEquals(0.0, projection.distanceToPoint, 1e-6)
     }
 
     @Test
     fun pointOnTheSecondSegmentAccumulatesTheFirst() {
-        val projection = poly.project(0.0, 1.5)!!
+        val projection = poly.nearestProjection(0.0, 1.5)!!
 
-        assertEquals(segLen * 1.5, projection.distanceAlongMeters, segLen * 1e-6)
+        assertEquals(segLen * 1.5, projection.distanceAlong, segLen * 1e-6)
     }
 
     @Test
     fun pointBeforeTheStartClampsToZero() {
-        val projection = poly.project(0.0, -0.5)!!
+        val projection = poly.nearestProjection(0.0, -0.5)!!
 
-        assertEquals(0.0, projection.distanceAlongMeters, 1e-9)
+        assertEquals(0.0, projection.distanceAlong, 1e-9)
         // The offset is the real distance back to the start, not zero.
-        assertEquals(segLen / 2, projection.offsetMeters, segLen * 1e-3)
+        assertEquals(segLen / 2, projection.distanceToPoint, segLen * 1e-3)
     }
 
     @Test
     fun pointBeyondTheEndClampsToTheTotalLength() {
-        val projection = poly.project(0.0, 2.5)!!
+        val projection = poly.nearestProjection(0.0, 2.5)!!
 
-        assertEquals(poly.lengthMeters, projection.distanceAlongMeters, segLen * 1e-6)
-        assertEquals(segLen * 2, poly.lengthMeters, segLen * 1e-6)
+        assertEquals(segLen * 2, projection.distanceAlong, segLen * 1e-6)
     }
 
     @Test
     fun offLinePointKeepsItsArcLengthAndReportsItsOffset() {
         // A tenth of a degree north of the midpoint of the first segment.
-        val projection = poly.project(0.1, 0.5)!!
+        val projection = poly.nearestProjection(0.1, 0.5)!!
 
-        assertEquals(segLen / 2, projection.distanceAlongMeters, segLen * 1e-3)
-        assertEquals(haversineDistance(0.0, 0.5, 0.1, 0.5), projection.offsetMeters, 1.0)
+        assertEquals(segLen / 2, projection.distanceAlong, segLen * 1e-3)
+        assertEquals(haversineDistance(0.0, 0.5, 0.1, 0.5), projection.distanceToPoint, 1.0)
     }
 
     @Test
@@ -106,10 +132,10 @@ class PolylineProjectionTest {
         // monotonically — which is the whole reason this coordinate exists.
         val corner = Polyline(listOf(gp(0.0, 0.0), gp(0.0, 1.0), gp(1.0, 1.0)))
         val along = listOf(
-            corner.project(0.0, 0.25)!!.distanceAlongMeters,
-            corner.project(0.0, 0.75)!!.distanceAlongMeters,
-            corner.project(0.25, 1.0)!!.distanceAlongMeters,
-            corner.project(0.75, 1.0)!!.distanceAlongMeters
+            corner.nearestProjection(0.0, 0.25)!!.distanceAlong,
+            corner.nearestProjection(0.0, 0.75)!!.distanceAlong,
+            corner.nearestProjection(0.25, 1.0)!!.distanceAlong,
+            corner.nearestProjection(0.75, 1.0)!!.distanceAlong
         )
 
         assertEquals(along.sorted(), along)
@@ -119,7 +145,7 @@ class PolylineProjectionTest {
     @Test
     fun nearestPointStillReturnsTheProjectedPoint() {
         val nearest = poly.nearestPoint(0.1, 0.5)!!
-        val projection = poly.project(0.1, 0.5)!!
+        val projection = poly.nearestProjection(0.1, 0.5)!!
 
         assertEquals(projection.point, nearest)
         assertEquals(0.0, nearest.latitude, 1e-9)

@@ -33,7 +33,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.map.RiddenSegment
+import org.onebusaway.android.map.RouteFocusRelationship
+import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.models.FocusedTrip
@@ -625,12 +626,24 @@ class HomeViewModel @Inject constructor(
         }
         // Anchor to the boarding stop so the route shows only the ridden direction. A folded interline
         // (#2000) carries its extra ridden legs so the map draws each continued-onto route/direction and
-        // the shared vehicle across them; empty for an ordinary leg (plain single-route focus).
+        // the shared vehicle across them. An interchangeable ride (#2042) adds every alternative route,
+        // anchored to that same platform, so focusing the joined badge shows the whole corridor rather
+        // than whichever route OTP happened to choose for the itinerary. Unresolved alternatives remain
+        // useful in the badge/ETA UI but cannot be loaded on the map, so they are omitted here.
+        val alternativeSegments = routeLeg.alternatives.mapNotNull { alternative ->
+            val alternativeRouteId = alternative.routeId ?: return@mapNotNull null
+            RouteFocusSegment(
+                routeId = alternativeRouteId,
+                anchorStopId = routeLeg.board?.stopId,
+                relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                directionHeadsign = alternative.headsign
+            )
+        }
         focusItineraryRouteLegOnMap(
             routeId,
             segment = fallbackLeg.points,
             directionStopId = routeLeg.board?.stopId,
-            extraSegments = routeLeg.extraSegments
+            extraSegments = routeLeg.extraSegments + alternativeSegments
         )
     }
 
@@ -654,7 +667,7 @@ class HomeViewModel @Inject constructor(
         segment: List<GeoPoint> = emptyList(),
         directionStopId: String? = null,
         directionId: Int? = null,
-        extraSegments: List<RiddenSegment> = emptyList(),
+        extraSegments: List<RouteFocusSegment> = emptyList(),
         undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(

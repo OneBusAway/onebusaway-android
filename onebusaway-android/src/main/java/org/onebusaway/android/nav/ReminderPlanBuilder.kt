@@ -148,9 +148,9 @@ internal object ReminderPlanBuilder {
         val polyline = Polyline(points)
 
         fun offsetOf(stop: ReminderStop): Double? = polyline
-            .project(stop.point.latitude, stop.point.longitude)
-            ?.takeIf { it.offsetMeters <= MAX_STOP_OFFSET_METERS }
-            ?.distanceAlongMeters
+            .nearestProjection(stop.point.latitude, stop.point.longitude)
+            ?.takeIf { it.distanceToPoint <= MAX_STOP_OFFSET_METERS }
+            ?.distanceAlong
 
         val penultimateOffset = offsetOf(penultimate) ?: return null
         val alightOffset = offsetOf(alight) ?: return null

@@ -26,6 +26,12 @@ import kotlin.math.cos
  */
 class Polyline(points: List<GeoPoint>) {
 
+    data class Projection(
+        val point: GeoPoint,
+        val distanceAlong: Double,
+        val distanceToPoint: Double
+    )
+
     /** Owned copy, so a caller mutating its list can't desync it from [cumulativeDistances]. */
     val points: List<GeoPoint> = points.toList()
 
@@ -91,29 +97,25 @@ class Polyline(points: List<GeoPoint>) {
     }
 
     /**
-     * Where a point falls on this polyline: how far along it the projection lies, and how far the
-     * point sits off the line. [distanceAlongMeters] shares its metric space with the server's
-     * `distanceAlongTrip` (see [haversineDistance]), so the two are directly comparable.
+     * The point on this polyline closest to ([latitude], [longitude]), or null if the polyline is
+     * empty. Each segment is projected in a local equirectangular frame (longitude scaled by
+     * cos(latitude), which keeps the two axes to the same metric scale near the query point), the
+     * projection parameter clamped to the segment, and the true closest projected point returned. Used
+     * to sit a route stop on the route centerline (#1752). This is an exact geometric projection, not a
+     * magnitude guess; the planar approximation is negligible at the stop-to-line distances involved.
      */
-    data class Projection(val point: GeoPoint, val distanceAlongMeters: Double, val offsetMeters: Double)
+    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? = nearestProjection(latitude, longitude)?.point
 
-    /**
-     * Projects ([latitude], [longitude]) onto this polyline, or null if it is empty. Each segment is
-     * projected in a local equirectangular frame (longitude scaled by cos(latitude), which keeps the
-     * two axes to the same metric scale near the query point), the projection parameter clamped to
-     * the segment, and the nearest result returned with its arc length from the polyline's start.
-     *
-     * This is an exact geometric projection, not a magnitude guess; the planar approximation is
-     * negligible at the point-to-line distances involved. Turning a position into a one-dimensional
-     * "distance travelled" is what lets a consumer reason about progress along a route monotonically
-     * rather than by straight-line distance to a destination, which decreases and increases again on
-     * any route that curves.
-     */
-    fun project(latitude: Double, longitude: Double): Projection? {
+    /** The closest point plus its distance along this polyline and distance from the query. */
+    fun nearestProjection(latitude: Double, longitude: Double): Projection? {
         if (points.isEmpty()) return null
-        val first = points.first()
         if (points.size == 1) {
-            return Projection(first, 0.0, haversineDistance(latitude, longitude, first.latitude, first.longitude))
+            val point = points.first()
+            return Projection(
+                point,
+                distanceAlong = 0.0,
+                distanceToPoint = haversineDistance(latitude, longitude, point.latitude, point.longitude)
+            )
         }
         val cosLat = cos(Math.toRadians(latitude))
         // Query point in the local frame.
@@ -122,8 +124,7 @@ class Polyline(points: List<GeoPoint>) {
         var bestLat = 0.0
         var bestLon = 0.0
         var bestDist2 = Double.MAX_VALUE
-        var bestSegment = 0
-        var bestT = 0.0
+        var bestDistanceAlong = 0.0
         for (i in 0 until points.size - 1) {
             val a = points[i]
             val b = points[i + 1]
@@ -142,27 +143,18 @@ class Polyline(points: List<GeoPoint>) {
                 bestDist2 = dist2
                 bestLat = projLat
                 bestLon = projLon
-                bestSegment = i
-                bestT = t
+                bestDistanceAlong = cumulativeDistances[i] +
+                    t *
+                    (cumulativeDistances[i + 1] - cumulativeDistances[i])
             }
         }
-        val segmentLength = cumulativeDistances[bestSegment + 1] - cumulativeDistances[bestSegment]
+        val point = GeoPoint(bestLat, bestLon)
         return Projection(
-            point = GeoPoint(bestLat, bestLon),
-            distanceAlongMeters = cumulativeDistances[bestSegment] + bestT * segmentLength,
-            offsetMeters = haversineDistance(latitude, longitude, bestLat, bestLon)
+            point,
+            distanceAlong = bestDistanceAlong,
+            distanceToPoint = haversineDistance(latitude, longitude, bestLat, bestLon)
         )
     }
-
-    /**
-     * The point on this polyline closest to ([latitude], [longitude]), or null if the polyline is
-     * empty. Used to sit a route stop on the route centerline (#1752). See [project] when the arc
-     * length of that projection is also wanted.
-     */
-    fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? = project(latitude, longitude)?.point
-
-    /** The total length of this polyline in meters; zero when it has fewer than two points. */
-    val lengthMeters: Double get() = cumulativeDistances.lastOrNull() ?: 0.0
 
     /** Returns the sub-polyline between two distances, with interpolated endpoints. */
     fun subPolyline(startDist: Double, endDist: Double): List<GeoPoint>? {

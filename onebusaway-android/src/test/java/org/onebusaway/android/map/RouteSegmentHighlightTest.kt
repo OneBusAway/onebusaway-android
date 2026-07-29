@@ -16,6 +16,8 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
@@ -100,5 +102,34 @@ class RouteSegmentHighlightTest {
         assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE, result[1].widthProfile)
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
+    }
+
+    @Test
+    fun upstreamTo_keepsOnlyTheApproachThroughTheBoardingPoint() {
+        val first = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.33)))
+        val second = RoutePolyline(color = 1, points = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.64, -122.33)))
+
+        val upstream = listOf(first, second).upstreamTo(GeoPoint(47.62, -122.33))
+
+        assertEquals(2, upstream.size)
+        assertEquals(first, upstream.first())
+        assertEquals(47.62, upstream.last().points.last().latitude, 0.000001)
+        assertFalse(upstream.last().points.any { it.latitude > 47.62 })
+    }
+
+    @Test
+    fun containsRoutePoint_acceptsApproachingAndOnLegVehicles_andRejectsDownstreamVehicle() {
+        val route = listOf(
+            RoutePolyline(
+                color = 1,
+                points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33))
+            )
+        )
+        val throughSelectedLeg = route.boundedThrough(GeoPoint(47.64, -122.33))
+
+        assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.60, -122.33))) // upstream
+        assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.63, -122.33))) // selected leg
+        // Only ~11 m beyond alighting: spatial tolerance alone must not leak this downstream vehicle.
+        assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.6401, -122.33)))
     }
 }

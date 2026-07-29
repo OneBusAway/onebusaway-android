@@ -445,10 +445,10 @@ internal object ReminderEngine {
     private fun ReminderRide.shapeProgress(sample: ReminderLocationSample): RideProgress? {
         val shape = shape ?: return null
         val polyline = shape.polyline ?: return null
-        val projection = polyline.project(sample.point.latitude, sample.point.longitude) ?: return null
-        if (projection.offsetMeters > DestinationReminderPolicy.MAX_OFF_ROUTE_METERS) return null
+        val projection = polyline.nearestProjection(sample.point.latitude, sample.point.longitude) ?: return null
+        if (projection.distanceToPoint > DestinationReminderPolicy.MAX_OFF_ROUTE_METERS) return null
 
-        val along = projection.distanceAlongMeters
+        val along = projection.distanceAlong
         val margin = DestinationReminderPolicy.STOP_CROSSING_MARGIN_METERS
         val boardOffset = shape.boardOffsetMeters
         return RideProgress(

@@ -128,12 +128,15 @@ class DefaultTripInfoRepository @Inject constructor(
         if (args.routeId != null && args.routeName != null) {
             routeDao.refreshRouteShortName(args.routeId, args.routeName)
         }
-        val fromDb = tripDao.getTrip(args.tripId, args.stopId)?.let { toExistingTrip(it, args) }
-        fromDb ?: newTrip(args)
+        // Read the device clock once, here, and pass it down: the helpers below stay pure functions
+        // of their inputs, so reminder options are deterministic and testable.
+        val deviceNow = WallTime.now()
+        val fromDb = tripDao.getTrip(args.tripId, args.stopId)?.let { toExistingTrip(it, args, deviceNow) }
+        fromDb ?: newTrip(args, deviceNow)
     }
 
     /** Merges an existing stored reminder with [args] (args win), looking up any still-missing names. */
-    private suspend fun toExistingTrip(stored: TripRecord, args: TripInfoArgs): TripInfoData {
+    private suspend fun toExistingTrip(stored: TripRecord, args: TripInfoArgs, deviceNow: WallTime): TripInfoData {
         val routeId = args.routeId ?: stored.routeId
         val departTime = if (args.departTime != 0L) {
             args.departTime
@@ -154,11 +157,11 @@ class DefaultTripInfoRepository @Inject constructor(
             tripName = stored.name,
             reminderMinutes = stored.reminder,
             isNewTrip = false,
-            reminderTimeBasis = args.reminderTimeBasis(departTime)
+            reminderTimeBasis = args.reminderTimeBasis(departTime, deviceNow)
         )
     }
 
-    private fun newTrip(args: TripInfoArgs): TripInfoData = toTripInfoData(
+    private fun newTrip(args: TripInfoArgs, deviceNow: WallTime): TripInfoData = toTripInfoData(
         routeId = args.routeId,
         routeName = args.routeName,
         stopName = args.stopName,
@@ -173,7 +176,7 @@ class DefaultTripInfoRepository @Inject constructor(
             DEFAULT_REMINDER_MINUTES
         ),
         isNewTrip = true,
-        reminderTimeBasis = args.reminderTimeBasis(args.departTime)
+        reminderTimeBasis = args.reminderTimeBasis(args.departTime, deviceNow)
     )
 
     /**
@@ -182,10 +185,13 @@ class DefaultTripInfoRepository @Inject constructor(
      * — the correct reference for an edit-from-storage departure, which is a locally-reconstructed
      * scheduled time rather than a server timestamp.
      */
-    private fun TripInfoArgs.reminderTimeBasis(resolvedDepartureMs: Long): ReminderTimeBasis = if (serverNowMs != 0L && departTime != 0L) {
+    private fun TripInfoArgs.reminderTimeBasis(
+        resolvedDepartureMs: Long,
+        deviceNow: WallTime
+    ): ReminderTimeBasis = if (serverNowMs != 0L && departTime != 0L) {
         ReminderTimeBasis.Server(ServerTime(resolvedDepartureMs), ServerTime(serverNowMs))
     } else {
-        ReminderTimeBasis.Device(WallTime(resolvedDepartureMs), WallTime.now())
+        ReminderTimeBasis.Device(WallTime(resolvedDepartureMs), deviceNow)
     }
 
     private fun toTripInfoData(

@@ -127,7 +127,8 @@ class DefaultTripResultsRepository @Inject constructor(
                     ?: return@mapNotNull null
                 RouteFocusSegment(
                     routeId = routeId,
-                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName)
+                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName),
+                    directionHeadsign = legs[j].headsign
                 )
             }
             val alternatives = substitutable[chain.leaderIndex]

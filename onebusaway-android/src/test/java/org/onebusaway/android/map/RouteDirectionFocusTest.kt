@@ -82,6 +82,10 @@ class RouteDirectionFocusTest {
         assertEquals(0, directions.directionIdForHeadsign("Lynnwood City Center"))
         assertEquals(0, directions.directionIdForHeadsign("TO LYNNWOOD CITY CENTER"))
         assertNull(directions.directionIdForHeadsign("Angle Lake"))
+        assertNull(
+            (directions + RouteMapDirection(2, "To Federal Way Downtown"))
+                .directionIdForHeadsign("Federal Way Downtown")
+        )
     }
 
     @Test

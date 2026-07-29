@@ -102,8 +102,12 @@ private val BADGE_VERTICAL_PADDING = 1.dp
  * cards draw glyphs and roundels in one row and size both from a single height, deriving the chip's
  * scale from this rather than hard-coding a number that would silently rot if these metrics changed.
  *
- * Holds at the default font scale. Under a larger accessibility font the sp line box — and the chip —
- * grow while a dp-sized glyph beside it does not, so the two only drift apart in the direction of the
+ * It is also the chip's *minimum width*, which is what makes a short name a square roundel rather than a
+ * lozenge.
+ *
+ * Both hold at the default font scale. Under a larger accessibility font the sp line box — and so the
+ * chip's height — grows while a dp-sized glyph beside it, and this dp minimum width, do not: the chip
+ * comes out taller than it is wide and drifts from a neighbouring glyph, both in the direction of the
  * text being bigger, which is what the setting asked for.
  */
 val ROUTE_BADGE_HEIGHT = 16.dp + BADGE_VERTICAL_PADDING * 2
@@ -147,6 +151,10 @@ private val CHEVRON_LEAN_ALLOWANCE = ROUTE_BADGE_HEIGHT * JOIN_LEAN_RATIO / 2
  * cards), as opposed to the large square [LineBadge]. [scale] enlarges the whole chip (text + padding)
  * proportionally — e.g. the directions board badge uses 1.5×.
  *
+ * The chip is never narrower than it is tall ([ROUTE_BADGE_HEIGHT] at the default font scale), so a
+ * one- or two-character route reads as a roundel of the same family as a longer one rather than as a
+ * sliver next to it. The name centres itself in whatever width that leaves.
+ *
  * [maxWidth] caps the chip and ellipsizes the name past it. Unconstrained by default, since a route
  * short name is a handful of characters; it's for callers that badge a route by its *long* name because
  * it publishes no short one ("Seattle - Bremerton"), which would otherwise blow out a row of roundels.
@@ -167,7 +175,11 @@ fun RouteBadgeChip(
 ) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     Surface(
-        modifier = modifier.widthIn(max = maxWidth),
+        // A short name still gets a proper roundel rather than a narrow lozenge: at the default font
+        // scale the chip is at least as wide as it is tall, so "8" and "45" read as the same object at
+        // different widths instead of as a sliver beside a badge. [Surface] propagates the minimum to
+        // its content, which centres itself in the room that gives it (see [BadgeContent]).
+        modifier = modifier.widthIn(min = ROUTE_BADGE_HEIGHT * scale, max = maxWidth),
         color = container,
         contentColor = content,
         shape = BADGE_SHAPE
@@ -207,7 +219,12 @@ private fun BadgeContent(
     Row(
         modifier = modifier.padding(horizontal = horizontalPadding, vertical = BADGE_VERTICAL_PADDING * scale),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BADGE_ICON_GAP * scale)
+        // Centred, not packed at the start: a name narrower than the chip's square minimum has room left
+        // over, and it belongs either side of the name rather than all after it.
+        horizontalArrangement = Arrangement.spacedBy(
+            space = BADGE_ICON_GAP * scale,
+            alignment = Alignment.CenterHorizontally
+        )
     ) {
         if (leadingIcon != null) {
             Icon(
@@ -296,6 +313,9 @@ fun RouteBadgeChip(
                 leadingIconDescription = leadingIconDescription,
                 modifier = Modifier
                     .fillMaxHeight()
+                    // Each segment is squared off the same way the plain chip is, so a one-character
+                    // route inside a joined badge doesn't come out as a sliver beside a wider sibling.
+                    .widthIn(min = ROUTE_BADGE_HEIGHT * scale)
                     // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
                     // on the segment's size, so they're built once per size change, not per draw pass.
                     .drawWithCache {

@@ -27,9 +27,12 @@ import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -42,7 +45,8 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
  * several routes rather than as separate badges, or as one long name:
  *  - its route colors meet **directly**, with none of the surface behind showing through as a gap;
  *  - they meet along a **slash-like diagonal**, not a vertical edge;
- *  - that meeting line is much darker than the routes it separates, and the badge's outline is black.
+ *  - that meeting line is much darker than the routes it separates, and the badge's outline is black;
+ *  - and a short route name is squared off rather than left as a sliver, segment by segment.
  *
  * Rendering assertions, so they live on-device: the badge is drawn over a garish background that must
  * not appear anywhere inside it, and the color boundary is located on a high and a low scan line to
@@ -61,6 +65,35 @@ class RouteBadgeChipRenderTest {
 
     private val link1 = RouteBadge("1 Line", 0xFF00A651.toInt())
     private val link2 = RouteBadge("2 Line", 0xFF0075C4.toInt())
+
+    /**
+     * A one-character route is a roundel, not a sliver: the chip is at least as wide as it is tall, so
+     * "1" and "1 Line" read as the same kind of object at different widths.
+     */
+    @Test
+    fun aShortNameGetsASquareBadge() {
+        renderJoinedBadge(routes = listOf(RouteBadge("1", link1.routeColor)))
+
+        val bounds = composeRule.onNodeWithTag(BADGE).getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "expected a square-or-wider badge, but it was ${bounds.width} × ${bounds.height}",
+            bounds.width >= bounds.height
+        )
+    }
+
+    /** The same squaring inside a joined badge, so one short segment isn't crushed beside a longer one. */
+    @Test
+    fun eachSegmentOfAJoinedBadgeIsSquaredToo() {
+        renderJoinedBadge(routes = listOf(RouteBadge("1", link1.routeColor), RouteBadge("2", link2.routeColor)))
+
+        val bounds = composeRule.onNodeWithTag(BADGE).getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "expected two squared segments, but the badge was ${bounds.width} × ${bounds.height}",
+            bounds.width >= bounds.height * 2
+        )
+    }
 
     private fun renderJoinedBadge(routes: List<RouteBadge> = listOf(link1, link2)) {
         composeRule.setContent {

@@ -4,6 +4,7 @@
  */
 package org.onebusaway.android.nav
 
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,16 +12,35 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 
 /**
- * Replays every complete field recording on the JVM. Trip 19 is excluded because its recording is
- * missing; the ten `*c` entries are excluded because their paired car traces are missing.
+ * Replays whole rides through the reducer on the JVM, in both of its coordinates.
+ *
+ * Trip 19 is excluded from the recorded set because its recording is missing; the ten `*c` entries
+ * are excluded because their paired car traces are missing.
  */
 class ReminderTraceReplayTest {
+    /**
+     * The recorded rides. Their trips have churned out of every feed, so no shape can be sourced for
+     * them (see `tools/fetch-reminder-shapes.py`) and they exercise the straight-line fallback —
+     * which remains the shipped path for legacy and pre-upgrade sessions.
+     */
     @Test
     fun recordedTrips_emitOneOrderedAlertPairAndComplete() {
-        TRACE_NAMES.forEach(::replay)
+        RECORDED_TRACES.forEach { replay(it) }
     }
 
-    private fun replay(name: String) {
+    /**
+     * The generated rides: a simulated vehicle over real, current route geometry, so these exercise
+     * the along-the-route coordinate the recorded traces cannot reach. Built by
+     * `tools/generate-reminder-fixtures.py`.
+     */
+    @Test
+    fun generatedTrips_replayAlongTheirRouteShape() {
+        val names = generatedTraceNames()
+        assertTrue("no generated fixtures found; run tools/generate-reminder-fixtures.py", names.isNotEmpty())
+        names.forEach { replay(it, requireShape = true) }
+    }
+
+    private fun replay(name: String, requireShape: Boolean = false) {
         val lines = checkNotNull(javaClass.classLoader?.getResourceAsStream("$name.csv")) {
             "Missing trace $name.csv"
         }.bufferedReader().use { it.readLines() }
@@ -35,6 +55,7 @@ class ReminderTraceReplayTest {
             header[4],
             ReminderPoint(header[5].toDouble(), header[6].toDouble())
         )
+        val shape = shapeFor(name)
         val plan = ReminderPlan(
             sessionId = name,
             rides = listOf(
@@ -46,13 +67,15 @@ class ReminderTraceReplayTest {
                     penultimate = penultimate,
                     alight = destination,
                     scheduledStart = ServerTime(0),
-                    scheduledEnd = ServerTime(0)
+                    scheduledEnd = ServerTime(0),
+                    shape = shape
                 )
             )
         )
         var state = ReminderEngineState()
         val emitted = mutableListOf<ReminderEffect>()
         var lastTimestamp = 0L
+        var sawAlongRouteReading = false
         lines.drop(1).filter { it.isNotBlank() }.forEach { line ->
             val values = line.split(',')
             if (values.size < 13) return@forEach
@@ -71,8 +94,19 @@ class ReminderTraceReplayTest {
                 val distance = ReminderEngine.distanceMeters(sample.point, destination.point)
                 assertTrue("$name emitted alight alert outside its stop-progression window", state.penultimateReached || distance <= 400.0)
             }
+            // Which coordinate actually produced this reading. On a curving route the remaining
+            // distance along the route runs well ahead of the straight-line distance to the stop,
+            // so a reading that exceeds it can only have come from the shape. Without this the
+            // whole fixture could silently replay through the fallback and still pass.
+            transition.effects.filterIsInstance<ReminderEffect.Progress>().forEach { progress ->
+                val straightLine = ReminderEngine.distanceMeters(sample.point, destination.point)
+                if (progress.alightDistanceMeters > straightLine + 1.0) sawAlongRouteReading = true
+            }
             state = transition.state
             emitted += transition.effects.filterNot { it is ReminderEffect.Progress }
+        }
+        if (requireShape) {
+            assertTrue("$name never produced an along-the-route reading", sawAlongRouteReading)
         }
 
         // Legacy captures stop after the reminder fires rather than after the vehicle reaches the
@@ -97,7 +131,25 @@ class ReminderTraceReplayTest {
         assertTrue("$name did not complete", state.completed)
     }
 
+    /**
+     * The sidecar written beside a fixture by the fixture tools. Its fields are [ReminderShape]'s,
+     * so it decodes straight into the model rather than through a mirror of the same schema; the
+     * provenance the tools also record is dropped by [SIDECAR_JSON]'s `ignoreUnknownKeys`.
+     */
+    private fun shapeFor(name: String): ReminderShape? = javaClass.classLoader?.getResourceAsStream("$name.shape.json")
+        ?.bufferedReader()?.use { it.readText() }
+        ?.let { SIDECAR_JSON.decodeFromString<ReminderShape>(it) }
+
+    private fun generatedTraceNames(): List<String> = javaClass.classLoader?.getResourceAsStream(GENERATED_MANIFEST)
+        ?.bufferedReader()?.use { reader -> reader.readLines().map(String::trim).filter { it.isNotEmpty() } }
+        .orEmpty()
+
     private companion object {
+        const val GENERATED_MANIFEST = "generated-fixtures.txt"
+
+        /** The sidecars carry provenance fields the engine has no use for. */
+        val SIDECAR_JSON = Json { ignoreUnknownKeys = true }
+
         val MISSING_CAR_TRACES = setOf(
             "nav_trip17c",
             "nav_trip26c",
@@ -111,7 +163,7 @@ class ReminderTraceReplayTest {
             "nav_trip34c"
         )
 
-        val TRACE_NAMES = (1..34)
+        val RECORDED_TRACES = (1..34)
             .filterNot { it == 19 }
             .flatMap { number -> listOf("nav_trip$number", "nav_trip${number}c") }
             .filterNot { it in MISSING_CAR_TRACES }

@@ -1,0 +1,17 @@
+{
+  "encodedPoints": "aeufEbfcjU?`@@rD?nDvB?T?dA?dE??oD?uD?qDAmD?sD@{C?U?wD@wD@uD?{C?[AqDAyD?sD?uDAwD?sDAiC?m@?wDAsDnEAnEAnEA?}@?yFAuD?wDQ}BEa@CSCWGq@YsCG}AAIGgE@_C@kA@qH?yLAoLEaLEeM?w@QqE_@aGc@{Fi@iE{@wEeAqEQs@[iAoAwGeA_Fw@{GQ}B[mCo@oF]uEKyB?IEUCOQaBOcCWoCoDwNoBkO?wAf@oRMaBEmAAiANsA\\kAd@kA^s@|A{Ah@WhIgBlBa@|Aa@r@[xBwApAkAxBeBf@_@hBeBnLiK~D}DdCcCj@g@f@m@fBsAjAu@nEoBlF}AtJ[nEBfADnA@zUD@?t@EzKIfK@lFK~E}@tBm@TIx@Wl@U^On@e@nAq@xCuBFEbBgBtIyKxAeBd@m@|AoBxDkDjDgCbDqBfIiDpOsG~H_D`DiAtDqAdDaAhQqFzLiDnEsA~C}@lD_AxImCjAw@xB}Ar@g@f@]hEuDdFiEzAqAnBaBh@e@LMv@o@JIrGsFFGVSdTqR`CyBjC{C|@mAhDwFdGcPlDeLb@oA~@cBx@mAbA{AdEmEt@o@~@q@~BuAnFeCzEmB`CkA`CyAxBeB~@{@\\]nEsF`N_XlDuFxBuCtBeChB_BxCcCjBkAfBeArFgC|MeFfSaHhEyAnBm@jEsAbHmBDAxSmGdUcGC_@C_@UwDA[A{@DeARsB^sDB{BGkAIqBo@_GK}BAiBFiCLmBPeBz@cJn@_HJgCAgCGyASeC_@aCi@sBqBaHqEqOyF}R]_Bi@{Co@cGSoBg@cFSoAcCqMo@{BACo@eB_AgBuEsHaEuGu@eBe@yA_@aBuBgPsAcK_AaHUoAc@oAk@iAq@_A}CmDwA{AkA}@gAi@wAc@yAUcAE{A?_LIU?yAC_AOy@]q@g@i@o@c@}@U{@OaACaA?UBm@j@uGtAgPp@kI\\oEd@}ER}@\\{@h@w@FGjGsFvGeGp@}@h@eAXw@r@gCr@_CnAgEjAeE`@uAJe@He@Js@LmADs@Bg@@[Dk@Dg@R}BDc@@[Ac@A_@CWG[uAgHeDmQAMAK?I@MBIDGFEFCNC^AjHs@XGbA_@BAvHcDd@Sd@Ox@Mt@KnC[~@M^G^On@[RKxDyAhDsANEDAD@D@B@@BBB@FtBbLZ`BoDfAmBj@QDO@a@@mIBAjLB`EFxCVlDh@`FTpAbAjEUKYCMBqBv@YD_@G[QU]Ic@@g@Hc@T]ZQTCzAId@QJE|MA`GKtAEfDi@xE{@vFuA~DoArCoAlC}A`[eR|Ay@pCmAvC_AxCq@bF{@pDc@rDUzDEdEHbEV`Ed@~UlFrDl@rD^vDRdDBnDEpDSvCYjDg@v@OdD}@`DiAvB{@nDgBhDsB`D_Cr@m@dCyBfCmC`CuCrBwCjB{CjDoGbKmQhIqNrAiBZa@zB_B~@i@nBcCtF}BhHaBpRaBpC?fEkA~CiBlPeVxE_EvEkEtC_CbG{D|AgA`@UrBhEVj@zBcBNSP[XeAX_AnAl@n@qADI@GAKCEEEEAECE@GBs@h@",
+  "pointCount": 462,
+  "boardOffsetMeters": null,
+  "penultimateOffsetMeters": 1828.8595050686909,
+  "alightOffsetMeters": 2397.643605824883,
+  "provenance": {
+    "tripId": "MTS_19383706",
+    "shapeId": "MTS_225_1_22",
+    "routeName": "910",
+    "boardStopId": "MTS_99589",
+    "shapeLengthMeters": 39978.4,
+    "sinuosity": 1.424,
+    "isLoop": false,
+    "note": "Real route geometry and stop offsets; simulated vehicle motion and GPS error."
+  }
+}

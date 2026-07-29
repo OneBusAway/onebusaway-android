@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,6 +24,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -54,6 +56,8 @@ class NavigationService : Service() {
     @Inject lateinit var obaAnalytics: ObaAnalytics
 
     @Inject lateinit var locationRepository: LocationRepository
+
+    @Inject internal lateinit var shapeSource: ReminderShapeSource
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var navigationJob: Job? = null
@@ -136,16 +140,17 @@ class NavigationService : Service() {
             return
         }
 
-        plan = activePlan
+        val resolvedPlan = activePlan.withLegacyShapesResolved()
+        plan = resolvedPlan
         engineState = (restored?.state ?: ReminderEngineState()).let {
             if (mutedRequested) it.copy(speechMuted = true) else it
         }
         if (incomingPlan != null) {
-            sessionStore.start(activePlan, wallClock())
-            persistLegacyCompatibility(activePlan, wallClock())
+            sessionStore.start(resolvedPlan, wallClock())
+            persistLegacyCompatibility(resolvedPlan, wallClock())
         }
-        sessionStore.persist(activePlan, engineState, wallClock())
-        if (!promoteToForeground(notificationPresenter.foregroundNotification(activePlan))) {
+        sessionStore.persist(resolvedPlan, engineState, wallClock())
+        if (!promoteToForeground(notificationPresenter.foregroundNotification(resolvedPlan))) {
             sessionStore.clear()
             notificationPresenter.cancel()
             stopSelf()
@@ -153,6 +158,29 @@ class NavigationService : Service() {
         }
 
         locationRepository.locationUpdates(NAV_UPDATE_INTERVAL_SECONDS).collect(::handleLocation)
+    }
+
+    /**
+     * Looks up the route shape for a legacy ride, which arrives with a trip id and two stop ids and
+     * no geometry. Identified by the absent boarding stop: a plan built from a directions itinerary
+     * carries its own geometry and is left alone, which also avoids a pointless lookup of an OTP
+     * trip id that would not resolve against the OBA API.
+     *
+     * Best-effort in every direction. The lookup is bounded by [SHAPE_LOOKUP_TIMEOUT] so a slow
+     * network cannot hold up the start of monitoring, and any failure simply leaves the ride on
+     * straight-line distances — the behaviour it had before shapes existed.
+     */
+    private suspend fun ReminderPlan.withLegacyShapesResolved(): ReminderPlan {
+        val ride = rides.singleOrNull() ?: return this
+        if (ride.shape != null || ride.board != null) return this
+        val shape = withTimeoutOrNull(SHAPE_LOOKUP_TIMEOUT) {
+            shapeSource.shapeFor(ride.tripId, ride.penultimate.id, ride.alight.id)
+        }
+        if (shape == null) {
+            Log.i(TAG, "No shape for trip ${ride.tripId}; monitoring by straight-line distance")
+            return this
+        }
+        return copy(rides = listOf(ride.copy(shape = shape)))
     }
 
     private suspend fun Intent.legacyPlan(): ReminderPlan? {
@@ -294,5 +322,8 @@ class NavigationService : Service() {
         const val ACTION_SILENCE = "org.onebusaway.android.nav.SILENCE"
         const val ACTION_CANCEL = "org.onebusaway.android.nav.CANCEL"
         private const val NAV_UPDATE_INTERVAL_SECONDS = 1
+
+        /** Upper bound on the legacy shape lookup, so a slow network cannot delay monitoring. */
+        private val SHAPE_LOOKUP_TIMEOUT = 10.seconds
     }
 }

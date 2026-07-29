@@ -19,11 +19,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pins the test-only [encodePolyline] against the production [PolylineDecoder]. Every shape fixture
- * built for the reminder tests passes through this pair, so a bug here would silently weaken those
- * tests rather than fail them.
+ * Pins [encodePolyline] against [PolylineDecoder]. Every persisted reminder shape, and every shape
+ * fixture the reminder tests build, passes through this pair — so a bug here would corrupt stored
+ * plans in production and silently weaken those tests rather than fail them.
  */
-class PolylineTestEncodingTest {
+class PolylineEncoderTest {
 
     @Test
     fun roundTripsThroughTheProductionDecoder() {

@@ -16,14 +16,17 @@
 package org.onebusaway.android.util
 
 /**
- * The inverse of [PolylineDecoder], for tests that need to build a shape the production code will
- * decode. Test-only: the app consumes encoded polylines from OTP and OBA and never produces them,
- * so shipping an encoder would be dead code. [PolylineTestEncodingTest] pins it against the real
- * decoder, which is what makes it safe to build fixtures with.
+ * The inverse of [PolylineDecoder]. The app almost always consumes encoded polylines rather than
+ * producing them; this exists because a destination reminder persists the shape it is monitoring
+ * into its stored plan, and the fetch path that supplies that shape has already decoded it (the
+ * shape endpoint's raw string does not survive `TripVehiclesDataSource.shape`). Encoding is an order
+ * of magnitude more compact than a list of coordinate pairs in JSON, which matters for a value that
+ * crosses a Binder transaction as an Intent extra.
  *
- * Google encoded polyline algorithm, precision 1e5 — the same one [PolylineDecoder] reads.
+ * Google encoded polyline algorithm, precision 1e5 — the same one [PolylineDecoder] reads. Round
+ * trips through the decoder are pinned by `PolylineEncoderTest`.
  */
-internal fun encodePolyline(points: List<GeoPoint>): String {
+fun encodePolyline(points: List<GeoPoint>): String {
     val encoded = StringBuilder()
     var previousLatitude = 0
     var previousLongitude = 0

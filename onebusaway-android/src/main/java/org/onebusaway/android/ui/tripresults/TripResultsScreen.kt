@@ -77,6 +77,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -120,9 +122,13 @@ import org.onebusaway.android.util.parseObaHexColor
 @Composable
 fun TripResultsHeader(
     state: TripResultsUiState,
-    onSelectOption: (Int) -> Unit
+    onSelectOption: (Int) -> Unit,
+    scheduleWinnerMode: ScheduleWinnerMode = ScheduleWinnerMode.BOTH
 ) {
     val success = state as? TripResultsUiState.Success ?: return
+    val winners = remember(success.options, scheduleWinnerMode) {
+        itineraryWinnerCategories(success.options, scheduleWinnerMode)
+    }
     // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
     // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
     // Flanked by the same overflow chevrons as the ETA strip (ScrollChevronGutter) so the user can see
@@ -159,6 +165,7 @@ fun TripResultsHeader(
             success.options.forEachIndexed { index, option ->
                 OptionCard(
                     option = option,
+                    winners = winners[index],
                     selected = index == success.selectedIndex,
                     onClick = { onSelectOption(index) }
                 )
@@ -213,9 +220,15 @@ private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
 
 private val SYMBOL_GAP = 4.dp
 
+/** A quiet keyline around a winning metric: enough separation to survive the selected card's tint. */
+private val WINNER_OUTLINE_WIDTH = 1.5.dp
+private val WINNER_OUTLINE_RADIUS = 4.dp
+private const val WINNER_OUTLINE_ALPHA = 0.60f
+
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
+    winners: Set<WinnerCategory>,
     selected: Boolean,
     onClick: () -> Unit
 ) {
@@ -226,6 +239,17 @@ private fun OptionCard(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
     val context = LocalContext.current
+    val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
+    val shortestTravelTime = WinnerCategory.SHORTEST_TRAVEL_TIME in winners
+    val leastWalking = WinnerCategory.LEAST_WALKING in winners
+    val earliestArrival = WinnerCategory.EARLIEST_ARRIVAL in winners
+    val latestDeparture = WinnerCategory.LATEST_DEPARTURE in winners
+    val winnerDescriptions = buildList {
+        if (shortestTravelTime) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
+        if (leastWalking) add(stringResource(R.string.trip_plan_winner_least_walking))
+        if (earliestArrival) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
+        if (latestDeparture) add(stringResource(R.string.trip_plan_winner_latest_departure))
+    }
     Surface(
         color = background,
         contentColor = textColor,
@@ -234,6 +258,11 @@ private fun OptionCard(
         modifier = Modifier
             .widthIn(min = 104.dp)
             .clickable(onClick = onClick)
+            .semantics {
+                if (winnerDescriptions.isNotEmpty()) {
+                    stateDescription = winnerDescriptions.joinToString()
+                }
+            }
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -291,28 +320,38 @@ private fun OptionCard(
             // card's other lines.
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 // Duration — a leading hourglass + the ETA-pill-formatted trip length.
-                MetricRow(R.drawable.hourglass_24, contentDescription = null) {
+                MetricRow(
+                    R.drawable.hourglass_24,
+                    contentDescription = null,
+                    winner = shortestTravelTime,
+                    outlineColor = winnerOutlineColor
+                ) {
                     EtaDurationText(minutes = option.durationMinutes)
                 }
                 // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
                 // with the distance styled like the duration (bold value + smaller unit). In the user's units
                 // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
-                if (option.walkDistanceMeters > 0.0) {
+                if (option.walkDistanceMeters > 0.0 || leastWalking) {
                     MetricRow(
                         R.drawable.ic_directions_walk,
-                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action)
+                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                        winner = leastWalking,
+                        outlineColor = winnerOutlineColor
                     ) {
-                        EtaPartsText(ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context))
+                        EtaPartsText(
+                            ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context)
+                        )
                     }
                 }
             }
             // The device-localized departure–arrival range (unwrap the server clock only here).
-            Text(
-                text = "${DisplayFormat.formatTime(context, option.startTime.epochMs)} – " +
-                    DisplayFormat.formatTime(context, option.endTime.epochMs),
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1
-            )
+            val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
+            val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ScheduleMetric(startText, winner = latestDeparture, outlineColor = winnerOutlineColor)
+                Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
+                ScheduleMetric(endText, winner = earliestArrival, outlineColor = winnerOutlineColor)
+            }
         }
     }
 }
@@ -322,8 +361,15 @@ private fun OptionCard(
  * duration and walk-distance rows so their icon size and spacing stay in lockstep.
  */
 @Composable
-private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Composable () -> Unit) {
+private fun MetricRow(
+    iconRes: Int,
+    contentDescription: String?,
+    winner: Boolean,
+    outlineColor: Color,
+    content: @Composable () -> Unit
+) {
     Row(
+        modifier = winnerOutline(winner, outlineColor),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -334,6 +380,26 @@ private fun MetricRow(iconRes: Int, contentDescription: String?, content: @Compo
         )
         content()
     }
+}
+
+/** One endpoint of the option's time range, outlined independently when it wins its schedule category. */
+@Composable
+private fun ScheduleMetric(text: String, winner: Boolean, outlineColor: Color) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        maxLines = 1,
+        modifier = winnerOutline(winner, outlineColor)
+    )
+}
+
+/** Adds no layout or drawing when [winner] is false, preserving the existing ordinary metric rows. */
+private fun winnerOutline(winner: Boolean, color: Color): Modifier = if (winner) {
+    Modifier
+        .border(WINNER_OUTLINE_WIDTH, color, RoundedCornerShape(WINNER_OUTLINE_RADIUS))
+        .padding(horizontal = 3.dp, vertical = 1.dp)
+} else {
+    Modifier
 }
 
 /**
@@ -347,6 +413,7 @@ fun TripResultsList(
     state: TripResultsUiState,
     modifier: Modifier = Modifier,
     bottomInset: Dp = 0.dp,
+    scheduleWinnerMode: ScheduleWinnerMode = ScheduleWinnerMode.BOTH,
     onSelectOption: (Int) -> Unit = {},
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
@@ -373,6 +440,7 @@ fun TripResultsList(
             is TripResultsUiState.Success -> TripLogList(
                 state = state,
                 bottomInset = bottomInset,
+                scheduleWinnerMode = scheduleWinnerMode,
                 onSelectOption = onSelectOption,
                 onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
@@ -438,6 +506,11 @@ fun TripResultsSheet(
         state = state,
         modifier = modifier.fillMaxSize(),
         bottomInset = listBottomInset,
+        scheduleWinnerMode = when (params?.arriving) {
+            true -> ScheduleWinnerMode.LATEST_DEPARTURE
+            false -> ScheduleWinnerMode.EARLIEST_ARRIVAL
+            null -> ScheduleWinnerMode.BOTH
+        },
         onSelectOption = resultsViewModel::selectOption,
         onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
@@ -516,6 +589,7 @@ private fun railSplit(): Dp = RAIL_SPLIT * timelineScale()
 private fun TripLogList(
     state: TripResultsUiState.Success,
     bottomInset: Dp,
+    scheduleWinnerMode: ScheduleWinnerMode,
     onSelectOption: (Int) -> Unit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
@@ -551,7 +625,7 @@ private fun TripLogList(
     ) {
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
-            TripResultsHeader(state, onSelectOption)
+            TripResultsHeader(state, onSelectOption, scheduleWinnerMode)
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))
         }

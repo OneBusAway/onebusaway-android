@@ -21,10 +21,13 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.Polyline
 
 internal sealed interface ReminderPlanResult {
     data class Success(val plan: ReminderPlan) : ReminderPlanResult
@@ -108,15 +111,60 @@ internal object ReminderPlanBuilder {
         val orderedStops = normalizedStops() ?: return null
         if (orderedStops.size < 2) return null
         val trip = tripId?.takeIf { it.isNotBlank() } ?: return null
+        val board = orderedStops.first()
+        val penultimate = orderedStops[orderedStops.lastIndex - 1]
+        val alight = orderedStops.last()
         return ReminderRide(
             mode = reminderMode,
             routeLabel = routeDisplayLabel(),
             tripId = trip,
-            board = orderedStops.first(),
-            penultimate = orderedStops[orderedStops.lastIndex - 1],
-            alight = orderedStops.last(),
+            board = board,
+            penultimate = penultimate,
+            alight = alight,
             scheduledStart = startTime,
-            scheduledEnd = endTime
+            scheduledEnd = endTime,
+            shape = legGeometry?.let { reminderShape(it, board, penultimate, alight) }
+        )
+    }
+
+    /**
+     * Resolves a leg's own board-to-alight geometry into a [ReminderShape], or null when the shape
+     * cannot be trusted to place the stops — in which case the ride keeps straight-line distances.
+     *
+     * Rejected when: the geometry is degenerate; a stop projects further than
+     * [MAX_STOP_OFFSET_METERS] from the path (the shape is for a different pattern, or the stops are
+     * not the ones this leg actually serves); or the offsets do not increase from board to
+     * penultimate to alight (the shape runs the other way, or the stops are out of order), since a
+     * non-monotone axis is exactly what this coordinate exists to avoid.
+     */
+    private fun reminderShape(
+        geometry: TripLegGeometry,
+        board: ReminderStop,
+        penultimate: ReminderStop,
+        alight: ReminderStop
+    ): ReminderShape? {
+        val encoded = geometry.points?.takeIf { it.isNotEmpty() } ?: return null
+        val points = geometry.decodedPoints().takeIf { it.size >= 2 } ?: return null
+        val polyline = Polyline(points)
+
+        fun offsetOf(stop: ReminderStop): Double? = polyline
+            .project(stop.point.latitude, stop.point.longitude)
+            ?.takeIf { it.offsetMeters <= MAX_STOP_OFFSET_METERS }
+            ?.distanceAlongMeters
+
+        val penultimateOffset = offsetOf(penultimate) ?: return null
+        val alightOffset = offsetOf(alight) ?: return null
+        // A one-stop ride legitimately has board == penultimate; only require strict growth to the
+        // alight stop, which is the comparison the reducer actually makes.
+        if (alightOffset <= penultimateOffset) return null
+        val boardOffset = offsetOf(board)?.takeIf { it <= penultimateOffset }
+
+        return ReminderShape(
+            encodedPoints = encoded,
+            pointCount = points.size,
+            boardOffsetMeters = boardOffset,
+            penultimateOffsetMeters = penultimateOffset,
+            alightOffsetMeters = alightOffset
         )
     }
 
@@ -164,6 +212,16 @@ internal object ReminderPlanBuilder {
     }
 
     private const val TAG = "ReminderPlanBuilder"
+
+    /**
+     * How far a stop may sit from the leg's own path and still be placed on it. Transit stops sit
+     * off the centreline by design (the far side of an intersection, a platform beside the track),
+     * so this has to be generous; beyond it the shape is not describing this leg's stops and the
+     * ride is safer on straight-line distances. Same order as
+     * `RouteSegmentHighlight.SEGMENT_STOP_TOLERANCE_METERS`, widened because that constant is
+     * choosing between candidate stops while this one is validating a match.
+     */
+    private const val MAX_STOP_OFFSET_METERS = 150.0
 }
 
 internal object ReminderPlanJson {

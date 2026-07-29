@@ -15,12 +15,9 @@
  */
 package org.onebusaway.android.nav
 
-import kotlin.math.asin
-import kotlin.math.cos
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.sin
-import kotlin.math.sqrt
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.nullable
@@ -31,6 +28,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.PolylineDecoder
+import org.onebusaway.android.util.haversineDistance
 
 /** A complete, versioned destination-reminder session. This model has no Android dependencies. */
 @Serializable
@@ -64,7 +64,9 @@ internal data class ReminderRide(
     val scheduledStart: ServerTime?,
     /** Server-scheduled alighting instant, or null when a legacy session did not carry it. */
     @Serializable(with = NullableReminderServerTimeSerializer::class)
-    val scheduledEnd: ServerTime?
+    val scheduledEnd: ServerTime?,
+    /** This ride's path and its stops' offsets along it; null falls back to straight-line distances. */
+    val shape: ReminderShape? = null
 )
 
 @Serializable
@@ -91,6 +93,36 @@ internal data class ReminderStop(val id: String, val name: String, val point: Re
 @Serializable
 internal data class ReminderPoint(val latitude: Double, val longitude: Double)
 
+/**
+ * A ride's path, plus where its three stops sit along it. Carrying the stop offsets means the
+ * engine projects only the live fix — the stops are resolved once, when the plan is built.
+ *
+ * Offsets are metres along [encodedPoints] from its start, in the same metric space as the OBA
+ * server's `distanceAlongTrip` (see [haversineDistance]), so a shape and offsets that came from the
+ * server can be used unchanged.
+ *
+ * Null on a ride whose geometry was unavailable or implausible; such a ride falls back to
+ * straight-line distances. Optional-with-default so a plan serialised before this field existed
+ * still decodes, which is what keeps an in-flight session alive across the upgrade.
+ */
+@Serializable
+internal data class ReminderShape(
+    val encodedPoints: String,
+    val pointCount: Int,
+    val boardOffsetMeters: Double?,
+    val penultimateOffsetMeters: Double,
+    val alightOffsetMeters: Double
+) {
+    /**
+     * Decoded once per process rather than per location fix. A delegated property has no backing
+     * field, so it is absent from both the serialised form (only [encodedPoints] is persisted) and
+     * from `equals`/`hashCode`, which the reducer relies on to compare states.
+     */
+    val polyline: Polyline? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        PolylineDecoder.decode(encodedPoints, pointCount).takeIf { it.size >= 2 }?.let(::Polyline)
+    }
+}
+
 /** A platform-neutral location fix supplied to [ReminderEngine.reduce]. */
 internal data class ReminderLocationSample(
     val point: ReminderPoint,
@@ -108,8 +140,13 @@ internal data class ReminderEngineState(
     val penultimateReached: Boolean = false,
     val penultimateDepartureSamples: Int = 0,
     val alightInsideSamples: Int = 0,
-    val previousAlightDistanceMeters: Double? = null,
-    val towardAlightSamples: Int = 0,
+    /**
+     * The previous fix's [RideProgress.progressMeters], for the forward-movement test. Its scale
+     * depends on which coordinate produced it, so only successive values from the same ride are
+     * comparable — which is all the reducer does with it.
+     */
+    val previousProgressMeters: Double? = null,
+    val advancedSamples: Int = 0,
     val rideProgressEstablished: Boolean = false,
     /**
      * Set when the session advances to a connecting ride: the rider is standing at the transfer
@@ -175,33 +212,97 @@ internal sealed interface ReminderEffect {
 internal data class ReminderTransition(val state: ReminderEngineState, val effects: List<ReminderEffect>)
 
 /**
+ * One location fix read against one ride, in whichever coordinate that ride supports. Producing this
+ * is the only part of the reducer that knows about geometry; the alert, latch, and boarding rules
+ * downstream are written against these fields and are identical for both coordinates.
+ */
+internal data class RideProgress(
+    /**
+     * A monotone-increasing measure of how far the rider has got. Along the route shape it is metres
+     * travelled; without one it is the negated straight-line distance to the destination, so that
+     * "larger means further along" holds either way. Only differences between fixes are meaningful.
+     */
+    val progressMeters: Double,
+    /** Remaining distance to each stop. Negative once the stop is behind the rider (shape only). */
+    val remainingToPenultimateMeters: Double,
+    val remainingToAlightMeters: Double,
+    val atPenultimate: Boolean,
+    val beyondPenultimate: Boolean,
+    val atAlight: Boolean,
+    /** False when this ride has no boarding stop to reason about, which disables the boarding gate. */
+    val hasBoard: Boolean,
+    val atBoard: Boolean,
+    /** Outside the boarding stop — weak on its own, meaningful once the rider was seen waiting there. */
+    val leftBoard: Boolean,
+    /** Demonstrably further along the ride than the boarding stop, with no "was seen there" evidence. */
+    val pastBoard: Boolean,
+    /** True when this reading came from the route shape rather than straight-line distances. */
+    val usesShape: Boolean
+)
+
+/**
  * Product policy for destination-reminder GPS filtering and alert confirmation: reject fixes worse
- * than 100 m, scale the early warning to 90 seconds of travel within 300–1,200 m, require two
- * consecutive fixes for geofence transitions, and recover sparse traces inside 400 m only after
- * forward ride progress is proven. The same arrival/departure radii give the boarding gate its
- * hysteresis (see `confirmBoarding`). Accuracy-scaled radii reduce false positives from noisy fixes
- * while their caps keep a poor fix from turning into an unbounded geofence.
+ * than 100 m, scale the early warning to 90 seconds of travel, require two consecutive fixes to
+ * confirm a stop transition, and recover sparse traces inside 400 m of the destination once forward
+ * ride progress is proven.
  *
  * These thresholds are a **new** design for the modernized engine, not a carry-over — the legacy
  * provider used a different scheme (20/50/100 m bands with speed cutoffs, a fixed 300 m ready
  * radius). Per the repository's "no unsanctioned heuristics" rule they are a human-sign-off gate:
  * they are called out in the pull request for explicit approval, and changing them re-opens it.
- * The two accuracy multipliers in particular infer a geofence size from a reported accuracy figure
- * whose meaning varies by location provider.
+ *
+ * Two coordinate systems, and the difference is deliberate. When a ride knows its route shape, a
+ * stop transition is a crossing on a monotone axis and needs only [STOP_CROSSING_MARGIN_METERS] of
+ * noise tolerance. Without one, the engine is comparing straight-line distances, which are blind to
+ * direction and to the route's actual path, so it needs the accuracy-scaled geofences and their
+ * hysteresis instead — those infer a geofence size from a reported accuracy figure whose meaning
+ * varies by location provider, and are the weakest part of this policy. They now apply only to the
+ * fallback path.
  */
 internal object DestinationReminderPolicy {
     const val MAX_ACCEPTED_ACCURACY_METERS = 100f
-    const val MIN_GET_READY_METERS = 300.0
-    const val MAX_GET_READY_METERS = 1_200.0
     const val GET_READY_SECONDS = 90.0
+    const val MIN_GET_READY_METERS = 300.0
+
+    /**
+     * Cap on the speed-scaled early warning when measuring along the route. Bounds a bogus speed
+     * reading (90 s at 200 km/h) without truncating the intended warning: rail at 100 km/h needs
+     * 2.5 km to get 90 seconds.
+     */
+    const val MAX_GET_READY_ALONG_ROUTE_METERS = 5_000.0
+
+    /**
+     * The same cap for straight-line distances, and much tighter for a reason: straight-line
+     * distance cannot tell "approaching the stop" from "passing within a kilometre of it twenty
+     * minutes before serving it", which a loop or a one-way pair does routinely. A large radius on a
+     * direction-blind measure would fire the early warning at the wrong time.
+     */
+    const val MAX_GET_READY_STRAIGHT_LINE_METERS = 1_200.0
+
+    /**
+     * How far past a stop's offset a fix must land to count as having crossed it, when measuring
+     * along the route. Small because the projection is exact; noise rejection comes from the
+     * accuracy filter and from requiring [REQUIRED_CONSECUTIVE_SAMPLES] confirming fixes.
+     */
+    const val STOP_CROSSING_MARGIN_METERS = 30.0
+
+    /**
+     * How far off its route a fix may land and still be read as a position along it. Beyond this the
+     * rider is somewhere the shape does not describe — a detour, a bad fix, or the wrong vehicle —
+     * and that fix is read with straight-line distances instead.
+     */
+    const val MAX_OFF_ROUTE_METERS = 100.0
+
+    const val SPARSE_FIX_FALLBACK_METERS = 400.0
+    const val REQUIRED_CONSECUTIVE_SAMPLES = 2
+
+    // Straight-line fallback only. See the class note above.
     const val MIN_ARRIVAL_RADIUS_METERS = 35.0
     const val MAX_ARRIVAL_RADIUS_METERS = 100.0
     const val ARRIVAL_ACCURACY_MULTIPLIER = 1.5
     const val MIN_DEPARTURE_RADIUS_METERS = 75.0
     const val MAX_DEPARTURE_RADIUS_METERS = 150.0
     const val DEPARTURE_ACCURACY_MULTIPLIER = 2.0
-    const val SPARSE_FIX_FALLBACK_METERS = 400.0
-    const val REQUIRED_CONSECUTIVE_SAMPLES = 2
 
     fun arrivalRadius(accuracyMeters: Float): Double = min(
         MAX_ARRIVAL_RADIUS_METERS,
@@ -212,6 +313,16 @@ internal object DestinationReminderPolicy {
         MAX_DEPARTURE_RADIUS_METERS,
         max(MIN_DEPARTURE_RADIUS_METERS, accuracyMeters * DEPARTURE_ACCURACY_MULTIPLIER)
     )
+
+    /** The early-warning distance for this fix, capped per the coordinate in use. */
+    fun getReadyDistance(speedMetersPerSecond: Float?, usesShape: Boolean): Double {
+        val cap = if (usesShape) MAX_GET_READY_ALONG_ROUTE_METERS else MAX_GET_READY_STRAIGHT_LINE_METERS
+        return speedMetersPerSecond
+            ?.takeIf { it.isFinite() && it >= 0f }
+            ?.times(GET_READY_SECONDS)
+            ?.coerceIn(MIN_GET_READY_METERS, cap)
+            ?: MIN_GET_READY_METERS
+    }
 }
 
 /**
@@ -233,45 +344,41 @@ internal object ReminderEngine {
         }
 
         val ride = plan.rides[state.activeRideIndex]
-        val penultimateDistance = distanceMeters(sample.point, ride.penultimate.point)
-        val alightDistance = distanceMeters(sample.point, ride.alight.point)
-        val getReadyRadius = sample.speedMetersPerSecond
-            ?.takeIf { it.isFinite() && it >= 0f }
-            ?.times(DestinationReminderPolicy.GET_READY_SECONDS)
-            ?.coerceIn(DestinationReminderPolicy.MIN_GET_READY_METERS, DestinationReminderPolicy.MAX_GET_READY_METERS)
-            ?: DestinationReminderPolicy.MIN_GET_READY_METERS
-        val arrivalRadius = DestinationReminderPolicy.arrivalRadius(sample.accuracyMeters)
-        val departureRadius = DestinationReminderPolicy.departureRadius(sample.accuracyMeters)
+        val progress = ride.progressFor(sample)
+        val getReadyDistance = DestinationReminderPolicy.getReadyDistance(sample.speedMetersPerSecond, progress.usesShape)
         val effects = mutableListOf<ReminderEffect>(
-            ReminderEffect.Progress(state.activeRideIndex, alightDistance, getReadyRadius)
+            ReminderEffect.Progress(state.activeRideIndex, progress.remainingToAlightMeters, getReadyDistance)
         )
 
-        val movingTowardAlight = state.previousAlightDistanceMeters?.let { alightDistance < it } ?: false
-        val towardAlightSamples = if (movingTowardAlight) state.towardAlightSamples + 1 else 0
+        // Forward movement, whichever coordinate produced it. Along a shape this is monotone by
+        // construction; on straight-line distances it is the old "getting closer to the destination"
+        // test, which a curving route can defeat.
+        val advanced = state.previousProgressMeters?.let { progress.progressMeters > it } ?: false
+        val advancedSamples = if (advanced) state.advancedSamples + 1 else 0
         var next = state.copy(
-            previousAlightDistanceMeters = alightDistance,
-            towardAlightSamples = towardAlightSamples,
+            previousProgressMeters = progress.progressMeters,
+            advancedSamples = advancedSamples,
             rideProgressEstablished = state.rideProgressEstablished ||
-                towardAlightSamples >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES,
+                advancedSamples >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES,
             lastSampleTimestamp = sample.timestamp
         )
         val isTransfer = state.activeRideIndex < plan.rides.lastIndex
 
         if (next.awaitingBoarding) {
-            next = next.confirmBoarding(ride, sample, alightDistance, arrivalRadius, departureRadius, movingTowardAlight)
+            next = next.confirmBoarding(progress, advanced)
             // Until the connecting vehicle is under way, every proximity signal here is the rider
             // waiting at the transfer stop — alerting on it would fire "prepare to exit" on a
             // platform, and the latch would then suppress the alert when it actually matters.
             if (next.awaitingBoarding) return ReminderTransition(next, effects)
         }
 
-        if (!next.getReadyEmitted && penultimateDistance <= getReadyRadius) {
+        if (!next.getReadyEmitted && progress.remainingToPenultimateMeters <= getReadyDistance) {
             next = next.copy(getReadyEmitted = true)
             effects += ReminderEffect.GetReady(state.activeRideIndex, ride.alight, isTransfer)
         }
 
         if (!next.penultimateReached) {
-            val insideCount = if (penultimateDistance <= arrivalRadius) state.penultimateInsideSamples + 1 else 0
+            val insideCount = if (progress.atPenultimate) state.penultimateInsideSamples + 1 else 0
             next = next.copy(
                 penultimateInsideSamples = insideCount,
                 penultimateReached = insideCount >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES
@@ -280,11 +387,7 @@ internal object ReminderEngine {
         }
 
         if (next.penultimateReached && !next.alightNowEmitted) {
-            val departedCount = if (penultimateDistance > departureRadius && movingTowardAlight) {
-                state.penultimateDepartureSamples + 1
-            } else {
-                0
-            }
+            val departedCount = if (progress.beyondPenultimate && advanced) state.penultimateDepartureSamples + 1 else 0
             next = next.copy(penultimateDepartureSamples = departedCount)
             if (departedCount >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES) {
                 next = next.copy(alightNowEmitted = true)
@@ -301,27 +404,23 @@ internal object ReminderEngine {
         // deliver each missed alert exactly once rather than silently abandoning the rider.
         if (
             next.rideProgressEstablished &&
-            alightDistance <= DestinationReminderPolicy.SPARSE_FIX_FALLBACK_METERS &&
+            progress.remainingToAlightMeters <= DestinationReminderPolicy.SPARSE_FIX_FALLBACK_METERS &&
             !next.alightNowEmitted
         ) {
             if (!next.getReadyEmitted) {
                 next = next.copy(getReadyEmitted = true)
                 effects += ReminderEffect.GetReady(state.activeRideIndex, ride.alight, isTransfer)
             }
-            if (!next.alightNowEmitted) {
-                next = next.copy(alightNowEmitted = true)
-                effects += ReminderEffect.AlightNow(
-                    state.activeRideIndex,
-                    ride.alight,
-                    isTransfer,
-                    ride.mode.usesRequestStopWording
-                )
-            }
+            next = next.copy(alightNowEmitted = true)
+            effects += ReminderEffect.AlightNow(
+                state.activeRideIndex,
+                ride.alight,
+                isTransfer,
+                ride.mode.usesRequestStopWording
+            )
         }
 
-        // Stop coordinates are commonly offset from the vehicle path. Use the wider departure
-        // geofence for arrival completion while still requiring two independent fixes.
-        val alightInsideCount = if (alightDistance <= departureRadius) state.alightInsideSamples + 1 else 0
+        val alightInsideCount = if (progress.atAlight) state.alightInsideSamples + 1 else 0
         next = next.copy(alightInsideSamples = alightInsideCount)
         if (next.rideProgressEstablished && alightInsideCount >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES) {
             effects += ReminderEffect.RideCompleted(state.activeRideIndex)
@@ -337,26 +436,78 @@ internal object ReminderEngine {
     }
 
     /**
+     * Reads one fix against this ride, preferring the route shape and falling back to straight-line
+     * distances when the ride has no shape, its geometry could not be decoded, or this particular fix
+     * landed too far off the path to be placed on it.
+     */
+    private fun ReminderRide.progressFor(sample: ReminderLocationSample): RideProgress = shapeProgress(sample) ?: straightLineProgress(sample)
+
+    private fun ReminderRide.shapeProgress(sample: ReminderLocationSample): RideProgress? {
+        val shape = shape ?: return null
+        val polyline = shape.polyline ?: return null
+        val projection = polyline.project(sample.point.latitude, sample.point.longitude) ?: return null
+        if (projection.offsetMeters > DestinationReminderPolicy.MAX_OFF_ROUTE_METERS) return null
+
+        val along = projection.distanceAlongMeters
+        val margin = DestinationReminderPolicy.STOP_CROSSING_MARGIN_METERS
+        val boardOffset = shape.boardOffsetMeters
+        return RideProgress(
+            progressMeters = along,
+            remainingToPenultimateMeters = shape.penultimateOffsetMeters - along,
+            remainingToAlightMeters = shape.alightOffsetMeters - along,
+            atPenultimate = abs(along - shape.penultimateOffsetMeters) <= margin,
+            beyondPenultimate = along > shape.penultimateOffsetMeters + margin,
+            atAlight = along >= shape.alightOffsetMeters - margin,
+            hasBoard = boardOffset != null,
+            atBoard = boardOffset != null && abs(along - boardOffset) <= margin,
+            // On a monotone axis, having left the boarding stop and being past it are the same fact.
+            leftBoard = boardOffset != null && along > boardOffset + margin,
+            pastBoard = boardOffset != null && along > boardOffset + margin,
+            usesShape = true
+        )
+    }
+
+    private fun ReminderRide.straightLineProgress(sample: ReminderLocationSample): RideProgress {
+        val arrivalRadius = DestinationReminderPolicy.arrivalRadius(sample.accuracyMeters)
+        // Stop coordinates are commonly offset from the vehicle path, so arrival at the destination
+        // uses the wider departure geofence. A route shape makes this compensation unnecessary.
+        val departureRadius = DestinationReminderPolicy.departureRadius(sample.accuracyMeters)
+        val penultimateDistance = distanceMeters(sample.point, penultimate.point)
+        val alightDistance = distanceMeters(sample.point, alight.point)
+        val boardDistance = board?.let { distanceMeters(sample.point, it.point) }
+        return RideProgress(
+            // Negated, so that "larger is further along" holds in both coordinates.
+            progressMeters = -alightDistance,
+            remainingToPenultimateMeters = penultimateDistance,
+            remainingToAlightMeters = alightDistance,
+            atPenultimate = penultimateDistance <= arrivalRadius,
+            beyondPenultimate = penultimateDistance > departureRadius,
+            atAlight = alightDistance <= departureRadius,
+            hasBoard = boardDistance != null,
+            atBoard = boardDistance != null && boardDistance <= arrivalRadius,
+            leftBoard = boardDistance != null && boardDistance > departureRadius,
+            // Straight-line distance cannot see direction, so "past the boarding stop" needs the
+            // stronger evidence of being meaningfully nearer the destination than the boarding stop
+            // is. Merely being far from the boarding stop is also true while walking towards it.
+            pastBoard = board != null &&
+                alightDistance < distanceMeters(board.point, alight.point) - departureRadius,
+            usesShape = false
+        )
+    }
+
+    /**
      * Clears [ReminderEngineState.awaitingBoarding] once the rider is under way on this ride,
      * by either of two independent signals:
      *
-     * - they were seen at the boarding stop and have since left it moving toward the destination
-     *   (the normal wait-then-board sequence, with the wider departure radius giving hysteresis); or
-     * - they are demonstrably further along the ride than the boarding stop is, which recovers the
+     * - they were seen at the boarding stop and have since left it, still moving forward (the normal
+     *   wait-then-board sequence); or
+     * - they are already beyond the boarding stop with ride progress established, which recovers the
      *   case where fixes were sparse or absent while they waited.
      */
-    private fun ReminderEngineState.confirmBoarding(
-        ride: ReminderRide,
-        sample: ReminderLocationSample,
-        alightDistance: Double,
-        arrivalRadius: Double,
-        departureRadius: Double,
-        movingTowardAlight: Boolean
-    ): ReminderEngineState {
-        // No boarding stop to gate on (a legacy single-ride session): nothing to wait for.
-        val board = ride.board ?: return copy(awaitingBoarding = false)
-        val boardDistance = distanceMeters(sample.point, board.point)
-        val insideSamples = if (boardDistance <= arrivalRadius) {
+    private fun ReminderEngineState.confirmBoarding(progress: RideProgress, advanced: Boolean): ReminderEngineState {
+        // Nothing to gate on: a legacy session carries no boarding stop.
+        if (!progress.hasBoard) return copy(awaitingBoarding = false)
+        val insideSamples = if (progress.atBoard) {
             // Monotonic, not consecutive: a rider dwells at the stop, and one noisy fix in the
             // middle of the wait should not discard the evidence that they were there.
             min(boardInsideSamples + 1, DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES)
@@ -364,31 +515,21 @@ internal object ReminderEngine {
             boardInsideSamples
         }
         val leftBoardingStop = insideSamples >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES &&
-            boardDistance > departureRadius &&
-            movingTowardAlight
-        val boardToAlight = distanceMeters(board.point, ride.alight.point)
-        val pastBoardingStop = rideProgressEstablished && alightDistance < boardToAlight - departureRadius
+            progress.leftBoard &&
+            advanced
+        val pastBoardingStop = rideProgressEstablished && progress.pastBoard
         return copy(
             boardInsideSamples = insideSamples,
             awaitingBoarding = !(leftBoardingStop || pastBoardingStop)
         )
     }
 
-    internal fun distanceMeters(first: ReminderPoint, second: ReminderPoint): Double {
-        val lat1 = Math.toRadians(first.latitude)
-        val lat2 = Math.toRadians(second.latitude)
-        val deltaLat = lat2 - lat1
-        val deltaLon = Math.toRadians(second.longitude - first.longitude)
-        val haversine = sin(deltaLat / 2) *
-            sin(deltaLat / 2) +
-            cos(lat1) *
-            cos(lat2) *
-            sin(deltaLon / 2) *
-            sin(deltaLon / 2)
-        return 2.0 * EARTH_RADIUS_METERS * asin(sqrt(haversine.coerceIn(0.0, 1.0)))
-    }
-
-    private const val EARTH_RADIUS_METERS = 6_371_000.0
+    /**
+     * Straight-line distance between two reminder points. Delegates to the shared [haversineDistance]
+     * so these distances sit in the same metric space as [Polyline]'s cumulative distances and the
+     * server's `distanceAlongTrip`, which the two coordinates are compared against each other.
+     */
+    internal fun distanceMeters(first: ReminderPoint, second: ReminderPoint): Double = haversineDistance(first.latitude, first.longitude, second.latitude, second.longitude)
 }
 
 private object ReminderServerTimeSerializer : KSerializer<ServerTime> {

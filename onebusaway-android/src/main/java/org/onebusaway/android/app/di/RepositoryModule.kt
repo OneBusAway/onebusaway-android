@@ -59,8 +59,10 @@ import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
 import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
 import org.onebusaway.android.nav.AndroidReminderSpeechController
 import org.onebusaway.android.nav.NavigationFeedbackRepository
+import org.onebusaway.android.nav.ObaReminderShapeSource
 import org.onebusaway.android.nav.ReminderNotificationPresenter
 import org.onebusaway.android.nav.ReminderSessionStore
+import org.onebusaway.android.nav.ReminderShapeSource
 import org.onebusaway.android.nav.ReminderSpeechController
 import org.onebusaway.android.nav.RoomReminderSessionStore
 import org.onebusaway.android.preferences.DefaultPreferencesRepository
@@ -134,6 +136,9 @@ abstract class RepositoryModule {
     internal abstract fun bindNavigationFeedbackRepository(
         impl: AndroidNavigationFeedbackRepository
     ): NavigationFeedbackRepository
+
+    @Binds
+    internal abstract fun bindReminderShapeSource(impl: ObaReminderShapeSource): ReminderShapeSource
 
     @Binds
     abstract fun bindRegionsRepository(impl: DefaultRegionsRepository): RegionsRepository

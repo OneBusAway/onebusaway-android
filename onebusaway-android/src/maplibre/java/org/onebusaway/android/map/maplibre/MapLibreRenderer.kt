@@ -250,7 +250,7 @@ class MapLibreRenderer(
                     .icon(routeBadgeIcon(badge.routeShortName, badge.color))
             )
             staticAnnotations.add(marker)
-            routeBadgeByMarker[marker] = badge
+            if (badge.interactive) routeBadgeByMarker[marker] = badge
         }
     }
 

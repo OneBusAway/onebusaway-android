@@ -1113,12 +1113,18 @@ private fun ColumnScope.BoardContent(
         // before. A route that publishes no short name gets no roundel and leads with its long name —
         // see routeDisplayShortName.
         val joined = entry.routeLeg.badge?.takeIf { it.isJoined }
+        val singleMapRouteColor = entry.routeLeg.badge?.routes?.singleOrNull()?.mapRouteColor
         val title = entry.routeDisplayName?.takeIf { it != entry.routeShortName }
         Row(verticalAlignment = Alignment.CenterVertically) {
             when {
                 joined != null -> RouteBadgeChip(joined.routes, scale = 1.5f, join = joined.join)
                 entry.routeShortName != null ->
-                    RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
+                    RouteBadgeChip(
+                        entry.routeShortName,
+                        routeColorInt(entry.routeColorHex),
+                        scale = 1.5f,
+                        mapRouteColor = singleMapRouteColor
+                    )
             }
             if (joined != null || entry.routeShortName != null) Spacer(Modifier.width(8.dp))
             if (title != null) {

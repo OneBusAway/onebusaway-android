@@ -210,7 +210,9 @@ data class RouteBadge(
     val routeShortName: String,
     val color: Int,
     val point: GeoPoint,
-    val directionId: Int?
+    val directionId: Int?,
+    /** Whether tapping this label enters route focus. Directions labels are informational only. */
+    val interactive: Boolean = true
 )
 
 /**

@@ -70,7 +70,7 @@ private const val SHRINK_STEP = 0.9f
 private val CHIP_SHAPE = RoundedCornerShape(8.dp)
 private val CHIP_H_PADDING = 8.dp
 private val CHIP_V_PADDING = 2.dp
-private const val CHIP_END_COLOR_FRACTION = 0.2f
+private val CHIP_END_COLOR_WIDTH = 9.dp
 
 // Route-badge color tokens. We take only the *hue* of the agency's GTFS color and re-derive the chip
 // in HCT (a perceptual space) at a fixed tone + capped chroma, so the agency can't hand us an
@@ -170,7 +170,7 @@ fun rememberRouteBadgeColors(routeColor: Int?): Pair<Color, Color> {
  * [color] defaults to [Color.Unspecified] so the badge inherits the ambient content color. Pass a
  * [containerColor] (e.g. from [rememberRouteBadgeColors]) to draw the name on a rounded colored chip
  * filling the fixed-width slot; leave it unspecified for the bare-text badge. [endContainerColor]
- * optionally replaces the rightmost fifth of that background (the arrivals drawer uses this to key
+ * optionally replaces the rightmost 9dp of that background (the arrivals drawer uses this to key
  * the GTFS-colored badge to its stop-focus map color). Set [square] to make the chip a [width]×[width]
  * square tile (a route roundel) with the text shrunk to fit inside it.
  *
@@ -262,7 +262,7 @@ fun LineBadge(
                     Modifier
                         .drawWithContent {
                             if (endContainerColor.isSpecified) {
-                                val endWidth = size.width * CHIP_END_COLOR_FRACTION
+                                val endWidth = CHIP_END_COLOR_WIDTH.toPx().coerceAtMost(size.width)
                                 drawRect(
                                     color = endContainerColor,
                                     topLeft = Offset(size.width - endWidth, 0f),

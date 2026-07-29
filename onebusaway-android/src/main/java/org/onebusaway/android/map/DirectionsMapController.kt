@@ -21,8 +21,15 @@ import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
+import org.onebusaway.android.directions.model.interchangeableRoutes
+import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
+import org.onebusaway.android.map.layout.RouteBadgePath
+import org.onebusaway.android.map.layout.layoutRouteBadges
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
+import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -87,27 +94,35 @@ class DirectionsMapController(private val host: MapHost) {
 
         // Build every leg's polyline (each in its own mode/route style), keeping each one's leg index so
         // a later focus can name legs rather than drawn positions (a leg without geometry draws nothing).
-        legLines = legs.mapIndexedNotNull { legIndex, leg ->
+        val drawableLegs = legs.mapIndexedNotNull { legIndex, leg ->
             val geometry = leg.legGeometry ?: return@mapIndexedNotNull null
             val shape = LegShape(geometry)
-            if (shape.length > 0) {
-                val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
-                // Every leg's points run in travel order, so whether it stamps chevrons is the style's
-                // call — a dashed on-street stroke declines them (see [itineraryLegStyle]).
-                ItineraryLegLine(
-                    legIndex,
-                    RoutePolyline(
-                        style.color,
-                        shape.points,
-                        widthProfile = style.widthProfile,
-                        directional = style.directional,
-                        dash = style.dash
-                    )
-                )
-            } else {
-                null
-            }
+            shape.points.takeIf { shape.length > 0 && it.size >= 2 }
+                ?.let { ItineraryDrawableLeg(legIndex, leg, it) }
         }
+        val interchangeable = itinerary.interchangeableRoutes()
+        val transitColors = itineraryTransitColors(
+            legs,
+            interchangeable.flatten().map { it.routeId }
+        )
+        legLines = drawableLegs.map { drawable ->
+            val leg = drawable.leg
+            val style = itineraryLegStyle(
+                leg.legKind(),
+                transitColors[leg.itineraryRouteIdentity()] ?: parseObaHexColor(leg.routeColor)
+            )
+            ItineraryLegLine(
+                drawable.index,
+                RoutePolyline(
+                    style.color,
+                    drawable.points,
+                    widthProfile = style.widthProfile,
+                    directional = style.directional,
+                    dash = style.dash
+                )
+            )
+        }
+        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs, transitColors))
         // A freshly drawn itinerary is the overview: every leg at full weight until one is focused.
         focusedLegIndices = emptySet()
         publishLegs()
@@ -172,6 +187,7 @@ class DirectionsMapController(private val host: MapHost) {
         directionsMarkerIds.clear()
         legLines = emptyList()
         focusedLegIndices = emptySet()
+        host.renderState.setRouteBadges(emptyList())
     }
 
     /**
@@ -226,5 +242,66 @@ class DirectionsMapController(private val host: MapHost) {
             }
             return ids
         }
+    }
+}
+
+internal data class ItineraryDrawableLeg(
+    val index: Int,
+    val leg: TripLeg,
+    val points: List<GeoPoint>
+)
+
+/** Stable directions-map identity: prefer the wire route id, with its display name as the OTP1 fallback. */
+internal fun TripLeg.itineraryRouteIdentity(): String? = routeId ?: routeDisplayLabel()?.takeIf(String::isNotBlank)
+
+/**
+ * Assign every distinct transit route in a drawn itinerary an evenly separated map hue. This is the
+ * same policy as focused-stop adjacency: agency colors don't get to make two simultaneously visible
+ * routes indistinguishable, and a colorless route no longer collapses onto a shared fallback.
+ */
+internal fun itineraryTransitColors(
+    legs: List<TripLeg>,
+    additionalRouteIdentities: List<String> = emptyList()
+): Map<String, Int> = adjacencyRouteColors(
+    legs.asSequence()
+        .filter { it.mode?.isTransit == true }
+        .mapNotNull(TripLeg::itineraryRouteIdentity)
+        .plus(additionalRouteIdentities.asSequence())
+        .asIterable()
+)
+
+/**
+ * One non-interactive line label per transit route in the itinerary. The stop-focus badge layout is
+ * reused so labels sit at stable distance midpoints and stagger when two ridden corridors overlap.
+ */
+internal fun itineraryRouteBadges(
+    legs: List<ItineraryDrawableLeg>,
+    colors: Map<String, Int>
+): List<RouteBadge> {
+    val specs = legs.asSequence()
+        .filter { it.leg.mode?.isTransit == true }
+        .mapNotNull { drawable ->
+            val identity = drawable.leg.itineraryRouteIdentity() ?: return@mapNotNull null
+            val name = drawable.leg.routeDisplayLabel()?.takeIf(String::isNotBlank) ?: return@mapNotNull null
+            Triple(identity, name, drawable.points)
+        }
+        .groupBy { it.first }
+    val inputs = specs.map { (identity, entries) ->
+        RouteBadgeLayoutInput(
+            RouteDirectionKey(identity, null),
+            entries.map { RouteBadgePath(it.third) }
+        )
+    }
+    val placements = layoutRouteBadges(inputs).associateBy { it.route.routeId }
+    return specs.mapNotNull { (identity, entries) ->
+        val point = placements[identity]?.point ?: return@mapNotNull null
+        RouteBadge(
+            routeId = identity,
+            routeShortName = entries.first().second,
+            color = colors.getValue(identity),
+            point = point,
+            directionId = null,
+            interactive = false
+        )
     }
 }

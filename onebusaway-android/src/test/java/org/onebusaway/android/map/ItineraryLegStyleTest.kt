@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripLeg
@@ -115,6 +116,69 @@ class ItineraryLegStyleTest {
                 Hct.fromInt(fallback.color).chroma > ACHROMATIC_ROUTE_CHROMA
             )
         }
+    }
+
+    @Test
+    fun `itinerary transit routes get contrasting colors independent of agency colors`() {
+        val legs = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "route-a", routeShortName = "A", routeColor = "FF0000"),
+            TripLeg(mode = TripMode.RAIL, routeId = "route-b", routeShortName = "B", routeColor = "FF0000"),
+            // A later leg on the same route retains the first leg's identity and color.
+            TripLeg(mode = TripMode.BUS, routeId = "route-a", routeShortName = "A", routeColor = null),
+            TripLeg(mode = TripMode.WALK, routeId = "not-a-route", routeShortName = "Walk")
+        )
+
+        val colors = itineraryTransitColors(legs, additionalRouteIdentities = listOf("route-c"))
+
+        assertEquals(setOf("route-a", "route-b", "route-c"), colors.keys)
+        assertEquals(3, colors.values.toSet().size)
+        assertEquals(
+            colors.getValue("route-a"),
+            itineraryLegStyle(ItineraryLegKind.TRANSIT, colors.getValue("route-a")).color
+        )
+    }
+
+    @Test
+    fun `OTP1 route display name is the fallback color identity`() {
+        val leg = TripLeg(mode = TripMode.BUS, routeId = null, route = "45")
+
+        assertEquals("45", leg.itineraryRouteIdentity())
+        assertEquals(setOf("45"), itineraryTransitColors(listOf(leg)).keys)
+    }
+
+    @Test
+    fun `directions route badge matches its assigned line color and midpoint`() {
+        val route = TripLeg(mode = TripMode.BUS, routeId = "route-45", routeShortName = "45")
+        val walk = TripLeg(mode = TripMode.WALK)
+        val path = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
+        val color = itineraryTransitColors(listOf(route)).getValue("route-45")
+
+        val badge = itineraryRouteBadges(
+            listOf(
+                ItineraryDrawableLeg(0, route, path),
+                ItineraryDrawableLeg(1, walk, path)
+            ),
+            mapOf("route-45" to color)
+        ).single()
+
+        assertEquals("45", badge.routeShortName)
+        assertEquals(color, badge.color)
+        assertEquals(GeoPoint(0.0, 0.5), badge.point)
+        assertFalse(badge.interactive)
+    }
+
+    @Test
+    fun `a transit leg without geometry still reserves its palette position`() {
+        val hidden = TripLeg(mode = TripMode.BUS, routeId = "hidden", routeShortName = "H")
+        val drawn = TripLeg(mode = TripMode.BUS, routeId = "drawn", routeShortName = "D")
+
+        val fullPalette = itineraryTransitColors(listOf(hidden, drawn))
+
+        assertEquals(listOf("hidden", "drawn"), fullPalette.keys.toList())
+        assertNotEquals(
+            fullPalette.getValue("drawn"),
+            itineraryTransitColors(listOf(drawn)).getValue("drawn")
+        )
     }
 
     @Test

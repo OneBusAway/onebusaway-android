@@ -19,6 +19,7 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.map.itineraryRouteIdentity
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.ROUTE_NAME_ORDER
@@ -53,9 +54,10 @@ import org.onebusaway.android.util.parseObaHexColor
 internal fun rideBadge(
     legs: List<TripLeg>,
     chain: Interlines.Chain,
-    alternatives: List<InterchangeableRoute>
+    alternatives: List<InterchangeableRoute>,
+    mapRouteColors: Map<String, Int> = emptyMap()
 ): LegBadge = if (chain.transitionLegIndices.isEmpty()) {
-    legBadge(legs[chain.leaderIndex], alternatives)
+    legBadge(legs[chain.leaderIndex], alternatives, mapRouteColors)
 } else {
     require(alternatives.isEmpty()) {
         "a ride that changes route mid-vehicle admits no substitutes (leg ${chain.leaderIndex}, ${alternatives.size} offered)"
@@ -66,7 +68,7 @@ internal fun rideBadge(
         // drawer's transition row announces too, and hiding it here would leave the two disagreeing.
         // A leg whose route names itself in no way at all (a null badge) drops out rather than leaving a
         // blank segment; the ride still names every route that can be named.
-        routes = chain.riddenLegIndices.mapNotNull { legs[it].plannedBadge() },
+        routes = chain.riddenLegIndices.mapNotNull { legs[it].plannedBadge(mapRouteColors) },
         mode = legs[chain.leaderIndex].mode.transitMode(),
         join = RouteBadgeJoin.THEN
     )
@@ -74,7 +76,15 @@ internal fun rideBadge(
 
 /** The badge for one transit leg: its planned route joined by the routes ruled interchangeable with
  *  it ([org.onebusaway.android.directions.model.interchangeableRoutes]). */
-internal fun legBadge(leg: TripLeg, alternatives: List<InterchangeableRoute>): LegBadge = legBadge(leg.plannedBadge(), alternatives.map { it.badge() }, leg.mode.transitMode())
+internal fun legBadge(
+    leg: TripLeg,
+    alternatives: List<InterchangeableRoute>,
+    mapRouteColors: Map<String, Int> = emptyMap()
+): LegBadge = legBadge(
+    leg.plannedBadge(mapRouteColors),
+    alternatives.map { it.badge(mapRouteColors) },
+    leg.mode.transitMode()
+)
 
 /**
  * The leg's badge: [planned] joined by [alternatives], in natural name order. The plan's own choice
@@ -103,10 +113,12 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
  * directions pane still draws no roundel for such a route: it has room to print the long name in full as
  * the row's title, and doesn't reach for this badge to do it.
  */
-internal fun TripLeg.plannedBadge(): RouteBadge? = routeDisplayLabel()?.let { RouteBadge(it, badgeColor(routeColor)) }
+internal fun TripLeg.plannedBadge(mapRouteColors: Map<String, Int> = emptyMap()): RouteBadge? = routeDisplayLabel()?.let {
+    RouteBadge(it, badgeColor(routeColor), itineraryRouteIdentity()?.let(mapRouteColors::get))
+}
 
 /** An interchangeable route's roundel, alongside [plannedBadge] in the same leg's badge. */
-internal fun InterchangeableRoute.badge(): RouteBadge = RouteBadge(displayName, badgeColor(routeColor))
+internal fun InterchangeableRoute.badge(mapRouteColors: Map<String, Int> = emptyMap()): RouteBadge = RouteBadge(displayName, badgeColor(routeColor), mapRouteColors[routeId])
 
 /** A wire route color as a badge color: OTP hands over a bare hex, but tolerate a leading '#'. */
 private fun badgeColor(wireHex: String?): Int? = parseObaHexColor(wireHex?.removePrefix("#"))

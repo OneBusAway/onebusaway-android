@@ -310,7 +310,7 @@ class GoogleMapRenderer(
                     .zIndex(ROUTE_BADGE_Z_INDEX)
             )!!
             staticMarkers += marker
-            routeBadgeByMarker[marker] = badge
+            if (badge.interactive) routeBadgeByMarker[marker] = badge
         }
     }
 

@@ -426,7 +426,11 @@ fun DirectionStopEtaStrip(
                 modifier = rowPadding,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RouteBadgeChip(alternative.shortName, alternative.routeColor)
+                RouteBadgeChip(
+                    alternative.shortName,
+                    alternative.routeColor,
+                    mapRouteColor = alternative.mapRouteColor
+                )
                 Spacer(Modifier.width(8.dp))
                 EtaStrip(
                     trips = group.trips,

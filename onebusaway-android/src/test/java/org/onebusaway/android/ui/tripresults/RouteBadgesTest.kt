@@ -97,6 +97,23 @@ class RouteBadgesTest {
         assertEquals("8", badge?.shortName)
     }
 
+    @Test
+    fun plannedAndAlternativeBadgesCarryTheirMapStripeColors() {
+        val leg = transitLeg("8")
+        val alternative = interchangeableRoute("7")
+
+        val badge = legBadge(
+            leg,
+            listOf(alternative),
+            mapOf(leg.routeId!! to 0xFF112233.toInt(), alternative.routeId to 0xFF445566.toInt())
+        )
+
+        assertEquals(
+            mapOf("7" to 0xFF445566.toInt(), "8" to 0xFF112233.toInt()),
+            badge.routes.associate { it.shortName to it.mapRouteColor }
+        )
+    }
+
     /**
      * A route that publishes no short name badges its long name — never its GTFS id, which is an
      * identifier and not a name. Washington State Ferries' "Seattle - Bremerton" is the real case: it

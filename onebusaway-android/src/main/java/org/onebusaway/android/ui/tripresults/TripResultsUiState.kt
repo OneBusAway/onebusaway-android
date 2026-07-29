@@ -359,7 +359,8 @@ data class AlternativeRouteRef(
     val routeId: String?,
     val headsign: String?,
     val shortName: String,
-    val routeColor: Int?
+    val routeColor: Int?,
+    val mapRouteColor: Int? = null
 )
 
 /** A transit stop reached on a leg — its OBA id (for arrivals), display name, code, and location. */

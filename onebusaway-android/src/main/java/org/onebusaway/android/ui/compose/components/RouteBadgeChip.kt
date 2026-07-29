@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.CacheDrawScope
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -45,8 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/** One route on a badge: its short name and (nullable) GTFS color as an ARGB int. */
-data class RouteBadge(val shortName: String, val routeColor: Int?)
+/** One route on a badge: its name, GTFS chip color, and optional map-line color for the end stripe. */
+data class RouteBadge(val shortName: String, val routeColor: Int?, val mapRouteColor: Int? = null)
+
+private val MAP_COLOR_STRIPE_WIDTH = 9.dp
 
 /**
  * How the routes sharing one badge relate to each other — and so what shape divides them. A badge is one
@@ -163,11 +166,12 @@ fun RouteBadgeChip(
     scale: Float = 1f,
     maxWidth: Dp = Dp.Unspecified,
     leadingIcon: Int? = null,
-    leadingIconDescription: String? = null
+    leadingIconDescription: String? = null,
+    mapRouteColor: Int? = null
 ) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     Surface(
-        modifier = modifier.widthIn(max = maxWidth),
+        modifier = modifier.widthIn(min = ROUTE_BADGE_HEIGHT * scale, max = maxWidth),
         color = container,
         contentColor = content,
         shape = BADGE_SHAPE
@@ -178,7 +182,8 @@ fun RouteBadgeChip(
             scale = scale,
             horizontalPadding = 3.dp * scale,
             leadingIcon = leadingIcon,
-            leadingIconDescription = leadingIconDescription
+            leadingIconDescription = leadingIconDescription,
+            modifier = Modifier.mapColorStripe(mapRouteColor)
         )
     }
 }
@@ -207,7 +212,10 @@ private fun BadgeContent(
     Row(
         modifier = modifier.padding(horizontal = horizontalPadding, vertical = BADGE_VERTICAL_PADDING * scale),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BADGE_ICON_GAP * scale)
+        horizontalArrangement = Arrangement.spacedBy(
+            space = BADGE_ICON_GAP * scale,
+            alignment = Alignment.CenterHorizontally
+        )
     ) {
         if (leadingIcon != null) {
             Icon(
@@ -273,7 +281,16 @@ fun RouteBadgeChip(
     val outlined = modifier.border(BADGE_LINE_WIDTH, BADGE_LINE_COLOR, BADGE_SHAPE)
     if (routes.size == 1) {
         val route = routes.first()
-        RouteBadgeChip(route.shortName, route.routeColor, outlined, scale, maxWidth, leadingIcon, leadingIconDescription)
+        RouteBadgeChip(
+            route.shortName,
+            route.routeColor,
+            outlined,
+            scale,
+            maxWidth,
+            leadingIcon,
+            leadingIconDescription,
+            route.mapRouteColor
+        )
         return
     }
     // Deliberately uncapped, unlike the plain chip: this Row's children are unweighted, so a bounded max
@@ -296,6 +313,9 @@ fun RouteBadgeChip(
                 leadingIconDescription = leadingIconDescription,
                 modifier = Modifier
                     .fillMaxHeight()
+                    // A one-character route still gets a proper roundel rather than a narrow lozenge:
+                    // at the default font scale each segment is at least as wide as the badge is tall.
+                    .widthIn(min = ROUTE_BADGE_HEIGHT * scale)
                     // drawWithCache, not drawBehind: the band's Path and the line's geometry depend only
                     // on the segment's size, so they're built once per size change, not per draw pass.
                     .drawWithCache {
@@ -307,6 +327,16 @@ fun RouteBadgeChip(
                             extendStart = index == 0,
                             extendEnd = index == routes.lastIndex
                         )
+                        // Keep the stripe's leading edge vertical and overdraw its trailing edge beneath
+                        // the next segment. That sibling's band then clips the overdraw to the actual
+                        // slash/chevron divider, filling cleanly into its geometry without bending the
+                        // stripe itself.
+                        val stripe = route.mapRouteColor?.let {
+                            endStripePath(
+                                extendEnd = index == routes.lastIndex,
+                                width = MAP_COLOR_STRIPE_WIDTH.toPx()
+                            ) to Color(it)
+                        }
                         // Only the leading edge, and never on the first segment: each segment draws its
                         // line after its band, so it lands on top of the neighbouring band this one just
                         // overwrote. The first segment has no neighbour, so it builds no line at all.
@@ -314,6 +344,7 @@ fun RouteBadgeChip(
                         val line = Stroke(BADGE_LINE_WIDTH.toPx())
                         onDrawBehind {
                             drawPath(band, container)
+                            stripe?.let { (path, color) -> drawPath(path, color) }
                             divider?.let { drawPath(it, BADGE_LINE_COLOR, style = line) }
                         }
                     }
@@ -322,6 +353,19 @@ fun RouteBadgeChip(
                     // therefore still sizes the band to the whole segment.
                     .padding(start = join.leadingInset(index) * scale)
             )
+        }
+    }
+}
+
+/** Paint the same exact-map-color 9dp end stripe used by the arrivals drawer's large line badge. */
+private fun Modifier.mapColorStripe(mapRouteColor: Int?): Modifier = if (mapRouteColor == null) {
+    this
+} else {
+    drawWithCache {
+        val stripe = Color(mapRouteColor)
+        onDrawBehind {
+            val width = MAP_COLOR_STRIPE_WIDTH.toPx().coerceAtMost(size.width)
+            drawRect(stripe, Offset(size.width - width, 0f), Size(width, size.height))
         }
     }
 }
@@ -380,6 +424,22 @@ private fun CacheDrawScope.bandPath(edge: List<Offset>, extendStart: Boolean, ex
     // across the top.
     return leading.toPath().apply {
         for (i in trailing.lastIndex downTo 0) lineTo(trailing[i].x, trailing[i].y)
+        close()
+    }
+}
+
+/**
+ * A vertical fixed-width strip that overdraws beneath a following segment. Siblings paint left to
+ * right, so that following band erases the overdraw exactly along its slash/chevron leading edge.
+ */
+private fun CacheDrawScope.endStripePath(extendEnd: Boolean, width: Float): Path {
+    val left = size.width - width.coerceAtMost(size.width)
+    val right = size.width + if (extendEnd) 0f else leanPx()
+    return Path().apply {
+        moveTo(left, 0f)
+        lineTo(right, 0f)
+        lineTo(right, size.height)
+        lineTo(left, size.height)
         close()
     }
 }

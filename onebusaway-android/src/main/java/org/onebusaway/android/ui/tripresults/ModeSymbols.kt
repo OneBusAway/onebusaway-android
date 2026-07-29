@@ -19,6 +19,7 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.map.itineraryTransitColors
 
 /**
  * Builds the [ModeSymbol] sequence an itinerary option card shows (#2047) — the whole trip in travel
@@ -69,10 +70,19 @@ internal object ModeSymbols {
         require(substitutable.size == legs.size) {
             "substitutable must be index-aligned to legs (${substitutable.size} vs ${legs.size})"
         }
+        val mapRouteColors = itineraryTransitColors(
+            legs,
+            substitutable.flatten().map(InterchangeableRoute::routeId)
+        )
         // One badge per ride, at the leg it's boarded at; every other transit leg is a continuation the
         // rider never acts on, and is already named inside its leader's badge.
         val rides = Interlines.chains(legs).associate { chain ->
-            chain.leaderIndex to rideBadge(legs, chain, substitutable[chain.leaderIndex])
+            chain.leaderIndex to rideBadge(
+                legs,
+                chain,
+                substitutable[chain.leaderIndex],
+                mapRouteColors
+            )
         }
         val symbols = legs.mapIndexedNotNull { i, leg ->
             when {

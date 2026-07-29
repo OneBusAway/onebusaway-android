@@ -310,7 +310,9 @@ class GoogleMapRenderer(
                     .zIndex(ROUTE_BADGE_Z_INDEX)
             )!!
             staticMarkers += marker
-            routeBadgeByMarker[marker] = badge
+            // Only an interactive label becomes a tap target; a directions label is informational, and
+            // an unregistered marker's tap falls through to the map like any other unclaimed one.
+            if (badge.interactive) routeBadgeByMarker[marker] = badge
         }
     }
 

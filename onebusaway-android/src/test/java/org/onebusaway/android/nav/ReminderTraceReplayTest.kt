@@ -63,7 +63,11 @@ class ReminderTraceReplayTest {
                     mode = ReminderMode.BUS,
                     routeLabel = null,
                     tripId = header[0],
-                    board = penultimate,
+                    // These are recordings of the legacy trip-details launch, whose contract carries
+                    // only the destination and the stop before it. Naming the penultimate stop as the
+                    // boarding stop would fabricate a fact the fixtures do not have, and would gate
+                    // rides that the shipped legacy path does not gate.
+                    board = null,
                     penultimate = penultimate,
                     alight = destination,
                     scheduledStart = ServerTime(0),

@@ -98,7 +98,7 @@ query Plan(
                     # user-visible validation error rather than starting partial reminder coverage.
                     stopCalls {
                         stopLocation {
-                            ... on Stop { gtfsId name lat lon }
+                            ... on Stop { gtfsId name lat lon code }
                         }
                     }
                     # Interleaved/interchangeable routes (#2010): OTP's own alternative-leg search,

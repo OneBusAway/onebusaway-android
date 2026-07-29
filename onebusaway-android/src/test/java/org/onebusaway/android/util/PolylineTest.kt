@@ -143,6 +143,27 @@ class PolylineTest {
     }
 
     @Test
+    fun anAnchorKeepsAnOutAndBackPathOnTheBranchBeingTravelled() {
+        // Out along the equator and straight back — the two branches are the same ground but a whole
+        // out-and-back apart in arc length. Unanchored, a point on the return branch is answered with
+        // the outbound branch's arc length, which reads as the traveller having jumped backwards.
+        val outAndBack = Polyline(listOf(gp(0.0, 0.0), gp(0.0, 1.0), gp(0.0, 0.0)))
+        val total = outAndBack.nearestProjection(0.0, 0.0, segLen * 1.5)!!.distanceAlong
+
+        val unanchored = outAndBack.nearestProjection(0.0, 0.5)!!.distanceAlong
+        val anchored = outAndBack.nearestProjection(0.0, 0.5, segLen)!!.distanceAlong
+
+        assertEquals("the globally nearest answer sits on the outbound branch", segLen / 2, unanchored, segLen * 1e-3)
+        assertEquals("anchored past the turn, the same point reads on the return branch", segLen * 1.5, anchored, segLen * 1e-3)
+        assertEquals(segLen * 2, total, segLen * 1e-6)
+    }
+
+    @Test
+    fun anAnchorBeyondTheEndOfTheLineHasNoAnswer() {
+        assertNull(poly.nearestProjection(0.0, 0.5, segLen * 2 + 1.0))
+    }
+
+    @Test
     fun nearestPointStillReturnsTheProjectedPoint() {
         val nearest = poly.nearestPoint(0.1, 0.5)!!
         val projection = poly.nearestProjection(0.1, 0.5)!!

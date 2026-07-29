@@ -8,7 +8,9 @@
 package org.onebusaway.android.nav
 
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -17,16 +19,11 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.database.oba.NavStopDao
-import org.onebusaway.android.database.oba.NavStopDetailsRow
-import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.NavigationSessionRecord
-import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopLocationRow
 import org.onebusaway.android.database.oba.StopRecentRow
-import org.onebusaway.android.database.oba.StopRecord
 import org.onebusaway.android.database.oba.StopUserInfoMapRow
 import org.onebusaway.android.database.oba.StopUserInfoRow
 import org.onebusaway.android.time.WallTime
@@ -55,12 +52,26 @@ class RoomReminderSessionStoreTest {
     }
 
     @Test
-    fun discardsASessionOlderThanTheResumableWindow() {
-        // A force-stop or a crash leaves the row behind; resuming it days later would put the
-        // device back into a foreground GPS session for a trip that is long over.
+    fun discardsASessionThatHasBeenQuietLongerThanTheResumableWindow() {
+        // A force-stop or a crash leaves the row behind and nothing writes to it again; resuming it
+        // days later would put the device back into a foreground GPS session for a trip long over.
         val outcome = row(plan(), ReminderEngineState(), startedAt = now - 48.hours).resumeOutcome(now)
 
         assertTrue(outcome is StoredSessionOutcome.Discard)
+    }
+
+    @Test
+    fun aLongJourneyIsJudgedByItsLastProgressNotItsStartDate() {
+        // Started two days ago but still making progress: a real journey that outlasts the window is
+        // not a zombie, and retiring it would drop a session the service is actively monitoring.
+        val outcome = row(
+            plan(),
+            ReminderEngineState(),
+            startedAt = now - 48.hours,
+            updatedAt = now - 5.minutes
+        ).resumeOutcome(now)
+
+        assertTrue(outcome is StoredSessionOutcome.Resume)
     }
 
     @Test
@@ -74,14 +85,68 @@ class RoomReminderSessionStoreTest {
 
     @Test
     fun anUnreadablePlanIsDiscardedRatherThanResumed() {
-        // The caller must not fall back to the legacy nav_stops row, which describes a different,
-        // single-ride trip: resuming that under a rider part-way through a multi-leg session would
-        // monitor the wrong journey. Discard is the only non-resume outcome there is.
+        // Discard is the only non-resume outcome there is: there is deliberately nothing to fall
+        // back to, so an undecodable plan can never hand the rider a different journey.
         val outcome = row(plan(), ReminderEngineState(), startedAt = now)
             .copy(planJson = "{not json")
             .resumeOutcome(now)
 
         assertTrue(outcome is StoredSessionOutcome.Discard)
+    }
+
+    @Test
+    fun anUnreadableStoredPlanIsDiscardedByTheStore() = runTest {
+        // Through the real store, not just the pure rule: an undecodable row must leave the rider
+        // with no session at all, and must not be offered again on the next launch.
+        val sessions = FakeSessionDao(
+            row(plan(), ReminderEngineState(), startedAt = now).copy(planJson = "{not json")
+        )
+        val log = RecordingLog()
+
+        assertNull(store(sessions, log = log).restore(now))
+        assertTrue("the unreadable row must not be offered again", sessions.rows.isEmpty())
+        assertTrue(log.warnings.single().contains("plan JSON did not decode"))
+    }
+
+    @Test
+    fun aSessionFromAnotherFormatVersionIsDiscardedByTheStore() = runTest {
+        val sessions = FakeSessionDao(
+            row(plan(), ReminderEngineState(), startedAt = now)
+                .copy(formatVersion = ReminderPlan.CURRENT_VERSION + 1)
+        )
+        val log = RecordingLog()
+
+        assertNull(store(sessions, log = log).restore(now))
+        assertTrue("the row this build cannot read must not be offered again", sessions.rows.isEmpty())
+        assertTrue(log.warnings.single().contains("format version"))
+    }
+
+    @Test
+    fun theActiveSessionSignalOnlyReportsRowsRestoreWouldResume() = runTest {
+        // The screen picks its Start/Stop action off this, so anything it reports has to be
+        // something restore() would actually resume — otherwise the rider is told to stop a
+        // session nothing is monitoring, and cannot start one until they do.
+        val fresh = row(plan(), ReminderEngineState(), startedAt = WallTime.now() - 1.hours)
+
+        assertTrue(store(FakeSessionDao(fresh)).hasActiveSession.first())
+        assertFalse(
+            "a force-stopped row quiet since yesterday is not an active session",
+            store(FakeSessionDao(fresh.copy(updatedAtMs = (WallTime.now() - 48.hours).epochMs)))
+                .hasActiveSession.first()
+        )
+        assertTrue(
+            "but a long journey still making progress is",
+            store(
+                FakeSessionDao(
+                    fresh.copy(startedAtMs = (WallTime.now() - 48.hours).epochMs)
+                )
+            ).hasActiveSession.first()
+        )
+        assertFalse(
+            "nor is one written by a format version this build cannot read",
+            store(FakeSessionDao(fresh.copy(formatVersion = ReminderPlan.CURRENT_VERSION + 1)))
+                .hasActiveSession.first()
+        )
     }
 
     @Test
@@ -108,53 +173,12 @@ class RoomReminderSessionStoreTest {
     }
 
     @Test
-    fun legacyRowIsResumableOnlyInsideTheWindow() {
-        assertTrue(legacySessionResumable(now - 1.hours, now))
-        assertFalse(legacySessionResumable(now - 100.hours, now))
-    }
-
-    @Test
-    fun convertsARecentLegacyNavStopsRowIntoASingleRidePlan() = runTest {
-        val legacy = FakeNavStopDao(legacyRow(startTime = (now - 1.hours).epochMs))
-        val store = store(FakeSessionDao(), legacy)
-
-        val restored = store.restore(now)
-
-        val ride = restored?.plan?.rides?.single()
-        assertEquals("trip", ride?.tripId)
-        assertEquals("before", ride?.penultimate?.id)
-        assertEquals("destination", ride?.alight?.id)
-        assertNull("the legacy schema carries no boarding stop", ride?.board)
-    }
-
-    @Test
-    fun ignoresAStaleLegacyNavStopsRow() = runTest {
-        // The legacy schema leaves the last trip's row is_active=1 forever and the pre-Room
-        // importer carries it across verbatim, so an upgrade can surface a years-old trip.
-        val legacy = FakeNavStopDao(legacyRow(startTime = (now - 100.hours).epochMs))
-        val store = store(FakeSessionDao(), legacy)
-
-        assertNull(store.restore(now))
-        assertNull("the zombie row must not be found again", legacy.row)
-    }
-
-    @Test
-    fun missingLegacyStopsYieldNoSession() = runTest {
-        val legacy = FakeNavStopDao(legacyRow(startTime = now.epochMs))
-        val store = store(FakeSessionDao(), legacy, stops = FakeStopDao(emptyMap()))
-
-        assertNull(store.restore(now))
-    }
-
-    @Test
-    fun clearRemovesBothTheStoredAndTheLegacySession() = runTest {
+    fun clearRemovesTheStoredSession() = runTest {
         val sessions = FakeSessionDao(row(plan(), ReminderEngineState(), startedAt = now))
-        val legacy = FakeNavStopDao(legacyRow(startTime = now.epochMs))
 
-        store(sessions, legacy).clear()
+        store(sessions).clear()
 
         assertTrue(sessions.rows.isEmpty())
-        assertNull(legacy.row)
     }
 
     @Test
@@ -173,14 +197,8 @@ class RoomReminderSessionStoreTest {
 
     private fun store(
         sessions: NavigationSessionDao,
-        legacy: NavStopDao = FakeNavStopDao(),
-        stops: StopDao = FakeStopDao(
-            mapOf(
-                "before" to stopRecord("before", 47.60),
-                "destination" to stopRecord("destination", 47.61)
-            )
-        )
-    ) = RoomReminderSessionStore(sessions, legacy, stops)
+        log: ReminderSessionLog = RecordingLog()
+    ) = RoomReminderSessionStore(sessions, log)
 
     private fun plan() = ReminderPlan(
         sessionId = "session",
@@ -198,39 +216,39 @@ class RoomReminderSessionStoreTest {
         )
     )
 
-    private fun row(plan: ReminderPlan, state: ReminderEngineState, startedAt: WallTime) = NavigationSessionRecord(
+    private fun row(
+        plan: ReminderPlan,
+        state: ReminderEngineState,
+        startedAt: WallTime,
+        updatedAt: WallTime = startedAt
+    ) = NavigationSessionRecord(
         sessionId = plan.sessionId,
         formatVersion = plan.version,
         planJson = ReminderPlanJson.encode(plan),
         stateJson = ReminderPlanJson.encodeState(state),
         startedAtMs = startedAt.epochMs,
-        updatedAtMs = startedAt.epochMs
+        updatedAtMs = updatedAt.epochMs
     )
 
-    private fun legacyRow(startTime: Long) = NavStopRecord(
-        navId = "1",
-        startTime = startTime,
-        tripId = "trip",
-        destinationId = "destination",
-        beforeId = "before",
-        sequence = 1,
-        active = 1
-    )
+    /**
+     * The store reports discards through [ReminderSessionLog] rather than `android.util.Log`, which
+     * throws here — that indirection is what lets these tests run `restore()` itself instead of only
+     * the pure [resumeOutcome] underneath it.
+     */
+    private class RecordingLog : ReminderSessionLog() {
+        val warnings = mutableListOf<String>()
 
-    private fun stopRecord(id: String, latitude: Double) = StopRecord(
-        id = id,
-        code = id,
-        name = id,
-        direction = "N",
-        useCount = 0,
-        latitude = latitude,
-        longitude = -122.3
-    )
+        override fun warn(message: String) {
+            warnings += message
+        }
+    }
 
     private class FakeSessionDao(initial: NavigationSessionRecord? = null) : NavigationSessionDao {
         val rows = mutableListOf<NavigationSessionRecord>().apply { initial?.let(::add) }
 
-        override fun observeHasActiveSession(): Flow<Boolean> = flowOf(rows.isNotEmpty())
+        override fun observeHasActiveSession(formatVersion: Int, updatedAtOrAfterMs: Long): Flow<Boolean> = flowOf(
+            rows.any { it.formatVersion == formatVersion && it.updatedAtMs >= updatedAtOrAfterMs }
+        )
 
         override suspend fun active(): NavigationSessionRecord? = rows.maxByOrNull { it.updatedAtMs }
 
@@ -247,66 +265,4 @@ class RoomReminderSessionStoreTest {
             }
         }
     }
-
-    private class FakeNavStopDao(var row: NavStopRecord? = null) : NavStopDao {
-        override suspend fun active(): NavStopRecord? = row?.takeIf { it.active == 1 }
-
-        override suspend fun clearAll() {
-            row = null
-        }
-
-        override suspend fun insert(row: NavStopRecord) {
-            this.row = row
-        }
-
-        override suspend fun getDetails(navId: String): NavStopDetailsRow? = row?.takeIf { it.navId == navId }?.let { NavStopDetailsRow(it.tripId, it.destinationId, it.beforeId) }
-    }
-
-    private class FakeStopDao(private val stops: Map<String, StopRecord>) : FakeStopDaoBase() {
-        override suspend fun getStop(stopId: String): StopRecord? = stops[stopId]
-    }
-}
-
-/** The unused half of the [StopDao] surface; the store only ever looks a stop up by id. */
-private abstract class FakeStopDaoBase : StopDao {
-    override suspend fun userInfo(stopId: String): StopUserInfoRow? = null
-
-    override suspend fun setFavorite(stopId: String, favorite: Int) = Unit
-
-    override suspend fun userInfoMap(): List<StopUserInfoMapRow> = emptyList()
-
-    override suspend fun location(stopId: String): StopLocationRow? = null
-
-    override suspend fun nameForStop(stopId: String): String? = null
-
-    override suspend fun getStop(stopId: String): StopRecord? = null
-
-    override suspend fun upsert(stop: StopRecord) = Unit
-
-    override suspend fun markStopUsed(
-        id: String,
-        code: String,
-        name: String,
-        direction: String,
-        latitude: Double,
-        longitude: Double,
-        regionId: Long?,
-        now: Long
-    ) = Unit
-
-    override fun recents(cutoff: Long, regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
-
-    override fun recentsForSearch(cutoff: Long, regionId: Long?): Flow<List<StopRecentRow>> = flowOf(emptyList())
-
-    override fun starredByName(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
-
-    override fun starredByFrequency(regionId: Long?): Flow<List<StopListRow>> = flowOf(emptyList())
-
-    override fun favoriteStopIds(): Flow<List<String>> = flowOf(emptyList())
-
-    override suspend fun markUnused(stopId: String) = Unit
-
-    override suspend fun markAllUnused() = Unit
-
-    override suspend fun clearAllFavorites() = Unit
 }

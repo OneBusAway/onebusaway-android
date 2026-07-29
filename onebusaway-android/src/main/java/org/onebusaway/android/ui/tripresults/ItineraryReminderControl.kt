@@ -18,11 +18,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
@@ -35,7 +33,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -62,37 +67,44 @@ internal fun ItineraryReminderControl(
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    var pendingPlan by remember { mutableStateOf<ReminderPlan?>(null) }
-    var confirmationPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     val active by viewModel.hasActiveSession.collectAsStateWithLifecycle()
-    val scope = rememberCoroutineScope()
+    val confirmationPlan by viewModel.confirmationPlan.collectAsStateWithLifecycle()
 
-    fun start(plan: ReminderPlan) {
-        pendingPlan = null
-        scope.launch {
-            // Store first, then start: the intent carries only the session id, so the row has to be
-            // there before the service goes looking for it.
-            viewModel.storeSession(plan).onFailure { error ->
-                Log.e(TAG, "Could not store reminder session ${plan.sessionId}", error)
-                Toast.makeText(context, R.string.destination_reminder_invalid_plan, Toast.LENGTH_LONG).show()
-                return@launch
-            }
+    // Bound to the application context rather than this composable's: the ViewModel runs the
+    // store-then-start sequence on its own scope, which outlives a screen the rider navigates away
+    // from mid-sequence.
+    val serviceStarter = remember(context) {
+        val appContext = context.applicationContext
+        ReminderServiceStarter { sessionId ->
             ContextCompat.startForegroundService(
-                context,
-                Intent(context, NavigationService::class.java)
-                    .putExtra(NavigationService.SESSION_ID, plan.sessionId)
+                appContext,
+                Intent(appContext, NavigationService::class.java)
+                    .putExtra(NavigationService.SESSION_ID, sessionId)
             )
-            Toast.makeText(
-                context,
-                resources.getQuantityString(
-                    R.plurals.destination_reminder_monitoring_rides,
-                    plan.rides.size,
-                    plan.rides.size
-                ),
-                Toast.LENGTH_LONG
-            ).show()
         }
     }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is ReminderControlEvent.Started -> Toast.makeText(
+                    context,
+                    resources.getQuantityString(
+                        R.plurals.destination_reminder_monitoring_rides,
+                        event.rideCount,
+                        event.rideCount
+                    ),
+                    Toast.LENGTH_LONG
+                ).show()
+                is ReminderControlEvent.StoreFailed -> {
+                    Log.e(TAG, "Could not store reminder session ${event.sessionId}", event.error)
+                    Toast.makeText(context, R.string.destination_reminder_invalid_plan, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    fun start(plan: ReminderPlan) = viewModel.startSession(plan, serviceStarter)
 
     // Notifications carry the ongoing session and its Silence/Cancel actions, so a denial is worth
     // telling the rider about — but reminders still work by voice, and this screen can still stop
@@ -100,7 +112,7 @@ internal fun ItineraryReminderControl(
     val notificationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        val plan = pendingPlan ?: return@rememberLauncherForActivityResult
+        val plan = viewModel.takePendingPlan() ?: return@rememberLauncherForActivityResult
         if (!granted) {
             Toast.makeText(context, R.string.destination_reminder_notifications_denied, Toast.LENGTH_LONG).show()
         }
@@ -114,16 +126,14 @@ internal fun ItineraryReminderControl(
             start(plan)
             return
         }
-        pendingPlan = plan
+        viewModel.awaitPermission(plan)
         notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
 
     val locationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { grants ->
-        val plan = pendingPlan
-        pendingPlan = null
-        if (plan == null) return@rememberLauncherForActivityResult
+        val plan = viewModel.takePendingPlan() ?: return@rememberLauncherForActivityResult
         // Coarse location is roughly kilometre-scale; the engine rejects fixes worse than
         // DestinationReminderPolicy.MAX_ACCEPTED_ACCURACY_METERS, so a coarse-only grant would
         // silently never alert. Say so rather than starting a session that cannot work.
@@ -151,7 +161,7 @@ internal fun ItineraryReminderControl(
             itinerary?.let { selectedItinerary ->
                 when (val result = ReminderPlanBuilder.build(selectedItinerary)) {
                     is ReminderPlanResult.Error -> Toast.makeText(context, result.userMessage(context), Toast.LENGTH_LONG).show()
-                    is ReminderPlanResult.Success -> confirmationPlan = result.plan
+                    is ReminderPlanResult.Success -> viewModel.confirm(result.plan)
                 }
             }
         },
@@ -163,7 +173,7 @@ internal fun ItineraryReminderControl(
 
     confirmationPlan?.let { plan ->
         AlertDialog(
-            onDismissRequest = { confirmationPlan = null },
+            onDismissRequest = { viewModel.dismissConfirmation() },
             title = { Text(stringResource(R.string.destination_reminder_dialog_title)) },
             text = {
                 Text(
@@ -177,7 +187,7 @@ internal fun ItineraryReminderControl(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        confirmationPlan = null
+                        viewModel.dismissConfirmation()
                         if (!isLocationEnabled(context)) {
                             Toast.makeText(context, R.string.destination_reminder_enable_location, Toast.LENGTH_LONG).show()
                         } else if (PermissionUtils.hasGrantedPermission(
@@ -187,19 +197,39 @@ internal fun ItineraryReminderControl(
                         ) {
                             startAfterNotificationPermission(plan)
                         } else {
-                            pendingPlan = plan
+                            viewModel.awaitPermission(plan)
                             locationPermission.launch(PermissionUtils.LOCATION_PERMISSIONS)
                         }
                     }
                 ) { Text(stringResource(R.string.destination_reminder_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = { confirmationPlan = null }) {
+                TextButton(onClick = { viewModel.dismissConfirmation() }) {
                     Text(stringResource(R.string.destination_reminder_cancel))
                 }
             }
         )
     }
+}
+
+/**
+ * Starts the reminder foreground service for a session already in the store. Supplied per call
+ * rather than held by the ViewModel so the ViewModel never owns a Context, and so the caller
+ * decides which one the service is started from.
+ */
+internal fun interface ReminderServiceStarter {
+    fun start(sessionId: String)
+}
+
+/**
+ * One-shot feedback from a start attempt. The sequence runs on the ViewModel's scope, so it can
+ * finish after the screen is gone; these are dropped when nothing is collecting rather than queued
+ * for a screen that may never come back.
+ */
+internal sealed interface ReminderControlEvent {
+    data class Started(val rideCount: Int) : ReminderControlEvent
+
+    data class StoreFailed(val sessionId: String, val error: Throwable) : ReminderControlEvent
 }
 
 @HiltViewModel
@@ -211,6 +241,58 @@ internal class ReminderControlViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(5_000),
         false
     )
+
+    private val _confirmationPlan = MutableStateFlow<ReminderPlan?>(null)
+
+    /** The plan the rider is being asked to confirm, held here so a rotation keeps the dialog up. */
+    val confirmationPlan: StateFlow<ReminderPlan?> = _confirmationPlan.asStateFlow()
+
+    private val _events = MutableSharedFlow<ReminderControlEvent>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
+
+    val events: SharedFlow<ReminderControlEvent> = _events.asSharedFlow()
+
+    /**
+     * The plan waiting on a system permission dialog. It lives here rather than in composition
+     * because the dialog can take the activity through a configuration change: a plan remembered in
+     * the composable would be gone when the result arrived, and the rider would grant location only
+     * for nothing to happen.
+     */
+    private var pendingPlan: ReminderPlan? = null
+
+    fun confirm(plan: ReminderPlan) {
+        _confirmationPlan.value = plan
+    }
+
+    fun dismissConfirmation() {
+        _confirmationPlan.value = null
+    }
+
+    fun awaitPermission(plan: ReminderPlan) {
+        pendingPlan = plan
+    }
+
+    /** The plan a permission result belongs to, consumed so a later result cannot restart it. */
+    fun takePendingPlan(): ReminderPlan? = pendingPlan.also { pendingPlan = null }
+
+    /**
+     * Stores [plan] and then starts the service for it. Store first: the intent carries only the
+     * session id, so the row has to be there before the service goes looking for it — and the pair
+     * runs on [viewModelScope] so a rider who navigates away in between cannot leave a stored
+     * session with nothing monitoring it, which would strand the screen on its Stop action.
+     */
+    fun startSession(plan: ReminderPlan, service: ReminderServiceStarter) {
+        viewModelScope.launch {
+            storeSession(plan)
+                .onSuccess {
+                    service.start(plan.sessionId)
+                    _events.tryEmit(ReminderControlEvent.Started(plan.rides.size))
+                }
+                .onFailure { _events.tryEmit(ReminderControlEvent.StoreFailed(plan.sessionId, it)) }
+        }
+    }
 
     /**
      * Makes [plan] the stored session, replacing any other. The caller must not start the service

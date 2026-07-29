@@ -28,9 +28,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
+import org.onebusaway.android.app.FeatureFlags
 import org.onebusaway.android.database.oba.ImportGate
-import org.onebusaway.android.database.oba.NavStopDao
-import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.time.WallTime
@@ -46,8 +45,6 @@ class NavigationService : Service() {
     @Inject internal lateinit var speechController: ReminderSpeechController
 
     @Inject internal lateinit var feedbackRepository: NavigationFeedbackRepository
-
-    @Inject lateinit var navStopDao: NavStopDao
 
     @Inject lateinit var stopDao: StopDao
 
@@ -66,7 +63,25 @@ class NavigationService : Service() {
     private var explicitCancellation = false
     private var mutedRequested = false
 
+    /** The newest start command, so a teardown that lost the race to one can stand down. */
+    private var latestStartId = 0
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        latestStartId = startId
+        if (!FeatureFlags.DESTINATION_REMINDERS) {
+            // Nothing can legitimately start this service while the feature is off, so anything that
+            // reaches here is left over from a build where it was on: a stored session plus the
+            // sticky restart the platform owes it. Clear the row so it cannot be resumed later, and
+            // stop. Deliberately no foreground promotion, for the same reason the teardown commands
+            // below skip it — this is a service that is going away, not one that is starting.
+            explicitCancellation = true
+            serviceScope.launch {
+                sessionStore.clear()
+                notificationPresenter.cancel()
+                stopSelf(startId)
+            }
+            return START_NOT_STICKY
+        }
         // The teardown commands are handled before any foreground promotion: promoting here would
         // post a fresh ongoing notification only to cancel it a moment later, and on API 34+
         // startForeground with a location type throws if the permission has since been revoked —
@@ -76,11 +91,16 @@ class NavigationService : Service() {
                 explicitCancellation = true
                 stopLocationCollection()
                 serviceScope.launch {
+                    // A rider who taps "cancel" and immediately starts another trip: by the time
+                    // this runs, the newer start has already written its session and re-promoted the
+                    // service, so tearing down here would delete its row and cancel its
+                    // notification. Nothing about this cancellation applies to it.
+                    if (startId != latestStartId) return@launch
                     sessionStore.clear()
                     speechController.silence()
                     speechController.close()
                     notificationPresenter.cancel()
-                    stopSelf()
+                    stopSelf(startId)
                 }
                 return START_NOT_STICKY
             }
@@ -94,7 +114,14 @@ class NavigationService : Service() {
                     stopSelf(startId)
                     return START_NOT_STICKY
                 }
-                promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
+                // Reached via startForegroundService, so a refused promotion has to end the service
+                // rather than leave it un-promoted for the platform to kill.
+                if (!promoteToForeground(notificationPresenter.foregroundNotification(activePlan))) {
+                    serviceScope.launch { sessionStore.clear() }
+                    notificationPresenter.cancel()
+                    stopSelf(startId)
+                    return START_NOT_STICKY
+                }
                 activePlan?.let {
                     serviceScope.launch { sessionStore.persist(it, engineState, wallClock()) }
                 }
@@ -119,7 +146,12 @@ class NavigationService : Service() {
         val requestedSessionId = intent?.getStringExtra(SESSION_ID)
         val supersedes = (requestedSessionId != null && requestedSessionId != plan?.sessionId) ||
             intent?.hasExtra(TRIP_ID) == true
-        if (supersedes) mutedRequested = false
+        if (supersedes) {
+            mutedRequested = false
+            // Including a cancellation this launch raced: it applied to the session being replaced,
+            // and leaving it set would cancel this session's "you have arrived" summary on destroy.
+            explicitCancellation = false
+        }
         if (navigationJob?.isActive != true || supersedes) {
             navigationJob?.cancel()
             navigationJob = serviceScope.launch { initialize(intent, requestedSessionId) }
@@ -156,11 +188,6 @@ class NavigationService : Service() {
         val activePlan = restored.plan
         plan = activePlan
         engineState = restored.state.let { if (mutedRequested) it.copy(speechMuted = true) else it }
-        // Only when this launch began a session. Rewriting the compat row on a plain resume would
-        // restamp its start time, which is what bounds how long a legacy row stays resumable.
-        if (requestedSessionId != null || legacyPlan != null) {
-            persistLegacyCompatibility(activePlan, wallClock())
-        }
         if (!promoteToForeground(notificationPresenter.foregroundNotification(activePlan))) {
             sessionStore.clear()
             notificationPresenter.cancel()
@@ -221,26 +248,14 @@ class NavigationService : Service() {
             )?.plan
     }
 
-    private suspend fun persistLegacyCompatibility(plan: ReminderPlan, now: WallTime) {
-        val ride = plan.rides.first()
-        navStopDao.replaceActive(
-            NavStopRecord(
-                navId = "1",
-                startTime = ride.scheduledStart?.epochMs ?: now.epochMs,
-                tripId = ride.tripId,
-                destinationId = ride.alight.id,
-                beforeId = ride.penultimate.id,
-                sequence = 1,
-                active = 1
-            )
-        )
-    }
-
     private suspend fun handleLocation(location: Location) {
         val activePlan = plan ?: return
         val sample = ReminderLocationSample(
             point = ReminderPoint(location.latitude, location.longitude),
-            accuracyMeters = location.accuracy,
+            // A fix that reports no accuracy reads as 0f, which the engine's accuracy gate would
+            // accept as a perfect one. NaN fails that range test, so the sample is rejected instead
+            // of driving alerts off an unknown-quality position.
+            accuracyMeters = if (location.hasAccuracy()) location.accuracy else Float.NaN,
             speedMetersPerSecond = location.speed.takeIf { location.hasSpeed() },
             timestamp = WallTime(location.time)
         )
@@ -251,12 +266,12 @@ class NavigationService : Service() {
         if (previous.restorationKey() != engineState.restorationKey()) {
             sessionStore.persist(activePlan, engineState, wallClock())
         }
-        transition.effects.forEach { dispatch(activePlan, it) }
+        transition.effects.forEach { dispatch(it) }
     }
 
-    private suspend fun dispatch(activePlan: ReminderPlan, effect: ReminderEffect) {
-        notificationPresenter.present(activePlan, effect)
-        if (!engineState.speechMuted) speechController.speak(activePlan, effect)
+    private suspend fun dispatch(effect: ReminderEffect) {
+        notificationPresenter.present(effect)
+        if (!engineState.speechMuted) speechController.speak(effect)
         when (effect) {
             is ReminderEffect.GetReady -> report(R.string.analytics_label_destination_reminder_variant_get_ready)
             is ReminderEffect.AlightNow -> report(R.string.analytics_label_destination_reminder_variant_exit_at_next_stop)

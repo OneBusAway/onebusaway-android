@@ -103,7 +103,8 @@ fun TripDetailsRoute(
     viewModel: TripDetailsViewModel,
     onBack: () -> Unit,
     onStopClick: (stopId: String, name: String, direction: String?) -> Unit,
-    onSetDestinationReminder: (stopIndex: Int) -> Unit,
+    /** Null when destination reminders are off, which removes the long-press affordance. */
+    onSetDestinationReminder: ((stopIndex: Int) -> Unit)?,
     onShowTrajectory: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -128,7 +129,7 @@ fun TripDetailsScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onStopClick: (String, String, String?) -> Unit,
-    onSetDestinationReminder: (Int) -> Unit,
+    onSetDestinationReminder: ((Int) -> Unit)?,
     onShowTrajectory: () -> Unit = {}
 ) {
     val content = state as? TripDetailsUiState.Content
@@ -191,7 +192,7 @@ fun TripDetailsScreen(
 private fun TripStopList(
     content: TripDetailsUiState.Content,
     onStopClick: (String, String, String?) -> Unit,
-    onSetDestinationReminder: (Int) -> Unit,
+    onSetDestinationReminder: ((Int) -> Unit)?,
     listState: LazyListState = rememberLazyListState()
 ) {
     val lineColor = Color(content.lineColorArgb)
@@ -213,7 +214,9 @@ private fun TripStopList(
                 isRealtime = content.header.isRealtime,
                 onClick = { onStopClick(stop.stopId, stop.name, stop.direction) },
                 // Legacy: only stops past the first two can anchor a reminder (need a "before" stop)
-                onLongClick = if (i > 1) ({ onSetDestinationReminder(i) }) else null
+                onLongClick = onSetDestinationReminder
+                    ?.takeIf { i > 1 }
+                    ?.let { setReminder -> { setReminder(i) } }
             )
         }
     }

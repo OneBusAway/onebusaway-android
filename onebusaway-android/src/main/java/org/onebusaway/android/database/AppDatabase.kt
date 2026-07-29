@@ -6,7 +6,6 @@ import org.onebusaway.android.database.oba.CachedRouteTypeRecord
 import org.onebusaway.android.database.oba.CachedStopRecord
 import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.MapStopCacheDao
-import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.NavigationSessionRecord
@@ -100,7 +99,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun routeDao(): RouteDao
     abstract fun tripDao(): TripDao
     abstract fun regionDao(): RegionDao
-    abstract fun navStopDao(): NavStopDao
     abstract fun navigationSessionDao(): NavigationSessionDao
 
     // Map stop cache (#1754).

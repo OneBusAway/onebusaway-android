@@ -27,9 +27,24 @@ import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.RegionUtils
 
+/**
+ * Request codes for every reminder [PendingIntent]. The system matches a pending intent by
+ * [Intent.filterEquals], which ignores extras — so the arrival alert's plain `HomeActivity` intent
+ * and the feedback prompt's `HomeActivity` actions are indistinguishable to it, and `FLAG_UPDATE_CURRENT`
+ * would rewrite whichever was registered first. The request code is the only discriminator, so every
+ * pending intent in this file gets its own.
+ */
+private object ReminderRequestCodes {
+    const val FEEDBACK_NO = 1
+    const val FEEDBACK_YES = 2
+    const val SILENCE = 10
+    const val CANCEL = 11
+    const val OPEN_APP = 12
+}
+
 internal interface ReminderNotificationPresenter {
     fun foregroundNotification(plan: ReminderPlan? = null): Notification
-    fun present(plan: ReminderPlan, effect: ReminderEffect)
+    fun present(effect: ReminderEffect)
     fun cancel()
 }
 
@@ -39,7 +54,7 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
 ) : ReminderNotificationPresenter {
     private val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    override fun foregroundNotification(plan: ReminderPlan?): Notification = builder(plan)
+    override fun foregroundNotification(plan: ReminderPlan?): Notification = builder()
         .setContentText(
             plan?.let {
                 context.resources.getQuantityString(
@@ -53,13 +68,13 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
         .setOngoing(true)
         .build()
 
-    override fun present(plan: ReminderPlan, effect: ReminderEffect) {
+    override fun present(effect: ReminderEffect) {
         when (effect) {
             is ReminderEffect.RideCompleted -> return
             // The ongoing progress notification: quiet by construction, re-posted on every fix.
             is ReminderEffect.Progress -> manager.notify(
                 NavigationService.NOTIFICATION_ID,
-                builder(plan)
+                builder()
                     .setContentText(distanceText(effect.alightDistanceMeters))
                     .setOngoing(true)
                     .build()
@@ -69,18 +84,18 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
             // notification would both silence them and let the next fix overwrite the text.
             is ReminderEffect.GetReady -> manager.notify(
                 GET_READY_NOTIFICATION_ID,
-                arrivalAlert(plan, alertText(effect.stop, effect.isTransfer, requestStop = false))
+                arrivalAlert(alertText(effect.stop, effect.isTransfer, requestStop = false))
             )
             is ReminderEffect.AlightNow -> {
                 manager.cancel(GET_READY_NOTIFICATION_ID)
                 manager.notify(
                     ALIGHT_NOW_NOTIFICATION_ID,
-                    arrivalAlert(plan, alertText(effect.stop, effect.isTransfer, effect.usesRequestStopWording))
+                    arrivalAlert(alertText(effect.stop, effect.isTransfer, effect.usesRequestStopWording))
                 )
             }
             ReminderEffect.SessionCompleted -> manager.notify(
                 NavigationService.NOTIFICATION_ID,
-                builder(plan)
+                builder()
                     .setContentText(context.getString(R.string.destination_reminder_arrived))
                     .setOngoing(false)
                     .setAutoCancel(true)
@@ -101,11 +116,11 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
      * `setVibrate` are the pre-26 equivalents of the channel's importance and vibration —
      * ignored on 26+, still required on the API 23-25 floor.
      */
-    private fun arrivalAlert(plan: ReminderPlan, text: String): Notification = NotificationCompat.Builder(context, NotificationChannels.DESTINATION_ARRIVAL_ID)
+    private fun arrivalAlert(text: String): Notification = NotificationCompat.Builder(context, NotificationChannels.DESTINATION_ARRIVAL_ID)
         .setSmallIcon(R.drawable.ic_content_flag)
         .setContentTitle(context.getString(R.string.destination_reminder_title))
         .setContentText(text)
-        .setContentIntent(contentIntent(plan))
+        .setContentIntent(contentIntent())
         .setPriority(NotificationCompat.PRIORITY_HIGH)
         .setDefaults(NotificationCompat.DEFAULT_SOUND)
         .setVibrate(NotificationChannels.DESTINATION_VIBRATION_PATTERN)
@@ -146,19 +161,37 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
         }
     }
 
-    private fun contentIntent(plan: ReminderPlan?): PendingIntent? = plan?.rides?.getOrNull(0)?.let {
+    /** Opens the app; the reminder notifications carry no per-plan destination of their own. */
+    private fun contentIntent(): PendingIntent {
         val intent = Intent(context, HomeActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
-        PendingIntent.getActivity(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        return PendingIntent.getActivity(
+            context,
+            ReminderRequestCodes.OPEN_APP,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
-    private fun builder(plan: ReminderPlan?): NotificationCompat.Builder = NotificationCompat.Builder(context, NotificationChannels.DESTINATION_ALERT_ID)
+    private fun builder(): NotificationCompat.Builder = NotificationCompat.Builder(context, NotificationChannels.DESTINATION_ALERT_ID)
         .setSmallIcon(R.drawable.ic_content_flag)
         .setContentTitle(context.getString(R.string.destination_reminder_title))
-        .setContentIntent(contentIntent(plan))
-        .addAction(commandAction(NavigationReceiver.ACTION_SILENCE, R.string.destination_reminder_silence, 10))
-        .addAction(commandAction(NavigationReceiver.ACTION_CANCEL, R.string.destination_reminder_cancel_trip, 11))
+        .setContentIntent(contentIntent())
+        .addAction(
+            commandAction(
+                NavigationReceiver.ACTION_SILENCE,
+                R.string.destination_reminder_silence,
+                ReminderRequestCodes.SILENCE
+            )
+        )
+        .addAction(
+            commandAction(
+                NavigationReceiver.ACTION_CANCEL,
+                R.string.destination_reminder_cancel_trip,
+                ReminderRequestCodes.CANCEL
+            )
+        )
 
     private fun commandAction(action: String, label: Int, requestCode: Int): NotificationCompat.Action {
         val intent = Intent(context, NavigationReceiver::class.java).setAction(action)
@@ -186,7 +219,7 @@ internal class AndroidReminderNotificationPresenter @Inject constructor(
 }
 
 internal interface ReminderSpeechController {
-    fun speak(plan: ReminderPlan, effect: ReminderEffect)
+    fun speak(effect: ReminderEffect)
     fun silence()
     fun close()
 }
@@ -211,7 +244,6 @@ internal class AndroidReminderSpeechController @Inject constructor(
     private var utteranceCounter = 0L
 
     override fun onInit(status: Int) {
-        val queued: List<String>
         synchronized(lock) {
             ready = status == TextToSpeech.SUCCESS
             if (!ready) {
@@ -223,13 +255,11 @@ internal class AndroidReminderSpeechController @Inject constructor(
             tts?.language = Locale.getDefault()
             tts?.setSpeechRate(SPEECH_RATE)
             tts?.setOnUtteranceProgressListener(progressListener)
-            queued = pending.toList()
-            pending.clear()
         }
-        queued.forEach(::enqueueUtterance)
+        drainPending()
     }
 
-    override fun speak(plan: ReminderPlan, effect: ReminderEffect) {
+    override fun speak(effect: ReminderEffect) {
         val text = when (effect) {
             is ReminderEffect.GetReady -> context.getString(R.string.destination_voice_get_ready_for, effect.stop.name)
             is ReminderEffect.AlightNow -> when {
@@ -240,26 +270,19 @@ internal class AndroidReminderSpeechController @Inject constructor(
             ReminderEffect.SessionCompleted -> context.getString(R.string.destination_voice_arriving_destination)
             else -> return
         }
+        // Everything goes through the queue, so text is never held anywhere the shutdown check
+        // cannot see it.
         val startEngine = synchronized(lock) {
             if (closeWhenIdle) return
-            when {
-                tts == null -> {
-                    pending += text
-                    true
-                }
-                !ready -> {
-                    pending += text
-                    false
-                }
-                else -> false
-            }
+            pending += text
+            tts == null
         }
         if (startEngine) {
             // Constructing TextToSpeech triggers onInit, which drains `pending`.
             val engine = TextToSpeech(context, this)
             synchronized(lock) { tts = engine }
-        } else if (synchronized(lock) { ready }) {
-            enqueueUtterance(text)
+        } else {
+            drainPending()
         }
     }
 
@@ -279,8 +302,11 @@ internal class AndroidReminderSpeechController @Inject constructor(
     override fun close() {
         val shutdownNow = synchronized(lock) {
             closeWhenIdle = true
-            pending.clear()
-            outstanding == 0
+            // Queued text has not reached the engine yet, so it is outstanding work too: on a cold
+            // engine (a sticky restart, or "get ready" and "exit now" emitted together) the arrival
+            // announcement is still in `pending` when the session completes, and clearing it here is
+            // what used to swallow it.
+            outstanding == 0 && pending.isEmpty()
         }
         if (shutdownNow) {
             synchronized(lock) { shutdownLocked() }
@@ -289,22 +315,31 @@ internal class AndroidReminderSpeechController @Inject constructor(
         }
     }
 
-    private fun enqueueUtterance(text: String) {
-        val id = synchronized(lock) {
-            if (tts == null || !ready) return
-            outstanding++
-            "destination-reminder-${utteranceCounter++}"
+    /**
+     * Hands queued text to the engine, doing nothing while it is still initializing (onInit calls
+     * this again once it is ready). Each utterance is counted as outstanding in the same locked step
+     * that removes it from [pending], so a shutdown check racing the drain never sees it in neither
+     * place and tears the engine down mid-queue.
+     */
+    private fun drainPending() {
+        while (true) {
+            val (text, id) = synchronized(lock) {
+                if (tts == null || !ready) return
+                val next = pending.removeFirstOrNull() ?: return
+                outstanding++
+                next to "destination-reminder-${utteranceCounter++}"
+            }
+            // QUEUE_ADD, not QUEUE_FLUSH: a second alert in the same transition must follow the first
+            // rather than cut it off.
+            val result = synchronized(lock) { tts?.speak(text, TextToSpeech.QUEUE_ADD, null, id) }
+            if (result != TextToSpeech.SUCCESS) onUtteranceSettled()
         }
-        // QUEUE_ADD, not QUEUE_FLUSH: a second alert in the same transition must follow the first
-        // rather than cut it off.
-        val result = synchronized(lock) { tts?.speak(text, TextToSpeech.QUEUE_ADD, null, id) }
-        if (result != TextToSpeech.SUCCESS) onUtteranceSettled()
     }
 
     private fun onUtteranceSettled() {
         val shutdownNow = synchronized(lock) {
             if (outstanding > 0) outstanding--
-            closeWhenIdle && outstanding == 0
+            closeWhenIdle && outstanding == 0 && pending.isEmpty()
         }
         if (shutdownNow) {
             handler.removeCallbacks(shutdownRunnable)
@@ -321,6 +356,7 @@ internal class AndroidReminderSpeechController @Inject constructor(
 
     private val shutdownRunnable = Runnable {
         synchronized(lock) {
+            pending.clear()
             outstanding = 0
             shutdownLocked()
         }
@@ -349,6 +385,13 @@ internal class AndroidReminderSpeechController @Inject constructor(
 
 internal interface NavigationFeedbackRepository {
     fun requestFeedback()
+
+    /**
+     * Dismisses the post-trip prompt once the rider has answered it. The prompt has no content
+     * intent, only actions, so `setAutoCancel` never fires and the notification has to be taken
+     * down explicitly.
+     */
+    fun dismissFeedbackPrompt()
 }
 
 @Singleton
@@ -356,16 +399,15 @@ internal class AndroidNavigationFeedbackRepository @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) : NavigationFeedbackRepository {
     override fun requestFeedback() {
-        val notificationId = NavigationService.NOTIFICATION_ID + 1
         val no = PendingIntent.getActivity(
             context,
-            1,
+            ReminderRequestCodes.FEEDBACK_NO,
             FeedbackLauncher.makeIntent(context, FeedbackLauncher.FEEDBACK_NO),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val yes = PendingIntent.getActivity(
             context,
-            2,
+            ReminderRequestCodes.FEEDBACK_YES,
             FeedbackLauncher.makeIntent(context, FeedbackLauncher.FEEDBACK_YES),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -375,10 +417,18 @@ internal class AndroidNavigationFeedbackRepository @Inject constructor(
             .setContentText(context.getString(R.string.feedback_notify_dialog_msg))
             .addAction(0, context.getString(R.string.feedback_action_reply_no), no)
             .addAction(0, context.getString(R.string.feedback_action_reply_yes), yes)
-            .setAutoCancel(true)
             .build()
-        manager.notify(notificationId, notification)
+        manager.notify(FEEDBACK_NOTIFICATION_ID, notification)
     }
 
+    override fun dismissFeedbackPrompt() = manager.cancel(FEEDBACK_NOTIFICATION_ID)
+
     private val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+    private companion object {
+        // Distinct from both arrival alerts: the next ride's "get ready" must not replace a prompt
+        // the rider has yet to answer, and the reminder presenter must not cancel a prompt it does
+        // not own.
+        const val FEEDBACK_NOTIFICATION_ID = NavigationService.NOTIFICATION_ID + 3
+    }
 }

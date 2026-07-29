@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("PropertyName")
-
 package org.onebusaway.android.ui.report
 
 /** Constants used by report flows. */
 object ReportConstants {
-    // Intent numbers
-    @JvmField var CAPTURE_PICTURE_INTENT = 1
-
-    @JvmField var GALLERY_INTENT = 2
-
     // Map default values
     const val DEFAULT_SERVICE = "default"
     const val DYNAMIC_SERVICE = "dynamic"

@@ -51,14 +51,17 @@ class Application :
 
         mApp = this
 
-        removeLegacyNavigationTraces()
-
         // Seed the per-install app UID once, eagerly, before any reader needs it. It has multiple
         // independent direct readers (ObaEndpointResolver sends it as app_uid; the Open311 report path
         // reads it as device_id), so seeding lazily in one reader can't guarantee it for the others.
-        if (PreferenceUtils.getString(ObaApi.APP_UID) == null) {
+        // Its absence is also this launch's fresh-install signal: it has been written on first launch
+        // far longer than any build that could have left navigation traces behind.
+        val freshInstall = PreferenceUtils.getString(ObaApi.APP_UID) == null
+        if (freshInstall) {
             PreferenceUtils.saveString(ObaApi.APP_UID, UUID.randomUUID().toString())
         }
+
+        removeLegacyNavigationTraces(freshInstall)
 
         // Apply the saved theme.
         ThemeUtils.applyPersistedTheme(this)
@@ -121,9 +124,17 @@ class Application :
      * A one-shot upgrade cost: without the flag this would run `WorkManager.getInstance` (which
      * forces WorkManager initialization, opening its database) on the main thread of every cold
      * start, forever, long after the work and files are gone.
+     *
+     * A [freshInstall] has nothing to remove — neither the traces nor the queued work can exist in
+     * an install that never ran an older build — so it latches without paying that main-thread
+     * WorkManager init at all. Only a genuine upgrade does the work, and only until it succeeds.
      */
-    private fun removeLegacyNavigationTraces() {
+    private fun removeLegacyNavigationTraces(freshInstall: Boolean) {
         if (PreferenceUtils.getBoolean(LEGACY_NAV_TRACES_REMOVED, false)) return
+        if (freshInstall) {
+            PreferenceUtils.saveBoolean(LEGACY_NAV_TRACES_REMOVED, true)
+            return
+        }
         val workManager = WorkManager.getInstance(this)
         val cancellations = listOf(
             workManager.cancelUniqueWork("navigation_log_upload"),

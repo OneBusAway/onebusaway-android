@@ -108,6 +108,10 @@ private fun List<PlanQuery.StopCall>.toIntermediateTripPlaces(): List<TripPlace>
         TripPlace(
             name = stop.name,
             stopId = stop.gtfsId,
+            // The rider-facing stop number, which the directions drawer appends to each intermediate
+            // stop's name. Omitting it here is why OTP2 legs showed a bare name where OTP1 showed
+            // "Name (1002)".
+            stopCode = stop.code,
             lat = stop.lat,
             lon = stop.lon,
             vertexType = TripVertexType.TRANSIT

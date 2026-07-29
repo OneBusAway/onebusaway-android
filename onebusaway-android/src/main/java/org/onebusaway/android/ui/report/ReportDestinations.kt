@@ -17,6 +17,7 @@
  */
 package org.onebusaway.android.ui.report
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavBackStackEntry
@@ -25,6 +26,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import org.onebusaway.android.app.di.NavigationFeedbackEntryPoint
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.feedback.FeedbackLauncher
 import org.onebusaway.android.ui.feedback.FeedbackScreen
@@ -100,6 +102,9 @@ fun NavGraphBuilder.reportGraph(navController: NavHostController) {
         )
     ) { backStackEntry ->
         val context = LocalContext.current
+        // Opening this screen answers the prompt, so the notification that offered it has done its
+        // job. It carries no content intent, so setAutoCancel would never have retired it.
+        LaunchedEffect(Unit) { NavigationFeedbackEntryPoint.get(context).dismissFeedbackPrompt() }
         val response =
             backStackEntry.arguments?.getInt(NavRoutes.ARG_FEEDBACK_RESPONSE) ?: 0
         val submitter = remember {

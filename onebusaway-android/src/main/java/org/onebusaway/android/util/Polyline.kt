@@ -106,8 +106,19 @@ class Polyline(points: List<GeoPoint>) {
      */
     fun nearestPoint(latitude: Double, longitude: Double): GeoPoint? = nearestProjection(latitude, longitude)?.point
 
-    /** The closest point plus its distance along this polyline and distance from the query. */
-    fun nearestProjection(latitude: Double, longitude: Double): Projection? {
+    /**
+     * The closest point plus its distance along this polyline and distance from the query.
+     *
+     * [minDistanceAlong] restricts the answer to the part of the line at or beyond that distance,
+     * which is what a caller tracking something *moving along* the line wants: a path that doubles
+     * back on itself (a terminal loop, a street traversed in both directions) has places that are
+     * metres apart on the ground but a whole loop apart along the line, and the globally-nearest
+     * point can therefore sit on the wrong branch. Defaults to zero, i.e. the whole line, for
+     * callers placing a fixed point such as a stop. Returns null when the whole line lies before
+     * [minDistanceAlong].
+     */
+    @JvmOverloads
+    fun nearestProjection(latitude: Double, longitude: Double, minDistanceAlong: Double = 0.0): Projection? {
         if (points.isEmpty()) return null
         if (points.size == 1) {
             val point = points.first()
@@ -126,6 +137,14 @@ class Polyline(points: List<GeoPoint>) {
         var bestDist2 = Double.MAX_VALUE
         var bestDistanceAlong = 0.0
         for (i in 0 until points.size - 1) {
+            val segmentStart = cumulativeDistances[i]
+            val segmentEnd = cumulativeDistances[i + 1]
+            // Wholly before the floor: no point on it is an allowed answer.
+            if (segmentEnd < minDistanceAlong) continue
+            val segmentLength = segmentEnd - segmentStart
+            // Where the floor falls inside this segment, so the projection can be clamped to it
+            // instead of the segment's own start.
+            val tFloor = if (segmentLength <= 0.0) 0.0 else ((minDistanceAlong - segmentStart) / segmentLength).coerceIn(0.0, 1.0)
             val a = points[i]
             val b = points[i + 1]
             val ax = a.longitude * cosLat
@@ -133,7 +152,7 @@ class Polyline(points: List<GeoPoint>) {
             val dx = b.longitude * cosLat - ax
             val dy = b.latitude - ay
             val segLen2 = dx * dx + dy * dy
-            val t = if (segLen2 <= 0.0) 0.0 else (((px - ax) * dx + (py - ay) * dy) / segLen2).coerceIn(0.0, 1.0)
+            val t = if (segLen2 <= 0.0) tFloor else (((px - ax) * dx + (py - ay) * dy) / segLen2).coerceIn(tFloor, 1.0)
             val projLat = a.latitude + t * (b.latitude - a.latitude)
             val projLon = a.longitude + t * (b.longitude - a.longitude)
             val ex = projLon * cosLat - px
@@ -143,11 +162,10 @@ class Polyline(points: List<GeoPoint>) {
                 bestDist2 = dist2
                 bestLat = projLat
                 bestLon = projLon
-                bestDistanceAlong = cumulativeDistances[i] +
-                    t *
-                    (cumulativeDistances[i + 1] - cumulativeDistances[i])
+                bestDistanceAlong = segmentStart + t * segmentLength
             }
         }
+        if (bestDist2 == Double.MAX_VALUE) return null
         val point = GeoPoint(bestLat, bestLon)
         return Projection(
             point,

@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.app.FeatureFlags
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
@@ -446,10 +447,14 @@ fun TripResultsSheet(
         onFocusPoint = onFocusPoint,
         stopEtaStrip = stopEtaStrip,
         reminderControl = {
-            ItineraryReminderControl(
-                itineraries.getOrNull((state as? TripResultsUiState.Success)?.selectedIndex ?: 0),
-                Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
-            )
+            // Destination reminders are off pending the navigation-mode rework; leaving the slot
+            // empty removes the affordance rather than offering one that starts nothing.
+            if (FeatureFlags.DESTINATION_REMINDERS) {
+                ItineraryReminderControl(
+                    itineraries.getOrNull((state as? TripResultsUiState.Success)?.selectedIndex ?: 0),
+                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
         }
     )
 }

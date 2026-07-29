@@ -39,7 +39,6 @@ import org.onebusaway.android.database.oba.ImportGate
 import org.onebusaway.android.database.oba.LegacyDataImporter
 import org.onebusaway.android.database.oba.LegacyImportDao
 import org.onebusaway.android.database.oba.MapStopCacheDao
-import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.RegionDao
 import org.onebusaway.android.database.oba.RouteDao
@@ -98,9 +97,6 @@ object DatabaseModule {
 
     @Provides
     fun provideRegionDao(db: AppDatabase): RegionDao = db.regionDao()
-
-    @Provides
-    fun provideNavStopDao(db: AppDatabase): NavStopDao = db.navStopDao()
 
     @Provides
     fun provideNavigationSessionDao(db: AppDatabase): NavigationSessionDao = db.navigationSessionDao()

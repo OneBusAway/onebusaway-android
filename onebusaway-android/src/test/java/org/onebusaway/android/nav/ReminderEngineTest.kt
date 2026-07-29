@@ -21,7 +21,7 @@ class ReminderEngineTest {
     @Test
     fun ordinaryProgression_emitsOrderedAlertsAndCompletes() {
         val plan = plan(ride())
-        var state = ReminderEngineState()
+        var state = underWay()
         val effects = mutableListOf<ReminderEffect>()
 
         // Approaching the penultimate stop enters the dynamic get-ready radius.
@@ -56,7 +56,7 @@ class ReminderEngineTest {
     @Test
     fun noisyPenultimateSamples_requireTwoConsecutiveInside() {
         val plan = plan(ride())
-        var state = ReminderEngineState()
+        var state = underWay()
         listOf(20.0, 80.0, 20.0).forEachIndexed { index, north ->
             state = ReminderEngine.reduce(plan, state, sample(north, index + 1L)).state
         }
@@ -66,22 +66,54 @@ class ReminderEngineTest {
     }
 
     @Test
-    fun sparseFixNearAlight_requiresEstablishedProgressThenEmitsBothAlertsOnce() {
-        val plan = plan(ride())
-        val first = ReminderEngine.reduce(plan, ReminderEngineState(), sample(700.0, 1))
-        assertEquals(0, first.effects.count { it is ReminderEffect.GetReady })
-        assertEquals(0, first.effects.count { it is ReminderEffect.AlightNow })
+    fun closelySpacedStops_doNotFireTheAlightAlertBeforeThePenultimateStop() {
+        // 200 m between the last two stops — ordinary urban spacing, and comfortably inside the
+        // missed-stage recovery radius. Being near the destination is not on its own evidence that
+        // the stop before it was missed, and reading it that way fires "get off now" while the
+        // vehicle is still short of that stop, latching the alert that actually matters.
+        val plan = plan(shapedRide(penultimateMeters = 4_800.0, alightMeters = 5_000.0))
+        var state = underWay()
+        val effects = mutableListOf<ReminderEffect>()
 
-        val second = ReminderEngine.reduce(plan, first.state, sample(710.0, 2))
-        assertEquals(0, second.effects.count { it is ReminderEffect.GetReady })
-        assertEquals(0, second.effects.count { it is ReminderEffect.AlightNow })
-        val third = ReminderEngine.reduce(plan, second.state, sample(720.0, 3))
-        assertEquals(1, third.effects.count { it is ReminderEffect.GetReady })
-        assertEquals(1, third.effects.count { it is ReminderEffect.AlightNow })
+        listOf(4_400.0, 4_500.0, 4_600.0, 4_700.0).forEachIndexed { index, north ->
+            val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L, speed = 8f))
+            state = transition.state
+            effects += transition.effects.filterNot { it is ReminderEffect.Progress }
+        }
 
-        val fourth = ReminderEngine.reduce(plan, third.state, sample(730.0, 4))
-        assertEquals(0, fourth.effects.count { it is ReminderEffect.GetReady })
-        assertEquals(0, fourth.effects.count { it is ReminderEffect.AlightNow })
+        assertTrue("the early warning is due this close in", effects.any { it is ReminderEffect.GetReady })
+        assertEquals(
+            "the rider has not reached the stop before their destination yet",
+            0,
+            effects.count { it is ReminderEffect.AlightNow }
+        )
+    }
+
+    @Test
+    fun passingThePenultimateStopUnobserved_stillDeliversTheAlightAlert() {
+        // A stop can be passed without a single fix landing inside its geofence — the device slept,
+        // or the stop's own coordinates sit further off the vehicle's path than the geofence
+        // reaches. Straight-line distance cannot see direction, so the recovery asks the one
+        // question that does: is the rider nearer the destination than that stop is?
+        val plan = plan(ride(penultimateMeters = 800.0, alightMeters = 1_000.0))
+        var state = underWay()
+        listOf(100.0, 200.0, 300.0).forEachIndexed { index, north ->
+            state = ReminderEngine.reduce(plan, state, sample(north, index + 1L)).state
+        }
+        assertTrue(state.rideProgressEstablished)
+
+        // Still short of the stop before the destination, and inside the recovery radius: being
+        // close to the destination is not on its own evidence of having passed anything.
+        val approaching = ReminderEngine.reduce(plan, state, sample(700.0, 4))
+        assertEquals(0, approaching.effects.count { it is ReminderEffect.AlightNow })
+
+        val past = ReminderEngine.reduce(plan, approaching.state, sample(900.0, 5))
+        assertEquals(1, past.effects.count { it is ReminderEffect.AlightNow })
+
+        // ...and exactly once.
+        val next = ReminderEngine.reduce(plan, past.state, sample(920.0, 6))
+        assertEquals(0, next.effects.count { it is ReminderEffect.GetReady })
+        assertEquals(0, next.effects.count { it is ReminderEffect.AlightNow })
     }
 
     @Test
@@ -99,7 +131,7 @@ class ReminderEngineTest {
     @Test
     fun completingRide_activatesTransferThenCompletesSession() {
         val plan = plan(ride(), ride(penultimateMeters = 2_000.0, alightMeters = 3_000.0))
-        var state = ReminderEngineState(rideProgressEstablished = true)
+        var state = underWay().copy(rideProgressEstablished = true)
         state = ReminderEngine.reduce(plan, state, sample(995.0, 1)).state
         val firstCompletion = ReminderEngine.reduce(plan, state, sample(999.0, 2))
         assertEquals(1, firstCompletion.state.activeRideIndex)
@@ -107,7 +139,7 @@ class ReminderEngineTest {
         assertTrue(firstCompletion.effects.any { it is ReminderEffect.RideCompleted })
         assertFalse(firstCompletion.effects.any { it is ReminderEffect.SessionCompleted })
 
-        state = firstCompletion.state.copy(rideProgressEstablished = true)
+        state = firstCompletion.state.copy(rideProgressEstablished = true, awaitingBoarding = false)
         state = ReminderEngine.reduce(plan, state, sample(2_995.0, 3)).state
         val finalCompletion = ReminderEngine.reduce(plan, state, sample(2_999.0, 4))
         assertTrue(finalCompletion.state.completed)
@@ -117,14 +149,14 @@ class ReminderEngineTest {
     @Test
     fun alightEffectCarriesModeAwareWordingAndTransferDestination() {
         val plan = plan(ride(mode = ReminderMode.BUS), ride(mode = ReminderMode.RAIL))
-        var state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
+        var state = underWay().copy(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
         state = ReminderEngine.reduce(plan, state, sample(100.0, 1)).state
         val bus = ReminderEngine.reduce(plan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertTrue(bus.usesRequestStopWording)
         assertTrue(bus.isTransfer)
 
         val railPlan = plan(ride(mode = ReminderMode.RAIL))
-        state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
+        state = underWay().copy(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
         state = ReminderEngine.reduce(railPlan, state, sample(100.0, 1)).state
         val rail = ReminderEngine.reduce(railPlan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertFalse(rail.usesRequestStopWording)
@@ -139,11 +171,12 @@ class ReminderEngineTest {
             ride(),
             ride(boardMeters = 1_000.0, penultimateMeters = 1_200.0, alightMeters = 1_300.0)
         )
-        var state = ReminderEngineState(activeRideIndex = 1, awaitingBoarding = true)
+        var state = ReminderEngineState(activeRideIndex = 1)
         val whileWaiting = mutableListOf<ReminderEffect>()
 
-        // Drifting along the platform toward the destination end: enough to establish "progress".
-        listOf(950.0, 960.0, 970.0).forEachIndexed { index, north ->
+        // Waiting at the transfer stop, drifting along the platform toward the destination end:
+        // enough movement to establish "progress", nowhere near enough to be a departure.
+        listOf(990.0, 995.0, 1_000.0).forEachIndexed { index, north ->
             val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L))
             state = transition.state
             whileWaiting += transition.effects.filterNot { it is ReminderEffect.Progress }
@@ -152,9 +185,69 @@ class ReminderEngineTest {
         assertTrue(state.awaitingBoarding)
 
         // The connecting vehicle pulls out: the rider leaves the boarding stop toward the alight stop.
-        val departing = ReminderEngine.reduce(plan, state, sample(1_100.0, 4))
+        val departing = ReminderEngine.reduce(plan, state, sample(1_200.0, 4))
         assertFalse(departing.state.awaitingBoarding)
         assertTrue(departing.effects.any { it is ReminderEffect.GetReady })
+    }
+
+    @Test
+    fun walkingTheTransferPlatform_doesNotOpenTheBoardingGateAlongAShape() {
+        // The same gate, read along the ride's own route shape — where "left the boarding stop" had
+        // been the axis's noise margin, so 40 m of platform walking in the direction of travel was
+        // enough to be mistaken for a departing vehicle.
+        val plan = plan(ride(), shapedRide(boardMeters = 0.0, penultimateMeters = 100.0, alightMeters = 400.0))
+        var state = ReminderEngineState(activeRideIndex = 1)
+        val whileWaiting = mutableListOf<ReminderEffect>()
+
+        listOf(10.0, 25.0, 40.0).forEachIndexed { index, north ->
+            val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L))
+            state = transition.state
+            whileWaiting += transition.effects.filterNot { it is ReminderEffect.Progress }
+        }
+        assertTrue("standing on a platform is not boarding", state.awaitingBoarding)
+        assertTrue(whileWaiting.isEmpty())
+
+        val departing = ReminderEngine.reduce(plan, state, sample(200.0, 4))
+        assertFalse(departing.state.awaitingBoarding)
+    }
+
+    @Test
+    fun aBoardingStopTheShapeCannotPlace_stillGatesAConnectingRide() {
+        // The ride is read along its shape, but the boarding stop projected too far from the path to
+        // be given an offset. Whether a ride has a boarding stop to reason about is a fact about the
+        // ride, not about which coordinate happened to read this fix: taking it from the reading let
+        // a missing offset pass as "legacy session, nothing to gate" and opened the gate at once.
+        val shaped = shapedRide(boardMeters = 0.0, penultimateMeters = 800.0, alightMeters = 1_000.0)
+        val unplaceableBoard = shaped.copy(shape = shaped.shape!!.copy(boardOffsetMeters = null))
+
+        val transition = ReminderEngine.reduce(
+            plan(ride(), unplaceableBoard),
+            ReminderEngineState(activeRideIndex = 1),
+            sample(20.0, 1)
+        )
+
+        assertTrue(transition.state.awaitingBoarding)
+        assertTrue(transition.effects.none { it !is ReminderEffect.Progress })
+    }
+
+    @Test
+    fun theFirstRideDoesNotBurnItsGetReadyWalkingToTheOriginStop() {
+        // Monitoring starts when the rider taps "start", typically minutes before boarding and often
+        // while still walking to the origin stop. A first leg with no intermediate stops has
+        // penultimate == board, so an ungated first ride fires its early warning on that walk and
+        // latches it, leaving nothing to announce at the actual destination.
+        val plan = plan(oneStopRide())
+        var state = ReminderEngineState()
+        val effects = mutableListOf<ReminderEffect>()
+
+        listOf(-100.0, -60.0, -20.0, 0.0).forEachIndexed { index, north ->
+            val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L))
+            state = transition.state
+            effects += transition.effects.filterNot { it is ReminderEffect.Progress }
+        }
+
+        assertTrue("the early warning belongs to the destination, not the walk", effects.isEmpty())
+        assertTrue(state.awaitingBoarding)
     }
 
     @Test
@@ -172,7 +265,7 @@ class ReminderEngineTest {
     @Test
     fun silenceSurvivesARideTransition() {
         val plan = plan(ride(), ride(penultimateMeters = 2_000.0, alightMeters = 3_000.0))
-        var state = ReminderEngineState(rideProgressEstablished = true, speechMuted = true)
+        var state = underWay().copy(rideProgressEstablished = true, speechMuted = true)
         state = ReminderEngine.reduce(plan, state, sample(995.0, 1)).state
         val afterTransfer = ReminderEngine.reduce(plan, state, sample(999.0, 2)).state
 
@@ -184,7 +277,7 @@ class ReminderEngineTest {
     @Test
     fun strictlyOlderSampleIsIgnored() {
         val plan = plan(ride())
-        val first = ReminderEngine.reduce(plan, ReminderEngineState(), sample(500.0, 5))
+        val first = ReminderEngine.reduce(plan, underWay(), sample(500.0, 5))
         val stale = ReminderEngine.reduce(plan, first.state, sample(10.0, 3))
 
         assertEquals(first.state, stale.state)
@@ -200,7 +293,8 @@ class ReminderEngineTest {
                     getReadyEmitted = true,
                     alightNowEmitted = true,
                     penultimateReached = true,
-                    rideProgressEstablished = true
+                    rideProgressEstablished = true,
+                    awaitingBoarding = false
                 )
             )
         )!!
@@ -238,7 +332,11 @@ class ReminderEngineTest {
             base.copy(getReadyEmitted = true),
             base.copy(alightNowEmitted = true),
             base.copy(activeRideIndex = 1),
-            base.copy(awaitingBoarding = true),
+            base.copy(awaitingBoarding = false),
+            // One-way latches, not scratch: losing either to process death discards the evidence
+            // that the rider passed the stop before their destination.
+            base.copy(penultimateReached = true),
+            base.copy(rideProgressEstablished = true),
             base.copy(speechMuted = true),
             base.copy(completed = true)
         ).forEach { assertFalse(base.restorationKey() == it.restorationKey()) }
@@ -278,7 +376,7 @@ class ReminderEngineTest {
         val ride = shapedRide(penultimateMeters = 500.0, alightMeters = 1_000.0, stopOffsetDegrees = 0.00054)
         val plan = plan(ride)
 
-        var state = ReminderEngineState()
+        var state = underWay()
         val effects = mutableListOf<ReminderEffect>()
         listOf(300.0, 480.0, 500.0, 620.0, 700.0, 980.0, 1_000.0).forEachIndexed { index, north ->
             val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L, speed = 8f))
@@ -400,6 +498,16 @@ class ReminderEngineTest {
     }
 
     private fun plan(vararg rides: ReminderRide) = ReminderPlan(sessionId = "session", rides = rides.toList())
+
+    /**
+     * A rider already aboard. Reminder sessions start gated on boarding, so every test whose subject
+     * is the progression along a ride rather than the gate itself begins from here — otherwise each
+     * of them would be re-testing [ReminderEngineState.awaitingBoarding] by accident.
+     */
+    private fun underWay() = ReminderEngineState(awaitingBoarding = false)
+
+    /** A leg with no intermediate stops, where the stop before the destination *is* the boarding stop. */
+    private fun oneStopRide() = ride(boardMeters = 0.0, penultimateMeters = 0.0, alightMeters = 1_000.0)
 
     private fun ride(
         mode: ReminderMode = ReminderMode.BUS,

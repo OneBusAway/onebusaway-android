@@ -61,7 +61,7 @@ work = "2.11.2"
 room = "2.8.4"
 lifecycle = "2.11.0"
 navigationCompose = "2.9.8"
-androidxHilt = "1.4.0"
+hiltNavigationCompose = "1.4.0"
 composeBom = "2026.06.01"
 retrofit = "3.0.0"
 okhttp = "5.4.0"
@@ -111,7 +111,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "androidxHilt" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 
 # --- Jetpack Compose (versions from the BOM unless noted) ---
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }

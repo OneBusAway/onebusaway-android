@@ -31,8 +31,20 @@ data class NavigationSessionRecord(
 
 @Dao
 interface NavigationSessionDao {
-    @Query("SELECT EXISTS(SELECT 1 FROM navigation_sessions)")
-    fun observeHasActiveSession(): Flow<Boolean>
+    /**
+     * Whether a session worth resuming is stored. The two predicates are the ones the store applies
+     * when it actually restores a row, passed in so the age bound and the readable format version
+     * keep a single definition there: a row this query reports must be one the store would resume,
+     * or the screen ends up offering to stop a session nothing is monitoring.
+     *
+     * The age bound is on `updated_at_ms` — how long the session has been quiet — so a journey that
+     * outlasts the bound is not retired while the service is still following it.
+     */
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM navigation_sessions " +
+            "WHERE format_version = :formatVersion AND updated_at_ms >= :updatedAtOrAfterMs)"
+    )
+    fun observeHasActiveSession(formatVersion: Int, updatedAtOrAfterMs: Long): Flow<Boolean>
 
     @Query("SELECT * FROM navigation_sessions ORDER BY updated_at_ms DESC LIMIT 1")
     suspend fun active(): NavigationSessionRecord?

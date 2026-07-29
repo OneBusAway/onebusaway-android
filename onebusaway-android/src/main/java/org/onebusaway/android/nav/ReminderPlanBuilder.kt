@@ -84,7 +84,13 @@ internal object ReminderPlanBuilder {
                     routeLabel = listOfNotNull(previous.routeLabel, ride.routeLabel).distinct().joinToString(" / ").ifBlank { null },
                     penultimate = ride.penultimate,
                     alight = ride.alight,
-                    scheduledEnd = ride.scheduledEnd
+                    scheduledEnd = ride.scheduledEnd,
+                    // The merged ride ends at the second leg's stops, which the first leg's geometry
+                    // knows nothing about — and a [ReminderShape] carries its stop offsets, so
+                    // keeping it would measure the new destination against the old leg's path and
+                    // complete the ride at the interline point. Dropping to straight-line distances
+                    // is the same fallback a ride with unusable geometry already takes.
+                    shape = null
                 )
             } else {
                 rides += ride
@@ -169,9 +175,10 @@ internal object ReminderPlanBuilder {
     }
 
     private fun TripLeg.normalizedStops(): List<ReminderStop>? {
+        val intermediates = intermediateStopsOrUnknown() ?: return null
         val raw = buildList {
             add(from)
-            addAll(stop?.takeIf { it.isNotEmpty() } ?: intermediateStops.orEmpty())
+            addAll(intermediates)
             add(to)
         }
         val converted = raw.map { it.toReminderStop() ?: return null }
@@ -179,6 +186,26 @@ internal object ReminderPlanBuilder {
             if (result.lastOrNull()?.sameStop(item) != true) result += item
             result
         }
+    }
+
+    /**
+     * This leg's intermediate stops, or null when no protocol supplied them.
+     *
+     * "None" and "not stated" are different answers and only one of them is safe to act on. OTP2
+     * fills [TripLeg.stop] and OTP1 [TripLeg.intermediateStops], each authoritative when present —
+     * including when present and empty, which is a genuinely nonstop ride. Neither present means
+     * the stops are unknown, and reading that as nonstop is exactly how an OTP2 leg whose stop
+     * calls could not be represented (a flex `Location`, deliberately collapsed to null at the wire
+     * boundary) becomes a two-stop ride whose penultimate stop *is* its boarding stop — which then
+     * alerts the rider to get off at the first stop and latches, so the real alert never comes.
+     * The caller rejects the whole plan instead, which is the all-or-nothing rule this builder
+     * applies to every other kind of missing stop data.
+     */
+    private fun TripLeg.intermediateStopsOrUnknown(): List<TripPlace>? {
+        val supplied = listOfNotNull(stop, intermediateStops)
+        if (supplied.isEmpty()) return null
+        // A server that sends both fields wins nothing by disagreeing; prefer the one with stops.
+        return supplied.firstOrNull { it.isNotEmpty() } ?: emptyList()
     }
 
     private fun TripPlace.toReminderStop(): ReminderStop? {

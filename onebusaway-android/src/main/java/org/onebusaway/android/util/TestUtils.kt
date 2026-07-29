@@ -34,6 +34,16 @@ object TestUtils {
     @JvmStatic fun isRunningOnCI(): Boolean = BuildConfig.CI == "true"
 }
 
+/**
+ * Whether these [Build] identity fields look like an emulator rather than a physical device.
+ *
+ * This is a heuristic, and deliberately a lenient one: its only consumer is instrumented tests
+ * deciding whether to *skip* a case that needs real device hardware (e.g. `LastKnownLocationTest`).
+ * No user-facing behaviour depends on it, and a false positive costs a skipped test while a false
+ * negative fails the suite — so each clause is a superset of the identity it recognizes (note
+ * `contains`, not `startsWith`, on the fingerprint) and new emulator identities are added here as
+ * they turn up.
+ */
 internal fun isEmulatorBuild(
     fingerprint: String,
     model: String,
@@ -42,12 +52,12 @@ internal fun isEmulatorBuild(
     device: String,
     product: String,
     hardware: String
-): Boolean = fingerprint.startsWith("generic") ||
+): Boolean = fingerprint.contains("generic") ||
     fingerprint.startsWith("unknown") ||
     model.contains("google_sdk") ||
     model.contains("Emulator") ||
     model.contains("Android SDK built for") ||
     manufacturer.contains("Genymotion") ||
     hardware in setOf("goldfish", "ranchu", "vbox86") ||
-    product in setOf("sdk", "google_sdk", "sdk_x86", "sdk_gphone64_arm64") ||
+    product in setOf("sdk", "google_sdk", "sdk_x86", "sdk_gphone64_arm64", "sdk_gphone64_x86_64") ||
     (brand.startsWith("generic") && device.startsWith("generic"))

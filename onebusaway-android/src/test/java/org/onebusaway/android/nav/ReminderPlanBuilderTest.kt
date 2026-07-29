@@ -154,6 +154,52 @@ class ReminderPlanBuilderTest {
     }
 
     @Test
+    fun unknownIntermediateStopsRejectThePlanRatherThanPassingAsNonstop() {
+        // Neither protocol supplied a stop list, which is not the same answer as "there are none".
+        // An OTP2 leg whose stop calls cannot be represented collapses to null at the wire boundary,
+        // and reading that as nonstop builds a ride whose penultimate stop is its boarding stop —
+        // which alerts the rider to get off at the first stop and latches, so the real alert for
+        // their destination never comes.
+        val unknown = leg(TripMode.BUS).copy(stop = null, intermediateStops = null)
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(unknown)), "id")
+
+        assertEquals(ReminderPlanError.INCOMPLETE_STOP_INFORMATION, (result as ReminderPlanResult.Error).reason)
+    }
+
+    @Test
+    fun otp1IntermediateStopsAreUsedWhenTheOtp2FieldIsAbsent() {
+        val otp1 = leg(TripMode.BUS).copy(
+            stop = null,
+            intermediateStops = listOf(place("x-middle", latitude = 0.01))
+        )
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(otp1)), "id") as ReminderPlanResult.Success
+
+        assertEquals("x-middle", result.plan.rides.single().penultimate.id)
+    }
+
+    @Test
+    fun interlinedRideDropsTheFirstLegsShape() {
+        // The merged ride ends at the second leg's stops, and a shape carries the offsets of the
+        // stops it was built for — so keeping the first leg's would measure the new destination
+        // against the old leg's path and complete the whole session at the interline point.
+        val path = (0..20).map { GeoPoint(it * 0.001, 0.0) }
+        val geometry = TripLegGeometry(points = encodePolyline(path), length = path.size)
+        val first = leg(TripMode.BUS, prefix = "a").copy(legGeometry = geometry)
+        val second = leg(TripMode.BUS, prefix = "b")
+            .copy(interlineWithPreviousLeg = true, legGeometry = geometry)
+
+        val standalone = ReminderPlanBuilder.build(TripItinerary(legs = listOf(first)), "id") as ReminderPlanResult.Success
+        assertNotNull("an un-merged ride does carry its shape", standalone.plan.rides.single().shape)
+
+        val merged = ReminderPlanBuilder.build(TripItinerary(legs = listOf(first, second)), "id") as ReminderPlanResult.Success
+
+        assertEquals(1, merged.plan.rides.size)
+        assertNull(merged.plan.rides.single().shape)
+    }
+
+    @Test
     fun itineraryWithoutTransitHasUserVisibleError() {
         val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(leg(TripMode.WALK))), "id")
         assertEquals(ReminderPlanError.NO_TRANSIT_RIDES, (result as ReminderPlanResult.Error).reason)

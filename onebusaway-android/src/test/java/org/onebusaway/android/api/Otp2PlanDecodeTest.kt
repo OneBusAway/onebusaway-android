@@ -107,9 +107,9 @@ class Otp2PlanDecodeTest {
             route = PlanQuery.Route(__typename = "Route", routeFields = routeFields()),
             trip = PlanQuery.Trip(gtfsId = "1_trip_5", tripHeadsign = "Downtown"),
             stopCalls = listOf(
-                stopCall("1_1001", "Stop A", 47.61, -122.31),
-                stopCall("1_1050", "Stop Before B", 47.619, -122.319),
-                stopCall("1_1002", "Stop B", 47.62, -122.32)
+                stopCall("1_1001", "Stop A", 47.61, -122.31, code = "1001"),
+                stopCall("1_1050", "Stop Before B", 47.619, -122.319, code = "1050"),
+                stopCall("1_1002", "Stop B", 47.62, -122.32, code = "1002")
             ),
             legGeometry = null,
             steps = null,
@@ -196,6 +196,8 @@ class Otp2PlanDecodeTest {
         // in between" and what the reminder plan walks — so the two endpoints are dropped.
         assertEquals(listOf("1_1050"), bus.stop?.map { it.stopId })
         assertEquals(TripVertexType.TRANSIT, bus.stop?.single()?.vertexType)
+        // The rider-facing stop number the drawer appends to the name, as OTP1 legs already carry.
+        assertEquals("1050", bus.stop?.single()?.stopCode)
 
         // The leg's alternative departures (`nextLegs`) come across unjudged — route identity, the
         // ride time the interchangeability rule compares, and both stop ids to check it against.
@@ -291,10 +293,16 @@ class Otp2PlanDecodeTest {
         )
     }
 
-    private fun stopCall(id: String, name: String, lat: Double, lon: Double) = PlanQuery.StopCall(
+    private fun stopCall(
+        id: String,
+        name: String,
+        lat: Double,
+        lon: Double,
+        code: String? = null
+    ) = PlanQuery.StopCall(
         PlanQuery.StopLocation(
             __typename = "Stop",
-            onStop = PlanQuery.OnStop(id, name, lat, lon)
+            onStop = PlanQuery.OnStop(id, name, lat, lon, code)
         )
     )
 

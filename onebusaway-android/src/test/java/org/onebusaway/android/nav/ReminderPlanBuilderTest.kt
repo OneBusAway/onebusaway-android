@@ -6,14 +6,18 @@ package org.onebusaway.android.nav
 
 import kotlin.time.Duration.Companion.minutes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.encodePolyline
 
 class ReminderPlanBuilderTest {
     @Test
@@ -65,6 +69,45 @@ class ReminderPlanBuilderTest {
         // The legacy schema stores only the destination and the stop before it; inventing a
         // boarding stop would misreport it to anything that later reads the field.
         assertNull(result.plan.rides.single().board)
+    }
+
+    @Test
+    fun legGeometryBecomesTheRidesShapeWithItsStopOffsets() {
+        val path = (0..20).map { GeoPoint(it * 0.001, 0.0) }
+        val withGeometry = leg(TripMode.BUS).copy(
+            legGeometry = TripLegGeometry(points = encodePolyline(path), length = path.size)
+        )
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(withGeometry)), "id") as ReminderPlanResult.Success
+
+        val shape = result.plan.rides.single().shape!!
+        val boardOffset = shape.boardOffsetMeters!!
+        // Stops sit at latitude 0.0 / 0.01 / 0.02, so their offsets rise across the leg's length.
+        assertEquals(0.0, boardOffset, 1.0)
+        assertTrue(shape.penultimateOffsetMeters > boardOffset)
+        assertTrue(shape.alightOffsetMeters > shape.penultimateOffsetMeters)
+        assertNotNull("the encoded path must survive for the engine to decode", shape.polyline)
+    }
+
+    @Test
+    fun geometryThatDoesNotPassTheStopsIsRejectedRatherThanTrusted() {
+        // A path a long way from this leg's stops: the wrong pattern, or the wrong leg. Placing the
+        // stops on it would produce confident nonsense, so the ride keeps straight-line distances.
+        val elsewhere = (0..20).map { GeoPoint(it * 0.001, 5.0) }
+        val mismatched = leg(TripMode.BUS).copy(
+            legGeometry = TripLegGeometry(points = encodePolyline(elsewhere), length = elsewhere.size)
+        )
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(mismatched)), "id") as ReminderPlanResult.Success
+
+        assertNull(result.plan.rides.single().shape)
+    }
+
+    @Test
+    fun aLegWithoutGeometryHasNoShape() {
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(leg(TripMode.BUS))), "id") as ReminderPlanResult.Success
+
+        assertNull(result.plan.rides.single().shape)
     }
 
     @Test

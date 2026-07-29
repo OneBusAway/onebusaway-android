@@ -13,6 +13,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.Polyline
+import org.onebusaway.android.util.encodePolyline
 
 class ReminderEngineTest {
     @Test
@@ -114,14 +117,14 @@ class ReminderEngineTest {
     @Test
     fun alightEffectCarriesModeAwareWordingAndTransferDestination() {
         val plan = plan(ride(mode = ReminderMode.BUS), ride(mode = ReminderMode.RAIL))
-        var state = ReminderEngineState(penultimateReached = true, previousAlightDistanceMeters = 1_000.0)
+        var state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0)
         state = ReminderEngine.reduce(plan, state, sample(100.0, 1)).state
         val bus = ReminderEngine.reduce(plan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertTrue(bus.usesRequestStopWording)
         assertTrue(bus.isTransfer)
 
         val railPlan = plan(ride(mode = ReminderMode.RAIL))
-        state = ReminderEngineState(penultimateReached = true, previousAlightDistanceMeters = 1_000.0)
+        state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0)
         state = ReminderEngine.reduce(railPlan, state, sample(100.0, 1)).state
         val rail = ReminderEngine.reduce(railPlan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertFalse(rail.usesRequestStopWording)
@@ -224,8 +227,8 @@ class ReminderEngineTest {
         assertEquals(
             base.restorationKey(),
             base.copy(
-                previousAlightDistanceMeters = 120.0,
-                towardAlightSamples = 2,
+                previousProgressMeters = -120.0,
+                advancedSamples = 2,
                 penultimateInsideSamples = 1,
                 lastSampleTimestamp = WallTime(9)
             ).restorationKey()
@@ -239,6 +242,110 @@ class ReminderEngineTest {
             base.copy(speechMuted = true),
             base.copy(completed = true)
         ).forEach { assertFalse(base.restorationKey() == it.restorationKey()) }
+    }
+
+    @Test
+    fun curvingRoute_establishesProgressOnlyWithAShape() {
+        // A hooked route: east, then north, then back west to a destination that sits due north of
+        // the boarding stop. While the vehicle runs the outbound leg it is getting *further* from
+        // the destination in a straight line, even though it is making real progress along the route.
+        val shaped = plan(hookedRide(withShape = true))
+        val unshaped = plan(hookedRide(withShape = false))
+        val outbound = listOf(hookPoint(0.004), hookPoint(0.008), hookPoint(0.012))
+
+        var shapedState = ReminderEngineState()
+        var unshapedState = ReminderEngineState()
+        outbound.forEachIndexed { index, point ->
+            val fix = ReminderLocationSample(point, 5f, null, WallTime(index + 1L))
+            shapedState = ReminderEngine.reduce(shaped, shapedState, fix).state
+            unshapedState = ReminderEngine.reduce(unshaped, unshapedState, fix).state
+        }
+
+        assertTrue(
+            "along the route the rider is unambiguously making progress",
+            shapedState.rideProgressEstablished
+        )
+        assertFalse(
+            "straight-line distance to the destination grows on the outbound leg, hiding the progress",
+            unshapedState.rideProgressEstablished
+        )
+    }
+
+    @Test
+    fun stopOffsetFromTheVehiclePathIsStillDetected() {
+        // A stop placed 60 m off the centreline — a platform beside the track. Its offset along the
+        // route is what matters, not how close a fix gets to the stop's own coordinate.
+        val ride = shapedRide(penultimateMeters = 500.0, alightMeters = 1_000.0, stopOffsetDegrees = 0.00054)
+        val plan = plan(ride)
+
+        var state = ReminderEngineState()
+        val effects = mutableListOf<ReminderEffect>()
+        listOf(300.0, 480.0, 500.0, 620.0, 700.0, 980.0, 1_000.0).forEachIndexed { index, north ->
+            val transition = ReminderEngine.reduce(plan, state, sample(north, index + 1L, speed = 8f))
+            state = transition.state
+            effects += transition.effects.filterNot { it is ReminderEffect.Progress }
+        }
+
+        assertEquals(1, effects.count { it is ReminderEffect.GetReady })
+        assertEquals(1, effects.count { it is ReminderEffect.AlightNow })
+        assertTrue(state.completed)
+    }
+
+    @Test
+    fun alongARouteAFastModeKeepsItsFullEarlyWarning() {
+        // 100 km/h needs 2.5 km to get the intended 90 seconds. The straight-line cap of 1,200 m
+        // would cut that to 43 s — least warning exactly where most is needed.
+        val shaped = plan(shapedRide(penultimateMeters = 4_000.0, alightMeters = 5_000.0))
+        val unshaped = plan(ride(penultimateMeters = 4_000.0, alightMeters = 5_000.0))
+        val fast = 27.78f
+
+        val alongRoute = ReminderEngine.reduce(shaped, ReminderEngineState(), sample(100.0, 1, speed = fast))
+        val straightLine = ReminderEngine.reduce(unshaped, ReminderEngineState(), sample(100.0, 1, speed = fast))
+
+        assertEquals(
+            (fast * DestinationReminderPolicy.GET_READY_SECONDS),
+            alongRoute.effects.filterIsInstance<ReminderEffect.Progress>().single().getReadyRadiusMeters,
+            1.0
+        )
+        assertEquals(
+            DestinationReminderPolicy.MAX_GET_READY_STRAIGHT_LINE_METERS,
+            straightLine.effects.filterIsInstance<ReminderEffect.Progress>().single().getReadyRadiusMeters,
+            0.01
+        )
+    }
+
+    @Test
+    fun aFixFarOffTheRouteFallsBackToStraightLineDistances() {
+        // Well beyond MAX_OFF_ROUTE_METERS of the path: the shape cannot place this fix, so the
+        // reading must degrade rather than report a confidently wrong position along the route.
+        val plan = plan(shapedRide())
+        val farEast = ReminderPoint(500.0 / METERS_PER_DEGREE, 5_000.0 / METERS_PER_DEGREE)
+
+        val transition = ReminderEngine.reduce(
+            plan,
+            ReminderEngineState(),
+            ReminderLocationSample(farEast, 5f, null, WallTime(1))
+        )
+
+        // The straight-line reading of that position is dominated by the 5 km eastward offset.
+        val progress = transition.effects.filterIsInstance<ReminderEffect.Progress>().single()
+        assertTrue("expected a straight-line reading", progress.alightDistanceMeters > 4_000.0)
+    }
+
+    @Test
+    fun aPlanWithoutAShapeStillDecodes() {
+        // What a session persisted before shapes existed looks like on disk.
+        val legacyJson = """
+            {"version":1,"sessionId":"s","rides":[{"mode":"BUS","routeLabel":"10","tripId":"t",
+            "board":null,"penultimate":{"id":"p","name":"p","point":{"latitude":0.0,"longitude":0.0}},
+            "alight":{"id":"a","name":"a","point":{"latitude":0.01,"longitude":0.0}},
+            "scheduledStart":null,"scheduledEnd":null}]}
+        """.trimIndent().replace("\n", "")
+
+        val decoded = ReminderPlanJson.decode(legacyJson)
+
+        assertEquals("t", decoded?.rides?.single()?.tripId)
+        assertEquals(null, decoded?.rides?.single()?.shape)
     }
 
     @Test
@@ -274,6 +381,107 @@ class ReminderEngineTest {
         scheduledStart = ServerTime(1),
         scheduledEnd = ServerTime(2)
     )
+
+    /**
+     * The same straight north-south ride as [ride], but carrying the shape it runs along. On a
+     * straight line the two coordinates agree, so a shaped ride is a drop-in for the unshaped one —
+     * which is what makes the pair usable as a controlled comparison.
+     *
+     * [stopOffsetDegrees] pushes the stops sideways off the path, modelling a platform beside the
+     * track: their offsets along the route are unchanged, but their own coordinates are not on it.
+     */
+    private fun shapedRide(
+        mode: ReminderMode = ReminderMode.BUS,
+        penultimateMeters: Double = 0.0,
+        alightMeters: Double = 1_000.0,
+        boardMeters: Double = -1_000.0,
+        stopOffsetDegrees: Double = 0.0
+    ): ReminderRide {
+        fun offsetStop(id: String, northMeters: Double) = ReminderStop(id, id, ReminderPoint(northMeters / METERS_PER_DEGREE, stopOffsetDegrees))
+
+        // A dense straight path spanning the whole ride, so projection has real segments to work on.
+        val path = generateSequence(boardMeters - 200.0) { it + 100.0 }
+            .takeWhile { it <= alightMeters + 200.0 }
+            .map { GeoPoint(it / METERS_PER_DEGREE, 0.0) }
+            .toList()
+        return ride(mode, penultimateMeters, alightMeters, boardMeters).copy(
+            board = offsetStop("board", boardMeters),
+            penultimate = offsetStop("before", penultimateMeters),
+            alight = offsetStop("destination", alightMeters),
+            shape = shapeAlong(path, boardMeters, penultimateMeters, alightMeters)
+        )
+    }
+
+    /**
+     * A hooked route — east, north, then back west — whose destination sits due north of its
+     * boarding stop. Travelling the outbound leg increases the straight-line distance to the
+     * destination while genuinely making progress, which is the case straight-line distances cannot
+     * read and the route shape can.
+     */
+    private fun hookedRide(withShape: Boolean): ReminderRide {
+        val path = buildList {
+            var east = 0.0
+            while (east <= 0.02) {
+                add(GeoPoint(0.0, east))
+                east += 0.001
+            }
+            var north = 0.0
+            while (north <= 0.02) {
+                add(GeoPoint(north, 0.02))
+                north += 0.001
+            }
+            var west = 0.02
+            while (west >= 0.0) {
+                add(GeoPoint(0.02, west))
+                west -= 0.001
+            }
+        }
+        val polyline = Polyline(path)
+        val board = ReminderStop("board", "board", ReminderPoint(0.0, 0.0))
+        val penultimate = ReminderStop("before", "before", ReminderPoint(0.02, 0.005))
+        val alight = ReminderStop("destination", "destination", ReminderPoint(0.02, 0.0))
+        return ReminderRide(
+            mode = ReminderMode.BUS,
+            routeLabel = "10",
+            tripId = "trip",
+            board = board,
+            penultimate = penultimate,
+            alight = alight,
+            scheduledStart = ServerTime(1),
+            scheduledEnd = ServerTime(2),
+            shape = if (!withShape) {
+                null
+            } else {
+                ReminderShape(
+                    encodedPoints = encodePolyline(path),
+                    pointCount = path.size,
+                    boardOffsetMeters = polyline.project(0.0, 0.0)!!.distanceAlongMeters,
+                    penultimateOffsetMeters = polyline.project(0.02, 0.005)!!.distanceAlongMeters,
+                    alightOffsetMeters = polyline.project(0.02, 0.0)!!.distanceAlongMeters
+                )
+            }
+        )
+    }
+
+    /** A point on the hooked route's outbound (eastward) leg, [degreesEast] from its start. */
+    private fun hookPoint(degreesEast: Double) = ReminderPoint(0.0, degreesEast)
+
+    private fun shapeAlong(
+        path: List<GeoPoint>,
+        boardMeters: Double,
+        penultimateMeters: Double,
+        alightMeters: Double
+    ): ReminderShape {
+        val polyline = Polyline(path)
+        fun offsetAt(northMeters: Double) = polyline.project(northMeters / METERS_PER_DEGREE, 0.0)!!.distanceAlongMeters
+        return ReminderShape(
+            encodedPoints = encodePolyline(path),
+            pointCount = path.size,
+            boardOffsetMeters = offsetAt(boardMeters),
+            penultimateOffsetMeters = offsetAt(penultimateMeters),
+            alightOffsetMeters = offsetAt(alightMeters)
+        )
+    }
 
     private fun stop(id: String, northMeters: Double) = ReminderStop(id, id, point(northMeters))
 

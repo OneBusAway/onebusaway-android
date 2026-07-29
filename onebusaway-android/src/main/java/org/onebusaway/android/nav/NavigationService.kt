@@ -113,44 +113,55 @@ class NavigationService : Service() {
             return START_NOT_STICKY
         }
 
-        val incomingPlan = intent?.getStringExtra(PLAN_JSON)?.let(ReminderPlanJson::decode)
-        val supersedes = incomingPlan != null && incomingPlan.sessionId != plan?.sessionId
-        if (supersedes) {
-            // A superseding session inherits nothing from the one it replaces, including the
-            // previous rider's "silence" choice.
-            mutedRequested = false
-        }
+        // Identifiers only — the session itself lives in the store. Any fresh launch supersedes what
+        // is running and inherits nothing from it, including the previous rider's "silence" choice.
+        // A sticky restart arrives with no intent at all and simply resumes.
+        val requestedSessionId = intent?.getStringExtra(SESSION_ID)
+        val supersedes = (requestedSessionId != null && requestedSessionId != plan?.sessionId) ||
+            intent?.hasExtra(TRIP_ID) == true
+        if (supersedes) mutedRequested = false
         if (navigationJob?.isActive != true || supersedes) {
             navigationJob?.cancel()
-            navigationJob = serviceScope.launch { initialize(intent, incomingPlan) }
+            navigationJob = serviceScope.launch { initialize(intent, requestedSessionId) }
         }
         return START_STICKY
     }
 
-    private suspend fun initialize(intent: Intent?, decodedIncomingPlan: ReminderPlan?) {
+    /**
+     * Loads the session to monitor. There is exactly one stored at a time, so [requestedSessionId]
+     * is not a lookup key — it says which session the caller believes it just wrote, and a mismatch
+     * means another has superseded it in between. The stored session wins either way; it is the
+     * source of truth that a sticky restart (which arrives with no intent at all) has to rely on.
+     */
+    private suspend fun initialize(intent: Intent?, requestedSessionId: String?) {
         importGate.awaitReady()
-        val incomingPlan = decodedIncomingPlan
-            ?: intent?.legacyPlan()
-        val restored = if (incomingPlan == null) sessionStore.restore(wallClock()) else null
-        val activePlan = incomingPlan ?: restored?.plan
-        if (activePlan == null) {
-            Log.w(TAG, "No valid reminder plan to start or restore")
+        // The legacy trip-details launch carries stop and trip ids rather than a session, so the
+        // service is the one that builds its plan — and therefore the one that stores it.
+        val legacyPlan = if (requestedSessionId == null) intent?.legacyPlan() else null
+        if (legacyPlan != null) {
+            sessionStore.start(legacyPlan.withLegacyShapesResolved(), wallClock())
+        }
+
+        val restored = sessionStore.restore(wallClock())
+        if (restored == null) {
+            Log.w(TAG, "No reminder session to monitor")
             notificationPresenter.cancel()
             stopSelf()
             return
         }
+        if (requestedSessionId != null && restored.plan.sessionId != requestedSessionId) {
+            Log.i(TAG, "Session $requestedSessionId was superseded by ${restored.plan.sessionId}")
+        }
 
-        val resolvedPlan = activePlan.withLegacyShapesResolved()
-        plan = resolvedPlan
-        engineState = (restored?.state ?: ReminderEngineState()).let {
-            if (mutedRequested) it.copy(speechMuted = true) else it
+        val activePlan = restored.plan
+        plan = activePlan
+        engineState = restored.state.let { if (mutedRequested) it.copy(speechMuted = true) else it }
+        // Only when this launch began a session. Rewriting the compat row on a plain resume would
+        // restamp its start time, which is what bounds how long a legacy row stays resumable.
+        if (requestedSessionId != null || legacyPlan != null) {
+            persistLegacyCompatibility(activePlan, wallClock())
         }
-        if (incomingPlan != null) {
-            sessionStore.start(resolvedPlan, wallClock())
-            persistLegacyCompatibility(resolvedPlan, wallClock())
-        }
-        sessionStore.persist(resolvedPlan, engineState, wallClock())
-        if (!promoteToForeground(notificationPresenter.foregroundNotification(resolvedPlan))) {
+        if (!promoteToForeground(notificationPresenter.foregroundNotification(activePlan))) {
             sessionStore.clear()
             notificationPresenter.cancel()
             stopSelf()
@@ -318,7 +329,9 @@ class NavigationService : Service() {
         const val DESTINATION_ID = ".DestinationId"
         const val BEFORE_STOP_ID = ".BeforeId"
         const val TRIP_ID = ".TripId"
-        const val PLAN_JSON = ".ReminderPlanJson"
+
+        /** The session the caller has just written to the store. State never travels in the intent. */
+        const val SESSION_ID = ".ReminderSessionId"
         const val ACTION_SILENCE = "org.onebusaway.android.nav.SILENCE"
         const val ACTION_CANCEL = "org.onebusaway.android.nav.CANCEL"
         private const val NAV_UPDATE_INTERVAL_SECONDS = 1

@@ -8,6 +8,7 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -35,6 +37,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.isLocationEnabled
@@ -42,10 +45,13 @@ import org.onebusaway.android.nav.NavigationService
 import org.onebusaway.android.nav.ReminderPlan
 import org.onebusaway.android.nav.ReminderPlanBuilder
 import org.onebusaway.android.nav.ReminderPlanError
-import org.onebusaway.android.nav.ReminderPlanJson
 import org.onebusaway.android.nav.ReminderPlanResult
 import org.onebusaway.android.nav.ReminderSessionStore
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.PermissionUtils
+import org.onebusaway.android.util.runCatchingCancellable
+
+private const val TAG = "ReminderControl"
 
 /** Full-width start/stop action for the currently selected itinerary. */
 @Composable
@@ -59,22 +65,33 @@ internal fun ItineraryReminderControl(
     var pendingPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     var confirmationPlan by remember { mutableStateOf<ReminderPlan?>(null) }
     val active by viewModel.hasActiveSession.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
 
     fun start(plan: ReminderPlan) {
-        val intent = Intent(context, NavigationService::class.java).apply {
-            putExtra(NavigationService.PLAN_JSON, ReminderPlanJson.encode(plan))
-        }
-        ContextCompat.startForegroundService(context, intent)
         pendingPlan = null
-        Toast.makeText(
-            context,
-            resources.getQuantityString(
-                R.plurals.destination_reminder_monitoring_rides,
-                plan.rides.size,
-                plan.rides.size
-            ),
-            Toast.LENGTH_LONG
-        ).show()
+        scope.launch {
+            // Store first, then start: the intent carries only the session id, so the row has to be
+            // there before the service goes looking for it.
+            viewModel.storeSession(plan).onFailure { error ->
+                Log.e(TAG, "Could not store reminder session ${plan.sessionId}", error)
+                Toast.makeText(context, R.string.destination_reminder_invalid_plan, Toast.LENGTH_LONG).show()
+                return@launch
+            }
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, NavigationService::class.java)
+                    .putExtra(NavigationService.SESSION_ID, plan.sessionId)
+            )
+            Toast.makeText(
+                context,
+                resources.getQuantityString(
+                    R.plurals.destination_reminder_monitoring_rides,
+                    plan.rides.size,
+                    plan.rides.size
+                ),
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     // Notifications carry the ongoing session and its Silence/Cancel actions, so a denial is worth
@@ -186,12 +203,23 @@ internal fun ItineraryReminderControl(
 }
 
 @HiltViewModel
-internal class ReminderControlViewModel @Inject constructor(store: ReminderSessionStore) : ViewModel() {
+internal class ReminderControlViewModel @Inject constructor(
+    private val store: ReminderSessionStore
+) : ViewModel() {
     val hasActiveSession = store.hasActiveSession.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
         false
     )
+
+    /**
+     * Makes [plan] the stored session, replacing any other. The caller must not start the service
+     * on a failure: it is started by session id and would find nothing to monitor. Reporting is
+     * left to the caller so this stays free of Android dependencies and unit-testable.
+     */
+    suspend fun storeSession(plan: ReminderPlan): Result<Unit> = runCatchingCancellable {
+        store.start(plan, WallTime.now())
+    }
 }
 
 private fun ReminderPlanResult.Error.userMessage(context: Context): String = when (reason) {

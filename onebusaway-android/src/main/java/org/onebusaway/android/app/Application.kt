@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.app
 
+import android.util.Log
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import dagger.hilt.android.EntryPointAccessors
@@ -117,16 +118,20 @@ class Application :
 
     /** Removes files and queued jobs left by destination-reminder trace collection in older builds. */
     private fun removeLegacyNavigationTraces() {
-        WorkManager.getInstance(this).run {
-            cancelUniqueWork("navigation_log_upload")
-            cancelUniqueWork("navigation_log_cleanup")
-        }
+        val workManager = WorkManager.getInstance(this)
+        val cancellations = listOf(
+            workManager.cancelUniqueWork("navigation_log_upload"),
+            workManager.cancelUniqueWork("navigation_log_cleanup")
+        )
         thread(name = "remove-navigation-traces") {
-            File(filesDir, "ObaNavLog").deleteRecursively()
+            runCatching { cancellations.forEach { it.result.get() } }
+                .onSuccess { File(filesDir, "ObaNavLog").deleteRecursively() }
+                .onFailure { Log.w(TAG, "Unable to cancel legacy navigation work", it) }
         }
     }
 
     companion object {
+        private const val TAG = "Application"
 
         // Set in onCreate, cleared in onTerminate (emulator-only). Nullable-backed rather than lateinit
         // precisely because onTerminate re-nulls it; get() unwraps it non-null since it's never read

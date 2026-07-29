@@ -10,12 +10,13 @@
 package org.onebusaway.android.nav
 
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavigationSessionDao
 import org.onebusaway.android.database.oba.NavigationSessionRecord
 import org.onebusaway.android.database.oba.StopDao
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 
 internal data class ActiveReminderSession(
@@ -69,7 +70,7 @@ internal class RoomReminderSessionStore @Inject constructor(
         plan: ReminderPlan,
         state: ReminderEngineState,
         now: WallTime
-    ) {
+    ) = withContext(Dispatchers.IO) {
         sessions.updateState(plan.sessionId, ReminderPlanJson.encodeState(state), now.epochMs)
     }
 
@@ -99,8 +100,8 @@ internal class RoomReminderSessionStore @Inject constructor(
                 board = beforeStop,
                 penultimate = beforeStop,
                 alight = destinationStop,
-                scheduledStart = ServerTime(legacy.startTime),
-                scheduledEnd = ServerTime(legacy.startTime)
+                scheduledStart = null,
+                scheduledEnd = null
             ) as? ReminderPlanResult.Success
             )?.plan ?: return null
         start(plan, now)

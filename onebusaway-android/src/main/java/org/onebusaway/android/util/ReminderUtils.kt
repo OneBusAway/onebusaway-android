@@ -9,6 +9,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.onebusaway.android.R
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 
 /** Pure payload and lead-time helpers for departure reminders. */
 object ReminderUtils {
@@ -29,9 +30,15 @@ object ReminderUtils {
     }
 
     @JvmStatic
-    fun getReminderTimes(context: Context, departTime: ServerTime, now: ServerTime): Array<String> {
+    fun getReminderTimes(context: Context, departTime: ServerTime, now: ServerTime): Array<String> =
+        getReminderTimes(context, departTime - now)
+
+    fun getWallReminderTimes(context: Context, departTime: WallTime, now: WallTime): Array<String> =
+        getReminderTimes(context, departTime - now)
+
+    private fun getReminderTimes(context: Context, untilDeparture: kotlin.time.Duration): Array<String> {
         val thresholds = listOf(3, 5, 10, 15, 20, 25, 30)
-        val minutes = ceil((departTime - now) / 1.minutes).toLong()
+        val minutes = ceil(untilDeparture / 1.minutes).toLong()
         val allTimes = context.resources.getStringArray(R.array.reminder_time)
         return buildList {
             add(allTimes[0])

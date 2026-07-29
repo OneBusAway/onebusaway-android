@@ -42,8 +42,8 @@ internal object ReminderPlanBuilder {
         alight: ReminderStop,
         mode: ReminderMode = ReminderMode.TRANSIT,
         routeLabel: String? = null,
-        scheduledStart: ServerTime = ServerTime(0),
-        scheduledEnd: ServerTime = scheduledStart
+        scheduledStart: ServerTime? = null,
+        scheduledEnd: ServerTime? = null
     ): ReminderPlanResult {
         if (tripId.isBlank()) return ReminderPlanResult.Error(ReminderPlanError.MISSING_TRIP)
         return runCatching {
@@ -102,8 +102,7 @@ internal object ReminderPlanBuilder {
 
     private fun TripLeg.toReminderRide(): ReminderRide? {
         val reminderMode = mode?.toReminderMode() ?: return null
-        if (from.toReminderStop() == null || to.toReminderStop() == null) return null
-        val orderedStops = normalizedStops()
+        val orderedStops = normalizedStops() ?: return null
         if (orderedStops.size < 2) return null
         val trip = tripId?.takeIf { it.isNotBlank() } ?: return null
         return ReminderRide(
@@ -118,13 +117,14 @@ internal object ReminderPlanBuilder {
         )
     }
 
-    private fun TripLeg.normalizedStops(): List<ReminderStop> {
+    private fun TripLeg.normalizedStops(): List<ReminderStop>? {
         val raw = buildList {
             add(from)
             addAll(stop?.takeIf { it.isNotEmpty() } ?: intermediateStops.orEmpty())
             add(to)
         }
-        return raw.mapNotNull { it.toReminderStop() }.fold(mutableListOf()) { result, item ->
+        val converted = raw.map { it.toReminderStop() ?: return null }
+        return converted.fold(mutableListOf()) { result, item ->
             if (result.lastOrNull()?.sameStop(item) != true) result += item
             result
         }
@@ -138,7 +138,7 @@ internal object ReminderPlanBuilder {
         return ReminderStop(stopId, stopName, ReminderPoint(latitude, longitude))
     }
 
-    private fun ReminderStop.sameStop(other: ReminderStop): Boolean = id == other.id || point == other.point
+    private fun ReminderStop.sameStop(other: ReminderStop): Boolean = id == other.id
 
     private fun TripMode.toReminderMode(): ReminderMode? = when (this) {
         TripMode.BUS -> ReminderMode.BUS

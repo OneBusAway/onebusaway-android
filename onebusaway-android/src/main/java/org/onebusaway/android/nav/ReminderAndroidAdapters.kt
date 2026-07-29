@@ -121,6 +121,9 @@ internal class AndroidReminderSpeechController @Inject constructor(
             tts?.setSpeechRate(0.75f)
             pendingText?.let(::speakText)
             pendingText = null
+        } else {
+            tts?.shutdown()
+            tts = null
         }
     }
 

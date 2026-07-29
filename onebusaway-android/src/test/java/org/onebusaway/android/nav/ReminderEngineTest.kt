@@ -137,6 +137,13 @@ class ReminderEngineTest {
         assertEquals(null, ReminderPlanJson.decode("{\"version\":99}"))
     }
 
+    @Test
+    fun unscheduledPlan_roundTripsForLegacyRestoration() {
+        val plan = plan(ride().copy(scheduledStart = null, scheduledEnd = null))
+
+        assertEquals(plan, ReminderPlanJson.decode(ReminderPlanJson.encode(plan)))
+    }
+
     private fun plan(vararg rides: ReminderRide) = ReminderPlan(sessionId = "session", rides = rides.toList())
 
     private fun ride(

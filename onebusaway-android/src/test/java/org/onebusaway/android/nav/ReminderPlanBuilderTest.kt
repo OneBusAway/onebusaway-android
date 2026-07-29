@@ -63,6 +63,36 @@ class ReminderPlanBuilderTest {
     }
 
     @Test
+    fun invalidIntermediateStopRejectsWholePlan() {
+        val invalid = leg(TripMode.BUS).copy(
+            stop = listOf(
+                place("x-board"),
+                place("x-invalid", latitude = null),
+                place("x-alight", latitude = 0.02)
+            )
+        )
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(invalid)), "id")
+
+        assertEquals(ReminderPlanError.INCOMPLETE_STOP_INFORMATION, (result as ReminderPlanResult.Error).reason)
+    }
+
+    @Test
+    fun coLocatedStopsWithDistinctIdsRemainDistinct() {
+        val coLocated = leg(TripMode.BUS).copy(
+            stop = listOf(
+                place("x-board"),
+                place("x-middle"),
+                place("x-alight", latitude = 0.02)
+            )
+        )
+
+        val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(coLocated)), "id") as ReminderPlanResult.Success
+
+        assertEquals("x-middle", result.plan.rides.single().penultimate.id)
+    }
+
+    @Test
     fun itineraryWithoutTransitHasUserVisibleError() {
         val result = ReminderPlanBuilder.build(TripItinerary(legs = listOf(leg(TripMode.WALK))), "id")
         assertEquals(ReminderPlanError.NO_TRANSIT_RIDES, (result as ReminderPlanResult.Error).reason)

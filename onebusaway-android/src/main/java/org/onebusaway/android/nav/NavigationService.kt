@@ -16,10 +16,12 @@ import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.ObaAnalytics
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -28,7 +30,6 @@ import org.onebusaway.android.database.oba.NavStopDao
 import org.onebusaway.android.database.oba.NavStopRecord
 import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 
@@ -88,6 +89,7 @@ class NavigationService : Service() {
             }
             ACTION_CANCEL -> {
                 explicitCancellation = true
+                stopLocationCollection()
                 serviceScope.launch {
                     sessionStore.clear()
                     speechController.silence()
@@ -127,7 +129,7 @@ class NavigationService : Service() {
         }
         if (incomingPlan != null) {
             sessionStore.start(activePlan, wallClock())
-            persistLegacyCompatibility(activePlan)
+            persistLegacyCompatibility(activePlan, wallClock())
         }
         sessionStore.persist(activePlan, engineState, wallClock())
         promoteToForeground(notificationPresenter.foregroundNotification(activePlan))
@@ -155,18 +157,18 @@ class NavigationService : Service() {
                 board = beforeStop,
                 penultimate = beforeStop,
                 alight = destinationStop,
-                scheduledStart = ServerTime(now.epochMs),
-                scheduledEnd = ServerTime(now.epochMs)
+                scheduledStart = null,
+                scheduledEnd = null
             ) as? ReminderPlanResult.Success
             )?.plan
     }
 
-    private suspend fun persistLegacyCompatibility(plan: ReminderPlan) {
+    private suspend fun persistLegacyCompatibility(plan: ReminderPlan, now: WallTime) {
         val ride = plan.rides.first()
         navStopDao.replaceActive(
             NavStopRecord(
                 navId = "1",
-                startTime = plan.rides.first().scheduledStart.epochMs,
+                startTime = ride.scheduledStart?.epochMs ?: now.epochMs,
                 tripId = ride.tripId,
                 destinationId = ride.alight.id,
                 beforeId = ride.penultimate.id,
@@ -205,13 +207,22 @@ class NavigationService : Service() {
 
     private suspend fun completeSession() {
         report(R.string.analytics_label_destination_reminder_variant_ended)
-        sessionStore.clear()
-        speechController.close()
-        feedbackRepository.requestFeedback()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_DETACH)
+        stopLocationCollection()
+        withContext(NonCancellable) {
+            sessionStore.clear()
+            speechController.close()
+            feedbackRepository.requestFeedback()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                stopForeground(STOP_FOREGROUND_DETACH)
+            }
+            stopSelf()
         }
-        stopSelf()
+    }
+
+    private fun stopLocationCollection() {
+        navigationJob?.cancel()
+        navigationJob = null
+        plan = null
     }
 
     private fun report(label: Int) {

@@ -58,10 +58,12 @@ internal data class ReminderRide(
     val board: ReminderStop,
     val penultimate: ReminderStop,
     val alight: ReminderStop,
-    @Serializable(with = ReminderServerTimeSerializer::class)
-    val scheduledStart: ServerTime,
-    @Serializable(with = ReminderServerTimeSerializer::class)
-    val scheduledEnd: ServerTime
+    /** Server-scheduled boarding instant, or null when a legacy session did not carry it. */
+    @Serializable(with = NullableReminderServerTimeSerializer::class)
+    val scheduledStart: ServerTime?,
+    /** Server-scheduled alighting instant, or null when a legacy session did not carry it. */
+    @Serializable(with = NullableReminderServerTimeSerializer::class)
+    val scheduledEnd: ServerTime?
 )
 
 @Serializable
@@ -306,6 +308,8 @@ private object ReminderServerTimeSerializer : KSerializer<ServerTime> {
     override fun serialize(encoder: Encoder, value: ServerTime) = encoder.encodeLong(value.epochMs)
     override fun deserialize(decoder: Decoder): ServerTime = ServerTime(decoder.decodeLong())
 }
+
+private object NullableReminderServerTimeSerializer : KSerializer<ServerTime?> by ReminderServerTimeSerializer.nullable
 
 private object ReminderWallTimeSerializer : KSerializer<WallTime> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("WallTime", PrimitiveKind.LONG)

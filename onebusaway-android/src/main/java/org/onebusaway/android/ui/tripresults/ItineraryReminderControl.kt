@@ -100,15 +100,11 @@ internal fun ItineraryReminderControl(
                 )
                 return@Button
             }
-            val selectedItinerary = itinerary
-            if (selectedItinerary == null) {
-                Toast.makeText(context, R.string.destination_reminder_no_itinerary, Toast.LENGTH_LONG).show()
-                return@Button
-            }
-            val result = ReminderPlanBuilder.build(selectedItinerary)
-            when (result) {
-                is ReminderPlanResult.Error -> Toast.makeText(context, result.userMessage(context), Toast.LENGTH_LONG).show()
-                is ReminderPlanResult.Success -> confirmationPlan = result.plan
+            itinerary?.let { selectedItinerary ->
+                when (val result = ReminderPlanBuilder.build(selectedItinerary)) {
+                    is ReminderPlanResult.Error -> Toast.makeText(context, result.userMessage(context), Toast.LENGTH_LONG).show()
+                    is ReminderPlanResult.Success -> confirmationPlan = result.plan
+                }
             }
         },
         enabled = active || itinerary != null,

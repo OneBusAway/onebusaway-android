@@ -28,7 +28,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
-import org.onebusaway.android.map.RiddenSegment
+import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -125,9 +125,10 @@ class DefaultTripResultsRepository @Inject constructor(
             val extraSegments = ((chain.leaderIndex + 1)..chain.alightIndex).mapNotNull { j ->
                 val routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName)
                     ?: return@mapNotNull null
-                RiddenSegment(
+                RouteFocusSegment(
                     routeId = routeId,
-                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName)
+                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName),
+                    directionHeadsign = legs[j].headsign
                 )
             }
             val alternatives = substitutable[chain.leaderIndex]

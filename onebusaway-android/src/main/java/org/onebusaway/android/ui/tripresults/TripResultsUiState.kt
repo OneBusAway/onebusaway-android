@@ -16,7 +16,7 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.map.RiddenSegment
+import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
@@ -327,7 +327,7 @@ data class RouteLegRef(
     // stay-aboard interline (#2000): each names the route continued onto and the seam stop boarded
     // there. The map focus draws each segment's shape + stops and the shared vehicle across them.
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
-    val extraSegments: List<RiddenSegment> = emptyList(),
+    val extraSegments: List<RouteFocusSegment> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
     val badge: LegBadge? = null
 )

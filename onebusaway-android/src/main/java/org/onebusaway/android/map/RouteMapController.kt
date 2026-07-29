@@ -1041,6 +1041,7 @@ class RouteMapController(
         // continuations happen after boarding and are already represented by the selected leg overlay.
         basePolylines = approaches.values.flatten()
         publishMapPresentation()
+        publishVehicleSet()
     }
 
     /**

@@ -141,11 +141,16 @@ internal data class ReminderEngineState(
     val penultimateDepartureSamples: Int = 0,
     val alightInsideSamples: Int = 0,
     /**
-     * The previous fix's [RideProgress.progressMeters], for the forward-movement test. Its scale
-     * depends on which coordinate produced it, so only successive values from the same ride are
-     * comparable — which is all the reducer does with it.
+     * The previous fix's [RideProgress.progressMeters], for the forward-movement test.
+     *
+     * Only meaningful against a value from the same coordinate: along a shape this is metres
+     * travelled (large and positive), while without one it is the negated straight-line distance to
+     * the destination (negative). Comparing across the two says nothing about movement — it just
+     * compares a route offset with a negated distance — so [previousProgressUsedShape] records
+     * which coordinate produced it and the reducer withholds judgement when they differ.
      */
     val previousProgressMeters: Double? = null,
+    val previousProgressUsedShape: Boolean? = null,
     val advancedSamples: Int = 0,
     val rideProgressEstablished: Boolean = false,
     /**
@@ -350,13 +355,23 @@ internal object ReminderEngine {
             ReminderEffect.Progress(state.activeRideIndex, progress.remainingToAlightMeters, getReadyDistance)
         )
 
-        // Forward movement, whichever coordinate produced it. Along a shape this is monotone by
-        // construction; on straight-line distances it is the old "getting closer to the destination"
-        // test, which a curving route can defeat.
-        val advanced = state.previousProgressMeters?.let { progress.progressMeters > it } ?: false
-        val advancedSamples = if (advanced) state.advancedSamples + 1 else 0
+        // Forward movement, judged only against a previous fix read in the same coordinate. Along a
+        // shape this is monotone by construction; on straight-line distances it is the old "getting
+        // closer to the destination" test, which a curving route can defeat. A fix that switched
+        // coordinates — one bad fix falling off the route, or the first one back onto it — is not
+        // comparable with its predecessor at all, so it neither proves advancement nor disproves
+        // it: the streak is carried, not extended and not reset.
+        val previousProgress = state.previousProgressMeters
+        val comparable = previousProgress != null && state.previousProgressUsedShape == progress.usesShape
+        val advanced = comparable && progress.progressMeters > previousProgress
+        val advancedSamples = when {
+            !comparable -> state.advancedSamples
+            advanced -> state.advancedSamples + 1
+            else -> 0
+        }
         var next = state.copy(
             previousProgressMeters = progress.progressMeters,
+            previousProgressUsedShape = progress.usesShape,
             advancedSamples = advancedSamples,
             rideProgressEstablished = state.rideProgressEstablished ||
                 advancedSamples >= DestinationReminderPolicy.REQUIRED_CONSECUTIVE_SAMPLES,

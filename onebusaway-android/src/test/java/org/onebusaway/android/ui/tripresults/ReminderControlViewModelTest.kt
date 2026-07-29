@@ -8,7 +8,9 @@
 package org.onebusaway.android.ui.tripresults
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,10 +37,12 @@ class ReminderControlViewModelTest {
     fun storingASessionMakesItTheActiveOne() = runTest {
         val store = FakeStore()
         val plan = plan()
+        assertFalse(store.hasActiveSession.first())
 
         assertTrue(ReminderControlViewModel(store).storeSession(plan).isSuccess)
 
         assertEquals(plan, store.started?.first)
+        assertTrue("the screen's Stop action keys off this", store.hasActiveSession.first())
     }
 
     @Test
@@ -48,6 +52,7 @@ class ReminderControlViewModelTest {
         val store = FakeStore(failOnStart = true)
 
         assertTrue(ReminderControlViewModel(store).storeSession(plan()).isFailure)
+        assertFalse(store.hasActiveSession.first())
     }
 
     private fun plan() = ReminderPlan(
@@ -66,24 +71,31 @@ class ReminderControlViewModelTest {
         )
     )
 
+    /**
+     * Backed by the same state the real store exposes, so [hasActiveSession] tracks [start] and
+     * [clear] rather than being pinned to a constant — otherwise the tests above would pass on a
+     * store that recorded a plan without ever becoming active.
+     */
     private class FakeStore(private val failOnStart: Boolean = false) : ReminderSessionStore {
-        var started: Pair<ReminderPlan, WallTime>? = null
+        private val active = MutableStateFlow<Pair<ReminderPlan, WallTime>?>(null)
 
-        override val hasActiveSession: Flow<Boolean> = flowOf(false)
+        val started: Pair<ReminderPlan, WallTime>? get() = active.value
+
+        override val hasActiveSession: Flow<Boolean> = active.map { it != null }
 
         override suspend fun start(plan: ReminderPlan, now: WallTime) {
             if (failOnStart) throw IllegalStateException("disk full")
-            started = plan to now
+            active.value = plan to now
         }
 
-        override suspend fun restore(now: WallTime): ActiveReminderSession? = started?.let {
+        override suspend fun restore(now: WallTime): ActiveReminderSession? = active.value?.let {
             ActiveReminderSession(it.first, ReminderEngineState())
         }
 
         override suspend fun persist(plan: ReminderPlan, state: ReminderEngineState, now: WallTime) = Unit
 
         override suspend fun clear() {
-            started = null
+            active.value = null
         }
     }
 }

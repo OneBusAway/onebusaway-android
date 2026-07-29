@@ -117,14 +117,14 @@ class ReminderEngineTest {
     @Test
     fun alightEffectCarriesModeAwareWordingAndTransferDestination() {
         val plan = plan(ride(mode = ReminderMode.BUS), ride(mode = ReminderMode.RAIL))
-        var state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0)
+        var state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
         state = ReminderEngine.reduce(plan, state, sample(100.0, 1)).state
         val bus = ReminderEngine.reduce(plan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertTrue(bus.usesRequestStopWording)
         assertTrue(bus.isTransfer)
 
         val railPlan = plan(ride(mode = ReminderMode.RAIL))
-        state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0)
+        state = ReminderEngineState(penultimateReached = true, previousProgressMeters = -1_000.0, previousProgressUsedShape = false)
         state = ReminderEngine.reduce(railPlan, state, sample(100.0, 1)).state
         val rail = ReminderEngine.reduce(railPlan, state, sample(200.0, 2)).effects.filterIsInstance<ReminderEffect.AlightNow>().single()
         assertFalse(rail.usesRequestStopWording)
@@ -330,6 +330,41 @@ class ReminderEngineTest {
         // The straight-line reading of that position is dominated by the 5 km eastward offset.
         val progress = transition.effects.filterIsInstance<ReminderEffect.Progress>().single()
         assertTrue("expected a straight-line reading", progress.alightDistanceMeters > 4_000.0)
+    }
+
+    @Test
+    fun aCoordinateSwitchProvesNothingAboutForwardMovement() {
+        // Along a shape, progress is a large positive arc length; without one it is the negated
+        // straight-line distance, which is negative. A fix that falls off the route switches
+        // coordinates, and comparing the two is meaningless in both directions: leaving the route
+        // would read as going backwards, and rejoining it as a huge leap forward. The second is the
+        // dangerous one, since it would manufacture the progress that gates the arrival alerts.
+        val plan = plan(shapedRide())
+        val onRoute = sample(400.0, 1)
+        val offRoute = ReminderLocationSample(
+            ReminderPoint(450.0 / METERS_PER_DEGREE, 5_000.0 / METERS_PER_DEGREE),
+            5f,
+            null,
+            WallTime(2)
+        )
+
+        val first = ReminderEngine.reduce(plan, ReminderEngineState(), onRoute)
+        assertTrue("the first fix should be read along the shape", first.state.previousProgressUsedShape == true)
+
+        val left = ReminderEngine.reduce(plan, first.state, offRoute)
+        assertFalse("a fix off the route is read by straight line", left.state.previousProgressUsedShape!!)
+        assertEquals("leaving the route neither proves nor disproves movement", 0, left.state.advancedSamples)
+
+        val rejoined = ReminderEngine.reduce(plan, left.state, sample(500.0, 3))
+        assertEquals("rejoining the route must not manufacture progress", 0, rejoined.state.advancedSamples)
+        assertFalse(rejoined.state.rideProgressEstablished)
+
+        // Two comparable fixes in a row still establish progress normally.
+        var state = rejoined.state
+        listOf(600.0, 700.0).forEachIndexed { index, north ->
+            state = ReminderEngine.reduce(plan, state, sample(north, index + 4L)).state
+        }
+        assertTrue(state.rideProgressEstablished)
     }
 
     @Test

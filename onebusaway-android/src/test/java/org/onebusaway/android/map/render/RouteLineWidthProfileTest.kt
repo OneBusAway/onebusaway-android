@@ -75,9 +75,13 @@ class RouteLineWidthProfileTest {
     fun `a case reads as an outline at every zoom, so it stays off the width ramp`() {
         // The case is a fixed dp inset on each side, deliberately not scaled by the line's zoom multiplier: a
         // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
-        assertEquals(1.5f, ROUTE_LINE_CASE_DP, 0f)
-        // And it stays finer than the thinnest line it can wrap, so a case reads as that line's edge rather
-        // than as a second line under it.
-        assertTrue(ROUTE_LINE_CASE_EXTRA_DP < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+        assertEquals(1.5f, RouteLineCase.SELECTION.widthDp, 0f)
+        assertEquals(0.75f, RouteLineCase.OUTLINE.widthDp, 0f)
+        // Selection is the heavier edge, which is what lets it still mean "selected" now that every
+        // directions ride wears an outline.
+        assertTrue(RouteLineCase.OUTLINE.widthDp < RouteLineCase.SELECTION.widthDp)
+        // And both stay finer than the thinnest line they can wrap, so a case reads as that line's edge
+        // rather than as a second line under it.
+        assertTrue(RouteLineCase.SELECTION.extraWidthDp < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
     }
 }

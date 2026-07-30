@@ -27,9 +27,9 @@ class ItineraryRouteBadgesTest {
     @Test
     fun `each ridden route is labelled at its midpoint, in its own line colour, and is not tappable`() {
         val ride = TripLeg(mode = TripMode.BUS, routeId = "route-45", routeShortName = "45")
-        val rideStyle = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt())
+        val rideStyle = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt(), palette = PALETTE)
 
-        val badge = itineraryRouteBadges(
+        val badge = labelsFor(
             listOf(
                 drawable(0, TripLeg(mode = TripMode.WALK), northward, ItineraryLegKind.WALK),
                 ItineraryDrawableLeg(1, ride, eastward, rideStyle)
@@ -48,7 +48,7 @@ class ItineraryRouteBadgesTest {
         val first = TripLeg(mode = TripMode.BUS, routeId = "route-5", routeShortName = "5")
         val second = TripLeg(mode = TripMode.BUS, routeId = "route-5", routeShortName = "5")
 
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(drawable(0, first, eastward), drawable(2, second, northward))
         )
 
@@ -57,7 +57,7 @@ class ItineraryRouteBadgesTest {
 
     @Test
     fun `two routes ridden along the same corridor are labelled apart`() {
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(
                 drawable(0, TripLeg(mode = TripMode.BUS, routeId = "a", routeShortName = "A"), eastward),
                 drawable(1, TripLeg(mode = TripMode.RAIL, routeId = "b", routeShortName = "B"), eastward)
@@ -72,7 +72,7 @@ class ItineraryRouteBadgesTest {
     fun `OTP1 legs, which identify no route, are grouped by the name they display`() {
         // An OTP1 response names a route without identifying it, so the displayed name is all these two
         // legs have to be recognized as one ride by — they still get a single shared label.
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(
                 drawable(0, TripLeg(mode = TripMode.BUS, routeId = null, route = "45"), eastward),
                 drawable(1, TripLeg(mode = TripMode.BUS, routeId = null, route = "45"), northward)
@@ -87,7 +87,7 @@ class ItineraryRouteBadgesTest {
         val nameless = TripLeg(mode = TripMode.BUS, routeId = "route-x")
         val degenerate = TripLeg(mode = TripMode.BUS, routeId = "route-y", routeShortName = "Y")
 
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(
                 drawable(0, nameless, eastward),
                 drawable(1, degenerate, listOf(GeoPoint(0.0, 0.0)))
@@ -103,7 +103,7 @@ class ItineraryRouteBadgesTest {
         // joined badge doesn't — the routes are interchangeable, so the label reads the same either way.
         val ride = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
 
-        val badge = itineraryRouteBadges(
+        val badge = labelsFor(
             listOf(drawable(0, ride, eastward, interchangeable = listOf(interchangeable("1 Line"))))
         ).single()
 
@@ -117,12 +117,12 @@ class ItineraryRouteBadgesTest {
         val ride = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
         val alternative = interchangeable("1 Line", routeColor = 0xFF0000FF.toInt())
 
-        val badge = itineraryRouteBadges(
+        val badge = labelsFor(
             listOf(drawable(0, ride, eastward, interchangeable = listOf(alternative)))
         ).single()
 
         assertEquals(
-            itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt()).color,
+            itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt(), palette = PALETTE).color,
             badge.routes.single { it.routeShortName == "1 Line" }.color
         )
     }
@@ -134,7 +134,7 @@ class ItineraryRouteBadgesTest {
         val first = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
         val second = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
 
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(
                 drawable(0, first, eastward, interchangeable = listOf(interchangeable("1 Line"))),
                 drawable(1, second, northward)
@@ -152,7 +152,7 @@ class ItineraryRouteBadgesTest {
         val first = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
         val second = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
 
-        val badges = itineraryRouteBadges(
+        val badges = labelsFor(
             listOf(
                 drawable(0, first, eastward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1a"))),
                 drawable(1, second, northward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1b")))
@@ -161,6 +161,9 @@ class ItineraryRouteBadgesTest {
 
         assertEquals(listOf(listOf("1 Line", "2 Line"), listOf("1 Line", "2 Line")), badges.map(::names))
     }
+
+    /** The labels [legs] would be drawn with, through the palette the directions view itself uses. */
+    private fun labelsFor(legs: List<ItineraryDrawableLeg>) = itineraryRouteBadges(legs, PALETTE)
 
     private fun names(badge: RouteBadge) = badge.routes.map(BadgedRoute::routeShortName)
 
@@ -188,5 +191,9 @@ class ItineraryRouteBadgesTest {
         points: List<GeoPoint>,
         kind: ItineraryLegKind = ItineraryLegKind.TRANSIT,
         interchangeable: List<ItinerarySubstitute> = emptyList()
-    ) = ItineraryDrawableLeg(index, leg, points, itineraryLegStyle(kind, routeColor = null), interchangeable)
+    ) = ItineraryDrawableLeg(index, leg, points, itineraryLegStyle(kind, routeColor = null, palette = PALETTE), interchangeable)
+
+    private companion object {
+        val PALETTE: RouteLinePalette = directionsRouteLinePalette(dark = false)
+    }
 }

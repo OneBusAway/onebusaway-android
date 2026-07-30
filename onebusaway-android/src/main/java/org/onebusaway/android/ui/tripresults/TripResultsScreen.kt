@@ -115,6 +115,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.map.riddenRouteHue
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
@@ -989,8 +990,10 @@ private fun TripLogList(
             expandedEntries = expandedEntries,
             neutral = neutral,
             // The agency's GTFS colour re-toned to stay legible on this theme's surface, so a near-black
-            // or near-white route can't hand us an invisible spine. Same system as the leg's route badge.
-            rideColors = { routeLineColors(routeColorInt(it.routeColorHex), dark, neutral) }
+            // or near-white route can't hand us an invisible spine. Same system as the leg's route badge —
+            // including its answer for a route that publishes no colour at all ([riddenRouteHue]), so a
+            // ferry's spine, its badge and its line on the map are one hue rather than three fallbacks.
+            rideColors = { routeLineColors(riddenRouteHue(routeColorInt(it.routeColorHex)), dark, neutral) }
         )
     }
 

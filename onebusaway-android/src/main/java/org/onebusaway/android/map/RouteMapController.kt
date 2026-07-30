@@ -113,6 +113,11 @@ class RouteMapController(
     // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
     private var highlightedSegment: List<GeoPoint> = emptyList()
 
+    // How this session's route colours are rendered: the basemap palette for an ordinary route launch, the
+    // directions one for a leg drilled into from a trip plan, so the corridor keeps the leg's badge colour.
+    // Set in start(); restored to the default in stop(), since a palette belongs to the view that asked for it.
+    private var palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
+
     // The trip whose leg was drilled into, already reduced to its middle journey-context weight (#2048).
     // It draws above unused route geometry but below the ridden segment, keeping the rest of the journey
     // visible around the selected leg. Empty for every non-directions launch. Set in start(); cleared in
@@ -272,6 +277,11 @@ class RouteMapController(
      * originating [directionStopId] once the vehicle appears; the on-load framing is deferred until that
      * decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent, and a
      * route frame is the fallback when no such vehicle exists.
+     *
+     * [palette] renders this session's route colours. It is the one thing a drill-in from the directions
+     * drawer changes about how the route is drawn: the leg the rider tapped keeps the badge colour it had in
+     * the itinerary, so the whole corridor it belongs to is drawn in that colour too rather than shifting to
+     * the basemap palette the moment the rider drills in.
      */
     fun start(
         routeId: String,
@@ -281,13 +291,15 @@ class RouteMapController(
         focusTripId: String? = null,
         highlightedSegment: List<GeoPoint> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
-        itineraryContext: List<RoutePolyline> = emptyList()
+        itineraryContext: List<RoutePolyline> = emptyList(),
+        palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
         this.highlightedSegment = highlightedSegment
         this.extraSegments = extraSegments
         this.itineraryContext = itineraryContext
+        this.palette = palette
         // (Re)built as the extra routes load / poll in onRouteLoaded + startVehiclePolling; cleared here
         // so a prior focus's routes/polls can't leak into this one during the load window.
         this.extraRouteMaps = emptyMap()
@@ -520,11 +532,11 @@ class RouteMapController(
 
     /**
      * The shown route's colour as this map draws it (also the band tint's basis): the agency's hue put
-     * through the shared route-line policy, or the default when the route carries no usable colour. This
-     * is what a ridden directions leg's highlighted segment is drawn in, so tapping a leg in the drawer
-     * lands on the same colour the itinerary's own line had.
+     * through this session's [palette], or the default when the route carries no usable colour. This is what
+     * a ridden directions leg's highlighted segment is drawn in, so tapping a leg in the drawer lands on the
+     * same colour the itinerary's own line had — which is why the palette travels with the drill-in.
      */
-    private fun currentRouteColor(): Int = mapRouteLineColorOrNull((_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
+    private fun currentRouteColor(): Int = palette.lineColor((_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -570,7 +582,7 @@ class RouteMapController(
         val badgePoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS / 2) ?: return null
         val endSeg = neighborShape.segmentIndex(CONTINUATION_LINE_LENGTH_METERS)
         val arrowPoint = neighborShape.interpolate(CONTINUATION_LINE_LENGTH_METERS, endSeg) ?: return null
-        val lineColor = mapRouteLineColorOrNull(neighbor.routeColor) ?: CONTINUATION_FALLBACK_LINE_COLOR
+        val lineColor = palette.lineColor(neighbor.routeColor) ?: CONTINUATION_FALLBACK_LINE_COLOR
         return RouteContinuation(
             polyline = RoutePolyline(
                 color = lineColor,
@@ -612,6 +624,7 @@ class RouteMapController(
         highlightedSegment = emptyList()
         extraSegments = emptyList()
         itineraryContext = emptyList()
+        palette = BASEMAP_ROUTE_LINE_PALETTE
         extraRouteMaps = emptyMap()
         focusedVehiclePathsByRoute = emptyMap()
         extraPolls = emptyMap()
@@ -987,7 +1000,7 @@ class RouteMapController(
     /**
      * The drawn lines for [directionId]'s shape: the selected direction's own travel-ordered shape
      * (with direction arrows), or the whole-route merged shape drawn undirected when [directionId] is
-     * null. Puts the route's GTFS colour through the map's route-line policy; the render layer picks the
+     * null. Puts the route's GTFS colour through this session's [palette]; the render layer picks the
      * fallback when the route has no usable colour of its own. Uses [focusedRoutePolyline], the same complete line presentation as a route selected
      * from focused-stop mode. shapeForDirection pairs the drawn shape with its directionality, so
      * arrows are stamped only when the direction's own travel-ordered shape is used — never on the
@@ -999,7 +1012,7 @@ class RouteMapController(
     private fun directionPolylines(route: RouteMap, directionId: Int?): List<RoutePolyline> {
         val shape = route.shapeForDirection(directionId)
         // One colour for the whole shape — a gapped route draws several polylines, all the same route.
-        val color = mapRouteLineColorOrNull(route.route?.color)
+        val color = palette.lineColor(route.route?.color)
         return shape.polylines.map { points ->
             focusedRoutePolyline(color = color, points = points, directional = shape.directional)
         }
@@ -1182,7 +1195,7 @@ class RouteMapController(
         // drawn color and passes through, while an agency's GTFS color goes through the map's route-line
         // policy (#2041) first. Skipping that policy here would put the disc on the raw agency color
         // while its line drew the normalized one — the disagreement this resolution exists to prevent.
-        return assigned ?: mapRouteLineColorOrNull(response.route(trip.routeId)?.color)
+        return assigned ?: palette.lineColor(response.route(trip.routeId)?.color)
     }
 }
 

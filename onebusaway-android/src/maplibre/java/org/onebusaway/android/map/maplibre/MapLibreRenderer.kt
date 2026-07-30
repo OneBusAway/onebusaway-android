@@ -50,7 +50,6 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.ROUTE_LINE_CASE_EXTRA_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
@@ -134,7 +133,7 @@ class MapLibreRenderer(
         // theme, because the basemap it separates its line from does.
         caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
         // maplibre annotation widths are already in dp, so no density conversion is involved.
-        caseExtraWidth = ROUTE_LINE_CASE_EXTRA_DP
+        caseExtraWidth = { it.case.extraWidthDp }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route

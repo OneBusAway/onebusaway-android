@@ -23,7 +23,7 @@ package org.onebusaway.android.map.render
  * against the last-drawn widths, the native width patch, the three-field state update, and the
  * camera-settle width resync all live here once.
  *
- * It also owns the *case* pairing (#2082): a [RoutePolyline] that asks to be [RoutePolyline.cased] draws as two
+ * It also owns the *case* pairing (#2082): a [RoutePolyline] that asks for a [RouteLineCase] draws as two
  * native lines — the case beneath its own stroke — and "create both, remove both, resize both, case underneath"
  * is the same species of bookkeeping as everything above, so it belongs here rather than in each flavor.
  *
@@ -31,8 +31,9 @@ package org.onebusaway.android.map.render
  * type: how to resolve a line's pixel width at a zoom ([widthOf]), how to create a native line
  * ([createLine]), how to remove a batch of them ([removeLines]), how to patch a live line's width
  * ([setWidth]), what colour a case draws in ([caseColorOf] — theme-dependent, so it needs the flavor's
- * `Context`), and how much wider a case is stroked ([caseExtraWidth], in whatever width unit that flavor's
- * [widthOf] returns). Everything else — the bookkeeping the fixes were about — is shared.
+ * `Context`), and how much wider a given line's case is stroked ([caseExtraWidth] — per line, since the two
+ * case weights differ, in whatever width unit that flavor's [widthOf] returns). Everything else — the
+ * bookkeeping the fixes were about — is shared.
  *
  * Not thread-safe: every method mutates native map state and must run on the map's main thread, which
  * is where both renderers already call it.
@@ -43,13 +44,13 @@ class RoutePolylineReconciler<NativeLine>(
     private val removeLines: (List<NativeLine>) -> Unit,
     private val setWidth: (NativeLine, Float) -> Unit,
     private val caseColorOf: (RoutePolyline) -> Int,
-    private val caseExtraWidth: Float
+    private val caseExtraWidth: (RoutePolyline) -> Float
 ) {
     /**
      * One drawn line: its stroke, plus the wider case (halo) stroke beneath it when the line asked for one.
      * Held as a pair so a case cannot outlive its line or drift out of sync with its width.
      */
-    private class Drawn<NativeLine>(val case: NativeLine?, val line: NativeLine) {
+    private class Drawn<NativeLine>(val case: NativeLine?, val line: NativeLine, val caseExtraWidth: Float) {
         /** Both strokes, case first — the order they were added, and so the order they draw. */
         val natives: List<NativeLine> get() = listOfNotNull(case, line)
     }
@@ -119,10 +120,16 @@ class RoutePolylineReconciler<NativeLine>(
      * order they were added, which is the same thing that layers the polyline list itself, so creating the case
      * ahead of its own stroke is what puts it underneath.
      */
-    private fun create(polyline: RoutePolyline, width: Float): Drawn<NativeLine> = Drawn(
-        case = if (polyline.cased) createLine(polyline.asCase(caseColorOf(polyline)), width + caseExtraWidth) else null,
-        line = createLine(polyline, width)
-    )
+    private fun create(polyline: RoutePolyline, width: Float): Drawn<NativeLine> {
+        val extra = caseExtraWidth(polyline)
+        return Drawn(
+            case = if (polyline.case != RouteLineCase.NONE) createLine(polyline.asCase(caseColorOf(polyline)), width + extra) else null,
+            line = createLine(polyline, width),
+            // Retained with the pair: a width resync patches the case from the line's new width, and the
+            // amount to add is a property of the case that was drawn, not of the reconcile doing the patching.
+            caseExtraWidth = extra
+        )
+    }
 
     private fun Drawn<NativeLine>.applyWidth(width: Float) {
         setWidth(line, width)
@@ -137,4 +144,4 @@ class RoutePolylineReconciler<NativeLine>(
  * (its dash rhythm, and on gms the cheap solid-colour draw path a non-directional line takes) rather than each
  * flavor rebuilding a parallel one that has to be kept in step.
  */
-private fun RoutePolyline.asCase(color: Int) = copy(color = color, directional = false, cased = false)
+private fun RoutePolyline.asCase(color: Int) = copy(color = color, directional = false, case = RouteLineCase.NONE)

@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
@@ -24,6 +25,7 @@ import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.GeoPoint
@@ -85,8 +87,8 @@ class RouteSegmentHighlightTest {
         assertEquals(true, overlay.directional)
         // Both halves of the selected route carry a case, so the approach and the ride read as one line
         // rather than as two things that happen to meet.
-        assertTrue(approach.cased)
-        assertTrue(overlay.cased)
+        assertEquals(RouteLineCase.SELECTION, approach.case)
+        assertEquals(RouteLineCase.SELECTION, overlay.case)
     }
 
     @Test
@@ -110,9 +112,9 @@ class RouteSegmentHighlightTest {
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
         // Only the selected route is cased: the rest of the rider's journey is context, not selection.
-        assertFalse(result[1].cased)
-        assertTrue(result[0].cased)
-        assertTrue(result[2].cased)
+        assertNotEquals(RouteLineCase.SELECTION, result[1].case)
+        assertEquals(RouteLineCase.SELECTION, result[0].case)
+        assertEquals(RouteLineCase.SELECTION, result[2].case)
     }
 
     @Test

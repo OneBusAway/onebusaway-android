@@ -21,6 +21,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.directions.model.routeDisplayShortName
+import org.onebusaway.android.map.riddenRouteHue
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.inInterchangeableOrder
@@ -122,5 +123,13 @@ internal fun TripLeg.plannedBadge(): RouteBadge? = routeDisplayLabel()?.let { Ro
 /** An interchangeable route's roundel, alongside [plannedBadge] in the same leg's badge. */
 internal fun InterchangeableRoute.badge(): RouteBadge = RouteBadge(displayName, badgeColor(routeColor))
 
-/** A wire route color as a badge color: OTP hands over a bare hex, but tolerate a leading '#'. */
-private fun badgeColor(wireHex: String?): Int? = parseObaHexColor(wireHex?.removePrefix("#"))
+/**
+ * A wire route color as a badge color: OTP hands over a bare hex, but tolerate a leading '#'.
+ *
+ * A route publishing nothing usable takes the colourless-ride hue rather than leaving the badge to fall
+ * back on its own, because the map draws that ride's line in exactly that hue ([riddenRouteHue]) — and a
+ * badge picking the neutral theme chip instead is how a WSF ferry came to sit as a grey roundel beside its
+ * own coral line. The hue, not a rendered colour: the chip still re-tones it for the active theme, which is
+ * the one thing this pure, `Context`-free layer can't do.
+ */
+private fun badgeColor(wireHex: String?): Int = riddenRouteHue(parseObaHexColor(wireHex?.removePrefix("#")))

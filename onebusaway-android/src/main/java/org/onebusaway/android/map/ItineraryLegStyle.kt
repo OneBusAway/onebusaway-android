@@ -27,11 +27,13 @@ import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.inInterchangeableOrder
+import org.onebusaway.android.util.routeColorHctOrNull
 
 /**
  * How one trip-plan itinerary leg is stroked on the directions map (#2041).
@@ -40,8 +42,9 @@ import org.onebusaway.android.util.inInterchangeableOrder
  * everything else — so a walk, an own-bike ride and a bikeshare ride were indistinguishable, and the
  * route colour the option card and the directions drawer were already showing never reached the map at
  * all. Here each leg's stroke is decided from its mode, and a ride keeps its own route's hue, rendered by
- * [mapRouteLineColor] at the same chroma and tone as every other route line on this map — so a leg reads
- * as one colour whether the rider looks at the map, the drawer beside it or the option card above.
+ * the [RouteLinePalette] the caller hands in — [directionsRouteLinePalette] for every line the directions
+ * view draws, which is the badge's own colour, so a leg is literally the same colour as the badge naming it
+ * in the drawer beside it and on the option card above.
  *
  * Pure and free of `android.graphics` (the colour science is Material's own JVM-side HCT), so
  * `ItineraryLegStyleTest` covers the whole table on the JVM. Parsing the wire hex is the one part that
@@ -52,7 +55,8 @@ internal data class ItineraryLegStyle(
     val widthProfile: RouteLineWidthProfile,
     val dash: RouteLineDash,
     val directional: Boolean,
-    val roundCaps: Boolean
+    val roundCaps: Boolean,
+    val case: RouteLineCase
 )
 
 /**
@@ -80,29 +84,49 @@ internal fun TripLeg.legKind(): ItineraryLegKind = when {
 
 /**
  * The stroke for a [kind] leg, given its already-parsed GTFS [routeColor] (null for every non-transit
- * kind, and for a ride whose agency publishes no colour).
+ * kind, and for a ride whose agency publishes no colour), rendered by [palette].
+ *
+ * [palette] reaches the **ride** only. A ride is faded to the badge's own colour because it is read against
+ * the badge that names it (see [directionsRouteLinePalette]); an on-street leg has no badge — the drawer
+ * marks it with a mode glyph, not a route roundel — so there is no parity to keep, and nothing to buy for
+ * the contrast it would cost. Every mode leg therefore keeps [BASEMAP_ROUTE_LINE_PALETTE], which is what
+ * every other line on this map is drawn with.
+ *
+ * So the palette is now one more way the two kinds of leg differ, alongside width, dash and chevrons: a
+ * ride carries its route's identity and is toned to match how that identity is written elsewhere, while a
+ * mode leg only has to read as "you walk here" against the basemap.
  *
  * On-street legs are dashed and thinner than the ride they connect to, mirroring the directions
  * drawer, where a walk is a dashed spine and a ride a solid one. (The MapLibre renderer draws every
  * line solid, so there the distinction rests on colour and width alone.)
  *
- * They also drop the travel-direction chevrons, which a dashed stroke can't carry: the chevron texture
- * is stamped along the line, so the dash pattern chops it into fragments and the two read as one
- * confused broken line rather than as either. A ride keeps them — it's solid, and which way along the
- * corridor you're carried is worth saying.
+ * **No itinerary leg stamps travel-direction chevrons.** A dashed on-street stroke never could — the chevron
+ * texture is stamped along the line, so the dash chops it into fragments and the two read as one confused
+ * broken line rather than as either. A ride dropped them with the badge palette: it is drawn in a faded,
+ * badge-toned colour now and wears a hairline case to hold that colour off the basemap, and an arrow texture
+ * under a hairline edge is noise rather than direction. Which way the rider is carried is read from the
+ * drawer's ordered rows and from the leg's endpoint bulbs instead.
+ *
+ * A ride also carries [RouteLineCase.OUTLINE] for that reason — every ride, so the edge says nothing about
+ * selection; the rider's selected leg steps up to [RouteLineCase.SELECTION] ([withCase]). A mode leg has no
+ * case, as it has no fading to compensate for.
  */
-internal fun itineraryLegStyle(kind: ItineraryLegKind, routeColor: Int?): ItineraryLegStyle = when (kind) {
+internal fun itineraryLegStyle(
+    kind: ItineraryLegKind,
+    routeColor: Int?,
+    palette: RouteLinePalette
+): ItineraryLegStyle = when (kind) {
     ItineraryLegKind.TRANSIT -> ItineraryLegStyle(
-        // The agency's own colour when it has a usable one; otherwise every ride shares the transit
-        // anchor, as they all did before. Giving colourless rides distinct auto-assigned hues (the way
-        // focused-stop adjacency does) is the rest of #2041, not this pass.
-        color = mapRouteLineColorOrNull(routeColor) ?: anchorColor(TRANSIT_HUE_ANCHOR),
+        color = anchorColor(riddenRouteHue(routeColor), palette),
         widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
         dash = RouteLineDash.NONE,
-        directional = true,
-        roundCaps = true
+        directional = false,
+        roundCaps = true,
+        case = RouteLineCase.OUTLINE
     )
 
+    // Deliberately not [palette]: see the note above — a mode leg has no badge to match, so it stays on
+    // the map's own rendering rather than being faded for a parity that doesn't exist.
     ItineraryLegKind.WALK -> street(WALK_HUE_ANCHOR)
     ItineraryLegKind.BIKE -> street(BIKE_HUE_ANCHOR)
     ItineraryLegKind.BIKESHARE -> street(BIKESHARE_HUE_ANCHOR)
@@ -188,7 +212,10 @@ internal data class ItinerarySubstitute(val route: InterchangeableRoute, val rou
  * board either of two. A leg with no alternatives is labelled with its planned route alone, which is what
  * an OTP1 plan (no candidates at all) yields for every leg.
  */
-internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteBadge> {
+internal fun itineraryRouteBadges(
+    legs: List<ItineraryDrawableLeg>,
+    palette: RouteLinePalette
+): List<RouteBadge> {
     val rides = legs.mapNotNull { drawable ->
         if (drawable.leg.mode?.isTransit != true) return@mapNotNull null
         // A route that names itself in no way at all has nothing to label the line with.
@@ -212,7 +239,7 @@ internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteB
         rides.map { (_, ridden) ->
             val ride = ridden.first()
             RouteBadgeRequest(
-                routes = ride.badgedRoutes(),
+                routes = ride.badgedRoutes(palette),
                 paths = ridden.map { RouteBadgePath(it.drawable.points) }
                 // No tap target: see [RouteBadge.tap].
             )
@@ -229,36 +256,56 @@ private data class Ride(val identity: RideIdentity, val name: String, val drawab
      * way the drawer names it and drawn in the colour this map gives that route's line, which is the colour
      * it actually takes when the rider drills into the leg and the whole corridor is drawn (#2063).
      */
-    fun badgedRoutes(): List<BadgedRoute> = (
+    fun badgedRoutes(palette: RouteLinePalette): List<BadgedRoute> = (
         listOf(BadgedRoute(name, drawable.style.color)) +
             drawable.interchangeable.map { substitute ->
                 BadgedRoute(
                     substitute.route.displayName,
-                    itineraryLegStyle(ItineraryLegKind.TRANSIT, substitute.routeColor).color
+                    itineraryLegStyle(ItineraryLegKind.TRANSIT, substitute.routeColor, palette).color
                 )
             }
         ).inInterchangeableOrder(BadgedRoute::routeShortName)
 }
 
 private fun street(hueAnchor: Int) = ItineraryLegStyle(
-    color = anchorColor(hueAnchor),
+    color = anchorColor(hueAnchor, BASEMAP_ROUTE_LINE_PALETTE),
     widthProfile = ITINERARY_STREET_WIDTH_PROFILE,
     dash = RouteLineDash.TRAIL,
     directional = false,
-    roundCaps = false
+    roundCaps = false,
+    case = RouteLineCase.NONE
 )
 
 /**
- * A mode's hue [anchor] rendered at the map's route chroma and tone, so a mode leg carries exactly the
- * weight a route line does. The elvis stands in for a `!!`: [mapRouteLineColorOrNull] declines only an
+ * The hue a ride is *presented* in, wherever it is presented: the agency's own [routeColor] when it has a
+ * usable one, else [COLOURLESS_RIDE_HUE_ANCHOR]. A hue source, not a rendered colour — each surface still
+ * renders it through its own policy (the map line and the drawer badge through the badge tone, the drawer's
+ * leg spine through its on-surface tone), which is what lets this be shared by a Compose surface and a
+ * `Context`-free map controller alike.
+ *
+ * It exists because that fallback is the one thing the surfaces cannot each decide for themselves. They
+ * did: a WSF ferry (every WSF route publishes an empty colour) drew a coral line on the map, since the map
+ * substituted the anchor, beside a neutral grey badge in the drawer, since a badge substituted the theme's
+ * `surfaceVariant`. Same route, same wire field, same policy — and two different colours, because "no
+ * colour published" was answered twice.
+ *
+ * Giving *distinct* auto-assigned hues to the colourless rides of one itinerary (the way focused-stop
+ * adjacency does) is still the rest of #2041; when that lands it replaces this function's fallback, and
+ * every surface follows because they all read it here.
+ */
+internal fun riddenRouteHue(routeColor: Int?): Int = routeColor?.takeIf { routeColorHctOrNull(it) != null } ?: COLOURLESS_RIDE_HUE_ANCHOR
+
+/**
+ * A mode's hue [anchor] rendered by [palette] exactly as a route's own colour is, so a mode leg carries
+ * exactly the weight a route line does. The elvis stands in for a `!!`: a palette declines only an
  * achromatic source, and every anchor below is chromatic — which `ItineraryLegStyleTest` holds to, by
  * asserting every leg kind draws a colour above the achromatic floor.
  */
-private fun anchorColor(anchor: Int): Int = mapRouteLineColorOrNull(anchor) ?: anchor
+private fun anchorColor(anchor: Int, palette: RouteLinePalette): Int = palette.lineColor(anchor) ?: anchor
 
-// The mode hue anchors. Only each colour's *hue* survives — [mapRouteLineColor] supplies the chroma and
-// tone — so these read as "walking is green", not as literal strokes, and tuning one means moving it
-// around the hue circle. They're spread far apart, and away from the transit anchor, so no two modes of
+// The mode hue anchors. Only each colour's *hue* survives — [BASEMAP_ROUTE_LINE_PALETTE] supplies the
+// chroma and tone — so these read as "walking is green", not as literal strokes, and tuning one means moving
+// it around the hue circle. They're spread far apart, and away from the transit anchor, so no two modes of
 // one itinerary read as the same thing.
 private const val WALK_HUE_ANCHOR = 0xFF1D9914.toInt()
 private const val BIKE_HUE_ANCHOR = 0xFF007E8F.toInt()
@@ -269,6 +316,10 @@ private const val BIKE_HUE_ANCHOR = 0xFF007E8F.toInt()
 private const val BIKESHARE_HUE_ANCHOR = 0xFF3A4677.toInt()
 private const val CAR_HUE_ANCHOR = 0xFF8A6D00.toInt()
 
-// The fallback for a ride whose agency publishes no usable colour. It was OTP's green, which walking now
-// owns — a colourless ride takes the terracotta walking vacated rather than sit a few degrees off it.
-private const val TRANSIT_HUE_ANCHOR = 0xFFC4400F.toInt()
+/**
+ * The hue a ride whose agency publishes no usable colour is presented in — read through [riddenRouteHue],
+ * which is the one place that substitution happens, so the map line, the drawer badge and the leg spine
+ * cannot answer "no colour published" differently. It was OTP's green, which walking now owns; a colourless
+ * ride takes the terracotta walking vacated rather than sit a few degrees off it.
+ */
+internal const val COLOURLESS_RIDE_HUE_ANCHOR = 0xFFC4400F.toInt()

@@ -79,6 +79,32 @@ enum class RouteLineDash {
 }
 
 /**
+ * Whether a line is outlined, and how heavily. Named for what each weight *means*, since that is what
+ * decides which one a producer asks for:
+ *
+ *  - [NONE] — no case, the ordinary route line.
+ *  - [OUTLINE] — a hairline edge that holds a directions ride off the basemap. Every ride in a drawn
+ *    itinerary carries it, so it says nothing about selection; it is there because a faded, badge-toned
+ *    line has less of its own contrast to spend against the map than a full-strength one does.
+ *  - [SELECTION] — the heavier case marking the line the rider has selected (#2082). Selection used to be
+ *    said with a width, but the map already spends width on what a line *is* (a ride, an on-street leg,
+ *    route context), so saying two things with one channel left neither legible. It stays legible against
+ *    [OUTLINE] because it is twice the weight of it — selection is now a *heavier* edge, not the only edge.
+ *
+ * The widths are deliberately *not* on the zoom ramp: a case is an outline, and an outline that thins with
+ * its line stops separating it from the basemap at exactly the zoom where the line is hardest to pick out.
+ */
+enum class RouteLineCase(val widthDp: Float) {
+    NONE(0f),
+    OUTLINE(0.75f),
+    SELECTION(1.5f);
+
+    /** What this case adds to its line's *total* width — both sides. Derived here so no caller has to
+     *  remember that [widthDp] is per-side. */
+    val extraWidthDp: Float get() = widthDp * 2f
+}
+
+/**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
@@ -96,12 +122,10 @@ enum class RouteLineDash {
  * [RouteLineDash] names. Whether a renderer honors it is flavor-specific (the maplibre classic
  * annotation draws every line solid).
  *
- * [cased] asks the renderer to draw a *case* (halo) beneath this line: the same geometry stroked
- * [ROUTE_LINE_CASE_DP] wider on each side, immediately under the line itself. It marks the line the rider
- * has selected (#2082) — selection used to be said with a width, but the map already spends width on what a
- * line *is* (a ride, an on-street leg, route context), so saying two things with one channel left neither
- * legible. Renderers draw the pair as a unit; the case never carries chevrons, and follows the line's own
- * [dash] so a broken line's case breaks with it.
+ * [case] asks the renderer to draw a *case* (halo) beneath this line: the same geometry stroked
+ * [RouteLineCase.widthDp] wider on each side, immediately under the line itself. Renderers draw the pair as
+ * a unit; the case never carries chevrons, and follows the line's own [dash] so a broken line's case breaks
+ * with it.
  *
  * Only the *request* lives here, not a colour: a case works by separating its line from the basemap, and the
  * basemap flips with the theme, so its colour is the one route colour that has to be resolved against the
@@ -122,7 +146,7 @@ data class RoutePolyline(
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,
-    val cased: Boolean = false,
+    val case: RouteLineCase = RouteLineCase.NONE,
     val roundStartCap: Boolean = false,
     val roundEndCap: Boolean = false,
     val transforms: Set<RoutePolylineTransform> = emptySet()

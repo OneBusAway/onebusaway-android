@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -71,21 +72,30 @@ object TripPlanTestTags {
     const val FIELD_SUFFIX = "Field"
     const val PILL_SUFFIX = "Pill"
     const val SUGGESTION_SUFFIX = "Suggestion"
+
+    /** The tag prefix naming [slot]'s field. */
+    fun prefixFor(slot: TripEndpointSlot): String = when (slot) {
+        TripEndpointSlot.FROM -> FROM_PREFIX
+        TripEndpointSlot.TO -> TO_PREFIX
+    }
 }
+
+/** The rider-facing name of an endpoint ("From" / "To"), shared by the form and the map-pick overlay. */
+@get:StringRes
+val TripEndpointSlot.labelRes: Int
+    get() = when (this) {
+        TripEndpointSlot.FROM -> R.string.trip_plan_from
+        TripEndpointSlot.TO -> R.string.trip_plan_to
+    }
 
 @Composable
 fun TripPlanForm(
     state: TripPlanFormState,
-    onFromQueryChange: (String) -> Unit,
-    onToQueryChange: (String) -> Unit,
-    onSelectFrom: (TripEndpoint.Geocoded) -> Unit,
-    onSelectTo: (TripEndpoint.Geocoded) -> Unit,
-    onClearFrom: () -> Unit,
-    onClearTo: () -> Unit,
-    onFromCurrentLocation: () -> Unit,
-    onToCurrentLocation: () -> Unit,
-    onFromPickOnMap: () -> Unit,
-    onToPickOnMap: () -> Unit,
+    onQueryChange: (TripEndpointSlot, String) -> Unit,
+    onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit,
+    onClear: (TripEndpointSlot) -> Unit,
+    onCurrentLocation: (TripEndpointSlot) -> Unit,
+    onPickOnMap: (TripEndpointSlot) -> Unit,
     onSetArriving: (Boolean) -> Unit,
     onPickDate: () -> Unit,
     onPickTime: () -> Unit,
@@ -108,28 +118,20 @@ fun TripPlanForm(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AddressField(
-                    label = stringResource(R.string.trip_plan_from),
-                    tagPrefix = TripPlanTestTags.FROM_PREFIX,
-                    endpoint = state.from,
-                    suggestions = state.fromSuggestions,
-                    onQueryChange = onFromQueryChange,
-                    onSelect = onSelectFrom,
-                    onClear = onClearFrom,
-                    onCurrentLocation = onFromCurrentLocation,
-                    onPickOnMap = onFromPickOnMap
-                )
-                AddressField(
-                    label = stringResource(R.string.trip_plan_to),
-                    tagPrefix = TripPlanTestTags.TO_PREFIX,
-                    endpoint = state.to,
-                    suggestions = state.toSuggestions,
-                    onQueryChange = onToQueryChange,
-                    onSelect = onSelectTo,
-                    onClear = onClearTo,
-                    onCurrentLocation = onToCurrentLocation,
-                    onPickOnMap = onToPickOnMap
-                )
+                // Origin then destination, in declaration order — the enum is the list of fields.
+                TripEndpointSlot.entries.forEach { slot ->
+                    AddressField(
+                        label = stringResource(slot.labelRes),
+                        tagPrefix = TripPlanTestTags.prefixFor(slot),
+                        endpoint = state.endpointAt(slot),
+                        suggestions = state.suggestionsAt(slot),
+                        onQueryChange = { onQueryChange(slot, it) },
+                        onSelect = { onSelect(slot, it) },
+                        onClear = { onClear(slot) },
+                        onCurrentLocation = { onCurrentLocation(slot) },
+                        onPickOnMap = { onPickOnMap(slot) }
+                    )
+                }
             }
             Column {
                 IconButton(onClick = onReverse) {
@@ -416,11 +418,8 @@ private fun TripPlanFormPreview() {
                 dateLabel = "June 10",
                 timeLabel = "3:45 PM"
             ),
-            onFromQueryChange = {}, onToQueryChange = {},
-            onSelectFrom = {}, onSelectTo = {},
-            onClearFrom = {}, onClearTo = {},
-            onFromCurrentLocation = {}, onToCurrentLocation = {},
-            onFromPickOnMap = {}, onToPickOnMap = {},
+            onQueryChange = { _, _ -> }, onSelect = { _, _ -> },
+            onClear = {}, onCurrentLocation = {}, onPickOnMap = {},
             onSetArriving = {}, onPickDate = {}, onPickTime = {},
             onReverse = {}, onAdvancedSettings = {}
         )

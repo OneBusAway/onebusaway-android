@@ -101,8 +101,9 @@ class TripPlanViewModel @Inject constructor(
     private val _planState = MutableStateFlow<PlanResult>(PlanResult.Idle)
     val planState: StateFlow<PlanResult> = _planState.asStateFlow()
 
-    private val fromQueries = MutableStateFlow("")
-    private val toQueries = MutableStateFlow("")
+    // The in-progress autocomplete query per endpoint, each feeding its own debounced suggestion
+    // pipeline below. Keyed by slot rather than held as a from/to pair so the pipeline is written once.
+    private val queries = TripEndpointSlot.entries.associateWith { MutableStateFlow("") }
 
     // Reverse-geocoded names, keyed by the coordinate that produced them. Re-planning re-submits the same
     // points — a date or arrive-by change, an advanced-settings apply, or editing *the other* endpoint all
@@ -121,16 +122,13 @@ class TripPlanViewModel @Inject constructor(
     private val planInputs = Channel<TripPlanParams?>(Channel.CONFLATED)
 
     init {
-        fromQueries
-            .debounce(SUGGEST_DEBOUNCE_MS)
-            .mapLatest(::suggestionsFor)
-            .onEach { suggestions -> _formState.update { it.copy(fromSuggestions = suggestions) } }
-            .launchIn(viewModelScope)
-        toQueries
-            .debounce(SUGGEST_DEBOUNCE_MS)
-            .mapLatest(::suggestionsFor)
-            .onEach { suggestions -> _formState.update { it.copy(toSuggestions = suggestions) } }
-            .launchIn(viewModelScope)
+        queries.forEach { (slot, typed) ->
+            typed
+                .debounce(SUGGEST_DEBOUNCE_MS)
+                .mapLatest(::suggestionsFor)
+                .onEach { suggestions -> _formState.update { it.withSuggestions(slot, suggestions) } }
+                .launchIn(viewModelScope)
+        }
         planInputs.receiveAsFlow()
             .mapLatest { params ->
                 if (params == null) {
@@ -188,16 +186,11 @@ class TripPlanViewModel @Inject constructor(
         return name?.also { reverseNames[lat to lon] = it }
     }
 
-    fun onFromQueryChange(query: String) {
-        _formState.update { it.copy(from = TripEndpoint.FreeText(query)) }
-        fromQueries.value = query
+    /** Types into [slot]'s field, which starts a debounced autocomplete lookup for it. */
+    fun onQueryChange(slot: TripEndpointSlot, query: String) {
+        _formState.update { it.withTypedQuery(slot, query) }
+        queries.getValue(slot).value = query
         // Editing over a resolved endpoint makes the form non-submittable — drop any stale route too.
-        replanOrClearResult()
-    }
-
-    fun onToQueryChange(query: String) {
-        _formState.update { it.copy(to = TripEndpoint.FreeText(query)) }
-        toQueries.value = query
         replanOrClearResult()
     }
 
@@ -206,10 +199,6 @@ class TripPlanViewModel @Inject constructor(
         _formState.update { it.withEndpoint(slot, endpoint) }
         replanOrClearResult()
     }
-
-    fun setFrom(endpoint: TripEndpoint) = setEndpoint(TripEndpointSlot.FROM, endpoint)
-
-    fun setTo(endpoint: TripEndpoint) = setEndpoint(TripEndpointSlot.TO, endpoint)
 
     /**
      * Sets [slot] to the device's current location, or returns false when there's no fix to set it to
@@ -236,15 +225,10 @@ class TripPlanViewModel @Inject constructor(
     private fun currentLocation(): TripEndpoint.CurrentLocation? = locationRepository.lastKnownLocation()
         ?.let { TripEndpoint.CurrentLocation(lat = it.latitude, lon = it.longitude) }
 
-    /** Clears the origin back to an empty editable field (the pill's ✕), dropping any stale result. */
-    fun clearFrom() {
-        fromQueries.value = ""
-        setEndpoint(TripEndpointSlot.FROM, TripEndpoint.FreeText())
-    }
-
-    fun clearTo() {
-        toQueries.value = ""
-        setEndpoint(TripEndpointSlot.TO, TripEndpoint.FreeText())
+    /** Clears an endpoint back to an empty editable field (the pill's ✕), dropping any stale result. */
+    fun clearEndpoint(slot: TripEndpointSlot) {
+        queries.getValue(slot).value = ""
+        setEndpoint(slot, TripEndpoint.FreeText())
     }
 
     fun setDateTime(millis: Long) {

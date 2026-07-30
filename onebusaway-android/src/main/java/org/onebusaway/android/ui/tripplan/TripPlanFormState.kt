@@ -152,10 +152,31 @@ data class TripPlanFormState(
         TripEndpointSlot.TO -> to
     }
 
+    /** The autocomplete suggestions currently offered for [slot]. */
+    fun suggestionsAt(slot: TripEndpointSlot): List<TripEndpoint.Geocoded> = when (slot) {
+        TripEndpointSlot.FROM -> fromSuggestions
+        TripEndpointSlot.TO -> toSuggestions
+    }
+
     /** This form with [slot] set to [endpoint], dropping that field's now-stale suggestions. */
     fun withEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint): TripPlanFormState = when (slot) {
         TripEndpointSlot.FROM -> copy(from = endpoint, fromSuggestions = emptyList())
         TripEndpointSlot.TO -> copy(to = endpoint, toSuggestions = emptyList())
+    }
+
+    /**
+     * This form with [slot] being typed into. Unlike [withEndpoint] the suggestions stay put — they're
+     * what the rider is picking from, and the debounced lookup replaces them a moment later.
+     */
+    fun withTypedQuery(slot: TripEndpointSlot, query: String): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(from = TripEndpoint.FreeText(query))
+        TripEndpointSlot.TO -> copy(to = TripEndpoint.FreeText(query))
+    }
+
+    /** This form with [slot]'s autocomplete suggestions replaced by [suggestions]. */
+    fun withSuggestions(slot: TripEndpointSlot, suggestions: List<TripEndpoint.Geocoded>): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(fromSuggestions = suggestions)
+        TripEndpointSlot.TO -> copy(toSuggestions = suggestions)
     }
 
     /**

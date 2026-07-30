@@ -705,8 +705,7 @@ fun HomeScreen(
                                             DirectionsFormCard(
                                                 viewModel = tripPlanViewModel,
                                                 state = tripPlanFormState,
-                                                onPickFrom = { pickTarget = TripEndpointSlot.FROM },
-                                                onPickTo = { pickTarget = TripEndpointSlot.TO },
+                                                onPickEndpoint = { pickTarget = it },
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .statusBarsPadding()
@@ -799,14 +798,9 @@ fun HomeScreen(
                                 longPressPoint?.let { point ->
                                     val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     DirectionsLongPressMenu(
-                                        onFromHere = {
+                                        onChooseSlot = { slot ->
                                             homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointFromMap(TripEndpointSlot.FROM, mapPoint)
-                                            longPressPoint = null
-                                        },
-                                        onToHere = {
-                                            homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setEndpointFromMap(TripEndpointSlot.TO, mapPoint)
+                                            tripPlanViewModel.setEndpointFromMap(slot, mapPoint)
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }

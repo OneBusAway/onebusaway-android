@@ -120,6 +120,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
+import org.onebusaway.android.ui.tripplan.labelRes
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -138,8 +139,8 @@ import org.onebusaway.android.util.PreferenceUtils
  * [MapViewModel] directions controller — driven by [TripResultsSheet]'s selection.
  *
  * The address-book (contacts) picker was removed (#1936 tracks accepting place intents from other apps
- * instead). Map-pick is hoisted to the caller ([onPickFrom]/[onPickTo]); current-location, date/time,
- * and advanced settings are wired here.
+ * instead). Map-pick is hoisted to the caller ([DirectionsFormCard]'s `onPickEndpoint`);
+ * current-location, date/time, and advanced settings are wired here.
  */
 
 /**
@@ -150,8 +151,7 @@ import org.onebusaway.android.util.PreferenceUtils
 fun DirectionsFormCard(
     viewModel: TripPlanViewModel,
     state: TripPlanFormState,
-    onPickFrom: () -> Unit,
-    onPickTo: () -> Unit,
+    onPickEndpoint: (TripEndpointSlot) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -173,16 +173,11 @@ fun DirectionsFormCard(
         Column(Modifier.heightIn(max = maxHeight).verticalScroll(rememberScrollState())) {
             TripPlanForm(
                 state = state,
-                onFromQueryChange = viewModel::onFromQueryChange,
-                onToQueryChange = viewModel::onToQueryChange,
-                onSelectFrom = viewModel::setFrom,
-                onSelectTo = viewModel::setTo,
-                onClearFrom = viewModel::clearFrom,
-                onClearTo = viewModel::clearTo,
-                onFromCurrentLocation = { setCurrentLocation(context, viewModel, TripEndpointSlot.FROM) },
-                onToCurrentLocation = { setCurrentLocation(context, viewModel, TripEndpointSlot.TO) },
-                onFromPickOnMap = onPickFrom,
-                onToPickOnMap = onPickTo,
+                onQueryChange = viewModel::onQueryChange,
+                onSelect = viewModel::setEndpoint,
+                onClear = viewModel::clearEndpoint,
+                onCurrentLocation = { slot -> setCurrentLocation(context, viewModel, slot) },
+                onPickOnMap = onPickEndpoint,
                 onSetArriving = viewModel::setArriving,
                 onPickDate = { pickTripDate(activity, viewModel) },
                 onPickTime = { pickTripTime(activity, viewModel) },
@@ -457,8 +452,7 @@ private fun NoEtasText(modifier: Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DirectionsLongPressMenu(
-    onFromHere: () -> Unit,
-    onToHere: () -> Unit,
+    onChooseSlot: (TripEndpointSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -468,12 +462,12 @@ fun DirectionsLongPressMenu(
                 leadingContent = {
                     Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
                 },
-                modifier = Modifier.clickable(onClick = onFromHere)
+                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.FROM) }
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.directions_to_here)) },
                 leadingContent = { Icon(AppIcons.Place, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onToHere)
+                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.TO) }
             )
         }
     }
@@ -554,12 +548,7 @@ fun BoxScope.DirectionsPickOverlay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(
-                    when (target) {
-                        TripEndpointSlot.FROM -> R.string.trip_plan_from
-                        TripEndpointSlot.TO -> R.string.trip_plan_to
-                    }
-                ),
+                text = stringResource(target.labelRes),
                 style = MaterialTheme.typography.titleMedium
             )
             IconButton(onClick = onCancel) {

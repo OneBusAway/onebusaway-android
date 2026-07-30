@@ -76,8 +76,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -210,17 +215,25 @@ private val OPTION_BADGE_MAX_WIDTH = 110.dp
  * costs more than a card two lines tall. Chosen to keep the *next* card in view on a narrow (320dp)
  * screen; tune here.
  *
- * A ceiling on the *wrap*, not a clip: see [SymbolFlow] for the one case a card still exceeds it.
+ * It governs the **summary line**, which is what makes a card wide, and it governs where that line
+ * *breaks* rather than clipping it. So it is not quite a maximum on the card: the card still exceeds it
+ * for a single symbol too wide to break (see [SymbolFlow]), and it says nothing about the stats below,
+ * which are short enough not to need it.
  */
 private val OPTION_CARD_MAX_WIDTH = 200.dp
 
-/** The card's own padding — named because [OPTION_CARD_MAX_WIDTH] has to be net of it to bite. */
+/**
+ * The padding around each of the card's two sections. Applied per section rather than to the card, so
+ * the keyline between them can span the card edge to edge — which also means the gap either side of that
+ * keyline is twice this. One value, so the two sections' content cannot drift out of alignment.
+ */
 private val CARD_PADDING_HORIZONTAL = 12.dp
 private val CARD_PADDING_VERTICAL = 8.dp
+private val CARD_SECTION_PADDING =
+    PaddingValues(horizontal = CARD_PADDING_HORIZONTAL, vertical = CARD_PADDING_VERTICAL)
 
-/** The gap between two wrapped lines of the summary — matched to [SYMBOL_GAP] so the wrap reads as one
- *  evenly-spaced field of symbols rather than as two stacked rows. */
-private val SYMBOL_LINE_GAP = 4.dp
+/** Where the summary line breaks: the card's width, net of the padding it is drawn inside. */
+private val SUMMARY_WRAP_WIDTH = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL * 2
 
 /**
  * The keyline separating a card's summary line from its stats (#2081). Faded from the card's *own*
@@ -261,6 +274,10 @@ private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
 
 private val SYMBOL_GAP = 4.dp
 
+/** The gap between two wrapped lines of the summary — [SYMBOL_GAP] itself, so the wrap reads as one
+ *  evenly-spaced field of symbols rather than as two stacked rows, and stays so if that gap is retuned. */
+private val SYMBOL_LINE_GAP = SYMBOL_GAP
+
 /** A quiet keyline around a winning metric: enough separation to survive the selected card's tint. */
 private val WINNER_OUTLINE_WIDTH = 1.5.dp
 private val WINNER_OUTLINE_RADIUS = 4.dp
@@ -279,16 +296,11 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
-    val shortestTravelTime = WinnerCategory.SHORTEST_TRAVEL_TIME in winners
-    val leastWalking = WinnerCategory.LEAST_WALKING in winners
-    val earliestArrival = WinnerCategory.EARLIEST_ARRIVAL in winners
-    val latestDeparture = WinnerCategory.LATEST_DEPARTURE in winners
     val winnerDescriptions = buildList {
-        if (shortestTravelTime) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
-        if (leastWalking) add(stringResource(R.string.trip_plan_winner_least_walking))
-        if (earliestArrival) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
-        if (latestDeparture) add(stringResource(R.string.trip_plan_winner_latest_departure))
+        if (WinnerCategory.SHORTEST_TRAVEL_TIME in winners) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
+        if (WinnerCategory.LEAST_WALKING in winners) add(stringResource(R.string.trip_plan_winner_least_walking))
+        if (WinnerCategory.EARLIEST_ARRIVAL in winners) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
+        if (WinnerCategory.LATEST_DEPARTURE in winners) add(stringResource(R.string.trip_plan_winner_latest_departure))
     }
     Surface(
         color = background,
@@ -327,13 +339,8 @@ private fun OptionCard(
             // over an empty strip would be worse than the card simply starting at its stats.
             if (drawn.isNotEmpty()) {
                 SymbolFlow(
-                    wrapAt = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL * 2,
-                    horizontalGap = SYMBOL_GAP,
-                    verticalGap = SYMBOL_LINE_GAP,
-                    modifier = Modifier.padding(
-                        horizontal = CARD_PADDING_HORIZONTAL,
-                        vertical = CARD_PADDING_VERTICAL
-                    )
+                    wrapAt = SUMMARY_WRAP_WIDTH,
+                    modifier = Modifier.padding(CARD_SECTION_PADDING)
                 ) {
                     drawn.forEachIndexed { index, symbol ->
                         // A symbol travels with the chevron that follows it, as one unbreakable unit:
@@ -350,14 +357,7 @@ private fun OptionCard(
                 }
                 HorizontalDivider(color = LocalContentColor.current.copy(alpha = CARD_DIVIDER_ALPHA))
             }
-            StatsColumn(
-                option = option,
-                shortestTravelTime = shortestTravelTime,
-                leastWalking = leastWalking,
-                earliestArrival = earliestArrival,
-                latestDeparture = latestDeparture,
-                winnerOutlineColor = winnerOutlineColor
-            )
+            StatsColumn(option, winners)
         }
     }
 }
@@ -374,48 +374,41 @@ private fun OptionCard(
  * lose a route off the end of its own badge. [wrapAt] is therefore where the line *breaks*, not a width
  * the card is cut to.
  *
- * The packing is stable under re-measurement, which is what lets the card take its width from this
- * layout's intrinsic one ([OptionCard]): every line fits inside the width reported here, so packing
- * again at exactly that width breaks the lines in the same places.
+ * The card takes its width from this layout's intrinsic one ([OptionCard]), which [SymbolFlowPolicy]
+ * answers from the same packing the measure pass performs — so the two cannot disagree and leave the
+ * card carrying a line it then refuses to fill.
  */
 @Composable
-private fun SymbolFlow(
-    wrapAt: Dp,
-    horizontalGap: Dp,
-    verticalGap: Dp,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-    Layout(content, modifier) { measurables, constraints ->
-        val gapX = horizontalGap.roundToPx()
-        val gapY = verticalGap.roundToPx()
+private fun SymbolFlow(wrapAt: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content, modifier, remember(wrapAt) { SymbolFlowPolicy(wrapAt) })
+}
+
+/**
+ * [SymbolFlow]'s measurement. A policy object rather than a measure lambda so the layout can state its
+ * own **intrinsic** width: the card is sized by asking for it ([OptionCard]), and the default intrinsic
+ * a lambda inherits re-runs the whole measure block at an unbounded width and hopes the answer matches.
+ * Here both paths break the lines with the same [packLines] call, so the width the card takes is the
+ * width this layout then packs into, by construction rather than by argument.
+ */
+private class SymbolFlowPolicy(private val wrapAt: Dp) : MeasurePolicy {
+
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val gapX = SYMBOL_GAP.roundToPx()
+        val gapY = SYMBOL_LINE_GAP.roundToPx()
+        // Measured unbounded — the point of the whole layout, see [SymbolFlow].
+        val placeables = measurables.map { it.measure(Constraints()) }
+        val widths = placeables.map { it.width }
         // Whichever binds first: the line we chose, or a genuinely narrower parent.
-        val limit = minOf(constraints.maxWidth, wrapAt.roundToPx())
-        val lines = mutableListOf<MutableList<Placeable>>()
-        var lineWidth = 0
-        measurables.forEach { measurable ->
-            val placeable = measurable.measure(Constraints())
-            val line = lines.lastOrNull()
-            if (line == null || lineWidth + gapX + placeable.width > limit) {
-                lines += mutableListOf(placeable)
-                lineWidth = placeable.width
-            } else {
-                line += placeable
-                lineWidth += gapX + placeable.width
-            }
-        }
-        val lineHeights = lines.map { line -> line.maxOf { it.height } }
-        val width = constraints.constrainWidth(
-            lines.maxOfOrNull { line -> line.sumOf { it.width } + gapX * (line.size - 1) } ?: 0
-        )
-        val height = constraints.constrainHeight(
-            lineHeights.sum() + gapY * (lines.size - 1).coerceAtLeast(0)
-        )
-        layout(width, height) {
+        val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
+        val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
+        val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)
+        val height = constraints.constrainHeight(lineHeights.sum() + gapY * (lines.size - 1))
+        return layout(width, height) {
             var y = 0
             lines.forEachIndexed { index, line ->
                 var x = 0
-                line.forEach { placeable ->
+                line.forEach {
+                    val placeable = placeables[it]
                     // Centred in its line, as the symbols were in the single row they used to share: a
                     // chevron is half a glyph tall, and belongs level with what it joins.
                     placeable.placeRelative(x, y + (lineHeights[index] - placeable.height) / 2)
@@ -425,7 +418,46 @@ private fun SymbolFlow(
             }
         }
     }
+
+    /** The width [measure] will report when nothing narrower is imposed — the same packing, asked early. */
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
+        val gapX = SYMBOL_GAP.roundToPx()
+        val widths = measurables.map { it.maxIntrinsicWidth(Constraints.Infinity) }
+        return packLines(widths, wrapAt.roundToPx(), gapX).maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0
+    }
 }
+
+/**
+ * Greedy line breaking: which symbols land on each line, given their [widths] and the [gap] between two
+ * of them. A symbol wider than [limit] all the same opens — and keeps — a line of its own, which is what
+ * widens the card rather than cutting the symbol down (see [SymbolFlow]).
+ *
+ * Every line comes out no wider than the widest, so packing again at that width breaks the lines in the
+ * same places: a line stopped where the *next* symbol would have passed [limit], and [limit] can only
+ * have shrunk to a width this same line already fitted.
+ */
+private fun packLines(widths: List<Int>, limit: Int, gap: Int): List<IntRange> {
+    val lines = mutableListOf<IntRange>()
+    var start = 0
+    var packed = 0
+    widths.forEachIndexed { index, width ->
+        when {
+            // The first symbol on a line takes it whatever its width — nothing is ever cut to fit.
+            index == start -> packed = width
+            packed + gap + width <= limit -> packed += gap + width
+            else -> {
+                lines += start until index
+                start = index
+                packed = width
+            }
+        }
+    }
+    if (widths.isNotEmpty()) lines += start until widths.size
+    return lines
+}
+
+/** How wide one of [packLines]' lines is: its symbols, plus a [gap] between each neighbouring pair. */
+private fun lineWidth(widths: List<Int>, line: IntRange, gap: Int): Int = line.sumOf { widths[it] } + gap * (line.last - line.first)
 
 /** One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel. */
 @Composable
@@ -459,19 +491,18 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
     }
 }
 
-/** The lower half of an option card: what the trip costs (duration, walking) and when it runs. */
+/**
+ * The lower half of an option card: what the trip costs (duration, walking) and when it runs, each metric
+ * outlined where it wins its category. Takes the [winners] set itself rather than a flag per category, so
+ * a new [WinnerCategory] is one line here and nothing at the call site.
+ */
 @Composable
-private fun StatsColumn(
-    option: ItineraryOption,
-    shortestTravelTime: Boolean,
-    leastWalking: Boolean,
-    earliestArrival: Boolean,
-    latestDeparture: Boolean,
-    winnerOutlineColor: Color
-) {
+private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     val context = LocalContext.current
+    val leastWalking = WinnerCategory.LEAST_WALKING in winners
+    val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
     Column(
-        modifier = Modifier.padding(horizontal = CARD_PADDING_HORIZONTAL, vertical = CARD_PADDING_VERTICAL),
+        modifier = Modifier.padding(CARD_SECTION_PADDING),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Duration + walk distance read as one stat group, so they sit tighter together than the
@@ -481,7 +512,7 @@ private fun StatsColumn(
             MetricRow(
                 MetricGlyph.DURATION,
                 contentDescription = null,
-                winner = shortestTravelTime,
+                winner = WinnerCategory.SHORTEST_TRAVEL_TIME in winners,
                 outlineColor = winnerOutlineColor
             ) {
                 EtaDurationText(
@@ -514,9 +545,9 @@ private fun StatsColumn(
         val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
         val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ScheduleMetric(startText, winner = latestDeparture, outlineColor = winnerOutlineColor)
+            ScheduleMetric(startText, winner = WinnerCategory.LATEST_DEPARTURE in winners, outlineColor = winnerOutlineColor)
             Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
-            ScheduleMetric(endText, winner = earliestArrival, outlineColor = winnerOutlineColor)
+            ScheduleMetric(endText, winner = WinnerCategory.EARLIEST_ARRIVAL in winners, outlineColor = winnerOutlineColor)
         }
     }
 }

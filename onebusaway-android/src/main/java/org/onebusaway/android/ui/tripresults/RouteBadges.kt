@@ -19,6 +19,7 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.ROUTE_NAME_ORDER
@@ -38,8 +39,10 @@ import org.onebusaway.android.util.parseObaHexColor
  * interline is one ride the rider is never asked to act on. Which of the two joins it takes is decided
  * here, once, for both places a ride is badged:
  *  - a ride the vehicle changes route during badges those routes in travel order, joined by chevrons
- *    (`5 > 12`, #2049) — the seam is a fact about the ride, so the badge has to carry it, or the picker
- *    promises a 5 all the way and the drawer's own "stay on board" row contradicts it;
+ *    (`5 > 12`, #2049) — the seam is a fact about the ride, so a badge standing for the *whole* ride has
+ *    to carry it, or the picker promises a 5 all the way and the drawer's own "stay on board" row
+ *    contradicts it. (The drawer itself no longer draws this form: it has a row per segment, so it
+ *    badges each segment where the rider reaches it — #2071. It still builds it, for the picker.)
  *  - any other ride badges its planned route joined by whatever is interchangeable with it (#2010).
  *
  * The two can't both apply, and this says so rather than trusting it: [substitutableRoutes] empties the
@@ -92,6 +95,18 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
     mode,
     RouteBadgeJoin.ANY_OF
 )
+
+/**
+ * The transit leg's roundel as the **directions drawer** draws one: its short name and parsed GTFS
+ * color, and *no* badge at all for a route publishing no short name.
+ *
+ * The narrower rule the drawer has always applied to a board row's roundel ([TripLogEntry.Transit
+ * .routeShortName]), lifted out so a seam row can badge the route continued onto by the same rule
+ * (#2071) — the two rows name a route the same way or the ride reads as two different kinds of thing.
+ * The wider [plannedBadge] rule (long name in the roundel) belongs to the option cards, which have no
+ * room to print a long name any other way.
+ */
+internal fun TripLeg.shortNameBadge(): RouteBadge? = routeDisplayShortName()?.let { RouteBadge(it, badgeColor(routeColor)) }
 
 /**
  * The transit leg's own roundel: its badge name and parsed GTFS color; null when it names itself in no

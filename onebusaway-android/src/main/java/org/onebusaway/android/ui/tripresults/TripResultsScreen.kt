@@ -1196,12 +1196,15 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClick = onFocus)
     ) {
-        // A ride naming more than one route badges them all as one joined roundel — the routes it may be
-        // taken on ("1 Line/2 Line", #2010) or the ones the vehicle becomes under the rider ("5 > 12",
-        // #2049), the badge's own join saying which. An ordinary ride badges its own route exactly as
-        // before. A route that publishes no short name gets no roundel and leads with its long name —
-        // see routeDisplayShortName.
-        val joined = entry.routeLeg.badge?.takeIf { it.isJoined }
+        // A ride the rider may take on any of several routes badges them all as one joined roundel
+        // ("1 Line/2 Line", #2010). A ride the *vehicle* changes route during does not (#2071): the
+        // drawer draws a row per segment, so the header badges only the route boarded and each route the
+        // vehicle becomes is badged at the seam the rider reaches it at (TransitionContent) — the
+        // header's roundel says what to board, not everything the ride will eventually be called. The
+        // option card above still joins them ("5 > 12", #2049); it has one line for the whole ride.
+        // A route that publishes no short name gets no roundel and leads with its long name — see
+        // routeDisplayShortName.
+        val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
         val title = entry.routeDisplayName?.takeIf { it != entry.routeShortName }
         Row(verticalAlignment = Alignment.CenterVertically) {
             when {
@@ -1230,10 +1233,11 @@ private fun ColumnScope.BoardContent(
             )
         }
         // What an interchangeable badge means: any of those routes will do, so board the first to
-        // arrive. Each one's own ETA strip sits under the board stop below (#2010). A chevron badge is
-        // the opposite instruction — board this one and stay on it — and says so in its own row further
-        // down the ride (TransitionContent), so it must not pick this caption up.
-        if (joined?.isInterchangeable == true) {
+        // arrive. Each one's own ETA strip sits under the board stop below (#2010). A ride that changes
+        // route under the rider carries the opposite instruction — board this one and stay on it — and
+        // gives it in its own row further down the ride (TransitionContent); its badge never reaches
+        // this header, so it cannot pick this caption up.
+        if (joined != null) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodyMedium,
@@ -1274,23 +1278,57 @@ private fun ColumnScope.StopContent(stop: LogStop) {
 
 /**
  * A stay-aboard interline (#2000): the vehicle keeps going but its route changes, so the rider is told
- * to stay on board — never to get off and reboard. Shows the new route label (short name + "to headsign")
- * and the seam stop where the change happens.
+ * to stay on board — never to get off and reboard.
+ *
+ * Laid out as the board row of the ride's *next segment* (#2071) — badge, fuller name, headsign, by the
+ * same rules a board row uses — since that is what the seam is: the header above named the route
+ * boarded, and this names the route the rider goes on to ride, at the point they reach it. The
+ * instruction and the seam stop follow, so a route with no long name reads
+ * `[12] / Interlaken Park / Stay on board / At Mount Baker Transit Center`.
+ *
+ * With nothing at all to name the new route by — no badge, no name, no headsign — the instruction says
+ * so itself rather than standing over a blank.
  */
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
-    // "the vehicle becomes <X>" needs a subject. With a route name, X is that name (plus "to
-    // <headsign>" when there is one). With no name the headsign stands in alone — never behind the "to"
-    // connector, which would read "becomes to Bremerton" — and with neither, the sentence drops the
-    // subject entirely rather than trailing off into a blank.
-    val becomes = when (val route = transition.routeLabel) {
-        null -> headsign
-        else -> headsign?.let { "$route ${stringResource(R.string.step_by_step_transit_connector_headsign)} $it" } ?: route
+    // Dropped when it merely repeats the badge beside it, exactly as a board row's title is.
+    val title = transition.routeDisplayName?.takeIf { it != transition.badge?.shortName }
+    if (transition.badge != null || title != null) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            transition.badge?.let {
+                RouteBadgeChip(it.shortName, it.routeColor, scale = 1.5f)
+                Spacer(Modifier.width(8.dp))
+            }
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+        }
     }
+    headsign?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    val named = transition.badge != null || title != null || headsign != null
     Text(
-        text = becomes?.let { stringResource(R.string.step_by_step_transit_interline, it) }
-            ?: stringResource(R.string.step_by_step_transit_interline_unknown_route),
+        text = stringResource(
+            if (named) {
+                R.string.step_by_step_transit_stay_on_board
+            } else {
+                R.string.step_by_step_transit_interline_unknown_route
+            }
+        ),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurface
@@ -1503,13 +1541,15 @@ private fun TripResultsPreview() {
                     durationMinutes = 16,
                     realtime = RealtimeState.OnTime,
                     // The same ride the first option's chevron badge stands for: boarded once as the 8,
-                    // becoming the 12 at Mount Baker without the rider getting off (#2000/#2049).
+                    // becoming the 12 at Mount Baker without the rider getting off (#2000/#2049). Here
+                    // the header badges only the 8 and the 12 arrives at its own seam row (#2071).
                     rideEvents = listOf(
                         RideEvent.Stop(LogStop("Capitol Hill Station")),
                         RideEvent.Stop(LogStop("23rd Ave & E Union St")),
                         RideEvent.Transition(
                             InterlineTransition(
-                                routeLabel = "12",
+                                badge = RouteBadge("12", 0xFFD62828.toInt()),
+                                routeDisplayName = "Route 12",
                                 headsign = "Interlaken Park",
                                 stop = RouteStopRef("1_550", "550", "Mount Baker Transit Center", null)
                             )

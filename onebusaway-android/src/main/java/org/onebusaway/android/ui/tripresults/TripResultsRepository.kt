@@ -27,6 +27,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.interchangeableRoutes
+import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
@@ -113,7 +114,8 @@ class DefaultTripResultsRepository @Inject constructor(
             val leader = legs[chain.leaderIndex]
             val transitions = chain.transitionLegIndices.associateWith { j ->
                 InterlineTransition(
-                    routeLabel = Interlines.transitionRouteLabel(legs[j]),
+                    badge = legs[j].shortNameBadge(),
+                    routeDisplayName = legs[j].routeDisplayName(),
                     headsign = legs[j].headsign,
                     stop = legs[j].from.resolveStop(legs[j])
                 )

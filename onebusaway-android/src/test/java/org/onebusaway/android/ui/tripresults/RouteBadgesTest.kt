@@ -128,6 +128,21 @@ class RouteBadgesTest {
         assertEquals(TransitMode.FERRY, badge.mode)
     }
 
+    /**
+     * The drawer's narrower rule (#2071): a short name roundels, a long name never does. The two board
+     * and seam rows both use it, and each has room to print a long name as the row's title instead — so
+     * a ferry that reaches the drawer draws no roundel where an option card would draw a wide one.
+     */
+    @Test
+    fun shortNameBadgeRoundelsOnlyAShortName() {
+        val bus = TripLeg(mode = TripMode.BUS, routeId = "1_100", routeShortName = "8", routeLongName = "Rainier Ave")
+        val ferry = TripLeg(mode = TripMode.FERRY, routeId = "95:74", routeLongName = "Seattle - Bremerton")
+
+        assertEquals("8", bus.shortNameBadge()?.shortName)
+        assertEquals("Seattle - Bremerton", ferry.plannedBadge()?.shortName)
+        assertNull(ferry.shortNameBadge())
+    }
+
     /** OTP1 legs carry a flat display string instead of a short name; it still badges. */
     @Test
     fun legBadgeUsesTheOtp1FlatRouteStringWhenThereIsNoShortName() {

@@ -544,8 +544,7 @@ class HomeViewModel @Inject constructor(
         when {
             target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
             // Popped a leg sub-focus back to the whole trip.
-            target is CurrentFocus.Directions ->
-                itineraryOverviewDirective(focus)?.let { emitMapDirective(it) }
+            target is CurrentFocus.Directions -> emitMapDirective(itineraryOverviewDirective(focus))
             else -> {
                 presentedRoutes = emptySet()
                 emitMapDirective(MapDirective.ClearFocus)
@@ -556,12 +555,14 @@ class HomeViewModel @Inject constructor(
     /**
      * How the map returns to the itinerary overview from [from]: with the trip still drawn (an on-street
      * leg focus only receded its other legs) restoring their weight and reframing the trip is enough;
-     * otherwise it has to be redrawn — null when there is none to redraw (a fresh entry).
+     * otherwise it has to be redrawn — and where there is nothing to redraw (a fresh entry, before any
+     * itinerary was shown) the map is cleared rather than left in whatever the sub-focus made of it; the
+     * sheet's own remount reconcile draws the selected trip back.
      */
-    private fun itineraryOverviewDirective(from: CurrentFocus): MapDirective? = if (from.keepsDrawnItinerary) {
+    private fun itineraryOverviewDirective(from: CurrentFocus): MapDirective = if (from.keepsDrawnItinerary) {
         MapDirective.ClearItineraryLegFocus
     } else {
-        shownItinerary?.let { MapDirective.ShowItinerary(it) }
+        shownItinerary?.let { MapDirective.ShowItinerary(it) } ?: MapDirective.ClearFocus
     }
 
     /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
@@ -848,9 +849,8 @@ class HomeViewModel @Inject constructor(
                     )
                     // Back into an on-street leg focus: re-apply it exactly as the drawer's tap does.
                     is DirectionsSubFocus.Leg -> applyLegFocus(subFocus.leg, from)
-                    // Back to the itinerary overview: restore it over whatever the leg focus did (the
-                    // sheet's own remount reconcile covers a fresh entry, where shownItinerary is null).
-                    null -> emitMapDirective(itineraryOverviewDirective(from) ?: MapDirective.ClearFocus)
+                    // Back to the itinerary overview: restore it over whatever the leg focus did.
+                    null -> emitMapDirective(itineraryOverviewDirective(from))
                 }
                 CurrentFocus.None, is CurrentFocus.BikeStation ->
                     emitMapDirective(MapDirective.ClearFocus)

@@ -255,6 +255,35 @@ class HomeViewModelTest {
         job.cancel()
     }
 
+    /**
+     * A route sub-focus entered before any itinerary was drawn has nothing to redraw on the way back, so
+     * both gestures clear the map rather than emitting nothing and leaving it in route mode while the focus
+     * already reads as the plain overview.
+     */
+    private fun assertClearsMapWithNoDrawnItinerary(dropOneLevel: HomeViewModel.() -> Unit) = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        vm.focusItineraryRouteLegOnMap("65")
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.dropOneLevel()
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.ClearFocus), map.sent)
+        job.cancel()
+    }
+
+    @Test
+    fun `tapping off a route focus with no drawn itinerary clears the map`() = assertClearsMapWithNoDrawnItinerary(HomeViewModel::unfocusMapOneLevel)
+
+    @Test
+    fun `back out of a route focus with no drawn itinerary clears the map`() = assertClearsMapWithNoDrawnItinerary(HomeViewModel::navigateBackInDirections)
+
     @Test
     fun `focusing an on-street leg from a route focus redraws the trip first`() = runTest {
         val vm = viewModel()

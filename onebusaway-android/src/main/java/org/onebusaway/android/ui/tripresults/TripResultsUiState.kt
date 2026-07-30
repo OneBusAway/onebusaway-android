@@ -91,7 +91,9 @@ data class LegBadge(
     val isJoined: Boolean get() = routes.size > 1
 
     /** Whether the badge offers a *choice* of routes — as opposed to naming a ride that becomes another
-     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. */
+     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. The
+     *  drawer's board row draws only this form: the other names routes the rider does not reach until
+     *  later in the ride, and it has a row down there to name each of them at (#2071). */
     val isInterchangeable: Boolean get() = isJoined && join == RouteBadgeJoin.ANY_OF
 
     /** True when the ride names no route at all, and can only be shown as its mode. */
@@ -334,16 +336,23 @@ data class RouteLegRef(
 
 /**
  * A stay-aboard interline onto a **different** route within one continuous vehicle ride (#2000): at
- * [stop] the vehicle changes to route [routeLabel] (heading to [headsign]) and the passenger stays
- * seated. Rendered as a distinct row between Board and Alight so the directions never tell the rider to
- * get off and reboard. Self-interlines (same route reversing onto itself) produce no transition — the
- * seam vanishes entirely.
+ * [stop] the vehicle changes route (heading to [headsign]) and the passenger stays seated. Rendered as a
+ * distinct row between Board and Alight so the directions never tell the rider to get off and reboard.
+ * Self-interlines (same route reversing onto itself) produce no transition — the seam vanishes entirely.
  *
- * [routeLabel] is the prose label ([Interlines.transitionRouteLabel]), not the badge name: this row is a
- * sentence, so it names a short-name-less route by its long name rather than saying nothing.
+ * The row identifies the route continued onto exactly as a board row identifies the route boarded
+ * (#2071) — that is the point of the seam row: the ride's second segment starts here, so it is named
+ * here rather than folded into the header's badge:
+ *  - [badge] is the roundel, so a route's number arrives in its own colour beside the instruction. Null
+ *    for a route that publishes no short name — like a board row, the seam draws no roundel for one and
+ *    leans on [routeDisplayName] instead, rather than putting a long name in a roundel.
+ *  - [routeDisplayName] is the fuller name for the row's title line (long name, else the short one), so
+ *    a route with both reads `[550] Bellevue - Seattle`. The renderer drops it when it merely repeats
+ *    the badge.
  */
 data class InterlineTransition(
-    val routeLabel: String?,
+    val badge: RouteBadge?,
+    val routeDisplayName: String?,
     val headsign: String?,
     val stop: RouteStopRef
 )

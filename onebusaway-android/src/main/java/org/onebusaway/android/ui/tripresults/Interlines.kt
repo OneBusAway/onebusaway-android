@@ -19,7 +19,6 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.interchangeableRoutes
-import org.onebusaway.android.directions.model.routeDisplayLabel
 
 /**
  * Pure interline analysis over a trip's legs (#2000) — no `Context` / OBA-id resolution, so it's
@@ -84,16 +83,6 @@ internal object Interlines {
         }
         return chains
     }
-
-    /**
-     * How a stay-aboard transition names the route the vehicle becomes ("stay on board for X"). The
-     * prose label rather than the badge name — the sentence needs a name even where a badge would be
-     * omitted — so a route with only a long name reads "stay on board for Seattle - Bremerton".
-     *
-     * Null when the route names itself in no way at all, so the renderer can reach for the headsign (or
-     * a generic) rather than building a sentence around a blank.
-     */
-    fun transitionRouteLabel(leg: TripLeg): String? = leg.routeDisplayLabel()
 }
 
 /**

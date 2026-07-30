@@ -22,6 +22,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 
 /**
@@ -52,7 +53,12 @@ class TripLogRowsTest {
         )
     )
 
-    private val seam = InterlineTransition("49", "Downtown", RouteStopRef("1_600", "600", "Seam Stop", null))
+    private val seam = InterlineTransition(
+        badge = RouteBadge("49", null),
+        routeDisplayName = "49",
+        headsign = "Downtown",
+        stop = RouteStopRef("1_600", "600", "Seam Stop", null)
+    )
 
     private fun transit(events: List<RideEvent>) = TripLogEntry.Transit(
         routeShortName = "8",
@@ -105,7 +111,7 @@ class TripLogRowsTest {
             )
         )
 
-        // Collapsed: the stops hide, but the "stay on board — it becomes route 49" instruction does not.
+        // Collapsed: the stops hide, but the "stay on board for the 49" instruction does not.
         assertEquals(
             listOf("BoardHeader", "Transition", "ExitNode"),
             flatten(listOf(chain)).kinds()

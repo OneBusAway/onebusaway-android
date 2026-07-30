@@ -201,8 +201,9 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Sets [slot] to the device's current location, or returns false when there's no fix to set it to
-     * — the caller says why (no permission vs. no fix yet), which only it can tell apart.
+     * Sets [slot] to the device's current location, returning false when there's no fix to set it to.
+     * Saying *why* there's none is left to the caller, whose business it is: the field's own button
+     * explains itself with a toast, while the long-press path below pairs silently.
      */
     fun setEndpointToCurrentLocation(slot: TripEndpointSlot): Boolean {
         val here = currentLocation() ?: return false
@@ -211,11 +212,14 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Sets the endpoint the map's "directions from/to here" named, pairing the trip's other end with
-     * the device's current location when that end is empty — [TripPlanFormState.withEndpointPaired]
-     * owns the rule (#2092). Both ends land in one form update, so the pair submits as a single plan.
+     * Sets the endpoint a map long-press named ("directions from/to here"), pairing the trip's other
+     * end with the device's current location — [TripPlanFormState.withEndpointPaired] owns the rule
+     * (#2092). Both ends land in one form update, so the pair submits as a single plan.
+     *
+     * Distinct from [setEndpoint], which the crosshair pick-on-map path uses: that one is an edit
+     * within a form the rider is already filling, so it pairs nothing.
      */
-    fun setEndpointFromMap(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+    fun setEndpointFromLongPress(slot: TripEndpointSlot, endpoint: TripEndpoint) {
         val here = currentLocation()
         _formState.update { it.withEndpointPaired(slot, endpoint, here) }
         replanOrClearResult()
@@ -259,13 +263,9 @@ class TripPlanViewModel @Inject constructor(
     }
 
     fun reverseTrip() {
+        // Both reads are of the pre-swap `it`, so this is a swap and not a double-assignment.
         _formState.update {
-            it.copy(
-                from = it.to,
-                to = it.from,
-                fromSuggestions = emptyList(),
-                toSuggestions = emptyList()
-            )
+            it.withEndpoint(TripEndpointSlot.FROM, it.to).withEndpoint(TripEndpointSlot.TO, it.from)
         }
         replanOrClearResult()
     }

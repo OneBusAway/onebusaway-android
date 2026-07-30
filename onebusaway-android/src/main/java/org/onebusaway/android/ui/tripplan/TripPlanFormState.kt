@@ -81,7 +81,10 @@ sealed interface TripEndpoint {
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
 }
 
-/** Which of the form's two endpoints an action targets. */
+/**
+ * Which of the form's two endpoints an action targets. Declaration order is the form's field order
+ * (origin above destination) — [org.onebusaway.android.ui.tripplan.TripPlanForm] renders `entries`.
+ */
 enum class TripEndpointSlot {
     FROM,
     TO;
@@ -185,8 +188,7 @@ data class TripPlanFormState(
      *
      * Naming one end of a trip on its own leaves a form nobody can submit, and the other end is
      * overwhelmingly the rider's own position, so it's filled in for them and the trip plans on the
-     * spot. Strictly a convenience: an endpoint carrying anything at all — a resolved pill, a half-typed
-     * query — is left untouched, and with no fix available ([here] null) that end simply stays empty.
+     * spot. Strictly a convenience — it only ever fills a field that was empty anyway.
      *
      * The test is what the field holds now, not whether the rider ever touched it: an end they cleared
      * with the pill's ✕ is empty again and will be paired. That's deliberate — the ✕ says "not this

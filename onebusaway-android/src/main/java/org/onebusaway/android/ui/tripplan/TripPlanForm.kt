@@ -72,20 +72,25 @@ object TripPlanTestTags {
     const val FIELD_SUFFIX = "Field"
     const val PILL_SUFFIX = "Pill"
     const val SUGGESTION_SUFFIX = "Suggestion"
-
-    /** The tag prefix naming [slot]'s field. */
-    fun prefixFor(slot: TripEndpointSlot): String = when (slot) {
-        TripEndpointSlot.FROM -> FROM_PREFIX
-        TripEndpointSlot.TO -> TO_PREFIX
-    }
 }
 
-/** The rider-facing name of an endpoint ("From" / "To"), shared by the form and the map-pick overlay. */
+/**
+ * The rider-facing name of an endpoint ("From" / "To"), shared by the form and the map-pick overlay.
+ * Lives here rather than on [TripEndpointSlot] itself to keep [TripPlanFormState]'s file free of
+ * Android — the same seam [TripEndpoint.displayText] already draws for the fixed-label endpoint kinds.
+ */
 @get:StringRes
 val TripEndpointSlot.labelRes: Int
     get() = when (this) {
         TripEndpointSlot.FROM -> R.string.trip_plan_from
         TripEndpointSlot.TO -> R.string.trip_plan_to
+    }
+
+/** The [TripPlanTestTags] prefix naming this endpoint's field. */
+val TripEndpointSlot.tagPrefix: String
+    get() = when (this) {
+        TripEndpointSlot.FROM -> TripPlanTestTags.FROM_PREFIX
+        TripEndpointSlot.TO -> TripPlanTestTags.TO_PREFIX
     }
 
 @Composable
@@ -118,11 +123,12 @@ fun TripPlanForm(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Origin then destination, in declaration order — the enum is the list of fields.
+                // One field per endpoint, in TripEndpointSlot's declaration order (origin above
+                // destination) — the enum is the list of fields.
                 TripEndpointSlot.entries.forEach { slot ->
                     AddressField(
                         label = stringResource(slot.labelRes),
-                        tagPrefix = TripPlanTestTags.prefixFor(slot),
+                        tagPrefix = slot.tagPrefix,
                         endpoint = state.endpointAt(slot),
                         suggestions = state.suggestionsAt(slot),
                         onQueryChange = { onQueryChange(slot, it) },

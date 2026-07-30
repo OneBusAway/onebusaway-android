@@ -287,7 +287,7 @@ class TripPlanViewModelTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
-        vm.setEndpointFromMap(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         val state = vm.formState.value
@@ -297,19 +297,20 @@ class TripPlanViewModelTest {
         assertEquals(0, plan.calls)
     }
 
+    // Not a test of the don't-overwrite rule — with no fix the pairing branch is never reached at all.
+    // That rule is TripPlanFormStateTest's; this pins the one submission the completed form makes.
     @Test
-    fun `a long-pressed endpoint does not disturb an origin the rider already set`() = runTest {
+    fun `a long-pressed endpoint completing the pair plans exactly once`() = runTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
         vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
 
-        vm.setEndpointFromMap(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
-        assertEquals(origin, vm.formState.value.from)
         assertTrue(vm.formState.value.canSubmit)
-        assertEquals(1, plan.calls) // the completed pair plans exactly once
+        assertEquals(1, plan.calls)
     }
 
     @Test

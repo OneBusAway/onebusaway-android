@@ -88,11 +88,10 @@
     <color name="md_theme_surface">#10140F</color>
     <color name="md_theme_onSurface">#E0E4DB</color>
 
-    <!-- Lightened for the dark surface (#10140F); the day tones are far too dark to read on it.
-         These carry text as well as the rail dot, so they clear the 4.5:1 body-text ratio, not just
-         the 3:1 a graphical element would need. -->
+    <!-- Lightened for the dark surface (#10140F); the day tone is far too dark to read on it. This
+         carries text as well as the rail dot, so it clears the 4.5:1 body-text ratio, not just the
+         3:1 a graphical element would need. -->
     <color name="trip_plan_endpoint_current_location">#90CAF9</color>
-    <color name="trip_plan_endpoint_destination">#EF9A9A</color>
 
     <color name="md_theme_surfaceContainerLowest">#0B0F0A</color>
     <color name="md_theme_surfaceContainerLow">#191D17</color>

@@ -166,7 +166,7 @@ class TripPlanFormRenderTest {
     fun theActionBarStatesWhenTheTripIsFor() {
         renderForm(plannedState)
 
-        composeRule.onNodeWithTag(WHEN_MODE).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_MODE).assertIsDisplayed()
         composeRule.onNodeWithText("now").assertIsDisplayed()
     }
 
@@ -183,34 +183,19 @@ class TripPlanFormRenderTest {
     @Test
     fun repeatedlyChoosingYourLocationKeepsTheOriginResolved() {
         var from: TripEndpoint by mutableStateOf(TripEndpoint.FreeText(""))
-        composeRule.setContent {
-            ObaTheme {
-                Box(Modifier.width(cardWidth).testTag(FORM)) {
-                    TripPlanForm(
-                        state = plannedState.copy(from = from),
-                        // Exactly what the ViewModel does with each of these, for the origin slot.
-                        onQueryChange = { slot, text ->
-                            if (slot == TripEndpointSlot.FROM) from = TripEndpoint.FreeText(text)
-                        },
-                        onSelect = { slot, place ->
-                            if (slot == TripEndpointSlot.FROM) from = place
-                        },
-                        onCurrentLocation = { slot ->
-                            if (slot == TripEndpointSlot.FROM) {
-                                from = TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3)
-                            }
-                        },
-                        onPickOnMap = {},
-                        onSetArriving = {},
-                        onDepartNow = {},
-                        onPickDate = {},
-                        onPickTime = {},
-                        onReverse = {},
-                        onAdvancedSettings = {}
-                    )
+        renderForm(
+            state = { plannedState.copy(from = from) },
+            // Exactly what the ViewModel does with each of these, for the origin slot.
+            onQueryChange = { slot, text ->
+                if (slot == TripEndpointSlot.FROM) from = TripEndpoint.FreeText(text)
+            },
+            onSelect = { slot, place -> if (slot == TripEndpointSlot.FROM) from = place },
+            onCurrentLocation = { slot ->
+                if (slot == TripEndpointSlot.FROM) {
+                    from = TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3)
                 }
             }
-        }
+        )
 
         repeat(4) { attempt ->
             composeRule.onNodeWithTag(FROM_FIELD).performClick()
@@ -294,18 +279,26 @@ class TripPlanFormRenderTest {
     private fun renderForm(
         state: TripPlanFormState,
         onToQueryChange: (String) -> Unit = {}
+    ) = renderForm(
+        state = { state },
+        onQueryChange = { slot, text -> if (slot == TripEndpointSlot.TO) onToQueryChange(text) }
+    )
+
+    /** [state] is a lambda so a test can back it with its own mutable state and observe writes. */
+    private fun renderForm(
+        state: () -> TripPlanFormState,
+        onQueryChange: (TripEndpointSlot, String) -> Unit = { _, _ -> },
+        onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit = { _, _ -> },
+        onCurrentLocation: (TripEndpointSlot) -> Unit = {}
     ) {
-        // Only the destination's query is observed; the rest are inert for these tests.
         composeRule.setContent {
             ObaTheme {
                 Box(Modifier.width(cardWidth).testTag(FORM)) {
                     TripPlanForm(
-                        state = state,
-                        onQueryChange = { slot, text ->
-                            if (slot == TripEndpointSlot.TO) onToQueryChange(text)
-                        },
-                        onSelect = { _, _ -> },
-                        onCurrentLocation = {},
+                        state = state(),
+                        onQueryChange = onQueryChange,
+                        onSelect = onSelect,
+                        onCurrentLocation = onCurrentLocation,
                         onPickOnMap = {},
                         onSetArriving = {},
                         onDepartNow = {},
@@ -328,6 +321,5 @@ class TripPlanFormRenderTest {
         val FROM_PICK_ON_MAP = TripPlanTestTags.FROM_PREFIX + TripPlanTestTags.PICK_ON_MAP_SUFFIX
         val TO_MY_LOCATION = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.MY_LOCATION_SUFFIX
         val TO_PICK_ON_MAP = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.PICK_ON_MAP_SUFFIX
-        val WHEN_MODE = TripPlanTestTags.WHEN_MODE
     }
 }

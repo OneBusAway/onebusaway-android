@@ -52,6 +52,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -139,9 +140,16 @@ fun MapFeature(
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
-    // Whether the soft keyboard is up, read through rememberUpdatedState for the same reason: the
-    // callbacks object below is remembered and would otherwise capture the value at first composition.
-    val imeVisible by rememberUpdatedState(WindowInsets.ime.getBottom(LocalDensity.current) > 0)
+    // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
+    // inset updates on every frame of the keyboard animation, and reading it here directly would
+    // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
+    // snapshotFlow the chrome insets below go through. Only ever read from onMapClick, outside any
+    // snapshot observer, so nothing subscribes to it.
+    val imeInsets = WindowInsets.ime
+    val imeDensity = LocalDensity.current
+    val imeVisible by remember(imeInsets, imeDensity) {
+        derivedStateOf { imeInsets.getBottom(imeDensity) > 0 }
+    }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
 

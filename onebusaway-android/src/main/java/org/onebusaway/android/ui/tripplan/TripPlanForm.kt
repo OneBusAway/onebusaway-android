@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.tripplan
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -73,23 +73,6 @@ import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.icons.AppIcons
-
-/**
- * The trip-plan form: two endpoint rows over a single action bar (#2094).
- *
- * The layout is deliberately close to what a rider already knows from other mapping apps — a leading
- * rail whose glyph says what each endpoint *is*, two borderless fields separated by a hairline, and no
- * per-field chrome. What differs is the bottom band: transit is scheduled travel, so the form always
- * states when the trip is for, as a "Depart · now" callout whose two halves open separate pickers.
- *
- * That band doubles as the form's action bar, carrying reverse and additional-preferences as well. It's
- * the reason the endpoint rows can run full width: everything acting on the *whole trip* lives on one
- * line, and only what acts on a single endpoint lives in that endpoint's row (which, currently, is
- * nothing — see [EndpointRow]). The card measures 146dp against the old layout's 216dp.
- *
- * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
- * interactions launched by the host.
- */
 
 /** Height of one endpoint row. Android's minimum touch target — the rows are tap-to-edit. */
 private val ENDPOINT_ROW_HEIGHT = 48.dp
@@ -155,6 +138,22 @@ val TripEndpointSlot.tagPrefix: String
         TripEndpointSlot.TO -> TripPlanTestTags.TO_PREFIX
     }
 
+/**
+ * The trip-plan form: two endpoint rows over a single action bar (#2094).
+ *
+ * The layout is deliberately close to what a rider already knows from other mapping apps — a leading
+ * rail whose glyph says what each endpoint *is*, two borderless fields separated by a hairline, and no
+ * per-field chrome. What differs is the bottom band: transit is scheduled travel, so the form always
+ * states when the trip is for, as a "Depart · now" callout whose two halves open separate pickers.
+ *
+ * That band doubles as the form's action bar, carrying reverse and additional-preferences as well. It's
+ * the reason the endpoint rows can run full width: everything acting on the *whole trip* lives on one
+ * line, and only what acts on a single endpoint lives in that endpoint's row (which, currently, is
+ * nothing — see [EndpointRow]). The card measures 146dp against the old layout's 216dp.
+ *
+ * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
+ * interactions launched by the host.
+ */
 @Composable
 fun TripPlanForm(
     state: TripPlanFormState,
@@ -180,10 +179,8 @@ fun TripPlanForm(
                 HairlineDivider(startIndent = RAIL_WIDTH, endIndent = 12.dp)
             }
             EndpointRow(
+                slot = slot,
                 endpoint = state.endpointAt(slot),
-                placeholder = stringResource(slot.placeholderRes),
-                tagPrefix = slot.tagPrefix,
-                isOrigin = slot == TripEndpointSlot.FROM,
                 suggestions = state.suggestionsAt(slot),
                 onQueryChange = { onQueryChange(slot, it) },
                 onSelect = { onSelect(slot, it) },
@@ -195,7 +192,10 @@ fun TripPlanForm(
         // than separating two members of the same group.
         HairlineDivider()
         TripActionBar(
-            state = state,
+            arriving = state.arriving,
+            departNow = state.departNow,
+            dateLabel = state.dateLabel,
+            timeLabel = state.timeLabel,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
             onPickDate = onPickDate,
@@ -209,10 +209,7 @@ fun TripPlanForm(
 /** A 1dp rule at the outline colour, optionally inset at either end. */
 @Composable
 private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
-    HorizontalDivider(
-        modifier = Modifier.padding(start = startIndent, end = endIndent),
-        color = MaterialTheme.colorScheme.outlineVariant
-    )
+    HorizontalDivider(Modifier.padding(start = startIndent, end = endIndent))
 }
 
 /**
@@ -234,16 +231,16 @@ private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EndpointRow(
+    slot: TripEndpointSlot,
     endpoint: TripEndpoint,
-    placeholder: String,
-    tagPrefix: String,
-    isOrigin: Boolean,
     suggestions: List<TripEndpoint.Geocoded>,
     onQueryChange: (String) -> Unit,
     onSelect: (TripEndpoint.Geocoded) -> Unit,
     onCurrentLocation: () -> Unit,
     onPickOnMap: () -> Unit
 ) {
+    val tagPrefix = slot.tagPrefix
+    val isOrigin = slot == TripEndpointSlot.FROM
     // The endpoint as the field should read it. A resolved endpoint is not a different *kind* of row
     // — it is the same field showing a name — so nothing is swapped in or out as it resolves.
     val endpointText = endpointLabel(endpoint)
@@ -317,7 +314,7 @@ private fun EndpointRow(
                     .testTag(tagPrefix + TripPlanTestTags.FIELD_SUFFIX),
                 decorationBox = { innerField ->
                     Box(contentAlignment = Alignment.CenterStart) {
-                        if (field.text.isEmpty()) PlaceholderText(placeholder)
+                        if (field.text.isEmpty()) PlaceholderText(stringResource(slot.placeholderRes))
                         innerField()
                     }
                 }
@@ -382,7 +379,7 @@ private fun endpointColor(endpoint: TripEndpoint, isOrigin: Boolean): Color = wh
     endpoint is TripEndpoint.CurrentLocation ->
         colorResource(R.color.trip_plan_endpoint_current_location)
     isOrigin -> MaterialTheme.colorScheme.primary
-    else -> colorResource(R.color.trip_plan_endpoint_destination)
+    else -> colorResource(R.color.trip_destination_marker)
 }
 
 /**
@@ -401,23 +398,29 @@ private fun EndpointRail(endpoint: TripEndpoint, isOrigin: Boolean) {
         // it shares with the other row. The two halves meet because the divider above is inset past the
         // rail, so nothing crosses the gap. This is what makes origin and destination read as two ends
         // of one trip rather than two unrelated fields.
-        Canvas(Modifier.matchParentSize()) {
-            val gap = CONNECTOR_GLYPH_CLEARANCE.toPx()
-            val midY = size.height / 2
-            val start = if (isOrigin) midY + gap else 0f
-            val end = if (isOrigin) size.height else midY - gap
-            if (end <= start) return@Canvas
-            drawLine(
-                color = connectorColor,
-                start = Offset(size.width / 2, start),
-                end = Offset(size.width / 2, end),
-                strokeWidth = 2.dp.toPx(),
-                cap = StrokeCap.Round,
-                pathEffect = PathEffect.dashPathEffect(
-                    floatArrayOf(2.dp.toPx(), 4.dp.toPx())
-                )
-            )
-        }
+        Box(
+            Modifier.matchParentSize().drawWithCache {
+                // Built once per size/density rather than per draw: a dash effect allocates a native
+                // DashPathEffect, and this rail repaints with the whole card — on every keystroke and
+                // every blink of the text cursor — for a line that never changes.
+                val dashes = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 4.dp.toPx()))
+                val gap = CONNECTOR_GLYPH_CLEARANCE.toPx()
+                val midY = size.height / 2
+                val start = if (isOrigin) midY + gap else 0f
+                val end = if (isOrigin) size.height else midY - gap
+                onDrawBehind {
+                    if (end <= start) return@onDrawBehind
+                    drawLine(
+                        color = connectorColor,
+                        start = Offset(size.width / 2, start),
+                        end = Offset(size.width / 2, end),
+                        strokeWidth = 2.dp.toPx(),
+                        cap = StrokeCap.Round,
+                        pathEffect = dashes
+                    )
+                }
+            }
+        )
         if (endpoint.isTransit) {
             BusIcon()
         } else {
@@ -474,7 +477,10 @@ private fun PinnedActionIcon(painter: Painter) {
  */
 @Composable
 private fun TripActionBar(
-    state: TripPlanFormState,
+    arriving: Boolean,
+    departNow: Boolean,
+    dateLabel: String,
+    timeLabel: String,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
     onPickDate: () -> Unit,
@@ -497,14 +503,16 @@ private fun TripActionBar(
                 modifier = Modifier.size(18.dp)
             )
         }
-        WhenModeSegment(arriving = state.arriving, onSetArriving = onSetArriving)
+        WhenModeSegment(arriving = arriving, onSetArriving = onSetArriving)
         Text(
             text = "·",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         WhenTimeSegment(
-            state = state,
+            departNow = departNow,
+            dateLabel = dateLabel,
+            timeLabel = timeLabel,
             onDepartNow = onDepartNow,
             onPickDate = onPickDate,
             onPickTime = onPickTime
@@ -561,7 +569,9 @@ private fun WhenModeSegment(arriving: Boolean, onSetArriving: (Boolean) -> Unit)
  */
 @Composable
 private fun WhenTimeSegment(
-    state: TripPlanFormState,
+    departNow: Boolean,
+    dateLabel: String,
+    timeLabel: String,
     onDepartNow: () -> Unit,
     onPickDate: () -> Unit,
     onPickTime: () -> Unit
@@ -570,7 +580,7 @@ private fun WhenTimeSegment(
     val nowLabel = stringResource(R.string.trip_plan_now)
     Box {
         SegmentButton(
-            text = if (state.departNow) nowLabel else "${state.dateLabel}, ${state.timeLabel}",
+            text = if (departNow) nowLabel else "$dateLabel, $timeLabel",
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
@@ -578,7 +588,7 @@ private fun WhenTimeSegment(
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = { Text(nowLabel) },
-                trailingIcon = if (state.departNow) {
+                trailingIcon = if (departNow) {
                     {
                         Icon(
                             imageVector = AppIcons.Check,

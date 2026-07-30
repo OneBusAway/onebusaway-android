@@ -51,7 +51,8 @@ internal data class ItineraryLegStyle(
     val color: Int,
     val widthProfile: RouteLineWidthProfile,
     val dash: RouteLineDash,
-    val directional: Boolean
+    val directional: Boolean,
+    val roundCaps: Boolean
 )
 
 /**
@@ -98,7 +99,8 @@ internal fun itineraryLegStyle(kind: ItineraryLegKind, routeColor: Int?): Itiner
         color = mapRouteLineColorOrNull(routeColor) ?: anchorColor(TRANSIT_HUE_ANCHOR),
         widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
         dash = RouteLineDash.NONE,
-        directional = true
+        directional = true,
+        roundCaps = true
     )
 
     ItineraryLegKind.WALK -> street(WALK_HUE_ANCHOR)
@@ -113,6 +115,20 @@ internal fun itineraryLegStyle(kind: ItineraryLegKind, routeColor: Int?): Itiner
  * list is not a leg index.
  */
 internal data class ItineraryLegLine(val legIndex: Int, val line: RoutePolyline)
+
+/** Bulb-bearing ends of one itinerary leg; an interline continuation has no visible internal seam. */
+internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean)
+
+internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int): ItineraryLegCaps {
+    val leg = legs[index]
+    val transit = leg.mode?.isTransit == true
+    val continuesPrevious = transit &&
+        leg.interlineWithPreviousLeg &&
+        legs.getOrNull(index - 1)?.mode?.isTransit == true
+    val next = legs.getOrNull(index + 1)
+    val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
+    return ItineraryLegCaps(start = !continuesPrevious, end = !continuesIntoNext)
+}
 
 /**
  * The drawn itinerary composed around a leg focus (#2048): the focused leg(s) cased ([withCase]) and
@@ -228,7 +244,8 @@ private fun street(hueAnchor: Int) = ItineraryLegStyle(
     color = anchorColor(hueAnchor),
     widthProfile = ITINERARY_STREET_WIDTH_PROFILE,
     dash = RouteLineDash.TRAIL,
-    directional = false
+    directional = false,
+    roundCaps = false
 )
 
 /**

@@ -100,6 +100,7 @@ class MapLibreRenderer(
     private val renderState: MapRenderState
 ) : PingTarget {
     private val stopMarkerLayer = MapLibreStopMarkerLayer(map, context)
+    private val routeEndpointBulbLayer = MapLibreRouteEndpointBulbLayer(mapStyle)
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -274,7 +275,9 @@ class MapLibreRenderer(
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
-        routePolylineReconciler.reconcile(next, map.cameraPosition.zoom.toFloat())
+        val zoom = map.cameraPosition.zoom.toFloat()
+        routePolylineReconciler.reconcile(next, zoom)
+        routeEndpointBulbLayer.render(next) { routeWidth(it, zoom) }
     }
 
     private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
@@ -284,6 +287,7 @@ class MapLibreRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routePolylineReconciler.resyncWidths(zoom)
+        routeEndpointBulbLayer.render(renderState.snapshot.value.routePolylines) { routeWidth(it, zoom) }
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
     }
@@ -308,6 +312,7 @@ class MapLibreRenderer(
         clearPing()
         stopMarkerLayer.dispose()
         routeStopCircleLayer.dispose()
+        routeEndpointBulbLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
         map.removeAnnotations()

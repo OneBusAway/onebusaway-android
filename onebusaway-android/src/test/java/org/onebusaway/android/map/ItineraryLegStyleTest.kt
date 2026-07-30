@@ -84,6 +84,26 @@ class ItineraryLegStyleTest {
     }
 
     @Test
+    fun `only transit legs draw circular endpoint bulbs`() {
+        assertTrue(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).roundCaps)
+        ItineraryLegKind.entries.filterNot { it == ItineraryLegKind.TRANSIT }.forEach { kind ->
+            assertFalse("$kind should keep flat endpoints", itineraryLegStyle(kind, routeColor = null).roundCaps)
+        }
+    }
+
+    @Test
+    fun `an interline hides only the shared bulbs`() {
+        val first = TripLeg(mode = TripMode.BUS)
+        val continuation = TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)
+        val walk = TripLeg(mode = TripMode.WALK)
+        val legs = listOf(first, continuation, walk)
+
+        assertEquals(ItineraryLegCaps(start = true, end = false), itineraryLegCaps(legs, 0))
+        assertEquals(ItineraryLegCaps(start = false, end = true), itineraryLegCaps(legs, 1))
+        assertEquals(ItineraryLegCaps(start = true, end = true), itineraryLegCaps(legs, 2))
+    }
+
+    @Test
     fun `a ride keeps its agency's hue, at the map's own chroma and tone`() {
         // Two reds an agency might publish: one washed out, one nearly black. Only the hue survives, so
         // the map draws them the same — the hue is the route's identity, the rest is this map's rendering.
@@ -214,7 +234,9 @@ class ItineraryLegStyleTest {
                 listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
                 widthProfile = style.widthProfile,
                 directional = style.directional,
-                dash = style.dash
+                dash = style.dash,
+                roundStartCap = style.roundCaps,
+                roundEndCap = style.roundCaps
             )
         )
     }

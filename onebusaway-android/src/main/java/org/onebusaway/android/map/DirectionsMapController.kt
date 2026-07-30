@@ -106,7 +106,8 @@ class DirectionsMapController(private val host: MapHost) {
                     points,
                     widthProfile = style.widthProfile,
                     directional = style.directional,
-                    dash = style.dash
+                    dash = style.dash,
+                    roundCaps = style.roundCaps
                 )
             )
         }

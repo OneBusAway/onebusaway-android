@@ -48,7 +48,8 @@ internal data class ItineraryLegStyle(
     val color: Int,
     val widthProfile: RouteLineWidthProfile,
     val dash: RouteLineDash,
-    val directional: Boolean
+    val directional: Boolean,
+    val roundCaps: Boolean
 )
 
 /**
@@ -95,7 +96,8 @@ internal fun itineraryLegStyle(kind: ItineraryLegKind, routeColor: Int?): Itiner
         color = mapRouteLineColorOrNull(routeColor) ?: anchorColor(TRANSIT_HUE_ANCHOR),
         widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
         dash = RouteLineDash.NONE,
-        directional = true
+        directional = true,
+        roundCaps = true
     )
 
     ItineraryLegKind.WALK -> street(WALK_HUE_ANCHOR)
@@ -180,7 +182,8 @@ private fun street(hueAnchor: Int) = ItineraryLegStyle(
     color = anchorColor(hueAnchor),
     widthProfile = ITINERARY_STREET_WIDTH_PROFILE,
     dash = RouteLineDash.TRAIL,
-    directional = false
+    directional = false,
+    roundCaps = false
 )
 
 /**

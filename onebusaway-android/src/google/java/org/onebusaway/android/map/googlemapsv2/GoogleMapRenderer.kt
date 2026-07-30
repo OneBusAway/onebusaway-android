@@ -19,6 +19,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import com.google.android.gms.maps.GoogleMap
@@ -26,6 +27,7 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.CircleOptions
+import com.google.android.gms.maps.model.CustomCap
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Gap
 import com.google.android.gms.maps.model.LatLng
@@ -333,6 +335,10 @@ class GoogleMapRenderer(
             .width(widthPx)
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
+        if (polyline.roundCaps) {
+            val bulb = endpointBulbCap(polyline.resolvedColor)
+            options.startCap(bulb).endCap(bulb)
+        }
         if (polyline.directional) {
             // Advanced spans are substantially more expensive for Maps to retessellate while
             // zooming. Reserve that path for the lines that actually need repeated chevrons.
@@ -346,6 +352,21 @@ class GoogleMapRenderer(
             options.color(polyline.resolvedColor)
         }
         return map.addPolyline(options)
+    }
+
+    /** A circle 1.5x the stroke width, scaled by Maps together with the line at every zoom. */
+    private fun endpointBulbCap(color: Int): CustomCap {
+        val descriptor = descriptorCache.get("route-endpoint-bulb:$color") {
+            val bitmap = createBitmap(ENDPOINT_BULB_BITMAP_PX, ENDPOINT_BULB_BITMAP_PX)
+            Canvas(bitmap).drawCircle(
+                ENDPOINT_BULB_BITMAP_PX / 2f,
+                ENDPOINT_BULB_BITMAP_PX / 2f,
+                ENDPOINT_BULB_BITMAP_PX / 2f,
+                Paint(Paint.ANTI_ALIAS_FLAG).apply { this.color = color }
+            )
+            bitmap
+        }
+        return CustomCap(descriptor, ENDPOINT_BULB_REFERENCE_WIDTH_PX)
     }
 
     /**
@@ -801,6 +822,9 @@ class GoogleMapRenderer(
     fun vehicleMarkerForTripId(tripId: String): Marker? = vehicleMarkersByTripId[tripId]
 
     companion object {
+        private const val ENDPOINT_BULB_BITMAP_PX = 24
+        private const val ENDPOINT_BULB_REFERENCE_WIDTH_PX = 16f
+
         // gms polyline/marker dimensions are in screen pixels.
         private const val DEFAULT_ROUTE_WIDTH_PX = 10f
         private const val TRIP_BAND_WIDTH_PX = 44f

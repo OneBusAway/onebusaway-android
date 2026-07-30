@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -56,12 +57,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -75,6 +79,13 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.layout.MeasurePolicy
+import androidx.compose.ui.layout.MeasureResult
+import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -88,9 +99,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -137,6 +151,9 @@ fun TripResultsHeader(
     val winners = remember(success.options, scheduleWinnerMode) {
         itineraryWinnerCategories(success.options, scheduleWinnerMode)
     }
+    // Every card's summary reserves the tallest one's height, so a trip whose summary wraps doesn't push
+    // its own stats a line below its neighbours' and leave the row unreadable across (#2081).
+    val summaryHeights = remember(success.options) { SummaryHeights() }
     // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
     // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
     // Flanked by the same overflow chevrons as the ETA strip (ScrollChevronGutter) so the user can see
@@ -175,6 +192,7 @@ fun TripResultsHeader(
                     option = option,
                     winners = winners[index],
                     selected = index == success.selectedIndex,
+                    summaryHeights = summaryHeights,
                     onClick = { onSelectOption(index) }
                 )
             }
@@ -196,6 +214,60 @@ fun TripResultsHeader(
  * badge now leads with. Tune here.
  */
 private val OPTION_BADGE_MAX_WIDTH = 110.dp
+
+/**
+ * How wide an option card is allowed to grow before its summary line wraps onto another line (#2081).
+ * Without it a four-leg trip drew one long card that pushed every other option off the row — the picker
+ * scrolls, but the rider can only compare what is on screen at once, so a card that runs off the edge
+ * costs more than a card two lines tall. Chosen to keep the *next* card in view on a narrow (320dp)
+ * screen; tune here.
+ *
+ * It governs the **summary line**, which is what makes a card wide, and it governs where that line
+ * *breaks* rather than clipping it. So it is not quite a maximum on the card: the card still exceeds it
+ * for a single symbol too wide to break (see [SymbolFlow]), and it says nothing about the stats below,
+ * which are short enough not to need it.
+ */
+private val OPTION_CARD_MAX_WIDTH = 200.dp
+
+/**
+ * The padding around each of the card's two sections. Applied per section rather than to the card, so
+ * the summary's band can be filled edge to edge — the padding is inside the tint, which is what makes it
+ * read as a header rather than as a stripe behind some glyphs. One value, so the two sections' content
+ * cannot drift out of alignment.
+ */
+private val CARD_PADDING_HORIZONTAL = 12.dp
+private val CARD_PADDING_VERTICAL = 8.dp
+private val CARD_SECTION_PADDING =
+    PaddingValues(horizontal = CARD_PADDING_HORIZONTAL, vertical = CARD_PADDING_VERTICAL)
+
+/** Where the summary line breaks: the card's width, net of the padding it is drawn inside. */
+private val SUMMARY_WRAP_WIDTH = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL * 2
+
+/**
+ * How far the summary's band is tinted off the card behind it, to set the trip itself on its own surface
+ * above the stats (#2081).
+ *
+ * A veil of the **brand green** (`MaterialTheme.colorScheme.primary`) rather than a neutral step up the
+ * container ramp: the band is the app's colour showing through the card, not a second grey. `primary` is
+ * the token to veil with because it flips ends between the themes exactly as the ramp does — a deep green
+ * over a light card darkens it, a pale green over a dark card lightens it — so one alpha serves both, and
+ * a white-label brand re-tints these headers by overriding the one colour it already overrides.
+ *
+ * The value is chosen to land the same lightness step the neutral veil it replaced did (−7.4 on a light
+ * card, +9.0 on a dark one, in CIE L*), so this changed the hue and not the weight; it holds within about
+ * one unit of that across all four card states. That weight is itself set well above one step of the
+ * container ramp (~0.03–0.05 here), since the band does on its own the separating a rule between the
+ * sections would otherwise share — at a single step the two halves of the card barely read as two.
+ *
+ * Tried louder, too: a band inverted into the dark range (the card's own opposite, carrying light
+ * glyphs) reads as a slab in a picker of small cards, at any strength. The header stays light and merely
+ * offset; this is the knob for how far.
+ *
+ * Note the selected card is *already* green ([R.color.trip_plan_card_background_selected]), so on that
+ * one the veil reads as darkening rather than as a hue change — which is what keeps a selected card
+ * looking like the same object as its neighbours rather than a differently-tinted one.
+ */
+private const val CARD_HEADER_TINT_ALPHA = 0.13f
 
 /**
  * The chevron between two of a card's mode symbols, and the gap on either side of it. Deliberately
@@ -228,16 +300,44 @@ private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
 
 private val SYMBOL_GAP = 4.dp
 
+/** The gap between two wrapped lines of the summary — [SYMBOL_GAP] itself, so the wrap reads as one
+ *  evenly-spaced field of symbols rather than as two stacked rows, and stays so if that gap is retuned. */
+private val SYMBOL_LINE_GAP = SYMBOL_GAP
+
 /** A quiet keyline around a winning metric: enough separation to survive the selected card's tint. */
 private val WINNER_OUTLINE_WIDTH = 1.5.dp
 private val WINNER_OUTLINE_RADIUS = 4.dp
 private const val WINNER_OUTLINE_ALPHA = 0.60f
+
+/**
+ * The tallest summary band across a picker row's cards, which every card in it then reserves — so the
+ * stats below start at the same y on each card and can be read across the row, whether or not a
+ * particular trip's summary wrapped (#2081).
+ *
+ * Filled in from layout rather than known up front: where a summary wraps depends on measured text, so
+ * the tallest is only knowable once the cards have been measured. The first layout pass reports it and a
+ * second settles every card on the result — [tallest] only ever grows within one set of options, so it
+ * converges rather than oscillating, and the whole holder is re-created when the options change (a new
+ * plan whose summaries all fit on one line must not inherit an old plan's taller band).
+ */
+@Stable
+private class SummaryHeights {
+
+    /** The tallest natural summary height reported so far, in pixels. */
+    var tallest by mutableIntStateOf(0)
+        private set
+
+    fun report(height: Int) {
+        if (height > tallest) tallest = height
+    }
+}
 
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
     winners: Set<WinnerCategory>,
     selected: Boolean,
+    summaryHeights: SummaryHeights,
     onClick: () -> Unit
 ) {
     val background = colorResource(
@@ -246,23 +346,19 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    val context = LocalContext.current
-    val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
-    val shortestTravelTime = WinnerCategory.SHORTEST_TRAVEL_TIME in winners
-    val leastWalking = WinnerCategory.LEAST_WALKING in winners
-    val earliestArrival = WinnerCategory.EARLIEST_ARRIVAL in winners
-    val latestDeparture = WinnerCategory.LATEST_DEPARTURE in winners
     val winnerDescriptions = buildList {
-        if (shortestTravelTime) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
-        if (leastWalking) add(stringResource(R.string.trip_plan_winner_least_walking))
-        if (earliestArrival) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
-        if (latestDeparture) add(stringResource(R.string.trip_plan_winner_latest_departure))
+        if (WinnerCategory.SHORTEST_TRAVEL_TIME in winners) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
+        if (WinnerCategory.LEAST_WALKING in winners) add(stringResource(R.string.trip_plan_winner_least_walking))
+        if (WinnerCategory.EARLIEST_ARRIVAL in winners) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
+        if (WinnerCategory.LATEST_DEPARTURE in winners) add(stringResource(R.string.trip_plan_winner_latest_departure))
     }
     Surface(
         color = background,
         contentColor = textColor,
         shape = MaterialTheme.shapes.small,
         // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
+        // The ceiling is the summary line's own — it wraps at [OPTION_CARD_MAX_WIDTH] rather than the
+        // card being cut to it (see [SymbolFlow]).
         modifier = Modifier
             .widthIn(min = 104.dp)
             .clickable(onClick = onClick)
@@ -272,10 +368,11 @@ private fun OptionCard(
                 }
             }
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        // Sized to the widest thing on it, so the summary's band has a card width to fill: under the
+        // picker's horizontal scroll the incoming width is unbounded, where `fillMaxWidth` measures to
+        // nothing. The intrinsic pass asks the summary how wide it lands *after* wrapping — see
+        // [SymbolFlow].
+        Column(Modifier.width(IntrinsicSize.Max)) {
             // The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel
             // per ride, chevron-separated (#2047). The gap between symbols is deliberately wide, so
             // "two legs" and "one leg, two interchangeable routes" (which is one seamless chip) can't
@@ -288,86 +385,244 @@ private fun OptionCard(
             val drawn = remember(option.symbols) {
                 option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                drawn.forEachIndexed { index, symbol ->
-                    if (index > 0) SymbolSeparator()
-                    when (symbol) {
-                        // A glyph alone — there is nothing to name about a walk.
-                        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
-                            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
-                        }
-                        // Every badge leads with the mode it's ridden on, which a route number never says
-                        // on its own. A route publishing no short name badges its long name, capped to
-                        // [OPTION_BADGE_MAX_WIDTH] and ellipsized so one wordy name can't crowd the
-                        // other legs off the card; only a route that names itself in no way at all is
-                        // left with the bare glyph.
-                        is ModeSymbol.Transit -> {
-                            val badge = symbol.badge
-                            val glyph = transitModeIcon(badge.mode)
-                            val glyphLabel = stringResource(transitModeLabel(badge.mode))
-                            if (badge.isUnnamed) {
-                                ModeGlyph(glyph, glyphLabel)
-                            } else {
-                                RouteBadgeChip(
-                                    badge.routes,
-                                    scale = SYMBOL_BADGE_SCALE,
-                                    maxWidth = OPTION_BADGE_MAX_WIDTH,
-                                    join = badge.join,
-                                    leadingIcon = glyph,
-                                    leadingIconDescription = glyphLabel
-                                )
-                            }
+            // A trip with nothing drawable to say (see above) gets no summary at all — an empty tinted
+            // strip would be worse than the card simply starting at its stats.
+            if (drawn.isNotEmpty()) {
+                SymbolFlow(
+                    wrapAt = SUMMARY_WRAP_WIDTH,
+                    minHeight = summaryHeights.tallest,
+                    onNaturalHeight = summaryHeights::report,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
+                        .padding(CARD_SECTION_PADDING)
+                ) {
+                    drawn.forEachIndexed { index, symbol ->
+                        // A symbol travels with the chevron that follows it, as one unbreakable unit:
+                        // the wrap then never opens a line with a chevron pointing at the symbol above
+                        // it, and a broken line ends on the "and then" that carries the eye down.
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ModeSymbolContent(symbol)
+                            if (index < drawn.lastIndex) SymbolSeparator()
                         }
                     }
                 }
             }
-            // Duration + walk distance read as one stat group, so they sit tighter together than the
-            // card's other lines.
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+            StatsColumn(option, winners)
+        }
+    }
+}
+
+/**
+ * The summary line's layout: its symbols packed left to right, wrapping onto the next line as soon as
+ * the following one would carry the line past [wrapAt] (#2081).
+ *
+ * Not a `FlowRow`, for one reason: every child here is measured **unbounded**, so a symbol that is by
+ * itself wider than [wrapAt] takes a line of its own and widens the card rather than being measured into
+ * whatever width is left. That case is real — a badge joining several interchangeable routes is
+ * deliberately uncapped (see [RouteBadgeChip]) — and the alternative is the failure that badge exists to
+ * avoid: a `Row` handed too little width measures its later segments at zero, so the ride would quietly
+ * lose a route off the end of its own badge. [wrapAt] is therefore where the line *breaks*, not a width
+ * the card is cut to.
+ *
+ * The card takes its width from this layout's intrinsic one ([OptionCard]), which [SymbolFlowPolicy]
+ * answers from the same packing the measure pass performs — so the two cannot disagree and leave the
+ * card carrying a line it then refuses to fill.
+ */
+@Composable
+private fun SymbolFlow(
+    wrapAt: Dp,
+    minHeight: Int,
+    onNaturalHeight: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    // Held through rememberUpdatedState so the reporting callback can be re-created every recomposition
+    // without re-creating the policy — only [wrapAt] and [minHeight] change what this layout does.
+    val report by rememberUpdatedState(onNaturalHeight)
+    Layout(content, modifier, remember(wrapAt, minHeight) { SymbolFlowPolicy(wrapAt, minHeight) { report(it) } })
+}
+
+/**
+ * [SymbolFlow]'s measurement. A policy object rather than a measure lambda so the layout can state its
+ * own **intrinsic** width: the card is sized by asking for it ([OptionCard]), and the default intrinsic
+ * a lambda inherits re-runs the whole measure block at an unbounded width and hopes the answer matches.
+ * Here both paths break the lines with the same [packLines] call, so the width the card takes is the
+ * width this layout then packs into, by construction rather than by argument.
+ */
+private class SymbolFlowPolicy(
+    private val wrapAt: Dp,
+    private val minHeight: Int,
+    private val onNaturalHeight: (Int) -> Unit
+) : MeasurePolicy {
+
+    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        val gapX = SYMBOL_GAP.roundToPx()
+        val gapY = SYMBOL_LINE_GAP.roundToPx()
+        // Measured unbounded — the point of the whole layout, see [SymbolFlow].
+        val placeables = measurables.map { it.measure(Constraints()) }
+        val widths = placeables.map { it.width }
+        // Whichever binds first: the line we chose, or a genuinely narrower parent.
+        val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
+        val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
+        val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)
+        // The height these lines want, and the height they are given: a card whose summary wraps to fewer
+        // lines than its neighbours' still reserves theirs, so every card's stats start at the same y.
+        // The lines are laid from the top, so the reserved room falls below them rather than centring
+        // them in it.
+        val natural = lineHeights.sum() + gapY * (lines.size - 1)
+        val height = constraints.constrainHeight(maxOf(natural, minHeight))
+        return layout(width, height) {
+            // Reported from placement, not from measure: writing the row's shared state is a change to
+            // someone else's layout, and placement is where that is safe to do.
+            onNaturalHeight(natural)
+            var y = 0
+            lines.forEachIndexed { index, line ->
+                var x = 0
+                line.forEach {
+                    val placeable = placeables[it]
+                    // Centred in its line, as the symbols were in the single row they used to share: a
+                    // chevron is half a glyph tall, and belongs level with what it joins.
+                    placeable.placeRelative(x, y + (lineHeights[index] - placeable.height) / 2)
+                    x += placeable.width + gapX
+                }
+                y += lineHeights[index] + gapY
+            }
+        }
+    }
+
+    /** The width [measure] will report when nothing narrower is imposed — the same packing, asked early. */
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int {
+        val gapX = SYMBOL_GAP.roundToPx()
+        val widths = measurables.map { it.maxIntrinsicWidth(Constraints.Infinity) }
+        return packLines(widths, wrapAt.roundToPx(), gapX).maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0
+    }
+}
+
+/**
+ * Greedy line breaking: which symbols land on each line, given their [widths] and the [gap] between two
+ * of them. A symbol wider than [limit] all the same opens — and keeps — a line of its own, which is what
+ * widens the card rather than cutting the symbol down (see [SymbolFlow]).
+ *
+ * Every line comes out no wider than the widest, so packing again at that width breaks the lines in the
+ * same places: a line stopped where the *next* symbol would have passed [limit], and [limit] can only
+ * have shrunk to a width this same line already fitted.
+ */
+private fun packLines(widths: List<Int>, limit: Int, gap: Int): List<IntRange> {
+    val lines = mutableListOf<IntRange>()
+    var start = 0
+    var packed = 0
+    widths.forEachIndexed { index, width ->
+        when {
+            // The first symbol on a line takes it whatever its width — nothing is ever cut to fit.
+            index == start -> packed = width
+            packed + gap + width <= limit -> packed += gap + width
+            else -> {
+                lines += start until index
+                start = index
+                packed = width
+            }
+        }
+    }
+    if (widths.isNotEmpty()) lines += start until widths.size
+    return lines
+}
+
+/** How wide one of [packLines]' lines is: its symbols, plus a [gap] between each neighbouring pair. */
+private fun lineWidth(widths: List<Int>, line: IntRange, gap: Int): Int = line.sumOf { widths[it] } + gap * (line.last - line.first)
+
+/** One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel. */
+@Composable
+private fun ModeSymbolContent(symbol: ModeSymbol) {
+    when (symbol) {
+        // A glyph alone — there is nothing to name about a walk.
+        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
+            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
+        }
+        // Every badge leads with the mode it's ridden on, which a route number never says on its own. A
+        // route publishing no short name badges its long name, capped to [OPTION_BADGE_MAX_WIDTH] and
+        // ellipsized so one wordy name can't crowd the other legs off the card; only a route that names
+        // itself in no way at all is left with the bare glyph.
+        is ModeSymbol.Transit -> {
+            val badge = symbol.badge
+            val glyph = transitModeIcon(badge.mode)
+            val glyphLabel = stringResource(transitModeLabel(badge.mode))
+            if (badge.isUnnamed) {
+                ModeGlyph(glyph, glyphLabel)
+            } else {
+                RouteBadgeChip(
+                    badge.routes,
+                    scale = SYMBOL_BADGE_SCALE,
+                    maxWidth = OPTION_BADGE_MAX_WIDTH,
+                    join = badge.join,
+                    leadingIcon = glyph,
+                    leadingIconDescription = glyphLabel
+                )
+            }
+        }
+    }
+}
+
+/**
+ * The lower half of an option card: what the trip costs (duration, walking) and when it runs, each metric
+ * outlined where it wins its category. Takes the [winners] set itself rather than a flag per category, so
+ * a new [WinnerCategory] is one line here and nothing at the call site.
+ */
+@Composable
+private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
+    val context = LocalContext.current
+    val leastWalking = WinnerCategory.LEAST_WALKING in winners
+    val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
+    Column(
+        modifier = Modifier.padding(CARD_SECTION_PADDING),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // Duration + walk distance read as one stat group, so they sit tighter together than the
+        // card's other lines.
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+            MetricRow(
+                MetricGlyph.DURATION,
+                contentDescription = null,
+                winner = WinnerCategory.SHORTEST_TRAVEL_TIME in winners,
+                outlineColor = winnerOutlineColor
+            ) {
+                EtaDurationText(
+                    minutes = option.durationMinutes,
+                    modifier = Modifier.alignByBaseline(),
+                    numberSize = METRIC_NUMBER_SIZE,
+                    unitSize = METRIC_UNIT_SIZE
+                )
+            }
+            // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
+            // with the distance styled like the duration (bold value + smaller unit). In the user's units
+            // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
+            if (option.walkDistanceMeters > 0.0 || leastWalking) {
                 MetricRow(
-                    MetricGlyph.DURATION,
-                    contentDescription = null,
-                    winner = shortestTravelTime,
+                    MetricGlyph.WALK,
+                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                    winner = leastWalking,
                     outlineColor = winnerOutlineColor
                 ) {
-                    EtaDurationText(
-                        minutes = option.durationMinutes,
+                    EtaPartsText(
+                        ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
                         modifier = Modifier.alignByBaseline(),
                         numberSize = METRIC_NUMBER_SIZE,
                         unitSize = METRIC_UNIT_SIZE
                     )
                 }
-                // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
-                // with the distance styled like the duration (bold value + smaller unit). In the user's units
-                // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
-                if (option.walkDistanceMeters > 0.0 || leastWalking) {
-                    MetricRow(
-                        MetricGlyph.WALK,
-                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
-                        winner = leastWalking,
-                        outlineColor = winnerOutlineColor
-                    ) {
-                        EtaPartsText(
-                            ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
-                            modifier = Modifier.alignByBaseline(),
-                            numberSize = METRIC_NUMBER_SIZE,
-                            unitSize = METRIC_UNIT_SIZE
-                        )
-                    }
-                }
             }
-            // The device-localized departure–arrival range (unwrap the server clock only here).
-            val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
-            val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ScheduleMetric(startText, winner = latestDeparture, outlineColor = winnerOutlineColor)
-                Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
-                ScheduleMetric(endText, winner = earliestArrival, outlineColor = winnerOutlineColor)
-            }
+        }
+        // The device-localized departure–arrival range (unwrap the server clock only here).
+        val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
+        val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ScheduleMetric(startText, winner = WinnerCategory.LATEST_DEPARTURE in winners, outlineColor = winnerOutlineColor)
+            Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            ScheduleMetric(endText, winner = WinnerCategory.EARLIEST_ARRIVAL in winners, outlineColor = winnerOutlineColor)
         }
     }
 }

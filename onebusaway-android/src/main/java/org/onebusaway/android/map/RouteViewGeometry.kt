@@ -5,9 +5,9 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
 import org.onebusaway.android.map.layout.RouteBadgePath
-import org.onebusaway.android.map.layout.layoutRouteBadges
+import org.onebusaway.android.map.layout.RouteBadgeRequest
+import org.onebusaway.android.map.layout.placeRouteBadges
 import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
@@ -141,34 +141,23 @@ internal fun FocusedTripGeometry.toRouteBadges(
         val name = getRouteDisplayName(route).takeIf(String::isNotBlank) ?: return@mapNotNull null
         RouteBadgeSpec(key, route, name, routeShapes)
     }
-    val placements = layoutRouteBadges(
+    return placeRouteBadges(
         specs.map { spec ->
-            RouteBadgeLayoutInput(
-                spec.key,
-                spec.shapes.map { shape -> RouteBadgePath(shape.points) }
+            RouteBadgeRequest(
+                routeShortName = spec.name,
+                // A badge takes its line's colour, so it goes through the same policy — an
+                // adjacency colour is already in it, an agency's own has to be put through.
+                color = routeColors[spec.key]
+                    ?: mapRouteLineColorOrNull(
+                        spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
+                    )
+                    ?: DEFAULT_ROUTE_LINE_COLOR,
+                paths = spec.shapes.map { shape -> RouteBadgePath(shape.points) },
+                // An adjacency label is the way into its route: it names a route the rider hasn't opened.
+                tap = spec.key
             )
         }
-    ).associateBy { it.route }
-    return buildList {
-        for (spec in specs) {
-            val placement = placements[spec.key] ?: continue
-            add(
-                RouteBadge(
-                    routeId = spec.key.routeId,
-                    routeShortName = spec.name,
-                    // A badge takes its line's colour, so it goes through the same policy — an
-                    // adjacency colour is already in it, an agency's own has to be put through.
-                    color = routeColors[spec.key]
-                        ?: mapRouteLineColorOrNull(
-                            spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
-                        )
-                        ?: DEFAULT_ROUTE_LINE_COLOR,
-                    point = placement.point,
-                    directionId = spec.key.directionId
-                )
-            )
-        }
-    }
+    )
 }
 
 private data class RouteBadgeSpec(

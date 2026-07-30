@@ -28,7 +28,8 @@ import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
- * (each polyline styled by [itineraryLegStyle]) plus start/end pins, and frames the whole itinerary. A
+ * (each polyline styled by [itineraryLegStyle], each ride labelled by [itineraryRouteBadges]) plus
+ * start/end pins, and frames the whole itinerary. A
  * synchronous driver over [MapHost] — it has no loader of its own (the itinerary is handed in), so it
  * just writes polylines + markers and dispatches the framing camera command.
  *
@@ -85,28 +86,29 @@ class DirectionsMapController(private val host: MapHost) {
         val endLat = endPlace.lat
         val endLon = endPlace.lon
 
-        // Build every leg's polyline (each in its own mode/route style), keeping each one's leg index so
-        // a later focus can name legs rather than drawn positions (a leg without geometry draws nothing).
-        legLines = legs.mapIndexedNotNull { legIndex, leg ->
+        // Every leg that has geometry to draw, decoded and styled once: the polylines below stroke it and
+        // the route labels are anchored on it, so a label cannot end up a different colour from its own
+        // line (a leg without geometry draws neither).
+        val drawableLegs = legs.mapIndexedNotNull { legIndex, leg ->
             val geometry = leg.legGeometry ?: return@mapIndexedNotNull null
             val shape = LegShape(geometry)
-            if (shape.length > 0) {
-                val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
-                // Every leg's points run in travel order, so whether it stamps chevrons is the style's
-                // call — a dashed on-street stroke declines them (see [itineraryLegStyle]).
-                ItineraryLegLine(
-                    legIndex,
-                    RoutePolyline(
-                        style.color,
-                        shape.points,
-                        widthProfile = style.widthProfile,
-                        directional = style.directional,
-                        dash = style.dash
-                    )
+            if (shape.length <= 0) return@mapIndexedNotNull null
+            val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
+            ItineraryDrawableLeg(legIndex, leg, shape.points, style)
+        }
+        // Every leg's points run in travel order, so whether it stamps chevrons is the style's call — a
+        // dashed on-street stroke declines them (see [itineraryLegStyle]).
+        legLines = drawableLegs.map { (legIndex, _, points, style) ->
+            ItineraryLegLine(
+                legIndex,
+                RoutePolyline(
+                    style.color,
+                    points,
+                    widthProfile = style.widthProfile,
+                    directional = style.directional,
+                    dash = style.dash
                 )
-            } else {
-                null
-            }
+            )
         }
         // A freshly drawn itinerary is the overview: every leg at full weight until one is focused.
         focusedLegIndices = emptySet()
@@ -118,6 +120,9 @@ class DirectionsMapController(private val host: MapHost) {
         if (endLat != null && endLon != null) {
             directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
         }
+        // Published after the pins, since the static layer is redrawn wholesale on each emission that
+        // reaches it: badges written first would be built again for every pin added after them.
+        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs))
 
         directionsHasRoute = legLines.isNotEmpty()
         directionsStart = if (startLat != null && startLon != null) GeoPoint(startLat, startLon) else null
@@ -172,6 +177,7 @@ class DirectionsMapController(private val host: MapHost) {
         directionsMarkerIds.clear()
         legLines = emptyList()
         focusedLegIndices = emptySet()
+        host.renderState.setRouteBadges(emptyList())
     }
 
     /**

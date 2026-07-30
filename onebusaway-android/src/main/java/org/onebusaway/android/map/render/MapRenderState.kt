@@ -202,15 +202,22 @@ data class ContinuationBadge(
 )
 
 /**
- * A tappable label for one route in focused-stop adjacency view (#1827), anchored once in geographic
- * space so the map SDK naturally carries it through pan and zoom. Rendered by both flavors (#1913).
+ * A label naming one route on the line it is drawn on — in focused-stop adjacency view (#1827), and on
+ * a directions itinerary's rides (#2066). Anchored once in geographic space so the map SDK naturally
+ * carries it through pan and zoom. Rendered by both flavors (#1913).
  */
 data class RouteBadge(
-    val routeId: String,
     val routeShortName: String,
     val color: Int,
     val point: GeoPoint,
-    val directionId: Int?
+    /**
+     * Where a tap on this label navigates — the route-direction to show, preferring the drawn line's own
+     * direction over the route's default. Null makes the label informational: a directions itinerary's
+     * labels name legs of a trip the rider is already reading, so a stray tap must not drop the whole
+     * itinerary for a single route's map. Null is also the default, so a label is inert until a producer
+     * says where it leads, and no producer needs a navigable id it doesn't have.
+     */
+    val tap: RouteDirectionKey? = null
 )
 
 /**

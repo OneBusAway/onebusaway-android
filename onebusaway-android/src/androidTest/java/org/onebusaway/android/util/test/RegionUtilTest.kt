@@ -45,12 +45,36 @@ class RegionUtilTest {
         assertNull(RegionUtils.getClosestRegion(context, regions, locationOf(51.5072, -0.1275), true))
     }
 
+    /**
+     * [RegionUtils.getRegionSpan] returns the bounding box of *all* a region's bounds, so it is tested
+     * against a synthetic two-bound region rather than a bundled one.
+     *
+     * Two reasons. A single-bound region just echoes its own `latSpan`/`lonSpan` back, asserting
+     * nothing about the union math — which is the only thing this function does. And pinning a bundled
+     * region couples the test to `regions_v3.json`, a live config source that legitimately drifts
+     * (`RegionsDecodeTest` is deliberately the only test that pins a bundled value).
+     *
+     *   bound A: lat 10.0 ± 1.0 -> 9.0..11.0    lon 20.0 ± 2.0  -> 18.0..22.0
+     *   bound B: lat 12.0 ± 1.0 -> 11.0..13.0   lon 19.0 ± 0.5  -> 18.5..19.5
+     *   union:   lat 9.0..13.0  (span 4.0, centre 11.0)
+     *            lon 18.0..22.0 (span 4.0, centre 20.0)
+     */
     @Test fun regionSpan() {
+        val region = Region(
+            id = -3,
+            name = "Test-TwoBounds",
+            active = true,
+            bounds = arrayOf(
+                Region.Bounds(10.0, 20.0, 2.0, 4.0),
+                Region.Bounds(12.0, 19.0, 2.0, 1.0)
+            )
+        )
         val results = DoubleArray(4)
-        RegionUtils.getRegionSpan(tampa, results)
-        listOf(0.542461f, 0.576357f, 27.9769105f, -82.445851f).forEachIndexed { index, value ->
-            assertEquals(value, results[index].toFloat(), SPAN_TOLERANCE_DEG)
-        }
+        RegionUtils.getRegionSpan(region, results)
+        assertEquals(4.0, results[0], SPAN_TOLERANCE_DEG)
+        assertEquals(4.0, results[1], SPAN_TOLERANCE_DEG)
+        assertEquals(11.0, results[2], SPAN_TOLERANCE_DEG)
+        assertEquals(20.0, results[3], SPAN_TOLERANCE_DEG)
     }
 
     @Test fun locationWithinRegion() {
@@ -69,9 +93,10 @@ class RegionUtilTest {
         const val DISTANCE_TOLERANCE_M = 2f
 
         /**
-         * Degrees, not metres: the span assertions below compare coordinate spans/centres, so the
-         * metre-scale tolerance above would make them vacuous.
+         * Degrees, not metres: [regionSpan] compares coordinate spans/centres, so the metre-scale
+         * tolerance above would make those assertions vacuous. The inputs are exact decimals, so this
+         * only absorbs floating-point noise.
          */
-        const val SPAN_TOLERANCE_DEG = 1e-4f
+        const val SPAN_TOLERANCE_DEG = 1e-9
     }
 }

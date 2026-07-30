@@ -578,6 +578,9 @@ private val ROW_MIN_TOUCH_HEIGHT = 48.dp
 /** The gap between the option-card header and the log, and below the log's last row. */
 private val LOG_EDGE_GAP = 4.dp
 
+/** How much the drawer enlarges a route roundel over its default size — see [SegmentIdentity]. */
+private const val BADGE_SCALE = 1.5f
+
 /**
  * How far the timeline's fixed metrics stretch with the user's font scale, capped at the platform's 2×
  * ceiling so a large text size can't crowd the content off a narrow screen. [TIME_WIDTH] is sized for
@@ -1038,8 +1041,11 @@ private fun BoxScope.LogNode(content: RowContent, nodeColors: RouteLineColors) {
             FilledNode(26.dp, nodeColor, transitModeIcon(content.entry.mode), onNode, 16.dp, shape = RoundedCornerShape(8.dp))
         is RowContent.ExitNode -> RingNode(22.dp, 3.dp, nodeColor)
         is RowContent.Stop -> RingNode(11.dp, 2.dp, nodeColor)
+        // A seam's arrow points *down* the rail, the way the ride carries on. It used to borrow the walk
+        // maneuver's ic_continue, whose arrow points up — that glyph means "keep going straight ahead"
+        // on a compass-oriented turn list, and read as travel back up the timeline on a vertical one.
         is RowContent.Transition ->
-            FilledNode(22.dp, nodeColor, R.drawable.ic_continue, onNode, 14.dp)
+            FilledNode(22.dp, nodeColor, R.drawable.ic_arrow_downward, onNode, 14.dp)
         is RowContent.Step -> RingNode(8.dp, 2.dp, muted.copy(alpha = 0.7f))
         // The between-steps distance is an interval, not an event — the spine runs through unbroken.
         is RowContent.StepDistance -> Unit
@@ -1205,33 +1211,16 @@ private fun ColumnScope.BoardContent(
         // A route that publishes no short name gets no roundel and leads with its long name — see
         // routeDisplayShortName.
         val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
-        val title = entry.routeDisplayName?.takeIf { it != entry.routeShortName }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            when {
-                joined != null -> RouteBadgeChip(joined.routes, scale = 1.5f, join = joined.join)
+        SegmentIdentity(
+            title = entry.routeDisplayName?.takeIf { it != entry.routeShortName },
+            headsign = entry.headsign,
+            roundel = when {
+                joined != null -> ({ RouteBadgeChip(joined.routes, scale = BADGE_SCALE, join = joined.join) })
                 entry.routeShortName != null ->
-                    RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = 1.5f)
+                    ({ RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = BADGE_SCALE) })
+                else -> null
             }
-            if (joined != null || entry.routeShortName != null) Spacer(Modifier.width(8.dp))
-            if (title != null) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
-        }
-        entry.headsign?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        )
         // What an interchangeable badge means: any of those routes will do, so board the first to
         // arrive. Each one's own ETA strip sits under the board stop below (#2010). A ride that changes
         // route under the rider carries the opposite instruction — board this one and stay on it — and
@@ -1292,42 +1281,18 @@ private fun ColumnScope.StopContent(stop: LogStop) {
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
-    // Dropped when it merely repeats the badge beside it, exactly as a board row's title is.
     val title = transition.routeDisplayName?.takeIf { it != transition.badge?.shortName }
-    if (transition.badge != null || title != null) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            transition.badge?.let {
-                RouteBadgeChip(it.shortName, it.routeColor, scale = 1.5f)
-                Spacer(Modifier.width(8.dp))
-            }
-            if (title != null) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-            } else {
-                Spacer(Modifier.weight(1f))
-            }
+    SegmentIdentity(
+        title = title,
+        headsign = headsign,
+        roundel = transition.badge?.let { badge ->
+            { RouteBadgeChip(badge.shortName, badge.routeColor, scale = BADGE_SCALE) }
         }
-    }
-    headsign?.let {
-        Text(
-            text = it,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
+    )
     val named = transition.badge != null || title != null || headsign != null
     Text(
         text = stringResource(
-            if (named) {
-                R.string.step_by_step_transit_stay_on_board
-            } else {
-                R.string.step_by_step_transit_interline_unknown_route
-            }
+            if (named) R.string.step_by_step_transit_stay_on_board else R.string.step_by_step_transit_interline_unknown_route
         ),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = FontWeight.SemiBold,
@@ -1336,6 +1301,49 @@ private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     transition.stop.name?.let { name ->
         Text(
             text = "${stringResource(R.string.step_by_step_transit_connector_stop_name)} $name",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * How a row names the route the rider is about to be on: its [roundel], the fuller name beside it, and
+ * the [headsign] under both.
+ *
+ * One composable rather than two so the ride's segments can't drift apart (#2071). The rider boards a
+ * segment at the board row and reaches every later one at a seam row, and those are the same act — a
+ * padding or type tweak landing on one of them and not the other would make one ride read as two
+ * different kinds of thing.
+ *
+ * [roundel] is a slot rather than a badge value because the two rows draw genuinely different chips: a
+ * board row may draw the joined "1 Line/2 Line" roundel, which is outlined, where a seam always draws
+ * the plain single one. Null draws none — and takes its spacing with it — for a route publishing no
+ * short name. [title] is null when the name would merely repeat the roundel, and the weight falls to a
+ * spacer, so whatever follows is laid out the same either way.
+ */
+@Composable
+private fun SegmentIdentity(title: String?, headsign: String?, roundel: (@Composable () -> Unit)?) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (roundel != null) {
+            roundel()
+            Spacer(Modifier.width(8.dp))
+        }
+        if (title != null) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+    }
+    headsign?.let {
+        Text(
+            text = it,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

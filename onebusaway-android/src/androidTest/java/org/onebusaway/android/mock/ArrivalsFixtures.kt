@@ -43,7 +43,7 @@ object ArrivalsFixtures {
     fun load(context: Context, fixture: String): ObaEnvelope<EntryWithReferences<ArrivalsForStop>> = Resources.read(context, Resources.getTestUri(fixture))
         .use { json.decodeFromString(it.readText()) }
 
-    private fun snapshot(env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>): StopArrivals = StopArrivals(requireNotNull(env.data), env.currentTime, 0)
+    private fun snapshot(env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>): StopArrivals = StopArrivals(env.data!!, env.currentTime, 0)
 
     /**
      * The fixture's arrivals projected to display [ArrivalInfo] via the production [convertArrivals].
@@ -73,6 +73,6 @@ object ArrivalsFixtures {
         env: ObaEnvelope<EntryWithReferences<ArrivalsForStop>>
     ): List<ObaSituation> {
         val snapshot = snapshot(env)
-        return requireNotNull(env.data).entry.situationIds.mapNotNull { snapshot.situation(it) }
+        return env.data!!.entry.situationIds.mapNotNull { snapshot.situation(it) }
     }
 }

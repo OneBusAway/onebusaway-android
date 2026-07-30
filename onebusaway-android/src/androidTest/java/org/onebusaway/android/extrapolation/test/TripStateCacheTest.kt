@@ -68,9 +68,9 @@ class TripStateCacheTest {
 
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val history = cache.lookupTripState("trip1").let(::requireNotNull).history
+        val history = cache.lookupTripState("trip1")!!.history
         assertEquals(1, history.size)
-        assertEquals(100.0, requireNotNull(history[0].status.distanceAlongTrip), 1e-12)
+        assertEquals(100.0, history[0].status.distanceAlongTrip!!, 1e-12)
     }
 
     @Test
@@ -90,7 +90,7 @@ class TripStateCacheTest {
             recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
         }
 
-        val history = cache.lookupTripState("trip1").let(::requireNotNull).history
+        val history = cache.lookupTripState("trip1")!!.history
         assertEquals(50, history.size)
     }
 
@@ -102,15 +102,15 @@ class TripStateCacheTest {
         recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        assertEquals(1, cache.lookupTripState("trip1").let(::requireNotNull).history.size)
-        assertEquals(1, cache.lookupTripState("trip2").let(::requireNotNull).history.size)
+        assertEquals(1, cache.lookupTripState("trip1")!!.history.size)
+        assertEquals(1, cache.lookupTripState("trip2")!!.history.size)
     }
 
     @Test
     fun testTrackerClearAll() {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
-        assertEquals(1, cache.lookupTripState("trip1").let(::requireNotNull).history.size)
+        assertEquals(1, cache.lookupTripState("trip1")!!.history.size)
 
         cache.clearAllTrips()
         assertNull(cache.lookupTripState("trip1"))
@@ -120,7 +120,7 @@ class TripStateCacheTest {
     fun testSnapshotIsolation() {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, 100.0, 5000.0, 1000L)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
-        val before = cache.lookupTripState("trip1").let(::requireNotNull)
+        val before = cache.lookupTripState("trip1")!!
 
         val later = createStatus("v1", "trip1", 47.1, -122.0, 200.0, 200.0, 5000.0, 2000L)
         recordStatus(later, System.currentTimeMillis(), System.currentTimeMillis())
@@ -128,7 +128,7 @@ class TripStateCacheTest {
         // Writes produce new snapshots; a previously looked-up state never changes underneath
         // its holder
         assertEquals(1, before.history.size)
-        assertEquals(2, cache.lookupTripState("trip1").let(::requireNotNull).history.size)
+        assertEquals(2, cache.lookupTripState("trip1")!!.history.size)
     }
 
     // --- Eviction tests ---
@@ -180,7 +180,7 @@ class TripStateCacheTest {
         val tracked = cache.getTrackedTripIds()
         assertEquals(cap, tracked.size)
         assertTrue("trip0 should still be present after self-update", "trip0" in tracked)
-        assertEquals(2, cache.lookupTripState("trip0").let(::requireNotNull).history.size)
+        assertEquals(2, cache.lookupTripState("trip0")!!.history.size)
     }
 
     // --- Schedule cache tests ---
@@ -219,8 +219,8 @@ class TripStateCacheTest {
     fun testPolylineSinglePoint() {
         val points = listOf(gp(47.0, -122.0))
         cache.putPolyline("trip1", Polyline(points))
-        val poly = requireNotNull(cache.lookupTripState("trip1").let(::requireNotNull).polyline)
-        val result = poly.interpolate(50.0).let(::requireNotNull)
+        val poly = cache.lookupTripState("trip1")!!.polyline!!
+        val result = poly.interpolate(50.0)!!
         assertEquals(47.0, result.latitude, 1e-12)
         assertEquals(-122.0, result.longitude, 1e-12)
     }
@@ -233,12 +233,12 @@ class TripStateCacheTest {
                 gp(47.001, -122.0) // ~111 meters north
             )
         cache.putPolyline("trip1", Polyline(points))
-        val poly = requireNotNull(cache.lookupTripState("trip1").let(::requireNotNull).polyline)
+        val poly = cache.lookupTripState("trip1")!!.polyline!!
         // Interpolate at 0 — should return first point
-        val start = poly.interpolate(0.0).let(::requireNotNull)
+        val start = poly.interpolate(0.0)!!
         assertEquals(47.0, start.latitude, 1e-12)
         // Interpolate beyond end — should return last point
-        val end = poly.interpolate(1000.0).let(::requireNotNull)
+        val end = poly.interpolate(1000.0)!!
         assertEquals(47.001, end.latitude, 1e-6)
     }
 
@@ -252,9 +252,9 @@ class TripStateCacheTest {
                 gp(47.003, -122.0) // ~333m total
             )
         cache.putPolyline("trip1", Polyline(points))
-        val poly = requireNotNull(cache.lookupTripState("trip1").let(::requireNotNull).polyline)
+        val poly = cache.lookupTripState("trip1")!!.polyline!!
         // Interpolate at ~166m — should be between second and third point
-        val mid = poly.interpolate(166.0).let(::requireNotNull)
+        val mid = poly.interpolate(166.0)!!
         assertTrue(
             "Should be between 47.001 and 47.002",
             mid.latitude > 47.001 && mid.latitude < 47.002
@@ -287,7 +287,7 @@ class TripStateCacheTest {
         recordStatus(status1, System.currentTimeMillis(), System.currentTimeMillis())
         recordStatus(status2, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = cache.lookupTripState("trip1").let(::requireNotNull).extrapolate(WallTime(queryTime + 5000))
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(queryTime + 5000))
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Median distance should be > last distance", dist.median() > 400.0)
@@ -300,7 +300,7 @@ class TripStateCacheTest {
         val status = createStatus("v1", "trip1", 47.0, -122.0, 100.0, null, 5000.0, timestamp)
         recordStatus(status, System.currentTimeMillis(), System.currentTimeMillis())
 
-        val result = cache.lookupTripState("trip1").let(::requireNotNull).extrapolate(WallTime(timestamp))
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(timestamp))
         assertTrue("Should be MissingSchedule", result is ExtrapolationResult.MissingSchedule)
     }
 
@@ -353,7 +353,7 @@ class TripStateCacheTest {
             )
 
         recordStatus(latestStatus, System.currentTimeMillis(), System.currentTimeMillis())
-        val result = cache.lookupTripState("trip1").let(::requireNotNull).extrapolate(WallTime(latestTimestamp))
+        val result = cache.lookupTripState("trip1")!!.extrapolate(WallTime(latestTimestamp))
         assertTrue("Should succeed", result is ExtrapolationResult.Success)
         val dist = (result as ExtrapolationResult.Success).distribution
         assertTrue("Extrapolated distance should be positive", dist.median() > 0)
@@ -364,7 +364,7 @@ class TripStateCacheTest {
     /** Records [status] as an observation of its active trip, as the response adapters would. */
     private fun recordStatus(status: ObaTripStatus, serverTimeMs: Long, localTimeMs: Long) = cache.record(
         TripObservation(
-            requireNotNull(status.activeTripId),
+            status.activeTripId!!,
             status,
             ServerTime(serverTimeMs),
             serviceDate = null,

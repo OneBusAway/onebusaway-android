@@ -58,7 +58,7 @@ class LastKnownLocationTest {
         // A last-known fix is optional platform state (for example after a reboot or when the user
         // clears location history), so this device-only assertion is not applicable without one.
         assumeNotNull(loc)
-        Log.d(TAG, "Location Provider for Location API v1 test is '${requireNotNull(loc).provider}'")
+        Log.d(TAG, "Location Provider for Location API v1 test is '${loc!!.provider}'")
         assertFreshLocation(loc)
     }
 
@@ -74,7 +74,7 @@ class LastKnownLocationTest {
         // Could return either a fused or Location API v1 location.
         val loc = LocationEntryPoint.get(targetContext).lastKnownLocation()
         assumeNotNull(loc)
-        Log.d(TAG, "Location Provider for Location Services test is '${requireNotNull(loc).provider}'")
+        Log.d(TAG, "Location Provider for Location Services test is '${loc!!.provider}'")
         assertFreshLocation(loc)
     }
 

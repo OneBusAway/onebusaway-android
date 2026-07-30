@@ -133,7 +133,7 @@ object VehicleBitmaps {
      * whatever `references` the poll happened to carry — and a vehicle mid-block-interline can
      * legitimately report an `activeTripId` this route's poll never fetched (which is why
      * `TripVehiclesDataSource.trip` exists at all, #1691); a blank id does it too (#2003). This was a
-     * forced-null chain inherited from the former Java, which turned that ordinary data gap into a foreground
+     * `!!` chain inherited from the former Java, which turned that ordinary data gap into a foreground
      * process death on the reactive poll path (#2020) — even though `vehicleTitle`, called one line
      * away in the same reconcile loop, already degraded to "".
      *
@@ -187,7 +187,7 @@ object VehicleBitmaps {
         // The path bearing is already a compass direction; the server orientation needs converting.
         val pathBearing = vehicle.bearing
         val direction = if (pathBearing.isNaN()) {
-            MathUtils.toDirection(requireNotNull(vehicle.status.orientation))
+            MathUtils.toDirection(vehicle.status.orientation!!)
         } else {
             pathBearing.toDouble()
         }

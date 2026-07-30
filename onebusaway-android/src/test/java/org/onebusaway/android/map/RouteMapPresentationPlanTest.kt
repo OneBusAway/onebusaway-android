@@ -121,7 +121,7 @@ class RouteMapPresentationPlanTest {
 
         // Only the adjacency line — the base route is not drawn underneath its own focus.
         assertEquals(1, plan.polylines.size)
-        val stops = requireNotNull(plan.stopPresentation)
+        val stops = plan.stopPresentation!!
         assertEquals(listOf("stop-a"), stops.stops.map { it.id })
         assertEquals(projected, stops.projectedPoints)
         assertEquals(1, projections)

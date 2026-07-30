@@ -297,10 +297,10 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         target.putBoolean(ARRIVE_BY, arriveBy)
         val fromAddr = from
         val toAddr = to
-        target.putDouble(FROM_LAT, requireNotNull(fromAddr).latitude)
+        target.putDouble(FROM_LAT, fromAddr!!.latitude)
         target.putDouble(FROM_LON, fromAddr.longitude)
         target.putString(FROM_NAME, fromAddr.toString())
-        target.putDouble(TO_LAT, requireNotNull(toAddr).latitude)
+        target.putDouble(TO_LAT, toAddr!!.latitude)
         target.putDouble(TO_LON, toAddr.longitude)
         target.putString(TO_NAME, toAddr.toString())
         target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())

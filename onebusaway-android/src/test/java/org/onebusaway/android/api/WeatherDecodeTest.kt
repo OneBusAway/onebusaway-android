@@ -80,7 +80,7 @@ class WeatherDecodeTest {
 
         val current = response.current_forecast
         assertNotNull(current)
-        assertEquals("wind", requireNotNull(current).icon)
+        assertEquals("wind", current!!.icon)
         assertEquals(62.42, current.temperature, 1e-6)
         assertEquals(60.78, current.temperature_feels_like, 1e-6)
         assertEquals("Breezy and Partly Cloudy", current.summary)

@@ -40,7 +40,7 @@ class NearestProjectedTest {
     fun `picks the item nearest the center`() {
         val near = GeoPoint(10.0, 10.0)
         val far = GeoPoint(100.0, 100.0)
-        val (item, offset) = nearestProjected(listOf(far, near), { it }, 12f, 12f, identity).let(::requireNotNull)
+        val (item, offset) = nearestProjected(listOf(far, near), { it }, 12f, 12f, identity)!!
         assertEquals(near, item)
         assertEquals(ScreenOffset(10f, 10f), offset)
     }
@@ -52,7 +52,7 @@ class NearestProjectedTest {
         val project: (GeoPoint) -> ScreenOffset? = { p ->
             if (p == offScreen) null else ScreenOffset(p.latitude.toFloat(), p.longitude.toFloat())
         }
-        val result = nearestProjected(listOf(offScreen, onScreen), { it }, 0f, 0f, project).let(::requireNotNull)
+        val result = nearestProjected(listOf(offScreen, onScreen), { it }, 0f, 0f, project)!!
         assertEquals(onScreen, result.first)
     }
 

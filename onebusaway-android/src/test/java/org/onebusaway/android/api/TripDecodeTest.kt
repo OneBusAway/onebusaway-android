@@ -56,7 +56,7 @@ class TripDecodeTest {
         val envelope: ObaEnvelope<EntryWithReferences<TripReference>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = requireNotNull(envelope.data)
+        val data = envelope.data!!
         val trip = data.entry
         assertEquals("1_18196913", trip.id)
         assertEquals("1_100", trip.routeId)

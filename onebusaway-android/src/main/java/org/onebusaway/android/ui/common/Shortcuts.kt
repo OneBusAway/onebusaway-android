@@ -109,13 +109,13 @@ object Shortcuts {
         destIntent.action = Intent.ACTION_VIEW
 
         val drawableIcon: Drawable = ResourcesCompat
-            .getDrawable(context.resources, icon, context.theme).let(::requireNotNull)
+            .getDrawable(context.resources, icon, context.theme)!!
         drawableIcon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
             ContextCompat.getColor(context, R.color.shortcut_icon),
             BlendModeCompat.SRC_IN
         )
         val drawableBackground: Drawable = ResourcesCompat
-            .getDrawable(context.resources, R.drawable.launcher_background, context.theme).let(::requireNotNull)
+            .getDrawable(context.resources, R.drawable.launcher_background, context.theme)!!
 
         val layerDrawable = LayerDrawable(arrayOf(drawableBackground, drawableIcon))
 

@@ -54,12 +54,12 @@ class StopDaoMergeTest {
     fun markStopUsed_preservesFavoriteAndUserName() = runBlocking {
         dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
         dao.setFavorite("s1", 1)
-        dao.upsert(dao.getStop("s1").let(::requireNotNull).copy(userName = "Home"))
+        dao.upsert(dao.getStop("s1")!!.copy(userName = "Home"))
 
         // Record again (e.g. a later arrivals load) — favorite + custom name must survive.
         dao.markStopUsed("s1", "100", "Main Street", "N", 47.0, -122.0, regionId = 1L, now = 200)
 
-        val s = dao.getStop("s1").let(::requireNotNull)
+        val s = dao.getStop("s1")!!
         assertEquals(1, s.favorite)
         assertEquals("Home", s.userName)
         assertEquals(2, s.useCount)
@@ -87,7 +87,7 @@ class StopDaoMergeTest {
             favorite = 1
         )
 
-        val s = dao.getStop("s1").let(::requireNotNull)
+        val s = dao.getStop("s1")!!
         assertEquals(1, s.favorite)
         assertEquals("Main St", s.name)
         assertEquals("100", s.code)
@@ -98,7 +98,7 @@ class StopDaoMergeTest {
     fun setFavoriteEnsuringRow_onlyFlipsFlagWhenRowExists() = runBlocking {
         // Existing row carries user state that a re-star must not clobber.
         dao.markStopUsed("s1", "100", "Main St", "N", 47.0, -122.0, regionId = 1L, now = 100)
-        dao.upsert(dao.getStop("s1").let(::requireNotNull).copy(userName = "Home"))
+        dao.upsert(dao.getStop("s1")!!.copy(userName = "Home"))
 
         // Ensure-row is handed the focused-stop identity (blank direction, no user state), but the row
         // exists, so only the flag flips — user_name / use_count / access_time survive.
@@ -116,7 +116,7 @@ class StopDaoMergeTest {
             favorite = 1
         )
 
-        val s = dao.getStop("s1").let(::requireNotNull)
+        val s = dao.getStop("s1")!!
         assertEquals(1, s.favorite)
         assertEquals("Home", s.userName)
         assertEquals("N", s.direction)
@@ -144,7 +144,7 @@ class StopDaoMergeTest {
 
         dao.markStopUsed("s1", "100", "Main Street", "N", 47.0, -122.0, regionId = 1L, now = 200)
 
-        val s = dao.getStop("s1").let(::requireNotNull)
+        val s = dao.getStop("s1")!!
         assertEquals(1, s.favorite) // early star preserved by the merge
         assertEquals("Main Street", s.name) // identity backfilled by the arrivals load
         assertEquals("100", s.code)
@@ -157,7 +157,7 @@ class StopDaoMergeTest {
         // region 1, with a custom name (UI_NAME should be the user name)
         dao.markStopUsed("s1", "1", "Alpha", "N", 1.0, 1.0, regionId = 1L, now = 1)
         dao.setFavorite("s1", 1)
-        dao.upsert(dao.getStop("s1").let(::requireNotNull).copy(userName = "Zulu"))
+        dao.upsert(dao.getStop("s1")!!.copy(userName = "Zulu"))
         // region 2 (should be excluded when scoping to region 1)
         dao.markStopUsed("s2", "2", "Beta", "N", 2.0, 2.0, regionId = 2L, now = 2)
         dao.setFavorite("s2", 1)

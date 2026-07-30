@@ -135,7 +135,7 @@ class RouteStopGroupsMapperTest {
         """.trimIndent()
 
         val envelope: ObaEnvelope<EntryWithReferences<StopsForRoute>> = json.decodeFromString(body)
-        val groups = requireNotNull(envelope.data).toRouteStopGroups()
+        val groups = envelope.data!!.toRouteStopGroups()
 
         assertEquals(1, groups.size)
         assertEquals("To Downtown", groups[0].name)

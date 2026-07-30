@@ -243,7 +243,7 @@ class ArrivalsViewModelTest {
         viewModel.loadMore()
         assertTrue(viewModel.loadingMore.value)
 
-        requireNotNull(repository.gate).complete(Unit)
+        repository.gate!!.complete(Unit)
         advanceUntilIdle()
 
         assertFalse(viewModel.loadingMore.value)
@@ -259,7 +259,7 @@ class ArrivalsViewModelTest {
         viewModel.loadMore()
         viewModel.loadMore() // ignored: a request is already in flight
 
-        requireNotNull(repository.gate).complete(Unit)
+        repository.gate!!.complete(Unit)
         advanceUntilIdle()
 
         // Only one widen (65 -> 125), not two.

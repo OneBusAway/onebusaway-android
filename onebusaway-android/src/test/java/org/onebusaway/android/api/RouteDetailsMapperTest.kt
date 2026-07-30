@@ -117,7 +117,7 @@ class RouteDetailsMapperTest {
 
         assertEquals(200, envelope.code)
         assertEquals(2, envelope.version)
-        val details = requireNotNull(envelope.data).toRouteDetails()
+        val details = envelope.data!!.toRouteDetails()
         assertEquals("8", details.shortName)
         assertEquals("Metro", details.agency?.name)
     }

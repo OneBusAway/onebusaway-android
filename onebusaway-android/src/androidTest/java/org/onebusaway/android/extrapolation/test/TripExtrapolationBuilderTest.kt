@@ -96,10 +96,10 @@ class TripExtrapolationBuilderTest {
             TripState("t", polyline = northLine()),
             ExtrapolationResult.Success(UniformDist(3000.0)),
             nowMs = WallTime(0L)
-        ).let(::requireNotNull)
+        )!!
 
-        val vehicle = requireNotNull(extrapolation.vehiclePoint)
-        val fast = requireNotNull(extrapolation.fastEstimatePoint)
+        val vehicle = extrapolation.vehiclePoint!!
+        val fast = extrapolation.fastEstimatePoint!!
         // Both lie on the line (constant lng) between the endpoints; the fast estimate (q0.90) is
         // further along than the median.
         assertEquals(-122.0, vehicle.longitude, 1e-6)
@@ -130,9 +130,9 @@ class TripExtrapolationBuilderTest {
             ),
             ExtrapolationResult.Success(UniformDist(3000.0)),
             nowMs = WallTime(6_000L)
-        ).let(::requireNotNull)
+        )!!
 
-        val dot = requireNotNull(extrapolation.dataAge)
+        val dot = extrapolation.dataAge!!
         assertEquals(
             "dot rides the shape (projected distance), not the off-route raw position",
             -122.0,
@@ -144,7 +144,7 @@ class TripExtrapolationBuilderTest {
         // remaining shape) is at or ahead of it, never behind.
         assertTrue(
             "glide median is not behind the data dot",
-            requireNotNull(extrapolation.vehiclePoint).latitude >= dot.point.latitude - 1e-9
+            extrapolation.vehiclePoint!!.latitude >= dot.point.latitude - 1e-9
         )
         assertEquals(5_000L, dot.ageMillis)
     }
@@ -161,9 +161,9 @@ class TripExtrapolationBuilderTest {
             ),
             ExtrapolationResult.NoData,
             nowMs = WallTime(1_000L)
-        ).let(::requireNotNull)
+        )!!
 
-        val dot = requireNotNull(extrapolation.dataAge)
+        val dot = extrapolation.dataAge!!
         assertEquals(-122.5, dot.point.longitude, 1e-6)
         assertEquals(47.5, dot.point.latitude, 1e-6)
     }
@@ -181,7 +181,7 @@ class TripExtrapolationBuilderTest {
             TripState("t", polyline = northLine()),
             ExtrapolationResult.NoData,
             nowMs = WallTime(0L)
-        ).let(::requireNotNull)
+        )!!
         assertNull(extrapolation.vehiclePoint)
         assertNull(extrapolation.fastEstimatePoint)
         assertTrue(extrapolation.band.isEmpty())

@@ -141,7 +141,7 @@ class MapDataSourceDirectionsTest {
             )
         ).polylinesByDirection
         assertEquals(listOf(shape("aaa"), shape("aaa")), result[0])
-        assertEquals(listOf(shape("aaa")), result[0].let(::requireNotNull).distinct())
+        assertEquals(listOf(shape("aaa")), result[0]!!.distinct())
     }
 
     @Test

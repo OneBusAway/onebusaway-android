@@ -54,7 +54,7 @@ class RegionDaoReplaceAllTest {
     fun replaceAll_insertsRegionWithChildren_andPreservesRegionZero() = runBlocking {
         dao.replaceAll(listOf(regionWithChildren(0)))
 
-        val hydrated = dao.getRegion(0).let(::requireNotNull)
+        val hydrated = dao.getRegion(0)!!
         assertEquals(0L, hydrated.region.id) // Tampa id 0 not reassigned
         assertEquals(1, hydrated.bounds.size)
         assertEquals(1, hydrated.open311Servers.size)
@@ -70,7 +70,7 @@ class RegionDaoReplaceAllTest {
         assertNull(dao.getRegion(0)) // old regions gone
         assertNull(dao.getRegion(1))
         assertEquals(1, dao.getAllRegions().size)
-        val r5 = dao.getRegion(5).let(::requireNotNull)
+        val r5 = dao.getRegion(5)!!
         assertEquals(1, r5.bounds.size) // region_bounds reinserted
         assertEquals(0, r5.open311Servers.size) // open311 cleared, none reinserted
     }

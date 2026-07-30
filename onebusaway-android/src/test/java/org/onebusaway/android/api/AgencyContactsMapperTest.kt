@@ -101,7 +101,7 @@ class AgencyContactsMapperTest {
         val envelope: ObaEnvelope<ListWithReferences<AgencyCoverage>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val items = requireNotNull(envelope.data).toAgencyContacts()
+        val items = envelope.data!!.toAgencyContacts()
         assertEquals(1, items.size)
         assertEquals("Metro", items[0].name)
     }

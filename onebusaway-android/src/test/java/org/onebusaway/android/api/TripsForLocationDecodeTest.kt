@@ -48,7 +48,7 @@ class TripsForLocationDecodeTest {
         val envelope: ObaEnvelope<ListWithReferences<TripDetailsEntry>> = json.decodeFromString(body)
 
         assertEquals(200, envelope.code)
-        val data = requireNotNull(envelope.data)
+        val data = envelope.data!!
         assertTrue(data.list.isNotEmpty())
         assertEquals("1_18196913", data.list[0].tripId)
         assertEquals(false, data.outOfRange)
@@ -64,6 +64,6 @@ class TripsForLocationDecodeTest {
         """.trimIndent()
         val envelope: ObaEnvelope<ListWithReferences<TripDetailsEntry>> = json.decodeFromString(body)
 
-        assertEquals(true, requireNotNull(envelope.data).outOfRange)
+        assertEquals(true, envelope.data!!.outOfRange)
     }
 }

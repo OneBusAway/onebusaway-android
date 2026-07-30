@@ -283,7 +283,7 @@ class GoogleMapRenderer(
                             .position(bike.point.toLatLng())
                             .icon(icon)
                             .title(bike.station.name)
-                    ).let(::requireNotNull)
+                    )!!
                     staticMarkers.add(marker)
                     bikeByMarker[marker] = bike
                 }
@@ -293,7 +293,7 @@ class GoogleMapRenderer(
         for ((_, generic) in snapshot.genericMarkers) {
             val options = MarkerOptions().position(generic.point.toLatLng())
             generic.hue?.let { options.icon(BitmapDescriptorFactory.defaultMarker(it)) }
-            staticMarkers.add(map.addMarker(options).let(::requireNotNull))
+            staticMarkers.add(map.addMarker(options)!!)
         }
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
@@ -308,7 +308,7 @@ class GoogleMapRenderer(
                     .icon(routeBadgeIcon(badge.routeShortName, badge.color))
                     .anchor(0.5f, 0.5f)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
-            ).let(::requireNotNull)
+            )!!
             staticMarkers += marker
             // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
             // unregistered marker's tap falls through to the map like any other unclaimed one.
@@ -366,7 +366,7 @@ class GoogleMapRenderer(
                     .rotation(arrow.bearing)
                     .flat(true)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
-            ).let(::requireNotNull)
+            )!!
         )
 
         val badge = continuation.badge
@@ -376,7 +376,7 @@ class GoogleMapRenderer(
                 .icon(routeBadgeIcon(badge.routeShortName, polyline.resolvedColor))
                 .anchor(0.5f, 0.5f)
                 .zIndex(ROUTE_BADGE_Z_INDEX)
-        ).let(::requireNotNull)
+        )!!
         staticMarkers.add(marker)
         continuationBadgeByMarker[marker] = badge
     }
@@ -602,7 +602,7 @@ class GoogleMapRenderer(
                     .zIndex(0.5f)
                     .title(MOST_RECENT_DATA_TITLE)
                     .snippet(formatDataAge(context.resources, ageSeconds))
-            ).let(::requireNotNull)
+            )!!
             mostRecentDataMarker = marker
             dotAgeSeconds = ageSeconds
             // The dot is created only after a no-selection gap cleared the smoother, so just prime it
@@ -655,7 +655,7 @@ class GoogleMapRenderer(
                         .anchor(0.5f, 0.5f)
                         .title(vehicleTitle(vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
-                ).let(::requireNotNull)
+                )!!
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
@@ -746,7 +746,7 @@ class GoogleMapRenderer(
                         .title(title)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex)
-                ).let(::requireNotNull)
+                )!!
                 smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
                 return
             }

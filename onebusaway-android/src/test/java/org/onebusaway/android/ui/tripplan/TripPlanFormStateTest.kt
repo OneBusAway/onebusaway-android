@@ -33,7 +33,7 @@ class TripPlanFormStateTest {
 
     @Test
     fun `a long-pressed destination pairs an empty origin with the current location`() {
-        val paired = TripPlanFormState().withMapEndpointPaired(TripEndpointSlot.TO, pressed, here)
+        val paired = TripPlanFormState().withEndpointPaired(TripEndpointSlot.TO, pressed, here)
 
         assertEquals(pressed, paired.to)
         assertEquals(here, paired.from)
@@ -42,7 +42,7 @@ class TripPlanFormStateTest {
 
     @Test
     fun `a long-pressed origin pairs an empty destination with the current location`() {
-        val paired = TripPlanFormState().withMapEndpointPaired(TripEndpointSlot.FROM, pressed, here)
+        val paired = TripPlanFormState().withEndpointPaired(TripEndpointSlot.FROM, pressed, here)
 
         assertEquals(pressed, paired.from)
         assertEquals(here, paired.to)
@@ -53,7 +53,7 @@ class TripPlanFormStateTest {
     fun `pairing never overwrites an endpoint the rider already resolved`() {
         val form = TripPlanFormState(from = named)
 
-        val paired = form.withMapEndpointPaired(TripEndpointSlot.TO, pressed, here)
+        val paired = form.withEndpointPaired(TripEndpointSlot.TO, pressed, here)
 
         assertEquals(named, paired.from)
         assertEquals(pressed, paired.to)
@@ -63,7 +63,7 @@ class TripPlanFormStateTest {
     fun `pairing never overwrites a half-typed query`() {
         val form = TripPlanFormState(to = TripEndpoint.FreeText("pike pl"))
 
-        val paired = form.withMapEndpointPaired(TripEndpointSlot.FROM, pressed, here)
+        val paired = form.withEndpointPaired(TripEndpointSlot.FROM, pressed, here)
 
         assertEquals(TripEndpoint.FreeText("pike pl"), paired.to)
         assertEquals(pressed, paired.from)
@@ -71,8 +71,18 @@ class TripPlanFormStateTest {
     }
 
     @Test
+    fun `an endpoint the rider cleared is empty again, so it pairs`() {
+        // The ✕ leaves exactly the never-set state, and pairing reads what the field holds now.
+        val form = TripPlanFormState(from = named).withEndpoint(TripEndpointSlot.FROM, TripEndpoint.FreeText())
+
+        val paired = form.withEndpointPaired(TripEndpointSlot.TO, pressed, here)
+
+        assertEquals(here, paired.from)
+    }
+
+    @Test
     fun `without a location fix the other endpoint is left empty`() {
-        val paired = TripPlanFormState().withMapEndpointPaired(TripEndpointSlot.TO, pressed, here = null)
+        val paired = TripPlanFormState().withEndpointPaired(TripEndpointSlot.TO, pressed, here = null)
 
         assertEquals(pressed, paired.to)
         assertEquals(TripEndpoint.FreeText(), paired.from)
@@ -83,7 +93,7 @@ class TripPlanFormStateTest {
     fun `pairing drops both endpoints' stale suggestions`() {
         val form = TripPlanFormState(fromSuggestions = listOf(named), toSuggestions = listOf(named))
 
-        val paired = form.withMapEndpointPaired(TripEndpointSlot.TO, pressed, here)
+        val paired = form.withEndpointPaired(TripEndpointSlot.TO, pressed, here)
 
         assertTrue(paired.fromSuggestions.isEmpty())
         assertTrue(paired.toSuggestions.isEmpty())
@@ -97,11 +107,5 @@ class TripPlanFormStateTest {
         assertFalse(named.isEmpty)
         assertFalse(pressed.isEmpty)
         assertFalse(here.isEmpty)
-    }
-
-    @Test
-    fun `each slot names the trip's other end`() {
-        assertEquals(TripEndpointSlot.TO, TripEndpointSlot.FROM.other)
-        assertEquals(TripEndpointSlot.FROM, TripEndpointSlot.TO.other)
     }
 }

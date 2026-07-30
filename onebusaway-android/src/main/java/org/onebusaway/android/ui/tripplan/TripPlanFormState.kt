@@ -33,11 +33,7 @@ sealed interface TripEndpoint {
     /** Mirrors CustomAddress.isSet(): a usable endpoint must have coordinates. */
     val hasCoordinates: Boolean get() = lat != null && lon != null
 
-    /**
-     * Nothing entered here yet — an empty editable field. A resolved pill and a half-typed query are
-     * both the rider's own work, so neither counts as empty (see
-     * [TripPlanFormState.withMapEndpointPaired]).
-     */
+    /** Nothing here — an empty editable field. A half-typed query is content, so it isn't empty. */
     val isEmpty: Boolean get() = this is FreeText && query.isBlank()
 
     /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
@@ -163,16 +159,19 @@ data class TripPlanFormState(
     }
 
     /**
-     * This form after the map's "directions from/to here" filled [slot] with [endpoint] (#2092).
+     * This form with [slot] set to [endpoint], and the trip's other end filled with [here] (the
+     * device's current location) if — and only if — that end is [TripEndpoint.isEmpty] right now (#2092).
      *
-     * A long-press names one end of a trip, and in a fresh directions session the other end is
-     * overwhelmingly the rider's own position — so [here] (the device's current location) is filled in
-     * for them, which makes the form submittable and plans the trip on the spot rather than leaving a
-     * half-filled form. Strictly a convenience: an endpoint the rider already set or started typing is
-     * never overwritten, and with no fix available ([here] null) that side is simply left empty, exactly
-     * as before.
+     * Naming one end of a trip on its own leaves a form nobody can submit, and the other end is
+     * overwhelmingly the rider's own position, so it's filled in for them and the trip plans on the
+     * spot. Strictly a convenience: an endpoint carrying anything at all — a resolved pill, a half-typed
+     * query — is left untouched, and with no fix available ([here] null) that end simply stays empty.
+     *
+     * The test is what the field holds now, not whether the rider ever touched it: an end they cleared
+     * with the pill's ✕ is empty again and will be paired. That's deliberate — the ✕ says "not this
+     * place", and a form the rider then leaves half-filled is no more useful for having been edited.
      */
-    fun withMapEndpointPaired(
+    fun withEndpointPaired(
         slot: TripEndpointSlot,
         endpoint: TripEndpoint,
         here: TripEndpoint.CurrentLocation?

@@ -786,10 +786,7 @@ fun HomeScreen(
                                             // keep the picker open rather than silently losing the selection.
                                             mapViewModel.camera.value?.center?.let { c ->
                                                 val point = TripEndpoint.MapPoint(c.latitude, c.longitude)
-                                                when (target) {
-                                                    TripEndpointSlot.FROM -> tripPlanViewModel.setFrom(point)
-                                                    TripEndpointSlot.TO -> tripPlanViewModel.setTo(point)
-                                                }
+                                                tripPlanViewModel.setEndpoint(target, point)
                                                 pickTarget = null
                                             }
                                         },
@@ -797,8 +794,8 @@ fun HomeScreen(
                                     )
                                 }
                                 // Long-press → "directions from/to here": enters directions and fills the endpoint
-                                // with the pressed point. On a fresh session the trip's other end is paired with
-                                // the rider's current location, so the plan runs off the one long-press (#2092).
+                                // with the pressed point (see setEndpointFromMap, which pairs the trip's other
+                                // end with current location so the one long-press plans a trip).
                                 longPressPoint?.let { point ->
                                     val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     DirectionsLongPressMenu(

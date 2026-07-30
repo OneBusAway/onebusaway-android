@@ -201,40 +201,50 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
-    /** Sets the origin (from a suggestion, current location, contacts, or map) and re-plans if ready. */
-    fun setFrom(endpoint: TripEndpoint) {
-        _formState.update { it.copy(from = endpoint, fromSuggestions = emptyList()) }
+    /** Sets one endpoint (from a suggestion, current location, contacts, or map) and re-plans if ready. */
+    fun setEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+        _formState.update { it.withEndpoint(slot, endpoint) }
         replanOrClearResult()
     }
 
-    fun setTo(endpoint: TripEndpoint) {
-        _formState.update { it.copy(to = endpoint, toSuggestions = emptyList()) }
-        replanOrClearResult()
+    fun setFrom(endpoint: TripEndpoint) = setEndpoint(TripEndpointSlot.FROM, endpoint)
+
+    fun setTo(endpoint: TripEndpoint) = setEndpoint(TripEndpointSlot.TO, endpoint)
+
+    /**
+     * Sets [slot] to the device's current location, or returns false when there's no fix to set it to
+     * — the caller says why (no permission vs. no fix yet), which only it can tell apart.
+     */
+    fun setEndpointToCurrentLocation(slot: TripEndpointSlot): Boolean {
+        val here = currentLocation() ?: return false
+        setEndpoint(slot, here)
+        return true
     }
 
     /**
      * Sets the endpoint the map's "directions from/to here" named, pairing the trip's other end with
-     * the device's current location when it's still empty — see [TripPlanFormState.withMapEndpointPaired]
-     * for the rule (#2092). Both ends land in a single form update, so the paired trip submits as one plan.
+     * the device's current location when that end is empty — [TripPlanFormState.withEndpointPaired]
+     * owns the rule (#2092). Both ends land in one form update, so the pair submits as a single plan.
      */
     fun setEndpointFromMap(slot: TripEndpointSlot, endpoint: TripEndpoint) {
-        val here = locationRepository.lastKnownLocation()
-            ?.let { TripEndpoint.CurrentLocation(lat = it.latitude, lon = it.longitude) }
-        _formState.update { it.withMapEndpointPaired(slot, endpoint, here) }
+        val here = currentLocation()
+        _formState.update { it.withEndpointPaired(slot, endpoint, here) }
         replanOrClearResult()
     }
+
+    /** The device's last known fix as a plan endpoint, or null when there is none (or no permission). */
+    private fun currentLocation(): TripEndpoint.CurrentLocation? = locationRepository.lastKnownLocation()
+        ?.let { TripEndpoint.CurrentLocation(lat = it.latitude, lon = it.longitude) }
 
     /** Clears the origin back to an empty editable field (the pill's ✕), dropping any stale result. */
     fun clearFrom() {
-        _formState.update { it.copy(from = TripEndpoint.FreeText(), fromSuggestions = emptyList()) }
         fromQueries.value = ""
-        replanOrClearResult()
+        setEndpoint(TripEndpointSlot.FROM, TripEndpoint.FreeText())
     }
 
     fun clearTo() {
-        _formState.update { it.copy(to = TripEndpoint.FreeText(), toSuggestions = emptyList()) }
         toQueries.value = ""
-        replanOrClearResult()
+        setEndpoint(TripEndpointSlot.TO, TripEndpoint.FreeText())
     }
 
     fun setDateTime(millis: Long) {

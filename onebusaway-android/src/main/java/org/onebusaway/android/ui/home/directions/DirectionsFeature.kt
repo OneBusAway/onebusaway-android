@@ -87,7 +87,6 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
@@ -112,7 +111,6 @@ import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
-import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
@@ -181,8 +179,8 @@ fun DirectionsFormCard(
                 onSelectTo = viewModel::setTo,
                 onClearFrom = viewModel::clearFrom,
                 onClearTo = viewModel::clearTo,
-                onFromCurrentLocation = { setCurrentLocation(context, viewModel::setFrom) },
-                onToCurrentLocation = { setCurrentLocation(context, viewModel::setTo) },
+                onFromCurrentLocation = { setCurrentLocation(context, viewModel, TripEndpointSlot.FROM) },
+                onToCurrentLocation = { setCurrentLocation(context, viewModel, TripEndpointSlot.TO) },
                 onFromPickOnMap = onPickFrom,
                 onToPickOnMap = onPickTo,
                 onSetArriving = viewModel::setArriving,
@@ -198,25 +196,21 @@ fun DirectionsFormCard(
     }
 }
 
-/** Set an endpoint to the device's last-known location, or toast if none is available. */
-private fun setCurrentLocation(context: Context, target: (TripEndpoint) -> Unit) {
-    val location = LocationEntryPoint.get(context.applicationContext).lastKnownLocation()
-    if (location == null) {
-        // A null fix means "no permission" only when permission is actually denied; with permission
-        // granted it just means we don't have a fix yet, which is a different (recoverable) message.
-        val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
-                context,
-                PermissionUtils.LOCATION_PERMISSIONS
-            )
-        ) {
-            R.string.main_waiting_for_location
-        } else {
-            R.string.no_location_permission
-        }
-        Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-        return
+/** Set [slot] to the device's last-known location, or toast if none is available. */
+private fun setCurrentLocation(context: Context, viewModel: TripPlanViewModel, slot: TripEndpointSlot) {
+    if (viewModel.setEndpointToCurrentLocation(slot)) return
+    // A null fix means "no permission" only when permission is actually denied; with permission
+    // granted it just means we don't have a fix yet, which is a different (recoverable) message.
+    val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
+            context,
+            PermissionUtils.LOCATION_PERMISSIONS
+        )
+    ) {
+        R.string.main_waiting_for_location
+    } else {
+        R.string.no_location_permission
     }
-    target(TripEndpoint.CurrentLocation(lat = location.latitude, lon = location.longitude))
+    Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
 }
 
 private fun pickTripDate(activity: AppCompatActivity, viewModel: TripPlanViewModel) {

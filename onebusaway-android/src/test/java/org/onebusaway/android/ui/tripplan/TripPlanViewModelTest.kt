@@ -117,9 +117,7 @@ class TripPlanViewModelTest {
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
         region: RegionRepository = FakeRegionRepository()
     ): TripPlanViewModel {
-        // Location isn't constructible in a plain JVM test, so the fake reports "no fix" — which is the
-        // path the VM itself owns. The paired-endpoint rule it delegates to is covered, with a fix, by
-        // TripPlanFormStateTest.
+        // The fake reports "no fix" — see TripPlanFormStateTest for the with-a-fix cases.
         val location = FakeLocationRepository()
         return TripPlanViewModel(
             geocode,

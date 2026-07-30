@@ -145,7 +145,7 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a case is its own line's hue, tuned away from it in the direction the basemap went`() {
+    fun `a case is its own line's hue, tuned against the basemap`() {
         val line = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).color)
         val onLightMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false))
         val onDarkMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true))
@@ -154,10 +154,12 @@ class ItineraryLegStyleTest {
         listOf(onLightMap, onDarkMap).forEach {
             assertEquals(line.hue, it.hue, HUE_TOLERANCE_DEGREES)
         }
-        // A halo separates a line from its surroundings by carrying the *background's* value, so it goes
-        // light on the light basemap and dark on the dark one — a fixed dark case would sink into a dark map.
-        assertTrue("light-map case tone ${onLightMap.tone} should exceed line tone ${line.tone}", onLightMap.tone > line.tone)
-        assertTrue("dark-map case tone ${onDarkMap.tone} should be below line tone ${line.tone}", onDarkMap.tone < line.tone)
+        // A case goes *against* the basemap — dark on the light map, light on the dark one. Device-checked:
+        // tinting it toward the map instead put it at the map's own value and it disappeared entirely.
+        assertTrue("light-map case tone ${onLightMap.tone} should be below line tone ${line.tone}", onLightMap.tone < line.tone)
+        assertTrue("dark-map case tone ${onDarkMap.tone} should exceed line tone ${line.tone}", onDarkMap.tone > line.tone)
+        // And by the same amount in each, so one theme can't quietly end up with a weaker case than the other.
+        assertEquals(line.tone - onLightMap.tone, onDarkMap.tone - line.tone, CHANNEL_TOLERANCE)
     }
 
     @Test

@@ -31,7 +31,6 @@ import org.onebusaway.android.app.di.RegionEntryPoint
  */
 object ObaRequestErrors {
 
-    @JvmStatic
     fun getRouteErrorString(context: Context, code: Int): String {
         if (!isConnected(context)) {
             return if (isAirplaneMode(context)) {
@@ -60,7 +59,6 @@ object ObaRequestErrors {
         }
     }
 
-    @JvmStatic
     fun getStopErrorString(context: Context, code: Int): String {
         if (!isConnected(context)) {
             return if (isAirplaneMode(context)) {
@@ -95,7 +93,6 @@ object ObaRequestErrors {
      *
      * @param code The status code (an HTTP status, or an ObaApi.OBA_* sentinel)
      */
-    @JvmStatic
     fun getMapErrorString(context: Context, code: Int): String {
         if (!isConnected(context)) {
             return if (isAirplaneMode(context)) {

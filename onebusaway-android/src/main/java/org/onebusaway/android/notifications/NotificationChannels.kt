@@ -65,7 +65,6 @@ object NotificationChannels {
      * Registers the app's notification channels. A no-op below API 26 (channels didn't exist);
      * idempotent above it, since registering an existing channel id just updates it.
      */
-    @JvmStatic
     fun registerAll(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return

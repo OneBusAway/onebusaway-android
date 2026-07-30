@@ -179,15 +179,14 @@ private object WireStringSerializer : KSerializer<String> {
  * The single OTP `/plan` JSON entry point, shared by the legacy Java `TripRequest` AsyncTask and the
  * coroutine [org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository]. Configured like the rest
  * of the modernized stack (`ignoreUnknownKeys` + `coerceInputValues`, mirroring `NetworkModule`), and
- * exposed as a `@JvmStatic` so the remaining Java caller can invoke it directly. Returns the decoded
+ * exposed on the companion object for callers. Returns the decoded
  * [OtpResponseDto] as-is — callers map `.plan?.itineraries` through
  * [org.onebusaway.android.api.adapters.toTripItinerary] themselves; there's no OTP-library envelope
  * type to project onto anymore.
  *
  * A malformed body is rethrown as [IOException] rather than the unchecked
  * [SerializationException] `decodeFromString` raises, so both call sites route it through the same
- * `IOException`-based network-failure handling (the Java AsyncTask only catches `IOException`, and the
- * repository maps `IOException` to a user-facing message).
+ * `IOException`-based network-failure handling and user-facing message.
  */
 object OtpPlanParser {
 
@@ -196,8 +195,6 @@ object OtpPlanParser {
         coerceInputValues = true
     }
 
-    @JvmStatic
-    @Throws(IOException::class)
     fun parse(body: String): OtpResponseDto = try {
         json.decodeFromString<OtpResponseDto>(body)
     } catch (e: SerializationException) {
@@ -208,7 +205,5 @@ object OtpPlanParser {
      * Reads [input] fully as UTF-8 and [parse]s it — the single stream→[OtpResponseDto] entry point,
      * so callers don't each hand-roll the read (and its charset choice).
      */
-    @JvmStatic
-    @Throws(IOException::class)
     fun parse(input: InputStream): OtpResponseDto = parse(input.readBytes().toString(Charsets.UTF_8))
 }

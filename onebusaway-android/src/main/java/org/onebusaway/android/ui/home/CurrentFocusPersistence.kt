@@ -53,7 +53,7 @@ internal object CurrentFocusPersistence {
             FOCUS_ROUTE -> readRouteTarget(state)?.let { CurrentFocus.Route(it) } ?: CurrentFocus.None
             FOCUS_BIKE -> state.get<String>(KEY_BIKE_STATION)?.let { CurrentFocus.BikeStation(it) }
                 ?: CurrentFocus.None
-            // A restored directions focus returns to the itinerary overview; the transient route
+            // A restored directions focus returns to the itinerary overview; the transient leg
             // sub-focus isn't persisted.
             FOCUS_DIRECTIONS -> CurrentFocus.Directions()
             FOCUS_NONE -> CurrentFocus.None

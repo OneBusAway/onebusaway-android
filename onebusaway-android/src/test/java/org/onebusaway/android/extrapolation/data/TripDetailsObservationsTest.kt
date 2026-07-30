@@ -23,13 +23,13 @@ import org.junit.Test
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.TripDetailsEntry
-import org.onebusaway.android.api.data.asRouteTrips
+import org.onebusaway.android.api.data.asSingleRouteTrips
 import org.onebusaway.android.time.ServiceDate
 
 /**
  * Ports the trip-details cases of the retired instrumented AdaptersTest onto the modernized DTO path:
  * decodes the same trip-details fixtures into the api/ envelope, adapts via the single-entry
- * [asRouteTrips] and distills [toObservations] — one observation for an active vehicle, none when the
+ * [asSingleRouteTrips] and distills [toObservations] — one observation for an active vehicle, none when the
  * response has no status or no active trip. JVM-only ([toObservations] reads no Android types).
  */
 class TripDetailsObservationsTest {
@@ -43,7 +43,7 @@ class TripDetailsObservationsTest {
 
     @Test
     fun distillsOneObservation() {
-        val observations = decode("trip_details_hart_1389962.json").asRouteTrips().toObservations()
+        val observations = decode("trip_details_hart_1389962.json").asSingleRouteTrips().toObservations()
 
         assertEquals(1, observations.size)
         val observation = observations[0]
@@ -55,13 +55,13 @@ class TripDetailsObservationsTest {
 
     @Test
     fun noStatusYieldsNoObservations() {
-        assertTrue(decode("trip_1_18196913.json").asRouteTrips().toObservations().isEmpty())
+        assertTrue(decode("trip_1_18196913.json").asSingleRouteTrips().toObservations().isEmpty())
     }
 
     @Test
     fun noActiveTripIdYieldsNoObservations() {
         assertTrue(
-            decode("trip_details_hart_1389962_no_active_trip.json").asRouteTrips().toObservations()
+            decode("trip_details_hart_1389962_no_active_trip.json").asSingleRouteTrips().toObservations()
                 .isEmpty()
         )
     }

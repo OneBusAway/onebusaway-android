@@ -19,6 +19,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
@@ -29,14 +30,18 @@ import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * Verifies that a ride the vehicle changes route during (#2000) is badged as what it is in both places a
- * ride is drawn — the itinerary option card at the top and the ride's own badge in the trip log: one
- * roundel naming every route ridden, "5 > 12" (#2049). The badge used to name only the route boarded,
- * leaving the picker promising a 5 all the way while the log's own "stay on board" row said otherwise.
+ * Verifies that a ride the vehicle changes route during (#2000) names every route it runs as, in the two
+ * places a ride is drawn — and names them in the form each place can carry:
+ *  - the itinerary option card has one line to stand for the whole ride, so it joins them into one
+ *    roundel, "5 > 12" (#2049). The card used to name only the route boarded, leaving the picker
+ *    promising a 5 all the way while the drawer's own "stay on board" row said otherwise;
+ *  - the trip log has a row per segment, so it splits them (#2071): the header badges the 5 the rider
+ *    boards, and the 12 appears at the seam row, where the rider is told to stay aboard for it. The
+ *    header used to carry the joined roundel too, promising a 12 several stops before it existed.
  *
- * The instruction it must *not* pick up is the interchangeable one: a chevron badge is one vehicle, so
- * "whichever comes first" (see [DirectionRowAlternativeRoutesTest]) would tell the rider to board a 12
- * that is the same bus they are already on.
+ * The instruction the seam must *not* pick up is the interchangeable one: an interlined ride is one
+ * vehicle, so "whichever comes first" (see [DirectionRowAlternativeRoutesTest]) would tell the rider to
+ * board a 12 that is the same bus they are already on.
  */
 class DirectionRowInterlineBadgeTest {
 
@@ -61,7 +66,8 @@ class DirectionRowInterlineBadgeTest {
     )
 
     private val transition = InterlineTransition(
-        routeLabel = "12",
+        badge = RouteBadge("12", 0xFFD62828.toInt()),
+        routeDisplayName = "12",
         headsign = "Interlaken Park",
         stop = RouteStopRef("1_550", "550", "Mount Baker Transit Center", seamPoint)
     )
@@ -103,14 +109,36 @@ class DirectionRowInterlineBadgeTest {
         directions = listOf(ride)
     )
 
-    /** Both roundels — the option card's and the ride's — name the route boarded and the one it becomes. */
+    /** Every route the ride runs as is named twice over: once on the option card, once in the log. */
     @Test
-    fun anInterlinedRideBadgesEveryRouteItRunsAsInThePickerAndTheLog() {
+    fun anInterlinedRideNamesEveryRouteItRunsAsInThePickerAndTheLog() {
         composeRule.setContent { TripResultsList(state = state) }
 
-        // One node per route in each of the two badges: the option card's and the ride's.
         composeRule.onAllNodesWithText("5").assertCountEquals(2)
         composeRule.onAllNodesWithText("12").assertCountEquals(2)
+    }
+
+    /**
+     * …but the log names them where the rider reaches them (#2071): the 12 is drawn *below* the board
+     * stop, at its seam, and never beside the route the rider is boarding. Anchored on the board stop's
+     * own row rather than on node order, so it fails for the reason it is named — the header carrying a
+     * "5 > 12" roundel would put a 12 above that line, and no 5 may appear below it.
+     */
+    @Test
+    fun theLogBadgesTheRouteBoardedAtTheHeaderAndTheOneItBecomesAtTheSeam() {
+        composeRule.setContent { TripResultsList(state = state) }
+
+        val boardStopBottom = composeRule
+            .onNodeWithText("3rd Ave & Pine St")
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .bottom
+        fun topsOf(name: String) = composeRule.onAllNodesWithText(name)
+            .fetchSemanticsNodes()
+            .map { it.boundsInRoot.top }
+
+        assertEquals("one 12 below the board stop — the seam's", 1, topsOf("12").count { it > boardStopBottom })
+        assertEquals("no 5 below the board stop", 0, topsOf("5").count { it > boardStopBottom })
     }
 
     /** The badge and the narrative tell one story: the 12 is where the ride goes, not a bus to board. */
@@ -119,13 +147,9 @@ class DirectionRowInterlineBadgeTest {
         composeRule.setContent { TripResultsList(state = state) }
 
         composeRule
-            .onNodeWithText(
-                context.getString(
-                    R.string.step_by_step_transit_interline,
-                    "12 ${context.getString(R.string.step_by_step_transit_connector_headsign)} Interlaken Park"
-                )
-            )
+            .onNodeWithText(context.getString(R.string.step_by_step_transit_stay_on_board))
             .assertExists()
+        composeRule.onNodeWithText("Interlaken Park").assertExists()
         composeRule
             .onAllNodesWithText(context.getString(R.string.directions_whichever_comes_first))
             .assertCountEquals(0)

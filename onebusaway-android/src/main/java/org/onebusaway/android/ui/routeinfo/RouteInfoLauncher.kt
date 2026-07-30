@@ -33,12 +33,10 @@ import org.onebusaway.android.ui.nav.DeepLinkUris
  */
 object RouteInfoLauncher {
 
-    @JvmStatic
     fun start(context: Context, routeId: String) {
         context.startActivity(makeIntent(context, routeId))
     }
 
-    @JvmStatic
     fun makeIntent(context: Context, routeId: String): Intent = Intent(context, HomeActivity::class.java).apply {
         data = Uri.withAppendedPath(DeepLinkUris.ROUTES, routeId)
     }

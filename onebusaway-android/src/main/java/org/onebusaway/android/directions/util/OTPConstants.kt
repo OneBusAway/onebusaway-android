@@ -20,13 +20,10 @@ import java.util.concurrent.TimeUnit
 
 object OTPConstants {
 
-    @JvmField
     val DEFAULT_UPDATE_INTERVAL_TRIP_TIME = TimeUnit.SECONDS.toMillis(60)
 
-    @JvmField
     val REALTIME_SERVICE_QUERY_WINDOW = TimeUnit.HOURS.toMillis(1)
 
-    @JvmField
     val REALTIME_SERVICE_DELAY_THRESHOLD = TimeUnit.MINUTES.toSeconds(2)
 
     const val FORMAT_OTP_SERVER_DATE_RESPONSE = "yyyy-MM-dd'T'HH:mm:ssZZ"
@@ -59,7 +56,6 @@ object OTPConstants {
 
     const val FORMAT_OTP_SERVER_TIME_REQUEST = "hh:mma"
 
-    @JvmField
     val OTP_LOCALE: Locale = Locale.US
 
     // flag to indicate intent sent by or on behalf of TripPlanActivity

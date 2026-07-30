@@ -88,15 +88,13 @@ private fun TripDetailsEntry.fixRank(): Int {
 }
 
 /** Adapts a modernized trips-for-route envelope (a list of vehicles) to [RouteTrips]. */
-@JvmName("listAsRouteTrips")
 internal fun ObaEnvelope<ListWithReferences<TripDetailsEntry>>.asRouteTrips(): RouteTrips {
     val data = requireData()
     return routeTripsOf(data.list, data.references, currentTime)
 }
 
 /** Adapts a modernized trip-details envelope (a single trip) to [RouteTrips]. */
-@JvmName("entryAsRouteTrips")
-internal fun ObaEnvelope<EntryWithReferences<TripDetailsEntry>>.asRouteTrips(): RouteTrips {
+internal fun ObaEnvelope<EntryWithReferences<TripDetailsEntry>>.asSingleRouteTrips(): RouteTrips {
     val data = requireData()
     return routeTripsOf(listOf(data.entry), data.references, currentTime)
 }
@@ -138,7 +136,7 @@ class DefaultTripVehiclesDataSource @Inject constructor(
     }.onFailure { Log.e(TAG, "tripsForRoute($routeId) failed", it) }
 
     override suspend fun tripDetails(tripId: String): Result<RouteTrips> = api.call {
-        it.tripDetails(tripId).asRouteTrips()
+        it.tripDetails(tripId).asSingleRouteTrips()
     }.onFailure { Log.e(TAG, "tripDetails($tripId) failed", it) }
 
     override suspend fun tripSchedule(tripId: String): Result<ObaTripSchedule?> = api.call {

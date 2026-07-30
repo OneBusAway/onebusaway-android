@@ -53,7 +53,6 @@ object ConversionUtils {
      * @param applicationContext context to look up resources
      * @return formatted string of distance
      */
-    @JvmStatic
     fun getFormattedDistance(meters: Double, applicationContext: Context): String = getFormattedDistanceParts(meters, applicationContext).joinToString(" ") { it.text }
 
     /**
@@ -65,7 +64,6 @@ object ConversionUtils {
      * @param meters distance in meters
      * @param applicationContext context to look up resources
      */
-    @JvmStatic
     fun getFormattedDistanceParts(
         meters: Double,
         applicationContext: Context
@@ -101,7 +99,6 @@ object ConversionUtils {
      * @param applicationContext context to look up resources
      * @return formatted duration string
      */
-    @JvmStatic
     fun getFormattedDurationText(sec: Long, applicationContext: Context): String? {
         var text = ""
         val h = sec / 3600
@@ -126,7 +123,6 @@ object ConversionUtils {
      * @param applicationContext context to look up resources
      * @return formatted duration text
      */
-    @JvmStatic
     fun getFormattedDurationTextNoSeconds(
         sec: Long,
         longFormat: Boolean,
@@ -159,8 +155,6 @@ object ConversionUtils {
         return text
     }
 
-    @JvmStatic
-    @JvmOverloads
     fun getTimeWithContext(
         applicationContext: Context,
         time: Long,
@@ -232,8 +226,6 @@ object ConversionUtils {
         }
     }
 
-    @JvmStatic
-    @JvmOverloads
     fun getTimeUpdated(
         applicationContext: Context,
         oldTime: Long,
@@ -336,7 +328,6 @@ object ConversionUtils {
      * @param maxLength max length of the new sentence
      * @return the reduced sentence
      */
-    @JvmStatic
     fun tailAndTruncateSentence(sentence: String, maxLength: Int): String {
         val reversedWords = sentence.split(" ").reversed()
 
@@ -362,7 +353,6 @@ object ConversionUtils {
      * @param routeShortName to be returned if is not null
      * @return a valid route short name
      */
-    @JvmStatic
     fun getRouteShortNameSafe(
         routeShortName: String?,
         routeLongName: String?,
@@ -394,7 +384,6 @@ object ConversionUtils {
      * @param routeShortName to use if necessary
      * @return a valid route long name
      */
-    @JvmStatic
     fun getRouteLongNameSafe(
         routeLongName: String?,
         routeShortName: String?,
@@ -419,12 +408,10 @@ object ConversionUtils {
     /**
      * Convert meters to feet.
      */
-    @JvmStatic
     fun metersToFeet(meters: Double): Double = meters * FEET_PER_METER
 
     /**
      * Convert feet to meters.
      */
-    @JvmStatic
     fun feetToMeters(feet: Double): Double = feet / FEET_PER_METER
 }

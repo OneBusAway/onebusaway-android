@@ -23,8 +23,8 @@ import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.hours
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeNotNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onebusaway.android.app.di.LocationEntryPoint
@@ -55,8 +55,9 @@ class LastKnownLocationTest {
         // Retrieves the last known location from any available source — the fused provider when
         // Google Play Services is present, otherwise the framework Location API v1 providers.
         val loc = LocationEntryPoint.get(targetContext).lastKnownLocation()
-        // Can fail on some devices (e.g., a fresh reboot without a network connection).
-        assertNotNull(loc)
+        // A last-known fix is optional platform state (for example after a reboot or when the user
+        // clears location history), so this device-only assertion is not applicable without one.
+        assumeNotNull(loc)
         Log.d(TAG, "Location Provider for Location API v1 test is '${loc!!.provider}'")
         assertFreshLocation(loc)
     }
@@ -72,7 +73,7 @@ class LastKnownLocationTest {
         }
         // Could return either a fused or Location API v1 location.
         val loc = LocationEntryPoint.get(targetContext).lastKnownLocation()
-        assertNotNull(loc)
+        assumeNotNull(loc)
         Log.d(TAG, "Location Provider for Location Services test is '${loc!!.provider}'")
         assertFreshLocation(loc)
     }

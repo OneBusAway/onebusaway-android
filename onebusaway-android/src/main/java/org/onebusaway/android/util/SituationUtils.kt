@@ -34,7 +34,6 @@ object SituationUtils {
      * `from`/`to` are already epoch millis (normalized at the wire→domain adapter, see
      * `situationEpochToMillis`). This function is a pure function of its inputs — it reads no clock.
      */
-    @JvmStatic
     fun isActiveWindowForSituation(situation: ObaSituation, currentTime: Long): Boolean {
         val windows = situation.activeWindows
         if (windows.isEmpty()) {

@@ -36,7 +36,6 @@ object PlausibleAnalytics {
      * @param id The ID of the item that was selected.
      * @param state The state of the item that was selected.
      */
-    @JvmStatic
     fun reportUiEvent(plausible: Plausible?, pageURL: String, id: String, state: String?) {
         if (plausible == null) return
         plausible.event("Item Selected", pageURL, props = mapOf("item_id" to id, "item_variant" to state))
@@ -47,7 +46,6 @@ object PlausibleAnalytics {
      * @param plausible The Plausible instance to report to.
      * @param query The search query.
      */
-    @JvmStatic
     fun reportSearchEvent(plausible: Plausible?, query: String) {
         if (plausible == null) return
         plausible.event("Search", REPORT_SEARCH_EVENT_URL, props = mapOf("query" to query))
@@ -59,7 +57,6 @@ object PlausibleAnalytics {
      * @param id The ID of the stop.
      * @param stopDistance a label indicating the proximity of the user to the stop
      */
-    @JvmStatic
     fun reportViewStopEvent(plausible: Plausible?, id: String, stopDistance: String) {
         if (plausible == null) return
         plausible.pageView(REPORT_VIEW_STOP_EVENT_URL, props = mapOf("id" to id, "distance" to stopDistance))

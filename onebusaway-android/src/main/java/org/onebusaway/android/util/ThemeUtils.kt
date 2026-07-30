@@ -27,7 +27,6 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
  */
 object ThemeUtils {
 
-    @JvmStatic
     fun setAppTheme(context: Context, themeValue: String) {
         val mode = when {
             themeValue.equals(
@@ -55,7 +54,6 @@ object ThemeUtils {
      * Applies the persisted app-theme preference to the night-mode delegate, if the user has chosen
      * one. Called at startup so the saved theme takes effect; a no-op when no theme has been set.
      */
-    @JvmStatic
     fun applyPersistedTheme(context: Context) {
         val themeValue = PreferencesEntryPoint.get(context)
             .getString(R.string.preference_key_app_theme, null) ?: return
@@ -66,7 +64,6 @@ object ThemeUtils {
      * Returns true if the app is currently in dark mode: the AppCompat night-mode
      * override takes precedence, otherwise the system UI configuration decides.
      */
-    @JvmStatic
     fun isInDarkMode(context: Context): Boolean {
         val mode = AppCompatDelegate.getDefaultNightMode()
         if (mode == AppCompatDelegate.MODE_NIGHT_YES) {

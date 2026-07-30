@@ -51,18 +51,15 @@ object BikeBitmaps {
     private var sBigFloating: Bitmap? = null
 
     /** The small bike-dot bitmap, drawn from the [bike_marker_small][R.drawable.bike_marker_small] vector. */
-    @JvmStatic
     fun small(context: Context): Bitmap = sSmall ?: run {
         val px = context.resources.getDimensionPixelSize(R.dimen.bikeshare_small_marker_size)
         MarkerRendering.rasterize(context, R.drawable.bike_marker_small, px).also { sSmall = it }
     }
 
     /** The large bike-station pin (navy pin + white bike-dock glyph). */
-    @JvmStatic
     fun bigStation(context: Context): Bitmap = sBigStation ?: bigMarker(context, R.drawable.bike_dock).also { sBigStation = it }
 
     /** The large floating-bike pin (navy pin + white cyclist glyph). */
-    @JvmStatic
     fun bigFloating(context: Context): Bitmap = sBigFloating ?: bigMarker(context, R.drawable.ic_directions_bike).also { sBigFloating = it }
 
     /** Composites pin_base (tinted navy) with a centered white [glyphRes] — no outline, tip at the bottom. */

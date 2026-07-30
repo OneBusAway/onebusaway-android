@@ -54,22 +54,18 @@ interface NetworkEntryPoint {
 
     companion object {
         /** Resolves the shared [RegionsWebService] from any [context] (its application is used). */
-        @JvmStatic
         fun getRegions(context: Context): RegionsWebService = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
             .regionsWebService()
 
         /** Resolves the shared [ReminderWebService] from any [context] (its application is used). */
-        @JvmStatic
         fun getReminder(context: Context): ReminderWebService = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
             .reminderWebService()
 
         /** Resolves the shared [LocationSearchDataSource] from any [context] (its application is used). */
-        @JvmStatic
         fun getLocationSearch(context: Context): LocationSearchDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
             .locationSearchDataSource()
 
         /** Resolves the shared [StopArrivalsDataSource] from any [context] (its application is used). */
-        @JvmStatic
         fun getStopArrivals(context: Context): StopArrivalsDataSource = EntryPointAccessors.fromApplication(context, NetworkEntryPoint::class.java)
             .stopArrivalsDataSource()
     }

@@ -25,10 +25,8 @@ object ArrivalInfoUtils {
         override fun compare(lhs: ArrivalInfo, rhs: ArrivalInfo): Int = lhs.eta.compareTo(rhs.eta)
     }
 
-    @JvmStatic
     fun findFirstNonNegativeArrival(infoList: ArrayList<ArrivalInfo>): Int = infoList.indexOfFirst { it.eta >= 0 }
 
-    @JvmStatic
     fun findPreferredArrivalIndexes(
         infoList: ArrayList<ArrivalInfo>,
         favoriteRouteIds: Set<String>
@@ -48,7 +46,6 @@ object ArrivalInfoUtils {
         return preferred
     }
 
-    @JvmStatic
     fun computeArrivalLabel(
         resources: Resources,
         status: ScheduleDeviation.Status,

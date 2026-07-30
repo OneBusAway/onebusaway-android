@@ -17,19 +17,11 @@ package org.onebusaway.android.util
 
 /** Arithmetic and geometry helpers. */
 object MathUtils {
-    @JvmStatic fun mod(a: Float, b: Float): Float = (a % b + b) % b
-
-    @JvmStatic
     fun getHalfWindIndex(heading: Float, numHalfWinds: Int): Int {
         val partitionSize = 360f / numHalfWinds
-        val displacedHeading = mod(heading + partitionSize / 2, 360f)
+        val displacedHeading = (heading + partitionSize / 2).mod(360f)
         return (displacedHeading / partitionSize).toInt()
     }
 
-    @JvmStatic
-    fun toDirection(orientation: Double): Double {
-        var direction = (-orientation + 90) % 360
-        if (direction < 0) direction += 360
-        return direction
-    }
+    fun toDirection(orientation: Double): Double = (-orientation + 90).mod(360.0)
 }

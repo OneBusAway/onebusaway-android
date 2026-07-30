@@ -36,10 +36,6 @@ object InfrastructureIssueLauncher {
      * @param issueType which problem the report was started for; rides the route as its enum name so
      *   the destination's ViewModel can resolve it from nav-args without touching resources.
      */
-    // @JvmStatic to match the other launcher facades, which legacy Java callers still reach. No
-    // @JvmOverloads: the trailing defaults are only used from Kotlin, and generating Java overloads
-    // of a method taking a Kotlin enum earns nothing.
-    @JvmStatic
     fun startWithService(
         activity: Activity,
         issueType: DefaultIssueType,

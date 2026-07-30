@@ -30,6 +30,7 @@ import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripStep
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -287,7 +288,12 @@ class TripLogBuilderTest {
             alight = RouteStopRef("1_700", "700", "Final Dest", alightTo),
             // Keyed by the leg the change happens at — leg 1, the continuation.
             interlineTransitions = mapOf(
-                1 to InterlineTransition("49", "Downtown", RouteStopRef("1_600", "600", "Seam Stop", alightTo))
+                1 to InterlineTransition(
+                    badge = RouteBadge("49", null),
+                    routeDisplayName = "49",
+                    headsign = "Downtown",
+                    stop = RouteStopRef("1_600", "600", "Seam Stop", alightTo)
+                )
             )
         )
 
@@ -310,7 +316,7 @@ class TripLogBuilderTest {
             transit.rideEvents.map {
                 when (it) {
                     is RideEvent.Stop -> "stop:${it.stop.name}"
-                    is RideEvent.Transition -> "transition:${it.transition.routeLabel}"
+                    is RideEvent.Transition -> "transition:${it.transition.badge?.shortName}"
                 }
             }
         )

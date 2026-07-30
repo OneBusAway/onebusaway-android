@@ -37,7 +37,6 @@ object ReminderClient {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     /** Fires a best-effort DELETE of the alarm at [alarmDeletePath]; no-op if the path is blank. */
-    @JvmStatic
     fun deleteAlarm(context: Context, alarmDeletePath: String?) {
         if (alarmDeletePath.isNullOrEmpty()) return
         val service = NetworkEntryPoint.getReminder(context)

@@ -27,6 +27,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.interchangeableRoutes
+import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
@@ -113,7 +114,8 @@ class DefaultTripResultsRepository @Inject constructor(
             val leader = legs[chain.leaderIndex]
             val transitions = chain.transitionLegIndices.associateWith { j ->
                 InterlineTransition(
-                    routeLabel = Interlines.transitionRouteLabel(legs[j]),
+                    badge = legs[j].shortNameBadge(),
+                    routeDisplayName = legs[j].routeDisplayName(),
                     headsign = legs[j].headsign,
                     stop = legs[j].from.resolveStop(legs[j])
                 )
@@ -141,8 +143,12 @@ class DefaultTripResultsRepository @Inject constructor(
                 extraSegments = extraSegments,
                 alternatives = alternatives.map { it.resolve() },
                 // Built here, alongside the option cards' badges, so the drawer renders one rather than
-                // deriving it per row (#2010) — and so a ride that changes route under the rider is
-                // badged the same "5 > 12" in both places (#2049).
+                // deriving it per row (#2010). The drawer's board row draws only the interchangeable
+                // form; on an interlined ride it names each segment at its own row instead (#2071), so
+                // the "5 > 12" this returns for one of those is drawn on the option card alone. Still
+                // built by the shared [rideBadge] rather than short-cut to the interchangeable case —
+                // that is where the two forms are held apart, invariant check and all, and the card's
+                // badge would otherwise be the only thing keeping it honest.
                 badge = rideBadge(legs, chain, alternatives)
             )
         }

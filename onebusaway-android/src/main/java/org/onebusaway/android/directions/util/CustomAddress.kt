@@ -128,6 +128,8 @@ class CustomAddress(locale: Locale) : Address(locale) {
 
         private const val ADDRESS_MAX_LINES_TO_SHOW = 5
 
+        // Parcelable requires a real static field; this is an Android framework contract, not a
+        // compatibility bridge for Java callers in this project.
         @JvmField
         val CREATOR: Parcelable.Creator<CustomAddress> =
             object : Parcelable.Creator<CustomAddress> {
@@ -186,7 +188,6 @@ class CustomAddress(locale: Locale) : Address(locale) {
          *
          * @return CustomAddress with default locale and unset latitude and longitude.
          */
-        @JvmStatic
         fun getEmptyAddress(): CustomAddress {
             val addr = CustomAddress(Locale.getDefault())
             addr.latitude = Double.MAX_VALUE

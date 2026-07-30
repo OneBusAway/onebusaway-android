@@ -61,7 +61,6 @@ import org.onebusaway.android.util.describeLocation
  */
 object ReportLauncher {
 
-    @JvmStatic
     fun start(
         context: Context,
         focusId: String?,
@@ -73,12 +72,10 @@ object ReportLauncher {
         context.startActivity(makeIntent(context, focusId, stopName, stopCode, lat, lon))
     }
 
-    @JvmStatic
     fun start(context: Context, lat: Double, lon: Double) {
         context.startActivity(makeIntent(context, null, null, null, lat, lon))
     }
 
-    @JvmStatic
     fun start(context: Context) {
         context.startActivity(makeIntent(context, null, null, null, 0.0, 0.0))
     }

@@ -44,11 +44,9 @@ object BikeshareAvailability {
      * Resolves the region + custom OTP URL from [context] (via the DI EntryPoints) for callers that
      * aren't themselves injectable — static Java utilities, the [TripRequestBuilder], composables.
      */
-    @JvmStatic
     fun isTripPlanningEnabled(context: Context): Boolean = isTripPlanningEnabled(region(context), customOtpApiUrl(context))
 
     /** Pure predicate for injected consumers that already hold the [region] + [customOtpApiUrl]. */
-    @JvmStatic
     fun isTripPlanningEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(
         // The flag for whichever OTP server the plan will actually be sent to. This selection is app
         // routing policy, not a fact about the region, so it lives here rather than on [Region] —
@@ -58,7 +56,6 @@ object BikeshareAvailability {
     )
 
     /** [isStationLayerEnabled] for callers that only hold a [Context]. */
-    @JvmStatic
     fun isStationLayerEnabled(context: Context): Boolean = isStationLayerEnabled(region(context), customOtpApiUrl(context))
 
     /**
@@ -66,7 +63,6 @@ object BikeshareAvailability {
      * the overlay's only data source is OTP1 REST `/bike_rental` (see `BikeStationsRepository`), so an
      * OTP2-only bikeshare region has no stations to draw even though it can plan bike trips.
      */
-    @JvmStatic
     fun isStationLayerEnabled(region: Region?, customOtpApiUrl: String?): Boolean = enabled(region?.supportsOtpBikeshare ?: false, customOtpApiUrl)
 
     /**

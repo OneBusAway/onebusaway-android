@@ -63,7 +63,6 @@ object StopBitmaps {
     const val STAR_OUTLINE_WIDTH_DP = 1.5f
 
     /** Scales [bitmap] uniformly by [factor] — shared by the flavor factories' focused/star variants. */
-    @JvmStatic
     fun scale(bitmap: Bitmap, factor: Float): Bitmap = Bitmap.createScaledBitmap(
         bitmap,
         (bitmap.width * factor).toInt(),
@@ -77,8 +76,6 @@ object StopBitmaps {
      * enlarges the dot relative to that base — the focused stop passes [FOCUSED_DOT_SCALE] so its
      * selection reads as larger than surrounding dots.
      */
-    @JvmStatic
-    @JvmOverloads
     fun dot(baseIconPx: Int, fillColor: Int, scale: Float = 1f): Bitmap {
         val sizePx = max(6, (baseIconPx * 0.5f * scale).roundToInt())
         val bm = createBitmap(sizePx, sizePx)
@@ -110,7 +107,6 @@ object StopBitmaps {
      * factories draw the star with an arrow via [favoriteMarker]. [outlineWidthPx] is passed the same
      * circle-matched width the full-band star uses (see [STAR_OUTLINE_WIDTH_DP]).
      */
-    @JvmStatic
     fun star(sizePx: Int, topColor: Int, bottomColor: Int, outlineWidthPx: Float): Bitmap {
         val size = max(8, sizePx)
         val bm = createBitmap(size, size)
@@ -181,7 +177,6 @@ object StopBitmaps {
      * gradient-plus-white-outline styling as the stop circle, in the star's colour. The direction arrow
      * keeps the plain markers' [arrowTipColor]→[arrowBaseColor] (theme primary→accent) shading.
      */
-    @JvmStatic
     fun favoriteMarker(
         basePx: Int,
         starDiameterPx: Int,
@@ -225,8 +220,6 @@ object StopBitmaps {
      * [circleRadiusPx] with the arrow scaled by [arrowScale] and pushed out by [radialOffsetPx]. Callers
      * use it to size a bitmap that fits the arrow at any rotation (it overhangs the circle on one side).
      */
-    @JvmStatic
-    @JvmOverloads
     fun directionArrowReach(circleRadiusPx: Float, arrowScale: Float = 1f, radialOffsetPx: Float = 0f): Float {
         val baseDistance = circleRadiusPx - circleRadiusPx / 5f + radialOffsetPx
         val arrowHeight = circleRadiusPx * 2f / 3f * arrowScale
@@ -246,8 +239,6 @@ object StopBitmaps {
      * caller centers the circle and sizes the canvas from [directionArrowReach] so the arrow fits at any
      * [angleDeg].
      */
-    @JvmStatic
-    @JvmOverloads
     fun drawDirectionArrow(
         canvas: Canvas,
         cx: Float,
@@ -327,7 +318,6 @@ object StopBitmaps {
      * arrow overhang [directionalStopMarker] draws — the arrow's `/3` height minus its `/10` tuck — so a
      * flavor's anchors track any change to that geometry instead of re-deriving the ratios themselves.
      */
-    @JvmStatic
     fun anchorPercentOffset(baseIconPx: Int): Float {
         val buffer = baseIconPx / 3f - baseIconPx / 10f
         return buffer / (baseIconPx + buffer) * 0.5f
@@ -344,7 +334,6 @@ object StopBitmaps {
      * circle's bounds within the bitmap — so a caller can draw on top (e.g. Google's centered route
      * glyph) without relying on reading back the mutated [shape]'s bounds after this returns.
      */
-    @JvmStatic
     fun directionalStopMarker(
         shape: Drawable,
         direction: StopDirection,

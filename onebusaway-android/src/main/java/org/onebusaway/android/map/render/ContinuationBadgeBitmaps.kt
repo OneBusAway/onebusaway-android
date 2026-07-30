@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.map.render
 
-import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -23,7 +22,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
-import com.google.android.material.color.utilities.Hct
+import org.onebusaway.android.util.routeCasingColor
 
 /**
  * Bitmaps for the route-continuation overlay (#1691): the tappable pill badge showing a route short
@@ -130,11 +129,13 @@ object ContinuationBadgeBitmaps {
         return bitmap
     }
 
-    /** Theme-aware casing that retains the badge color's HCT hue/chroma and shifts only its tone. */
-    @SuppressLint("RestrictedApi") // Material Components' vendored color-science utility.
-    internal fun routeBadgeOutlineColor(color: Int, darkMode: Boolean): Int {
-        val source = Hct.fromInt(color or 0xFF000000.toInt())
-        val tone = if (darkMode) OUTLINE_TONE_DARK else OUTLINE_TONE_LIGHT
-        return Hct.from(source.hue, source.chroma, tone).toInt()
-    }
+    /**
+     * Theme-aware casing that retains the badge color's HCT hue/chroma and shifts only its tone. Shares
+     * [routeCasingColor] with a selected route line's case (#2082); these tones are gentler, since a badge
+     * outline sits against the badge's own fill rather than having to hold a hairline off the basemap.
+     */
+    internal fun routeBadgeOutlineColor(color: Int, darkMode: Boolean): Int = routeCasingColor(
+        color,
+        if (darkMode) OUTLINE_TONE_DARK else OUTLINE_TONE_LIGHT
+    )
 }

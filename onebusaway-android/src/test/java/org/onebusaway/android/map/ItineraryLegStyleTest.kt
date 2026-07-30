@@ -11,7 +11,6 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVertexType
-import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineDash
@@ -126,21 +125,56 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `focusing a leg recedes the rest of the trip instead of erasing it`() {
+    fun `focusing a leg cases it and leaves the rest of the trip alone`() {
         val lines = tripOf(walk = 0, ride = 1, walk2 = 2)
 
         val focused = lines.withLegFocus(setOf(1))
 
-        // Nothing is dropped — the whole trip is still drawn, just no longer all at one weight.
+        // Nothing is dropped — the whole trip is still drawn.
         assertEquals(lines.size, focused.size)
-        // The two on-street legs recede; the ride keeps the weight it had.
-        val (context, ride) = focused.partition { it.widthProfile == DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE }
-        assertEquals(2, context.size)
-        assertEquals(listOf(ITINERARY_RIDE_WIDTH_PROFILE), ride.map { it.widthProfile })
-        // The focused leg is last, so it draws over the context rather than under it.
-        assertEquals(ride.single(), focused.last())
-        // Only the weight changes: a leg keeps its mode/route colour, so the trip is still legible.
-        assertEquals(lines.map { it.line.color }.toSet(), focused.map { it.color }.toSet())
+        // Exactly the focused leg is cased; that case *is* the selection signal (#2082).
+        val (cased, plain) = focused.partition { it.cased }
+        assertEquals(listOf(ITINERARY_RIDE_WIDTH_PROFILE), cased.map { it.widthProfile })
+        // The focused leg is last, so its case and stroke draw over the legs around it.
+        assertEquals(cased.single(), focused.last())
+        // Nothing but the case changes: every leg keeps the weight, colour and dash that say what kind of
+        // leg it is, so width is free to mean only that. Compared as sets — focusing reorders the list, which
+        // is how the focused leg comes to draw last.
+        assertEquals(lines.map { it.line }.toSet(), focused.map { it.copy(cased = false) }.toSet())
+        assertEquals(2, plain.size)
+    }
+
+    @Test
+    fun `a case goes to the end of the tone scale away from the basemap, keeping its line's hue`() {
+        // A case goes *against* the basemap — near-black on the light map, near-white on the dark one.
+        // Device-checked twice over: tinting it toward the map put it at the map's own value and it vanished,
+        // and a mid-way tone was still too weak at this width to register.
+        //
+        // At those tones sRGB holds little chroma, so a case ends up mostly a separator rather than a second
+        // colour — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour
+        // that's left is its own line's and not a neighbouring one's.
+        ItineraryLegKind.entries.forEach { kind ->
+            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
+
+            listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
+                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
+                assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
+                assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
+            }
+        }
+    }
+
+    @Test
+    fun `a case's tone belongs to the theme, not to the line it wraps`() {
+        // What a case has to contrast with is the basemap, which sits at a fixed value per theme. So two lines
+        // at quite different tones get the same case tone — this is the assertion an offset-from-the-line
+        // policy (which is what the earlier passes tried) would fail.
+        val pale = Hct.from(36.0, 40.0, 85.0)
+        val deep = Hct.from(36.0, 40.0, 25.0)
+
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(caseTone(pale, darkMode), caseTone(deep, darkMode), CHANNEL_TOLERANCE)
+        }
     }
 
     @Test
@@ -148,7 +182,7 @@ class ItineraryLegStyleTest {
         // #2000: several itinerary legs the rider stays aboard through, read (and tapped) as one ride.
         val focused = tripOf(walk = 0, ride = 1, walk2 = 2).withLegFocus(setOf(1, 2))
 
-        assertEquals(1, focused.count { it.widthProfile == DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE })
+        assertEquals(2, focused.count { it.cased })
     }
 
     @Test
@@ -161,6 +195,8 @@ class ItineraryLegStyleTest {
             assertEquals(lines.map { it.line }, lines.withLegFocus(focus))
         }
     }
+
+    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
 
     /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
     private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(

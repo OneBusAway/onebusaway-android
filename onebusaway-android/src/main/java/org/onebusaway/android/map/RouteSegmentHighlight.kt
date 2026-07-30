@@ -23,8 +23,8 @@ import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.haversineDistance
 
 /**
- * Presenting a trip-plan leg's **ridden segment** over its route in route focus: thin the full route to
- * faint context, draw the segment at normal weight on top, and keep only the segment's stops. Pure
+ * Presenting a trip-plan leg's **ridden segment** over its route in route focus: draw the route's approach
+ * to the boarding point, the segment cased on top, and keep only the segment's stops. Pure
  * geometry over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop] (like [RouteViewGeometry] /
  * [projectStopsOntoPolylines]), so it stays JVM-testable and out of [RouteMapController]'s state plumbing.
  */
@@ -38,16 +38,16 @@ const val SEGMENT_STOP_TOLERANCE_METERS = 50.0
 internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 
 /**
- * Compose the route's polylines when [segment] is highlighted: the full route [base] de-emphasized
- * (thin, no arrows), then the rider's [itineraryContext], then the ridden segment in [routeColor]. This
- * order makes the visual hierarchy match the semantics: unused route, committed journey, current leg.
- * Without a drawable segment, retains the ordinary plain-route ordering: itinerary context beneath
- * [base], with no route deemphasis or selected overlay.
+ * Compose the route's polylines when [segment] is highlighted: the route [base] upstream of the boarding
+ * point drawn as the selected line's approach, then the rider's [itineraryContext], then the ridden segment
+ * in [routeColor]. This order makes the visual hierarchy match the semantics: where the vehicle comes from,
+ * the committed journey, the current leg. Without a drawable segment, retains the ordinary plain-route
+ * ordering: itinerary context beneath [base], with no approach restyle or selected overlay.
  *
  * The segment keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it
- * was tapped from — so drilling into a leg thins the route around it without also thinning the ride
- * itself. It's always a trip-plan leg that gets here, so that is the profile to match, not the ordinary
- * route line's.
+ * was tapped from — and says it is the selected one with a case rather than by out-widening its
+ * surroundings (#2082). Its approach carries the same case, so the two read as one route line stepping down
+ * where the rider boards.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
@@ -57,8 +57,9 @@ internal fun routePolylinesWithSegment(
 ): List<RoutePolyline> {
     val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
         RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE, directional = true)
+            .withCase()
     } ?: return itineraryContext + base
-    return base.asUntraveledRouteUnderlay() + itineraryContext + overlay
+    return base.asSelectedRouteApproach() + itineraryContext + overlay
 }
 
 /** Keep a direction's travel-ordered geometry only through [anchor], including a clipped final line. */

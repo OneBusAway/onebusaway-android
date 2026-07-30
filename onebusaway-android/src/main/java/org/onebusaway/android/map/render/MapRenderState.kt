@@ -96,6 +96,17 @@ enum class RouteLineDash {
  * [RouteLineDash] names. Whether a renderer honors it is flavor-specific (the maplibre classic
  * annotation draws every line solid).
  *
+ * [cased] asks the renderer to draw a *case* (halo) beneath this line: the same geometry stroked
+ * [ROUTE_LINE_CASE_DP] wider on each side, immediately under the line itself. It marks the line the rider
+ * has selected (#2082) — selection used to be said with a width, but the map already spends width on what a
+ * line *is* (a ride, an on-street leg, route context), so saying two things with one channel left neither
+ * legible. Renderers draw the pair as a unit; the case never carries chevrons, and follows the line's own
+ * [dash] so a broken line's case breaks with it.
+ *
+ * Only the *request* lives here, not a colour: a case works by separating its line from the basemap, and the
+ * basemap flips with the theme, so its colour is the one route colour that has to be resolved against the
+ * current theme at draw time (`mapRouteLineCaseColor`) rather than when the line is produced.
+ *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
  * only to the list they render. An empty set is a strict pass-through.
@@ -106,6 +117,7 @@ data class RoutePolyline(
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,
+    val cased: Boolean = false,
     val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */

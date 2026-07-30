@@ -38,6 +38,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
+import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
@@ -48,6 +49,7 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.ROUTE_LINE_CASE_EXTRA_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
@@ -125,7 +127,12 @@ class MapLibreRenderer(
             )
         },
         removeLines = { lines -> map.removeAnnotations(lines) },
-        setWidth = { line, width -> line.width = width }
+        setWidth = { line, width -> line.width = width },
+        // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
+        // theme, because the basemap it separates its line from does.
+        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
+        // maplibre annotation widths are already in dp, so no density conversion is involved.
+        caseExtraWidth = ROUTE_LINE_CASE_EXTRA_DP
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route

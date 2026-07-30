@@ -59,3 +59,22 @@ fun routeColorHctOrNull(routeColor: Int?): Hct? {
 
 /** The chroma floor [routeColorHctOrNull] applies; exposed so a test can assert against the same bar. */
 const val ACHROMATIC_ROUTE_CHROMA = 5.0
+
+/**
+ * [color] re-toned to [tone], keeping its hue and chroma — the casing step, shared by the two things on the
+ * map that outline something in a deepened or lightened version of its own colour: a route line's case
+ * (`mapRouteLineCaseColor`, #2082) and a continuation badge's outline
+ * ([org.onebusaway.android.map.render.ContinuationBadgeBitmaps.routeBadgeOutlineColor]).
+ *
+ * The two deliberately pick *different* tones — a 1.5dp hairline under a route line needs far more contrast
+ * than a badge's outline — so the tone stays the caller's decision. What they share is this: which channels
+ * survive, and the opaque-alpha normalization ahead of the conversion, exactly as [routeColorHctOrNull] does
+ * it. Written once so the two casings can't drift apart on either.
+ *
+ * Unlike [routeColorHctOrNull] this does not decline an achromatic source: a grey line still needs an
+ * outline, and re-toning grey yields a lighter or darker grey, which is the right answer for it.
+ */
+@SuppressLint("RestrictedApi")
+fun routeCasingColor(color: Int, tone: Double): Int = with(Hct.fromInt(color or 0xFF000000.toInt())) {
+    Hct.from(hue, chroma, tone).toInt()
+}

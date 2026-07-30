@@ -21,11 +21,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.map.render.UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.util.GeoPoint
 
 /** JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment], [routePolylinesWithSegment]). */
@@ -59,7 +59,7 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
-    fun routePolylinesWithSegment_deemphasizesBase_andKeepsTheRideAtItsItineraryWeight() {
+    fun routePolylinesWithSegment_casesTheApproach_andKeepsTheRideAtItsItineraryWeight() {
         val base = listOf(
             RoutePolyline(
                 color = null,
@@ -71,19 +71,26 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(base, segment, routeColor = 0xFF00FF00.toInt())
 
         assertEquals(2, result.size)
-        // Base is thinned to context (and loses its arrows).
-        assertEquals(UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE, result.first().widthProfile)
-        assertEquals(RouteLineDash.HINT, result.first().dash)
+        // The approach steps down to its own thinnest itinerary weight, loses its arrows, and is solid rather
+        // than the faint dashed line that used to compete with the legs beside it (#2082).
+        val approach = result.first()
+        assertEquals(ITINERARY_APPROACH_WIDTH_PROFILE, approach.widthProfile)
+        assertEquals(RouteLineDash.NONE, approach.dash)
+        assertFalse(approach.directional)
         // The ridden span rides on top at the weight it had as an itinerary leg, in the route colour,
         // directional — so drilling in doesn't make the ride itself thinner than it just was.
         val overlay = result.last()
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, overlay.widthProfile)
         assertEquals(0xFF00FF00.toInt(), overlay.color)
         assertEquals(true, overlay.directional)
+        // Both halves of the selected route carry a case, so the approach and the ride read as one line
+        // rather than as two things that happen to meet.
+        assertTrue(approach.cased)
+        assertTrue(overlay.cased)
     }
 
     @Test
-    fun routePolylinesWithSegment_layersUnusedRoute_thenJourneyContext_thenSelectedRide() {
+    fun routePolylinesWithSegment_layersApproach_thenJourneyContext_thenSelectedRide() {
         val base = listOf(RoutePolyline(color = 1, points = segment, directional = true))
         val journey = listOf(
             RoutePolyline(
@@ -97,11 +104,15 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(base, segment, routeColor = 3, itineraryContext = journey)
 
         assertEquals(listOf(1, 2, 3), result.map { it.color })
-        assertEquals(UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE, result[0].widthProfile)
-        assertEquals(RouteLineDash.HINT, result[0].dash)
+        assertEquals(ITINERARY_APPROACH_WIDTH_PROFILE, result[0].widthProfile)
+        assertEquals(RouteLineDash.NONE, result[0].dash)
         assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE, result[1].widthProfile)
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
+        // Only the selected route is cased: the rest of the rider's journey is context, not selection.
+        assertFalse(result[1].cased)
+        assertTrue(result[0].cased)
+        assertTrue(result[2].cased)
     }
 
     @Test

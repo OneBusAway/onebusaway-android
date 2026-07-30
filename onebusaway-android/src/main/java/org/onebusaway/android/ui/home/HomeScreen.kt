@@ -93,7 +93,6 @@ import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
-import org.onebusaway.android.ui.home.directions.DirectionsPickTarget
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
 import org.onebusaway.android.ui.home.donation.DonationFeature
 import org.onebusaway.android.ui.home.donation.DonationViewModel
@@ -119,6 +118,7 @@ import org.onebusaway.android.ui.survey.SurveyFeature
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
+import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
@@ -584,7 +584,7 @@ fun HomeScreen(
                             val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                             val directionsLoading = tripPlanResult is PlanResult.Loading
                             // Which endpoint (if any) is being picked directly on the map (crosshair + confirm).
-                            var pickTarget by rememberSaveable { mutableStateOf<DirectionsPickTarget?>(null) }
+                            var pickTarget by rememberSaveable { mutableStateOf<TripEndpointSlot?>(null) }
                             // A long-pressed map point awaiting the "directions from/to here" choice.
                             var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                             // Leaving directions ends any in-progress map pick.
@@ -704,8 +704,7 @@ fun HomeScreen(
                                             DirectionsFormCard(
                                                 viewModel = tripPlanViewModel,
                                                 state = tripPlanFormState,
-                                                onPickFrom = { pickTarget = DirectionsPickTarget.FROM },
-                                                onPickTo = { pickTarget = DirectionsPickTarget.TO },
+                                                onPickEndpoint = { pickTarget = it },
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .statusBarsPadding()
@@ -787,29 +786,21 @@ fun HomeScreen(
                                             // keep the picker open rather than silently losing the selection.
                                             mapViewModel.camera.value?.center?.let { c ->
                                                 val point = TripEndpoint.MapPoint(c.latitude, c.longitude)
-                                                when (target) {
-                                                    DirectionsPickTarget.FROM -> tripPlanViewModel.setFrom(point)
-                                                    DirectionsPickTarget.TO -> tripPlanViewModel.setTo(point)
-                                                }
+                                                tripPlanViewModel.setEndpoint(target, point)
                                                 pickTarget = null
                                             }
                                         },
                                         onCancel = { pickTarget = null }
                                     )
                                 }
-                                // Long-press → "directions from/to here": enters directions and fills the endpoint
-                                // with the pressed point (which auto-plans once both endpoints are set).
+                                // Long-press → "directions from/to here": enters directions and fills the
+                                // chosen endpoint with the pressed point (see setEndpointFromLongPress).
                                 longPressPoint?.let { point ->
                                     val mapPoint = TripEndpoint.MapPoint(point.latitude, point.longitude)
                                     DirectionsLongPressMenu(
-                                        onFromHere = {
+                                        onChooseSlot = { slot ->
                                             homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setFrom(mapPoint)
-                                            longPressPoint = null
-                                        },
-                                        onToHere = {
-                                            homeViewModel.enterDirections(mapViewModel.viewport)
-                                            tripPlanViewModel.setTo(mapPoint)
+                                            tripPlanViewModel.setEndpointFromLongPress(slot, mapPoint)
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }

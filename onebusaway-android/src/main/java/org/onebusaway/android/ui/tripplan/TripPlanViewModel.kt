@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.TimeProvider
@@ -58,6 +59,7 @@ class TripPlanViewModel @Inject constructor(
     private val planRepository: TripPlanRepository,
     private val regionRepository: RegionRepository,
     private val searchCenter: SearchCenter,
+    private val locationRepository: LocationRepository,
     timeProvider: TimeProvider,
     settingsRepository: AdvancedSettingsRepository
 ) : ViewModel() {
@@ -99,8 +101,9 @@ class TripPlanViewModel @Inject constructor(
     private val _planState = MutableStateFlow<PlanResult>(PlanResult.Idle)
     val planState: StateFlow<PlanResult> = _planState.asStateFlow()
 
-    private val fromQueries = MutableStateFlow("")
-    private val toQueries = MutableStateFlow("")
+    // The in-progress autocomplete query per endpoint, each feeding its own debounced suggestion
+    // pipeline below. Keyed by slot rather than held as a from/to pair so the pipeline is written once.
+    private val queries = TripEndpointSlot.entries.associateWith { MutableStateFlow("") }
 
     // Reverse-geocoded names, keyed by the coordinate that produced them. Re-planning re-submits the same
     // points — a date or arrive-by change, an advanced-settings apply, or editing *the other* endpoint all
@@ -119,16 +122,13 @@ class TripPlanViewModel @Inject constructor(
     private val planInputs = Channel<TripPlanParams?>(Channel.CONFLATED)
 
     init {
-        fromQueries
-            .debounce(SUGGEST_DEBOUNCE_MS)
-            .mapLatest(::suggestionsFor)
-            .onEach { suggestions -> _formState.update { it.copy(fromSuggestions = suggestions) } }
-            .launchIn(viewModelScope)
-        toQueries
-            .debounce(SUGGEST_DEBOUNCE_MS)
-            .mapLatest(::suggestionsFor)
-            .onEach { suggestions -> _formState.update { it.copy(toSuggestions = suggestions) } }
-            .launchIn(viewModelScope)
+        queries.forEach { (slot, typed) ->
+            typed
+                .debounce(SUGGEST_DEBOUNCE_MS)
+                .mapLatest(::suggestionsFor)
+                .onEach { suggestions -> _formState.update { it.withSuggestions(slot, suggestions) } }
+                .launchIn(viewModelScope)
+        }
         planInputs.receiveAsFlow()
             .mapLatest { params ->
                 if (params == null) {
@@ -186,41 +186,53 @@ class TripPlanViewModel @Inject constructor(
         return name?.also { reverseNames[lat to lon] = it }
     }
 
-    fun onFromQueryChange(query: String) {
-        _formState.update { it.copy(from = TripEndpoint.FreeText(query)) }
-        fromQueries.value = query
+    /** Types into [slot]'s field, which starts a debounced autocomplete lookup for it. */
+    fun onQueryChange(slot: TripEndpointSlot, query: String) {
+        _formState.update { it.withTypedQuery(slot, query) }
+        queries.getValue(slot).value = query
         // Editing over a resolved endpoint makes the form non-submittable — drop any stale route too.
         replanOrClearResult()
     }
 
-    fun onToQueryChange(query: String) {
-        _formState.update { it.copy(to = TripEndpoint.FreeText(query)) }
-        toQueries.value = query
+    /** Sets one endpoint (from a suggestion, current location, contacts, or map) and re-plans if ready. */
+    fun setEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+        _formState.update { it.withEndpoint(slot, endpoint) }
         replanOrClearResult()
     }
 
-    /** Sets the origin (from a suggestion, current location, contacts, or map) and re-plans if ready. */
-    fun setFrom(endpoint: TripEndpoint) {
-        _formState.update { it.copy(from = endpoint, fromSuggestions = emptyList()) }
+    /**
+     * Sets [slot] to the device's current location, returning false when there's no fix to set it to.
+     * Saying *why* there's none is left to the caller, whose business it is: the field's own button
+     * explains itself with a toast, while the long-press path below pairs silently.
+     */
+    fun setEndpointToCurrentLocation(slot: TripEndpointSlot): Boolean {
+        val here = currentLocation() ?: return false
+        setEndpoint(slot, here)
+        return true
+    }
+
+    /**
+     * Sets the endpoint a map long-press named ("directions from/to here"), pairing the trip's other
+     * end with the device's current location — [TripPlanFormState.withEndpointPaired] owns the rule
+     * (#2092). Both ends land in one form update, so the pair submits as a single plan.
+     *
+     * Distinct from [setEndpoint], which the crosshair pick-on-map path uses: that one is an edit
+     * within a form the rider is already filling, so it pairs nothing.
+     */
+    fun setEndpointFromLongPress(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+        val here = currentLocation()
+        _formState.update { it.withEndpointPaired(slot, endpoint, here) }
         replanOrClearResult()
     }
 
-    fun setTo(endpoint: TripEndpoint) {
-        _formState.update { it.copy(to = endpoint, toSuggestions = emptyList()) }
-        replanOrClearResult()
-    }
+    /** The device's last known fix as a plan endpoint, or null when there is none (or no permission). */
+    private fun currentLocation(): TripEndpoint.CurrentLocation? = locationRepository.lastKnownLocation()
+        ?.let { TripEndpoint.CurrentLocation(lat = it.latitude, lon = it.longitude) }
 
-    /** Clears the origin back to an empty editable field (the pill's ✕), dropping any stale result. */
-    fun clearFrom() {
-        _formState.update { it.copy(from = TripEndpoint.FreeText(), fromSuggestions = emptyList()) }
-        fromQueries.value = ""
-        replanOrClearResult()
-    }
-
-    fun clearTo() {
-        _formState.update { it.copy(to = TripEndpoint.FreeText(), toSuggestions = emptyList()) }
-        toQueries.value = ""
-        replanOrClearResult()
+    /** Clears an endpoint back to an empty editable field (the pill's ✕), dropping any stale result. */
+    fun clearEndpoint(slot: TripEndpointSlot) {
+        queries.getValue(slot).value = ""
+        setEndpoint(slot, TripEndpoint.FreeText())
     }
 
     fun setDateTime(millis: Long) {
@@ -251,13 +263,9 @@ class TripPlanViewModel @Inject constructor(
     }
 
     fun reverseTrip() {
+        // Both reads are of the pre-swap `it`, so this is a swap and not a double-assignment.
         _formState.update {
-            it.copy(
-                from = it.to,
-                to = it.from,
-                fromSuggestions = emptyList(),
-                toSuggestions = emptyList()
-            )
+            it.withEndpoint(TripEndpointSlot.FROM, it.to).withEndpoint(TripEndpointSlot.TO, it.from)
         }
         replanOrClearResult()
     }

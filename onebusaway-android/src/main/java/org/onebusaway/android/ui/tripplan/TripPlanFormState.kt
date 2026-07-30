@@ -33,6 +33,9 @@ sealed interface TripEndpoint {
     /** Mirrors CustomAddress.isSet(): a usable endpoint must have coordinates. */
     val hasCoordinates: Boolean get() = lat != null && lon != null
 
+    /** Nothing here — an empty editable field. A half-typed query is content, so it isn't empty. */
+    val isEmpty: Boolean get() = this is FreeText && query.isBlank()
+
     /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
     val isTransit: Boolean get() = false
 
@@ -76,6 +79,18 @@ sealed interface TripEndpoint {
 
     /** A point chosen on the map. Its label is a fixed string resolved by the UI. */
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
+}
+
+/**
+ * Which of the form's two endpoints an action targets. Declaration order is the form's field order
+ * (origin above destination) — [org.onebusaway.android.ui.tripplan.TripPlanForm] renders `entries`.
+ */
+enum class TripEndpointSlot {
+    FROM,
+    TO;
+
+    /** The endpoint at the trip's other end. */
+    val other: TripEndpointSlot get() = if (this == FROM) TO else FROM
 }
 
 /**
@@ -133,6 +148,61 @@ data class TripPlanFormState(
     /** Mirrors TripRequestBuilder.ready(): both endpoints must resolve to coordinates. */
     val canSubmit: Boolean
         get() = from.hasCoordinates && to.hasCoordinates
+
+    /** The endpoint currently in [slot]. */
+    fun endpointAt(slot: TripEndpointSlot): TripEndpoint = when (slot) {
+        TripEndpointSlot.FROM -> from
+        TripEndpointSlot.TO -> to
+    }
+
+    /** The autocomplete suggestions currently offered for [slot]. */
+    fun suggestionsAt(slot: TripEndpointSlot): List<TripEndpoint.Geocoded> = when (slot) {
+        TripEndpointSlot.FROM -> fromSuggestions
+        TripEndpointSlot.TO -> toSuggestions
+    }
+
+    /** This form with [slot] set to [endpoint], dropping that field's now-stale suggestions. */
+    fun withEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(from = endpoint, fromSuggestions = emptyList())
+        TripEndpointSlot.TO -> copy(to = endpoint, toSuggestions = emptyList())
+    }
+
+    /**
+     * This form with [slot] being typed into. Unlike [withEndpoint] the suggestions stay put — they're
+     * what the rider is picking from, and the debounced lookup replaces them a moment later.
+     */
+    fun withTypedQuery(slot: TripEndpointSlot, query: String): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(from = TripEndpoint.FreeText(query))
+        TripEndpointSlot.TO -> copy(to = TripEndpoint.FreeText(query))
+    }
+
+    /** This form with [slot]'s autocomplete suggestions replaced by [suggestions]. */
+    fun withSuggestions(slot: TripEndpointSlot, suggestions: List<TripEndpoint.Geocoded>): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(fromSuggestions = suggestions)
+        TripEndpointSlot.TO -> copy(toSuggestions = suggestions)
+    }
+
+    /**
+     * This form with [slot] set to [endpoint], and the trip's other end filled with [here] (the
+     * device's current location) if — and only if — that end is [TripEndpoint.isEmpty] right now (#2092).
+     *
+     * Naming one end of a trip on its own leaves a form nobody can submit, and the other end is
+     * overwhelmingly the rider's own position, so it's filled in for them and the trip plans on the
+     * spot. Strictly a convenience — it only ever fills a field that was empty anyway.
+     *
+     * The test is what the field holds now, not whether the rider ever touched it: an end they cleared
+     * with the pill's ✕ is empty again and will be paired. That's deliberate — the ✕ says "not this
+     * place", and a form the rider then leaves half-filled is no more useful for having been edited.
+     */
+    fun withEndpointPaired(
+        slot: TripEndpointSlot,
+        endpoint: TripEndpoint,
+        here: TripEndpoint.CurrentLocation?
+    ): TripPlanFormState {
+        val filled = withEndpoint(slot, endpoint)
+        if (here == null || !endpointAt(slot.other).isEmpty) return filled
+        return filled.withEndpoint(slot.other, here)
+    }
 
     /** The current advanced options, for persistence by the host. */
     val advancedSettings: AdvancedSettings

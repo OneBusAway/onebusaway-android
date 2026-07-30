@@ -88,7 +88,6 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import org.onebusaway.android.R
-import org.onebusaway.android.app.di.LocationEntryPoint
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
@@ -112,7 +111,7 @@ import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
-import org.onebusaway.android.ui.tripplan.TripEndpoint
+import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanForm
@@ -121,6 +120,7 @@ import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
+import org.onebusaway.android.ui.tripplan.labelRes
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -139,12 +139,9 @@ import org.onebusaway.android.util.PreferenceUtils
  * [MapViewModel] directions controller — driven by [TripResultsSheet]'s selection.
  *
  * The address-book (contacts) picker was removed (#1936 tracks accepting place intents from other apps
- * instead). Map-pick is hoisted to the caller ([onPickFrom]/[onPickTo]); current-location, date/time,
- * and advanced settings are wired here.
+ * instead). Map-pick is hoisted to the caller ([DirectionsFormCard]'s `onPickEndpoint`);
+ * current-location, date/time, and advanced settings are wired here.
  */
-
-/** Which endpoint a map-pick is currently choosing. */
-enum class DirectionsPickTarget { FROM, TO }
 
 /**
  * The compact trip-plan form, shown in the top chrome (in place of the search field) while planning.
@@ -154,8 +151,7 @@ enum class DirectionsPickTarget { FROM, TO }
 fun DirectionsFormCard(
     viewModel: TripPlanViewModel,
     state: TripPlanFormState,
-    onPickFrom: () -> Unit,
-    onPickTo: () -> Unit,
+    onPickEndpoint: (TripEndpointSlot) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -177,16 +173,11 @@ fun DirectionsFormCard(
         Column(Modifier.heightIn(max = maxHeight).verticalScroll(rememberScrollState())) {
             TripPlanForm(
                 state = state,
-                onFromQueryChange = viewModel::onFromQueryChange,
-                onToQueryChange = viewModel::onToQueryChange,
-                onSelectFrom = viewModel::setFrom,
-                onSelectTo = viewModel::setTo,
-                onClearFrom = viewModel::clearFrom,
-                onClearTo = viewModel::clearTo,
-                onFromCurrentLocation = { setCurrentLocation(context, viewModel::setFrom) },
-                onToCurrentLocation = { setCurrentLocation(context, viewModel::setTo) },
-                onFromPickOnMap = onPickFrom,
-                onToPickOnMap = onPickTo,
+                onQueryChange = viewModel::onQueryChange,
+                onSelect = viewModel::setEndpoint,
+                onClear = viewModel::clearEndpoint,
+                onCurrentLocation = { slot -> setCurrentLocation(context, viewModel, slot) },
+                onPickOnMap = onPickEndpoint,
                 onSetArriving = viewModel::setArriving,
                 onPickDate = { pickTripDate(activity, viewModel) },
                 onPickTime = { pickTripTime(activity, viewModel) },
@@ -200,25 +191,21 @@ fun DirectionsFormCard(
     }
 }
 
-/** Set an endpoint to the device's last-known location, or toast if none is available. */
-private fun setCurrentLocation(context: Context, target: (TripEndpoint) -> Unit) {
-    val location = LocationEntryPoint.get(context.applicationContext).lastKnownLocation()
-    if (location == null) {
-        // A null fix means "no permission" only when permission is actually denied; with permission
-        // granted it just means we don't have a fix yet, which is a different (recoverable) message.
-        val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
-                context,
-                PermissionUtils.LOCATION_PERMISSIONS
-            )
-        ) {
-            R.string.main_waiting_for_location
-        } else {
-            R.string.no_location_permission
-        }
-        Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-        return
+/** Set [slot] to the device's last-known location, or toast if none is available. */
+private fun setCurrentLocation(context: Context, viewModel: TripPlanViewModel, slot: TripEndpointSlot) {
+    if (viewModel.setEndpointToCurrentLocation(slot)) return
+    // A null fix means "no permission" only when permission is actually denied; with permission
+    // granted it just means we don't have a fix yet, which is a different (recoverable) message.
+    val messageRes = if (PermissionUtils.hasGrantedAtLeastOnePermission(
+            context,
+            PermissionUtils.LOCATION_PERMISSIONS
+        )
+    ) {
+        R.string.main_waiting_for_location
+    } else {
+        R.string.no_location_permission
     }
-    target(TripEndpoint.CurrentLocation(lat = location.latitude, lon = location.longitude))
+    Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
 }
 
 private fun pickTripDate(activity: AppCompatActivity, viewModel: TripPlanViewModel) {
@@ -474,8 +461,7 @@ private fun NoEtasText(modifier: Modifier) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DirectionsLongPressMenu(
-    onFromHere: () -> Unit,
-    onToHere: () -> Unit,
+    onChooseSlot: (TripEndpointSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
@@ -485,12 +471,12 @@ fun DirectionsLongPressMenu(
                 leadingContent = {
                     Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
                 },
-                modifier = Modifier.clickable(onClick = onFromHere)
+                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.FROM) }
             )
             ListItem(
                 headlineContent = { Text(stringResource(R.string.directions_to_here)) },
                 leadingContent = { Icon(AppIcons.Place, contentDescription = null) },
-                modifier = Modifier.clickable(onClick = onToHere)
+                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.TO) }
             )
         }
     }
@@ -555,7 +541,7 @@ fun DirectionsErrorSnackbar(
  */
 @Composable
 fun BoxScope.DirectionsPickOverlay(
-    target: DirectionsPickTarget,
+    target: TripEndpointSlot,
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -571,13 +557,7 @@ fun BoxScope.DirectionsPickOverlay(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = stringResource(
-                    if (target == DirectionsPickTarget.FROM) {
-                        R.string.trip_plan_from
-                    } else {
-                        R.string.trip_plan_to
-                    }
-                ),
+                text = stringResource(target.labelRes),
                 style = MaterialTheme.typography.titleMedium
             )
             IconButton(onClick = onCancel) {

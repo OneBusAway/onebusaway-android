@@ -116,19 +116,24 @@ class TripPlanViewModelTest {
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
         region: RegionRepository = FakeRegionRepository()
-    ) = TripPlanViewModel(
-        geocode,
-        plan,
-        region,
-        SearchCenter(FakeLocationRepository(), region),
-        TimeProvider { 0L },
-        FakeAdvancedSettingsRepository()
-    )
+    ): TripPlanViewModel {
+        // The fake reports "no fix" — see TripPlanFormStateTest for the with-a-fix cases.
+        val location = FakeLocationRepository()
+        return TripPlanViewModel(
+            geocode,
+            plan,
+            region,
+            SearchCenter(location, region),
+            location,
+            TimeProvider { 0L },
+            FakeAdvancedSettingsRepository()
+        )
+    }
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {
-        vm.setFrom(origin)
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
     }
 
     @Test
@@ -146,7 +151,7 @@ class TripPlanViewModelTest {
     fun `a query change populates suggestions after the debounce`() = runTest {
         val geocode = FakeGeocodeRepository(Result.success(listOf(origin, destination)))
         val vm = viewModel(geocode = geocode)
-        vm.onFromQueryChange("down")
+        vm.onQueryChange(TripEndpointSlot.FROM, "down")
         advanceUntilIdle()
         assertEquals("down", geocode.lastQuery)
         assertEquals(listOf(origin, destination), vm.formState.value.fromSuggestions)
@@ -155,7 +160,7 @@ class TripPlanViewModelTest {
     @Test
     fun `a query change makes the origin a FreeText endpoint`() = runTest {
         val vm = viewModel()
-        vm.onFromQueryChange("downtown")
+        vm.onQueryChange(TripEndpointSlot.FROM, "downtown")
         assertEquals(TripEndpoint.FreeText("downtown"), vm.formState.value.from)
         assertFalse(vm.formState.value.canSubmit)
     }
@@ -163,9 +168,9 @@ class TripPlanViewModelTest {
     @Test
     fun `selecting a geocoded suggestion stores the resolved endpoint`() = runTest {
         val vm = viewModel()
-        vm.onFromQueryChange("orig")
+        vm.onQueryChange(TripEndpointSlot.FROM, "orig")
         advanceUntilIdle()
-        vm.setFrom(origin)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
         val state = vm.formState.value
         assertEquals(origin, state.from)
@@ -173,14 +178,14 @@ class TripPlanViewModelTest {
     }
 
     @Test
-    fun `clearFrom resets the origin to empty FreeText and does not submit`() = runTest {
+    fun `clearing the origin resets it to empty FreeText and does not submit`() = runTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
         setBothEndpoints(vm)
         advanceUntilIdle()
         assertEquals(1, plan.calls)
 
-        vm.clearFrom()
+        vm.clearEndpoint(TripEndpointSlot.FROM)
         advanceUntilIdle()
         val state = vm.formState.value
         assertEquals(TripEndpoint.FreeText(), state.from)
@@ -193,11 +198,11 @@ class TripPlanViewModelTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
-        vm.setFrom(origin)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
         assertEquals(0, plan.calls) // destination still missing
 
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
         advanceUntilIdle()
         assertTrue(vm.formState.value.canSubmit)
         assertEquals(1, plan.calls)
@@ -211,7 +216,7 @@ class TripPlanViewModelTest {
         advanceUntilIdle()
         assertTrue(vm.planState.value is PlanResult.Success)
 
-        vm.clearTo()
+        vm.clearEndpoint(TripEndpointSlot.TO)
         advanceUntilIdle()
         assertFalse(vm.formState.value.canSubmit)
         assertEquals(PlanResult.Idle, vm.planState.value)
@@ -224,7 +229,7 @@ class TripPlanViewModelTest {
         advanceUntilIdle()
         assertTrue(vm.planState.value is PlanResult.Success)
 
-        vm.onFromQueryChange("typing over the pill")
+        vm.onQueryChange(TripEndpointSlot.FROM, "typing over the pill")
         advanceUntilIdle()
         assertFalse(vm.formState.value.canSubmit)
         assertEquals(PlanResult.Idle, vm.planState.value)
@@ -238,7 +243,7 @@ class TripPlanViewModelTest {
         advanceUntilIdle()
         assertEquals(PlanResult.Loading, vm.planState.value)
 
-        vm.clearTo() // form no longer submittable: invalidates the in-flight plan
+        vm.clearEndpoint(TripEndpointSlot.TO) // form no longer submittable: invalidates the in-flight plan
         advanceUntilIdle()
         assertEquals(PlanResult.Idle, vm.planState.value)
 
@@ -253,12 +258,12 @@ class TripPlanViewModelTest {
         // Seed a stale success, then reset both endpoints to empty as a fresh start.
         setBothEndpoints(vm)
         advanceUntilIdle()
-        vm.clearFrom()
-        vm.clearTo()
+        vm.clearEndpoint(TripEndpointSlot.FROM)
+        vm.clearEndpoint(TripEndpointSlot.TO)
         advanceUntilIdle()
 
         // Selecting just one endpoint must not bring back the old route.
-        vm.setFrom(origin)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
         advanceUntilIdle()
         assertFalse(vm.formState.value.canSubmit)
         assertEquals(PlanResult.Idle, vm.planState.value)
@@ -269,12 +274,43 @@ class TripPlanViewModelTest {
         val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
         val vm = viewModel(plan = plan)
 
-        vm.setFrom(TripEndpoint.AddressBook("Contact A", lat = null, lon = null))
-        vm.setTo(TripEndpoint.AddressBook("Contact B", lat = null, lon = null))
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.AddressBook("Contact A", lat = null, lon = null))
+        vm.setEndpoint(TripEndpointSlot.TO, TripEndpoint.AddressBook("Contact B", lat = null, lon = null))
         advanceUntilIdle()
 
         assertFalse(vm.formState.value.canSubmit)
         assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a long-pressed endpoint with no location fix leaves the other end empty`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+
+        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        advanceUntilIdle()
+
+        val state = vm.formState.value
+        assertEquals(TripEndpoint.MapPoint(lat = 47.7, lon = -122.2), state.to)
+        assertEquals(TripEndpoint.FreeText(), state.from)
+        assertFalse(state.canSubmit)
+        assertEquals(0, plan.calls)
+    }
+
+    // Not a test of the don't-overwrite rule — with no fix the pairing branch is never reached at all.
+    // That rule is TripPlanFormStateTest's; this pins the one submission the completed form makes.
+    @Test
+    fun `a long-pressed endpoint completing the pair plans exactly once`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        advanceUntilIdle()
+
+        vm.setEndpointFromLongPress(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        advanceUntilIdle()
+
+        assertTrue(vm.formState.value.canSubmit)
+        assertEquals(1, plan.calls)
     }
 
     @Test
@@ -355,8 +391,8 @@ class TripPlanViewModelTest {
         )
         val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
 
-        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
-        vm.setTo(TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setEndpoint(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
         advanceUntilIdle()
 
         val legs = (vm.planState.value as PlanResult.Success).itineraries.first().legs
@@ -389,8 +425,8 @@ class TripPlanViewModelTest {
         )
         val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
 
-        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
         advanceUntilIdle()
 
         assertEquals(OTP_PLACEHOLDER_ORIGIN, plannedOriginName(vm))
@@ -403,8 +439,8 @@ class TripPlanViewModelTest {
             plan = FakeTripPlanRepository(Result.success(plannedTrip))
         )
 
-        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
         advanceUntilIdle()
 
         assertTrue(vm.planState.value is PlanResult.Success)
@@ -418,8 +454,8 @@ class TripPlanViewModelTest {
             reverseResult = Result.success("Pike Place Market")
         )
         val vm = viewModel(geocode = geocode, plan = FakeTripPlanRepository(Result.success(plannedTrip)))
-        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
         advanceUntilIdle()
         assertEquals(1, geocode.reverseCalls.size)
 
@@ -439,8 +475,8 @@ class TripPlanViewModelTest {
             plan = FakeTripPlanRepository(Result.failure(IOException("boom")))
         )
 
-        vm.setFrom(TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
-        vm.setTo(destination)
+        vm.setEndpoint(TripEndpointSlot.FROM, TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3))
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
         // No advanceUntilIdle: only the plan is allowed to complete. A naming lookup still in flight must
         // not hold the error behind its timeout.
         runCurrent()

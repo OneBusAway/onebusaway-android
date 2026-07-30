@@ -614,9 +614,17 @@ fun HomeScreen(
                                     if (showResultsSheet) directionsSheetHeightPx else 0
                                 )
                             }
-                            // Back cancels an in-progress map pick, else exits directions focus (to nearby stops).
+                            // Back cancels an in-progress map pick, then steps out of a drilled-into leg to
+                            // the whole trip, and only from the itinerary overview exits directions focus
+                            // (to nearby stops). This handler composes inside the undo one above, so it
+                            // registers later and wins every back press while directions is active — the
+                            // one-level walk it delegates to is what keeps that from stranding the trip.
                             BackHandler(enabled = directionsActive) {
-                                if (pickTarget != null) pickTarget = null else homeViewModel.exitDirections()
+                                if (pickTarget != null) {
+                                    pickTarget = null
+                                } else {
+                                    homeViewModel.navigateBackInDirections()
+                                }
                             }
 
                             // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle

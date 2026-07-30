@@ -203,6 +203,78 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `back steps out of a focused on-street leg before leaving directions`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        vm.showItineraryOnMap(TripItinerary())
+        vm.focusItineraryLegOnMap(FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), setOf(0)))
+        advanceUntilIdle()
+        map.sent.clear()
+
+        // Back reverses the drill-in rather than leaving the trip behind.
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.ClearItineraryLegFocus), map.sent)
+
+        // From the plain overview it exits directions.
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertEquals(1, map.clearFocusCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `back walks the focused legs the user visited in order`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        vm.showItineraryOnMap(TripItinerary())
+        val first = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), setOf(0))
+        val second = FocusedLeg(listOf(GeoPoint(47.62, -122.32), GeoPoint(47.63, -122.33)), setOf(2))
+        vm.focusItineraryLegOnMap(first)
+        vm.focusItineraryLegOnMap(second)
+        advanceUntilIdle()
+
+        // Unlike the map-background tap (which jumps to the overview), Back retraces each leg.
+        vm.navigateBackInDirections()
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(first)), vm.currentFocus.value)
+        vm.navigateBackInDirections()
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        vm.navigateBackInDirections()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        job.cancel()
+    }
+
+    @Test
+    fun `back steps out of a transit leg's route focus to the itinerary overview`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        val itinerary = TripItinerary()
+        vm.showItineraryOnMap(itinerary)
+        vm.focusItineraryRouteLegOnMap("65")
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        // Route mode tore the trip down, so returning to the overview redraws it.
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.ShowItinerary(itinerary)), map.sent)
+        job.cancel()
+    }
+
+    @Test
     fun `focusing an on-street leg from a route focus redraws the trip first`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)

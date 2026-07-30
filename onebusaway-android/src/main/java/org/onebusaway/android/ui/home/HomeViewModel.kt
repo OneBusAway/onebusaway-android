@@ -735,6 +735,21 @@ class HomeViewModel @Inject constructor(
     /** Leave directions focus, returning the map to nearby stops. */
     fun exitDirections() = clearMapFocus()
 
+    /**
+     * The system Back gesture while in directions. A leg the user drilled into — its route, or an
+     * on-street leg framed on its own — steps back out of that leg first, so Back reverses the drill-in
+     * (restoring the camera it moved) instead of leaving the trip behind (#2075); only from the plain
+     * itinerary overview does Back exit directions. The map-background tap drops a level the same way,
+     * but jumps straight to the overview, while Back walks the legs the user visited in order — matching
+     * how a stop's route focus already behaves under each gesture.
+     */
+    fun navigateBackInDirections() {
+        // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
+        // entered from, so there is history to pop.
+        if (directionsSubFocus != null && navigateBackFocus()) return
+        exitDirections()
+    }
+
     /** Reframe the focused route as one undoable camera action. */
     fun reframeFocusedRoute(undoViewport: MapViewport?) {
         if (_currentFocus.value !is CurrentFocus.Route) return

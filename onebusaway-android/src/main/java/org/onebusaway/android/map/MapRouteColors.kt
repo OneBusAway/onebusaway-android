@@ -56,10 +56,9 @@ internal fun mapRouteLineColor(hue: Double): Int = Hct.from(hue, MAP_ROUTE_CHROM
 internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(source)?.let { mapRouteLineColor(it.hue) }
 
 /**
- * The case (halo) drawn beneath a selected line of colour [lineColor] (#2082): that very line's own hue and
- * chroma, moved [MAP_ROUTE_CASE_TONE_DELTA] tones *against the basemap* — **darker** on the light basemap,
- * lighter when [darkMode]. Same hue, so the case reads as part of its line rather than as a second line
- * beside it; a tone apart in the direction the map isn't, so the pair separates from the basemap.
+ * The case (halo) drawn beneath a selected line of colour [lineColor] (#2082): that line's own hue and chroma
+ * taken to the far end of the tone scale *away from the basemap* — [MAP_ROUTE_CASE_TONE_DARK] on the light
+ * basemap, [MAP_ROUTE_CASE_TONE_LIGHT] when [darkMode].
  *
  * The direction is deliberately the opposite of the halo convention for map *labels*, which carry the
  * background's own value to punch glyphs out of busy detail. Tried that way first and the case vanished on
@@ -67,34 +66,31 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  * empty basemap, so a case tinted *toward* the map lands on the map's own value and disappears into it. What
  * a line needs here is the contrast a label already has from its own ink.
  *
+ * These are near-black and near-white, and that is the point: the case is a **separator**, not a second
+ * colour. The sRGB gamut holds little chroma at either end of the tone scale, so a case here keeps only a
+ * trace of its line's hue — measured across the leg hues, as little as chroma 13 where its line carries 75.
+ * That is a deliberate trade: maximum tonal contrast is what makes a 1.5dp edge visible at all, and the
+ * line's own colour is already saying which route it is. (Its *hue* does survive, within a couple of degrees,
+ * so what colour is left is the right one.)
+ *
+ * Absolute tones rather than an offset from [lineColor]'s own tone: what a case has to contrast with is the
+ * basemap, which sits at a fixed value per theme, so the target is a property of the theme and not of the line
+ * it wraps. Reads the hue and chroma off [lineColor] so what little colour survives is its own — a case is
+ * derived from a line that is already drawn, whatever its colour came from.
+ *
  * This is the one deliberate exception to this file's theme independence (see above) — precisely because its
  * whole job is to hold the line apart from a backdrop that itself flips.
- *
- * Anchored on [lineColor]'s own tone, not on [MAP_ROUTE_TONE], so a case contrasts with *its own* trunk even
- * for a line that never went through [mapRouteLineColor] (the render layer's fallback). Clamped to the tone
- * range, so a line already near white or black yields the nearest case it can rather than an out-of-range
- * colour. Reads the hue off [lineColor] for the same reason: a case is derived from a line that is already
- * drawn, whatever its colour came from. An achromatic line yields an achromatic case.
  */
 @SuppressLint("RestrictedApi")
 internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean): Int = with(Hct.fromInt(lineColor)) {
-    val delta = if (darkMode) MAP_ROUTE_CASE_TONE_DELTA else -MAP_ROUTE_CASE_TONE_DELTA
-    Hct.from(hue, chroma, (tone + delta).coerceIn(MIN_TONE, MAX_TONE)).toInt()
+    Hct.from(hue, chroma, if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK).toInt()
 }
 
 private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0
 
-// Far enough from the line's own tone to read as an outline rather than as a shade of the same stroke, and
-// close enough to stay recognisably its colour. Kept a tone delta rather than a pair of fixed colours so a
-// case tracks whatever hue its line is drawn in — and so the two themes can't drift into different amounts
-// of contrast.
-//
-// Also what makes a case *bright* rather than muddy, which is why it isn't larger: the sRGB gamut holds much
-// less chroma at the ends of the tone scale than in the middle, so a case pushed far from its line loses its
-// colour on the way — dark and murky one side, washed out the other. Pulling the delta in keeps both themes'
-// cases nearer the hue's chroma peak, where the colour actually survives.
-private const val MAP_ROUTE_CASE_TONE_DELTA = 18.0
-
-private const val MIN_TONE = 0.0
-private const val MAX_TONE = 100.0
+// The two ends of the tone scale a case is pinned to, chosen for maximum contrast with the basemap it has to
+// separate its line from. Not symmetric about MAP_ROUTE_TONE, and not meant to be: each is as far as it can
+// usefully go without becoming literal black or white.
+private const val MAP_ROUTE_CASE_TONE_DARK = 10.0
+private const val MAP_ROUTE_CASE_TONE_LIGHT = 90.0

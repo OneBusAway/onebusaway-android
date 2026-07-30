@@ -145,52 +145,47 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a case is its own line's hue, tuned against the basemap`() {
-        val line = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).color)
-        val onLightMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false))
-        val onDarkMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true))
+    fun `a case goes to the end of the tone scale away from the basemap`() {
+        // A case goes *against* the basemap — near-black on the light map, near-white on the dark one.
+        // Device-checked twice over: tinting it toward the map put it at the map's own value and it vanished,
+        // and a mid-way tone was still too weak at this width to register.
+        ItineraryLegKind.entries.forEach { kind ->
+            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
 
-        // Same hue either way, so a case reads as part of its line rather than as a second line beside it.
-        listOf(onLightMap, onDarkMap).forEach {
-            assertEquals(line.hue, it.hue, HUE_TOLERANCE_DEGREES)
+            assertEquals("$kind on the light basemap", 10.0, caseTone(line, darkMode = false), CHANNEL_TOLERANCE)
+            assertEquals("$kind on the dark basemap", 90.0, caseTone(line, darkMode = true), CHANNEL_TOLERANCE)
         }
-        // A case goes *against* the basemap — dark on the light map, light on the dark one. Device-checked:
-        // tinting it toward the map instead put it at the map's own value and it disappeared entirely.
-        assertTrue("light-map case tone ${onLightMap.tone} should be below line tone ${line.tone}", onLightMap.tone < line.tone)
-        assertTrue("dark-map case tone ${onDarkMap.tone} should exceed line tone ${line.tone}", onDarkMap.tone > line.tone)
-        // And by the same amount in each, so one theme can't quietly end up with a weaker case than the other.
-        assertEquals(line.tone - onLightMap.tone, onDarkMap.tone - line.tone, CHANNEL_TOLERANCE)
     }
 
     @Test
-    fun `a case keeps most of its line's colour rather than going grey`() {
-        // The tone delta is what makes a case visible, but push it too far and the sRGB gamut takes the colour
-        // away on the journey: at a 30-tone delta the transit fallback's dark-mode case fell to chroma 21 from
-        // its line's 75 — a washed-out near-grey edge. So this pins the *outcome* the delta is chosen for,
-        // across every leg hue and both themes, instead of pinning the delta and hoping.
+    fun `a case keeps its line's hue even where the gamut takes the chroma`() {
+        // At these tones sRGB holds little chroma, so a case is mostly a separator rather than a second colour
+        // — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour that's left
+        // is its own line's and not a neighbouring one's.
         ItineraryLegKind.entries.forEach { kind ->
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
             listOf(false, true).forEach { darkMode ->
                 val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
-                assertTrue(
-                    "$kind case (darkMode=$darkMode) kept only chroma ${case.chroma} of the line's ${line.chroma}",
-                    case.chroma >= line.chroma * MIN_CASE_CHROMA_SHARE
-                )
+                assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
             }
         }
     }
 
     @Test
-    fun `a case stays in range for a line already at the end of the tone scale`() {
-        // Nothing on this map is drawn near-white or near-black, but a case must degrade to the nearest one
-        // it can rather than asking for an out-of-range tone.
-        listOf(0xFFFFFFFF.toInt(), 0xFF000000.toInt()).forEach { extreme ->
-            listOf(true, false).forEach { darkMode ->
-                val tone = Hct.fromInt(mapRouteLineCaseColor(extreme, darkMode)).tone
-                assertTrue("tone $tone out of range", tone in 0.0..100.0)
-            }
+    fun `a case's tone belongs to the theme, not to the line it wraps`() {
+        // What a case has to contrast with is the basemap, which sits at a fixed value per theme. So two lines
+        // at quite different tones get the same case tone — this is the assertion an offset-from-the-line
+        // policy (which is what the earlier passes tried) would fail.
+        val pale = Hct.from(36.0, 40.0, 85.0)
+        val deep = Hct.from(36.0, 40.0, 25.0)
+
+        listOf(false, true).forEach { darkMode ->
+            assertEquals(caseTone(pale, darkMode), caseTone(deep, darkMode), CHANNEL_TOLERANCE)
         }
     }
+
+    @SuppressLint("RestrictedApi")
+    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
 
     @Test
     fun `a folded interline chain focuses as one ride, not as its first leg`() {
@@ -239,10 +234,5 @@ class ItineraryLegStyleTest {
         // Chroma likewise clamps to the gamut: a hue that can't hold the full chroma at this tone lands
         // slightly under it. Wide enough to absorb that, far too narrow to hide a different policy.
         const val CHANNEL_TOLERANCE = 2.0
-
-        // How much of its line's chroma a case has to keep to still read as that line's colour. Half is well
-        // clear of what the current delta actually achieves (the tightest leg hue keeps ~0.59) while still
-        // failing the washed-out cases a larger delta produced.
-        const val MIN_CASE_CHROMA_SHARE = 0.5
     }
 }

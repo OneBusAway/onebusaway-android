@@ -91,7 +91,16 @@ class DirectionsMapController(private val host: MapHost) {
         // is already narrowed by what the rest of the plan needs of this leg (a leg of a stay-aboard
         // interline admits no substitute at all, #2000 × #2010), so the label on a line and the badge in the
         // drawer beside it name one ride the same way.
+        //
+        // Its alignment to the legs is stated rather than defended against, in the same terms
+        // [ModeSymbols.forLegs] states it for the same list: a short list read defensively would quietly
+        // label a ride with fewer routes than it can be taken on — the rider is told to wait for the 1 Line
+        // when the 2 Line would also do — and nothing downstream could tell that from a leg that genuinely
+        // has no alternatives. Misalignment is a bug in the analysis, so say so where it is read.
         val substitutes = itinerary.substitutableRoutes()
+        require(substitutes.size == legs.size) {
+            "substitutable routes must be index-aligned to legs (${substitutes.size} vs ${legs.size})"
+        }
 
         // Every leg that has geometry to draw, decoded and styled once: the polylines below stroke it and
         // the route labels are anchored on it, so a label cannot end up a different colour from its own
@@ -103,9 +112,6 @@ class DirectionsMapController(private val host: MapHost) {
             val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
             // The wire hex is parsed here, on the leg and on every route offered in its place, so the
             // styling itself stays free of `android.graphics` (see the [ItineraryLegStyle] file header).
-            // Indexed, not read defensively: `substitutableRoutes` is aligned to these same legs by
-            // construction, so a misalignment is a caller bug worth hearing about rather than a ride
-            // quietly labelled with fewer routes than it can be taken on (as `ModeSymbols.forLegs` argues).
             val interchangeable = substitutes[legIndex].map { route ->
                 ItinerarySubstitute(route, parseObaHexColor(route.routeColor))
             }

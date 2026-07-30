@@ -510,10 +510,12 @@ private fun TripActionBar(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         WhenTimeSegment(
-            // The only part of the bar that can grow: a pinned label is a full date and time, which in
-            // a long locale format or at a large font scale would otherwise push the two trailing
-            // buttons off the edge. Weighted so it gives up width and ellipsizes instead.
-            modifier = Modifier.weight(1f, fill = false),
+            // The bar's one flexible slot, and the only part of it that can grow: a pinned label is a
+            // full date and time, longer in other locales and at a large font scale. Taking all the
+            // remaining width does both jobs — it holds the two trailing buttons against the right
+            // edge, and it caps the label so it ellipsizes rather than shoving them off. The button
+            // inside stays its own width at the slot's start, so the tap target doesn't span the gap.
+            modifier = Modifier.weight(1f),
             departNow = departNow,
             dateLabel = dateLabel,
             timeLabel = timeLabel,
@@ -521,7 +523,6 @@ private fun TripActionBar(
             onPickDate = onPickDate,
             onPickTime = onPickTime
         )
-        Spacer(Modifier.weight(1f))
         IconButton(onClick = onReverse, modifier = Modifier.size(40.dp)) {
             Icon(
                 painter = painterResource(R.drawable.ic_swap_direction),

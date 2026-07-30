@@ -28,12 +28,14 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -186,6 +188,41 @@ class TripPlanFormRenderTest {
     }
 
     /**
+     * The action bar's trailing buttons stay put whatever the time segment reads. The segment is the
+     * bar's one flexible slot, so it has to both hold the buttons against the edge when the label is
+     * the single word "now" and cap itself when the label is a full date and time — sharing that
+     * flexibility with a weighted spacer got the first half wrong, leaving the buttons floating short
+     * of the edge, and nothing caught it because both labels rendered without overflowing.
+     */
+    @Test
+    fun theActionBarHoldsItsButtonsInPlaceWhateverTheTimeReads() {
+        var departNow by mutableStateOf(true)
+        renderForm(
+            state = {
+                plannedState.copy(
+                    departNow = departNow,
+                    dateLabel = "Wednesday, 30 September",
+                    timeLabel = "11:45 PM"
+                )
+            }
+        )
+
+        val withNow = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
+            .getUnclippedBoundsInRoot().right
+
+        departNow = false
+        composeRule.waitForIdle()
+        val withPinnedTime = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
+            .getUnclippedBoundsInRoot().right
+
+        assertEquals(
+            "the trailing buttons moved when the time label grew",
+            withNow,
+            withPinnedTime
+        )
+    }
+
+    /**
      * Choosing "Your location" repeatedly has to keep resolving the endpoint. It used to work only on
      * alternate taps: the cycles that started from an already-resolved endpoint left a focused text
      * field to be torn down, and the value change that came out of that teardown was forwarded as a
@@ -334,6 +371,9 @@ class TripPlanFormRenderTest {
 
     private companion object {
         const val FORM = "tripPlanFormRoot"
+
+        /** The advanced-settings button's contentDescription — the bar's last trailing child. */
+        const val ADVANCED_SETTINGS = "Additional Trip Preferences"
         val RAIL_WIDTH_DP = 44.dp
         val FROM_FIELD = TripPlanTestTags.FROM_PREFIX + TripPlanTestTags.FIELD_SUFFIX
         val TO_FIELD = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.FIELD_SUFFIX

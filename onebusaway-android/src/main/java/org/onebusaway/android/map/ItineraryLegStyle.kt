@@ -119,7 +119,8 @@ internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean)
 internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int): ItineraryLegCaps {
     val leg = legs[index]
     val transit = leg.mode?.isTransit == true
-    val continuesPrevious = transit && leg.interlineWithPreviousLeg &&
+    val continuesPrevious = transit &&
+        leg.interlineWithPreviousLeg &&
         legs.getOrNull(index - 1)?.mode?.isTransit == true
     val next = legs.getOrNull(index + 1)
     val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg

@@ -61,6 +61,6 @@ internal class MapLibreRouteEndpointBulbLayer(private val style: Style) {
         const val LAYER_ID = "oba-route-endpoint-bulbs-layer"
         const val RADIUS_PROPERTY = "radius"
         const val COLOR_PROPERTY = "color"
-        const val ENDPOINT_BULB_RADIUS_SCALE = 0.65f
+        const val ENDPOINT_BULB_RADIUS_SCALE = 1f
     }
 }

@@ -955,6 +955,8 @@
     <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
          sentence next to Leaving/Arriving, not as a heading. -->
     <string name="trip_plan_now">now</string>
+    <!-- A pinned departure/arrival in the time callout: date, then time. -->
+    <string name="trip_plan_date_time">%1$s, %2$s</string>
     <string name="trip_plan_choose_date">Choose date…</string>
     <string name="trip_plan_choose_time">Choose time…</string>
     <!-- Accessibility click label for either half of the time callout. -->

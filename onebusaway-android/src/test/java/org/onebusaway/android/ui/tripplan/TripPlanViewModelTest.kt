@@ -583,4 +583,37 @@ class TripPlanViewModelTest {
         assertFalse(state.departNow)
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
     }
+
+    /**
+     * "Arrive by now" asks for a trip that has already finished, so choosing *arriving* leaves the
+     * now anchor and pins a concrete instant for the rider to move.
+     */
+    @Test
+    fun `choosing arriving pins the trip to the clock`() = runTest {
+        val clock = FakeClock(0L)
+        val vm = viewModel(clock = clock)
+        clock.nowMillis = 60_000L
+
+        vm.setArriving(true)
+
+        val state = vm.formState.value
+        assertTrue(state.arriving)
+        assertFalse(state.departNow)
+        // Pinned to the clock at the moment of the switch, not to the stale construction stamp.
+        assertEquals(60_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `going back to leaving does not disturb a pinned time`() = runTest {
+        val vm = viewModel(clock = FakeClock(0L))
+        vm.setDateTime(1_700_000_000_000L)
+
+        vm.setArriving(true)
+        vm.setArriving(false)
+
+        val state = vm.formState.value
+        assertFalse(state.arriving)
+        assertFalse(state.departNow)
+        assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
 }

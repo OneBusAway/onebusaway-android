@@ -510,6 +510,10 @@ private fun TripActionBar(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         WhenTimeSegment(
+            // The only part of the bar that can grow: a pinned label is a full date and time, which in
+            // a long locale format or at a large font scale would otherwise push the two trailing
+            // buttons off the edge. Weighted so it gives up width and ellipsizes instead.
+            modifier = Modifier.weight(1f, fill = false),
             departNow = departNow,
             dateLabel = dateLabel,
             timeLabel = timeLabel,
@@ -569,6 +573,7 @@ private fun WhenModeSegment(arriving: Boolean, onSetArriving: (Boolean) -> Unit)
  */
 @Composable
 private fun WhenTimeSegment(
+    modifier: Modifier = Modifier,
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
@@ -578,9 +583,13 @@ private fun WhenTimeSegment(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val nowLabel = stringResource(R.string.trip_plan_now)
-    Box {
+    Box(modifier) {
         SegmentButton(
-            text = if (departNow) nowLabel else "$dateLabel, $timeLabel",
+            text = if (departNow) {
+                nowLabel
+            } else {
+                stringResource(R.string.trip_plan_date_time, dateLabel, timeLabel)
+            },
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
@@ -622,10 +631,11 @@ private fun SegmentButton(
     text: String,
     emphasized: Boolean,
     testTag: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .height(32.dp)
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).

@@ -270,8 +270,29 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
+    /**
+     * Leaving vs arriving. Choosing *arriving* also leaves the "now" anchor, pinning the trip to the
+     * clock as it does so: "arrive by now" is not a request that can be answered — it asks for a trip
+     * that has already finished — whereas "depart now" is the ordinary case. Pinning puts a concrete
+     * instant in the form's time callout, which is the thing the rider then moves.
+     */
     fun setArriving(arriving: Boolean) {
-        _formState.update { it.copy(arriving = arriving) }
+        _formState.update { state ->
+            if (!arriving || !state.departNow) {
+                state.copy(arriving = arriving)
+            } else {
+                // Pin to the clock now, not to dateTimeMillis — under the "now" anchor that field
+                // still holds the instant the ViewModel was built, which may be long past.
+                val now = timeProvider.now()
+                state.copy(
+                    arriving = true,
+                    departNow = false,
+                    dateTimeMillis = now,
+                    dateLabel = formatDate(now),
+                    timeLabel = formatTime(now)
+                )
+            }
+        }
         replanOrClearResult()
     }
 

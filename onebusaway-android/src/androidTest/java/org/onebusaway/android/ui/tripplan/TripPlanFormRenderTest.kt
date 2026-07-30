@@ -33,6 +33,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
+import kotlin.math.absoluteValue
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -72,11 +73,13 @@ class TripPlanFormRenderTest {
 
         val height = composeRule.onNodeWithTag(FORM).getUnclippedBoundsInRoot().height
 
-        // 4dp padding × 2 + 48 + 1 + 48 + 1 + 40. Rounding across densities moves this by a fraction of
-        // a dp, so allow a little slack — the check is "still compact", not "pixel-identical".
+        // 4 + 48 + 1 + 48 + 1 + 40 + 4. Each of those seven bands is rounded to whole pixels
+        // independently, so the total can drift by up to seven half-pixels — expressed in dp, since
+        // that is what drifts. Nothing wider: this test exists to hold the budget, not to wave at it.
+        val allowance = with(composeRule.density) { (7 * 0.5f).toDp() }
         assertTrue(
-            "expected the resting form to measure about 146dp, but it was $height",
-            height > 142.dp && height < 150.dp
+            "expected the resting form to measure 146dp (±$allowance), but it was $height",
+            (height - 146.dp).value.absoluteValue <= allowance.value
         )
     }
 
@@ -117,6 +120,18 @@ class TripPlanFormRenderTest {
         composeRule.onNodeWithTag(FROM_MY_LOCATION).assertIsDisplayed()
         composeRule.onNodeWithTag(FROM_PICK_ON_MAP).assertIsDisplayed()
         composeRule.onNodeWithText("Pike Brewing Company").assertIsDisplayed()
+
+        // Ordering is the point — the actions are pinned to the *head* of the list. Visibility alone
+        // would pass with them sitting below the geocoder's results.
+        val firstSuggestionTop = composeRule.onNodeWithText("Pike St & 3rd Ave")
+            .getUnclippedBoundsInRoot().top
+        listOf(FROM_MY_LOCATION, FROM_PICK_ON_MAP).forEach { tag ->
+            val actionTop = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot().top
+            assertTrue(
+                "$tag should precede the suggestions, but sat at $actionTop vs $firstSuggestionTop",
+                actionTop < firstSuggestionTop
+            )
+        }
     }
 
     /**
@@ -255,6 +270,11 @@ class TripPlanFormRenderTest {
 
     private enum class Channel { RED, GREEN, BLUE }
 
+    /**
+     * Dominance rather than an exact hex, so the rule survives a palette tweak and holds in both
+     * themes — but strictly, with no tolerance to tune: the sample is the centre of a 12dp filled
+     * circle, so it is the fill colour itself, not an antialiased edge.
+     */
     private fun assertDominant(color: Color, channel: Channel, what: String) {
         val (dominant, others) = when (channel) {
             Channel.RED -> color.red to listOf(color.green, color.blue)
@@ -263,7 +283,7 @@ class TripPlanFormRenderTest {
         }
         assertTrue(
             "$what should read $channel, but its dot was $color",
-            others.all { dominant > it + 0.05f }
+            others.all { dominant > it }
         )
     }
 

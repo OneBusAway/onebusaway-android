@@ -116,14 +116,21 @@ class TripPlanViewModelTest {
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
         region: RegionRepository = FakeRegionRepository()
-    ) = TripPlanViewModel(
-        geocode,
-        plan,
-        region,
-        SearchCenter(FakeLocationRepository(), region),
-        TimeProvider { 0L },
-        FakeAdvancedSettingsRepository()
-    )
+    ): TripPlanViewModel {
+        // Location isn't constructible in a plain JVM test, so the fake reports "no fix" — which is the
+        // path the VM itself owns. The paired-endpoint rule it delegates to is covered, with a fix, by
+        // TripPlanFormStateTest.
+        val location = FakeLocationRepository()
+        return TripPlanViewModel(
+            geocode,
+            plan,
+            region,
+            SearchCenter(location, region),
+            location,
+            TimeProvider { 0L },
+            FakeAdvancedSettingsRepository()
+        )
+    }
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {
@@ -275,6 +282,36 @@ class TripPlanViewModelTest {
 
         assertFalse(vm.formState.value.canSubmit)
         assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a long-pressed endpoint with no location fix leaves the other end empty`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+
+        vm.setEndpointFromMap(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        advanceUntilIdle()
+
+        val state = vm.formState.value
+        assertEquals(TripEndpoint.MapPoint(lat = 47.7, lon = -122.2), state.to)
+        assertEquals(TripEndpoint.FreeText(), state.from)
+        assertFalse(state.canSubmit)
+        assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a long-pressed endpoint does not disturb an origin the rider already set`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        vm.setFrom(origin)
+        advanceUntilIdle()
+
+        vm.setEndpointFromMap(TripEndpointSlot.TO, TripEndpoint.MapPoint(lat = 47.7, lon = -122.2))
+        advanceUntilIdle()
+
+        assertEquals(origin, vm.formState.value.from)
+        assertTrue(vm.formState.value.canSubmit)
+        assertEquals(1, plan.calls) // the completed pair plans exactly once
     }
 
     @Test

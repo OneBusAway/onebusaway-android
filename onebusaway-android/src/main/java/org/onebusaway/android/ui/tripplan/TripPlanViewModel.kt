@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.TimeProvider
@@ -58,6 +59,7 @@ class TripPlanViewModel @Inject constructor(
     private val planRepository: TripPlanRepository,
     private val regionRepository: RegionRepository,
     private val searchCenter: SearchCenter,
+    private val locationRepository: LocationRepository,
     timeProvider: TimeProvider,
     settingsRepository: AdvancedSettingsRepository
 ) : ViewModel() {
@@ -207,6 +209,18 @@ class TripPlanViewModel @Inject constructor(
 
     fun setTo(endpoint: TripEndpoint) {
         _formState.update { it.copy(to = endpoint, toSuggestions = emptyList()) }
+        replanOrClearResult()
+    }
+
+    /**
+     * Sets the endpoint the map's "directions from/to here" named, pairing the trip's other end with
+     * the device's current location when it's still empty — see [TripPlanFormState.withMapEndpointPaired]
+     * for the rule (#2092). Both ends land in a single form update, so the paired trip submits as one plan.
+     */
+    fun setEndpointFromMap(slot: TripEndpointSlot, endpoint: TripEndpoint) {
+        val here = locationRepository.lastKnownLocation()
+            ?.let { TripEndpoint.CurrentLocation(lat = it.latitude, lon = it.longitude) }
+        _formState.update { it.withMapEndpointPaired(slot, endpoint, here) }
         replanOrClearResult()
     }
 

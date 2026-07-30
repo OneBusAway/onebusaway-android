@@ -113,6 +113,7 @@ import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
 import org.onebusaway.android.ui.tripplan.TripEndpoint
+import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
 import org.onebusaway.android.ui.tripplan.TripPlanForm
@@ -142,9 +143,6 @@ import org.onebusaway.android.util.PreferenceUtils
  * instead). Map-pick is hoisted to the caller ([onPickFrom]/[onPickTo]); current-location, date/time,
  * and advanced settings are wired here.
  */
-
-/** Which endpoint a map-pick is currently choosing. */
-enum class DirectionsPickTarget { FROM, TO }
 
 /**
  * The compact trip-plan form, shown in the top chrome (in place of the search field) while planning.
@@ -546,7 +544,7 @@ fun DirectionsErrorSnackbar(
  */
 @Composable
 fun BoxScope.DirectionsPickOverlay(
-    target: DirectionsPickTarget,
+    target: TripEndpointSlot,
     onConfirm: () -> Unit,
     onCancel: () -> Unit
 ) {
@@ -563,10 +561,9 @@ fun BoxScope.DirectionsPickOverlay(
         ) {
             Text(
                 text = stringResource(
-                    if (target == DirectionsPickTarget.FROM) {
-                        R.string.trip_plan_from
-                    } else {
-                        R.string.trip_plan_to
+                    when (target) {
+                        TripEndpointSlot.FROM -> R.string.trip_plan_from
+                        TripEndpointSlot.TO -> R.string.trip_plan_to
                     }
                 ),
                 style = MaterialTheme.typography.titleMedium

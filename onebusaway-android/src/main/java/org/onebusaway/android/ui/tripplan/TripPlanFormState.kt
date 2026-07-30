@@ -33,6 +33,13 @@ sealed interface TripEndpoint {
     /** Mirrors CustomAddress.isSet(): a usable endpoint must have coordinates. */
     val hasCoordinates: Boolean get() = lat != null && lon != null
 
+    /**
+     * Nothing entered here yet — an empty editable field. A resolved pill and a half-typed query are
+     * both the rider's own work, so neither counts as empty (see
+     * [TripPlanFormState.withMapEndpointPaired]).
+     */
+    val isEmpty: Boolean get() = this is FreeText && query.isBlank()
+
     /** The geocoder flagged this as a public-transit location (drives the pill/suggestion icon). */
     val isTransit: Boolean get() = false
 
@@ -76,6 +83,15 @@ sealed interface TripEndpoint {
 
     /** A point chosen on the map. Its label is a fixed string resolved by the UI. */
     data class MapPoint(override val lat: Double, override val lon: Double) : TripEndpoint
+}
+
+/** Which of the form's two endpoints an action targets. */
+enum class TripEndpointSlot {
+    FROM,
+    TO;
+
+    /** The endpoint at the trip's other end. */
+    val other: TripEndpointSlot get() = if (this == FROM) TO else FROM
 }
 
 /**
@@ -133,6 +149,38 @@ data class TripPlanFormState(
     /** Mirrors TripRequestBuilder.ready(): both endpoints must resolve to coordinates. */
     val canSubmit: Boolean
         get() = from.hasCoordinates && to.hasCoordinates
+
+    /** The endpoint currently in [slot]. */
+    fun endpointAt(slot: TripEndpointSlot): TripEndpoint = when (slot) {
+        TripEndpointSlot.FROM -> from
+        TripEndpointSlot.TO -> to
+    }
+
+    /** This form with [slot] set to [endpoint], dropping that field's now-stale suggestions. */
+    fun withEndpoint(slot: TripEndpointSlot, endpoint: TripEndpoint): TripPlanFormState = when (slot) {
+        TripEndpointSlot.FROM -> copy(from = endpoint, fromSuggestions = emptyList())
+        TripEndpointSlot.TO -> copy(to = endpoint, toSuggestions = emptyList())
+    }
+
+    /**
+     * This form after the map's "directions from/to here" filled [slot] with [endpoint] (#2092).
+     *
+     * A long-press names one end of a trip, and in a fresh directions session the other end is
+     * overwhelmingly the rider's own position — so [here] (the device's current location) is filled in
+     * for them, which makes the form submittable and plans the trip on the spot rather than leaving a
+     * half-filled form. Strictly a convenience: an endpoint the rider already set or started typing is
+     * never overwritten, and with no fix available ([here] null) that side is simply left empty, exactly
+     * as before.
+     */
+    fun withMapEndpointPaired(
+        slot: TripEndpointSlot,
+        endpoint: TripEndpoint,
+        here: TripEndpoint.CurrentLocation?
+    ): TripPlanFormState {
+        val filled = withEndpoint(slot, endpoint)
+        if (here == null || !endpointAt(slot.other).isEmpty) return filled
+        return filled.withEndpoint(slot.other, here)
+    }
 
     /** The current advanced options, for persistence by the host. */
     val advancedSettings: AdvancedSettings

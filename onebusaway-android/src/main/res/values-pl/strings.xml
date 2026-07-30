@@ -799,9 +799,9 @@
     <string name="donation_view_donate_now_button">Wesprzyj Teraz</string>
     <string name="donation_dismiss_dialog_title">Proszę, nie ignoruj tej prośby</string>
     <string name="donation_dismiss_dialog_body">%1$s to organizacja prowadzona przez wolontariuszy, z prawie żadnym finansowaniem. Potrzebujemy twojej pomocy, aby utrzymać tę aplikację przy życiu.</string>
-    <string name="donation_dismiss_dialog_dont_want_to_help_button">Nie chcę pomagać</string>
-    <string name="donation_dismiss_dialog_remind_me_later_button">Przypomnij mi później</string>
-    <string name="donation_dismiss_dialog_cancel_button">Anuluj</string>
+    <string name="donation_dismiss_dialog_remind_me_checkbox">Przypomnij mi</string>
+    <string name="donation_dismiss_dialog_maybe_later_button">Może później</string>
+    <string name="donation_dismiss_dialog_back_button">Wstecz</string>
     <string name="title_activity_donation_learn_more">Dlaczego potrzebujemy Twojej pomocy</string>
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100%% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>

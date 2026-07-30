@@ -33,6 +33,9 @@ data class DonationUiState(
     val showDismissDialog: Boolean = false
 )
 
+/** What the user chose in the dismiss dialog's "maybe later" — snooze the card, or stop asking. */
+enum class DonationDismissChoice { REMIND_LATER, STOP_ASKING }
+
 /** One-shot donation navigation the activity carries out (it owns startActivity + the intents). */
 sealed interface DonationEffect {
     object OpenLearnMore : DonationEffect
@@ -78,15 +81,12 @@ class DonationViewModel @Inject constructor(
         _effects.tryEmit(DonationEffect.OpenDonatePage(manager.donateUrl()))
     }
 
-    /** "I don't want to help" — stop asking, hide the dialog, and re-gate the card. */
-    fun dismissForever() {
-        manager.dismissDonationRequests()
-        _state.update { it.copy(showDismissDialog = false, available = manager.shouldShowDonationUI()) }
-    }
-
-    /** "Remind me later" — snooze, hide the dialog, and re-gate the card. */
-    fun remindLater() {
-        manager.remindUserLater()
+    /** "Maybe later" — carry out [choice], then hide the dialog and re-gate the card. */
+    fun maybeLater(choice: DonationDismissChoice) {
+        when (choice) {
+            DonationDismissChoice.REMIND_LATER -> manager.remindUserLater()
+            DonationDismissChoice.STOP_ASKING -> manager.dismissDonationRequests()
+        }
         _state.update { it.copy(showDismissDialog = false, available = manager.shouldShowDonationUI()) }
     }
 }

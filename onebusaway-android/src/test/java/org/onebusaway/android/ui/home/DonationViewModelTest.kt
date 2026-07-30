@@ -32,7 +32,7 @@ import org.onebusaway.android.ui.home.donation.DonationViewModel
 /**
  * Unit tests for [DonationViewModel]'s dialog/effect logic — the parts that don't touch the
  * `DonationsManager` (Application) singleton. The manager-backed paths (refresh / donate /
- * dismissForever / remindLater) are exercised by the on-device verification.
+ * maybeLater) are exercised by the on-device verification.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DonationViewModelTest {

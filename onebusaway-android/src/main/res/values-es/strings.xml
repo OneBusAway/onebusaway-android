@@ -1039,9 +1039,9 @@
     <string name="donation_view_donate_now_button">Donar Ahora</string>
     <string name="donation_dismiss_dialog_title">Por favor, no ignores esta solicitud</string>
     <string name="donation_dismiss_dialog_body">%1$s es una organización dirigida por voluntarios con casi ningún financiamiento. Necesitamos tu ayuda para mantener esta aplicación funcionando.</string>
-    <string name="donation_dismiss_dialog_dont_want_to_help_button">No Quiero Ayudar</string>
-    <string name="donation_dismiss_dialog_remind_me_later_button">Recuérdame Más Tarde</string>
-    <string name="donation_dismiss_dialog_cancel_button">Cancelar</string>
+    <string name="donation_dismiss_dialog_remind_me_checkbox">Recuérdame</string>
+    <string name="donation_dismiss_dialog_maybe_later_button">Quizás Más Tarde</string>
+    <string name="donation_dismiss_dialog_back_button">Atrás</string>
     <string name="title_activity_donation_learn_more">Por qué necesitamos tu ayuda</string>
     <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Tenemos grandes planes para mejorar %1$s, pero no podemos hacerlo sin tu ayuda. Esta aplicación está actualmente desarrollada con un 100%% de trabajo voluntario, y necesitamos que nos ayudes a financiar el desarrollo futuro.\n\nComo un proyecto clave de la Open Transit Software Foundation, una organización sin fines de lucro 501(c)(3), dependemos de la buena voluntad de usuarios como tú para seguir funcionando y mejorando este software.\n\nCada año, solo una pequeña fracción de nuestros usuarios dona, pero cada contribución, grande o pequeña, ayuda a asegurar que %1$s permanezca gratuito, actualizado y accesible para todos. Una pequeña donación, incluso solo el costo de una semana de viaje, $27.50, puede marcar la diferencia.\n\nTu contribución deducible de impuestos asegura que %1$s permanezca libre y accesible para todos. ¡Formemos juntos el futuro del transporte!\n\nGracias,\nEl equipo de %1$s</string>

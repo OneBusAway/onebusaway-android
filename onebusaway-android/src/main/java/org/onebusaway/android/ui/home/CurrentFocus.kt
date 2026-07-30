@@ -63,6 +63,15 @@ sealed interface DirectionsSubFocus {
     data class Leg(val leg: FocusedLeg) : DirectionsSubFocus
 }
 
+/**
+ * Whether the drawn itinerary survives in this focus: the overview and an on-street leg focus both keep it
+ * (the leg focus just restyles it), while a leg's route sub-focus recontextualizes the map onto that route
+ * — and any focus outside directions tears the trip down altogether. So returning to a trip *from* a focus
+ * that doesn't keep it has to redraw it first.
+ */
+internal val CurrentFocus.keepsDrawnItinerary: Boolean
+    get() = this is CurrentFocus.Directions && subFocus !is DirectionsSubFocus.Route
+
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop
 

@@ -240,18 +240,27 @@ private val SUMMARY_WRAP_WIDTH = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL
  * How far the summary's band is tinted off the card behind it, to set the trip itself on its own surface
  * above the stats (#2081).
  *
- * A veil of the card's *own* content colour rather than a second background colour, for the reason
- * [SymbolSeparator] is faded the same way: the card is tinted, and differently again when selected, so a
- * theme surface token lands on one of those two states as an off-hue patch — and the selected card's
- * `secondaryContainer` has no "one step up" token to reach for at all. Veiling toward the content colour
- * moves both states the way Material's own container ramp moves: darker on a light theme, lighter on a
- * dark one.
+ * A veil of the **brand green** (`MaterialTheme.colorScheme.primary`) rather than a neutral step up the
+ * container ramp: the band is the app's colour showing through the card, not a second grey. `primary` is
+ * the token to veil with because it flips ends between the themes exactly as the ramp does — a deep green
+ * over a light card darkens it, a pale green over a dark card lightens it — so one alpha serves both, and
+ * a white-label brand re-tints these headers by overriding the one colour it already overrides.
  *
- * Set a little above one step of that ramp (which is ~0.03–0.05 here), since this band has to do on its
- * own the separating a rule between the sections would otherwise share. This is the knob to turn if the
- * header reads too loud or too faint.
+ * The value is chosen to land the same lightness step the neutral veil it replaced did (−7.4 on a light
+ * card, +9.0 on a dark one, in CIE L*), so this changed the hue and not the weight; it holds within about
+ * one unit of that across all four card states. That weight is itself set well above one step of the
+ * container ramp (~0.03–0.05 here), since the band does on its own the separating a rule between the
+ * sections would otherwise share — at a single step the two halves of the card barely read as two.
+ *
+ * Tried louder, too: a band inverted into the dark range (the card's own opposite, carrying light
+ * glyphs) reads as a slab in a picker of small cards, at any strength. The header stays light and merely
+ * offset; this is the knob for how far.
+ *
+ * Note the selected card is *already* green ([R.color.trip_plan_card_background_selected]), so on that
+ * one the veil reads as darkening rather than as a hue change — which is what keeps a selected card
+ * looking like the same object as its neighbours rather than a differently-tinted one.
  */
-private const val CARD_HEADER_TINT_ALPHA = 0.06f
+private const val CARD_HEADER_TINT_ALPHA = 0.13f
 
 /**
  * The chevron between two of a card's mode symbols, and the gap on either side of it. Deliberately
@@ -352,7 +361,7 @@ private fun OptionCard(
                     wrapAt = SUMMARY_WRAP_WIDTH,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(LocalContentColor.current.copy(alpha = CARD_HEADER_TINT_ALPHA))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
                         .padding(CARD_SECTION_PADDING)
                 ) {
                     drawn.forEachIndexed { index, symbol ->

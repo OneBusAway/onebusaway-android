@@ -19,11 +19,7 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -42,6 +38,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -52,19 +49,23 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
@@ -97,10 +98,9 @@ import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
-import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
-import org.onebusaway.android.ui.compose.components.DragHandleBar
+import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
 import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
@@ -261,17 +261,23 @@ private fun pickTripTime(activity: AppCompatActivity, viewModel: TripPlanViewMod
     picker.show(activity.supportFragmentManager, "TIME_PICKER")
 }
 
-/** Collapsed height of the directions sheet content — just the drag handle peeking above the map. */
-private val DIRECTIONS_SHEET_PEEK = DRAG_HANDLE_HEIGHT
-
-/** Net drag (px per gesture event) on the handle past which the sheet snaps collapsed/expanded. */
-private const val DIRECTIONS_SHEET_DRAG_THRESHOLD = 8f
+/** The expanded directions sheet's share of the window height (the collapsed peek is handle-only). */
+private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
 
 /**
- * The bottom directions sheet: option cards + the step-by-step list, over the map. Collapsible via the
- * drag handle at its top — tap or drag it down to collapse to just the handle (revealing the map), up to
- * restore the full ~40%-height sheet.
+ * The bottom directions sheet: option cards + the step-by-step list, over the map. A standard Material 3
+ * persistent bottom sheet — [BottomSheetScaffold]'s sheet slot — so it gets the real sheet gesture:
+ * the sheet tracks the finger, settles on velocity, and drags from anywhere on it (including a
+ * nested-scroll handoff, so pulling down at the top of the step list collapses the sheet). Collapsed it
+ * rests at a handle-only peek revealing the map; expanded it fills [DIRECTIONS_SHEET_HEIGHT_FRACTION]
+ * of the window. Tapping the handle still toggles, and screen readers get M3's expand/collapse actions.
+ *
+ * The scaffold hosts *only* the sheet: its body is empty and its container transparent, so the map that
+ * the caller drew underneath shows through and keeps receiving its own gestures (M3 builds the scaffold
+ * root from a plain `Box`, not a touch-intercepting `Surface`). [onSheetHeightPx] reports the sheet's
+ * settled on-screen height for the map's bottom inset.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DirectionsResultsSheet(
     resultsViewModel: TripResultsViewModel,
@@ -282,30 +288,47 @@ fun DirectionsResultsSheet(
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    onSheetHeightPx: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // The system nav-bar inset: the surface reaches the bottom edge (continuous background), but its
+    // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
-    // stranded under the gesture pill / 3-button bar. Collapsed height includes it so the handle fits.
+    // stranded under the gesture pill / 3-button bar. The peek includes it so the handle clears it.
     val navBottom = navigationBarBottomPadding()
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
     val fullHeight = with(LocalDensity.current) {
-        (LocalWindowInfo.current.containerSize.height * 0.4f).toDp()
+        (LocalWindowInfo.current.containerSize.height * DIRECTIONS_SHEET_HEIGHT_FRACTION).toDp()
     }
-    var collapsed by rememberSaveable { mutableStateOf(false) }
-    val sheetHeight by animateDpAsState(
-        targetValue = if (collapsed) DIRECTIONS_SHEET_PEEK + navBottom else fullHeight,
-        label = "directionsSheetHeight"
-    )
-    Surface(
-        modifier = modifier.fillMaxWidth().height(sheetHeight),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 2.dp,
-        shadowElevation = 8.dp
-    ) {
-        Column(Modifier.fillMaxWidth().navigationBarsPadding()) {
-            DirectionsSheetHandle(collapsed = collapsed, onSetCollapsed = { collapsed = it })
+    val peekHeight = DRAG_HANDLE_TOUCH_TARGET_HEIGHT + navBottom
+    val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
+    val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+
+    // The map's bottom inset follows the *settled* sheet, not the live drag — a per-frame inset would
+    // re-frame the map on every gesture event. Both resting heights are known up front, so this needs no
+    // measurement: expanded is the sheet's own height, collapsed is the peek. Keyed on the heights too,
+    // so a late nav-bar inset (or a rotation) re-emits rather than sticking at the stale value.
+    val density = LocalDensity.current
+    LaunchedEffect(sheetState, fullHeight, peekHeight) {
+        snapshotFlow { sheetState.currentValue }.collect { value ->
+            val resting = if (value == SheetValue.Expanded) fullHeight else peekHeight
+            onSheetHeightPx(with(density) { resting.roundToPx() })
+        }
+    }
+
+    BottomSheetScaffold(
+        modifier = modifier,
+        scaffoldState = scaffoldState,
+        sheetPeekHeight = peekHeight,
+        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetTonalElevation = 2.dp,
+        sheetShadowElevation = 8.dp,
+        // The scaffold supplies the drag gesture and the tap/accessibility actions around whatever handle
+        // it's given, so this is the app's own bar — the same one the arrivals sheet shows — in the 48dp
+        // band [DRAG_HANDLE_TOUCH_TARGET_HEIGHT] measures for the peek above.
+        sheetDragHandle = { SheetDragHandle() },
+        sheetContent = {
+            // Sized so handle + content == fullHeight, which is what sets the sheet's expanded anchor.
             TripResultsSheet(
                 itineraries = itineraries,
                 params = params,
@@ -315,41 +338,18 @@ fun DirectionsResultsSheet(
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(fullHeight - DRAG_HANDLE_TOUCH_TARGET_HEIGHT)
+                    .navigationBarsPadding()
             )
-        }
-    }
-}
-
-/** The drag handle atop [DirectionsResultsSheet]: tap toggles collapse; drag up/down sets it. */
-@Composable
-private fun DirectionsSheetHandle(collapsed: Boolean, onSetCollapsed: (Boolean) -> Unit) {
-    // draggable() reports per-frame deltas, so accumulate them — a slow drag would never cross the
-    // threshold on any single frame. Reset once a threshold crossing snaps the sheet, and at drag end.
-    var dragAccumulated by remember { mutableFloatStateOf(0f) }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onSetCollapsed(!collapsed) }
-            .draggable(
-                orientation = Orientation.Vertical,
-                state = rememberDraggableState { delta ->
-                    dragAccumulated += delta
-                    if (dragAccumulated > DIRECTIONS_SHEET_DRAG_THRESHOLD) {
-                        onSetCollapsed(true)
-                        dragAccumulated = 0f
-                    } else if (dragAccumulated < -DIRECTIONS_SHEET_DRAG_THRESHOLD) {
-                        onSetCollapsed(false)
-                        dragAccumulated = 0f
-                    }
-                },
-                onDragStopped = { dragAccumulated = 0f }
-            )
-            .padding(vertical = DRAG_HANDLE_VERTICAL_PADDING),
-        contentAlignment = Alignment.Center
-    ) {
-        DragHandleBar()
-    }
+        },
+        // Sheet-only host: no snackbar (the caller owns one), no body, and a transparent container so
+        // the caller's map stays visible and interactive behind it.
+        snackbarHost = {},
+        containerColor = Color.Transparent,
+        content = {}
+    )
 }
 
 /**

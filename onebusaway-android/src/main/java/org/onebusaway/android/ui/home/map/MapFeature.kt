@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -64,7 +65,9 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -136,6 +139,11 @@ fun MapFeature(
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
+    // Whether the soft keyboard is up, read through rememberUpdatedState for the same reason: the
+    // callbacks object below is remembered and would otherwise capture the value at first composition.
+    val imeVisible by rememberUpdatedState(WindowInsets.ime.getBottom(LocalDensity.current) > 0)
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
 
     // Compose-native permission launcher: deliver the result to the map view model (blue dot) + the
     // home view model (the deferred first-launch region check).
@@ -170,6 +178,18 @@ fun MapFeature(
             }
 
             override fun onMapClick(point: GeoPoint?) {
+                // A tap made while the keyboard is up is aimed at the keyboard: half the map is behind
+                // it, and the rider is reaching for the part they can see again. So that tap does only
+                // that. Without this it also unfocused the map a level, which from the directions form
+                // — an editor being typed into, with nothing focused beneath it — meant one stray tap
+                // left directions altogether and discarded the trip being entered.
+                if (imeVisible) {
+                    // Clearing focus is what closes the editor and its suggestion list; hide() covers
+                    // a keyboard raised by something that isn't a focused Compose field.
+                    focusManager.clearFocus()
+                    keyboard?.hide()
+                    return
+                }
                 homeViewModel.unfocusMapOneLevel()
             }
 

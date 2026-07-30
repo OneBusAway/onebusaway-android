@@ -949,8 +949,16 @@
 
     <!-- Trip Planner strings -->
 
-    <string name="trip_plan_from">From: </string>
-    <string name="trip_plan_to">To: </string>
+    <!-- Placeholders shown in the empty directions endpoint fields. -->
+    <string name="trip_plan_from_hint">Choose starting point</string>
+    <string name="trip_plan_to_hint">Choose destination</string>
+    <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
+         sentence next to Leaving/Arriving, not as a heading. -->
+    <string name="trip_plan_now">now</string>
+    <string name="trip_plan_choose_date">Choose date…</string>
+    <string name="trip_plan_choose_time">Choose time…</string>
+    <!-- Accessibility click label for either half of the time callout. -->
+    <string name="trip_plan_change_when">Change when</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_date">Date</string>
@@ -965,7 +973,6 @@
     <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
          stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
     <string name="directions_whichever_comes_first">whichever comes first</string>
-    <string name="trip_plan_clear_endpoint">Clear</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>
@@ -1041,7 +1048,7 @@
     <string name="tripplanner_error_geocode_from_to_ambiguous">Origin and destination are uncertain</string>
     <string name="tripplanner_error_triangle">Something went wrong.  Change your bike options and try again</string>
     <!-- When routing from my location -->
-    <string name="tripplanner_current_location">Current Location</string>
+    <string name="tripplanner_current_location">Current location</string>
 
 
     <string name="tripplanner_reverse">Reverse</string>

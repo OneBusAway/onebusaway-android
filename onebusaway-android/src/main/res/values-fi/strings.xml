@@ -783,8 +783,6 @@
     <string name="rt_no">EI</string>
 
     <!-- Trip planner -->
-    <string name="trip_plan_from">Mistä: </string>
-    <string name="trip_plan_to">Minne: </string>
     <string name="trip_plan_leaving">Lähtö</string>
     <string name="trip_plan_arriving">Saapuminen</string>
     <string name="trip_plan_advanced_settings">Lisäasetukset</string>

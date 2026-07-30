@@ -60,7 +60,7 @@ class TripPlanViewModel @Inject constructor(
     private val regionRepository: RegionRepository,
     private val searchCenter: SearchCenter,
     private val locationRepository: LocationRepository,
-    timeProvider: TimeProvider,
+    private val timeProvider: TimeProvider,
     settingsRepository: AdvancedSettingsRepository
 ) : ViewModel() {
 
@@ -235,9 +235,37 @@ class TripPlanViewModel @Inject constructor(
         setEndpoint(slot, TripEndpoint.FreeText())
     }
 
+    /**
+     * Pins the trip to an explicit instant, leaving the "now" anchor. Picking either half of the
+     * date/time is enough to pin: the other half keeps whatever it already showed, which is the
+     * moment the form was opened.
+     */
     fun setDateTime(millis: Long) {
         _formState.update {
-            it.copy(dateTimeMillis = millis, dateLabel = formatDate(millis), timeLabel = formatTime(millis))
+            it.copy(
+                dateTimeMillis = millis,
+                departNow = false,
+                dateLabel = formatDate(millis),
+                timeLabel = formatTime(millis)
+            )
+        }
+        replanOrClearResult()
+    }
+
+    /**
+     * Returns the trip to the "now" anchor. The pinned [TripPlanFormState.dateTimeMillis] is refreshed
+     * to the current clock as well, so re-opening the picker starts from now rather than from the
+     * instant that was abandoned.
+     */
+    fun setDepartNow() {
+        val now = timeProvider.now()
+        _formState.update {
+            it.copy(
+                dateTimeMillis = now,
+                departNow = true,
+                dateLabel = formatDate(now),
+                timeLabel = formatTime(now)
+            )
         }
         replanOrClearResult()
     }
@@ -291,6 +319,9 @@ class TripPlanViewModel @Inject constructor(
                 from = from ?: it.from,
                 to = to ?: it.to,
                 dateTimeMillis = dateTimeMillis,
+                // A restored trip carries the instant it was planned for, so it is pinned rather than
+                // anchored to "now" — re-anchoring would silently re-time the very trip being restored.
+                departNow = false,
                 dateLabel = formatDate(dateTimeMillis),
                 timeLabel = formatTime(dateTimeMillis),
                 arriving = arriving
@@ -309,7 +340,9 @@ class TripPlanViewModel @Inject constructor(
      */
     private fun replanOrClearResult() {
         val form = _formState.value
-        planInputs.trySend(if (form.canSubmit) form.toParams() else null)
+        // Read the clock here, at submit, so a "depart now" trip left sitting in an open form plans
+        // from the moment it is sent rather than the moment the ViewModel was built.
+        planInputs.trySend(if (form.canSubmit) form.toParams(timeProvider.now()) else null)
     }
 
     private fun formatDate(millis: Long): String = SimpleDateFormat(DATE_PATTERN, Locale.getDefault()).format(Date(millis))

@@ -831,8 +831,6 @@
     <string name="close_donation_card">Zamknij kartę darowizny</string>
 
     <!-- Trip Planner strings -->
-    <string name="trip_plan_from">Skąd: </string>
-    <string name="trip_plan_to">Dokąd: </string>
     <string name="trip_plan_leaving">Wyjazd</string>
     <string name="trip_plan_arriving">Przyjazd</string>
     <string name="trip_plan_date">Data</string>

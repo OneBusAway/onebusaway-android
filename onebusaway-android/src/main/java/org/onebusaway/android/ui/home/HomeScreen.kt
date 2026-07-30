@@ -247,6 +247,9 @@ fun HomeScreen(
                 // The directions trip-plan form card's absolute bottom edge (window px), so the map's top inset
                 // covers the form/FAB during directions (the itinerary-step focus centers in the band below it).
                 var directionsFormBottomPx by remember { mutableIntStateOf(0) }
+                // Which endpoint (if any) is being picked directly on the map (crosshair + confirm). Lives
+                // up here because the map's padding depends on it, just below.
+                var pickTarget by rememberSaveable { mutableStateOf<TripEndpointSlot?>(null) }
                 val focusTopEdgePx = focusBannerTopEdge(
                     currentFocus,
                     focusBannerBottomPx,
@@ -254,6 +257,11 @@ fun HomeScreen(
                 )
                 LaunchedEffect(focusTopEdgePx) {
                     mapViewModel.setFocusBannerBottomEdge(focusTopEdgePx)
+                }
+                // Aiming the centre crosshair suspends map padding entirely: the point a pick captures is
+                // the camera target, and padding moves that off the crosshair the rider is aiming.
+                LaunchedEffect(pickTarget) {
+                    mapViewModel.setCenterPickActive(pickTarget != null)
                 }
                 val snackbarHostState = remember { SnackbarHostState() }
                 // The unified recent stops+routes list for the search field's dropdown. Hosted here (like the
@@ -583,8 +591,6 @@ fun HomeScreen(
                             // surfaces a message.
                             val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                             val directionsLoading = tripPlanResult is PlanResult.Loading
-                            // Which endpoint (if any) is being picked directly on the map (crosshair + confirm).
-                            var pickTarget by rememberSaveable { mutableStateOf<TripEndpointSlot?>(null) }
                             // A long-pressed map point awaiting the "directions from/to here" choice.
                             var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                             // Leaving directions ends any in-progress map pick.
@@ -708,7 +714,11 @@ fun HomeScreen(
                                                 modifier = Modifier
                                                     .align(Alignment.TopCenter)
                                                     .statusBarsPadding()
-                                                    .padding(horizontal = 8.dp, vertical = 8.dp)
+                                                    // Wider at the sides than at the top: the card
+                                                    // floats over the map, and letting a little more
+                                                    // of it show past either edge reads as floating
+                                                    // rather than as chrome bolted to the screen.
+                                                    .padding(horizontal = 12.dp, vertical = 8.dp)
                                                     // Report the card's bottom edge as the map's top inset (see
                                                     // directionsFormBottomPx) so a focused step clears the form.
                                                     .onGloballyPositioned {
@@ -780,7 +790,6 @@ fun HomeScreen(
                                 // Pick a From/To point on the home map: crosshair + confirm reads the map center.
                                 pickTarget?.let { target ->
                                     DirectionsPickOverlay(
-                                        target = target,
                                         onConfirm = {
                                             // Only commit + dismiss once we actually have a map center; otherwise
                                             // keep the picker open rather than silently losing the selection.
@@ -789,8 +798,7 @@ fun HomeScreen(
                                                 tripPlanViewModel.setEndpoint(target, point)
                                                 pickTarget = null
                                             }
-                                        },
-                                        onCancel = { pickTarget = null }
+                                        }
                                     )
                                 }
                                 // Long-press → "directions from/to here": enters directions and fills the

@@ -135,6 +135,14 @@ data class TripPlanFormState(
     val toSuggestions: List<TripEndpoint.Geocoded> = emptyList(),
     val dateTimeMillis: Long = 0L,
     val arriving: Boolean = false,
+    /**
+     * The trip is anchored to "now" rather than to [dateTimeMillis] — the default, and what the form's
+     * time control shows until a date or time is picked. The distinction has to be explicit because
+     * "now" is a *moving* anchor: [dateTimeMillis] is stamped once when the ViewModel is built, so a
+     * form left open for twenty minutes would otherwise plan a trip twenty minutes in the past. The
+     * live instant is resolved at submit — see [toParams].
+     */
+    val departNow: Boolean = true,
     val dateLabel: String = "",
     val timeLabel: String = "",
     val modes: TripModeSelection = TripModeSelection(),
@@ -216,11 +224,18 @@ data class TripPlanFormState(
             bikePreference = bikePreference
         )
 
-    /** Builds the plan request; only call when [canSubmit] is true. */
-    fun toParams(): TripPlanParams = TripPlanParams(
+    /**
+     * Builds the plan request; only call when [canSubmit] is true.
+     *
+     * [nowMillis] is the caller's reading of the wall clock, passed in rather than read here so this
+     * stays a pure projection of the form (the same rule the ETA helpers follow). It is used only when
+     * [departNow] is set, which is what makes "now" mean the moment of submission rather than the
+     * moment the form was opened.
+     */
+    fun toParams(nowMillis: Long): TripPlanParams = TripPlanParams(
         from = from,
         to = to,
-        dateTimeMillis = dateTimeMillis,
+        dateTimeMillis = if (departNow) nowMillis else dateTimeMillis,
         arriving = arriving,
         modes = modes,
         wheelchair = wheelchair,

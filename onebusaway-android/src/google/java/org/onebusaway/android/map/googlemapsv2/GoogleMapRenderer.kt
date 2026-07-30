@@ -46,6 +46,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
 import org.onebusaway.android.map.mapRouteLineCaseColor
+import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadge
@@ -312,7 +313,7 @@ class GoogleMapRenderer(
             val marker = map.addMarkerOrFail(
                 MarkerOptions()
                     .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routeShortName, badge.color))
+                    .icon(routeBadgeIcon(badge.routes))
                     .anchor(0.5f, 0.5f)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
             )
@@ -380,7 +381,7 @@ class GoogleMapRenderer(
         val marker = map.addMarkerOrFail(
             MarkerOptions()
                 .position(badge.point.toLatLng())
-                .icon(routeBadgeIcon(badge.routeShortName, polyline.resolvedColor))
+                .icon(routeBadgeIcon(listOf(BadgedRoute(badge.routeShortName, polyline.resolvedColor))))
                 .anchor(0.5f, 0.5f)
                 .zIndex(ROUTE_BADGE_Z_INDEX)
         )
@@ -388,13 +389,11 @@ class GoogleMapRenderer(
         continuationBadgeByMarker[marker] = badge
     }
 
-    private fun routeBadgeIcon(routeShortName: String, color: Int): BitmapDescriptor = descriptorCache.get("route-badge:$routeShortName:$color") {
-        ContinuationBadgeBitmaps.badge(
-            routeShortName,
-            color,
-            density,
-            darkMode = ThemeUtils.isInDarkMode(context)
-        )
+    private fun routeBadgeIcon(routes: List<BadgedRoute>): BitmapDescriptor {
+        val darkMode = ThemeUtils.isInDarkMode(context)
+        return descriptorCache.get(ContinuationBadgeBitmaps.badgeKey(routes, darkMode)) {
+            ContinuationBadgeBitmaps.badge(routes, density, darkMode)
+        }
     }
 
     private fun continuationArrowIcon(color: Int): BitmapDescriptor = descriptorCache.get("continuation-arrow:$color") {

@@ -278,8 +278,10 @@ class RouteViewGeometryTest {
         )
 
         assertEquals(listOf("route-b", "route-a", "route-a"), badges.map { it.tap?.routeId })
-        assertEquals(listOf("B", "A", "A"), badges.map { it.routeShortName })
-        assertEquals(listOf(20, 10, 30), badges.map { it.color })
+        // An adjacency label names its one route: only a directions ride the rider may board any of
+        // several routes for stacks more than one name (#2083).
+        assertEquals(listOf("B", "A", "A"), badges.map { it.routes.single().routeShortName })
+        assertEquals(listOf(20, 10, 30), badges.map { it.routes.single().color })
         assertEquals(listOf(1, 0, 1), badges.map { it.tap?.directionId })
         assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
         assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)

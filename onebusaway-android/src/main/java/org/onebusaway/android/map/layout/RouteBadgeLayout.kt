@@ -19,6 +19,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
@@ -83,13 +84,12 @@ fun <K> layoutRouteBadges(
 }
 
 /**
- * One route label to place: what it reads, the colour of the line it names, where a tap on it navigates
- * (null for an informational label — see [RouteBadge.tap]), and the shapes it may be anchored on. List
- * order is collision priority, as in [layoutRouteBadges].
+ * One route label to place: the route(s) it names (stacked, in reading order — see [RouteBadge.routes]),
+ * where a tap on it navigates (null for an informational label — see [RouteBadge.tap]), and the shapes it
+ * may be anchored on. List order is collision priority, as in [layoutRouteBadges].
  */
 internal data class RouteBadgeRequest(
-    val routeShortName: String,
-    val color: Int,
+    val routes: List<BadgedRoute>,
     val paths: List<RouteBadgePath>,
     val tap: RouteDirectionKey? = null
 )
@@ -108,12 +108,7 @@ internal fun placeRouteBadges(requests: List<RouteBadgeRequest>): List<RouteBadg
     ).associateBy { it.route }
     return requests.mapIndexedNotNull { index, request ->
         placements[index]?.let { placement ->
-            RouteBadge(
-                routeShortName = request.routeShortName,
-                color = request.color,
-                point = placement.point,
-                tap = request.tap
-            )
+            RouteBadge(routes = request.routes, point = placement.point, tap = request.tap)
         }
     }
 }

@@ -16,13 +16,14 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
-import org.onebusaway.android.util.ROUTE_NAME_ORDER
+import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
 
 /**
@@ -89,9 +90,7 @@ internal fun legBadge(leg: TripLeg, alternatives: List<InterchangeableRoute>): L
  * an unnameable one is never built. A leg left with no routes renders as its [mode] instead.
  */
 internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode: TransitMode): LegBadge = LegBadge(
-    (listOfNotNull(planned) + alternatives)
-        .distinctBy { it.shortName }
-        .sortedWith(compareBy(ROUTE_NAME_ORDER) { it.shortName }),
+    (listOfNotNull(planned) + alternatives).inInterchangeableOrder { it.shortName },
     mode,
     RouteBadgeJoin.ANY_OF
 )

@@ -22,12 +22,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.directions.OtpObaIdResolver
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.model.routeDisplayName
+import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull

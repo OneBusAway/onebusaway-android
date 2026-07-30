@@ -214,13 +214,25 @@ data class ContinuationBadge(
 )
 
 /**
- * A label naming one route on the line it is drawn on — in focused-stop adjacency view (#1827), and on
- * a directions itinerary's rides (#2066). Anchored once in geographic space so the map SDK naturally
+ * One route named on a [RouteBadge]: what it reads, and the colour the map draws that route's line in
+ * (already through the map's route-line policy — see [org.onebusaway.android.map.mapRouteLineColor]),
+ * so a name and the line it belongs to can't disagree.
+ */
+data class BadgedRoute(val routeShortName: String, val color: Int)
+
+/**
+ * A label naming the route(s) on the line it is drawn on — in focused-stop adjacency view (#1827), and
+ * on a directions itinerary's rides (#2066). Anchored once in geographic space so the map SDK naturally
  * carries it through pan and zoom. Rendered by both flavors (#1913).
  */
 data class RouteBadge(
-    val routeShortName: String,
-    val color: Int,
+    /**
+     * The routes this label names, in the order it reads them — top to bottom, since a label naming
+     * several routes stacks them (#2083). Usually one; several exactly where the rider may board any of
+     * them for the same ride (interchangeable routes, #2010), which is a fact about the ride, so the
+     * label carries every route rather than whichever one the trip planner picked.
+     */
+    val routes: List<BadgedRoute>,
     val point: GeoPoint,
     /**
      * Where a tap on this label navigates — the route-direction to show, preferring the drawn line's own
@@ -230,7 +242,22 @@ data class RouteBadge(
      * says where it leads, and no producer needs a navigable id it doesn't have.
      */
     val tap: RouteDirectionKey? = null
-)
+) {
+    init {
+        // Both stated rather than trusted: a label with nothing to read is a marker the rider can't
+        // account for, and a navigable label naming several routes would leave the tap handler picking
+        // one of them — the destination has to be as unambiguous as the name. Producer-side invariants
+        // (only adjacency labels navigate, and each names its one route), so a violation is a bug in a
+        // badge builder, which is where the message points.
+        require(routes.isNotEmpty()) { "a route badge names at least one route" }
+        require(tap == null || routes.size == 1) {
+            "a badge naming ${routes.size} routes has no single route to navigate to"
+        }
+    }
+
+    /** The one route a navigable badge names — see the [tap] invariant above. */
+    val tappedRouteShortName: String get() = routes.single().routeShortName
+}
 
 /**
  * The arrowhead terminating a route-continuation line (#1691), at [point] oriented along [bearing]

@@ -39,6 +39,7 @@ import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.mapRouteLineCaseColor
+import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
@@ -254,7 +255,7 @@ class MapLibreRenderer(
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routeShortName, badge.color))
+                    .icon(routeBadgeIcon(badge.routes))
             )
             staticAnnotations.add(marker)
             // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
@@ -263,10 +264,9 @@ class MapLibreRenderer(
         }
     }
 
-    private fun routeBadgeIcon(routeShortName: String, color: Int): Icon = iconFactory.fromBitmap(
+    private fun routeBadgeIcon(routes: List<BadgedRoute>): Icon = iconFactory.fromBitmap(
         ContinuationBadgeBitmaps.badge(
-            routeShortName,
-            color,
+            routes,
             density,
             darkMode = ThemeUtils.isInDarkMode(context)
         )

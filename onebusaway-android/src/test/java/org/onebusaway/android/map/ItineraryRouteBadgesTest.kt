@@ -5,14 +5,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.map.render.BadgedRoute
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.util.GeoPoint
 
 /**
  * The route labels drawn on a directions itinerary's transit lines (#2066). The point of these is that a
- * label names *a ride* — one per route, however many legs it spans — takes the colour of the line it
- * names, and never becomes a tap target that would navigate away from the trip being read.
+ * label names *a ride* — one per route, however many legs it spans, and every route the rider may board
+ * for it (#2083) — takes the colour of the line it names, and never becomes a tap target that would
+ * navigate away from the trip being read.
  */
 class ItineraryRouteBadgesTest {
 
@@ -32,10 +36,9 @@ class ItineraryRouteBadgesTest {
             )
         ).single()
 
-        assertEquals("45", badge.routeShortName)
-        assertEquals(GeoPoint(0.0, 0.5), badge.point)
         // Exactly the colour its own line is stroked with, so a label and its line can't disagree.
-        assertEquals(rideStyle.color, badge.color)
+        assertEquals(listOf(BadgedRoute("45", rideStyle.color)), badge.routes)
+        assertEquals(GeoPoint(0.0, 0.5), badge.point)
         // No tap target at all, so there is nothing for a stray tap to navigate to.
         assertNull(badge.tap)
     }
@@ -49,7 +52,7 @@ class ItineraryRouteBadgesTest {
             listOf(drawable(0, first, eastward), drawable(2, second, northward))
         )
 
-        assertEquals(listOf("5"), badges.map { it.routeShortName })
+        assertEquals(listOf(listOf("5")), badges.map(::names))
     }
 
     @Test
@@ -61,7 +64,7 @@ class ItineraryRouteBadgesTest {
             )
         )
 
-        assertEquals(listOf("A", "B"), badges.map { it.routeShortName })
+        assertEquals(listOf(listOf("A"), listOf("B")), badges.map(::names))
         assertNotEquals(badges[0].point, badges[1].point)
     }
 
@@ -76,7 +79,7 @@ class ItineraryRouteBadgesTest {
             )
         )
 
-        assertEquals(listOf("45"), badges.map { it.routeShortName })
+        assertEquals(listOf(listOf("45")), badges.map(::names))
     }
 
     @Test
@@ -91,13 +94,99 @@ class ItineraryRouteBadgesTest {
             )
         )
 
-        assertEquals(emptyList<String>(), badges.map { it.routeShortName })
+        assertEquals(emptyList<List<String>>(), badges.map(::names))
     }
+
+    @Test
+    fun `an interchangeable ride is labelled with every route it may be ridden as, in name order`() {
+        // The planner picked the 2 Line; the label gives it no pride of place, exactly as the drawer's
+        // joined badge doesn't — the routes are interchangeable, so the label reads the same either way.
+        val ride = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+
+        val badge = itineraryRouteBadges(
+            listOf(drawable(0, ride, eastward, interchangeable = listOf(interchangeable("1 Line"))))
+        ).single()
+
+        assertEquals(listOf("1 Line", "2 Line"), names(badge))
+        // Still informational: naming several routes doesn't turn the label into a navigation target.
+        assertNull(badge.tap)
+    }
+
+    @Test
+    fun `an interchangeable route is coloured as the map would draw its own line`() {
+        val ride = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+        val alternative = interchangeable("1 Line", routeColor = 0xFF0000FF.toInt())
+
+        val badge = itineraryRouteBadges(
+            listOf(drawable(0, ride, eastward, interchangeable = listOf(alternative)))
+        ).single()
+
+        assertEquals(
+            itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt()).color,
+            badge.routes.single { it.routeShortName == "1 Line" }.color
+        )
+    }
+
+    @Test
+    fun `two legs of one route offered different substitutes are labelled separately`() {
+        // The first leg shares its corridor with the 1 Line; the second doesn't. One shared label would
+        // claim on both segments what is only true of one, so the ride is labelled where it is true.
+        val first = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+        val second = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+
+        val badges = itineraryRouteBadges(
+            listOf(
+                drawable(0, first, eastward, interchangeable = listOf(interchangeable("1 Line"))),
+                drawable(1, second, northward)
+            )
+        )
+
+        assertEquals(listOf(listOf("1 Line", "2 Line"), listOf("2 Line")), badges.map(::names))
+    }
+
+    @Test
+    fun `substitutes that merely read alike are different offers`() {
+        // Two legs of the 2 Line, each offered a different route that happens to publish the same name. The
+        // labels group on the candidates' route ids, so the two rides stay apart; grouping on the name would
+        // fold them into one label covering both corridors.
+        val first = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+        val second = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+
+        val badges = itineraryRouteBadges(
+            listOf(
+                drawable(0, first, eastward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1a"))),
+                drawable(1, second, northward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1b")))
+            )
+        )
+
+        assertEquals(listOf(listOf("1 Line", "2 Line"), listOf("1 Line", "2 Line")), badges.map(::names))
+    }
+
+    private fun names(badge: RouteBadge) = badge.routes.map(BadgedRoute::routeShortName)
+
+    /** A route offered in a leg's place, as the controller hands it over: the candidate plus its parsed colour. */
+    private fun interchangeable(
+        displayName: String,
+        routeColor: Int? = null,
+        routeId: String = "route-for-$displayName"
+    ) = ItinerarySubstitute(
+        InterchangeableRoute(
+            routeId = routeId,
+            displayName = displayName,
+            // The colour reaches the label already parsed, so the wire field plays no part here.
+            routeColor = null,
+            agencyId = null,
+            agencyName = null,
+            headsign = null
+        ),
+        routeColor
+    )
 
     private fun drawable(
         index: Int,
         leg: TripLeg,
         points: List<GeoPoint>,
-        kind: ItineraryLegKind = ItineraryLegKind.TRANSIT
-    ) = ItineraryDrawableLeg(index, leg, points, itineraryLegStyle(kind, routeColor = null))
+        kind: ItineraryLegKind = ItineraryLegKind.TRANSIT,
+        interchangeable: List<ItinerarySubstitute> = emptyList()
+    ) = ItineraryDrawableLeg(index, leg, points, itineraryLegStyle(kind, routeColor = null), interchangeable)
 }

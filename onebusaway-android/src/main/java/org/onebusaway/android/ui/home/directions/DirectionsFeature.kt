@@ -295,11 +295,18 @@ fun DirectionsResultsSheet(
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
     // stranded under the gesture pill / 3-button bar. The peek includes it so the handle clears it.
     val navBottom = navigationBarBottomPadding()
+    val peekHeight = DRAG_HANDLE_TOUCH_TARGET_HEIGHT + navBottom
     // containerSize (px), not Configuration.screenHeightDp (lint-flagged as unreliable across insets).
+    //
+    // Floored at the peek, because a sheet shorter than its own peek inverts the two states: M3 anchors
+    // PartiallyExpanded at (layoutHeight - peek) and Expanded at (layoutHeight - sheetHeight), so the
+    // collapsed sheet would sit *above* the expanded one. Reachable in a freeform window near Android's
+    // 220dp resizable minimum alongside a 48dp 3-button bar, where the fraction lands under the peek. At
+    // the floor M3 drops the Expanded anchor outright (it skips it when sheet height == peek) and the
+    // sheet just rests at the handle — the honest outcome for a window with no room to open into.
     val fullHeight = with(LocalDensity.current) {
         (LocalWindowInfo.current.containerSize.height * DIRECTIONS_SHEET_HEIGHT_FRACTION).toDp()
-    }
-    val peekHeight = DRAG_HANDLE_TOUCH_TARGET_HEIGHT + navBottom
+    }.coerceAtLeast(peekHeight)
     val sheetState = rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
 
@@ -329,6 +336,8 @@ fun DirectionsResultsSheet(
         sheetDragHandle = { SheetDragHandle() },
         sheetContent = {
             // Sized so handle + content == fullHeight, which is what sets the sheet's expanded anchor.
+            // Non-negative by construction: fullHeight is floored at the peek, which is this same
+            // handle band plus navBottom, so the subtraction leaves at least the nav padding below.
             TripResultsSheet(
                 itineraries = itineraries,
                 params = params,

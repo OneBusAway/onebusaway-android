@@ -144,7 +144,7 @@ class RouteMapPresentationPlanTest {
         )
 
         // No emphasized route -> route badges are emitted, and there's no active base route to frame to.
-        assertEquals(listOf("79"), plan.badges.map { it.routeId })
+        assertEquals(listOf("79"), plan.badges.map { it.tap?.routeId })
         assertEquals(emptyList<RoutePolyline>(), plan.framingPolylines)
         assertEquals(1, plan.polylines.size)
     }

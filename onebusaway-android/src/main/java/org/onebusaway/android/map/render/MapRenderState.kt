@@ -207,17 +207,17 @@ data class ContinuationBadge(
  * carries it through pan and zoom. Rendered by both flavors (#1913).
  */
 data class RouteBadge(
-    val routeId: String,
     val routeShortName: String,
     val color: Int,
     val point: GeoPoint,
-    val directionId: Int?,
     /**
-     * Whether tapping this label navigates the map to its route. Adjacency labels do; a directions
-     * itinerary's labels don't — they name legs of a trip the rider is already reading, so a stray tap
-     * would drop the whole itinerary for a single route's map.
+     * Where a tap on this label navigates — the route-direction to show, preferring the drawn line's own
+     * direction over the route's default. Null makes the label informational: a directions itinerary's
+     * labels name legs of a trip the rider is already reading, so a stray tap must not drop the whole
+     * itinerary for a single route's map. Null is also the default, so a label is inert until a producer
+     * says where it leads, and no producer needs a navigable id it doesn't have.
      */
-    val interactive: Boolean = true
+    val tap: RouteDirectionKey? = null
 )
 
 /**

@@ -250,9 +250,9 @@ class MapLibreRenderer(
                     .icon(routeBadgeIcon(badge.routeShortName, badge.color))
             )
             staticAnnotations.add(marker)
-            // Only an interactive label becomes a tap target; a directions label is informational, and
-            // an unregistered marker's tap falls through to the map like any other unclaimed one.
-            if (badge.interactive) routeBadgeByMarker[marker] = badge
+            // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
+            // unregistered marker's tap falls through to the map like any other unclaimed one.
+            if (badge.tap != null) routeBadgeByMarker[marker] = badge
         }
     }
 

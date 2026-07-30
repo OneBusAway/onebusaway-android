@@ -18,11 +18,17 @@ package org.onebusaway.android.map
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.directions.model.routeDisplayLabel
+import org.onebusaway.android.map.layout.RouteBadgePath
+import org.onebusaway.android.map.layout.RouteBadgeRequest
+import org.onebusaway.android.map.layout.placeRouteBadges
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.util.GeoPoint
 
 /**
  * How one trip-plan itinerary leg is stroked on the directions map (#2041).
@@ -123,6 +129,48 @@ internal fun List<ItineraryLegLine>.withLegFocus(focusedLegIndices: Set<Int>): L
     if (focused.isEmpty()) return map { it.line }
     return rest.map { it.line }.asDeemphasizedRouteUnderlay() + focused.map { it.line }
 }
+
+/**
+ * One itinerary leg with geometry to draw: its index in the itinerary, the leg itself, its decoded
+ * points, and the stroke its line and its label share.
+ */
+internal data class ItineraryDrawableLeg(
+    val index: Int,
+    val leg: TripLeg,
+    val points: List<GeoPoint>,
+    val style: ItineraryLegStyle
+)
+
+/**
+ * One label per route ridden in a drawn itinerary (#2066), so a transit line on the directions map says
+ * which route it is without the rider having to match it to the drawer beside it. Two legs of one route
+ * — a stay-aboard interline, or a route the itinerary returns to — share a single label.
+ */
+internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteBadge> {
+    val rides = legs.mapNotNull { drawable ->
+        if (drawable.leg.mode?.isTransit != true) return@mapNotNull null
+        // A route that names itself in no way at all has nothing to label the line with.
+        val name = drawable.leg.routeDisplayLabel() ?: return@mapNotNull null
+        // Grouped by the wire route id, or — for an OTP1 response, which names a route without
+        // identifying it — by the name it displays. That key never leaves this grouping, so a name
+        // standing in for an id can't reach anywhere that would treat it as one.
+        Ride(drawable.leg.routeId ?: name, name, drawable)
+    }.groupBy(Ride::identity)
+    return placeRouteBadges(
+        rides.map { (_, ridden) ->
+            val ride = ridden.first()
+            RouteBadgeRequest(
+                routeShortName = ride.name,
+                // Exactly the colour its own line is stroked with, so a label and its line can't disagree.
+                color = ride.drawable.style.color,
+                paths = ridden.map { RouteBadgePath(it.drawable.points) }
+                // No tap target: see [RouteBadge.tap].
+            )
+        }
+    )
+}
+
+private data class Ride(val identity: String, val name: String, val drawable: ItineraryDrawableLeg)
 
 private fun street(hueAnchor: Int) = ItineraryLegStyle(
     color = anchorColor(hueAnchor),

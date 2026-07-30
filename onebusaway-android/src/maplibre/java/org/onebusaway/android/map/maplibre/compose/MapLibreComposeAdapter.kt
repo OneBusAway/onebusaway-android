@@ -329,8 +329,9 @@ private fun wireClicks(
             return@setOnMarkerClickListener true
         }
         val routeBadge = renderer.routeBadgeForMarker(marker)
-        if (routeBadge != null) {
-            callbacks.onRouteBadgeClick(routeBadge.routeId, routeBadge.routeShortName, routeBadge.directionId)
+        val routeBadgeTap = routeBadge?.tap
+        if (routeBadge != null && routeBadgeTap != null) {
+            callbacks.onRouteBadgeClick(routeBadgeTap.routeId, routeBadge.routeShortName, routeBadgeTap.directionId)
             return@setOnMarkerClickListener true
         }
         // Titled markers (the trip-focus estimate markers + the most-recent-data dot) fall through to

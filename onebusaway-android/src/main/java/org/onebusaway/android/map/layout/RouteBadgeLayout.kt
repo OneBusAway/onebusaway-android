@@ -19,39 +19,45 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
-/** One shape on which a route-direction badge may be anchored. */
+/** One shape on which a route badge may be anchored. */
 data class RouteBadgePath(val points: List<GeoPoint>)
 
-/** One route-direction identity and the geographic shapes on which its badge may be anchored. */
-data class RouteBadgeLayoutInput(
-    val route: RouteDirectionKey,
+/**
+ * One badge identity and the geographic shapes on which it may be anchored. [route] is an opaque token
+ * — the layout never reads it, only echoes it back on the placement — so a caller keys by whatever
+ * identifies a badge in its own view: adjacency by [RouteDirectionKey], an itinerary (which has no
+ * direction axis) by something else entirely.
+ */
+data class RouteBadgeLayoutInput<K>(
+    val route: K,
     val paths: List<RouteBadgePath>
 )
 
 /** A stable geographic badge anchor. Input order determines collision priority. */
-data class RouteBadgePlacement(
-    val route: RouteDirectionKey,
+data class RouteBadgePlacement<K>(
+    val route: K,
     val point: GeoPoint,
     val overlaps: Boolean
 )
 
 /**
- * Places one badge per route-direction identity in geographic space, following the line-center
+ * Places one badge per input identity in geographic space, following the line-center
  * convention used for road shields. The midpoint by distance of the route's longest shape is
  * preferred. When that is too close to an earlier route's badge, candidates alternate upstream and
  * downstream by a fixed geographic distance; if none clears [minimumSeparationMeters], the least-conflicting candidate
  * wins. The result is computed only when route geometry changes and remains fixed across pan/zoom.
  */
-fun layoutRouteBadges(
-    inputs: List<RouteBadgeLayoutInput>,
+fun <K> layoutRouteBadges(
+    inputs: List<RouteBadgeLayoutInput<K>>,
     minimumSeparationMeters: Double = DEFAULT_BADGE_SEPARATION_METERS,
     maxStaggerSteps: Int = DEFAULT_MAX_STAGGER_STEPS
-): List<RouteBadgePlacement> {
+): List<RouteBadgePlacement<K>> {
     val separation = minimumSeparationMeters.coerceAtLeast(0.0)
     val occupied = mutableListOf<GeoPoint>()
     return buildList {
@@ -72,6 +78,42 @@ fun layoutRouteBadges(
             val overlaps = clear == null && occupied.isNotEmpty()
             occupied += point
             add(RouteBadgePlacement(input.route, point, overlaps))
+        }
+    }
+}
+
+/**
+ * One route label to place: what it reads, the colour of the line it names, where a tap on it navigates
+ * (null for an informational label — see [RouteBadge.tap]), and the shapes it may be anchored on. List
+ * order is collision priority, as in [layoutRouteBadges].
+ */
+internal data class RouteBadgeRequest(
+    val routeShortName: String,
+    val color: Int,
+    val paths: List<RouteBadgePath>,
+    val tap: RouteDirectionKey? = null
+)
+
+/**
+ * The shared tail behind every route label on the map — focused-stop adjacency (#1827) and a directions
+ * itinerary's rides (#2066): anchor each request via [layoutRouteBadges], preserve the caller's order,
+ * and drop a request the layout couldn't measure (no anchor, so no label). Callers differ only in how
+ * they group geometry into requests, which is the half that is actually view-specific.
+ */
+internal fun placeRouteBadges(requests: List<RouteBadgeRequest>): List<RouteBadge> {
+    // A request's own position is its layout key: unique by construction, and since the layout only
+    // echoes the key back, neither caller has to invent an identity it would never read.
+    val placements = layoutRouteBadges(
+        requests.mapIndexed { index, request -> RouteBadgeLayoutInput(index, request.paths) }
+    ).associateBy { it.route }
+    return requests.mapIndexedNotNull { index, request ->
+        placements[index]?.let { placement ->
+            RouteBadge(
+                routeShortName = request.routeShortName,
+                color = request.color,
+                point = placement.point,
+                tap = request.tap
+            )
         }
     }
 }

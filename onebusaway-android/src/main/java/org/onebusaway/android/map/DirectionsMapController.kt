@@ -21,14 +21,8 @@ import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
-import org.onebusaway.android.directions.model.routeDisplayLabel
-import org.onebusaway.android.map.layout.RouteBadgeLayoutInput
-import org.onebusaway.android.map.layout.RouteBadgePath
-import org.onebusaway.android.map.layout.layoutRouteBadges
-import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
-import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -102,23 +96,20 @@ class DirectionsMapController(private val host: MapHost) {
             val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
             ItineraryDrawableLeg(legIndex, leg, shape.points, style)
         }
-        // Build every leg's polyline (each in its own mode/route style), keeping each one's leg index so
-        // a later focus can name legs rather than drawn positions.
-        legLines = drawableLegs.map { drawable ->
-            // Every leg's points run in travel order, so whether it stamps chevrons is the style's
-            // call — a dashed on-street stroke declines them (see [itineraryLegStyle]).
+        // Every leg's points run in travel order, so whether it stamps chevrons is the style's call — a
+        // dashed on-street stroke declines them (see [itineraryLegStyle]).
+        legLines = drawableLegs.map { (legIndex, _, points, style) ->
             ItineraryLegLine(
-                drawable.index,
+                legIndex,
                 RoutePolyline(
-                    drawable.style.color,
-                    drawable.points,
-                    widthProfile = drawable.style.widthProfile,
-                    directional = drawable.style.directional,
-                    dash = drawable.style.dash
+                    style.color,
+                    points,
+                    widthProfile = style.widthProfile,
+                    directional = style.directional,
+                    dash = style.dash
                 )
             )
         }
-        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs))
         // A freshly drawn itinerary is the overview: every leg at full weight until one is focused.
         focusedLegIndices = emptySet()
         publishLegs()
@@ -129,6 +120,9 @@ class DirectionsMapController(private val host: MapHost) {
         if (endLat != null && endLon != null) {
             directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
         }
+        // Published after the pins, since the static layer is redrawn wholesale on each emission that
+        // reaches it: badges written first would be built again for every pin added after them.
+        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs))
 
         directionsHasRoute = legLines.isNotEmpty()
         directionsStart = if (startLat != null && startLon != null) GeoPoint(startLat, startLon) else null
@@ -240,63 +234,3 @@ class DirectionsMapController(private val host: MapHost) {
         }
     }
 }
-
-/**
- * One itinerary leg that has geometry to draw: its index in the itinerary, the leg itself, its decoded
- * points, and the stroke they're drawn in — resolved once, so the line and its label share it.
- */
-internal data class ItineraryDrawableLeg(
-    val index: Int,
-    val leg: TripLeg,
-    val points: List<GeoPoint>,
-    val style: ItineraryLegStyle
-)
-
-/**
- * One route label per ride in a drawn itinerary, so a line on the directions map says which route it
- * is without the rider having to match it to the drawer beside it. Non-interactive: they name legs of
- * the trip already being read, so a tap must not navigate away into a single route's map.
- *
- * Anchored by the shared [layoutRouteBadges] used by focused-stop adjacency, so labels sit at stable
- * distance midpoints and stagger apart when two ridden corridors overlap. Each label takes the colour
- * its own line is stroked with ([itineraryLegStyle]), so the two can't disagree.
- */
-internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteBadge> {
-    val rides = legs.asSequence()
-        .filter { it.leg.mode?.isTransit == true }
-        .mapNotNull { drawable ->
-            // A route that names itself in no way at all has nothing to label the line with.
-            val name = drawable.leg.routeDisplayLabel() ?: return@mapNotNull null
-            // Grouped by the wire route id, or — for an OTP1 response, which names a route without
-            // identifying it — by that name. So two legs of one route (a stay-aboard interline, or a
-            // route the itinerary returns to) share a single label rather than each getting their own.
-            RideLabel(drawable.leg.routeId ?: name, name, drawable.style.color, drawable.points)
-        }
-        .groupBy(RideLabel::identity)
-    val placements = layoutRouteBadges(
-        rides.map { (identity, ridden) ->
-            // Direction is the adjacency view's axis, not an itinerary's: a ride is already one
-            // direction along its route, so every leg of it shares one label.
-            RouteBadgeLayoutInput(RouteDirectionKey(identity, null), ridden.map { RouteBadgePath(it.points) })
-        }
-    ).associateBy { it.route.routeId }
-    return rides.mapNotNull { (identity, ridden) ->
-        // A ride whose every leg is too short to measure gets no anchor, and so no label.
-        val point = placements[identity]?.point ?: return@mapNotNull null
-        RouteBadge(
-            routeId = identity,
-            routeShortName = ridden.first().name,
-            color = ridden.first().color,
-            point = point,
-            directionId = null,
-            interactive = false
-        )
-    }
-}
-
-private data class RideLabel(
-    val identity: String,
-    val name: String,
-    val color: Int,
-    val points: List<GeoPoint>
-)

@@ -2,8 +2,8 @@
 package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
@@ -33,11 +33,11 @@ class ItineraryRouteBadgesTest {
         ).single()
 
         assertEquals("45", badge.routeShortName)
-        assertEquals("route-45", badge.routeId)
         assertEquals(GeoPoint(0.0, 0.5), badge.point)
         // Exactly the colour its own line is stroked with, so a label and its line can't disagree.
         assertEquals(rideStyle.color, badge.color)
-        assertFalse(badge.interactive)
+        // No tap target at all, so there is nothing for a stray tap to navigate to.
+        assertNull(badge.tap)
     }
 
     @Test
@@ -49,7 +49,7 @@ class ItineraryRouteBadgesTest {
             listOf(drawable(0, first, eastward), drawable(2, second, northward))
         )
 
-        assertEquals(listOf("route-5"), badges.map { it.routeId })
+        assertEquals(listOf("5"), badges.map { it.routeShortName })
     }
 
     @Test
@@ -66,13 +66,17 @@ class ItineraryRouteBadgesTest {
     }
 
     @Test
-    fun `an OTP1 leg, which identifies no route, is identified by the name it displays`() {
-        val badge = itineraryRouteBadges(
-            listOf(drawable(0, TripLeg(mode = TripMode.BUS, routeId = null, route = "45"), eastward))
-        ).single()
+    fun `OTP1 legs, which identify no route, are grouped by the name they display`() {
+        // An OTP1 response names a route without identifying it, so the displayed name is all these two
+        // legs have to be recognized as one ride by — they still get a single shared label.
+        val badges = itineraryRouteBadges(
+            listOf(
+                drawable(0, TripLeg(mode = TripMode.BUS, routeId = null, route = "45"), eastward),
+                drawable(1, TripLeg(mode = TripMode.BUS, routeId = null, route = "45"), northward)
+            )
+        )
 
-        assertEquals("45", badge.routeId)
-        assertEquals("45", badge.routeShortName)
+        assertEquals(listOf("45"), badges.map { it.routeShortName })
     }
 
     @Test
@@ -87,7 +91,7 @@ class ItineraryRouteBadgesTest {
             )
         )
 
-        assertEquals(emptyList<String>(), badges.map { it.routeId })
+        assertEquals(emptyList<String>(), badges.map { it.routeShortName })
     }
 
     private fun drawable(

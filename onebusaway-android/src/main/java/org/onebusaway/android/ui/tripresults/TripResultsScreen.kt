@@ -78,7 +78,6 @@ import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -411,7 +410,6 @@ private fun MetricRow(
             painterResource(glyph.iconRes),
             contentDescription = contentDescription,
             modifier = Modifier
-                .testTag(glyph.testTag)
                 .size(width = column, height = box)
                 .alignBy { with(density) { glyph.inkBaselineFor(inkHeight).roundToPx() } }
         )
@@ -424,29 +422,21 @@ private fun MetricRow(
  * vector viewport — read off the asset's `pathData` bounds, and *not* the same for both: the hourglass
  * inks y[2, 22], the walker y[1.5, 23]. Carrying the bounds is what lets [MetricRow] work in ink.
  *
- * These four numbers are transcribed by hand, but they are not on their honour: `MetricRowRenderTest`
- * measures where each glyph's ink actually lands against its value, so a swapped drawable, an edited
- * path or a re-import with different margins fails the build rather than quietly un-levelling a row.
- * Re-read the bounds when you change an asset, and let that test check your reading.
+ * These four numbers are transcribed by hand from the asset, so re-read them whenever you swap a
+ * drawable, edit its path, or re-import it from Material — nothing checks them for you, and a stale
+ * reading un-levels its row quietly rather than loudly.
  *
  * The assets stay uncropped — cropping would only delete the ink fraction, not the levelling — and for
  * the walker it can't be done at all: `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and
  * a step icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside
  * it, so a crop would mean a second copy of its path.
  */
-internal enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
+private enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
     DURATION(R.drawable.hourglass_24, inkTop = 2f, inkBottom = 22f),
     WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f);
 
     /** What the icon box has to be scaled by for this glyph's ink alone to stand a wanted height. */
     val boxFactor: Float = GLYPH_VIEWPORT / (inkBottom - inkTop)
-
-    /**
-     * How `MetricRowRenderTest` finds this glyph to measure where its ink landed. A test tag rather
-     * than a content description: the duration hourglass is decorative (the "min" beside it says what
-     * it means), so it must stay unnamed to a screen reader.
-     */
-    val testTag: String = "metric-glyph-$name"
 
     /** The icon box that draws this glyph's ink exactly [inkHeight] tall. */
     fun boxFor(inkHeight: Dp): Dp = inkHeight * boxFactor

@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class RouteLineWidthProfileTest {
@@ -53,20 +54,30 @@ class RouteLineWidthProfileTest {
     }
 
     @Test
-    fun `the directions map spends width on three kinds of line, and nothing else`() {
-        // Width says what a line *is* — a ride, an on-street leg, or context around them — and selection is
-        // said with a case instead (#2082). So these three are the whole vocabulary, and the approach shares
-        // the context weight rather than adding a fourth near-duplicate of it.
-        assertEquals(15f, ITINERARY_RIDE_WIDTH_PROFILE.thicknessDp, 0f)
-        assertEquals(9f, ITINERARY_STREET_WIDTH_PROFILE.thicknessDp, 0f)
-        assertEquals(5f, ITINERARY_CONTEXT_WIDTH_PROFILE.thicknessDp, 0f)
-        assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE.thicknessDp, ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp, 0f)
+    fun `directions widths descend with how committed the geometry is`() {
+        // Width says what a line *is*, and selection is said with a case instead (#2082). What "is" means here
+        // is how committed the rider is to that geometry, so the ordering is the semantics: the ride they're
+        // reading, the on-street legs joining it, the rest of their journey, and last the approach they never
+        // travel. Pinning the order rather than only the values keeps a future tuning pass from inverting a
+        // pair and quietly saying something else.
+        val descending = listOf(
+            ITINERARY_RIDE_WIDTH_PROFILE,
+            ITINERARY_STREET_WIDTH_PROFILE,
+            ITINERARY_CONTEXT_WIDTH_PROFILE,
+            ITINERARY_APPROACH_WIDTH_PROFILE
+        ).map { it.thicknessDp }
+
+        assertEquals(listOf(15f, 9f, 5f, 3.5f), descending)
+        assertEquals(descending.sortedDescending(), descending)
     }
 
     @Test
     fun `a case reads as an outline at every zoom, so it stays off the width ramp`() {
         // The case is a fixed dp inset on each side, deliberately not scaled by the line's zoom multiplier: a
         // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
-        assertEquals(2.5f, ROUTE_LINE_CASE_DP, 0f)
+        assertEquals(1.5f, ROUTE_LINE_CASE_DP, 0f)
+        // And it stays finer than the thinnest line it can wrap, so a case reads as that line's edge rather
+        // than as a second line under it.
+        assertTrue(2f * ROUTE_LINE_CASE_DP < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
     }
 }

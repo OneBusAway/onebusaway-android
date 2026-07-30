@@ -71,15 +71,19 @@ val DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
 )
 
 /**
- * The selected transit route upstream of where the rider boards it — where the bus is coming from. It is
- * the same route as the ridden segment, so it is cased like it (see [RoutePolyline.caseColor]) and drawn at
- * the itinerary's context weight, stepping down at the boarding point.
+ * The selected transit route upstream of where the rider boards it — where the bus is coming from. It is the
+ * same route as the ridden segment, so it is cased like it (see [RoutePolyline.cased]) and steps down in width
+ * at the boarding point.
  *
- * It used to be the map's faintest line (2dp) and dashed, which put it within a hair of the receded
+ * The thinnest of the itinerary weights, because it is the least committed geometry on the map: the rider
+ * won't travel it, and it's here to say where the vehicle arrives from. Its case, not its width, is what
+ * connects it to the ride — which is what lets it be this thin without being mistaken for context.
+ *
+ * It used to be the map's faintest line (2dp) *and* dashed, which put it within a hair of the receded
  * itinerary legs around it — the two competed instead of reading as different things (#2082).
  */
 val ITINERARY_APPROACH_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
-    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.5f
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.35f
 )
 
 /**
@@ -113,11 +117,14 @@ val ITINERARY_STREET_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
 )
 
 /**
- * How far a case (halo) extends beyond its line on each side — see [RoutePolyline.caseColor]. Deliberately
- * *not* on the zoom ramp: a case is an outline, and an outline that thins with its line stops separating it
- * from the basemap at exactly the zoom where the line is hardest to pick out.
+ * How far a case (halo) extends beyond its line on each side — see [RoutePolyline.cased]. Deliberately *not*
+ * on the zoom ramp: a case is an outline, and an outline that thins with its line stops separating it from the
+ * basemap at exactly the zoom where the line is hardest to pick out.
+ *
+ * Kept fine enough to read as an edge on the line rather than as a second line under it — a case's job is to
+ * separate, and past a hairline the extra width only adds visual weight the selection didn't ask for.
  */
-const val ROUTE_LINE_CASE_DP = 2.5f
+const val ROUTE_LINE_CASE_DP = 1.5f
 
 /** Route-line scale retained for unprofiled lines and vehicle markers. */
 fun routeLineWidthScale(zoom: Float): Float = ROUTE_LINE_WIDTH_PROFILE.multiplierAt(zoom)

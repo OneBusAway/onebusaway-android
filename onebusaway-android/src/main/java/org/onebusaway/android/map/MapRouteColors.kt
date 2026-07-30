@@ -89,7 +89,12 @@ private const val MAP_ROUTE_TONE = 55.0
 // close enough to stay recognisably its colour. Kept a tone delta rather than a pair of fixed colours so a
 // case tracks whatever hue its line is drawn in — and so the two themes can't drift into different amounts
 // of contrast.
-private const val MAP_ROUTE_CASE_TONE_DELTA = 30.0
+//
+// Also what makes a case *bright* rather than muddy, which is why it isn't larger: the sRGB gamut holds much
+// less chroma at the ends of the tone scale than in the middle, so a case pushed far from its line loses its
+// colour on the way — dark and murky one side, washed out the other. Pulling the delta in keeps both themes'
+// cases nearer the hue's chroma peak, where the colour actually survives.
+private const val MAP_ROUTE_CASE_TONE_DELTA = 18.0
 
 private const val MIN_TONE = 0.0
 private const val MAX_TONE = 100.0

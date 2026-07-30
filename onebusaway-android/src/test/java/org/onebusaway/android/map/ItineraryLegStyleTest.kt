@@ -163,6 +163,24 @@ class ItineraryLegStyleTest {
     }
 
     @Test
+    fun `a case keeps most of its line's colour rather than going grey`() {
+        // The tone delta is what makes a case visible, but push it too far and the sRGB gamut takes the colour
+        // away on the journey: at a 30-tone delta the transit fallback's dark-mode case fell to chroma 21 from
+        // its line's 75 — a washed-out near-grey edge. So this pins the *outcome* the delta is chosen for,
+        // across every leg hue and both themes, instead of pinning the delta and hoping.
+        ItineraryLegKind.entries.forEach { kind ->
+            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
+            listOf(false, true).forEach { darkMode ->
+                val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
+                assertTrue(
+                    "$kind case (darkMode=$darkMode) kept only chroma ${case.chroma} of the line's ${line.chroma}",
+                    case.chroma >= line.chroma * MIN_CASE_CHROMA_SHARE
+                )
+            }
+        }
+    }
+
+    @Test
     fun `a case stays in range for a line already at the end of the tone scale`() {
         // Nothing on this map is drawn near-white or near-black, but a case must degrade to the nearest one
         // it can rather than asking for an out-of-range tone.
@@ -221,5 +239,10 @@ class ItineraryLegStyleTest {
         // Chroma likewise clamps to the gamut: a hue that can't hold the full chroma at this tone lands
         // slightly under it. Wide enough to absorb that, far too narrow to hide a different policy.
         const val CHANNEL_TOLERANCE = 2.0
+
+        // How much of its line's chroma a case has to keep to still read as that line's colour. Half is well
+        // clear of what the current delta actually achieves (the tightest leg hue keeps ~0.59) while still
+        // failing the washed-out cases a larger delta produced.
+        const val MIN_CASE_CHROMA_SHARE = 0.5
     }
 }

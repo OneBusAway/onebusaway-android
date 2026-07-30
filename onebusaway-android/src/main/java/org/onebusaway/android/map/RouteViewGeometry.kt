@@ -9,6 +9,7 @@ import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.RouteBadgeRequest
 import org.onebusaway.android.map.layout.placeRouteBadges
 import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
@@ -161,14 +162,20 @@ internal fun FocusedTripGeometry.toRouteBadges(
     return placeRouteBadges(
         specs.map { spec ->
             RouteBadgeRequest(
-                routeShortName = spec.name,
-                // A badge takes its line's colour, so it goes through the same policy — an
-                // adjacency colour is already in it, an agency's own has to be put through.
-                color = routeColors[spec.key]
-                    ?: mapRouteLineColorOrNull(
-                        spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
+                // An adjacency label names the one route whose line it sits on; only a directions ride the
+                // rider may board any of several routes for stacks more than one name (#2083).
+                routes = listOf(
+                    BadgedRoute(
+                        routeShortName = spec.name,
+                        // A badge takes its line's colour, so it goes through the same policy — an
+                        // adjacency colour is already in it, an agency's own has to be put through.
+                        color = routeColors[spec.key]
+                            ?: mapRouteLineColorOrNull(
+                                spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
+                            )
+                            ?: DEFAULT_ROUTE_LINE_COLOR
                     )
-                    ?: DEFAULT_ROUTE_LINE_COLOR,
+                ),
                 paths = spec.shapes.map { shape -> RouteBadgePath(shape.points) },
                 // An adjacency label is the way into its route: it names a route the rider hasn't opened.
                 tap = spec.key

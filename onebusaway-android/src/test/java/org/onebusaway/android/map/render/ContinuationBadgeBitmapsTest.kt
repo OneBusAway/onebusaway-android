@@ -18,7 +18,9 @@ package org.onebusaway.android.map.render
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 
 @SuppressLint("RestrictedApi")
 class ContinuationBadgeBitmapsTest {
@@ -31,5 +33,20 @@ class ContinuationBadgeBitmapsTest {
 
         assertEquals(35.0, Hct.fromInt(lightOutline).tone, 1.0)
         assertEquals(85.0, Hct.fromInt(darkOutline).tone, 1.0)
+    }
+
+    @Test
+    fun `a badge naming several routes cases itself in a neutral of the same tone`() {
+        // A stacked badge (#2083) has no single hue to case with, so it keeps the theme tone and drops the
+        // hue — the outline and the lines between its rows read against every band they enclose.
+        val light = ContinuationBadgeBitmaps.neutralBadgeOutlineColor(darkMode = false)
+        val dark = ContinuationBadgeBitmaps.neutralBadgeOutlineColor(darkMode = true)
+
+        assertEquals(35.0, Hct.fromInt(light).tone, 1.0)
+        assertEquals(85.0, Hct.fromInt(dark).tone, 1.0)
+        // Grey to the same threshold the app uses to declare a route colour hueless, rather than exactly
+        // zero: the tone is quantized into sRGB on the way out and lands a hair off achromatic.
+        assertTrue(Hct.fromInt(light).chroma < ACHROMATIC_ROUTE_CHROMA)
+        assertTrue(Hct.fromInt(dark).chroma < ACHROMATIC_ROUTE_CHROMA)
     }
 }

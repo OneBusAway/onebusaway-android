@@ -30,6 +30,18 @@ data class RouteDisplayNames(val shortName: String, val longName: String?)
 val ROUTE_NAME_ORDER: Comparator<String> = AlphanumComparator()
 
 /**
+ * The routes of one interchangeable ride (#2010) as it is read: deduplicated by [name] and in
+ * [ROUTE_NAME_ORDER], the plan's own choice given no pride of place — "1 Line/2 Line" reads the same
+ * whichever of them the trip planner picked, and which one it did pick is still on the option card's
+ * header line and its ETA strip.
+ *
+ * Shared by the two places a ride's routes are named: the drawer/picker's joined badge
+ * (`legBadge`) and the label on its line on the map (`itineraryRouteBadges`, #2083) — so a rider looking
+ * at both at once can't be shown one ride named in two orders.
+ */
+fun <T> List<T>.inInterchangeableOrder(name: (T) -> String): List<T> = distinctBy(name).sortedWith(compareBy(ROUTE_NAME_ORDER, name))
+
+/**
  * Resolves a route's display names with the same short→long→description fallbacks the legacy
  * UIUtils.setRouteView applied: the short name falls back to the long name, and the secondary
  * line is the long name (or the description when the long name is missing or equals the short

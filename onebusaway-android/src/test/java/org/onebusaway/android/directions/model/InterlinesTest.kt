@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.tripresults
+package org.onebusaway.android.directions.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.TripLegAlternative
-import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.directions.model.TripPlace
 
 /**
  * JVM tests for [Interlines]: the pure analysis that folds a self-interline seam away and keeps a

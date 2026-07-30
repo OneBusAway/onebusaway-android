@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.Direction
+import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayName

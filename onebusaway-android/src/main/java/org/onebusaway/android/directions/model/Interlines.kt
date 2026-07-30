@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.tripresults
-
-import org.onebusaway.android.directions.model.InterchangeableRoute
-import org.onebusaway.android.directions.model.TripItinerary
-import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.interchangeableRoutes
+package org.onebusaway.android.directions.model
 
 /**
  * Pure interline analysis over a trip's legs (#2000) — no `Context` / OBA-id resolution, so it's
@@ -29,6 +24,10 @@ import org.onebusaway.android.directions.model.interchangeableRoutes
  *    e.g. an inbound 12 that becomes an outbound 12; the rider never acts, so the seam is hidden;
  *  - a **cross-route interline** — the vehicle changes to a *different* route while the rider stays
  *    seated; surfaced as a "stay on board" transition rather than a get-off/get-on pair.
+ *
+ * Lives with the trip-plan model rather than with the results UI that first needed it: the shape of a
+ * ride is a fact about the plan, and the directions map reads it too — it labels an interchangeable ride
+ * with every route it may be ridden as (#2083), which is the [substitutableRoutes] question.
  *
  * Comparing `routeId` across a seam is an exact match on the canonical GTFS route id (not a heuristic):
  * the [TripLeg.interlineWithPreviousLeg] flag is the sanctioned "same vehicle, stay aboard" signal, and

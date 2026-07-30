@@ -79,14 +79,11 @@ class AnalyticsProvider @Inject constructor(
     }
 
     private fun buildUmami(region: Region?): UmamiAnalytics? {
-        if (region?.obaBaseUrl == null ||
-            region.umamiAnalyticsUrl == null ||
-            region.umamiAnalyticsId == null
-        ) {
-            return null
-        }
-        val host = hostOf(region.obaBaseUrl) ?: return null
-        return UmamiAnalytics(region.umamiAnalyticsUrl, region.umamiAnalyticsId, host)
+        val baseUrl = region?.obaBaseUrl ?: return null
+        val serverUrl = region.umamiAnalyticsUrl ?: return null
+        val websiteId = region.umamiAnalyticsId ?: return null
+        val host = hostOf(baseUrl) ?: return null
+        return UmamiAnalytics(serverUrl, websiteId, host)
     }
 
     private fun hostOf(url: String): String? = try {

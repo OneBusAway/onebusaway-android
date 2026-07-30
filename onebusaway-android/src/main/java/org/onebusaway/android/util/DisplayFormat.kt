@@ -38,7 +38,6 @@ object DisplayFormat {
      * @return the time formatting as "1:10pm" to be displayed as an absolute time for an
      * arrival/departure
      */
-    @JvmStatic
     fun formatTime(context: Context, time: Long): String = DateUtils.formatDateTime(
         context,
         time,
@@ -60,7 +59,6 @@ object DisplayFormat {
      * @return a user-readable string saying the number of minutes in which no arrivals are coming,
      * or the number of hours and minutes if minutes > 60
      */
-    @JvmStatic
     fun getNoArrivalsMessage(
         context: Context,
         minutes: Int,
@@ -150,7 +148,6 @@ object DisplayFormat {
      * legible as the hour count. [minutes] may be negative for a recent-past arrival; the sign
      * stays on the leading number.
      */
-    @JvmStatic
     fun formatEtaParts(context: Context, minutes: Long): List<EtaPart> = formatEtaParts(
         minutes = minutes,
         minutesAbbrev = context.getString(R.string.minutes_abbreviation),
@@ -181,12 +178,10 @@ object DisplayFormat {
     }
 
     /** [direction] resolved to a localized display string ("Northbound"), or null when absent/blank. */
-    @JvmStatic
     fun stopDirectionText(context: Context, direction: String?): String? = direction?.takeIf { it.isNotBlank() }
         ?.let { context.getString(getStopDirectionText(it)) }
         ?.takeIf { it.isNotEmpty() }
 
-    @JvmStatic
     @StringRes
     fun getStopDirectionText(direction: String): Int = when (direction) {
         "N" -> R.string.direction_n

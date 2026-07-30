@@ -60,7 +60,6 @@ object TripMonitorDecider {
      * @param thresholdSeconds absolute end-time deviation (seconds) that counts as a notable change
      *   (see [org.onebusaway.android.directions.util.OTPConstants.REALTIME_SERVICE_DELAY_THRESHOLD]).
      */
-    @JvmStatic
     fun decide(
         current: ItineraryDescription,
         results: List<TripItinerary>,
@@ -100,7 +99,6 @@ object TripMonitorWindow {
      * user-picked request time) and [now] are both on the device wall clock, so this is a same-domain
      * comparison ([window] = [org.onebusaway.android.directions.util.OTPConstants.REALTIME_SERVICE_QUERY_WINDOW]).
      */
-    @JvmStatic
     fun shouldStartNow(departure: WallTime, now: WallTime, window: Duration): Boolean = departure - now <= window
 
     /**
@@ -115,6 +113,5 @@ object TripMonitorWindow {
     // Sanctioned server↔device crossing (see KDoc): the typed API forbids ServerTime vs WallTime by
     // design; here the coarse "has this moment passed?" lifecycle bound accepts the device-clock skew.
     @Suppress("PrematureUnwrap")
-    @JvmStatic
     fun hasDeparted(departure: ServerTime?, now: WallTime): Boolean = departure != null && now.epochMs >= departure.epochMs
 }

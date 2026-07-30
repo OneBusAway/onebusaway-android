@@ -29,9 +29,9 @@ import org.onebusaway.android.time.WallTime
 object ReminderUtils {
     const val ARRIVAL_PAYLOAD_KEY = "arrival_and_departure"
 
-    @JvmStatic fun getStopIdFromPayload(arrivalJson: String?): String? = stringFromPayload(arrivalJson, "stop_id")
+    fun getStopIdFromPayload(arrivalJson: String?): String? = stringFromPayload(arrivalJson, "stop_id")
 
-    @JvmStatic fun getTripIdFromPayload(arrivalJson: String?): String? = stringFromPayload(arrivalJson, "trip_id")
+    fun getTripIdFromPayload(arrivalJson: String?): String? = stringFromPayload(arrivalJson, "trip_id")
 
     private fun stringFromPayload(arrivalJson: String?, key: String): String? {
         if (arrivalJson == null) return null

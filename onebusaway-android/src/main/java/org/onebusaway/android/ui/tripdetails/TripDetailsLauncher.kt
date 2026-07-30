@@ -58,17 +58,14 @@ object TripDetailsLauncher {
         }
     }
 
-    @JvmStatic
     fun start(context: Context, tripId: String) {
         Builder(context, tripId).start()
     }
 
-    @JvmStatic
     fun start(context: Context, tripId: String, mode: String) {
         Builder(context, tripId).setScrollMode(mode).start()
     }
 
-    @JvmStatic
     fun start(context: Context, tripId: String, stopId: String, mode: String) {
         Builder(context, tripId).setStopId(stopId).setScrollMode(mode).start()
     }

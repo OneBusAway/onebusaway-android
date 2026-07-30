@@ -166,7 +166,6 @@ class Application :
         // before onCreate and every caller dereferences it.
         private var mApp: Application? = null
 
-        @JvmStatic
         fun get(): Application = mApp!!
     }
 }

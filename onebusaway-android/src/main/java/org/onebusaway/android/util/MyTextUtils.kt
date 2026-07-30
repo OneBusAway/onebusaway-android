@@ -23,7 +23,6 @@ object MyTextUtils {
      * @param str The string to convert.
      * @return The converted string.
      */
-    @JvmStatic
     fun toTitleCase(str: String?): String? {
         if (str == null) {
             return null
@@ -57,7 +56,6 @@ object MyTextUtils {
      * @param str
      * @return true if the provided string is all caps, and false if it is not
      */
-    @JvmStatic
     fun isAllCaps(str: String): Boolean = str == str.uppercase()
 
     /**
@@ -68,7 +66,6 @@ object MyTextUtils {
      * @param inputVal The string to convert.
      * @return The converted string.
      */
-    @JvmStatic
     fun toSentenceCase(inputVal: String?): String? {
         if (inputVal == null) {
             return null
@@ -102,7 +99,6 @@ object MyTextUtils {
      * contain SPLC (see #883), it will be converted to title case (Is All Caps), otherwise the
      * returned string will match the input.
      */
-    @JvmStatic
     fun formatDisplayText(displayText: String?): String? {
         if (displayText == null) {
             return null

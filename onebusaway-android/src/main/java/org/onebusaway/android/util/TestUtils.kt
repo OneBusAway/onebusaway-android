@@ -20,7 +20,6 @@ import org.onebusaway.android.BuildConfig
 
 /** Utility methods used by instrumentation tests. */
 object TestUtils {
-    @JvmStatic
     fun isRunningOnEmulator(): Boolean = isEmulatorBuild(
         fingerprint = Build.FINGERPRINT,
         model = Build.MODEL,
@@ -31,7 +30,7 @@ object TestUtils {
         hardware = Build.HARDWARE
     )
 
-    @JvmStatic fun isRunningOnCI(): Boolean = BuildConfig.CI == "true"
+    fun isRunningOnCI(): Boolean = BuildConfig.CI == "true"
 }
 
 /**

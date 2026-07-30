@@ -45,7 +45,6 @@ object RegionsClient {
     }
 
     /** Fetches the live regions directory from the fixed regions host; empty list on failure. */
-    @JvmStatic
     fun fetchRegionsFromServer(context: Context): List<Region> = runCatching {
         val url = context.getString(R.string.regions_api_url)
         val service = NetworkEntryPoint.getRegions(context)
@@ -56,7 +55,6 @@ object RegionsClient {
     }
 
     /** Parses the bundled offline fail-safe regions file (R.raw.regions_v3); empty list on failure. */
-    @JvmStatic
     fun parseBundledRegions(context: Context): List<Region> = runCatching {
         val body = context.resources.openRawResource(R.raw.regions_v3)
             .bufferedReader().use { it.readText() }

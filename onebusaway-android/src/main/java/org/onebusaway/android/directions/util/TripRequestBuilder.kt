@@ -360,7 +360,6 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
         /**
          * Initialize from a BaseBundle
          */
-        @JvmStatic
         fun initFromBundleSimple(context: Context, bundle: Bundle): TripRequestBuilder {
             val target = Bundle()
             target.putBoolean(ARRIVE_BY, bundle.getBoolean(ARRIVE_BY))

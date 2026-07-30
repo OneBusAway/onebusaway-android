@@ -46,8 +46,8 @@ plugins {
     alias(libs.plugins.spotless)
 }
 
-// Formatting is enforced by Spotless, driving ktlint for Kotlin and google-java-format for the few
-// Java files. ktlint reads .editorconfig (ktlint_code_style = android_studio) for style. Generated
+// Formatting is enforced by Spotless, driving ktlint for Kotlin. ktlint reads .editorconfig
+// (ktlint_code_style = android_studio) for style. Generated
 // sources under build/ are excluded. Run `./gradlew spotlessApply` before pushing.
 spotless {
     // Applying Spotless auto-wires `spotlessCheck` into the `check` lifecycle task (which CI runs), so
@@ -88,11 +88,22 @@ spotless {
         targetExclude("**/.claude/**")
         ktlint(ktlintVersion).editorConfigOverride(ktlintConfig)
     }
-    java {
-        target("**/*.java")
-        targetExclude("**/build/**", "**/.claude/**")
-        googleJavaFormat()
+}
+
+val verifyNoJavaSources = tasks.register("verifyNoJavaSources") {
+    group = "verification"
+    description = "Fails when Java sources exist in :onebusaway-android."
+    val javaSources = fileTree("onebusaway-android/src") { include("**/*.java") }
+    inputs.files(javaSources)
+    doLast {
+        check(javaSources.isEmpty) {
+            "Java sources remain in :onebusaway-android:\n${javaSources.files.sorted().joinToString("\n")}"
+        }
     }
+}
+
+tasks.named("check") {
+    dependsOn(verifyNoJavaSources)
 }
 
 allprojects {

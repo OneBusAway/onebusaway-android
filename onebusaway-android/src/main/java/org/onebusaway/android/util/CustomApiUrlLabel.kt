@@ -31,7 +31,6 @@ import org.onebusaway.android.R
  */
 object CustomApiUrlLabel {
 
-    @JvmStatic
     fun forUrl(context: Context, customApiUrl: String): String = try {
         val hash = MessageDigest.getInstance("SHA-1")
             .digest(customApiUrl.toByteArray())

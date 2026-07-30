@@ -29,7 +29,6 @@ enum class Status(private val value: String) {
          * Converts from the string representation of status to the enumeration, or null if [status]
          * isn't a recognized value.
          */
-        @JvmStatic
         fun fromString(status: String?): Status? = entries.firstOrNull { it.value == status }
     }
 }

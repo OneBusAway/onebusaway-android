@@ -31,7 +31,6 @@ object ViewUtils {
      * @param dp value in dp
      * @return value in pixels
      */
-    @JvmStatic
     fun dpToPixels(context: Context, dp: Float): Int {
         // Get the screen's density scale
         val scale = context.resources.displayMetrics.density

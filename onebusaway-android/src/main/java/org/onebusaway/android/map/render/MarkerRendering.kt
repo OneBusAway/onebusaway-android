@@ -83,8 +83,6 @@ object MarkerRendering {
      * Rasterizes [resId] into a square [sizePx] bitmap, optionally recolored by [tint] and inset by
      * [insetPx] on every side (a positive inset shrinks the artwork; a negative one zooms/crops it).
      */
-    @JvmStatic
-    @JvmOverloads
     fun rasterize(context: Context, @DrawableRes resId: Int, sizePx: Int, tint: Int? = null, insetPx: Int = 0): Bitmap {
         val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
         if (tint != null) drawable.setTint(tint)

@@ -59,7 +59,6 @@ interface DatabaseEntryPoint {
     fun alertsRepository(): AlertsRepository
 
     companion object {
-        @JvmStatic
         fun get(context: Context): DatabaseEntryPoint = EntryPointAccessors.fromApplication(
             context.applicationContext,
             DatabaseEntryPoint::class.java

@@ -32,7 +32,6 @@ object PolylineDecoder {
      * @param numPoints a hint used to allocate memory; the result always reflects the points
      *                  actually contained in [encoded]
      */
-    @JvmStatic
     fun decode(encoded: String, numPoints: Int): List<GeoPoint> {
         require(numPoints >= 0) { "numPoints must be >= 0" }
         val array = ArrayList<GeoPoint>(numPoints)

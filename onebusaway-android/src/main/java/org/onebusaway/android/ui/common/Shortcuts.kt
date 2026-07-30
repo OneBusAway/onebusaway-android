@@ -96,7 +96,6 @@ object Shortcuts {
      *                   60dp (2dp of asset padding) for high resolution on launcher screens
      * @return ShortcutInfoCompat that can be used to request pinning the shortcut
      */
-    @JvmStatic
     fun makeShortcutInfo(
         context: Context,
         name: String?,

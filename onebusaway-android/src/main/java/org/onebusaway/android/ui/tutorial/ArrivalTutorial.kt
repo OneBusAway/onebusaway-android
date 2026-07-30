@@ -48,7 +48,6 @@ object ArrivalTutorial {
     const val KEY_MORE_MENU = ".tutorial_compose_more_menu"
 
     /** The sequence, in display order. */
-    @JvmField
     val steps: List<TutorialStep> = listOf(
         TutorialStep(
             id = KEY_ETA,
@@ -72,19 +71,16 @@ object ArrivalTutorial {
      * The steps still owed to the user: empty when tutorials are turned off, otherwise the steps not yet
      * marked shown. Pure (only reads [prefs]) so the gating is JVM-unit-testable.
      */
-    @JvmStatic
     fun pendingSteps(prefs: PreferencesRepository): List<TutorialStep> {
         if (!prefs.getBoolean(R.string.preference_key_show_tutorial_screens, true)) return emptyList()
         return steps.filter { !prefs.getBoolean(it.id, false) }
     }
 
     /** Records [shown] steps so they don't re-appear (mirrors the legacy `doNotShowTutorial`-on-show). */
-    @JvmStatic
     fun markShown(prefs: PreferencesRepository, shown: List<TutorialStep>) {
         shown.forEach { prefs.setBoolean(it.id, true) }
     }
 
     /** The preference keys "show tutorials again" clears to re-arm the sequence. */
-    @JvmStatic
     fun resetKeys(): List<String> = steps.map { it.id }
 }

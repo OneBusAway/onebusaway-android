@@ -227,18 +227,21 @@ class DefaultLocationRepository @Inject constructor(
      * Considers both Google Play Services (if available) and the Android Location API, returning the
      * more recent.
      */
-    @Throws(SecurityException::class)
     private fun poll(): Location? {
         var playServices: Location? = null
         if (GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(context)
             == ConnectionResult.SUCCESS
         ) {
-            val task = LocationServices.getFusedLocationProviderClient(context).lastLocation
-            // isSuccessful (not isComplete) — a task that completed with a failure would throw
-            // RuntimeExecutionException from getResult().
-            if (task.isSuccessful) {
-                playServices = task.result
-                Log.d(TAG, "Got location from Google Play Services, testing against API v1...")
+            try {
+                val task = LocationServices.getFusedLocationProviderClient(context).lastLocation
+                // isSuccessful (not isComplete) — a task that completed with a failure would throw
+                // RuntimeExecutionException from getResult().
+                if (task.isSuccessful) {
+                    playServices = task.result
+                    Log.d(TAG, "Got location from Google Play Services, testing against API v1...")
+                }
+            } catch (error: SecurityException) {
+                Log.w(TAG, "User may have denied location permission - $error")
             }
         }
         val apiV1 = pollApiV1()

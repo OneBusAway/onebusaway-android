@@ -66,7 +66,6 @@ object FeedbackLauncher {
     const val FEEDBACK_YES = 2
 
     /** Builds the explicit [HomeActivity] intent that opens the feedback destination. */
-    @JvmStatic
     fun makeIntent(context: Context, response: Int): Intent = HomeActivity.navIntent(context, NavRoutes.feedback(response))
 }
 

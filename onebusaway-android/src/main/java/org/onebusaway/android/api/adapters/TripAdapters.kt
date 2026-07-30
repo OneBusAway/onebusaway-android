@@ -124,7 +124,6 @@ class TripScheduleData(
 ) : ObaTripSchedule {
 
     companion object {
-        @JvmField
         val EMPTY = TripScheduleData()
     }
 }

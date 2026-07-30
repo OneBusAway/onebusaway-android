@@ -73,8 +73,17 @@ object ServiceUtils {
         return false
     }
 
+    /**
+     * Keyword heuristic (pre-existing, carried over verbatim from the Java original). Open311
+     * endpoints are operated by each city, not by us, and their service catalogs carry no field
+     * saying "this is a transit stop issue" — so the only signal available is the free-text group /
+     * keywords / service name. Failure modes: a city that words its transit services differently
+     * gets no match (we then append the static fallback services below), and an unrelated service
+     * whose text happens to contain a keyword gets mis-grouped under Transit.
+     */
     fun isTransitStopServiceByText(context: Context, text: String?): Boolean = containsKeyword(context, R.array.report_stop_transit_category_keywords, text)
 
+    /** Trip-issue counterpart of [isTransitStopServiceByText]; same heuristic and same caveats. */
     fun isTransitTripServiceByText(context: Context, text: String?): Boolean = containsKeyword(context, R.array.report_trip_transit_category_keywords, text)
 
     fun isTransitStopServiceByType(type: String?): Boolean = type == ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP || type == ReportConstants.STATIC_TRANSIT_SERVICE_STOP
@@ -85,6 +94,13 @@ object ServiceUtils {
 
     fun isTransitOpen311ServiceByType(type: String?): Boolean = type == ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP || type == ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP
 
+    /**
+     * Heuristic (pre-existing, carried over verbatim from the Java original). An Open311 service
+     * definition describes its attributes only in prose, so we guess which free-form attribute is
+     * the stop-ID field from its description. Two keyword hits are required rather than one
+     * because single words like "stop" or "id" match far too many unrelated attributes; the cost
+     * of guessing wrong is that we fail to pre-fill the stop ID, not a bad report.
+     */
     fun isStopIdField(context: Context, desc: String?): Boolean {
         val text = desc?.lowercase(Locale.getDefault()) ?: return false
         return context.resources.getStringArray(R.array.report_stop_id_field_keywords).count { text.contains(it) } >= 2

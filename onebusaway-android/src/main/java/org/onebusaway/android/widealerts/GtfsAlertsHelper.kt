@@ -45,9 +45,15 @@ object GtfsAlertsHelper {
             GtfsRealtime.Alert.SeverityLevel.WARNING
         )
 
+    /**
+     * These alerts come straight off a raw GTFS-realtime feed, not the OBA API, so
+     * `active_period.start` is POSIX **seconds** per the GTFS-rt spec — a fixed unit, not a
+     * magnitude guess. (The OBA `situation` path is the polymorphic one; its seconds-vs-millis
+     * rule lives in `situationEpochToMillis` and does not apply here.)
+     */
     fun isStartDateWithin24Hours(alert: GtfsRealtime.Alert, nowMs: Long): Boolean {
         if (alert.activePeriodCount == 0) return false
-        val elapsed = nowMs - alert.getActivePeriod(0).start * 1_000L
+        val elapsed = nowMs - alert.getActivePeriod(0).start * MILLIS_PER_SECOND
         return elapsed in 0..DAY_MS
     }
 
@@ -60,5 +66,6 @@ object GtfsAlertsHelper {
     fun getCurrentAppLanguageCode(): String = Locale.getDefault().language
 
     private const val DEFAULT_LANGUAGE_CODE = "en"
+    private const val MILLIS_PER_SECOND = 1_000L
     private const val DAY_MS = 24L * 60L * 60L * 1_000L
 }

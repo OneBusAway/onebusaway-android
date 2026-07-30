@@ -69,7 +69,7 @@ object BackupUtils {
 
     fun buildSelectBackupFileIntent(): Intent = documentIntent(
         Intent.ACTION_OPEN_DOCUMENT,
-        "backup.bin"
+        Backup.FILE_NAME
     )
 
     private fun documentIntent(action: String, title: String): Intent = Intent(action).apply {

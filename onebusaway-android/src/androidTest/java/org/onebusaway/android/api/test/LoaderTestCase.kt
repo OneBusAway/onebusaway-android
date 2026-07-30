@@ -6,6 +6,7 @@ import android.os.Looper
 import androidx.loader.content.Loader
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.TimeUnit
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -25,13 +26,18 @@ abstract class LoaderTestCase {
             loader.startLoading()
         }
         return try {
-            queue.take()
+            // Bounded so a loader that never completes fails the test instead of hanging the run.
+            queue.poll(LOAD_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                ?: throw AssertionError("loader produced no result within ${LOAD_TIMEOUT_SECONDS}s")
         } catch (exception: InterruptedException) {
+            Thread.currentThread().interrupt()
             throw RuntimeException("waiting thread interrupted", exception)
         }
     }
 
     companion object {
+        private const val LOAD_TIMEOUT_SECONDS = 30L
+
         init {
             @Suppress("DEPRECATION")
             object : AsyncTask<Void, Void, Void>() {

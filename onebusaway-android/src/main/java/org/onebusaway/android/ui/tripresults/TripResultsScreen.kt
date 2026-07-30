@@ -17,6 +17,10 @@ package org.onebusaway.android.ui.tripresults
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +32,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -85,7 +90,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -322,25 +329,33 @@ private fun OptionCard(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 // Duration — a leading hourglass + the ETA-pill-formatted trip length.
                 MetricRow(
-                    R.drawable.hourglass_24,
+                    MetricGlyph.DURATION,
                     contentDescription = null,
                     winner = shortestTravelTime,
                     outlineColor = winnerOutlineColor
                 ) {
-                    EtaDurationText(minutes = option.durationMinutes)
+                    EtaDurationText(
+                        minutes = option.durationMinutes,
+                        modifier = Modifier.alignByBaseline(),
+                        numberSize = METRIC_NUMBER_SIZE,
+                        unitSize = METRIC_UNIT_SIZE
+                    )
                 }
                 // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
                 // with the distance styled like the duration (bold value + smaller unit). In the user's units
                 // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
                 if (option.walkDistanceMeters > 0.0 || leastWalking) {
                     MetricRow(
-                        R.drawable.ic_directions_walk,
+                        MetricGlyph.WALK,
                         contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
                         winner = leastWalking,
                         outlineColor = winnerOutlineColor
                     ) {
                         EtaPartsText(
-                            ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context)
+                            ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
+                            modifier = Modifier.alignByBaseline(),
+                            numberSize = METRIC_NUMBER_SIZE,
+                            unitSize = METRIC_UNIT_SIZE
                         )
                     }
                 }
@@ -358,30 +373,120 @@ private fun OptionCard(
 }
 
 /**
- * One option-card stat line: a 16dp leading glyph followed by its value [content]. Shared by the
- * duration and walk-distance rows so their icon size and spacing stay in lockstep.
+ * One option-card stat line: a leading glyph followed by its value [content], drawn so the glyph and
+ * the value occupy exactly the same band — same top edge, same bottom edge, both sitting on the value's
+ * baseline (#2076). Shared by the duration and walk-distance rows so the two stay in lockstep.
+ *
+ * The glyph is sized and placed by its *ink*, not by its box: the box is inflated from the wanted ink
+ * height by the asset's own ink fraction ([MetricGlyph]), and the row's alignment line is the ink's
+ * bottom rather than the box's, so the transparent margin baked into the vector doesn't push the glyph
+ * below the text (which is what it used to do — a centred 16dp box put 1.5dp of hourglass under the
+ * digits).
+ *
+ * [content] holds up its half of that: it must be a value sized [METRIC_NUMBER_SIZE]/[METRIC_UNIT_SIZE]
+ * and hung on `Modifier.alignByBaseline()` — the glyph is cut to those digits, and a row that opts out
+ * of the alignment line simply isn't levelled by anything.
  */
 @Composable
 private fun MetricRow(
-    iconRes: Int,
+    glyph: MetricGlyph,
     contentDescription: String?,
     winner: Boolean,
     outlineColor: Color,
-    content: @Composable () -> Unit
+    content: @Composable RowScope.() -> Unit
 ) {
+    val density = LocalDensity.current
+    val inkHeight = digitCapHeight(density, METRIC_NUMBER_SIZE)
+    val box = glyph.boxFor(inkHeight)
+    // Levelling by ink leaves each glyph a different box width (the two assets ink different fractions
+    // of their viewport), which would step the rows' values apart horizontally. Reserve the widest
+    // row's box for every row: Icon fits-and-centres the vector, so the extra width only centres the
+    // glyph — the height still drives its scale.
+    val column = inkHeight * WIDEST_BOX_FACTOR
     Row(
         modifier = winnerOutline(winner, outlineColor),
-        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
-            painterResource(iconRes),
+            painterResource(glyph.iconRes),
             contentDescription = contentDescription,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier
+                .size(width = column, height = box)
+                .alignBy { with(density) { glyph.inkBaselineFor(inkHeight).roundToPx() } }
         )
         content()
     }
 }
+
+/**
+ * A metric row's leading glyph, together with where the glyph's ink actually sits inside its 24-unit
+ * vector viewport — read off the asset's `pathData` bounds, and *not* the same for both: the hourglass
+ * inks y[2, 22], the walker y[1.5, 23]. Carrying the bounds is what lets [MetricRow] work in ink.
+ *
+ * These four numbers are transcribed by hand from the asset, so re-read them whenever you swap a
+ * drawable, edit its path, or re-import it from Material — nothing checks them for you, and a stale
+ * reading un-levels its row quietly rather than loudly.
+ *
+ * The assets stay uncropped — cropping would only delete the ink fraction, not the levelling — and for
+ * the walker it can't be done at all: `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and
+ * a step icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside
+ * it, so a crop would mean a second copy of its path.
+ */
+private enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
+    DURATION(R.drawable.hourglass_24, inkTop = 2f, inkBottom = 22f),
+    WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f);
+
+    /** What the icon box has to be scaled by for this glyph's ink alone to stand a wanted height. */
+    val boxFactor: Float = GLYPH_VIEWPORT / (inkBottom - inkTop)
+
+    /** The icon box that draws this glyph's ink exactly [inkHeight] tall. */
+    fun boxFor(inkHeight: Dp): Dp = inkHeight * boxFactor
+
+    /** Where the ink's bottom edge falls inside that box — the row's alignment line, i.e. the baseline. */
+    fun inkBaselineFor(inkHeight: Dp): Dp = boxFor(inkHeight) * inkBottom / GLYPH_VIEWPORT
+}
+
+/** The viewport every glyph in [MetricGlyph] is authored in (Material's 24dp grid). */
+private const val GLYPH_VIEWPORT = 24f
+
+/**
+ * The widest row's box, as a multiple of the ink height every row is cut to — derived from the glyphs
+ * rather than pinned as a gutter width, so adding a metric re-levels the column instead of silently
+ * leaving one row's value indented from the others.
+ */
+private val WIDEST_BOX_FACTOR = MetricGlyph.entries.maxOf { it.boxFactor }
+
+/**
+ * The metric value's type sizes. Bigger than the ETA pill's own 15/12sp: #2076 levelled the glyph and
+ * the value on each other, and the honest meeting point is between the two — the glyph came down from
+ * a 13.3dp ink height and the digits up from ~10.7dp, to ~12dp each. The unit keeps roughly the pill's
+ * value:unit size ratio so the pair still reads as one "32 min", not two words.
+ */
+private val METRIC_NUMBER_SIZE = 17.sp
+private val METRIC_UNIT_SIZE = 13.sp
+
+/**
+ * The ink height of a digit set at [size] — what a rider sees as the height of "32", cap to baseline,
+ * which is what a glyph beside it has to match. Asked of the platform paint rather than taken as a
+ * fraction of the em size: the em box reserves ascent/descent space no digit fills (a 15sp digit inks
+ * about 10.7dp), and the ratio is the font's to state, not ours to assume. Measured through the row's
+ * [Density], so it tracks the user's font-scale setting along with the text.
+ */
+@Composable
+private fun digitCapHeight(density: Density, size: TextUnit): Dp = remember(density, size) {
+    val bounds = Rect()
+    Paint()
+        .apply {
+            // Matches how [EtaPartsText] sets the value: the theme's default family, bold.
+            typeface = Typeface.DEFAULT_BOLD
+            textSize = with(density) { size.toPx() }
+        }
+        .getTextBounds(CAP_SAMPLE, 0, CAP_SAMPLE.length, bounds)
+    with(density) { bounds.height().toDp() }
+}
+
+/** A flat-topped, flat-bottomed digit: no round-glyph overshoot, no descender, so its ink is the cap. */
+private const val CAP_SAMPLE = "7"
 
 /** One endpoint of the option's time range, outlined independently when it wins its schedule category. */
 @Composable

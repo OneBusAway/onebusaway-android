@@ -224,8 +224,9 @@ private val OPTION_CARD_MAX_WIDTH = 200.dp
 
 /**
  * The padding around each of the card's two sections. Applied per section rather than to the card, so
- * the keyline between them can span the card edge to edge — which also means the gap either side of that
- * keyline is twice this. One value, so the two sections' content cannot drift out of alignment.
+ * the summary's band can be filled edge to edge — the padding is inside the tint, which is what makes it
+ * read as a header rather than as a stripe behind some glyphs. One value, so the two sections' content
+ * cannot drift out of alignment.
  */
 private val CARD_PADDING_HORIZONTAL = 12.dp
 private val CARD_PADDING_VERTICAL = 8.dp
@@ -236,12 +237,21 @@ private val CARD_SECTION_PADDING =
 private val SUMMARY_WRAP_WIDTH = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL * 2
 
 /**
- * The keyline separating a card's summary line from its stats (#2081). Faded from the card's *own*
- * content colour for the same reason [SymbolSeparator] is: the card is tinted, and differently again
- * when selected, so a theme grey lands on it as an off-hue smudge. Quiet enough to divide the two halves
- * without drawing a box around either.
+ * How far the summary's band is tinted off the card behind it, to set the trip itself on its own surface
+ * above the stats (#2081).
+ *
+ * A veil of the card's *own* content colour rather than a second background colour, for the reason
+ * [SymbolSeparator] is faded the same way: the card is tinted, and differently again when selected, so a
+ * theme surface token lands on one of those two states as an off-hue patch — and the selected card's
+ * `secondaryContainer` has no "one step up" token to reach for at all. Veiling toward the content colour
+ * moves both states the way Material's own container ramp moves: darker on a light theme, lighter on a
+ * dark one.
+ *
+ * Set a little above one step of that ramp (which is ~0.03–0.05 here), since this band has to do on its
+ * own the separating a rule between the sections would otherwise share. This is the knob to turn if the
+ * header reads too loud or too faint.
  */
-private const val CARD_DIVIDER_ALPHA = 0.2f
+private const val CARD_HEADER_TINT_ALPHA = 0.06f
 
 /**
  * The chevron between two of a card's mode symbols, and the gap on either side of it. Deliberately
@@ -318,10 +328,10 @@ private fun OptionCard(
                 }
             }
     ) {
-        // Sized to the widest thing on it, so the summary's keyline has a card width to span: under the
-        // picker's horizontal scroll the incoming width is unbounded, where a `fillMaxWidth` divider
-        // measures to nothing. The intrinsic pass asks the summary how wide it lands *after* wrapping,
-        // which is stable — see [SymbolFlow].
+        // Sized to the widest thing on it, so the summary's band has a card width to fill: under the
+        // picker's horizontal scroll the incoming width is unbounded, where `fillMaxWidth` measures to
+        // nothing. The intrinsic pass asks the summary how wide it lands *after* wrapping — see
+        // [SymbolFlow].
         Column(Modifier.width(IntrinsicSize.Max)) {
             // The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel
             // per ride, chevron-separated (#2047). The gap between symbols is deliberately wide, so
@@ -335,12 +345,15 @@ private fun OptionCard(
             val drawn = remember(option.symbols) {
                 option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
             }
-            // A trip with nothing drawable to say (see above) gets no summary at all — a lone keyline
-            // over an empty strip would be worse than the card simply starting at its stats.
+            // A trip with nothing drawable to say (see above) gets no summary at all — an empty tinted
+            // strip would be worse than the card simply starting at its stats.
             if (drawn.isNotEmpty()) {
                 SymbolFlow(
                     wrapAt = SUMMARY_WRAP_WIDTH,
-                    modifier = Modifier.padding(CARD_SECTION_PADDING)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(LocalContentColor.current.copy(alpha = CARD_HEADER_TINT_ALPHA))
+                        .padding(CARD_SECTION_PADDING)
                 ) {
                     drawn.forEachIndexed { index, symbol ->
                         // A symbol travels with the chevron that follows it, as one unbreakable unit:
@@ -355,7 +368,6 @@ private fun OptionCard(
                         }
                     }
                 }
-                HorizontalDivider(color = LocalContentColor.current.copy(alpha = CARD_DIVIDER_ALPHA))
             }
             StatsColumn(option, winners)
         }

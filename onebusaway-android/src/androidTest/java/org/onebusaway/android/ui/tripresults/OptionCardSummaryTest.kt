@@ -37,9 +37,9 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
  * says what the trip is (#2081):
  *  - a trip with too many legs to fit the card's width **wraps** rather than drawing one long card that
  *    pushes every other option off the picker;
- *  - the wrap is a ceiling, not a floor: a short trip still gets a card sized to itself (the keyline
- *    under the summary spans the card, and a `fillMaxWidth` one would otherwise blow every card out to
- *    the same width under the picker's horizontal scroll);
+ *  - the wrap is a ceiling, not a floor: a short trip still gets a card sized to itself (the summary's
+ *    tinted band fills the card, and a `fillMaxWidth` that measured against the picker's unbounded
+ *    horizontal scroll would otherwise blow every card out to the same width);
  *  - and a badge that is *itself* wider than the wrap — several interchangeable routes on one ride —
  *    keeps every route it names, instead of being measured into the space that's left and losing its
  *    last segments to a zero width.

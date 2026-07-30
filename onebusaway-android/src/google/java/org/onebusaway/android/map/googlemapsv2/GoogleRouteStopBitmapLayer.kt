@@ -112,14 +112,14 @@ internal class GoogleRouteStopBitmapLayer(
             val selected = stop.id == focusedStopId
             val rendered = stopsById[stop.id]
             if (rendered == null) {
-                val marker = map.addMarker(
+                val marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
                         .icon(icon(sizes.forSelection(selected), selected))
                         .flat(true)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex(selected))
-                )!!
+                )
                 marker.tag = stop.id
                 stopsById[stop.id] = RenderedStop(marker, stop)
             } else {

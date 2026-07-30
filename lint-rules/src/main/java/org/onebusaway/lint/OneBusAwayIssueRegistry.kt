@@ -32,7 +32,8 @@ class OneBusAwayIssueRegistry : IssueRegistry() {
             RawTimeDetector.ISSUE_VALUE,
             PrematureUnwrapDetector.ISSUE,
             WireTimeEscapeDetector.ISSUE,
-            SwallowedCancellationDetector.ISSUE
+            SwallowedCancellationDetector.ISSUE,
+            ForcedNonNullDetector.ISSUE
         )
 
     override val api: Int = CURRENT_API

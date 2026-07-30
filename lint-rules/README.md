@@ -104,6 +104,30 @@ Scope is the **nearest enclosing named function** being `suspend` (matching dete
 non-suspending work in a suspend function is still flagged — the wrapper is a strict superset, so it's
 never wrong, and the rule stays a simple ban rather than a fragile "does this lambda suspend" analysis.
 
+### `ForcedNonNull` (warning)
+Fires on the forced non-null operator `!!` in **production** Kotlin (`src/main`, `src/google`,
+`src/maplibre`). `!!` asserts an invariant the type system doesn't know about and does it without a
+message, so when the assertion is wrong the user gets a bare `NullPointerException` whose stack trace
+names the line the code gave up on rather than the invariant that broke.
+
+Fix in this order: **handle** the null (elvis with a real fallback, early return, `?.let`); **fix the
+type** so the nullability disappears at the boundary that produced it; or **assert with a reason** —
+`requireNotNull(x) { "why" }` / `checkNotNull(x) { "why" }`. The message is the point. A bare
+`requireNotNull(x)` is `!!` with a different exception type and is not an improvement; if the check ever
+turns into a rename campaign it has failed. Where several sites assert the *same* invariant, extract a
+named helper — `GoogleMap.addMarkerOrFail` and `requireDrawable` each replaced a cluster of otherwise
+identical unexplained operators.
+
+**Test sources are exempt** (`src/test`, `src/androidTest`), enforced by source-set path in the detector
+rather than by build wiring, since lint analyses test sources as part of the variant. A test that
+dereferences an unexpected null already fails with a stack trace at the right line — the outcome you
+want — so wrapping it adds ceremony and no information, and the user-facing cost that motivates the rule
+doesn't exist there. Enrolling tests would mean ~167 mechanical rewrites of no behavioural benefit.
+
+Detection is the postfix operator token, so `!=` and boolean `!` are untouched, and each operator in a
+chain (`a!!.b!!`) reports separately. No baseline: a genuinely unavoidable site carries an inline
+`@Suppress("ForcedNonNull")` with a one-line rationale.
+
 ## Lifecycle
 
 Each check names its reason to exist and its reason to die. Regenerate the baseline after landing a
@@ -111,6 +135,7 @@ check, then only ever shrink it.
 
 | Check                 | Guards                                    | Dies when                                             |
 | --------------------- | ----------------------------------------- | ----------------------------------------------------- |
+| `ForcedNonNull`       | unexplained `!!` crashes reaching users   | never (can't remove the operator from Kotlin)         |
 | `RawClockArithmetic`  | foreign clock namespace, in math          | never (can't own `java.lang`)                         |
 | `UnwrappedClockValue` | foreign clock namespace, coming to rest   | never (can't forbid `Long`)                           |
 | `PrematureUnwrap`     | the elimination door of the typed region  | a real module boundary makes `.epochMs` cross-module  |

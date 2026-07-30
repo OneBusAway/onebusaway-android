@@ -167,6 +167,6 @@ class Application :
         private var mApp: Application? = null
 
         @JvmStatic
-        fun get(): Application = mApp!!
+        fun get(): Application = checkNotNull(mApp) { "Application.get() before onCreate() or after onTerminate()" }
     }
 }

@@ -58,14 +58,14 @@ internal class GoogleStopMarkerLayer(
             val existing = markerByStopId[stop.id]
             if (existing == null) {
                 val (anchorX, anchorY) = anchor(stop, kind)
-                val marker = map.addMarker(
+                val marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(stop.point.toLatLng())
                         .icon(icon(stop, kind))
                         .flat(true)
                         .anchor(anchorX, anchorY)
                         .zIndex(stopZIndex(routeStop = false, favorite = stop.favorite))
-                )!!
+                )
                 markerByStopId[stop.id] = marker
                 stopByMarker[marker] = stop
             } else {

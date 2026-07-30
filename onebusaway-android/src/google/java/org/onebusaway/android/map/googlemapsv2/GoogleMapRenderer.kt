@@ -278,12 +278,12 @@ class GoogleMapRenderer(
                     }
                     // Title is kept only so a marker tap opens the info window; the InfoWindowAdapter
                     // renders the shared BikeInfoWindow composable instead of the title text.
-                    val marker = map.addMarker(
+                    val marker = map.addMarkerOrFail(
                         MarkerOptions()
                             .position(bike.point.toLatLng())
                             .icon(icon)
                             .title(bike.station.name)
-                    )!!
+                    )
                     staticMarkers.add(marker)
                     bikeByMarker[marker] = bike
                 }
@@ -293,7 +293,7 @@ class GoogleMapRenderer(
         for ((_, generic) in snapshot.genericMarkers) {
             val options = MarkerOptions().position(generic.point.toLatLng())
             generic.hue?.let { options.icon(BitmapDescriptorFactory.defaultMarker(it)) }
-            staticMarkers.add(map.addMarker(options)!!)
+            staticMarkers.add(map.addMarkerOrFail(options))
         }
 
         snapshot.routeContinuation?.let { continuation -> renderContinuation(continuation) }
@@ -302,13 +302,13 @@ class GoogleMapRenderer(
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
         for (badge in badges) {
-            val marker = map.addMarker(
+            val marker = map.addMarkerOrFail(
                 MarkerOptions()
                     .position(badge.point.toLatLng())
                     .icon(routeBadgeIcon(badge.routeShortName, badge.color))
                     .anchor(0.5f, 0.5f)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
-            )!!
+            )
             staticMarkers += marker
             // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
             // unregistered marker's tap falls through to the map like any other unclaimed one.
@@ -358,7 +358,7 @@ class GoogleMapRenderer(
 
         val arrow = continuation.arrow
         staticMarkers.add(
-            map.addMarker(
+            map.addMarkerOrFail(
                 MarkerOptions()
                     .position(arrow.point.toLatLng())
                     .icon(continuationArrowIcon(polyline.resolvedColor))
@@ -366,17 +366,17 @@ class GoogleMapRenderer(
                     .rotation(arrow.bearing)
                     .flat(true)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
-            )!!
+            )
         )
 
         val badge = continuation.badge
-        val marker = map.addMarker(
+        val marker = map.addMarkerOrFail(
             MarkerOptions()
                 .position(badge.point.toLatLng())
                 .icon(routeBadgeIcon(badge.routeShortName, polyline.resolvedColor))
                 .anchor(0.5f, 0.5f)
                 .zIndex(ROUTE_BADGE_Z_INDEX)
-        )!!
+        )
         staticMarkers.add(marker)
         continuationBadgeByMarker[marker] = badge
     }
@@ -594,7 +594,7 @@ class GoogleMapRenderer(
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
         val existing = mostRecentDataMarker
         if (existing == null) {
-            val marker = map.addMarker(
+            val marker = map.addMarkerOrFail(
                 MarkerOptions()
                     .position(target.toLatLng())
                     .icon(dataAgeIcon())
@@ -602,7 +602,7 @@ class GoogleMapRenderer(
                     .zIndex(0.5f)
                     .title(MOST_RECENT_DATA_TITLE)
                     .snippet(formatDataAge(context.resources, ageSeconds))
-            )!!
+            )
             mostRecentDataMarker = marker
             dotAgeSeconds = ageSeconds
             // The dot is created only after a no-selection gap cleared the smoother, so just prime it
@@ -646,7 +646,7 @@ class GoogleMapRenderer(
         for (vehicle in markers) {
             val existing = vehicleMarkersByTripId[vehicle.activeTripId]
             if (existing == null) {
-                val marker = map.addMarker(
+                val marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
@@ -655,7 +655,7 @@ class GoogleMapRenderer(
                         .anchor(0.5f, 0.5f)
                         .title(vehicleTitle(vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
-                )!!
+                )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
@@ -739,14 +739,14 @@ class GoogleMapRenderer(
                 return
             }
             if (existing == null) {
-                marker = map.addMarker(
+                marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(point.toLatLng())
                         .icon(iconProvider())
                         .title(title)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex)
-                )!!
+                )
                 smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
                 return
             }

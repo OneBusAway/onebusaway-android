@@ -26,6 +26,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
@@ -144,6 +145,90 @@ class HomeViewModelTest {
             ),
             map.routeRequests.single()
         )
+        job.cancel()
+    }
+
+    @Test
+    fun `tapping off a focused on-street leg returns to the itinerary overview`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        vm.showItineraryOnMap(TripItinerary())
+        val walk = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), setOf(0))
+
+        vm.focusItineraryLegOnMap(walk)
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
+        map.sent.clear()
+
+        // The first background tap drops the leg, not directions: the trip's legs return to full weight.
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertEquals(listOf(MapDirective.ClearItineraryLegFocus), map.sent)
+
+        // Only the second tap leaves directions.
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertEquals(1, map.clearFocusCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `back after tapping off an on-street leg refocuses it`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        vm.showItineraryOnMap(TripItinerary())
+        val walk = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), setOf(2))
+        vm.focusItineraryLegOnMap(walk)
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
+        assertEquals(
+            listOf(MapDirective.FocusItineraryLeg(walk.points, walk.legIndices)),
+            map.sent
+        )
+        job.cancel()
+    }
+
+    @Test
+    fun `focusing an on-street leg from a route focus redraws the trip first`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+        val itinerary = TripItinerary()
+        vm.showItineraryOnMap(itinerary)
+        vm.focusItineraryRouteLegOnMap("65")
+        advanceUntilIdle()
+        map.sent.clear()
+        val walk = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), setOf(1))
+
+        vm.focusItineraryLegOnMap(walk)
+        advanceUntilIdle()
+
+        // Route mode tore the itinerary down, so it is redrawn before the leg framing (which would
+        // otherwise no-op), and the leg — not the route — is now the focus.
+        assertEquals(
+            listOf(
+                MapDirective.ShowItinerary(itinerary),
+                MapDirective.FocusItineraryLeg(walk.points, walk.legIndices)
+            ),
+            map.sent
+        )
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
         job.cancel()
     }
 

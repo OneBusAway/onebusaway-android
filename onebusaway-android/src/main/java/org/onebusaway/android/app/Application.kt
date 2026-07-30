@@ -166,6 +166,6 @@ class Application :
         // before onCreate and every caller dereferences it.
         private var mApp: Application? = null
 
-        fun get(): Application = mApp!!
+        fun get(): Application = checkNotNull(mApp) { "Application.get() before onCreate() or after onTerminate()" }
     }
 }

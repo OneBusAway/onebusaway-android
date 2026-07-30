@@ -76,9 +76,10 @@ fun SettingsRoute(
     val ringtoneLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
-        if (result.resultCode == Activity.RESULT_OK && result.data != null) {
+        val data = result.data
+        if (result.resultCode == Activity.RESULT_OK && data != null) {
             @Suppress("DEPRECATION")
-            val uri: Uri? = result.data!!.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            val uri: Uri? = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
             viewModel.onRingtonePicked(uri?.toString() ?: "")
         }
     }

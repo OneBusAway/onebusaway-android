@@ -25,7 +25,6 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.graphics.createBitmap
@@ -34,6 +33,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
 import org.onebusaway.android.ui.routeinfo.RouteInfoLauncher
 import org.onebusaway.android.util.ViewUtils
+import org.onebusaway.android.util.requireDrawable
 
 /**
  * Helpers for creating launcher shortcuts (stops, routes, and arbitrary destinations).
@@ -108,14 +108,12 @@ object Shortcuts {
         destIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         destIntent.action = Intent.ACTION_VIEW
 
-        val drawableIcon: Drawable = ResourcesCompat
-            .getDrawable(context.resources, icon, context.theme)!!
+        val drawableIcon: Drawable = requireDrawable(context, icon, context.theme)
         drawableIcon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
             ContextCompat.getColor(context, R.color.shortcut_icon),
             BlendModeCompat.SRC_IN
         )
-        val drawableBackground: Drawable = ResourcesCompat
-            .getDrawable(context.resources, R.drawable.launcher_background, context.theme)!!
+        val drawableBackground: Drawable = requireDrawable(context, R.drawable.launcher_background, context.theme)
 
         val layerDrawable = LayerDrawable(arrayOf(drawableBackground, drawableIcon))
 

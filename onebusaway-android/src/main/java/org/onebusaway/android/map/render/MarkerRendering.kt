@@ -22,11 +22,11 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
+import org.onebusaway.android.util.requireDrawable
 
 /**
  * Shared low-level map-marker drawing, used by the flavor-neutral bitmap factories ([VehicleBitmaps],
@@ -84,7 +84,7 @@ object MarkerRendering {
      * [insetPx] on every side (a positive inset shrinks the artwork; a negative one zooms/crops it).
      */
     fun rasterize(context: Context, @DrawableRes resId: Int, sizePx: Int, tint: Int? = null, insetPx: Int = 0): Bitmap {
-        val drawable = ContextCompat.getDrawable(context, resId)!!.mutate()
+        val drawable = requireDrawable(context, resId).mutate()
         if (tint != null) drawable.setTint(tint)
         val bitmap = createBitmap(sizePx, sizePx)
         drawable.setBounds(insetPx, insetPx, sizePx - insetPx, sizePx - insetPx)
@@ -109,7 +109,7 @@ object MarkerRendering {
         glyphSize: Float,
         outline: Float
     ) {
-        val pin = ContextCompat.getDrawable(context, R.drawable.pin_base)!!.mutate()
+        val pin = requireDrawable(context, R.drawable.pin_base).mutate()
         pin.setBounds(0, 0, contentPx, contentPx)
         drawOutlined(canvas, pin, outline, pinColor)
 
@@ -165,7 +165,7 @@ object MarkerRendering {
         outline: Float,
         glyphColor: Int
     ) {
-        val glyph = ContextCompat.getDrawable(context, glyphRes)!!.mutate()
+        val glyph = requireDrawable(context, glyphRes).mutate()
         glyph.setBounds(
             (cxPx - halfPx).toInt(),
             (cyPx - halfPx).toInt(),

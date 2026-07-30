@@ -100,6 +100,7 @@ internal object CurrentFocusPersistence {
                 directionId = state[MapParams.ROUTE_DIRECTION_ID]
             )
         }
+        val bikeStationId = state.get<String>(KEY_BIKE_STATION)
         return when {
             stop != null && route != null -> CurrentFocus.Stop(
                 stop,
@@ -110,8 +111,7 @@ internal object CurrentFocusPersistence {
             )
             route != null -> CurrentFocus.Route(route)
             stop != null -> CurrentFocus.Stop(stop)
-            state.get<String>(KEY_BIKE_STATION) != null ->
-                CurrentFocus.BikeStation(state.get<String>(KEY_BIKE_STATION)!!)
+            bikeStationId != null -> CurrentFocus.BikeStation(bikeStationId)
             else -> CurrentFocus.None
         }
     }

@@ -295,12 +295,12 @@ class TripRequestBuilder(context: Context, private val mBundle: Bundle) {
      */
     fun copyIntoBundleSimple(target: Bundle) {
         target.putBoolean(ARRIVE_BY, arriveBy)
-        val fromAddr = from
-        val toAddr = to
-        target.putDouble(FROM_LAT, fromAddr!!.latitude)
+        val fromAddr = checkNotNull(from) { "trip request has no origin" }
+        val toAddr = checkNotNull(to) { "trip request has no destination" }
+        target.putDouble(FROM_LAT, fromAddr.latitude)
         target.putDouble(FROM_LON, fromAddr.longitude)
         target.putString(FROM_NAME, fromAddr.toString())
-        target.putDouble(TO_LAT, toAddr!!.latitude)
+        target.putDouble(TO_LAT, toAddr.latitude)
         target.putDouble(TO_LON, toAddr.longitude)
         target.putString(TO_NAME, toAddr.toString())
         target.putBoolean(OPTIMIZE_TRANSFERS, getOptimizeTransfers())

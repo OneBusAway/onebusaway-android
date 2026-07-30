@@ -187,7 +187,14 @@ object VehicleBitmaps {
         // The path bearing is already a compass direction; the server orientation needs converting.
         val pathBearing = vehicle.bearing
         val direction = if (pathBearing.isNaN()) {
-            MathUtils.toDirection(vehicle.status.orientation!!)
+            // Asserted rather than defaulted because the KDoc above claims a live vehicle always has a
+            // heading. If that claim is wrong the message says so, instead of a bare NPE on the poll
+            // path; degrading to UNDIRECTED here would be the other reasonable answer (see #2020).
+            MathUtils.toDirection(
+                checkNotNull(vehicle.status.orientation) {
+                    "vehicle ${vehicle.activeTripId} has neither a path bearing nor a server orientation"
+                }
+            )
         } else {
             pathBearing.toDouble()
         }

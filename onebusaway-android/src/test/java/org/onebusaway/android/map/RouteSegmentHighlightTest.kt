@@ -71,7 +71,7 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(base, segment, routeColor = 0xFF00FF00.toInt())
 
         assertEquals(2, result.size)
-        // The approach steps down to the itinerary's context weight, loses its arrows, and is solid rather
+        // The approach steps down to its own thinnest itinerary weight, loses its arrows, and is solid rather
         // than the faint dashed line that used to compete with the legs beside it (#2082).
         val approach = result.first()
         assertEquals(ITINERARY_APPROACH_WIDTH_PROFILE, approach.widthProfile)

@@ -78,6 +78,6 @@ class RouteLineWidthProfileTest {
         assertEquals(1.5f, ROUTE_LINE_CASE_DP, 0f)
         // And it stays finer than the thinnest line it can wrap, so a case reads as that line's edge rather
         // than as a second line under it.
-        assertTrue(2f * ROUTE_LINE_CASE_DP < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
+        assertTrue(ROUTE_LINE_CASE_EXTRA_DP < ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp)
     }
 }

@@ -126,6 +126,12 @@ val ITINERARY_STREET_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
  */
 const val ROUTE_LINE_CASE_DP = 1.5f
 
+/**
+ * What [ROUTE_LINE_CASE_DP] adds to a line's *total* width — both sides. Derived here rather than at each width
+ * computation, so nothing has to remember that the constant above is per-side.
+ */
+const val ROUTE_LINE_CASE_EXTRA_DP = 2f * ROUTE_LINE_CASE_DP
+
 /** Route-line scale retained for unprofiled lines and vehicle markers. */
 fun routeLineWidthScale(zoom: Float): Float = ROUTE_LINE_WIDTH_PROFILE.multiplierAt(zoom)
 

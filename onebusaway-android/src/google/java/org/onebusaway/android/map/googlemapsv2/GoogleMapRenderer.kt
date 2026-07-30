@@ -58,7 +58,7 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.ROUTE_LINE_CASE_DP
+import org.onebusaway.android.map.render.ROUTE_LINE_CASE_EXTRA_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteLineDash
@@ -142,11 +142,16 @@ class GoogleMapRenderer(
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
     // lives in the shared [RoutePolylineReconciler] (#1906); only the four gms-specific line operations
     // below are supplied here.
-    private val routePolylineReconciler = RoutePolylineReconciler<CasedLine>(
+    private val routePolylineReconciler = RoutePolylineReconciler<Polyline>(
         widthOf = ::routeWidthPx,
         createLine = ::addRoutePolyline,
-        removeLines = { lines -> lines.forEach(CasedLine::remove) },
-        setWidth = { cased, width -> cased.setLineWidth(width, caseExtraPx) }
+        removeLines = { lines -> lines.forEach { it.remove() } },
+        setWidth = { line, width -> line.width = width },
+        // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
+        // theme, because the basemap it separates its line from does (see [mapRouteLineCaseColor]).
+        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
+        // Read from context rather than the [density] field, which is declared below this initializer.
+        caseExtraWidth = ROUTE_LINE_CASE_EXTRA_DP * context.resources.displayMetrics.density
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles
@@ -194,10 +199,6 @@ class GoogleMapRenderer(
     private val bikeIcons by lazy { BikeIcons(context) }
 
     private val density = context.resources.displayMetrics.density
-
-    // How much wider a case is stroked than the line it wraps — [ROUTE_LINE_CASE_DP] beyond each side, in the
-    // screen pixels every other gms line dimension here is in.
-    private val caseExtraPx = 2f * ROUTE_LINE_CASE_DP * density
 
     // The directional-arrow chevron stamp is color-independent, so build it once; the per-polyline
     // color is applied by the StrokeStyle below. (Same texture the legacy GoogleMapHost route overlay
@@ -327,44 +328,7 @@ class GoogleMapRenderer(
         routePolylineReconciler.reconcile(next, map.cameraPosition.zoom)
     }
 
-    /**
-     * One drawn route line: its stroke, plus the wider case (halo) stroke beneath it when the line asks for
-     * one (#2082). The two are created, removed and re-widened as a unit, so a case can't outlive its line or
-     * drift out of sync with its width. gms draws equal-z polylines in the order they were added — the same
-     * thing that orders the whole polyline list into layers — so adding the case first puts it underneath.
-     */
-    private class CasedLine(val case: Polyline?, val line: Polyline) {
-        fun remove() {
-            case?.remove()
-            line.remove()
-        }
-
-        fun setLineWidth(widthPx: Float, caseExtraPx: Float) {
-            line.width = widthPx
-            case?.width = widthPx + caseExtraPx
-        }
-    }
-
-    private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): CasedLine = CasedLine(
-        case = if (!polyline.cased) {
-            null
-        } else {
-            map.addPolyline(
-                PolylineOptions()
-                    // Resolved here rather than by the producer: a case's colour follows the theme, because
-                    // the basemap it separates its line from does (see [mapRouteLineCaseColor]).
-                    .color(mapRouteLineCaseColor(polyline.resolvedColor, ThemeUtils.isInDarkMode(context)))
-                    .width(widthPx + caseExtraPx)
-                    .addPoints(polyline.points)
-                    // The case follows its line's dash so a broken line's case breaks with it, rather than
-                    // backing the gaps with a solid stroke and erasing the dash.
-                    .applyDashPattern(polyline)
-            )
-        },
-        line = addRouteStroke(polyline, widthPx)
-    )
-
-    private fun addRouteStroke(polyline: RoutePolyline, widthPx: Float): Polyline {
+    private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): Polyline {
         val options = PolylineOptions()
             .width(widthPx)
             .addPoints(polyline.points)

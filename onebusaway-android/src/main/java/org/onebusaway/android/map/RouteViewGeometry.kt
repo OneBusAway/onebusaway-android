@@ -61,8 +61,8 @@ internal fun RoutePolyline.withCase(): RoutePolyline = copy(cased = true)
 
 /**
  * The selected transit route upstream of the boarding point — where the vehicle is coming from — drawn as
- * part of the selected line rather than as background: solid, cased like the ride it leads into, at the
- * itinerary's context weight.
+ * part of the selected line rather than as background: solid, cased like the ride it leads into, at its own
+ * thinnest itinerary weight ([ITINERARY_APPROACH_WIDTH_PROFILE]).
  *
  * It was previously the map's faintest dashed line, a hair thinner than the receded itinerary legs beside
  * it, so the rider read two near-identical thin strokes meaning quite different things (#2082). Chevrons

@@ -761,9 +761,9 @@ class RouteMapController(
             }
         )
         renderState.setRoutePolylines(
-            // Over a highlighted leg segment: unused route first, the rider's remaining itinerary at a
-            // middle weight, then the ridden span on top (#2048). The trip stays out of
-            // [framingPolylines] — drilling into a leg frames that leg, not the whole journey again.
+            // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
+            // remaining itinerary at a middle weight, then the ridden span cased on top (#2048, #2082). The
+            // trip stays out of [framingPolylines] — drilling into a leg frames that leg, not the journey.
             polylines = routePolylinesWithSegment(
                 plan.polylines,
                 highlightedSegment,

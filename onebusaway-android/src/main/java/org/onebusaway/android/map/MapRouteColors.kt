@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
+import org.onebusaway.android.util.routeCasingColor
 import org.onebusaway.android.util.routeColorHctOrNull
 
 /**
@@ -75,16 +76,17 @@ internal fun mapRouteLineColorOrNull(source: Int?): Int? = routeColorHctOrNull(s
  *
  * Absolute tones rather than an offset from [lineColor]'s own tone: what a case has to contrast with is the
  * basemap, which sits at a fixed value per theme, so the target is a property of the theme and not of the line
- * it wraps. Reads the hue and chroma off [lineColor] so what little colour survives is its own — a case is
- * derived from a line that is already drawn, whatever its colour came from.
+ * it wraps. The re-tone itself is [routeCasingColor], shared with the continuation badge's outline so the map's
+ * two casings can't drift apart on which channels survive; only the tones differ, and deliberately — a 1.5dp
+ * hairline needs far more contrast than a badge outline.
  *
  * This is the one deliberate exception to this file's theme independence (see above) — precisely because its
  * whole job is to hold the line apart from a backdrop that itself flips.
  */
-@SuppressLint("RestrictedApi")
-internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean): Int = with(Hct.fromInt(lineColor)) {
-    Hct.from(hue, chroma, if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK).toInt()
-}
+internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean): Int = routeCasingColor(
+    lineColor,
+    if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK
+)
 
 private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0

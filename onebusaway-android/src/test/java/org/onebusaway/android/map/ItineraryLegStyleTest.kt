@@ -145,27 +145,20 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a case goes to the end of the tone scale away from the basemap`() {
+    fun `a case goes to the end of the tone scale away from the basemap, keeping its line's hue`() {
         // A case goes *against* the basemap — near-black on the light map, near-white on the dark one.
         // Device-checked twice over: tinting it toward the map put it at the map's own value and it vanished,
         // and a mid-way tone was still too weak at this width to register.
+        //
+        // At those tones sRGB holds little chroma, so a case ends up mostly a separator rather than a second
+        // colour — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour
+        // that's left is its own line's and not a neighbouring one's.
         ItineraryLegKind.entries.forEach { kind ->
             val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
 
-            assertEquals("$kind on the light basemap", 10.0, caseTone(line, darkMode = false), CHANNEL_TOLERANCE)
-            assertEquals("$kind on the dark basemap", 90.0, caseTone(line, darkMode = true), CHANNEL_TOLERANCE)
-        }
-    }
-
-    @Test
-    fun `a case keeps its line's hue even where the gamut takes the chroma`() {
-        // At these tones sRGB holds little chroma, so a case is mostly a separator rather than a second colour
-        // — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour that's left
-        // is its own line's and not a neighbouring one's.
-        ItineraryLegKind.entries.forEach { kind ->
-            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
-            listOf(false, true).forEach { darkMode ->
+            listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
                 val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
+                assertEquals("$kind case tone (darkMode=$darkMode)", expectedTone, case.tone, CHANNEL_TOLERANCE)
                 assertEquals("$kind case hue (darkMode=$darkMode)", line.hue, case.hue, HUE_TOLERANCE_DEGREES)
             }
         }
@@ -183,9 +176,6 @@ class ItineraryLegStyleTest {
             assertEquals(caseTone(pale, darkMode), caseTone(deep, darkMode), CHANNEL_TOLERANCE)
         }
     }
-
-    @SuppressLint("RestrictedApi")
-    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
 
     @Test
     fun `a folded interline chain focuses as one ride, not as its first leg`() {
@@ -205,6 +195,8 @@ class ItineraryLegStyleTest {
             assertEquals(lines.map { it.line }, lines.withLegFocus(focus))
         }
     }
+
+    private fun caseTone(line: Hct, darkMode: Boolean) = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode)).tone
 
     /** A walk → ride → walk trip as drawn lines, at the given leg indices. */
     private fun tripOf(walk: Int, ride: Int, walk2: Int) = listOf(

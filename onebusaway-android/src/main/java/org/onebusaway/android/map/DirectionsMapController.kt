@@ -99,6 +99,7 @@ class DirectionsMapController(private val host: MapHost) {
         // Every leg's points run in travel order, so whether it stamps chevrons is the style's call — a
         // dashed on-street stroke declines them (see [itineraryLegStyle]).
         legLines = drawableLegs.map { (legIndex, _, points, style) ->
+            val caps = itineraryLegCaps(legs, legIndex)
             ItineraryLegLine(
                 legIndex,
                 RoutePolyline(
@@ -107,7 +108,8 @@ class DirectionsMapController(private val host: MapHost) {
                     widthProfile = style.widthProfile,
                     directional = style.directional,
                     dash = style.dash,
-                    roundCaps = style.roundCaps
+                    roundStartCap = style.roundCaps && caps.start,
+                    roundEndCap = style.roundCaps && caps.end
                 )
             )
         }

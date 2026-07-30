@@ -107,10 +107,10 @@ enum class RouteLineDash {
  * basemap flips with the theme, so its colour is the one route colour that has to be resolved against the
  * current theme at draw time (`mapRouteLineCaseColor`) rather than when the line is produced.
  *
- * [roundCaps] asks the renderer to finish both ends with a circle rather than a flat cut. Directions
- * transit legs use these endpoint bulbs so consecutive rides remain visibly segmented even when their
- * agencies publish the same GTFS color. It is deliberately independent of [directional]: the cap says
- * where a leg starts and stops, while the repeated chevrons say which way it travels.
+ * [roundStartCap] and [roundEndCap] ask the renderer to finish that end with a circle rather than a
+ * flat cut. Directions transit legs use these endpoint bulbs so consecutive rides remain visibly
+ * segmented even when their agencies publish the same GTFS color. Separate ends let a stay-aboard
+ * interline hide its internal seam while retaining bulbs at the beginning and end of the combined ride.
  *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
@@ -123,7 +123,8 @@ data class RoutePolyline(
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,
     val cased: Boolean = false,
-    val roundCaps: Boolean = false,
+    val roundStartCap: Boolean = false,
+    val roundEndCap: Boolean = false,
     val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */

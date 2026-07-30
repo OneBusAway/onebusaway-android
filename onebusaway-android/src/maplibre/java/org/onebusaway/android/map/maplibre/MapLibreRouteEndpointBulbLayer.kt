@@ -29,8 +29,11 @@ internal class MapLibreRouteEndpointBulbLayer(private val style: Style) {
 
     fun render(polylines: List<RoutePolyline>, widthOf: (RoutePolyline) -> Float) {
         val features = polylines.flatMap { line ->
-            if (!line.roundCaps || line.points.isEmpty()) return@flatMap emptyList()
-            listOf(line.points.first(), line.points.last()).distinct().map { point ->
+            if ((!line.roundStartCap && !line.roundEndCap) || line.points.isEmpty()) return@flatMap emptyList()
+            buildList {
+                if (line.roundStartCap) add(line.points.first())
+                if (line.roundEndCap) add(line.points.last())
+            }.distinct().map { point ->
                 Feature.fromGeometry(Point.fromLngLat(point.longitude, point.latitude)).apply {
                     addNumberProperty(RADIUS_PROPERTY, widthOf(line) * ENDPOINT_BULB_RADIUS_SCALE)
                     addStringProperty(COLOR_PROPERTY, line.resolvedColor.toMapLibreColor())
@@ -58,6 +61,6 @@ internal class MapLibreRouteEndpointBulbLayer(private val style: Style) {
         const val LAYER_ID = "oba-route-endpoint-bulbs-layer"
         const val RADIUS_PROPERTY = "radius"
         const val COLOR_PROPERTY = "color"
-        const val ENDPOINT_BULB_RADIUS_SCALE = 0.75f
+        const val ENDPOINT_BULB_RADIUS_SCALE = 0.65f
     }
 }

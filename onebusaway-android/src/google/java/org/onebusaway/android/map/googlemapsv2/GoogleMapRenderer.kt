@@ -335,9 +335,10 @@ class GoogleMapRenderer(
             .width(widthPx)
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
-        if (polyline.roundCaps) {
+        if (polyline.roundStartCap || polyline.roundEndCap) {
             val bulb = endpointBulbCap(polyline.resolvedColor)
-            options.startCap(bulb).endCap(bulb)
+            if (polyline.roundStartCap) options.startCap(bulb)
+            if (polyline.roundEndCap) options.endCap(bulb)
         }
         if (polyline.directional) {
             // Advanced spans are substantially more expensive for Maps to retessellate while
@@ -354,7 +355,7 @@ class GoogleMapRenderer(
         return map.addPolyline(options)
     }
 
-    /** A circle 1.5x the stroke width, scaled by Maps together with the line at every zoom. */
+    /** A circle 1.3x the stroke width, scaled by Maps together with the line at every zoom. */
     private fun endpointBulbCap(color: Int): CustomCap {
         val descriptor = descriptorCache.get("route-endpoint-bulb:$color") {
             val bitmap = createBitmap(ENDPOINT_BULB_BITMAP_PX, ENDPOINT_BULB_BITMAP_PX)
@@ -822,8 +823,8 @@ class GoogleMapRenderer(
     fun vehicleMarkerForTripId(tripId: String): Marker? = vehicleMarkersByTripId[tripId]
 
     companion object {
-        private const val ENDPOINT_BULB_BITMAP_PX = 24
-        private const val ENDPOINT_BULB_REFERENCE_WIDTH_PX = 16f
+        private const val ENDPOINT_BULB_BITMAP_PX = 26
+        private const val ENDPOINT_BULB_REFERENCE_WIDTH_PX = 20f
 
         // gms polyline/marker dimensions are in screen pixels.
         private const val DEFAULT_ROUTE_WIDTH_PX = 10f

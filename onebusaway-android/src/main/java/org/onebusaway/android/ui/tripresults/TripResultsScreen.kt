@@ -382,6 +382,10 @@ private fun OptionCard(
  * bottom rather than the box's, so the transparent margin baked into the vector doesn't push the glyph
  * below the text (which is what it used to do — a centred 16dp box put 1.5dp of hourglass under the
  * digits).
+ *
+ * [content] holds up its half of that: it must be a value sized [METRIC_NUMBER_SIZE]/[METRIC_UNIT_SIZE]
+ * and hung on `Modifier.alignByBaseline()` — the glyph is cut to those digits, and a row that opts out
+ * of the alignment line simply isn't levelled by anything.
  */
 @Composable
 private fun MetricRow(
@@ -392,13 +396,13 @@ private fun MetricRow(
     content: @Composable RowScope.() -> Unit
 ) {
     val density = LocalDensity.current
-    val inkHeight = digitCapHeight(METRIC_NUMBER_SIZE)
+    val inkHeight = digitCapHeight(density, METRIC_NUMBER_SIZE)
     val box = glyph.boxFor(inkHeight)
     // Levelling by ink leaves each glyph a different box width (the two assets ink different fractions
     // of their viewport), which would step the rows' values apart horizontally. Reserve the widest
     // row's box for every row: Icon fits-and-centres the vector, so the extra width only centres the
     // glyph — the height still drives its scale.
-    val column = MetricGlyph.entries.maxOf { it.boxFor(inkHeight) }
+    val column = inkHeight * WIDEST_BOX_FACTOR
     Row(
         modifier = winnerOutline(winner, outlineColor),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -409,7 +413,7 @@ private fun MetricRow(
             modifier = Modifier
                 .testTag(glyph.testTag)
                 .size(width = column, height = box)
-                .alignBy { with(density) { (box * glyph.inkBottom / GLYPH_VIEWPORT).roundToPx() } }
+                .alignBy { with(density) { glyph.inkBaselineFor(inkHeight).roundToPx() } }
         )
         content()
     }
@@ -418,30 +422,48 @@ private fun MetricRow(
 /**
  * A metric row's leading glyph, together with where the glyph's ink actually sits inside its 24-unit
  * vector viewport — read off the asset's `pathData` bounds, and *not* the same for both: the hourglass
- * inks y[2, 22], the walker y[1.5, 23]. That margin is why sizing the icon box alone can't line a glyph
- * up with text (or with the other row's glyph); carrying the bounds lets [MetricRow] work in ink.
+ * inks y[2, 22], the walker y[1.5, 23]. Carrying the bounds is what lets [MetricRow] work in ink.
  *
- * Re-read the bounds if you swap a drawable here. The assets stay uncropped because both are shared:
- * `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and a step icon, where it has to sit at
- * the same visual weight as the uncropped bus/rail glyphs beside it.
+ * These four numbers are transcribed by hand, but they are not on their honour: `MetricRowRenderTest`
+ * measures where each glyph's ink actually lands against its value, so a swapped drawable, an edited
+ * path or a re-import with different margins fails the build rather than quietly un-levelling a row.
+ * Re-read the bounds when you change an asset, and let that test check your reading.
+ *
+ * The assets stay uncropped — cropping would only delete the ink fraction, not the levelling — and for
+ * the walker it can't be done at all: `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and
+ * a step icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside
+ * it, so a crop would mean a second copy of its path.
  */
 internal enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
     DURATION(R.drawable.hourglass_24, inkTop = 2f, inkBottom = 22f),
     WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f);
 
-    /** The icon box that draws this glyph's ink exactly [inkHeight] tall. */
-    fun boxFor(inkHeight: Dp): Dp = inkHeight * (GLYPH_VIEWPORT / (inkBottom - inkTop))
+    /** What the icon box has to be scaled by for this glyph's ink alone to stand a wanted height. */
+    val boxFactor: Float = GLYPH_VIEWPORT / (inkBottom - inkTop)
 
     /**
      * How `MetricRowRenderTest` finds this glyph to measure where its ink landed. A test tag rather
      * than a content description: the duration hourglass is decorative (the "min" beside it says what
      * it means), so it must stay unnamed to a screen reader.
      */
-    val testTag: String get() = "metric-glyph-$name"
+    val testTag: String = "metric-glyph-$name"
+
+    /** The icon box that draws this glyph's ink exactly [inkHeight] tall. */
+    fun boxFor(inkHeight: Dp): Dp = inkHeight * boxFactor
+
+    /** Where the ink's bottom edge falls inside that box — the row's alignment line, i.e. the baseline. */
+    fun inkBaselineFor(inkHeight: Dp): Dp = boxFor(inkHeight) * inkBottom / GLYPH_VIEWPORT
 }
 
 /** The viewport every glyph in [MetricGlyph] is authored in (Material's 24dp grid). */
 private const val GLYPH_VIEWPORT = 24f
+
+/**
+ * The widest row's box, as a multiple of the ink height every row is cut to — derived from the glyphs
+ * rather than pinned as a gutter width, so adding a metric re-levels the column instead of silently
+ * leaving one row's value indented from the others.
+ */
+private val WIDEST_BOX_FACTOR = MetricGlyph.entries.maxOf { it.boxFactor }
 
 /**
  * The metric value's type sizes. Bigger than the ETA pill's own 15/12sp: #2076 levelled the glyph and
@@ -456,23 +478,20 @@ private val METRIC_UNIT_SIZE = 13.sp
  * The ink height of a digit set at [size] — what a rider sees as the height of "32", cap to baseline,
  * which is what a glyph beside it has to match. Asked of the platform paint rather than taken as a
  * fraction of the em size: the em box reserves ascent/descent space no digit fills (a 15sp digit inks
- * about 10.7dp), and the ratio is the font's to state, not ours to assume. Measured through the current
+ * about 10.7dp), and the ratio is the font's to state, not ours to assume. Measured through the row's
  * [Density], so it tracks the user's font-scale setting along with the text.
  */
 @Composable
-private fun digitCapHeight(size: TextUnit): Dp {
-    val density = LocalDensity.current
-    return remember(density, size) {
-        val bounds = Rect()
-        Paint()
-            .apply {
-                // Matches how [EtaPartsText] sets the value: the theme's default family, bold.
-                typeface = Typeface.DEFAULT_BOLD
-                textSize = with(density) { size.toPx() }
-            }
-            .getTextBounds(CAP_SAMPLE, 0, CAP_SAMPLE.length, bounds)
-        with(density) { bounds.height().toDp() }
-    }
+private fun digitCapHeight(density: Density, size: TextUnit): Dp = remember(density, size) {
+    val bounds = Rect()
+    Paint()
+        .apply {
+            // Matches how [EtaPartsText] sets the value: the theme's default family, bold.
+            typeface = Typeface.DEFAULT_BOLD
+            textSize = with(density) { size.toPx() }
+        }
+        .getTextBounds(CAP_SAMPLE, 0, CAP_SAMPLE.length, bounds)
+    with(density) { bounds.height().toDp() }
 }
 
 /** A flat-topped, flat-bottomed digit: no round-glyph overshoot, no descender, so its ink is the cap. */

@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.tripresults
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.PixelMap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.LocalDensity
@@ -33,8 +32,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.ui.compose.components.RouteBadge
-import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.util.DisplayFormat
@@ -62,13 +59,7 @@ class MetricRowRenderTest {
      */
     @Test
     fun durationGlyphAndValueShareTheirTopAndBottomEdges() {
-        renderCard()
-
-        val glyph = inkBand(composeRule.onNodeWithTag(MetricGlyph.DURATION.testTag, useUnmergedTree = true))
-        val value = inkBand(composeRule.onNodeWithText(durationText(), useUnmergedTree = true))
-
-        assertClose("top edge", glyph.first, value.first)
-        assertClose("bottom edge", glyph.second, value.second)
+        assertLevelled(MetricGlyph.DURATION, durationText())
     }
 
     /**
@@ -78,13 +69,18 @@ class MetricRowRenderTest {
      */
     @Test
     fun walkGlyphAndValueShareTheirTopAndBottomEdges() {
+        assertLevelled(MetricGlyph.WALK, walkDistanceText())
+    }
+
+    /** Renders the card and asserts [glyph]'s ink runs from [value]'s cap line to its baseline. */
+    private fun assertLevelled(glyph: MetricGlyph, value: String) {
         renderCard()
 
-        val glyph = inkBand(composeRule.onNodeWithTag(MetricGlyph.WALK.testTag, useUnmergedTree = true))
-        val value = inkBand(composeRule.onNodeWithText(walkDistanceText(), useUnmergedTree = true))
+        val glyphInk = inkBand(composeRule.onNodeWithTag(glyph.testTag, useUnmergedTree = true))
+        val valueInk = inkBand(composeRule.onNodeWithText(value, useUnmergedTree = true))
 
-        assertClose("top edge", glyph.first, value.first)
-        assertClose("bottom edge", glyph.second, value.second)
+        assertClose("top edge", glyphInk.first, valueInk.first)
+        assertClose("bottom edge", glyphInk.last, valueInk.last)
     }
 
     /** One option card, alone on screen so each glyph and value matches a single node. */
@@ -97,16 +93,9 @@ class MetricRowRenderTest {
                         state = TripResultsUiState.Success(
                             options = listOf(
                                 ItineraryOption(
-                                    symbols = listOf(
-                                        ModeSymbol.Street(StreetMode.WALK),
-                                        ModeSymbol.Transit(
-                                            LegBadge(
-                                                listOf(RouteBadge("8", 0xFF1B6EF3.toInt())),
-                                                TransitMode.BUS,
-                                                RouteBadgeJoin.ANY_OF
-                                            )
-                                        )
-                                    ),
+                                    // The mode symbols above the metrics don't enter into the levelling,
+                                    // so the card is built with the one leg it takes to be a trip.
+                                    symbols = listOf(ModeSymbol.Street(StreetMode.WALK)),
                                     durationMinutes = DURATION_MINUTES,
                                     startTime = ServerTime(0L),
                                     endTime = ServerTime(DURATION_MINUTES * 60_000L),
@@ -142,22 +131,22 @@ class MetricRowRenderTest {
      * the threshold sits well below a fully-drawn pixel so an antialiased edge still counts, and counts
      * the same way for the icon and for the text.
      */
-    private fun inkBand(node: SemanticsNodeInteraction): Pair<Int, Int> {
+    private fun inkBand(node: SemanticsNodeInteraction): IntRange {
         val pixels = node.captureToImage().toPixelMap()
         val top = node.getUnclippedBoundsInRoot().top.value * DENSITY
-        val background = (0 until pixels.height)
+        val surface = (0 until pixels.height)
             .flatMap { y -> (0 until pixels.width).map { x -> pixels[x, y] } }
             .groupingBy { it }
             .eachCount()
             .maxBy { it.value }
             .key
-        val inked = (0 until pixels.height).filter { y ->
-            (0 until pixels.width).any { x ->
-                abs(pixels[x, y].luminance() - background.luminance()) > INK_THRESHOLD
-            }
+            .luminance()
+        val isInked = { y: Int ->
+            (0 until pixels.width).any { x -> abs(pixels[x, y].luminance() - surface) > INK_THRESHOLD }
         }
-        assertTrue("no ink found in the captured node", inked.isNotEmpty())
-        return (top + inked.first()).toInt() to (top + inked.last()).toInt()
+        val first = (0 until pixels.height).indexOfFirst(isInked)
+        assertTrue("no ink found in the captured node", first != -1)
+        return (top + first).toInt()..(top + (0 until pixels.height).indexOfLast(isInked)).toInt()
     }
 
     private fun assertClose(what: String, glyph: Int, value: Int) = assertTrue(

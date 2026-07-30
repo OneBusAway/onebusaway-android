@@ -1,0 +1,70 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ */
+package org.onebusaway.android.database.oba
+
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
+
+@Entity(tableName = "navigation_sessions")
+data class NavigationSessionRecord(
+    @PrimaryKey @ColumnInfo(name = "session_id") val sessionId: String,
+    @ColumnInfo(name = "format_version") val formatVersion: Int,
+    @ColumnInfo(name = "plan_json") val planJson: String,
+    @ColumnInfo(name = "state_json") val stateJson: String,
+    @ColumnInfo(name = "started_at_ms") val startedAtMs: Long,
+    @ColumnInfo(name = "updated_at_ms") val updatedAtMs: Long
+)
+
+@Dao
+interface NavigationSessionDao {
+    /**
+     * Whether a session worth resuming is stored. The two predicates are the ones the store applies
+     * when it actually restores a row, passed in so the age bound and the readable format version
+     * keep a single definition there: a row this query reports must be one the store would resume,
+     * or the screen ends up offering to stop a session nothing is monitoring.
+     *
+     * The age bound is on `updated_at_ms` — how long the session has been quiet — so a journey that
+     * outlasts the bound is not retired while the service is still following it.
+     */
+    @Query(
+        "SELECT EXISTS(SELECT 1 FROM navigation_sessions " +
+            "WHERE format_version = :formatVersion AND updated_at_ms >= :updatedAtOrAfterMs)"
+    )
+    fun observeHasActiveSession(formatVersion: Int, updatedAtOrAfterMs: Long): Flow<Boolean>
+
+    @Query("SELECT * FROM navigation_sessions ORDER BY updated_at_ms DESC LIMIT 1")
+    suspend fun active(): NavigationSessionRecord?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(record: NavigationSessionRecord)
+
+    @Query("DELETE FROM navigation_sessions")
+    suspend fun clear()
+
+    @Transaction
+    suspend fun replace(record: NavigationSessionRecord) {
+        clear()
+        upsert(record)
+    }
+
+    @Query("UPDATE navigation_sessions SET state_json = :stateJson, updated_at_ms = :updatedAtMs WHERE session_id = :sessionId")
+    suspend fun updateState(
+        sessionId: String,
+        stateJson: String,
+        updatedAtMs: Long
+    )
+}

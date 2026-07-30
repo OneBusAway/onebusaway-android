@@ -104,7 +104,6 @@ class SettingsViewModel @Inject constructor(
         vibrateAllowed = prefs.getBoolean(R.string.preference_key_preference_vibrate_allowed, true),
         tripPlanNotifications = prefs.getBoolean(R.string.preference_key_trip_plan_notifications, true),
         analyticsEnabled = prefs.getBoolean(R.string.preferences_key_analytics, true),
-        shareDestinationLogs = prefs.getBoolean(R.string.preferences_key_user_share_destination_logs, true),
         mapMode = prefs.getString(
             R.string.preference_key_map_mode,
             context.getString(R.string.preferences_preferred_map_option_normal2d)
@@ -183,8 +182,6 @@ class SettingsViewModel @Inject constructor(
         prefs.setBoolean(R.string.preferences_key_analytics, value)
         obaAnalytics.setSendAnonymousData(value)
     }
-
-    fun onShareDestinationLogsChanged(value: Boolean) = prefs.setBoolean(R.string.preferences_key_user_share_destination_logs, value)
 
     // endregion
 

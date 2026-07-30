@@ -1,0 +1,81 @@
+/*
+ * Copyright (C) 2015 University of South Florida, Sean J. Barbeau (sjbarbeau@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.map.googlemapsv2
+
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.net.toUri
+import com.google.android.gms.maps.model.Marker
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import org.onebusaway.android.R
+
+/** Helper methods specific to proprietary Google Maps integration. */
+object ProprietaryMapHelpV2 {
+    @JvmStatic
+    fun isMapsInstalled(context: Context): Boolean = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.packageManager.getApplicationInfo(
+                "com.google.android.apps.maps",
+                PackageManager.ApplicationInfoFlags.of(0)
+            )
+        } else {
+            getApplicationInfoLegacy(context.packageManager)
+        }
+        true
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
+    }
+
+    /**
+     * The pre-API-33 `getApplicationInfo(String, Int)`, isolated in its own function so the
+     * suppression covers exactly the deprecated call and nothing around it. The replacement
+     * overload takes an `ApplicationInfoFlags` that only exists on API 33+, so this stays until
+     * `minSdk` reaches it.
+     */
+    @Suppress("DEPRECATION")
+    private fun getApplicationInfoLegacy(packageManager: PackageManager) {
+        packageManager.getApplicationInfo("com.google.android.apps.maps", 0)
+    }
+
+    @JvmStatic
+    fun promptUserInstallMaps(context: Context) {
+        MaterialAlertDialogBuilder(context)
+            .setMessage(context.getString(R.string.please_install_google_maps_dialog_title))
+            .setCancelable(false)
+            .setPositiveButton(context.getString(R.string.install_google_maps_positive_button)) { _, _ ->
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    context.getString(R.string.android_maps_v2_market_url).toUri()
+                )
+                if (context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY) != null) {
+                    context.startActivity(intent)
+                } else {
+                    MaterialAlertDialogBuilder(context)
+                        .setMessage(context.getString(R.string.no_play_store))
+                        .setCancelable(true)
+                        .setPositiveButton(context.getString(R.string.ok)) { dialog, _ -> dialog.dismiss() }
+                        .show()
+                }
+            }
+            .show()
+    }
+
+    @JvmStatic fun setZIndex(marker: Marker, zIndex: Float) {
+        marker.zIndex = zIndex
+    }
+}

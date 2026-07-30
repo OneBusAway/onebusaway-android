@@ -75,6 +75,8 @@ android {
         getByName("androidTest") {
             assets.directories.add("$projectDir/schemas")
         }
+        // src/test/resources is on the JVM unit-test classpath by convention; the recorded
+        // navigation traces the reminder replay test reads live there.
     }
 
     /**
@@ -391,8 +393,6 @@ dependencies {
     implementation(libs.firebase.analytics)
     // Plausible Analytics
     implementation(libs.plausible.android.sdk)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.storage)
     // Firebase Crashlytics
     implementation(libs.firebase.crashlytics)
     // Google Play Services Location
@@ -435,7 +435,7 @@ dependencies {
     // for a hidden InputManager.getInstance() that Android 16 (API 36) removed, so Espresso.onIdle()
     // throws NoSuchMethodException on current devices before any test body runs.
     androidTestImplementation(libs.espresso.core)
-    // WorkManager (Java only)
+    // WorkManager remains temporarily to cancel jobs left by removed navigation-trace builds.
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.core.ktx)
     // Preferences DataStore — the backing store behind PreferencesRepository.

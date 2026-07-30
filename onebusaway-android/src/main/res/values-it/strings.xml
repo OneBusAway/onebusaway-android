@@ -229,8 +229,6 @@
     <string name="destination_reminder_beta_summary">I promemoria di destinazione utilizzano il GPS, che non è sempre affidabile e non funziona in ambienti chiusi, sotterranei o in aree senza una chiara visione del cielo. Fai sempre attenzione a ciò che ti circonda.</string>
 
     <!-- Destination reminder voice commands -->
-    <string name="destination_voice_get_ready">Preparati!</string>
-    <string name="destination_voice_request_stop">Scendi alla prossima fermata!</string>
     <string name="destination_voice_arriving_destination">Hai raggiunto la destinazione!</string>
 
     <!-- Destination reminder feedback notifications -->
@@ -244,15 +242,10 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_msg">Hai ricevuto la notifica di scendere alla fermata al momento giusto?</string>
     <string name="feedback_freeText">Scrivi il tuo feedback</string>
-    <string name="feedback_checkbox_text">Includi registro di sistema (la tua scelta verrà salvata per il futuro)</string>
     <string name="feedback_like_button_description">Sì, sono stato avvisato al momento giusto</string>
     <string name="feedback_dislike_button_description">No, non sono stato avvisato al momento giusto</string>
-    <string name="feedback_log_guide">Il tuo feedback sarà inviato a %1$s. Se selezioni “Includi registro di sistema”, %1$s riceverà dal dispositivo la posizione in tempo reale mentre arrivi a destinazione. Questo ci aiuterà a migliorare la funzione promemoria di destinazione.\n\nCambia le tue preferenze per la condivisione del registro di sistema su Impostazioni.</string>
 
     <!-- Destination reminder feedback Preferences -->
-    <string name="preferences_category_user_logs">Condividi informazioni di debug</string>
-    <string name="preferences_user_share_destination_logs_title">Includi registri dei promemoria di destinazione</string>
-    <string name="preferences_user_share_destination_logs_summary">Il dispositivo invierà informazioni anonime sulla posizione in tempo reale a %1$s per migliorare la funzione promemoria di destinazione.</string>
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">Modalità Alta precisione non abilitata</string>

@@ -16,9 +16,14 @@
  */
 package org.onebusaway.android.app
 
+import android.util.Log
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.HiltAndroidApp
+import java.io.File
 import java.util.UUID
+import kotlin.concurrent.thread
 import org.onebusaway.android.R
 import org.onebusaway.android.api.ObaApi
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
@@ -34,7 +39,12 @@ import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
 
 @HiltAndroidApp
-class Application : android.app.Application() {
+class Application :
+    android.app.Application(),
+    Configuration.Provider {
+
+    override val workManagerConfiguration: Configuration
+        get() = Configuration.Builder().build()
 
     override fun onCreate() {
         super.onCreate()
@@ -44,9 +54,14 @@ class Application : android.app.Application() {
         // Seed the per-install app UID once, eagerly, before any reader needs it. It has multiple
         // independent direct readers (ObaEndpointResolver sends it as app_uid; the Open311 report path
         // reads it as device_id), so seeding lazily in one reader can't guarantee it for the others.
-        if (PreferenceUtils.getString(ObaApi.APP_UID) == null) {
+        // Its absence is also this launch's fresh-install signal: it has been written on first launch
+        // far longer than any build that could have left navigation traces behind.
+        val freshInstall = PreferenceUtils.getString(ObaApi.APP_UID) == null
+        if (freshInstall) {
             PreferenceUtils.saveString(ObaApi.APP_UID, UUID.randomUUID().toString())
         }
+
+        removeLegacyNavigationTraces(freshInstall)
 
         // Apply the saved theme.
         ThemeUtils.applyPersistedTheme(this)
@@ -104,7 +119,47 @@ class Application : android.app.Application() {
         label?.let { AnalyticsEntryPoint.get(this).setRegion(it) }
     }
 
+    /**
+     * Removes files and queued jobs left by destination-reminder trace collection in older builds.
+     * A one-shot upgrade cost: without the flag this would run `WorkManager.getInstance` (which
+     * forces WorkManager initialization, opening its database) on the main thread of every cold
+     * start, forever, long after the work and files are gone.
+     *
+     * A [freshInstall] has nothing to remove — neither the traces nor the queued work can exist in
+     * an install that never ran an older build — so it latches without paying that main-thread
+     * WorkManager init at all. Only a genuine upgrade does the work, and only until it succeeds.
+     */
+    private fun removeLegacyNavigationTraces(freshInstall: Boolean) {
+        if (PreferenceUtils.getBoolean(LEGACY_NAV_TRACES_REMOVED, false)) return
+        if (freshInstall) {
+            PreferenceUtils.saveBoolean(LEGACY_NAV_TRACES_REMOVED, true)
+            return
+        }
+        val workManager = WorkManager.getInstance(this)
+        val cancellations = listOf(
+            workManager.cancelUniqueWork("navigation_log_upload"),
+            workManager.cancelUniqueWork("navigation_log_cleanup")
+        )
+        thread(name = "remove-navigation-traces") {
+            // Cancel first: cancelUniqueWork only *requests* cancellation, so deleting while a worker
+            // still ran could let it recreate the directory behind us. Awaiting the cancellations
+            // closes that window.
+            val cancelled = runCatching { cancellations.forEach { it.result.get() } }
+                .onFailure { Log.w(TAG, "Unable to cancel legacy navigation work", it) }
+                .isSuccess
+            // Deleting the recorded traces is the privacy-relevant half, so it happens whether or not
+            // the cancellations resolved — it is ordered after them, not conditional on them.
+            val filesDeleted = File(filesDir, "ObaNavLog").deleteRecursively()
+            // Only latch when everything is actually gone; otherwise retry on the next launch.
+            if (filesDeleted && cancelled) PreferenceUtils.saveBoolean(LEGACY_NAV_TRACES_REMOVED, true)
+        }
+    }
+
     companion object {
+        private const val TAG = "Application"
+
+        /** Latched once the legacy trace files and their queued workers are confirmed gone. */
+        private const val LEGACY_NAV_TRACES_REMOVED = "legacy_navigation_traces_removed"
 
         // Set in onCreate, cleared in onTerminate (emulator-only). Nullable-backed rather than lateinit
         // precisely because onTerminate re-nulls it; get() unwraps it non-null since it's never read

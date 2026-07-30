@@ -44,8 +44,6 @@ lint = "32.3.1"
 # --- Libraries ---
 desugar = "2.1.5"
 firebaseAnalytics = "23.2.0"
-firebaseAuth = "24.2.0"
-firebaseStorage = "22.0.1"
 firebaseCrashlytics = "20.1.0"
 firebaseMessaging = "25.1.1"
 playServicesLocation = "21.4.0"
@@ -84,8 +82,6 @@ desugar-jdk-libs = { module = "com.android.tools:desugar_jdk_libs", version.ref 
 
 # --- Firebase / Google Play services ---
 firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
-firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
-firebase-storage = { module = "com.google.firebase:firebase-storage", version.ref = "firebaseStorage" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics", version.ref = "firebaseCrashlytics" }
 firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }

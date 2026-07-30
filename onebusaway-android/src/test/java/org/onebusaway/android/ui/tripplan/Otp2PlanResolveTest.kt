@@ -354,6 +354,7 @@ class Otp2PlanResolveTest {
             to = to("Destination", 47.62, -122.34),
             route = null,
             trip = null,
+            stopCalls = emptyList(),
             legGeometry = null,
             steps = null,
             nextLegs = null

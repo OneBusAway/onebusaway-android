@@ -89,6 +89,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.app.FeatureFlags
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
@@ -418,7 +419,8 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> }
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
+    reminderControl: @Composable () -> Unit = {}
 ) {
     Box(
         modifier
@@ -445,7 +447,8 @@ fun TripResultsList(
                 onFocusRouteLeg = onFocusRouteLeg,
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
-                stopEtaStrip = stopEtaStrip
+                stopEtaStrip = stopEtaStrip,
+                reminderControl = reminderControl
             )
         }
     }
@@ -515,7 +518,17 @@ fun TripResultsSheet(
         onFocusRouteLeg = onFocusRouteLeg,
         onFocusLeg = onFocusLeg,
         onFocusPoint = onFocusPoint,
-        stopEtaStrip = stopEtaStrip
+        stopEtaStrip = stopEtaStrip,
+        reminderControl = {
+            // Destination reminders are off pending the navigation-mode rework; leaving the slot
+            // empty removes the affordance rather than offering one that starts nothing.
+            if (FeatureFlags.DESTINATION_REMINDERS) {
+                ItineraryReminderControl(
+                    itineraries.getOrNull((state as? TripResultsUiState.Success)?.selectedIndex ?: 0),
+                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+            }
+        }
     )
 }
 
@@ -594,7 +607,8 @@ private fun TripLogList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
     val dark = MaterialTheme.colorScheme.isDarkTheme()
@@ -626,6 +640,7 @@ private fun TripLogList(
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
             TripResultsHeader(state, onSelectOption, scheduleWinnerMode)
+            reminderControl()
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))
         }

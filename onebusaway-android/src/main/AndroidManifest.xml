@@ -71,6 +71,16 @@
         android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="24">
 
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                tools:node="remove" />
+        </provider>
+
         <!-- Apache HTTP legacy: removed from the default classpath at targetSdk 28+. Google Play
              Services' Maps dynamite module (loaded in-process on the API-33 emulator) references
              org.apache.http.* and crashes the instrumentation process with a NoClassDefFoundError
@@ -319,7 +329,7 @@
             android:foregroundServiceType="location" />
 
         <!-- Triggered only by the app's own explicit-component notification PendingIntents
-             (NavigationServiceProvider), so it needs no cross-app access. -->
+             so it needs no cross-app access. -->
         <receiver
             android:name=".nav.NavigationReceiver"
             android:enabled="true"
@@ -328,11 +338,6 @@
                 <action android:name=".nav.NavigationReceiver" />
             </intent-filter>
         </receiver>
-        <receiver
-            android:name=".nav.FeedbackReceiver"
-            android:enabled="true">
-        </receiver>
-
         <!-- Trip-plan-change monitor: a foreground service running a coroutine poll loop while the
              user is within the pre-departure window. No platform foregroundServiceType fits "watch a
              planned trip for changes"; specialUse is the sanctioned catch-all (subtype documents it

@@ -20,6 +20,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
+import org.onebusaway.android.app.FeatureFlags
 
 /**
  * The app's notification channels: their stable IDs and one-time registration. Extracted from
@@ -53,10 +55,9 @@ object NotificationChannels {
 
     /**
      * Vibration pattern for the destination arrival alerts, shared by the [DESTINATION_ARRIVAL_ID]
-     * channel (API 26+) and the notification builders' `setVibrate` (pre-26). Exposed as a
-     * `@JvmField` so the Java notification code (`NavigationServiceProvider`) reads the same source.
+     * channel (API 26+) and the arrival notification's `setVibrate` (the API 23-25 floor, where
+     * the channel does not exist).
      */
-    @JvmField
     val DESTINATION_VIBRATION_PATTERN =
         longArrayOf(2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000, 2000, 1000)
 
@@ -96,6 +97,24 @@ object NotificationChannels {
                 description = "Notifications to remind the user of an arriving bus."
             }
         )
+        registerDestinationChannels(manager)
+    }
+
+    /**
+     * The destination-reminder channels, which exist only while that feature does. A channel is a
+     * user-visible row in the system notification settings, so registering these unconditionally
+     * would offer the rider switches for alerts nothing can post. When the feature is off they are
+     * deleted rather than merely skipped, so a device that ran a build with it on does not keep the
+     * dead rows; deleting is a no-op when they were never created, and re-creating one later
+     * restores whatever the rider had set on it.
+     */
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun registerDestinationChannels(manager: NotificationManager) {
+        if (!FeatureFlags.DESTINATION_REMINDERS) {
+            manager.deleteNotificationChannel(DESTINATION_ALERT_ID)
+            manager.deleteNotificationChannel(DESTINATION_ARRIVAL_ID)
+            return
+        }
         manager.createNotificationChannel(
             NotificationChannel(
                 DESTINATION_ALERT_ID,

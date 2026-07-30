@@ -27,6 +27,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import org.onebusaway.android.R
+import org.onebusaway.android.app.FeatureFlags
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.ui.compose.findActivity
@@ -79,12 +80,18 @@ fun NavGraphBuilder.tripGraph(navController: NavHostController) {
                 onStopClick = { sid, name, _ ->
                     navController.navigate(NavRoutes.arrivals(sid, name))
                 },
-                onSetDestinationReminder = rememberDestinationReminderAction(
-                    viewModel = tripVm,
-                    prefsRepository = PreferencesEntryPoint.get(context),
-                    tripId = tripId,
-                    stopId = tripStopId
-                ),
+                // Off pending the navigation-mode rework; null removes the long-press affordance
+                // rather than leaving a gesture that starts nothing.
+                onSetDestinationReminder = if (!FeatureFlags.DESTINATION_REMINDERS) {
+                    null
+                } else {
+                    rememberDestinationReminderAction(
+                        viewModel = tripVm,
+                        prefsRepository = PreferencesEntryPoint.get(context),
+                        tripId = tripId,
+                        stopId = tripStopId
+                    )
+                },
                 onShowTrajectory = { navController.navigate(NavRoutes.tripTrajectory(tripId)) }
             )
         }

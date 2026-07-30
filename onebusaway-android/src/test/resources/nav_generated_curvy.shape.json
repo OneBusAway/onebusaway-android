@@ -1,0 +1,17 @@
+{
+  "encodedPoints": "mi|fE`qijUR@NHNR~Bk@X@FXHjDmDb@G@UB_@Dq@H}C^Xh@b@b@^XPLPNZTzCdCnA`AhA~@hA~@pAfAdBvANNVh@Lr@?r@Kp@aFxJUn@]xAYzB?Bg@`FAJCXu@lHALEZ[~Co@fGcBfPUxBg@hFE|A@fAHfAyApC_CnEoAbCcBfDIPa@v@GJYl@Wb@_AbB{E`JwDhHe@z@cG`Ls@rAq@lAq@jAiAxAm@l@mAbAmBlAkB|@i@TE@g@Pg@Dc@G]SY]Mc@Ee@Dg@J_@RUZQ`@?`@JVXL^NrAB`A@pAEdBGb@e@hCe@~B}CjPW`Ag@pBcAlCkAfCwAbCmDtFqDzFqN|Tk@dAWb@Wh@e@zAY|AQ`BAzA@nAB|C?jAKNw@Hs@Fo@Hs@Js@Jo@Js@L}@P]HQBw@Rm@Pq@Rq@Ru@Pm@Lw@J[DYFs@Jq@Fu@Fo@Bq@Ds@?u@Bw@Ac@AM?s@?q@Cs@Aq@As@Ce@?Q?u@Cu@Au@Aw@Aq@Cs@?w@@g@@O@w@?c@B_@Bc@De@Da@Da@Da@F]Da@Ha@He@HODUD_@Hc@L]La@J_@Jc@Ja@F_@Fc@Fa@Ba@Bg@Be@?a@AA?a@Ac@Aa@Cc@Gc@Ge@Ge@Ge@Cc@Ag@@e@B_@Fg@H{@Py@PUDeB`@{Cn@mE~@}Dx@{@P[FoB`@kAiJOgA_AiHM}@aAoHmAkJoA{ICSmAmJqAiJqAuJU_By@qGqAkJqAmJyCsIuCwIsCwIWw@mB}Fc@eAcAoBkAqBgA}Ao@}@m@y@uCyDq@mAc@cA[mAGUG[Ky@{@eGOgAIc@QcBcAcIu@uFUeBKy@g@wDGa@Gc@QoAE[Gc@OmAS}Aa@oCASAEAGWmBTKZETCp@GZ@PHVTPXVf@DZ@X?rBJXNHt@WBE^KBI^MBGZK",
+  "pointCount": 288,
+  "boardOffsetMeters": null,
+  "penultimateOffsetMeters": 11537.580439154553,
+  "alightOffsetMeters": 11940.865899006016,
+  "provenance": {
+    "tripId": "MTS_19445691",
+    "shapeId": "MTS_8_0_67",
+    "routeName": "8",
+    "boardStopId": "MTS_94019",
+    "shapeLengthMeters": 13625.3,
+    "sinuosity": 2.342,
+    "isLoop": false,
+    "note": "Real route geometry and stop offsets; simulated vehicle motion and GPS error."
+  }
+}

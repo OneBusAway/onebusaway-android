@@ -82,10 +82,8 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     endTime = requireField("leg.end", (end.estimated?.time ?: end.scheduledTime).toServerTime()),
     from = from.placeFields.toTripPlace(),
     to = to.placeFields.toTripPlace(),
-    // Not requested by Plan.graphql: OTP2's nearest equivalents (`stopCalls`/deprecated
-    // `intermediatePlaces`) have a materially different shape from OTP1's flat stop-place list.
     intermediateStops = null,
-    stop = null,
+    stop = stopCalls.toIntermediateTripPlaces(),
     steps = steps.orEmpty().filterNotNull().map { it.toTripStep() },
     legGeometry = legGeometry?.let { TripLegGeometry(points = it.points, length = it.length ?: 0) },
     // OTP's own alternative-leg search for this leg (#2010) — null on a non-transit leg, and carried
@@ -93,6 +91,33 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     // itinerary (the next leg's departure) and so can't be answered leg-at-a-time here.
     alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() }
 )
+
+/**
+ * OTP2's `stopCalls` includes the boarding and alighting calls, but `TripLeg.stop` is consumed as a
+ * leg's *intermediate* stops — the directions drawer's "N stops in between" and the reminder plan's
+ * stop progression — so the two endpoints are dropped here; they already arrive as `from`/`to`.
+ *
+ * A call this query cannot represent as a transit stop (OTP's flex `Location`/`LocationGroup`
+ * variants) collapses the whole list to null rather than quietly omitting one stop: a hole in the
+ * middle would shift the reminder plan's penultimate stop and alert the rider at the wrong place.
+ */
+private fun List<PlanQuery.StopCall>.toIntermediateTripPlaces(): List<TripPlace>? {
+    if (size <= 2) return emptyList()
+    return subList(1, size - 1).map { call ->
+        val stop = call.stopLocation.onStop ?: return null
+        TripPlace(
+            name = stop.name,
+            stopId = stop.gtfsId,
+            // The rider-facing stop number, which the directions drawer appends to each intermediate
+            // stop's name. Omitting it here is why OTP2 legs showed a bare name where OTP1 showed
+            // "Name (1002)".
+            stopCode = stop.code,
+            lat = stop.lat,
+            lon = stop.lon,
+            vertexType = TripVertexType.TRANSIT
+        )
+    }
+}
 
 private fun PlanQuery.NextLeg.toTripLegAlternative(): TripLegAlternative = TripLegAlternative(
     routeId = route?.alternativeRouteFields?.gtfsId,

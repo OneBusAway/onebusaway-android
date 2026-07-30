@@ -23,10 +23,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.app.FeatureFlags
 
 /**
  * Verifies the destination-reminder notification channels are configured so the arrival alerts
@@ -36,6 +40,11 @@ import org.junit.runner.RunWith
  * Notification channels only exist on API 26+; below that [NotificationChannels.registerAll] is a
  * no-op and there's nothing to assert. [SdkSuppress] statically gates the whole class to API 26+ so
  * the test runner skips it — and the channel API calls below it — on lower floors.
+ *
+ * A channel is also a user-visible row in the system notification settings, so these two exist only
+ * while the feature does. The configuration assertions therefore run only when
+ * [FeatureFlags.DESTINATION_REMINDERS] is on, and [destinationChannelsAreAbsentWhileTheFeatureIsOff]
+ * covers the other state — each is skipped, not failed, when it does not apply.
  */
 @RunWith(AndroidJUnit4::class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.O)
@@ -58,6 +67,7 @@ class NotificationChannelsTest {
 
     @Test
     fun arrivalChannel_isHighImportance_andVibrates() {
+        assumeTrue("destination reminders are off; nothing registers this channel", remindersEnabled)
         val channel = requireNotNull(
             manager.getNotificationChannel(NotificationChannels.DESTINATION_ARRIVAL_ID)
         ) { "Destination arrival channel should be registered" }
@@ -71,6 +81,7 @@ class NotificationChannelsTest {
 
     @Test
     fun progressChannel_staysQuiet() {
+        assumeTrue("destination reminders are off; nothing registers this channel", remindersEnabled)
         // The distance/progress notification re-posts continuously, so its channel must not buzz.
         val channel = requireNotNull(
             manager.getNotificationChannel(NotificationChannels.DESTINATION_ALERT_ID)
@@ -78,4 +89,21 @@ class NotificationChannelsTest {
         assertEquals(NotificationManager.IMPORTANCE_LOW, channel.importance)
         assertFalse("Progress channel must not vibrate", channel.shouldVibrate())
     }
+
+    @Test
+    fun destinationChannelsAreAbsentWhileTheFeatureIsOff() {
+        assumeFalse("destination reminders are on; the channels are expected", remindersEnabled)
+        // Registration deletes rather than skips these, so a device that ran a build with the
+        // feature enabled does not keep switches for alerts nothing can post.
+        assertNull(
+            "Destination arrival channel must not be offered while the feature is off",
+            manager.getNotificationChannel(NotificationChannels.DESTINATION_ARRIVAL_ID)
+        )
+        assertNull(
+            "Destination alert channel must not be offered while the feature is off",
+            manager.getNotificationChannel(NotificationChannels.DESTINATION_ALERT_ID)
+        )
+    }
+
+    private val remindersEnabled: Boolean get() = FeatureFlags.DESTINATION_REMINDERS
 }

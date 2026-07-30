@@ -223,3 +223,16 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         )
     }
 }
+
+/** Adds durable, versioned destination-reminder sessions without changing the legacy nav_stops table. */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `navigation_sessions` " +
+                "(`session_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, " +
+                "`plan_json` TEXT NOT NULL, `state_json` TEXT NOT NULL, " +
+                "`started_at_ms` INTEGER NOT NULL, `updated_at_ms` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`session_id`))"
+        )
+    }
+}

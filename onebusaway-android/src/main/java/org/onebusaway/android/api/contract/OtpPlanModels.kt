@@ -133,6 +133,7 @@ data class OtpLegDto(
 @Serializable
 data class OtpPlaceDto(
     val name: String? = null,
+    val stopId: String? = null,
     val stopCode: String? = null,
     val lat: Double? = null,
     val lon: Double? = null,

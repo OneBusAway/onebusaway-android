@@ -40,7 +40,6 @@ class SettingsUiStateTest {
         vibrateAllowed = true,
         tripPlanNotifications = true,
         analyticsEnabled = true,
-        shareDestinationLogs = true,
         mapMode = "normal",
         preferredUnits = "Automatic",
         preferredTempUnits = "Automatic",
@@ -83,16 +82,6 @@ class SettingsUiStateTest {
         assertFalse(build(region = RegionSummaryInfo("R", hasOtp = false)).showTripPlanNotifications)
         // No region (custom API): the row stays.
         assertTrue(build(region = null).showTripPlanNotifications)
-    }
-
-    // --- user logs ---
-
-    @Test
-    fun `user logs category only on Android 7 and 8 (24 through 27)`() {
-        assertFalse(build(env = env(sdkInt = 23)).showUserLogsCategory)
-        assertTrue(build(env = env(sdkInt = 24)).showUserLogsCategory)
-        assertTrue(build(env = env(sdkInt = 27)).showUserLogsCategory)
-        assertFalse(build(env = env(sdkInt = 28)).showUserLogsCategory)
     }
 
     // --- flavor: donate vs powered-by ---

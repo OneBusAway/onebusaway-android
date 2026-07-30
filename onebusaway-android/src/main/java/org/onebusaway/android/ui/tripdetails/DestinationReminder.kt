@@ -16,6 +16,7 @@
  */
 package org.onebusaway.android.ui.tripdetails
 
+import android.Manifest
 import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -56,6 +57,7 @@ import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.ui.compose.components.OptOutInfoDialog
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.rememberNotificationPermissionRequest
+import org.onebusaway.android.util.PermissionUtils
 
 /**
  * The destination-reminder flow (set a reminder to alight at a chosen stop), as a reusable Compose
@@ -83,8 +85,9 @@ internal fun rememberDestinationReminderAction(
     var showLocationModeDialog by remember { mutableStateOf(false) }
     var showBetaDialog by remember { mutableStateOf(false) }
 
-    // Saved when we must wait for the user to enable location settings; started on the OK result.
-    var pendingServiceIntent by remember { mutableStateOf<Intent?>(null) }
+    // The stop we are still working towards while a system prompt (location settings, location
+    // permission) is in front of the user; the flow resumes from here on the result.
+    var pendingStopIndex by remember { mutableStateOf<Int?>(null) }
 
     fun startNavigationService(serviceIntent: Intent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -94,17 +97,95 @@ internal fun rememberDestinationReminderAction(
         }
     }
 
+    // Requests POST_NOTIFICATIONS and resyncs the push registration on the result (see the helper).
+    val requestNotificationPermission = rememberNotificationPermissionRequest()
+
+    /** Builds the NavigationService intent for the destination at [position]; flags the stop. */
+    fun setUpNavigationService(position: Int): Intent? {
+        val stops = viewModel.destinationStops(position) ?: return null
+        val serviceIntent = Intent(context, NavigationService::class.java).apply {
+            putExtra(NavigationService.DESTINATION_ID, stops.destinationStopId)
+            putExtra(NavigationService.BEFORE_STOP_ID, stops.beforeStopId)
+            putExtra(NavigationService.TRIP_ID, tripId)
+        }
+        viewModel.setDestinationId(stops.destinationStopId)
+        return serviceIntent
+    }
+
+    fun dialogForLocationModeChanges() {
+        showLocationModeDialog = true
+    }
+
+    fun destinationReminderBetaDialog() {
+        showBetaDialog = true
+    }
+
+    /** Starts the reminder for [position]; only called once location is on and precise location granted. */
+    fun startReminder(position: Int) {
+        if (!prefsRepository.getBoolean(R.string.preference_key_never_show_change_location_mode_dialog, false) &&
+            !isHighAccuracyLocationMode(context)
+        ) {
+            dialogForLocationModeChanges()
+        }
+        if (!prefsRepository.getBoolean(R.string.preference_key_never_show_destination_reminder_beta_dialog, false)) {
+            destinationReminderBetaDialog()
+        }
+        AnalyticsEntryPoint.get(context).reportUiEvent(
+            PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
+            resources.getString(R.string.analytics_label_destination_reminder),
+            resources.getString(R.string.analytics_label_destination_reminder_variant_started)
+        )
+        requestNotificationPermission()
+        val serviceIntent = setUpNavigationService(position) ?: return
+        startNavigationService(serviceIntent)
+        Toast.makeText(
+            context,
+            resources.getString(R.string.destination_reminder_title),
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val position = pendingStopIndex ?: return@rememberLauncherForActivityResult
+        pendingStopIndex = null
+        if (grants[Manifest.permission.ACCESS_FINE_LOCATION] == true) {
+            startReminder(position)
+        } else {
+            val message = if (grants.values.any { it }) {
+                R.string.destination_reminder_precise_location_required
+            } else {
+                R.string.destination_reminder_location_required
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /**
+     * Requires ACCESS_FINE_LOCATION before starting, mirroring the itinerary entry point: the service
+     * needs a precise fix to tell which stop the rider is at, so without it the reminder can never
+     * fire — report that rather than toasting success for a session that will do nothing.
+     */
+    fun startWithLocationPermission(position: Int) {
+        if (PermissionUtils.hasGrantedPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)) {
+            startReminder(position)
+            return
+        }
+        pendingStopIndex = position
+        locationPermissionLauncher.launch(PermissionUtils.LOCATION_PERMISSIONS)
+    }
+
     // Replaces startResolutionForResult(...) + onActivityResult(REQUEST_ENABLE_LOCATION).
     val locationSettingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
+        val position = pendingStopIndex ?: return@rememberLauncherForActivityResult
+        pendingStopIndex = null
         if (result.resultCode == Activity.RESULT_OK) {
-            pendingServiceIntent?.let { startNavigationService(it) }
+            startWithLocationPermission(position)
         }
     }
-
-    // Requests POST_NOTIFICATIONS and resyncs the push registration on the result (see the helper).
-    val requestNotificationPermission = rememberNotificationPermissionRequest()
 
     fun askUserToTurnLocationOn() {
         @Suppress("DEPRECATION")
@@ -131,55 +212,14 @@ internal fun rememberDestinationReminderAction(
             }
     }
 
-    /** Builds the NavigationService intent for the destination at [position]; flags the stop. */
-    fun setUpNavigationService(position: Int): Intent? {
-        val stops = viewModel.destinationStops(position) ?: return null
-        val serviceIntent = Intent(context, NavigationService::class.java).apply {
-            putExtra(NavigationService.DESTINATION_ID, stops.destinationStopId)
-            putExtra(NavigationService.BEFORE_STOP_ID, stops.beforeStopId)
-            putExtra(NavigationService.TRIP_ID, tripId)
-        }
-        viewModel.setDestinationId(stops.destinationStopId)
-        pendingServiceIntent = serviceIntent
-        return serviceIntent
-    }
-
-    fun dialogForLocationModeChanges() {
-        showLocationModeDialog = true
-    }
-
-    fun destinationReminderBetaDialog() {
-        showBetaDialog = true
-    }
-
     fun onDestinationReminderConfirmed(position: Int) {
         if (!isLocationEnabled(context)) {
-            // Still build the pending service intent so the location-settings result can start it.
-            if (setUpNavigationService(position) == null) return
+            // Remember the stop so the location-settings result can resume where we left off.
+            pendingStopIndex = position
             askUserToTurnLocationOn()
             return
         }
-        if (!prefsRepository.getBoolean(R.string.preference_key_never_show_change_location_mode_dialog, false) &&
-            !isHighAccuracyLocationMode(context)
-        ) {
-            dialogForLocationModeChanges()
-        }
-        if (!prefsRepository.getBoolean(R.string.preference_key_never_show_destination_reminder_beta_dialog, false)) {
-            destinationReminderBetaDialog()
-        }
-        AnalyticsEntryPoint.get(context).reportUiEvent(
-            PlausibleAnalytics.REPORT_DESTINATION_REMINDER_EVENT_URL,
-            resources.getString(R.string.analytics_label_destination_reminder),
-            resources.getString(R.string.analytics_label_destination_reminder_variant_started)
-        )
-        requestNotificationPermission()
-        val serviceIntent = setUpNavigationService(position) ?: return
-        startNavigationService(serviceIntent)
-        Toast.makeText(
-            context,
-            resources.getString(R.string.destination_reminder_title),
-            Toast.LENGTH_LONG
-        ).show()
+        startWithLocationPermission(position)
     }
 
     fun confirmDestinationReminder(position: Int) {

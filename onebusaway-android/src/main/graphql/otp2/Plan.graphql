@@ -93,6 +93,14 @@ query Plan(
                         gtfsId
                         tripHeadsign
                     }
+                    # Ordered calls include both board and alight. The reminder plan builder consumes
+                    # this same normalized stop list for OTP1 and OTP2, so incomplete legs fail as one
+                    # user-visible validation error rather than starting partial reminder coverage.
+                    stopCalls {
+                        stopLocation {
+                            ... on Stop { gtfsId name lat lon code }
+                        }
+                    }
                     # Interleaved/interchangeable routes (#2010): OTP's own alternative-leg search,
                     # which returns the next departures that serve this leg's *exact* board and alight
                     # stops on ANY route (the GTFS GraphQL API runs it with

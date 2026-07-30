@@ -292,12 +292,40 @@
     <string name="destination_reminder_cancel">Cancel</string>
     <string name="destination_reminder_title">Destination reminder is set</string>
     <string name="destination_reminder_cancel_trip">Cancel reminder</string>
+    <string name="destination_reminder_start">Start reminders</string>
+    <string name="destination_reminder_stop">Stop reminders</string>
+    <string name="destination_reminder_missing_trip">This transit ride does not include a trip identifier.</string>
+    <!-- Not a plural: %1$d identifies which leg of the itinerary is at fault, so it names one leg
+         however many there are. -->
+    <string name="destination_reminder_incomplete_stop_information" tools:ignore="PluralsCandidate">Reminders are unavailable because transit leg %1$d has incomplete stop information.</string>
+    <string name="destination_reminder_no_transit_rides">This itinerary has no transit rides to monitor.</string>
+    <string name="destination_reminder_invalid_plan">Unable to create destination reminders.</string>
+    <string name="destination_reminder_location_required">Location permission is required for destination reminders.</string>
+    <string name="destination_reminder_precise_location_required">Destination reminders need precise location to tell which stop you are at.</string>
+    <string name="destination_reminder_notifications_denied">Notifications are turned off, so reminders will be spoken only. Return to this screen to stop them.</string>
+    <string name="destination_reminder_enable_location">Turn on device location, then try again.</string>
+    <string name="destination_reminder_silence">Silence</string>
+    <string name="destination_reminder_starting">Starting destination reminders…</string>
+    <plurals name="destination_reminder_monitoring_rides">
+        <item quantity="one">Monitoring %1$d transit ride</item>
+        <item quantity="other">Monitoring %1$d transit rides</item>
+    </plurals>
+    <string name="destination_reminder_transfer_at">Prepare to transfer at %1$s</string>
+    <string name="destination_reminder_request_stop_for">Request your stop for %1$s</string>
+    <string name="destination_reminder_prepare_to_exit">Prepare to exit at %1$s</string>
+    <string name="destination_reminder_arrived">You have arrived at your destination</string>
+    <plurals name="destination_reminder_confirm_rides">
+        <item quantity="one">Start reminders for %1$d transit ride?</item>
+        <item quantity="other">Start reminders for %1$d transit rides?</item>
+    </plurals>
     <string name="destination_reminder_beta_title">Destination reminders are in beta</string>
     <string name="destination_reminder_beta_summary">Destination reminders rely on GPS, which is not always reliable and will not work indoors, underground, or in areas without a clear view of the sky. Always be aware of your surroundings.</string>
 
     <!-- Destination reminder voice commands -->
-    <string name="destination_voice_get_ready">Get ready!</string>
-    <string name="destination_voice_request_stop">Exit at the next stop!</string>
+    <string name="destination_voice_get_ready_for">Get ready for %1$s.</string>
+    <string name="destination_voice_request_stop_for">Request your stop for %1$s.</string>
+    <string name="destination_voice_prepare_to_exit">Prepare to exit at %1$s.</string>
+    <string name="destination_voice_transfer_at">Prepare to transfer at %1$s.</string>
     <string name="destination_voice_arriving_destination">Arriving at destination!</string>
 
     <!-- Destination reminder feedback notifications -->
@@ -311,17 +339,8 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_msg">Were you notified at the right time to exit at your stop?</string>
     <string name="feedback_freeText">Write your feedback</string>
-    <string name="feedback_checkbox_text">Include system log (your choice will be saved for future trips)</string>
     <string name="feedback_like_button_description">Yes, I was notified at the right time</string>
     <string name="feedback_dislike_button_description">No, I was not notified at the right time</string>
-    <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="feedback_log_guide">Your feedback will be sent to %1$s. If you check “Include system logs”, real-time location information from your device recorded as you approached your destination stop will be shared with %1$s so developers can improve the destination reminder feature.\n\nChange your preference for sharing system logs in Settings.</string>
-
-    <!-- Destination reminder feedback Preferences -->
-    <string name="preferences_category_user_logs">Share debugging information</string>
-    <string name="preferences_user_share_destination_logs_title">Include destination reminder logs</string>
-    <!-- Note: %1$s is replaced with app_name for white-label support -->
-    <string name="preferences_user_share_destination_logs_summary">Anonymous real-time location information from your device will be shared with %1$s to improve the destination reminder feature.</string>
 
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">High accuracy location not enabled</string>

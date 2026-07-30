@@ -287,31 +287,12 @@ object NavRoutes {
 
     // --- Feedback ---
     // The post-trip destination-reminder feedback screen. Reached only from the post-trip notification's
-    // Yes/No actions (see NavigationService). RESPONSE is an Int (FEEDBACK_YES / FEEDBACK_NO); the rest
-    // mirror the former intent extras (logFile is read on send; tripId/notificationId are carried to
-    // preserve the contract). Declared last so it can reuse ARG_TRIP_ID above.
+    // Yes/No actions (see NavigationService). RESPONSE is an Int (FEEDBACK_YES / FEEDBACK_NO).
     const val ARG_FEEDBACK_RESPONSE = "feedbackResponse"
-    const val ARG_LOG_FILE = "logFile"
-    const val ARG_NOTIFICATION_ID = "notificationId"
-    const val FEEDBACK = "feedback?$ARG_FEEDBACK_RESPONSE={$ARG_FEEDBACK_RESPONSE}" +
-        "&$ARG_LOG_FILE={$ARG_LOG_FILE}&$ARG_TRIP_ID={$ARG_TRIP_ID}" +
-        "&$ARG_NOTIFICATION_ID={$ARG_NOTIFICATION_ID}"
+    const val FEEDBACK = "feedback?$ARG_FEEDBACK_RESPONSE={$ARG_FEEDBACK_RESPONSE}"
 
-    /** Builds a navigable [FEEDBACK] route; null id args fall back to the nav-arg defaults. */
-    fun feedback(
-        response: Int,
-        logFile: String? = null,
-        tripId: String? = null,
-        notificationId: Int = 0
-    ): String {
-        val query = buildList {
-            add("$ARG_FEEDBACK_RESPONSE=$response")
-            if (logFile != null) add("$ARG_LOG_FILE=${Uri.encode(logFile)}")
-            if (tripId != null) add("$ARG_TRIP_ID=${Uri.encode(tripId)}")
-            if (notificationId != 0) add("$ARG_NOTIFICATION_ID=$notificationId")
-        }.joinToString("&")
-        return "feedback?$query"
-    }
+    /** Builds a navigable [FEEDBACK] route. */
+    fun feedback(response: Int): String = "feedback?$ARG_FEEDBACK_RESPONSE=$response"
 
     // --- Trip plan (former TripPlanActivity + TripPlanLocationPickerActivity) ---
     // The trip-plan form + results screen. No args (re-entry from a trip-plan monitor notification

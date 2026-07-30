@@ -56,7 +56,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -758,9 +757,11 @@ fun HomeScreen(
                                                     }
                                                 )
                                             },
-                                            modifier = Modifier
-                                                .align(Alignment.BottomCenter)
-                                                .onSizeChanged { directionsSheetHeightPx = it.height }
+                                            // Its own settled height (peek vs expanded), not a measured
+                                            // size: the sheet now hosts a full-screen scaffold over the
+                                            // map, so the composable's own bounds are the whole screen.
+                                            onSheetHeightPx = { directionsSheetHeightPx = it },
+                                            modifier = Modifier.fillMaxSize()
                                         )
                                         directionsError != null -> DirectionsErrorSnackbar(
                                             error = directionsError,

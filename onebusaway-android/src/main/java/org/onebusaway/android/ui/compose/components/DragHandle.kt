@@ -16,10 +16,12 @@
 package org.onebusaway.android.ui.compose.components
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
@@ -31,6 +33,13 @@ import org.onebusaway.android.R
 val DRAG_HANDLE_BAR_HEIGHT = 4.dp
 val DRAG_HANDLE_VERTICAL_PADDING = 9.dp
 val DRAG_HANDLE_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_VERTICAL_PADDING * 2
+
+// The same bar in a full 48dp band — Android's minimum touch-target size, which is also the geometry
+// Material 3 gives `BottomSheetDefaults.DragHandle`. Used by [SheetDragHandle] for a sheet that collapses
+// to a handle-only peek, where the band is all that separates a tap from the system gesture area; the
+// tighter band above is for handles sitting atop content that is already on screen.
+val DRAG_HANDLE_TOUCH_TARGET_PADDING = 22.dp
+val DRAG_HANDLE_TOUCH_TARGET_HEIGHT = DRAG_HANDLE_BAR_HEIGHT + DRAG_HANDLE_TOUCH_TARGET_PADDING * 2
 
 /**
  * The short tinted grab-bar pill drawn inside a bottom-sheet drag handle — a muted grey matching the
@@ -45,5 +54,22 @@ fun DragHandleBar(modifier: Modifier = Modifier) {
         shape = RoundedCornerShape(percent = 50)
     ) {
         Box(Modifier.size(width = 32.dp, height = DRAG_HANDLE_BAR_HEIGHT))
+    }
+}
+
+/**
+ * [DragHandleBar] centred in a full 48dp touch-target band ([DRAG_HANDLE_TOUCH_TARGET_HEIGHT]) — the
+ * handle to hand a Material `BottomSheetScaffold` as its `sheetDragHandle`. The scaffold wraps whatever
+ * it's given with the sheet's tap-to-toggle and expand/collapse accessibility actions, so this only has
+ * to supply the geometry; sizing the band here (rather than using `BottomSheetDefaults.DragHandle`) keeps
+ * a handle-only peek height computable from an app-owned constant instead of one of M3's private ones.
+ */
+@Composable
+fun SheetDragHandle(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier.padding(vertical = DRAG_HANDLE_TOUCH_TARGET_PADDING),
+        contentAlignment = Alignment.Center
+    ) {
+        DragHandleBar()
     }
 }

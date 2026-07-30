@@ -260,6 +260,15 @@ class MapViewModel @Inject constructor(
     /** The actual palette used for routes around the focused stop. */
     val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
 
+    /**
+     * Suspend map content padding while the rider aims the centre crosshair at a From/To point. The
+     * captured point is the camera target, which padding would move off the crosshair — see
+     * [org.onebusaway.android.map.render.MapRenderState.setCenterPickActive].
+     */
+    fun setCenterPickActive(active: Boolean) {
+        mapHost.setCenterPickActive(active)
+    }
+
     /** Apply the active focus banner's bottom edge in map coordinates; zero clears it. */
     fun setFocusBannerBottomEdge(bottomPx: Int) {
         mapHost.setFocusBannerBottomEdge(if (bottomPx > 0) bottomPx + focusBannerMarkerPaddingPx else 0)

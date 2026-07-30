@@ -677,8 +677,6 @@
     <string name="title_activity_about">Informazioni</string>
     <!-- Trip Planner strings -->
 
-    <string name="trip_plan_from">Da:</string>
-    <string name="trip_plan_to">A:</string>
     <string name="trip_plan_leaving">Partenza</string>
     <string name="trip_plan_arriving">Arrivo</string>
     <string name="trip_plan_date">Data</string>

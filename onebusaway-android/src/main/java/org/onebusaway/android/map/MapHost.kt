@@ -213,6 +213,9 @@ class MapHost(
 
     fun setDirectionsBottomInset(px: Int) = renderState.setDirectionsBottomInset(px)
 
+    /** See [MapRenderState.setCenterPickActive]: no padding while the centre crosshair is being aimed. */
+    fun setCenterPickActive(active: Boolean) = renderState.setCenterPickActive(active)
+
     // Pending re-fit of a padding-sensitive frame (route / itinerary) as the map's obstruction insets —
     // the top chrome/focus banner/directions form, the bottom arrivals/directions sheet — are measured
     // and land *after* the frame first fit (see [frameRoute]/[frameItinerary]). Cancelled the moment any

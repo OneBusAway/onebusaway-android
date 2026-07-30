@@ -402,7 +402,9 @@ class MapRenderState {
     private var topChromeInsetPx = 0
     private var focusBannerBottomEdgePx = 0
 
-    private fun applyTopPadding() = _padding.update { it.copy(topPx = maxOf(topChromeInsetPx, focusBannerBottomEdgePx)) }
+    private fun applyTopPadding() = _padding.update {
+        it.copy(topPx = if (centerPickActive) 0 else maxOf(topChromeInsetPx, focusBannerBottomEdgePx))
+    }
 
     /** The floating top-chrome inset (status bar + FAB-row clearance); keeps the compass below the FABs. */
     fun setTopChromeInset(px: Int) {
@@ -423,7 +425,26 @@ class MapRenderState {
     private var arrivalsBottomInsetPx = 0
     private var directionsBottomInsetPx = 0
 
-    private fun applyBottomPadding() = _padding.update { it.copy(bottomPx = maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx)) }
+    private fun applyBottomPadding() = _padding.update {
+        it.copy(bottomPx = if (centerPickActive) 0 else maxOf(arrivalsBottomInsetPx, directionsBottomInsetPx))
+    }
+
+    // Padding moves the camera *target* to the middle of the padded region. That is what every other
+    // caller wants — a framed route should sit in the visible band, not under the chrome — but it is
+    // exactly wrong while the rider is aiming the centre crosshair, because the point captured on
+    // confirm IS the camera target. With a top inset the captured point lands below the crosshair by
+    // half the inset; with a bottom inset, above it. So a pick suspends padding outright rather than
+    // zeroing contributors one at a time: there are four independent writers here, and any of them
+    // left standing would reintroduce the offset.
+    private var centerPickActive = false
+
+    /** Suspends all content padding, so the camera target is the crosshair the rider is aiming. */
+    fun setCenterPickActive(active: Boolean) {
+        if (centerPickActive == active) return
+        centerPickActive = active
+        applyTopPadding()
+        applyBottomPadding()
+    }
 
     /** The arrivals sheet's bottom inset (keeps the focused stop above the sheet). */
     fun setBottomPadding(px: Int) {

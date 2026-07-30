@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -120,7 +119,6 @@ import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.VehicleMode
 import org.onebusaway.android.ui.tripplan.WalkPreference
-import org.onebusaway.android.ui.tripplan.labelRes
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -175,10 +173,10 @@ fun DirectionsFormCard(
                 state = state,
                 onQueryChange = viewModel::onQueryChange,
                 onSelect = viewModel::setEndpoint,
-                onClear = viewModel::clearEndpoint,
                 onCurrentLocation = { slot -> setCurrentLocation(context, viewModel, slot) },
                 onPickOnMap = onPickEndpoint,
                 onSetArriving = viewModel::setArriving,
+                onDepartNow = viewModel::setDepartNow,
                 onPickDate = { pickTripDate(activity, viewModel) },
                 onPickTime = { pickTripTime(activity, viewModel) },
                 onReverse = viewModel::reverseTrip,
@@ -535,36 +533,16 @@ fun DirectionsErrorSnackbar(
 }
 
 /**
- * Pick a From/To point directly on the home map: a fixed center crosshair the map pans under, a top
- * hint for which endpoint is being set, and a bottom confirm. [onConfirm] captures the map's current
- * center; the caller resolves it to a [org.onebusaway.android.ui.tripplan.TripEndpoint.MapPoint].
+ * Pick a From/To point directly on the home map: a fixed center crosshair the map pans under, and a
+ * bottom confirm. [onConfirm] captures the map's current center; the caller resolves it to a
+ * [org.onebusaway.android.ui.tripplan.TripEndpoint.MapPoint].
+ *
+ * Nothing is drawn at the top. A labelled From/To card used to sit there carrying a ✕, but the map is
+ * the thing being read during a pick and the card only covered it; back cancels, as it does everywhere
+ * else in directions.
  */
 @Composable
-fun BoxScope.DirectionsPickOverlay(
-    target: TripEndpointSlot,
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit
-) {
-    Surface(
-        modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(8.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp,
-        shadowElevation = 3.dp
-    ) {
-        Row(
-            modifier = Modifier.padding(start = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = stringResource(target.labelRes),
-                style = MaterialTheme.typography.titleMedium
-            )
-            IconButton(onClick = onCancel) {
-                Icon(AppIcons.Close, contentDescription = stringResource(R.string.close))
-            }
-        }
-    }
+fun BoxScope.DirectionsPickOverlay(onConfirm: () -> Unit) {
     // Fixed, non-interactive center crosshair: the map pans under it and its center is the chosen point.
     Icon(
         painter = painterResource(R.drawable.ic_my_location),

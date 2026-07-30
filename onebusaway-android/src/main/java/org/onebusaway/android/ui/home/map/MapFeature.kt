@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -51,6 +52,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,7 +66,9 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -136,6 +140,18 @@ fun MapFeature(
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
+    // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
+    // inset updates on every frame of the keyboard animation, and reading it here directly would
+    // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
+    // snapshotFlow the chrome insets below go through. Only ever read from onMapClick, outside any
+    // snapshot observer, so nothing subscribes to it.
+    val imeInsets = WindowInsets.ime
+    val imeDensity = LocalDensity.current
+    val imeVisible by remember(imeInsets, imeDensity) {
+        derivedStateOf { imeInsets.getBottom(imeDensity) > 0 }
+    }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
 
     // Compose-native permission launcher: deliver the result to the map view model (blue dot) + the
     // home view model (the deferred first-launch region check).
@@ -170,6 +186,18 @@ fun MapFeature(
             }
 
             override fun onMapClick(point: GeoPoint?) {
+                // A tap made while the keyboard is up is aimed at the keyboard: half the map is behind
+                // it, and the rider is reaching for the part they can see again. So that tap does only
+                // that. Without this it also unfocused the map a level, which from the directions form
+                // — an editor being typed into, with nothing focused beneath it — meant one stray tap
+                // left directions altogether and discarded the trip being entered.
+                if (imeVisible) {
+                    // Clearing focus is what closes the editor and its suggestion list; hide() covers
+                    // a keyboard raised by something that isn't a focused Compose field.
+                    focusManager.clearFocus()
+                    keyboard?.hide()
+                    return
+                }
                 homeViewModel.unfocusMapOneLevel()
             }
 

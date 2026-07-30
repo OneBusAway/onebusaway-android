@@ -834,8 +834,6 @@
     <string name="title_activity_about">Acerca de</string>
     <!-- Trip Planner strings -->
 
-    <string name="trip_plan_from">Origen: </string>
-    <string name="trip_plan_to">Destino: </string>
     <string name="trip_plan_leaving">Saliendo</string>
     <string name="trip_plan_arriving">Llegando</string>
     <string name="trip_plan_date">Fecha</string>

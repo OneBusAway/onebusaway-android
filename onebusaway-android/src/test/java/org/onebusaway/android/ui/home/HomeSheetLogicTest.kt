@@ -54,6 +54,14 @@ class HomeSheetLogicTest {
         assertEquals(0, focusBannerTopEdge(CurrentFocus.BikeStation("bike"), 240))
     }
 
+    @Test
+    fun `directions takes its top edge from the form card`() {
+        assertEquals(
+            180,
+            focusBannerTopEdge(CurrentFocus.Directions(), 240, directionsFormBottomPx = 180)
+        )
+    }
+
     // --- toggleSheetTarget ---
 
     @Test

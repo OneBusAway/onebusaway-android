@@ -112,10 +112,16 @@ class TripPlanViewModelTest {
         override fun load() = settings
     }
 
+    /** A clock the test can advance, to tell "now at construction" apart from "now at submit". */
+    private class FakeClock(var nowMillis: Long = 0L) : TimeProvider {
+        override fun now(): Long = nowMillis
+    }
+
     private fun viewModel(
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
-        region: RegionRepository = FakeRegionRepository()
+        region: RegionRepository = FakeRegionRepository(),
+        clock: TimeProvider = TimeProvider { 0L }
     ): TripPlanViewModel {
         // The fake reports "no fix" — see TripPlanFormStateTest for the with-a-fix cases.
         val location = FakeLocationRepository()
@@ -125,7 +131,7 @@ class TripPlanViewModelTest {
             region,
             SearchCenter(location, region),
             location,
-            TimeProvider { 0L },
+            clock,
             FakeAdvancedSettingsRepository()
         )
     }
@@ -502,6 +508,112 @@ class TripPlanViewModelTest {
         val state = vm.formState.value
         assertTrue(state.dateLabel.isNotBlank())
         assertTrue(state.timeLabel.isNotBlank())
+        assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `a form starts anchored to now`() = runTest {
+        assertTrue(viewModel().formState.value.departNow)
+    }
+
+    @Test
+    fun `a depart-now plan reads the clock at submit, not at construction`() = runTest {
+        val clock = FakeClock(0L)
+        val vm = viewModel(clock = clock)
+        // The rider leaves the form open for a while before both endpoints resolve.
+        clock.nowMillis = 90_000L
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        // This is the whole point of departNow: the seeded state still carries construction time, but
+        // the request that reaches OTP carries the moment of submission.
+        assertEquals(0L, vm.formState.value.dateTimeMillis)
+        assertEquals(90_000L, (vm.planState.value as PlanResult.Success).params?.dateTimeMillis)
+    }
+
+    @Test
+    fun `picking a time pins the trip against a moving clock`() = runTest {
+        val clock = FakeClock(0L)
+        val vm = viewModel(clock = clock)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+
+        vm.setDateTime(1_700_000_000_000L)
+        clock.nowMillis = 500_000L
+        advanceUntilIdle()
+
+        assertFalse(vm.formState.value.departNow)
+        assertEquals(
+            1_700_000_000_000L,
+            (vm.planState.value as PlanResult.Success).params?.dateTimeMillis
+        )
+    }
+
+    @Test
+    fun `setDepartNow returns a pinned trip to the now anchor`() = runTest {
+        val clock = FakeClock(0L)
+        val vm = viewModel(clock = clock)
+        setBothEndpoints(vm)
+        vm.setDateTime(1_700_000_000_000L)
+        advanceUntilIdle()
+
+        clock.nowMillis = 120_000L
+        vm.setDepartNow()
+        advanceUntilIdle()
+
+        val state = vm.formState.value
+        assertTrue(state.departNow)
+        // The pinned instant is refreshed too, so re-opening the picker starts from now rather than
+        // from the abandoned selection.
+        assertEquals(120_000L, state.dateTimeMillis)
+        assertEquals(120_000L, (vm.planState.value as PlanResult.Success).params?.dateTimeMillis)
+    }
+
+    @Test
+    fun `a restored trip stays pinned to the instant it was planned for`() = runTest {
+        val vm = viewModel(clock = FakeClock(0L))
+        vm.restoreFrom(
+            from = origin,
+            to = destination,
+            dateTimeMillis = 1_700_000_000_000L,
+            arriving = true,
+            itineraries = listOf(TripItinerary())
+        )
+        val state = vm.formState.value
+        assertFalse(state.departNow)
+        assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
+
+    /**
+     * "Arrive by now" asks for a trip that has already finished, so choosing *arriving* leaves the
+     * now anchor and pins a concrete instant for the rider to move.
+     */
+    @Test
+    fun `choosing arriving pins the trip to the clock`() = runTest {
+        val clock = FakeClock(0L)
+        val vm = viewModel(clock = clock)
+        clock.nowMillis = 60_000L
+
+        vm.setArriving(true)
+
+        val state = vm.formState.value
+        assertTrue(state.arriving)
+        assertFalse(state.departNow)
+        // Pinned to the clock at the moment of the switch, not to the stale construction stamp.
+        assertEquals(60_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `going back to leaving does not disturb a pinned time`() = runTest {
+        val vm = viewModel(clock = FakeClock(0L))
+        vm.setDateTime(1_700_000_000_000L)
+
+        vm.setArriving(true)
+        vm.setArriving(false)
+
+        val state = vm.formState.value
+        assertFalse(state.arriving)
+        assertFalse(state.departNow)
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
     }
 }

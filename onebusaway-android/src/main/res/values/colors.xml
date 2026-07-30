@@ -117,6 +117,14 @@
     <color name="tutorial_background">#df4CAF50</color>
 
     <!-- Trip Planning -->
+    <!-- The directions form's endpoint identity colours. Blue marks an endpoint anchored to the
+         device's own position at *either* end of the trip — "where I am" is a different kind of fact
+         from "where I'm going", so it outranks the start/end distinction and reads the same at both.
+         Otherwise the start takes the theme's primary (green in the OBA brand, and whatever a
+         white-label brand uses) and the destination the shared trip_destination_marker below, the same
+         red the itinerary's own terminal dot uses. A literal rather than an md_theme_* alias: the
+         scheme is a single-hue green one and has no blue slot to borrow. -->
+    <color name="trip_plan_endpoint_current_location">#1565C0</color>
     <color name="trip_plan_card_background">@color/md_theme_surfaceContainer</color>
     <color name="trip_plan_header_text">@color/md_theme_onSurface</color>
     <color name="trip_plan_card_background_selected">@color/md_theme_secondaryContainer</color>

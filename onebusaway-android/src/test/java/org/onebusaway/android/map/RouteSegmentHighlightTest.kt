@@ -17,8 +17,6 @@ package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
@@ -85,10 +83,10 @@ class RouteSegmentHighlightTest {
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, overlay.widthProfile)
         assertEquals(0xFF00FF00.toInt(), overlay.color)
         assertEquals(true, overlay.directional)
-        // Both halves of the selected route carry a case, each derived from its own stroke colour, so the
-        // approach and the ride read as one line rather than two things that happen to meet.
-        assertNotNull(approach.caseColor)
-        assertNotNull(overlay.caseColor)
+        // Both halves of the selected route carry a case, so the approach and the ride read as one line
+        // rather than as two things that happen to meet.
+        assertTrue(approach.cased)
+        assertTrue(overlay.cased)
     }
 
     @Test
@@ -112,9 +110,9 @@ class RouteSegmentHighlightTest {
         assertEquals(RouteLineDash.TRAIL, result[1].dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, result[2].widthProfile)
         // Only the selected route is cased: the rest of the rider's journey is context, not selection.
-        assertNull(result[1].caseColor)
-        assertNotNull(result[0].caseColor)
-        assertNotNull(result[2].caseColor)
+        assertFalse(result[1].cased)
+        assertTrue(result[0].cased)
+        assertTrue(result[2].cased)
     }
 
     @Test

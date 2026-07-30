@@ -133,27 +133,43 @@ class ItineraryLegStyleTest {
         // Nothing is dropped — the whole trip is still drawn.
         assertEquals(lines.size, focused.size)
         // Exactly the focused leg is cased; that case *is* the selection signal (#2082).
-        val (cased, plain) = focused.partition { it.caseColor != null }
+        val (cased, plain) = focused.partition { it.cased }
         assertEquals(listOf(ITINERARY_RIDE_WIDTH_PROFILE), cased.map { it.widthProfile })
         // The focused leg is last, so its case and stroke draw over the legs around it.
         assertEquals(cased.single(), focused.last())
         // Nothing but the case changes: every leg keeps the weight, colour and dash that say what kind of
         // leg it is, so width is free to mean only that. Compared as sets — focusing reorders the list, which
         // is how the focused leg comes to draw last.
-        assertEquals(lines.map { it.line }.toSet(), focused.map { it.copy(caseColor = null) }.toSet())
+        assertEquals(lines.map { it.line }.toSet(), focused.map { it.copy(cased = false) }.toSet())
         assertEquals(2, plain.size)
     }
 
     @Test
-    fun `a case is its own line's hue, deepened`() {
-        val ride = tripOf(walk = 0, ride = 1, walk2 = 2).withLegFocus(setOf(1)).last()
-        val line = Hct.fromInt(ride.resolvedColor)
-        val case = Hct.fromInt(ride.caseColor!!)
+    fun `a case is its own line's hue, tuned away from it in the direction the basemap went`() {
+        val line = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).color)
+        val onLightMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = false))
+        val onDarkMap = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode = true))
 
-        // Same hue, so the case reads as part of its line rather than as a second line beside it...
-        assertEquals(line.hue, case.hue, HUE_TOLERANCE_DEGREES)
-        // ...and darker, so the pair separates from the basemap and from the lines it crosses.
-        assertTrue("case tone ${case.tone} should be below line tone ${line.tone}", case.tone < line.tone)
+        // Same hue either way, so a case reads as part of its line rather than as a second line beside it.
+        listOf(onLightMap, onDarkMap).forEach {
+            assertEquals(line.hue, it.hue, HUE_TOLERANCE_DEGREES)
+        }
+        // A halo separates a line from its surroundings by carrying the *background's* value, so it goes
+        // light on the light basemap and dark on the dark one — a fixed dark case would sink into a dark map.
+        assertTrue("light-map case tone ${onLightMap.tone} should exceed line tone ${line.tone}", onLightMap.tone > line.tone)
+        assertTrue("dark-map case tone ${onDarkMap.tone} should be below line tone ${line.tone}", onDarkMap.tone < line.tone)
+    }
+
+    @Test
+    fun `a case stays in range for a line already at the end of the tone scale`() {
+        // Nothing on this map is drawn near-white or near-black, but a case must degrade to the nearest one
+        // it can rather than asking for an out-of-range tone.
+        listOf(0xFFFFFFFF.toInt(), 0xFF000000.toInt()).forEach { extreme ->
+            listOf(true, false).forEach { darkMode ->
+                val tone = Hct.fromInt(mapRouteLineCaseColor(extreme, darkMode)).tone
+                assertTrue("tone $tone out of range", tone in 0.0..100.0)
+            }
+        }
     }
 
     @Test
@@ -161,7 +177,7 @@ class ItineraryLegStyleTest {
         // #2000: several itinerary legs the rider stays aboard through, read (and tapped) as one ride.
         val focused = tripOf(walk = 0, ride = 1, walk2 = 2).withLegFocus(setOf(1, 2))
 
-        assertEquals(2, focused.count { it.caseColor != null })
+        assertEquals(2, focused.count { it.cased })
     }
 
     @Test

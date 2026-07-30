@@ -51,12 +51,13 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
 }
 
 /**
- * The line the rider has selected, wrapped in a case (halo) in its own deepened hue — the map's one way of
- * saying "this is the one you're looking at" (#2082). Selection deliberately changes nothing else: a leg
- * keeps the weight, colour, dash and chevrons that say what *kind* of line it is, so drilling into it doesn't
- * restyle the trip around it.
+ * The line the rider has selected, wrapped in a case (halo) — the map's one way of saying "this is the one
+ * you're looking at" (#2082). Selection deliberately changes nothing else: a leg keeps the weight, colour,
+ * dash and chevrons that say what *kind* of line it is, so drilling into it doesn't restyle the trip around
+ * it. The case's colour is the renderer's to resolve, since it depends on the current theme (see
+ * [mapRouteLineCaseColor]).
  */
-internal fun RoutePolyline.withCase(): RoutePolyline = copy(caseColor = mapRouteLineCaseColor(resolvedColor))
+internal fun RoutePolyline.withCase(): RoutePolyline = copy(cased = true)
 
 /**
  * The selected transit route upstream of the boarding point — where the vehicle is coming from — drawn as

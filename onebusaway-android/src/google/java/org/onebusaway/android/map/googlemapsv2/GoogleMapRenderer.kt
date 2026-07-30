@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
+import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadge
@@ -345,10 +346,14 @@ class GoogleMapRenderer(
     }
 
     private fun addRoutePolyline(polyline: RoutePolyline, widthPx: Float): CasedLine = CasedLine(
-        case = polyline.caseColor?.let { caseColor ->
+        case = if (!polyline.cased) {
+            null
+        } else {
             map.addPolyline(
                 PolylineOptions()
-                    .color(caseColor)
+                    // Resolved here rather than by the producer: a case's colour follows the theme, because
+                    // the basemap it separates its line from does (see [mapRouteLineCaseColor]).
+                    .color(mapRouteLineCaseColor(polyline.resolvedColor, ThemeUtils.isInDarkMode(context)))
                     .width(widthPx + caseExtraPx)
                     .addPoints(polyline.points)
                     // The case follows its line's dash so a broken line's case breaks with it, rather than

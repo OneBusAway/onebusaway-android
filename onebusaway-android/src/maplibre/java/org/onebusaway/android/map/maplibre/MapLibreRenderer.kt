@@ -38,6 +38,7 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
+import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BikeBand
 import org.onebusaway.android.map.render.BikeBitmaps
 import org.onebusaway.android.map.render.BikeMarker
@@ -121,10 +122,14 @@ class MapLibreRenderer(
             CasedLine(
                 // Added before its own line: the classic annotation API has no z-index, so the draw order is
                 // the order annotations were added — the same thing that layers the polyline list itself.
-                case = polyline.caseColor?.let { caseColor ->
+                case = if (!polyline.cased) {
+                    null
+                } else {
                     map.addPolyline(
                         PolylineOptions()
-                            .color(caseColor)
+                            // Resolved here rather than by the producer: a case's colour follows the theme,
+                            // because the basemap it separates its line from does.
+                            .color(mapRouteLineCaseColor(polyline.resolvedColor, ThemeUtils.isInDarkMode(context)))
                             .width(width + CASE_EXTRA_DP)
                             .addPoints(polyline.points)
                     )

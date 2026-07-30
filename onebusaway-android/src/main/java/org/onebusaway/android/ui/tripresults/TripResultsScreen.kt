@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -75,6 +76,8 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
@@ -88,9 +91,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -198,6 +204,33 @@ fun TripResultsHeader(
 private val OPTION_BADGE_MAX_WIDTH = 110.dp
 
 /**
+ * How wide an option card is allowed to grow before its summary line wraps onto another line (#2081).
+ * Without it a four-leg trip drew one long card that pushed every other option off the row — the picker
+ * scrolls, but the rider can only compare what is on screen at once, so a card that runs off the edge
+ * costs more than a card two lines tall. Chosen to keep the *next* card in view on a narrow (320dp)
+ * screen; tune here.
+ *
+ * A ceiling on the *wrap*, not a clip: see [SymbolFlow] for the one case a card still exceeds it.
+ */
+private val OPTION_CARD_MAX_WIDTH = 200.dp
+
+/** The card's own padding — named because [OPTION_CARD_MAX_WIDTH] has to be net of it to bite. */
+private val CARD_PADDING_HORIZONTAL = 12.dp
+private val CARD_PADDING_VERTICAL = 8.dp
+
+/** The gap between two wrapped lines of the summary — matched to [SYMBOL_GAP] so the wrap reads as one
+ *  evenly-spaced field of symbols rather than as two stacked rows. */
+private val SYMBOL_LINE_GAP = 4.dp
+
+/**
+ * The keyline separating a card's summary line from its stats (#2081). Faded from the card's *own*
+ * content colour for the same reason [SymbolSeparator] is: the card is tinted, and differently again
+ * when selected, so a theme grey lands on it as an off-hue smudge. Quiet enough to divide the two halves
+ * without drawing a box around either.
+ */
+private const val CARD_DIVIDER_ALPHA = 0.2f
+
+/**
  * The chevron between two of a card's mode symbols, and the gap on either side of it. Deliberately
  * small and quiet: it is punctuation saying "then", not a step of the trip, so it must not compete
  * with the glyphs and roundels it joins — hence a height well under [ModeGlyph]'s 20dp and a faded
@@ -246,7 +279,6 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    val context = LocalContext.current
     val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
     val shortestTravelTime = WinnerCategory.SHORTEST_TRAVEL_TIME in winners
     val leastWalking = WinnerCategory.LEAST_WALKING in winners
@@ -263,6 +295,8 @@ private fun OptionCard(
         contentColor = textColor,
         shape = MaterialTheme.shapes.small,
         // Wrap to the content width (a sensible floor so short options aren't tiny); the row scrolls.
+        // The ceiling is the summary line's own — it wraps at [OPTION_CARD_MAX_WIDTH] rather than the
+        // card being cut to it (see [SymbolFlow]).
         modifier = Modifier
             .widthIn(min = 104.dp)
             .clickable(onClick = onClick)
@@ -272,10 +306,11 @@ private fun OptionCard(
                 }
             }
     ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        // Sized to the widest thing on it, so the summary's keyline has a card width to span: under the
+        // picker's horizontal scroll the incoming width is unbounded, where a `fillMaxWidth` divider
+        // measures to nothing. The intrinsic pass asks the summary how wide it lands *after* wrapping,
+        // which is stable — see [SymbolFlow].
+        Column(Modifier.width(IntrinsicSize.Max)) {
             // The trip in travel order, as one symbol sequence: a glyph per on-street leg and a roundel
             // per ride, chevron-separated (#2047). The gap between symbols is deliberately wide, so
             // "two legs" and "one leg, two interchangeable routes" (which is one seamless chip) can't
@@ -288,86 +323,200 @@ private fun OptionCard(
             val drawn = remember(option.symbols) {
                 option.symbols.filter { it !is ModeSymbol.Street || streetModeIcon(it.mode) != null }
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                drawn.forEachIndexed { index, symbol ->
-                    if (index > 0) SymbolSeparator()
-                    when (symbol) {
-                        // A glyph alone — there is nothing to name about a walk.
-                        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
-                            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
-                        }
-                        // Every badge leads with the mode it's ridden on, which a route number never says
-                        // on its own. A route publishing no short name badges its long name, capped to
-                        // [OPTION_BADGE_MAX_WIDTH] and ellipsized so one wordy name can't crowd the
-                        // other legs off the card; only a route that names itself in no way at all is
-                        // left with the bare glyph.
-                        is ModeSymbol.Transit -> {
-                            val badge = symbol.badge
-                            val glyph = transitModeIcon(badge.mode)
-                            val glyphLabel = stringResource(transitModeLabel(badge.mode))
-                            if (badge.isUnnamed) {
-                                ModeGlyph(glyph, glyphLabel)
-                            } else {
-                                RouteBadgeChip(
-                                    badge.routes,
-                                    scale = SYMBOL_BADGE_SCALE,
-                                    maxWidth = OPTION_BADGE_MAX_WIDTH,
-                                    join = badge.join,
-                                    leadingIcon = glyph,
-                                    leadingIconDescription = glyphLabel
-                                )
-                            }
+            // A trip with nothing drawable to say (see above) gets no summary at all — a lone keyline
+            // over an empty strip would be worse than the card simply starting at its stats.
+            if (drawn.isNotEmpty()) {
+                SymbolFlow(
+                    wrapAt = OPTION_CARD_MAX_WIDTH - CARD_PADDING_HORIZONTAL * 2,
+                    horizontalGap = SYMBOL_GAP,
+                    verticalGap = SYMBOL_LINE_GAP,
+                    modifier = Modifier.padding(
+                        horizontal = CARD_PADDING_HORIZONTAL,
+                        vertical = CARD_PADDING_VERTICAL
+                    )
+                ) {
+                    drawn.forEachIndexed { index, symbol ->
+                        // A symbol travels with the chevron that follows it, as one unbreakable unit:
+                        // the wrap then never opens a line with a chevron pointing at the symbol above
+                        // it, and a broken line ends on the "and then" that carries the eye down.
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(SYMBOL_GAP),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ModeSymbolContent(symbol)
+                            if (index < drawn.lastIndex) SymbolSeparator()
                         }
                     }
                 }
+                HorizontalDivider(color = LocalContentColor.current.copy(alpha = CARD_DIVIDER_ALPHA))
             }
-            // Duration + walk distance read as one stat group, so they sit tighter together than the
-            // card's other lines.
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+            StatsColumn(
+                option = option,
+                shortestTravelTime = shortestTravelTime,
+                leastWalking = leastWalking,
+                earliestArrival = earliestArrival,
+                latestDeparture = latestDeparture,
+                winnerOutlineColor = winnerOutlineColor
+            )
+        }
+    }
+}
+
+/**
+ * The summary line's layout: its symbols packed left to right, wrapping onto the next line as soon as
+ * the following one would carry the line past [wrapAt] (#2081).
+ *
+ * Not a `FlowRow`, for one reason: every child here is measured **unbounded**, so a symbol that is by
+ * itself wider than [wrapAt] takes a line of its own and widens the card rather than being measured into
+ * whatever width is left. That case is real — a badge joining several interchangeable routes is
+ * deliberately uncapped (see [RouteBadgeChip]) — and the alternative is the failure that badge exists to
+ * avoid: a `Row` handed too little width measures its later segments at zero, so the ride would quietly
+ * lose a route off the end of its own badge. [wrapAt] is therefore where the line *breaks*, not a width
+ * the card is cut to.
+ *
+ * The packing is stable under re-measurement, which is what lets the card take its width from this
+ * layout's intrinsic one ([OptionCard]): every line fits inside the width reported here, so packing
+ * again at exactly that width breaks the lines in the same places.
+ */
+@Composable
+private fun SymbolFlow(
+    wrapAt: Dp,
+    horizontalGap: Dp,
+    verticalGap: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Layout(content, modifier) { measurables, constraints ->
+        val gapX = horizontalGap.roundToPx()
+        val gapY = verticalGap.roundToPx()
+        // Whichever binds first: the line we chose, or a genuinely narrower parent.
+        val limit = minOf(constraints.maxWidth, wrapAt.roundToPx())
+        val lines = mutableListOf<MutableList<Placeable>>()
+        var lineWidth = 0
+        measurables.forEach { measurable ->
+            val placeable = measurable.measure(Constraints())
+            val line = lines.lastOrNull()
+            if (line == null || lineWidth + gapX + placeable.width > limit) {
+                lines += mutableListOf(placeable)
+                lineWidth = placeable.width
+            } else {
+                line += placeable
+                lineWidth += gapX + placeable.width
+            }
+        }
+        val lineHeights = lines.map { line -> line.maxOf { it.height } }
+        val width = constraints.constrainWidth(
+            lines.maxOfOrNull { line -> line.sumOf { it.width } + gapX * (line.size - 1) } ?: 0
+        )
+        val height = constraints.constrainHeight(
+            lineHeights.sum() + gapY * (lines.size - 1).coerceAtLeast(0)
+        )
+        layout(width, height) {
+            var y = 0
+            lines.forEachIndexed { index, line ->
+                var x = 0
+                line.forEach { placeable ->
+                    // Centred in its line, as the symbols were in the single row they used to share: a
+                    // chevron is half a glyph tall, and belongs level with what it joins.
+                    placeable.placeRelative(x, y + (lineHeights[index] - placeable.height) / 2)
+                    x += placeable.width + gapX
+                }
+                y += lineHeights[index] + gapY
+            }
+        }
+    }
+}
+
+/** One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel. */
+@Composable
+private fun ModeSymbolContent(symbol: ModeSymbol) {
+    when (symbol) {
+        // A glyph alone — there is nothing to name about a walk.
+        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
+            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
+        }
+        // Every badge leads with the mode it's ridden on, which a route number never says on its own. A
+        // route publishing no short name badges its long name, capped to [OPTION_BADGE_MAX_WIDTH] and
+        // ellipsized so one wordy name can't crowd the other legs off the card; only a route that names
+        // itself in no way at all is left with the bare glyph.
+        is ModeSymbol.Transit -> {
+            val badge = symbol.badge
+            val glyph = transitModeIcon(badge.mode)
+            val glyphLabel = stringResource(transitModeLabel(badge.mode))
+            if (badge.isUnnamed) {
+                ModeGlyph(glyph, glyphLabel)
+            } else {
+                RouteBadgeChip(
+                    badge.routes,
+                    scale = SYMBOL_BADGE_SCALE,
+                    maxWidth = OPTION_BADGE_MAX_WIDTH,
+                    join = badge.join,
+                    leadingIcon = glyph,
+                    leadingIconDescription = glyphLabel
+                )
+            }
+        }
+    }
+}
+
+/** The lower half of an option card: what the trip costs (duration, walking) and when it runs. */
+@Composable
+private fun StatsColumn(
+    option: ItineraryOption,
+    shortestTravelTime: Boolean,
+    leastWalking: Boolean,
+    earliestArrival: Boolean,
+    latestDeparture: Boolean,
+    winnerOutlineColor: Color
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier.padding(horizontal = CARD_PADDING_HORIZONTAL, vertical = CARD_PADDING_VERTICAL),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        // Duration + walk distance read as one stat group, so they sit tighter together than the
+        // card's other lines.
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // Duration — a leading hourglass + the ETA-pill-formatted trip length.
+            MetricRow(
+                MetricGlyph.DURATION,
+                contentDescription = null,
+                winner = shortestTravelTime,
+                outlineColor = winnerOutlineColor
+            ) {
+                EtaDurationText(
+                    minutes = option.durationMinutes,
+                    modifier = Modifier.alignByBaseline(),
+                    numberSize = METRIC_NUMBER_SIZE,
+                    unitSize = METRIC_UNIT_SIZE
+                )
+            }
+            // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
+            // with the distance styled like the duration (bold value + smaller unit). In the user's units
+            // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
+            if (option.walkDistanceMeters > 0.0 || leastWalking) {
                 MetricRow(
-                    MetricGlyph.DURATION,
-                    contentDescription = null,
-                    winner = shortestTravelTime,
+                    MetricGlyph.WALK,
+                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
+                    winner = leastWalking,
                     outlineColor = winnerOutlineColor
                 ) {
-                    EtaDurationText(
-                        minutes = option.durationMinutes,
+                    EtaPartsText(
+                        ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
                         modifier = Modifier.alignByBaseline(),
                         numberSize = METRIC_NUMBER_SIZE,
                         unitSize = METRIC_UNIT_SIZE
                     )
                 }
-                // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
-                // with the distance styled like the duration (bold value + smaller unit). In the user's units
-                // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
-                if (option.walkDistanceMeters > 0.0 || leastWalking) {
-                    MetricRow(
-                        MetricGlyph.WALK,
-                        contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
-                        winner = leastWalking,
-                        outlineColor = winnerOutlineColor
-                    ) {
-                        EtaPartsText(
-                            ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
-                            modifier = Modifier.alignByBaseline(),
-                            numberSize = METRIC_NUMBER_SIZE,
-                            unitSize = METRIC_UNIT_SIZE
-                        )
-                    }
-                }
             }
-            // The device-localized departure–arrival range (unwrap the server clock only here).
-            val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
-            val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ScheduleMetric(startText, winner = latestDeparture, outlineColor = winnerOutlineColor)
-                Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
-                ScheduleMetric(endText, winner = earliestArrival, outlineColor = winnerOutlineColor)
-            }
+        }
+        // The device-localized departure–arrival range (unwrap the server clock only here).
+        val startText = DisplayFormat.formatTime(context, option.startTime.epochMs)
+        val endText = DisplayFormat.formatTime(context, option.endTime.epochMs)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ScheduleMetric(startText, winner = latestDeparture, outlineColor = winnerOutlineColor)
+            Text(" – ", style = MaterialTheme.typography.bodySmall, maxLines = 1)
+            ScheduleMetric(endText, winner = earliestArrival, outlineColor = winnerOutlineColor)
         }
     }
 }

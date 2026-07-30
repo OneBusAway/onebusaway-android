@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home
 
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.models.RouteDirectionKey
+import org.onebusaway.android.ui.tripresults.FocusedLeg
 
 /** The one mutually-exclusive focus rendered by HOME. */
 sealed interface CurrentFocus {
@@ -31,23 +32,45 @@ sealed interface CurrentFocus {
     /**
      * Trip-plan directions mode. The itinerary/plan identity still lives in
      * `TripPlanViewModel`/`TripResultsViewModel` (persisted via their own SavedStateHandle), so this
-     * does not duplicate "which itinerary". [routeFocus] is the one sub-state it does own: the transit
-     * leg the user drilled into to examine its route (map recontextualized to that route + the
-     * departing stop's arrivals board), mirroring the route-subordinate-to-stop focus. Null is the
-     * plain itinerary overview.
+     * does not duplicate "which itinerary". [subFocus] is the one sub-state it does own: the leg the
+     * user drilled into from the overview. Null is the plain itinerary overview.
      */
-    data class Directions(val routeFocus: DirectionsRouteFocus? = null) : CurrentFocus
+    data class Directions(val subFocus: DirectionsSubFocus? = null) : CurrentFocus
 }
 
 /**
- * A transit leg the user tapped from the directions overview — the route-subordinate-to-directions
- * focus. Recontextualizes the map onto a route with the traveled board→alight segment drawn thick over
- * it. Holds the exact [ShowRouteRequest] that produced this focus (route id, the boarding stop the
- * direction is narrowed to, the ridden `highlightedSegment`, and — for a followed vehicle — its
- * `focusTripId`) so restoring after a back-press replays it faithfully. (Each stop's live ETAs are
- * shown inline in the drawer's Board/Alight rows, not here.)
+ * A leg the user tapped from the directions overview — the leg-subordinate-to-directions focus, one
+ * attention level below the whole trip (mirroring the route-subordinate-to-stop focus). Being its own
+ * level is what makes a background tap, or Back, drop to the itinerary overview rather than out of
+ * directions, for every kind of leg alike (#2075).
  */
-data class DirectionsRouteFocus(val request: ShowRouteRequest)
+sealed interface DirectionsSubFocus {
+
+    /**
+     * A transit leg examined as its route: the map recontextualized onto that route with the traveled
+     * board→alight segment drawn thick over it. Holds the exact [ShowRouteRequest] that produced this
+     * focus (route id, the boarding stop the direction is narrowed to, the ridden `highlightedSegment`,
+     * and — for a followed vehicle — its `focusTripId`) so restoring after a back-press replays it
+     * faithfully. (Each stop's live ETAs are shown inline in the drawer's Board/Alight rows, not here.)
+     */
+    data class Route(val request: ShowRouteRequest) : DirectionsSubFocus
+
+    /**
+     * An on-street (walk/bike) leg framed on its own, with the rest of the trip receding to context
+     * around it (#2048) — the itinerary stays drawn, so only [leg]'s geometry + leg indices are needed
+     * to re-apply the focus.
+     */
+    data class Leg(val leg: FocusedLeg) : DirectionsSubFocus
+}
+
+/**
+ * Whether the drawn itinerary survives in this focus: the overview and an on-street leg focus both keep it
+ * (the leg focus just restyles it), while a leg's route sub-focus recontextualizes the map onto that route
+ * — and any focus outside directions tears the trip down altogether. So returning to a trip *from* a focus
+ * that doesn't keep it has to redraw it first.
+ */
+internal val CurrentFocus.keepsDrawnItinerary: Boolean
+    get() = this is CurrentFocus.Directions && subFocus !is DirectionsSubFocus.Route
 
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop

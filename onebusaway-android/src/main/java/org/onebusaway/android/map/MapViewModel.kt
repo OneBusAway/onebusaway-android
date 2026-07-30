@@ -543,6 +543,18 @@ class MapViewModel @Inject constructor(
         mapHost.frameItineraryLeg(points, WALK_LEG_MIN_FRAMING_SPAN_DEG)
     }
 
+    /**
+     * Drop a [focusItineraryLeg] focus: restore every leg of the drawn trip to full weight and reframe the
+     * whole itinerary — the map returning from a leg the rider was reading to the trip overview. The
+     * itinerary is still drawn (a leg focus only restyles it), so no redraw is needed. Guarded on an active
+     * directions session, like the focus it undoes.
+     */
+    fun clearItineraryLegFocus() {
+        if (!directionsActive) return
+        directionsController.focusLegs(emptySet())
+        directionsController.frameDirections()
+    }
+
     /** Clear the drawn itinerary while staying in directions mode (e.g. the plan became unsubmittable). */
     fun clearShownItinerary() {
         if (!directionsActive) return

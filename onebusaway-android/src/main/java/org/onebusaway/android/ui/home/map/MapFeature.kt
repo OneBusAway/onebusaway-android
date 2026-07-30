@@ -299,6 +299,7 @@ fun MapFeature(
                     mapViewModel.focusItineraryPoint(directive.point)
                 is MapDirective.FocusItineraryLeg ->
                     mapViewModel.focusItineraryLeg(directive.points, directive.legIndices)
+                MapDirective.ClearItineraryLegFocus -> mapViewModel.clearItineraryLegFocus()
                 MapDirective.ClearItinerary -> mapViewModel.clearShownItinerary()
                 is MapDirective.SetDirectionsEndpoints ->
                     mapViewModel.setDirectionsEndpoints(directive.from, directive.to)

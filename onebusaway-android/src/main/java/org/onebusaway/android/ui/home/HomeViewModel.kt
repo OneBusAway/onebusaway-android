@@ -518,18 +518,21 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * A background-map tap drops one attention layer: route-over-stop becomes the plain stop; any
-     * plain stop, standalone route, or bike focus returns to the unfocused root.
+     * A background-map tap drops one attention layer: route-over-stop becomes the plain stop; a focused
+     * itinerary leg becomes the plain itinerary overview; any plain stop, standalone route, or bike focus
+     * returns to the unfocused root.
      */
     fun unfocusMapOneLevel() {
-        val target = when (val focus = _currentFocus.value) {
+        val focus = _currentFocus.value
+        val target = when (focus) {
             is CurrentFocus.Stop -> if (focus.selectedRoute == null) {
                 CurrentFocus.None
             } else {
                 CurrentFocus.Stop(focus.stop)
             }
-            // Route-over-directions becomes the plain itinerary overview; a plain overview exits.
-            is CurrentFocus.Directions -> if (focus.routeFocus == null) {
+            // A focused leg — its route, or an on-street leg framed on its own — becomes the plain
+            // itinerary overview; a plain overview exits.
+            is CurrentFocus.Directions -> if (focus.subFocus == null) {
                 CurrentFocus.None
             } else {
                 CurrentFocus.Directions()
@@ -540,14 +543,26 @@ class HomeViewModel @Inject constructor(
         pushFocus(target)
         when {
             target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
-            // Popped a route sub-focus back to the overview: redraw the itinerary over the route.
-            target is CurrentFocus.Directions ->
-                shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+            // Popped a leg sub-focus back to the whole trip.
+            target is CurrentFocus.Directions -> emitMapDirective(itineraryOverviewDirective(focus))
             else -> {
                 presentedRoutes = emptySet()
                 emitMapDirective(MapDirective.ClearFocus)
             }
         }
+    }
+
+    /**
+     * How the map returns to the itinerary overview from [from]: with the trip still drawn (an on-street
+     * leg focus only receded its other legs) restoring their weight and reframing the trip is enough;
+     * otherwise it has to be redrawn — and where there is nothing to redraw (a fresh entry, before any
+     * itinerary was shown) the map is cleared rather than left in whatever the sub-focus made of it; the
+     * sheet's own remount reconcile draws the selected trip back.
+     */
+    private fun itineraryOverviewDirective(from: CurrentFocus): MapDirective = if (from.keepsDrawnItinerary) {
+        MapDirective.ClearItineraryLegFocus
+    } else {
+        shownItinerary?.let { MapDirective.ShowItinerary(it) } ?: MapDirective.ClearFocus
     }
 
     /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
@@ -583,31 +598,41 @@ class HomeViewModel @Inject constructor(
      */
     fun showItineraryOnMap(itinerary: TripItinerary) {
         shownItinerary = itinerary
-        popRouteFocus() // the ShowItinerary below is the redraw
+        // Showing the whole trip drops any leg sub-focus; the ShowItinerary below is the redraw. Guarded so
+        // a call from outside directions can't push a directions focus.
+        if (directionsSubFocus != null) pushFocus(CurrentFocus.Directions())
         emitMapDirective(MapDirective.ShowItinerary(itinerary))
     }
 
-    /**
-     * Drop a leg's route sub-focus back to the itinerary overview, if one is active; returns whether it
-     * did (so the caller can redraw the itinerary the route mode tore down).
-     */
-    private fun popRouteFocus(): Boolean {
-        if ((_currentFocus.value as? CurrentFocus.Directions)?.routeFocus == null) return false
-        pushFocus(CurrentFocus.Directions())
-        return true
-    }
+    /** The leg the user has drilled into from the itinerary overview, if any. */
+    private val directionsSubFocus: DirectionsSubFocus?
+        get() = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus
 
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
     fun focusItineraryPointOnMap(point: GeoPoint) = emitMapDirective(MapDirective.FocusItineraryPoint(point))
 
     /**
-     * Focus a whole tapped itinerary leg on the map (only while in [CurrentFocus.Directions]): frame it,
-     * with the rest of the trip receding to context around it (#2048).
+     * Focus a whole tapped itinerary leg on the map: frame it, with the rest of the trip receding to context
+     * around it (#2048). Recorded as the overview's [DirectionsSubFocus.Leg], so tapping the map background
+     * (or Back) returns to the whole trip exactly as it does from a transit leg's route focus, instead of
+     * leaving directions (#2075). Only the directions drawer offers leg taps, so anywhere else there is no
+     * trip to focus into and this is a no-op.
      */
     fun focusItineraryLegOnMap(leg: FocusedLeg) {
-        // If a transit leg's route is in focus, drop back to the itinerary overview and redraw it first —
-        // otherwise the framing would no-op in route mode (directionsActive is false).
-        if (popRouteFocus()) shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+        val from = _currentFocus.value as? CurrentFocus.Directions ?: return
+        pushFocus(CurrentFocus.Directions(DirectionsSubFocus.Leg(leg)))
+        applyLegFocus(leg, from)
+    }
+
+    /**
+     * Recede the trip's other legs around [leg] and frame it — redrawing the itinerary first when the focus
+     * we come from ([from]) tore it down, since the framing would otherwise no-op in route mode
+     * (directionsActive is false). Shared by the drawer's leg tap and the back-restore of one.
+     */
+    private fun applyLegFocus(leg: FocusedLeg, from: CurrentFocus) {
+        if (!from.keepsDrawnItinerary) {
+            shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+        }
         emitMapDirective(MapDirective.FocusItineraryLeg(leg.points, leg.legIndices))
     }
 
@@ -691,7 +716,7 @@ class HomeViewModel @Inject constructor(
         request: ShowRouteRequest,
         undoViewport: MapViewport? = null
     ) {
-        pushFocus(CurrentFocus.Directions(DirectionsRouteFocus(request)), undoViewport)
+        pushFocus(CurrentFocus.Directions(DirectionsSubFocus.Route(request)), undoViewport)
         // withinDirections: this route is drilled into *from* a trip plan, so the map keeps the rest of
         // the trip beneath it as de-emphasized context (#2048).
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false, withinDirections = true))
@@ -703,8 +728,25 @@ class HomeViewModel @Inject constructor(
     /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
     fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
 
-    /** Leave directions focus, returning the map to nearby stops. */
-    fun exitDirections() = clearMapFocus()
+    // Leave directions focus, returning the map to nearby stops. Private: the only way out is
+    // [navigateBackInDirections]'s last step, so a control can't jump straight out of a focused leg —
+    // exactly the behaviour #2075 removed.
+    private fun exitDirections() = clearMapFocus()
+
+    /**
+     * The system Back gesture while in directions. A leg the user drilled into — its route, or an
+     * on-street leg framed on its own — steps back out of that leg first, so Back reverses the drill-in
+     * (restoring the camera it moved) instead of leaving the trip behind (#2075); only from the plain
+     * itinerary overview does Back exit directions. The map-background tap drops a level the same way,
+     * but jumps straight to the overview, while Back walks the legs the user visited in order — matching
+     * how a stop's route focus already behaves under each gesture.
+     */
+    fun navigateBackInDirections() {
+        // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
+        // entered from, so there is history to pop.
+        if (directionsSubFocus != null && navigateBackFocus()) return
+        exitDirections()
+    }
 
     /** Reframe the focused route as one undoable camera action. */
     fun reframeFocusedRoute(undoViewport: MapViewport?) {
@@ -794,25 +836,21 @@ class HomeViewModel @Inject constructor(
                         )
                     )
                 }
-                is CurrentFocus.Directions -> {
-                    val routeFocus = target.routeFocus
-                    if (routeFocus != null) {
-                        // Back into a route sub-focus: re-show that leg's route on the map, over the trip
-                        // it belongs to (still drawn, or restored by the sheet's own reconcile).
-                        emitMapDirective(
-                            MapDirective.ShowRoute(
-                                routeFocus.request,
-                                stopScoped = false,
-                                frameRoute = frameFocus,
-                                withinDirections = true
-                            )
+                is CurrentFocus.Directions -> when (val subFocus = target.subFocus) {
+                    // Back into a route sub-focus: re-show that leg's route on the map, over the trip
+                    // it belongs to (still drawn, or restored by the sheet's own reconcile).
+                    is DirectionsSubFocus.Route -> emitMapDirective(
+                        MapDirective.ShowRoute(
+                            subFocus.request,
+                            stopScoped = false,
+                            frameRoute = frameFocus,
+                            withinDirections = true
                         )
-                    } else {
-                        // Back to the itinerary overview: redraw it over any route (the sheet's own
-                        // remount reconcile also covers a fresh entry, where shownItinerary is null).
-                        shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
-                            ?: emitMapDirective(MapDirective.ClearFocus)
-                    }
+                    )
+                    // Back into an on-street leg focus: re-apply it exactly as the drawer's tap does.
+                    is DirectionsSubFocus.Leg -> applyLegFocus(subFocus.leg, from)
+                    // Back to the itinerary overview: restore it over whatever the leg focus did.
+                    null -> emitMapDirective(itineraryOverviewDirective(from))
                 }
                 CurrentFocus.None, is CurrentFocus.BikeStation ->
                     emitMapDirective(MapDirective.ClearFocus)
@@ -949,6 +987,13 @@ sealed interface MapDirective {
      * the trip's other legs — everything outside [legIndices] — to context (#2048).
      */
     data class FocusItineraryLeg(val points: List<GeoPoint>, val legIndices: Set<Int>) : MapDirective
+
+    /**
+     * Drop a [FocusItineraryLeg] focus back to the itinerary overview: every leg to full weight again and
+     * the whole trip reframed. The lighter counterpart to redrawing via [ShowItinerary], which a leg focus
+     * doesn't need — it never tore the trip down (unlike a leg's route sub-focus).
+     */
+    data object ClearItineraryLegFocus : MapDirective
 
     /** Clear the drawn itinerary but stay in directions mode (the plan became unsubmittable). */
     data object ClearItinerary : MapDirective

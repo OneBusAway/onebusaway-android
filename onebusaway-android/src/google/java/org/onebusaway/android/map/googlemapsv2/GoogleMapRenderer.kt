@@ -61,7 +61,6 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
-import org.onebusaway.android.map.render.ROUTE_LINE_CASE_EXTRA_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteLineDash
@@ -153,8 +152,7 @@ class GoogleMapRenderer(
         // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
         // theme, because the basemap it separates its line from does (see [mapRouteLineCaseColor]).
         caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
-        // Read from context rather than the [density] field, which is declared below this initializer.
-        caseExtraWidth = ROUTE_LINE_CASE_EXTRA_DP * context.resources.displayMetrics.density
+        caseExtraWidth = { it.case.extraWidthDp * density }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles

@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.TripLeg
@@ -13,10 +14,13 @@ import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.riddenRouteHue
+import org.onebusaway.android.util.routeBadgeChipColor
 
 /**
  * The directions map's per-leg stroke policy (#2041). The point of these is the *distinctions*: before
@@ -53,19 +57,19 @@ class ItineraryLegStyleTest {
 
     @Test
     fun `no two leg kinds share a colour`() {
-        val colors = ItineraryLegKind.entries.map { itineraryLegStyle(it, routeColor = null).color }
+        val colors = ItineraryLegKind.entries.map { itineraryLegStyle(it, routeColor = null, palette = DIRECTIONS).color }
         assertEquals(colors.size, colors.toSet().size)
     }
 
     @Test
     fun `on-street legs are dashed and thinner than the ride they connect to`() {
-        val ride = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null)
+        val ride = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null, palette = DIRECTIONS)
         assertEquals(RouteLineDash.NONE, ride.dash)
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, ride.widthProfile)
 
         listOf(ItineraryLegKind.WALK, ItineraryLegKind.BIKE, ItineraryLegKind.BIKESHARE, ItineraryLegKind.CAR)
             .forEach { kind ->
-                val street = itineraryLegStyle(kind, routeColor = null)
+                val street = itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS)
                 assertEquals("$kind should be dashed", RouteLineDash.TRAIL, street.dash)
                 assertEquals(ITINERARY_STREET_WIDTH_PROFILE, street.widthProfile)
             }
@@ -73,21 +77,18 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `no leg both dashes and stamps chevrons`() {
-        // The chevrons are a texture stamped along the stroke, so a dash pattern chops them into
-        // fragments and the two read as one broken line rather than as either.
-        ItineraryLegKind.entries.forEach { kind ->
-            val style = itineraryLegStyle(kind, routeColor = null)
-            assertFalse("$kind dashes and stamps chevrons", style.dash != RouteLineDash.NONE && style.directional)
+    fun `every ride is outlined and no mode leg is, so the outline can't be read as selection`() {
+        assertEquals(RouteLineCase.OUTLINE, itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null, palette = DIRECTIONS).case)
+        ItineraryLegKind.entries.filterNot { it == ItineraryLegKind.TRANSIT }.forEach { kind ->
+            assertEquals("$kind should carry no case", RouteLineCase.NONE, itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).case)
         }
-        assertTrue(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).directional)
     }
 
     @Test
     fun `only transit legs draw circular endpoint bulbs`() {
-        assertTrue(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null).roundCaps)
+        assertTrue(itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null, palette = DIRECTIONS).roundCaps)
         ItineraryLegKind.entries.filterNot { it == ItineraryLegKind.TRANSIT }.forEach { kind ->
-            assertFalse("$kind should keep flat endpoints", itineraryLegStyle(kind, routeColor = null).roundCaps)
+            assertFalse("$kind should keep flat endpoints", itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).roundCaps)
         }
     }
 
@@ -104,11 +105,11 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `a ride keeps its agency's hue, at the map's own chroma and tone`() {
+    fun `on the basemap palette a ride keeps its agency's hue, at the map's own chroma and tone`() {
         // Two reds an agency might publish: one washed out, one nearly black. Only the hue survives, so
         // the map draws them the same — the hue is the route's identity, the rest is this map's rendering.
-        val pale = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, Hct.from(25.0, 20.0, 85.0).toInt()).color)
-        val dark = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, Hct.from(25.0, 90.0, 20.0).toInt()).color)
+        val pale = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, Hct.from(25.0, 20.0, 85.0).toInt(), BASEMAP).color)
+        val dark = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, Hct.from(25.0, 90.0, 20.0).toInt(), BASEMAP).color)
 
         assertEquals(25.0, pale.hue, HUE_TOLERANCE_DEGREES)
         assertEquals(pale.hue, dark.hue, HUE_TOLERANCE_DEGREES)
@@ -124,11 +125,91 @@ class ItineraryLegStyleTest {
     }
 
     @Test
+    fun `the palette reaches the ride and leaves every mode leg on the map's own rendering`() {
+        // A ride is faded to its badge's colour because it is read beside that badge. A walk, bike or car
+        // leg has no badge at all — the drawer marks it with a mode glyph — so it keeps the basemap
+        // rendering every other line on this map uses, and the palette must not touch it.
+        val streets = ItineraryLegKind.entries.filterNot { it == ItineraryLegKind.TRANSIT }
+        streets.forEach { kind ->
+            val palettes = listOf(BASEMAP, DIRECTIONS, directionsRouteLinePalette(dark = true))
+                .map { itineraryLegStyle(kind, routeColor = null, palette = it).color }
+            assertEquals("$kind should be palette-invariant", 1, palettes.toSet().size)
+        }
+
+        // And the ride is not: it is the whole point of handing a palette in.
+        val ride = { palette: RouteLinePalette -> itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null, palette = palette).color }
+        assertNotEquals(ride(BASEMAP), ride(DIRECTIONS))
+    }
+
+    @Test
+    fun `a ride in the directions view is drawn in exactly its route badge's colour`() {
+        // The whole point of the directions palette: the line under a ride and the badge naming it in the
+        // drawer are one colour, not two policies that happen to land near each other. Asserted against
+        // [routeBadgeChipColor] itself — the chip reads the same function — so a change to the badge's tone
+        // or chroma cap moves the map line with it or fails here.
+        val agencyRed = Hct.from(25.0, 90.0, 45.0).toInt()
+
+        listOf(false, true).forEach { dark ->
+            assertEquals(
+                "ride colour (dark=$dark)",
+                routeBadgeChipColor(agencyRed, dark),
+                itineraryLegStyle(ItineraryLegKind.TRANSIT, agencyRed, directionsRouteLinePalette(dark)).color
+            )
+        }
+    }
+
+    @Test
+    fun `the directions palette is faded and theme-aware where the basemap one is neither`() {
+        // An agency's vivid hue is muted to the badge's soft chroma cap and taken to its light tone, and the
+        // two themes differ — none of which is true of the basemap palette, which renders one chroma and one
+        // tone whatever the theme (the basemap carries its own light/dark styles).
+        val agencyRed = Hct.from(25.0, 90.0, 45.0).toInt()
+        fun ride(palette: RouteLinePalette) = Hct.fromInt(itineraryLegStyle(ItineraryLegKind.TRANSIT, agencyRed, palette).color)
+
+        val basemap = ride(BASEMAP)
+        val light = ride(directionsRouteLinePalette(dark = false))
+        val night = ride(directionsRouteLinePalette(dark = true))
+
+        // Same route, so the hue is the same in all three: only the rendering changed.
+        listOf(light, night).forEach { assertEquals(basemap.hue, it.hue, HUE_TOLERANCE_DEGREES) }
+        // Faded: less saturated and lighter than the basemap line.
+        listOf(light, night).forEach {
+            assertTrue("chroma ${it.chroma} should be under the basemap's ${basemap.chroma}", it.chroma < basemap.chroma)
+            assertTrue("tone ${it.tone} should be above the basemap's ${basemap.tone}", it.tone > basemap.tone)
+        }
+        // Theme-aware: the two themes render the same route differently. Deliberately not asserted as
+        // "the dark theme is more saturated" — each theme's chroma ceiling is its own *cap* (which
+        // `RouteColorsTest` pins at a shared tone), but what a hue can actually hold is decided by the sRGB
+        // gamut at that theme's fill tone, so which theme comes out more saturated varies by hue.
+        assertNotEquals(light.toInt(), night.toInt())
+    }
+
+    @Test
+    fun `a colourless ride's line is the colour a badge gives that ride, not a fallback of its own`() {
+        // The WSF case: every WSF route publishes an empty colour, and the two surfaces each substituted
+        // something — the map the colourless-ride anchor, the badge the theme's neutral chip — so a ferry
+        // drew a coral line beside a grey roundel. Both now read [riddenRouteHue], and this is the assertion
+        // that fails if either grows a private fallback again.
+        val greyPublished = 0xFF808080.toInt() // achromatic: published, but no hue to keep
+
+        listOf(false, true).forEach { dark ->
+            val badge = routeBadgeChipColor(riddenRouteHue(routeColor = null), dark)
+            listOf(null, greyPublished).forEach { source ->
+                assertEquals(
+                    "colourless ride line for $source (dark=$dark)",
+                    badge,
+                    itineraryLegStyle(ItineraryLegKind.TRANSIT, source, directionsRouteLinePalette(dark)).color
+                )
+            }
+        }
+    }
+
+    @Test
     fun `a ride whose agency publishes no usable colour falls back rather than going grey`() {
         val nearBlack = 0xFF101010.toInt() // achromatic: a hue-preserving re-tone has nothing to keep
 
         listOf(null, nearBlack).forEach { source ->
-            val fallback = itineraryLegStyle(ItineraryLegKind.TRANSIT, source)
+            val fallback = itineraryLegStyle(ItineraryLegKind.TRANSIT, source, DIRECTIONS)
             assertTrue(
                 "fallback for $source was achromatic",
                 Hct.fromInt(fallback.color).chroma > ACHROMATIC_ROUTE_CHROMA
@@ -139,7 +220,7 @@ class ItineraryLegStyleTest {
     @Test
     fun `every leg kind draws a colour with a hue`() {
         ItineraryLegKind.entries.forEach { kind ->
-            val color = itineraryLegStyle(kind, routeColor = null).color
+            val color = itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color
             assertTrue("$kind was achromatic", Hct.fromInt(color).chroma > ACHROMATIC_ROUTE_CHROMA)
         }
     }
@@ -152,15 +233,21 @@ class ItineraryLegStyleTest {
 
         // Nothing is dropped — the whole trip is still drawn.
         assertEquals(lines.size, focused.size)
-        // Exactly the focused leg is cased; that case *is* the selection signal (#2082).
-        val (cased, plain) = focused.partition { it.cased }
+        // Exactly the focused leg takes the selection case; that step up in edge weight *is* the selection
+        // signal (#2082) — every ride already wears the hairline outline.
+        val (cased, plain) = focused.partition { it.case == RouteLineCase.SELECTION }
         assertEquals(listOf(ITINERARY_RIDE_WIDTH_PROFILE), cased.map { it.widthProfile })
         // The focused leg is last, so its case and stroke draw over the legs around it.
         assertEquals(cased.single(), focused.last())
         // Nothing but the case changes: every leg keeps the weight, colour and dash that say what kind of
         // leg it is, so width is free to mean only that. Compared as sets — focusing reorders the list, which
         // is how the focused leg comes to draw last.
-        assertEquals(lines.map { it.line }.toSet(), focused.map { it.copy(cased = false) }.toSet())
+        assertEquals(
+            lines.map { it.line }.toSet(),
+            // Undo only the selection step: a ride drops back to the outline it always wore, and the mode
+            // legs beside it are compared exactly as they were drawn.
+            focused.map { if (it.case == RouteLineCase.SELECTION) it.copy(case = RouteLineCase.OUTLINE) else it }.toSet()
+        )
         assertEquals(2, plain.size)
     }
 
@@ -174,7 +261,7 @@ class ItineraryLegStyleTest {
         // colour — a deliberate trade for contrast. What must survive is the *hue*, so the trace of colour
         // that's left is its own line's and not a neighbouring one's.
         ItineraryLegKind.entries.forEach { kind ->
-            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null).color)
+            val line = Hct.fromInt(itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).color)
 
             listOf(false to 10.0, true to 90.0).forEach { (darkMode, expectedTone) ->
                 val case = Hct.fromInt(mapRouteLineCaseColor(line.toInt(), darkMode))
@@ -202,7 +289,7 @@ class ItineraryLegStyleTest {
         // #2000: several itinerary legs the rider stays aboard through, read (and tapped) as one ride.
         val focused = tripOf(walk = 0, ride = 1, walk2 = 2).withLegFocus(setOf(1, 2))
 
-        assertEquals(2, focused.count { it.cased })
+        assertEquals(2, focused.count { it.case == RouteLineCase.SELECTION })
     }
 
     @Test
@@ -225,16 +312,26 @@ class ItineraryLegStyleTest {
         legLine(walk2, ItineraryLegKind.BIKE)
     )
 
+    @Test
+    fun `no itinerary leg stamps travel-direction chevrons`() {
+        // An on-street leg never could: the chevrons are a texture stamped along the stroke, so its dash
+        // chops them into fragments. A ride dropped them with the badge palette — a faded line under a
+        // hairline case reads as noise with an arrow texture on it, and the trip's direction is already read
+        // from the drawer's ordered rows and the leg's endpoint bulbs. Asserted on the drawn line, since the
+        // style table deliberately names no `directional` for anything to get wrong.
+        assertTrue(tripOf(walk = 0, ride = 1, walk2 = 2).none { it.line.directional })
+    }
+
     private fun legLine(legIndex: Int, kind: ItineraryLegKind): ItineraryLegLine {
-        val style = itineraryLegStyle(kind, routeColor = null)
+        val style = itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS)
         return ItineraryLegLine(
             legIndex,
             RoutePolyline(
                 style.color,
                 listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
                 widthProfile = style.widthProfile,
-                directional = style.directional,
                 dash = style.dash,
+                case = style.case,
                 roundStartCap = style.roundCaps,
                 roundEndCap = style.roundCaps
             )
@@ -242,6 +339,13 @@ class ItineraryLegStyleTest {
     }
 
     private companion object {
+        // The palette the directions view actually draws with, and the one every other view does. Most cases
+        // here are about a leg's *shape* rather than its colour, and take the directions palette because that
+        // is the only palette an itinerary leg is ever stroked with.
+        val DIRECTIONS: RouteLinePalette = directionsRouteLinePalette(dark = false)
+
+        val BASEMAP: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
+
         // The re-tone clamps to each hue's own sRGB gamut limit, so a hue can shift a degree or two.
         const val HUE_TOLERANCE_DEGREES = 3.0
 

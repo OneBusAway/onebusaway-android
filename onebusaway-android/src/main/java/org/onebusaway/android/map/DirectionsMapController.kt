@@ -69,8 +69,13 @@ class DirectionsMapController(private val host: MapHost) {
 
     private class EndpointMarker(val point: GeoPoint, val id: Int)
 
-    /** Draw [itinerary]'s leg polylines + start/end pins and frame it. */
-    fun start(itinerary: TripItinerary) {
+    /**
+     * Draw [itinerary]'s leg polylines + start/end pins and frame it, stroking every leg through
+     * [palette] — the directions view's own, which is the theme-aware colour the drawer badges this leg
+     * with (see [directionsRouteLinePalette]). Passed per draw rather than held, so the palette that
+     * resolved the current theme is the one this itinerary was drawn with.
+     */
+    fun start(itinerary: TripItinerary, palette: RouteLinePalette) {
         val legs = itinerary.legs
         if (legs.isEmpty()) {
             return
@@ -109,7 +114,7 @@ class DirectionsMapController(private val host: MapHost) {
             val geometry = leg.legGeometry ?: return@mapIndexedNotNull null
             val shape = LegShape(geometry)
             if (shape.length <= 0) return@mapIndexedNotNull null
-            val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
+            val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor), palette)
             // The wire hex is parsed here, on the leg and on every route offered in its place, so the
             // styling itself stays free of `android.graphics` (see the [ItineraryLegStyle] file header).
             val interchangeable = substitutes[legIndex].map { route ->
@@ -117,8 +122,8 @@ class DirectionsMapController(private val host: MapHost) {
             }
             ItineraryDrawableLeg(legIndex, leg, shape.points, style, interchangeable)
         }
-        // Every leg's points run in travel order, so whether it stamps chevrons is the style's call — a
-        // dashed on-street stroke declines them (see [itineraryLegStyle]).
+        // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
+        // [itineraryLegStyle], which also decides the hairline case a ride wears.
         legLines = drawableLegs.map { (legIndex, _, points, style) ->
             val caps = itineraryLegCaps(legs, legIndex)
             ItineraryLegLine(
@@ -127,8 +132,8 @@ class DirectionsMapController(private val host: MapHost) {
                     style.color,
                     points,
                     widthProfile = style.widthProfile,
-                    directional = style.directional,
                     dash = style.dash,
+                    case = style.case,
                     roundStartCap = style.roundCaps && caps.start,
                     roundEndCap = style.roundCaps && caps.end
                 )
@@ -146,7 +151,7 @@ class DirectionsMapController(private val host: MapHost) {
         }
         // Published after the pins, since the static layer is redrawn wholesale on each emission that
         // reaches it: badges written first would be built again for every pin added after them.
-        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs))
+        host.renderState.setRouteBadges(itineraryRouteBadges(drawableLegs, palette))
 
         directionsHasRoute = legLines.isNotEmpty()
         directionsStart = if (startLat != null && startLon != null) GeoPoint(startLat, startLon) else null

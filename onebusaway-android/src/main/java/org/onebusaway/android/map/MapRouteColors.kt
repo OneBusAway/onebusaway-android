@@ -17,6 +17,7 @@ package org.onebusaway.android.map
 
 import android.annotation.SuppressLint
 import com.google.android.material.color.utilities.Hct
+import org.onebusaway.android.util.routeBadgeChipColor
 import org.onebusaway.android.util.routeCasingColor
 import org.onebusaway.android.util.routeColorHctOrNull
 
@@ -39,9 +40,15 @@ import org.onebusaway.android.util.routeColorHctOrNull
  * [routeColorHctOrNull] — reading an agency colour and deciding whether it has a hue worth keeping — so a
  * route reads as the same *hue* on the map as in the drawer beside it, rendered for its own backdrop.
  *
- * [mapRouteLineCaseColor] is the one deliberate exception, and for the reason that proves the rule: a case
- * exists to hold its line apart from the basemap, so it is the one route colour whose job is defined against
- * a backdrop that flips. It follows the theme — contrasting with it — so the line it wraps doesn't have to.
+ * Two deliberate exceptions, each for a reason that proves the rule:
+ *
+ *  - [mapRouteLineCaseColor]: a case exists to hold its line apart from the basemap, so it is the one route
+ *    colour whose job is defined against a backdrop that flips. It follows the theme — contrasting with it —
+ *    so the line it wraps doesn't have to.
+ *  - [directionsRouteLinePalette]: in the directions view a line is read *against the drawer beside it*, a
+ *    Material surface full of route badges naming those very legs, so there the line takes the badge's own
+ *    theme-aware colour rather than this map's. Which of the two policies a line draws through is the
+ *    [RouteLinePalette] its producer was handed.
  */
 // Hct is Material Components' vendored color-science util (LIBRARY_GROUP); no public equivalent
 // exists, so this is deliberate long-term use, not a migration to track (same as LineBadge).
@@ -87,6 +94,50 @@ internal fun mapRouteLineCaseColor(lineColor: Int, darkMode: Boolean): Int = rou
     lineColor,
     if (darkMode) MAP_ROUTE_CASE_TONE_LIGHT else MAP_ROUTE_CASE_TONE_DARK
 )
+
+/**
+ * Which policy renders a route line's colour, handed to whatever produces the lines rather than read from
+ * ambient state — so a pure geometry helper still says, in its own signature, that a colour decision was
+ * made somewhere.
+ *
+ * Two exist: [BASEMAP_ROUTE_LINE_PALETTE] for every line drawn against the basemap alone, and
+ * [directionsRouteLinePalette] for the directions view, where the line is read next to the badges in the
+ * drawer. A third would be a third answer to "what does a route line look like here", so add one only with
+ * a backdrop that genuinely differs — not to tweak a single view.
+ */
+// Public, unlike the rest of this file: a palette is handed to the controllers' own entry points
+// ([DirectionsMapController.start], [RouteMapController.start]), so it is part of their signature. What it
+// renders *with* stays internal.
+fun interface RouteLinePalette {
+
+    /** [source]'s hue rendered by this palette, or null when it is absent or achromatic. */
+    fun lineColor(source: Int?): Int?
+}
+
+/**
+ * The map's own palette: one chroma and one tone whatever the hue, theme-independent (see the file
+ * header). Every route line outside the directions view.
+ */
+val BASEMAP_ROUTE_LINE_PALETTE = RouteLinePalette { mapRouteLineColorOrNull(it) }
+
+/**
+ * The directions view's palette: a line takes the exact colour of the route badge that names it
+ * ([routeBadgeChipColor]) — the agency's hue at the badge's capped chroma and light tone, flipping with the
+ * theme as the badge does.
+ *
+ * The trade this makes, deliberately: these are *faded* colours, chosen to sit on a Material surface, so a
+ * directions line carries less contrast against the light basemap than a [BASEMAP_ROUTE_LINE_PALETTE] line
+ * would. That is the point — in directions the map is read together with the drawer's badges and spines, and
+ * a leg being the same colour as its badge is worth more there than maximum contrast with the basemap. The
+ * selected leg still separates itself with a case ([mapRouteLineCaseColor]), which is a tonal contrast and so
+ * unaffected.
+ *
+ * [dark] is resolved when the lines are produced (the drawn itinerary is rebuilt on every plan, leg focus and
+ * drill-in), not when they are drawn. A theme flipped while a plan is on screen therefore leaves the lines as
+ * they were until the next redraw — the same as the case colour, which the renderer resolves once per created
+ * line. The two themes' badge tones sit close together, so a stale line is a shade off, never illegible.
+ */
+fun directionsRouteLinePalette(dark: Boolean) = RouteLinePalette { routeBadgeChipColor(it, dark) }
 
 private const val MAP_ROUTE_CHROMA = 75.0
 private const val MAP_ROUTE_TONE = 55.0

@@ -47,7 +47,7 @@ class RoutePolylineReconcilerTest {
                 line.width = width
             },
             caseColorOf = { CASE_COLOR },
-            caseExtraWidth = CASE_EXTRA_WIDTH
+            caseExtraWidth = { it.case.extraWidthDp }
         )
 
         /** The lines still on the map — created minus removed (creation order, not draw order). */
@@ -192,15 +192,33 @@ class RoutePolylineReconcilerTest {
     fun `a cased line draws its case first, wider, and without chevrons`() {
         val h = Harness()
 
-        h.reconciler.reconcile(listOf(line(1, 0.0).copy(cased = true, directional = true)), zoom = 4f)
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION, directional = true)), zoom = 4f)
 
         // Created case-first, which is what puts it under its own stroke in both SDKs' add-order draw.
         assertEquals(listOf(CASE_COLOR, 1), h.created.map { it.polyline.color })
-        assertEquals(4f + CASE_EXTRA_WIDTH, h.cases().single().width, 0f)
+        assertEquals(4f + SELECTION_CASE_EXTRA, h.cases().single().width, 0f)
         assertEquals(4f, h.strokes().single().width, 0f)
         // The stroke keeps its chevrons; the case must not double them.
         assertTrue(h.strokes().single().polyline.directional)
         assertFalse(h.cases().single().polyline.directional)
+    }
+
+    @Test
+    fun `an outline case draws thinner than a selection case, so selection still reads as the heavier edge`() {
+        val h = Harness()
+
+        h.reconciler.reconcile(
+            listOf(line(1, 0.0).copy(case = RouteLineCase.OUTLINE), line(2, 1.0).copy(case = RouteLineCase.SELECTION)),
+            zoom = 4f
+        )
+
+        val (outline, selection) = h.cases()
+        assertTrue(
+            "outline ${outline.width} should be thinner than selection ${selection.width}",
+            outline.width < selection.width
+        )
+        // Both are still wider than the stroke they wrap, or they wouldn't show at all.
+        assertTrue(outline.width > 4f)
     }
 
     @Test
@@ -217,7 +235,7 @@ class RoutePolylineReconcilerTest {
     fun `a case keeps its line's dash so a broken line's case breaks with it`() {
         val h = Harness()
 
-        h.reconciler.reconcile(listOf(line(1, 0.0).copy(cased = true, dash = RouteLineDash.TRAIL)), zoom = 4f)
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION, dash = RouteLineDash.TRAIL)), zoom = 4f)
 
         assertEquals(RouteLineDash.TRAIL, h.cases().single().polyline.dash)
     }
@@ -225,18 +243,18 @@ class RoutePolylineReconcilerTest {
     @Test
     fun `a case is re-widened with its line, staying the wider of the two`() {
         val h = Harness()
-        h.reconciler.reconcile(listOf(line(1, 0.0).copy(cased = true)), zoom = 4f)
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION)), zoom = 4f)
 
         h.reconciler.resyncWidths(zoom = 10f)
 
-        assertEquals(10f + CASE_EXTRA_WIDTH, h.cases().single().width, 0f)
+        assertEquals(10f + SELECTION_CASE_EXTRA, h.cases().single().width, 0f)
         assertEquals(10f, h.strokes().single().width, 0f)
     }
 
     @Test
     fun `removing a cased line removes its case too`() {
         val h = Harness()
-        h.reconciler.reconcile(listOf(line(1, 0.0).copy(cased = true)), zoom = 4f)
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION)), zoom = 4f)
 
         // A wholly different line: the cased one goes away, so its case must not be stranded on the map.
         h.reconciler.reconcile(listOf(line(2, 1.0)), zoom = 4f)
@@ -248,7 +266,7 @@ class RoutePolylineReconcilerTest {
     @Test
     fun `clear removes cases as well as strokes`() {
         val h = Harness()
-        h.reconciler.reconcile(listOf(line(1, 0.0).copy(cased = true), line(2, 1.0)), zoom = 4f)
+        h.reconciler.reconcile(listOf(line(1, 0.0).copy(case = RouteLineCase.SELECTION), line(2, 1.0)), zoom = 4f)
 
         h.reconciler.clear()
 
@@ -259,6 +277,8 @@ class RoutePolylineReconcilerTest {
         // The fake's case colour, distinct from every line colour used here so a test can tell the two apart.
         const val CASE_COLOR = -424242
 
-        const val CASE_EXTRA_WIDTH = 3f
+        // The width a SELECTION case adds, read from the enum rather than restated: the harness feeds the
+        // reconciler the same per-line lambda the renderers do, so these assertions follow a retuned case.
+        val SELECTION_CASE_EXTRA = RouteLineCase.SELECTION.extraWidthDp
     }
 }

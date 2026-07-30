@@ -53,6 +53,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -228,6 +229,16 @@ class MapViewModel @Inject constructor(
     private val directionsController = DirectionsMapController(mapHost)
     private var directionsActive = false
 
+    /**
+     * The palette every line the directions view draws is stroked with — the route badge's own theme-aware
+     * colour (see [directionsRouteLinePalette]), so a leg on the map, its badge in the drawer and its spine
+     * in the option card are one colour.
+     *
+     * Read per draw rather than held: the theme can change between one plan and the next, and this is the
+     * boundary where the app's `Context` — and so the current night mode — is available at all.
+     */
+    private fun directionsPalette(): RouteLinePalette = directionsRouteLinePalette(ThemeUtils.isInDarkMode(context))
+
     // Keeps vehicle markers clear of whichever top control anchors route focus: the standalone route
     // banner or, for a route selected within stop focus, the always-visible search field.
     private val focusBannerMarkerPaddingPx =
@@ -309,7 +320,8 @@ class MapViewModel @Inject constructor(
         highlightedSegment: List<GeoPoint> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         itineraryContext: List<RoutePolyline> = emptyList(),
-        preserveItinerary: Boolean = false
+        preserveItinerary: Boolean = false,
+        palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
     ) {
         // A leg's route sub-focus keeps the trip it came from (its context lines were read by the caller
         // before this teardown, and its start/end pins are left standing); every other entry drops it.
@@ -325,7 +337,8 @@ class MapViewModel @Inject constructor(
             focusTripId,
             highlightedSegment,
             extraSegments,
-            itineraryContext
+            itineraryContext,
+            palette
         )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
@@ -484,7 +497,10 @@ class MapViewModel @Inject constructor(
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
                 itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),
-                preserveItinerary = withinDirections
+                preserveItinerary = withinDirections,
+                // A leg drilled into keeps the directions view's colours: the corridor it belongs to is drawn
+                // in the same badge colour the leg had in the itinerary, rather than shifting palette on tap.
+                palette = if (withinDirections) directionsPalette() else BASEMAP_ROUTE_LINE_PALETTE
             )
         }
     }
@@ -506,7 +522,7 @@ class MapViewModel @Inject constructor(
         directionsController.clear()
         directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
-        directionsController.start(itinerary)
+        directionsController.start(itinerary, directionsPalette())
         bikeController.start(
             directions = true,
             selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)

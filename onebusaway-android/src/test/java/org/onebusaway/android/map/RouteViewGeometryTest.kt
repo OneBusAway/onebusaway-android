@@ -53,27 +53,26 @@ class RouteViewGeometryTest {
     }
 
     @Test
-    fun `a route draws the same colour whichever view shows it`() {
+    fun `a route draws one colour across every view that shares its backdrop`() {
         // The agency's own colour, as it arrives from the wire.
         val gtfs = 0xFF8B0000.toInt()
         val shape = FocusedTripShape("shape", "route", gtfs, listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)))
 
         // Focused-stop geometry (the picker's full-route view goes through the same focusedRoutePolyline).
         val adjacencyLine = FocusedTripGeometry(listOf(shape)).toRoutePolylines().single().color
-        // The ridden segment under a tapped directions leg, drawn in the shown route's colour.
+        // The ridden segment under a tapped route, drawn in the shown route's colour.
         val riddenSegment = routePolylinesWithSegment(
             base = emptyList(),
             segment = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
             routeColor = mapRouteLineColorOrNull(gtfs)
         ).single().color
-        // The same route ridden as an itinerary leg on the directions map.
-        val itineraryLeg = itineraryLegStyle(ItineraryLegKind.TRANSIT, gtfs).color
 
         assertEquals(mapRouteLineColorOrNull(gtfs), adjacencyLine)
         assertEquals(adjacencyLine, riddenSegment)
-        assertEquals(adjacencyLine, itineraryLeg)
         // And it is not the raw hex: a dark red would otherwise sink into the basemap.
         assertTrue(adjacencyLine != gtfs)
+        // The directions view is the one deliberate exception — same hue, its own rendering. That is
+        // asserted where the exception lives, in ItineraryLegStyleTest.
     }
 
     @Test

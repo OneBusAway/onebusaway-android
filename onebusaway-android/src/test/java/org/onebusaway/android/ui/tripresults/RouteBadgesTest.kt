@@ -26,6 +26,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
+import org.onebusaway.android.util.COLOURLESS_RIDE_HUE_ANCHOR
 
 /**
  * JVM tests for the joined route badge a ride draws — the planned route plus whatever else the leg can be
@@ -82,6 +83,18 @@ class RouteBadgesTest {
         val badge = legBadge(RouteBadge("8", null), listOf(RouteBadge("8", null), RouteBadge("7", null)), TransitMode.BUS)
 
         assertEquals(listOf("7", "8"), badge.routes.map { it.shortName })
+    }
+
+    /**
+     * A leg whose route publishes no colour — every WSF ferry — badges the colourless-ride hue, which is
+     * what the map draws that ride's line in. It used to carry no colour at all and the chip fell back to
+     * the theme's neutral container, so the ferry's roundel came out grey beside its own coral line.
+     */
+    @Test
+    fun aColourlessRouteBadgesTheColourlessRideHue() {
+        val ferry = TripLeg(mode = TripMode.FERRY, routeId = "95_128", routeLongName = "Kingston - Edmonds")
+
+        assertEquals(COLOURLESS_RIDE_HUE_ANCHOR, ferry.plannedBadge()?.routeColor)
     }
 
     /** A leg badges its route's short name. (Parsing the GTFS color needs the Android graphics stack,

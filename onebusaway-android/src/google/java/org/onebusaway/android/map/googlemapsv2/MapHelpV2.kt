@@ -15,24 +15,13 @@
  */
 package org.onebusaway.android.map.googlemapsv2
 
-import android.content.Context
-import android.location.Location
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import org.onebusaway.android.region.Region
 
 /** Utilities for Google Maps values. */
 object MapHelpV2 {
-    const val TAG = "MapHelpV2"
-
-    fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
-
-    fun makeLatLng(location: Location) = makeLatLng(location.latitude, location.longitude)
-
-    fun makeLocation(latLng: LatLng) = Location("FromLatLng").apply {
-        latitude = latLng.latitude
-        longitude = latLng.longitude
-    }
+    private fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
 
     fun getRegionBounds(region: Region): LatLngBounds {
         var latMin = 90.0
@@ -52,8 +41,4 @@ object MapHelpV2 {
             .include(makeLatLng(latMax, lonMax))
             .build()
     }
-
-    fun isMapsInstalled(context: Context) = ProprietaryMapHelpV2.isMapsInstalled(context)
-
-    fun promptUserInstallMaps(context: Context) = ProprietaryMapHelpV2.promptUserInstallMaps(context)
 }

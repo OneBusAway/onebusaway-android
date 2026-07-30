@@ -24,7 +24,6 @@ import android.graphics.Matrix
 import android.os.Environment
 import androidx.exifinterface.media.ExifInterface
 import java.io.File
-import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale

@@ -3,6 +3,8 @@ package org.onebusaway.android.util
 
 import android.content.Context
 import android.os.Bundle
+import androidx.annotation.ArrayRes
+import androidx.annotation.StringRes
 import java.util.Locale
 import org.onebusaway.android.R
 import org.onebusaway.android.app.Application
@@ -10,7 +12,16 @@ import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.preferences.PreferencesRepository
 
-/** Synchronous compatibility facade over [PreferencesRepository]. */
+/**
+ * A thin synchronous facade over the [PreferencesRepository] seam — every read/write routes through
+ * the repository (resolved via [PreferencesEntryPoint]) rather than touching `SharedPreferences`
+ * directly. That keeps these static helpers, and their many call sites, working unchanged while the
+ * underlying store is free to move (e.g. to DataStore) behind the seam.
+ *
+ * The [Application.get] reach in [repo] is the one deliberately-kept service-locator hop (#1636):
+ * threading a `Context` through every call site would be churn without changing the seam. The real
+ * removal is making this object injectable, which is tracked separately.
+ */
 object PreferenceUtils {
     private fun repo(): PreferencesRepository = PreferencesEntryPoint.get(Application.get())
 
@@ -22,32 +33,21 @@ object PreferenceUtils {
 
     fun saveBoolean(key: String, value: Boolean) = repo().setBoolean(key, value)
 
-    fun saveFloat(key: String, value: Float) = repo().setFloat(key, value)
+    private fun saveFloat(key: String, value: Float) = repo().setFloat(key, value)
 
     fun saveDouble(key: String, value: Double) = saveLong(key, value.toRawBits())
 
     fun getDouble(key: String, defaultValue: Double): Double = Double.fromBits(repo().getLong(key, defaultValue.toRawBits()))
 
-    fun getStopSortOrderFromPreferences(context: Context): Int {
-        val resources = context.resources
-        val options = resources.getStringArray(R.array.sort_stops)
-        val selected = repo().getString(
-            resources.getString(R.string.preference_key_default_stop_sort),
-            options[0]
-        )
-        return options.take(2).indexOfFirst { selected.equals(it, ignoreCase = true) }
-            .takeIf { it >= 0 } ?: 0
-    }
+    fun getStopSortOrderFromPreferences(context: Context): Int = sortOrderFromPreferences(context, R.array.sort_stops, R.string.preference_key_default_stop_sort)
 
-    fun getReminderSortOrderFromPreferences(context: Context): Int {
+    fun getReminderSortOrderFromPreferences(context: Context): Int = sortOrderFromPreferences(context, R.array.sort_reminders, R.string.preference_key_default_reminder_sort)
+
+    private fun sortOrderFromPreferences(context: Context, @ArrayRes optionsRes: Int, @StringRes keyRes: Int): Int {
         val resources = context.resources
-        val options = resources.getStringArray(R.array.sort_reminders)
-        val selected = repo().getString(
-            resources.getString(R.string.preference_key_default_reminder_sort),
-            options[0]
-        )
-        return options.take(2).indexOfFirst { selected.equals(it, ignoreCase = true) }
-            .takeIf { it >= 0 } ?: 0
+        val options = resources.getStringArray(optionsRes)
+        val selected = repo().getString(resources.getString(keyRes), options[0])
+        return options.take(2).indexOfFirst { selected.equals(it, ignoreCase = true) }.coerceAtLeast(0)
     }
 
     fun saveMapViewToPreferences(lat: Double, lon: Double, zoom: Float) {

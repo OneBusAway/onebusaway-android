@@ -15,23 +15,13 @@
  */
 package org.onebusaway.android.map.maplibre
 
-import android.location.Location
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.geometry.LatLngBounds
 import org.onebusaway.android.region.Region
 
 /** Utilities for MapLibre map values. */
 object MapHelpMapLibre {
-    const val TAG = "MapHelpMapLibre"
-
-    fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
-
-    fun makeLatLng(location: Location) = makeLatLng(location.latitude, location.longitude)
-
-    fun makeLocation(latLng: LatLng) = Location("FromLatLng").apply {
-        latitude = latLng.latitude
-        longitude = latLng.longitude
-    }
+    private fun makeLatLng(lat: Double, lon: Double) = LatLng(lat, lon)
 
     fun getRegionBounds(region: Region): LatLngBounds {
         var latMin = 90.0
@@ -51,6 +41,4 @@ object MapHelpMapLibre {
             .include(makeLatLng(latMax, lonMax))
             .build()
     }
-
-    fun isMapsInstalled() = true
 }

@@ -45,7 +45,7 @@ internal class DtoStop(private val ref: StopReference) : ObaStop {
 /**
  * Object defining a Stop element. Equality is by [id] only (preserved from the original).
  */
-class ObaStopElement constructor(
+class ObaStopElement(
     override val id: String = "",
     private val lat: Double = 0.0,
     private val lon: Double = 0.0,

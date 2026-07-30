@@ -57,7 +57,7 @@ class LocationHelper(context: Context, interval: Int) : LocationListener {
     override fun onLocationChanged(location: Location) {
         LocationEntryPoint.getSink(context).update(location)
         LocationEntryPoint.get(context).lastKnownLocation()?.let { latest ->
-            val copy = Location("for listeners").apply { set(latest) }
+            val copy = Location(latest)
             listeners.toList().forEach { it.onLocationChanged(copy) }
         }
     }
@@ -102,7 +102,7 @@ class LocationHelper(context: Context, interval: Int) : LocationListener {
     }
 
     companion object {
-        const val TAG = "LocationHelper"
+        private const val TAG = "LocationHelper"
         private const val MILLISECONDS_PER_SECOND = 1_000L
         private const val FASTEST_INTERVAL = MILLISECONDS_PER_SECOND
     }

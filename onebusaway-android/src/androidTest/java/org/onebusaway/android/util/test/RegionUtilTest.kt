@@ -33,8 +33,8 @@ class RegionUtilTest {
     }
 
     @Test fun distanceAway() {
-        assertApproximateEquals(1210f, requireNotNull(RegionUtils.getDistanceAway(pugetSound, seattle)))
-        assertApproximateEquals(3160f, requireNotNull(RegionUtils.getDistanceAway(tampa, tampaLocation)))
+        assertEquals(1210f, requireNotNull(RegionUtils.getDistanceAway(pugetSound, seattle)), DISTANCE_TOLERANCE_M)
+        assertEquals(3160f, requireNotNull(RegionUtils.getDistanceAway(tampa, tampaLocation)), DISTANCE_TOLERANCE_M)
         assertNull(RegionUtils.getDistanceAway(Region(id = -2, name = "No Bounds", active = true), seattle))
     }
 
@@ -49,7 +49,7 @@ class RegionUtilTest {
         val results = DoubleArray(4)
         RegionUtils.getRegionSpan(tampa, results)
         listOf(0.542461f, 0.576357f, 27.9769105f, -82.445851f).forEachIndexed { index, value ->
-            assertApproximateEquals(value, results[index].toFloat())
+            assertEquals(value, results[index].toFloat(), SPAN_TOLERANCE_DEG)
         }
     }
 
@@ -61,9 +61,17 @@ class RegionUtilTest {
 
     @Test fun regionUsable() {
         assertTrue(RegionUtils.isRegionUsable(context, pugetSound))
-        assertFalse(RegionUtils.isRegionUsable(context, MockRegion.getRegionWithoutObaApis(context)))
-        assertFalse(RegionUtils.isRegionUsable(context, MockRegion.getInactiveRegion(context)))
+        assertFalse(RegionUtils.isRegionUsable(context, MockRegion.getRegionWithoutObaApis()))
+        assertFalse(RegionUtils.isRegionUsable(context, MockRegion.getInactiveRegion()))
     }
 
-    private fun assertApproximateEquals(expected: Float, actual: Float) = assertTrue(actual in expected - 2f..expected + 2f)
+    private companion object {
+        const val DISTANCE_TOLERANCE_M = 2f
+
+        /**
+         * Degrees, not metres: the span assertions below compare coordinate spans/centres, so the
+         * metre-scale tolerance above would make them vacuous.
+         */
+        const val SPAN_TOLERANCE_DEG = 1e-4f
+    }
 }

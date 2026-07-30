@@ -30,7 +30,6 @@ object RegionUtils {
 
     const val TAMPA_REGION_ID = 0
     const val PUGET_SOUND_REGION_ID = 1
-    const val ATLANTA_REGION_ID = 3
     const val METERS_TO_MILES = 0.000621371
     const val METERS_TO_FEET = 3.28084
     private const val DISTANCE_LIMITER = 100
@@ -148,9 +147,9 @@ object RegionUtils {
     fun formatOtpBaseUrl(baseUrl: String): String = baseUrl.removeSuffix("/")
 
     @Synchronized
-    fun getRegionsFromServer(context: Context): ArrayList<Region> = ArrayList(RegionsClient.fetchRegionsFromServer(context))
+    fun getRegionsFromServer(context: Context): List<Region> = RegionsClient.fetchRegionsFromServer(context)
 
-    fun getRegionsFromResources(context: Context): ArrayList<Region> = ArrayList(RegionsClient.parseBundledRegions(context))
+    fun getRegionsFromResources(context: Context): List<Region> = RegionsClient.parseBundledRegions(context)
 
     @VisibleForTesting
     fun open311ServersFrom(jurisdictionId: String?, apiKey: String?, baseUrl: String?): Array<Region.Open311Server> = if (baseUrl.isNullOrBlank()) emptyArray() else arrayOf(Region.Open311Server(jurisdictionId, apiKey, baseUrl))

@@ -92,8 +92,6 @@ object ServiceUtils {
 
     fun isTransitServiceByType(type: String?): Boolean = isTransitStopServiceByType(type) || isTransitTripServiceByType(type)
 
-    fun isTransitOpen311ServiceByType(type: String?): Boolean = type == ReportConstants.DYNAMIC_TRANSIT_SERVICE_TRIP || type == ReportConstants.DYNAMIC_TRANSIT_SERVICE_STOP
-
     /**
      * Heuristic (pre-existing, carried over verbatim from the Java original). An Open311 service
      * definition describes its attributes only in prose, so we guess which free-form attribute is

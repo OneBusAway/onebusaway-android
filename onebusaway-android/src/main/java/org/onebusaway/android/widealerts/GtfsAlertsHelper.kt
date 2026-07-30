@@ -19,7 +19,8 @@ object GtfsAlertsHelper {
     ): String {
         val language = getCurrentAppLanguageCode()
         var fallback = ""
-        translations.filter { it.hasLanguage() }.forEach { translation ->
+        for (translation in translations) {
+            if (!translation.hasLanguage()) continue
             when (translation.language) {
                 language -> return translation.text
                 DEFAULT_LANGUAGE_CODE -> fallback = translation.text
@@ -37,13 +38,13 @@ object GtfsAlertsHelper {
         isStartDateWithin24Hours(entity.alert, nowMs) &&
         !isAlertRead(context, entity)
 
-    fun isAgencyWideAlert(alert: GtfsRealtime.Alert): Boolean = alert.informedEntityList.any { it.hasAgencyId() }
+    private fun isAgencyWideAlert(alert: GtfsRealtime.Alert): Boolean = alert.informedEntityList.any { it.hasAgencyId() }
 
-    fun isHighSeverity(alert: GtfsRealtime.Alert): Boolean = alert.hasSeverityLevel() &&
-        alert.severityLevel in setOf(
-            GtfsRealtime.Alert.SeverityLevel.SEVERE,
-            GtfsRealtime.Alert.SeverityLevel.WARNING
-        )
+    private fun isHighSeverity(alert: GtfsRealtime.Alert): Boolean = alert.hasSeverityLevel() &&
+        (
+            alert.severityLevel == GtfsRealtime.Alert.SeverityLevel.SEVERE ||
+                alert.severityLevel == GtfsRealtime.Alert.SeverityLevel.WARNING
+            )
 
     /**
      * These alerts come straight off a raw GTFS-realtime feed, not the OBA API, so
@@ -57,13 +58,13 @@ object GtfsAlertsHelper {
         return elapsed in 0..DAY_MS
     }
 
-    fun isAlertRead(context: Context, entity: GtfsRealtime.FeedEntity): Boolean = DatabaseEntryPoint.get(context).alertsRepository().isAlertExists(entity.id)
+    private fun isAlertRead(context: Context, entity: GtfsRealtime.FeedEntity): Boolean = DatabaseEntryPoint.get(context).alertsRepository().isAlertExists(entity.id)
 
     fun markAlertAsRead(context: Context, entity: GtfsRealtime.FeedEntity) {
         DatabaseEntryPoint.get(context).alertsRepository().insertAlert(AlertEntity(entity.id))
     }
 
-    fun getCurrentAppLanguageCode(): String = Locale.getDefault().language
+    private fun getCurrentAppLanguageCode(): String = Locale.getDefault().language
 
     private const val DEFAULT_LANGUAGE_CODE = "en"
     private const val MILLIS_PER_SECOND = 1_000L

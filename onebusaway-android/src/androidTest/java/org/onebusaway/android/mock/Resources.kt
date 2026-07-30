@@ -9,8 +9,6 @@ import org.onebusaway.android.BuildConfig
 object Resources {
     private val testRawUri = Uri.parse("android.resource://${BuildConfig.APPLICATION_ID}.test/raw/")
 
-    fun buildTestUri(): Uri.Builder = testRawUri.buildUpon()
-
     fun getTestUri(path: String): Uri = Uri.withAppendedPath(testRawUri, path)
 
     fun read(context: Context, uri: Uri): Reader = InputStreamReader(requireNotNull(context.contentResolver.openInputStream(uri)), Charsets.UTF_8)

@@ -161,21 +161,15 @@ internal fun FocusedTripGeometry.toRouteBadges(
     }
     return placeRouteBadges(
         specs.map { spec ->
+            // A badge takes its line's colour, so it goes through the same policy — an adjacency colour is
+            // already in it, an agency's own has to be put through.
+            val color = routeColors[spec.key]
+                ?: mapRouteLineColorOrNull(spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color)
+                ?: DEFAULT_ROUTE_LINE_COLOR
             RouteBadgeRequest(
                 // An adjacency label names the one route whose line it sits on; only a directions ride the
                 // rider may board any of several routes for stacks more than one name (#2083).
-                routes = listOf(
-                    BadgedRoute(
-                        routeShortName = spec.name,
-                        // A badge takes its line's colour, so it goes through the same policy — an
-                        // adjacency colour is already in it, an agency's own has to be put through.
-                        color = routeColors[spec.key]
-                            ?: mapRouteLineColorOrNull(
-                                spec.shapes.firstNotNullOfOrNull(FocusedTripShape::routeColor) ?: spec.route.color
-                            )
-                            ?: DEFAULT_ROUTE_LINE_COLOR
-                    )
-                ),
+                routes = listOf(BadgedRoute(spec.name, color)),
                 paths = spec.shapes.map { shape -> RouteBadgePath(shape.points) },
                 // An adjacency label is the way into its route: it names a route the rider hasn't opened.
                 tap = spec.key

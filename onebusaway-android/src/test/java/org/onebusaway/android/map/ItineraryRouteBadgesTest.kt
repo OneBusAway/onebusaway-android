@@ -144,13 +144,36 @@ class ItineraryRouteBadgesTest {
         assertEquals(listOf(listOf("1 Line", "2 Line"), listOf("2 Line")), badges.map(::names))
     }
 
+    @Test
+    fun `substitutes that merely read alike are different offers`() {
+        // Two legs of the 2 Line, each offered a different route that happens to publish the same name. The
+        // labels group on the candidates' route ids, so the two rides stay apart; grouping on the name would
+        // fold them into one label covering both corridors.
+        val first = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+        val second = TripLeg(mode = TripMode.RAIL, routeId = "route-2", routeShortName = "2 Line")
+
+        val badges = itineraryRouteBadges(
+            listOf(
+                drawable(0, first, eastward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1a"))),
+                drawable(1, second, northward, interchangeable = listOf(interchangeable("1 Line", routeId = "route-1b")))
+            )
+        )
+
+        assertEquals(listOf(listOf("1 Line", "2 Line"), listOf("1 Line", "2 Line")), badges.map(::names))
+    }
+
     private fun names(badge: RouteBadge) = badge.routes.map(BadgedRoute::routeShortName)
 
-    /** An interchangeable route as the controller hands it over: named, and already colour-parsed. */
-    private fun interchangeable(displayName: String, routeColor: Int? = null) = interchangeableBadgedRoute(
+    /** A route offered in a leg's place, as the controller hands it over: the candidate plus its parsed colour. */
+    private fun interchangeable(
+        displayName: String,
+        routeColor: Int? = null,
+        routeId: String = "route-for-$displayName"
+    ) = ItinerarySubstitute(
         InterchangeableRoute(
-            routeId = "route-for-$displayName",
+            routeId = routeId,
             displayName = displayName,
+            // The colour reaches the label already parsed, so the wire field plays no part here.
             routeColor = null,
             agencyId = null,
             agencyName = null,
@@ -164,6 +187,6 @@ class ItineraryRouteBadgesTest {
         leg: TripLeg,
         points: List<GeoPoint>,
         kind: ItineraryLegKind = ItineraryLegKind.TRANSIT,
-        interchangeable: List<BadgedRoute> = emptyList()
+        interchangeable: List<ItinerarySubstitute> = emptyList()
     ) = ItineraryDrawableLeg(index, leg, points, itineraryLegStyle(kind, routeColor = null), interchangeable)
 }

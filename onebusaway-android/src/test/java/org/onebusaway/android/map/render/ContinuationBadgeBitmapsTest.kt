@@ -49,4 +49,24 @@ class ContinuationBadgeBitmapsTest {
         assertTrue(Hct.fromInt(light).chroma < ACHROMATIC_ROUTE_CHROMA)
         assertTrue(Hct.fromInt(dark).chroma < ACHROMATIC_ROUTE_CHROMA)
     }
+
+    @Test
+    fun `casing follows the colours on the badge, not how many routes it names`() {
+        val blue = Hct.from(210.0, 75.0, 55.0).toInt()
+        val green = Hct.from(140.0, 75.0, 55.0).toInt()
+        val hued = ContinuationBadgeBitmaps.routeBadgeOutlineColor(blue, darkMode = false)
+
+        // One route: its own hue, as it always has been.
+        assertEquals(hued, casing(listOf(BadgedRoute("1 Line", blue))))
+        // Two routes drawn in one colour — a pair whose agency publishes none, both taking the shared
+        // transit fallback — is a single-colour pill, so it cases like one rather than going grey.
+        assertEquals(hued, casing(listOf(BadgedRoute("1 Line", blue), BadgedRoute("2 Line", blue))))
+        // Only a badge that really holds several colours has no hue to case with.
+        assertEquals(
+            ContinuationBadgeBitmaps.neutralBadgeOutlineColor(darkMode = false),
+            casing(listOf(BadgedRoute("1 Line", blue), BadgedRoute("2 Line", green)))
+        )
+    }
+
+    private fun casing(routes: List<BadgedRoute>) = ContinuationBadgeBitmaps.casingColor(routes, darkMode = false)
 }

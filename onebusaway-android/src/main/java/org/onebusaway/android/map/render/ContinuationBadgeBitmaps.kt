@@ -22,6 +22,7 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withClip
 import kotlin.math.ceil
 import org.onebusaway.android.util.routeCasingColor
 
@@ -60,19 +61,24 @@ object ContinuationBadgeBitmaps {
      * corridor it labels, while rows keep the label roughly as wide as its widest name.
      */
     fun badge(routes: List<BadgedRoute>, density: Float, darkMode: Boolean): Bitmap {
-        require(routes.isNotEmpty()) { "a route badge names at least one route" }
-        val rows = routes.map { route -> BadgeRow(route, textPaint(route.color)) }
-        // Every row shares one font size, so one row's metrics size them all — the pill's rows are equal
-        // bands whatever they read.
-        val metrics = rows.first().textPaint.fontMetrics
+        require(routes.isNotEmpty()) { "a route badge has to name a route to draw one" }
+        // One paint for every row: they share a size and weight, so only the text color changes down the
+        // stack — set per row, exactly as the band's is. That also makes the metrics below the whole pill's:
+        // its rows are equal bands whatever they read.
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = TEXT_SIZE_PX
+            isFakeBoldText = true
+            textAlign = Paint.Align.CENTER
+        }
+        val metrics = textPaint.fontMetrics
         // A whole number of pixels, so the bands are identical and the pill is exactly as tall as its rows
         // — the row boundaries are also where the dividers are drawn, and a fractional band would drift
         // away from them down the stack.
         val rowHeight = ceil((metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * 2)
-        val width = rows
-            .maxOf { row -> row.textPaint.measureText(row.route.routeShortName) + HORIZONTAL_PADDING_PX * 2 }
+        val width = routes
+            .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * 2 }
             .coerceAtLeast(CORNER_RADIUS_PX * 2)
-        val height = rowHeight * rows.size
+        val height = rowHeight * routes.size
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
         val canvas = Canvas(bitmap)
@@ -83,29 +89,28 @@ object ContinuationBadgeBitmaps {
             width - outlineWidth / 2f,
             height - outlineWidth / 2f
         )
-        val casing = casingColor(routes, darkMode)
+        val band = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
         // The pill's shape clips the bands, so the outermost ones take its rounded corners and the
         // interior ones stay square where they meet.
-        canvas.save()
-        canvas.clipPath(Path().apply { addRoundRect(badgeBounds, CORNER_RADIUS_PX, CORNER_RADIUS_PX, Path.Direction.CW) })
-        val band = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-        rows.forEachIndexed { index, row ->
-            val top = rowHeight * index
-            val color = row.route.color
-            band.color = Color.rgb(Color.red(color), Color.green(color), Color.blue(color))
-            canvas.drawRect(RectF(0f, top, width, top + rowHeight), band)
-            val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
-            canvas.drawText(row.route.routeShortName, width / 2f, baseline, row.textPaint)
+        val pill = Path().apply { addRoundRect(badgeBounds, CORNER_RADIUS_PX, CORNER_RADIUS_PX, Path.Direction.CW) }
+        canvas.withClip(pill) {
+            routes.forEachIndexed { index, route ->
+                val top = rowHeight * index
+                band.color = Color.rgb(Color.red(route.color), Color.green(route.color), Color.blue(route.color))
+                drawRect(RectF(0f, top, width, top + rowHeight), band)
+                textPaint.color = MarkerRendering.legibleOn(route.color)
+                val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
+                drawText(route.routeShortName, width / 2f, baseline, textPaint)
+            }
         }
-        canvas.restore()
         val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = casing
+            color = casingColor(routes, darkMode)
             style = Paint.Style.STROKE
             strokeWidth = outlineWidth
         }
         // Where two rows meet, in the same color as the outline around them all — so the badge reads as
         // one bounded object holding several names, even when its routes share a color or have none.
-        for (index in 1..rows.lastIndex) {
+        for (index in 1..routes.lastIndex) {
             val y = rowHeight * index
             canvas.drawLine(badgeBounds.left, y, badgeBounds.right, y, line)
         }
@@ -113,23 +118,34 @@ object ContinuationBadgeBitmaps {
         return bitmap
     }
 
-    private class BadgeRow(val route: BadgedRoute, val textPaint: Paint)
-
-    private fun textPaint(color: Int) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        this.color = MarkerRendering.legibleOn(color)
-        textSize = TEXT_SIZE_PX
-        isFakeBoldText = true
-        textAlign = Paint.Align.CENTER
-    }
+    /**
+     * A stable key identifying the bitmap [badge] draws for these inputs, beside the function itself so the
+     * two can't disagree about which of them the key names (as [VehicleBitmaps.iconKey] is). A renderer
+     * caches one wrapper (a Google `BitmapDescriptor`) per key.
+     *
+     * Every name and color on the badge takes part, so two labels differing only in a stacked route can't
+     * share a bitmap — and so does [darkMode], which the casing reads: the same routes case differently
+     * either side of a light/dark switch, and a key blind to it would serve the pre-switch pill. Density is
+     * fixed for the lifetime of a renderer's cache, so it distinguishes nothing within one.
+     */
+    fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean): String = routes.joinToString(
+        separator = "|",
+        prefix = "route-badge:$darkMode:"
+    ) { "${it.routeShortName}:${it.color}" }
 
     /**
-     * The color of the badge's outline and of the lines dividing its rows. A badge naming one route cases
-     * itself in that route's own hue ([routeBadgeOutlineColor]); one naming several has no single hue to
-     * case with — picking a row's would say that row is the badge — so it takes the same tone with the hue
-     * dropped, a neutral that reads against every band it encloses.
+     * The color of the badge's outline and of the lines dividing its rows. A badge with one color between
+     * its routes cases itself in that color's own hue ([routeBadgeOutlineColor]) — which is every
+     * single-route label, and equally a pair of colorless routes drawn in the shared transit fallback. Only
+     * a badge that really does hold several colors has no hue to case with — picking one row's would say
+     * that row is the badge — so it takes the same tone with the hue dropped, a neutral that reads against
+     * every band it encloses.
      */
-    private fun casingColor(routes: List<BadgedRoute>, darkMode: Boolean): Int = routes.singleOrNull()
-        ?.let { routeBadgeOutlineColor(it.color, darkMode) }
+    internal fun casingColor(routes: List<BadgedRoute>, darkMode: Boolean): Int = routes
+        .map(BadgedRoute::color)
+        .distinct()
+        .singleOrNull()
+        ?.let { routeBadgeOutlineColor(it, darkMode) }
         ?: neutralBadgeOutlineColor(darkMode)
 
     /**

@@ -389,20 +389,12 @@ class GoogleMapRenderer(
         continuationBadgeByMarker[marker] = badge
     }
 
-    private fun routeBadgeIcon(routes: List<BadgedRoute>): BitmapDescriptor = descriptorCache.get(routeBadgeCacheKey(routes)) {
-        ContinuationBadgeBitmaps.badge(
-            routes,
-            density,
-            darkMode = ThemeUtils.isInDarkMode(context)
-        )
+    private fun routeBadgeIcon(routes: List<BadgedRoute>): BitmapDescriptor {
+        val darkMode = ThemeUtils.isInDarkMode(context)
+        return descriptorCache.get(ContinuationBadgeBitmaps.badgeKey(routes, darkMode)) {
+            ContinuationBadgeBitmaps.badge(routes, density, darkMode)
+        }
     }
-
-    /** Every name and colour on the badge, so two labels differing only in a stacked route can't share
-     *  a cached bitmap. */
-    private fun routeBadgeCacheKey(routes: List<BadgedRoute>): String = routes.joinToString(
-        separator = "|",
-        prefix = "route-badge:"
-    ) { "${it.routeShortName}:${it.color}" }
 
     private fun continuationArrowIcon(color: Int): BitmapDescriptor = descriptorCache.get("continuation-arrow:$color") {
         ContinuationBadgeBitmaps.arrow(color)

@@ -140,28 +140,25 @@ internal fun List<ItineraryLegLine>.withLegFocus(focusedLegIndices: Set<Int>): L
 /**
  * One itinerary leg with geometry to draw: its index in the itinerary, the leg itself, its decoded
  * points, the stroke its line and its label share, and the other routes the rider may board in its place
- * (empty for all but an interchangeable ride — see [interchangeableBadgedRoute]).
+ * (empty for all but an interchangeable ride).
  */
 internal data class ItineraryDrawableLeg(
     val index: Int,
     val leg: TripLeg,
     val points: List<GeoPoint>,
     val style: ItineraryLegStyle,
-    val interchangeable: List<BadgedRoute> = emptyList()
+    val interchangeable: List<ItinerarySubstitute> = emptyList()
 )
 
 /**
- * One route the rider may board in place of a leg's planned one (#2010), as a row on that leg's map label:
- * named the way the drawer names it, in the colour this map draws that route's line — the colour its line
- * actually takes when the rider drills into the leg and the whole corridor is drawn (#2063).
- *
- * [routeColor] is the candidate's *already-parsed* GTFS colour, for the reason the file header gives: the
- * wire hex is the caller's to parse, so everything here stays JVM-pure.
+ * A route the rider may board in place of a leg's planned one (#2010), with its GTFS colour *already
+ * parsed* — the one thing the caller has to do for it, since parsing the wire hex needs
+ * `android.graphics` and everything here stays JVM-pure (see the file header). The candidate itself is
+ * carried whole rather than reduced to a name, so a label can group on the route **id** OTP gave it:
+ * two routes may publish the same short name, and a name is only ever an identity of last resort
+ * ([itineraryRouteBadges]).
  */
-internal fun interchangeableBadgedRoute(route: InterchangeableRoute, routeColor: Int?): BadgedRoute = BadgedRoute(
-    routeShortName = route.displayName,
-    color = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor).color
-)
+internal data class ItinerarySubstitute(val route: InterchangeableRoute, val routeColor: Int?)
 
 /**
  * One label per route ridden in a drawn itinerary (#2066), so a transit line on the directions map says
@@ -187,8 +184,13 @@ internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteB
         // The alternatives are part of the identity, not just cargo: two legs of one route can be offered
         // different ones (the corridor they share ends), and a single label carrying the union would claim
         // on both segments what is only true of one. When they agree — the ordinary case, and every leg of
-        // an interline chain, which is offered none at all — the legs still share one label.
-        Ride(RideIdentity(drawable.leg.routeId ?: name, drawable.interchangeable.map(BadgedRoute::routeShortName).toSet()), name, drawable)
+        // an interline chain, which is offered none at all — the legs still share one label. They key by
+        // route id, which a candidate always has, so two alternatives that merely read alike stay apart.
+        val identity = RideIdentity(
+            drawable.leg.routeId ?: name,
+            drawable.interchangeable.map { it.route.routeId }.toSet()
+        )
+        Ride(identity, name, drawable)
     }.groupBy(Ride::identity)
     return placeRouteBadges(
         rides.map { (_, ridden) ->
@@ -202,15 +204,24 @@ internal fun itineraryRouteBadges(legs: List<ItineraryDrawableLeg>): List<RouteB
     )
 }
 
-private data class RideIdentity(val route: String, val interchangeableNames: Set<String>)
+private data class RideIdentity(val route: String, val interchangeableRouteIds: Set<String>)
 
 private data class Ride(val identity: RideIdentity, val name: String, val drawable: ItineraryDrawableLeg) {
     /**
      * The routes this label names: the planned one in exactly the colour its own line is stroked with — so
-     * a label and its line can't disagree — joined by whatever is interchangeable with it.
+     * a label and its line can't disagree — joined by whatever is interchangeable with it, each named the
+     * way the drawer names it and drawn in the colour this map gives that route's line, which is the colour
+     * it actually takes when the rider drills into the leg and the whole corridor is drawn (#2063).
      */
-    fun badgedRoutes(): List<BadgedRoute> = (listOf(BadgedRoute(name, drawable.style.color)) + drawable.interchangeable)
-        .inInterchangeableOrder(BadgedRoute::routeShortName)
+    fun badgedRoutes(): List<BadgedRoute> = (
+        listOf(BadgedRoute(name, drawable.style.color)) +
+            drawable.interchangeable.map { substitute ->
+                BadgedRoute(
+                    substitute.route.displayName,
+                    itineraryLegStyle(ItineraryLegKind.TRANSIT, substitute.routeColor).color
+                )
+            }
+        ).inInterchangeableOrder(BadgedRoute::routeShortName)
 }
 
 private fun street(hueAnchor: Int) = ItineraryLegStyle(

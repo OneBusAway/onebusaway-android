@@ -101,10 +101,14 @@ class DirectionsMapController(private val host: MapHost) {
             val shape = LegShape(geometry)
             if (shape.length <= 0) return@mapIndexedNotNull null
             val style = itineraryLegStyle(leg.legKind(), parseObaHexColor(leg.routeColor))
-            // The wire hex is parsed here, on both the leg and its alternatives, so the styling itself stays
-            // free of `android.graphics` (see the [ItineraryLegStyle] file header).
-            val interchangeable = substitutes.getOrElse(legIndex) { emptyList() }
-                .map { route -> interchangeableBadgedRoute(route, parseObaHexColor(route.routeColor)) }
+            // The wire hex is parsed here, on the leg and on every route offered in its place, so the
+            // styling itself stays free of `android.graphics` (see the [ItineraryLegStyle] file header).
+            // Indexed, not read defensively: `substitutableRoutes` is aligned to these same legs by
+            // construction, so a misalignment is a caller bug worth hearing about rather than a ride
+            // quietly labelled with fewer routes than it can be taken on (as `ModeSymbols.forLegs` argues).
+            val interchangeable = substitutes[legIndex].map { route ->
+                ItinerarySubstitute(route, parseObaHexColor(route.routeColor))
+            }
             ItineraryDrawableLeg(legIndex, leg, shape.points, style, interchangeable)
         }
         // Every leg's points run in travel order, so whether it stamps chevrons is the style's call — a

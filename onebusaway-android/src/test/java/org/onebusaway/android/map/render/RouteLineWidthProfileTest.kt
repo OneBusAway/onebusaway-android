@@ -53,9 +53,20 @@ class RouteLineWidthProfileTest {
     }
 
     @Test
-    fun `focused ride journey context and unused route form three distinct weights`() {
+    fun `the directions map spends width on three kinds of line, and nothing else`() {
+        // Width says what a line *is* — a ride, an on-street leg, or context around them — and selection is
+        // said with a case instead (#2082). So these three are the whole vocabulary, and the approach shares
+        // the context weight rather than adding a fourth near-duplicate of it.
         assertEquals(15f, ITINERARY_RIDE_WIDTH_PROFILE.thicknessDp, 0f)
+        assertEquals(9f, ITINERARY_STREET_WIDTH_PROFILE.thicknessDp, 0f)
         assertEquals(5f, ITINERARY_CONTEXT_WIDTH_PROFILE.thicknessDp, 0f)
-        assertEquals(2f, UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE.thicknessDp, 0f)
+        assertEquals(ITINERARY_CONTEXT_WIDTH_PROFILE.thicknessDp, ITINERARY_APPROACH_WIDTH_PROFILE.thicknessDp, 0f)
+    }
+
+    @Test
+    fun `a case reads as an outline at every zoom, so it stays off the width ramp`() {
+        // The case is a fixed dp inset on each side, deliberately not scaled by the line's zoom multiplier: a
+        // halo that thinned with its line would stop separating it from the basemap exactly when zoomed out.
+        assertEquals(2.5f, ROUTE_LINE_CASE_DP, 0f)
     }
 }

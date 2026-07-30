@@ -12,12 +12,12 @@ import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
-import org.onebusaway.android.map.render.UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
@@ -50,13 +50,29 @@ internal fun List<RoutePolyline>.asDeemphasizedRouteUnderlay(): List<RoutePolyli
     )
 }
 
-/** The unused remainder of a route retained as the faintest reference beneath a ridden segment. */
-internal fun List<RoutePolyline>.asUntraveledRouteUnderlay(): List<RoutePolyline> = map { line ->
+/**
+ * The line the rider has selected, wrapped in a case (halo) in its own deepened hue — the map's one way of
+ * saying "this is the one you're looking at" (#2082). Selection deliberately changes nothing else: a leg
+ * keeps the weight, colour, dash and chevrons that say what *kind* of line it is, so drilling into it doesn't
+ * restyle the trip around it.
+ */
+internal fun RoutePolyline.withCase(): RoutePolyline = copy(caseColor = mapRouteLineCaseColor(resolvedColor))
+
+/**
+ * The selected transit route upstream of the boarding point — where the vehicle is coming from — drawn as
+ * part of the selected line rather than as background: solid, cased like the ride it leads into, at the
+ * itinerary's context weight.
+ *
+ * It was previously the map's faintest dashed line, a hair thinner than the receded itinerary legs beside
+ * it, so the rider read two near-identical thin strokes meaning quite different things (#2082). Chevrons
+ * stay off: the approach is where the vehicle comes from, not a span the rider travels.
+ */
+internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> = map { line ->
     line.copy(
-        widthProfile = UNTRAVELED_ROUTE_LINE_WIDTH_PROFILE,
+        widthProfile = ITINERARY_APPROACH_WIDTH_PROFILE,
         directional = false,
-        dash = RouteLineDash.HINT
-    )
+        dash = RouteLineDash.NONE
+    ).withCase()
 }
 
 /**

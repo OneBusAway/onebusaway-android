@@ -48,6 +48,7 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.ROUTE_LINE_CASE_DP
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
@@ -114,18 +115,30 @@ class MapLibreRenderer(
     // focus, or bike changes retain these native polylines. The flavor-neutral reconcile/width bookkeeping
     // lives in the shared [RoutePolylineReconciler] (#1906); only the four maplibre-specific line
     // operations below are supplied here.
-    private val routePolylineReconciler = RoutePolylineReconciler<Polyline>(
+    private val routePolylineReconciler = RoutePolylineReconciler<CasedLine>(
         widthOf = ::routeWidth,
         createLine = { polyline, width ->
-            map.addPolyline(
-                PolylineOptions()
-                    .color(polyline.resolvedColor)
-                    .width(width)
-                    .addPoints(polyline.points)
+            CasedLine(
+                // Added before its own line: the classic annotation API has no z-index, so the draw order is
+                // the order annotations were added — the same thing that layers the polyline list itself.
+                case = polyline.caseColor?.let { caseColor ->
+                    map.addPolyline(
+                        PolylineOptions()
+                            .color(caseColor)
+                            .width(width + CASE_EXTRA_DP)
+                            .addPoints(polyline.points)
+                    )
+                },
+                line = map.addPolyline(
+                    PolylineOptions()
+                        .color(polyline.resolvedColor)
+                        .width(width)
+                        .addPoints(polyline.points)
+                )
             )
         },
-        removeLines = { lines -> map.removeAnnotations(lines) },
-        setWidth = { line, width -> line.width = width }
+        removeLines = { lines -> map.removeAnnotations(lines.flatMap(CasedLine::annotations)) },
+        setWidth = { cased, width -> cased.setLineWidth(width) }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
@@ -264,6 +277,20 @@ class MapLibreRenderer(
             darkMode = ThemeUtils.isInDarkMode(context)
         )
     )
+
+    /**
+     * One drawn route line: its stroke, plus the wider case (halo) stroke beneath it when the line asks for
+     * one (#2082). The two are created, removed and re-widened as a unit, so a case can't outlive its line or
+     * drift out of sync with its width.
+     */
+    private class CasedLine(val case: Polyline?, val line: Polyline) {
+        fun annotations(): List<Polyline> = listOfNotNull(case, line)
+
+        fun setLineWidth(width: Float) {
+            line.width = width
+            case?.width = width + CASE_EXTRA_DP
+        }
+    }
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
@@ -622,6 +649,10 @@ class MapLibreRenderer(
     fun vehicleResponse(): RouteTrips? = lastVehicleResponse
 
     companion object {
+        // How much wider a case is stroked than the line it wraps — [ROUTE_LINE_CASE_DP] beyond each side.
+        // maplibre annotation widths are already in dp, so no density conversion is involved.
+        private const val CASE_EXTRA_DP = 2f * ROUTE_LINE_CASE_DP
+
         private const val ROUTE_WIDTH_DP = 3f
         private const val TRIP_BAND_WIDTH_DP = 6f
     }

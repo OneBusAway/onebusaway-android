@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home.donation
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,14 +29,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -50,6 +54,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.ui.compose.components.CheckboxRow
 import org.onebusaway.android.util.ExternalIntents
 
 /**
@@ -94,8 +99,7 @@ fun DonationFeature(
             onClose = viewModel::requestDismiss,
             onLearnMore = viewModel::learnMore,
             onDonate = viewModel::donate,
-            onDismissForever = viewModel::dismissForever,
-            onRemindLater = viewModel::remindLater,
+            onMaybeLater = viewModel::maybeLater,
             onCancelDismiss = viewModel::cancelDismiss
         )
     }
@@ -112,8 +116,7 @@ class DonationCallbacks(
     val onClose: () -> Unit,
     val onLearnMore: () -> Unit,
     val onDonate: () -> Unit,
-    val onDismissForever: () -> Unit,
-    val onRemindLater: () -> Unit,
+    val onMaybeLater: (DonationDismissChoice) -> Unit,
     val onCancelDismiss: () -> Unit
 )
 
@@ -141,8 +144,7 @@ fun DonationOverlay(
     }
     if (dismissDialogVisible) {
         DonationDismissDialog(
-            onDismissForever = callbacks.onDismissForever,
-            onRemindLater = callbacks.onRemindLater,
+            onMaybeLater = callbacks.onMaybeLater,
             onCancel = callbacks.onCancelDismiss
         )
     }
@@ -201,15 +203,19 @@ fun DonationCard(
 }
 
 /**
- * Confirmation when the user closes the donation card. Three stacked actions (the Compose idiom for
- * >2 dialog buttons): keep asking later, stop asking, or cancel.
+ * Confirmation when the user closes the donation card. Two outlined action groups: "back", and
+ * "maybe later" + its trailing "remind me" checkbox together (the checkbox chooses between
+ * [DonationDismissChoice.REMIND_LATER] and [DonationDismissChoice.STOP_ASKING], so grouping them in
+ * one outline shows they act as a pair). The checkbox state is local to the dialog, so it starts
+ * opted-in each time the dialog is opened.
  */
 @Composable
 private fun DonationDismissDialog(
-    onDismissForever: () -> Unit,
-    onRemindLater: () -> Unit,
+    onMaybeLater: (DonationDismissChoice) -> Unit,
     onCancel: () -> Unit
 ) {
+    var remindMe by remember { mutableStateOf(true) }
+    val choice = if (remindMe) DonationDismissChoice.REMIND_LATER else DonationDismissChoice.STOP_ASKING
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(R.string.donation_dismiss_dialog_title)) },
@@ -217,16 +223,33 @@ private fun DonationDismissDialog(
             Text(stringResource(R.string.donation_dismiss_dialog_body, stringResource(R.string.app_name)))
         },
         confirmButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = onRemindLater) {
-                    Text(stringResource(R.string.donation_dismiss_dialog_remind_me_later_button))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    // Matches the outline OutlinedButton draws for "back", so the two groups read as peers.
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(24.dp)
+                    )
+                    // The group owns its inset off its own curve, so its children stay shape-agnostic
+                    // and reordering them can't break the clearance. Only the trailing edge needs it —
+                    // the leading child is a button, which brings its own content padding.
+                    .padding(end = 16.dp)
+            ) {
+                TextButton(onClick = { onMaybeLater(choice) }) {
+                    Text(stringResource(R.string.donation_dismiss_dialog_maybe_later_button))
                 }
-                TextButton(onClick = onDismissForever) {
-                    Text(stringResource(R.string.donation_dismiss_dialog_dont_want_to_help_button))
-                }
-                TextButton(onClick = onCancel) {
-                    Text(stringResource(R.string.donation_dismiss_dialog_cancel_button))
-                }
+                CheckboxRow(
+                    label = stringResource(R.string.donation_dismiss_dialog_remind_me_checkbox),
+                    checked = remindMe,
+                    onCheckedChange = { remindMe = it }
+                )
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onCancel) {
+                Text(stringResource(R.string.donation_dismiss_dialog_back_button))
             }
         }
     )

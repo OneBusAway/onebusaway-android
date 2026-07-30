@@ -57,12 +57,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -148,6 +151,9 @@ fun TripResultsHeader(
     val winners = remember(success.options, scheduleWinnerMode) {
         itineraryWinnerCategories(success.options, scheduleWinnerMode)
     }
+    // Every card's summary reserves the tallest one's height, so a trip whose summary wraps doesn't push
+    // its own stats a line below its neighbours' and leave the row unreadable across (#2081).
+    val summaryHeights = remember(success.options) { SummaryHeights() }
     // Side-scrollable so options never get squished: each card sizes to its own content (route/lines,
     // duration, walk distance, time) and the row scrolls horizontally when they overflow the width.
     // Flanked by the same overflow chevrons as the ETA strip (ScrollChevronGutter) so the user can see
@@ -186,6 +192,7 @@ fun TripResultsHeader(
                     option = option,
                     winners = winners[index],
                     selected = index == success.selectedIndex,
+                    summaryHeights = summaryHeights,
                     onClick = { onSelectOption(index) }
                 )
             }
@@ -302,11 +309,35 @@ private val WINNER_OUTLINE_WIDTH = 1.5.dp
 private val WINNER_OUTLINE_RADIUS = 4.dp
 private const val WINNER_OUTLINE_ALPHA = 0.60f
 
+/**
+ * The tallest summary band across a picker row's cards, which every card in it then reserves — so the
+ * stats below start at the same y on each card and can be read across the row, whether or not a
+ * particular trip's summary wrapped (#2081).
+ *
+ * Filled in from layout rather than known up front: where a summary wraps depends on measured text, so
+ * the tallest is only knowable once the cards have been measured. The first layout pass reports it and a
+ * second settles every card on the result — [tallest] only ever grows within one set of options, so it
+ * converges rather than oscillating, and the whole holder is re-created when the options change (a new
+ * plan whose summaries all fit on one line must not inherit an old plan's taller band).
+ */
+@Stable
+private class SummaryHeights {
+
+    /** The tallest natural summary height reported so far, in pixels. */
+    var tallest by mutableIntStateOf(0)
+        private set
+
+    fun report(height: Int) {
+        if (height > tallest) tallest = height
+    }
+}
+
 @Composable
 private fun OptionCard(
     option: ItineraryOption,
     winners: Set<WinnerCategory>,
     selected: Boolean,
+    summaryHeights: SummaryHeights,
     onClick: () -> Unit
 ) {
     val background = colorResource(
@@ -359,6 +390,8 @@ private fun OptionCard(
             if (drawn.isNotEmpty()) {
                 SymbolFlow(
                     wrapAt = SUMMARY_WRAP_WIDTH,
+                    minHeight = summaryHeights.tallest,
+                    onNaturalHeight = summaryHeights::report,
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = CARD_HEADER_TINT_ALPHA))
@@ -400,8 +433,17 @@ private fun OptionCard(
  * card carrying a line it then refuses to fill.
  */
 @Composable
-private fun SymbolFlow(wrapAt: Dp, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Layout(content, modifier, remember(wrapAt) { SymbolFlowPolicy(wrapAt) })
+private fun SymbolFlow(
+    wrapAt: Dp,
+    minHeight: Int,
+    onNaturalHeight: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    // Held through rememberUpdatedState so the reporting callback can be re-created every recomposition
+    // without re-creating the policy — only [wrapAt] and [minHeight] change what this layout does.
+    val report by rememberUpdatedState(onNaturalHeight)
+    Layout(content, modifier, remember(wrapAt, minHeight) { SymbolFlowPolicy(wrapAt, minHeight) { report(it) } })
 }
 
 /**
@@ -411,7 +453,11 @@ private fun SymbolFlow(wrapAt: Dp, modifier: Modifier = Modifier, content: @Comp
  * Here both paths break the lines with the same [packLines] call, so the width the card takes is the
  * width this layout then packs into, by construction rather than by argument.
  */
-private class SymbolFlowPolicy(private val wrapAt: Dp) : MeasurePolicy {
+private class SymbolFlowPolicy(
+    private val wrapAt: Dp,
+    private val minHeight: Int,
+    private val onNaturalHeight: (Int) -> Unit
+) : MeasurePolicy {
 
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
         val gapX = SYMBOL_GAP.roundToPx()
@@ -423,8 +469,16 @@ private class SymbolFlowPolicy(private val wrapAt: Dp) : MeasurePolicy {
         val lines = packLines(widths, minOf(constraints.maxWidth, wrapAt.roundToPx()), gapX)
         val lineHeights = lines.map { line -> line.maxOf { placeables[it].height } }
         val width = constraints.constrainWidth(lines.maxOfOrNull { lineWidth(widths, it, gapX) } ?: 0)
-        val height = constraints.constrainHeight(lineHeights.sum() + gapY * (lines.size - 1))
+        // The height these lines want, and the height they are given: a card whose summary wraps to fewer
+        // lines than its neighbours' still reserves theirs, so every card's stats start at the same y.
+        // The lines are laid from the top, so the reserved room falls below them rather than centring
+        // them in it.
+        val natural = lineHeights.sum() + gapY * (lines.size - 1)
+        val height = constraints.constrainHeight(maxOf(natural, minHeight))
         return layout(width, height) {
+            // Reported from placement, not from measure: writing the row's shared state is a change to
+            // someone else's layout, and placement is where that is safe to do.
+            onNaturalHeight(natural)
             var y = 0
             lines.forEachIndexed { index, line ->
                 var x = 0

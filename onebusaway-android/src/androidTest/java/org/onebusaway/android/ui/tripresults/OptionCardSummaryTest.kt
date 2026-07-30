@@ -17,11 +17,14 @@ package org.onebusaway.android.ui.tripresults
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -31,6 +34,7 @@ import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.util.DisplayFormat
 
 /**
  * Layout coverage for an option card's summary line — the row of mode glyphs and route roundels that
@@ -52,6 +56,8 @@ class OptionCardSummaryTest {
     // See createUnconfinedComposeRule for why Unconfined composition is used here (issue #1792).
     @get:Rule
     val composeRule = createUnconfinedComposeRule()
+
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
     @Test
     fun aSummaryTooWideForTheCardWrapsOntoAnotherLine() {
@@ -84,6 +90,34 @@ class OptionCardSummaryTest {
         assertTrue(
             "expected the one-leg card to be narrower: ${short.width} vs ${long.width}",
             short.width < long.width
+        )
+    }
+
+    /**
+     * The point of the wrap being bounded: a card whose summary took two lines used to push its own
+     * stats a line below its neighbours', so the row could not be read across.
+     *
+     * The two options are given identical stats, so the only thing that differs is how many lines their
+     * summaries take — and so that no category is won by one card alone, since a winner's outline insets
+     * its own value by a padding that has nothing to do with what is under test here.
+     */
+    @Test
+    fun everyCardsStatsStartAtTheSameHeight() {
+        show(
+            option(bus("Q1")),
+            option(walk(), bus("R1"), walk(), bus("R2"), walk(), bus("R3"), walk())
+        )
+
+        val durations = composeRule.onAllNodesWithText(
+            DisplayFormat.formatEtaParts(context, DURATION_MINUTES).joinToString(separator = "") { it.text },
+            useUnmergedTree = true
+        )
+        durations.assertCountEquals(2)
+
+        assertEquals(
+            "expected both cards' durations on the same line",
+            durations[0].getUnclippedBoundsInRoot().top,
+            durations[1].getUnclippedBoundsInRoot().top
         )
     }
 
@@ -123,9 +157,9 @@ class OptionCardSummaryTest {
 
     private fun option(vararg symbols: ModeSymbol) = ItineraryOption(
         symbols = symbols.toList(),
-        durationMinutes = 30,
+        durationMinutes = DURATION_MINUTES,
         startTime = ServerTime(0L),
-        endTime = ServerTime(30 * 60_000L),
+        endTime = ServerTime(DURATION_MINUTES * 60_000L),
         walkDistanceMeters = 400.0
     )
 
@@ -153,6 +187,9 @@ class OptionCardSummaryTest {
     /** The whole card holding [name]: `clickable` merges the card's descendants into one node. */
     private fun card(name: String) = composeRule.onNodeWithText(name).getUnclippedBoundsInRoot()
 }
+
+/** Every fixture option runs the same length, so no card wins a category its neighbour doesn't. */
+private const val DURATION_MINUTES = 30L
 
 /** Pinned so text measurement — and so where the summary wraps — is the same on every screen. */
 private const val DENSITY = 2f

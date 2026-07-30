@@ -292,7 +292,7 @@ class RouteMapController(
         highlightedSegment: List<GeoPoint> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         itineraryContext: List<RoutePolyline> = emptyList(),
-        palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
+        palette: RouteLinePalette
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId

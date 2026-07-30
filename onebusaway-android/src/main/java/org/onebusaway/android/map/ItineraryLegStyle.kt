@@ -31,9 +31,10 @@ import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.util.COLOURLESS_RIDE_HUE_ANCHOR
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.inInterchangeableOrder
-import org.onebusaway.android.util.routeColorHctOrNull
+import org.onebusaway.android.util.riddenRouteHue
 
 /**
  * How one trip-plan itinerary leg is stroked on the directions map (#2041).
@@ -54,7 +55,6 @@ internal data class ItineraryLegStyle(
     val color: Int,
     val widthProfile: RouteLineWidthProfile,
     val dash: RouteLineDash,
-    val directional: Boolean,
     val roundCaps: Boolean,
     val case: RouteLineCase
 )
@@ -100,12 +100,13 @@ internal fun TripLeg.legKind(): ItineraryLegKind = when {
  * drawer, where a walk is a dashed spine and a ride a solid one. (The MapLibre renderer draws every
  * line solid, so there the distinction rests on colour and width alone.)
  *
- * **No itinerary leg stamps travel-direction chevrons.** A dashed on-street stroke never could — the chevron
- * texture is stamped along the line, so the dash chops it into fragments and the two read as one confused
- * broken line rather than as either. A ride dropped them with the badge palette: it is drawn in a faded,
- * badge-toned colour now and wears a hairline case to hold that colour off the basemap, and an arrow texture
- * under a hairline edge is noise rather than direction. Which way the rider is carried is read from the
- * drawer's ordered rows and from the leg's endpoint bulbs instead.
+ * **No itinerary leg stamps travel-direction chevrons**, which is why this table names no `directional` at
+ * all — [RoutePolyline] defaults it off and nothing here turns it on. A dashed on-street stroke never could
+ * carry them: the chevron texture is stamped along the line, so the dash chops it into fragments and the two
+ * read as one confused broken line rather than as either. A ride dropped them with the badge palette — it is
+ * drawn in a faded, badge-toned colour now and wears a hairline case to hold that colour off the basemap, and
+ * an arrow texture under a hairline edge is noise rather than direction. Which way the rider is carried is
+ * read from the drawer's ordered rows and from the leg's endpoint bulbs instead.
  *
  * A ride also carries [RouteLineCase.OUTLINE] for that reason — every ride, so the edge says nothing about
  * selection; the rider's selected leg steps up to [RouteLineCase.SELECTION] ([withCase]). A mode leg has no
@@ -120,7 +121,6 @@ internal fun itineraryLegStyle(
         color = anchorColor(riddenRouteHue(routeColor), palette),
         widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
         dash = RouteLineDash.NONE,
-        directional = false,
         roundCaps = true,
         case = RouteLineCase.OUTLINE
     )
@@ -271,29 +271,9 @@ private fun street(hueAnchor: Int) = ItineraryLegStyle(
     color = anchorColor(hueAnchor, BASEMAP_ROUTE_LINE_PALETTE),
     widthProfile = ITINERARY_STREET_WIDTH_PROFILE,
     dash = RouteLineDash.TRAIL,
-    directional = false,
     roundCaps = false,
     case = RouteLineCase.NONE
 )
-
-/**
- * The hue a ride is *presented* in, wherever it is presented: the agency's own [routeColor] when it has a
- * usable one, else [COLOURLESS_RIDE_HUE_ANCHOR]. A hue source, not a rendered colour — each surface still
- * renders it through its own policy (the map line and the drawer badge through the badge tone, the drawer's
- * leg spine through its on-surface tone), which is what lets this be shared by a Compose surface and a
- * `Context`-free map controller alike.
- *
- * It exists because that fallback is the one thing the surfaces cannot each decide for themselves. They
- * did: a WSF ferry (every WSF route publishes an empty colour) drew a coral line on the map, since the map
- * substituted the anchor, beside a neutral grey badge in the drawer, since a badge substituted the theme's
- * `surfaceVariant`. Same route, same wire field, same policy — and two different colours, because "no
- * colour published" was answered twice.
- *
- * Giving *distinct* auto-assigned hues to the colourless rides of one itinerary (the way focused-stop
- * adjacency does) is still the rest of #2041; when that lands it replaces this function's fallback, and
- * every surface follows because they all read it here.
- */
-internal fun riddenRouteHue(routeColor: Int?): Int = routeColor?.takeIf { routeColorHctOrNull(it) != null } ?: COLOURLESS_RIDE_HUE_ANCHOR
 
 /**
  * A mode's hue [anchor] rendered by [palette] exactly as a route's own colour is, so a mode leg carries
@@ -315,11 +295,3 @@ private const val BIKE_HUE_ANCHOR = 0xFF007E8F.toInt()
 // resource read: only the hue is wanted, and this file has no `Context` to resolve one with.
 private const val BIKESHARE_HUE_ANCHOR = 0xFF3A4677.toInt()
 private const val CAR_HUE_ANCHOR = 0xFF8A6D00.toInt()
-
-/**
- * The hue a ride whose agency publishes no usable colour is presented in — read through [riddenRouteHue],
- * which is the one place that substitution happens, so the map line, the drawer badge and the leg spine
- * cannot answer "no colour published" differently. It was OTP's green, which walking now owns; a colourless
- * ride takes the terracotta walking vacated rather than sit a few degrees off it.
- */
-internal const val COLOURLESS_RIDE_HUE_ANCHOR = 0xFFC4400F.toInt()

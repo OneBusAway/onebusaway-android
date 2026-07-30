@@ -78,17 +78,6 @@ private const val LINE_TONE_LIGHT = 40.0
 private const val LINE_TONE_DARK = 80.0
 
 /**
- * The route's GTFS color re-derived in HCT at [tone] as a Compose [Color] — same hue, chroma capped for
- * the active theme. Null when the source is absent or achromatic (grey/black/white — no hue to keep),
- * which is every caller's cue to fall back to a neutral.
- *
- * The policy itself is [routeColorAtTone], which the directions map's route lines also draw through, so
- * the chip and the line naming the same ride can't drift apart on how saturated a route may get. This is
- * only the Compose wrapper.
- */
-private fun tonedRouteColor(routeColor: Int?, dark: Boolean, tone: Double): Color? = routeColorAtTone(routeColor, dark, tone)?.let { Color(it) }
-
-/**
  * A route color for drawing straight **on the surface** — a spine, stroke or filled marker — paired
  * with the color for a glyph placed on top of it. Returned together (as [rememberRouteBadgeColors]
  * does for its chip) so the contrast is guaranteed by construction rather than by a comment, on the
@@ -105,8 +94,8 @@ data class RouteLineColors(val line: Color, val onLine: Color)
  * An achromatic or absent route color yields [fallback] unchanged, glyph included.
  */
 fun routeLineColors(routeColor: Int?, dark: Boolean, fallback: RouteLineColors): RouteLineColors {
-    val line = tonedRouteColor(routeColor, dark, if (dark) LINE_TONE_DARK else LINE_TONE_LIGHT)
-        ?: return fallback
+    val line = routeColorAtTone(routeColor, dark, if (dark) LINE_TONE_DARK else LINE_TONE_LIGHT)
+        ?.let { Color(it) } ?: return fallback
     return RouteLineColors(line, if (dark) Color.Black else Color.White)
 }
 

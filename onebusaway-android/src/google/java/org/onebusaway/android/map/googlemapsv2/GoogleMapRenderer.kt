@@ -152,8 +152,7 @@ class GoogleMapRenderer(
         // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
         // theme, because the basemap it separates its line from does (see [mapRouteLineCaseColor]).
         caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
-        // Read from context rather than the [density] field, which is declared below this initializer.
-        caseExtraWidth = { it.case.extraWidthDp * context.resources.displayMetrics.density }
+        caseExtraWidth = { it.case.extraWidthDp * density }
     )
 
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route vehicles

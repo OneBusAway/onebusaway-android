@@ -24,9 +24,9 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.map.COLOURLESS_RIDE_HUE_ANCHOR
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
+import org.onebusaway.android.util.COLOURLESS_RIDE_HUE_ANCHOR
 
 /**
  * JVM tests for the joined route badge a ride draws — the planned route plus whatever else the leg can be

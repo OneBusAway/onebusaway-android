@@ -21,11 +21,11 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.directions.model.routeDisplayShortName
-import org.onebusaway.android.map.riddenRouteHue
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
+import org.onebusaway.android.util.riddenRouteHue
 
 /**
  * Builds the [LegBadge] a ride draws — the planned route, plus whatever else the rider may ride for that
@@ -106,7 +106,7 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
  * The wider [plannedBadge] rule (long name in the roundel) belongs to the option cards, which have no
  * room to print a long name any other way.
  */
-internal fun TripLeg.shortNameBadge(): RouteBadge? = routeDisplayShortName()?.let { RouteBadge(it, badgeColor(routeColor)) }
+internal fun TripLeg.shortNameBadge(): RouteBadge? = routeDisplayShortName()?.let { RouteBadge(it, ridePresentationColor(routeColor)) }
 
 /**
  * The transit leg's own roundel: its badge name and parsed GTFS color; null when it names itself in no
@@ -118,18 +118,22 @@ internal fun TripLeg.shortNameBadge(): RouteBadge? = routeDisplayShortName()?.le
  * directions pane still draws no roundel for such a route: it has room to print the long name in full as
  * the row's title, and doesn't reach for this badge to do it.
  */
-internal fun TripLeg.plannedBadge(): RouteBadge? = routeDisplayLabel()?.let { RouteBadge(it, badgeColor(routeColor)) }
+internal fun TripLeg.plannedBadge(): RouteBadge? = routeDisplayLabel()?.let { RouteBadge(it, ridePresentationColor(routeColor)) }
 
 /** An interchangeable route's roundel, alongside [plannedBadge] in the same leg's badge. */
-internal fun InterchangeableRoute.badge(): RouteBadge = RouteBadge(displayName, badgeColor(routeColor))
+internal fun InterchangeableRoute.badge(): RouteBadge = RouteBadge(displayName, ridePresentationColor(routeColor))
 
 /**
- * A wire route color as a badge color: OTP hands over a bare hex, but tolerate a leading '#'.
+ * A ride's wire route colour as the colour that ride is *presented* in — by its badge here, by its spine and
+ * roundel in the drawer, and by its line on the map.
  *
- * A route publishing nothing usable takes the colourless-ride hue rather than leaving the badge to fall
- * back on its own, because the map draws that ride's line in exactly that hue ([riddenRouteHue]) — and a
- * badge picking the neutral theme chip instead is how a WSF ferry came to sit as a grey roundel beside its
- * own coral line. The hue, not a rendered colour: the chip still re-tones it for the active theme, which is
- * the one thing this pure, `Context`-free layer can't do.
+ * A route publishing nothing usable takes the colourless-ride hue ([riddenRouteHue]) rather than leaving
+ * each surface to fall back on its own: a badge picking the neutral theme chip instead is how a WSF ferry
+ * came to sit as a grey roundel beside its own coral line. The hue, not a rendered colour — the chip and the
+ * spine still re-tone it for the active theme, which is the one thing this pure, `Context`-free layer can't
+ * do.
+ *
+ * `internal` so the drawer's composables share this one spelling rather than re-deriving it: the same
+ * substitution written twice is the same defect waiting to reappear one surface over.
  */
-private fun badgeColor(wireHex: String?): Int = riddenRouteHue(parseObaHexColor(wireHex?.removePrefix("#")))
+internal fun ridePresentationColor(wireHex: String?): Int = riddenRouteHue(parseObaHexColor(wireHex))

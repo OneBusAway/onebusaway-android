@@ -113,6 +113,37 @@ fun routeBadgeChipColor(routeColor: Int?, dark: Boolean): Int? = routeColorAtTon
  */
 fun routeBadgeChipTextColor(routeColor: Int?, dark: Boolean): Int? = routeColorAtTone(routeColor, dark, if (dark) BADGE_CHIP_TEXT_TONE_DARK else BADGE_CHIP_TEXT_TONE_LIGHT)
 
+/**
+ * The hue a ride is *presented* in, wherever it is presented: the agency's own [routeColor] when it has a
+ * usable one, else [COLOURLESS_RIDE_HUE_ANCHOR]. A hue source, not a rendered colour — each surface still
+ * renders it through its own policy (the map line and the drawer badge through the badge tone, the drawer's
+ * leg spine through its on-surface tone), which is what lets this be shared by a Compose surface and a
+ * `Context`-free map controller alike.
+ *
+ * It exists because that fallback is the one thing the surfaces cannot each decide for themselves. They
+ * did: a WSF ferry (every WSF route publishes an empty colour) drew a coral line on the map, since the map
+ * substituted the anchor, beside a neutral grey badge in the drawer, since a badge substituted the theme's
+ * `surfaceVariant`. Same route, same wire field, same policy — and two different colours, because "no
+ * colour published" was answered twice.
+ *
+ * Giving *distinct* auto-assigned hues to the colourless rides of one itinerary (the way focused-stop
+ * adjacency does) is still the rest of #2041; when that lands it replaces this function's fallback, and
+ * every surface follows because they all read it here.
+ *
+ * Lives beside [routeBadgeChipColor] rather than with the map's leg styling, for the reason that put the
+ * chip's tonal policy here: the surfaces sharing it are a `Context`-free map controller and two Compose
+ * files, which cannot reach each other. This file is where they meet.
+ */
+internal fun riddenRouteHue(routeColor: Int?): Int = routeColor?.takeIf { routeColorHctOrNull(it) != null } ?: COLOURLESS_RIDE_HUE_ANCHOR
+
+/**
+ * The hue a ride whose agency publishes no usable colour is presented in — read through [riddenRouteHue],
+ * which is the one place that substitution happens, so the map line, the drawer badge and the leg spine
+ * cannot answer "no colour published" differently. It was OTP's green, which walking now owns; a colourless
+ * ride takes the terracotta walking vacated rather than sit a few degrees off it.
+ */
+internal const val COLOURLESS_RIDE_HUE_ANCHOR = 0xFFC4400F.toInt()
+
 // The saturation ceiling a re-derived route colour may reach, per theme, and the badge chip's tones
 // (0=black … 100=white). Together these decide how *pastel* a route reads: chroma is how much of the
 // agency's colour survives, tone how light the result sits. Each hue still clamps to its own sRGB gamut

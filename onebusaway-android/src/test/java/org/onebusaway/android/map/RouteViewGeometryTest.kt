@@ -1,8 +1,6 @@
 /* Copyright (C) 2026 Open Transit Software Foundation */
 package org.onebusaway.android.map
 
-import android.annotation.SuppressLint
-import com.google.android.material.color.utilities.Hct
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -21,7 +19,6 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
 
-@SuppressLint("RestrictedApi") // Hct, Material's vendored color-science util; see AdjacencyRouteColors.kt.
 class RouteViewGeometryTest {
 
     @Test
@@ -74,21 +71,8 @@ class RouteViewGeometryTest {
         assertEquals(adjacencyLine, riddenSegment)
         // And it is not the raw hex: a dark red would otherwise sink into the basemap.
         assertTrue(adjacencyLine != gtfs)
-    }
-
-    @Test
-    fun `the directions view redraws the same route in its own palette, keeping the hue`() {
-        // The one deliberate divergence from the invariant above: in directions a line is read beside the
-        // drawer's badges, so it takes the badge's faded theme-aware colour instead of the basemap one. What
-        // has to survive is the route's identity — its hue — so the leg is recognisably the same route as the
-        // picker draws, just rendered for a different backdrop.
-        val gtfs = 0xFF8B0000.toInt()
-        val basemap = itineraryLegStyle(ItineraryLegKind.TRANSIT, gtfs, BASEMAP_ROUTE_LINE_PALETTE).color
-        val directions = itineraryLegStyle(ItineraryLegKind.TRANSIT, gtfs, directionsRouteLinePalette(dark = false)).color
-
-        assertEquals(mapRouteLineColorOrNull(gtfs), basemap)
-        assertTrue(directions != basemap)
-        assertEquals(Hct.fromInt(basemap).hue, Hct.fromInt(directions).hue, HUE_TOLERANCE_DEGREES)
+        // The directions view is the one deliberate exception — same hue, its own rendering. That is
+        // asserted where the exception lives, in ItineraryLegStyleTest.
     }
 
     @Test
@@ -330,10 +314,5 @@ class RouteViewGeometryTest {
         override val color = routeColor
         override val textColor: Int? = null
         override val agencyId = "agency"
-    }
-
-    private companion object {
-        // The re-tone clamps to each hue's own sRGB gamut limit, so a hue can shift a degree or two.
-        const val HUE_TOLERANCE_DEGREES = 3.0
     }
 }

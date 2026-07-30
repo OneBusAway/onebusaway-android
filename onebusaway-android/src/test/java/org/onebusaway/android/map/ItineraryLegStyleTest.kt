@@ -19,6 +19,7 @@ import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.riddenRouteHue
 import org.onebusaway.android.util.routeBadgeChipColor
 
 /**
@@ -76,25 +77,11 @@ class ItineraryLegStyleTest {
     }
 
     @Test
-    fun `no itinerary leg stamps travel-direction chevrons`() {
-        // An on-street leg never could: the chevrons are a texture stamped along the stroke, so its dash
-        // chops them into fragments. A ride dropped them with the badge palette — a faded line under a
-        // hairline case reads as noise with an arrow texture on it, and the trip's direction is already read
-        // from the drawer's ordered rows and the leg's endpoint bulbs.
-        ItineraryLegKind.entries.forEach { kind ->
-            assertFalse("$kind stamps chevrons", itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).directional)
-        }
-    }
-
-    @Test
     fun `every ride is outlined and no mode leg is, so the outline can't be read as selection`() {
         assertEquals(RouteLineCase.OUTLINE, itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = null, palette = DIRECTIONS).case)
         ItineraryLegKind.entries.filterNot { it == ItineraryLegKind.TRANSIT }.forEach { kind ->
             assertEquals("$kind should carry no case", RouteLineCase.NONE, itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS).case)
         }
-        // The selection case is a *heavier* edge than the one every ride already wears — that difference is
-        // the whole selection signal now, so it has to be a real one.
-        assertTrue(RouteLineCase.OUTLINE.widthDp < RouteLineCase.SELECTION.widthDp)
     }
 
     @Test
@@ -325,6 +312,16 @@ class ItineraryLegStyleTest {
         legLine(walk2, ItineraryLegKind.BIKE)
     )
 
+    @Test
+    fun `no itinerary leg stamps travel-direction chevrons`() {
+        // An on-street leg never could: the chevrons are a texture stamped along the stroke, so its dash
+        // chops them into fragments. A ride dropped them with the badge palette — a faded line under a
+        // hairline case reads as noise with an arrow texture on it, and the trip's direction is already read
+        // from the drawer's ordered rows and the leg's endpoint bulbs. Asserted on the drawn line, since the
+        // style table deliberately names no `directional` for anything to get wrong.
+        assertTrue(tripOf(walk = 0, ride = 1, walk2 = 2).none { it.line.directional })
+    }
+
     private fun legLine(legIndex: Int, kind: ItineraryLegKind): ItineraryLegLine {
         val style = itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS)
         return ItineraryLegLine(
@@ -333,7 +330,6 @@ class ItineraryLegStyleTest {
                 style.color,
                 listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
                 widthProfile = style.widthProfile,
-                directional = style.directional,
                 dash = style.dash,
                 case = style.case,
                 roundStartCap = style.roundCaps,

@@ -115,7 +115,6 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
-import org.onebusaway.android.map.riddenRouteHue
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
@@ -991,9 +990,10 @@ private fun TripLogList(
             neutral = neutral,
             // The agency's GTFS colour re-toned to stay legible on this theme's surface, so a near-black
             // or near-white route can't hand us an invisible spine. Same system as the leg's route badge —
-            // including its answer for a route that publishes no colour at all ([riddenRouteHue]), so a
-            // ferry's spine, its badge and its line on the map are one hue rather than three fallbacks.
-            rideColors = { routeLineColors(riddenRouteHue(routeColorInt(it.routeColorHex)), dark, neutral) }
+            // including its answer for a route that publishes no colour at all
+            // ([ridePresentationColor]), so a ferry's spine, its roundel and its line on the map are one
+            // hue rather than three fallbacks.
+            rideColors = { routeLineColors(ridePresentationColor(it.routeColorHex), dark, neutral) }
         )
     }
 
@@ -1115,9 +1115,6 @@ private fun focusTransit(
         else -> entry.routeLeg.board?.point?.let(onFocusPoint)
     }
 }
-
-/** The GTFS colour as the nullable ARGB int the route-colour helpers want (null → their fallback). */
-private fun routeColorInt(hex: String?): Int? = parseObaHexColor(hex?.removePrefix("#"))
 
 /**
  * One timeline row: the time column, the spine cell (drawn from [LogRowModel.top]/[bottom] with the node
@@ -1580,7 +1577,7 @@ private fun ColumnScope.BoardContent(
             roundel = when {
                 joined != null -> ({ RouteBadgeChip(joined.routes, scale = BADGE_SCALE, join = joined.join) })
                 entry.routeShortName != null ->
-                    ({ RouteBadgeChip(entry.routeShortName, routeColorInt(entry.routeColorHex), scale = BADGE_SCALE) })
+                    ({ RouteBadgeChip(entry.routeShortName, ridePresentationColor(entry.routeColorHex), scale = BADGE_SCALE) })
                 else -> null
             }
         )

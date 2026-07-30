@@ -132,7 +132,6 @@ class DirectionsMapController(private val host: MapHost) {
                     style.color,
                     points,
                     widthProfile = style.widthProfile,
-                    directional = style.directional,
                     dash = style.dash,
                     case = style.case,
                     roundStartCap = style.roundCaps && caps.start,

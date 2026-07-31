@@ -33,6 +33,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
@@ -209,6 +210,48 @@ class TripPlanFormRenderTest {
         composeRule.onNodeWithText("Pike Brewing Company").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TO_FIELD).assertIsNotFocused()
+    }
+
+    /**
+     * The keyboard's accept key takes the top result. It used to be wired to nothing: it closed the
+     * keyboard and left the endpoint as the free text the rider had typed, which no plan can be made
+     * from — so the one key that says "that's the one" was the one way of leaving the field that
+     * didn't name a place.
+     */
+    @Test
+    fun theAcceptKeyTakesTheTopSuggestion() {
+        val top = TripEndpoint.Geocoded("Pike St & 3rd Ave", 47.61, -122.33, isTransit = true)
+        var chosen: TripEndpoint.Geocoded? = null
+        renderForm(
+            state = {
+                plannedState.copy(
+                    from = TripEndpoint.FreeText("Pike"),
+                    fromSuggestions = listOf(top, TripEndpoint.Geocoded("Pike Brewing Company", 47.60, -122.34))
+                )
+            },
+            onSelect = { slot, place -> if (slot == TripEndpointSlot.FROM) chosen = place }
+        )
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).performImeAction()
+        composeRule.waitForIdle()
+
+        assertEquals("the accept key should resolve the endpoint", top, chosen)
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
+    }
+
+    /** With nothing to accept, the key still ends the edit rather than leaving the keyboard standing. */
+    @Test
+    fun theAcceptKeyEndsTheEditWithNoSuggestions() {
+        renderForm(plannedState.copy(from = TripEndpoint.FreeText("Pike")))
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).performImeAction()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
     }
 
     @Test

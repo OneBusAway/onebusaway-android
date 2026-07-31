@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -67,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -269,6 +272,12 @@ private fun EndpointRow(
         action()
     }
 
+    // The keyboard's own accept key is a choice like any other: by the time it is pressed the geocoder
+    // has already answered, and the rider is confirming the result they can see at the top of the list
+    // rather than asking for it. With nothing to confirm it just ends the edit — which is all it did
+    // before, having been wired to nothing at all.
+    val acceptTopSuggestion = choosing { suggestions.firstOrNull()?.let(onSelect) }
+
     // Adopt the hosted endpoint only when it actually says something different — a suggestion picked,
     // a location filled in, a reversed trip. While the user types, the endpoint is echoing the text
     // that came from this field, so there is nothing to adopt and the cursor is left alone.
@@ -301,6 +310,8 @@ private fun EndpointRow(
                     }
                 },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { acceptTopSuggestion() }),
                 // The device's own position is named in its own colour, matching its rail dot, so the
                 // one endpoint the rider didn't choose is identifiable without reading it. A chosen
                 // place is ordinary text — colouring every endpoint would say nothing.

@@ -54,6 +54,7 @@ import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
+import org.onebusaway.android.map.render.InterlineSeamMark
 import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
@@ -366,6 +367,9 @@ class GoogleMapRenderer(
             if (polyline.roundStartCap) options.startCap(bulb)
             if (polyline.roundEndCap) options.endCap(bulb)
         }
+        // A stay-aboard interline's cutover (#2127) — never together with a start bulb, since the join it
+        // marks is precisely the one the bulbs are withheld at.
+        if (polyline.startSeam) options.startCap(interlineSeamCap(polyline.resolvedColor))
         if (polyline.directional) {
             // Advanced spans are substantially more expensive for Maps to retessellate while
             // zooming. Reserve that path for the lines that actually need repeated chevrons.
@@ -394,6 +398,22 @@ class GoogleMapRenderer(
             bitmap
         }
         return CustomCap(descriptor, ENDPOINT_BULB_REFERENCE_WIDTH_PX)
+    }
+
+    /**
+     * The slash cut across a line where the rider's vehicle changes route mid-ride (#2127), in that line's
+     * own case colour — the mark separates itself from the corridor exactly as the ride's hairline case
+     * separates the corridor from the basemap, and follows the theme for the same reason (see
+     * [mapRouteLineCaseColor]).
+     *
+     * A [CustomCap] like the endpoint bulb above, so Maps scales it with the line's stroke at every zoom and
+     * orients it along the line itself — which is what spares this mark the camera-settle re-stamp a
+     * marker-based one (the route labels) needs.
+     */
+    private fun interlineSeamCap(lineColor: Int): CustomCap {
+        val color = mapRouteLineCaseColor(lineColor, ThemeUtils.isInDarkMode(context))
+        val descriptor = descriptorCache.get("interline-seam:$color") { InterlineSeamMark.bitmap(color) }
+        return CustomCap(descriptor, InterlineSeamMark.REFERENCE_WIDTH_PX)
     }
 
     /**

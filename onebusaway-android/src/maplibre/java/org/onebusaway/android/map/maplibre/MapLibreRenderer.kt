@@ -101,6 +101,14 @@ class MapLibreRenderer(
 ) : PingTarget {
     private val stopMarkerLayer = MapLibreStopMarkerLayer(map, context)
     private val routeEndpointBulbLayer = MapLibreRouteEndpointBulbLayer(mapStyle)
+
+    // The interline cutover marks (#2127), sized and coloured from the lines they cut exactly as the bulbs
+    // above are — the same theme-resolved case colour the reconciler draws a line's own case in.
+    private val interlineSeamLayer = MapLibreInterlineSeamLayer(
+        mapStyle,
+        context.resources.displayMetrics.density,
+        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) }
+    )
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -319,6 +327,7 @@ class MapLibreRenderer(
         val zoom = map.cameraPosition.zoom.toFloat()
         routePolylineReconciler.reconcile(next, zoom)
         routeEndpointBulbLayer.render(next) { routeWidth(it, zoom) }
+        interlineSeamLayer.render(next) { routeWidth(it, zoom) }
     }
 
     private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
@@ -328,7 +337,9 @@ class MapLibreRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routePolylineReconciler.resyncWidths(zoom)
-        routeEndpointBulbLayer.render(renderState.snapshot.value.routePolylines) { routeWidth(it, zoom) }
+        val lines = renderState.snapshot.value.routePolylines
+        routeEndpointBulbLayer.render(lines) { routeWidth(it, zoom) }
+        interlineSeamLayer.render(lines) { routeWidth(it, zoom) }
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
         updateRouteBadgeScale(zoom)
@@ -355,6 +366,7 @@ class MapLibreRenderer(
         stopMarkerLayer.dispose()
         routeStopCircleLayer.dispose()
         routeEndpointBulbLayer.dispose()
+        interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
         map.removeAnnotations()

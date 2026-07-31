@@ -94,14 +94,62 @@ class ItineraryLegStyleTest {
 
     @Test
     fun `an interline hides only the shared bulbs`() {
-        val first = TripLeg(mode = TripMode.BUS)
-        val continuation = TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)
+        val first = TripLeg(mode = TripMode.BUS, routeId = "45")
+        val continuation = TripLeg(mode = TripMode.RAIL, routeId = "75", interlineWithPreviousLeg = true)
         val walk = TripLeg(mode = TripMode.WALK)
         val legs = listOf(first, continuation, walk)
+        val seams = interlineSeamLegs(legs)
 
-        assertEquals(ItineraryLegCaps(start = true, end = false), itineraryLegCaps(legs, 0))
-        assertEquals(ItineraryLegCaps(start = false, end = true), itineraryLegCaps(legs, 1))
-        assertEquals(ItineraryLegCaps(start = true, end = true), itineraryLegCaps(legs, 2))
+        assertEquals(ItineraryLegCaps(start = true, end = false), itineraryLegCaps(legs, 0, seams))
+        assertEquals(ItineraryLegCaps(start = false, end = true, startSeam = true), itineraryLegCaps(legs, 1, seams))
+        assertEquals(ItineraryLegCaps(start = true, end = true), itineraryLegCaps(legs, 2, seams))
+    }
+
+    @Test
+    fun `only a route change is cut, and it is cut where the drawer says stay on board`() {
+        // #2127: the rider's vehicle keeps going but its route changes, which no bulb can say — a bulb pair
+        // means alight and board. The cut goes on the leg continued *onto*, and only when the route really
+        // changed: a 12 reversing onto itself (a self-interline) leaves the ride unchanged, so there's
+        // nothing to mark, exactly as the drawer announces no transition for one.
+        val crossRoute = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "45"),
+            TripLeg(mode = TripMode.BUS, routeId = "75", interlineWithPreviousLeg = true)
+        )
+        val selfInterline = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "12"),
+            TripLeg(mode = TripMode.BUS, routeId = "12", interlineWithPreviousLeg = true)
+        )
+
+        assertEquals(setOf(1), interlineSeamLegs(crossRoute))
+        assertEquals(emptySet<Int>(), interlineSeamLegs(selfInterline))
+        // Two legs that name no route at all are the same route as far as anything can tell, so they are
+        // read as a self-interline — the exact-id rule [Interlines] states, not a second guess at it here.
+        assertEquals(
+            emptySet<Int>(),
+            interlineSeamLegs(listOf(TripLeg(mode = TripMode.BUS), TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)))
+        )
+        // And nothing is cut where two separate rides meet — that join keeps its two bulbs.
+        assertEquals(
+            emptySet<Int>(),
+            interlineSeamLegs(listOf(TripLeg(mode = TripMode.BUS, routeId = "45"), TripLeg(mode = TripMode.BUS, routeId = "75")))
+        )
+    }
+
+    @Test
+    fun `a cut line is never also bulbed at that end`() {
+        // The two marks answer the same question — what happens to the rider at this join — so a line that
+        // carries both would be saying "stay aboard" and "get off" in one place.
+        val legs = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "45"),
+            TripLeg(mode = TripMode.BUS, routeId = "75", interlineWithPreviousLeg = true),
+            TripLeg(mode = TripMode.BUS, routeId = "8", interlineWithPreviousLeg = true)
+        )
+        val seams = interlineSeamLegs(legs)
+
+        legs.indices.forEach { index ->
+            val caps = itineraryLegCaps(legs, index, seams)
+            assertFalse("leg $index was both cut and bulbed", caps.startSeam && caps.start)
+        }
     }
 
     @Test

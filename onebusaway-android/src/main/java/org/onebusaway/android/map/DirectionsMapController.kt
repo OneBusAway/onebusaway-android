@@ -133,8 +133,13 @@ class DirectionsMapController(private val host: MapHost) {
         }
         // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
         // [itineraryLegStyle], which also decides the hairline case a ride wears.
+        //
+        // The cross-route cutovers (#2127) are resolved once for the whole plan rather than per leg: they
+        // are one reading of the leg list ([Interlines.chains]), which is also what keeps them the same
+        // joins the drawer tells the rider to stay on board through.
+        val seamLegs = interlineSeamLegs(legs)
         legLines = drawableLegs.map { (legIndex, _, points, style) ->
-            val caps = itineraryLegCaps(legs, legIndex)
+            val caps = itineraryLegCaps(legs, legIndex, seamLegs)
             ItineraryLegLine(
                 legIndex,
                 RoutePolyline(
@@ -144,7 +149,8 @@ class DirectionsMapController(private val host: MapHost) {
                     dash = style.dash,
                     case = style.case,
                     roundStartCap = style.roundCaps && caps.start,
-                    roundEndCap = style.roundCaps && caps.end
+                    roundEndCap = style.roundCaps && caps.end,
+                    startSeam = caps.startSeam
                 )
             )
         }

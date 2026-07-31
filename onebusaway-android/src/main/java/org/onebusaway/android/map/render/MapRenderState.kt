@@ -136,6 +136,16 @@ enum class RouteLineCase(val widthDp: Float) {
  * segmented even when their agencies publish the same GTFS color. Separate ends let a stay-aboard
  * interline hide its internal seam while retaining bulbs at the beginning and end of the combined ride.
  *
+ * [startSeam] says this line *begins* at an interline cutover (#2127) — the point where the vehicle the
+ * rider is already aboard changes route mid-ride — and asks the renderer to cut across the line there.
+ * The mark is deliberately nothing like a bulb: a bulb-to-bulb join is two rides meeting at a stop, which
+ * the rider has to act on (get off, get on), and a stay-aboard route change must not be read as one. It goes
+ * exactly where the bulbs above are withheld — the ride runs on through this join, so the line does too, and
+ * the cut is the only thing saying the route it is drawn for changed here.
+ *
+ * Like [case], only the *request* lives here: the mark's colour and size are the renderer's, taken from the
+ * line's own colour and stroke width so the cut tones and scales with the line it interrupts.
+ *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
  * only to the list they render. An empty set is a strict pass-through.
@@ -149,6 +159,7 @@ data class RoutePolyline(
     val case: RouteLineCase = RouteLineCase.NONE,
     val roundStartCap: Boolean = false,
     val roundEndCap: Boolean = false,
+    val startSeam: Boolean = false,
     val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */

@@ -143,5 +143,15 @@ class RoutePolylineReconciler<NativeLine>(
  * carries. Routed back through the renderer's ordinary line creation so a case inherits every line feature
  * (its dash rhythm, and on gms the cheap solid-colour draw path a non-directional line takes) rather than each
  * flavor rebuilding a parallel one that has to be kept in step.
+ *
+ * The interline cut ([RoutePolyline.startSeam]) drops out for the same reason the chevrons do, and one more:
+ * it is already drawn *in* the case colour, so a copy of it stroked wider underneath would only fringe the
+ * mark on the line above with a bigger version of itself. The endpoint bulbs deliberately stay — those are in
+ * the line's own colour, so their case is a ring that reads exactly like the case around the line.
  */
-private fun RoutePolyline.asCase(color: Int) = copy(color = color, directional = false, case = RouteLineCase.NONE)
+private fun RoutePolyline.asCase(color: Int) = copy(
+    color = color,
+    directional = false,
+    case = RouteLineCase.NONE,
+    startSeam = false
+)

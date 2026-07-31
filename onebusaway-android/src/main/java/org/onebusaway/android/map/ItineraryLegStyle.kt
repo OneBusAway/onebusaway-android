@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
@@ -142,10 +143,30 @@ internal fun itineraryLegStyle(
  */
 internal data class ItineraryLegLine(val legIndex: Int, val line: RoutePolyline)
 
-/** Bulb-bearing ends of one itinerary leg; an interline continuation has no visible internal seam. */
-internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean)
+/**
+ * Bulb-bearing ends of one itinerary leg, plus whether it begins at an interline **cutover** (#2127).
+ *
+ * An interline continuation has no visible internal seam — no bulbs, because the rider never gets off — but
+ * a continuation onto a *different* route is cut across at that join ([RoutePolyline.startSeam]). The two
+ * are one decision made in one place: a bulb pair says "alight here, board there", so the join a rider
+ * stays seated through has to be marked as something else or not at all, and until now it was not at all.
+ */
+internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean, val startSeam: Boolean = false)
 
-internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int): ItineraryLegCaps {
+/**
+ * The legs a stay-aboard interline hands over to on a **different** route — the cutover points to mark.
+ * Exactly the transitions [Interlines.chains] reports, so the map cuts the line in the same places the
+ * drawer tells the rider to stay on board, and nowhere else. A self-interline (the same route reversing
+ * onto itself) contributes none: nothing about the ride changed there, so there is nothing to say.
+ *
+ * Resolved for the whole itinerary at once rather than per leg, since that is what the analysis reads;
+ * [itineraryLegCaps] takes the result.
+ */
+internal fun interlineSeamLegs(legs: List<TripLeg>): Set<Int> = Interlines.chains(legs)
+    .flatMapTo(mutableSetOf()) { it.transitionLegIndices }
+
+/** [seamLegs] is [interlineSeamLegs] for the same [legs] — see [ItineraryLegCaps]. */
+internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int, seamLegs: Set<Int>): ItineraryLegCaps {
     val leg = legs[index]
     val transit = leg.mode?.isTransit == true
     val continuesPrevious = transit &&
@@ -153,7 +174,11 @@ internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int): ItineraryLegCaps
         legs.getOrNull(index - 1)?.mode?.isTransit == true
     val next = legs.getOrNull(index + 1)
     val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
-    return ItineraryLegCaps(start = !continuesPrevious, end = !continuesIntoNext)
+    return ItineraryLegCaps(
+        start = !continuesPrevious,
+        end = !continuesIntoNext,
+        startSeam = index in seamLegs
+    )
 }
 
 /**

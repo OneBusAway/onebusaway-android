@@ -520,9 +520,11 @@ class MapViewModel @Inject constructor(
      * stop/route focus + nearby stops) and enters directions mode; later calls (a different option
      * selected) just redraw the legs/pins. Deliberately does not restart the nearby-stops loader —
      * directions hides nearby stops. Exiting (any other transition → [leaveCurrentView]) tears it down,
-     * except a leg's route sub-focus, which carries the trip on as context (#2048).
+     * except a leg's route sub-focus, which carries the trip on as context (#2048). [pins] carries the
+     * trip's own endpoints' claim on their terminus pins — a current-location terminus wears none
+     * (#2111).
      */
-    fun showItinerary(itinerary: TripItinerary) {
+    fun showItinerary(itinerary: TripItinerary, pins: ItineraryPins) {
         if (!directionsActive) {
             leaveCurrentView(clearStopFocus = true)
             persistRoute(null)
@@ -531,7 +533,7 @@ class MapViewModel @Inject constructor(
         directionsController.clear()
         directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
-        directionsController.start(itinerary, directionsPalette())
+        directionsController.start(itinerary, directionsPalette(), pins)
         bikeController.start(
             directions = true,
             selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)

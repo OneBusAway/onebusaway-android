@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.ItineraryPins
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -588,7 +589,7 @@ class HomeViewModel @Inject constructor(
     private fun itineraryOverviewDirective(from: CurrentFocus): MapDirective = if (from.keepsDrawnItinerary) {
         MapDirective.ClearItineraryLegFocus
     } else {
-        shownItinerary?.let { MapDirective.ShowItinerary(it) } ?: MapDirective.ClearFocus
+        shownItinerary ?: MapDirective.ClearFocus
     }
 
     /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
@@ -613,21 +614,25 @@ class HomeViewModel @Inject constructor(
         pushFocus(CurrentFocus.Directions(), undoViewport)
     }
 
-    // The itinerary currently drawn in directions mode, cached so returning from a route sub-focus (a
-    // map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on its own.
-    private var shownItinerary: TripItinerary? = null
+    // The draw of the itinerary currently shown in directions mode, cached so returning from a route
+    // sub-focus (a map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on
+    // its own. Held as the whole directive rather than just the itinerary, so a redraw reproduces the
+    // terminus pins the trip was drawn with instead of quietly restoring a suppressed one.
+    private var shownItinerary: MapDirective.ShowItinerary? = null
 
     /**
      * Draw [itinerary] on the home map and frame the whole trip (only meaningful in
      * [CurrentFocus.Directions]). Showing the full itinerary drops any leg route focus, so an option-card
-     * tap returns to the overview.
+     * tap returns to the overview. [pins] withholds the terminus pin of an endpoint the rider set to
+     * their current location, which the blue dot already marks (#2111).
      */
-    fun showItineraryOnMap(itinerary: TripItinerary) {
-        shownItinerary = itinerary
+    fun showItineraryOnMap(itinerary: TripItinerary, pins: ItineraryPins = ItineraryPins()) {
+        val draw = MapDirective.ShowItinerary(itinerary, pins)
+        shownItinerary = draw
         // Showing the whole trip drops any leg sub-focus; the ShowItinerary below is the redraw. Guarded so
         // a call from outside directions can't push a directions focus.
         if (directionsSubFocus != null) pushFocus(CurrentFocus.Directions())
-        emitMapDirective(MapDirective.ShowItinerary(itinerary))
+        emitMapDirective(draw)
     }
 
     /** The leg the user has drilled into from the itinerary overview, if any. */
@@ -675,7 +680,7 @@ class HomeViewModel @Inject constructor(
      */
     private fun applyLegFocus(leg: FocusedLeg, from: CurrentFocus) {
         if (!from.keepsDrawnItinerary) {
-            shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+            shownItinerary?.let { emitMapDirective(it) }
         }
         emitMapDirective(MapDirective.FocusItineraryLeg(leg.points, leg.legIndices))
     }
@@ -1021,7 +1026,11 @@ sealed interface MapDirective {
     ) : MapDirective
 
     /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */
-    data class ShowItinerary(val itinerary: TripItinerary) : MapDirective
+    data class ShowItinerary(
+        val itinerary: TripItinerary,
+        /** Which terminus pins the trip wears — a current-location endpoint claims none (#2111). */
+        val pins: ItineraryPins = ItineraryPins()
+    ) : MapDirective
 
     /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
     data class FocusItineraryPoint(val point: GeoPoint) : MapDirective

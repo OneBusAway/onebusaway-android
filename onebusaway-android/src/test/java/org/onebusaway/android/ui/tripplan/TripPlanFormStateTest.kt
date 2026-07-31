@@ -100,6 +100,16 @@ class TripPlanFormStateTest {
     }
 
     @Test
+    fun `only the current-location endpoint is the device's own position`() {
+        // What the map's pin suppression turns on (#2111) — a map point the rider happened to press on
+        // top of themselves is still a place they named, not the moving blue dot.
+        assertTrue(here.isDeviceLocation)
+        assertFalse(TripEndpoint.MapPoint(lat = 47.6, lon = -122.3).isDeviceLocation)
+        assertFalse(named.isDeviceLocation)
+        assertFalse(TripEndpoint.FreeText("here").isDeviceLocation)
+    }
+
+    @Test
     fun `only a blank free-text endpoint counts as empty`() {
         assertTrue(TripEndpoint.FreeText().isEmpty)
         assertTrue(TripEndpoint.FreeText("   ").isEmpty)

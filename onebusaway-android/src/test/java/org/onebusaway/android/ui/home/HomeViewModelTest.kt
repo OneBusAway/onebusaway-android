@@ -116,11 +116,12 @@ class HomeViewModelTest {
         val job = launch { map.collect() }
         advanceUntilIdle()
         val board = RouteStopRef("40_N23-T2", "N23", "Lynnwood City Center", GeoPoint(47.8158, -122.2942))
+        val alight = RouteStopRef("40_990", "Westlake", "Westlake Station", GeoPoint(47.6114, -122.3376))
         val routeLeg = RouteLegRef(
             routeId = "40_2LINE",
             headsign = "Downtown Redmond",
             board = board,
-            alight = null,
+            alight = alight,
             alternatives = listOf(
                 AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null),
                 // Still appears in the joined badge, but cannot be loaded without an OBA route id.
@@ -146,7 +147,9 @@ class HomeViewModelTest {
                         relationship = RouteFocusRelationship.INTERCHANGEABLE,
                         directionHeadsign = "Federal Way Downtown"
                     )
-                )
+                ),
+                // The alighting stop's OBA id rides along for the symbolic vehicle filter (#2124).
+                alightStopId = alight.stopId
             ),
             map.routeRequests.single()
         )

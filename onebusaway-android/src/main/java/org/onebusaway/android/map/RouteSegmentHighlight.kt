@@ -174,9 +174,9 @@ internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedR
 }
 
 /** Whether [point] is near one of these paths without exceeding its along-route boundary.
- *  Runs on the 20 Hz vehicle sampler for every vehicle, and each path costs a full projection —
- *  a rejected (downstream) vehicle pays all of them, since [any] can only short-circuit a match.
- *  See #2124 for pre-rejecting on a bounding box or hoisting the verdict off the frame loop. */
+ *  Since #2124 the primary keep/drop verdict is symbolic ([rideEligibility], decided once per poll
+ *  from the trip's schedule), so this projection runs on the 20 Hz sampler only for the vehicles
+ *  whose verdict is [RideEligibility.UNKNOWN] — each path still costs a full projection there. */
 internal fun List<BoundedRoutePath>.containsRoutePoint(
     point: GeoPoint,
     toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
@@ -187,12 +187,17 @@ internal fun List<BoundedRoutePath>.containsRoutePoint(
 }
 
 /**
- * Whether a route-focus vehicle survives the selected leg's spatial filter. The explicitly requested
- * ETA-pill trip ([focusedTripId]) always survives: its pin is derived from the arrivals response's
- * exact active-trip + GPS identity, while the eligible paths are reconstructed independently from
- * route-wide geometry and can still miss it when the planned leg's geometry doesn't match the route
- * shape. Without this exception the route poll can contain the tapped vehicle yet discard it before
- * [RouteMapController] gets the chance to frame it.
+ * Whether a route-focus vehicle survives the selected leg's filter. The symbolic [eligibility]
+ * verdict (the trip's schedule versus the ride's end-of-ride stops, [rideEligibility]) is the
+ * primary answer; only an [RideEligibility.UNKNOWN] falls back to projecting [point] against the
+ * geometric [eligiblePaths].
+ *
+ * The explicitly requested ETA-pill trip ([focusedTripId]) always survives, ahead of both: its pin
+ * is derived from the arrivals response's exact active-trip + GPS identity, while both filters are
+ * reconstructed independently of it (the geometry from route-wide shapes, the symbolic verdict from
+ * a schedule that may not have loaded) and can still miss it. Without this exception the route poll
+ * can contain the tapped vehicle yet discard it before [RouteMapController] gets the chance to
+ * frame it.
  *
  * [focusedTripId] must be the trip's exemption for the whole focus context, not the one-shot pending
  * camera fit: this filter re-runs on every vehicle sample, so keying it to a focus that resolves
@@ -201,10 +206,15 @@ internal fun List<BoundedRoutePath>.containsRoutePoint(
 internal fun focusedRideKeepsVehicle(
     vehicleTripId: String?,
     focusedTripId: String?,
+    eligibility: RideEligibility,
     eligiblePaths: List<BoundedRoutePath>,
     point: GeoPoint
 ): Boolean = (vehicleTripId != null && vehicleTripId == focusedTripId) ||
-    eligiblePaths.containsRoutePoint(point)
+    when (eligibility) {
+        RideEligibility.ELIGIBLE -> true
+        RideEligibility.INELIGIBLE -> false
+        RideEligibility.UNKNOWN -> eligiblePaths.containsRoutePoint(point)
+    }
 
 private data class VariantProjection(
     val line: RoutePolyline,

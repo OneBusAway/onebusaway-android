@@ -336,9 +336,32 @@ class RouteSegmentHighlightTest {
         ).boundedThrough(GeoPoint(47.62, -122.33))
         val offPath = GeoPoint(47.70, -122.40)
 
-        assertFalse(focusedRideKeepsVehicle("other-trip", "tapped-trip", eligible, offPath))
-        assertTrue(focusedRideKeepsVehicle("tapped-trip", "tapped-trip", eligible, offPath))
+        // An UNKNOWN symbolic verdict leaves the whole decision to the geometry, as before #2124.
+        assertFalse(focusedRideKeepsVehicle("other-trip", "tapped-trip", RideEligibility.UNKNOWN, eligible, offPath))
+        assertTrue(focusedRideKeepsVehicle("tapped-trip", "tapped-trip", RideEligibility.UNKNOWN, eligible, offPath))
         // No focused trip at all: a schedule-only vehicle (null trip id) must not match a null focus.
-        assertFalse(focusedRideKeepsVehicle(null, null, eligible, offPath))
+        assertFalse(focusedRideKeepsVehicle(null, null, RideEligibility.UNKNOWN, eligible, offPath))
+    }
+
+    @Test
+    fun symbolicVerdictDecidesAheadOfGeometry() {
+        val eligible = listOf(
+            RoutePolyline(
+                color = 1,
+                points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.64, -122.33))
+            )
+        ).boundedThrough(GeoPoint(47.62, -122.33))
+        val onPath = GeoPoint(47.60, -122.33)
+        val offPath = GeoPoint(47.70, -122.40)
+
+        // A trip the schedule proves still reaches the alighting stop is kept even where geometry
+        // would reject it (the planned leg's geometry not matching the route shape, #2104).
+        assertTrue(focusedRideKeepsVehicle("trip", null, RideEligibility.ELIGIBLE, eligible, offPath))
+        // A trip proven past (or never reaching) the alighting stop is dropped even on the path —
+        // the reverse-direction / short-turn vehicles the 50 m tolerance could never exclude.
+        assertFalse(focusedRideKeepsVehicle("trip", null, RideEligibility.INELIGIBLE, eligible, onPath))
+        // The explicitly tapped ETA-pill trip outranks even an INELIGIBLE verdict (#2099): both
+        // filters are reconstructed independently of the tap and must not discard its vehicle.
+        assertTrue(focusedRideKeepsVehicle("tapped-trip", "tapped-trip", RideEligibility.INELIGIBLE, eligible, offPath))
     }
 }

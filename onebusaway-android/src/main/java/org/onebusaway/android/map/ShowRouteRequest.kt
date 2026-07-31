@@ -41,6 +41,11 @@ package org.onebusaway.android.map
  * @property extraSegments route/directions shown alongside the primary route: stay-aboard continuations
  *   (#2000) and interchangeable routes (#2042). Each relationship controls whether vehicles remain
  *   visible across a seam or are filtered to the segment's resolved direction.
+ * @property alightStopId when non-null (a directions leg focus), the OBA id of the stop where the rider
+ *   leaves the ride — the end of the last stay-aboard continuation, or of the leg itself. Feeds the
+ *   symbolic vehicle filter (#2124): a vehicle stays visible while its trip's schedule still reaches
+ *   this stop. Null (an OTP→OBA resolution failure, or a non-directions caller) leaves the filter to
+ *   its geometric fallback.
  */
 data class ShowRouteRequest(
     val routeId: String,
@@ -48,5 +53,6 @@ data class ShowRouteRequest(
     val focusTripId: String? = null,
     val initialDirectionId: Int? = null,
     val riddenSpans: List<RiddenSpan> = emptyList(),
-    val extraSegments: List<RouteFocusSegment> = emptyList()
+    val extraSegments: List<RouteFocusSegment> = emptyList(),
+    val alightStopId: String? = null
 )

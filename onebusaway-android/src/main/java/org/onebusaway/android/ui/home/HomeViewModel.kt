@@ -737,7 +737,8 @@ class HomeViewModel @Inject constructor(
             routeId,
             spans = routeLeg.riddenSpansOr(fallbackLeg.points),
             directionStopId = routeLeg.board?.stopId,
-            extraSegments = routeLeg.extraSegments + alternativeSegments
+            extraSegments = routeLeg.extraSegments + alternativeSegments,
+            alightStopId = routeLeg.alight?.stopId
         )
     }
 
@@ -748,13 +749,23 @@ class HomeViewModel @Inject constructor(
      * as the arrivals drawer, adding the ride [routeLeg] is travelled on over the route. Takes the same
      * ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits in draw the
      * same ride.
+     *
+     * The symbolic alighting bound rides along only for an uninterlined [routeLeg]: the arrivals-built
+     * [request] carries no stay-aboard segments, and without them the map would bound the leader route
+     * at the ride's final alighting stop — a stop a folded interline's leader trips never serve, which
+     * would wrongly rule them all out. An interlined pill tap stays on the geometric filter instead.
      */
     fun focusDirectionsRouteVehicle(
         request: ShowRouteRequest,
         routeLeg: RouteLegRef,
         fallbackPoints: List<GeoPoint>
     ) {
-        enterDirectionsRouteFocus(request.copy(riddenSpans = routeLeg.riddenSpansOr(fallbackPoints)))
+        enterDirectionsRouteFocus(
+            request.copy(
+                riddenSpans = routeLeg.riddenSpansOr(fallbackPoints),
+                alightStopId = routeLeg.takeIf { it.extraSegments.isEmpty() }?.alight?.stopId
+            )
+        )
     }
 
     /**
@@ -777,6 +788,7 @@ class HomeViewModel @Inject constructor(
         directionStopId: String? = null,
         directionId: Int? = null,
         extraSegments: List<RouteFocusSegment> = emptyList(),
+        alightStopId: String? = null,
         undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(
@@ -785,7 +797,8 @@ class HomeViewModel @Inject constructor(
                 directionStopId = directionStopId,
                 initialDirectionId = directionId,
                 riddenSpans = spans,
-                extraSegments = extraSegments
+                extraSegments = extraSegments,
+                alightStopId = alightStopId
             ),
             undoViewport
         )

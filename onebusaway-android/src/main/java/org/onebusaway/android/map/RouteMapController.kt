@@ -157,6 +157,11 @@ class RouteMapController(
     // their relevant shape and stops. Set in start(); the maps/polls below are rebuilt as routes load.
     private var extraSegments: List<RouteFocusSegment> = emptyList()
 
+    // The OBA stop where the rider leaves the focused ride (null when unknown or outside leg focus).
+    // Set in start()/reframe(); the symbolic end-of-ride bound the vehicle filter compares trip
+    // schedules against ([rideBoundsByRoute]).
+    private var alightStopId: String? = null
+
     // Distinct other route ids to load and poll alongside the leader. A self-interline segment reuses the
     // leader route, so it is excluded (its shape/stops/vehicles already come from the leader).
     private val extraRouteIds: List<String>
@@ -191,7 +196,13 @@ class RouteMapController(
 
     // Eligible geometry by route while a directions leg is selected. Empty outside leg focus; spans
     // the approach and selected ride, but stops at alighting so downstream vehicles stay hidden.
+    // Since #2124 this is the *fallback* filter — the symbolic bounds below decide first.
     private var focusedVehiclePathsByRoute: Map<String, List<BoundedRoutePath>> = emptyMap()
+
+    // End-of-ride stops per focused route while a directions leg is selected — the symbolic side of
+    // the vehicle filter (#2124), built alongside [focusedVehiclePathsByRoute] in
+    // [showDirectionPolylines]. Empty outside leg focus.
+    private var focusedRideBoundsByRoute: Map<String, List<RideBound>> = emptyMap()
 
     private data class FocusedRouteLines(
         val routeId: String,
@@ -249,6 +260,17 @@ class RouteMapController(
     private var routeColorMemoExtras: Map<String, VehiclePoll>? = null
     private var routeColorMemoAssignment: Map<RouteDirectionKey, Int> = emptyMap()
 
+    // Memo behind the symbolic ride-eligibility verdict ([rideEligibilityFor]), consulted by the
+    // per-frame sampler for every vehicle. Keyed by (routeId, tripId) — not tripId alone, because
+    // [sampleVehicles] de-duplicates a trip shared across the leader/extra polls only *after*
+    // filtering, and each route carries its own end-of-ride bounds. The verdict reads only poll-time
+    // status distance + the schedule cache, so it can change only when a poll is replaced
+    // ([refreshRideEligibilityMemo]) or the focus context rebuilds ([showDirectionPolylines],
+    // [start], [stop]) — never per frame.
+    private val rideEligibilityMemo = HashMap<Pair<String, String>, RideEligibility>()
+    private var rideEligibilityMemoPoll: VehiclePoll? = null
+    private var rideEligibilityMemoExtras: Map<String, VehiclePoll>? = null
+
     // The one-shot route shape/stops/header load. The long-running periodic vehicle poll lives in
     // [vehiclePoller], suspended/resumed independently with the map lifecycle.
     private var routeJob: Job? = null
@@ -305,6 +327,7 @@ class RouteMapController(
         focusTripId: String? = null,
         riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
+        alightStopId: String? = null,
         itineraryContext: List<RoutePolyline> = emptyList(),
         palette: RouteLinePalette
     ) {
@@ -312,12 +335,15 @@ class RouteMapController(
         this.directionStopId = directionStopId
         this.riddenSpans = riddenSpans
         this.extraSegments = extraSegments
+        this.alightStopId = alightStopId
         this.itineraryContext = itineraryContext
         this.palette = palette
         // (Re)built as the extra routes load in onRouteLoaded; cleared here so a prior focus's routes
         // can't leak into this one during the load window (the poller clears its own polls in start).
         this.extraRouteMaps = emptyMap()
         this.focusedVehiclePathsByRoute = emptyMap()
+        this.focusedRideBoundsByRoute = emptyMap()
+        this.rideEligibilityMemo.clear()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
         this.focusExemptTripId = focusTripId
@@ -397,13 +423,18 @@ class RouteMapController(
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
         // republish when it actually changes.
-        if (riddenSpans != request.riddenSpans || extraSegments != request.extraSegments) {
+        if (riddenSpans != request.riddenSpans ||
+            extraSegments != request.extraSegments ||
+            alightStopId != request.alightStopId
+        ) {
             riddenSpans = request.riddenSpans
-            // Move both segment fields together so a redraw can't key off fresh riddenSpans while
-            // extraSegments stays stale (or vice versa). No reload here (reframe contract), so extra routes
-            // aren't re-fetched — in practice this path is only hit for a same-route+direction re-tap where
-            // changed extras are already loaded (a new cross-route id requires a full re-enter).
+            // Move all the segment fields together so a redraw can't key off fresh riddenSpans while
+            // extraSegments or the alighting bound stays stale (or vice versa). No reload here (reframe
+            // contract), so extra routes aren't re-fetched — in practice this path is only hit for a
+            // same-route+direction re-tap where changed extras are already loaded (a new cross-route id
+            // requires a full re-enter).
             extraSegments = request.extraSegments
+            alightStopId = request.alightStopId
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
             showDirectionStops()
@@ -457,6 +488,9 @@ class RouteMapController(
         val resolved = directionState as? DirectionState.Resolved ?: return null
         val poll = vehiclePoller.leaderPoll ?: return null
         val extraPolls = vehiclePoller.extraPolls
+        // Unlike [refreshRouteColorMemo] (bottom of this function), this must run before the
+        // filterToFocusedRide calls below — they are what reads the memo.
+        refreshRideEligibilityMemo(poll, extraPolls)
         // A stay-aboard interline is one shared block vehicle running consecutive trips across the ridden
         // routes/directions, so don't direction-filter and merge each extra route's poll — the vehicle
         // must show through every phase, not vanish when it flips direction/route at a seam (#2000).
@@ -512,17 +546,49 @@ class RouteMapController(
     // is the discrete set the renderer keeps, so it carries the shape-projected most-recent-data point.
     private fun currentVehicleLayer(): MapVehicles? = sampleVehicles(WallTime.now(), includeDataFixPoint = true)
 
-    /** During selected-leg focus, retain vehicles upstream of or currently on the ride. */
+    /** During selected-leg focus, retain vehicles upstream of or currently on the ride. The symbolic
+     *  schedule-versus-alighting-stop verdict decides first; geometry answers only its UNKNOWNs. */
     private fun List<ExtrapolatedVehicle>.filterToFocusedRide(routeId: String): List<ExtrapolatedVehicle> {
         if (!riddenSpans.isDrawableRide()) return this
         val eligiblePaths = focusedVehiclePathsByRoute[routeId] ?: return emptyList()
+        val bounds = focusedRideBoundsByRoute[routeId].orEmpty()
         return filter { vehicle ->
             focusedRideKeepsVehicle(
                 vehicleTripId = vehicle.status.activeTripId,
                 focusedTripId = focusExemptTripId,
+                eligibility = rideEligibilityFor(routeId, vehicle, bounds),
                 eligiblePaths = eligiblePaths,
                 point = vehicle.point
             )
+        }
+    }
+
+    // The memoized symbolic verdict for one vehicle's trip under [bounds] — see [rideEligibilityMemo]
+    // for the key shape and invalidation. The schedule comes from the observation cache
+    // ([TripObservationRepository.lookupTripState]), which the route poll prefetches for every active
+    // trip; until it lands the verdict is UNKNOWN and geometry fills in.
+    private fun rideEligibilityFor(
+        routeId: String,
+        vehicle: ExtrapolatedVehicle,
+        bounds: List<RideBound>
+    ): RideEligibility {
+        val tripId = vehicle.status.activeTripId ?: return RideEligibility.UNKNOWN
+        return rideEligibilityMemo.getOrPut(routeId to tripId) {
+            rideEligibility(
+                schedule = tripObservationRepository.lookupTripState(tripId)?.schedule,
+                statusDistanceAlongTrip = vehicle.status.distanceAlongTrip,
+                bounds = bounds
+            )
+        }
+    }
+
+    /** Drops the [rideEligibilityMemo] when either poll it was derived from has been replaced. */
+    private fun refreshRideEligibilityMemo(poll: VehiclePoll, extras: Map<String, VehiclePoll>) {
+        // Identity compares, like [refreshRouteColorMemo]: a new poll or extra-poll map is a fresh instance.
+        if (poll !== rideEligibilityMemoPoll || extras !== rideEligibilityMemoExtras) {
+            rideEligibilityMemoPoll = poll
+            rideEligibilityMemoExtras = extras
+            rideEligibilityMemo.clear()
         }
     }
 
@@ -667,10 +733,13 @@ class RouteMapController(
         directionStopId = null
         riddenSpans = emptyList()
         extraSegments = emptyList()
+        alightStopId = null
         itineraryContext = emptyList()
         palette = BASEMAP_ROUTE_LINE_PALETTE
         extraRouteMaps = emptyMap()
         focusedVehiclePathsByRoute = emptyMap()
+        focusedRideBoundsByRoute = emptyMap()
+        rideEligibilityMemo.clear()
         initialDirectionOverride = null
         routeStops = emptyList()
         routeStopRoutes = emptyList()
@@ -1003,6 +1072,14 @@ class RouteMapController(
         } else {
             emptyMap()
         }
+        // The symbolic side of the same eligibility (#2124): each focused route's end-of-ride stops,
+        // decided against trip schedules ahead of the geometry above.
+        focusedRideBoundsByRoute = if (isLegFocus) {
+            rideBoundsByRoute(leaderRouteId, extraSegments, alightStopId)
+        } else {
+            emptyMap()
+        }
+        rideEligibilityMemo.clear()
         // In leg focus, only the approaches to the boarding point remain as route context. Stay-aboard
         // continuations happen after boarding and are already represented by the selected leg overlay.
         basePolylines = approaches.values.flatten()

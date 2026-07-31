@@ -25,7 +25,6 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.model.routeDisplayName
@@ -38,7 +37,7 @@ import org.onebusaway.android.util.runCatchingCancellable
 /**
  * Projects [TripItinerary] objects onto the Compose results model. The turn-by-turn directions reuse
  * the legacy [DirectionsGenerator] (which needs a [Context] for resources), and the option cards carry
- * structured data (mode symbols / duration / time range / walk distance) formatted by the UI. All
+ * structured data (mode symbols / duration / time range / street distances) formatted by the UI. All
  * on the IO thread so [TripResultsViewModel] stays JVM-testable.
  */
 interface TripResultsRepository {
@@ -72,10 +71,9 @@ class DefaultTripResultsRepository @Inject constructor(
         durationMinutes = itinerary.duration.inWholeMinutes,
         startTime = itinerary.startTime,
         endTime = itinerary.startTime + itinerary.duration,
-        // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
-        walkDistanceMeters = itinerary.legs
-            .filter { it.mode == TripMode.WALK }
-            .sumOf { it.distance }
+        // How far the trip goes on each street mode it uses (meters), one metric line each on the card
+        // (#2122); the card formats them to the user's units.
+        streetDistanceMeters = itinerary.legs.streetDistancesMeters()
     )
 
     override suspend fun directionsFor(

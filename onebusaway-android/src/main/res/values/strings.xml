@@ -979,6 +979,8 @@
     <!-- Accessibility announcements for values emphasized as the best among the itinerary options. -->
     <string name="trip_plan_winner_shortest_travel_time">Shortest travel time</string>
     <string name="trip_plan_winner_least_walking">Least walking</string>
+    <string name="trip_plan_winner_least_biking">Least biking</string>
+    <string name="trip_plan_winner_least_bikesharing">Least bikeshare riding</string>
     <string name="trip_plan_winner_earliest_arrival">Earliest arrival</string>
     <string name="trip_plan_winner_latest_departure">Latest departure</string>
     <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->

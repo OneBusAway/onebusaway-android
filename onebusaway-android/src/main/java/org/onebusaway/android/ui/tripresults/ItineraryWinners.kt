@@ -15,12 +15,27 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-/** A comparison an itinerary option can win in the route picker. */
-enum class WinnerCategory {
-    SHORTEST_TRAVEL_TIME,
-    LEAST_WALKING,
-    EARLIEST_ARRIVAL,
-    LATEST_DEPARTURE
+import androidx.annotation.StringRes
+import org.onebusaway.android.R
+
+/**
+ * A comparison an itinerary option can win in the route picker, and what that win is called aloud
+ * ([labelRes] — the card announces its wins as a `stateDescription`).
+ *
+ * Every street mode a card can draw a distance for has its own "least" category, so the emphasis is on
+ * whatever the trip actually costs the rider: a bikeshare plan's cards compete on how far they make you
+ * ride, exactly as a walking plan's compete on how far they make you walk (#2122). Which mode owns which
+ * category — and which modes have one at all — is [StreetMetric]'s to say, not this enum's.
+ *
+ * The declaration order is the order a card reads its wins in, so keep related categories together.
+ */
+enum class WinnerCategory(@StringRes val labelRes: Int) {
+    SHORTEST_TRAVEL_TIME(R.string.trip_plan_winner_shortest_travel_time),
+    LEAST_WALKING(R.string.trip_plan_winner_least_walking),
+    LEAST_BIKING(R.string.trip_plan_winner_least_biking),
+    LEAST_BIKESHARING(R.string.trip_plan_winner_least_bikesharing),
+    EARLIEST_ARRIVAL(R.string.trip_plan_winner_earliest_arrival),
+    LATEST_DEPARTURE(R.string.trip_plan_winner_latest_departure)
 }
 
 /** Which clock-time comparison is useful for the request that produced the options. */
@@ -59,10 +74,19 @@ fun itineraryWinnerCategories(
 
     award(WinnerCategory.SHORTEST_TRAVEL_TIME, options.map { it.durationMinutes }) { it.min() }
 
-    // A non-finite distance is not comparable enough to declare a winner for the whole result set.
-    val walks = options.map { it.walkDistanceMeters }
-    if (walks.all(Double::isFinite)) {
-        award(WinnerCategory.LEAST_WALKING, walks) { it.min() }
+    // One "least" per street mode the cards measure, rather than walking alone: whichever modes a plan
+    // is made of, the rider can see which option asks least of them on each.
+    //
+    // A mode an option never uses counts as **zero** of it, which is the best value there is — "this one
+    // needs no bikeshare at all" is a real answer to how much bikesharing it costs, and it is how a
+    // trip that never walks has always won LEAST_WALKING. The card draws the winning line even at zero
+    // (see `streetMetrics`), so the outline always has a value under it.
+    for (metric in StreetMetric.entries) {
+        val distances = options.map { it.streetDistanceMeters[metric.mode] ?: 0.0 }
+        // A non-finite distance is not comparable enough to declare a winner for the whole result set.
+        if (distances.all(Double::isFinite)) {
+            award(metric.winner, distances) { it.min() }
+        }
     }
 
     if (scheduleMode == ScheduleWinnerMode.EARLIEST_ARRIVAL || scheduleMode == ScheduleWinnerMode.BOTH) {

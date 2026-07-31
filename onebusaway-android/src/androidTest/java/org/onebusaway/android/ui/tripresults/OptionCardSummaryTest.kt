@@ -160,7 +160,7 @@ class OptionCardSummaryTest {
         durationMinutes = DURATION_MINUTES,
         startTime = ServerTime(0L),
         endTime = ServerTime(DURATION_MINUTES * 60_000L),
-        walkDistanceMeters = 400.0
+        streetDistanceMeters = mapOf(StreetMode.WALK to 400.0)
     )
 
     private fun show(vararg options: ItineraryOption) {

@@ -33,6 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 /**
+ * The menu's width band. The maximum is named because it is what makes the menu read as a card
+ * rather than a full-width sheet, which is asserted on device.
+ */
+internal val LONG_PRESS_MENU_MIN_WIDTH = 196.dp
+internal val LONG_PRESS_MENU_MAX_WIDTH = 320.dp
+
+/**
  * A secondary-action menu opened by long press. A dialog supplies one consistent screen-centered
  * position regardless of which row or horizontally scrolled ETA pill launched it; the content stays
  * ordinary Material [androidx.compose.material3.DropdownMenuItem] rows.
@@ -46,7 +53,10 @@ internal fun CenteredLongPressMenu(
     if (!expanded) return
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
-            modifier = Modifier.widthIn(min = 196.dp, max = 320.dp),
+            modifier = Modifier.widthIn(
+                min = LONG_PRESS_MENU_MIN_WIDTH,
+                max = LONG_PRESS_MENU_MAX_WIDTH
+            ),
             shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainer,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
@@ -61,19 +71,20 @@ internal fun CenteredLongPressMenu(
 /** A labelled menu item with an optional decorative leading [icon]. */
 @Composable
 internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(stringResource(textRes)) },
-        onClick = onClick,
-        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } }
+    MenuRow(
+        textRes = textRes,
+        leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } },
+        onClick = onClick
     )
 }
 
 /**
  * A labelled menu item whose leading slot the caller draws, for a mark no tinted [ImageVector]
- * carries — the directions endpoint dots, which are identified by their own hue.
+ * carries — the directions endpoint dots, which are identified by their own hue. Deliberately
+ * without a default, so the two-argument `MenuRow(textRes) { … }` form still resolves above.
  */
 @Composable
-internal fun MenuRow(textRes: Int, leadingIcon: @Composable () -> Unit, onClick: () -> Unit) {
+internal fun MenuRow(textRes: Int, leadingIcon: (@Composable () -> Unit)?, onClick: () -> Unit) {
     DropdownMenuItem(
         text = { Text(stringResource(textRes)) },
         onClick = onClick,

@@ -23,7 +23,6 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
@@ -32,11 +31,10 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.ui.compose.Channel
 import org.onebusaway.android.ui.compose.assertDominant
+import org.onebusaway.android.ui.compose.components.LONG_PRESS_MENU_MAX_WIDTH
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
-import org.onebusaway.android.ui.tripplan.TripPlanTestTags
-import org.onebusaway.android.ui.tripplan.tagPrefix
 
 /**
  * On-device checks on the map's long-press menu (#2112). The redesign made two claims that only a
@@ -81,9 +79,9 @@ class DirectionsLongPressMenuRenderTest {
                 .targetContext.resources.displayMetrics.widthPixels.toDp()
         }
         assertTrue(
-            "the menu should be a card capped at $MENU_MAX_WIDTH, not a $screenWidth sheet, " +
-                "but its rows measured $rowWidth",
-            rowWidth <= MENU_MAX_WIDTH && rowWidth < screenWidth
+            "the menu should be a card capped at $LONG_PRESS_MENU_MAX_WIDTH, not a $screenWidth " +
+                "sheet, but its rows measured $rowWidth",
+            rowWidth <= LONG_PRESS_MENU_MAX_WIDTH && rowWidth < screenWidth
         )
     }
 
@@ -92,18 +90,18 @@ class DirectionsLongPressMenuRenderTest {
     fun theRowsAreMarkedWithTheRailsEndpointDots() {
         renderMenu()
 
-        assertDominant(dot(TripEndpointSlot.FROM), Channel.GREEN, "directions from here")
-        assertDominant(dot(TripEndpointSlot.TO), Channel.RED, "directions to here")
+        assertDominant(dot(DirectionsLongPressMenuTestTags.FROM_DOT), Channel.GREEN, FROM_LABEL)
+        assertDominant(dot(DirectionsLongPressMenuTestTags.TO_DOT), Channel.RED, TO_LABEL)
     }
 
     /**
-     * The centre of a row's endpoint dot. Captured from the dot's own 24dp box, so nothing here
-     * depends on Material's internal menu-item padding; unmerged because the clickable row merges
-     * its children's semantics.
+     * The centre of a row's endpoint dot. Captured from the dot's own box, so nothing here depends
+     * on Material's internal menu-item padding; unmerged because the clickable row merges its
+     * children's semantics.
      */
-    private fun dot(slot: TripEndpointSlot): Color {
+    private fun dot(tag: String): Color {
         val pixels = composeRule
-            .onNodeWithTag(slot.tagPrefix + TripPlanTestTags.DOT_SUFFIX, useUnmergedTree = true)
+            .onNodeWithTag(tag, useUnmergedTree = true)
             .captureToImage()
             .toPixelMap()
         return pixels[pixels.width / 2, pixels.height / 2]
@@ -120,8 +118,5 @@ class DirectionsLongPressMenuRenderTest {
     private companion object {
         const val FROM_LABEL = "Directions from here"
         const val TO_LABEL = "Directions to here"
-
-        /** CenteredLongPressMenu's own cap — the shape every long-press menu in the app shares. */
-        val MENU_MAX_WIDTH = 320.dp
     }
 }

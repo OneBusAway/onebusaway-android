@@ -91,6 +91,9 @@ private val RAIL_WIDTH = 44.dp
 /** Diameter of the endpoint dot, in the rail and in the suggestion row that fills that endpoint. */
 private val ENDPOINT_DOT_SIZE = 12.dp
 
+/** The box the endpoint dot occupies when it stands in a menu row's leading icon slot. */
+private val ENDPOINT_DOT_ICON_SIZE = 22.dp
+
 /** Clear space between an endpoint glyph and the dotted connector running to the other one. */
 private val CONNECTOR_GLYPH_CLEARANCE = 12.dp
 
@@ -128,9 +131,6 @@ object TripPlanTestTags {
     /** The two pinned rows at the head of a field's suggestion list. */
     const val MY_LOCATION_SUFFIX = "MyLocation"
     const val PICK_ON_MAP_SUFFIX = "PickOnMap"
-
-    /** The endpoint dot [TripEndpointDotIcon] draws, wherever a row stands for one end of the trip. */
-    const val DOT_SUFFIX = "Dot"
 
     /** The action bar's two time segments. */
     const val WHEN_MODE = "tripPlanWhenMode"
@@ -492,30 +492,32 @@ private fun EndpointDot(color: Color) {
 }
 
 /**
- * The dot at icon size, for the suggestion row that fills an endpoint with the device's position —
- * the row and the endpoint it produces then show the same mark, rather than a crosshair that turns
- * into a dot once chosen.
+ * The dot in a menu row's leading icon slot. Every row that *offers* to fill an endpoint shows the
+ * mark that endpoint will carry once filled, rather than a separate glyph that turns into a dot on
+ * being chosen.
  */
 @Composable
-private fun CurrentLocationDotIcon() {
-    Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
-        EndpointDot(colorResource(R.color.trip_plan_endpoint_current_location))
+private fun EndpointDotIcon(color: Color, modifier: Modifier = Modifier) {
+    Box(modifier.size(ENDPOINT_DOT_ICON_SIZE), contentAlignment = Alignment.Center) {
+        EndpointDot(color)
     }
 }
 
+/** [EndpointDotIcon] for the suggestion row that fills an endpoint with the device's position. */
+@Composable
+private fun CurrentLocationDotIcon() {
+    EndpointDotIcon(colorResource(R.color.trip_plan_endpoint_current_location))
+}
+
 /**
- * The rail's endpoint dot in a Material icon slot, for a row elsewhere that offers to fill this end
- * of the trip — the map long-press menu's "directions from/to here". Same reasoning as
- * [CurrentLocationDotIcon]: what the rider taps carries the mark of the endpoint it produces.
+ * [EndpointDotIcon] for a row elsewhere that offers to fill one named end of the trip — the map
+ * long-press menu's "directions from/to here" (#2112). Takes a [modifier] rather than tagging
+ * itself: the tag belongs to whichever feature draws the row, since more than one of them can be
+ * on screen at once.
  */
 @Composable
-fun TripEndpointDotIcon(slot: TripEndpointSlot) {
-    Box(
-        Modifier.size(24.dp).testTag(slot.tagPrefix + TripPlanTestTags.DOT_SUFFIX),
-        contentAlignment = Alignment.Center
-    ) {
-        EndpointDot(endpointSlotColor(slot))
-    }
+fun TripEndpointDotIcon(slot: TripEndpointSlot, modifier: Modifier = Modifier) {
+    EndpointDotIcon(endpointSlotColor(slot), modifier)
 }
 
 @Composable

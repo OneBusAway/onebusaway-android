@@ -15,20 +15,16 @@
  */
 package org.onebusaway.android.map
 
-import android.os.SystemClock
 import java.net.HttpURLConnection
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
@@ -68,10 +64,15 @@ import org.onebusaway.android.util.toGeoPoint
  *
  * [routeId] is the single source of truth for "the map is in route mode"; there is no separate mode flag.
  *
- * **Vehicles.** A background job polls trips-for-route on a fixed cadence and stashes each response. The
- * controller installs a per-frame sampler in [MapHost.renderState] that the renderer pulls each display
- * frame to dead-reckon every vehicle forward to the frame's clock — so vehicles glide smoothly between
- * the comparatively slow polls. The poll is suspended and resumed with the map via [onPause]/[onResume].
+ * **Vehicles.** [RouteVehiclePoller] keeps a fresh trips-for-route response coming on a fixed cadence;
+ * this controller turns each one into the drawn layer. It installs a per-frame sampler in
+ * [MapHost.renderState] that the renderer pulls each display frame to dead-reckon every vehicle forward
+ * to the frame's clock — so vehicles glide smoothly between the comparatively slow polls. The poll is
+ * suspended and resumed with the map via [onPause]/[onResume].
+ *
+ * **Stop focus.** The "exact trips arriving at this stop" layer belongs to [StopFocusController]; this
+ * controller merges its [StopFocusPresentation] with the route's own geometry in
+ * [publishMapPresentation] and forwards the focus calls to it.
  *
  * **Display-free.** The controller deals in route data, not presentation: it publishes the raw
  * [loadedRoute] (loading, then the loaded [ObaRoute] and agency) and passes each route's raw GTFS color
@@ -87,9 +88,27 @@ class RouteMapController(
     private val routeRepository: RouteMapRepository,
     private val stopsController: StopsMapController,
     private val tripObservationRepository: TripObservationRepository,
-    private val focusedTripRepository: FocusedTripRepository,
+    focusedTripRepository: FocusedTripRepository,
     private val scope: CoroutineScope
 ) {
+
+    // The real-time vehicle poll for this session (jobs + retained responses). Every landed poll
+    // republishes the vehicle set, which is also where a pending arrivals focus resolves.
+    private val vehiclePoller = RouteVehiclePoller(
+        tripObservationRepository = tripObservationRepository,
+        scope = scope,
+        onPoll = ::publishVehicleSet
+    )
+
+    // The focused-stop layer (the exact trips arriving at one stop). It owns its own load job and
+    // geometry and calls back here to republish; [publishMapPresentation] reads its presentation.
+    private val stopFocus = StopFocusController(
+        focusedTripRepository = focusedTripRepository,
+        stopsController = stopsController,
+        scope = scope,
+        isRouteActive = { isActive },
+        onPresentationChanged = ::publishMapPresentation
+    )
 
     // The raw route load, published while in route mode (the view model formats it into the display
     // header overlay). Loading on entry, the loaded route once it resolves, null outside route mode.
@@ -139,14 +158,6 @@ class RouteMapController(
     // onRouteLoaded; read by the extra-segment shape/stop helpers.
     private var extraRouteMaps: Map<String, RouteMap> = emptyMap()
 
-    // The latest vehicle poll per extra route id — a cross-route interline polls each route so the one
-    // shared block vehicle shows through every phase. Merged with [latestPoll] in sampleVehicles; empty
-    // otherwise.
-    private var extraPolls: Map<String, VehiclePoll> = emptyMap()
-
-    // The per-extra-route vehicle poll jobs, cancelled alongside [vehicleJob].
-    private var extraVehicleJobs: List<Job> = emptyList()
-
     // A restore/deep-link override for the initial direction (the user-selected direction persisted
     // across process death); when set and still valid it wins over the anchor stop's direction.
     private var initialDirectionOverride: Int? = null
@@ -173,26 +184,17 @@ class RouteMapController(
     // the approach and selected ride, but stops at alighting so downstream vehicles stay hidden.
     private var focusedVehiclePathsByRoute: Map<String, List<BoundedRoutePath>> = emptyMap()
 
-    private data class StopFocusSession(
-        val stopId: String,
-        val trips: Set<FocusedTrip>
-    )
-
     private data class FocusedRouteLines(
         val routeId: String,
         val relationship: RouteFocusRelationship?,
         val polylines: List<RoutePolyline>
     )
 
-    private var stopFocusSession: StopFocusSession? = null
-    private var stopFocusJob: Job? = null
-    private var focusedGeometry = FocusedTripGeometry(emptyList())
-    private var focusedStops = FocusedTripStops(emptyMap(), emptyMap())
-    private var focusedRoutes: List<ObaRoute> = emptyList()
-    private val _focusedRouteColors = MutableStateFlow<Map<RouteDirectionKey, Int>>(emptyMap())
-    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> = _focusedRouteColors.asStateFlow()
+    /** The synthesized hue per focused route/direction — see [StopFocusController.routeColors]. */
+    val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = stopFocus.routeColors
 
-    val focusedStopId: String? get() = stopFocusSession?.stopId
+    /** The stop whose trips are drawn, or null when no stop is focused. */
+    val focusedStopId: String? get() = stopFocus.focusedStopId
 
     // The direction shown now (null = whole route). Derived from [directionState] rather than stored
     // separately, so the stop filter and the vehicle filter can never disagree. Meaningful only once
@@ -228,11 +230,6 @@ class RouteMapController(
     /** Whether a route is currently shown (drives the home map's route-header focus bias). */
     val isActive: Boolean get() = routeId != null
 
-    // The most recent trips-for-route poll and when it landed (nanos). The sampler reads the response to
-    // dead-reckon every vehicle to the frame's clock; the load time lets a resume mid-period wait only
-    // the remainder. Null until the first poll lands (the sampler then yields nothing to draw).
-    private var latestPoll: VehiclePoll? = null
-
     // Memo behind [displayedRouteColor], which the per-frame vehicle sampler calls for every vehicle.
     // Keyed by active trip id (unique across the polls in play); holds nulls, so absence means "not yet
     // resolved" rather than "no color". Invalidated wholesale by [refreshRouteColorMemo] when any input
@@ -243,11 +240,9 @@ class RouteMapController(
     private var routeColorMemoExtras: Map<String, VehiclePoll>? = null
     private var routeColorMemoAssignment: Map<RouteDirectionKey, Int> = emptyMap()
 
-    // routeJob is the one-shot route shape/stops/header load; vehicleJob is the long-running periodic
-    // vehicle poll, suspended/resumed independently with the map lifecycle (onPause cancels only it).
+    // The one-shot route shape/stops/header load. The long-running periodic vehicle poll lives in
+    // [vehiclePoller], suspended/resumed independently with the map lifecycle.
     private var routeJob: Job? = null
-
-    private var vehicleJob: Job? = null
 
     // Drives everything a tap-selected vehicle shows: its exact shape + scheduled stops
     // ([showSelectionPresentation]), the trip overlay (the uncertainty band + fast-estimate marker,
@@ -310,10 +305,9 @@ class RouteMapController(
         this.extraSegments = extraSegments
         this.itineraryContext = itineraryContext
         this.palette = palette
-        // (Re)built as the extra routes load / poll in onRouteLoaded + startVehiclePolling; cleared here
-        // so a prior focus's routes/polls can't leak into this one during the load window.
+        // (Re)built as the extra routes load in onRouteLoaded; cleared here so a prior focus's routes
+        // can't leak into this one during the load window (the poller clears its own polls in start).
         this.extraRouteMaps = emptyMap()
-        this.extraPolls = emptyMap()
         this.focusedVehiclePathsByRoute = emptyMap()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
@@ -353,7 +347,7 @@ class RouteMapController(
         // Defer the on-load framing while a focus is pending: the focus decision (below, once the first
         // set arrives) either fits the vehicle+stop box or, failing that, frames the route itself.
         loadRoute(zoomToRoute && focusTripId == null)
-        startVehiclePolling(0L)
+        vehiclePoller.start(routeId, extraRouteIds)
     }
 
     /**
@@ -419,7 +413,7 @@ class RouteMapController(
     private fun tryFocusVehicle(layer: MapVehicles?) {
         val focus = pendingFocus ?: return
         val marker = layer?.markers?.firstOrNull { it.activeTripId == focus }
-        when (resolveVehicleFocus(directionState is DirectionState.Resolved, latestPoll != null, marker != null)) {
+        when (resolveVehicleFocus(directionState is DirectionState.Resolved, vehiclePoller.leaderPoll != null, marker != null)) {
             FocusResolution.WAIT -> Unit
             FocusResolution.FIT -> {
                 pendingFocus = null
@@ -452,7 +446,8 @@ class RouteMapController(
     private fun sampleVehicles(now: WallTime, includeDataFixPoint: Boolean = false): MapVehicles? {
         val id = routeId ?: return null
         val resolved = directionState as? DirectionState.Resolved ?: return null
-        val poll = latestPoll ?: return null
+        val poll = vehiclePoller.leaderPoll ?: return null
+        val extraPolls = vehiclePoller.extraPolls
         // A stay-aboard interline is one shared block vehicle running consecutive trips across the ridden
         // routes/directions, so don't direction-filter and merge each extra route's poll — the vehicle
         // must show through every phase, not vanish when it flips direction/route at a seam (#2000).
@@ -495,7 +490,7 @@ class RouteMapController(
         } else {
             merged
         }
-        refreshRouteColorMemo(poll, extraPolls, _focusedRouteColors.value)
+        refreshRouteColorMemo(poll, extraPolls, stopFocus.routeColors.value)
         return MapVehicles(
             markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source) },
             response = poll.response
@@ -546,7 +541,7 @@ class RouteMapController(
     private suspend fun showSelectionPresentation(tripId: String?) {
         if (tripId != null) {
             val state = tripObservationRepository.lookupTripState(tripId)
-            val shapeId = state?.shapeId ?: latestPoll?.response?.trip(tripId)?.shapeId
+            val shapeId = state?.shapeId ?: vehiclePoller.leaderPoll?.response?.trip(tripId)?.shapeId
             // Warm both resources concurrently; supervisorScope joins them and keeps one failing
             // fetch from cancelling the other. selectedTripPresentation() re-reads the results.
             supervisorScope {
@@ -639,12 +634,9 @@ class RouteMapController(
     /** Leave single-route mode. A stop-focus layer, when present, remains visible. */
     fun stop() {
         routeJob?.cancel()
-        vehicleJob?.cancel()
-        extraVehicleJobs.forEach { it.cancel() }
+        vehiclePoller.stop()
         selectionJob?.cancel()
         routeJob = null
-        vehicleJob = null
-        extraVehicleJobs = emptyList()
         selectionJob = null
         routeId = null
         directionStopId = null
@@ -654,7 +646,6 @@ class RouteMapController(
         palette = BASEMAP_ROUTE_LINE_PALETTE
         extraRouteMaps = emptyMap()
         focusedVehiclePathsByRoute = emptyMap()
-        extraPolls = emptyMap()
         initialDirectionOverride = null
         routeStops = emptyList()
         routeStopRoutes = emptyList()
@@ -663,7 +654,6 @@ class RouteMapController(
         basePolylines = emptyList()
         baseStopPresentation = null
         directionState = DirectionState.Resolved(null)
-        latestPoll = null
         pendingFocus = null
         focusExemptTripId = null
         publishMapPresentation()
@@ -678,105 +668,15 @@ class RouteMapController(
         _loadedRoute.value = null
     }
 
-    /**
-     * Show the exact trips currently displayed for a stop. A first focus publishes shape and schedule
-     * results independently; a handoff from an existing stop stages both and swaps them atomically so
-     * the complete old presentation remains visible during loading. An empty trip set is still valid.
-     */
+    /** Show the exact trips currently displayed for a stop — see [StopFocusController.focus]. */
     fun focusStop(
         stopId: String,
         trips: Set<FocusedTrip>,
         routes: List<ObaRoute>
-    ) {
-        val next = StopFocusSession(stopId, LinkedHashSet(trips))
-        if (stopFocusSession == next) {
-            // Route wrappers may be recreated on every arrivals poll; refresh marker metadata without
-            // restarting unchanged shape/schedule work.
-            focusedRoutes = routes
-            publishMapPresentation()
-            return
-        }
-        stopFocusJob?.cancel()
-        val retainCurrentPresentation = stopFocusSession != null
-        if (!retainCurrentPresentation) {
-            applyStopFocus(
-                next,
-                routes,
-                FocusedTripGeometry(emptyList()),
-                FocusedTripStops(emptyMap(), emptyMap())
-            )
-        }
-        stopFocusJob = scope.launch {
-            supervisorScope {
-                val geometry = async {
-                    runCatching { focusedTripRepository.getGeometry(next.trips) }
-                        .getOrElse {
-                            if (it is CancellationException) throw it
-                            FocusedTripGeometry(emptyList())
-                        }
-                        .also {
-                            if (!retainCurrentPresentation && stopFocusSession == next) {
-                                focusedGeometry = it
-                                publishMapPresentation()
-                            }
-                        }
-                }
-                val stops = async {
-                    runCatching { focusedTripRepository.getStops(next.trips) }
-                        .getOrElse {
-                            if (it is CancellationException) throw it
-                            FocusedTripStops(emptyMap(), emptyMap())
-                        }
-                        .also {
-                            if (!retainCurrentPresentation && stopFocusSession == next) {
-                                focusedStops = it
-                                publishMapPresentation()
-                            }
-                        }
-                }
-                val nextGeometry = geometry.await()
-                val nextStops = stops.await()
-                if (retainCurrentPresentation) {
-                    // A stop-to-stop handoff keeps the old complete presentation visible until both
-                    // halves of the replacement are ready, then swaps once. Unrelated focus changes
-                    // clear the old session before reaching here and retain the eager first-load path.
-                    applyStopFocus(next, routes, nextGeometry, nextStops)
-                }
-            }
-        }
-    }
-
-    private fun applyStopFocus(
-        session: StopFocusSession,
-        routes: List<ObaRoute>,
-        geometry: FocusedTripGeometry,
-        stops: FocusedTripStops
-    ) {
-        stopFocusSession = session
-        focusedRoutes = routes
-        _focusedRouteColors.value = adjacencyRouteColors(
-            session.trips.map(FocusedTrip::routeDirection),
-            retained = _focusedRouteColors.value
-        )
-        focusedGeometry = geometry
-        focusedStops = stops
-        stopsController.start()
-        publishMapPresentation()
-    }
+    ) = stopFocus.focus(stopId, trips, routes)
 
     /** Clear focused-stop trips and reveal the base route (or ordinary nearby stops). */
-    fun clearStopFocus() {
-        if (stopFocusSession == null) return
-        stopFocusSession = null
-        stopFocusJob?.cancel()
-        stopFocusJob = null
-        focusedGeometry = FocusedTripGeometry(emptyList())
-        focusedStops = FocusedTripStops(emptyMap(), emptyMap())
-        focusedRoutes = emptyList()
-        _focusedRouteColors.value = emptyMap()
-        if (isActive) stopsController.stop() else stopsController.start()
-        publishMapPresentation()
-    }
+    fun clearStopFocus() = stopFocus.clear()
 
     // Assemble the render plan from the current controller state (pure — see
     // [assembleRouteMapPresentation]) and forward each field to the render/stop layers. IO/retained
@@ -786,20 +686,21 @@ class RouteMapController(
         // Both the selected trip's fallback and the ridden segment draw in the shown route's colour;
         // resolve it once so a publish runs the colour policy a single time.
         val routeColor = currentRouteColor()
+        // One snapshot of the focused-stop layer for the whole publish, so the plan can't read a
+        // half-swapped focus (its geometry and stops resolve independently).
+        val focus = stopFocus.presentation
         val plan = assembleRouteMapPresentation(
             isActive = isActive,
             emphasizedRoute = routeId?.let { RouteDirectionKey(it, presentationDirectionId) },
             basePolylines = basePolylines,
             baseStopPresentation = baseStopPresentation,
-            focusTrips = stopFocusSession?.trips,
-            focusedGeometry = focusedGeometry,
-            focusedStops = focusedStops,
-            focusedRoutes = focusedRoutes,
-            routeColors = _focusedRouteColors.value,
+            focusTrips = focus.trips,
+            focusedGeometry = focus.geometry,
+            focusedStops = focus.stops,
+            focusedRoutes = focus.routes,
+            routeColors = focus.routeColors,
             selected = selectedTripRenderInput(routeColor),
-            projectedFocusStops = {
-                stopFocusSession?.let { projectFocusedStops(it.trips, focusedGeometry, focusedStops) }.orEmpty()
-            }
+            projectedFocusStops = focus::projectedStops
         )
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
@@ -848,7 +749,7 @@ class RouteMapController(
         val polyline = state?.polyline ?: return null
         val schedule = state.schedule ?: return null
         // The marker is keyed by activeTripId, which resolves directly through the poll references.
-        val activeTrip = latestPoll?.response?.trip(tripId)
+        val activeTrip = vehiclePoller.leaderPoll?.response?.trip(tripId)
         return SelectedTripPresentation(
             points = polyline.points,
             stopIds = schedule.stopTimes.map { it.stopId },
@@ -879,15 +780,12 @@ class RouteMapController(
 
     /** Restart the vehicle poll if a route is shown and the poll isn't running (the host's onResume). */
     fun onResume() {
-        if (routeId != null && vehicleJob?.isActive != true) {
-            startVehiclePolling(nextVehicleDelay(latestPoll?.loadNanos ?: 0L, SystemClock.elapsedRealtimeNanos()))
-        }
+        val id = routeId ?: return
+        vehiclePoller.resume(id, extraRouteIds)
     }
 
     /** Stop the vehicle poll while the map is paused (the host's onPause). */
-    fun onPause() {
-        vehicleJob?.cancel()
-    }
+    fun onPause() = vehiclePoller.pause()
 
     private fun loadRoute(zoomToRoute: Boolean) {
         val id = routeId ?: return
@@ -1113,47 +1011,6 @@ class RouteMapController(
     }
 
     /**
-     * (Re)starts the real-time vehicle poll: after [initialDelayMs], reload vehicles every
-     * [VEHICLE_REFRESH_PERIOD_MS] measured from each load's completion (so network time is excluded),
-     * matching the legacy `postDelayed`-after-`onLoadFinished` cadence. The loop continues on a fixed
-     * cadence even if a load fails.
-     */
-    private fun startVehiclePolling(initialDelayMs: Long) {
-        vehicleJob?.cancel()
-        extraVehicleJobs.forEach { it.cancel() }
-        val id = routeId ?: return
-        vehicleJob = scope.launch {
-            if (initialDelayMs > 0L) {
-                delay(initialDelayMs)
-            }
-            // Keep the route's vehicles fresh while route mode is on screen: the repository polls
-            // trips-for-route (backfilling each active trip's schedule + shape into the store) and
-            // records each response. Each emission is a fresh poll — stash it for the motion sampler,
-            // record its time so a resume mid-period waits only the remainder, and push the new vehicle
-            // set so the renderer reconciles the marker set. The renderer's frame loop then pulls the
-            // motion sampler to dead-reckon every vehicle between polls.
-            tripObservationRepository.routeVehiclesStream(id, VEHICLE_REFRESH_PERIOD_MS).collect { response ->
-                latestPoll = VehiclePoll(response, SystemClock.elapsedRealtimeNanos())
-                publishVehicleSet()
-            }
-        }
-        // A cross-route interline (#2000) polls each other route too, so the one shared block vehicle
-        // shows through every phase; sampleVehicles merges these polls. (A self-interline segment shares
-        // the leader's route, so it's excluded — the leader poll already covers it.)
-        extraVehicleJobs = extraRouteIds.map { extraRouteId ->
-            scope.launch {
-                if (initialDelayMs > 0L) {
-                    delay(initialDelayMs)
-                }
-                tripObservationRepository.routeVehiclesStream(extraRouteId, VEHICLE_REFRESH_PERIOD_MS).collect { response ->
-                    extraPolls = extraPolls + (extraRouteId to VehiclePoll(response, SystemClock.elapsedRealtimeNanos()))
-                    publishVehicleSet()
-                }
-            }
-        }
-    }
-
-    /**
      * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
      * draw-time live-vs-scheduled flag through (the renderer picks its icon from it) and the color its
      * route is currently drawn with (the disc rides its own line's color, #2043).
@@ -1282,9 +1139,6 @@ private val CONTINUATION_LINE_WIDTH_PROFILE = RouteLineWidthProfile(
 // Used only when the neighbor route carries no GTFS color to draw the continuation line in its own
 // color with.
 private const val CONTINUATION_FALLBACK_LINE_COLOR = 0xFF9E9E9E.toInt() // opaque gray
-
-/** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */
-private data class VehiclePoll(val response: RouteTrips, val loadNanos: Long)
 
 /**
  * What the vehicle layer should show while in route mode — the single value the per-frame sampler reads

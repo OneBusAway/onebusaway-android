@@ -145,4 +145,20 @@ class RouteSegmentHighlightTest {
         // Only ~11 m beyond alighting: spatial tolerance alone must not leak this downstream vehicle.
         assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.6401, -122.33)))
     }
+
+    @Test
+    fun explicitlyFocusedEtaTripSurvivesAPlannedLegGeometryMismatch() {
+        val eligible = listOf(
+            RoutePolyline(
+                color = 1,
+                points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.64, -122.33))
+            )
+        ).boundedThrough(GeoPoint(47.62, -122.33))
+        val offPath = GeoPoint(47.70, -122.40)
+
+        assertFalse(focusedRideKeepsVehicle("other-trip", "tapped-trip", eligible, offPath))
+        assertTrue(focusedRideKeepsVehicle("tapped-trip", "tapped-trip", eligible, offPath))
+        // No focused trip at all: a schedule-only vehicle (null trip id) must not match a null focus.
+        assertFalse(focusedRideKeepsVehicle(null, null, eligible, offPath))
+    }
 }

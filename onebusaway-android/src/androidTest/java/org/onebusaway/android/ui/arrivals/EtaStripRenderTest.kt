@@ -26,6 +26,7 @@ import org.onebusaway.android.SmokeTest
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.previewArrival
 import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 /**
@@ -54,7 +55,10 @@ class EtaStripRenderTest {
                         previewArrival("40", "Northgate", etaMinutes = 12, tripId = "trip_3")
                     ),
                     actionsFor = { null },
-                    callbacks = previewRowCallbacks()
+                    callbacks = previewRowCallbacks(),
+                    routeBadgeFor = {
+                        RouteBadge(it.shortName ?: error("preview route must have a name"), null)
+                    }
                 )
             }
         }
@@ -66,5 +70,7 @@ class EtaStripRenderTest {
         // The value is stable for the test's duration: previewArrival anchors serverNow at 0 and
         // liveEta divides each side into whole minutes, so the pill reads exactly -2 for the first 60s.
         composeRule.onNodeWithText("-2", substring = true).assertExists()
+        // Route identity is inside each pill when the caller supplies it (#2099).
+        composeRule.onNodeWithText("40").assertExists()
     }
 }

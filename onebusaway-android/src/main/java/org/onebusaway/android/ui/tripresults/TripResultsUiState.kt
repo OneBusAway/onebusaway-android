@@ -322,8 +322,11 @@ sealed interface RealtimeState {
  * .OtpObaIdResolver]); [routeId]/[RouteStopRef.stopId] are null when they couldn't be resolved (an
  * unknown agency, or the OTP1 path). [headsign] disambiguates which direction group's ETAs to show.
  *
- * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop shows each
- * one's live ETA strip under the planned route's, so the rider can see which of them comes first.
+ * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop interleaves
+ * their live arrivals with the planned route's in one ETA strip, badging each pill by route (#2099),
+ * so the rider can see which of them comes first.
+ * [plannedBadge] identifies the planned route's own segment independently of [badge], whose routes are
+ * name-sorted and may deduplicate two distinct routes publishing the same public name.
  * [badge] is the leg's finished roundel (planned route joined by those alternatives), built once by
  * the repository rather than re-derived per row while composing; null where no badge was built at all
  * (fixtures), which is not the same as a badge that found no route to name.
@@ -346,6 +349,7 @@ data class RouteLegRef(
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
     val extraSegments: List<RouteFocusSegment> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
+    val plannedBadge: RouteBadge? = null,
     val badge: LegBadge? = null
 )
 
@@ -373,8 +377,8 @@ data class InterlineTransition(
 )
 
 /**
- * An interchangeable route on a transit leg: its display name and color for the badge beside its ETA
- * strip, plus the same OBA-id/headsign pair [RouteLegRef] carries for the planned route, used to pick
+ * An interchangeable route on a transit leg: its display name and color for the badge inside each ETA
+ * pill, plus the same OBA-id/headsign pair [RouteLegRef] carries for the planned route, used to pick
  * that route's direction group out of the board stop's arrivals. [routeId] is null when the OTP route
  * couldn't be resolved onto an OBA id — the route still names itself on the leg's badge, but has no
  * ETA strip to show.

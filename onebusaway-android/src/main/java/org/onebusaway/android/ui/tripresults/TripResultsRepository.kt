@@ -144,6 +144,10 @@ class DefaultTripResultsRepository @Inject constructor(
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
                 alternatives = alternatives.map { it.resolve() },
+                // Kept separately from the joined badge: natural-name ordering means the joined form
+                // cannot identify which segment was planned, and same-named routes may collapse to one.
+                // The route-badged ETA strip needs this route's own color even in either case (#2099).
+                plannedBadge = leader.plannedBadge(),
                 // Built here, alongside the option cards' badges, so the drawer renders one rather than
                 // deriving it per row (#2010). The drawer's board row draws only the interchangeable
                 // form; on an interlined ride it names each segment at its own row instead (#2071), so

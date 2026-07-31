@@ -99,7 +99,7 @@ import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
-import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.findActivity
@@ -388,12 +388,12 @@ fun DirectionsResultsSheet(
  * Spins up a per-stop arrivals session keyed to [stop] — so it polls only while shown — and picks the
  * route group matching the leg (by route id, then headsign). Ids on [routeLeg]/[stop] are OBA-format.
  *
- * A leg with interchangeable routes ([RouteLegRef.alternatives], #2010) gets one further strip per such
- * route below the planned one, each behind its own route badge so the pills can't be mistaken for the
- * planned route's — that badge is the only thing distinguishing them, since a pill shows an ETA and no
- * route. All of them read the one arrivals poll this stop already runs, so the extra routes cost no
- * extra request. An alternative with no OBA id, or with nothing upcoming at this stop, is simply left
- * out — its name still appears on the card's "or …" line.
+ * A leg with interchangeable routes ([RouteLegRef.alternatives], #2010) combines every matching route
+ * into this one strip in arrival order. Each ETA pill carries its route's small badge, so the rider can
+ * scan one timeline to see which interchangeable route comes first without losing the route identity.
+ * All routes read the one arrivals poll this stop already runs, so alternatives cost no extra request.
+ * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
+ * still appears on the card's "or …" line.
  */
 @Composable
 fun DirectionStopEtaStrip(
@@ -435,38 +435,43 @@ fun DirectionStopEtaStrip(
         content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
             ?.let { alternative to it }
     }
-    if (plannedGroup == null && alternativeGroups.isEmpty()) {
+    val routeTrips = buildList {
+        plannedGroup?.let { add(routeLeg.etaPlannedBadge(it.representative.lineName) to it.trips) }
+        alternativeGroups.forEach { (alternative, group) ->
+            add(RouteBadge(alternative.shortName, alternative.routeColor) to group.trips)
+        }
+    }
+    val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
+    if (interleaved.isEmpty()) {
         NoEtasText(rowPadding)
         return
     }
-    Column(modifier) {
-        if (plannedGroup == null) {
-            NoEtasText(rowPadding)
-        } else {
-            EtaStrip(
-                trips = plannedGroup.trips,
-                actionsFor = { content.actions[it.tripId] },
-                callbacks = callbacks,
-                modifier = rowPadding
-            )
-        }
-        alternativeGroups.forEach { (alternative, group) ->
-            Row(
-                modifier = rowPadding,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RouteBadgeChip(alternative.shortName, alternative.routeColor)
-                Spacer(Modifier.width(8.dp))
-                EtaStrip(
-                    trips = group.trips,
-                    actionsFor = { content.actions[it.tripId] },
-                    callbacks = callbacks,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
+    val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
+    EtaStrip(
+        trips = interleaved.map { it.first },
+        actionsFor = { content.actions[it.tripId] },
+        callbacks = callbacks,
+        modifier = modifier.then(rowPadding),
+        routeBadgeFor = { badgesByTrip[it] }
+    )
 }
+
+/**
+ * Flattens route-specific, already-ordered arrival lists into one chronological strip. Kotlin's sort
+ * is stable, so equal-time arrivals retain route order (planned first, then alternatives), avoiding
+ * visual jitter when two interchangeable routes share an ETA.
+ */
+internal fun <T> interleaveRouteItems(
+    routes: List<Pair<RouteBadge, List<T>>>,
+    timeOf: (T) -> Long
+): List<Pair<T, RouteBadge>> = routes
+    .flatMap { (badge, items) -> items.map { it to badge } }
+    .sortedBy { (item, _) -> timeOf(item) }
+
+/** The planned route's own badge, falling back to the arrivals display name only for legacy fixtures.
+ * It is carried explicitly rather than recovered from the joined badge by name: distinct routes may
+ * publish the same name, and the joined badge deliberately deduplicates those names. */
+internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge = plannedBadge ?: RouteBadge(fallbackLineName, null)
 
 /** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
  *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop. */

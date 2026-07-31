@@ -124,3 +124,20 @@ internal fun TripLeg.streetMode(): StreetMode = when (mode) {
     TripMode.CAR -> StreetMode.CAR
     else -> StreetMode.WALK
 }
+
+/**
+ * How far the trip covers on each street mode it uses, in meters — the option card's metric lines
+ * (#2122). Split by the same [streetMode] the card's symbols are drawn from, so a card cannot show a
+ * bikeshare glyph and then count that ride's distance as walking.
+ *
+ * A mode the trip never travels on is **absent**, not zero: the card draws a line per entry, and "0 ft
+ * of biking" on a plain transit trip is a line about something that didn't happen. Every on-street leg
+ * counts, including the ones too short for a symbol ([ModeSymbols.NEGLIGIBLE_STREET_METERS]) — the
+ * threshold is about what's worth *drawing* as a step of the trip, while these are totals, and dropping
+ * a 100 m transfer walk from them would under-report the walking a rider is being asked to do.
+ *
+ * Pure, like the rest of this file, so `ModeSymbolsTest` covers it without a `Context`.
+ */
+internal fun List<TripLeg>.streetDistancesMeters(): Map<StreetMode, Double> = filter { it.mode?.isOnStreetNonTransit == true }
+    .groupBy { it.streetMode() }
+    .mapValues { (_, legs) -> legs.sumOf { it.distance } }

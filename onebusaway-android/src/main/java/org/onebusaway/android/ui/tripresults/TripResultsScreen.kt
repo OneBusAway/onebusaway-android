@@ -567,20 +567,26 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
 }
 
 /**
- * The lower half of an option card: what the trip costs (duration, walking) and when it runs, each metric
- * outlined where it wins its category. Takes the [winners] set itself rather than a flag per category, so
- * a new [WinnerCategory] is one line here and nothing at the call site.
+ * The lower half of an option card: what the trip costs (duration, and the ground the rider covers under
+ * their own power) and when it runs, each metric outlined where it wins its category. Takes the [winners]
+ * set itself rather than a flag per category, so a new [WinnerCategory] is one line here and nothing at
+ * the call site.
  */
 @Composable
 private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     val context = LocalContext.current
     val leastWalking = WinnerCategory.LEAST_WALKING in winners
     val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
+    // A line per street mode the trip travels on, plus the walking line a zero-distance LEAST_WALKING
+    // winner has to keep showing (there is nothing to outline otherwise).
+    val metrics = remember(option.streetDistanceMeters, leastWalking) {
+        streetMetrics(option.streetDistanceMeters, keepZeroWalk = leastWalking)
+    }
     Column(
         modifier = Modifier.padding(CARD_SECTION_PADDING),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Duration + walk distance read as one stat group, so they sit tighter together than the
+        // Duration + the street distances read as one stat group, so they sit tighter together than the
         // card's other lines.
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             // Duration — a leading hourglass + the ETA-pill-formatted trip length.
@@ -597,18 +603,21 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
                     unitSize = METRIC_UNIT_SIZE
                 )
             }
-            // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
-            // with the distance styled like the duration (bold value + smaller unit). In the user's units
-            // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
-            if (option.walkDistanceMeters > 0.0 || leastWalking) {
+            // How far the trip goes on each street mode, one line each (#2122) — a leading mode glyph
+            // mirroring the duration row's hourglass, with the distance styled like the duration (bold
+            // value + smaller unit) and in the user's units (miles/km, or feet/meters for short hops).
+            // A card used to say only how far it walked, which left a bikeshare trip's ride unmeasured
+            // and a bike-only one claiming "0 ft" as its whole street distance.
+            metrics.forEach { metric ->
                 MetricRow(
-                    MetricGlyph.WALK,
-                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
-                    winner = leastWalking,
+                    metric.glyph,
+                    contentDescription = stringResource(streetModeLabel(metric.mode)),
+                    // Only walking is compared across the row, so only its line can be a winner.
+                    winner = leastWalking && metric.mode == StreetMode.WALK,
                     outlineColor = winnerOutlineColor
                 ) {
                     EtaPartsText(
-                        ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
+                        ConversionUtils.getFormattedDistanceParts(metric.meters, context),
                         modifier = Modifier.alignByBaseline(),
                         numberSize = METRIC_NUMBER_SIZE,
                         unitSize = METRIC_UNIT_SIZE
@@ -625,6 +634,32 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
             ScheduleMetric(endText, winner = WinnerCategory.EARLIEST_ARRIVAL in winners, outlineColor = winnerOutlineColor)
         }
     }
+}
+
+/** One street-distance line on a card: how far the trip goes on [mode], behind the [glyph] that leads it. */
+private data class StreetMetric(val mode: StreetMode, val meters: Double, val glyph: MetricGlyph)
+
+/**
+ * Which street-distance lines a card draws, from the per-mode totals it carries — in [StreetMode]
+ * declaration order rather than in travel order, so cards measuring the same modes list them in the same
+ * order and the row reads across (walking first, since it is the mode nearly every option has and the
+ * one they are ranked on). Cards measuring *different* modes do stagger below their first line — a
+ * bikeshare option carries a line its walk-only neighbour hasn't got — but that difference is itself
+ * what the rider is choosing between.
+ *
+ * A mode the trip doesn't use draws no line. The one exception is [keepZeroWalk]: an option that wins
+ * [WinnerCategory.LEAST_WALKING] by walking nowhere still shows its "0 ft", since the outline needs a
+ * value to sit on and the win is worth saying.
+ *
+ * [StreetMode.CAR] is dropped here for the same reason it draws no symbol — the app ships no car glyph
+ * and its planner never asks for car legs (see [streetModeIcon]) — so a car total would be a line with
+ * nothing leading it.
+ */
+private fun streetMetrics(distances: Map<StreetMode, Double>, keepZeroWalk: Boolean): List<StreetMetric> = StreetMode.entries.mapNotNull { mode ->
+    val meters = distances[mode] ?: 0.0
+    val glyph = streetMetricGlyph(mode)
+    val drawn = meters > 0.0 || (keepZeroWalk && mode == StreetMode.WALK)
+    if (drawn && glyph != null) StreetMetric(mode, meters, glyph) else null
 }
 
 /**
@@ -675,21 +710,24 @@ private fun MetricRow(
 
 /**
  * A metric row's leading glyph, together with where the glyph's ink actually sits inside its 24-unit
- * vector viewport — read off the asset's `pathData` bounds, and *not* the same for both: the hourglass
- * inks y[2, 22], the walker y[1.5, 23]. Carrying the bounds is what lets [MetricRow] work in ink.
+ * vector viewport — read off the asset's `pathData` bounds, and no two of them the same: the hourglass
+ * inks y[2, 22], the walker y[1.5, 23], the bicycle y[1.5, 22], the rental bike y[1, 22.497]. Carrying
+ * the bounds is what lets [MetricRow] work in ink.
  *
- * These four numbers are transcribed by hand from the asset, so re-read them whenever you swap a
- * drawable, edit its path, or re-import it from Material — nothing checks them for you, and a stale
- * reading un-levels its row quietly rather than loudly.
+ * These numbers are transcribed by hand from the asset, so re-read them whenever you swap a drawable,
+ * edit its path, or re-import it from Material — nothing checks them for you, and a stale reading
+ * un-levels its row quietly rather than loudly.
  *
  * The assets stay uncropped — cropping would only delete the ink fraction, not the levelling — and for
- * the walker it can't be done at all: `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and
- * a step icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside
- * it, so a crop would mean a second copy of its path.
+ * the street glyphs it can't be done at all: each is also a mode glyph ([streetModeIcon]) and a step
+ * icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside it, so a
+ * crop would mean a second copy of its path.
  */
 private enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
     DURATION(R.drawable.hourglass_24, inkTop = 2f, inkBottom = 22f),
-    WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f);
+    WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f),
+    BIKE(R.drawable.ic_directions_bike, inkTop = 1.5f, inkBottom = 22f),
+    BIKESHARE(R.drawable.ic_bike_rental, inkTop = 1f, inkBottom = 22.497f);
 
     /** What the icon box has to be scaled by for this glyph's ink alone to stand a wanted height. */
     val boxFactor: Float = GLYPH_VIEWPORT / (inkBottom - inkTop)
@@ -1301,20 +1339,26 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 }
 
 /**
- * The glyph for an on-street leg — inside its node on the spine, and as its symbol on an option card.
+ * The glyph for an on-street leg — inside its node on the spine, as its symbol on an option card, and
+ * leading that mode's distance line ([streetMetricGlyph], the one place the drawables are named, so a
+ * mode can't be drawn one way as a symbol and another as a metric).
+ *
  * A rented bike takes a rental glyph (`ic_bike_rental`: Material Symbols' `car_rental` key over a
  * bicycle instead of a car) rather than the plain bicycle, so a shared bike doesn't read as the one the
  * rider brought — the same distinction the map draws between a bikeshare dock and a bike.
  *
  * Null for [StreetMode.CAR]: the app ships no car drawable because its planner never asks OTP for car
  * modes (the mode picker offers none — see `org.onebusaway.android.ui.tripplan.TripModeSelection`), and
- * a bare ring is honest where a walking figure would be wrong. Add `ic_directions_car` here if car
- * planning is ever offered.
+ * a bare ring is honest where a walking figure would be wrong. Add `ic_directions_car` here — as a
+ * [MetricGlyph], with its ink bounds — if car planning is ever offered.
  */
-private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {
-    StreetMode.WALK -> R.drawable.ic_directions_walk
-    StreetMode.BIKE -> R.drawable.ic_directions_bike
-    StreetMode.BIKESHARE -> R.drawable.ic_bike_rental
+private fun streetModeIcon(mode: StreetMode): Int? = streetMetricGlyph(mode)?.iconRes
+
+/** The metric line's leading glyph for a street mode: the same art as [streetModeIcon], levelled by ink. */
+private fun streetMetricGlyph(mode: StreetMode): MetricGlyph? = when (mode) {
+    StreetMode.WALK -> MetricGlyph.WALK
+    StreetMode.BIKE -> MetricGlyph.BIKE
+    StreetMode.BIKESHARE -> MetricGlyph.BIKESHARE
     StreetMode.CAR -> null
 }
 
@@ -1860,7 +1904,7 @@ private fun TripResultsPreview() {
                     durationMinutes = 32,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(32 * 60_000L),
-                    walkDistanceMeters = 800.0
+                    streetDistanceMeters = mapOf(StreetMode.WALK to 800.0)
                 ),
                 ItineraryOption(
                     // The second leg is a ferry, which publishes no route short name — so it badges its
@@ -1873,7 +1917,7 @@ private fun TripResultsPreview() {
                     durationMinutes = 41,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(41 * 60_000L),
-                    walkDistanceMeters = 400.0
+                    streetDistanceMeters = mapOf(StreetMode.WALK to 400.0)
                 ),
                 ItineraryOption(
                     // A bikeshare trip: walk to the dock, ride, walk from it (#2047).
@@ -1885,7 +1929,8 @@ private fun TripResultsPreview() {
                     durationMinutes = 18,
                     startTime = ServerTime(0L),
                     endTime = ServerTime(18 * 60_000L),
-                    walkDistanceMeters = 500.0
+                    // Both of its street modes measured, the ride as well as the walk (#2122).
+                    streetDistanceMeters = mapOf(StreetMode.WALK to 500.0, StreetMode.BIKESHARE to 2300.0)
                 )
             ),
             selectedIndex = 0,

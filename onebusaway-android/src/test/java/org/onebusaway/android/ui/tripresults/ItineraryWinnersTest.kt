@@ -32,7 +32,7 @@ class ItineraryWinnersTest {
         durationMinutes = durationMinutes,
         startTime = ServerTime(departureMinutes * 60_000L),
         endTime = ServerTime(arrivalMinutes * 60_000L),
-        walkDistanceMeters = walkMeters
+        streetDistanceMeters = mapOf(StreetMode.WALK to walkMeters)
     )
 
     @Test

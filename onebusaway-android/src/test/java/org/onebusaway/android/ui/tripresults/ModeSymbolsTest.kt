@@ -27,6 +27,9 @@ import org.onebusaway.android.directions.model.TripVertexType
  * JVM tests for [ModeSymbols]: an itinerary read as one left-to-right symbol sequence — the on-street
  * legs between the rides included, the negligible ones dropped (#2047) — with the ride-folding rules
  * of #2000 (stay-aboard interlines) and #2010 (interchangeable routes) intact.
+ *
+ * Plus the other card fact this file derives from the same legs, by the same [streetMode] split: how
+ * far the trip covers on each street mode ([streetDistancesMeters], #2122).
  */
 class ModeSymbolsTest {
 
@@ -175,6 +178,42 @@ class ModeSymbolsTest {
         assertEquals(
             listOf(listOf("8")),
             symbolsOf(listOf(TripLeg(mode = TripMode.BOARDING), transit("8"), TripLeg(mode = TripMode.ALIGHTING)))
+        )
+    }
+
+    /**
+     * The card's metric lines (#2122): a total per street mode the trip actually uses, split the same
+     * way the symbols are — so a bikeshare ride is measured as bikeshare rather than swelling the walk.
+     */
+    @Test
+    fun aTripTotalsItsDistanceOnEachStreetModeSeparately() {
+        assertEquals(
+            mapOf(StreetMode.WALK to 900.0, StreetMode.BIKESHARE to 2000.0),
+            listOf(
+                walk(FAR),
+                bike(2000.0, rentedAt = Endpoint.FROM),
+                walk(300.0),
+                transit("8")
+            ).streetDistancesMeters()
+        )
+    }
+
+    /** A mode the trip never travels on has no line to draw, so it isn't reported as zero. */
+    @Test
+    fun aModeTheTripNeverUsesIsAbsentFromTheTotals() {
+        assertEquals(mapOf(StreetMode.BIKE to FAR), listOf(bike(FAR)).streetDistancesMeters())
+        assertEquals(emptyMap<StreetMode, Double>(), listOf(transit("8")).streetDistancesMeters())
+    }
+
+    /**
+     * The totals count every on-street leg, including the ones too short to draw a symbol for: the
+     * threshold says what is worth drawing as a step of the trip, not what the rider covers.
+     */
+    @Test
+    fun aStreetLegTooShortForASymbolStillCountsTowardTheTotal() {
+        assertEquals(
+            mapOf(StreetMode.WALK to FAR + NEAR),
+            listOf(walk(FAR), transit("8"), walk(NEAR)).streetDistancesMeters()
         )
     }
 

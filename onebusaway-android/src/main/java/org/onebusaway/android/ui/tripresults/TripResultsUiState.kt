@@ -35,7 +35,8 @@ import org.onebusaway.android.util.ScheduleDeviation
  *    (miles/km, or feet/meters for short distances). A mode the trip never uses is absent rather than
  *    zero, so the card can show what a trip actually does: a bike-only option says how far it rides
  *    instead of printing "0 ft" of walking, and a walk-and-bikeshare one says how far it does each
- *    (#2122).
+ *    (#2122). Comparing options ([itineraryWinnerCategories]) does read an absent mode as zero — none
+ *    of it is the least of it — which is the one place the two spellings mean the same thing.
  */
 data class ItineraryOption(
     val symbols: List<ModeSymbol>,
@@ -43,15 +44,7 @@ data class ItineraryOption(
     val startTime: ServerTime,
     val endTime: ServerTime,
     val streetDistanceMeters: Map<StreetMode, Double> = emptyMap()
-) {
-
-    /**
-     * Just the walking, which is the one street mode compared *across* options
-     * ([WinnerCategory.LEAST_WALKING]) — a trip that never walks has 0 of it, which is a real answer to
-     * "how much walking", unlike the absent key it comes from.
-     */
-    val walkDistanceMeters: Double get() = streetDistanceMeters[StreetMode.WALK] ?: 0.0
-}
+)
 
 /**
  * One symbol on an option card's first line. A card reads as the whole trip in travel order —

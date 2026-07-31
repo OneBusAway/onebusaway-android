@@ -35,6 +35,24 @@ class ItineraryWinnersTest {
         streetDistanceMeters = mapOf(StreetMode.WALK to walkMeters)
     )
 
+    /**
+     * A walk-and-bikeshare option, with both its distances. Same duration and clock times throughout, so
+     * only the distance categories can be won.
+     */
+    private fun biked(walkMeters: Double, bikeshareMeters: Double) = option(
+        durationMinutes = 20,
+        walkMeters = walkMeters,
+        departureMinutes = 0,
+        arrivalMinutes = 20
+    ).copy(
+        streetDistanceMeters = buildMap {
+            put(StreetMode.WALK, walkMeters)
+            // Absent rather than zero, as a repository-built option would be — the comparison is what
+            // reads it as none, not the model.
+            if (bikeshareMeters > 0.0) put(StreetMode.BIKESHARE, bikeshareMeters)
+        }
+    )
+
     @Test
     fun `shortest travel time is duration, not earliest arrival`() {
         val options = listOf(
@@ -120,6 +138,50 @@ class ItineraryWinnersTest {
 
         assertEquals(setOf(WinnerCategory.LEAST_WALKING), winners[0])
         assertTrue(winners[1].isEmpty())
+    }
+
+    /**
+     * Every street mode the cards measure is compared, not walking alone (#2122): a bikeshare plan's
+     * options are ranked on how far they make the rider ride, and each mode is its own category — the
+     * option that walks least need not be the one that rides least.
+     */
+    @Test
+    fun `each street mode is compared in its own category`() {
+        val options = listOf(
+            biked(walkMeters = 500.0, bikeshareMeters = 1000.0),
+            biked(walkMeters = 100.0, bikeshareMeters = 4000.0)
+        )
+
+        val winners = itineraryWinnerCategories(options, ScheduleWinnerMode.BOTH)
+
+        assertEquals(setOf(WinnerCategory.LEAST_BIKESHARING), winners[0])
+        assertEquals(setOf(WinnerCategory.LEAST_WALKING), winners[1])
+    }
+
+    /** Not using a mode at all is the least of it, exactly as walking nowhere has always won. */
+    @Test
+    fun `an option that never uses a mode wins its category`() {
+        val options = listOf(
+            biked(walkMeters = 900.0, bikeshareMeters = 0.0),
+            biked(walkMeters = 100.0, bikeshareMeters = 4000.0)
+        )
+
+        val winners = itineraryWinnerCategories(options, ScheduleWinnerMode.BOTH)
+
+        assertTrue(WinnerCategory.LEAST_BIKESHARING in winners[0])
+    }
+
+    /** A mode no option travels on is nothing to choose between, so it decorates nobody. */
+    @Test
+    fun `a mode no option uses awards nothing`() {
+        val options = listOf(
+            option(20, 100.0, 0, 20),
+            option(20, 300.0, 0, 20)
+        )
+
+        val winners = itineraryWinnerCategories(options, ScheduleWinnerMode.BOTH)
+
+        assertTrue(winners.none { WinnerCategory.LEAST_BIKING in it || WinnerCategory.LEAST_BIKESHARING in it })
     }
 
     @Test

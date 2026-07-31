@@ -346,12 +346,10 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    val winnerDescriptions = buildList {
-        if (WinnerCategory.SHORTEST_TRAVEL_TIME in winners) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
-        if (WinnerCategory.LEAST_WALKING in winners) add(stringResource(R.string.trip_plan_winner_least_walking))
-        if (WinnerCategory.EARLIEST_ARRIVAL in winners) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
-        if (WinnerCategory.LATEST_DEPARTURE in winners) add(stringResource(R.string.trip_plan_winner_latest_departure))
-    }
+    // Read off the categories themselves, in their declaration order, so a category added to the enum
+    // is announced without a second list here having to be remembered — which is exactly how the bike
+    // distances went un-announced when they first got their own lines.
+    val winnerDescriptions = WinnerCategory.entries.filter { it in winners }.map { stringResource(it.labelRes) }
     Surface(
         color = background,
         contentColor = textColor,
@@ -575,12 +573,11 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
 @Composable
 private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     val context = LocalContext.current
-    val leastWalking = WinnerCategory.LEAST_WALKING in winners
     val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
-    // A line per street mode the trip travels on, plus the walking line a zero-distance LEAST_WALKING
-    // winner has to keep showing (there is nothing to outline otherwise).
-    val metrics = remember(option.streetDistanceMeters, leastWalking) {
-        streetMetrics(option.streetDistanceMeters, keepZeroWalk = leastWalking)
+    // A line per street mode the trip travels on, plus any mode this option wins outright by not using
+    // it at all — a zero-distance win still needs a value to outline.
+    val metrics = remember(option.streetDistanceMeters, winners) {
+        streetMetrics(option.streetDistanceMeters, winners)
     }
     Column(
         modifier = Modifier.padding(CARD_SECTION_PADDING),
@@ -612,8 +609,7 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
                 MetricRow(
                     metric.glyph,
                     contentDescription = stringResource(streetModeLabel(metric.mode)),
-                    // Only walking is compared across the row, so only its line can be a winner.
-                    winner = leastWalking && metric.mode == StreetMode.WALK,
+                    winner = metric.winner,
                     outlineColor = winnerOutlineColor
                 ) {
                     EtaPartsText(
@@ -636,30 +632,35 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     }
 }
 
-/** One street-distance line on a card: how far the trip goes on [mode], behind the [glyph] that leads it. */
-private data class StreetMetric(val mode: StreetMode, val meters: Double, val glyph: MetricGlyph)
+/**
+ * One street-distance line on a card: how far the trip goes on [mode], behind the [glyph] that leads it,
+ * and whether that distance is the least of any option in the picker ([winner], which outlines it).
+ */
+private data class StreetMetric(val mode: StreetMode, val meters: Double, val glyph: MetricGlyph, val winner: Boolean)
 
 /**
  * Which street-distance lines a card draws, from the per-mode totals it carries — in [StreetMode]
  * declaration order rather than in travel order, so cards measuring the same modes list them in the same
- * order and the row reads across (walking first, since it is the mode nearly every option has and the
- * one they are ranked on). Cards measuring *different* modes do stagger below their first line — a
- * bikeshare option carries a line its walk-only neighbour hasn't got — but that difference is itself
- * what the rider is choosing between.
+ * order and the row reads across (walking first, since it is the mode nearly every option has). Cards
+ * measuring *different* modes do stagger below their first line — a bikeshare option carries a line its
+ * walk-only neighbour hasn't got — but that difference is itself what the rider is choosing between.
  *
- * A mode the trip doesn't use draws no line. The one exception is [keepZeroWalk]: an option that wins
- * [WinnerCategory.LEAST_WALKING] by walking nowhere still shows its "0 ft", since the outline needs a
- * value to sit on and the win is worth saying.
+ * A mode the trip doesn't use draws no line, unless this option **won** that mode's category by not
+ * using it: then it shows its "0 ft", since the outline needs a value to sit on and "needs none of it"
+ * is worth saying. Each drawn line is outlined when the option wins its mode ([WinnerCategory]), so a
+ * bikeshare plan's cards compete on how far they make you ride exactly as a walking plan's compete on
+ * how far they make you walk.
  *
  * [StreetMode.CAR] is dropped here for the same reason it draws no symbol — the app ships no car glyph
  * and its planner never asks for car legs (see [streetModeIcon]) — so a car total would be a line with
  * nothing leading it.
  */
-private fun streetMetrics(distances: Map<StreetMode, Double>, keepZeroWalk: Boolean): List<StreetMetric> = StreetMode.entries.mapNotNull { mode ->
+private fun streetMetrics(distances: Map<StreetMode, Double>, winners: Set<WinnerCategory>): List<StreetMetric> = StreetMode.entries.mapNotNull { mode ->
     val meters = distances[mode] ?: 0.0
     val glyph = streetMetricGlyph(mode)
-    val drawn = meters > 0.0 || (keepZeroWalk && mode == StreetMode.WALK)
-    if (drawn && glyph != null) StreetMetric(mode, meters, glyph) else null
+    val category = mode.streetDistanceCategory()
+    val winner = category != null && category in winners
+    if ((meters > 0.0 || winner) && glyph != null) StreetMetric(mode, meters, glyph, winner) else null
 }
 
 /**

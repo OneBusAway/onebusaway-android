@@ -38,6 +38,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -326,19 +327,76 @@ class TripPlanFormRenderTest {
             }
         )
 
-        val withNow = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withNow = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         departNow = false
         composeRule.waitForIdle()
-        val withPinnedTime = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withPinnedTime = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         assertEquals(
             "the trailing buttons moved when the time label grew",
             withNow,
             withPinnedTime
         )
+    }
+
+    /**
+     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
+     * clear of both fields and centred across the pair, which puts it on the divider between them.
+     * Position is the whole point of the move, so it's asserted rather than left to the eye.
+     */
+    @Test
+    fun reverseSitsBetweenTheTwoEndpointFields() {
+        renderForm(plannedState)
+
+        val button = bounds(TripPlanTestTags.REVERSE)
+        val from = bounds(FROM_FIELD)
+        val to = bounds(TO_FIELD)
+
+        assertTrue(
+            "reverse should sit clear of both fields, but started at ${button.left} against " +
+                "${from.right} and ${to.right}",
+            button.left >= from.right && button.left >= to.right
+        )
+        // Compare the rendered pixel centres exactly; any different pixel is a real misalignment.
+        val buttonCenter = (button.top + button.bottom) / 2f
+        val betweenRows = (from.bottom + to.top) / 2f
+        val buttonCenterPx = with(composeRule.density) { buttonCenter.toPx() }.roundToInt()
+        val dividerCenterPx = with(composeRule.density) { betweenRows.toPx() }.roundToInt()
+        assertEquals(
+            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
+            dividerCenterPx,
+            buttonCenterPx
+        )
+    }
+
+    /**
+     * Reverse and additional-preferences sit in one trailing column, across two bands that lay
+     * themselves out independently. The form spells that out — both bands take their width and their
+     * trailing gutter from one shared modifier, and every button one size — but nothing makes a band
+     * keep using either, so the alignment is still the part of the move most able to drift, and the
+     * part worth pinning.
+     */
+    @Test
+    fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
+        renderForm(plannedState)
+
+        assertEquals(
+            "reverse should share a trailing edge with additional-preferences",
+            bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
+            bounds(TripPlanTestTags.REVERSE).right
+        )
+    }
+
+    /** The form is stateless, so the swap itself is the host's; what's checked here is the ask. */
+    @Test
+    fun tappingReverseFiresTheReverseCallback() {
+        var reversed = false
+        renderForm(state = { plannedState }, onReverse = { reversed = true })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).performClick()
+
+        assertTrue("tapping reverse should ask the host to swap the endpoints", reversed)
     }
 
     /**
@@ -424,6 +482,9 @@ class TripPlanFormRenderTest {
         assertDominant(railDot(row = 1), Channel.BLUE, "a destination at the device's position")
     }
 
+    /** Where a tagged node sits in the form, for the tests that are about position. */
+    private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */
     private fun railDot(row: Int): Color {
         val pixels = composeRule.onNodeWithTag(FORM).captureToImage().toPixelMap()
@@ -449,6 +510,7 @@ class TripPlanFormRenderTest {
         onCurrentLocation: (TripEndpointSlot) -> Unit = {},
         onVehicleModeSelected: (VehicleMode) -> Unit = {},
         onStreetModeSelected: (StreetMode) -> Unit = {},
+        onReverse: () -> Unit = {},
         onPickDateTime: () -> Unit = {}
     ) {
         composeRule.setContent {
@@ -466,7 +528,7 @@ class TripPlanFormRenderTest {
                         availableStreetModes = StreetMode.entries,
                         onVehicleModeSelected = onVehicleModeSelected,
                         onStreetModeSelected = onStreetModeSelected,
-                        onReverse = {},
+                        onReverse = onReverse,
                         onAdvancedSettings = {}
                     )
                 }
@@ -476,9 +538,6 @@ class TripPlanFormRenderTest {
 
     private companion object {
         const val FORM = "tripPlanFormRoot"
-
-        /** The advanced-settings button's contentDescription — the bar's last trailing child. */
-        const val ADVANCED_SETTINGS = "Additional Trip Preferences"
         val RAIL_WIDTH_DP = 44.dp
         val FROM_FIELD = TripPlanTestTags.FROM_PREFIX + TripPlanTestTags.FIELD_SUFFIX
         val TO_FIELD = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.FIELD_SUFFIX

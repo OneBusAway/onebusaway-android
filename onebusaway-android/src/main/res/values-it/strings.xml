@@ -419,10 +419,6 @@
     <string name="bug_report_body_trip_plan_without_location">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\n\nPianificare il viaggio utilizzando l’URL: %5$s\n\n</string>
     <string name="bug_report_body_trip_plan_without_location_fail">Ti invitiamo a scriverci per reclami, apprezzamenti, e segnalazioni di bug!\n\n\nVersione app: %1$s\nModello: %2$s\nVersione SO: %3$s / %4$d\n\nImpossibile pianificare il viaggio utilizzando l’URL: %5$s\n\n</string>
 
-    <!-- Android Maps v2 -->
-    <string name="install_google_maps_positive_button">Installa</string>
-    <string name="please_install_google_maps_dialog_title">Installa Google Maps</string>
-    <string name="no_play_store">L’App Play Store non è installata su questo dispositivo. Trova un metodo alternativo per installare Google Maps.</string>
     <string name="ok">OK</string>
 
     <!-- Application Preferences -->

@@ -480,11 +480,6 @@
         %1$s\nModel: %2$s\nWersja OS: %3$s / %4$d\n\nNie udało się zaplanować podróży przy użyciu URL: %5$s\n\n
     </string>
 
-    <!-- Android Maps v2 -->
-    <string name="install_google_maps_positive_button">Instaluj</string>
-    <string name="please_install_google_maps_dialog_title">Zainstaluj Google Maps</string>
-    <string name="no_play_store">Twoje urządzenie nie ma zainstalowanego Sklepu Google Play. Znajdź inny sposób by zainstalować Google Maps.
-    </string>
     <string name="ok">OK</string>
 
     <!-- Application Preferences -->

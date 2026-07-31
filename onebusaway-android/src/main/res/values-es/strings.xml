@@ -539,12 +539,6 @@
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\nUnable to plan trip using URL: %5$s\n\n
     </string>
 
-    <!-- Android Maps v2 -->
-    <string name="install_google_maps_positive_button">Instalar</string>
-    <string name="please_install_google_maps_dialog_title">Por favor instala Google Maps</string>
-    <string name="no_play_store">Su dispositivio no tiene Play Store instalado. Por favor encuentra
-        otra manera de instalar Google Maps.
-    </string>
     <string name="ok">Aceptar</string>
     <string name="cancel">Cancelar</string>
     <string name="hide_all">Ocultar todo</string>

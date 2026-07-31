@@ -347,12 +347,35 @@ class TripPlanViewModelTest {
 
     @Test
     fun `setModeSelection updates the form and replans`() = runTest {
-        val vm = viewModel()
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
         val selected = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE)
 
         vm.setModeSelection(selected)
+        advanceUntilIdle()
 
         assertEquals(selected, vm.formState.value.modes)
+        // The modes are part of the request, so a completed form must ask again with the new ones.
+        assertEquals(2, plan.calls)
+        assertEquals(selected, (vm.planState.value as PlanResult.Success).params?.modes)
+    }
+
+    /** The menu reports a tap on the already-checked item; an identical request is not worth re-issuing. */
+    @Test
+    fun `re-picking the current mode does not replan`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
+
+        vm.setModeSelection(vm.formState.value.modes)
+        advanceUntilIdle()
+
+        assertEquals(1, plan.calls)
     }
 
     @Test

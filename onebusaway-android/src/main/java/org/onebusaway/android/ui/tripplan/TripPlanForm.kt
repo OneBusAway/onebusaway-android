@@ -558,6 +558,11 @@ private fun TripActionBar(
             onSelected = onVehicleModeSelected
         )
         ModePicker(
+            // Display-only substitution, deliberately not written back to the selection: a street mode
+            // this region can't serve degrades on the way to a request
+            // ([TripModeSelection.availableIn]) and never by rewriting what the rider chose, so a
+            // rider who picks their own bike at home still has it after passing through an OTP1
+            // region. Showing walking here matches the trip that will actually be planned.
             selected = modes.street.takeIf { it in availableStreetModes } ?: StreetMode.WALK,
             options = STREET_MODE_ORDER.filter { it in availableStreetModes },
             icon = { streetModeIcon(it) },

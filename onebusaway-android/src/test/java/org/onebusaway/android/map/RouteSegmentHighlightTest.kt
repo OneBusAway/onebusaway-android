@@ -128,6 +128,9 @@ class RouteSegmentHighlightTest {
         assertNotEquals(RouteLineCase.SELECTION, result[1].case)
         assertEquals(RouteLineCase.SELECTION, result[0].case)
         assertEquals(RouteLineCase.SELECTION, result[2].case)
+        // No layer of the composition carries direction chevrons — not even a base line that had them
+        // in plain route focus (#2129).
+        assertEquals(listOf(false, false, false), result.map { it.directional })
     }
 
     @Test

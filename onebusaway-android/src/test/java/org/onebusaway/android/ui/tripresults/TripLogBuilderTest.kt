@@ -239,6 +239,36 @@ class TripLogBuilderTest {
     }
 
     @Test
+    fun transitEntry_reachesTheStopWhenTheLegBeforeItEnds() {
+        // The rider is at the board stop when the walk that got them there finishes — 4 minutes in —
+        // which is a different moment from the ride's own departure whenever the plan builds in a wait.
+        // The Board row's ETA strip rules the live departures at this instant (#2125).
+        val transit = TripLogBuilder
+            .build(
+                legs = listOf(walkLeg, transitLeg.copy(startTime = ServerTime(9 * 60_000L))),
+                flatDirections = listOf(walkDir, boardDir, alightDir),
+                routeLegRefs = listOf(null, transitRef)
+            )
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(walkLeg.endTime, transit.reachStopTime)
+        assertEquals(ServerTime(9 * 60_000L), transit.boardTime)
+    }
+
+    @Test
+    fun anItineraryOpeningOnTransit_reachesTheStopAtItsOwnDeparture() {
+        // Nothing precedes the ride, so the plan puts the rider at the stop from the start and there is
+        // no wait to mark — the rule sits ahead of the departure the plan boards rather than nowhere.
+        val transit = TripLogBuilder
+            .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef))
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(transitLeg.startTime, transit.reachStopTime)
+    }
+
+    @Test
     fun anUnlabelledIntermediateStop_isDroppedRatherThanDrawnBlank() {
         // A stop the generator could name neither by name nor code yields empty text; carrying it would
         // put a node and an empty line on the spine, and inflate the "N stops" summary past what the

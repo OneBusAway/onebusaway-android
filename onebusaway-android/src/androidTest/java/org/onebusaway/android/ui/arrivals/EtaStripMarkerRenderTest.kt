@@ -1,0 +1,108 @@
+/*
+ * Copyright (C) 2026 Open Transit Software Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.onebusaway.android.ui.arrivals
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import org.junit.Rule
+import org.junit.Test
+import org.onebusaway.android.ui.arrivals.components.ETA_STRIP_MARKER_TAG
+import org.onebusaway.android.ui.arrivals.components.EtaStrip
+import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
+import org.onebusaway.android.ui.arrivals.components.previewArrival
+import org.onebusaway.android.ui.arrivals.components.previewRowCallbacks
+import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
+
+/**
+ * The strip's [EtaStripMarker] (#2125) — the rule the directions drawer draws at the moment the rider
+ * reaches the stop. What matters is that it lands *between* the right two pills, since a rule on the
+ * wrong side of a departure tells the rider the opposite of the truth, and that a screen reader gets the
+ * whole sentence (the rule is a bare bar, and the dimming beside it carries no semantics of its own).
+ */
+class EtaStripMarkerRenderTest {
+
+    // Unconfined composition — see createUnconfinedComposeRule (issue #1792).
+    @get:Rule
+    val composeRule = createUnconfinedComposeRule()
+
+    private val description = "You get to this stop at 3:19pm"
+
+    /**
+     * A strip of [names].size departures, one route each, with the rule before the pill at [markerIndex].
+     * Each pill wears its route's badge so a pill can be located by a string no other node holds — an ETA
+     * or clock-time match would risk colliding with a neighbour's subline.
+     */
+    private fun setContent(vararg names: String, markerIndex: Int) = composeRule.setContent {
+        Box(Modifier.fillMaxWidth()) {
+            EtaStrip(
+                trips = names.mapIndexed { i, name ->
+                    previewArrival(name, "Rainier Beach", etaMinutes = 3L + i * 8, tripId = "trip_$i")
+                },
+                actionsFor = { null },
+                callbacks = previewRowCallbacks(),
+                routeBadgeFor = { RouteBadge(it.shortName ?: error("preview route must have a name"), null) },
+                marker = EtaStripMarker(index = markerIndex, contentDescription = description)
+            )
+        }
+    }
+
+    private fun boundsOf(text: String) = composeRule.onNodeWithText(text).getUnclippedBoundsInRoot()
+
+    @Test
+    fun theRuleSitsBetweenTheDepartureItFollowsAndTheOneItPrecedes() {
+        setContent("A", "B", markerIndex = 1)
+
+        val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
+        val missed = boundsOf("A")
+        val catchable = boundsOf("B")
+
+        assert(missed.right <= rule.left) { "rule at ${rule.left} must follow route A, which ends at ${missed.right}" }
+        assert(rule.right <= catchable.left) { "rule ending at ${rule.right} must precede route B, which starts at ${catchable.left}" }
+    }
+
+    @Test
+    fun aRiderWhoIsAlreadyThereGetsTheRuleAheadOfEveryDeparture() {
+        setContent("A", markerIndex = 0)
+
+        val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
+
+        assert(rule.right <= boundsOf("A").left) { "rule ending at ${rule.right} must precede route A" }
+    }
+
+    @Test
+    fun aRiderArrivingAfterEveryDepartureStillGetsARule() {
+        // The index is past the last pill — every departure shown is out of reach. The rule closes the
+        // strip rather than being dropped, which would leave the row looking unmarked.
+        setContent("A", markerIndex = 1)
+
+        val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
+
+        assert(boundsOf("A").right <= rule.left) { "rule at ${rule.left} must follow route A" }
+    }
+
+    @Test
+    fun theRuleReadsAsOneSentenceToAScreenReader() {
+        setContent("A", "B", markerIndex = 1)
+
+        composeRule.onNodeWithContentDescription(description).assertExists()
+    }
+}

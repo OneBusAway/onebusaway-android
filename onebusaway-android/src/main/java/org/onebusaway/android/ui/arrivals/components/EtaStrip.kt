@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.arrivals.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -45,6 +47,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
@@ -55,8 +59,11 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.MultiContentMeasurePolicy
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -91,12 +98,26 @@ import org.onebusaway.android.util.DisplayFormat
 // not a gesture on this strip.
 
 /**
+ * A moment marked across the strip's timeline: a vertical rule drawn *before* the pill at [index]
+ * ([index] == `trips.size` puts it after the last pill), with the pills ahead of it dimmed as ones the
+ * rule has already ruled out. The directions drawer marks when the rider reaches the stop (#2125), so a
+ * plan whose walk lands after the next two departures reads as such instead of as if the rider were
+ * standing at the stop already.
+ *
+ * [contentDescription] is the whole rule for a screen reader — the dimming carries no semantics of its
+ * own, so this sentence has to say what it means on its own.
+ */
+internal data class EtaStripMarker(val index: Int, val contentDescription: String)
+
+/**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
  * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
  * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
  * that edge to signal there's more to scroll to; tapping it moves the strip one viewport that
  * direction (or to the end, whichever is closer). The chevron's own tap target is a narrow side
  * gutter separate from the pills, so it never blocks the strip's own drag-to-scroll.
+ *
+ * [marker] optionally rules one moment across the strip — see [EtaStripMarker].
  */
 @Composable
 internal fun EtaStrip(
@@ -106,6 +127,7 @@ internal fun EtaStrip(
     modifier: Modifier = Modifier,
     firstPillModifier: Modifier = Modifier,
     routeBadgeFor: (ArrivalInfo) -> RouteBadge? = { null },
+    marker: EtaStripMarker? = null,
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
     // the strip mid-scroll.
     state: LazyListState = rememberLazyListState()
@@ -187,14 +209,33 @@ internal fun EtaStrip(
                 ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
                     val pillModifier = if (index == 0) firstPillModifier else Modifier
-                    EtaPillWithMenu(
-                        trip = trip,
-                        liveNow = liveNow,
-                        actions = actionsFor(trip),
-                        callbacks = callbacks,
-                        routeBadge = routeBadgeFor(trip),
-                        modifier = pillModifier
-                    )
+                    // A pill the marker has already passed is dimmed: it's still readable (and still
+                    // tappable — it's a real departure, just not one this plan can use), but it reads as
+                    // background against the ones the rider can actually catch.
+                    val dimmed = marker != null && index < marker.index
+                    val pill = @Composable {
+                        EtaPillWithMenu(
+                            trip = trip,
+                            liveNow = liveNow,
+                            actions = actionsFor(trip),
+                            callbacks = callbacks,
+                            routeBadge = routeBadgeFor(trip),
+                            modifier = pillModifier.alpha(if (dimmed) PASSED_PILL_ALPHA else 1f)
+                        )
+                    }
+                    // The rule rides inside the item it precedes rather than being an item of its own, so
+                    // the pills' LazyRow keys — trip identity, which a poll must be able to match across
+                    // updates — stay exactly what they were.
+                    if (marker != null && marker.index == index) {
+                        MarkedItem(marker) { pill() }
+                    } else {
+                        pill()
+                    }
+                }
+                // A marker past the last departure — the rider gets to the stop after everything the feed
+                // knows about — closes the strip instead of vanishing.
+                if (marker != null && marker.index >= trips.size) {
+                    item(key = ETA_STRIP_MARKER_TAG) { EtaStripMarkerRule(marker) }
                 }
             }
         }
@@ -211,6 +252,50 @@ internal fun EtaStrip(
 
 /** The gap between adjacent ETA pills, for the LazyRow's [Arrangement.spacedBy]. */
 private val PILL_SPACING = 6.dp
+
+/** How faint a pill the strip's [EtaStripMarker] has already passed goes. Still legible — it's a real
+ *  departure — but clearly behind the ones after the rule. */
+private const val PASSED_PILL_ALPHA = 0.38f
+
+/** The marker rule's width. */
+private val MARKER_WIDTH = 3.dp
+
+/** A stable handle on the marker rule, so a render test can sample it without matching on its colour.
+ *  Doubles as its LazyRow key on the one path where the rule is an item of its own — a trip-identity key
+ *  is a NUL-joined tuple of OBA ids, so a bare word can't collide with one. */
+internal const val ETA_STRIP_MARKER_TAG = "etaStripMarker"
+
+/** One LazyRow item holding the marker rule and the pill it precedes, spaced as two adjacent pills
+ *  would be so the rule doesn't crowd the strip's rhythm. */
+@Composable
+private fun MarkedItem(marker: EtaStripMarker, pill: @Composable () -> Unit) {
+    Row(
+        Modifier.fillMaxHeight(),
+        horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        EtaStripMarkerRule(marker)
+        pill()
+    }
+}
+
+/**
+ * The marker itself: a full-height rounded rule in the theme's primary colour, standing between the
+ * departures on either side of the moment it marks. It carries the marker's whole meaning for a screen
+ * reader as its content description, since a rule says nothing on its own.
+ */
+@Composable
+private fun EtaStripMarkerRule(marker: EtaStripMarker) {
+    Box(
+        Modifier
+            .testTag(ETA_STRIP_MARKER_TAG)
+            .fillMaxHeight()
+            .width(MARKER_WIDTH)
+            .clip(RoundedCornerShape(MARKER_WIDTH / 2))
+            .background(MaterialTheme.colorScheme.primary)
+            .semantics { contentDescription = marker.contentDescription }
+    )
+}
 
 /**
  * Wraps [content] (the strip's LazyRow) in a layout whose height is fixed to a measured [reference]
@@ -518,6 +603,7 @@ private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Nor
 @Composable
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
+    marker: EtaStripMarker? = null,
     state: LazyListState = rememberLazyListState()
 ) {
     ObaTheme {
@@ -530,6 +616,7 @@ private fun EtaStripPreviewFrame(
                     trips = trips,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
+                    marker = marker,
                     state = state
                 )
             }
@@ -552,6 +639,17 @@ private fun EtaStripScrolledPreview() {
     EtaStripPreviewFrame(
         trips = northgatePills(7),
         state = remember { LazyListState(firstVisibleItemIndex = 2, firstVisibleItemScrollOffset = 30) }
+    )
+}
+
+@Preview(showBackground = true, widthDp = 240, name = "EtaStrip · marked (rider arrives)")
+@Composable
+private fun EtaStripMarkedPreview() {
+    // The directions case: the rider's walk lands after the first two departures, so the rule stands
+    // before the third and the two it has passed are dimmed.
+    EtaStripPreviewFrame(
+        trips = northgatePills(4),
+        marker = EtaStripMarker(index = 2, contentDescription = "You get to the stop at 3:19pm")
     )
 }
 

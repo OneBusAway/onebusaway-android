@@ -110,11 +110,21 @@ private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
 /**
  * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
  * [RAIL_WIDTH], and shared by both bands for the same reason: so their buttons line up in one column.
+ * Applied through [formBand] rather than by hand, so there is one gutter and not two that agree.
  */
 private val TRAILING_GUTTER = 4.dp
 
 /** Clear space between the endpoint rows' content and the reverse button beside them. */
 private val REVERSE_CLEARANCE = 4.dp
+
+/**
+ * The shape the card's two bands share: full width, inset at the trailing edge by [TRAILING_GUTTER].
+ * One expression rather than a gutter restated per band, because — paired with a single
+ * [ICON_BUTTON_SIZE] — it is the whole reason the reverse button lands in the same column as the
+ * action bar's buttons. Two bands that lay themselves out independently agree on that only if the
+ * measurement they agree on is written once.
+ */
+private fun Modifier.formBand() = fillMaxWidth().padding(end = TRAILING_GUTTER)
 
 /** Rider-facing order for the two mode menus; intentionally independent of enum declaration order. */
 private val VEHICLE_MODE_ORDER = listOf(
@@ -216,7 +226,7 @@ fun TripPlanForm(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.formBand(), verticalAlignment = Alignment.CenterVertically) {
             // The rows take the width the button doesn't, rather than running full width beneath it —
             // which is what stops a long place name, and the divider, from sliding under the button.
             // Centring the sibling button against the resulting block lands it on that divider.
@@ -246,7 +256,6 @@ fun TripPlanForm(
                 onClick = onReverse,
                 modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
             )
-            Spacer(Modifier.width(TRAILING_GUTTER))
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
         // than separating two members of the same group.
@@ -593,7 +602,7 @@ private fun TripActionBar(
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(ACTION_BAR_HEIGHT),
+        modifier = Modifier.formBand().height(ACTION_BAR_HEIGHT),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -616,7 +625,7 @@ private fun TripActionBar(
         WhenTimeSegment(
             // The bar's one flexible slot, and the only part of it that can grow: a pinned label is a
             // full date and time, longer in other locales and at a large font scale. Taking all the
-            // remaining width does both jobs — it holds the two trailing buttons against the right
+            // remaining width does both jobs — it holds the trailing buttons against the right
             // edge, and it caps the label so it ellipsizes rather than shoving them off. The button
             // inside stays its own width at the slot's start, so the tap target doesn't span the gap.
             modifier = Modifier.weight(1f),
@@ -654,7 +663,6 @@ private fun TripActionBar(
             onClick = onAdvancedSettings,
             modifier = Modifier.testTag(TripPlanTestTags.ADVANCED_SETTINGS)
         )
-        Spacer(Modifier.width(TRAILING_GUTTER))
     }
 }
 

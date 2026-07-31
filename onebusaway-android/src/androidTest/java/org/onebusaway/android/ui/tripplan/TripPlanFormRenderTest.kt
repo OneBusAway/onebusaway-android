@@ -328,7 +328,7 @@ class TripPlanFormRenderTest {
         val to = bounds(TO_FIELD)
 
         assertTrue(
-            "reverse should clear both fields, but started at ${button.left} against " +
+            "reverse should sit clear of both fields, but started at ${button.left} against " +
                 "${from.right} and ${to.right}",
             button.left >= from.right && button.left >= to.right
         )
@@ -346,9 +346,10 @@ class TripPlanFormRenderTest {
 
     /**
      * Reverse and additional-preferences sit in one trailing column, across two bands that lay
-     * themselves out independently. Nothing in either band's code forces that — it holds only because
-     * both end with the same button size and the same trailing gutter — so it's the part of the move
-     * most able to drift, and the part worth pinning.
+     * themselves out independently. The form spells that out — both bands take their width and their
+     * trailing gutter from one shared modifier, and every button one size — but nothing makes a band
+     * keep using either, so the alignment is still the part of the move most able to drift, and the
+     * part worth pinning.
      */
     @Test
     fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
@@ -361,14 +362,15 @@ class TripPlanFormRenderTest {
         )
     }
 
+    /** The form is stateless, so the swap itself is the host's; what's checked here is the ask. */
     @Test
-    fun tappingReverseSwapsTheEndpoints() {
+    fun tappingReverseFiresTheReverseCallback() {
         var reversed = false
         renderForm(state = { plannedState }, onReverse = { reversed = true })
 
         composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).performClick()
 
-        assertTrue("tapping reverse should swap the endpoints", reversed)
+        assertTrue("tapping reverse should ask the host to swap the endpoints", reversed)
     }
 
     /**

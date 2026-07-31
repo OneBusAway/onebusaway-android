@@ -31,6 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.ui.compose.Channel
 import org.onebusaway.android.ui.compose.assertDominant
+import org.onebusaway.android.ui.compose.components.LONG_PRESS_MENU_EDGE_MARGIN
 import org.onebusaway.android.ui.compose.components.LONG_PRESS_MENU_MAX_WIDTH
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -65,9 +66,14 @@ class DirectionsLongPressMenuRenderTest {
 
     /**
      * A compact centered card, not a sheet. Width is what separates the two: the shared
-     * `CenteredLongPressMenu` caps itself at 320dp, while a bottom sheet spans the screen. Dialog
-     * semantics would not do — a `ModalBottomSheet` reports `isDialog()` too (verified on device), so
-     * asserting that would pass for the layout this issue replaced.
+     * `CenteredLongPressMenu` caps itself at 320dp and keeps a margin from both screen edges, while a
+     * bottom sheet spans the screen. Dialog semantics would not do — a `ModalBottomSheet` reports
+     * `isDialog()` too (verified on device), so asserting that would pass for the layout this issue
+     * replaced.
+     *
+     * The bound is the cap *or* the inset screen, whichever is smaller, because the two swap places:
+     * the CI emulator's screen is 320dp — the cap itself — so on that device only the margin tells a
+     * card from a sheet, and asserting against the cap alone would pass for a full-width sheet.
      */
     @Test
     fun theMenuIsACompactCardRatherThanAFullWidthSheet() {
@@ -78,10 +84,14 @@ class DirectionsLongPressMenuRenderTest {
             InstrumentationRegistry.getInstrumentation()
                 .targetContext.resources.displayMetrics.widthPixels.toDp()
         }
+        val widest = minOf(
+            LONG_PRESS_MENU_MAX_WIDTH,
+            screenWidth - LONG_PRESS_MENU_EDGE_MARGIN * 2f
+        )
         assertTrue(
-            "the menu should be a card capped at $LONG_PRESS_MENU_MAX_WIDTH, not a $screenWidth " +
+            "the menu should be a card no wider than $widest on this $screenWidth screen, not a " +
                 "sheet, but its rows measured $rowWidth",
-            rowWidth <= LONG_PRESS_MENU_MAX_WIDTH && rowWidth < screenWidth
+            rowWidth <= widest
         )
     }
 

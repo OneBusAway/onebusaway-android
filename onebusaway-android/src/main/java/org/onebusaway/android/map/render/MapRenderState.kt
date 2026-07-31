@@ -306,7 +306,21 @@ data class RouteBadge(
      * default, so a label leads nowhere until a producer says where, and no producer needs a destination
      * it doesn't have.
      */
-    val tap: RouteBadgeTap? = null
+    val tap: RouteBadgeTap? = null,
+    /**
+     * How this label's drawn size answers the camera (#2102) — see [RouteBadgeScaleProfile]. Fixed by
+     * default, so a producer opts its labels into a schedule rather than inheriting one.
+     *
+     * Carried as an unresolved *profile*, exactly as [RoutePolyline.widthProfile] is, with the renderer
+     * resolving it against the live camera. That's the pattern for a **continuous** zoom response;
+     * [stopBand] is the pattern for a **discrete** one, and the difference is what decides between them: a
+     * band takes a handful of values, so a controller can collapse the camera stream with
+     * `distinctUntilChanged` and put the resolved value on the snapshot cheaply. A scale changes on
+     * essentially every camera idle inside the ramp, and every snapshot change re-fires `renderStatic`,
+     * which tears down and rebuilds the whole static layer — bikes, generic pins, the continuation
+     * overlay, every tap map. Resizing a label is not worth that, so the resolution stays in the renderer.
+     */
+    val scale: RouteBadgeScaleProfile = FIXED_ROUTE_BADGE_SCALE_PROFILE
 ) {
     init {
         // Both stated rather than trusted: a label with nothing to read is a marker the rider can't

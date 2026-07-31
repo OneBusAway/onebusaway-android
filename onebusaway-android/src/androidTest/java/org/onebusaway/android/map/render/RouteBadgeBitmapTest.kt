@@ -62,7 +62,34 @@ class RouteBadgeBitmapTest {
         assertEquals(blue, stacked.getPixel(stacked.width - SAMPLE_INSET_PX, rowCenterY(stacked, row = 0, rows = 2)))
     }
 
-    private fun badge(routes: List<BadgedRoute>): Bitmap = ContinuationBadgeBitmaps.badge(routes, density = 1f, darkMode = false)
+    @Test
+    fun aScaledLabelIsTheSameDrawingAtADifferentSize() {
+        // The directions map's labels recede with the zoom (#2102). What has to hold is that the scale is
+        // *uniform* — type, padding and corner all follow it — so a shrunk label is the same pill, not a
+        // squashed one or a full-size name in a smaller box.
+        val full = badge(listOf(BadgedRoute("1 Line", blue)))
+        val half = badge(listOf(BadgedRoute("1 Line", blue)), scale = 0.5f)
+
+        // A proportionality check, not a pixel-exact one: the row height is rounded up to a whole pixel, the
+        // bitmap is truncated to one, and a font's glyph advances don't have to divide exactly in half.
+        assertEquals(full.width / 2f, half.width.toFloat(), 2f)
+        assertEquals(full.height / 2f, half.height.toFloat(), 2f)
+        // Still the route's own colour inside its (now smaller) padding, so the pill didn't lose its fill or
+        // its casing to the rounding.
+        assertEquals(blue, half.rowFill(row = 0, rows = 1))
+    }
+
+    @Test
+    fun aStackedLabelScalesRowByRow() {
+        val stacked = badge(listOf(BadgedRoute("1 Line", blue), BadgedRoute("2 Line", green)), scale = 0.5f)
+        val single = badge(listOf(BadgedRoute("1 Line", blue)), scale = 0.5f)
+
+        assertEquals(single.height * 2, stacked.height)
+        assertEquals(blue, stacked.rowFill(row = 0, rows = 2))
+        assertEquals(green, stacked.rowFill(row = 1, rows = 2))
+    }
+
+    private fun badge(routes: List<BadgedRoute>, scale: Float = 1f): Bitmap = ContinuationBadgeBitmaps.badge(routes, density = 1f, darkMode = false, scale = scale)
 
     /** The fill colour of one row, read from inside its leading padding. */
     private fun Bitmap.rowFill(row: Int, rows: Int): Int = getPixel(SAMPLE_INSET_PX, rowCenterY(this, row, rows))

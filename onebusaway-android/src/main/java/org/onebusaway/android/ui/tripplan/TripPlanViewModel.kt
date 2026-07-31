@@ -311,6 +311,12 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
+    /** Changes either half of the trip mode from the form's action-bar pickers. */
+    fun setModeSelection(modes: TripModeSelection) {
+        _formState.update { it.copy(modes = modes) }
+        replanOrClearResult()
+    }
+
     fun reverseTrip() {
         // Both reads are of the pre-swap `it`, so this is a swap and not a double-assignment.
         _formState.update {

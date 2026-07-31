@@ -346,6 +346,16 @@ class TripPlanViewModelTest {
     }
 
     @Test
+    fun `setModeSelection updates the form and replans`() = runTest {
+        val vm = viewModel()
+        val selected = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE)
+
+        vm.setModeSelection(selected)
+
+        assertEquals(selected, vm.formState.value.modes)
+    }
+
+    @Test
     fun `applyAdvancedSettings carries the street preferences into the plan request`() = runTest {
         val vm = viewModel()
         setBothEndpoints(vm)

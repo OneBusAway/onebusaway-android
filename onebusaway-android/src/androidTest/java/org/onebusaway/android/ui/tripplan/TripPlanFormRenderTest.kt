@@ -86,6 +86,25 @@ class TripPlanFormRenderTest {
     }
 
     @Test
+    fun modePickersExpandToLabelsAndReportTheSelection() {
+        var vehicle: VehicleMode? = null
+        var street: StreetMode? = null
+        renderForm(
+            state = { plannedState },
+            onVehicleModeSelected = { vehicle = it },
+            onStreetModeSelected = { street = it }
+        )
+
+        composeRule.onNodeWithTag(TripPlanTestTags.VEHICLE_MODE).performClick()
+        composeRule.onNodeWithText("Rail only").performClick()
+        assertEquals(VehicleMode.RAIL, vehicle)
+
+        composeRule.onNodeWithTag(TripPlanTestTags.STREET_MODE).performClick()
+        composeRule.onNodeWithText("My own bike").performClick()
+        assertEquals(StreetMode.BICYCLE, street)
+    }
+
+    @Test
     fun aResolvedEndpointShowsItsPlaceWithNoTrailingChrome() {
         renderForm(plannedState)
 
@@ -346,7 +365,9 @@ class TripPlanFormRenderTest {
         state: () -> TripPlanFormState,
         onQueryChange: (TripEndpointSlot, String) -> Unit = { _, _ -> },
         onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit = { _, _ -> },
-        onCurrentLocation: (TripEndpointSlot) -> Unit = {}
+        onCurrentLocation: (TripEndpointSlot) -> Unit = {},
+        onVehicleModeSelected: (VehicleMode) -> Unit = {},
+        onStreetModeSelected: (StreetMode) -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
@@ -361,6 +382,9 @@ class TripPlanFormRenderTest {
                         onDepartNow = {},
                         onPickDate = {},
                         onPickTime = {},
+                        availableStreetModes = StreetMode.entries,
+                        onVehicleModeSelected = onVehicleModeSelected,
+                        onStreetModeSelected = onStreetModeSelected,
                         onReverse = {},
                         onAdvancedSettings = {}
                     )

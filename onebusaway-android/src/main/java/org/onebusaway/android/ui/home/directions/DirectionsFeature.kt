@@ -155,6 +155,11 @@ fun DirectionsFormCard(
     val context = LocalContext.current
     val activity = context.findActivity()
     var showAdvanced by remember { mutableStateOf(false) }
+    val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
+    val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
+    val availableStreetModes = StreetMode.entries.filter { it.isAvailableIn(bikeshare, usesOtp2) }
+    val vehicleModePreference = stringResource(R.string.preference_key_trip_plan_vehicle_mode)
+    val streetModePreference = stringResource(R.string.preference_key_trip_plan_street_mode)
 
     // containerSize (px) reflects the actual available window; Configuration.screenHeightDp is lint-flagged
     // as unreliable across insets/multi-window. Match the HomeScreen peek-cap pattern.
@@ -179,6 +184,15 @@ fun DirectionsFormCard(
                 onDepartNow = viewModel::setDepartNow,
                 onPickDate = { pickTripDate(activity, viewModel) },
                 onPickTime = { pickTripTime(activity, viewModel) },
+                availableStreetModes = availableStreetModes,
+                onVehicleModeSelected = { vehicle ->
+                    viewModel.setModeSelection(state.modes.copy(vehicle = vehicle))
+                    PreferenceUtils.saveString(vehicleModePreference, vehicle.name)
+                },
+                onStreetModeSelected = { street ->
+                    viewModel.setModeSelection(state.modes.copy(street = street))
+                    PreferenceUtils.saveString(streetModePreference, street.name)
+                },
                 onReverse = viewModel::reverseTrip,
                 onAdvancedSettings = { showAdvanced = true }
             )
@@ -577,30 +591,9 @@ private fun DirectionsAdvancedSettingsDialog(
     val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
     val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
 
-    // The mode choice is two independent questions — what you'll ride, and how you'll cover the
-    // street at either end — so they get a picker each rather than one list of every combination.
-    val vehicleOptions = listOf(
-        stringResource(R.string.vehicle_mode_all_transit) to VehicleMode.ALL_TRANSIT,
-        stringResource(R.string.vehicle_mode_bus) to VehicleMode.BUS,
-        stringResource(R.string.vehicle_mode_rail) to VehicleMode.RAIL,
-        stringResource(R.string.vehicle_mode_none) to VehicleMode.NONE
-    )
-    val streetOptions = listOf(
-        stringResource(R.string.street_mode_walk) to StreetMode.WALK,
-        stringResource(R.string.street_mode_walk_and_bikeshare) to StreetMode.WALK_AND_BIKESHARE,
-        stringResource(R.string.street_mode_bicycle) to StreetMode.BICYCLE
-    ).filter { (_, mode) -> mode.isAvailableIn(bikeshare, usesOtp2) }
-
     val current = remember { viewModel.formState.value }
-    var vehicleMode by remember { mutableStateOf(current.modes.vehicle) }
-    // Holds the rider's actual choice, including a street mode this region can't serve — a preference
-    // carried in from another region. Confirming the dialog must not overwrite that with the fallback
-    // below; like the max-walk field on OTP2, a setting the rider can't act on here is carried through
-    // untouched rather than eroded. The request degrades it at build time (TripModeSelection.availableIn).
-    var streetMode by remember { mutableStateOf(current.modes.street) }
-    // What the picker can show, by the same rule that filtered its options: an unofferable stored mode
-    // reads as the walking fallback the request will really use.
-    val offeredStreetMode = streetMode.takeIf { it.isAvailableIn(bikeshare, usesOtp2) } ?: StreetMode.WALK
+    val offeredStreetMode = current.modes.street
+        .takeIf { it.isAvailableIn(bikeshare, usesOtp2) } ?: StreetMode.WALK
     var minimizeTransfers by remember { mutableStateOf(current.optimizeTransfers) }
     var wheelchair by remember { mutableStateOf(current.wheelchair) }
     // Rounded, not truncated: the field's value is converted back to metres on confirm, so
@@ -632,8 +625,6 @@ private fun DirectionsAdvancedSettingsDialog(
 
     // Preference keys resolved in composition (stringResource) so the confirm handler doesn't read
     // resource values off LocalContext.current (lint: LocalContextGetResourceValueCall).
-    val prefKeyVehicleMode = stringResource(R.string.preference_key_trip_plan_vehicle_mode)
-    val prefKeyStreetMode = stringResource(R.string.preference_key_trip_plan_street_mode)
     val prefKeyMaxWalk = stringResource(R.string.preference_key_trip_plan_maximum_walking_distance)
     val prefKeyWalkPreference = stringResource(R.string.preference_key_trip_plan_walk_preference)
     val prefKeyCyclingPreference = stringResource(R.string.preference_key_trip_plan_cycling_preference)
@@ -649,19 +640,6 @@ private fun DirectionsAdvancedSettingsDialog(
             // rows, and AlertDialog content doesn't scroll on its own — at large font scales the
             // switches at the bottom would otherwise be unreachable.
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                PreferenceDropdownRow(
-                    label = stringResource(R.string.vehicle_mode_label),
-                    options = vehicleOptions,
-                    selected = vehicleMode,
-                    onSelected = { vehicleMode = it }
-                )
-                PreferenceDropdownRow(
-                    label = stringResource(R.string.street_mode_label),
-                    options = streetOptions,
-                    selected = offeredStreetMode,
-                    onSelected = { streetMode = it },
-                    modifier = Modifier.padding(top = 8.dp)
-                )
                 if (usesOtp2) {
                     PreferenceSliderRow(
                         label = stringResource(R.string.walk_preference_label),
@@ -735,7 +713,7 @@ private fun DirectionsAdvancedSettingsDialog(
                 }
                 viewModel.applyAdvancedSettings(
                     AdvancedSettings(
-                        modes = TripModeSelection(vehicleMode, streetMode),
+                        modes = current.modes,
                         maxWalkMeters = maxWalkMeters,
                         optimizeTransfers = minimizeTransfers,
                         wheelchair = wheelchair,
@@ -746,8 +724,6 @@ private fun DirectionsAdvancedSettingsDialog(
                 )
                 // Every option is saved whether or not this region's protocol showed its control, so
                 // the value survives a move to a region that can use it (see [AdvancedSettings]).
-                PreferenceUtils.saveString(prefKeyVehicleMode, vehicleMode.name)
-                PreferenceUtils.saveString(prefKeyStreetMode, streetMode.name)
                 PreferenceUtils.saveDouble(prefKeyMaxWalk, maxWalkMeters ?: Double.MAX_VALUE)
                 PreferenceUtils.saveString(prefKeyWalkPreference, walkPreference.name)
                 PreferenceUtils.saveString(prefKeyCyclingPreference, cyclingPreference.name)

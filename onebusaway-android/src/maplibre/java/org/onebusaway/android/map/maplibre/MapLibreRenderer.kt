@@ -23,6 +23,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import java.util.concurrent.TimeUnit
@@ -107,7 +108,31 @@ class MapLibreRenderer(
     // Route badge tap targets — adjacency (#1827) and a directions ride (#2101) — mirroring the Google
     // flavor's routeBadgeByMarker. Their geographic anchors are laid out once upstream; these markers
     // then move naturally with the map through pan and zoom.
+    // Every route-badge marker the last static render drew, including the inert ones: a camera settle has
+    // to re-stamp a label whose zoom schedule gives it a different size there (#2102) whether or not it
+    // leads anywhere. [routeBadgeForMarker] applies the tappability filter, so this stays one registry
+    // rather than two collections written in the same loop and cleared in the same places.
     private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
+
+    // The zoom the route-badge icons above were last stamped at. Synced to the live camera by each static
+    // redraw and moved by each settle, so the scale a label draws at always answers the camera it's under.
+    private var renderedBadgeZoom = map.cameraPosition.zoom.toFloat()
+
+    // One Icon per distinct label bitmap, the maplibre counterpart of the Google flavor's descriptorCache
+    // and keyed the same way ([ContinuationBadgeBitmaps.badgeKey]). Not an optimization to taste: an Icon
+    // carries a full ARGB copy of its bitmap and registers a native sprite, iconFactory mints a fresh id
+    // per call so two icons made from equal bitmaps never dedupe, and the SDK doesn't release the icon a
+    // marker is replacing. Re-stamping badges on every camera settle without this would retain a bitmap
+    // and a sprite per settle for the life of the map. Freed in [dispose].
+    //
+    // An LRU rather than a plain map, for the reason the Google flavor's [BitmapDescriptorCache] is one:
+    // quantizing scaleAt bounds only the *size* dimension of the key, while the label content in it — the
+    // names and colors on the pill — turns over with every route and itinerary shown, and [renderStatic]
+    // drops those markers without dropping their entries. Unbounded, a long session accumulates a bitmap
+    // and a sprite per label it ever drew. Evicting is safe: a marker holds its own reference to the Icon
+    // it was given, so a still-drawn label keeps its sprite and an evicted key is merely re-minted on the
+    // next request. See [BADGE_ICON_CACHE_SIZE] for the sizing.
+    private val routeBadgeIcons = LruCache<String, Icon>(BADGE_ICON_CACHE_SIZE)
 
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on
     // the next so the retained route and per-frame dynamic layers survive a static redraw.
@@ -251,26 +276,43 @@ class MapLibreRenderer(
     // .anchor(0.5f, 0.5f)). Draw order is add-order in maplibre (no z-index on classic markers), so
     // adding these last keeps them on top of the stops/bikes/generics drawn above.
     private fun renderRouteBadges(badges: List<RouteBadge>) {
+        // Read the camera rather than trusting the last settle: a static redraw can land mid-gesture, and a
+        // label stamped at a stale zoom would keep the wrong size until the camera next moved.
+        renderedBadgeZoom = map.cameraPosition.zoom.toFloat()
         for (badge in badges) {
             val marker = map.addMarker(
                 MarkerOptions()
                     .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routes))
+                    .icon(routeBadgeIcon(badge.routes, badge.scale.scaleAt(renderedBadgeZoom)))
             )
             staticAnnotations.add(marker)
-            // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
-            // unregistered marker's tap falls through to the map like any other unclaimed one.
-            if (badge.tap != null) routeBadgeByMarker[marker] = badge
+            routeBadgeByMarker[marker] = badge
         }
     }
 
-    private fun routeBadgeIcon(routes: List<BadgedRoute>): Icon = iconFactory.fromBitmap(
-        ContinuationBadgeBitmaps.badge(
-            routes,
-            density,
-            darkMode = ThemeUtils.isInDarkMode(context)
-        )
-    )
+    /**
+     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102). A label on the
+     * fixed profile — every one but a directions itinerary's — resolves to the same scale either side of
+     * the move and is left alone, as is a scheduled one whose camera stayed within a flat end of its ramp
+     * or moved less than one quantization step (see [RouteBadgeScaleProfile.scaleAt]).
+     */
+    private fun updateRouteBadgeScale(zoom: Float) {
+        val previous = renderedBadgeZoom
+        if (zoom == previous) return
+        renderedBadgeZoom = zoom
+        for ((marker, badge) in routeBadgeByMarker) {
+            val scale = badge.scale.scaleAt(zoom)
+            if (scale != badge.scale.scaleAt(previous)) marker.icon = routeBadgeIcon(badge.routes, scale)
+        }
+    }
+
+    private fun routeBadgeIcon(routes: List<BadgedRoute>, scale: Float): Icon {
+        val darkMode = ThemeUtils.isInDarkMode(context)
+        val key = ContinuationBadgeBitmaps.badgeKey(routes, darkMode, scale)
+        return routeBadgeIcons.get(key) ?: iconFactory
+            .fromBitmap(ContinuationBadgeBitmaps.badge(routes, density, darkMode, scale))
+            .also { routeBadgeIcons.put(key, it) }
+    }
 
     /** Reconcile the independently collected route layer, retaining equal native polylines. */
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
@@ -289,6 +331,7 @@ class MapLibreRenderer(
         routeEndpointBulbLayer.render(renderState.snapshot.value.routePolylines) { routeWidth(it, zoom) }
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
+        updateRouteBadgeScale(zoom)
     }
 
     private fun routeWidth(polyline: RoutePolyline, zoom: Float): Float = polyline.widthProfile?.thicknessAt(zoom) ?: (ROUTE_WIDTH_DP * routeLineWidthScale(zoom))
@@ -323,6 +366,7 @@ class MapLibreRenderer(
         vehicleByMarker.clear()
         bikeByMarker.clear()
         routeBadgeByMarker.clear()
+        routeBadgeIcons.evictAll()
         vehicleIconDirection.clear()
         mostRecentDataMarker = null
         lastVehicleResponse = null
@@ -618,8 +662,11 @@ class MapLibreRenderer(
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 
-    /** The adjacency route badge (#1827) tapped, or null if [marker] isn't one. */
-    fun routeBadgeForMarker(marker: Marker): RouteBadge? = routeBadgeByMarker[marker]
+    /**
+     * The route badge tapped, or null if [marker] isn't one — or names a label that leads nowhere (see
+     * [RouteBadge.tap]), whose tap falls through to the map like any other unclaimed one.
+     */
+    fun routeBadgeForMarker(marker: Marker): RouteBadge? = routeBadgeByMarker[marker]?.takeIf { it.tap != null }
 
     /**
      * If [marker] is the ping ripple, the vehicle marker it's centered on (else null) — so a tap on the
@@ -635,6 +682,13 @@ class MapLibreRenderer(
     companion object {
         private const val ROUTE_WIDTH_DP = 3f
         private const val TRIP_BAND_WIDTH_DP = 6f
+
+        // Sized to hold a whole zoom session's worth of the labels currently on the map, so panning the
+        // ramp end to end never evicts a label that is still drawn: a directions itinerary shows on the
+        // order of ten distinct pills, each of which can be asked for at any of the nine sizes
+        // [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize its ramp to, in either theme. Matches the
+        // Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges alongside its other icons.
+        private const val BADGE_ICON_CACHE_SIZE = 256
     }
 }
 

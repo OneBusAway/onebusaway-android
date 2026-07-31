@@ -36,11 +36,26 @@ import org.onebusaway.android.util.routeCasingColor
  */
 object ContinuationBadgeBitmaps {
 
-    private const val TEXT_SIZE_PX = 38f
-    private const val HORIZONTAL_PADDING_PX = 20f
-    private const val VERTICAL_PADDING_PX = 12f
-    private const val CORNER_RADIUS_PX = 22f
-    private const val OUTLINE_WIDTH_DP = 2f
+    // The pill at its unscaled size, which [badge]'s scale multiplies as a set. Every one of these went up
+    // by half again in #2102: the label was legible but undersized against the lines it names, and moving
+    // them together is what keeps a bigger pill the same drawing rather than a differently-proportioned one.
+    //
+    // Deliberately the *shared* base rather than the directions profile, even though #2102 is a
+    // directions-map issue. Undersized was a claim about route labels generally, so the fixed-1.0x
+    // consumers — focused-stop adjacency (#1827) and the route-continuation badge (#1691) — are meant to
+    // grow with it. The scoped lever exists and was not pulled on purpose: ITINERARY_ROUTE_BADGE_SCALE_
+    // PROFILE(distantScale = 0.75f, closeScale = 1.5f) would have reproduced today's directions labels
+    // against the old constants and left those two alone. A future size change should decide between the
+    // two the same way — base for "every label is wrong", profile for "this view's labels are wrong".
+    //
+    // One consequence worth stating: at 1.5x base against a 0.5 distant scale, a directions label at
+    // overview zoom is 0.75x of its pre-#2102 self — bigger than it was even at the receded end of the
+    // ramp the profile's own KDoc introduces to stop it crowding the itinerary.
+    private const val TEXT_SIZE_PX = 57f
+    private const val HORIZONTAL_PADDING_PX = 30f
+    private const val VERTICAL_PADDING_PX = 18f
+    private const val CORNER_RADIUS_PX = 33f
+    private const val OUTLINE_WIDTH_DP = 3f
     private const val OUTLINE_TONE_LIGHT = 35.0
     private const val OUTLINE_TONE_DARK = 85.0
 
@@ -59,30 +74,38 @@ object ContinuationBadgeBitmaps {
      * (#2010/#2083), not separate lines that happen to meet here. The stack goes downwards rather than
      * across because a map label's neighbour is the basemap — a name-per-column pill grows into the
      * corridor it labels, while rows keep the label roughly as wide as its widest name.
+     *
+     * [scale] multiplies every dimension of the pill — type, padding, corner, casing — so a scaled label
+     * is the same drawing at a different size rather than a differently-proportioned one. A renderer
+     * resolves it from the camera through the label's [RouteBadgeScaleProfile] (#2102).
      */
-    fun badge(routes: List<BadgedRoute>, density: Float, darkMode: Boolean): Bitmap {
+    fun badge(routes: List<BadgedRoute>, density: Float, darkMode: Boolean, scale: Float): Bitmap {
         require(routes.isNotEmpty()) { "a route badge has to name a route to draw one" }
+        // Stated rather than clamped: a non-positive scale has no smallest sensible pill to fall back to,
+        // and would otherwise surface far from its cause as a zero-size bitmap allocation.
+        require(scale > 0f) { "a route badge drawn at scale $scale would have no pixels" }
         // One paint for every row: they share a size and weight, so only the text color changes down the
         // stack — set per row, exactly as the band's is. That also makes the metrics below the whole pill's:
         // its rows are equal bands whatever they read.
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = TEXT_SIZE_PX
+            textSize = TEXT_SIZE_PX * scale
             isFakeBoldText = true
             textAlign = Paint.Align.CENTER
         }
         val metrics = textPaint.fontMetrics
+        val cornerRadius = CORNER_RADIUS_PX * scale
         // A whole number of pixels, so the bands are identical and the pill is exactly as tall as its rows
         // — the row boundaries are also where the dividers are drawn, and a fractional band would drift
         // away from them down the stack.
-        val rowHeight = ceil((metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * 2)
+        val rowHeight = ceil((metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * scale * 2)
         val width = routes
-            .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * 2 }
-            .coerceAtLeast(CORNER_RADIUS_PX * 2)
+            .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * scale * 2 }
+            .coerceAtLeast(cornerRadius * 2)
         val height = rowHeight * routes.size
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
         val canvas = Canvas(bitmap)
-        val outlineWidth = OUTLINE_WIDTH_DP * density
+        val outlineWidth = OUTLINE_WIDTH_DP * density * scale
         val badgeBounds = RectF(
             outlineWidth / 2f,
             outlineWidth / 2f,
@@ -92,7 +115,7 @@ object ContinuationBadgeBitmaps {
         val band = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
         // The pill's shape clips the bands, so the outermost ones take its rounded corners and the
         // interior ones stay square where they meet.
-        val pill = Path().apply { addRoundRect(badgeBounds, CORNER_RADIUS_PX, CORNER_RADIUS_PX, Path.Direction.CW) }
+        val pill = Path().apply { addRoundRect(badgeBounds, cornerRadius, cornerRadius, Path.Direction.CW) }
         canvas.withClip(pill) {
             routes.forEachIndexed { index, route ->
                 val top = rowHeight * index
@@ -114,7 +137,7 @@ object ContinuationBadgeBitmaps {
             val y = rowHeight * index
             canvas.drawLine(badgeBounds.left, y, badgeBounds.right, y, line)
         }
-        canvas.drawRoundRect(badgeBounds, CORNER_RADIUS_PX, CORNER_RADIUS_PX, line)
+        canvas.drawRoundRect(badgeBounds, cornerRadius, cornerRadius, line)
         return bitmap
     }
 
@@ -125,12 +148,15 @@ object ContinuationBadgeBitmaps {
      *
      * Every name and color on the badge takes part, so two labels differing only in a stacked route can't
      * share a bitmap — and so does [darkMode], which the casing reads: the same routes case differently
-     * either side of a light/dark switch, and a key blind to it would serve the pre-switch pill. Density is
-     * fixed for the lifetime of a renderer's cache, so it distinguishes nothing within one.
+     * either side of a light/dark switch, and a key blind to it would serve the pre-switch pill. [scale]
+     * takes part for the same reason it does in [VehicleBitmaps.iconKey]: a zoom-scheduled label (#2102)
+     * draws the same routes at several sizes over one camera session, and a key blind to the size would
+     * hand back whichever it drew first. Density is fixed for the lifetime of a renderer's cache, so it
+     * distinguishes nothing within one.
      */
-    fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean): String = routes.joinToString(
+    fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean, scale: Float): String = routes.joinToString(
         separator = "|",
-        prefix = "route-badge:$darkMode:"
+        prefix = "route-badge:$darkMode:$scale:"
     ) { "${it.routeShortName}:${it.color}" }
 
     /**

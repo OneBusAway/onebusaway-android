@@ -95,6 +95,19 @@ private val CONNECTOR_GLYPH_CLEARANCE = 12.dp
  */
 private val ACTION_BAR_HEIGHT = 40.dp
 
+/** Rider-facing order for the two mode menus; intentionally independent of enum declaration order. */
+private val VEHICLE_MODE_ORDER = listOf(
+    VehicleMode.ALL_TRANSIT,
+    VehicleMode.BUS,
+    VehicleMode.RAIL,
+    VehicleMode.NONE
+)
+private val STREET_MODE_ORDER = listOf(
+    StreetMode.WALK,
+    StreetMode.BICYCLE,
+    StreetMode.WALK_AND_BIKESHARE
+)
+
 /**
  * Stable UIAutomator/Compose-test handles for the trip-plan form. Surfaced as resource-ids by the
  * app-wide `testTagsAsResourceId` in HomeActivity, so the form can be driven semantically (focus a
@@ -114,6 +127,8 @@ object TripPlanTestTags {
     /** The action bar's two time segments. */
     const val WHEN_MODE = "tripPlanWhenMode"
     const val WHEN_TIME = "tripPlanWhenTime"
+    const val VEHICLE_MODE = "tripPlanVehicleMode"
+    const val STREET_MODE = "tripPlanStreetMode"
 }
 
 /**
@@ -165,6 +180,9 @@ fun TripPlanForm(
     onDepartNow: () -> Unit,
     onPickDate: () -> Unit,
     onPickTime: () -> Unit,
+    availableStreetModes: List<StreetMode>,
+    onVehicleModeSelected: (VehicleMode) -> Unit,
+    onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
     onAdvancedSettings: () -> Unit,
     modifier: Modifier = Modifier
@@ -196,10 +214,14 @@ fun TripPlanForm(
             departNow = state.departNow,
             dateLabel = state.dateLabel,
             timeLabel = state.timeLabel,
+            modes = state.modes,
+            availableStreetModes = availableStreetModes,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
             onPickDate = onPickDate,
             onPickTime = onPickTime,
+            onVehicleModeSelected = onVehicleModeSelected,
+            onStreetModeSelected = onStreetModeSelected,
             onReverse = onReverse,
             onAdvancedSettings = onAdvancedSettings
         )
@@ -481,10 +503,14 @@ private fun TripActionBar(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    modes: TripModeSelection,
+    availableStreetModes: List<StreetMode>,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
     onPickDate: () -> Unit,
     onPickTime: () -> Unit,
+    onVehicleModeSelected: (VehicleMode) -> Unit,
+    onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
@@ -523,6 +549,27 @@ private fun TripActionBar(
             onPickDate = onPickDate,
             onPickTime = onPickTime
         )
+        ModePicker(
+            selected = modes.vehicle,
+            options = VEHICLE_MODE_ORDER,
+            icon = { vehicleModeIcon(it) },
+            label = { vehicleModeLabel(it) },
+            testTag = TripPlanTestTags.VEHICLE_MODE,
+            onSelected = onVehicleModeSelected
+        )
+        ModePicker(
+            // Display-only substitution, deliberately not written back to the selection: a street mode
+            // this region can't serve degrades on the way to a request
+            // ([TripModeSelection.availableIn]) and never by rewriting what the rider chose, so a
+            // rider who picks their own bike at home still has it after passing through an OTP1
+            // region. Showing walking here matches the trip that will actually be planned.
+            selected = modes.street.takeIf { it in availableStreetModes } ?: StreetMode.WALK,
+            options = STREET_MODE_ORDER.filter { it in availableStreetModes },
+            icon = { streetModeIcon(it) },
+            label = { streetModeLabel(it) },
+            testTag = TripPlanTestTags.STREET_MODE,
+            onSelected = onStreetModeSelected
+        )
         IconButton(onClick = onReverse, modifier = Modifier.size(40.dp)) {
             Icon(
                 painter = painterResource(R.drawable.ic_swap_direction),
@@ -540,6 +587,86 @@ private fun TripActionBar(
         Spacer(Modifier.width(4.dp))
     }
 }
+
+/** A selected mode glyph that expands to icon-and-label choices, then collapses again. */
+@Composable
+private fun <T> ModePicker(
+    selected: T,
+    options: List<T>,
+    icon: @Composable (T) -> Int,
+    label: @Composable (T) -> String,
+    testTag: String,
+    onSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = label(selected)
+    Box {
+        IconButton(
+            onClick = { expanded = true },
+            modifier = Modifier.size(40.dp).testTag(testTag)
+        ) {
+            Icon(
+                painter = painterResource(icon(selected)),
+                contentDescription = selectedLabel,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(label(option)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(icon(option)),
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = if (option == selected) {
+                        { Icon(AppIcons.Check, contentDescription = null) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelected(option)
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun vehicleModeIcon(mode: VehicleMode): Int = when (mode) {
+    VehicleMode.ALL_TRANSIT -> R.drawable.ic_bus_railway
+    VehicleMode.BUS -> R.drawable.ic_directions_bus
+    VehicleMode.RAIL -> R.drawable.ic_train
+    VehicleMode.NONE -> R.drawable.ic_no_transfer
+}
+
+@Composable
+private fun vehicleModeLabel(mode: VehicleMode): String = stringResource(
+    when (mode) {
+        VehicleMode.ALL_TRANSIT -> R.string.vehicle_mode_all_transit
+        VehicleMode.BUS -> R.string.vehicle_mode_bus
+        VehicleMode.RAIL -> R.string.vehicle_mode_rail
+        VehicleMode.NONE -> R.string.vehicle_mode_none
+    }
+)
+
+private fun streetModeIcon(mode: StreetMode): Int = when (mode) {
+    StreetMode.WALK -> R.drawable.ic_directions_walk
+    StreetMode.BICYCLE -> R.drawable.ic_directions_bike
+    StreetMode.WALK_AND_BIKESHARE -> R.drawable.ic_bike_rental
+}
+
+@Composable
+private fun streetModeLabel(mode: StreetMode): String = stringResource(
+    when (mode) {
+        StreetMode.WALK -> R.string.street_mode_walk
+        StreetMode.BICYCLE -> R.string.street_mode_bicycle
+        StreetMode.WALK_AND_BIKESHARE -> R.string.street_mode_walk_and_bikeshare
+    }
+)
 
 /** Leaving vs arriving — the first half of the "when" sentence. */
 @Composable
@@ -698,6 +825,8 @@ private fun TripPlanFormPreview() {
             onCurrentLocation = {}, onPickOnMap = {},
             onSetArriving = {}, onDepartNow = {},
             onPickDate = {}, onPickTime = {},
+            availableStreetModes = StreetMode.entries,
+            onVehicleModeSelected = {}, onStreetModeSelected = {},
             onReverse = {}, onAdvancedSettings = {}
         )
     }

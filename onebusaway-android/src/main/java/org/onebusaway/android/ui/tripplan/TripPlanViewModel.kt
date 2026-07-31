@@ -311,6 +311,19 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
+    /**
+     * Changes either half of the trip mode from the form's action-bar pickers.
+     *
+     * Re-picking the mode that is already checked is a no-op, not a replan: the menu reports every
+     * tap, including one on the current selection, and a replan there would re-issue an identical
+     * request (and, on a form that can't submit yet, needlessly clear a result the rider is reading).
+     */
+    fun setModeSelection(modes: TripModeSelection) {
+        if (_formState.value.modes == modes) return
+        _formState.update { it.copy(modes = modes) }
+        replanOrClearResult()
+    }
+
     fun reverseTrip() {
         // Both reads are of the pre-swap `it`, so this is a swap and not a double-assignment.
         _formState.update {

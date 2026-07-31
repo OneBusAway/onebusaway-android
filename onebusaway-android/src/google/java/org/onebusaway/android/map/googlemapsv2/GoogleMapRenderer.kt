@@ -127,7 +127,15 @@ class GoogleMapRenderer(
     // Route badge tap targets — adjacency (#1827) and a directions ride (#2101) — mirrored by the
     // maplibre flavor (#1913). Their geographic anchors are laid out once upstream; these markers then
     // move naturally with the map through pan and zoom.
+    // Every route-badge marker the last static render drew, including the inert ones: a camera settle has
+    // to re-stamp a label whose zoom schedule gives it a different size there (#2102) whether or not it
+    // leads anywhere. [routeBadgeForMarker] applies the tappability filter, so this stays one registry
+    // rather than two collections written in the same loop and cleared in the same places.
     private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
+
+    // The zoom the route-badge icons above were last stamped at. Synced to the live camera by each static
+    // redraw and moved by each settle, so the scale a label draws at always answers the camera it's under.
+    private var renderedBadgeZoom = map.cameraPosition.zoom
 
     // The latest trips-for-route poll, published as it changes (after the markers are reconciled). The
     // change-detector for the vehicle reconcile, the source a vehicle info window reads its content from,
@@ -309,18 +317,37 @@ class GoogleMapRenderer(
     }
 
     private fun renderRouteBadges(badges: List<RouteBadge>) {
+        // Read the camera rather than trusting the last settle: a static redraw can land mid-gesture, and a
+        // label stamped at a stale zoom would keep the wrong size until the camera next moved.
+        renderedBadgeZoom = map.cameraPosition.zoom
         for (badge in badges) {
             val marker = map.addMarkerOrFail(
                 MarkerOptions()
                     .position(badge.point.toLatLng())
-                    .icon(routeBadgeIcon(badge.routes))
+                    .icon(routeBadgeIcon(badge.routes, badge.scale.scaleAt(renderedBadgeZoom)))
+                    // Centered on the anchor, so a label that changes size with zoom grows and shrinks
+                    // about its own placement instead of drifting off it.
                     .anchor(0.5f, 0.5f)
                     .zIndex(ROUTE_BADGE_Z_INDEX)
             )
             staticMarkers += marker
-            // Only a label that leads somewhere becomes a tap target (see [RouteBadge.tap]); an
-            // unregistered marker's tap falls through to the map like any other unclaimed one.
-            if (badge.tap != null) routeBadgeByMarker[marker] = badge
+            routeBadgeByMarker[marker] = badge
+        }
+    }
+
+    /**
+     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102). A label on the
+     * fixed profile — every one but a directions itinerary's — resolves to the same scale either side of
+     * the move and is left alone, as is a scheduled one whose camera stayed within a flat end of its ramp
+     * or moved less than one quantization step (see [RouteBadgeScaleProfile.scaleAt]).
+     */
+    private fun updateRouteBadgeScale(zoom: Float) {
+        val previous = renderedBadgeZoom
+        if (zoom == previous) return
+        renderedBadgeZoom = zoom
+        for ((marker, badge) in routeBadgeByMarker) {
+            val scale = badge.scale.scaleAt(zoom)
+            if (scale != badge.scale.scaleAt(previous)) marker.setIcon(routeBadgeIcon(badge.routes, scale))
         }
     }
 
@@ -409,10 +436,14 @@ class GoogleMapRenderer(
         continuationBadgeByMarker[marker] = badge
     }
 
-    private fun routeBadgeIcon(routes: List<BadgedRoute>): BitmapDescriptor {
+    /**
+     * The pill naming [routes], drawn at [scale] — unscaled by default, which is what the fixed-size
+     * route-continuation badge (#1691) above takes; a [RouteBadge] resolves its own from the camera.
+     */
+    private fun routeBadgeIcon(routes: List<BadgedRoute>, scale: Float = 1f): BitmapDescriptor {
         val darkMode = ThemeUtils.isInDarkMode(context)
-        return descriptorCache.get(ContinuationBadgeBitmaps.badgeKey(routes, darkMode)) {
-            ContinuationBadgeBitmaps.badge(routes, density, darkMode)
+        return descriptorCache.get(ContinuationBadgeBitmaps.badgeKey(routes, darkMode, scale)) {
+            ContinuationBadgeBitmaps.badge(routes, density, darkMode, scale)
         }
     }
 
@@ -804,6 +835,7 @@ class GoogleMapRenderer(
         routePolylineReconciler.resyncWidths(zoom)
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
+        updateRouteBadgeScale(zoom)
     }
 
     fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
@@ -813,8 +845,11 @@ class GoogleMapRenderer(
     /** The route-continuation badge (#1691) tapped, or null if [marker] isn't that badge. */
     fun continuationBadgeForMarker(marker: Marker): ContinuationBadge? = continuationBadgeByMarker[marker]
 
-    /** The adjacency route badge (#1827) tapped, or null if [marker] isn't one. */
-    fun routeBadgeForMarker(marker: Marker): RouteBadge? = routeBadgeByMarker[marker]
+    /**
+     * The route badge tapped, or null if [marker] isn't one — or names a label that leads nowhere (see
+     * [RouteBadge.tap]), whose tap falls through to the map like any other unclaimed one.
+     */
+    fun routeBadgeForMarker(marker: Marker): RouteBadge? = routeBadgeByMarker[marker]?.takeIf { it.tap != null }
 
     /** The live route-vehicle marker for [tripId], or null if that vehicle isn't currently drawn. */
     fun vehicleMarkerForTripId(tripId: String): Marker? = vehicleMarkersByTripId[tripId]

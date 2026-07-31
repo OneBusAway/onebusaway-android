@@ -94,6 +94,8 @@ import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
+import org.onebusaway.android.ui.home.directions.itineraryPins
+import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
 import org.onebusaway.android.ui.home.donation.DonationViewModel
 import org.onebusaway.android.ui.home.drawer.HomeNavDrawerSheet
@@ -129,7 +131,6 @@ import org.onebusaway.android.ui.tutorial.rememberTutorialState
 import org.onebusaway.android.ui.tutorial.tutorialAnchor
 import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.geoPointOrNull
 
 /**
  * The home screen's tap/UI callbacks, bundled into one holder (mirrors [org.onebusaway.android.ui.survey.SurveyCallbacks]) so
@@ -605,8 +606,8 @@ fun HomeScreen(
                             // (so a single-endpoint state already shows the point). Only while in directions with
                             // no itinerary yet — the itinerary's own pins supersede these once it draws.
                             val showEndpointPins = directionsActive && directionsResults == null
-                            val fromPoint = if (showEndpointPins) tripPlanFormState.from.toGeoPoint() else null
-                            val toPoint = if (showEndpointPins) tripPlanFormState.to.toGeoPoint() else null
+                            val fromPoint = if (showEndpointPins) tripPlanFormState.from.pinPoint() else null
+                            val toPoint = if (showEndpointPins) tripPlanFormState.to.pinPoint() else null
                             LaunchedEffect(fromPoint, toPoint) {
                                 homeViewModel.setDirectionsEndpointsOnMap(fromPoint, toPoint)
                             }
@@ -749,7 +750,12 @@ fun HomeScreen(
                                             resultsViewModel = tripResultsViewModel,
                                             itineraries = directionsResults.itineraries,
                                             params = directionsResults.params,
-                                            showItinerary = homeViewModel::showItineraryOnMap,
+                                            showItinerary = { itinerary ->
+                                                homeViewModel.showItineraryOnMap(
+                                                    itinerary,
+                                                    directionsResults.params.itineraryPins()
+                                                )
+                                            },
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
@@ -1056,6 +1062,3 @@ private fun ArrivalsDragHandle(onToggle: () -> Unit, modifier: Modifier = Modifi
         DragHandleBar()
     }
 }
-
-/** A resolved endpoint's map point, or null while it's still free text (no coordinates yet). */
-private fun TripEndpoint.toGeoPoint(): GeoPoint? = geoPointOrNull(lat, lon)

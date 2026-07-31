@@ -28,6 +28,7 @@ import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.FakeLocationRepository
+import org.onebusaway.android.map.ItineraryPins
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -252,6 +253,29 @@ class HomeViewModelTest {
         // Route mode tore the trip down, so returning to the overview redraws it.
         assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
         assertEquals(listOf(MapDirective.ShowItinerary(itinerary)), map.sent)
+        job.cancel()
+    }
+
+    @Test
+    fun `a redrawn trip keeps the terminus pin its current-location endpoint withheld`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val itinerary = TripItinerary()
+        // A trip planned *from* here: the blue dot marks the start, so it wears no start pin (#2111).
+        val pins = ItineraryPins(start = false)
+        vm.enterDirections()
+        vm.showItineraryOnMap(itinerary, pins)
+        vm.focusItineraryRouteLegOnMap("65")
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        // The redraw reproduces the trip as it was drawn — a suppressed pin doesn't come back with it.
+        assertEquals(listOf(MapDirective.ShowItinerary(itinerary, pins)), map.sent)
         job.cancel()
     }
 

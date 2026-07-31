@@ -46,12 +46,22 @@ data class FocusedTripShape(
     val routeDirection: RouteDirectionKey get() = RouteDirectionKey(routeId, directionId)
 }
 
-data class FocusedTripGeometry(val shapes: List<FocusedTripShape>)
+data class FocusedTripGeometry(val shapes: List<FocusedTripShape>) {
+    companion object {
+        /** No geometry — the pre-load state, and what a failed load falls back to. */
+        val EMPTY = FocusedTripGeometry(emptyList())
+    }
+}
 
 data class FocusedTripStops(
     val stopIdsByTripId: Map<String, List<String>>,
     val stopsById: Map<String, ObaStop>
-)
+) {
+    companion object {
+        /** No stops — the pre-load state, and what a failed load falls back to. */
+        val EMPTY = FocusedTripStops(emptyMap(), emptyMap())
+    }
+}
 
 /** Exact shape and scheduled-stop pass-throughs for the trips displayed at a focused stop. */
 interface FocusedTripRepository {

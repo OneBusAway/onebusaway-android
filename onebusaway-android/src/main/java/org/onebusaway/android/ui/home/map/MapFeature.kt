@@ -334,7 +334,7 @@ fun MapFeature(
                         directive.animate
                     )
                 is MapDirective.ShowItinerary ->
-                    mapViewModel.showItinerary(directive.itinerary)
+                    mapViewModel.showItinerary(directive.itinerary, directive.pins)
                 is MapDirective.FocusItineraryPoint ->
                     mapViewModel.focusItineraryPoint(directive.point)
                 is MapDirective.FocusItineraryLeg ->

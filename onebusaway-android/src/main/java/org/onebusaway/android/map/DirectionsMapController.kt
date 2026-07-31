@@ -28,6 +28,13 @@ import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
 /**
+ * Which of a drawn itinerary's two terminus pins to draw. A terminus the rider set to their current
+ * location goes unpinned: the map's location layer already marks that exact point with the blue dot, so
+ * a pin on top of it is redundant (#2111). Both pins are drawn unless a terminus says otherwise.
+ */
+data class ItineraryPins(val start: Boolean = true, val end: Boolean = true)
+
+/**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
  * (each polyline styled by [itineraryLegStyle], each ride labelled by [itineraryRouteBadges]) plus
  * start/end pins, and frames the whole itinerary. A
@@ -73,9 +80,11 @@ class DirectionsMapController(private val host: MapHost) {
      * Draw [itinerary]'s leg polylines + start/end pins and frame it, stroking every leg through
      * [palette] — the directions view's own, which is the theme-aware colour the drawer badges this leg
      * with (see [directionsRouteLinePalette]). Passed per draw rather than held, so the palette that
-     * resolved the current theme is the one this itinerary was drawn with.
+     * resolved the current theme is the one this itinerary was drawn with. [pins] withholds a terminus
+     * pin the trip's own endpoint made redundant (see [ItineraryPins]); framing is unaffected, since a
+     * withheld pin doesn't move where the trip starts.
      */
-    fun start(itinerary: TripItinerary, palette: RouteLinePalette) {
+    fun start(itinerary: TripItinerary, palette: RouteLinePalette, pins: ItineraryPins) {
         val legs = itinerary.legs
         if (legs.isEmpty()) {
             return
@@ -143,10 +152,10 @@ class DirectionsMapController(private val host: MapHost) {
         focusedLegIndices = emptySet()
         publishLegs()
 
-        if (startLat != null && startLon != null) {
+        if (pins.start && startLat != null && startLon != null) {
             directionsMarkerIds.add(host.addMarker(startLat, startLon, HUE_GREEN))
         }
-        if (endLat != null && endLon != null) {
+        if (pins.end && endLat != null && endLon != null) {
             directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
         }
         // Published after the pins, since the static layer is redrawn wholesale on each emission that

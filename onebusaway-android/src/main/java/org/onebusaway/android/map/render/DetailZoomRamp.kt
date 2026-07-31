@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlin.math.round
+
 /** Shared zoom interval for route-detail styling. */
 const val DETAIL_RAMP_START_ZOOM = 11f
 const val DETAIL_RAMP_END_ZOOM = 16f
@@ -114,6 +116,77 @@ val ITINERARY_RIDE_WIDTH_PROFILE = FOCUSED_ROUTE_LINE_WIDTH_PROFILE
  */
 val ITINERARY_STREET_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
     thicknessDp = ROUTE_LINE_WIDTH_DP * 0.9f
+)
+
+/**
+ * The number of steps the ramp between a badge profile's two ends is quantized into — see
+ * [RouteBadgeScaleProfile.scaleAt] for why a label's scale is discrete where a line's width is not.
+ */
+private const val ROUTE_BADGE_SCALE_STEPS = 16f
+
+/**
+ * How a route label's drawn size answers the camera: a uniform scale on the pill
+ * [ContinuationBadgeBitmaps.badge] draws, ramped linearly across [rampStartZoom]..[rampEndZoom] and flat
+ * on either side of it.
+ *
+ * A profile rather than a bare function for the reason [RouteLineWidthProfile] is one: the two kinds of
+ * label on the map (adjacency, a directions itinerary's rides) answer the camera differently, and that
+ * difference should be a value one of them carries rather than a branch in each renderer.
+ */
+data class RouteBadgeScaleProfile(
+    val distantScale: Float,
+    val closeScale: Float,
+    val rampStartZoom: Float = DETAIL_RAMP_START_ZOOM,
+    val rampEndZoom: Float = DETAIL_RAMP_END_ZOOM
+) {
+    /**
+     * The scale to draw at under a camera at [zoom], **quantized** to [ROUTE_BADGE_SCALE_STEPS] steps.
+     *
+     * A route line's width can take the ramp's raw value because setting a native polyline's width is
+     * free. A label's can't: its scale sizes a rasterized bitmap and keys the icon cache
+     * ([ContinuationBadgeBitmaps.badgeKey]), so a raw camera float means every settle inside the ramp
+     * yields a scale never seen before — a guaranteed cache miss, a fresh `Canvas` draw and native
+     * texture per badge, and a cache filling with entries that can never be hit again. Discrete steps
+     * bound the whole thing to a handful of bitmaps per label for a session.
+     *
+     * This is the same move [org.onebusaway.android.map.googlemapsv2.GoogleRouteStopBitmapLayer] already
+     * makes for the identical ramp, where it rounds the stop diameter to whole pixels and keys on that.
+     * Sixteenths are fine enough that a step is a ~6% size change — smaller than the jump a settle-only
+     * update makes anyway, since labels resize on camera idle rather than continuously.
+     */
+    fun scaleAt(zoom: Float): Float {
+        val raw = detailZoomRamp(
+            zoom,
+            startZoom = rampStartZoom,
+            endZoom = rampEndZoom,
+            distantValue = distantScale,
+            closeValue = closeScale
+        )
+        return round(raw * ROUTE_BADGE_SCALE_STEPS) / ROUTE_BADGE_SCALE_STEPS
+    }
+}
+
+/**
+ * A label that draws at one size whatever the camera does — every route label but a directions
+ * itinerary's, which is the only one #2102 gave a schedule to.
+ */
+val FIXED_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(distantScale = 1f, closeScale = 1f)
+
+/**
+ * A directions itinerary's ride labels (#2102), on the shared detail ramp and pointing the same way as
+ * everything else it rides with: half size when zoomed out, full at zoom 16 and above.
+ *
+ * A label is a fixed number of screen pixels, so at an overview zoom it is enormous relative to the
+ * itinerary it annotates — several of them, anchored at leg midpoints that are themselves close together
+ * out there, crowd each other and cover the shape the rider is trying to read. Receding with the route
+ * lines and stop circles around it ([RouteLineWidthProfile], [focusedRouteStopScale]) keeps the whole view
+ * scaling as one thing, and hands the label its full size at the zoom where there's room for it.
+ *
+ * Deliberately a starting point to be tuned against the real map, not a settled value.
+ */
+val ITINERARY_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(
+    distantScale = ROUTE_DETAIL_DISTANT_SCALE,
+    closeScale = 1f
 )
 
 /** Route-line scale retained for unprofiled lines and vehicle markers. */

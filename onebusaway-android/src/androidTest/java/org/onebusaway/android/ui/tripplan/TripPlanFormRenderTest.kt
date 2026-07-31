@@ -41,6 +41,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.ui.compose.Channel
+import org.onebusaway.android.ui.compose.assertDominant
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
@@ -332,15 +334,15 @@ class TripPlanFormRenderTest {
                 "${from.right} and ${to.right}",
             button.left >= from.right && button.left >= to.right
         )
-        // Compared in pixels, because rounding is what the slack is for: the rows and the 1dp rule
-        // between them round to whole pixels independently of the button's own centring, so the
-        // midpoint they define can sit a pixel off it. Anything past that is a real misalignment.
+        // Compare the rendered pixel centres exactly; any different pixel is a real misalignment.
         val buttonCenter = (button.top + button.bottom) / 2f
         val betweenRows = (from.bottom + to.top) / 2f
-        val driftPx = with(composeRule.density) { (buttonCenter - betweenRows).toPx() }.roundToInt()
-        assertTrue(
+        val buttonCenterPx = with(composeRule.density) { buttonCenter.toPx() }.roundToInt()
+        val dividerCenterPx = with(composeRule.density) { betweenRows.toPx() }.roundToInt()
+        assertEquals(
             "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
-            driftPx.absoluteValue <= 1
+            dividerCenterPx,
+            buttonCenterPx
         )
     }
 
@@ -456,28 +458,8 @@ class TripPlanFormRenderTest {
         assertDominant(railDot(row = 1), Channel.BLUE, "a destination at the device's position")
     }
 
-    private enum class Channel { RED, GREEN, BLUE }
-
-    /**
-     * Dominance rather than an exact hex, so the rule survives a palette tweak and holds in both
-     * themes — but strictly, with no tolerance to tune: the sample is the centre of a 12dp filled
-     * circle, so it is the fill colour itself, not an antialiased edge.
-     */
-    private fun assertDominant(color: Color, channel: Channel, what: String) {
-        val (dominant, others) = when (channel) {
-            Channel.RED -> color.red to listOf(color.green, color.blue)
-            Channel.GREEN -> color.green to listOf(color.red, color.blue)
-            Channel.BLUE -> color.blue to listOf(color.red, color.green)
-        }
-        assertTrue(
-            "$what should read $channel, but its dot was $color",
-            others.all { dominant > it }
-        )
-    }
-
     /** Where a tagged node sits in the form, for the tests that are about position. */
     private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */
     private fun railDot(row: Int): Color {
         val pixels = composeRule.onNodeWithTag(FORM).captureToImage().toPixelMap()

@@ -346,9 +346,8 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    // Read off the categories themselves, in their declaration order, so a category added to the enum
-    // is announced without a second list here having to be remembered — which is exactly how the bike
-    // distances went un-announced when they first got their own lines.
+    // Read off the categories themselves, in their declaration order, so a category added to the enum is
+    // announced without a second list here having to be kept in step with it.
     val winnerDescriptions = WinnerCategory.entries.filter { it in winners }.map { stringResource(it.labelRes) }
     Surface(
         color = background,
@@ -537,8 +536,8 @@ private fun lineWidth(widths: List<Int>, line: IntRange, gap: Int): Int = line.s
 private fun ModeSymbolContent(symbol: ModeSymbol) {
     when (symbol) {
         // A glyph alone — there is nothing to name about a walk.
-        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
-            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
+        is ModeSymbol.Street -> StreetMetric.of(symbol.mode)?.let { metric ->
+            ModeGlyph(metric.glyph.iconRes, stringResource(metric.labelRes))
         }
         // Every badge leads with the mode it's ridden on, which a route number never says on its own. A
         // route publishing no short name badges its long name, capped to [OPTION_BADGE_MAX_WIDTH] and
@@ -574,11 +573,6 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
 private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     val context = LocalContext.current
     val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
-    // A line per street mode the trip travels on, plus any mode this option wins outright by not using
-    // it at all — a zero-distance win still needs a value to outline.
-    val metrics = remember(option.streetDistanceMeters, winners) {
-        streetMetrics(option.streetDistanceMeters, winners)
-    }
     Column(
         modifier = Modifier.padding(CARD_SECTION_PADDING),
         verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -605,15 +599,15 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
             // value + smaller unit) and in the user's units (miles/km, or feet/meters for short hops).
             // A card used to say only how far it walked, which left a bikeshare trip's ride unmeasured
             // and a bike-only one claiming "0 ft" as its whole street distance.
-            metrics.forEach { metric ->
+            streetDistanceLines(option.streetDistanceMeters, winners).forEach { (metric, meters) ->
                 MetricRow(
                     metric.glyph,
-                    contentDescription = stringResource(streetModeLabel(metric.mode)),
-                    winner = metric.winner,
+                    contentDescription = stringResource(metric.labelRes),
+                    winner = metric.winner in winners,
                     outlineColor = winnerOutlineColor
                 ) {
                     EtaPartsText(
-                        ConversionUtils.getFormattedDistanceParts(metric.meters, context),
+                        ConversionUtils.getFormattedDistanceParts(meters, context),
                         modifier = Modifier.alignByBaseline(),
                         numberSize = METRIC_NUMBER_SIZE,
                         unitSize = METRIC_UNIT_SIZE
@@ -633,40 +627,32 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
 }
 
 /**
- * One street-distance line on a card: how far the trip goes on [mode], behind the [glyph] that leads it,
- * and whether that distance is the least of any option in the picker ([winner], which outlines it).
- */
-private data class StreetMetric(val mode: StreetMode, val meters: Double, val glyph: MetricGlyph, val winner: Boolean)
-
-/**
- * Which street-distance lines a card draws, from the per-mode totals it carries — in [StreetMode]
- * declaration order rather than in travel order, so cards measuring the same modes list them in the same
- * order and the row reads across (walking first, since it is the mode nearly every option has). Cards
- * measuring *different* modes do stagger below their first line — a bikeshare option carries a line its
- * walk-only neighbour hasn't got — but that difference is itself what the rider is choosing between.
+ * Which street-distance lines a card draws, and how far each says — its per-mode totals read in
+ * [StreetMetric] order rather than in travel order, so cards measuring the same modes list them in the
+ * same order and the picker row reads across. Cards measuring *different* modes do stagger below their
+ * first line — a bikeshare option carries a line its walk-only neighbour hasn't got — but that
+ * difference is itself what the rider is choosing between.
  *
  * A mode the trip doesn't use draws no line, unless this option **won** that mode's category by not
  * using it: then it shows its "0 ft", since the outline needs a value to sit on and "needs none of it"
- * is worth saying. Each drawn line is outlined when the option wins its mode ([WinnerCategory]), so a
- * bikeshare plan's cards compete on how far they make you ride exactly as a walking plan's compete on
- * how far they make you walk.
+ * is worth saying.
  *
- * [StreetMode.CAR] is dropped here for the same reason it draws no symbol — the app ships no car glyph
- * and its planner never asks for car legs (see [streetModeIcon]) — so a car total would be a line with
- * nothing leading it.
+ * Only the modes the cards can present are considered at all — [StreetMetric] is that list, so a mode
+ * with no glyph can't reach a line here and a mode with no line can't be announced as a winner.
  */
-private fun streetMetrics(distances: Map<StreetMode, Double>, winners: Set<WinnerCategory>): List<StreetMetric> = StreetMode.entries.mapNotNull { mode ->
-    val meters = distances[mode] ?: 0.0
-    val glyph = streetMetricGlyph(mode)
-    val category = mode.streetDistanceCategory()
-    val winner = category != null && category in winners
-    if ((meters > 0.0 || winner) && glyph != null) StreetMetric(mode, meters, glyph, winner) else null
+private fun streetDistanceLines(
+    distances: Map<StreetMode, Double>,
+    winners: Set<WinnerCategory>
+): List<Pair<StreetMetric, Double>> = StreetMetric.entries.mapNotNull { metric ->
+    val meters = distances[metric.mode] ?: 0.0
+    if (meters > 0.0 || metric.winner in winners) metric to meters else null
 }
 
 /**
  * One option-card stat line: a leading glyph followed by its value [content], drawn so the glyph and
  * the value occupy exactly the same band — same top edge, same bottom edge, both sitting on the value's
- * baseline (#2076). Shared by the duration and walk-distance rows so the two stay in lockstep.
+ * baseline (#2076). Shared by every row of the stat group — the duration and each street distance — so
+ * they all stay in lockstep.
  *
  * The glyph is sized and placed by its *ink*, not by its box: the box is inflated from the wanted ink
  * height by the asset's own ink fraction ([MetricGlyph]), and the row's alignment line is the ink's
@@ -689,8 +675,8 @@ private fun MetricRow(
     val density = LocalDensity.current
     val inkHeight = digitCapHeight(density, METRIC_NUMBER_SIZE)
     val box = glyph.boxFor(inkHeight)
-    // Levelling by ink leaves each glyph a different box width (the two assets ink different fractions
-    // of their viewport), which would step the rows' values apart horizontally. Reserve the widest
+    // Levelling by ink leaves each glyph a different box width (no two assets ink the same fraction of
+    // their viewport), which would step the rows' values apart horizontally. Reserve the widest
     // row's box for every row: Icon fits-and-centres the vector, so the extra width only centres the
     // glyph — the height still drives its scale.
     val column = inkHeight * WIDEST_BOX_FACTOR
@@ -1341,34 +1327,29 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 
 /**
  * The glyph for an on-street leg — inside its node on the spine, as its symbol on an option card, and
- * leading that mode's distance line ([streetMetricGlyph], the one place the drawables are named, so a
- * mode can't be drawn one way as a symbol and another as a metric).
+ * leading that mode's distance line. All three read the same [StreetMetric.glyph], so a mode can't be
+ * drawn one way as a symbol and another as a metric.
  *
  * A rented bike takes a rental glyph (`ic_bike_rental`: Material Symbols' `car_rental` key over a
  * bicycle instead of a car) rather than the plain bicycle, so a shared bike doesn't read as the one the
  * rider brought — the same distinction the map draws between a bikeshare dock and a bike.
  *
- * Null for [StreetMode.CAR]: the app ships no car drawable because its planner never asks OTP for car
- * modes (the mode picker offers none — see `org.onebusaway.android.ui.tripplan.TripModeSelection`), and
- * a bare ring is honest where a walking figure would be wrong. Add `ic_directions_car` here — as a
- * [MetricGlyph], with its ink bounds — if car planning is ever offered.
+ * Null for [StreetMode.CAR], which [StreetMetric] doesn't list: the app ships no car drawable because
+ * its planner never asks OTP for car modes (the mode picker offers none — see
+ * `org.onebusaway.android.ui.tripplan.TripModeSelection`), and a bare ring is honest where a walking
+ * figure would be wrong. Offering car planning means a [StreetMetric] entry and a [MetricGlyph] with its
+ * ink bounds.
  */
-private fun streetModeIcon(mode: StreetMode): Int? = streetMetricGlyph(mode)?.iconRes
+private fun streetModeIcon(mode: StreetMode): Int? = StreetMetric.of(mode)?.glyph?.iconRes
 
-/** The metric line's leading glyph for a street mode: the same art as [streetModeIcon], levelled by ink. */
-private fun streetMetricGlyph(mode: StreetMode): MetricGlyph? = when (mode) {
-    StreetMode.WALK -> MetricGlyph.WALK
-    StreetMode.BIKE -> MetricGlyph.BIKE
-    StreetMode.BIKESHARE -> MetricGlyph.BIKESHARE
-    StreetMode.CAR -> null
-}
-
-/** What to call [mode] aloud, for a glyph standing on its own on an option card. */
-private fun streetModeLabel(mode: StreetMode): Int = when (mode) {
-    StreetMode.WALK -> R.string.step_by_step_non_transit_mode_walk_action
-    StreetMode.BIKE -> R.string.step_by_step_non_transit_mode_bicycle_action
-    StreetMode.BIKESHARE -> R.string.transit_directions_bikeshare_label
-    StreetMode.CAR -> R.string.step_by_step_non_transit_mode_car_action
+/**
+ * The glyph a presentable street mode is drawn with — total, since [StreetMetric] holds exactly the
+ * modes the cards can show, so the compiler asks for the art whenever one is added.
+ */
+private val StreetMetric.glyph: MetricGlyph get() = when (this) {
+    StreetMetric.WALK -> MetricGlyph.WALK
+    StreetMetric.BIKE -> MetricGlyph.BIKE
+    StreetMetric.BIKESHARE -> MetricGlyph.BIKESHARE
 }
 
 /**

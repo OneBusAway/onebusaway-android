@@ -93,7 +93,7 @@ internal object ModeSymbols {
     private fun TripLeg.streetSymbolOrNull(): ModeSymbol.Street? = if (distance >= NEGLIGIBLE_STREET_METERS) ModeSymbol.Street(streetMode()) else null
 
     /** The longest on-street leg, i.e. the one a street-only trip is really about; null if there is none. */
-    private fun List<TripLeg>.longestStreetLeg(): TripLeg? = filter { it.mode?.isOnStreetNonTransit == true }.maxByOrNull { it.distance }
+    private fun List<TripLeg>.longestStreetLeg(): TripLeg? = streetLegs().maxByOrNull { it.distance }
 
     private fun List<ModeSymbol>.filterConsecutiveDuplicateStreets(): List<ModeSymbol> = filterIndexed { i, symbol ->
         symbol !is ModeSymbol.Street || getOrNull(i - 1) != symbol
@@ -138,6 +138,9 @@ internal fun TripLeg.streetMode(): StreetMode = when (mode) {
  *
  * Pure, like the rest of this file, so `ModeSymbolsTest` covers it without a `Context`.
  */
-internal fun List<TripLeg>.streetDistancesMeters(): Map<StreetMode, Double> = filter { it.mode?.isOnStreetNonTransit == true }
+internal fun List<TripLeg>.streetDistancesMeters(): Map<StreetMode, Double> = streetLegs()
     .groupBy { it.streetMode() }
     .mapValues { (_, legs) -> legs.sumOf { it.distance } }
+
+/** The legs the rider covers under their own power — the ones [streetMode] can speak for. */
+private fun List<TripLeg>.streetLegs(): List<TripLeg> = filter { it.mode?.isOnStreetNonTransit == true }

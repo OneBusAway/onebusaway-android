@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import androidx.annotation.StringRes
+import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
@@ -250,6 +252,36 @@ enum class TerminalKind { START, ARRIVE }
  * guess. See `ModeSymbols.streetMode`.
  */
 enum class StreetMode { WALK, BIKE, BIKESHARE, CAR }
+
+/**
+ * A street mode the option cards can *present*: what its glyph is called aloud, and the category its
+ * distance competes in across the picker (#2122). One entry per presentable mode, so the two halves
+ * cannot disagree — a mode with a category but no line would announce a win the rider never sees, and a
+ * mode with a line but no category could never be emphasized.
+ *
+ * [StreetMode.CAR] is deliberately absent, which is the single statement of "the cards can't show a car
+ * leg": the app ships no car art and the planner never asks OTP for car modes (see the mode picker,
+ * `org.onebusaway.android.ui.tripplan.TripModeSelection`). Adding car planning means adding an entry
+ * here, its drawable, and its ink bounds — and nothing else has to be remembered.
+ *
+ * Declaration order is the order a card stacks its distance lines, walking first: it is the mode nearly
+ * every option has, so it lands in the same place on every card and the picker row reads across.
+ */
+enum class StreetMetric(
+    val mode: StreetMode,
+    @param:StringRes val labelRes: Int,
+    val winner: WinnerCategory
+) {
+    WALK(StreetMode.WALK, R.string.step_by_step_non_transit_mode_walk_action, WinnerCategory.LEAST_WALKING),
+    BIKE(StreetMode.BIKE, R.string.step_by_step_non_transit_mode_bicycle_action, WinnerCategory.LEAST_BIKING),
+    BIKESHARE(StreetMode.BIKESHARE, R.string.transit_directions_bikeshare_label, WinnerCategory.LEAST_BIKESHARING);
+
+    companion object {
+
+        /** How to present [mode], or null when it is one the cards can't show ([StreetMode.CAR]). */
+        fun of(mode: StreetMode): StreetMetric? = entries.firstOrNull { it.mode == mode }
+    }
+}
 
 /**
  * What a [TripLogEntry.Transit] leg is ridden on, narrowed from [TripMode] to the vehicle families the

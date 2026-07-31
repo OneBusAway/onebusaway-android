@@ -24,8 +24,8 @@ import org.onebusaway.android.R
  *
  * Every street mode a card can draw a distance for has its own "least" category, so the emphasis is on
  * whatever the trip actually costs the rider: a bikeshare plan's cards compete on how far they make you
- * ride, exactly as a walking plan's compete on how far they make you walk (#2122). [StreetMode.CAR] has
- * none, for the same reason it has no metric line at all — see [streetDistanceCategory].
+ * ride, exactly as a walking plan's compete on how far they make you walk (#2122). Which mode owns which
+ * category — and which modes have one at all — is [StreetMetric]'s to say, not this enum's.
  *
  * The declaration order is the order a card reads its wins in, so keep related categories together.
  */
@@ -36,18 +36,6 @@ enum class WinnerCategory(@StringRes val labelRes: Int) {
     LEAST_BIKESHARING(R.string.trip_plan_winner_least_bikesharing),
     EARLIEST_ARRIVAL(R.string.trip_plan_winner_earliest_arrival),
     LATEST_DEPARTURE(R.string.trip_plan_winner_latest_departure)
-}
-
-/**
- * Which category a street mode's distance is compared in — null for a mode the cards draw no distance
- * line for ([StreetMode.CAR]; see `streetMetricGlyph`), since a win with nothing to outline would be
- * announced and never seen.
- */
-fun StreetMode.streetDistanceCategory(): WinnerCategory? = when (this) {
-    StreetMode.WALK -> WinnerCategory.LEAST_WALKING
-    StreetMode.BIKE -> WinnerCategory.LEAST_BIKING
-    StreetMode.BIKESHARE -> WinnerCategory.LEAST_BIKESHARING
-    StreetMode.CAR -> null
 }
 
 /** Which clock-time comparison is useful for the request that produced the options. */
@@ -93,12 +81,11 @@ fun itineraryWinnerCategories(
     // needs no bikeshare at all" is a real answer to how much bikesharing it costs, and it is how a
     // trip that never walks has always won LEAST_WALKING. The card draws the winning line even at zero
     // (see `streetMetrics`), so the outline always has a value under it.
-    for (mode in StreetMode.entries) {
-        val category = mode.streetDistanceCategory() ?: continue
-        val distances = options.map { it.streetDistanceMeters[mode] ?: 0.0 }
+    for (metric in StreetMetric.entries) {
+        val distances = options.map { it.streetDistanceMeters[metric.mode] ?: 0.0 }
         // A non-finite distance is not comparable enough to declare a winner for the whole result set.
         if (distances.all(Double::isFinite)) {
-            award(category, distances) { it.min() }
+            award(metric.winner, distances) { it.min() }
         }
     }
 

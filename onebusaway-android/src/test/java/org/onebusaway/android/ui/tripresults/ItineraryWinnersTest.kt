@@ -26,13 +26,16 @@ class ItineraryWinnersTest {
         durationMinutes: Long,
         walkMeters: Double,
         departureMinutes: Long,
-        arrivalMinutes: Long
+        arrivalMinutes: Long,
+        // Absent rather than zero for a mode the trip doesn't use, as a repository-built option would be
+        // — reading none of it as zero is the comparison's doing, not the model's.
+        distances: Map<StreetMode, Double> = mapOf(StreetMode.WALK to walkMeters)
     ) = ItineraryOption(
         symbols = emptyList(),
         durationMinutes = durationMinutes,
         startTime = ServerTime(departureMinutes * 60_000L),
         endTime = ServerTime(arrivalMinutes * 60_000L),
-        streetDistanceMeters = mapOf(StreetMode.WALK to walkMeters)
+        streetDistanceMeters = distances
     )
 
     /**
@@ -43,12 +46,9 @@ class ItineraryWinnersTest {
         durationMinutes = 20,
         walkMeters = walkMeters,
         departureMinutes = 0,
-        arrivalMinutes = 20
-    ).copy(
-        streetDistanceMeters = buildMap {
+        arrivalMinutes = 20,
+        distances = buildMap {
             put(StreetMode.WALK, walkMeters)
-            // Absent rather than zero, as a repository-built option would be — the comparison is what
-            // reads it as none, not the model.
             if (bikeshareMeters > 0.0) put(StreetMode.BIKESHARE, bikeshareMeters)
         }
     )

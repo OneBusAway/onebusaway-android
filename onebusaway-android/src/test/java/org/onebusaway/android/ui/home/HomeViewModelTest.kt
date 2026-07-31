@@ -1381,4 +1381,54 @@ class HomeViewModelTest {
         assertEquals(0, startup.cleared)
         assertEquals(0, region.refreshCount)
     }
+
+    // ---- a stop cannot be selected while directions owns the map (#2097) ----
+
+    private val someStop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
+
+    @Test
+    fun `a stop tapped on the directions map is refused`() = runTest {
+        val vm = viewModel()
+        vm.enterDirections()
+
+        val transition = vm.onStopFocused(someStop)
+
+        assertEquals(StopFocusTransition.Refused, transition)
+        // The refusal is the point: focus stays on the trip, so there is no stop selection to leave
+        // behind when the rider comes back to it.
+        assertTrue(vm.currentFocus.value is CurrentFocus.Directions)
+    }
+
+    @Test
+    fun `a refused stop does not disturb a focused leg`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        val walk = walkLeg(2)
+        vm.focusItineraryLegOnMap(walk)
+
+        vm.onStopFocused(someStop)
+
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
+    }
+
+    /** A reveal from elsewhere is deliberate, so it leaves directions rather than being refused. */
+    @Test
+    fun `revealing a stop from navigation leaves directions`() = runTest {
+        val vm = viewModel()
+        vm.enterDirections()
+
+        vm.revealStop(someStop)
+
+        assertEquals(someStop, vm.currentFocus.value.focusedStop)
+    }
+
+    @Test
+    fun `a stop tapped outside directions still focuses`() = runTest {
+        val vm = viewModel()
+
+        val transition = vm.onStopFocused(someStop)
+
+        assertEquals(StopFocusTransition.ReplacePresentation, transition)
+        assertEquals(someStop, vm.currentFocus.value.focusedStop)
+    }
 }

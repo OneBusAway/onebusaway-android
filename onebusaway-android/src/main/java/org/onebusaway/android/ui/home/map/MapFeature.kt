@@ -172,6 +172,9 @@ fun MapFeature(
                     FocusedStop(stop.id, stop.name, stop.stopCode, marker.point, stop.wheelchairBoarding),
                     continuingRoutes = marker.presentedRoutes
                 )
+                // Refused (directions owns the map): leave before the map marks the stop selected,
+                // which is the render state that used to outlive the focus and confuse the trip.
+                if (transition == StopFocusTransition.Refused) return
                 if (transition == StopFocusTransition.ReplacePresentation) {
                     mapViewModel.clearAllFocus()
                 }

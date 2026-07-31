@@ -53,7 +53,13 @@ import org.onebusaway.android.util.toGeoPoint
 internal enum class StopFocusTransition {
     Unchanged,
     ContinuePresentation,
-    ReplacePresentation
+    ReplacePresentation,
+
+    /**
+     * The focus was refused: directions owns the map, and a stop cannot be selected there (#2097).
+     * Callers must not mark the stop selected on the map either — the refusal is the whole point.
+     */
+    Refused
 }
 
 /**
@@ -217,6 +223,12 @@ class HomeViewModel @Inject constructor(
         stop: FocusedStop,
         continuingRoutes: Set<RouteDirectionKey> = emptySet()
     ): StopFocusTransition {
+        // Directions owns the map while a trip is being planned, so a stop tapped there is refused
+        // rather than allowed to take over (#2097). Letting it through pushed stop focus on top of the
+        // trip, and coming back left the marker still reading as selected underneath a form that knows
+        // nothing about it — a state easier to make unreachable than to unwind. A deliberate reveal
+        // from elsewhere in the app is a different act and leaves directions first; see [revealStop].
+        if (_currentFocus.value is CurrentFocus.Directions) return StopFocusTransition.Refused
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId == stop.id
         if (sameStop) return StopFocusTransition.Unchanged
@@ -249,6 +261,11 @@ class HomeViewModel @Inject constructor(
      */
     fun revealStop(stop: FocusedStop, animate: Boolean = false) {
         emitMapDirective(MapDirective.ClearFocus)
+        // Asking for a stop from somewhere else in the app — starred, recents, a deep link — is a
+        // deliberate move to that stop, so it leaves a trip plan behind rather than being refused by
+        // it the way a marker tap on the directions map is. The plan itself survives in
+        // TripPlanViewModel, so re-entering directions picks it back up.
+        if (_currentFocus.value is CurrentFocus.Directions) replaceFocus(CurrentFocus.None)
         onStopFocused(stop)
         markPendingMapFocus(animate)
     }

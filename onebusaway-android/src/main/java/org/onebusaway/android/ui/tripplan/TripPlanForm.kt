@@ -129,6 +129,9 @@ object TripPlanTestTags {
     const val MY_LOCATION_SUFFIX = "MyLocation"
     const val PICK_ON_MAP_SUFFIX = "PickOnMap"
 
+    /** The endpoint dot [TripEndpointDotIcon] draws, wherever a row stands for one end of the trip. */
+    const val DOT_SUFFIX = "Dot"
+
     /** The action bar's two time segments. */
     const val WHEN_MODE = "tripPlanWhenMode"
     const val WHEN_TIME = "tripPlanWhenTime"
@@ -267,7 +270,6 @@ private fun EndpointRow(
     onPickOnMap: () -> Unit
 ) {
     val tagPrefix = slot.tagPrefix
-    val isOrigin = slot == TripEndpointSlot.FROM
     // The endpoint as the field should read it. A resolved endpoint is not a different *kind* of row
     // — it is the same field showing a name — so nothing is swapped in or out as it resolves.
     val endpointText = endpointLabel(endpoint)
@@ -318,7 +320,7 @@ private fun EndpointRow(
             modifier = Modifier.fillMaxWidth().height(ENDPOINT_ROW_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            EndpointRail(endpoint = endpoint, isOrigin = isOrigin)
+            EndpointRail(endpoint = endpoint, slot = slot)
             BasicTextField(
                 value = field,
                 onValueChange = { value ->
@@ -340,7 +342,7 @@ private fun EndpointRow(
                 textStyle = LocalTextStyle.current.merge(MaterialTheme.typography.bodyLarge)
                     .copy(
                         color = if (endpoint is TripEndpoint.CurrentLocation) {
-                            endpointColor(endpoint, isOrigin)
+                            endpointColor(endpoint, slot)
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         }
@@ -411,17 +413,28 @@ private fun EndpointRow(
 }
 
 /**
- * The colour that identifies an endpoint. Blue wherever the trip is anchored to the device's own
- * position, at either end — that is a different kind of fact from a chosen place, so it outranks the
- * start/destination distinction rather than sitting beside it. Otherwise the origin takes the theme's
- * primary and the destination the fixed red.
+ * The colour that says which end of the trip an endpoint is: the theme's primary for the origin
+ * (green in the OBA brand, whatever a white-label brand sets) and the fixed red for the destination.
+ *
+ * Public because the rail is not the only place a rider names an endpoint — the map long-press menu
+ * offers the same two ends, and marks its rows with these same hues so the row and the endpoint it
+ * fills read as one thing.
  */
 @Composable
-private fun endpointColor(endpoint: TripEndpoint, isOrigin: Boolean): Color = when {
-    endpoint is TripEndpoint.CurrentLocation ->
-        colorResource(R.color.trip_plan_endpoint_current_location)
-    isOrigin -> MaterialTheme.colorScheme.primary
-    else -> colorResource(R.color.trip_destination_marker)
+fun endpointSlotColor(slot: TripEndpointSlot): Color = when (slot) {
+    TripEndpointSlot.FROM -> MaterialTheme.colorScheme.primary
+    TripEndpointSlot.TO -> colorResource(R.color.trip_destination_marker)
+}
+
+/**
+ * The colour that identifies an endpoint. Blue wherever the trip is anchored to the device's own
+ * position, at either end — that is a different kind of fact from a chosen place, so it outranks the
+ * start/destination distinction rather than sitting beside it. Otherwise it is the slot's own colour.
+ */
+@Composable
+private fun endpointColor(endpoint: TripEndpoint, slot: TripEndpointSlot): Color = when (endpoint) {
+    is TripEndpoint.CurrentLocation -> colorResource(R.color.trip_plan_endpoint_current_location)
+    else -> endpointSlotColor(slot)
 }
 
 /**
@@ -430,7 +443,8 @@ private fun endpointColor(endpoint: TripEndpoint, isOrigin: Boolean): Color = wh
  * instead — that it is a stop rather than an address is something no colour in the set encodes.
  */
 @Composable
-private fun EndpointRail(endpoint: TripEndpoint, isOrigin: Boolean) {
+private fun EndpointRail(endpoint: TripEndpoint, slot: TripEndpointSlot) {
+    val isOrigin = slot == TripEndpointSlot.FROM
     val connectorColor = MaterialTheme.colorScheme.outlineVariant
     Box(
         modifier = Modifier.width(RAIL_WIDTH).height(ENDPOINT_ROW_HEIGHT),
@@ -466,7 +480,7 @@ private fun EndpointRail(endpoint: TripEndpoint, isOrigin: Boolean) {
         if (endpoint.isTransit) {
             BusIcon()
         } else {
-            EndpointDot(endpointColor(endpoint, isOrigin))
+            EndpointDot(endpointColor(endpoint, slot))
         }
     }
 }
@@ -486,6 +500,21 @@ private fun EndpointDot(color: Color) {
 private fun CurrentLocationDotIcon() {
     Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
         EndpointDot(colorResource(R.color.trip_plan_endpoint_current_location))
+    }
+}
+
+/**
+ * The rail's endpoint dot in a Material icon slot, for a row elsewhere that offers to fill this end
+ * of the trip — the map long-press menu's "directions from/to here". Same reasoning as
+ * [CurrentLocationDotIcon]: what the rider taps carries the mark of the endpoint it produces.
+ */
+@Composable
+fun TripEndpointDotIcon(slot: TripEndpointSlot) {
+    Box(
+        Modifier.size(24.dp).testTag(slot.tagPrefix + TripPlanTestTags.DOT_SUFFIX),
+        contentAlignment = Alignment.Center
+    ) {
+        EndpointDot(endpointSlotColor(slot))
     }
 }
 

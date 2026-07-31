@@ -67,3 +67,16 @@ internal fun MenuRow(textRes: Int, icon: ImageVector? = null, onClick: () -> Uni
         leadingIcon = icon?.let { { Icon(imageVector = it, contentDescription = null) } }
     )
 }
+
+/**
+ * A labelled menu item whose leading slot the caller draws, for a mark no tinted [ImageVector]
+ * carries — the directions endpoint dots, which are identified by their own hue.
+ */
+@Composable
+internal fun MenuRow(textRes: Int, leadingIcon: @Composable () -> Unit, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(stringResource(textRes)) },
+        onClick = onClick,
+        leadingIcon = leadingIcon
+    )
+}

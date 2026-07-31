@@ -75,6 +75,11 @@ internal fun routePolylinesWithSegment(
  * a variant that never touches the boarding point isn't an approach to it and is dropped. When the
  * boarding point is off every variant (a leg-geometry mismatch), the single nearest variant is clipped
  * so the approach still draws.
+ *
+ * Variants that diverge only *after* the boarding point clip to the same approach, so the result is
+ * de-duplicated: the shared trunk is drawn (and cased) once, not once per variant. That only catches
+ * exactly-equal geometry — variants encoding the same street with different vertex sampling stay
+ * distinct and still draw over each other.
  */
 internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyline> {
     anchor ?: return this
@@ -86,6 +91,7 @@ internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyli
                 ?.takeIf { it.isDrawableSegment() && it.first() != it.last() }
                 ?.let { line.copy(points = it) }
         }
+        .distinct()
 }
 
 /** A route line whose eligible travel ends at [maxDistanceAlong]. */
@@ -104,6 +110,20 @@ internal data class BoundedRoutePath(
  * off every variant — the ride continues onto a later stay-aboard route, or the leg geometry doesn't
  * match this route's shape — there is no meaningful bound, and the whole shape stays eligible rather
  * than guessing one.
+ *
+ * That last fallback is deliberately the opposite of [upstreamTo]'s, which narrows to the single nearest
+ * variant. The two answer different questions about the same mismatched anchor: a mismatch must not
+ * multiply the *drawn* approach, and it must not drop a vehicle that is genuinely on the ride. So one
+ * degrades restrictively and the other permissively, on purpose.
+ *
+ * The receiver may be the whole-route **merged** shape rather than a direction's own, since
+ * `RouteMap.shapeForDirection` falls back to it for a direction that carried no shape on the wire. That
+ * set holds both directions, so the alighting point also sits within tolerance of the reverse-direction
+ * shape, which then becomes an eligible path bounded in the *opposite* travel order — a geographically
+ * downstream vehicle projects upstream on it and survives. Ordinarily the poll is already narrowed by
+ * trip `directionId` before this filter runs, so those vehicles never reach here; a stay-aboard
+ * interline composite deliberately drops that direction filter (#2000) and is the case where the
+ * geometry alone would have to exclude them, and can't.
  */
 internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedRoutePath> {
     val projections = variantProjections(anchor)
@@ -112,7 +132,10 @@ internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedR
         .ifEmpty { projections.map { BoundedRoutePath(it.path, Double.POSITIVE_INFINITY) } }
 }
 
-/** Whether [point] is near one of these paths without exceeding its along-route boundary. */
+/** Whether [point] is near one of these paths without exceeding its along-route boundary.
+ *  Runs on the 20 Hz vehicle sampler for every vehicle, and each path costs a full projection —
+ *  a rejected (downstream) vehicle pays all of them, since [any] can only short-circuit a match.
+ *  See #2124 for pre-rejecting on a bounding box or hoisting the verdict off the frame loop. */
 internal fun List<BoundedRoutePath>.containsRoutePoint(
     point: GeoPoint,
     toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS

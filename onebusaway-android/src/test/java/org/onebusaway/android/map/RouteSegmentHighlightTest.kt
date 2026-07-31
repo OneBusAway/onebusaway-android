@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.map
 
+import kotlin.math.cos
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -28,6 +29,7 @@ import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
 /** JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment], [routePolylinesWithSegment]). */
@@ -37,6 +39,17 @@ class RouteSegmentHighlightTest {
     private val segment = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33))
 
     private fun stop(id: String, lat: Double, lon: Double) = ObaStopElement(id = id, lat = lat, lon = lon)
+
+    /**
+     * A point [meters] due east of ([lat], [lon]), so a tolerance test can state the distance it means
+     * instead of hiding it in a magic decimal. Uses the same earth radius as the haversine helper the
+     * filter measures with; at these distances the parallel and the great circle through the two points
+     * diverge far below a millimetre, so the offset a test asks for is the distance the filter sees.
+     */
+    private fun eastOf(lat: Double, lon: Double, meters: Double) = GeoPoint(
+        lat,
+        lon + Math.toDegrees(meters / (EARTH_RADIUS_METERS * cos(Math.toRadians(lat))))
+    )
 
     @Test
     fun onSegment_keepsStopsOnThePath_dropsFarOnes() {
@@ -120,10 +133,16 @@ class RouteSegmentHighlightTest {
     @Test
     fun upstreamTo_clipsEveryVariantAtTheBoardingPoint_dropsVariantsThatNeverReachIt() {
         val trunk = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
-        // Same street through the boarding point, then branching east — a second valid approach variant.
+        // Reaches the boarding point up a western street instead, then branches east — a second valid
+        // approach variant, and a different one (a variant sharing the trunk's approach would dedupe).
         val branch = RoutePolyline(
             color = 1,
-            points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33), GeoPoint(47.62, -122.31))
+            points = listOf(
+                GeoPoint(47.58, -122.36),
+                GeoPoint(47.62, -122.36),
+                GeoPoint(47.62, -122.33),
+                GeoPoint(47.62, -122.31)
+            )
         )
         // Short-turn variant ending ~2 km before the boarding point: not an approach to it.
         val shortTurn = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.33)))
@@ -148,6 +167,25 @@ class RouteSegmentHighlightTest {
         assertEquals(1, upstream.size)
         assertEquals(47.62, upstream.single().points.last().latitude, 0.001)
         assertEquals(-122.33, upstream.single().points.last().longitude, 0.000001)
+    }
+
+    @Test
+    fun upstreamTo_variantsSharingTheApproach_drawTheTrunkOnce() {
+        // Two variants that run the same street to the boarding point and only diverge after it: their
+        // clipped approaches are the same line, and the trunk must not be drawn (and cased) twice.
+        val north = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33), GeoPoint(47.66, -122.33))
+        )
+        val east = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33), GeoPoint(47.62, -122.31))
+        )
+
+        val upstream = listOf(north, east).upstreamTo(GeoPoint(47.62, -122.33))
+
+        assertEquals(1, upstream.size)
+        assertEquals(listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33)), upstream.single().points)
     }
 
     @Test
@@ -187,6 +225,35 @@ class RouteSegmentHighlightTest {
         assertFalse(eligible.containsRoutePoint(GeoPoint(47.65, -122.33)))
         // Nowhere near any variant.
         assertFalse(eligible.containsRoutePoint(GeoPoint(47.64, -122.36)))
+    }
+
+    @Test
+    fun boundedThrough_variantNotReachingTheAlightingPoint_formsNoEligiblePath() {
+        // A variant that can't carry a rider to the alighting point contributes no eligible path, so a
+        // vehicle on the stretch only that variant serves is filtered out.
+        val through = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
+        val shortTurn = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.36)))
+
+        val eligible = listOf(through, shortTurn).boundedThrough(GeoPoint(47.64, -122.33))
+
+        // Mid-way along the short-turn's own spur, and nowhere near the through variant.
+        assertFalse(eligible.containsRoutePoint(GeoPoint(47.59, -122.345)))
+        // Not vacuous: the variant that does reach the alighting point still carries its upstream vehicles.
+        assertTrue(eligible.containsRoutePoint(GeoPoint(47.60, -122.33)))
+    }
+
+    @Test
+    fun boundedThrough_variantMatch_isPinnedToBothSidesOfTheTolerance() {
+        val route = listOf(RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33))))
+        val downstream = GeoPoint(47.65, -122.33)
+
+        // Inside the tolerance the anchor travels the variant, so it bounds it and downstream is excluded.
+        val matched = route.boundedThrough(eastOf(47.64, -122.33, VARIANT_MATCH_TOLERANCE_METERS - 5))
+        assertFalse(matched.containsRoutePoint(downstream))
+
+        // Just outside it the anchor travels nothing, so the fallback leaves the whole shape eligible.
+        val unmatched = route.boundedThrough(eastOf(47.64, -122.33, VARIANT_MATCH_TOLERANCE_METERS + 5))
+        assertTrue(unmatched.containsRoutePoint(downstream))
     }
 
     @Test

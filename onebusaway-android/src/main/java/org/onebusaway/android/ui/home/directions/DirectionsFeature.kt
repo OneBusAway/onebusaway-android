@@ -56,6 +56,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -157,7 +158,9 @@ fun DirectionsFormCard(
     // The instant the picker opens on, captured when it is opened rather than read from the form on
     // each recomposition: under the "now" anchor the form's own dateTimeMillis is the moment the
     // ViewModel was built, which a form left open has long outrun (see [TripPlanViewModel.pickerStartMillis]).
-    var pickerStartMillis by remember { mutableStateOf<Long?>(null) }
+    // Saved, not merely remembered, so a rotation mid-pick doesn't close the dialog on the rider — the
+    // fragment-based pickers this replaced survived one, and the dialog's own state is saveable too.
+    var pickerStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
     val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
     val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
     val availableStreetModes = StreetMode.entries.filter { it.isAvailableIn(bikeshare, usesOtp2) }

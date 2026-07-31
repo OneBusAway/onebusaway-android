@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -177,6 +178,37 @@ class TripPlanFormRenderTest {
 
         composeRule.onNodeWithTag(FROM_MY_LOCATION).assertIsDisplayed()
         composeRule.onNodeWithTag(FROM_PICK_ON_MAP).assertIsDisplayed()
+    }
+
+    /**
+     * Naming an endpoint from the menu ends the edit. The field is a text box only while a place is
+     * being chosen, so a choice that leaves it focused leaves the keyboard standing over the map with
+     * nothing left for the rider to type — worst with "Your location", which they reach for precisely
+     * to avoid typing. Both kinds of row are checked, since a geocoded result names the endpoint just
+     * as completely. The keyboard itself isn't assertable here; the focus that raises it is.
+     */
+    @Test
+    fun choosingFromTheMenuEndsTheEdit() {
+        renderForm(
+            plannedState.copy(
+                from = TripEndpoint.FreeText(""),
+                toSuggestions = listOf(TripEndpoint.Geocoded("Pike Brewing Company", 47.60, -122.34))
+            )
+        )
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_MY_LOCATION).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
+
+        // The second half is also the handoff: the row is editable again after the first choice let go
+        // of the focus it shares with its sibling.
+        composeRule.onNodeWithTag(TO_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Pike Brewing Company").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TO_FIELD).assertIsNotFocused()
     }
 
     @Test

@@ -29,6 +29,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.R
 import org.onebusaway.android.ui.compose.Channel
 import org.onebusaway.android.ui.compose.assertDominant
 import org.onebusaway.android.ui.compose.components.LONG_PRESS_MENU_EDGE_MARGIN
@@ -49,18 +50,22 @@ class DirectionsLongPressMenuRenderTest {
     @get:Rule
     val composeRule = createUnconfinedComposeRule()
 
+    private val context = InstrumentationRegistry.getInstrumentation().targetContext
+    private val fromLabel = context.getString(R.string.directions_from_here)
+    private val toLabel = context.getString(R.string.directions_to_here)
+
     @Test
     fun bothEndsOfTheTripAreOfferedAndReportTheirSlot() {
         var chosen: TripEndpointSlot? = null
         renderMenu(onChooseSlot = { chosen = it })
 
-        composeRule.onNodeWithText(FROM_LABEL).assertIsDisplayed()
-        composeRule.onNodeWithText(TO_LABEL).assertIsDisplayed()
+        composeRule.onNodeWithText(fromLabel).assertIsDisplayed()
+        composeRule.onNodeWithText(toLabel).assertIsDisplayed()
 
-        composeRule.onNodeWithText(FROM_LABEL).performClick()
+        composeRule.onNodeWithText(fromLabel).performClick()
         assertEquals(TripEndpointSlot.FROM, chosen)
 
-        composeRule.onNodeWithText(TO_LABEL).performClick()
+        composeRule.onNodeWithText(toLabel).performClick()
         assertEquals(TripEndpointSlot.TO, chosen)
     }
 
@@ -79,10 +84,9 @@ class DirectionsLongPressMenuRenderTest {
     fun theMenuIsACompactCardRatherThanAFullWidthSheet() {
         renderMenu()
 
-        val rowWidth = composeRule.onNodeWithText(FROM_LABEL).getUnclippedBoundsInRoot().width
+        val rowWidth = composeRule.onNodeWithText(fromLabel).getUnclippedBoundsInRoot().width
         val screenWidth = with(composeRule.density) {
-            InstrumentationRegistry.getInstrumentation()
-                .targetContext.resources.displayMetrics.widthPixels.toDp()
+            context.resources.displayMetrics.widthPixels.toDp()
         }
         val widest = minOf(
             LONG_PRESS_MENU_MAX_WIDTH,
@@ -100,8 +104,8 @@ class DirectionsLongPressMenuRenderTest {
     fun theRowsAreMarkedWithTheRailsEndpointDots() {
         renderMenu()
 
-        assertDominant(dot(DirectionsLongPressMenuTestTags.FROM_DOT), Channel.GREEN, FROM_LABEL)
-        assertDominant(dot(DirectionsLongPressMenuTestTags.TO_DOT), Channel.RED, TO_LABEL)
+        assertDominant(dot(DirectionsLongPressMenuTestTags.FROM_DOT), Channel.GREEN, fromLabel)
+        assertDominant(dot(DirectionsLongPressMenuTestTags.TO_DOT), Channel.RED, toLabel)
     }
 
     /**
@@ -123,10 +127,5 @@ class DirectionsLongPressMenuRenderTest {
                 DirectionsLongPressMenu(onChooseSlot = onChooseSlot, onDismiss = {})
             }
         }
-    }
-
-    private companion object {
-        const val FROM_LABEL = "Directions from here"
-        const val TO_LABEL = "Directions to here"
     }
 }

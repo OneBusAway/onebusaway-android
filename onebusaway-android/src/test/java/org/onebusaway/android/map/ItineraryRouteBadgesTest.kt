@@ -17,6 +17,10 @@ import org.onebusaway.android.util.GeoPoint
  * label names *a ride* — one per route, however many legs it spans, and every route the rider may board
  * for it (#2083) — takes the colour of the line it names, and leads back into that ride rather than away
  * from the trip being read (#2101).
+ *
+ * One label is not always one ride, though: a label is per route, so an itinerary that rides the same
+ * route twice wears a single label covering both. One label being one tap target, it leads to the first
+ * of them in travel order — the ride the rider reaches first. `rideCoveringLegs` owns that rule.
  */
 class ItineraryRouteBadgesTest {
 

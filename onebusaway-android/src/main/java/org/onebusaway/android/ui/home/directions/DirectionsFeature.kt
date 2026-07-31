@@ -270,7 +270,9 @@ private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
  *
  * It also answers the map's own tap on a ride ([rideBadgeTaps], #2101) — the sheet is where a ride's
  * resolved identity lives, so this is the one place that can spend a map tap the same way the drawer's
- * own row tap is spent.
+ * own row tap is spent. Where a label covers the same route ridden twice, it resolves to the first of
+ * those rides in travel order (see
+ * [rideCoveringLegs][org.onebusaway.android.ui.tripresults.rideCoveringLegs]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -325,7 +327,8 @@ fun DirectionsResultsSheet(
     // list below does — the same handler, so one ride can't mean two things depending on where the rider
     // reached for it. The label names legs of the itinerary it is drawn on, and the drawn itinerary is
     // this VM's own selection, so the indices are read against the plan that produced them; a set naming
-    // no ride here focuses nothing rather than guessing.
+    // no ride here focuses nothing rather than guessing, and one naming several (the same route ridden
+    // twice under a single label) focuses the first in travel order.
     //
     // The handlers are read through rememberUpdatedState so this long-lived collector spends the latest
     // ones rather than those it first captured.

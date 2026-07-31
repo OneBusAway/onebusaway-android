@@ -33,6 +33,11 @@ import org.onebusaway.android.util.haversineDistance
  *  spacing, so the nearest off-segment stop is never wrongly included. */
 const val SEGMENT_STOP_TOLERANCE_METERS = 50.0
 
+/** How close a board/alight anchor must sit to a direction shape variant to count as travelling that
+ *  variant ([upstreamTo], [boundedThrough]). Same 50 m drift class as [SEGMENT_STOP_TOLERANCE_METERS],
+ *  but its own knob: retuning stop inclusion must not silently retune variant applicability. */
+const val VARIANT_MATCH_TOLERANCE_METERS = 50.0
+
 /** A ridden segment worth drawing/framing: a polyline needs at least two points. Below that it's the
  *  "no segment" case — plain route focus (whole route drawn/framed, all stops kept). */
 internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
@@ -62,15 +67,25 @@ internal fun routePolylinesWithSegment(
     return base.asSelectedRouteApproach() + itineraryContext + overlay
 }
 
-/** Keep a direction's travel-ordered geometry only through [anchor], including a clipped final line. */
+/**
+ * Keep a direction's geometry only through [anchor], the boarding point. Each receiver entry is an
+ * independent shape **variant** of the direction — stops-for-route supplies one complete travel-ordered
+ * polyline per distinct trip shape (see `RouteMap.polylinesByDirection`), never consecutive fragments of
+ * one line (#2104). Every variant the boarding point sits on is clipped at its own boarding projection;
+ * a variant that never touches the boarding point isn't an approach to it and is dropped. When the
+ * boarding point is off every variant (a leg-geometry mismatch), the single nearest variant is clipped
+ * so the approach still draws.
+ */
 internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyline> {
     anchor ?: return this
-    val (matchIndex, line, projection) = closestProjection(anchor) ?: return emptyList()
-    val clipped = Polyline(line.points)
-        .subPolyline(0.0, projection.distanceAlong)
-        ?.takeIf { it.size >= 2 && it.first() != it.last() }
-        ?.let { line.copy(points = it) }
-    return take(matchIndex) + listOfNotNull(clipped)
+    val projections = variantProjections(anchor)
+    return projections.travelledVariants()
+        .ifEmpty { listOfNotNull(projections.minByOrNull { it.projection.distanceToPoint }) }
+        .mapNotNull { (line, path, projection) ->
+            path.subPolyline(0.0, projection.distanceAlong)
+                ?.takeIf { it.isDrawableSegment() && it.first() != it.last() }
+                ?.let { line.copy(points = it) }
+        }
 }
 
 /** A route line whose eligible travel ends at [maxDistanceAlong]. */
@@ -79,11 +94,22 @@ internal data class BoundedRoutePath(
     val maxDistanceAlong: Double
 )
 
-/** Preserve full geometry for projection while bounding travel at [anchor]. */
+/**
+ * Preserve full geometry for projection while bounding travel at [anchor], the alighting point. As in
+ * [upstreamTo], each receiver entry is an independent shape variant, so every variant the alighting
+ * point sits on becomes its own eligible path bounded at its own alight projection — a vehicle upstream
+ * on *any* variant serving the alighting point stays eligible, while a vehicle past the alighting point
+ * is beyond the bound of every variant it rides and drops out (#2104). A variant that never touches the
+ * alighting point can't carry a rider there, so it forms no eligible path. When the alighting point is
+ * off every variant — the ride continues onto a later stay-aboard route, or the leg geometry doesn't
+ * match this route's shape — there is no meaningful bound, and the whole shape stays eligible rather
+ * than guessing one.
+ */
 internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedRoutePath> {
-    val (matchIndex, _, projection) = closestProjection(anchor) ?: return emptyList()
-    return take(matchIndex).map { BoundedRoutePath(Polyline(it.points), Double.POSITIVE_INFINITY) } +
-        BoundedRoutePath(Polyline(get(matchIndex).points), projection.distanceAlong)
+    val projections = variantProjections(anchor)
+    return projections.travelledVariants()
+        .map { BoundedRoutePath(it.path, it.projection.distanceAlong) }
+        .ifEmpty { projections.map { BoundedRoutePath(it.path, Double.POSITIVE_INFINITY) } }
 }
 
 /** Whether [point] is near one of these paths without exceeding its along-route boundary. */
@@ -99,10 +125,10 @@ internal fun List<BoundedRoutePath>.containsRoutePoint(
 /**
  * Whether a route-focus vehicle survives the selected leg's spatial filter. The explicitly requested
  * ETA-pill trip ([focusedTripId]) always survives: its pin is derived from the arrivals response's
- * exact active-trip + GPS identity, while the eligible path is reconstructed independently from
- * route-wide geometry and can miss a legitimate trip variant. Without this exception the route poll
- * can contain the tapped vehicle yet discard it before [RouteMapController] gets the chance to frame
- * it.
+ * exact active-trip + GPS identity, while the eligible paths are reconstructed independently from
+ * route-wide geometry and can still miss it when the planned leg's geometry doesn't match the route
+ * shape. Without this exception the route poll can contain the tapped vehicle yet discard it before
+ * [RouteMapController] gets the chance to frame it.
  *
  * [focusedTripId] must be the trip's exemption for the whole focus context, not the one-shot pending
  * camera fit: this filter re-runs on every vehicle sample, so keying it to a focus that resolves
@@ -116,11 +142,23 @@ internal fun focusedRideKeepsVehicle(
 ): Boolean = (vehicleTripId != null && vehicleTripId == focusedTripId) ||
     eligiblePaths.containsRoutePoint(point)
 
-private fun List<RoutePolyline>.closestProjection(anchor: GeoPoint) = mapIndexedNotNull { index, line ->
-    val projection = Polyline(line.points).nearestProjection(anchor.latitude, anchor.longitude)
-        ?: return@mapIndexedNotNull null
-    Triple(index, line, projection)
-}.minByOrNull { (_, _, projection) -> projection.distanceToPoint }
+private data class VariantProjection(
+    val line: RoutePolyline,
+    val path: Polyline,
+    val projection: Polyline.Projection
+)
+
+/** Every variant paired with its nearest-[anchor] projection (a variant with no geometry drops out).
+ *  Built once per call so the O(n) [Polyline] construction is shared by the tolerance filter, the
+ *  callers' fallbacks, and the clip/bound they produce. */
+private fun List<RoutePolyline>.variantProjections(anchor: GeoPoint): List<VariantProjection> = mapNotNull { line ->
+    val path = Polyline(line.points)
+    path.nearestProjection(anchor.latitude, anchor.longitude)
+        ?.let { VariantProjection(line, path, it) }
+}
+
+/** The variants the anchor actually travels: those it sits on within [VARIANT_MATCH_TOLERANCE_METERS]. */
+private fun List<VariantProjection>.travelledVariants(): List<VariantProjection> = filter { it.projection.distanceToPoint <= VARIANT_MATCH_TOLERANCE_METERS }
 
 /**
  * Keep only the stops within [toleranceMeters] of [segment]'s path — the ride's stops, not the whole

@@ -118,16 +118,36 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
-    fun upstreamTo_keepsOnlyTheApproachThroughTheBoardingPoint() {
-        val first = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.33)))
-        val second = RoutePolyline(color = 1, points = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.64, -122.33)))
+    fun upstreamTo_clipsEveryVariantAtTheBoardingPoint_dropsVariantsThatNeverReachIt() {
+        val trunk = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
+        // Same street through the boarding point, then branching east — a second valid approach variant.
+        val branch = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33), GeoPoint(47.62, -122.31))
+        )
+        // Short-turn variant ending ~2 km before the boarding point: not an approach to it.
+        val shortTurn = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.60, -122.33)))
 
-        val upstream = listOf(first, second).upstreamTo(GeoPoint(47.62, -122.33))
+        val upstream = listOf(trunk, branch, shortTurn).upstreamTo(GeoPoint(47.62, -122.33))
 
         assertEquals(2, upstream.size)
-        assertEquals(first, upstream.first())
-        assertEquals(47.62, upstream.last().points.last().latitude, 0.000001)
-        assertFalse(upstream.last().points.any { it.latitude > 47.62 })
+        upstream.forEach { line ->
+            assertEquals(47.62, line.points.last().latitude, 0.000001)
+            assertFalse(line.points.any { it.latitude > 47.62 || it.longitude > -122.33 })
+        }
+    }
+
+    @Test
+    fun upstreamTo_boardingPointOffEveryVariant_stillClipsTheNearestOne() {
+        val near = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
+        val far = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.43), GeoPoint(47.66, -122.43)))
+
+        // ~150 m east of the near variant — off both, but the approach should still draw.
+        val upstream = listOf(near, far).upstreamTo(GeoPoint(47.62, -122.328))
+
+        assertEquals(1, upstream.size)
+        assertEquals(47.62, upstream.single().points.last().latitude, 0.001)
+        assertEquals(-122.33, upstream.single().points.last().longitude, 0.000001)
     }
 
     @Test
@@ -144,6 +164,40 @@ class RouteSegmentHighlightTest {
         assertTrue(throughSelectedLeg.containsRoutePoint(GeoPoint(47.63, -122.33))) // selected leg
         // Only ~11 m beyond alighting: spatial tolerance alone must not leak this downstream vehicle.
         assertFalse(throughSelectedLeg.containsRoutePoint(GeoPoint(47.6401, -122.33)))
+    }
+
+    @Test
+    fun boundedThrough_multiVariantDirection_keepsUpstreamVehicleOnAnotherVariant() {
+        // One direction, two shape variants sharing a trunk through the alighting point (#2104): the
+        // through variant, and a variant approaching the trunk on a western spur before joining it.
+        val through = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
+        val western = RoutePolyline(
+            color = 1,
+            points = listOf(GeoPoint(47.60, -122.36), GeoPoint(47.60, -122.33), GeoPoint(47.66, -122.33))
+        )
+
+        val eligible = listOf(through, western).boundedThrough(GeoPoint(47.64, -122.33))
+
+        // An active vehicle on the western variant's own spur is upstream of the alighting point and
+        // must stay eligible — it must not be discarded as if the variants were consecutive fragments.
+        assertTrue(eligible.containsRoutePoint(GeoPoint(47.60, -122.35)))
+        // The shared trunk upstream of alighting stays eligible too.
+        assertTrue(eligible.containsRoutePoint(GeoPoint(47.61, -122.33)))
+        // Past the alighting point on the trunk: downstream on every variant, so still excluded.
+        assertFalse(eligible.containsRoutePoint(GeoPoint(47.65, -122.33)))
+        // Nowhere near any variant.
+        assertFalse(eligible.containsRoutePoint(GeoPoint(47.64, -122.36)))
+    }
+
+    @Test
+    fun boundedThrough_alightingBeyondEveryVariant_keepsTheWholeShapeEligible() {
+        // A stay-aboard interline alights on a later route: this route's whole direction is upstream.
+        val route = listOf(RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.62, -122.33))))
+
+        val eligible = route.boundedThrough(GeoPoint(47.70, -122.33))
+
+        assertTrue(eligible.containsRoutePoint(GeoPoint(47.60, -122.33)))
+        assertTrue(eligible.containsRoutePoint(GeoPoint(47.62, -122.33))) // even the shape's very end
     }
 
     @Test

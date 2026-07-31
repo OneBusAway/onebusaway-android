@@ -953,8 +953,6 @@
     <string name="trip_plan_date_time">%1$s, %2$s</string>
     <!-- The one row of the time callout's menu that opens the combined date/time picker. -->
     <string name="trip_plan_choose_date_time">Choose date and time…</string>
-    <!-- That picker's title. Replaces Material's stock "Select time", which names only one of its halves. -->
-    <string name="trip_plan_select_date_time">Select date and time</string>
     <!-- The third row of that picker's day dropdown, which opens the calendar. -->
     <string name="trip_plan_choose_date">Choose date…</string>
     <!-- The two days that dropdown names outright; any other day shows as its own date. -->

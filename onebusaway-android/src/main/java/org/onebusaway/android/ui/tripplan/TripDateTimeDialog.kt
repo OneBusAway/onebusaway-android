@@ -110,15 +110,10 @@ fun TripDateTimeDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
         },
-        // Our own title rather than Material's, which reads "Select time" and so names only one of
-        // this dialog's two halves. Styled as the default is, so it keeps its place in the layout.
-        title = {
-            Text(
-                text = stringResource(R.string.trip_plan_select_date_time),
-                style = MaterialTheme.typography.labelMedium,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-        },
+        // No title. Material's default reads "Select time", which names only one of this dialog's two
+        // halves — but any heading here just restates the two controls under it, each of which already
+        // says what it is (a labelled day dropdown, and a clock).
+        title = {},
         modeToggleButton = {
             TimePickerDialogDefaults.DisplayModeToggle(
                 displayMode = displayMode,

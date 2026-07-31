@@ -770,7 +770,7 @@ fun HomeScreen(
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,
                                                     onFocusVehicle = { request ->
-                                                        homeViewModel.focusDirectionsRouteVehicle(request, ride.legPoints)
+                                                        homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg.riddenSpans)
                                                     }
                                                 )
                                             },

@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.tripresults
 import androidx.annotation.StringRes
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
@@ -395,6 +396,12 @@ data class RouteLegRef(
     // there. The map focus draws each segment's shape + stops and the shared vehicle across them.
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
     val extraSegments: List<RouteFocusSegment> = emptyList(),
+    // The geometry the rider actually travels on this card, split at each route it is ridden as — one span
+    // for an ordinary leg, one per leg of a folded interline chain (#2000). Drawing the ride from these
+    // rather than from one joined polyline is what lets each span keep its own route's colour and lets the
+    // cutover between them be marked (#2127); built beside [extraSegments] from the same chain analysis, so
+    // the two can't disagree about where a ride changes route. Empty where no ref was resolved.
+    val riddenSpans: List<RiddenSpan> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
     val plannedBadge: RouteBadge? = null,
     val badge: LegBadge? = null

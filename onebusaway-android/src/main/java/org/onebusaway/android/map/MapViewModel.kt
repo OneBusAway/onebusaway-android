@@ -326,7 +326,7 @@ class MapViewModel @Inject constructor(
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
-        highlightedSegment: List<GeoPoint> = emptyList(),
+        riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false,
@@ -344,7 +344,7 @@ class MapViewModel @Inject constructor(
             directionStopId,
             initialDirectionId,
             focusTripId,
-            highlightedSegment,
+            riddenSpans,
             extraSegments,
             itineraryContext,
             palette
@@ -501,7 +501,7 @@ class MapViewModel @Inject constructor(
                 initialDirectionId = request.initialDirectionId,
                 focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
-                highlightedSegment = request.highlightedSegment,
+                riddenSpans = request.riddenSpans,
                 extraSegments = request.extraSegments,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.

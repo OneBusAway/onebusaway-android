@@ -65,8 +65,8 @@ class RouteViewGeometryTest {
         // The ridden segment under a tapped route, drawn in the shown route's colour.
         val riddenSegment = routePolylinesWithSegment(
             base = emptyList(),
-            segment = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)),
-            routeColor = mapRouteLineColorOrNull(gtfs)
+            spans = listOf(RiddenSpan(listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0)))),
+            colorOf = { mapRouteLineColorOrNull(gtfs) }
         ).single().color
 
         assertEquals(mapRouteLineColorOrNull(gtfs), adjacencyLine)

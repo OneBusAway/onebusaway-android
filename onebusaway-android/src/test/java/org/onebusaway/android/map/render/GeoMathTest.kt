@@ -55,7 +55,10 @@ class GeoMathTest {
             GeoPoint(47.602, -122.29999)
         )
 
-        assertEquals(0f, leadingBearing(jitteryStart)!!, 1f)
+        // Not exactly 0: the first hop's 0.7 m of east survives in the chord, as ~2° over the 20 m window.
+        // That residue shrinking as the window grows is the whole mechanism — off the first hop alone this
+        // line reads due east.
+        assertEquals(0f, leadingBearing(jitteryStart)!!, 3f)
     }
 
     @Test

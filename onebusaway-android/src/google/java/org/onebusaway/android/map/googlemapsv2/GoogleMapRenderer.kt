@@ -65,6 +65,7 @@ import org.onebusaway.android.map.render.PingTarget
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
 import org.onebusaway.android.map.render.StopMarker
@@ -362,14 +363,8 @@ class GoogleMapRenderer(
             .width(widthPx)
             .addPoints(polyline.points)
             .applyDashPattern(polyline)
-        if (polyline.roundStartCap || polyline.roundEndCap) {
-            val bulb = endpointBulbCap(polyline.resolvedColor)
-            if (polyline.roundStartCap) options.startCap(bulb)
-            if (polyline.roundEndCap) options.endCap(bulb)
-        }
-        // A stay-aboard interline's cutover (#2127) — never together with a start bulb, since the join it
-        // marks is precisely the one the bulbs are withheld at.
-        if (polyline.startSeam) options.startCap(interlineSeamCap(polyline.resolvedColor))
+        endCapFor(polyline, polyline.startMark)?.let { options.startCap(it) }
+        endCapFor(polyline, polyline.endMark)?.let { options.endCap(it) }
         if (polyline.directional) {
             // Advanced spans are substantially more expensive for Maps to retessellate while
             // zooming. Reserve that path for the lines that actually need repeated chevrons.
@@ -383,6 +378,18 @@ class GoogleMapRenderer(
             options.color(polyline.resolvedColor)
         }
         return map.addPolyline(options)
+    }
+
+    /**
+     * The cap [mark] asks for on [polyline], or null for a flat end. Both marks are [CustomCap]s, which is
+     * what lets them be requested per end and stay right at every zoom: Maps scales a custom cap with the
+     * line's stroke and orients it along the line itself, so neither needs the camera-settle re-stamp a
+     * marker-based mark (the route labels) does.
+     */
+    private fun endCapFor(polyline: RoutePolyline, mark: RouteLineMark): CustomCap? = when (mark) {
+        RouteLineMark.NONE -> null
+        RouteLineMark.BULB -> endpointBulbCap(polyline.resolvedColor)
+        RouteLineMark.INTERLINE_CUT -> interlineSeamCap(polyline.resolvedColor)
     }
 
     /** A circle 2x the stroke width, scaled by Maps together with the line at every zoom. */
@@ -401,14 +408,9 @@ class GoogleMapRenderer(
     }
 
     /**
-     * The slash cut across a line where the rider's vehicle changes route mid-ride (#2127), in that line's
-     * own case colour — the mark separates itself from the corridor exactly as the ride's hairline case
-     * separates the corridor from the basemap, and follows the theme for the same reason (see
+     * The interline cutover slash ([InterlineSeamMark]), drawn in the cut line's own case colour — resolved
+     * here rather than by the producer because it follows the theme, exactly as a line's case does (see
      * [mapRouteLineCaseColor]).
-     *
-     * A [CustomCap] like the endpoint bulb above, so Maps scales it with the line's stroke at every zoom and
-     * orients it along the line itself — which is what spares this mark the camera-settle re-stamp a
-     * marker-based one (the route labels) needs.
      */
     private fun interlineSeamCap(lineColor: Int): CustomCap {
         val color = mapRouteLineCaseColor(lineColor, ThemeUtils.isInDarkMode(context))

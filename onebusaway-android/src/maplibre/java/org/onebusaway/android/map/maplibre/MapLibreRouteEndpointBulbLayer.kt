@@ -11,6 +11,7 @@ import org.maplibre.android.style.sources.GeoJsonSource
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 
 /** Draws screen-sized circular caps that MapLibre's classic polyline annotation cannot configure. */
@@ -29,10 +30,10 @@ internal class MapLibreRouteEndpointBulbLayer(private val style: Style) {
 
     fun render(polylines: List<RoutePolyline>, widthOf: (RoutePolyline) -> Float) {
         val features = polylines.flatMap { line ->
-            if ((!line.roundStartCap && !line.roundEndCap) || line.points.isEmpty()) return@flatMap emptyList()
+            if (line.points.isEmpty()) return@flatMap emptyList()
             buildList {
-                if (line.roundStartCap) add(line.points.first())
-                if (line.roundEndCap) add(line.points.last())
+                if (line.startMark == RouteLineMark.BULB) add(line.points.first())
+                if (line.endMark == RouteLineMark.BULB) add(line.points.last())
             }.distinct().map { point ->
                 Feature.fromGeometry(Point.fromLngLat(point.longitude, point.latitude)).apply {
                     addNumberProperty(RADIUS_PROPERTY, widthOf(line) * ENDPOINT_BULB_RADIUS_SCALE)

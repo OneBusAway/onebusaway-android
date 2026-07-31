@@ -32,6 +32,7 @@ import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.COLOURLESS_RIDE_HUE_ANCHOR
@@ -147,38 +148,37 @@ internal data class ItineraryLegLine(val legIndex: Int, val line: RoutePolyline)
  * Bulb-bearing ends of one itinerary leg, plus whether it begins at an interline **cutover** (#2127).
  *
  * An interline continuation has no visible internal seam — no bulbs, because the rider never gets off — but
- * a continuation onto a *different* route is cut across at that join ([RoutePolyline.startSeam]). The two
+ * a continuation onto a *different* route is cut across at that join ([RouteLineMark.INTERLINE_CUT]). The two
  * are one decision made in one place: a bulb pair says "alight here, board there", so the join a rider
  * stays seated through has to be marked as something else or not at all, and until now it was not at all.
+ * [startSeam] therefore never coincides with [start] — a cut goes exactly where the bulb is withheld.
  */
 internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean, val startSeam: Boolean = false)
 
 /**
- * The legs a stay-aboard interline hands over to on a **different** route — the cutover points to mark.
- * Exactly the transitions [Interlines.chains] reports, so the map cuts the line in the same places the
- * drawer tells the rider to stay on board, and nowhere else. A self-interline (the same route reversing
- * onto itself) contributes none: nothing about the ride changed there, so there is nothing to say.
+ * How every leg of [legs] is finished at each end, index-aligned to it.
  *
- * Resolved for the whole itinerary at once rather than per leg, since that is what the analysis reads;
- * [itineraryLegCaps] takes the result.
+ * Whole-itinerary rather than per leg because that is what the questions read: which legs a ride continues
+ * through, and which of those joins change route. The cutovers are exactly the transitions
+ * [Interlines.chains] reports, so the map cuts the line in the same places the drawer tells the rider to stay
+ * on board, and nowhere else — a self-interline (the same route reversing onto itself) contributes none,
+ * since nothing about the ride changed there.
  */
-internal fun interlineSeamLegs(legs: List<TripLeg>): Set<Int> = Interlines.chains(legs)
-    .flatMapTo(mutableSetOf()) { it.transitionLegIndices }
-
-/** [seamLegs] is [interlineSeamLegs] for the same [legs] — see [ItineraryLegCaps]. */
-internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int, seamLegs: Set<Int>): ItineraryLegCaps {
-    val leg = legs[index]
-    val transit = leg.mode?.isTransit == true
-    val continuesPrevious = transit &&
-        leg.interlineWithPreviousLeg &&
-        legs.getOrNull(index - 1)?.mode?.isTransit == true
-    val next = legs.getOrNull(index + 1)
-    val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
-    return ItineraryLegCaps(
-        start = !continuesPrevious,
-        end = !continuesIntoNext,
-        startSeam = index in seamLegs
-    )
+internal fun itineraryLegCaps(legs: List<TripLeg>): List<ItineraryLegCaps> {
+    val seamLegs = Interlines.chains(legs).flatMapTo(mutableSetOf()) { it.transitionLegIndices }
+    return legs.mapIndexed { index, leg ->
+        val transit = leg.mode?.isTransit == true
+        val continuesPrevious = transit &&
+            leg.interlineWithPreviousLeg &&
+            legs.getOrNull(index - 1)?.mode?.isTransit == true
+        val next = legs.getOrNull(index + 1)
+        val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
+        ItineraryLegCaps(
+            start = !continuesPrevious,
+            end = !continuesIntoNext,
+            startSeam = index in seamLegs
+        )
+    }
 }
 
 /**

@@ -49,9 +49,9 @@ object InterlineSeamMark {
      */
     const val REFERENCE_WIDTH_PX = 60f
 
-    // Twice the reference width, so the slash has room to overhang the line on both sides. The line's own
-    // edges sit a quarter and three quarters of the way across.
-    private const val BITMAP_PX = 120
+    // Twice the reference width, so the slash has room to overhang the line on both sides: the line's own
+    // edges then sit a quarter and three quarters of the way across the bitmap.
+    private const val BITMAP_PX = REFERENCE_WIDTH_PX * 2f
 
     // How far the slash reaches from the line's centre, as a multiple of the line's width. Past 0.5 it
     // overhangs the corridor, which is what makes the cut legible against a line of the same weight.
@@ -75,7 +75,7 @@ object InterlineSeamMark {
      * renderer anchors it to.
      */
     fun bitmap(color: Int): Bitmap {
-        val bitmap = createBitmap(BITMAP_PX, BITMAP_PX)
+        val bitmap = createBitmap(BITMAP_PX.toInt(), BITMAP_PX.toInt())
         val centre = BITMAP_PX / 2f
         val halfLength = REFERENCE_WIDTH_PX * HALF_LENGTH_SCALE
         // Across the line, and along it: the tilt splits the slash's reach between the two axes.

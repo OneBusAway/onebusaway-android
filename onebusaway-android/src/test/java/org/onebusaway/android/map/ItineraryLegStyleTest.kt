@@ -16,6 +16,7 @@ import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 import org.onebusaway.android.util.GeoPoint
@@ -97,12 +98,15 @@ class ItineraryLegStyleTest {
         val first = TripLeg(mode = TripMode.BUS, routeId = "45")
         val continuation = TripLeg(mode = TripMode.RAIL, routeId = "75", interlineWithPreviousLeg = true)
         val walk = TripLeg(mode = TripMode.WALK)
-        val legs = listOf(first, continuation, walk)
-        val seams = interlineSeamLegs(legs)
 
-        assertEquals(ItineraryLegCaps(start = true, end = false), itineraryLegCaps(legs, 0, seams))
-        assertEquals(ItineraryLegCaps(start = false, end = true, startSeam = true), itineraryLegCaps(legs, 1, seams))
-        assertEquals(ItineraryLegCaps(start = true, end = true), itineraryLegCaps(legs, 2, seams))
+        assertEquals(
+            listOf(
+                ItineraryLegCaps(start = true, end = false),
+                ItineraryLegCaps(start = false, end = true, startSeam = true),
+                ItineraryLegCaps(start = true, end = true)
+            ),
+            itineraryLegCaps(listOf(first, continuation, walk))
+        )
     }
 
     @Test
@@ -120,18 +124,18 @@ class ItineraryLegStyleTest {
             TripLeg(mode = TripMode.BUS, routeId = "12", interlineWithPreviousLeg = true)
         )
 
-        assertEquals(setOf(1), interlineSeamLegs(crossRoute))
-        assertEquals(emptySet<Int>(), interlineSeamLegs(selfInterline))
+        assertEquals(listOf(false, true), cutLegs(crossRoute))
+        assertEquals(listOf(false, false), cutLegs(selfInterline))
         // Two legs that name no route at all are the same route as far as anything can tell, so they are
         // read as a self-interline — the exact-id rule [Interlines] states, not a second guess at it here.
         assertEquals(
-            emptySet<Int>(),
-            interlineSeamLegs(listOf(TripLeg(mode = TripMode.BUS), TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)))
+            listOf(false, false),
+            cutLegs(listOf(TripLeg(mode = TripMode.BUS), TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)))
         )
         // And nothing is cut where two separate rides meet — that join keeps its two bulbs.
         assertEquals(
-            emptySet<Int>(),
-            interlineSeamLegs(listOf(TripLeg(mode = TripMode.BUS, routeId = "45"), TripLeg(mode = TripMode.BUS, routeId = "75")))
+            listOf(false, false),
+            cutLegs(listOf(TripLeg(mode = TripMode.BUS, routeId = "45"), TripLeg(mode = TripMode.BUS, routeId = "75")))
         )
     }
 
@@ -144,13 +148,14 @@ class ItineraryLegStyleTest {
             TripLeg(mode = TripMode.BUS, routeId = "75", interlineWithPreviousLeg = true),
             TripLeg(mode = TripMode.BUS, routeId = "8", interlineWithPreviousLeg = true)
         )
-        val seams = interlineSeamLegs(legs)
 
-        legs.indices.forEach { index ->
-            val caps = itineraryLegCaps(legs, index, seams)
+        itineraryLegCaps(legs).forEachIndexed { index, caps ->
             assertFalse("leg $index was both cut and bulbed", caps.startSeam && caps.start)
         }
     }
+
+    /** Which legs begin at an interline cutover, in leg order. */
+    private fun cutLegs(legs: List<TripLeg>) = itineraryLegCaps(legs).map { it.startSeam }
 
     @Test
     fun `on the basemap palette a ride keeps its agency's hue, at the map's own chroma and tone`() {
@@ -380,8 +385,8 @@ class ItineraryLegStyleTest {
                 widthProfile = style.widthProfile,
                 dash = style.dash,
                 case = style.case,
-                roundStartCap = style.roundCaps,
-                roundEndCap = style.roundCaps
+                startMark = if (style.roundCaps) RouteLineMark.BULB else RouteLineMark.NONE,
+                endMark = if (style.roundCaps) RouteLineMark.BULB else RouteLineMark.NONE
             )
         )
     }

@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.render
 
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.haversineDistance
 import org.onebusaway.android.util.initialBearing
 
@@ -46,16 +47,11 @@ private const val LEADING_BEARING_WINDOW_METERS = 20.0
  */
 internal fun leadingBearing(points: List<GeoPoint>): Float? {
     val start = points.firstOrNull() ?: return null
-    var travelled = 0.0
-    var ahead: GeoPoint? = null
-    for (index in 1 until points.size) {
-        travelled += haversineMeters(points[index - 1], points[index])
-        ahead = points[index]
-        if (travelled >= LEADING_BEARING_WINDOW_METERS) break
-    }
-    val end = ahead ?: return null
-    if (haversineMeters(start, end) <= 0.0) return null
-    return ((initialBearing(start.latitude, start.longitude, end.latitude, end.longitude) + 360) % 360).toFloat()
+    // [Polyline] owns walking a distance along a shape, and clamps to the end of a line shorter than the
+    // window — which is the right answer here: a short line's whole direction is its leading one.
+    val ahead = Polyline(points).interpolate(LEADING_BEARING_WINDOW_METERS) ?: return null
+    if (haversineMeters(start, ahead) <= 0.0) return null
+    return ((initialBearing(start.latitude, start.longitude, ahead.latitude, ahead.longitude) + 360) % 360).toFloat()
 }
 
 /**

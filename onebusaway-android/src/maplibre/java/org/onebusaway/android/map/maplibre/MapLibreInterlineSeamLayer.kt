@@ -30,19 +30,20 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 import org.onebusaway.android.map.render.InterlineSeamMark
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.leadingBearing
 
 /**
- * Draws the interline cutover mark (#2127) across the start of every line that asks for one
- * ([RoutePolyline.startSeam]) — the maplibre counterpart of the gms flavor's `CustomCap`, which the classic
- * polyline annotation has no equivalent of. The same gap [MapLibreRouteEndpointBulbLayer] fills for the
- * endpoint bulbs, and rendered on the same schedule: features are rebuilt from the reconciled line list and
- * re-sized on each camera settle, since the mark is sized against the line's current stroke width.
+ * Draws the interline cutover mark (#2127) across every line end that asks for one
+ * ([RouteLineMark.INTERLINE_CUT]) — the maplibre counterpart of the gms flavor's `CustomCap`, which the
+ * classic polyline annotation has no equivalent of. The same gap [MapLibreRouteEndpointBulbLayer] fills for
+ * the endpoint bulbs, and rendered on the same schedule: features are rebuilt from the reconciled line list
+ * and re-sized on each camera settle, since the mark is sized against the line's current stroke width.
  *
  * A symbol rather than a circle, because unlike a bulb this mark has an orientation: it is rotated to the
- * line's own leading direction ([leadingBearing]) and rotates with the map, so the slash always crosses the
- * corridor rather than lying along it.
+ * line's own direction at that end ([leadingBearing]) and rotates with the map, so the slash always crosses
+ * the corridor rather than lying along it.
  *
  * [caseColorOf] resolves a line's case colour (theme-dependent, so it is read at draw time rather than
  * carried on the line) and [density] converts maplibre's dp line widths into the screen pixels the mark's
@@ -78,17 +79,24 @@ internal class MapLibreInterlineSeamLayer(
     }
 
     fun render(polylines: List<RoutePolyline>, widthOf: (RoutePolyline) -> Float) {
-        val features = polylines.mapNotNull { line ->
-            if (!line.startSeam) return@mapNotNull null
-            val point = line.points.firstOrNull() ?: return@mapNotNull null
-            // A line with no direction at its start has nothing to cross — see [leadingBearing].
-            val bearing = leadingBearing(line.points) ?: return@mapNotNull null
-            Feature.fromGeometry(Point.fromLngLat(point.longitude, point.latitude)).apply {
-                addStringProperty(IMAGE_PROPERTY, imageFor(caseColorOf(line)))
-                // The bitmap is drawn for a line [InterlineSeamMark.REFERENCE_WIDTH_PX] wide, so this puts
-                // the mark's own corridor on this line's actual stroke at the current zoom.
-                addNumberProperty(SIZE_PROPERTY, widthOf(line) * density / InterlineSeamMark.REFERENCE_WIDTH_PX)
-                addNumberProperty(BEARING_PROPERTY, bearing)
+        val features = polylines.flatMap { line ->
+            buildList {
+                // Read from whichever end is cut: the line's points run away from its start and *into* its
+                // end, so the far end's direction is read down the reversed list. That the two disagree by a
+                // half turn doesn't matter — the slash is symmetric under one (see [InterlineSeamMark]).
+                if (line.startMark == RouteLineMark.INTERLINE_CUT) add(line.points)
+                if (line.endMark == RouteLineMark.INTERLINE_CUT) add(line.points.asReversed())
+            }.mapNotNull { fromCutEnd ->
+                val point = fromCutEnd.firstOrNull() ?: return@mapNotNull null
+                // A line with no direction at that end has nothing to cross — see [leadingBearing].
+                val bearing = leadingBearing(fromCutEnd) ?: return@mapNotNull null
+                Feature.fromGeometry(Point.fromLngLat(point.longitude, point.latitude)).apply {
+                    addStringProperty(IMAGE_PROPERTY, imageFor(caseColorOf(line)))
+                    // The bitmap is drawn for a line [InterlineSeamMark.REFERENCE_WIDTH_PX] wide, so this
+                    // puts the mark's own corridor on this line's actual stroke at the current zoom.
+                    addNumberProperty(SIZE_PROPERTY, widthOf(line) * density / InterlineSeamMark.REFERENCE_WIDTH_PX)
+                    addNumberProperty(BEARING_PROPERTY, bearing)
+                }
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))

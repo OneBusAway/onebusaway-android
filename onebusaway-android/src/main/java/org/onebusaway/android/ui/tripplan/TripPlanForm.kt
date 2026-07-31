@@ -169,6 +169,9 @@ object TripPlanTestTags {
 
     /** The action bar's trailing button, which reverse is column-aligned with. */
     const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
+
+    /** The day dropdown inside the combined date/time picker ([TripDateTimeDialog]). */
+    const val PICKER_DAY = "tripPlanPickerDay"
 }
 
 /**
@@ -219,8 +222,7 @@ fun TripPlanForm(
     onPickOnMap: (TripEndpointSlot) -> Unit,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit,
+    onPickDateTime: () -> Unit,
     availableStreetModes: List<StreetMode>,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
@@ -272,8 +274,7 @@ fun TripPlanForm(
             availableStreetModes = availableStreetModes,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
-            onPickDate = onPickDate,
-            onPickTime = onPickTime,
+            onPickDateTime = onPickDateTime,
             onVehicleModeSelected = onVehicleModeSelected,
             onStreetModeSelected = onStreetModeSelected,
             onAdvancedSettings = onAdvancedSettings
@@ -626,8 +627,7 @@ private fun TripActionBar(
     availableStreetModes: List<StreetMode>,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit,
+    onPickDateTime: () -> Unit,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
     onAdvancedSettings: () -> Unit
@@ -664,8 +664,7 @@ private fun TripActionBar(
             dateLabel = dateLabel,
             timeLabel = timeLabel,
             onDepartNow = onDepartNow,
-            onPickDate = onPickDate,
-            onPickTime = onPickTime
+            onPickDateTime = onPickDateTime
         )
         ModePicker(
             selected = modes.vehicle,
@@ -800,9 +799,10 @@ private fun WhenModeSegment(arriving: Boolean, onSetArriving: (Boolean) -> Unit)
 }
 
 /**
- * When the trip is for — the second half of the sentence. Reads "now" until a date or time is picked,
- * then the pinned instant. The menu keeps both Material pickers one tap away rather than folding them
- * into a single date-and-time flow, so changing just the time doesn't walk through a calendar.
+ * When the trip is for — the second half of the sentence. Reads "now" until an instant is pinned, then
+ * that instant. The menu is the two answers a rider actually has — leave now, or say when — with the
+ * date and the time settled together in one dialog ([TripDateTimeDialog], #2117) rather than as two
+ * menu rows that each set the whole instant from one of its halves.
  */
 @Composable
 private fun WhenTimeSegment(
@@ -811,8 +811,7 @@ private fun WhenTimeSegment(
     dateLabel: String,
     timeLabel: String,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit
+    onPickDateTime: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val nowLabel = stringResource(R.string.trip_plan_now)
@@ -846,14 +845,24 @@ private fun WhenTimeSegment(
                     onDepartNow()
                 }
             )
-            DropdownMenuItem(text = { Text(stringResource(R.string.trip_plan_choose_date)) }, onClick = {
-                expanded = false
-                onPickDate()
-            })
-            DropdownMenuItem(text = { Text(stringResource(R.string.trip_plan_choose_time)) }, onClick = {
-                expanded = false
-                onPickTime()
-            })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.trip_plan_choose_date_time)) },
+                trailingIcon = if (!departNow) {
+                    {
+                        Icon(
+                            imageVector = AppIcons.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                } else {
+                    null
+                },
+                onClick = {
+                    expanded = false
+                    onPickDateTime()
+                }
+            )
         }
     }
 }
@@ -929,7 +938,7 @@ private fun TripPlanFormPreview() {
             onQueryChange = { _, _ -> }, onSelect = { _, _ -> },
             onCurrentLocation = {}, onPickOnMap = {},
             onSetArriving = {}, onDepartNow = {},
-            onPickDate = {}, onPickTime = {},
+            onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
             onReverse = {}, onAdvancedSettings = {}

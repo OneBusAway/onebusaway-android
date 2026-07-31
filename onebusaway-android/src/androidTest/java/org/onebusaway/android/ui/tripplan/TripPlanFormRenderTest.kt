@@ -317,6 +317,37 @@ class TripPlanFormRenderTest {
     }
 
     /**
+     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
+     * to the right of both fields and centred across the pair, which puts it on the divider between
+     * them. Position is the whole point of the move, so it's asserted rather than left to the eye —
+     * a later edit that drops it back into a plain column would still render a working button.
+     */
+    @Test
+    fun reverseSitsBetweenTheTwoEndpointFields() {
+        var reversed = false
+        renderForm(state = { plannedState }, onReverse = { reversed = true })
+
+        val button = composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).getUnclippedBoundsInRoot()
+        val from = composeRule.onNodeWithTag(FROM_FIELD).getUnclippedBoundsInRoot()
+        val to = composeRule.onNodeWithTag(TO_FIELD).getUnclippedBoundsInRoot()
+
+        assertTrue(
+            "reverse should clear both fields, but started at ${button.left} against ${from.right}",
+            button.left >= from.right && button.left >= to.right
+        )
+        // Centred across the pair — i.e. level with the hairline between them.
+        val buttonCenter = (button.top + button.bottom) / 2f
+        val betweenRows = (from.bottom + to.top) / 2f
+        assertTrue(
+            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
+            (buttonCenter - betweenRows).value.absoluteValue <= 1f
+        )
+
+        composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).performClick()
+        assertTrue("tapping reverse should swap the endpoints", reversed)
+    }
+
+    /**
      * Choosing "Your location" repeatedly has to keep resolving the endpoint. It used to work only on
      * alternate taps: the cycles that started from an already-resolved endpoint left a focused text
      * field to be torn down, and the value change that came out of that teardown was forwarded as a
@@ -442,7 +473,8 @@ class TripPlanFormRenderTest {
         onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit = { _, _ -> },
         onCurrentLocation: (TripEndpointSlot) -> Unit = {},
         onVehicleModeSelected: (VehicleMode) -> Unit = {},
-        onStreetModeSelected: (StreetMode) -> Unit = {}
+        onStreetModeSelected: (StreetMode) -> Unit = {},
+        onReverse: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
@@ -460,7 +492,7 @@ class TripPlanFormRenderTest {
                         availableStreetModes = StreetMode.entries,
                         onVehicleModeSelected = onVehicleModeSelected,
                         onStreetModeSelected = onStreetModeSelected,
-                        onReverse = {},
+                        onReverse = onReverse,
                         onAdvancedSettings = {}
                     )
                 }

@@ -129,11 +129,14 @@ object TripPlanTestTags {
     const val MY_LOCATION_SUFFIX = "MyLocation"
     const val PICK_ON_MAP_SUFFIX = "PickOnMap"
 
-    /** The action bar's two time segments. */
+    /** The action bar's two time segments, and its two mode pickers. */
     const val WHEN_MODE = "tripPlanWhenMode"
     const val WHEN_TIME = "tripPlanWhenTime"
     const val VEHICLE_MODE = "tripPlanVehicleMode"
     const val STREET_MODE = "tripPlanStreetMode"
+
+    /** The swap-endpoints button, beside the two endpoint rows rather than in the action bar. */
+    const val REVERSE = "tripPlanReverse"
 }
 
 /**
@@ -166,10 +169,11 @@ val TripEndpointSlot.tagPrefix: String
  * per-field chrome. What differs is the bottom band: transit is scheduled travel, so the form always
  * states when the trip is for, as a "Depart · now" callout whose two halves open separate pickers.
  *
- * That band doubles as the form's action bar, carrying reverse and additional-preferences as well. It's
- * the reason the endpoint rows can run full width: everything acting on the *whole trip* lives on one
- * line, and only what acts on a single endpoint lives in that endpoint's row (which, currently, is
- * nothing — see [EndpointRow]). The card measures 146dp against the old layout's 216dp.
+ * That band doubles as the form's action bar, carrying the mode pickers and additional-preferences as
+ * well. It's the reason the endpoint rows carry no per-field chrome: everything acting on the trip's
+ * *terms* lives on one line, and nothing acts on a single endpoint (see [EndpointRow]). The one action
+ * on the endpoints themselves — reverse — sits beside the pair, centred on the divider between them.
+ * The card measures 146dp against the old layout's 216dp.
  *
  * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
  * interactions launched by the host.
@@ -193,23 +197,44 @@ fun TripPlanForm(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        // One row per endpoint, in TripEndpointSlot's declaration order (origin above destination) —
-        // the enum is the list of rows.
-        TripEndpointSlot.entries.forEachIndexed { index, slot ->
-            if (index > 0) {
-                // Inset past the rail so the hairline starts where the text does, leaving the origin
-                // and destination glyphs reading as one continuous column.
-                HairlineDivider(startIndent = RAIL_WIDTH, endIndent = 12.dp)
+        // The two endpoints and the one action that acts on the pair of them. Reverse is centred
+        // against the whole block, so it lands on the divider between the rows — beside the two fields
+        // it swaps rather than in the action bar, where it read as a property of the trip.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                // One row per endpoint, in TripEndpointSlot's declaration order (origin above
+                // destination) — the enum is the list of rows.
+                TripEndpointSlot.entries.forEachIndexed { index, slot ->
+                    if (index > 0) {
+                        // Inset past the rail so the hairline starts where the text does, leaving the
+                        // origin and destination glyphs reading as one continuous column. The trailing
+                        // end stops short of the reverse button rather than running under it.
+                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = 4.dp)
+                    }
+                    EndpointRow(
+                        slot = slot,
+                        endpoint = state.endpointAt(slot),
+                        suggestions = state.suggestionsAt(slot),
+                        onQueryChange = { onQueryChange(slot, it) },
+                        onSelect = { onSelect(slot, it) },
+                        onCurrentLocation = { onCurrentLocation(slot) },
+                        onPickOnMap = { onPickOnMap(slot) }
+                    )
+                }
             }
-            EndpointRow(
-                slot = slot,
-                endpoint = state.endpointAt(slot),
-                suggestions = state.suggestionsAt(slot),
-                onQueryChange = { onQueryChange(slot, it) },
-                onSelect = { onSelect(slot, it) },
-                onCurrentLocation = { onCurrentLocation(slot) },
-                onPickOnMap = { onPickOnMap(slot) }
-            )
+            IconButton(
+                onClick = onReverse,
+                modifier = Modifier.size(40.dp).testTag(TripPlanTestTags.REVERSE)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_swap_direction),
+                    contentDescription = stringResource(R.string.tripplanner_reverse),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            // Matches the action bar's own trailing spacer, so reverse sits in the same column as the
+            // preferences button below it.
+            Spacer(Modifier.width(4.dp))
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
         // than separating two members of the same group.
@@ -227,7 +252,6 @@ fun TripPlanForm(
             onPickTime = onPickTime,
             onVehicleModeSelected = onVehicleModeSelected,
             onStreetModeSelected = onStreetModeSelected,
-            onReverse = onReverse,
             onAdvancedSettings = onAdvancedSettings
         )
     }
@@ -241,8 +265,9 @@ private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
 
 /**
  * One trip-plan endpoint: a rail glyph naming the endpoint's kind, and the place itself in a
- * borderless field. There is no pill and no trailing button, which is what lets the row run the full
- * width of the card; the actions that used to sit here are in the suggestion list and the action bar.
+ * borderless field. There is no pill and no trailing button, which is what lets the row run nearly the
+ * full width of the card; the actions that used to sit here are in the suggestion list and the action
+ * bar, and the one that acts on both endpoints is beside the pair rather than in either row.
  *
  * The row is one persistent text field in every state — a resolved endpoint is the same field showing
  * a name, not a different kind of row. That matters beyond tidiness: swapping a read-only Text in and
@@ -370,7 +395,9 @@ private fun EndpointRow(
                     }
                 }
             )
-            Spacer(Modifier.width(12.dp))
+            // Clear space between the longest place name and the reverse button beside the rows; the
+            // button's own 8dp icon inset makes up the rest of the gap.
+            Spacer(Modifier.width(4.dp))
         }
 
         // The two ways to fill an endpoint that aren't typing. They used to be permanent icon buttons on
@@ -511,11 +538,12 @@ private fun PinnedActionIcon(painter: Painter) {
 }
 
 /**
- * The bottom band: when the trip is for, plus the two actions that apply to the trip as a whole.
+ * The bottom band: when the trip is for, and how it may be travelled.
  *
  * The time reads as one sentence — "Depart · now" — split into two separately-tappable segments, each
- * opening its own menu. Reverse and additional preferences sit at the trailing edge, which is why
- * neither endpoint row needs a trailing slot at all.
+ * opening its own menu. The mode pickers and additional preferences sit at the trailing edge; reverse
+ * is not here, because it acts on the two endpoints rather than on the trip's terms, and so lives
+ * beside them (#2110).
  */
 @Composable
 private fun TripActionBar(
@@ -531,7 +559,6 @@ private fun TripActionBar(
     onPickTime: () -> Unit,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
-    onReverse: () -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
     Row(
@@ -590,13 +617,6 @@ private fun TripActionBar(
             testTag = TripPlanTestTags.STREET_MODE,
             onSelected = onStreetModeSelected
         )
-        IconButton(onClick = onReverse, modifier = Modifier.size(40.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.ic_swap_direction),
-                contentDescription = stringResource(R.string.tripplanner_reverse),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
         IconButton(onClick = onAdvancedSettings, modifier = Modifier.size(40.dp)) {
             Icon(
                 imageVector = AppIcons.Settings,

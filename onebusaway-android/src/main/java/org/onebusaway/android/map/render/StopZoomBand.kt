@@ -27,12 +27,14 @@ const val STOP_DOT_ZOOM_THRESHOLD = 15f
  * band. A rider standing in a transit centre otherwise has to open every bay in turn to find the one that
  * serves their route, and the zoom the map is already at when they do that is what this keys off.
  *
- * Chosen for the viewport width it corresponds to. Marker zoom is density-independent (256**dp** tiles),
- * so at zoom z a map covers 156543·cos(latitude)/2^z metres per dp: on a ~400dp-wide phone at mid
- * latitudes that is ~160 m at zoom 18 — one or two city blocks, the "about a block wide" the issue asks
- * for — against ~320 m at 17, which is a neighbourhood and would label far more stops than fit. Tunable.
+ * **Set on device**, by zooming to where the map reads as one transit centre rather than a neighbourhood
+ * and taking the number off the debug zoom readout. It is a judgement about when the labels start
+ * earning their clutter, which is not a thing to derive: for scale, marker zoom is density-independent
+ * (256**dp** tiles), so at zoom z a map covers 156543·cos(latitude)/2^z metres per dp — on a ~400dp-wide
+ * phone at mid latitudes about 230 m here, against ~160 m at 18 (which held the labels back until the
+ * rider had already zoomed past the centre) and ~320 m at 17. Tunable, but retune it the same way.
  */
-const val STOP_ROUTES_ZOOM_THRESHOLD = 18f
+const val STOP_ROUTES_ZOOM_THRESHOLD = 17.5f
 
 /** Smallest focused route-stop circle scale at the zoomed-out end of the detail ramp. */
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f

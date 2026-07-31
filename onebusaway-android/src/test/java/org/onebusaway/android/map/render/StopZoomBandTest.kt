@@ -50,15 +50,15 @@ class StopZoomBandTest {
     }
 
     @Test
-    fun `the bands flip at zoom 15 and 18 (pins the threshold constants, not just the boundaries)`() {
+    fun `the bands flip at zoom 15 and 17,5 (pins the threshold constants, not just the boundaries)`() {
         // Literal anchors (not the constants) so retuning either is a deliberate change that has to
         // update this test — the ± boundary cases above would otherwise silently follow it.
         assertEquals(15f, STOP_DOT_ZOOM_THRESHOLD, 0f)
-        assertEquals(18f, STOP_ROUTES_ZOOM_THRESHOLD, 0f)
+        assertEquals(17.5f, STOP_ROUTES_ZOOM_THRESHOLD, 0f)
         assertEquals(StopBand.DOT, stopZoomBand(14.99f))
         assertEquals(StopBand.FULL, stopZoomBand(15f))
-        assertEquals(StopBand.FULL, stopZoomBand(17.99f))
-        assertEquals(StopBand.ROUTES, stopZoomBand(18f))
+        assertEquals(StopBand.FULL, stopZoomBand(17.49f))
+        assertEquals(StopBand.ROUTES, stopZoomBand(17.5f))
     }
 
     @Test

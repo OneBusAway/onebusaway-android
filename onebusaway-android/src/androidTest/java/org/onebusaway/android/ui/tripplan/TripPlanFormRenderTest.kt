@@ -29,6 +29,7 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -284,6 +285,28 @@ class TripPlanFormRenderTest {
     }
 
     /**
+     * The time menu offers the two answers a rider has — leave now, or say when — and the second is one
+     * row, not the separate "Choose date…"/"Choose time…" pair it replaced (#2117). Both of those set
+     * the *whole* instant from one of its halves, so pinning tomorrow evening cost two trips through
+     * the menu and two re-plans.
+     */
+    @Test
+    fun theTimeMenuPinsAnInstantInOneRow() {
+        var picks = 0
+        renderForm(state = { plannedState }, onPickDateTime = { picks++ })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+        composeRule.onNodeWithText("Choose date and time…").performClick()
+
+        assertEquals("the one row should open the combined picker", 1, picks)
+        assertEquals(
+            "the split date/time rows should be gone",
+            0,
+            composeRule.onAllNodesWithText("Choose time…").fetchSemanticsNodes().size
+        )
+    }
+
+    /**
      * The action bar's trailing buttons stay put whatever the time segment reads. The segment is the
      * bar's one flexible slot, so it has to both hold the buttons against the edge when the label is
      * the single word "now" and cap itself when the label is a full date and time — sharing that
@@ -425,7 +448,8 @@ class TripPlanFormRenderTest {
         onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit = { _, _ -> },
         onCurrentLocation: (TripEndpointSlot) -> Unit = {},
         onVehicleModeSelected: (VehicleMode) -> Unit = {},
-        onStreetModeSelected: (StreetMode) -> Unit = {}
+        onStreetModeSelected: (StreetMode) -> Unit = {},
+        onPickDateTime: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
@@ -438,8 +462,7 @@ class TripPlanFormRenderTest {
                         onPickOnMap = {},
                         onSetArriving = {},
                         onDepartNow = {},
-                        onPickDate = {},
-                        onPickTime = {},
+                        onPickDateTime = onPickDateTime,
                         availableStreetModes = StreetMode.entries,
                         onVehicleModeSelected = onVehicleModeSelected,
                         onStreetModeSelected = onStreetModeSelected,

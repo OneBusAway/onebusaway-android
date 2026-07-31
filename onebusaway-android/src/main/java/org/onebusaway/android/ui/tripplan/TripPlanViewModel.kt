@@ -236,9 +236,19 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Pins the trip to an explicit instant, leaving the "now" anchor. Picking either half of the
-     * date/time is enough to pin: the other half keeps whatever it already showed, which is the
-     * moment the form was opened.
+     * The instant the date/time picker should open on: the pinned one when the trip is already pinned,
+     * and the live clock while it is anchored to "now". Under that anchor
+     * [TripPlanFormState.dateTimeMillis] still holds the instant this ViewModel was built, so a form
+     * left open would otherwise offer the rider a clock reading twenty minutes ago as their starting
+     * point — the same moving-anchor distinction [TripPlanFormState.departNow] exists for.
+     */
+    fun pickerStartMillis(): Long = _formState.value.let {
+        if (it.departNow) timeProvider.now() else it.dateTimeMillis
+    }
+
+    /**
+     * Pins the trip to an explicit instant, leaving the "now" anchor. The picker settles the date and
+     * the time together, so this is one write and one re-plan for both halves.
      */
     fun setDateTime(millis: Long) {
         _formState.update {

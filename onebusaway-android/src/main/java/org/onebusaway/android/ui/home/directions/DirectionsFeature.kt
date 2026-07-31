@@ -400,11 +400,8 @@ fun DirectionStopEtaStrip(
         content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
             ?.let { alternative to it }
     }
-    val plannedBadge = plannedGroup?.let { group ->
-        routeLeg.etaPlannedBadge(group.representative.lineName)
-    }
     val routeTrips = buildList {
-        if (plannedGroup != null && plannedBadge != null) add(plannedBadge to plannedGroup.trips)
+        plannedGroup?.let { add(routeLeg.etaPlannedBadge(it.representative.lineName) to it.trips) }
         alternativeGroups.forEach { (alternative, group) ->
             add(RouteBadge(alternative.shortName, alternative.routeColor) to group.trips)
         }

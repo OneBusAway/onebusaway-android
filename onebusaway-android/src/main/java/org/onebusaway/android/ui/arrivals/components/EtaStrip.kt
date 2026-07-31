@@ -115,7 +115,10 @@ internal fun EtaStrip(
     // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
     // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
-    val hasRouteBadges = trips.any { routeBadgeFor(it) != null }
+    // Remembered because reading the live clock above recomposes this whole body once a second, and
+    // this would otherwise re-run the caller's lambda over every trip on each of those ticks. It only
+    // changes when the trips or the badge source do.
+    val hasRouteBadges = remember(trips, routeBadgeFor) { trips.any { routeBadgeFor(it) != null } }
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
@@ -341,6 +344,15 @@ internal fun TripActionsMenu(
 }
 
 /**
+ * How wide a pill's route roundel may grow before its name ellipsizes — the option cards' own
+ * OPTION_BADGE_MAX_WIDTH rule (TripResultsScreen), at pill scale. Only bites on a route badged by its
+ * long name (one publishing no short name — both badge sources feeding a pill fall back to the long
+ * name), which would otherwise stretch one pill far past its neighbours and turn the strip's even
+ * rhythm into a single wide outlier. A route number never comes near it. Tune here.
+ */
+private val PILL_BADGE_MAX_WIDTH = 72.dp
+
+/**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
  * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
@@ -427,7 +439,8 @@ internal fun EtaPill(
                     RouteBadgeChip(
                         shortName = routeBadge.shortName,
                         routeColor = routeBadge.routeColor,
-                        scale = 0.8f
+                        scale = 0.8f,
+                        maxWidth = PILL_BADGE_MAX_WIDTH
                     )
                 }
                 if (etaParts == null) {

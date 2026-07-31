@@ -60,6 +60,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -95,10 +96,25 @@ private val ENDPOINT_DOT_SIZE = 12.dp
 private val CONNECTOR_GLYPH_CLEARANCE = 12.dp
 
 /**
- * Height of the action bar. Snug around its 40dp icon buttons; those keep a full 48dp touch target
+ * Side of every icon button in the form, at both bands. Load-bearing beyond its own size: paired with
+ * [TRAILING_GUTTER] it's what puts the reverse button in the same column as the action bar's buttons.
+ */
+private val ICON_BUTTON_SIZE = 40.dp
+
+/**
+ * Height of the action bar — snug around its icon buttons, which keep a full 48dp touch target
  * regardless, because Material expands it beyond their bounds.
  */
-private val ACTION_BAR_HEIGHT = 40.dp
+private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
+
+/**
+ * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
+ * [RAIL_WIDTH], and shared by both bands for the same reason: so their buttons line up in one column.
+ */
+private val TRAILING_GUTTER = 4.dp
+
+/** Clear space between the endpoint rows' content and the reverse button beside them. */
+private val REVERSE_CLEARANCE = 4.dp
 
 /** Rider-facing order for the two mode menus; intentionally independent of enum declaration order. */
 private val VEHICLE_MODE_ORDER = listOf(
@@ -135,8 +151,11 @@ object TripPlanTestTags {
     const val VEHICLE_MODE = "tripPlanVehicleMode"
     const val STREET_MODE = "tripPlanStreetMode"
 
-    /** The swap-endpoints button, beside the two endpoint rows rather than in the action bar. */
+    /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
+
+    /** The action bar's trailing button, which reverse is column-aligned with. */
+    const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
 }
 
 /**
@@ -197,19 +216,18 @@ fun TripPlanForm(
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        // The two endpoints and the one action that acts on the pair of them. Reverse is centred
-        // against the whole block, so it lands on the divider between the rows — beside the two fields
-        // it swaps rather than in the action bar, where it read as a property of the trip.
         Row(verticalAlignment = Alignment.CenterVertically) {
+            // The rows take the width the button doesn't, rather than running full width beneath it —
+            // which is what stops a long place name, and the divider, from sliding under the button.
+            // Centring the sibling button against the resulting block lands it on that divider.
             Column(Modifier.weight(1f)) {
                 // One row per endpoint, in TripEndpointSlot's declaration order (origin above
                 // destination) — the enum is the list of rows.
                 TripEndpointSlot.entries.forEachIndexed { index, slot ->
                     if (index > 0) {
                         // Inset past the rail so the hairline starts where the text does, leaving the
-                        // origin and destination glyphs reading as one continuous column. The trailing
-                        // end stops short of the reverse button rather than running under it.
-                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = 4.dp)
+                        // origin and destination glyphs reading as one continuous column.
+                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = REVERSE_CLEARANCE)
                     }
                     EndpointRow(
                         slot = slot,
@@ -222,19 +240,13 @@ fun TripPlanForm(
                     )
                 }
             }
-            IconButton(
+            FormIconButton(
+                painter = painterResource(R.drawable.ic_swap_direction),
+                contentDescription = stringResource(R.string.tripplanner_reverse),
                 onClick = onReverse,
-                modifier = Modifier.size(40.dp).testTag(TripPlanTestTags.REVERSE)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_swap_direction),
-                    contentDescription = stringResource(R.string.tripplanner_reverse),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            // Matches the action bar's own trailing spacer, so reverse sits in the same column as the
-            // preferences button below it.
-            Spacer(Modifier.width(4.dp))
+                modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
+            )
+            Spacer(Modifier.width(TRAILING_GUTTER))
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
         // than separating two members of the same group.
@@ -257,6 +269,27 @@ fun TripPlanForm(
     }
 }
 
+/**
+ * The form's one icon-button shape: fixed size, muted tint, the glyph as its own label. Shared rather
+ * than repeated, because reverse now sits in a different band from the rest — the two bands read as one
+ * set of controls only if nothing about the buttons is restated per site and free to drift.
+ */
+@Composable
+private fun FormIconButton(
+    painter: Painter,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(onClick = onClick, modifier = modifier.size(ICON_BUTTON_SIZE)) {
+        Icon(
+            painter = painter,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
 /** A 1dp rule at the outline colour, optionally inset at either end. */
 @Composable
 private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
@@ -265,9 +298,9 @@ private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
 
 /**
  * One trip-plan endpoint: a rail glyph naming the endpoint's kind, and the place itself in a
- * borderless field. There is no pill and no trailing button, which is what lets the row run nearly the
- * full width of the card; the actions that used to sit here are in the suggestion list and the action
- * bar, and the one that acts on both endpoints is beside the pair rather than in either row.
+ * borderless field. There is no pill and no trailing button, which is what lets the row give its whole
+ * width to the place name; the actions that used to sit here are in the suggestion list and the action
+ * bar.
  *
  * The row is one persistent text field in every state — a resolved endpoint is the same field showing
  * a name, not a different kind of row. That matters beyond tidiness: swapping a read-only Text in and
@@ -395,9 +428,7 @@ private fun EndpointRow(
                     }
                 }
             )
-            // Clear space between the longest place name and the reverse button beside the rows; the
-            // button's own 8dp icon inset makes up the rest of the gap.
-            Spacer(Modifier.width(4.dp))
+            Spacer(Modifier.width(REVERSE_CLEARANCE))
         }
 
         // The two ways to fill an endpoint that aren't typing. They used to be permanent icon buttons on
@@ -617,14 +648,13 @@ private fun TripActionBar(
             testTag = TripPlanTestTags.STREET_MODE,
             onSelected = onStreetModeSelected
         )
-        IconButton(onClick = onAdvancedSettings, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = AppIcons.Settings,
-                contentDescription = stringResource(R.string.trip_plan_advanced_settings),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.width(4.dp))
+        FormIconButton(
+            painter = rememberVectorPainter(AppIcons.Settings),
+            contentDescription = stringResource(R.string.trip_plan_advanced_settings),
+            onClick = onAdvancedSettings,
+            modifier = Modifier.testTag(TripPlanTestTags.ADVANCED_SETTINGS)
+        )
+        Spacer(Modifier.width(TRAILING_GUTTER))
     }
 }
 
@@ -641,16 +671,12 @@ private fun <T> ModePicker(
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = label(selected)
     Box {
-        IconButton(
+        FormIconButton(
+            painter = painterResource(icon(selected)),
+            contentDescription = selectedLabel,
             onClick = { expanded = true },
-            modifier = Modifier.size(40.dp).testTag(testTag)
-        ) {
-            Icon(
-                painter = painterResource(icon(selected)),
-                contentDescription = selectedLabel,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+            modifier = Modifier.testTag(testTag)
+        )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             options.forEach { option ->
                 DropdownMenuItem(

@@ -29,7 +29,6 @@ import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -37,6 +36,7 @@ import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -301,13 +301,11 @@ class TripPlanFormRenderTest {
             }
         )
 
-        val withNow = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withNow = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         departNow = false
         composeRule.waitForIdle()
-        val withPinnedTime = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withPinnedTime = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         assertEquals(
             "the trailing buttons moved when the time label grew",
@@ -318,32 +316,58 @@ class TripPlanFormRenderTest {
 
     /**
      * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
-     * to the right of both fields and centred across the pair, which puts it on the divider between
-     * them. Position is the whole point of the move, so it's asserted rather than left to the eye —
-     * a later edit that drops it back into a plain column would still render a working button.
+     * clear of both fields and centred across the pair, which puts it on the divider between them.
+     * Position is the whole point of the move, so it's asserted rather than left to the eye.
      */
     @Test
     fun reverseSitsBetweenTheTwoEndpointFields() {
+        renderForm(plannedState)
+
+        val button = bounds(TripPlanTestTags.REVERSE)
+        val from = bounds(FROM_FIELD)
+        val to = bounds(TO_FIELD)
+
+        assertTrue(
+            "reverse should clear both fields, but started at ${button.left} against " +
+                "${from.right} and ${to.right}",
+            button.left >= from.right && button.left >= to.right
+        )
+        // Compared in pixels, because rounding is what the slack is for: the rows and the 1dp rule
+        // between them round to whole pixels independently of the button's own centring, so the
+        // midpoint they define can sit a pixel off it. Anything past that is a real misalignment.
+        val buttonCenter = (button.top + button.bottom) / 2f
+        val betweenRows = (from.bottom + to.top) / 2f
+        val driftPx = with(composeRule.density) { (buttonCenter - betweenRows).toPx() }.roundToInt()
+        assertTrue(
+            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
+            driftPx.absoluteValue <= 1
+        )
+    }
+
+    /**
+     * Reverse and additional-preferences sit in one trailing column, across two bands that lay
+     * themselves out independently. Nothing in either band's code forces that — it holds only because
+     * both end with the same button size and the same trailing gutter — so it's the part of the move
+     * most able to drift, and the part worth pinning.
+     */
+    @Test
+    fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
+        renderForm(plannedState)
+
+        assertEquals(
+            "reverse should share a trailing edge with additional-preferences",
+            bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
+            bounds(TripPlanTestTags.REVERSE).right
+        )
+    }
+
+    @Test
+    fun tappingReverseSwapsTheEndpoints() {
         var reversed = false
         renderForm(state = { plannedState }, onReverse = { reversed = true })
 
-        val button = composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).getUnclippedBoundsInRoot()
-        val from = composeRule.onNodeWithTag(FROM_FIELD).getUnclippedBoundsInRoot()
-        val to = composeRule.onNodeWithTag(TO_FIELD).getUnclippedBoundsInRoot()
-
-        assertTrue(
-            "reverse should clear both fields, but started at ${button.left} against ${from.right}",
-            button.left >= from.right && button.left >= to.right
-        )
-        // Centred across the pair — i.e. level with the hairline between them.
-        val buttonCenter = (button.top + button.bottom) / 2f
-        val betweenRows = (from.bottom + to.top) / 2f
-        assertTrue(
-            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
-            (buttonCenter - betweenRows).value.absoluteValue <= 1f
-        )
-
         composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).performClick()
+
         assertTrue("tapping reverse should swap the endpoints", reversed)
     }
 
@@ -449,6 +473,9 @@ class TripPlanFormRenderTest {
         )
     }
 
+    /** Where a tagged node sits in the form, for the tests that are about position. */
+    private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */
     private fun railDot(row: Int): Color {
         val pixels = composeRule.onNodeWithTag(FORM).captureToImage().toPixelMap()
@@ -502,9 +529,6 @@ class TripPlanFormRenderTest {
 
     private companion object {
         const val FORM = "tripPlanFormRoot"
-
-        /** The advanced-settings button's contentDescription — the bar's last trailing child. */
-        const val ADVANCED_SETTINGS = "Additional Trip Preferences"
         val RAIL_WIDTH_DP = 44.dp
         val FROM_FIELD = TripPlanTestTags.FROM_PREFIX + TripPlanTestTags.FIELD_SUFFIX
         val TO_FIELD = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.FIELD_SUFFIX

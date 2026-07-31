@@ -659,7 +659,7 @@ private fun MetricRow(
     // glyph — the height still drives its scale.
     val column = inkHeight * WIDEST_BOX_FACTOR
     Row(
-        modifier = winnerOutline(winner, outlineColor),
+        modifier = Modifier.winnerOutline(winner, outlineColor),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
@@ -750,17 +750,17 @@ private fun ScheduleMetric(text: String, winner: Boolean, outlineColor: Color) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         maxLines = 1,
-        modifier = winnerOutline(winner, outlineColor)
+        modifier = Modifier.winnerOutline(winner, outlineColor)
     )
 }
 
 /** Adds no layout or drawing when [winner] is false, preserving the existing ordinary metric rows. */
-private fun winnerOutline(winner: Boolean, color: Color): Modifier = if (winner) {
-    Modifier
+private fun Modifier.winnerOutline(winner: Boolean, color: Color): Modifier = if (winner) {
+    this
         .border(WINNER_OUTLINE_WIDTH, color, RoundedCornerShape(WINNER_OUTLINE_RADIUS))
         .padding(horizontal = 3.dp, vertical = 1.dp)
 } else {
-    Modifier
+    this
 }
 
 /**

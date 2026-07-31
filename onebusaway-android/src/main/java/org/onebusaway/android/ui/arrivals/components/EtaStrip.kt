@@ -282,8 +282,8 @@ private fun EtaPillWithMenu(
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
-    routeBadge: RouteBadge? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    routeBadge: RouteBadge? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes

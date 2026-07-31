@@ -3,20 +3,24 @@ package org.onebusaway.android.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.util.GeoPoint
 
 /**
  * The route labels drawn on a directions itinerary's transit lines (#2066). The point of these is that a
  * label names *a ride* — one per route, however many legs it spans, and every route the rider may board
- * for it (#2083) — takes the colour of the line it names, and never becomes a tap target that would
- * navigate away from the trip being read.
+ * for it (#2083) — takes the colour of the line it names, and leads back into that ride rather than away
+ * from the trip being read (#2101).
+ *
+ * One label is not always one ride, though: a label is per route, so an itinerary that rides the same
+ * route twice wears a single label covering both. One label being one tap target, it leads to the first
+ * of them in travel order — the ride the rider reaches first. `rideCoveringLegs` owns that rule.
  */
 class ItineraryRouteBadgesTest {
 
@@ -25,7 +29,7 @@ class ItineraryRouteBadgesTest {
     private val northward = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 0.0))
 
     @Test
-    fun `each ridden route is labelled at its midpoint, in its own line colour, and is not tappable`() {
+    fun `each ridden route is labelled at its midpoint, in its own line colour, and focuses its own ride`() {
         val ride = TripLeg(mode = TripMode.BUS, routeId = "route-45", routeShortName = "45")
         val rideStyle = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor = 0xFF0000FF.toInt(), palette = PALETTE)
 
@@ -39,8 +43,8 @@ class ItineraryRouteBadgesTest {
         // Exactly the colour its own line is stroked with, so a label and its line can't disagree.
         assertEquals(listOf(BadgedRoute("45", rideStyle.color)), badge.routes)
         assertEquals(GeoPoint(0.0, 0.5), badge.point)
-        // No tap target at all, so there is nothing for a stray tap to navigate to.
-        assertNull(badge.tap)
+        // A tap lands back on the ride it names, never on that route's own map.
+        assertEquals(RouteBadgeTap.FocusItineraryRide(setOf(1)), badge.tap)
     }
 
     @Test
@@ -53,6 +57,9 @@ class ItineraryRouteBadgesTest {
         )
 
         assertEquals(listOf(listOf("5")), badges.map(::names))
+        // One label, so one tap target — carrying both legs, which `rideCoveringLegs` resolves to the
+        // ride the rider reaches first.
+        assertEquals(listOf(RouteBadgeTap.FocusItineraryRide(setOf(0, 2))), badges.map { it.tap })
     }
 
     @Test
@@ -108,8 +115,8 @@ class ItineraryRouteBadgesTest {
         ).single()
 
         assertEquals(listOf("1 Line", "2 Line"), names(badge))
-        // Still informational: naming several routes doesn't turn the label into a navigation target.
-        assertNull(badge.tap)
+        // Naming several routes doesn't make it several rides: the tap is still the one ride it sits on.
+        assertEquals(RouteBadgeTap.FocusItineraryRide(setOf(0)), badge.tap)
     }
 
     @Test

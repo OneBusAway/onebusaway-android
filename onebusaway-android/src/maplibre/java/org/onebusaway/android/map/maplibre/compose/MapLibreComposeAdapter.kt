@@ -328,10 +328,11 @@ private fun wireClicks(
             }
             return@setOnMarkerClickListener true
         }
+        // Only a label that leads somewhere is registered as a tap target, so this hands the badge over
+        // whole and lets the host read where it leads — see [ObaMapCallbacks.onRouteBadgeClick].
         val routeBadge = renderer.routeBadgeForMarker(marker)
-        val routeBadgeTap = routeBadge?.tap
-        if (routeBadge != null && routeBadgeTap != null) {
-            callbacks.onRouteBadgeClick(routeBadgeTap.routeId, routeBadge.tappedRouteShortName, routeBadgeTap.directionId)
+        if (routeBadge != null) {
+            callbacks.onRouteBadgeClick(routeBadge)
             return@setOnMarkerClickListener true
         }
         // Titled markers (the trip-focus estimate markers + the most-recent-data dot) fall through to

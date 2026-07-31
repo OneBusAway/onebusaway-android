@@ -27,6 +27,7 @@ import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
@@ -211,6 +212,11 @@ internal data class ItinerarySubstitute(val route: InterchangeableRoute, val rou
  * order ([inInterchangeableOrder]) — rather than naming one route on a line the rider is being told to
  * board either of two. A leg with no alternatives is labelled with its planned route alone, which is what
  * an OTP1 plan (no candidates at all) yields for every leg.
+ *
+ * Each label is a tap target for its own ride (#2101), carrying the legs it names so the tap lands on the
+ * same focus the drawer's row for that ride does. It deliberately does *not* lead to the route's own map,
+ * which is what a label on this view must never do: the rider is reading a trip, and a stray tap must not
+ * trade the whole itinerary for one route (see [RouteBadgeTap]).
  */
 internal fun itineraryRouteBadges(
     legs: List<ItineraryDrawableLeg>,
@@ -240,8 +246,8 @@ internal fun itineraryRouteBadges(
             val ride = ridden.first()
             RouteBadgeRequest(
                 routes = ride.badgedRoutes(palette),
-                paths = ridden.map { RouteBadgePath(it.drawable.points) }
-                // No tap target: see [RouteBadge.tap].
+                paths = ridden.map { RouteBadgePath(it.drawable.points) },
+                tap = RouteBadgeTap.FocusItineraryRide(ridden.mapTo(mutableSetOf()) { it.drawable.index })
             )
         }
     )

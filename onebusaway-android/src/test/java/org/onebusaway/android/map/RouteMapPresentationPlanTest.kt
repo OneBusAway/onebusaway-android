@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -144,7 +145,7 @@ class RouteMapPresentationPlanTest {
         )
 
         // No emphasized route -> route badges are emitted, and there's no active base route to frame to.
-        assertEquals(listOf("79"), plan.badges.map { it.tap?.routeId })
+        assertEquals(listOf("79"), plan.badges.map { (it.tap as? RouteBadgeTap.ShowRoute)?.route?.routeId })
         assertEquals(emptyList<RoutePolyline>(), plan.framingPolylines)
         assertEquals(1, plan.polylines.size)
     }

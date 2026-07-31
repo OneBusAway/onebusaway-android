@@ -252,6 +252,42 @@ data class ContinuationBadge(
 data class BadgedRoute(val routeShortName: String, val color: Int)
 
 /**
+ * What a tap on a [RouteBadge] does. The two map views that label their lines want different things of
+ * a tap, and the difference is not cosmetic: an adjacency label names a route the rider has not opened
+ * yet, so tapping it opens that route; a directions label names a ride of the trip the rider is already
+ * reading, so tapping it must stay inside that trip (#2101) rather than trade the whole itinerary for a
+ * single route's map.
+ */
+sealed interface RouteBadgeTap {
+
+    /**
+     * Show the route this label names — the route-direction to open, preferring the drawn line's own
+     * direction over the route's default. Focused-stop adjacency (#1827).
+     */
+    data class ShowRoute(val route: RouteDirectionKey) : RouteBadgeTap
+
+    /**
+     * Focus the ride this label names, within the itinerary already drawn (#2101) — exactly as tapping
+     * that ride's row in the directions drawer does, so the two ways to reach one ride can't disagree.
+     *
+     * [legIndices] are the itinerary leg indices the label covers, which need not be a whole ride and
+     * need not be only one: a label is per *route*, a ride is what the rider boards once, and a
+     * stay-aboard interline (#2000) makes the two differ in both directions — the ride's legs carry
+     * different routes, so each gets its own label, while an itinerary that rides one route on several
+     * legs draws a single label over all of them (see `itineraryRouteBadges`). Naming legs rather than a
+     * ride is what lets the label say what it knows and leave resolving the ride to the side that has
+     * the rides (`rideCoveringLegs`).
+     */
+    data class FocusItineraryRide(val legIndices: Set<Int>) : RouteBadgeTap {
+        init {
+            // A focus target that names no leg would silently do nothing on tap, which reads to the rider
+            // as a dead label rather than as the bug in a badge builder that it is.
+            require(legIndices.isNotEmpty()) { "an itinerary ride badge names at least one leg" }
+        }
+    }
+}
+
+/**
  * A label naming the route(s) on the line it is drawn on — in focused-stop adjacency view (#1827), and
  * on a directions itinerary's rides (#2066). Anchored once in geographic space so the map SDK naturally
  * carries it through pan and zoom. Rendered by both flavors (#1913).
@@ -266,27 +302,26 @@ data class RouteBadge(
     val routes: List<BadgedRoute>,
     val point: GeoPoint,
     /**
-     * Where a tap on this label navigates — the route-direction to show, preferring the drawn line's own
-     * direction over the route's default. Null makes the label informational: a directions itinerary's
-     * labels name legs of a trip the rider is already reading, so a stray tap must not drop the whole
-     * itinerary for a single route's map. Null is also the default, so a label is inert until a producer
-     * says where it leads, and no producer needs a navigable id it doesn't have.
+     * What a tap on this label does — see [RouteBadgeTap]. Null makes the label inert, which is also the
+     * default, so a label leads nowhere until a producer says where, and no producer needs a destination
+     * it doesn't have.
      */
-    val tap: RouteDirectionKey? = null
+    val tap: RouteBadgeTap? = null
 ) {
     init {
         // Both stated rather than trusted: a label with nothing to read is a marker the rider can't
-        // account for, and a navigable label naming several routes would leave the tap handler picking
-        // one of them — the destination has to be as unambiguous as the name. Producer-side invariants
-        // (only adjacency labels navigate, and each names its one route), so a violation is a bug in a
-        // badge builder, which is where the message points.
+        // account for, and a *route-navigating* label naming several routes would leave the tap handler
+        // picking one of them — that destination has to be as unambiguous as the name. (A ride focus is
+        // not so constrained: an interchangeable ride is one ride however many routes it may be taken
+        // on.) Producer-side invariants, so a violation is a bug in a badge builder, which is where the
+        // message points.
         require(routes.isNotEmpty()) { "a route badge names at least one route" }
-        require(tap == null || routes.size == 1) {
+        require(tap !is RouteBadgeTap.ShowRoute || routes.size == 1) {
             "a badge naming ${routes.size} routes has no single route to navigate to"
         }
     }
 
-    /** The one route a navigable badge names — see the [tap] invariant above. */
+    /** The one route a [RouteBadgeTap.ShowRoute] badge names — see the [tap] invariant above. */
     val tappedRouteShortName: String get() = routes.single().routeShortName
 }
 

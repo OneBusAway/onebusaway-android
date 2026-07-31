@@ -634,6 +634,24 @@ class HomeViewModel @Inject constructor(
     private val directionsSubFocus: DirectionsSubFocus?
         get() = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus
 
+    // A route label tapped on the drawn itinerary (#2101), carrying the itinerary legs that label names.
+    // Inbound (map -> the directions drawer), so it runs the other way from [mapDirectives] and can't be a
+    // directive: turning a tapped ride into a focus needs the drawer's own resolved leg refs (route ids,
+    // board stops), which live in the results VM, not here. So this VM only relays the tap to the sheet,
+    // which spends it through exactly the handler its own row tap uses.
+    //
+    // A SharedFlow rather than a Channel — the opposite call from [mapDirectives], for the opposite
+    // reason: an itinerary label only exists while the sheet showing that itinerary is composed, so a tap
+    // with no collector is a tap with no trip to focus into, and dropping it is the honest outcome. A
+    // queued one would land on whatever the rider had moved on to.
+    private val _itineraryRideBadgeTaps = MutableSharedFlow<Set<Int>>(extraBufferCapacity = 1)
+    val itineraryRideBadgeTaps: SharedFlow<Set<Int>> = _itineraryRideBadgeTaps.asSharedFlow()
+
+    /** A route label tapped on the drawn itinerary: relay the legs it names to the directions sheet. */
+    fun onItineraryRideBadgeTapped(legIndices: Set<Int>) {
+        _itineraryRideBadgeTaps.tryEmit(legIndices)
+    }
+
     /** Recenter the map on a tapped itinerary step's point (only while in [CurrentFocus.Directions]). */
     fun focusItineraryPointOnMap(point: GeoPoint) = emitMapDirective(MapDirective.FocusItineraryPoint(point))
 

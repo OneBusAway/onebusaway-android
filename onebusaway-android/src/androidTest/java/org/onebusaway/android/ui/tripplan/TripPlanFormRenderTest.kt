@@ -484,6 +484,7 @@ class TripPlanFormRenderTest {
 
     /** Where a tagged node sits in the form, for the tests that are about position. */
     private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */
     private fun railDot(row: Int): Color {
         val pixels = composeRule.onNodeWithTag(FORM).captureToImage().toPixelMap()

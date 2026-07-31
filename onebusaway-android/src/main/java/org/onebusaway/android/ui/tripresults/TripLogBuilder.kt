@@ -103,9 +103,11 @@ object TripLogBuilder {
                         legIndex = legIndex,
                         // When the rider gets to the board stop: the end of the leg that brought them
                         // there (a walk, or the ride they transfer off). An itinerary that opens on a
-                        // transit leg has no such leg — the rider is at the stop from the start — so the
-                        // ride's own departure stands in, leaving no planned wait.
-                        reachStopTime = legs.getOrNull(legIndex - 1)?.endTime ?: leg.startTime,
+                        // transit leg has no such leg — the rider is at the stop from the start — and
+                        // that is a genuine absence, not a moment to substitute for: see
+                        // TripLogEntry.Transit.reachStopTime for what standing in the ride's own
+                        // departure would tell the rider.
+                        reachStopTime = legs.getOrNull(legIndex - 1)?.endTime,
                         ref = routeLegRefs.getOrNull(legIndex)
                     )
                 }
@@ -181,7 +183,7 @@ object TripLogBuilder {
         board: Direction,
         legPoints: List<GeoPoint>,
         legIndex: Int,
-        reachStopTime: ServerTime,
+        reachStopTime: ServerTime?,
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)

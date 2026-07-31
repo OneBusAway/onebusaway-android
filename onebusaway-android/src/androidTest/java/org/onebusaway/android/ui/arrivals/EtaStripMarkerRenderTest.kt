@@ -19,11 +19,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasStateDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.components.ETA_STRIP_MARKER_TAG
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
 import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
@@ -45,13 +48,15 @@ class EtaStripMarkerRenderTest {
     val composeRule = createUnconfinedComposeRule()
 
     private val description = "You get to this stop at 3:19pm"
+    private val passedDescription = "Leaves before you get here"
 
     /**
-     * A strip of [names].size departures, one route each, with the rule before the pill at [markerIndex].
+     * A strip of [names].size departures, one route each, leaving 3, 11, 19… minutes out, with the rule
+     * at [reachStopMinutes] minutes out.
      * Each pill wears its route's badge so a pill can be located by a string no other node holds — an ETA
      * or clock-time match would risk colliding with a neighbour's subline.
      */
-    private fun setContent(vararg names: String, markerIndex: Int) = composeRule.setContent {
+    private fun setContent(vararg names: String, reachStopMinutes: Long) = composeRule.setContent {
         Box(Modifier.fillMaxWidth()) {
             EtaStrip(
                 trips = names.mapIndexed { i, name ->
@@ -60,7 +65,12 @@ class EtaStripMarkerRenderTest {
                 actionsFor = { null },
                 callbacks = previewRowCallbacks(),
                 routeBadgeFor = { RouteBadge(it.shortName ?: error("preview route must have a name"), null) },
-                marker = EtaStripMarker(index = markerIndex, contentDescription = description)
+                // previewArrival anchors serverNow at 0, so a departure N minutes out sits at N * 60_000.
+                marker = EtaStripMarker(
+                    at = ServerTime(reachStopMinutes * 60_000L),
+                    contentDescription = description,
+                    passedStateDescription = passedDescription
+                )
             )
         }
     }
@@ -69,40 +79,45 @@ class EtaStripMarkerRenderTest {
 
     @Test
     fun theRuleSitsBetweenTheDepartureItFollowsAndTheOneItPrecedes() {
-        setContent("A", "B", markerIndex = 1)
+        // A leaves 3 min out, B 11 min out; the rider gets there at 6 min.
+        setContent("A", "B", reachStopMinutes = 6)
 
         val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
         val missed = boundsOf("A")
         val catchable = boundsOf("B")
 
-        assert(missed.right <= rule.left) { "rule at ${rule.left} must follow route A, which ends at ${missed.right}" }
-        assert(rule.right <= catchable.left) { "rule ending at ${rule.right} must precede route B, which starts at ${catchable.left}" }
+        assertTrue("rule at ${rule.left} must follow route A, which ends at ${missed.right}", missed.right <= rule.left)
+        assertTrue("rule ending at ${rule.right} must precede route B, which starts at ${catchable.left}", rule.right <= catchable.left)
     }
 
     @Test
     fun aRiderWhoIsAlreadyThereGetsTheRuleAheadOfEveryDeparture() {
-        setContent("A", markerIndex = 0)
+        // A leaves 3 min out and the rider is there now.
+        setContent("A", reachStopMinutes = 0)
 
         val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
 
-        assert(rule.right <= boundsOf("A").left) { "rule ending at ${rule.right} must precede route A" }
+        assertTrue("rule ending at ${rule.right} must precede route A", rule.right <= boundsOf("A").left)
     }
 
     @Test
     fun aRiderArrivingAfterEveryDepartureStillGetsARule() {
-        // The index is past the last pill — every departure shown is out of reach. The rule closes the
-        // strip rather than being dropped, which would leave the row looking unmarked.
-        setContent("A", markerIndex = 1)
+        // The moment falls past the last pill — every departure shown is out of reach. The rule closes
+        // the strip rather than being dropped, which would leave the row looking unmarked.
+        setContent("A", reachStopMinutes = 30)
 
         val rule = composeRule.onNodeWithTag(ETA_STRIP_MARKER_TAG).getUnclippedBoundsInRoot()
 
-        assert(boundsOf("A").right <= rule.left) { "rule at ${rule.left} must follow route A" }
+        assertTrue("rule at ${rule.left} must follow route A", boundsOf("A").right <= rule.left)
     }
 
     @Test
     fun theRuleReadsAsOneSentenceToAScreenReader() {
-        setContent("A", "B", markerIndex = 1)
+        setContent("A", "B", reachStopMinutes = 6)
 
         composeRule.onNodeWithContentDescription(description).assertExists()
+        // ...and the pill it passed says so itself, where a screen reader actually meets it — the rule
+        // is read after that pill, too late to explain it.
+        composeRule.onNode(hasStateDescription(passedDescription)).assertExists()
     }
 }

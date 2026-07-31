@@ -257,15 +257,17 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun anItineraryOpeningOnTransit_reachesTheStopAtItsOwnDeparture() {
-        // Nothing precedes the ride, so the plan puts the rider at the stop from the start and there is
-        // no wait to mark — the rule sits ahead of the departure the plan boards rather than nowhere.
+    fun anItineraryOpeningOnTransit_hasNoArrivalAtTheStopToMark() {
+        // Nothing precedes the ride, so the rider is at the stop from the start: there is no wait, and
+        // no departure is out of their reach. Standing the ride's own departure in would dim every
+        // earlier one — for a "leave at 5pm" plan read at 3pm, the whole strip — so the absence is
+        // carried as null rather than substituted for.
         val transit = TripLogBuilder
             .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef))
             .filterIsInstance<TripLogEntry.Transit>()
             .single()
 
-        assertEquals(transitLeg.startTime, transit.reachStopTime)
+        assertNull(transit.reachStopTime)
     }
 
     @Test

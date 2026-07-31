@@ -13,34 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.ui.home.directions
+package org.onebusaway.android.ui.arrivals.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 
 /**
- * Where the "you get to this stop" rule lands in a Board row's live ETA strip (#2125): after every
- * departure the rider can't be there for, before the first one they can.
+ * Where an [EtaStripMarker]'s rule lands among the strip's departures (#2125) — in the directions
+ * drawer, after every departure the rider can't be there for and before the first one they can.
  */
-class DeparturesBeforeTest {
+class CountBeforeTest {
 
     private fun minutes(vararg m: Long) = m.map { ServerTime(it * 60_000L) }
 
+    /** The times are already [ServerTime]s here, so the item *is* its own time. */
+    private fun ruleAt(departures: List<ServerTime>, moment: ServerTime) = countBefore(departures, moment) { it }
+
     @Test
-    fun `the rule follows the departures that leave before the rider gets there`() {
+    fun `the rule follows the departures that leave before the moment`() {
         // Departures at 2, 9 and 17 minutes; the rider's walk lands at 10.
-        assertEquals(2, departuresBefore(minutes(2, 9, 17), ServerTime(10 * 60_000L)))
+        assertEquals(2, ruleAt(minutes(2, 9, 17), ServerTime(10 * 60_000L)))
     }
 
     @Test
     fun `a rider already at the stop puts the rule ahead of every departure`() {
-        assertEquals(0, departuresBefore(minutes(2, 9, 17), ServerTime(0L)))
+        assertEquals(0, ruleAt(minutes(2, 9, 17), ServerTime(0L)))
     }
 
     @Test
     fun `a rider arriving after everything the feed knows puts the rule at the end`() {
-        assertEquals(3, departuresBefore(minutes(2, 9, 17), ServerTime(60 * 60_000L)))
+        assertEquals(3, ruleAt(minutes(2, 9, 17), ServerTime(60 * 60_000L)))
     }
 
     @Test
@@ -48,11 +51,11 @@ class DeparturesBeforeTest {
         // An exact tie is the common case, not an edge one: an OTP plan whose walk is timed to the
         // vehicle hands back the same instant for both. Counting it as missed would dim the very ride
         // the row is about.
-        assertEquals(1, departuresBefore(minutes(2, 9, 17), ServerTime(9 * 60_000L)))
+        assertEquals(1, ruleAt(minutes(2, 9, 17), ServerTime(9 * 60_000L)))
     }
 
     @Test
     fun `an empty strip has nothing to rule`() {
-        assertEquals(0, departuresBefore(emptyList(), ServerTime(9 * 60_000L)))
+        assertEquals(0, ruleAt(emptyList(), ServerTime(9 * 60_000L)))
     }
 }

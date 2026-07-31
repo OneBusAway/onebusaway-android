@@ -384,12 +384,14 @@ fun DirectionsResultsSheet(
  * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
  * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
  * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
+ * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  */
 @Composable
 fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
-    reachStopTime: ServerTime,
+    reachStopTime: ServerTime?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
@@ -438,30 +440,28 @@ fun DirectionStopEtaStrip(
         return
     }
     val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
-    val trips = interleaved.map { it.first }
-    val context = LocalContext.current
-    val reachStopClock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
     EtaStrip(
-        trips = trips,
+        trips = interleaved.map { it.first },
         actionsFor = { content.actions[it.tripId] },
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
         routeBadgeFor = { badgesByTrip[it] },
-        marker = EtaStripMarker(
-            index = departuresBefore(trips.map { it.displayTime }, reachStopTime),
-            contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, reachStopClock)
-        )
+        marker = reachStopTime?.let { rememberReachStopMarker(it) }
     )
 }
 
-/**
- * How many of [departureTimes] (in strip order, i.e. chronological) leave before the rider gets to the
- * stop — which is where the strip's "you reach the stop" rule goes: after those, before the rest.
- *
- * A departure exactly *at* [reachStopTime] counts as catchable and stays after the rule; a plan that
- * boards a departure it also says the rider arrives for would otherwise rule out its own ride.
- */
-internal fun departuresBefore(departureTimes: List<ServerTime>, reachStopTime: ServerTime): Int = departureTimes.count { it < reachStopTime }
+/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
+ *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+@Composable
+private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+    val context = LocalContext.current
+    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
+    return EtaStripMarker(
+        at = reachStopTime,
+        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
+        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
+    )
+}
 
 /**
  * Flattens route-specific, already-ordered arrival lists into one chronological strip. Kotlin's sort

@@ -973,6 +973,12 @@
     <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
          stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
     <string name="directions_whichever_comes_first">whichever comes first</string>
+    <!-- Content description for the rule drawn across a Board row's live ETA strip at the moment the
+         plan has the rider reach that stop. %1$s is a clock time, e.g. "3:19pm". -->
+    <string name="directions_stop_eta_reach_stop">You get to this stop at %1$s</string>
+    <!-- Spoken state of each departure drawn before that rule: one leaving before the rider can be at
+         the stop. Read on the departure itself, since its dimmed appearance says nothing aloud. -->
+    <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>

@@ -21,6 +21,7 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.geoPointOrNull
@@ -95,7 +96,20 @@ object TripLogBuilder {
                     // in TripResultsRepository).
                     foldIntoLeader(entries, leg, board, legPoints, legIndex, transitionByLeg[legIndex])
                 } else {
-                    entries += transitEntry(leg, board, legPoints, legIndex, routeLegRefs.getOrNull(legIndex))
+                    entries += transitEntry(
+                        leg = leg,
+                        board = board,
+                        legPoints = legPoints,
+                        legIndex = legIndex,
+                        // When the rider gets to the board stop: the end of the leg that brought them
+                        // there (a walk, or the ride they transfer off). An itinerary that opens on a
+                        // transit leg has no such leg — the rider is at the stop from the start — and
+                        // that is a genuine absence, not a moment to substitute for: see
+                        // TripLogEntry.Transit.reachStopTime for what standing in the ride's own
+                        // departure would tell the rider.
+                        reachStopTime = legs.getOrNull(legIndex - 1)?.endTime,
+                        ref = routeLegRefs.getOrNull(legIndex)
+                    )
                 }
             }
         }
@@ -169,6 +183,7 @@ object TripLogBuilder {
         board: Direction,
         legPoints: List<GeoPoint>,
         legIndex: Int,
+        reachStopTime: ServerTime?,
         ref: RouteLegRef?
     ): TripLogEntry.Transit {
         val routeLeg = ref ?: fallbackRouteLeg(leg)
@@ -178,6 +193,7 @@ object TripLogBuilder {
             mode = leg.mode.transitMode(),
             routeColorHex = leg.routeColor,
             headsign = leg.headsign ?: routeLeg.headsign,
+            reachStopTime = reachStopTime,
             boardTime = leg.startTime,
             exitTime = leg.endTime,
             durationMinutes = leg.duration.inWholeMinutes,

@@ -804,7 +804,7 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit = { _, _ -> },
     reminderControl: @Composable () -> Unit = {}
 ) {
     Box(
@@ -859,7 +859,7 @@ fun TripResultsSheet(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp
 ) {
@@ -995,7 +995,7 @@ private fun TripLogList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
@@ -1051,7 +1051,7 @@ private fun LogRow(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
 ) {
     val i = model.entryIndex
     when (val content = model.content) {
@@ -1579,7 +1579,7 @@ private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
     onFocus: () -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
 ) {
     val context = LocalContext.current
     // The route/headsign/meta block highlights the leg on the map; expanding its steps is the scaffold's
@@ -1642,7 +1642,9 @@ private fun ColumnScope.BoardContent(
             stopName = stop.name,
             onClick = { stop.point?.let(onFocusPoint) }
         )
-        stopEtaStrip(entry.routeLeg, stop, entry.legPoints)
+        // The whole ride, not just its route/stop: the strip also rules the plan's own arrival at this
+        // stop across the live ETAs (#2125), and a pill tap frames the ride's geometry on the map.
+        stopEtaStrip(entry, stop)
     }
 }
 
@@ -1935,6 +1937,7 @@ private fun TripResultsPreview() {
                     mode = TransitMode.BUS,
                     routeColorHex = "1B6EF3",
                     headsign = "Rainier Beach",
+                    reachStopTime = ServerTime(3 * 60_000L),
                     boardTime = ServerTime(4 * 60_000L),
                     exitTime = ServerTime(20 * 60_000L),
                     durationMinutes = 16,
@@ -1978,6 +1981,7 @@ private fun TripResultsPreview() {
                     mode = TransitMode.FERRY,
                     routeColorHex = null,
                     headsign = "Bremerton",
+                    reachStopTime = ServerTime(20 * 60_000L),
                     boardTime = ServerTime(24 * 60_000L),
                     exitTime = ServerTime(84 * 60_000L),
                     durationMinutes = 60,

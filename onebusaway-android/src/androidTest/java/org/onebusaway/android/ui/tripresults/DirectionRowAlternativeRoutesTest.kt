@@ -81,6 +81,7 @@ class DirectionRowAlternativeRoutesTest {
         mode = TransitMode.RAIL,
         routeColorHex = "0075C4",
         headsign = "Downtown Redmond",
+        reachStopTime = ServerTime(60_000L),
         boardTime = ServerTime(2 * 60_000L),
         exitTime = ServerTime(32 * 60_000L),
         durationMinutes = 30,

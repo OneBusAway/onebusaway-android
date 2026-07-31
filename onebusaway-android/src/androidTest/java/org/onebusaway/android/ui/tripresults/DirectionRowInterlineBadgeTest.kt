@@ -87,6 +87,7 @@ class DirectionRowInterlineBadgeTest {
         mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
+        reachStopTime = ServerTime(60_000L),
         boardTime = ServerTime(2 * 60_000L),
         exitTime = ServerTime(32 * 60_000L),
         durationMinutes = 30,

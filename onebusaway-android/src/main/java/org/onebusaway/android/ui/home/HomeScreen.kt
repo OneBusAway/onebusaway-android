@@ -759,16 +759,18 @@ fun HomeScreen(
                                             onFocusRouteLeg = homeViewModel::focusItineraryRouteLeg,
                                             onFocusLeg = homeViewModel::focusItineraryLegOnMap,
                                             onFocusPoint = homeViewModel::focusItineraryPointOnMap,
-                                            // Each transit leg's Board/Alight row shows that stop's live ETA strip inline.
-                                            stopEtaStrip = { routeLeg, stop, segment ->
+                                            // Each transit leg's Board/Alight row shows that stop's live ETA strip inline,
+                                            // ruled at the moment the plan has the rider reach the stop (#2125).
+                                            stopEtaStrip = { ride, stop ->
                                                 DirectionStopEtaStrip(
-                                                    routeLeg = routeLeg,
+                                                    routeLeg = ride.routeLeg,
                                                     stop = stop,
+                                                    reachStopTime = ride.reachStopTime,
                                                     arrivalsViewModelFactory = arrivalsViewModelFactory,
                                                     onShowTrip = onShowTrip,
                                                     onEditReminder = onEditReminder,
                                                     onFocusVehicle = { request ->
-                                                        homeViewModel.focusDirectionsRouteVehicle(request, segment)
+                                                        homeViewModel.focusDirectionsRouteVehicle(request, ride.legPoints)
                                                     }
                                                 )
                                             },

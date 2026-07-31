@@ -181,6 +181,15 @@ sealed interface TripLogEntry {
      * then draws no roundel and leads with [routeDisplayName]; see
      * [routeDisplayShortName][org.onebusaway.android.directions.model.routeDisplayShortName]. [mode] is
      * what the rider boards, and picks the Board node's glyph — a ferry leg must not read as a bus.
+     *
+     * [reachStopTime] and [boardTime] are different moments and both matter: the rider gets to the stop
+     * at the first (the end of whatever leg precedes this one) and the vehicle leaves at the second. The
+     * gap between them is the planned wait, and it's what the Board node's live ETA strip marks (#2125) —
+     * without it the strip reads as if the rider were standing at the stop already. It is **null** when
+     * nothing precedes the ride: the plan then puts the rider at the stop from the start, so there is no
+     * wait, and — crucially — no departure is out of their reach. Substituting [boardTime] there would
+     * dim every departure earlier than the one the plan happened to pick, which for a "leave at 5pm" plan
+     * read at 3pm is the whole strip, and is the opposite of the truth.
      */
     data class Transit(
         val routeShortName: String?,
@@ -188,6 +197,7 @@ sealed interface TripLogEntry {
         val mode: TransitMode,
         val routeColorHex: String?,
         val headsign: String?,
+        val reachStopTime: ServerTime?,
         val boardTime: ServerTime,
         val exitTime: ServerTime,
         val durationMinutes: Long,

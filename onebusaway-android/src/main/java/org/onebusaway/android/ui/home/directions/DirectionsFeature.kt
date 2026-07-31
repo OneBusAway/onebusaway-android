@@ -85,10 +85,12 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
+import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
@@ -126,6 +128,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
+import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -267,7 +270,7 @@ fun DirectionsResultsSheet(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     onSheetHeightPx: (Int) -> Unit,
     // The itinerary leg indices of a route label tapped on the map, as they arrive. Required rather than
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
@@ -377,11 +380,18 @@ fun DirectionsResultsSheet(
  * All routes read the one arrivals poll this stop already runs, so alternatives cost no extra request.
  * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
  * still appears on the card's "or …" line.
+ *
+ * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
+ * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
+ * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
+ * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  */
 @Composable
 fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
+    reachStopTime: ServerTime?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
@@ -435,7 +445,21 @@ fun DirectionStopEtaStrip(
         actionsFor = { content.actions[it.tripId] },
         callbacks = callbacks,
         modifier = modifier.then(rowPadding),
-        routeBadgeFor = { badgesByTrip[it] }
+        routeBadgeFor = { badgesByTrip[it] },
+        marker = reachStopTime?.let { rememberReachStopMarker(it) }
+    )
+}
+
+/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
+ *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+@Composable
+private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+    val context = LocalContext.current
+    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
+    return EtaStripMarker(
+        at = reachStopTime,
+        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
+        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
     )
 }
 

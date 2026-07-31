@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +60,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -65,6 +69,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -273,6 +278,28 @@ private fun EndpointRow(
     var field by remember { mutableStateOf(TextFieldValue(endpointText)) }
     var menuOpen by remember { mutableStateOf(false) }
 
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // Choosing any row of the menu below names the endpoint, so it ends the edit rather than being a
+    // step in it: the field gives up focus and the keyboard goes with it. Hung off the choice rather
+    // than off the row's state, because focus is one resource shared with the sibling row — "this row
+    // isn't being edited" is also true the instant the other row takes focus, and reconciling to that
+    // would pull the keyboard down mid-handoff. Wrapping the action keeps a later row from forgetting.
+    fun choosing(action: () -> Unit): () -> Unit = {
+        menuOpen = false
+        // clearFocus() is what closes the keyboard the field raised; hide() is a cheap backstop.
+        focusManager.clearFocus()
+        keyboard?.hide()
+        action()
+    }
+
+    // The keyboard's own accept key is a choice like any other: by the time it is pressed the geocoder
+    // has already answered, and the rider is confirming the result they can see at the top of the list
+    // rather than asking for it. With nothing to confirm it just ends the edit — which is all it did
+    // before, having been wired to nothing at all.
+    val acceptTopSuggestion = choosing { suggestions.firstOrNull()?.let(onSelect) }
+
     // Adopt the hosted endpoint only when it actually says something different — a suggestion picked,
     // a location filled in, a reversed trip. While the user types, the endpoint is echoing the text
     // that came from this field, so there is nothing to adopt and the cursor is left alone.
@@ -305,6 +332,8 @@ private fun EndpointRow(
                     }
                 },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { acceptTopSuggestion() }),
                 // The device's own position is named in its own colour, matching its rail dot, so the
                 // one endpoint the rider didn't choose is identifiable without reading it. A chosen
                 // place is ordinary text — colouring every endpoint would say nothing.
@@ -351,10 +380,7 @@ private fun EndpointRow(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.tripplanner_current_location)) },
                 leadingIcon = { CurrentLocationDotIcon() },
-                onClick = {
-                    menuOpen = false
-                    onCurrentLocation()
-                },
+                onClick = choosing(onCurrentLocation),
                 modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.MY_LOCATION_SUFFIX)
             )
             DropdownMenuItem(
@@ -362,10 +388,7 @@ private fun EndpointRow(
                 // The crosshair the pick overlay itself puts at the centre of the map, so the row
                 // shows the tool it opens.
                 leadingIcon = { PinnedActionIcon(painterResource(R.drawable.ic_my_location)) },
-                onClick = {
-                    menuOpen = false
-                    onPickOnMap()
-                },
+                onClick = choosing(onPickOnMap),
                 modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.PICK_ON_MAP_SUFFIX)
             )
             if (suggestions.isNotEmpty()) {
@@ -378,10 +401,7 @@ private fun EndpointRow(
                         } else {
                             null
                         },
-                        onClick = {
-                            onSelect(place)
-                            menuOpen = false
-                        },
+                        onClick = choosing { onSelect(place) },
                         modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.SUGGESTION_SUFFIX)
                     )
                 }

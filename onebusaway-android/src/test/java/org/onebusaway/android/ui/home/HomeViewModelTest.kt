@@ -1381,4 +1381,52 @@ class HomeViewModelTest {
         assertEquals(0, startup.cleared)
         assertEquals(0, region.refreshCount)
     }
+
+    // ---- a stop cannot be selected while directions owns the map (#2097) ----
+
+    private val someStop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
+
+    /** Started from a leg sub-focus, the hardest state the one `is Directions` guard has to hold. */
+    @Test
+    fun `a stop tapped on the directions map is refused`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        val walk = walkLeg(2)
+        vm.focusItineraryLegOnMap(walk)
+
+        val transition = vm.onStopFocused(someStop)
+
+        assertEquals(StopFocusTransition.Refused, transition)
+        // The refusal is the point: focus is untouched, so there is no stop selection to leave behind
+        // when the rider comes back to the trip.
+        assertEquals(CurrentFocus.Directions(DirectionsSubFocus.Leg(walk)), vm.currentFocus.value)
+    }
+
+    /**
+     * A reveal is a deliberate move to that stop, so it is never refused — and it must not rewrite
+     * focus on the way in. pushFocus records the focus it replaces, so stepping through None would
+     * drop the trip out of the back stack: Back would land on an empty map rather than the itinerary.
+     */
+    @Test
+    fun `back after revealing a stop from directions returns to the trip`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+
+        vm.revealStop(someStop)
+        assertEquals(someStop, vm.currentFocus.value.focusedStop)
+
+        vm.navigateBackFocus()
+
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+    }
+
+    @Test
+    fun `a stop tapped outside directions still focuses`() = runTest {
+        val vm = viewModel()
+
+        val transition = vm.onStopFocused(someStop)
+
+        assertEquals(StopFocusTransition.ReplacePresentation, transition)
+        assertEquals(someStop, vm.currentFocus.value.focusedStop)
+    }
 }

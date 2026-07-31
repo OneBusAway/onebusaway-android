@@ -53,7 +53,13 @@ import org.onebusaway.android.util.toGeoPoint
 internal enum class StopFocusTransition {
     Unchanged,
     ContinuePresentation,
-    ReplacePresentation
+    ReplacePresentation,
+
+    /**
+     * The focus was refused: directions owns the map, and a stop cannot be selected there (#2097).
+     * Callers must not mark the stop selected on the map either — the refusal is the whole point.
+     */
+    Refused
 }
 
 /**
@@ -217,6 +223,26 @@ class HomeViewModel @Inject constructor(
         stop: FocusedStop,
         continuingRoutes: Set<RouteDirectionKey> = emptySet()
     ): StopFocusTransition {
+        // Directions owns the map while a trip is being planned, so a stop tapped there is refused
+        // rather than allowed to take over (#2097). Letting it through pushed stop focus on top of the
+        // trip, and coming back left the marker still reading as selected underneath a form that knows
+        // nothing about it — a state easier to make unreachable than to unwind.
+        if (_currentFocus.value is CurrentFocus.Directions) return StopFocusTransition.Refused
+        return focusStop(stop, continuingRoutes)
+    }
+
+    /**
+     * Focus [stop] unconditionally — the shared body of [onStopFocused] and [revealStop], minus the
+     * rule about who may ask. Asking for a stop from elsewhere in the app (starred, recents, a deep
+     * link) is a deliberate move to it rather than a stray tap on a crowded map, so it is never
+     * refused. It also has to reach the focus change *without* the current focus being rewritten
+     * first: [pushFocus] records the focus it replaces, so stepping through None on the way would
+     * drop the trip out of the back stack and leave Back on an empty map instead of the itinerary.
+     */
+    private fun focusStop(
+        stop: FocusedStop,
+        continuingRoutes: Set<RouteDirectionKey> = emptySet()
+    ): StopFocusTransition {
         val previousId = _currentFocus.value.focusedStop?.id
         val sameStop = previousId == stop.id
         if (sameStop) return StopFocusTransition.Unchanged
@@ -249,7 +275,7 @@ class HomeViewModel @Inject constructor(
      */
     fun revealStop(stop: FocusedStop, animate: Boolean = false) {
         emitMapDirective(MapDirective.ClearFocus)
-        onStopFocused(stop)
+        focusStop(stop)
         markPendingMapFocus(animate)
     }
 

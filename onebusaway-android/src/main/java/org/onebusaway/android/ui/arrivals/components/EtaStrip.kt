@@ -74,6 +74,8 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
+import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -103,6 +105,7 @@ internal fun EtaStrip(
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
     firstPillModifier: Modifier = Modifier,
+    routeBadgeFor: (ArrivalInfo) -> RouteBadge? = { null },
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
     // the strip mid-scroll.
     state: LazyListState = rememberLazyListState()
@@ -112,6 +115,7 @@ internal fun EtaStrip(
     // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
     // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
+    val hasRouteBadges = trips.any { routeBadgeFor(it) != null }
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
@@ -149,7 +153,13 @@ internal fun EtaStrip(
                 // An invisible tallest-variant pill (two-line ETA + clock subline), measured to size
                 // the row and never placed — so it's never drawn, takes no input, adds no semantics.
                 // Constant params, so it never recomposes on the live clock tick.
-                EtaPill(eta = 10, color = Color.Transparent, predicted = false, clockTime = "0:00")
+                EtaPill(
+                    eta = 10,
+                    color = Color.Transparent,
+                    predicted = false,
+                    clockTime = "0:00",
+                    routeBadge = if (hasRouteBadges) RouteBadge("00", null) else null
+                )
             }
         ) {
             LazyRow(
@@ -161,16 +171,16 @@ internal fun EtaStrip(
             ) {
                 itemsIndexed(
                     trips,
-                    // Trip-instance identity, so a poll that drops an aged-out leading trip keeps the
+                    // Route + trip-instance identity, so a poll that drops an aged-out leading trip keeps the
                     // viewport on the surviving pills instead of shifting by an index. It's the SAME
                     // (tripId, serviceDate, stopSequence) triple the arrivals dedup collapses to one
-                    // entry (see collapseDuplicateTripInstances) — tripId alone is NOT unique (a loop
-                    // route's two genuine visits to one stop share it), and a duplicate LazyRow key
-                    // is a fatal throw at measure time, so uniqueness here rests on that dedup rather
-                    // than on the feed being well-behaved (#2012). The NUL separator is the same
-                    // can't-occur-in-an-id joiner routeRowKey uses, written as an escape rather than pasted
-                    // raw, which had made this file binary to grep and code review (#2012).
-                    key = { _, trip -> "${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
+                    // entry within one route (see collapseDuplicateTripInstances); routeId keeps that
+                    // invariant valid when the directions drawer interleaves several routes (#2099).
+                    // tripId alone is NOT unique (a loop route's two genuine visits to one stop share
+                    // it), and a duplicate LazyRow key is a fatal throw at measure time. The NUL
+                    // separator is the same can't-occur-in-an-id joiner routeRowKey uses, written as an
+                    // escape rather than pasted raw, which had made this file binary to grep (#2012).
+                    key = { _, trip -> "${trip.routeId}\u0000${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
                 ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
                     val pillModifier = if (index == 0) firstPillModifier else Modifier
@@ -179,6 +189,7 @@ internal fun EtaStrip(
                         liveNow = liveNow,
                         actions = actionsFor(trip),
                         callbacks = callbacks,
+                        routeBadge = routeBadgeFor(trip),
                         modifier = pillModifier
                     )
                 }
@@ -268,6 +279,7 @@ private fun EtaPillWithMenu(
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
+    routeBadge: RouteBadge? = null,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -292,6 +304,7 @@ private fun EtaPillWithMenu(
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clockTime = clockTime,
+            routeBadge = routeBadge,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true }
         )
@@ -346,6 +359,7 @@ internal fun EtaPill(
     color: Color,
     predicted: Boolean,
     modifier: Modifier = Modifier,
+    routeBadge: RouteBadge? = null,
     // The trip's live vehicle is drawn on the map right now (#1992): show the "on the map" pin instead of
     // the rss glyph, cueing that a tap on this pill reframes the map to that vehicle. Implies [predicted]
     // (a drawn vehicle is always real-time), so it wins when both would apply.
@@ -398,14 +412,24 @@ internal fun EtaPill(
             // guessed independently of the actual text metrics.
             Column(
                 modifier = Modifier.padding(
-                    start = 6.dp,
-                    end = 6.dp,
+                    // A badged direction pill puts another element at its top edge. Reserve the live
+                    // indicator's overlaid corner on both sides so it cannot cover the roundel and the
+                    // roundel remains visually centered.
+                    start = if (routeBadge == null) 6.dp else indicatorSize,
+                    end = if (routeBadge == null) 6.dp else indicatorSize,
                     top = topPadding,
                     bottom = bottomPadding
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(clockTimeGap)
             ) {
+                if (routeBadge != null) {
+                    RouteBadgeChip(
+                        shortName = routeBadge.shortName,
+                        routeColor = routeBadge.routeColor,
+                        scale = 0.8f
+                    )
+                }
                 if (etaParts == null) {
                     Text(
                         text = stringResource(R.string.stop_info_eta_now),

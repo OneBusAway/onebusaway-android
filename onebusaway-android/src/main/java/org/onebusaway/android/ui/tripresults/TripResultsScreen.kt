@@ -1582,7 +1582,7 @@ private fun ColumnScope.BoardContent(
             }
         )
         // What an interchangeable badge means: any of those routes will do, so board the first to
-        // arrive. Each one's own ETA strip sits under the board stop below (#2010). A ride that changes
+        // arrive. Their arrivals share one route-badged ETA strip under the board stop (#2010/#2099). A ride that changes
         // route under the rider carries the opposite instruction — board this one and stay on it — and
         // gives it in its own row further down the ride (TransitionContent); its badge never reaches
         // this header, so it cannot pick this caption up.

@@ -492,7 +492,14 @@ class RouteMapController(
     private fun List<ExtrapolatedVehicle>.filterToFocusedRide(routeId: String): List<ExtrapolatedVehicle> {
         if (!highlightedSegment.isDrawableSegment()) return this
         val eligiblePaths = focusedVehiclePathsByRoute[routeId] ?: return emptyList()
-        return filter { vehicle -> eligiblePaths.containsRoutePoint(vehicle.point) }
+        return filter { vehicle ->
+            focusedRideKeepsVehicle(
+                vehicleTripId = vehicle.status.activeTripId,
+                pendingFocusTripId = pendingFocus,
+                eligiblePaths = eligiblePaths,
+                point = vehicle.point
+            )
+        }
     }
 
     /**

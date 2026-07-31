@@ -96,6 +96,22 @@ internal fun List<BoundedRoutePath>.containsRoutePoint(
     projection.distanceToPoint <= toleranceMeters && projection.distanceAlong <= path.maxDistanceAlong
 }
 
+/**
+ * Whether a route-focus vehicle survives the selected leg's spatial filter. The explicitly requested
+ * ETA-pill trip always survives: its pin is derived from the arrivals response's exact active-trip +
+ * GPS identity, while the eligible path is reconstructed independently from route-wide geometry and
+ * can miss a legitimate trip variant. Without this exception the route poll can contain the tapped
+ * vehicle yet discard it before [RouteMapController] gets the chance to frame it.
+ */
+internal fun focusedRideKeepsVehicle(
+    vehicleTripId: String?,
+    pendingFocusTripId: String?,
+    eligiblePaths: List<BoundedRoutePath>,
+    point: GeoPoint
+): Boolean = vehicleTripId != null &&
+    vehicleTripId == pendingFocusTripId ||
+    eligiblePaths.containsRoutePoint(point)
+
 private fun List<RoutePolyline>.closestProjection(anchor: GeoPoint) = mapIndexedNotNull { index, line ->
     val projection = Polyline(line.points).nearestProjection(anchor.latitude, anchor.longitude)
         ?: return@mapIndexedNotNull null

@@ -40,6 +40,14 @@ sealed interface TripEndpoint {
     val isTransit: Boolean get() = false
 
     /**
+     * This endpoint *is* the device's own position, which the map already marks with the location
+     * layer's blue dot. Such an endpoint is given no pin of its own — neither the standalone From/To
+     * pin shown while the form is being filled in nor the drawn itinerary's terminus pin — since a pin
+     * dropped on top of the blue dot says nothing the dot doesn't (#2111).
+     */
+    val isDeviceLocation: Boolean get() = this is CurrentLocation
+
+    /**
      * The text this endpoint carries itself (a typed query or a resolved place name), or null for the
      * fixed-label kinds ([CurrentLocation]/[MapPoint]) whose label is a string resource resolved by the
      * Android layer. Keeps the shared part of the endpoint→label mapping in one place instead of

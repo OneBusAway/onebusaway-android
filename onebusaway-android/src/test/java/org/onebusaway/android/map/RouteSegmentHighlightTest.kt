@@ -158,5 +158,7 @@ class RouteSegmentHighlightTest {
 
         assertFalse(focusedRideKeepsVehicle("other-trip", "tapped-trip", eligible, offPath))
         assertTrue(focusedRideKeepsVehicle("tapped-trip", "tapped-trip", eligible, offPath))
+        // No focused trip at all: a schedule-only vehicle (null trip id) must not match a null focus.
+        assertFalse(focusedRideKeepsVehicle(null, null, eligible, offPath))
     }
 }

@@ -267,6 +267,15 @@ class RouteMapController(
     // set from an ETA-pill tap ([ShowRouteRequest.focusTripId]).
     private var pendingFocus: String? = null
 
+    // The ETA-pill trip exempt from the selected-leg geometry filter (#2099). Unlike [pendingFocus] —
+    // a one-shot the FIT/DROP resolution consumes — this lives as long as the focus context itself:
+    // the per-frame sampler re-runs the filter continuously, so an exemption keyed to the pending
+    // focus would drop the tapped vehicle on the very next sample after the camera fits it. Set with
+    // every focus request (start/reframe/requestFocus, mirroring the request's focusTripId, including
+    // null); cleared only when the focus context ends — leaving route mode ([stop]) or a deliberate
+    // direction switch ([selectDirection]).
+    private var focusExemptTripId: String? = null
+
     /**
      * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
      * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
@@ -307,6 +316,7 @@ class RouteMapController(
         this.focusedVehiclePathsByRoute = emptyMap()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
+        this.focusExemptTripId = focusTripId
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
         // a direction-anchored launch (an anchor stop or a restored direction) stays Pending until the
         // route load resolves the filter (below).
@@ -355,6 +365,7 @@ class RouteMapController(
      */
     fun requestFocus(tripId: String) {
         pendingFocus = tripId
+        focusExemptTripId = tripId
         tryFocusVehicle(currentVehicleLayer())
     }
 
@@ -387,6 +398,10 @@ class RouteMapController(
             showDirectionPolylines()
         }
         request.initialDirectionId?.let { selectDirection(it) }
+        // The exemption mirrors this request's focus intent: a reframe without a focusTripId (e.g.
+        // tapping a different leg of the same route) ends any prior pill focus, so its exempted
+        // vehicle doesn't leak through the new leg's geometry filter.
+        focusExemptTripId = request.focusTripId
         request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
     }
 
@@ -495,7 +510,7 @@ class RouteMapController(
         return filter { vehicle ->
             focusedRideKeepsVehicle(
                 vehicleTripId = vehicle.status.activeTripId,
-                pendingFocusTripId = pendingFocus,
+                focusedTripId = focusExemptTripId,
                 eligiblePaths = eligiblePaths,
                 point = vehicle.point
             )
@@ -645,6 +660,7 @@ class RouteMapController(
         directionState = DirectionState.Resolved(null)
         latestPoll = null
         pendingFocus = null
+        focusExemptTripId = null
         publishMapPresentation()
         // setVehicleSet(null) is what clears the vehicle markers (the renderer reconciles the empty set);
         // it must be nulled together with the motion sampler, which only moves already-reconciled markers.
@@ -1074,10 +1090,12 @@ class RouteMapController(
     fun selectDirection(directionId: Int?): Boolean {
         if (routeId == null || directionId == currentDirectionId) return false
         directionState = DirectionState.Resolved(directionId)
-        // A vehicle selected in the old direction is now filtered out — drop the selection, and drop any
-        // still-pending vehicle+stop focus (the switch is a deliberate "show the other direction" action).
+        // A vehicle selected in the old direction is now filtered out — drop the selection, any
+        // still-pending vehicle+stop focus, and the pill trip's geometry-filter exemption (the switch
+        // is a deliberate "show the other direction" action).
         renderState.setSelectedVehicle(null)
         pendingFocus = null
+        focusExemptTripId = null
         showDirectionStops()
         showDirectionPolylines()
         // Re-filter the vehicle set against the same poll and push it — the renderer reconciles markers on

@@ -41,6 +41,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.ui.compose.Channel
+import org.onebusaway.android.ui.compose.assertDominant
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
@@ -397,25 +399,6 @@ class TripPlanFormRenderTest {
         )
 
         assertDominant(railDot(row = 1), Channel.BLUE, "a destination at the device's position")
-    }
-
-    private enum class Channel { RED, GREEN, BLUE }
-
-    /**
-     * Dominance rather than an exact hex, so the rule survives a palette tweak and holds in both
-     * themes — but strictly, with no tolerance to tune: the sample is the centre of a 12dp filled
-     * circle, so it is the fill colour itself, not an antialiased edge.
-     */
-    private fun assertDominant(color: Color, channel: Channel, what: String) {
-        val (dominant, others) = when (channel) {
-            Channel.RED -> color.red to listOf(color.green, color.blue)
-            Channel.GREEN -> color.green to listOf(color.red, color.blue)
-            Channel.BLUE -> color.blue to listOf(color.red, color.green)
-        }
-        assertTrue(
-            "$what should read $channel, but its dot was $color",
-            others.all { dominant > it }
-        )
     }
 
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */

@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.ui.tripresults
 
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -106,6 +105,5 @@ class RideCoveringLegsTest {
         val directions = listOf(start, walk, arrive)
 
         assertNull(directions.rideCoveringLegs(setOf(0)))
-        assertEquals(emptyList<TripLogEntry>(), directions.filterIsInstance<TripLogEntry.Transit>())
     }
 }

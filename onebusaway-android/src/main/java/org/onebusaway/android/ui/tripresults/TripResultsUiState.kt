@@ -214,7 +214,8 @@ sealed interface TripLogEntry {
  * an itinerary that rides one route twice is two rides under a single label, and — one label being one
  * tap target — it resolves to the first in travel order, the ride the rider reaches first.
  */
-fun List<TripLogEntry>.rideCoveringLegs(legIndices: Set<Int>): TripLogEntry.Transit? = filterIsInstance<TripLogEntry.Transit>().firstOrNull { entry -> entry.legIndices.any(legIndices::contains) }
+internal fun List<TripLogEntry>.rideCoveringLegs(legIndices: Set<Int>): TripLogEntry.Transit? = filterIsInstance<TripLogEntry.Transit>()
+    .firstOrNull { entry -> entry.legIndices.any(legIndices::contains) }
 
 /**
  * Something that happens between boarding and exiting a ride, in travel order: an intermediate [Stop]

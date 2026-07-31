@@ -61,7 +61,6 @@ import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapProjector
-import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.ScreenOffset
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.time.WallTime
@@ -386,22 +385,12 @@ private fun routeMarkerTap(
         )
         return true
     }
+    // Only a label that leads somewhere is registered as a tap target, so this hands the badge over
+    // whole and lets the host read where it leads — see [ObaMapCallbacks.onRouteBadgeClick].
     val routeBadge = renderer.routeBadgeForMarker(marker)
-    when (val routeBadgeTap = routeBadge?.tap) {
-        is RouteBadgeTap.ShowRoute -> {
-            cb.onRouteBadgeClick(
-                routeBadgeTap.route.routeId,
-                routeBadge.tappedRouteShortName,
-                routeBadgeTap.route.directionId
-            )
-            return true
-        }
-        is RouteBadgeTap.FocusItineraryRide -> {
-            cb.onItineraryRideBadgeClick(routeBadgeTap.legIndices)
-            return true
-        }
-        // An inert label, or not a label at all: fall through to the default marker handling below.
-        null -> Unit
+    if (routeBadge != null) {
+        cb.onRouteBadgeClick(routeBadge)
+        return true
     }
     // Trip-focus estimate markers + the most-recent-data dot (titled markers): the SDK's default
     // title/snippet info window, which dismisses any open custom bubble.

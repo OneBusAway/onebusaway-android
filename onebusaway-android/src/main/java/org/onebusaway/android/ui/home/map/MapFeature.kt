@@ -91,6 +91,8 @@ import org.onebusaway.android.map.StopsBanner
 import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.models.ObaTripStatus
@@ -241,21 +243,24 @@ fun MapFeature(
                 )
             }
 
-            override fun onRouteBadgeClick(
-                routeId: String,
-                routeShortName: String,
-                directionId: Int?
-            ) {
-                homeViewModel.requestShowFocusedStopRouteOnMap(
-                    routeId,
-                    directionId,
-                    routeShortName,
-                    undoViewport = mapViewModel.viewport
-                )
-            }
-
-            override fun onItineraryRideBadgeClick(legIndices: Set<Int>) {
-                homeViewModel.onItineraryRideBadgeTapped(legIndices)
+            override fun onRouteBadgeClick(badge: RouteBadge) {
+                when (val tap = badge.tap) {
+                    // An adjacency label (#1827) names a route the rider hasn't opened: open it.
+                    is RouteBadgeTap.ShowRoute -> homeViewModel.requestShowFocusedStopRouteOnMap(
+                        tap.route.routeId,
+                        tap.route.directionId,
+                        badge.tappedRouteShortName,
+                        undoViewport = mapViewModel.viewport
+                    )
+                    // A directions label (#2101) names a ride of the trip already being read: focus it
+                    // where it is, without trading the itinerary for one route's map.
+                    is RouteBadgeTap.FocusItineraryRide ->
+                        homeViewModel.onItineraryRideBadgeTapped(tap.legIndices)
+                    // A label a producer left inert is never registered as a tap target, so this can't
+                    // arrive — named rather than swallowed by an else, so a third kind of tap is a
+                    // compile error here (the one place that reads them) instead of a silent no-op.
+                    null -> Unit
+                }
             }
 
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {

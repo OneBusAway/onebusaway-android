@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.compose
 
 import org.onebusaway.android.map.bike.BikeStation
+import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.GeoPoint
@@ -45,15 +46,17 @@ interface ObaMapCallbacks {
     /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
     fun onRouteContinuationClick(routeId: String, routeShortName: String, directionId: Int?) {}
 
-    /** An adjacency route badge tap (#1827) — enter route mode on the badge's line direction. */
-    fun onRouteBadgeClick(routeId: String, routeShortName: String, directionId: Int?) {}
-
     /**
-     * A directions route badge tap (#2101) — focus the ride these itinerary [legIndices] belong to,
-     * without leaving the trip the rider is reading (see
-     * [org.onebusaway.android.map.render.RouteBadgeTap.FocusItineraryRide]).
+     * A route badge tap — an adjacency label opening its route (#1827), or a directions label focusing
+     * the ride it names (#2101).
+     *
+     * The whole [badge] is passed, not its destination flattened into fields, because what a tap does is
+     * the label's own to say ([RouteBadge.tap]) and the host is where that is read. Flattening it would
+     * put the `when` over that sealed type in each flavor's marker dispatch instead — mirrored code that
+     * a new kind of label has to be added to twice, and that would silently ignore it in the flavor that
+     * was missed. Same shape as [onStopClick], which likewise hands over the render model.
      */
-    fun onItineraryRideBadgeClick(legIndices: Set<Int>) {}
+    fun onRouteBadgeClick(badge: RouteBadge) {}
 
     /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
     fun onVehicleInfoWindowClick(status: ObaTripStatus)

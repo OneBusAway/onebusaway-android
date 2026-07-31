@@ -62,7 +62,6 @@ import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.routePolylineRenderFlow
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
@@ -329,22 +328,12 @@ private fun wireClicks(
             }
             return@setOnMarkerClickListener true
         }
+        // Only a label that leads somewhere is registered as a tap target, so this hands the badge over
+        // whole and lets the host read where it leads — see [ObaMapCallbacks.onRouteBadgeClick].
         val routeBadge = renderer.routeBadgeForMarker(marker)
-        when (val routeBadgeTap = routeBadge?.tap) {
-            is RouteBadgeTap.ShowRoute -> {
-                callbacks.onRouteBadgeClick(
-                    routeBadgeTap.route.routeId,
-                    routeBadge.tappedRouteShortName,
-                    routeBadgeTap.route.directionId
-                )
-                return@setOnMarkerClickListener true
-            }
-            is RouteBadgeTap.FocusItineraryRide -> {
-                callbacks.onItineraryRideBadgeClick(routeBadgeTap.legIndices)
-                return@setOnMarkerClickListener true
-            }
-            // An inert label, or not a label at all: fall through to the default marker handling below.
-            null -> Unit
+        if (routeBadge != null) {
+            callbacks.onRouteBadgeClick(routeBadge)
+            return@setOnMarkerClickListener true
         }
         // Titled markers (the trip-focus estimate markers + the most-recent-data dot) fall through to
         // the SDK's default title window. Untitled decorations (generic start/end markers) have

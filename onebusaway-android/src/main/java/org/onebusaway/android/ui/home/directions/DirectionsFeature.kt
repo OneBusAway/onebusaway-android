@@ -88,7 +88,6 @@ import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
@@ -285,9 +284,11 @@ fun DirectionsResultsSheet(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     onSheetHeightPx: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    // The itinerary leg indices of a route label tapped on the map, as they arrive.
-    rideBadgeTaps: Flow<Set<Int>> = emptyFlow()
+    // The itinerary leg indices of a route label tapped on the map, as they arrive. Required rather than
+    // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
+    // would otherwise type-check.
+    rideBadgeTaps: Flow<Set<Int>>,
+    modifier: Modifier = Modifier
 ) {
     // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't

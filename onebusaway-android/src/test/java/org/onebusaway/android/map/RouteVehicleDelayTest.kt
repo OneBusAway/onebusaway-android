@@ -15,34 +15,35 @@
  */
 package org.onebusaway.android.map
 
-import java.util.concurrent.TimeUnit
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.onebusaway.android.time.ElapsedTime
 
 /**
  * Unit tests for [nextVehicleDelay] — the resume-mid-period timing for the route vehicle poll,
- * ported from the legacy RouteMapController.onResume math. Timestamps are nanoseconds.
+ * ported from the legacy RouteMapController.onResume math. Both readings are monotonic-clock
+ * [ElapsedTime]s, so "never loaded" is the absent reading rather than a zero sentinel.
  */
 class RouteVehicleDelayTest {
 
-    private val base = 1_000_000_000L // arbitrary non-zero nanosecond "lastUpdated"
+    private val base = ElapsedTime(1_000_000L) // arbitrary monotonic "lastUpdated"
 
-    private fun nanosAfter(lastUpdated: Long, elapsedMillis: Long): Long = lastUpdated + TimeUnit.MILLISECONDS.toNanos(elapsedMillis)
+    private fun after(lastUpdated: ElapsedTime, elapsedMillis: Long) = ElapsedTime(lastUpdated.ms + elapsedMillis)
 
     @Test
     fun `never loaded waits a full period`() {
-        assertEquals(VEHICLE_REFRESH_PERIOD_MS, nextVehicleDelay(lastUpdated = 0L, now = base))
+        assertEquals(VEHICLE_REFRESH_PERIOD_MS, nextVehicleDelay(lastUpdated = null, now = base))
     }
 
     @Test
     fun `mid-period waits only the remainder`() {
-        val now = nanosAfter(base, elapsedMillis = 3000)
+        val now = after(base, elapsedMillis = 3000)
         assertEquals(VEHICLE_REFRESH_PERIOD_MS - 3000, nextVehicleDelay(base, now))
     }
 
     @Test
     fun `overdue refreshes almost immediately`() {
-        val now = nanosAfter(base, elapsedMillis = VEHICLE_REFRESH_PERIOD_MS + 5000)
+        val now = after(base, elapsedMillis = VEHICLE_REFRESH_PERIOD_MS + 5000)
         assertEquals(100L, nextVehicleDelay(base, now))
     }
 

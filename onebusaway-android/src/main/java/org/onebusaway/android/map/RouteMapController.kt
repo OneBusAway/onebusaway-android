@@ -104,7 +104,8 @@ class RouteMapController(
     // geometry and calls back here to republish; [publishMapPresentation] reads its presentation.
     private val stopFocus = StopFocusController(
         focusedTripRepository = focusedTripRepository,
-        stopsController = stopsController,
+        startNearbyStops = stopsController::start,
+        stopNearbyStops = stopsController::stop,
         scope = scope,
         isRouteActive = { isActive },
         onPresentationChanged = ::publishMapPresentation

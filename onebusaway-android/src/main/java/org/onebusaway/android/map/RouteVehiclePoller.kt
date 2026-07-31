@@ -15,16 +15,20 @@
  */
 package org.onebusaway.android.map
 
-import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.time.ElapsedTime
 
-/** The latest trips-for-route [response] and the device clock ([loadNanos]) when it landed. */
-internal data class VehiclePoll(val response: RouteTrips, val loadNanos: Long)
+/**
+ * The latest trips-for-route [response] and the monotonic-clock reading ([loadTime]) when it landed.
+ * Monotonic rather than wall-clock because the only thing measured against it is a real elapsed
+ * interval — how much of the refresh period a backgrounded map has already served out.
+ */
+internal data class VehiclePoll(val response: RouteTrips, val loadTime: ElapsedTime)
 
 /**
  * Keeps a route session's real-time vehicle responses fresh, and nothing else. Extracted from
@@ -49,14 +53,15 @@ internal class RouteVehiclePoller(
 ) {
 
     // The long-running periodic polls: the leader route's, plus one per extra route. Started, paused and
-    // resumed together, so the leader's liveness stands in for all of them.
+    // resumed together; [resume] checks all of them rather than treating the leader as a proxy, so a
+    // poll that ended on its own is relaunched instead of staying dead for the rest of the session.
     private var leaderJob: Job? = null
     private var extraJobs: List<Job> = emptyList()
 
     /**
-     * The most recent leader-route poll and when it landed (nanos). The controller's per-frame sampler
-     * reads the response to dead-reckon every vehicle to the frame's clock; the load time lets a resume
-     * mid-period wait only the remainder. Null until the first poll lands.
+     * The most recent leader-route poll and when it landed. The controller's per-frame sampler reads the
+     * response to dead-reckon every vehicle to the frame's clock; the load time lets a resume mid-period
+     * wait only the remainder. Null until the first poll lands.
      */
     var leaderPoll: VehiclePoll? = null
         private set
@@ -89,10 +94,14 @@ internal class RouteVehiclePoller(
      * retained responses survive, so the map redraws from them immediately. [extraRouteIds] is re-read
      * from the caller rather than remembered, since a reframe can change the session's extra segments
      * without restarting the poll.
+     *
+     * "Already running" means *every* poll, not just the leader's: an extra route's poll that ended on
+     * its own would otherwise never be noticed, and that route's vehicles would stop refreshing for the
+     * rest of the session with no way back but leaving and re-entering the route.
      */
     fun resume(routeId: String, extraRouteIds: List<String>) {
-        if (leaderJob?.isActive == true) return
-        launchPolls(routeId, extraRouteIds, nextVehicleDelay(leaderPoll?.loadNanos ?: 0L, SystemClock.elapsedRealtimeNanos()))
+        if (leaderJob?.isActive == true && extraJobs.all { it.isActive }) return
+        launchPolls(routeId, extraRouteIds, nextVehicleDelay(leaderPoll?.loadTime, ElapsedTime.now()))
     }
 
     /**
@@ -136,7 +145,7 @@ internal class RouteVehiclePoller(
             delay(initialDelayMs)
         }
         tripObservationRepository.routeVehiclesStream(routeId, VEHICLE_REFRESH_PERIOD_MS).collect { response ->
-            retain(VehiclePoll(response, SystemClock.elapsedRealtimeNanos()))
+            retain(VehiclePoll(response, ElapsedTime.now()))
             onPoll()
         }
     }

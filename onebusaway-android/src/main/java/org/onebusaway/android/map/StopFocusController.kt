@@ -60,12 +60,15 @@ internal data class StopFocusPresentation(
  * trip set is a valid focus.
  *
  * This controller does not draw: it exposes [presentation] and lets [RouteMapController] merge it with
- * the route's own geometry. It does drive [StopsMapController]'s start/stop, since whether the ordinary
- * nearby-stops loader should run depends on whether a stop focus (or a route) owns the stop layer.
+ * the route's own geometry. It does decide when the ordinary nearby-stops loader runs, since that
+ * depends on whether a stop focus (or a route) owns the stop layer — but it takes that loader as the
+ * two [startNearbyStops]/[stopNearbyStops] calls rather than the whole [StopsMapController], so the
+ * handoff logic is reachable from a JVM test without a map host.
  */
 internal class StopFocusController(
     private val focusedTripRepository: FocusedTripRepository,
-    private val stopsController: StopsMapController,
+    private val startNearbyStops: () -> Unit,
+    private val stopNearbyStops: () -> Unit,
     private val scope: CoroutineScope,
     private val isRouteActive: () -> Boolean,
     private val onPresentationChanged: () -> Unit
@@ -182,7 +185,7 @@ internal class StopFocusController(
             next.session.trips.map(FocusedTrip::routeDirection),
             retained = _routeColors.value
         )
-        stopsController.start()
+        startNearbyStops()
         onPresentationChanged()
     }
 
@@ -193,7 +196,7 @@ internal class StopFocusController(
         job?.cancel()
         job = null
         _routeColors.value = emptyMap()
-        if (isRouteActive()) stopsController.stop() else stopsController.start()
+        if (isRouteActive()) stopNearbyStops() else startNearbyStops()
         onPresentationChanged()
     }
 }

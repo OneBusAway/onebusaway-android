@@ -95,6 +95,7 @@ import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -113,7 +114,8 @@ import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
 // Temporary calibration aid; retain the implementation so it can be restored with a one-line toggle.
-private const val SHOW_DEBUG_ZOOM_INDICATOR = false
+// Currently ON to tune the stop-band thresholds (#2107) against what the map actually shows.
+private const val SHOW_DEBUG_ZOOM_INDICATOR = true
 
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue
@@ -456,9 +458,12 @@ fun MapFeature(
             Text(
                 text = String.format(
                     Locale.US,
-                    "Zoom %.2f · route %.2f×",
+                    "Zoom %.2f · route %.2f× · %s",
                     zoom,
-                    routeLineWidthScale(zoom)
+                    routeLineWidthScale(zoom),
+                    // The stop band this zoom falls in, so the dot/full/routes thresholds can be tuned
+                    // against the map rather than by arithmetic (#2107).
+                    stopZoomBand(zoom)
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.labelMedium,

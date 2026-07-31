@@ -951,14 +951,20 @@
     <string name="trip_plan_now">now</string>
     <!-- A pinned departure/arrival in the time callout: date, then time. -->
     <string name="trip_plan_date_time">%1$s, %2$s</string>
+    <!-- The one row of the time callout's menu that opens the combined date/time picker. -->
+    <string name="trip_plan_choose_date_time">Choose date and time…</string>
+    <!-- That picker's title. Replaces Material's stock "Select time", which names only one of its halves. -->
+    <string name="trip_plan_select_date_time">Select date and time</string>
+    <!-- The third row of that picker's day dropdown, which opens the calendar. -->
     <string name="trip_plan_choose_date">Choose date…</string>
-    <string name="trip_plan_choose_time">Choose time…</string>
+    <!-- The two days that dropdown names outright; any other day shows as its own date. -->
+    <string name="trip_plan_date_today">Today</string>
+    <string name="trip_plan_date_tomorrow">Tomorrow</string>
     <!-- Accessibility click label for either half of the time callout. -->
     <string name="trip_plan_change_when">Change when</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_date">Date</string>
-    <string name="trip_plan_time">Time</string>
     <string name="trip_plan_pick_on_map">Pick location on map</string>
     <string name="trip_plan_use_this_location">Use this location</string>
     <string name="trip_plan_map_location">Selected location</string>

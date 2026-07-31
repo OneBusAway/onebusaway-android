@@ -16,9 +16,7 @@
 package org.onebusaway.android.ui.home.directions
 
 import android.content.Context
-import android.text.format.DateFormat
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -78,11 +76,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
-import java.util.Calendar
-import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.Flow
@@ -102,7 +95,6 @@ import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
-import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
@@ -112,6 +104,7 @@ import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
+import org.onebusaway.android.ui.tripplan.TripDateTimeDialog
 import org.onebusaway.android.ui.tripplan.TripEndpointDotIcon
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
@@ -160,8 +153,11 @@ fun DirectionsFormCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val activity = context.findActivity()
     var showAdvanced by remember { mutableStateOf(false) }
+    // The instant the picker opens on, captured when it is opened rather than read from the form on
+    // each recomposition: under the "now" anchor the form's own dateTimeMillis is the moment the
+    // ViewModel was built, which a form left open has long outrun (see [TripPlanViewModel.pickerStartMillis]).
+    var pickerStartMillis by remember { mutableStateOf<Long?>(null) }
     val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
     val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
     val availableStreetModes = StreetMode.entries.filter { it.isAvailableIn(bikeshare, usesOtp2) }
@@ -189,8 +185,7 @@ fun DirectionsFormCard(
                 onPickOnMap = onPickEndpoint,
                 onSetArriving = viewModel::setArriving,
                 onDepartNow = viewModel::setDepartNow,
-                onPickDate = { pickTripDate(activity, viewModel) },
-                onPickTime = { pickTripTime(activity, viewModel) },
+                onPickDateTime = { pickerStartMillis = viewModel.pickerStartMillis() },
                 availableStreetModes = availableStreetModes,
                 onVehicleModeSelected = { vehicle ->
                     viewModel.setModeSelection(state.modes.copy(vehicle = vehicle))
@@ -207,6 +202,16 @@ fun DirectionsFormCard(
     }
     if (showAdvanced) {
         DirectionsAdvancedSettingsDialog(viewModel = viewModel, onDismiss = { showAdvanced = false })
+    }
+    pickerStartMillis?.let { start ->
+        TripDateTimeDialog(
+            initialMillis = start,
+            onDismiss = { pickerStartMillis = null },
+            onConfirm = { millis ->
+                viewModel.setDateTime(millis)
+                pickerStartMillis = null
+            }
+        )
     }
 }
 
@@ -225,46 +230,6 @@ private fun setCurrentLocation(context: Context, viewModel: TripPlanViewModel, s
         R.string.no_location_permission
     }
     Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-}
-
-private fun pickTripDate(activity: AppCompatActivity, viewModel: TripPlanViewModel) {
-    val current = viewModel.formState.value.dateTimeMillis
-    val picker = MaterialDatePicker.Builder.datePicker()
-        .setTitleText(R.string.trip_plan_date)
-        .setSelection(current)
-        .build()
-    picker.addOnPositiveButtonClickListener { selection ->
-        // Read the selection in UTC, exactly as the user saw it (matches the legacy form).
-        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = selection }
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = current
-            set(Calendar.YEAR, utc.get(Calendar.YEAR))
-            set(Calendar.MONTH, utc.get(Calendar.MONTH))
-            set(Calendar.DAY_OF_MONTH, utc.get(Calendar.DAY_OF_MONTH))
-        }
-        viewModel.setDateTime(calendar.timeInMillis)
-    }
-    picker.show(activity.supportFragmentManager, "DATE_PICKER")
-}
-
-private fun pickTripTime(activity: AppCompatActivity, viewModel: TripPlanViewModel) {
-    val current = viewModel.formState.value.dateTimeMillis
-    val calendar = Calendar.getInstance().apply { timeInMillis = current }
-    val timeFormat =
-        if (DateFormat.is24HourFormat(activity)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H
-    val picker = MaterialTimePicker.Builder()
-        .setTimeFormat(timeFormat)
-        .setHour(calendar.get(Calendar.HOUR_OF_DAY))
-        .setMinute(calendar.get(Calendar.MINUTE))
-        .setTitleText(R.string.trip_plan_time)
-        .setTheme(R.style.ThemeOverlay_App_TimePicker)
-        .build()
-    picker.addOnPositiveButtonClickListener {
-        calendar.set(Calendar.HOUR_OF_DAY, picker.hour)
-        calendar.set(Calendar.MINUTE, picker.minute)
-        viewModel.setDateTime(calendar.timeInMillis)
-    }
-    picker.show(activity.supportFragmentManager, "TIME_PICKER")
 }
 
 /** The expanded directions sheet's share of the window height (the collapsed peek is handle-only). */

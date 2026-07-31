@@ -829,7 +829,6 @@
     <string name="trip_plan_leaving">Wyjazd</string>
     <string name="trip_plan_arriving">Przyjazd</string>
     <string name="trip_plan_date">Data</string>
-    <string name="trip_plan_time">Czas</string>
 
     <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
     <!-- Errors -->

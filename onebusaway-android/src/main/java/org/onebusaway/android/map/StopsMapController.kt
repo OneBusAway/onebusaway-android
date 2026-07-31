@@ -38,8 +38,10 @@ import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.CachedViewport
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
+import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
@@ -50,7 +52,9 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
+import org.onebusaway.android.util.ROUTE_NAME_ORDER
 import org.onebusaway.android.util.RegionUtils
+import org.onebusaway.android.util.getRouteDisplayName
 import org.onebusaway.android.util.toGeoPoint
 
 /**
@@ -460,7 +464,8 @@ class StopsMapController(
                     existing.point == marker.point &&
                     existing.direction == marker.direction &&
                     existing.routeType == marker.routeType &&
-                    existing.favorite == marker.favorite
+                    existing.favorite == marker.favorite &&
+                    existing.routes == marker.routes
                 ) {
                     existing
                 } else {
@@ -542,9 +547,32 @@ class StopsMapController(
             direction,
             routeType,
             stop,
-            favorite = stop.id in favoriteIds
+            favorite = stop.id in favoriteIds,
+            routes = labelRoutes(stop)
         )
     }
+
+    /**
+     * The routes serving [stop], for the marker's transit-centre label (#2107), named and coloured
+     * exactly as they would be on their own lines. Resolved from [cachedRoutes] — the routes the stop
+     * responses reported — so a stop whose routes haven't been loaded yet simply carries none and draws
+     * no label until they have, the same graceful degradation [primaryRouteType] already makes for the
+     * icon. (That is the persistent stop cache's case: it stores each route's *type* but not its name, so
+     * a cache render labels nothing until the network response for the same viewport lands.)
+     */
+    private fun labelRoutes(stop: ObaStop): List<BadgedRoute> = stop.routeIds
+        .mapNotNull { cachedRoutes[it] }
+        .map { route ->
+            BadgedRoute(
+                getRouteDisplayName(route),
+                mapRouteLineColorOrNull(route.color) ?: DEFAULT_ROUTE_LINE_COLOR
+            )
+        }
+        // The app's one route-name order, so the label reads a stop's routes the way every other list of
+        // them does. Deduplicated by name because the label has only the name to show: two routes that
+        // share one (the feeds do collide) would draw as the same row twice.
+        .distinctBy(BadgedRoute::routeShortName)
+        .sortedWith(compareBy(ROUTE_NAME_ORDER, BadgedRoute::routeShortName))
 
     /** Rebuild the rendered marker list from canonical nearby data and the current route presentation. */
     private fun publishStops() {
@@ -591,7 +619,13 @@ internal fun applyRouteStopPresentation(
     return source.values.map { marker ->
         marker.copy(
             point = presentation.projectedPoints[marker.id] ?: marker.point,
-            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
+            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+            // No transit-centre route labels (#2107) in a route presentation. A presentation names the
+            // routes on screen itself — labelled on the lines they belong to, and in adjacency view
+            // through a palette that deliberately assigns each one a distinct hue so they can be told
+            // apart (#2043). A stop label built from the routes' own GTFS colours would name those same
+            // routes a second time, in a second colour, right beside the line saying otherwise.
+            routes = emptyList()
         )
     }
 }

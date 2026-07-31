@@ -39,16 +39,26 @@ class StopZoomBandTest {
         assertEquals(StopBand.DOT, stopZoomBand(0f))
         assertEquals(StopBand.FULL, stopZoomBand(STOP_DOT_ZOOM_THRESHOLD))
         assertEquals(StopBand.FULL, stopZoomBand(STOP_DOT_ZOOM_THRESHOLD + 0.01f))
-        assertEquals(StopBand.FULL, stopZoomBand(21f))
     }
 
     @Test
-    fun `the band flips at zoom 15 (pins the threshold constant, not just the boundary)`() {
-        // Literal anchors (not STOP_DOT_ZOOM_THRESHOLD) so retuning the constant is a deliberate change
-        // that has to update this test — the ± boundary cases above would otherwise silently follow it.
+    fun `at or above the routes threshold a stop also names its routes`() {
+        assertEquals(StopBand.FULL, stopZoomBand(STOP_ROUTES_ZOOM_THRESHOLD - 0.01f))
+        assertEquals(StopBand.ROUTES, stopZoomBand(STOP_ROUTES_ZOOM_THRESHOLD))
+        assertEquals(StopBand.ROUTES, stopZoomBand(STOP_ROUTES_ZOOM_THRESHOLD + 0.01f))
+        assertEquals(StopBand.ROUTES, stopZoomBand(21f))
+    }
+
+    @Test
+    fun `the bands flip at zoom 15 and 18 (pins the threshold constants, not just the boundaries)`() {
+        // Literal anchors (not the constants) so retuning either is a deliberate change that has to
+        // update this test — the ± boundary cases above would otherwise silently follow it.
         assertEquals(15f, STOP_DOT_ZOOM_THRESHOLD, 0f)
+        assertEquals(18f, STOP_ROUTES_ZOOM_THRESHOLD, 0f)
         assertEquals(StopBand.DOT, stopZoomBand(14.99f))
         assertEquals(StopBand.FULL, stopZoomBand(15f))
+        assertEquals(StopBand.FULL, stopZoomBand(17.99f))
+        assertEquals(StopBand.ROUTES, stopZoomBand(18f))
     }
 
     @Test
@@ -89,6 +99,20 @@ class StopZoomBandTest {
         assertEquals(
             StopIconKind.FAVORITE_DOT_FOCUSED,
             stopIconKind(focused = true, band = StopBand.DOT, favorite = true)
+        )
+    }
+
+    @Test
+    fun `the routes band takes the full band's icons — what it adds is the label, not a new icon`() {
+        assertEquals(StopIconKind.FULL, stopIconKind(focused = false, band = StopBand.ROUTES))
+        assertEquals(StopIconKind.FULL_FOCUSED, stopIconKind(focused = true, band = StopBand.ROUTES))
+        assertEquals(
+            StopIconKind.FAVORITE,
+            stopIconKind(focused = false, band = StopBand.ROUTES, favorite = true)
+        )
+        assertEquals(
+            StopIconKind.FAVORITE_FOCUSED,
+            stopIconKind(focused = true, band = StopBand.ROUTES, favorite = true)
         )
     }
 

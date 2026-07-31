@@ -22,6 +22,18 @@ package org.onebusaway.android.map.render
  */
 const val STOP_DOT_ZOOM_THRESHOLD = 15f
 
+/**
+ * The zoom at or above which a stop marker also names the routes serving it (#2107) — the transit-centre
+ * band. A rider standing in a transit centre otherwise has to open every bay in turn to find the one that
+ * serves their route, and the zoom the map is already at when they do that is what this keys off.
+ *
+ * Chosen for the viewport width it corresponds to. Marker zoom is density-independent (256**dp** tiles),
+ * so at zoom z a map covers 156543·cos(latitude)/2^z metres per dp: on a ~400dp-wide phone at mid
+ * latitudes that is ~160 m at zoom 18 — one or two city blocks, the "about a block wide" the issue asks
+ * for — against ~320 m at 17, which is a neighbourhood and would label far more stops than fit. Tunable.
+ */
+const val STOP_ROUTES_ZOOM_THRESHOLD = 18f
+
 /** Smallest focused route-stop circle scale at the zoomed-out end of the detail ramp. */
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
 
@@ -35,11 +47,30 @@ fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
     else -> 0f
 }
 
-/** Whether a stop renders as a small dot (distant zoom) or its full directional icon (close zoom). */
-enum class StopBand { DOT, FULL }
+/**
+ * A stop's route label (#2107) draws above every stop marker — including the enlarged focused one, whose
+ * icon would otherwise cover the label of the stop behind it. Below the route labels a selected line
+ * carries (`ROUTE_BADGE_Z_INDEX`), which name the map's current subject rather than what's merely nearby.
+ */
+const val STOP_ROUTE_LABEL_Z_INDEX = 1f
 
-/** The [StopBand] a stop falls in at [zoom]: a dot below [STOP_DOT_ZOOM_THRESHOLD], else the full icon. */
-fun stopZoomBand(zoom: Float): StopBand = if (zoom < STOP_DOT_ZOOM_THRESHOLD) StopBand.DOT else StopBand.FULL
+/**
+ * How much of a stop a marker shows at the current zoom: a small dot far out (declutter), its full
+ * directional icon closer in, and closer still that icon plus a label naming the routes that serve it
+ * (#2107). Widening bands, so a [ROUTES] stop draws everything a [FULL] one does and more — which is why
+ * [stopIconKind] treats the two alike.
+ */
+enum class StopBand { DOT, FULL, ROUTES }
+
+/**
+ * The [StopBand] a stop falls in at [zoom]: a dot below [STOP_DOT_ZOOM_THRESHOLD], its full icon from
+ * there, and from [STOP_ROUTES_ZOOM_THRESHOLD] that icon plus its route label.
+ */
+fun stopZoomBand(zoom: Float): StopBand = when {
+    zoom < STOP_DOT_ZOOM_THRESHOLD -> StopBand.DOT
+    zoom < STOP_ROUTES_ZOOM_THRESHOLD -> StopBand.FULL
+    else -> StopBand.ROUTES
+}
 
 /**
  * Stop-circle-specific detail scale applied while a route is focused, whether through focused-stop
@@ -76,6 +107,9 @@ enum class StopIconKind {
  * instead of the directional icon/dot (#1680). The focused stop always gets the matching focused
  * variant so a selection stays visible. Pure, so renderer icon-change decisions are unit-testable and
  * identical across both map flavors.
+ *
+ * [StopBand.ROUTES] takes the same icon as [StopBand.FULL]: what that band adds is the separate route
+ * label beside the marker (#2107, see [stopRouteLabel]), not a different icon.
  */
 fun stopIconKind(
     focused: Boolean,

@@ -217,6 +217,11 @@ data class BikeMarker(
  * this stop. A non-empty set makes [routeStop] true: [point] is projected onto the route centerline
  * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
+ *
+ * [routes] are the routes that serve this stop, in the order the marker's label reads them at
+ * transit-centre zoom (#2107) — see [stopRouteLabel]. Named and coloured as [BadgedRoute]s (the same
+ * type a route label on a line carries) so the two ways the map names a route can't drift apart. Empty
+ * where the producer has no route lookup for the stop yet, which simply draws no label.
  */
 data class StopMarker(
     val id: String,
@@ -225,7 +230,8 @@ data class StopMarker(
     val routeType: Int,
     val stop: ObaStop,
     val favorite: Boolean = false,
-    val presentedRoutes: Set<RouteDirectionKey> = emptySet()
+    val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
+    val routes: List<BadgedRoute> = emptyList()
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }

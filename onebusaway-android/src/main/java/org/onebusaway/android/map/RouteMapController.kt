@@ -270,10 +270,11 @@ class RouteMapController(
     // The ETA-pill trip exempt from the selected-leg geometry filter (#2099). Unlike [pendingFocus] —
     // a one-shot the FIT/DROP resolution consumes — this lives as long as the focus context itself:
     // the per-frame sampler re-runs the filter continuously, so an exemption keyed to the pending
-    // focus would drop the tapped vehicle on the very next sample after the camera fits it. Set with
-    // every focus request (start/reframe/requestFocus, mirroring the request's focusTripId, including
-    // null); cleared only when the focus context ends — leaving route mode ([stop]) or a deliberate
-    // direction switch ([selectDirection]).
+    // focus would drop the tapped vehicle on the very next sample after the camera fits it. Set
+    // alongside [pendingFocus] wherever a focus is installed ([start], [requestFocus] — which is how
+    // [reframe] installs one too); cleared when the focus context ends — leaving route mode ([stop]),
+    // a deliberate direction switch ([selectDirection]), or a [reframe] onto a request carrying no
+    // focus of its own.
     private var focusExemptTripId: String? = null
 
     /**
@@ -381,6 +382,14 @@ class RouteMapController(
      * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
      */
     fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
+        // [request] carries the whole desired focus state, so a previous request's focus ends here —
+        // and it must end *before* the segment refresh below, which republishes the vehicle set and so
+        // reads both fields: against the new geometry, a stale exemption would admit the old leg's
+        // vehicle and a stale pending focus could fly the camera to it. [requestFocus] in the tail
+        // installs this request's own focus; a request carrying none leaves focus cleared, the same
+        // unconditional set [start] does.
+        pendingFocus = null
+        focusExemptTripId = null
         // A reframe onto the same route+direction-stop can still carry a different (or empty) segment —
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
@@ -398,10 +407,6 @@ class RouteMapController(
             showDirectionPolylines()
         }
         request.initialDirectionId?.let { selectDirection(it) }
-        // The exemption mirrors this request's focus intent: a reframe without a focusTripId (e.g.
-        // tapping a different leg of the same route) ends any prior pill focus, so its exempted
-        // vehicle doesn't leak through the new leg's geometry filter.
-        focusExemptTripId = request.focusTripId
         request.focusTripId?.let { requestFocus(it) } ?: if (frameRoute) frameRouteOrSegment() else Unit
     }
 

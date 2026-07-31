@@ -770,7 +770,10 @@ fun HomeScreen(
                                             // size: the sheet now hosts a full-screen scaffold over the
                                             // map, so the composable's own bounds are the whole screen.
                                             onSheetHeightPx = { directionsSheetHeightPx = it },
-                                            modifier = Modifier.fillMaxSize()
+                                            modifier = Modifier.fillMaxSize(),
+                                            // A route label tapped on the drawn itinerary (#2101): the
+                                            // sheet resolves it to the ride it names and focuses it.
+                                            rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps
                                         )
                                         directionsError != null -> DirectionsErrorSnackbar(
                                             error = directionsError,

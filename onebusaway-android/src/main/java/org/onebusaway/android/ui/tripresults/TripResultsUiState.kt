@@ -203,6 +203,20 @@ sealed interface TripLogEntry {
 }
 
 /**
+ * The ride these itinerary [legIndices] belong to, or null when they name none — how a tap on the map's
+ * route label for a ride (#2101) finds the drawer entry that owns it, so the tap can spend the same
+ * focus that entry's own row does instead of a second, subtly different one.
+ *
+ * Matched by intersection rather than equality, because a label is per *route* and a ride is what the
+ * rider boards once, so the two need not cover the same legs (see
+ * [itineraryRouteBadges][org.onebusaway.android.map.itineraryRouteBadges]). A stay-aboard interline onto
+ * another route (#2000) is one ride wearing a label per route, and either label focuses the whole ride;
+ * an itinerary that rides one route twice is two rides under a single label, and — one label being one
+ * tap target — it resolves to the first in travel order, the ride the rider reaches first.
+ */
+fun List<TripLogEntry>.rideCoveringLegs(legIndices: Set<Int>): TripLogEntry.Transit? = filterIsInstance<TripLogEntry.Transit>().firstOrNull { entry -> entry.legIndices.any(legIndices::contains) }
+
+/**
  * Something that happens between boarding and exiting a ride, in travel order: an intermediate [Stop]
  * passed, or a stay-aboard [Transition] onto another route mid-vehicle (#2000). They interleave — a
  * folded interline chain is `stops… → transition → stops… → transition → stops…` — which is why they

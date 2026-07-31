@@ -10,6 +10,8 @@ import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
@@ -276,12 +278,12 @@ class RouteViewGeometryTest {
             )
         )
 
-        assertEquals(listOf("route-b", "route-a", "route-a"), badges.map { it.tap?.routeId })
+        assertEquals(listOf("route-b", "route-a", "route-a"), badges.map { it.showRouteTap?.routeId })
         // An adjacency label names its one route: only a directions ride the rider may board any of
         // several routes for stacks more than one name (#2083).
         assertEquals(listOf("B", "A", "A"), badges.map { it.routes.single().routeShortName })
         assertEquals(listOf(20, 10, 30), badges.map { it.routes.single().color })
-        assertEquals(listOf(1, 0, 1), badges.map { it.tap?.directionId })
+        assertEquals(listOf(1, 0, 1), badges.map { it.showRouteTap?.directionId })
         assertEquals(GeoPoint(0.0, 0.5), badges[0].point)
         assertTrue(haversineMeters(badges[0].point, badges[1].point) >= 299.9)
     }
@@ -301,8 +303,12 @@ class RouteViewGeometryTest {
             listOf(route("known-route", "Known"), route("degenerate-route", "Degenerate"))
         )
 
-        assertEquals(listOf("known-route"), badges.map { it.tap?.routeId })
+        assertEquals(listOf("known-route"), badges.map { it.showRouteTap?.routeId })
     }
+
+    /** The route-direction an adjacency label opens; null if the label leads elsewhere or nowhere. */
+    private val RouteBadge.showRouteTap: RouteDirectionKey?
+        get() = (tap as? RouteBadgeTap.ShowRoute)?.route
 
     private fun route(id: String, shortName: String, routeColor: Int? = null) = object : ObaRoute {
         override val id = id

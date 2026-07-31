@@ -104,9 +104,9 @@ class MapLibreRenderer(
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
-    // Adjacency route badge tap targets (#1827), mirroring the Google flavor's routeBadgeByMarker.
-    // Their geographic anchors are laid out once upstream; these markers then move naturally with the
-    // map through pan and zoom.
+    // Route badge tap targets — adjacency (#1827) and a directions ride (#2101) — mirroring the Google
+    // flavor's routeBadgeByMarker. Their geographic anchors are laid out once upstream; these markers
+    // then move naturally with the map through pan and zoom.
     private val routeBadgeByMarker = HashMap<Marker, RouteBadge>()
 
     // The non-route static annotations added by the last [renderStatic], removed (not map.clear()) on

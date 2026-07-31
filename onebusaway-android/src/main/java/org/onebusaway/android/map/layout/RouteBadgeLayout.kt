@@ -21,6 +21,7 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.haversineMeters
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
@@ -85,13 +86,13 @@ fun <K> layoutRouteBadges(
 
 /**
  * One route label to place: the route(s) it names (stacked, in reading order — see [RouteBadge.routes]),
- * where a tap on it navigates (null for an informational label — see [RouteBadge.tap]), and the shapes it
- * may be anchored on. List order is collision priority, as in [layoutRouteBadges].
+ * what a tap on it does (null for an inert label — see [RouteBadge.tap]), and the shapes it may be
+ * anchored on. List order is collision priority, as in [layoutRouteBadges].
  */
 internal data class RouteBadgeRequest(
     val routes: List<BadgedRoute>,
     val paths: List<RouteBadgePath>,
-    val tap: RouteDirectionKey? = null
+    val tap: RouteBadgeTap? = null
 )
 
 /**

@@ -48,6 +48,13 @@ interface ObaMapCallbacks {
     /** An adjacency route badge tap (#1827) — enter route mode on the badge's line direction. */
     fun onRouteBadgeClick(routeId: String, routeShortName: String, directionId: Int?) {}
 
+    /**
+     * A directions route badge tap (#2101) — focus the ride these itinerary [legIndices] belong to,
+     * without leaving the trip the rider is reading (see
+     * [org.onebusaway.android.map.render.RouteBadgeTap.FocusItineraryRide]).
+     */
+    fun onItineraryRideBadgeClick(legIndices: Set<Int>) {}
+
     /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
     fun onVehicleInfoWindowClick(status: ObaTripStatus)
 

@@ -60,6 +60,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -86,6 +87,8 @@ import java.util.Calendar
 import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
@@ -122,8 +125,12 @@ import org.onebusaway.android.ui.tripplan.WalkPreference
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
+import org.onebusaway.android.ui.tripresults.TripLogEntry
 import org.onebusaway.android.ui.tripresults.TripResultsSheet
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
+import org.onebusaway.android.ui.tripresults.focusTransit
+import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
@@ -261,6 +268,10 @@ private const val DIRECTIONS_SHEET_HEIGHT_FRACTION = 0.4f
  * the caller drew underneath shows through and keeps receiving its own gestures (M3 builds the scaffold
  * root from a plain `Box`, not a touch-intercepting `Surface`). [onSheetHeightPx] reports the sheet's
  * settled on-screen height for the map's bottom inset.
+ *
+ * It also answers the map's own tap on a ride ([rideBadgeTaps], #2101) — the sheet is where a ride's
+ * resolved identity lives, so this is the one place that can spend a map tap the same way the drawer's
+ * own row tap is spent.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -274,7 +285,9 @@ fun DirectionsResultsSheet(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
     onSheetHeightPx: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // The itinerary leg indices of a route label tapped on the map, as they arrive.
+    rideBadgeTaps: Flow<Set<Int>> = emptyFlow()
 ) {
     // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
     // content is padded above the nav chrome so the collapsed handle (and the last list row) aren't
@@ -304,6 +317,24 @@ fun DirectionsResultsSheet(
         snapshotFlow { sheetState.currentValue }.collect { value ->
             val resting = if (value == SheetValue.Expanded) fullHeight else peekHeight
             onSheetHeightPx(with(density) { resting.roundToPx() })
+        }
+    }
+
+    // A route label tapped on the drawn itinerary focuses that ride exactly as tapping its row in the
+    // list below does — the same handler, so one ride can't mean two things depending on where the rider
+    // reached for it. The label names legs of the itinerary it is drawn on, and the drawn itinerary is
+    // this VM's own selection, so the indices are read against the plan that produced them; a set naming
+    // no ride here focuses nothing rather than guessing.
+    //
+    // The handlers are read through rememberUpdatedState so this long-lived collector spends the latest
+    // ones rather than those it first captured.
+    val focusRide by rememberUpdatedState({ ride: TripLogEntry.Transit ->
+        focusTransit(ride, onFocusRouteLeg, onFocusLeg, onFocusPoint)
+    })
+    LaunchedEffect(resultsViewModel, rideBadgeTaps) {
+        rideBadgeTaps.collect { legIndices ->
+            val directions = (resultsViewModel.state.value as? TripResultsUiState.Success)?.directions.orEmpty()
+            directions.rideCoveringLegs(legIndices)?.let(focusRide)
         }
     }
 

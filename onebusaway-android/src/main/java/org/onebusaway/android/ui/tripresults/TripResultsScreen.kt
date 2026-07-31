@@ -1101,8 +1101,12 @@ private fun expandLabel(model: LogRowModel): String? = when {
 /**
  * Tapping a transit leg: highlight its route on the map when the route id resolved (the usual case),
  * else frame the leg polyline, else recentre on the board stop. Mirrors the old leg-body behaviour.
+ *
+ * Not private, because the drawer's row is no longer the only way to tap a ride: the route label drawn on
+ * that ride's line on the map is one too (#2101), and it spends this same function so the two can't
+ * drift into meaning different things.
  */
-private fun focusTransit(
+internal fun focusTransit(
     entry: TripLogEntry.Transit,
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,

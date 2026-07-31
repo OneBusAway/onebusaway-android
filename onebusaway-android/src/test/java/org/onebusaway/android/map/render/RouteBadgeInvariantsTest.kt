@@ -22,10 +22,10 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * The two invariants [RouteBadge] states about what a map label may be (#2083): it names at least one
- * route, and a navigable one names exactly one. Both are producer-side — only adjacency labels navigate,
- * and each names its own route — so these pin the contract a badge builder has to keep rather than
- * behaviour a rider sees.
+ * The invariants [RouteBadge] and [RouteBadgeTap] state about what a map label may be (#2083, #2101): it
+ * names at least one route, a *route-navigating* one names exactly one, and a ride focus names at least
+ * one leg. All producer-side, so these pin the contract a badge builder has to keep rather than behaviour
+ * a rider sees.
  */
 class RouteBadgeInvariantsTest {
 
@@ -41,15 +41,20 @@ class RouteBadgeInvariantsTest {
     }
 
     @Test
-    fun `a navigable label naming several routes is rejected`() {
-        // Where would the tap lead? A label that stacks routes is informational for exactly this reason.
+    fun `a route-navigating label naming several routes is rejected`() {
+        // Where would the tap lead? A label that stacks routes may only lead somewhere that is about the
+        // stack as a whole — which a ride focus is, and a single route's map isn't.
         assertThrows(IllegalArgumentException::class.java) {
-            RouteBadge(routes = listOf(oneLine, twoLine), point = point, tap = RouteDirectionKey("route-1", 0))
+            RouteBadge(
+                routes = listOf(oneLine, twoLine),
+                point = point,
+                tap = RouteBadgeTap.ShowRoute(RouteDirectionKey("route-1", 0))
+            )
         }
     }
 
     @Test
-    fun `an informational label may name several routes, in the order given`() {
+    fun `an inert label may name several routes, in the order given`() {
         val badge = RouteBadge(routes = listOf(oneLine, twoLine), point = point)
 
         assertEquals(listOf(oneLine, twoLine), badge.routes)
@@ -57,11 +62,27 @@ class RouteBadgeInvariantsTest {
     }
 
     @Test
-    fun `a navigable label names its one route`() {
-        val tap = RouteDirectionKey("route-1", 0)
+    fun `a route-navigating label names its one route`() {
+        val tap = RouteBadgeTap.ShowRoute(RouteDirectionKey("route-1", 0))
         val badge = RouteBadge(routes = listOf(oneLine), point = point, tap = tap)
 
         assertEquals(tap, badge.tap)
         assertEquals("1 Line", badge.tappedRouteShortName)
+    }
+
+    @Test
+    fun `a ride focus may name several routes - an interchangeable ride is still one ride`() {
+        // The stacked-name rule is about the *destination*, not the label: the rider boards whichever of
+        // these comes first, and either way it is the one ride this label sits on (#2010).
+        val tap = RouteBadgeTap.FocusItineraryRide(setOf(2))
+        val badge = RouteBadge(routes = listOf(oneLine, twoLine), point = point, tap = tap)
+
+        assertEquals(tap, badge.tap)
+    }
+
+    @Test
+    fun `a ride focus naming no leg is rejected`() {
+        // It would read as a dead label rather than as the badge-builder bug it is.
+        assertThrows(IllegalArgumentException::class.java) { RouteBadgeTap.FocusItineraryRide(emptySet()) }
     }
 }

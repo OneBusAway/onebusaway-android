@@ -254,6 +254,10 @@ fun MapFeature(
                 )
             }
 
+            override fun onItineraryRideBadgeClick(legIndices: Set<Int>) {
+                homeViewModel.onItineraryRideBadgeTapped(legIndices)
+            }
+
             override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
                 MapNavigation.openVehicleTripDetails(
                     context,

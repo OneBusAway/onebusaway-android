@@ -16,6 +16,7 @@ import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
+import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RoutePolyline
@@ -177,7 +178,7 @@ internal fun FocusedTripGeometry.toRouteBadges(
                 routes = listOf(BadgedRoute(spec.name, color)),
                 paths = spec.shapes.map { shape -> RouteBadgePath(shape.points) },
                 // An adjacency label is the way into its route: it names a route the rider hasn't opened.
-                tap = spec.key
+                tap = RouteBadgeTap.ShowRoute(spec.key)
             )
         }
     )

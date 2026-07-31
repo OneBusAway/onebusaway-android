@@ -205,6 +205,23 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
+    fun containsRoutePoint_paddedBounds_keepPointsWithinTolerance() {
+        val route = listOf(
+            RoutePolyline(
+                color = 1,
+                points = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33))
+            )
+        ).boundedThrough(GeoPoint(47.62, -122.33))
+
+        // Both points sit outside the raw vertex bounds, exercising each padded edge of the cache.
+        assertTrue(route.containsRoutePoint(eastOf(47.61, -122.33, SEGMENT_STOP_TOLERANCE_METERS - 1)))
+        assertTrue(route.containsRoutePoint(GeoPoint(47.60 - Math.toDegrees(49.0 / EARTH_RADIUS_METERS), -122.33)))
+        assertFalse(route.containsRoutePoint(eastOf(47.61, -122.33, SEGMENT_STOP_TOLERANCE_METERS + 1)))
+        // Callers choosing another tolerance bypass the bounds cached for the sampler's default.
+        assertTrue(route.containsRoutePoint(eastOf(47.61, -122.33, 75.0), toleranceMeters = 100.0))
+    }
+
+    @Test
     fun boundedThrough_multiVariantDirection_keepsUpstreamVehicleOnAnotherVariant() {
         // One direction, two shape variants sharing a trunk through the alighting point (#2104): the
         // through variant, and a variant approaching the trunk on a western spur before joining it.

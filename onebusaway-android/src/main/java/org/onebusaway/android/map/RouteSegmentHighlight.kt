@@ -15,9 +15,12 @@
  */
 package org.onebusaway.android.map
 
+import kotlin.math.abs
+import kotlin.math.cos
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaStop
+import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.haversineDistance
@@ -98,7 +101,62 @@ internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyli
 internal data class BoundedRoutePath(
     val line: Polyline,
     val maxDistanceAlong: Double
-)
+) {
+    /** The common sampler tolerance, paid once here instead of once per vehicle and frame. */
+    private val samplerBounds = PaddedBounds.around(line.points, SEGMENT_STOP_TOLERANCE_METERS)
+
+    fun mayContain(point: GeoPoint, toleranceMeters: Double): Boolean =
+        toleranceMeters != SEGMENT_STOP_TOLERANCE_METERS || samplerBounds.contains(point)
+}
+
+private data class PaddedBounds(
+    val minLatitude: Double,
+    val maxLatitude: Double,
+    val minLongitude: Double,
+    val maxLongitude: Double,
+    val crossesDateLine: Boolean
+) {
+    fun contains(point: GeoPoint): Boolean =
+        point.latitude in minLatitude..maxLatitude &&
+            (crossesDateLine || point.longitude in minLongitude..maxLongitude)
+
+    companion object {
+        fun around(points: List<GeoPoint>, paddingMeters: Double): PaddedBounds {
+            if (points.isEmpty()) {
+                return PaddedBounds(
+                    Double.POSITIVE_INFINITY,
+                    Double.NEGATIVE_INFINITY,
+                    Double.POSITIVE_INFINITY,
+                    Double.NEGATIVE_INFINITY,
+                    crossesDateLine = false
+                )
+            }
+            val minLatitude = points.minOf { it.latitude }
+            val maxLatitude = points.maxOf { it.latitude }
+            val minLongitude = points.minOf { it.longitude }
+            val maxLongitude = points.maxOf { it.longitude }
+            val latitudePadding = Math.toDegrees(paddingMeters / EARTH_RADIUS_METERS)
+            val paddedAbsoluteLatitude = (maxOf(abs(minLatitude), abs(maxLatitude)) + latitudePadding)
+                .coerceAtMost(90.0)
+            val longitudeScale = cos(Math.toRadians(paddedAbsoluteLatitude))
+            val longitudePadding = if (longitudeScale <= 0.0) {
+                180.0
+            } else {
+                Math.toDegrees(paddingMeters / (EARTH_RADIUS_METERS * longitudeScale))
+            }
+            // A conventional min/max longitude box is intentionally disabled for date-line shapes.
+            // Latitude rejection remains valid, and projection supplies the exact answer as before.
+            val crossesDateLine = maxLongitude - minLongitude > 180.0
+            return PaddedBounds(
+                minLatitude - latitudePadding,
+                maxLatitude + latitudePadding,
+                minLongitude - longitudePadding,
+                maxLongitude + longitudePadding,
+                crossesDateLine
+            )
+        }
+    }
+}
 
 /**
  * Preserve full geometry for projection while bounding travel at [anchor], the alighting point. As in
@@ -133,13 +191,13 @@ internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedR
 }
 
 /** Whether [point] is near one of these paths without exceeding its along-route boundary.
- *  Runs on the 20 Hz vehicle sampler for every vehicle, and each path costs a full projection —
- *  a rejected (downstream) vehicle pays all of them, since [any] can only short-circuit a match.
- *  See #2124 for pre-rejecting on a bounding box or hoisting the verdict off the frame loop. */
+ *  Runs on the 20 Hz vehicle sampler for every vehicle. Each path caches a bounding box padded by
+ *  the normal tolerance, so most rejected vehicles skip the full polyline projection (#2124). */
 internal fun List<BoundedRoutePath>.containsRoutePoint(
     point: GeoPoint,
     toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
 ): Boolean = any { path ->
+    if (!path.mayContain(point, toleranceMeters)) return@any false
     val projection = path.line.nearestProjection(point.latitude, point.longitude)
         ?: return@any false
     projection.distanceToPoint <= toleranceMeters && projection.distanceAlong <= path.maxDistanceAlong

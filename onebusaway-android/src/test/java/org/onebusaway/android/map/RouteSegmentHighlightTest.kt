@@ -93,11 +93,11 @@ class RouteSegmentHighlightTest {
         assertEquals(RouteLineDash.NONE, approach.dash)
         assertFalse(approach.directional)
         // The ridden span rides on top at the weight it had as an itinerary leg, in the route colour,
-        // directional — so drilling in doesn't make the ride itself thinner than it just was.
+        // and — like every itinerary line — without direction chevrons (#2129).
         val overlay = result.last()
         assertEquals(ITINERARY_RIDE_WIDTH_PROFILE, overlay.widthProfile)
         assertEquals(0xFF00FF00.toInt(), overlay.color)
-        assertEquals(true, overlay.directional)
+        assertFalse(overlay.directional)
         // Both halves of the selected route carry a case, so the approach and the ride read as one line
         // rather than as two things that happen to meet.
         assertEquals(RouteLineCase.SELECTION, approach.case)

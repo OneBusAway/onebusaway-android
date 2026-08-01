@@ -52,7 +52,8 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
  * The segment keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it
  * was tapped from — and says it is the selected one with a case rather than by out-widening its
  * surroundings (#2082). Its approach carries the same case, so the two read as one route line stepping down
- * where the rider boards.
+ * where the rider boards. Neither carries direction chevrons (#2129): like every other itinerary line, the
+ * ride is marked selected by its case and weight alone.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
@@ -61,7 +62,7 @@ internal fun routePolylinesWithSegment(
     itineraryContext: List<RoutePolyline> = emptyList()
 ): List<RoutePolyline> {
     val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
-        RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE, directional = true)
+        RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE)
             .withCase()
     } ?: return itineraryContext + base
     return base.asSelectedRouteApproach() + itineraryContext + overlay

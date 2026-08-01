@@ -39,14 +39,23 @@ object StopRouteLabelBitmaps {
     private const val SCALE = 0.6f
 
     /**
-     * How far above the stop's point the pill's bottom edge sits, in dp. The stop circle is drawn from
-     * `map_stop_shadow_size_6` (22dp across, 1.35× that in the Google flavor for its route glyph, and
-     * 1.5× again when focused), so this clears the largest of those with a few dp to spare — and stays
-     * put when a stop is focused, since a label that jumped on selection would read as a second marker.
-     * A visual offset rather than a derived geometry, so it's one tunable here rather than three
-     * flavor-private constants imported into one place.
+     * How far above the stop's point the pill's bottom edge sits, in dp — the label's whole distance from
+     * the stop, not the visible gap, which is this less whatever the marker itself reaches up to.
+     *
+     * Set on device to leave a few dp of daylight over an ordinary stop circle, which is drawn from
+     * `map_stop_shadow_size_6` (22dp across, 1.35× that in the Google flavor for its route glyph) and so
+     * reaches about 15dp above the point. Two things deliberately reach further and are *let* into the
+     * label, which draws above them ([STOP_ROUTE_LABEL_Z_INDEX]): a focused stop's circle, which grows
+     * half again, and a direction arrow that happens to point north. Both were cleared by an earlier,
+     * larger lift, and the daylight that bought over every other stop — the overwhelming majority — read
+     * as the label belonging to nothing in particular.
+     *
+     * One value for every stop, rather than one that clears whatever each marker reaches: a per-stop lift
+     * would set the labels of neighbouring bays at different heights, and a lift that answered focus would
+     * make a label jump on selection and read as a second marker. A visual offset rather than a derived
+     * geometry, so it's one tunable here rather than three flavor-private constants imported into one place.
      */
-    private const val LIFT_DP = 26f
+    private const val LIFT_DP = 18.5f
 
     /**
      * The label bitmap naming [routes], ready to be anchored at the **centre** on the stop's own point.

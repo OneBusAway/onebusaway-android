@@ -127,6 +127,24 @@ class RideEligibilityTest {
         assertEquals(RideEligibility.UNKNOWN, rideEligibility(trip, 400.0, emptyList()))
     }
 
+    @Test
+    fun missingScheduleVerdictIsRecomputedAfterBackfill() {
+        val memo = HashMap<String, RideEligibility>()
+        val bounds = listOf(bound("alight"))
+
+        assertEquals(
+            RideEligibility.UNKNOWN,
+            memoizedRideEligibility(memo, "trip", null, 400.0, bounds)
+        )
+        assertEquals(emptyMap<String, RideEligibility>(), memo)
+
+        assertEquals(
+            RideEligibility.ELIGIBLE,
+            memoizedRideEligibility(memo, "trip", trip, 400.0, bounds)
+        )
+        assertEquals(mapOf("trip" to RideEligibility.ELIGIBLE), memo)
+    }
+
     // -- rideBoundsByRoute: deriving each focused route's end-of-ride stops --
 
     @Test
@@ -134,6 +152,19 @@ class RideEligibilityTest {
         assertEquals(
             mapOf("route_1" to listOf(RideBound("alight", restrictive = true))),
             rideBoundsByRoute("route_1", emptyList(), "alight")
+        )
+    }
+
+    @Test
+    fun interchangeableEtaLeaderGetsANonRestrictiveBound() {
+        assertEquals(
+            mapOf("route_9" to listOf(RideBound("planned-platform", restrictive = false))),
+            rideBoundsByRoute(
+                leaderRouteId = "route_9",
+                extraSegments = emptyList(),
+                leaderEndStopId = "planned-platform",
+                leaderRestrictive = false
+            )
         )
     }
 

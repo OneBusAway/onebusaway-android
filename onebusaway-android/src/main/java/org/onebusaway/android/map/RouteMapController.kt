@@ -162,6 +162,10 @@ class RouteMapController(
     // start()/reframe(); each extra segment carries its own end stop, so this is only the leader's.
     private var endStopId: String? = null
 
+    // Whether absence of [endStopId] from a leader trip's schedule rules that trip out. Normally true;
+    // an interchangeable route promoted to leader by an ETA tap uses a nonrestrictive platform bound.
+    private var endStopRestrictive: Boolean = true
+
     // Distinct other route ids to load and poll alongside the leader. A self-interline segment reuses the
     // leader route, so it is excluded (its shape/stops/vehicles already come from the leader).
     private val extraRouteIds: List<String>
@@ -271,9 +275,10 @@ class RouteMapController(
     // which would allocate a key on every frame's every lookup; the outer map is resolved once per
     // route per frame in [filterToFocusedRide]. Scoped per route because [sampleVehicles] de-duplicates
     // a trip shared across the leader/extra polls only *after* filtering, and each route carries its
-    // own end-of-ride bounds. The verdict reads only poll-time status distance + the schedule cache,
-    // so it can change only when a poll is replaced ([refreshRideEligibilityMemo]) or the focus
-    // context rebuilds ([focusedRideBoundsByRoute]'s setter) — never per frame.
+    // own end-of-ride bounds. Once the schedule exists, the verdict reads only poll-time status distance
+    // and can change only when a poll is replaced ([refreshRideEligibilityMemo]) or the focus context
+    // rebuilds ([focusedRideBoundsByRoute]'s setter). A schedule-missing UNKNOWN is deliberately not
+    // cached, so a later frame sees asynchronous schedule backfill immediately.
     private val rideEligibilityMemo = HashMap<String, HashMap<String, RideEligibility>>()
     private var rideEligibilityMemoPoll: VehiclePoll? = null
     private var rideEligibilityMemoExtras: Map<String, VehiclePoll>? = null
@@ -335,6 +340,7 @@ class RouteMapController(
         riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         endStopId: String? = null,
+        endStopRestrictive: Boolean = true,
         itineraryContext: List<RoutePolyline> = emptyList(),
         palette: RouteLinePalette
     ) {
@@ -343,6 +349,7 @@ class RouteMapController(
         this.riddenSpans = riddenSpans
         this.extraSegments = extraSegments
         this.endStopId = endStopId
+        this.endStopRestrictive = endStopRestrictive
         this.itineraryContext = itineraryContext
         this.palette = palette
         // (Re)built as the extra routes load in onRouteLoaded; cleared here so a prior focus's routes
@@ -431,7 +438,8 @@ class RouteMapController(
         // republish when it actually changes.
         if (riddenSpans != request.riddenSpans ||
             extraSegments != request.extraSegments ||
-            endStopId != request.endStopId
+            endStopId != request.endStopId ||
+            endStopRestrictive != request.endStopRestrictive
         ) {
             riddenSpans = request.riddenSpans
             // Move all the segment fields together so a redraw can't key off fresh riddenSpans while
@@ -441,6 +449,7 @@ class RouteMapController(
             // requires a full re-enter).
             extraSegments = request.extraSegments
             endStopId = request.endStopId
+            endStopRestrictive = request.endStopRestrictive
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
             showDirectionStops()
@@ -583,13 +592,13 @@ class RouteMapController(
         bounds: List<RideBound>
     ): RideEligibility {
         val tripId = vehicle.status.activeTripId ?: return RideEligibility.UNKNOWN
-        return memo.getOrPut(tripId) {
-            rideEligibility(
-                schedule = tripObservationRepository.lookupTripState(tripId)?.schedule,
-                statusDistanceAlongTrip = vehicle.status.distanceAlongTrip,
-                bounds = bounds
-            )
-        }
+        return memoizedRideEligibility(
+            memo = memo,
+            tripId = tripId,
+            schedule = tripObservationRepository.lookupTripState(tripId)?.schedule,
+            statusDistanceAlongTrip = vehicle.status.distanceAlongTrip,
+            bounds = bounds
+        )
     }
 
     /** Drops the [rideEligibilityMemo] when either poll it was derived from has been replaced. */
@@ -744,6 +753,7 @@ class RouteMapController(
         riddenSpans = emptyList()
         extraSegments = emptyList()
         endStopId = null
+        endStopRestrictive = true
         itineraryContext = emptyList()
         palette = BASEMAP_ROUTE_LINE_PALETTE
         extraRouteMaps = emptyMap()
@@ -1084,7 +1094,7 @@ class RouteMapController(
         // The symbolic side of the same eligibility (#2124): each focused route's end-of-ride stops,
         // decided against trip schedules ahead of the geometry above.
         focusedRideBoundsByRoute = if (isLegFocus) {
-            rideBoundsByRoute(leaderRouteId, extraSegments, endStopId)
+            rideBoundsByRoute(leaderRouteId, extraSegments, endStopId, endStopRestrictive)
         } else {
             emptyMap()
         }

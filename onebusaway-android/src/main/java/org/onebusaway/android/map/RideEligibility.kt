@@ -100,19 +100,38 @@ internal fun rideEligibility(
 }
 
 /**
+ * Memoize a trip's symbolic verdict once its schedule exists. A missing schedule is a provisional
+ * cache miss while the route poll's asynchronous backfill is running, so caching that UNKNOWN would
+ * hide the newly available schedule until the next vehicle poll invalidates the whole memo.
+ */
+internal fun memoizedRideEligibility(
+    memo: MutableMap<String, RideEligibility>,
+    tripId: String,
+    schedule: ObaTripSchedule?,
+    statusDistanceAlongTrip: Double?,
+    bounds: List<RideBound>
+): RideEligibility {
+    memo[tripId]?.let { return it }
+    schedule ?: return RideEligibility.UNKNOWN
+    return rideEligibility(schedule, statusDistanceAlongTrip, bounds).also { memo[tripId] = it }
+}
+
+/**
  * Each focused route's end-of-ride stops. Every segment states where its own part of the ride ends
  * ([RouteFocusSegment.endStopId], resolved by the producer from its leg), and [leaderEndStopId] does
  * the same for the primary route — so nothing here infers one route's bound from another's, and a
  * segment the producer had to drop costs only its own. A null stop id (an OTP→OBA resolution failure)
  * flows through as a null [RideBound.stopId] → [RideEligibility.UNKNOWN] → geometric fallback, never
- * a guess. A self-interline accumulates both of its phases' bounds under the one route id.
+ * a guess. [leaderRestrictive] is false when an interchangeable route is temporarily the leader for an
+ * ETA focus. A self-interline accumulates both of its phases' bounds under the one route id.
  */
 internal fun rideBoundsByRoute(
     leaderRouteId: String,
     extraSegments: List<RouteFocusSegment>,
-    leaderEndStopId: String?
+    leaderEndStopId: String?,
+    leaderRestrictive: Boolean = true
 ): Map<String, List<RideBound>> {
-    val leader = leaderRouteId to RideBound(leaderEndStopId, restrictive = true)
+    val leader = leaderRouteId to RideBound(leaderEndStopId, restrictive = leaderRestrictive)
     val extras = extraSegments.map { segment ->
         segment.routeId to RideBound(
             segment.endStopId,

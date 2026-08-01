@@ -329,6 +329,7 @@ class MapViewModel @Inject constructor(
         riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         endStopId: String? = null,
+        endStopRestrictive: Boolean = true,
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false,
         palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
@@ -340,16 +341,17 @@ class MapViewModel @Inject constructor(
         leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
         persistRoute(routeId, directionStopId, initialDirectionId)
         routeController.start(
-            routeId,
-            zoomToRoute,
-            directionStopId,
-            initialDirectionId,
-            focusTripId,
-            riddenSpans,
-            extraSegments,
-            endStopId,
-            itineraryContext,
-            palette
+            routeId = routeId,
+            zoomToRoute = zoomToRoute,
+            directionStopId = directionStopId,
+            initialDirectionId = initialDirectionId,
+            focusTripId = focusTripId,
+            riddenSpans = riddenSpans,
+            extraSegments = extraSegments,
+            endStopId = endStopId,
+            endStopRestrictive = endStopRestrictive,
+            itineraryContext = itineraryContext,
+            palette = palette
         )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
@@ -506,6 +508,7 @@ class MapViewModel @Inject constructor(
                 riddenSpans = request.riddenSpans,
                 extraSegments = request.extraSegments,
                 endStopId = request.endStopId,
+                endStopRestrictive = request.endStopRestrictive,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
                 itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),

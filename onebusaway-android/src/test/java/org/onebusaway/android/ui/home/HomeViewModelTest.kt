@@ -213,6 +213,47 @@ class HomeViewModelTest {
         job.cancel()
     }
 
+    @Test
+    fun `focusing an alternative ETA keeps its planned-platform bound nonrestrictive`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val routeLeg = RouteLegRef(
+            routeId = "40_2LINE",
+            headsign = "Downtown Redmond",
+            board = RouteStopRef("40_board", "B", "Board", GeoPoint(47.6, -122.3)),
+            alight = RouteStopRef("40_planned_alight", "A", "Alight", GeoPoint(47.61, -122.31)),
+            leaderEndStopId = "40_planned_alight",
+            alternatives = listOf(AlternativeRouteRef("40_1LINE", null, "1 Line", null))
+        )
+        val segment = listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31))
+
+        vm.focusDirectionsRouteVehicle(
+            request = ShowRouteRequest(
+                routeId = "40_1LINE",
+                directionStopId = "40_board",
+                focusTripId = "alternative-trip"
+            ),
+            routeLeg = routeLeg,
+            fallbackPoints = segment
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            ShowRouteRequest(
+                routeId = "40_1LINE",
+                directionStopId = "40_board",
+                focusTripId = "alternative-trip",
+                riddenSpans = listOf(RiddenSpan(segment)),
+                endStopId = "40_planned_alight",
+                endStopRestrictive = false
+            ),
+            map.routeRequests.single()
+        )
+        job.cancel()
+    }
+
     // A tapped on-street leg. Only [legIndices] distinguishes one from another to the focus model, so the
     // geometry is shared; [walkLeg] gives each test the leg it needs without restating the coordinates.
     private fun walkLeg(vararg legIndices: Int) = FocusedLeg(listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31)), legIndices.toSet())

@@ -753,16 +753,21 @@ class HomeViewModel @Inject constructor(
      * own end-of-ride stop (the arrivals handler knows the route and stop tapped, not the planned ride).
      * Takes the same ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits
      * in draw the same ride.
+     *
+     * When the ETA is for an interchangeable alternative, its bound is nonrestrictive because the
+     * alternative may use a different alighting platform id than the planned route.
      */
     fun focusDirectionsRouteVehicle(
         request: ShowRouteRequest,
         routeLeg: RouteLegRef,
         fallbackPoints: List<GeoPoint>
     ) {
+        val isPlannedRoute = request.routeId == routeLeg.routeId
         enterDirectionsRouteFocus(
             request.copy(
                 riddenSpans = routeLeg.riddenSpansOr(fallbackPoints),
-                endStopId = routeLeg.leaderEndStopId
+                endStopId = routeLeg.leaderEndStopId,
+                endStopRestrictive = isPlannedRoute
             )
         )
     }

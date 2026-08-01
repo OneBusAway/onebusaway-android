@@ -48,6 +48,9 @@ package org.onebusaway.android.map
  *   others. Feeds the symbolic vehicle filter (#2124): a vehicle stays visible while its trip's schedule
  *   still reaches its route's end stop. Null (an OTP→OBA resolution failure, or a non-directions caller)
  *   leaves the filter to its geometric fallback.
+ * @property endStopRestrictive whether a trip that does not serve [endStopId] is ineligible. False when
+ *   an interchangeable alternative has been promoted to [routeId] by an ETA tap: that route may use a
+ *   different alighting platform, so absence of the planned route's exact stop must fall back to geometry.
  */
 data class ShowRouteRequest(
     val routeId: String,
@@ -56,5 +59,6 @@ data class ShowRouteRequest(
     val initialDirectionId: Int? = null,
     val riddenSpans: List<RiddenSpan> = emptyList(),
     val extraSegments: List<RouteFocusSegment> = emptyList(),
-    val endStopId: String? = null
+    val endStopId: String? = null,
+    val endStopRestrictive: Boolean = true
 )

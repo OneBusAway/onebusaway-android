@@ -74,20 +74,41 @@ object ContinuationBadgeBitmaps {
      * joined chip gives (`RouteBadgeChip`): the routes on it are one ride the rider may board any of
      * (#2010/#2083), not separate lines that happen to meet here. The stack goes downwards rather than
      * across because a map label's neighbour is the basemap — a name-per-column pill grows into the
-     * corridor it labels, while rows keep the label roughly as wide as its widest name.
+     * corridor it labels, while rows keep the label roughly as wide as its widest name. A label with more
+     * names than a single column can hold does take a second one ([badgeGrid]) — but that is a last
+     * resort, not the shape a label reaches for.
      *
      * [scale] multiplies every dimension of the pill — type, padding, corner, casing — so a scaled label
      * is the same drawing at a different size rather than a differently-proportioned one. A renderer
      * resolves it from the camera through the label's [RouteBadgeScaleProfile] (#2102).
      */
-    fun badge(routes: List<BadgedRoute>, density: Float, darkMode: Boolean, scale: Float): Bitmap {
-        require(routes.isNotEmpty()) { "a route badge has to name a route to draw one" }
+    fun badge(routes: List<BadgedRoute>, density: Float, darkMode: Boolean, scale: Float): Bitmap = badgeGrid(listOf(routes), density, darkMode, scale)
+
+    /**
+     * [badge] in several columns: the same pill, its names laid out in [columns] read top to bottom and
+     * then left to right, with dividers wherever two cells meet. One column is the ordinary badge — every
+     * label on a line is drawn through this — and a second only appears where a single column would grow
+     * taller than the thing it labels, which today is a transit-centre stop naming more routes than fit
+     * (#2107).
+     *
+     * The grid is **rectangular**: every column holds the same number of cells, and a caller with a
+     * remainder pads it with a blank cell of its own choosing rather than leaving a hole. Stated rather
+     * than handled, because a hole is a hole in the *pill* — the rounded rect and its casing enclose the
+     * whole grid — so what fills it is a colour decision belonging to whoever knows what the label is,
+     * not a default this drawing can pick.
+     */
+    fun badgeGrid(columns: List<List<BadgedRoute>>, density: Float, darkMode: Boolean, scale: Float): Bitmap {
+        val rowCount = columns.firstOrNull()?.size ?: 0
+        require(rowCount > 0) { "a route badge has to name a route to draw one" }
+        require(columns.all { it.size == rowCount }) {
+            "a route badge grid is rectangular; got columns of ${columns.map(List<BadgedRoute>::size)}"
+        }
         // Stated rather than clamped: a non-positive scale has no smallest sensible pill to fall back to,
         // and would otherwise surface far from its cause as a zero-size bitmap allocation.
         require(scale > 0f) { "a route badge drawn at scale $scale would have no pixels" }
-        // One paint for every row: they share a size and weight, so only the text color changes down the
-        // stack — set per row, exactly as the band's is. That also makes the metrics below the whole pill's:
-        // its rows are equal bands whatever they read.
+        // One paint for every cell: they share a size and weight, so only the text color changes across
+        // the grid — set per cell, exactly as the band's is. That also makes the metrics below the whole
+        // pill's: its rows are equal bands whatever they read.
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             textSize = TEXT_SIZE_PX * scale
             isFakeBoldText = true
@@ -99,10 +120,14 @@ object ContinuationBadgeBitmaps {
         // — the row boundaries are also where the dividers are drawn, and a fractional band would drift
         // away from them down the stack.
         val rowHeight = ceil((metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * scale * 2)
-        val width = routes
+        // One width for every column, measured across the whole grid rather than per column: columns of
+        // their own widths would put the dividers at ragged intervals, and a grid reads as a grid.
+        val columnWidth = columns
+            .flatten()
             .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * scale * 2 }
-            .coerceAtLeast(cornerRadius * 2)
-        val height = rowHeight * routes.size
+            .coerceAtLeast(cornerRadius * 2 / columns.size)
+        val width = columnWidth * columns.size
+        val height = rowHeight * rowCount
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
         val canvas = Canvas(bitmap)
@@ -118,25 +143,32 @@ object ContinuationBadgeBitmaps {
         // interior ones stay square where they meet.
         val pill = Path().apply { addRoundRect(badgeBounds, cornerRadius, cornerRadius, Path.Direction.CW) }
         canvas.withClip(pill) {
-            routes.forEachIndexed { index, route ->
-                val top = rowHeight * index
-                band.color = Color.rgb(Color.red(route.color), Color.green(route.color), Color.blue(route.color))
-                drawRect(RectF(0f, top, width, top + rowHeight), band)
-                textPaint.color = route.textColor ?: MarkerRendering.legibleOn(route.color)
-                val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
-                drawText(route.routeShortName, width / 2f, baseline, textPaint)
+            columns.forEachIndexed { column, cells ->
+                val left = columnWidth * column
+                cells.forEachIndexed { row, route ->
+                    val top = rowHeight * row
+                    band.color = Color.rgb(Color.red(route.color), Color.green(route.color), Color.blue(route.color))
+                    drawRect(RectF(left, top, left + columnWidth, top + rowHeight), band)
+                    textPaint.color = route.textColor ?: MarkerRendering.legibleOn(route.color)
+                    val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
+                    drawText(route.routeShortName, left + columnWidth / 2f, baseline, textPaint)
+                }
             }
         }
         val line = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = casingColor(routes, darkMode)
+            color = casingColor(columns.flatten(), darkMode)
             style = Paint.Style.STROKE
             strokeWidth = outlineWidth
         }
-        // Where two rows meet, in the same color as the outline around them all — so the badge reads as
+        // Where two cells meet, in the same color as the outline around them all — so the badge reads as
         // one bounded object holding several names, even when its routes share a color or have none.
-        for (index in 1..routes.lastIndex) {
-            val y = rowHeight * index
+        for (row in 1 until rowCount) {
+            val y = rowHeight * row
             canvas.drawLine(badgeBounds.left, y, badgeBounds.right, y, line)
+        }
+        for (column in 1 until columns.size) {
+            val x = columnWidth * column
+            canvas.drawLine(x, badgeBounds.top, x, badgeBounds.bottom, line)
         }
         canvas.drawRoundRect(badgeBounds, cornerRadius, cornerRadius, line)
         return bitmap
@@ -156,10 +188,18 @@ object ContinuationBadgeBitmaps {
      * hand back whichever it drew first. Density is fixed for the lifetime of a renderer's cache, so it
      * distinguishes nothing within one.
      */
-    fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean, scale: Float): String = routes.joinToString(
-        separator = "|",
+    fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean, scale: Float): String = badgeGridKey(listOf(routes), darkMode, scale)
+
+    /**
+     * [badgeKey] for a [badgeGrid]. The column boundaries take part too, since the same names in one
+     * column and in two are different pills.
+     */
+    fun badgeGridKey(columns: List<List<BadgedRoute>>, darkMode: Boolean, scale: Float): String = columns.joinToString(
+        separator = "/",
         prefix = "route-badge:$darkMode:$scale:"
-    ) { "${it.routeShortName}:${it.color}:${it.textColor}" }
+    ) { cells ->
+        cells.joinToString(separator = "|") { "${it.routeShortName}:${it.color}:${it.textColor}" }
+    }
 
     /**
      * The color of the badge's outline and of the lines dividing its rows. A badge with one color between

@@ -17,7 +17,7 @@ package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.models.ObaRoute
@@ -28,16 +28,21 @@ import org.onebusaway.android.util.routeBadgeChipColor
 import org.onebusaway.android.util.routeBadgeChipTextColor
 
 /**
- * Pure-logic tests for what a stop marker's route label reads and how it is coloured (#2107) — the zoom
- * band that shows one at all, the overflow rule that keeps a downtown bay's label from burying its
- * neighbours, and that the rows take the arrivals drawer's badge rather than the basemap's line colour.
- * The bitmap build and the marker reconcile are exercised on device.
+ * Pure-logic tests for what a stop marker's route label reads, how it is laid out and how it is coloured
+ * (#2107) — the zoom band that shows one at all, the balanced columns a stop with more routes than fit
+ * takes, and that the cells are the arrivals drawer's badge rather than the basemap's line colour. The
+ * bitmap build and the marker reconcile are exercised on device.
  */
 class StopRouteLabelTest {
 
     private val vivid = 0xFF1E88E5.toInt()
 
     private fun route(name: String, color: Int? = vivid) = StopRoute(name, color)
+
+    private fun routes(count: Int) = (1..count).map { route("$it") }
+
+    /** The laid-out grid read as names, `null` for the blank cells padding the last column. */
+    private fun names(routes: List<StopRoute>, maxRows: Int = STOP_ROUTE_LABEL_MAX_ROWS) = stopRouteLabelColumns(routes, maxRows).map { column -> column.map { it?.shortName } }
 
     private fun marker(routes: List<StopRoute>) = StopMarker(
         "stop",
@@ -59,36 +64,60 @@ class StopRouteLabelTest {
     @Test
     fun `a stop with no routes resolved yet draws no label even in the routes band`() {
         assertEquals(emptyList<StopRoute>(), stopRouteLabel(marker(emptyList()), StopBand.ROUTES))
+        assertEquals(emptyList<List<StopRoute?>>(), stopRouteLabelColumns(emptyList()))
+    }
+
+    // --- layout: columns, balanced, every route named ---
+
+    @Test
+    fun `routes that fit stay one column, in the order given`() {
+        assertEquals(listOf(listOf("8", "40", "550")), names(listOf(route("8"), route("40"), route("550"))))
+        assertEquals(1, stopRouteLabelColumns(routes(STOP_ROUTE_LABEL_MAX_ROWS)).size)
     }
 
     @Test
-    fun `routes that fit are all named, in the order given`() {
-        val routes = listOf(route("8"), route("40"), route("550"))
-        assertEquals(routes, stopRouteLabel(routes, maxRows = 3))
+    fun `one route over the cap opens a second column rather than lengthening`() {
+        // 6 routes, 5 rows allowed: two columns of 3 — read down, then across.
+        assertEquals(listOf(listOf("1", "2", "3"), listOf("4", "5", "6")), names(routes(6)))
     }
 
     @Test
-    fun `overflow keeps one row back to count what it dropped`() {
-        val routes = (1..10).map { route("route$it") }
-        val rows = stopRouteLabel(routes, maxRows = 4)
-        assertEquals(4, rows.size)
-        assertEquals(routes.take(3), rows.take(3))
-        // 10 routes, 3 named: the last row accounts for the other 7 rather than leaving them unsaid.
-        assertEquals("+7", rows.last().shortName)
-        // Colourless, so it draws as the neutral chip — it is a count, not one more route.
-        assertEquals(null, rows.last().routeColor)
+    fun `columns are balanced, not filled and spilled`() {
+        // 7 in two columns reads 4 + 3, not 5 + 2: both are as wide, so the taller one is only taller.
+        assertEquals(listOf(listOf("1", "2", "3", "4"), listOf("5", "6", "7", null)), names(routes(7)))
     }
 
     @Test
-    fun `exactly one row over the cap still overflows, counting the two it displaced`() {
-        val routes = listOf(route("a"), route("b"), route("c"))
-        assertEquals(listOf("a", "+2"), stopRouteLabel(routes, maxRows = 2).map(StopRoute::shortName))
+    fun `a third column opens only when two full ones would overflow`() {
+        assertEquals(2, stopRouteLabelColumns(routes(10)).size)
+        assertEquals(3, stopRouteLabelColumns(routes(11)).size)
+        // 11 over three columns is 4 + 4 + 3, so the grid is 4 rows with one blank.
+        assertEquals(listOf(4, 4, 4), stopRouteLabelColumns(routes(11)).map { it.size })
     }
 
     @Test
-    fun `a label with no room to both name and count is a producer bug, not a silent empty label`() {
-        assertThrows(IllegalArgumentException::class.java) {
-            stopRouteLabel(listOf(route("8"), route("40")), maxRows = 1)
+    fun `every route is named however many there are — no label ever says 'and N more'`() {
+        for (count in 1..40) {
+            val named = stopRouteLabelColumns(routes(count)).flatten().filterNotNull().map(StopRoute::shortName)
+            assertEquals("$count routes", routes(count).map(StopRoute::shortName), named)
+        }
+    }
+
+    @Test
+    fun `the grid is rectangular, so the pill it fills has no hole`() {
+        for (count in 1..40) {
+            val columns = stopRouteLabelColumns(routes(count))
+            assertEquals("$count routes", 1, columns.map { it.size }.distinct().size)
+            // Only the trailing cells are blank — a hole in the middle would break the reading order.
+            val cells = columns.flatten()
+            assertTrue("$count routes", cells.dropWhile { it != null }.all { it == null })
+        }
+    }
+
+    @Test
+    fun `no column is ever taller than the cap`() {
+        for (count in 1..40) {
+            assertTrue("$count routes", stopRouteLabelColumns(routes(count)).all { it.size <= STOP_ROUTE_LABEL_MAX_ROWS })
         }
     }
 
@@ -96,32 +125,40 @@ class StopRouteLabelTest {
     fun `the default cap is five rows`() {
         // A literal anchor, so retuning the constant is a deliberate change that has to update this test.
         assertEquals(5, STOP_ROUTE_LABEL_MAX_ROWS)
-        assertEquals(5, stopRouteLabel((1..9).map { route("$it") }).size)
+        assertEquals(listOf(5), stopRouteLabelColumns(routes(5)).map { it.size })
+        assertEquals(listOf(3, 3), stopRouteLabelColumns(routes(6)).map { it.size })
     }
 
     // --- colour: the arrivals drawer's badge, not the basemap's line ---
 
     @Test
-    fun `a row is the drawer's badge chip — its faded fill and the ink paired with it`() {
-        val row = stopRouteLabelRows(listOf(route("8")), dark = false).single()
-        assertEquals("8", row.routeShortName)
-        assertEquals(routeBadgeChipColor(vivid, dark = false), row.color)
-        assertEquals(routeBadgeChipTextColor(vivid, dark = false), row.textColor)
+    fun `a cell is the drawer's badge chip — its faded fill and the ink paired with it`() {
+        val cell = stopRouteLabelGrid(listOf(route("8")), dark = false).single().single()
+        assertEquals("8", cell.routeShortName)
+        assertEquals(routeBadgeChipColor(vivid, dark = false), cell.color)
+        assertEquals(routeBadgeChipTextColor(vivid, dark = false), cell.textColor)
     }
 
     @Test
     fun `a route with no usable colour takes the whole neutral chip, fill and ink together`() {
         for (source in listOf(null, 0xFF808080.toInt())) {
-            val row = stopRouteLabelRows(listOf(route("8", source)), dark = false).single()
-            assertEquals("neutral fill for $source", neutralBadgeChipColor(dark = false), row.color)
-            assertEquals("neutral ink for $source", neutralBadgeChipTextColor(dark = false), row.textColor)
+            val cell = stopRouteLabelGrid(listOf(route("8", source)), dark = false).single().single()
+            assertEquals("neutral fill for $source", neutralBadgeChipColor(dark = false), cell.color)
+            assertEquals("neutral ink for $source", neutralBadgeChipTextColor(dark = false), cell.textColor)
         }
     }
 
     @Test
-    fun `the rows flip with the theme, which is why the source is carried this far`() {
-        val light = stopRouteLabelRows(listOf(route("8")), dark = false).single()
-        val night = stopRouteLabelRows(listOf(route("8")), dark = true).single()
+    fun `a blank cell names nothing and takes the neutral chip, so the pill stays whole`() {
+        val blank = stopRouteLabelGrid(routes(7), dark = false).last().last()
+        assertEquals("", blank.routeShortName)
+        assertEquals(neutralBadgeChipColor(dark = false), blank.color)
+    }
+
+    @Test
+    fun `the cells flip with the theme, which is why the source is carried this far`() {
+        val light = stopRouteLabelGrid(listOf(route("8")), dark = false).single().single()
+        val night = stopRouteLabelGrid(listOf(route("8")), dark = true).single().single()
         assertNotEquals(light.color, night.color)
         assertNotEquals(light.textColor, night.textColor)
     }

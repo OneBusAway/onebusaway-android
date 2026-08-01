@@ -42,7 +42,7 @@ class StopRouteLabelTest {
     private fun routes(count: Int) = (1..count).map { route("$it") }
 
     /** The laid-out grid read as names, `null` for the blank cells padding the last column. */
-    private fun names(routes: List<StopRoute>, maxRows: Int = STOP_ROUTE_LABEL_MAX_ROWS) = stopRouteLabelColumns(routes, maxRows).map { column -> column.map { it?.shortName } }
+    private fun names(routes: List<StopRoute>) = stopRouteLabelColumns(routes).map { column -> column.map { it?.shortName } }
 
     private fun marker(routes: List<StopRoute>) = StopMarker(
         "stop",
@@ -59,6 +59,15 @@ class StopRouteLabelTest {
         assertEquals(emptyList<StopRoute>(), stopRouteLabel(stop, StopBand.DOT))
         assertEquals(emptyList<StopRoute>(), stopRouteLabel(stop, StopBand.FULL))
         assertEquals(stop.routes, stopRouteLabel(stop, StopBand.ROUTES))
+    }
+
+    @Test
+    fun `the band is read as an ordering, so a band added above ROUTES still labels`() {
+        // StopBand widens — a band above ROUTES shows everything it does and more — so every band from
+        // ROUTES up labels. An equality test would switch the labels off at the zoom that wants them most.
+        val stop = marker(listOf(route("8")))
+        val labelling = StopBand.entries.filter { stopRouteLabel(stop, it).isNotEmpty() }
+        assertEquals(StopBand.entries.filter { it >= StopBand.ROUTES }, labelling)
     }
 
     @Test

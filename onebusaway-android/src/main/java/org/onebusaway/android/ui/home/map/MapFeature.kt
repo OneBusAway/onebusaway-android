@@ -114,8 +114,7 @@ import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
 
 // Temporary calibration aid; retain the implementation so it can be restored with a one-line toggle.
-// Currently ON to tune the stop-band thresholds (#2107) against what the map actually shows.
-private const val SHOW_DEBUG_ZOOM_INDICATOR = true
+private const val SHOW_DEBUG_ZOOM_INDICATOR = false
 
 /**
  * The self-wiring map feature module: renders [ObaMap] and owns everything that used to be map glue

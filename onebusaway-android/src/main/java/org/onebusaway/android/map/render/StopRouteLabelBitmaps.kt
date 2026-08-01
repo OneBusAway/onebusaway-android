@@ -65,7 +65,8 @@ object StopRouteLabelBitmaps {
      * classic Marker has no per-marker anchor at all and always centres its icon (the same reason the
      * route-continuation badge is centred in its bitmap). The cost is a bitmap about twice the pill's
      * height, most of it empty, which is why callers cache these by [labelKey] rather than per stop:
-     * every stop served by the same routes shares one.
+     * every stop served by the same routes shares one, and a transit centre's bays repeat each other's
+     * routes heavily.
      */
     fun label(context: Context, routes: List<StopRoute>, darkMode: Boolean): Bitmap {
         val density = context.resources.displayMetrics.density
@@ -78,12 +79,20 @@ object StopRouteLabelBitmaps {
     /**
      * A stable key identifying the bitmap [label] draws for these inputs, beside the function itself so
      * the two can't disagree about which of them the key names (as [ContinuationBadgeBitmaps.badgeKey]
-     * is). Delegates to the pill's own key — the pill is the whole of the drawing that varies — under a
-     * distinct prefix, so a stop label and a line's label naming the same routes can't collide in a
-     * renderer that happens to cache both in one map. Scale and lift are fixed here, so neither
-     * distinguishes anything.
+     * is). Its own prefix keeps it clear of a line's label naming the same routes, in a renderer that
+     * caches both in one map. Scale and lift are fixed here, so neither distinguishes anything.
+     *
+     * Keyed on the **unrendered** routes rather than on the grid they draw as, unlike
+     * [ContinuationBadgeBitmaps.badgeGridKey], which keys a grid it is handed. The grid is a pure function
+     * of exactly these inputs, so the two keys separate the same bitmaps — and this one costs a string
+     * where that one would cost the whole colour policy (four HCT conversions per cell, over every route
+     * of every labelled stop) on a path a cache *hit* also walks. Layout and colour are then run once, on
+     * a miss, inside [label].
      */
-    fun labelKey(routes: List<StopRoute>, darkMode: Boolean): String = "stop-route-label:" + ContinuationBadgeBitmaps.badgeGridKey(stopRouteLabelGrid(routes, darkMode), darkMode, SCALE)
+    fun labelKey(routes: List<StopRoute>, darkMode: Boolean): String = routes.joinToString(
+        separator = "|",
+        prefix = "stop-route-label:$darkMode:"
+    ) { "${it.shortName}:${it.routeColor}" }
 
     /**
      * [pill] drawn at the top of a canvas tall enough that the canvas centre — where the marker is

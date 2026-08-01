@@ -16,7 +16,6 @@
 package org.onebusaway.android.map.googlemapsv2
 
 import android.content.Context
-import android.util.LruCache
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -46,11 +45,12 @@ internal class GoogleStopMarkerLayer(
     // than redrawn: at the zoom these appear the map still loads stops on every pan, and labels torn down
     // and re-added on each of those publishes would blink while the markers under them held still.
     private val labelByStopId = HashMap<String, Marker>()
-    private val labelRoutesByStopId = HashMap<String, List<StopRoute>>()
 
     // One descriptor per distinct set of routes: a transit centre's bays repeat each other's routes, and a
     // label bitmap is mostly transparent lift, so sharing them is worth more here than for a stop icon.
-    private val labelIcons = LruCache<String, BitmapDescriptor>(LABEL_ICON_CACHE_SIZE)
+    // The flavor's own memoizer, so the label bitmap is built only on a miss (see [BitmapDescriptorCache]).
+    private val labelIcons =
+        BitmapDescriptorCache(LABEL_ICON_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
     fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
         val markerStops = stops.filterNot(StopMarker::routeStop)
@@ -115,8 +115,7 @@ internal class GoogleStopMarkerLayer(
         markerByStopId.clear()
         labelByStopId.values.forEach(Marker::remove)
         labelByStopId.clear()
-        labelRoutesByStopId.clear()
-        labelIcons.evictAll()
+        labelIcons.clear()
         stopByMarker.clear()
         kindByStopId.clear()
     }
@@ -146,11 +145,13 @@ internal class GoogleStopMarkerLayer(
             labelByStopId[stop.id] = marker
             stopByMarker[marker] = stop
         } else {
-            if (labelRoutesByStopId[stop.id] != routes) existing.setIcon(labelIcon(routes))
-            if (stopByMarker[existing]?.point != stop.point) existing.position = stop.point.toLatLng()
+            // The label's own previous stop, which is what it was drawn from — a label exists only where
+            // the last render was in the labelling band, so its routes are the ones on the pill.
+            val previous = stopByMarker[existing]
+            if (previous?.routes != routes) existing.setIcon(labelIcon(routes))
+            if (previous?.point != stop.point) existing.position = stop.point.toLatLng()
             stopByMarker[existing] = stop
         }
-        labelRoutesByStopId[stop.id] = routes
     }
 
     private fun removeLabel(stopId: String) {
@@ -158,15 +159,13 @@ internal class GoogleStopMarkerLayer(
             stopByMarker.remove(it)
             it.remove()
         }
-        labelRoutesByStopId.remove(stopId)
     }
 
     private fun labelIcon(routes: List<StopRoute>): BitmapDescriptor {
         val darkMode = ThemeUtils.isInDarkMode(context)
-        val key = StopRouteLabelBitmaps.labelKey(routes, darkMode)
-        return labelIcons.get(key) ?: BitmapDescriptorFactory
-            .fromBitmap(StopRouteLabelBitmaps.label(context, routes, darkMode))
-            .also { labelIcons.put(key, it) }
+        return labelIcons.get(StopRouteLabelBitmaps.labelKey(routes, darkMode)) {
+            StopRouteLabelBitmaps.label(context, routes, darkMode)
+        }
     }
 
     private fun icon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {

@@ -46,7 +46,6 @@ internal class MapLibreStopMarkerLayer(
     // than redrawn: at the zoom these appear the map still loads stops on every pan, and labels torn down
     // and re-added on each of those publishes would blink while the markers under them held still.
     private val labelByStopId = HashMap<String, Marker>()
-    private val labelRoutesByStopId = HashMap<String, List<StopRoute>>()
 
     // One Icon per distinct set of routes: a transit centre's bays repeat each other's routes, and a label
     // bitmap is mostly transparent lift, so sharing them is worth more here than for a stop icon. Bounded
@@ -108,7 +107,6 @@ internal class MapLibreStopMarkerLayer(
         if (annotations.isNotEmpty()) map.removeAnnotations(annotations)
         markerByStopId.clear()
         labelByStopId.clear()
-        labelRoutesByStopId.clear()
         labelIcons.evictAll()
         stopByMarker.clear()
         kindByStopId.clear()
@@ -135,11 +133,13 @@ internal class MapLibreStopMarkerLayer(
             labelByStopId[stop.id] = marker
             stopByMarker[marker] = stop
         } else {
-            if (labelRoutesByStopId[stop.id] != routes) existing.icon = labelIcon(routes)
-            if (stopByMarker[existing]?.point != stop.point) existing.position = stop.point.toLatLng()
+            // The label's own previous stop, which is what it was drawn from — a label exists only where
+            // the last render was in the labelling band, so its routes are the ones on the pill.
+            val previous = stopByMarker[existing]
+            if (previous?.routes != routes) existing.icon = labelIcon(routes)
+            if (previous?.point != stop.point) existing.position = stop.point.toLatLng()
             stopByMarker[existing] = stop
         }
-        labelRoutesByStopId[stop.id] = routes
     }
 
     private fun removeLabel(stopId: String) {
@@ -147,7 +147,6 @@ internal class MapLibreStopMarkerLayer(
             stopByMarker.remove(it)
             map.removeAnnotation(it)
         }
-        labelRoutesByStopId.remove(stopId)
     }
 
     private fun labelIcon(routes: List<StopRoute>): Icon {

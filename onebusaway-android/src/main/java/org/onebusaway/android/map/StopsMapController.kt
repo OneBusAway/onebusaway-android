@@ -51,9 +51,9 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.ROUTE_NAME_ORDER
 import org.onebusaway.android.util.RegionUtils
 import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.toGeoPoint
 
 /**
@@ -563,11 +563,9 @@ class StopsMapController(
     private fun labelRoutes(stop: ObaStop): List<StopRoute> = stop.routeIds
         .mapNotNull { cachedRoutes[it] }
         .map { StopRoute(getRouteDisplayName(it), it.color) }
-        // The app's one route-name order, so the label reads a stop's routes the way every other list of
-        // them does. Deduplicated by name because the label has only the name to show: two routes that
-        // share one (the feeds do collide) would draw as the same row twice.
-        .distinctBy(StopRoute::shortName)
-        .sortedWith(compareBy(ROUTE_NAME_ORDER, StopRoute::shortName))
+        // The order every other set of badged routes is read in — deduplicated by name and in the app's
+        // one route-name order.
+        .inInterchangeableOrder(StopRoute::shortName)
 
     /** Rebuild the rendered marker list from canonical nearby data and the current route presentation. */
     private fun publishStops() {

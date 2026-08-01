@@ -20,11 +20,11 @@ import org.onebusaway.android.util.neutralBadgeChipTextColor
 import org.onebusaway.android.util.routeBadgeChipColor
 import org.onebusaway.android.util.routeBadgeChipTextColor
 
-/**
+/*
  * What a stop marker's route label reads (#2107), how it is laid out and how it is coloured: the cells of
  * the pill drawn beside a stop once the camera reaches the transit-centre band. Pure and shared, so the
  * two map flavors label a stop with the same routes in the same arrangement and the decisions are
- * unit-testable off-device; the drawing is [StopRouteLabelBitmaps].
+ * unit-testable off-device; the drawing is StopRouteLabelBitmaps.
  */
 
 /**
@@ -36,29 +36,33 @@ const val STOP_ROUTE_LABEL_MAX_ROWS = 5
 
 /**
  * The routes [stop]'s label names at [band] — empty below [StopBand.ROUTES], which draws no label at all.
- * The single place either flavor asks "does this stop name its routes right now", so a band crossing
- * can't show a label on one map and not the other.
+ * The single place either flavor asks "is this stop naming its routes right now", so a band crossing can't
+ * show a label on one map and not the other.
+ *
+ * Compared as an ordering rather than for equality, because [StopBand] widens: a band added above
+ * [StopBand.ROUTES] would show everything this one does and more, and an equality test would silently
+ * switch the labels back off at the very zoom that wants them most.
  */
-fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band == StopBand.ROUTES) stop.routes else emptyList()
+fun stopRouteLabel(stop: StopMarker, band: StopBand): List<StopRoute> = if (band >= StopBand.ROUTES) stop.routes else emptyList()
 
 /**
- * [routes] laid out in columns of at most [maxRows], read top to bottom and then left to right, so a stop
- * naming more routes than fit in one column widens rather than lengthening — and names every one of them.
- * A `+N` overflow row was the alternative and is worse where it matters: a rider hunting their route at a
- * transit centre is exactly the person for whom "and 6 more" is no answer.
+ * [routes] laid out in columns of at most [STOP_ROUTE_LABEL_MAX_ROWS], read top to bottom and then left to
+ * right, so a stop naming more routes than fit in one column widens rather than lengthening — and names
+ * every one of them. A `+N` overflow row was the alternative and is worse where it matters: a rider
+ * hunting their route at a transit centre is exactly the person for whom "and 6 more" is no answer.
  *
- * The columns are **balanced**, not filled to [maxRows] and then spilled: seven routes read 4 + 3, not
+ * The columns are **balanced**, not filled to the cap and then spilled: seven routes read 4 + 3, not
  * 5 + 2. Both are as wide, so the taller one is only taller, and a nearly-empty second column reads as an
  * afterthought rather than as one label.
  *
  * The grid is rectangular — [badgeGrid][ContinuationBadgeBitmaps.badgeGrid] requires it, since a hole is a
  * hole in the pill — so a trailing remainder is padded with `null`, a blank cell for
- * [stopRouteLabelGrid] to colour.
+ * [stopRouteLabelGrid] to colour. That padding is why this is internal: the nullable cell is how the
+ * layout meets the drawing, not something a caller outside this file should have to reason about.
  */
-fun stopRouteLabelColumns(routes: List<StopRoute>, maxRows: Int = STOP_ROUTE_LABEL_MAX_ROWS): List<List<StopRoute?>> {
-    require(maxRows >= 1) { "a route label of $maxRows row(s) has nowhere to name a route" }
+internal fun stopRouteLabelColumns(routes: List<StopRoute>): List<List<StopRoute?>> {
     if (routes.isEmpty()) return emptyList()
-    val columns = ceilingDivide(routes.size, maxRows)
+    val columns = ceilingDivide(routes.size, STOP_ROUTE_LABEL_MAX_ROWS)
     val rows = ceilingDivide(routes.size, columns)
     // Padded to `columns * rows` first, so the chunks come out rectangular without a special last case.
     return List(columns * rows) { routes.getOrNull(it) }.chunked(rows)
@@ -79,11 +83,7 @@ fun stopRouteLabelColumns(routes: List<StopRoute>, maxRows: Int = STOP_ROUTE_LAB
  *
  * Resolved here, at draw time, because these colours flip with [dark] (see [StopRoute]).
  */
-fun stopRouteLabelGrid(
-    routes: List<StopRoute>,
-    dark: Boolean,
-    maxRows: Int = STOP_ROUTE_LABEL_MAX_ROWS
-): List<List<BadgedRoute>> = stopRouteLabelColumns(routes, maxRows).map { column ->
+fun stopRouteLabelGrid(routes: List<StopRoute>, dark: Boolean): List<List<BadgedRoute>> = stopRouteLabelColumns(routes).map { column ->
     column.map { route ->
         BadgedRoute(
             // A blank cell names nothing; it exists only so the pill stays a rectangle.

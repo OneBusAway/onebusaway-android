@@ -218,9 +218,12 @@ data class BikeMarker(
  * and renders as the trip-map-style circle instead of the direction-anchored icon. Carrying identities,
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  *
- * [routes] are the routes that serve this stop, in the order the marker's label reads them at
- * transit-centre zoom (#2107) — see [stopRouteLabel]. Empty where the producer has no route lookup for
- * the stop yet, which simply draws no label.
+ * [routes] are the routes this marker's **label** names at transit-centre zoom (#2107) — see
+ * [stopRouteLabel] — in the order it reads them. Deliberately "what the label says" rather than "what
+ * serves this stop", which is the wider fact and lives on [stop]: a producer that wants no label says so
+ * by naming no routes, and empty is therefore both "not looked up yet" and "not labelled here", neither of
+ * which the renderer has to tell apart. That is what lets a route presentation suppress the labels
+ * (`applyRouteStopPresentation`) without a second flag riding the snapshot.
  */
 data class StopMarker(
     val id: String,

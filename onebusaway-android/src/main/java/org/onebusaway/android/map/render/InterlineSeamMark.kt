@@ -22,11 +22,11 @@ import androidx.core.graphics.createBitmap
 import kotlin.math.tan
 
 /**
- * The mark drawn across a route line where a stay-aboard interline changes route (#2127) — the cutover
- * point of [RoutePolyline.startSeam]. Resource-free and flavor-neutral, like [ContinuationBadgeBitmaps], so
- * each renderer only has to wrap the [Bitmap]: on gms as a `CustomCap` on the line's start, on maplibre as a
- * rotated symbol (whose classic polyline annotation has no configurable cap — the same gap
- * `MapLibreRouteEndpointBulbLayer` fills for the endpoint bulbs).
+ * The mark drawn across a route line where a stay-aboard interline changes route (#2127) — a
+ * [RouteLineMark.INTERLINE_CUT] on the line's [RoutePolyline.startMark]. Resource-free and flavor-neutral,
+ * like [ContinuationBadgeBitmaps], so each renderer only has to wrap the [Bitmap]: on gms as a `CustomCap`
+ * on the line's start, on maplibre as a rotated symbol (whose classic polyline annotation has no
+ * configurable cap — the same gap `MapLibreRouteEndpointBulbLayer` fills for the endpoint bulbs).
  *
  * It is the **casing of a mitred joint**: the hairline you would see where two route lines are mitred
  * together at an angle, drawn in the line's own case colour and reaching exactly its two edges — nothing

@@ -91,6 +91,11 @@ object ContinuationBadgeBitmaps {
      * taller than the thing it labels, which today is a transit-centre stop naming more routes than fit
      * (#2107).
      *
+     * Each column is as wide as its own widest name, so the grid is not a uniform table: a column holding
+     * "1" and "8" stays narrow beside one holding "Seattle - Bremerton". Ragged divider spacing is the
+     * price, and worth paying — the alternative pads every column out to the longest name anywhere in the
+     * label, which on a map is width spent on nothing, in the direction a label can least afford it.
+     *
      * The grid is **rectangular**: every column holds the same number of cells, and a caller with a
      * remainder pads it with a blank cell of its own choosing rather than leaving a hole. Stated rather
      * than handled, because a hole is a hole in the *pill* — the rounded rect and its casing enclose the
@@ -120,13 +125,18 @@ object ContinuationBadgeBitmaps {
         // — the row boundaries are also where the dividers are drawn, and a fractional band would drift
         // away from them down the stack.
         val rowHeight = ceil((metrics.descent - metrics.ascent) + VERTICAL_PADDING_PX * scale * 2)
-        // One width for every column, measured across the whole grid rather than per column: columns of
-        // their own widths would put the dividers at ragged intervals, and a grid reads as a grid.
-        val columnWidth = columns
-            .flatten()
-            .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * scale * 2 }
-            .coerceAtLeast(cornerRadius * 2 / columns.size)
-        val width = columnWidth * columns.size
+        // Each column takes the width of its own widest name — a column is only as wide as something in
+        // it, so one long name doesn't pad out every column beside it. Rows still share one height across
+        // the grid, and deliberately: type sets a row's height whatever it reads, while its width is the
+        // name's own.
+        val columnWidths = columns.map { cells ->
+            cells
+                .maxOf { route -> textPaint.measureText(route.routeShortName) + HORIZONTAL_PADDING_PX * scale * 2 }
+                .coerceAtLeast(cornerRadius * 2 / columns.size)
+        }
+        // Where each column starts, and (last) the whole pill's width.
+        val columnLefts = columnWidths.runningFold(0f, Float::plus)
+        val width = columnLefts.last()
         val height = rowHeight * rowCount
 
         val bitmap = createBitmap(width.toInt(), height.toInt())
@@ -144,14 +154,15 @@ object ContinuationBadgeBitmaps {
         val pill = Path().apply { addRoundRect(badgeBounds, cornerRadius, cornerRadius, Path.Direction.CW) }
         canvas.withClip(pill) {
             columns.forEachIndexed { column, cells ->
-                val left = columnWidth * column
+                val left = columnLefts[column]
+                val right = columnLefts[column + 1]
                 cells.forEachIndexed { row, route ->
                     val top = rowHeight * row
                     band.color = Color.rgb(Color.red(route.color), Color.green(route.color), Color.blue(route.color))
-                    drawRect(RectF(left, top, left + columnWidth, top + rowHeight), band)
+                    drawRect(RectF(left, top, right, top + rowHeight), band)
                     textPaint.color = route.textColor ?: MarkerRendering.legibleOn(route.color)
                     val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
-                    drawText(route.routeShortName, left + columnWidth / 2f, baseline, textPaint)
+                    drawText(route.routeShortName, (left + right) / 2f, baseline, textPaint)
                 }
             }
         }
@@ -167,7 +178,7 @@ object ContinuationBadgeBitmaps {
             canvas.drawLine(badgeBounds.left, y, badgeBounds.right, y, line)
         }
         for (column in 1 until columns.size) {
-            val x = columnWidth * column
+            val x = columnLefts[column]
             canvas.drawLine(x, badgeBounds.top, x, badgeBounds.bottom, line)
         }
         canvas.drawRoundRect(badgeBounds, cornerRadius, cornerRadius, line)

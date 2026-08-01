@@ -122,6 +122,18 @@ class StopRouteLabelTest {
     }
 
     @Test
+    fun `every column names at least one route`() {
+        // A column is drawn as wide as its own widest name, so an all-blank one would be a bare sliver of
+        // pill — and balancing is what rules it out, since it never opens a column it can't fill.
+        for (count in 1..40) {
+            assertTrue(
+                "$count routes",
+                stopRouteLabelColumns(routes(count)).all { column -> column.any { it != null } }
+            )
+        }
+    }
+
+    @Test
     fun `the default cap is five rows`() {
         // A literal anchor, so retuning the constant is a deliberate change that has to update this test.
         assertEquals(5, STOP_ROUTE_LABEL_MAX_ROWS)

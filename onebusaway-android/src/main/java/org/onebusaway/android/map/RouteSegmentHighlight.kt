@@ -68,6 +68,10 @@ data class RiddenSpan(
  *  the rider boards and alights, what to frame, which stops are on it. */
 internal fun List<RiddenSpan>.riddenPath(): List<GeoPoint> = flatMap { it.points }
 
+/** Whether [riddenPath] would be drawable, answered without building it — the per-frame vehicle sampler asks
+ *  this once per route per frame, and only wants the emptiness. */
+internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size } >= 2
+
 /**
  * Compose the route's polylines when [spans] are highlighted: the route [base] upstream of the boarding
  * point drawn as the selected line's approach, then the rider's [itineraryContext], then the ridden span(s),

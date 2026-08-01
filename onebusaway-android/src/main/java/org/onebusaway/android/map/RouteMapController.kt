@@ -514,7 +514,7 @@ class RouteMapController(
 
     /** During selected-leg focus, retain vehicles upstream of or currently on the ride. */
     private fun List<ExtrapolatedVehicle>.filterToFocusedRide(routeId: String): List<ExtrapolatedVehicle> {
-        if (!riddenPath.isDrawableSegment()) return this
+        if (!riddenSpans.isDrawableRide()) return this
         val eligiblePaths = focusedVehiclePathsByRoute[routeId] ?: return emptyList()
         return filter { vehicle ->
             focusedRideKeepsVehicle(

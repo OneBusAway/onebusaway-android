@@ -22,11 +22,11 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
-import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRoute
 import org.onebusaway.android.map.render.StopRouteLabelBitmaps
 import org.onebusaway.android.map.render.stopIconKind
 import org.onebusaway.android.map.render.stopRouteLabel
@@ -46,7 +46,7 @@ internal class GoogleStopMarkerLayer(
     // than redrawn: at the zoom these appear the map still loads stops on every pan, and labels torn down
     // and re-added on each of those publishes would blink while the markers under them held still.
     private val labelByStopId = HashMap<String, Marker>()
-    private val labelRoutesByStopId = HashMap<String, List<BadgedRoute>>()
+    private val labelRoutesByStopId = HashMap<String, List<StopRoute>>()
 
     // One descriptor per distinct set of routes: a transit centre's bays repeat each other's routes, and a
     // label bitmap is mostly transparent lift, so sharing them is worth more here than for a stop icon.
@@ -161,7 +161,7 @@ internal class GoogleStopMarkerLayer(
         labelRoutesByStopId.remove(stopId)
     }
 
-    private fun labelIcon(routes: List<BadgedRoute>): BitmapDescriptor {
+    private fun labelIcon(routes: List<StopRoute>): BitmapDescriptor {
         val darkMode = ThemeUtils.isInDarkMode(context)
         val key = StopRouteLabelBitmaps.labelKey(routes, darkMode)
         return labelIcons.get(key) ?: BitmapDescriptorFactory

@@ -5,8 +5,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.onebusaway.android.api.adapters.ObaStopElement
-import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRoute
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.util.GeoPoint
@@ -60,7 +60,7 @@ class RouteStopPresentationTest {
     @Test
     fun `a presentation drops the stops' own route labels — it names the routes on screen itself`() {
         val focused = stop("focused")
-        val labelled = marker(focused).copy(routes = listOf(BadgedRoute("62", 0xFF00FF00.toInt())))
+        val labelled = marker(focused).copy(routes = listOf(StopRoute("62", 0xFF00FF00.toInt())))
         val presentation = RouteStopPresentation(
             stops = emptyList(),
             routes = emptyList(),
@@ -70,7 +70,7 @@ class RouteStopPresentationTest {
 
         val result = applyRouteStopPresentation(listOf(labelled), focused.id, presentation, ::marker)
 
-        assertEquals(emptyList<BadgedRoute>(), result.single().routes)
+        assertEquals(emptyList<StopRoute>(), result.single().routes)
     }
 
     private fun stop(id: String) = ObaStopElement(id = id, lat = 47.0, lon = -122.0)

@@ -219,9 +219,8 @@ data class BikeMarker(
  * rather than only a boolean, lets a stop-focus handoff preserve every shared route's color.
  *
  * [routes] are the routes that serve this stop, in the order the marker's label reads them at
- * transit-centre zoom (#2107) — see [stopRouteLabel]. Named and coloured as [BadgedRoute]s (the same
- * type a route label on a line carries) so the two ways the map names a route can't drift apart. Empty
- * where the producer has no route lookup for the stop yet, which simply draws no label.
+ * transit-centre zoom (#2107) — see [stopRouteLabel]. Empty where the producer has no route lookup for
+ * the stop yet, which simply draws no label.
  */
 data class StopMarker(
     val id: String,
@@ -231,7 +230,7 @@ data class StopMarker(
     val stop: ObaStop,
     val favorite: Boolean = false,
     val presentedRoutes: Set<RouteDirectionKey> = emptySet(),
-    val routes: List<BadgedRoute> = emptyList()
+    val routes: List<StopRoute> = emptyList()
 ) {
     val routeStop: Boolean get() = presentedRoutes.isNotEmpty()
 }
@@ -254,8 +253,30 @@ data class ContinuationBadge(
  * One route named on a [RouteBadge]: what it reads, and the colour the map draws that route's line in
  * (already through the map's route-line policy — see [org.onebusaway.android.map.mapRouteLineColor]),
  * so a name and the line it belongs to can't disagree.
+ *
+ * [textColor] is the colour the name is drawn in, for a producer whose colour policy pairs a fill with a
+ * matching ink — the stop route label (#2107) draws the arrivals drawer's badge, whose pastel fill and
+ * deep same-hue text are only correct together (see `routeBadgeChipColor`). Null, the default, leaves the
+ * choice to the drawing, which takes black or white by measured contrast ([MarkerRendering.legibleOn]) —
+ * the right answer for a label filled with a saturated route-line colour, and one no producer of those
+ * has to state.
  */
-data class BadgedRoute(val routeShortName: String, val color: Int)
+data class BadgedRoute(val routeShortName: String, val color: Int, val textColor: Int? = null)
+
+/**
+ * One route serving a stop, as that stop's marker label names it (#2107): what it reads, and the colour
+ * the agency published for it — **unrendered**, unlike [BadgedRoute]'s.
+ *
+ * The difference is deliberate and is about where the theme is known. A stop label is drawn as the
+ * arrivals drawer's badge chip, a policy that flips with light/dark; the renderer knows the theme (and
+ * already re-keys its icon cache on it), while the controller producing these does not. Carrying the
+ * source this far and rendering it at the end is what lets a theme change re-colour the labels, instead of
+ * leaving them the colour they happened to be produced in.
+ *
+ * Null [routeColor] where the agency publishes none or publishes an achromatic one, which the label draws
+ * as a neutral chip exactly as the drawer does.
+ */
+data class StopRoute(val shortName: String, val routeColor: Int?)
 
 /**
  * What a tap on a [RouteBadge] does. The two map views that label their lines want different things of

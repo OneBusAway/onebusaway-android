@@ -66,8 +66,9 @@ object ContinuationBadgeBitmaps {
     /**
      * The badge bitmap naming [routes] — a rounded-rect pill sized to fit the widest name, with one row
      * per route filled in that route's own line color, stacked top to bottom in the order given. Each
-     * row's text is black or white, whichever contrasts better with the row it sits on, so the badge
-     * stays legible across the full range of GTFS route colors.
+     * row's text is the ink its route names ([BadgedRoute.textColor]) or, when it names none, black or
+     * white — whichever contrasts better with the row it sits on, so the badge stays legible across the
+     * full range of GTFS route colors.
      *
      * One pill holding several names, rather than several pills, for the reason the directions drawer's
      * joined chip gives (`RouteBadgeChip`): the routes on it are one ride the rider may board any of
@@ -121,7 +122,7 @@ object ContinuationBadgeBitmaps {
                 val top = rowHeight * index
                 band.color = Color.rgb(Color.red(route.color), Color.green(route.color), Color.blue(route.color))
                 drawRect(RectF(0f, top, width, top + rowHeight), band)
-                textPaint.color = MarkerRendering.legibleOn(route.color)
+                textPaint.color = route.textColor ?: MarkerRendering.legibleOn(route.color)
                 val baseline = top + rowHeight / 2f - (metrics.ascent + metrics.descent) / 2f
                 drawText(route.routeShortName, width / 2f, baseline, textPaint)
             }
@@ -146,8 +147,9 @@ object ContinuationBadgeBitmaps {
      * two can't disagree about which of them the key names (as [VehicleBitmaps.iconKey] is). A renderer
      * caches one wrapper (a Google `BitmapDescriptor`) per key.
      *
-     * Every name and color on the badge takes part, so two labels differing only in a stacked route can't
-     * share a bitmap — and so does [darkMode], which the casing reads: the same routes case differently
+     * Every name and color on the badge takes part — including a row's own ink, since two rows can share a
+     * fill and read in different colors — so two labels differing only in a stacked route can't
+     * share a bitmap. So does [darkMode], which the casing reads: the same routes case differently
      * either side of a light/dark switch, and a key blind to it would serve the pre-switch pill. [scale]
      * takes part for the same reason it does in [VehicleBitmaps.iconKey]: a zoom-scheduled label (#2102)
      * draws the same routes at several sizes over one camera session, and a key blind to the size would
@@ -157,7 +159,7 @@ object ContinuationBadgeBitmaps {
     fun badgeKey(routes: List<BadgedRoute>, darkMode: Boolean, scale: Float): String = routes.joinToString(
         separator = "|",
         prefix = "route-badge:$darkMode:$scale:"
-    ) { "${it.routeShortName}:${it.color}" }
+    ) { "${it.routeShortName}:${it.color}:${it.textColor}" }
 
     /**
      * The color of the badge's outline and of the lines dividing its rows. A badge with one color between

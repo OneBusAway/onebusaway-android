@@ -38,11 +38,10 @@ import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.database.oba.CachedViewport
 import org.onebusaway.android.database.oba.StopCacheRepository
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
-import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRoute
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.models.NearbyStops
@@ -553,26 +552,22 @@ class StopsMapController(
     }
 
     /**
-     * The routes serving [stop], for the marker's transit-centre label (#2107), named and coloured
-     * exactly as they would be on their own lines. Resolved from [cachedRoutes] — the routes the stop
-     * responses reported — so a stop whose routes haven't been loaded yet simply carries none and draws
-     * no label until they have, the same graceful degradation [primaryRouteType] already makes for the
-     * icon. (That is the persistent stop cache's case: it stores each route's *type* but not its name, so
-     * a cache render labels nothing until the network response for the same viewport lands.)
+     * The routes serving [stop], for the marker's transit-centre label (#2107): their names and the
+     * colours the agency published, left unrendered for the renderer to draw through the badge policy
+     * (see [StopRoute]). Resolved from [cachedRoutes] — the routes the stop responses reported — so a
+     * stop whose routes haven't been loaded yet simply carries none and draws no label until they have,
+     * the same graceful degradation [primaryRouteType] already makes for the icon. (That is the persistent
+     * stop cache's case: it stores each route's *type* but not its name, so a cache render labels nothing
+     * until the network response for the same viewport lands.)
      */
-    private fun labelRoutes(stop: ObaStop): List<BadgedRoute> = stop.routeIds
+    private fun labelRoutes(stop: ObaStop): List<StopRoute> = stop.routeIds
         .mapNotNull { cachedRoutes[it] }
-        .map { route ->
-            BadgedRoute(
-                getRouteDisplayName(route),
-                mapRouteLineColorOrNull(route.color) ?: DEFAULT_ROUTE_LINE_COLOR
-            )
-        }
+        .map { StopRoute(getRouteDisplayName(it), it.color) }
         // The app's one route-name order, so the label reads a stop's routes the way every other list of
         // them does. Deduplicated by name because the label has only the name to show: two routes that
         // share one (the feeds do collide) would draw as the same row twice.
-        .distinctBy(BadgedRoute::routeShortName)
-        .sortedWith(compareBy(ROUTE_NAME_ORDER, BadgedRoute::routeShortName))
+        .distinctBy(StopRoute::shortName)
+        .sortedWith(compareBy(ROUTE_NAME_ORDER, StopRoute::shortName))
 
     /** Rebuild the rendered marker list from canonical nearby data and the current route presentation. */
     private fun publishStops() {

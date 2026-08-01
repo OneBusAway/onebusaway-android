@@ -24,8 +24,9 @@ import kotlin.math.ceil
 /**
  * The label naming the routes that serve a stop, floated just above its marker at transit-centre zoom
  * (#2107). The pill itself is the map's one route label ([ContinuationBadgeBitmaps.badge]) — same rows,
- * same casing, same legibility rules — so a route named beside a stop looks like the same route named on
- * its line; only the size and the placement are this label's own. Flavor-neutral (like [StopBitmaps]), so
+ * same casing, same dividers — so the map draws one kind of route label however many things it labels;
+ * the size, the placement and the colours ([stopRouteLabelRows], which takes the arrivals drawer's badge
+ * rather than the basemap's line colour) are this label's own. Flavor-neutral (like [StopBitmaps]), so
  * each renderer just wraps the [Bitmap] as its marker icon.
  */
 object StopRouteLabelBitmaps {
@@ -57,10 +58,10 @@ object StopRouteLabelBitmaps {
      * height, most of it empty, which is why callers cache these by [labelKey] rather than per stop:
      * every stop served by the same routes shares one.
      */
-    fun label(context: Context, routes: List<BadgedRoute>, darkMode: Boolean): Bitmap {
+    fun label(context: Context, routes: List<StopRoute>, darkMode: Boolean): Bitmap {
         val density = context.resources.displayMetrics.density
         return liftedAbove(
-            ContinuationBadgeBitmaps.badge(routes, density, darkMode, SCALE),
+            ContinuationBadgeBitmaps.badge(stopRouteLabelRows(routes, darkMode), density, darkMode, SCALE),
             LIFT_DP * density
         )
     }
@@ -73,7 +74,7 @@ object StopRouteLabelBitmaps {
      * renderer that happens to cache both in one map. Scale and lift are fixed here, so neither
      * distinguishes anything.
      */
-    fun labelKey(routes: List<BadgedRoute>, darkMode: Boolean): String = "stop-route-label:" + ContinuationBadgeBitmaps.badgeKey(routes, darkMode, SCALE)
+    fun labelKey(routes: List<StopRoute>, darkMode: Boolean): String = "stop-route-label:" + ContinuationBadgeBitmaps.badgeKey(stopRouteLabelRows(routes, darkMode), darkMode, SCALE)
 
     /**
      * [pill] drawn at the top of a canvas tall enough that the canvas centre — where the marker is

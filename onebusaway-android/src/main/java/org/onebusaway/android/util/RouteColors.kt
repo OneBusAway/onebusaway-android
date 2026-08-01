@@ -114,6 +114,25 @@ fun routeBadgeChipColor(routeColor: Int?, dark: Boolean): Int? = routeColorAtTon
 fun routeBadgeChipTextColor(routeColor: Int?, dark: Boolean): Int? = routeColorAtTone(routeColor, dark, if (dark) BADGE_CHIP_TEXT_TONE_DARK else BADGE_CHIP_TEXT_TONE_LIGHT)
 
 /**
+ * The chip a route with no usable colour takes where there is no Material palette to fall back to: the
+ * map's stop route label (#2107) is a bitmap drawn on a basemap, not a composable on a container, so it
+ * cannot reach the theme's `surfaceVariant` pair that [rememberRouteBadgeColors] uses. The badge's own
+ * tones with the hue dropped — grey where the coloured rows are coloured, at the same lightness — so a
+ * colourless route sits in the same tonal family as the routes beside it rather than at a tone of its own.
+ *
+ * Hueless by construction: [routeCasingColor] deliberately doesn't decline an achromatic source, so grey
+ * taken to the badge tone stays grey. A Compose caller should keep using [rememberRouteBadgeColors];
+ * these exist for the callers that can't.
+ */
+fun neutralBadgeChipColor(dark: Boolean): Int = routeCasingColor(NEUTRAL_CHIP_SOURCE, if (dark) BADGE_CHIP_TONE_DARK else BADGE_CHIP_TONE_LIGHT)
+
+/** The text drawn on a [neutralBadgeChipColor] fill — the neutral counterpart of [routeBadgeChipTextColor]. */
+fun neutralBadgeChipTextColor(dark: Boolean): Int = routeCasingColor(NEUTRAL_CHIP_SOURCE, if (dark) BADGE_CHIP_TEXT_TONE_DARK else BADGE_CHIP_TEXT_TONE_LIGHT)
+
+/** Any achromatic colour would do — only its (absent) hue and chroma survive the re-tone. */
+private const val NEUTRAL_CHIP_SOURCE = 0xFF888888.toInt()
+
+/**
  * The hue a ride is *presented* in, wherever it is presented: the agency's own [routeColor] when it has a
  * usable one, else [COLOURLESS_RIDE_HUE_ANCHOR]. A hue source, not a rendered colour — each surface still
  * renders it through its own policy (the map line and the drawer badge through the badge tone, the drawer's

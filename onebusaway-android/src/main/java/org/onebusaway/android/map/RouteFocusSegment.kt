@@ -22,7 +22,12 @@ data class RouteFocusSegment(
     val anchorStopId: String?,
     val relationship: RouteFocusRelationship = RouteFocusRelationship.STAY_ABOARD,
     /** OTP's trip headsign, used when [anchorStopId] belongs to several direction groups. */
-    val directionHeadsign: String? = null
+    val directionHeadsign: String? = null,
+    /** Where the rider leaves *this* segment's route — the next continuation's seam stop, or the
+     *  ride's alighting stop when the ride ends here. Resolved by the producer, which knows the leg
+     *  it came from, rather than recovered downstream by shifting a segment list (#2124). Null when
+     *  the OTP→OBA id resolution failed; the vehicle filter then falls back to geometry. */
+    val endStopId: String? = null
 )
 
 enum class RouteFocusRelationship {

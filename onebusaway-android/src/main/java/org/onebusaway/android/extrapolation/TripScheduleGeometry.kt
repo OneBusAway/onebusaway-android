@@ -18,9 +18,23 @@ package org.onebusaway.android.extrapolation
 import org.onebusaway.android.models.ObaTripSchedule
 
 /**
+ * Every offset along the trip at which it serves [stopId], in travel order — empty when it doesn't,
+ * and more than one entry for a loop or out-and-back that passes the stop again. Callers decide what
+ * an ambiguous stop means to them; none of them may guess a visit (see [ObaTripSchedule.soleOffsetOf]
+ * and the map's ride-eligibility filter, which refuse in different ways).
+ */
+fun ObaTripSchedule.offsetsOf(stopId: String): List<Double> = stopTimes.filter { it.stopId == stopId }.map { it.distanceAlongTrip }
+
+/**
+ * This stop's one offset along the trip, or null when the trip does not serve it — or serves it more
+ * than once, which nothing here can disambiguate from a stop id alone.
+ */
+fun ObaTripSchedule.soleOffsetOf(stopId: String): Double? = offsetsOf(stopId).singleOrNull()
+
+/**
  * Finds the index of the first stop in the segment bracketing [distanceAlongTrip]. The segment
- * spans `stopTimes[result]`..`stopTimes[result + 1]`. Lives here because schedule geometry is only
- * needed by the extrapolators ([GammaExtrapolator], [replaySchedule]).
+ * spans `stopTimes[result]`..`stopTimes[result + 1]`. Lives here with the rest of the
+ * "search a schedule's stop times" logic, which `ObaTripSchedule`'s own doc places in this package.
  *
  * @throws IndexOutOfBoundsException if the distance is before the first stop, after the last stop,
  *         or there are fewer than 2 stops.

@@ -402,6 +402,11 @@ data class RouteLegRef(
     // cutover between them be marked (#2127); built beside [extraSegments] from the same chain analysis, so
     // the two can't disagree about where a ride changes route. Empty where no ref was resolved.
     val riddenSpans: List<RiddenSpan> = emptyList(),
+    // Where the rider leaves the *leader* route: the first interline seam, or [alight] when the ride
+    // ends on the leader. Distinct from [alight] (the whole ride's end) so the map can bound the
+    // leader's own vehicles symbolically (#2124) without shifting [extraSegments] by one — a
+    // reconstruction that would misread the chain whenever an unresolvable leg is dropped from it.
+    val leaderEndStopId: String? = null,
     val alternatives: List<AlternativeRouteRef> = emptyList(),
     val plannedBadge: RouteBadge? = null,
     val badge: LegBadge? = null

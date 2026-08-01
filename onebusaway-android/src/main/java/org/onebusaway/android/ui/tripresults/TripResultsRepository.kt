@@ -132,7 +132,9 @@ class DefaultTripResultsRepository @Inject constructor(
                 RouteFocusSegment(
                     routeId = routeId,
                     anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, legs[j].agencyId, legs[j].agencyName),
-                    directionHeadsign = legs[j].headsign
+                    directionHeadsign = legs[j].headsign,
+                    // This leg's own end: the next seam, or the ride's alighting stop for the last one.
+                    endStopId = otpObaIdResolver.obaStopId(legs[j].to.stopId, legs[j].agencyId, legs[j].agencyName)
                 )
             }
             // The ride's own geometry, one span per leg it is ridden as, in travel order — the map draws the
@@ -158,6 +160,9 @@ class DefaultTripResultsRepository @Inject constructor(
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
                 riddenSpans = riddenSpans,
+                // The leader's own end, straight from its leg — the first seam on an interlined ride,
+                // and the same stop as [alight] on an ordinary one.
+                leaderEndStopId = otpObaIdResolver.obaStopId(leader.to.stopId, leader.agencyId, leader.agencyName),
                 alternatives = alternatives.map { it.resolve() },
                 // Kept separately from the joined badge: natural-name ordering means the joined form
                 // cannot identify which segment was planned, and same-named routes may collapse to one.

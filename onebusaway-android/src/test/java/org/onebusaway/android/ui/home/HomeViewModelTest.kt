@@ -122,6 +122,7 @@ class HomeViewModelTest {
             headsign = "Downtown Redmond",
             board = board,
             alight = alight,
+            leaderEndStopId = alight.stopId,
             alternatives = listOf(
                 AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null),
                 // Still appears in the joined badge, but cannot be loaded without an OBA route id.
@@ -145,11 +146,13 @@ class HomeViewModelTest {
                         "40_1LINE",
                         board.stopId,
                         relationship = RouteFocusRelationship.INTERCHANGEABLE,
-                        directionHeadsign = "Federal Way Downtown"
+                        directionHeadsign = "Federal Way Downtown",
+                        // An alternative carries the rider exactly as far as the planned leg does.
+                        endStopId = alight.stopId
                     )
                 ),
-                // The alighting stop's OBA id rides along for the symbolic vehicle filter (#2124).
-                alightStopId = alight.stopId
+                // Where the rider leaves this route — the symbolic vehicle filter's bound (#2124).
+                endStopId = alight.stopId
             ),
             map.routeRequests.single()
         )

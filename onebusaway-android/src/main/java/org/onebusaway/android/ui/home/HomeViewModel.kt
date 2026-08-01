@@ -730,7 +730,10 @@ class HomeViewModel @Inject constructor(
                 routeId = alternativeRouteId,
                 anchorStopId = routeLeg.board?.stopId,
                 relationship = RouteFocusRelationship.INTERCHANGEABLE,
-                directionHeadsign = alternative.headsign
+                directionHeadsign = alternative.headsign,
+                // An alternative substitutes for the planned leg, so it carries the rider exactly as
+                // far — to where the leader's own phase of the ride ends.
+                endStopId = routeLeg.leaderEndStopId
             )
         }
         focusItineraryRouteLegOnMap(
@@ -738,7 +741,7 @@ class HomeViewModel @Inject constructor(
             spans = routeLeg.riddenSpansOr(fallbackLeg.points),
             directionStopId = routeLeg.board?.stopId,
             extraSegments = routeLeg.extraSegments + alternativeSegments,
-            alightStopId = routeLeg.alight?.stopId
+            endStopId = routeLeg.leaderEndStopId
         )
     }
 
@@ -746,14 +749,10 @@ class HomeViewModel @Inject constructor(
      * A pill tap in a directions leg's inline ETA strip: enter that leg's route focus and focus/animate/
      * ping the tapped trip's live vehicle — [request] already carries the route, direction-anchor stop,
      * and focusTripId (built by the shared arrivals handler), so this just rides the same ShowRoute path
-     * as the arrivals drawer, adding the ride [routeLeg] is travelled on over the route. Takes the same
-     * ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits in draw the
-     * same ride.
-     *
-     * The symbolic alighting bound rides along only for an uninterlined [routeLeg]: the arrivals-built
-     * [request] carries no stay-aboard segments, and without them the map would bound the leader route
-     * at the ride's final alighting stop — a stop a folded interline's leader trips never serve, which
-     * would wrongly rule them all out. An interlined pill tap stays on the geometric filter instead.
+     * as the arrivals drawer, adding the ride [routeLeg] is travelled on over the route and that leg's
+     * own end-of-ride stop (the arrivals handler knows the route and stop tapped, not the planned ride).
+     * Takes the same ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits
+     * in draw the same ride.
      */
     fun focusDirectionsRouteVehicle(
         request: ShowRouteRequest,
@@ -763,7 +762,7 @@ class HomeViewModel @Inject constructor(
         enterDirectionsRouteFocus(
             request.copy(
                 riddenSpans = routeLeg.riddenSpansOr(fallbackPoints),
-                alightStopId = routeLeg.takeIf { it.extraSegments.isEmpty() }?.alight?.stopId
+                endStopId = routeLeg.leaderEndStopId
             )
         )
     }
@@ -788,7 +787,7 @@ class HomeViewModel @Inject constructor(
         directionStopId: String? = null,
         directionId: Int? = null,
         extraSegments: List<RouteFocusSegment> = emptyList(),
-        alightStopId: String? = null,
+        endStopId: String? = null,
         undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(
@@ -798,7 +797,7 @@ class HomeViewModel @Inject constructor(
                 initialDirectionId = directionId,
                 riddenSpans = spans,
                 extraSegments = extraSegments,
-                alightStopId = alightStopId
+                endStopId = endStopId
             ),
             undoViewport
         )

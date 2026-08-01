@@ -33,50 +33,63 @@ class RideEligibilityTest {
 
     private val trip = schedule("board" to 100.0, "mid" to 500.0, "alight" to 1000.0)
 
-    // -- rideBoundVerdict: one trip against one bounding stop --
+    private fun bound(stopId: String?, restrictive: Boolean = true) = RideBound(stopId, restrictive)
+
+    // -- rideBoundEligibility: one trip against one end-of-ride bound --
 
     @Test
     fun tripServingTheBoundingStopAheadOfTheVehicleIsEligible() {
-        assertEquals(RideBoundVerdict.ELIGIBLE, rideBoundVerdict(trip, 400.0, "alight"))
+        assertEquals(RideEligibility.ELIGIBLE, rideBoundEligibility(trip, 400.0, bound("alight")))
     }
 
     @Test
     fun vehicleStandingExactlyAtTheBoundingStopIsStillEligible() {
         // <= : a vehicle at the alighting stop still carries the rider, matching the geometric bound.
-        assertEquals(RideBoundVerdict.ELIGIBLE, rideBoundVerdict(trip, 1000.0, "alight"))
+        assertEquals(RideEligibility.ELIGIBLE, rideBoundEligibility(trip, 1000.0, bound("alight")))
     }
 
     @Test
-    fun vehiclePastTheBoundingStopHasPassed() {
-        assertEquals(RideBoundVerdict.PASSED, rideBoundVerdict(trip, 1000.1, "alight"))
+    fun vehiclePastTheBoundingStopIsIneligible() {
+        assertEquals(RideEligibility.INELIGIBLE, rideBoundEligibility(trip, 1000.1, bound("alight")))
     }
 
     @Test
-    fun tripNotServingTheBoundingStopIsNotServed_evenWithoutVehicleProgress() {
-        // Absence from the stop sequence needs no progress, so it must not degrade to UNKNOWN.
-        assertEquals(RideBoundVerdict.NOT_SERVED, rideBoundVerdict(trip, null, "elsewhere"))
+    fun notServingARestrictiveBoundIsIneligible_evenWithoutVehicleProgress() {
+        // Absence from the stop sequence needs no progress, so it must not degrade to UNKNOWN. This
+        // is the short-turn (and reverse-direction) rejection geometry could never make.
+        assertEquals(RideEligibility.INELIGIBLE, rideBoundEligibility(trip, null, bound("elsewhere")))
+    }
+
+    @Test
+    fun notServingAnInterchangeableBoundIsUnknown_notARejection() {
+        // A parallel route may alight at a different platform's stop id, so "doesn't serve this
+        // exact id" leaves the verdict to the geometric fallback.
+        assertEquals(
+            RideEligibility.UNKNOWN,
+            rideBoundEligibility(trip, 400.0, bound("elsewhere", restrictive = false))
+        )
     }
 
     @Test
     fun missingScheduleIsUnknown() {
-        assertEquals(RideBoundVerdict.UNKNOWN, rideBoundVerdict(null, 400.0, "alight"))
+        assertEquals(RideEligibility.UNKNOWN, rideBoundEligibility(null, 400.0, bound("alight")))
     }
 
     @Test
     fun missingVehicleProgressIsUnknownWhenTheStopIsServed() {
-        assertEquals(RideBoundVerdict.UNKNOWN, rideBoundVerdict(trip, null, "alight"))
+        assertEquals(RideEligibility.UNKNOWN, rideBoundEligibility(trip, null, bound("alight")))
     }
 
     @Test
     fun stopServedTwiceIsUnknown() {
         // A loop/out-and-back has no single "the rider's alighting" — refuse rather than guess.
         val loop = schedule("board" to 0.0, "alight" to 500.0, "alight" to 900.0)
-        assertEquals(RideBoundVerdict.UNKNOWN, rideBoundVerdict(loop, 100.0, "alight"))
+        assertEquals(RideEligibility.UNKNOWN, rideBoundEligibility(loop, 100.0, bound("alight")))
     }
 
     @Test
     fun nullBoundingStopIsUnknown() {
-        assertEquals(RideBoundVerdict.UNKNOWN, rideBoundVerdict(trip, 400.0, null))
+        assertEquals(RideEligibility.UNKNOWN, rideBoundEligibility(trip, 400.0, bound(null)))
     }
 
     // -- rideEligibility: combining a route's bounds --
@@ -101,14 +114,6 @@ class RideEligibilityTest {
     }
 
     @Test
-    fun notServingAnInterchangeableBoundIsUnknown_notARejection() {
-        // A parallel route may alight at a different platform's stop id, so "doesn't serve this
-        // exact id" leaves the verdict to the geometric fallback.
-        val bounds = listOf(RideBound("elsewhere", restrictive = false))
-        assertEquals(RideEligibility.UNKNOWN, rideEligibility(trip, 400.0, bounds))
-    }
-
-    @Test
     fun anyUndecidedBoundBlocksARejection() {
         val bounds = listOf(
             RideBound("board", restrictive = true), // passed
@@ -125,7 +130,7 @@ class RideEligibilityTest {
     // -- rideBoundsByRoute: deriving each focused route's end-of-ride stops --
 
     @Test
-    fun plainLegBoundsTheLeaderRestrictivelyAtTheAlightingStop() {
+    fun plainLegBoundsTheLeaderRestrictivelyAtItsEndStop() {
         assertEquals(
             mapOf("route_1" to listOf(RideBound("alight", restrictive = true))),
             rideBoundsByRoute("route_1", emptyList(), "alight")
@@ -133,10 +138,10 @@ class RideEligibilityTest {
     }
 
     @Test
-    fun stayAboardChainBoundsEachRouteAtTheNextSeam_andTheLastAtTheAlightingStop() {
+    fun everyRouteInAStayAboardChainIsBoundedWhereItsOwnPhaseEnds() {
         val segments = listOf(
-            RouteFocusSegment("route_2", anchorStopId = "seam_1"),
-            RouteFocusSegment("route_3", anchorStopId = "seam_2")
+            RouteFocusSegment("route_2", anchorStopId = "seam_1", endStopId = "seam_2"),
+            RouteFocusSegment("route_3", anchorStopId = "seam_2", endStopId = "alight")
         )
         assertEquals(
             mapOf(
@@ -144,15 +149,30 @@ class RideEligibilityTest {
                 "route_2" to listOf(RideBound("seam_2", restrictive = true)),
                 "route_3" to listOf(RideBound("alight", restrictive = true))
             ),
-            rideBoundsByRoute("route_1", segments, "alight")
+            rideBoundsByRoute("route_1", segments, "seam_1")
         )
     }
 
     @Test
-    fun selfInterlineAccumulatesSeamAndAlightBoundsUnderOneRouteId() {
+    fun aDroppedContinuationCostsOnlyItsOwnBound() {
+        // The producer omits a leg whose route can't be resolved to an OBA id. Since every segment
+        // states its own end, the surviving routes keep their true bounds — no shifted chain hands
+        // one of them a stop two legs downstream that its trips never serve.
+        val withoutTheMiddleLeg = listOf(RouteFocusSegment("route_3", anchorStopId = "seam_2", endStopId = "alight"))
+        assertEquals(
+            mapOf(
+                "route_1" to listOf(RideBound("seam_1", restrictive = true)),
+                "route_3" to listOf(RideBound("alight", restrictive = true))
+            ),
+            rideBoundsByRoute("route_1", withoutTheMiddleLeg, "seam_1")
+        )
+    }
+
+    @Test
+    fun selfInterlineAccumulatesBothPhaseBoundsUnderOneRouteId() {
         // The same route continues onto itself (its other direction): the rider leaves the first
         // phase at the seam and the second at the alighting stop — one route id, both bounds.
-        val segments = listOf(RouteFocusSegment("route_1", anchorStopId = "seam"))
+        val segments = listOf(RouteFocusSegment("route_1", anchorStopId = "seam", endStopId = "alight"))
         assertEquals(
             mapOf(
                 "route_1" to listOf(
@@ -160,17 +180,18 @@ class RideEligibilityTest {
                     RideBound("alight", restrictive = true)
                 )
             ),
-            rideBoundsByRoute("route_1", segments, "alight")
+            rideBoundsByRoute("route_1", segments, "seam")
         )
     }
 
     @Test
-    fun interchangeableRoutesGetANonRestrictiveAlightBound() {
+    fun interchangeableRoutesGetANonRestrictiveBound() {
         val segments = listOf(
             RouteFocusSegment(
                 "route_9",
                 anchorStopId = "board",
-                relationship = RouteFocusRelationship.INTERCHANGEABLE
+                relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                endStopId = "alight"
             )
         )
         assertEquals(
@@ -183,7 +204,7 @@ class RideEligibilityTest {
     }
 
     @Test
-    fun unresolvedAlightingStopLeavesNullBounds() {
+    fun unresolvedEndStopLeavesNullBounds() {
         // An OTP→OBA id-resolution failure flows through as a null bound (→ UNKNOWN → geometric
         // fallback), never a guess.
         assertEquals(

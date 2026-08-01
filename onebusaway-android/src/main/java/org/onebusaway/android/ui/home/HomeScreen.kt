@@ -90,6 +90,7 @@ import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
+import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
@@ -632,6 +633,12 @@ fun HomeScreen(
                                     homeViewModel.navigateBackInDirections()
                                 }
                             }
+                            // That last step doesn't leave outright when a trip is drawn — it stages this
+                            // question instead, as does a tap on the map background (#2140). The VM owns the
+                            // latch because both gestures reach it from different places (here, and the map's
+                            // own click callback); answering it either exits or leaves the trip untouched.
+                            val confirmDirectionsExit by homeViewModel.pendingDirectionsExit
+                                .collectAsStateWithLifecycle()
 
                             // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle
                             // and MapChrome animates it. Local here since the screen holds the live SheetState. Only
@@ -825,6 +832,12 @@ fun HomeScreen(
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }
+                                    )
+                                }
+                                if (confirmDirectionsExit) {
+                                    DirectionsExitConfirmDialog(
+                                        onConfirm = homeViewModel::confirmExitDirections,
+                                        onDismiss = homeViewModel::dismissDirectionsExit
                                     )
                                 }
                             }

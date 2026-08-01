@@ -551,6 +551,10 @@ class HomeViewModel @Inject constructor(
      */
     fun unfocusMapOneLevel() {
         val focus = _currentFocus.value
+        // A stray background tap is the cheapest gesture on the map, and from the itinerary overview it
+        // used to spend a planned trip outright — so when there is a trip drawn to lose, it asks first
+        // (#2140) rather than erasing it. Nothing drawn yet: leaving is free, so it just leaves.
+        if (stageDirectionsExitConfirmation(focus)) return
         val target = when (focus) {
             is CurrentFocus.Stop -> if (focus.selectedRoute == null) {
                 CurrentFocus.None
@@ -611,13 +615,17 @@ class HomeViewModel @Inject constructor(
         if (_currentFocus.value is CurrentFocus.Directions) return
         presentedRoutes = emptySet()
         pendingFocus = null
+        // A fresh entry has nothing drawn yet — the previous visit's trip is long off the map, and a
+        // stale record of it would make the first Back out of an empty form ask to discard it (#2140).
+        shownItinerary = null
         pushFocus(CurrentFocus.Directions(), undoViewport)
     }
 
     // The draw of the itinerary currently shown in directions mode, cached so returning from a route
     // sub-focus (a map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on
     // its own. Held as the whole directive rather than just the itinerary, so a redraw reproduces the
-    // terminus pins the trip was drawn with instead of quietly restoring a suppressed one.
+    // terminus pins the trip was drawn with instead of quietly restoring a suppressed one. Null means
+    // there is no trip on the map, which is also what makes leaving directions free of a confirmation.
     private var shownItinerary: MapDirective.ShowItinerary? = null
 
     /**
@@ -772,7 +780,10 @@ class HomeViewModel @Inject constructor(
     }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
-    fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
+    fun clearShownItineraryOnMap() {
+        shownItinerary = null
+        emitMapDirective(MapDirective.ClearItinerary)
+    }
 
     /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
     fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
@@ -780,20 +791,60 @@ class HomeViewModel @Inject constructor(
     // Leave directions focus, returning the map to nearby stops. Private: the only way out is
     // [navigateBackInDirections]'s last step, so a control can't jump straight out of a focused leg —
     // exactly the behaviour #2075 removed.
+    // [shownItinerary] deliberately survives this: backing *into* the directions focus we just left has to
+    // put the trip back on the map. A later fresh entry resets it (see [enterDirections]).
     private fun exitDirections() = clearMapFocus()
+
+    // Whether a gesture that would leave directions is waiting on the rider's confirmation. Set only by
+    // [stageDirectionsExitConfirmation]; the host shows a modal dialog off it and answers with
+    // [confirmExitDirections] / [dismissDirectionsExit]. It carries no "which gesture asked", because
+    // there is only one answer to give: every gesture that reaches it wants the same exit.
+    private val _pendingDirectionsExit = MutableStateFlow(false)
+    val pendingDirectionsExit: StateFlow<Boolean> = _pendingDirectionsExit.asStateFlow()
+
+    /**
+     * Intercept a gesture that would leave directions from [focus], staging a confirmation instead of
+     * exiting — and reporting whether it did, so the caller stops where it is (#2140).
+     *
+     * The gate is a trip actually *drawn* on the map ([shownItinerary]) at the plain itinerary overview:
+     * that is the state a planned trip lives in, and losing it costs the rider the whole plan. An
+     * unplanned form, or a drilled-into leg (which steps back to the overview rather than out), is not
+     * worth a dialog and doesn't get one.
+     */
+    private fun stageDirectionsExitConfirmation(focus: CurrentFocus): Boolean {
+        val leavesDrawnTrip = focus is CurrentFocus.Directions &&
+            focus.subFocus == null &&
+            shownItinerary != null
+        if (!leavesDrawnTrip) return false
+        _pendingDirectionsExit.value = true
+        return true
+    }
+
+    /** The rider confirmed the staged exit: leave directions, dropping the trip. */
+    fun confirmExitDirections() {
+        if (!_pendingDirectionsExit.value) return
+        exitDirections()
+    }
+
+    /** The rider declined the staged exit (or dismissed the dialog): stay on the trip. */
+    fun dismissDirectionsExit() {
+        _pendingDirectionsExit.value = false
+    }
 
     /**
      * The system Back gesture while in directions. A leg the user drilled into — its route, or an
      * on-street leg framed on its own — steps back out of that leg first, so Back reverses the drill-in
      * (restoring the camera it moved) instead of leaving the trip behind (#2075); only from the plain
-     * itinerary overview does Back exit directions. The map-background tap drops a level the same way,
-     * but jumps straight to the overview, while Back walks the legs the user visited in order — matching
-     * how a stop's route focus already behaves under each gesture.
+     * itinerary overview does Back exit directions — and with a trip drawn there, only after the rider
+     * confirms it (#2140). The map-background tap drops a level the same way, but jumps straight to the
+     * overview, while Back walks the legs the user visited in order — matching how a stop's route focus
+     * already behaves under each gesture.
      */
     fun navigateBackInDirections() {
         // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
         // entered from, so there is history to pop.
         if (directionsSubFocus != null && navigateBackFocus()) return
+        if (stageDirectionsExitConfirmation(_currentFocus.value)) return
         exitDirections()
     }
 
@@ -844,6 +895,9 @@ class HomeViewModel @Inject constructor(
 
     private fun replaceFocus(focus: CurrentFocus) {
         _currentFocus.value = focus
+        // A staged "leave the trip?" question is only ever asked of the focus that raised it, so any
+        // move off directions — the confirmed exit itself, or a deep link taking the map — answers it.
+        if (focus !is CurrentFocus.Directions) _pendingDirectionsExit.value = false
         CurrentFocusPersistence.write(savedState, focus)
     }
 

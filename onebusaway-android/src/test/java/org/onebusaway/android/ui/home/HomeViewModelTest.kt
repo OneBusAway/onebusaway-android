@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -183,12 +184,116 @@ class HomeViewModelTest {
         assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
         assertEquals(listOf(MapDirective.ClearItineraryLegFocus), map.sent)
 
-        // Only the second one leaves directions.
+        // The second one would leave, but the trip is drawn, so it asks first (#2140) and the answer
+        // is what actually leaves.
         vm.dropOneLevel()
+        advanceUntilIdle()
+        assertTrue(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        vm.confirmExitDirections()
         advanceUntilIdle()
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
         assertEquals(1, map.clearFocusCount)
         job.cancel()
+    }
+
+    /**
+     * Both gestures that would discard a drawn trip stage the same question, and declining it leaves the
+     * rider exactly where they were — still in directions, with nothing sent to the map.
+     */
+    private fun assertConfirmsBeforeDiscardingTrip(leave: HomeViewModel.() -> Unit) = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirectionsShowing()
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.leave()
+        advanceUntilIdle()
+        assertTrue(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertTrue(map.sent.isEmpty())
+
+        vm.dismissDirectionsExit()
+        advanceUntilIdle()
+        assertFalse(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertTrue(map.sent.isEmpty())
+        job.cancel()
+    }
+
+    @Test
+    fun `back out of a drawn trip asks before discarding it`() = assertConfirmsBeforeDiscardingTrip(HomeViewModel::navigateBackInDirections)
+
+    @Test
+    fun `tapping off a drawn trip asks before discarding it`() = assertConfirmsBeforeDiscardingTrip(HomeViewModel::unfocusMapOneLevel)
+
+    /** With no trip drawn there is nothing to lose, so leaving directions costs no dialog. */
+    private fun assertLeavesUnplannedDirectionsOutright(leave: HomeViewModel.() -> Unit) = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        vm.enterDirections()
+
+        vm.leave()
+        advanceUntilIdle()
+
+        assertFalse(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+        assertEquals(1, map.clearFocusCount)
+        job.cancel()
+    }
+
+    @Test
+    fun `back out of an unplanned form leaves directions outright`() = assertLeavesUnplannedDirectionsOutright(HomeViewModel::navigateBackInDirections)
+
+    @Test
+    fun `tapping off an unplanned form leaves directions outright`() = assertLeavesUnplannedDirectionsOutright(HomeViewModel::unfocusMapOneLevel)
+
+    @Test
+    fun `a trip cleared off the map no longer guards the way out`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        // The plan became unsubmittable, so the drawn trip went with it — there is nothing left to lose.
+        vm.clearShownItineraryOnMap()
+
+        vm.navigateBackInDirections()
+
+        assertFalse(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+    }
+
+    @Test
+    fun `a fresh entry doesn't inherit the previous visit's trip`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.navigateBackInDirections()
+        vm.confirmExitDirections()
+
+        // Planning again from an empty form: the trip that was on the map last time isn't on it now, so
+        // the first gesture out leaves rather than asking about a trip the rider can't see.
+        vm.enterDirections()
+        vm.navigateBackInDirections()
+
+        assertFalse(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+    }
+
+    @Test
+    fun `a deep link taking the map drops the staged question`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.navigateBackInDirections()
+        assertTrue(vm.pendingDirectionsExit.value)
+
+        // The question was asked of directions; a stop opened from elsewhere replaces that focus outright,
+        // so the dialog has nothing left to answer for.
+        vm.revealStop(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
+
+        assertFalse(vm.pendingDirectionsExit.value)
     }
 
     @Test

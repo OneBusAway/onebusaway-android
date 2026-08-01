@@ -62,7 +62,7 @@ object InterlineSeamMark {
 
     /**
      * The mark's weight where the line it cuts is at its full width, which for every line that carries one
-     * today is [ITINERARY_RIDE_WIDTH_PROFILE]'s close-zoom thickness. A hairline, in the same family as the
+     * today is [ITINERARY_RIDE_WIDTH_PROFILE]'s close-zoom thickness. A ruled line, in the same family as the
      * cases around these lines ([RouteLineCase.OUTLINE] is 0.75dp per side, [RouteLineCase.SELECTION] 1.5dp)
      * — because that is what it is: the casing of the joint, not a symbol laid over the corridor.
      *
@@ -73,7 +73,7 @@ object InterlineSeamMark {
      * cap on every camera settle. At overview zoom the ride is 7.5dp of a trip drawn whole, and a seam
      * receding with it reads correctly there.
      */
-    private const val STROKE_DP_AT_FULL_WIDTH = 1f
+    private const val STROKE_DP_AT_FULL_WIDTH = 2f
 
     private val STROKE_SCALE = STROKE_DP_AT_FULL_WIDTH / ITINERARY_RIDE_WIDTH_PROFILE.thicknessDp
 

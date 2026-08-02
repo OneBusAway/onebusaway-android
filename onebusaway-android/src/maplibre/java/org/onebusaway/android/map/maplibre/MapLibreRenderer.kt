@@ -100,7 +100,23 @@ class MapLibreRenderer(
     private val renderState: MapRenderState
 ) : PingTarget {
     private val stopMarkerLayer = MapLibreStopMarkerLayer(map, context)
+
+    // A line's case colour, read at draw time rather than carried on the line: it follows the theme, because
+    // the basemap it separates its line from does (see [mapRouteLineCaseColor]). Shared by everything that
+    // draws in it — the case itself, and the interline cut, which is why they can't drift apart.
+    private val caseColorOf: (RoutePolyline) -> Int =
+        { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) }
+
+    // The marks on a route line's ends, drawn as style layers because the classic polyline annotation has no
+    // configurable cap: the endpoint bulbs, and the interline cutover slashes (#2127). Rendered together
+    // (see [renderLineDecorations]) — both are sized from the line's stroke width, so both answer the camera.
     private val routeEndpointBulbLayer = MapLibreRouteEndpointBulbLayer(mapStyle)
+
+    private val interlineSeamLayer = MapLibreInterlineSeamLayer(
+        mapStyle,
+        context.resources.displayMetrics.density,
+        caseColorOf = caseColorOf
+    )
     private val bikeByMarker = HashMap<Marker, BikeMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
@@ -154,9 +170,7 @@ class MapLibreRenderer(
         },
         removeLines = { lines -> map.removeAnnotations(lines) },
         setWidth = { line, width -> line.width = width },
-        // Resolved per line rather than once, and here rather than by the producer: a case's colour follows the
-        // theme, because the basemap it separates its line from does.
-        caseColorOf = { mapRouteLineCaseColor(it.resolvedColor, ThemeUtils.isInDarkMode(context)) },
+        caseColorOf = caseColorOf,
         // maplibre annotation widths are already in dp, so no density conversion is involved.
         caseExtraWidth = { it.case.extraWidthDp }
     )
@@ -318,7 +332,13 @@ class MapLibreRenderer(
     fun renderRoutePolylines(next: List<RoutePolyline> = renderState.snapshot.value.routePolylines) {
         val zoom = map.cameraPosition.zoom.toFloat()
         routePolylineReconciler.reconcile(next, zoom)
-        routeEndpointBulbLayer.render(next) { routeWidth(it, zoom) }
+        renderLineDecorations(next, zoom)
+    }
+
+    /** Redraw the end marks of [lines] for a camera at [zoom] — see the decoration layers above. */
+    private fun renderLineDecorations(lines: List<RoutePolyline>, zoom: Float) {
+        routeEndpointBulbLayer.render(lines) { routeWidth(it, zoom) }
+        interlineSeamLayer.render(lines) { routeWidth(it, zoom) }
     }
 
     private fun PolylineOptions.addPoints(points: List<GeoPoint>): PolylineOptions {
@@ -328,7 +348,7 @@ class MapLibreRenderer(
 
     fun onCameraSettled(zoom: Float) {
         routePolylineReconciler.resyncWidths(zoom)
-        routeEndpointBulbLayer.render(renderState.snapshot.value.routePolylines) { routeWidth(it, zoom) }
+        renderLineDecorations(renderState.snapshot.value.routePolylines, zoom)
         val detailScale = routeLineWidthScale(zoom)
         updateVehicleScale(detailScale)
         updateRouteBadgeScale(zoom)
@@ -355,6 +375,7 @@ class MapLibreRenderer(
         stopMarkerLayer.dispose()
         routeStopCircleLayer.dispose()
         routeEndpointBulbLayer.dispose()
+        interlineSeamLayer.dispose()
         // Clear the route lines first (removes them from the map), then mass-remove the rest.
         routePolylineReconciler.clear()
         map.removeAnnotations()

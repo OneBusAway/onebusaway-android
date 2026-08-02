@@ -22,6 +22,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.substitutableRoutes
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.GeoPoint
@@ -133,8 +134,9 @@ class DirectionsMapController(private val host: MapHost) {
         }
         // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
         // [itineraryLegStyle], which also decides the hairline case a ride wears.
+        val caps = itineraryLegCaps(legs)
         legLines = drawableLegs.map { (legIndex, _, points, style) ->
-            val caps = itineraryLegCaps(legs, legIndex)
+            val legCaps = caps[legIndex]
             ItineraryLegLine(
                 legIndex,
                 RoutePolyline(
@@ -143,8 +145,15 @@ class DirectionsMapController(private val host: MapHost) {
                     widthProfile = style.widthProfile,
                     dash = style.dash,
                     case = style.case,
-                    roundStartCap = style.roundCaps && caps.start,
-                    roundEndCap = style.roundCaps && caps.end
+                    // A cutover (#2127) and a bulb are alternatives, not additions — the cut goes precisely
+                    // where the ride runs on and the bulb is therefore withheld, which is what this `when`
+                    // says and what a pair of booleans left each renderer to decide for itself.
+                    startMark = when {
+                        legCaps.startSeam -> RouteLineMark.INTERLINE_CUT
+                        style.roundCaps && legCaps.start -> RouteLineMark.BULB
+                        else -> RouteLineMark.NONE
+                    },
+                    endMark = if (style.roundCaps && legCaps.end) RouteLineMark.BULB else RouteLineMark.NONE
                 )
             )
         }

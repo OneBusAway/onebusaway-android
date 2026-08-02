@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.GeoPoint
@@ -43,28 +44,67 @@ const val VARIANT_MATCH_TOLERANCE_METERS = 50.0
 internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
 
 /**
- * Compose the route's polylines when [segment] is highlighted: the route [base] upstream of the boarding
- * point drawn as the selected line's approach, then the rider's [itineraryContext], then the ridden segment
- * in [routeColor]. This order makes the visual hierarchy match the semantics: where the vehicle comes from,
- * the committed journey, the current leg. Without a drawable segment, retains the ordinary plain-route
- * ordering: itinerary context beneath [base], with no approach restyle or selected overlay.
+ * One route's share of a ride the rider drilled into — the board→alight span of a single itinerary leg.
  *
- * The segment keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it
- * was tapped from — and says it is the selected one with a case rather than by out-widening its
- * surroundings (#2082). Its approach carries the same case, so the two read as one route line stepping down
- * where the rider boards. Neither carries direction chevrons (#2129): like every other itinerary line, the
- * ride is marked selected by its case and weight alone.
+ * A ride is a list of these rather than one polyline because a stay-aboard interline (#2000) is one ride on
+ * *several* routes: the vehicle carries on but its route changes underneath the rider. Drawn as a single
+ * line, such a ride had to pick one route's colour for the whole thing and had no interior to mark, so the
+ * cutover the itinerary map shows (#2127) vanished the moment the rider tapped in to look closer. Split, each
+ * span takes its own route's colour and the seam is an end again — which is where a [RouteLineMark] goes.
+ *
+ * [routeId] is the OBA route id the span is ridden as (null when it couldn't be resolved), used to colour it;
+ * [startsCutover] is true when the vehicle *changed route* onto this span, straight off the same
+ * `Interlines.chains` transitions the drawer and the itinerary map read, so all three mark the same joins. A
+ * self-interline — one route reversing onto itself — is a span boundary with no cutover, exactly as it is a
+ * seam the drawer announces nothing at.
+ */
+data class RiddenSpan(
+    val points: List<GeoPoint>,
+    val routeId: String? = null,
+    val startsCutover: Boolean = false
+)
+
+/** The whole ride as one path, for the questions that are about the ride and not about its routes: where
+ *  the rider boards and alights, what to frame, which stops are on it. */
+internal fun List<RiddenSpan>.riddenPath(): List<GeoPoint> = flatMap { it.points }
+
+/** Whether [riddenPath] would be drawable, answered without building it — the per-frame vehicle sampler asks
+ *  this once per route per frame, and only wants the emptiness. */
+internal fun List<RiddenSpan>.isDrawableRide(): Boolean = sumOf { it.points.size } >= 2
+
+/**
+ * Compose the route's polylines when [spans] are highlighted: the route [base] upstream of the boarding
+ * point drawn as the selected line's approach, then the rider's [itineraryContext], then the ridden span(s),
+ * each in the colour [colorOf] gives it. This order makes the visual hierarchy match the semantics: where
+ * the vehicle comes from, the committed journey, the current leg. Without a drawable span, retains the
+ * ordinary plain-route ordering: itinerary context beneath [base], with no approach restyle or selected
+ * overlay.
+ *
+ * The ride keeps [ITINERARY_RIDE_WIDTH_PROFILE] — the very weight it had as a leg of the itinerary it was
+ * tapped from — and says it is the selected one with a case rather than by out-widening its surroundings
+ * (#2082). Its approach carries the same case, so the two read as one route line stepping down where the
+ * rider boards. Neither carries direction chevrons (#2129): like every other itinerary line, the ride is
+ * marked selected by its case and weight alone.
+ *
+ * A span the vehicle changed route onto is cut at its start ([RiddenSpan.startsCutover]), the same mark the
+ * itinerary map rules across that join — so drilling into an interlined ride shows the rider *more* about it,
+ * rather than losing the one thing that said the route changes mid-ride.
  */
 internal fun routePolylinesWithSegment(
     base: List<RoutePolyline>,
-    segment: List<GeoPoint>,
-    routeColor: Int?,
+    spans: List<RiddenSpan>,
+    colorOf: (RiddenSpan) -> Int?,
     itineraryContext: List<RoutePolyline> = emptyList()
 ): List<RoutePolyline> {
-    val overlay = segment.takeIf { it.isDrawableSegment() }?.let {
-        RoutePolyline(color = routeColor, points = it, widthProfile = ITINERARY_RIDE_WIDTH_PROFILE)
-            .withCase()
-    } ?: return itineraryContext + base
+    val overlay = spans.filter { it.points.isDrawableSegment() }.map { span ->
+        RoutePolyline(
+            color = colorOf(span),
+            points = span.points,
+            widthProfile = ITINERARY_RIDE_WIDTH_PROFILE,
+            startMark = if (span.startsCutover) RouteLineMark.INTERLINE_CUT else RouteLineMark.NONE
+        ).withCase()
+    }
+    if (overlay.isEmpty()) return itineraryContext + base
     return base.asSelectedRouteApproach() + itineraryContext + overlay
 }
 

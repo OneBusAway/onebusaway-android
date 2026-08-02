@@ -105,6 +105,32 @@ enum class RouteLineCase(val widthDp: Float) {
 }
 
 /**
+ * How a line's end is finished — what the rider is being told happens to them there. One value per end
+ * ([RoutePolyline.startMark], [RoutePolyline.endMark]), because an end is one thing: these were two
+ * independent booleans while a cut end was the only alternative to a bulb, which let a producer ask for
+ * both at once and left each renderer to break the tie its own way.
+ *
+ *  - [NONE] — a flat cut, the ordinary route line, and every end of a line that runs on past this point.
+ *  - [BULB] — a circle at the end, twice the stroke width. Directions transit legs use these so consecutive
+ *    rides stay visibly segmented even when their agencies publish the same GTFS colour, and a bulb pair
+ *    therefore reads as "alight here, board there" — a join the rider has to act on.
+ *  - [INTERLINE_CUT] — the mark for a stay-aboard interline cutover (#2127), where the vehicle the rider is
+ *    already aboard changes route mid-ride: a slash ruled across the corridor ([InterlineSeamMark]).
+ *    Deliberately nothing like a bulb, since a route change the rider sits through must not read as the
+ *    alight-and-board a bulb pair means, and it goes exactly where the bulbs are withheld — the ride runs on
+ *    through the join, so the line does too, and the cut is the only thing saying the route changed here.
+ *
+ * A mark carries no colour or size: like [case], only the *request* lives here. A bulb takes its line's own
+ * colour, a cut its line's case colour, and both are sized from the line's stroke width — resolved by the
+ * renderer, which is also where the theme a case colour depends on is known.
+ */
+enum class RouteLineMark {
+    NONE,
+    BULB,
+    INTERLINE_CUT
+}
+
+/**
  * One route/itinerary polyline: an ordered list of points and an optional [color]. A null [color]
  * means "use the [DEFAULT_ROUTE_LINE_COLOR]" — choosing the fallback is a display decision, so producers
  * can pass a route's raw (possibly absent) GTFS color straight through and renderers draw [resolvedColor].
@@ -131,10 +157,9 @@ enum class RouteLineCase(val widthDp: Float) {
  * basemap flips with the theme, so its colour is the one route colour that has to be resolved against the
  * current theme at draw time (`mapRouteLineCaseColor`) rather than when the line is produced.
  *
- * [roundStartCap] and [roundEndCap] ask the renderer to finish that end with a circle rather than a
- * flat cut. Directions transit legs use these endpoint bulbs so consecutive rides remain visibly
- * segmented even when their agencies publish the same GTFS color. Separate ends let a stay-aboard
- * interline hide its internal seam while retaining bulbs at the beginning and end of the combined ride.
+ * [startMark] and [endMark] say how each end is finished — see [RouteLineMark] for what each one means to a
+ * rider. Marked per end rather than per line so a stay-aboard interline can hide its internal seam while
+ * keeping bulbs at the beginning and end of the combined ride.
  *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
@@ -147,8 +172,8 @@ data class RoutePolyline(
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,
     val case: RouteLineCase = RouteLineCase.NONE,
-    val roundStartCap: Boolean = false,
-    val roundEndCap: Boolean = false,
+    val startMark: RouteLineMark = RouteLineMark.NONE,
+    val endMark: RouteLineMark = RouteLineMark.NONE,
     val transforms: Set<RoutePolylineTransform> = emptySet()
 ) {
     /** The [color] to draw, applying the [DEFAULT_ROUTE_LINE_COLOR] fallback in one place for every renderer. */

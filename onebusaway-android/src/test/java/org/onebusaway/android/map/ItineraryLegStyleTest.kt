@@ -16,6 +16,7 @@ import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.ACHROMATIC_ROUTE_CHROMA
 import org.onebusaway.android.util.GeoPoint
@@ -94,15 +95,67 @@ class ItineraryLegStyleTest {
 
     @Test
     fun `an interline hides only the shared bulbs`() {
-        val first = TripLeg(mode = TripMode.BUS)
-        val continuation = TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)
+        val first = TripLeg(mode = TripMode.BUS, routeId = "45")
+        val continuation = TripLeg(mode = TripMode.RAIL, routeId = "75", interlineWithPreviousLeg = true)
         val walk = TripLeg(mode = TripMode.WALK)
-        val legs = listOf(first, continuation, walk)
 
-        assertEquals(ItineraryLegCaps(start = true, end = false), itineraryLegCaps(legs, 0))
-        assertEquals(ItineraryLegCaps(start = false, end = true), itineraryLegCaps(legs, 1))
-        assertEquals(ItineraryLegCaps(start = true, end = true), itineraryLegCaps(legs, 2))
+        assertEquals(
+            listOf(
+                ItineraryLegCaps(start = true, end = false),
+                ItineraryLegCaps(start = false, end = true, startSeam = true),
+                ItineraryLegCaps(start = true, end = true)
+            ),
+            itineraryLegCaps(listOf(first, continuation, walk))
+        )
     }
+
+    @Test
+    fun `only a route change is cut, and it is cut where the drawer says stay on board`() {
+        // #2127: the rider's vehicle keeps going but its route changes, which no bulb can say — a bulb pair
+        // means alight and board. The cut goes on the leg continued *onto*, and only when the route really
+        // changed: a 12 reversing onto itself (a self-interline) leaves the ride unchanged, so there's
+        // nothing to mark, exactly as the drawer announces no transition for one.
+        val crossRoute = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "45"),
+            TripLeg(mode = TripMode.BUS, routeId = "75", interlineWithPreviousLeg = true)
+        )
+        val selfInterline = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "12"),
+            TripLeg(mode = TripMode.BUS, routeId = "12", interlineWithPreviousLeg = true)
+        )
+
+        assertEquals(listOf(false, true), cutLegs(crossRoute))
+        assertEquals(listOf(false, false), cutLegs(selfInterline))
+        // Two legs that name no route at all are the same route as far as anything can tell, so they are
+        // read as a self-interline — the exact-id rule [Interlines] states, not a second guess at it here.
+        assertEquals(
+            listOf(false, false),
+            cutLegs(listOf(TripLeg(mode = TripMode.BUS), TripLeg(mode = TripMode.RAIL, interlineWithPreviousLeg = true)))
+        )
+        // And nothing is cut where two separate rides meet — that join keeps its two bulbs.
+        assertEquals(
+            listOf(false, false),
+            cutLegs(listOf(TripLeg(mode = TripMode.BUS, routeId = "45"), TripLeg(mode = TripMode.BUS, routeId = "75")))
+        )
+    }
+
+    @Test
+    fun `a cut line is never also bulbed at that end`() {
+        // The two marks answer the same question — what happens to the rider at this join — so a line that
+        // carries both would be saying "stay aboard" and "get off" in one place.
+        val legs = listOf(
+            TripLeg(mode = TripMode.BUS, routeId = "45"),
+            TripLeg(mode = TripMode.BUS, routeId = "75", interlineWithPreviousLeg = true),
+            TripLeg(mode = TripMode.BUS, routeId = "8", interlineWithPreviousLeg = true)
+        )
+
+        itineraryLegCaps(legs).forEachIndexed { index, caps ->
+            assertFalse("leg $index was both cut and bulbed", caps.startSeam && caps.start)
+        }
+    }
+
+    /** Which legs begin at an interline cutover, in leg order. */
+    private fun cutLegs(legs: List<TripLeg>) = itineraryLegCaps(legs).map { it.startSeam }
 
     @Test
     fun `on the basemap palette a ride keeps its agency's hue, at the map's own chroma and tone`() {
@@ -332,8 +385,8 @@ class ItineraryLegStyleTest {
                 widthProfile = style.widthProfile,
                 dash = style.dash,
                 case = style.case,
-                roundStartCap = style.roundCaps,
-                roundEndCap = style.roundCaps
+                startMark = if (style.roundCaps) RouteLineMark.BULB else RouteLineMark.NONE,
+                endMark = if (style.roundCaps) RouteLineMark.BULB else RouteLineMark.NONE
             )
         )
     }

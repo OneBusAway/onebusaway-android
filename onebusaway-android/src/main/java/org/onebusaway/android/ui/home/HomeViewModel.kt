@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.ItineraryPins
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -715,7 +716,7 @@ class HomeViewModel @Inject constructor(
         }
         focusItineraryRouteLegOnMap(
             routeId,
-            segment = fallbackLeg.points,
+            spans = routeLeg.riddenSpansOr(fallbackLeg.points),
             directionStopId = routeLeg.board?.stopId,
             extraSegments = routeLeg.extraSegments + alternativeSegments
         )
@@ -725,20 +726,35 @@ class HomeViewModel @Inject constructor(
      * A pill tap in a directions leg's inline ETA strip: enter that leg's route focus and focus/animate/
      * ping the tapped trip's live vehicle — [request] already carries the route, direction-anchor stop,
      * and focusTripId (built by the shared arrivals handler), so this just rides the same ShowRoute path
-     * as the arrivals drawer, adding the traveled [segment] over the route.
+     * as the arrivals drawer, adding the ride [routeLeg] is travelled on over the route. Takes the same
+     * ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits in draw the
+     * same ride.
      */
-    fun focusDirectionsRouteVehicle(request: ShowRouteRequest, segment: List<GeoPoint>) {
-        enterDirectionsRouteFocus(request.copy(highlightedSegment = segment))
+    fun focusDirectionsRouteVehicle(
+        request: ShowRouteRequest,
+        routeLeg: RouteLegRef,
+        fallbackPoints: List<GeoPoint>
+    ) {
+        enterDirectionsRouteFocus(request.copy(riddenSpans = routeLeg.riddenSpansOr(fallbackPoints)))
     }
 
     /**
-     * Recontextualizes the map onto [routeId] with the traveled [segment] drawn thick over it, and
+     * The ride to draw over the route, preferring the per-route spans the leg was built with (#2127) and
+     * falling back to the tapped row's own joined geometry ([fallbackPoints]) as a single span. The fallback
+     * covers a ride whose ref carries no spans at all — an OTP1 plan, or a leg the results repository
+     * couldn't resolve — where one undivided span is exactly what the map drew before there were spans to
+     * divide.
+     */
+    private fun RouteLegRef.riddenSpansOr(fallbackPoints: List<GeoPoint>): List<RiddenSpan> = riddenSpans.ifEmpty { listOf(RiddenSpan(fallbackPoints)) }
+
+    /**
+     * Recontextualizes the map onto [routeId] with the traveled ride ([spans]) drawn thick over it, and
      * records the overview as the back target so a map-background tap (or Back) returns to the itinerary.
      * Ids are already OBA-format.
      */
     fun focusItineraryRouteLegOnMap(
         routeId: String,
-        segment: List<GeoPoint> = emptyList(),
+        spans: List<RiddenSpan> = emptyList(),
         directionStopId: String? = null,
         directionId: Int? = null,
         extraSegments: List<RouteFocusSegment> = emptyList(),
@@ -749,7 +765,7 @@ class HomeViewModel @Inject constructor(
                 routeId = routeId,
                 directionStopId = directionStopId,
                 initialDirectionId = directionId,
-                highlightedSegment = segment,
+                riddenSpans = spans,
                 extraSegments = extraSegments
             ),
             undoViewport

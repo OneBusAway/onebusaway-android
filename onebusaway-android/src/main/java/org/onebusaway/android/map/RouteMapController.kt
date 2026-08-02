@@ -128,10 +128,18 @@ class RouteMapController(
     var directionStopId: String? = null
         private set
 
-    // The board→alight polyline of a trip-plan transit leg drilled into route focus, drawn thick over
-    // the full route (empty for every non-directions route launch). Set in start(); overlaid last in
-    // publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
-    private var highlightedSegment: List<GeoPoint> = emptyList()
+    // The board→alight ride of a trip-plan transit leg drilled into route focus, drawn thick over the full
+    // route (empty for every non-directions route launch) — one span per route it is ridden on, so a
+    // stay-aboard interline keeps each route's own colour and its cutover marks (see [RiddenSpan]). Set in
+    // start(); overlaid last in publishMapPresentation so it survives re-publishes (vehicle polls,
+    // direction changes).
+    private var riddenSpans: List<RiddenSpan> = emptyList()
+
+    // The same ride as one path — where the rider boards and alights, what to frame, which stops and
+    // vehicles are on it. Those questions are about the ride, not about which route each part of it is
+    // ridden as, so they read this rather than the spans. Derived on read: the spans change rarely and
+    // this is short.
+    private val riddenPath: List<GeoPoint> get() = riddenSpans.riddenPath()
 
     // How this session's route colours are rendered: the basemap palette for an ordinary route launch, the
     // directions one for a leg drilled into from a trip plan, so the corridor keeps the leg's badge colour.
@@ -295,14 +303,14 @@ class RouteMapController(
         directionStopId: String? = null,
         initialDirectionId: Int? = null,
         focusTripId: String? = null,
-        highlightedSegment: List<GeoPoint> = emptyList(),
+        riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
         itineraryContext: List<RoutePolyline> = emptyList(),
         palette: RouteLinePalette
     ) {
         this.routeId = routeId
         this.directionStopId = directionStopId
-        this.highlightedSegment = highlightedSegment
+        this.riddenSpans = riddenSpans
         this.extraSegments = extraSegments
         this.itineraryContext = itineraryContext
         this.palette = palette
@@ -389,9 +397,9 @@ class RouteMapController(
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
         // republish when it actually changes.
-        if (highlightedSegment != request.highlightedSegment || extraSegments != request.extraSegments) {
-            highlightedSegment = request.highlightedSegment
-            // Move both segment fields together so a redraw can't key off a fresh highlightedSegment while
+        if (riddenSpans != request.riddenSpans || extraSegments != request.extraSegments) {
+            riddenSpans = request.riddenSpans
+            // Move both segment fields together so a redraw can't key off fresh riddenSpans while
             // extraSegments stays stale (or vice versa). No reload here (reframe contract), so extra routes
             // aren't re-fetched — in practice this path is only hit for a same-route+direction re-tap where
             // changed extras are already loaded (a new cross-route id requires a full re-enter).
@@ -506,7 +514,7 @@ class RouteMapController(
 
     /** During selected-leg focus, retain vehicles upstream of or currently on the ride. */
     private fun List<ExtrapolatedVehicle>.filterToFocusedRide(routeId: String): List<ExtrapolatedVehicle> {
-        if (!highlightedSegment.isDrawableSegment()) return this
+        if (!riddenSpans.isDrawableRide()) return this
         val eligiblePaths = focusedVehiclePathsByRoute[routeId] ?: return emptyList()
         return filter { vehicle ->
             focusedRideKeepsVehicle(
@@ -560,6 +568,22 @@ class RouteMapController(
      * same colour the itinerary's own line had — which is why the palette travels with the drill-in.
      */
     private fun currentRouteColor(): Int = palette.lineColor((_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
+
+    /**
+     * The colour one ridden span draws in: its own route's, through this session's [palette] — the same
+     * resolution [directionPolylines] gives that route's full corridor, so a span and the line it is ridden
+     * over can't disagree. A stay-aboard interline therefore changes colour at its cutover exactly as the
+     * itinerary map and the drawer's badges do, instead of drawing two routes as one.
+     *
+     * Falls back to [leaderColor] for a span whose route isn't identified or hasn't loaded yet: the shown
+     * route's colour is what the whole ride used to draw in, so an unresolved span looks exactly as it did
+     * before rather than dropping to a default the rest of the view isn't using. A late-loading extra route
+     * republishes, so the fallback lasts only as long as the load.
+     */
+    private fun spanColor(span: RiddenSpan, leaderColor: Int): Int {
+        val route = span.routeId?.takeIf { it != routeId }?.let { extraRouteMaps[it] } ?: return leaderColor
+        return palette.lineColor(route.route?.color) ?: leaderColor
+    }
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -641,7 +665,7 @@ class RouteMapController(
         selectionJob = null
         routeId = null
         directionStopId = null
-        highlightedSegment = emptyList()
+        riddenSpans = emptyList()
         extraSegments = emptyList()
         itineraryContext = emptyList()
         palette = BASEMAP_ROUTE_LINE_PALETTE
@@ -705,13 +729,13 @@ class RouteMapController(
         )
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
-            // remaining itinerary at a middle weight, then the ridden span cased on top (#2048, #2082). The
-            // trip stays out of [framingPolylines] — drilling into a leg frames that leg, not the journey.
+            // remaining itinerary at a middle weight, then the ridden span(s) cased on top (#2048, #2082).
+            // The trip stays out of [framingPolylines] — drilling into a leg frames that leg, not the journey.
             polylines = routePolylinesWithSegment(
                 plan.polylines,
-                highlightedSegment,
-                routeColor,
-                itineraryContext
+                riddenSpans,
+                colorOf = { spanColor(it, leaderColor = routeColor) },
+                itineraryContext = itineraryContext
             ),
             framingPolylines = plan.framingPolylines,
             routeModeScalesStopsWithZoom = plan.routeModeScalesStopsWithZoom
@@ -860,18 +884,18 @@ class RouteMapController(
     }
 
     /**
-     * Frame the highlighted board→alight [segment][highlightedSegment] when one is set (a trip-plan leg
+     * Frame the highlighted board→alight ride ([riddenPath]) when one is set (a trip-plan leg
      * drilled in — zoom to just the ridden part), else the whole route's bounding box.
      */
     private fun frameRouteOrSegment() {
-        val segment = highlightedSegment
+        val segment = riddenPath
         if (segment.isDrawableSegment()) host.frameItineraryLeg(segment) else host.frameRoute()
     }
 
     /**
      * Retain the ride's stops as the base route presentation: the leader route's stops narrowed to
      * [currentDirectionId], plus — for a stay-aboard interline (#2000) — each extra segment's route/
-     * direction stops, all clipped to the ridden [highlightedSegment]. Each stop keeps its own
+     * direction stops, all clipped to the ridden [riddenPath]. Each stop keeps its own
      * route+direction key so cross-route stops colour correctly.
      */
     private fun showDirectionStops() {
@@ -885,7 +909,7 @@ class RouteMapController(
             }
         }
         collect(
-            routeStops.stopsForDirection(currentDirectionId).onSegment(highlightedSegment),
+            routeStops.stopsForDirection(currentDirectionId).onSegment(riddenPath),
             RouteDirectionKey(leaderRoute, currentDirectionId)
         )
         // Every extra contributes its relevant route/direction's stops on the ridden segment. A
@@ -894,7 +918,7 @@ class RouteMapController(
             val route = segment.routeMap() ?: continue
             val directionId = segment.directionId()
             collect(
-                route.stops.stopsForDirection(directionId).onSegment(highlightedSegment),
+                route.stops.stopsForDirection(directionId).onSegment(riddenPath),
                 RouteDirectionKey(segment.routeId, directionId)
             )
         }
@@ -903,10 +927,12 @@ class RouteMapController(
             stops = stops,
             routes = (routeStopRoutes + extraRouteMaps.values.flatMap { it.routes }).distinctBy { it.id },
             routeDirectionsByStopId = keysById.mapValues { it.value.toSet() },
-            // An interline ride spans multiple direction shapes, so project onto the ridden segment (the
-            // emphasized line every leg's stops sit on); a plain leg keeps projecting onto its own shape.
+            // An interline ride spans multiple direction shapes, so project onto the ridden line (the
+            // emphasized one every leg's stops sit on); a plain leg keeps projecting onto its own shape.
+            // Span by span rather than onto the joined path, so no stop can land on the jump between two
+            // spans — that join is a seam in the geometry, not somewhere a vehicle travels.
             projectedPoints = if (isInterlineComposite) {
-                projectStopsOntoPolylines(stops, listOf(highlightedSegment))
+                projectStopsOntoPolylines(stops, riddenSpans.map { it.points })
             } else {
                 projectStopsOntoShape(stops)
             }
@@ -948,8 +974,8 @@ class RouteMapController(
     /** Re-draw the base route for [currentDirectionId]. Called on load and on every direction switch. */
     private fun showDirectionPolylines() {
         if (routeShape == null) return
-        val boardPoint = highlightedSegment.firstOrNull()
-        val isLegFocus = highlightedSegment.isDrawableSegment()
+        val boardPoint = riddenPath.firstOrNull()
+        val isLegFocus = riddenPath.isDrawableSegment()
         val leaderRouteId = routeId ?: return
         fun RouteFocusSegment.polylines(): List<RoutePolyline> = routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
         val focusedRouteLines = listOf(
@@ -967,7 +993,7 @@ class RouteMapController(
         focusedVehiclePathsByRoute = if (isLegFocus) {
             // Unlike the drawn context, vehicle eligibility extends through the selected ride. Include
             // stay-aboard continuations too: their vehicles belong until the rider's alighting point.
-            val alightPoint = highlightedSegment.last()
+            val alightPoint = riddenPath.last()
             focusedRouteLines
                 .groupBy(
                     { it.routeId },

@@ -26,10 +26,12 @@ import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.runCatchingCancellable
@@ -133,6 +135,20 @@ class DefaultTripResultsRepository @Inject constructor(
                     directionHeadsign = legs[j].headsign
                 )
             }
+            // The ride's own geometry, one span per leg it is ridden as, in travel order — the map draws the
+            // drilled-into ride from these (#2127). Built here rather than by splitting the joined focus
+            // geometry later because this is where both halves are known at once: the leg's shape, and the
+            // OBA route id that colours it. `startsCutover` reads the same chain transitions the drawer's
+            // "stay on board" rows do, so the two mark one ride's route changes identically. A leg with no
+            // geometry contributes an empty span rather than being dropped — the spans stay aligned to the
+            // ride's legs, and the map skips one it can't draw.
+            val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
+                RiddenSpan(
+                    points = legs[j].legGeometry?.decodedPoints().orEmpty(),
+                    routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName),
+                    startsCutover = j in chain.transitionLegIndices
+                )
+            }
             val alternatives = substitutable[chain.leaderIndex]
             refs[chain.leaderIndex] = RouteLegRef(
                 routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
@@ -141,6 +157,7 @@ class DefaultTripResultsRepository @Inject constructor(
                 alight = legs[chain.alightIndex].to.resolveStop(legs[chain.alightIndex]),
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
+                riddenSpans = riddenSpans,
                 alternatives = alternatives.map { it.resolve() },
                 // Kept separately from the joined badge: natural-name ordering means the joined form
                 // cannot identify which segment was planned, and same-named routes may collapse to one.

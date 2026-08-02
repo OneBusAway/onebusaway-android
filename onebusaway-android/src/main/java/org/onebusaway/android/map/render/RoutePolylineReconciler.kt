@@ -138,10 +138,31 @@ class RoutePolylineReconciler<NativeLine>(
 }
 
 /**
- * The line model a case is drawn from: the same geometry and dash in the case [color], minus the travel
- * chevrons — a case is an outline, and stamping the arrows into it would only double the ones its own line
- * carries. Routed back through the renderer's ordinary line creation so a case inherits every line feature
- * (its dash rhythm, and on gms the cheap solid-colour draw path a non-directional line takes) rather than each
- * flavor rebuilding a parallel one that has to be kept in step.
+ * The line model a case is drawn from: a case is geometry, weight, dash and its own [color], and nothing
+ * else. Built field by field rather than `copy()`-minus-a-list so that is true by construction — a new
+ * [RoutePolyline] feature is then absent from a case unless someone adds it here, which is the safe default
+ * (a feature that quietly rode along would draw twice, once at each width). Routed back through the
+ * renderer's ordinary line creation so a case still inherits every *drawing* feature — its dash rhythm, and
+ * on gms the cheap solid-colour path a non-directional line takes — rather than each flavor rebuilding a
+ * parallel one that has to be kept in step.
+ *
+ * Travel chevrons are the clearest thing left out: a case is an outline, and stamping the arrows into it
+ * would only double the ones its own line carries.
  */
-private fun RoutePolyline.asCase(color: Int) = copy(color = color, directional = false, case = RouteLineCase.NONE)
+private fun RoutePolyline.asCase(color: Int) = RoutePolyline(
+    color = color,
+    points = points,
+    widthProfile = widthProfile,
+    dash = dash,
+    startMark = startMark.asCaseMark(),
+    endMark = endMark.asCaseMark(),
+    transforms = transforms
+)
+
+/**
+ * What an end mark becomes on a case. A [RouteLineMark.BULB] stays — it is drawn in the line's own colour, so
+ * casing it is a ring that reads exactly like the case around the line it caps. An interline cut doesn't: it
+ * is *already* drawn in the case colour, so a wider copy of it underneath would only fringe the mark on the
+ * line above with a bigger version of itself.
+ */
+private fun RouteLineMark.asCaseMark() = if (this == RouteLineMark.BULB) this else RouteLineMark.NONE

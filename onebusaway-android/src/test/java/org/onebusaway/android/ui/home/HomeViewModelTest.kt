@@ -29,6 +29,7 @@ import org.onebusaway.android.api.adapters.ObaStopElement
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ItineraryPins
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -134,7 +135,9 @@ class HomeViewModelTest {
             ShowRouteRequest(
                 routeId = "40_2LINE",
                 directionStopId = board.stopId,
-                highlightedSegment = points,
+                // No spans on the ref (this fixture resolves none), so the tapped row's own geometry
+                // stands in as one undivided span — what the map drew before rides had spans.
+                riddenSpans = listOf(RiddenSpan(points)),
                 extraSegments = listOf(
                     RouteFocusSegment(
                         "40_1LINE",
@@ -145,6 +148,60 @@ class HomeViewModelTest {
                 )
             ),
             map.routeRequests.single()
+        )
+        job.cancel()
+    }
+
+    @Test
+    fun `focusing an interlined ride hands the map its per-route spans, not the joined geometry`() = runTest {
+        // #2127: the ride's own spans carry where it changes route, so drilling in can draw each route in
+        // its own colour and cut the line between them. The tapped row's joined geometry is only the
+        // fallback for a ride that resolved no spans at all.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val spans = listOf(
+            RiddenSpan(listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33)), routeId = "1_45"),
+            RiddenSpan(listOf(GeoPoint(47.62, -122.33), GeoPoint(47.62, -122.30)), routeId = "1_75", startsCutover = true)
+        )
+        val routeLeg = RouteLegRef(
+            routeId = "1_45",
+            headsign = "Downtown",
+            board = null,
+            alight = null,
+            riddenSpans = spans
+        )
+
+        vm.focusItineraryRouteLeg(routeLeg, FocusedLeg(listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 1.0)), setOf(1, 2)))
+        advanceUntilIdle()
+
+        assertEquals(spans, map.routeRequests.single().riddenSpans)
+        job.cancel()
+    }
+
+    @Test
+    fun `focusing an ETA pill draws the same ride the leg card would, spans or fallback`() = runTest {
+        // An ETA pill enters the same route focus as the leg card it sits in, so it has to resolve the ride
+        // the same way: the ref's spans when it has them, and the row's own geometry as one span when it
+        // doesn't (an OTP1 plan, or a leg the repository couldn't resolve) — otherwise tapping a pill on an
+        // unresolved ride would drop the traveled line the leg tap draws.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val spans = listOf(RiddenSpan(listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33)), routeId = "1_45"))
+        val legPoints = listOf(GeoPoint(47.55, -122.31), GeoPoint(47.58, -122.32))
+        val request = ShowRouteRequest(routeId = "1_45", focusTripId = "1_trip")
+        val ref = RouteLegRef(routeId = "1_45", headsign = "Downtown", board = null, alight = null)
+
+        vm.focusDirectionsRouteVehicle(request, ref.copy(riddenSpans = spans), legPoints)
+        vm.focusDirectionsRouteVehicle(request, ref, legPoints)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(spans, listOf(RiddenSpan(legPoints))),
+            map.routeRequests.map { it.riddenSpans }
         )
         job.cancel()
     }

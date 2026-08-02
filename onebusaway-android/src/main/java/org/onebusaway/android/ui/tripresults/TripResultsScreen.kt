@@ -303,11 +303,16 @@ private val SYMBOL_GAP = 4.dp
 
 /**
  * The warning triangle marking a mode symbol whose leg carries a service alert (#2143), and the gap
- * between the two. Drawn distinctly smaller than [SYMBOL_HEIGHT] and tucked closer than [SYMBOL_GAP]:
- * it annotates the symbol beside it rather than being one, and at equal size and spacing a row of
- * `[walk] ⚠ > [1 Line] ⚠` would read as six steps instead of two legs with a caveat each.
+ * between the two. Tucked closer than [SYMBOL_GAP] separates two symbols by, so it annotates the symbol
+ * beside it rather than reading as one — at equal spacing a row of `[walk] ⚠ > [1 Line] ⚠` reads as
+ * six steps instead of two legs with a caveat each.
+ *
+ * It sits a little *below* [SYMBOL_HEIGHT] rather than distinctly under it. The first cut was small
+ * enough to read as a footnote, which is the wrong register for "this train isn't running": a marker
+ * the rider is meant to catch while scanning the picker has to hold its own against the roundel it
+ * qualifies without displacing it as the thing being read. Tune both here.
  */
-private val SYMBOL_ALERT_SIZE = 13.dp
+private val SYMBOL_ALERT_SIZE = 17.dp
 private val SYMBOL_ALERT_GAP = 2.dp
 
 /** The gap between two wrapped lines of the summary — [SYMBOL_GAP] itself, so the wrap reads as one

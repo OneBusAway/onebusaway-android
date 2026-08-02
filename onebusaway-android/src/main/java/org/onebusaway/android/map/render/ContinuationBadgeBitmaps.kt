@@ -100,7 +100,9 @@ object ContinuationBadgeBitmaps {
      * remainder pads it with a blank cell of its own choosing rather than leaving a hole. Stated rather
      * than handled, because a hole is a hole in the *pill* — the rounded rect and its casing enclose the
      * whole grid — so what fills it is a colour decision belonging to whoever knows what the label is,
-     * not a default this drawing can pick.
+     * not a default this drawing can pick. Such a cell marks itself [blank][BadgedRoute.blank], which is
+     * what keeps its fill out of the badge's [casing][casingColor] — the one place the drawing asks what
+     * colours the *routes* on it are rather than what to paint where.
      */
     fun badgeGrid(columns: List<List<BadgedRoute>>, density: Float, darkMode: Boolean, scale: Float): Bitmap {
         val rowCount = columns.firstOrNull()?.size ?: 0
@@ -203,13 +205,15 @@ object ContinuationBadgeBitmaps {
 
     /**
      * [badgeKey] for a [badgeGrid]. The column boundaries take part too, since the same names in one
-     * column and in two are different pills.
+     * column and in two are different pills — as does each cell's [blank][BadgedRoute.blank], which the
+     * casing reads, so a padded grid and one whose last cell really names a colourless route case
+     * differently and can't share a bitmap.
      */
     fun badgeGridKey(columns: List<List<BadgedRoute>>, darkMode: Boolean, scale: Float): String = columns.joinToString(
         separator = "/",
         prefix = "route-badge:$darkMode:$scale:"
     ) { cells ->
-        cells.joinToString(separator = "|") { "${it.routeShortName}:${it.color}:${it.textColor}" }
+        cells.joinToString(separator = "|") { "${it.routeShortName}:${it.color}:${it.textColor}:${it.blank}" }
     }
 
     /**
@@ -219,8 +223,14 @@ object ContinuationBadgeBitmaps {
      * a badge that really does hold several colors has no hue to case with — picking one row's would say
      * that row is the badge — so it takes the same tone with the hue dropped, a neutral that reads against
      * every band it encloses.
+     *
+     * The [blank][BadgedRoute.blank] cells padding a grid out to a rectangle are not routes and so are not
+     * counted: they carry whatever fill their producer gave them, which need not be any route's, and a
+     * label reading one hue would otherwise case itself grey for the sole reason that its route count
+     * didn't divide evenly into its columns.
      */
     internal fun casingColor(routes: List<BadgedRoute>, darkMode: Boolean): Int = routes
+        .filterNot(BadgedRoute::blank)
         .map(BadgedRoute::color)
         .distinct()
         .singleOrNull()

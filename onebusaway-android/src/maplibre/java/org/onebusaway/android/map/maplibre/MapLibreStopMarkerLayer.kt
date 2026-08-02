@@ -94,9 +94,14 @@ internal class MapLibreStopMarkerLayer(
 
         // A second pass, after every marker exists: classic maplibre annotations have no z-index and draw
         // in add order, so labels added with their markers would each sit under the icons of the stops
-        // added after them — at these zooms exactly the neighbour a rider is comparing against. Only
-        // within one render; a stop that first appears in a later one still draws over earlier labels,
-        // which the SymbolManager migration (#1728) is what really fixes.
+        // added after them — at these zooms exactly the neighbour a rider is comparing against.
+        //
+        // Only within one render; a stop that first appears in a later one still draws over earlier
+        // labels. Re-adding every live label whenever a render adds a marker would order those too, and
+        // is deliberately not done: at this zoom a pan publishes new stops continuously, so it would tear
+        // down and re-add the whole viewport's labels over and over — the churn this reconcile exists to
+        // avoid — to correct an overlap that costs a stop circle's worth of one label. The fix that costs
+        // nothing is explicit layer ordering, which is the SymbolManager migration (#1728).
         for (stop in markerStops) renderLabel(stop, band)
     }
 
@@ -149,6 +154,14 @@ internal class MapLibreStopMarkerLayer(
         }
     }
 
+    /**
+     * The shared icon for a label naming [routes], drawn in the current theme.
+     *
+     * A live label is re-iconed only when its routes change (see [renderLabel]) — the theme can't change
+     * under one, since a light/dark switch recreates the activity and with it the map, this layer and this
+     * cache. The label is drawn from the unrendered [StopRoute]s that survive that recreate in the view
+     * model, which is what re-colours the labels rather than restoring the ones drawn before the switch.
+     */
     private fun labelIcon(routes: List<StopRoute>): Icon {
         val darkMode = ThemeUtils.isInDarkMode(context)
         val key = StopRouteLabelBitmaps.labelKey(routes, darkMode)

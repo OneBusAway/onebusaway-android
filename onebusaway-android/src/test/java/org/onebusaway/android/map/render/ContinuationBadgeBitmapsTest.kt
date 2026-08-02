@@ -68,5 +68,32 @@ class ContinuationBadgeBitmapsTest {
         )
     }
 
+    @Test
+    fun `the blank cells padding a grid do not count as a colour on it`() {
+        val blue = Hct.from(210.0, 75.0, 55.0).toInt()
+        val grey = Hct.from(0.0, 0.0, 90.0).toInt()
+        val hued = ContinuationBadgeBitmaps.routeBadgeOutlineColor(blue, darkMode = false)
+
+        // A padded grid (#2107: a route count that doesn't divide evenly into its columns) fills the
+        // remainder with a neutral of the producer's choosing. That fill is not a route's, so a label
+        // naming one colour still cases in that colour's hue rather than going grey on the strength of
+        // how many routes happened to be on it.
+        assertEquals(
+            hued,
+            casing(
+                listOf(
+                    BadgedRoute("8", blue),
+                    BadgedRoute("40", blue),
+                    BadgedRoute("", grey, blank = true)
+                )
+            )
+        )
+        // The same cell not marked blank is a colourless route, and two colours have no hue to case with.
+        assertEquals(
+            ContinuationBadgeBitmaps.neutralBadgeOutlineColor(darkMode = false),
+            casing(listOf(BadgedRoute("8", blue), BadgedRoute("40", blue), BadgedRoute("", grey)))
+        )
+    }
+
     private fun casing(routes: List<BadgedRoute>) = ContinuationBadgeBitmaps.casingColor(routes, darkMode = false)
 }

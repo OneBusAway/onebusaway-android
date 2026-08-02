@@ -174,6 +174,22 @@ class StopRouteLabelTest {
         val blank = stopRouteLabelGrid(routes(7), dark = false).last().last()
         assertEquals("", blank.routeShortName)
         assertEquals(neutralBadgeChipColor(dark = false), blank.color)
+        assertTrue(blank.blank)
+        // Only the padding says so: every cell that names a route is a route, colourless ones included.
+        assertEquals(1, stopRouteLabelGrid(routes(7), dark = false).flatten().count(BadgedRoute::blank))
+    }
+
+    @Test
+    fun `padding a label out to a rectangle does not change the colour it cases in`() {
+        // Seven routes need two columns of four, so one cell is blank; that neutral is not a colour on the
+        // label, and a label whose routes share a hue cases in it however its cells divided up.
+        val cased = ContinuationBadgeBitmaps.casingColor(stopRouteLabelGrid(routes(7), dark = false).flatten(), darkMode = false)
+        val unpadded = ContinuationBadgeBitmaps.casingColor(stopRouteLabelGrid(routes(6), dark = false).flatten(), darkMode = false)
+        assertEquals(unpadded, cased)
+        assertEquals(
+            ContinuationBadgeBitmaps.routeBadgeOutlineColor(checkNotNull(routeBadgeChipColor(vivid, dark = false)), darkMode = false),
+            cased
+        )
     }
 
     @Test

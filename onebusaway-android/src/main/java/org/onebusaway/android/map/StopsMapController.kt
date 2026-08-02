@@ -509,16 +509,27 @@ class StopsMapController(
             renderState.setFocusedStopId(null)
             return
         }
-        val newlyAccumulated = !stopAccum.containsKey(stop.id)
-        if (newlyAccumulated) {
-            routes?.let { cacheRoutes(it) }
+        // Cached before the marker is built or re-labelled, and whether or not the stop is new: these are
+        // the routes serving the stop the caller is focusing, and they are what its label names. An
+        // already-accumulated stop is the case that matters — one rendered from the persistent cache
+        // carries no route names at all (see [labelRoutes]), so dropping the ones the arrivals response
+        // just handed us would leave the *focused* stop the one stop on screen with no label.
+        routes?.let { cacheRoutes(it) }
+        val existing = stopAccum[stop.id]
+        val labelled = labelRoutes(stop)
+        val markerChanged = existing == null || existing.routes != labelled
+        if (existing == null) {
             stopAccum[stop.id] = toStopMarker(stop)
+        } else if (markerChanged) {
+            // Only the label changes: everything else about an accumulated marker came from the nearby
+            // load and stays as it is, so a copy keeps the rest referentially stable for the renderers.
+            stopAccum[stop.id] = existing.copy(routes = labelled)
         }
         // Focus before publishing (like clearStops): publishStops reads focusedStopId for the
         // presentation's keep-the-focused-stop fallback. With a route presentation active the marker
         // list keys off the focus even for an already-accumulated stop, so republish then too.
         renderState.setFocusedStopId(stop.id)
-        if (newlyAccumulated || routePresentation != null) {
+        if (markerChanged || routePresentation != null) {
             publishStops()
         }
     }

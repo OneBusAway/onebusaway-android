@@ -161,6 +161,14 @@ internal class GoogleStopMarkerLayer(
         }
     }
 
+    /**
+     * The shared descriptor for a label naming [routes], drawn in the current theme.
+     *
+     * A live label is re-iconed only when its routes change (see [renderLabel]) — the theme can't change
+     * under one, since a light/dark switch recreates the activity and with it the map, this layer and this
+     * cache. The label is drawn from the unrendered [StopRoute]s that survive that recreate in the view
+     * model, which is what re-colours the labels rather than restoring the ones drawn before the switch.
+     */
     private fun labelIcon(routes: List<StopRoute>): BitmapDescriptor {
         val darkMode = ThemeUtils.isInDarkMode(context)
         return labelIcons.get(StopRouteLabelBitmaps.labelKey(routes, darkMode)) {

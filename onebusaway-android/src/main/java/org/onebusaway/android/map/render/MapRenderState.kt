@@ -263,8 +263,20 @@ data class ContinuationBadge(
  * choice to the drawing, which takes black or white by measured contrast ([MarkerRendering.legibleOn]) —
  * the right answer for a label filled with a saturated route-line colour, and one no producer of those
  * has to state.
+ *
+ * [blank] marks a cell that names no route at all — the padding a caller adds to keep a multi-column
+ * [ContinuationBadgeBitmaps.badgeGrid] rectangular (#2107). It is drawn like any other cell, in whatever
+ * fill its producer chose, but it is *not* a route, so it takes no part in the decisions the drawing makes
+ * about the routes on the badge — the casing colour above all ([ContinuationBadgeBitmaps.casingColor]).
+ * Stated by the producer rather than inferred from an empty name: the padding is a fact the caller knows,
+ * and reading it back out of the drawing's own inputs would be a guess.
  */
-data class BadgedRoute(val routeShortName: String, val color: Int, val textColor: Int? = null)
+data class BadgedRoute(
+    val routeShortName: String,
+    val color: Int,
+    val textColor: Int? = null,
+    val blank: Boolean = false
+)
 
 /**
  * One route serving a stop, as that stop's marker label names it (#2107): what it reads, and the colour

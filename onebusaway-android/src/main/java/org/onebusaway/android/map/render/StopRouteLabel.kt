@@ -92,7 +92,10 @@ fun stopRouteLabelGrid(routes: List<StopRoute>, dark: Boolean): List<List<Badged
             // route colour takes the whole neutral chip, exactly as `rememberRouteBadgeColors` gives the
             // drawer, and so does a blank cell (which has no source at all).
             routeBadgeChipColor(route?.routeColor, dark) ?: neutralBadgeChipColor(dark),
-            routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark)
+            routeBadgeChipTextColor(route?.routeColor, dark) ?: neutralBadgeChipTextColor(dark),
+            // Told to the drawing, so the neutral a blank cell is filled with doesn't read as a second
+            // colour on the pill and case a one-colour label grey (see [ContinuationBadgeBitmaps.casingColor]).
+            blank = route == null
         )
     }
 }

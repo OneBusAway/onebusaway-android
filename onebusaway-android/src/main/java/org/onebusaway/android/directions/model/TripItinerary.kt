@@ -103,8 +103,45 @@ data class TripLeg(
     // (#2010) — the raw candidate set, straight off the wire. Includes later trips of this leg's own
     // route. Which of them the drawer may present as interchangeable is decided by
     // [interchangeableRoutes], not here. Always empty on the OTP1 path, which has no equivalent.
-    val alternatives: List<TripLegAlternative> = emptyList()
+    val alternatives: List<TripLegAlternative> = emptyList(),
+    // The service alerts OTP considers applicable to this leg (#2143) — already scoped by the server
+    // to the leg's own entities *and* its time window (see the `alerts` selection in Plan.graphql),
+    // so nothing here needs an active-window check. Always empty on the OTP1 path: the REST `/plan`
+    // response this app's regions serve carries no leg alerts at all (verified against the live OTP1
+    // server), so there is nothing to map rather than a mapping left undone.
+    val alerts: List<TripAlert> = emptyList()
 )
+
+/**
+ * One service alert attached to a [TripLeg] — a disruption the rider has to know about before they
+ * trust the itinerary, which is the whole point of surfacing it in the planner: an itinerary routed
+ * over suspended service looks perfectly ordinary otherwise (#2143).
+ *
+ * [id] is OTP's own global alert id, stable for as long as the feed publishes the alert under the
+ * same id. It is *not* used as the rider-facing row identity — a feed that republishes the same
+ * disruption under a fresh id would then read as a new alert, the #1593 failure — so the trip-results
+ * layer keys rows on the alert's content instead. It is kept because it is the only thing that
+ * identifies the alert back to OTP.
+ *
+ * [header] and [description] are GTFS-realtime `header_text`/`description_text`, already
+ * language-negotiated by OTP. Both are plain text, not HTML (unlike the OBA `situation` path's
+ * description) — GTFS-rt `TranslatedString` carries no markup.
+ */
+@Serializable
+data class TripAlert(
+    val id: String,
+    val header: String? = null,
+    val description: String? = null,
+    val url: String? = null,
+    val severity: TripAlertSeverity = TripAlertSeverity.UNKNOWN_SEVERITY
+)
+
+/**
+ * Mirrors OTP2's `AlertSeverityLevelType` wire vocabulary exactly (verified against the vendored
+ * `schema.graphqls`), same discipline as [TripMode]. Mapping it onto the app's three alert-banner
+ * styles is the presentation layer's job, not this model's.
+ */
+enum class TripAlertSeverity { INFO, WARNING, SEVERE, UNKNOWN_SEVERITY }
 
 /**
  * One departure from OTP's alternative-leg search for a [TripLeg] (OTP2 `Leg.nextLegs`, #2010): a

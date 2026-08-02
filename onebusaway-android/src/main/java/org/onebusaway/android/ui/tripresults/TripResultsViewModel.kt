@@ -73,13 +73,18 @@ class TripResultsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.summarize(itineraries).fold(
                 onSuccess = { options ->
-                    val directions = itineraries.getOrNull(selectedIndex)
+                    val selected = itineraries.getOrNull(selectedIndex)
+                    val directions = selected
                         ?.let { repository.directionsFor(it).getOrDefault(emptyList()) }
                         .orEmpty()
                     _state.value = TripResultsUiState.Success(
                         options = options,
                         selectedIndex = selectedIndex,
-                        directions = directions
+                        directions = directions,
+                        // A pure projection of the plan the server already sent (#2143) — no I/O, so
+                        // it doesn't go through the repository, and the banner can't lag the
+                        // directions it sits above.
+                        alerts = selected?.alertItems().orEmpty()
                     )
                 },
                 onFailure = { error ->

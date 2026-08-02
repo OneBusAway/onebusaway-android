@@ -461,11 +461,15 @@ sealed interface TripResultsUiState {
      * @param options the itinerary option cards (1–3)
      * @param selectedIndex the currently-selected option
      * @param directions the directions for the selected option
+     * @param alerts the service alerts affecting the selected option (#2143), loudest first. Per
+     *   *option*, not per plan: which disruptions apply is exactly what distinguishes an itinerary
+     *   routed over suspended service from the one beside it that isn't.
      */
     data class Success(
         val options: List<ItineraryOption>,
         val selectedIndex: Int,
-        val directions: List<TripLogEntry>
+        val directions: List<TripLogEntry>,
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripResultsUiState
 
     data class Error(val message: String) : TripResultsUiState

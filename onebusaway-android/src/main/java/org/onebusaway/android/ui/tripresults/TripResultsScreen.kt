@@ -1031,6 +1031,15 @@ private fun TripLogList(
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
             TripResultsHeader(state, onSelectOption, scheduleWinnerMode)
+        }
+        // Directly under the option cards and above the directions, because an itinerary routed over
+        // suspended service is otherwise indistinguishable from a good one — the alert is the only
+        // thing that says so (#2143). Each is its own lazy item, keyed on content identity, so
+        // expanding one keeps its state across a refresh and doesn't recompose the log below it.
+        items(state.alerts, key = { "alert:${it.contentId}" }) { alert ->
+            TripAlertBanner(alert)
+        }
+        item {
             reminderControl()
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))

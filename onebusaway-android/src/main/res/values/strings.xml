@@ -979,6 +979,10 @@
     <!-- Spoken state of each departure drawn before that rule: one leaving before the rider can be at
          the stop. Read on the departure itself, since its dimmed appearance says nothing aloud. -->
     <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
+    <!-- Content descriptions for the chevron on a service-alert banner above the directions, which
+         expands the alert to its full description. -->
+    <string name="directions_alert_show_details">Show alert details</string>
+    <string name="directions_alert_hide_details">Hide alert details</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>

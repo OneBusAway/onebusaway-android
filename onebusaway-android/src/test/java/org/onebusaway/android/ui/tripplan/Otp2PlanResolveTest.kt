@@ -357,7 +357,8 @@ class Otp2PlanResolveTest {
             stopCalls = emptyList(),
             legGeometry = null,
             steps = null,
-            nextLegs = null
+            nextLegs = null,
+            alerts = emptyList()
         )
         val node = PlanQuery.Node(
             start = "2026-07-11T10:00:00-07:00",

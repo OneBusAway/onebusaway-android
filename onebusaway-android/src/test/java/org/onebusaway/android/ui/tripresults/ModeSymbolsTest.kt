@@ -18,10 +18,13 @@ package org.onebusaway.android.ui.tripresults
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.TripAlert
+import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripVertexType
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 
 /**
  * JVM tests for [ModeSymbols]: an itinerary read as one left-to-right symbol sequence — the on-street
@@ -33,11 +36,16 @@ import org.onebusaway.android.directions.model.TripVertexType
  */
 class ModeSymbolsTest {
 
-    private fun transit(route: String, interline: Boolean = false) = TripLeg(
+    private fun transit(
+        route: String,
+        interline: Boolean = false,
+        alerts: List<TripAlert> = emptyList()
+    ) = TripLeg(
         mode = TripMode.BUS,
         routeId = route,
         routeShortName = route,
-        interlineWithPreviousLeg = interline
+        interlineWithPreviousLeg = interline,
+        alerts = alerts
     )
 
     private fun walk(meters: Double) = TripLeg(mode = TripMode.WALK, distance = meters)
@@ -216,6 +224,77 @@ class ModeSymbolsTest {
             listOf(walk(FAR), transit("8"), walk(NEAR)).streetDistancesMeters()
         )
     }
+
+    // ---- Per-symbol alert markers (#2143) --------------------------------------------------------
+
+    /** The alert tone marking each symbol, aligned to [symbolsOf]. */
+    private fun alertsOf(legs: List<TripLeg>): List<AlertSeverity?> = ModeSymbols.forLegs(legs, legs.map { emptyList() }).map { it.alert }
+
+    @Test
+    fun onlyTheAlertedLegsSymbolIsMarked() {
+        val legs = listOf(longWalk, transit("8", alerts = listOf(alert())), longWalk, transit("40"))
+
+        assertEquals(listOf(null, AlertSeverity.WARNING, null, null), alertsOf(legs))
+    }
+
+    /** The marker is the loudest of the leg's alerts — a suspension can't be hidden by a notice. */
+    @Test
+    fun aLegShowsItsLoudestAlert() {
+        val legs = listOf(
+            transit(
+                "8",
+                alerts = listOf(
+                    alert(TripAlertSeverity.INFO),
+                    alert(TripAlertSeverity.SEVERE),
+                    alert(TripAlertSeverity.WARNING)
+                )
+            )
+        )
+
+        assertEquals(listOf(AlertSeverity.ERROR), alertsOf(legs))
+    }
+
+    /**
+     * A stay-aboard interline is one roundel (see the folding tests above), so an alert on the leg the
+     * vehicle *continues* as still marks the ride the rider actually boards.
+     */
+    @Test
+    fun anInterlinedRideIsMarkedByAnAlertOnAnyLegOfTheChain() {
+        val legs = listOf(
+            transit("5"),
+            transit("12", interline = true, alerts = listOf(alert(TripAlertSeverity.SEVERE)))
+        )
+
+        assertEquals(listOf(listOf("5", "12")), symbolsOf(legs))
+        assertEquals(listOf(AlertSeverity.ERROR), alertsOf(legs))
+    }
+
+    /**
+     * Consecutive street legs collapse to one glyph, so the surviving glyph has to carry the alert the
+     * collapsed leg brought — otherwise the merge silently drops it.
+     */
+    @Test
+    fun aMergedRunOfWalksKeepsTheLoudestAlertAmongThem() {
+        val legs = listOf(
+            walk(FAR),
+            walk(FAR).copy(alerts = listOf(alert(TripAlertSeverity.SEVERE))),
+            walk(FAR).copy(alerts = listOf(alert(TripAlertSeverity.INFO)))
+        )
+
+        assertEquals(listOf(StreetMode.WALK), symbolsOf(legs))
+        assertEquals(listOf(AlertSeverity.ERROR), alertsOf(legs))
+    }
+
+    /** The street-only fallback is still a leg, and still says when that leg has an alert. */
+    @Test
+    fun theShortStrollFallbackCarriesItsAlert() {
+        val legs = listOf(walk(NEAR).copy(alerts = listOf(alert(TripAlertSeverity.SEVERE))))
+
+        assertEquals(listOf(StreetMode.WALK), symbolsOf(legs))
+        assertEquals(listOf(AlertSeverity.ERROR), alertsOf(legs))
+    }
+
+    private fun alert(severity: TripAlertSeverity = TripAlertSeverity.WARNING) = TripAlert(id = "a", header = "Heads up", severity = severity)
 
     private fun interchangeable(shortName: String) = InterchangeableRoute(
         routeId = "route_$shortName",

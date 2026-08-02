@@ -21,6 +21,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
@@ -58,16 +59,31 @@ data class ItineraryOption(
 sealed interface ModeSymbol {
 
     /**
+     * The loudest service alert affecting the leg(s) this symbol stands for, or null when none do — the
+     * warning triangle the card draws beside it (#2143). Per *symbol* rather than per itinerary, so a
+     * card says **where** in the trip the trouble is: a rider scanning the picker can see that one
+     * option's rail leg is the suspended one while the option beside it rides a bus around it.
+     *
+     * It marks only what the card draws. An alert on a leg the summary abbreviates away — one too short
+     * for a glyph ([ModeSymbols.NEGLIGIBLE_STREET_METERS]), or a car leg the app has no art for — has no
+     * symbol to hang on, and is carried by the banner below the picker, which lists every alert
+     * unconditionally. Attributing it to a neighbouring symbol instead would point the rider at the
+     * wrong leg, which is worse than abbreviating it.
+     */
+    val alert: AlertSeverity?
+
+    /**
      * An on-street leg, drawn as its mode's glyph alone — how the rider covers the ground between (or
      * instead of) rides. Legs shorter than [ModeSymbols.NEGLIGIBLE_STREET_METERS] carry no symbol at
      * all; see there for why.
      */
-    data class Street(val mode: StreetMode) : ModeSymbol
+    data class Street(val mode: StreetMode, override val alert: AlertSeverity? = null) : ModeSymbol
 
     /** A ride, drawn as one route roundel — which names every route it can be taken on, or becomes
      *  along the way (see [LegBadge]), and falls back to the mode glyph for a ride that names no
-     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two. */
-    data class Transit(val badge: LegBadge) : ModeSymbol
+     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two — and one
+     *  triangle, marking an alert on any leg of the chain. */
+    data class Transit(val badge: LegBadge, override val alert: AlertSeverity? = null) : ModeSymbol
 }
 
 /**

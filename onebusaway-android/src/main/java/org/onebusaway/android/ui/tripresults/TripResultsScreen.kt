@@ -125,6 +125,7 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
+import org.onebusaway.android.ui.compose.components.alertAccentColor
 import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -299,6 +300,15 @@ private val SYMBOL_BADGE_SCALE = SYMBOL_HEIGHT / ROUTE_BADGE_HEIGHT
 private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
 
 private val SYMBOL_GAP = 4.dp
+
+/**
+ * The warning triangle marking a mode symbol whose leg carries a service alert (#2143), and the gap
+ * between the two. Drawn distinctly smaller than [SYMBOL_HEIGHT] and tucked closer than [SYMBOL_GAP]:
+ * it annotates the symbol beside it rather than being one, and at equal size and spacing a row of
+ * `[walk] ⚠ > [1 Line] ⚠` would read as six steps instead of two legs with a caveat each.
+ */
+private val SYMBOL_ALERT_SIZE = 13.dp
+private val SYMBOL_ALERT_GAP = 2.dp
 
 /** The gap between two wrapped lines of the summary — [SYMBOL_GAP] itself, so the wrap reads as one
  *  evenly-spaced field of symbols rather than as two stacked rows, and stays so if that gap is retuned. */
@@ -531,9 +541,35 @@ private fun packLines(widths: List<Int>, limit: Int, gap: Int): List<IntRange> {
 /** How wide one of [packLines]' lines is: its symbols, plus a [gap] between each neighbouring pair. */
 private fun lineWidth(widths: List<Int>, line: IntRange, gap: Int): Int = line.sumOf { widths[it] } + gap * (line.last - line.first)
 
-/** One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel. */
+/**
+ * One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel — followed by a
+ * warning triangle when a service alert affects the leg(s) it stands for (#2143).
+ *
+ * The triangle rides *inside* the symbol, at a tighter gap than [SYMBOL_GAP] separates symbols by, so
+ * it reads as an annotation on the leg to its left rather than as a step of the trip in its own right —
+ * or, worse, as belonging to the symbol on the other side of the chevron.
+ */
 @Composable
 private fun ModeSymbolContent(symbol: ModeSymbol) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(SYMBOL_ALERT_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ModeSymbolGlyph(symbol)
+        symbol.alert?.let { severity ->
+            Icon(
+                painter = painterResource(R.drawable.baseline_warning_24),
+                contentDescription = stringResource(R.string.directions_leg_service_alert),
+                tint = alertAccentColor(severity),
+                modifier = Modifier.size(SYMBOL_ALERT_SIZE)
+            )
+        }
+    }
+}
+
+/** [ModeSymbolContent] without its alert marker: the symbol proper. */
+@Composable
+private fun ModeSymbolGlyph(symbol: ModeSymbol) {
     when (symbol) {
         // A glyph alone — there is nothing to name about a walk.
         is ModeSymbol.Street -> StreetMetric.of(symbol.mode)?.let { metric ->

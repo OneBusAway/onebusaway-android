@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -31,8 +32,29 @@ import androidx.compose.ui.unit.dp
  * `severityOf` (`ArrivalsRepository`), OTP2's `AlertSeverityLevelType` by `TripAlertSeverity.tone`
  * (`TripAlerts`). Presentation lives here so a severe alert can't read as urgent on one screen and
  * merely advisory on another.
+ *
+ * **Declaration order is loudness order**, quietest first, and callers rely on it: the loudest alert of
+ * a set is its `max()`, and a list of alerts sorts worst-first by `sortedByDescending`. Any new tone
+ * must be declared in its place on that scale, not appended.
  */
 enum class AlertSeverity { INFO, WARNING, ERROR }
+
+/**
+ * The colour a service alert of [severity] is marked in when it *annotates* something else rather than
+ * filling a container of its own — the warning triangle beside an itinerary option's mode symbols
+ * (#2143). Foreground roles, since these are drawn on an ordinary card surface rather than on the
+ * matching `…Container` [AlertSurface] fills.
+ *
+ * Deliberately not the `md_theme_severity*` palette [TripPlanError][
+ * org.onebusaway.android.ui.tripplan.TripPlanError] uses: those are tuned to be legible on the
+ * *inverting* `inverseSurface` snackbar bar, so on an ordinary surface they read inverted.
+ */
+@Composable
+fun alertAccentColor(severity: AlertSeverity): Color = when (severity) {
+    AlertSeverity.ERROR -> MaterialTheme.colorScheme.error
+    AlertSeverity.WARNING -> MaterialTheme.colorScheme.tertiary
+    AlertSeverity.INFO -> MaterialTheme.colorScheme.secondary
+}
 
 /**
  * The severity-tinted rounded card a service alert is drawn on. Only the container is shared: each

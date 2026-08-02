@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.tripresults
 import org.onebusaway.android.directions.model.TripAlert
 import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripItinerary
+import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 
@@ -74,7 +75,16 @@ fun TripItinerary.alertItems(): List<TripAlertItem> = legs
             routeLabels = group.mapNotNull { (_, label) -> label }.distinct()
         )
     }
-    .sortedByDescending { it.severity.ordinal }
+    .sortedByDescending { it.severity }
+
+/**
+ * The loudest tone among this leg's own alerts, or null when it carries none — what marks the leg's
+ * symbol on an itinerary option card (see [ModeSymbol.alert]).
+ */
+internal fun TripLeg.loudestAlertTone(): AlertSeverity? = alerts.map { it.severity.tone() }.maxOrNull()
+
+/** [loudestAlertTone] across several legs — what one symbol standing for all of them is marked with. */
+internal fun List<TripLeg>.loudestAlertTone(): AlertSeverity? = mapNotNull { it.loudestAlertTone() }.maxOrNull()
 
 /**
  * A key over the alert's rider-visible text — the same content-identity idea as
@@ -91,7 +101,7 @@ private fun TripAlert.contentKey(): String = listOf(header, description, url, se
  * (`severityOf`) — because an alert whose severity is unstated is still an alert, and silently
  * demoting it to INFO would hide the loudest thing OTP had to say about a leg.
  */
-private fun TripAlertSeverity.tone(): AlertSeverity = when (this) {
+internal fun TripAlertSeverity.tone(): AlertSeverity = when (this) {
     TripAlertSeverity.INFO -> AlertSeverity.INFO
     TripAlertSeverity.SEVERE -> AlertSeverity.ERROR
     TripAlertSeverity.WARNING, TripAlertSeverity.UNKNOWN_SEVERITY -> AlertSeverity.WARNING

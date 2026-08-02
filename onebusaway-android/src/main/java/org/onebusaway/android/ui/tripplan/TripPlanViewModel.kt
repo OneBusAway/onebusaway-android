@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
@@ -105,10 +106,12 @@ class TripPlanViewModel @Inject constructor(
     // pipeline below. Keyed by slot rather than held as a from/to pair so the pipeline is written once.
     private val queries = TripEndpointSlot.entries.associateWith { MutableStateFlow("") }
 
-    // Reverse-geocoded names, keyed by the coordinate that produced them. Re-planning re-submits the same
-    // points — a date or arrive-by change, an advanced-settings apply, or editing *the other* endpoint all
-    // re-plan — and what a point is called doesn't change between them, so the lookup is worth exactly
-    // once. Only successes are remembered, so a failed lookup is retried rather than cached as "unnamed".
+    // Reverse-geocoded names, keyed by the coordinate that produced them. Re-planning mostly re-submits
+    // the same points — a date or arrive-by change, an advanced-settings apply, or editing *the other*
+    // endpoint all re-plan — and what a point is called doesn't change between them, so the lookup is
+    // worth exactly once. (A "my location" end that has moved since is a genuinely different point, and
+    // is looked up again; see replanOrClearResult.) Only successes are remembered, so a failed lookup is
+    // retried rather than cached as "unnamed".
     // Read and written only from the plan collector, which runs on the main dispatcher.
     private val reverseNames = mutableMapOf<Pair<Double, Double>, String>()
 
@@ -383,7 +386,14 @@ class TripPlanViewModel @Inject constructor(
      * [PlanResult.Success]). Emitting supersedes any in-flight plan via the collector's [mapLatest].
      */
     private fun replanOrClearResult() {
-        val form = _formState.value
+        // Re-read the device fix here, at submit, so a "my location" end plans from where the rider is
+        // now rather than from where they were when they set it (#2134) — the same moving-anchor
+        // argument as the clock below. The form moves with it, so what it holds and what was sent stay
+        // the same trip. Only read when an end actually is the device's position: while no fix has been
+        // established lastKnownLocation() polls the providers, and a place-to-place trip has no reason
+        // to pay for that on every mode or date change.
+        val here = if (_formState.value.hasDeviceLocationEndpoint) currentLocation() else null
+        val form = _formState.updateAndGet { it.withDeviceLocationAt(here) }
         // Read the clock here, at submit, so a "depart now" trip left sitting in an open form plans
         // from the moment it is sent rather than the moment the ViewModel was built.
         planInputs.trySend(if (form.canSubmit) form.toParams(timeProvider.now()) else null)

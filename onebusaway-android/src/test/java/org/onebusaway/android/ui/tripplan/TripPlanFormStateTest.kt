@@ -21,13 +21,18 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The "directions from/to here" pairing rule (#2092), which the ViewModel delegates to. Kept here
- * rather than in the ViewModel test because a real fix means an `android.location.Location`, which a
- * plain JVM test can't build — this side of the seam is plain coordinates.
+ * The two current-location rules the ViewModel delegates to: the "directions from/to here" pairing
+ * (#2092) and moving a my-location endpoint to the latest fix at submit (#2134). Kept here rather than
+ * in the ViewModel test because a real fix means an `android.location.Location`, which a plain JVM test
+ * can't build — this side of the seam is plain coordinates.
  */
 class TripPlanFormStateTest {
 
     private val here = TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3)
+
+    /** Where the rider has walked to by the time the trip is re-planned. */
+    private val movedHere = TripEndpoint.CurrentLocation(lat = 47.62, lon = -122.31)
+
     private val pressed = TripEndpoint.MapPoint(lat = 47.7, lon = -122.2)
     private val named = TripEndpoint.Geocoded("Pike Place Market", lat = 47.61, lon = -122.34)
 
@@ -107,6 +112,57 @@ class TripPlanFormStateTest {
         assertFalse(TripEndpoint.MapPoint(lat = 47.6, lon = -122.3).isDeviceLocation)
         assertFalse(named.isDeviceLocation)
         assertFalse(TripEndpoint.FreeText("here").isDeviceLocation)
+    }
+
+    @Test
+    fun `a my-location endpoint moves to the latest fix`() {
+        val form = TripPlanFormState(from = here, to = named)
+
+        val moved = form.withDeviceLocationAt(movedHere)
+
+        assertEquals(movedHere, moved.from)
+        assertEquals(named, moved.to) // a place the rider named stays where they named it
+    }
+
+    @Test
+    fun `both ends move when the rider is planning a trip from here to here`() {
+        val form = TripPlanFormState(from = here, to = here)
+
+        val moved = form.withDeviceLocationAt(movedHere)
+
+        assertEquals(movedHere, moved.from)
+        assertEquals(movedHere, moved.to)
+    }
+
+    @Test
+    fun `a map point the rider pressed on themselves is not moved`() {
+        // Same coordinate as the fix, but it names a place, not the rider — see isDeviceLocation.
+        val form = TripPlanFormState(from = pressed, to = TripEndpoint.MapPoint(lat = 47.6, lon = -122.3))
+
+        val moved = form.withDeviceLocationAt(movedHere)
+
+        assertEquals(pressed, moved.from)
+        assertEquals(TripEndpoint.MapPoint(lat = 47.6, lon = -122.3), moved.to)
+    }
+
+    @Test
+    fun `with no fix the my-location endpoint keeps the coordinate it has`() {
+        // Better a fix from a minute ago than an unsubmittable form: losing the fix (or the permission)
+        // must not empty an end the rider already set.
+        val form = TripPlanFormState(from = here, to = named)
+
+        val moved = form.withDeviceLocationAt(here = null)
+
+        assertEquals(here, moved.from)
+        assertTrue(moved.canSubmit)
+    }
+
+    @Test
+    fun `only a form with a my-location end has a fix worth re-reading`() {
+        assertTrue(TripPlanFormState(from = here, to = named).hasDeviceLocationEndpoint)
+        assertTrue(TripPlanFormState(from = named, to = here).hasDeviceLocationEndpoint)
+        assertFalse(TripPlanFormState(from = named, to = pressed).hasDeviceLocationEndpoint)
+        assertFalse(TripPlanFormState().hasDeviceLocationEndpoint)
     }
 
     @Test

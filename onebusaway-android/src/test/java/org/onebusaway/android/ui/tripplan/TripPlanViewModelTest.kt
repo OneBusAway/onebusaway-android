@@ -88,8 +88,10 @@ class TripPlanViewModelTest {
 
     private class FakeTripPlanRepository(var result: Result<List<TripItinerary>>) : TripPlanRepository {
         var calls = 0
+        var lastParams: TripPlanParams? = null
         override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> {
             calls++
+            lastParams = params
             return result
         }
 
@@ -521,6 +523,26 @@ class TripPlanViewModelTest {
         runCurrent()
 
         assertEquals(PlanResult.Error(TripPlanError.Unknown), vm.planState.value)
+    }
+
+    @Test
+    fun `a my-location endpoint survives a re-plan when there is no fresh fix`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        val setFrom = TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3)
+        vm.setEndpoint(TripEndpointSlot.FROM, setFrom)
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
+        advanceUntilIdle()
+
+        vm.setArriving(true)
+        advanceUntilIdle()
+
+        // The re-read at submit (#2134) finds nothing — the fake reports no fix — so the endpoint must
+        // stay exactly as the rider set it, both in the form and in the request. Moving it to a *newer*
+        // fix is TripPlanFormStateTest's job: a real one is an android.location.Location.
+        assertEquals(2, plan.calls)
+        assertEquals(setFrom, vm.formState.value.from)
+        assertEquals(setFrom, plan.lastParams?.from)
     }
 
     @Test

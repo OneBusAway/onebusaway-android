@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.api.adapters
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.contract.ArrivalDeparture
@@ -23,9 +25,12 @@ import org.onebusaway.android.api.contract.Position
 import org.onebusaway.android.api.contract.TripStatus
 
 /**
- * [DtoArrivalData.hasPlottableVehicle] — the "the map can draw a vehicle for THIS trip right now" predicate
- * behind the ETA pill's "on the map" pin (#1992). It must mirror the map's own draw condition: the trip
- * status's active trip is this arrival's trip AND it carries a location (last-known or current position).
+ * The wire→domain decisions in `ArrivalAdapters`:
+ *  - [DtoArrivalData.hasPlottableVehicle] — the "the map can draw a vehicle for THIS trip right now"
+ *    predicate behind the ETA pill's "on the map" pin (#1992). It must mirror the map's own draw
+ *    condition: the trip status's active trip is this arrival's trip AND it carries a location.
+ *  - [predictedServerTimeOrNull] — decoding the server's no-prediction sentinel in both the spellings
+ *    it reaches us in.
  */
 class ArrivalAdaptersTest {
 
@@ -62,5 +67,57 @@ class ArrivalAdaptersTest {
         // A schedule-deviation-only status (no GPS) is real-time but has nothing to draw.
         val status = TripStatus(activeTripId = "trip", scheduleDeviation = 120L)
         assertFalse(arrival(tripId = "trip", tripStatus = status).hasPlottableVehicle)
+    }
+
+    // ---- predictedServerTimeOrNull: the no-prediction sentinel -----------------------------------
+    //
+    // OBA's TimepointPredictionRecord defaults both predicted fields to -1 ("the feed gave no
+    // prediction here"). It reaches the client two ways, and both must decode to "no prediction".
+
+    @Test
+    fun `the bare sentinel decodes to no prediction`() {
+        assertNull(predictedServerTimeOrNull(-1L, scheduledDwellMs = 0L))
+        assertNull(predictedServerTimeOrNull(0L, scheduledDwellMs = 0L))
+    }
+
+    /**
+     * The live 1 Line record that motivated this: stop `40_99603`, trip `..._100479_1058`, a platform
+     * with a 30 s scheduled dwell. The server ran `arrivalTime + slack * 1000` on the -1 sentinel and
+     * sent `29999` for *both* predicted fields — positive, so the old non-positive check passed it, and
+     * as an epoch it is half a minute past 1970. Rendered ETA: -496029 hours.
+     */
+    @Test
+    fun `the sentinel with slack added decodes to no prediction`() {
+        val dwell = 30_000L // scheduledDepartureTime - scheduledArrivalTime, i.e. the server's slackTime
+
+        assertNull(predictedServerTimeOrNull(29_999L, scheduledDwellMs = dwell))
+    }
+
+    /** The same bug at any other dwell — the artifact tracks the stop's slack, it is not one constant. */
+    @Test
+    fun `the sentinel with slack added is decoded at any dwell`() {
+        assertNull(predictedServerTimeOrNull(59_999L, scheduledDwellMs = 60_000L))
+        assertNull(predictedServerTimeOrNull(89_999L, scheduledDwellMs = 90_000L))
+        // A stop that doesn't dwell reduces to the bare sentinel, which is why this hid for so long.
+        assertNull(predictedServerTimeOrNull(-1L, scheduledDwellMs = 0L))
+    }
+
+    /**
+     * The artifact is only the artifact *for its own stop*: `29999` at a stop with a 60 s dwell is not
+     * what that stop's slack arithmetic would have produced. Reconstruction is exact, so this is a real
+     * (if absurd) instant rather than a value in a suspicious range — the check has no magnitude band.
+     */
+    @Test
+    fun `a value matching another stops artifact is not discarded`() {
+        assertEquals(29_999L, predictedServerTimeOrNull(29_999L, scheduledDwellMs = 60_000L)?.epochMs)
+    }
+
+    @Test
+    fun `a real prediction is kept`() {
+        // The healthy sibling of the record above, from the same response.
+        assertEquals(
+            1_785_706_260_000L,
+            predictedServerTimeOrNull(1_785_706_260_000L, scheduledDwellMs = 30_000L)?.epochMs
+        )
     }
 }

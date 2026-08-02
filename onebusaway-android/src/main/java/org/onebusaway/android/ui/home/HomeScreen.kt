@@ -633,12 +633,6 @@ fun HomeScreen(
                                     homeViewModel.navigateBackInDirections()
                                 }
                             }
-                            // That last step doesn't leave outright when a trip is drawn — it stages this
-                            // question instead, as does a tap on the map background (#2140). The VM owns the
-                            // latch because both gestures reach it from different places (here, and the map's
-                            // own click callback); answering it either exits or leaves the trip untouched.
-                            val confirmDirectionsExit by homeViewModel.pendingDirectionsExit
-                                .collectAsStateWithLifecycle()
 
                             // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle
                             // and MapChrome animates it. Local here since the screen holds the live SheetState. Only
@@ -834,7 +828,13 @@ fun HomeScreen(
                                         onDismiss = { longPressPoint = null }
                                     )
                                 }
-                                if (confirmDirectionsExit) {
+                                // Neither Back nor a tap on the map background leaves outright while a trip
+                                // is drawn — each stages this question instead (#2140). The VM owns the latch
+                                // because the two gestures reach it from different places (the BackHandler
+                                // above, and the map's own click callback), and it is answered here.
+                                val showExitConfirm by homeViewModel.pendingDirectionsExit
+                                    .collectAsStateWithLifecycle()
+                                if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit

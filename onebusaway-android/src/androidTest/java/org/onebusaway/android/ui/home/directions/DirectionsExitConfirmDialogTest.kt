@@ -43,22 +43,15 @@ class DirectionsExitConfirmDialogTest {
     private val cancelLabel = context.getString(R.string.cancel)
 
     @Test
-    fun itNamesTheTripBeingDiscardedAndOffersBothAnswers() {
-        renderDialog()
+    fun itNamesTheTripAndOnlyDiscardConfirmsTheExit() {
+        var confirmed = 0
+        var dismissed = 0
+        renderDialog(onConfirm = { confirmed++ }, onDismiss = { dismissed++ })
 
         composeRule.onNodeWithText(context.getString(R.string.directions_exit_confirm_title))
             .assertIsDisplayed()
         composeRule.onNodeWithText(context.getString(R.string.directions_exit_confirm_message))
             .assertIsDisplayed()
-        composeRule.onNodeWithText(discardLabel).assertIsDisplayed()
-        composeRule.onNodeWithText(cancelLabel).assertIsDisplayed()
-    }
-
-    @Test
-    fun onlyDiscardConfirmsTheExit() {
-        var confirmed = 0
-        var dismissed = 0
-        renderDialog(onConfirm = { confirmed++ }, onDismiss = { dismissed++ })
 
         composeRule.onNodeWithText(cancelLabel).performClick()
         assertEquals(0, confirmed)

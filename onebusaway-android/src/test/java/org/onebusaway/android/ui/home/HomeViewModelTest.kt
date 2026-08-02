@@ -283,6 +283,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `a bike dock tapped on a drawn trip is refused, not allowed to take the map`() = runTest {
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+
+        // The docks drawn in directions are the trip's own, so tapping one used to discard the whole
+        // plan in a single tap — the same take-over a stop tap is already refused for (#2097).
+        assertFalse(vm.onBikeStationFocused("bike-7"))
+
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+        assertNull(vm.currentFocus.value.focusedBikeStationId)
+        // Refused outright rather than asked about: nothing is lost, so there is nothing to confirm.
+        assertFalse(vm.pendingDirectionsExit.value)
+    }
+
+    @Test
     fun `a deep link taking the map drops the staged question`() = runTest {
         val vm = viewModel()
         vm.enterDirectionsShowing()

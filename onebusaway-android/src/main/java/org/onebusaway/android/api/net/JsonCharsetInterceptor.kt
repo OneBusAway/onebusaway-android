@@ -18,6 +18,7 @@ package org.onebusaway.android.api.net
 import okhttp3.Interceptor
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.asResponseBody
 
@@ -76,7 +77,42 @@ internal fun utf8JsonMediaTypeFor(contentType: MediaType?): MediaType? {
     // No charset stated: OkHttp already reads it as UTF-8, so there is nothing to correct.
     val declared = contentType.charset() ?: return null
     if (declared == Charsets.UTF_8) return null
-    // Rebuilt from type/subtype rather than by string-editing the original, so any other parameter the
-    // server attached is dropped along with the wrong charset rather than carried past this boundary.
-    return "${contentType.type}/${contentType.subtype}; charset=utf-8".toMediaType()
+    // Only the charset is wrong, so only the charset is replaced — every other parameter the server
+    // attached (`profile` on a `+json` type, say) is carried through. OkHttp can look a parameter up by
+    // name but not enumerate them, so the list is re-split off the original header text.
+    val type = "${contentType.type}/${contentType.subtype}"
+    val others = contentType.toString().splitParameters()
+        .filterNot { it.substringBefore('=').trim().equals("charset", ignoreCase = true) }
+    val rebuilt = (listOf(type) + others + "charset=utf-8").joinToString("; ")
+    // The fallback is unreachable for anything OkHttp itself parsed, but a header rebuild must never be
+    // the reason a good response fails: correct the charset alone rather than throw.
+    return rebuilt.toMediaTypeOrNull() ?: "$type; charset=utf-8".toMediaType()
+}
+
+/**
+ * The parameters of a `Content-Type` header, trimmed, with the leading type/subtype dropped.
+ *
+ * Split on the `;` that separate parameters — *not* on one inside a quoted value (RFC 2045 §5.1
+ * `quoted-string`), which is part of the value and must survive the round trip intact.
+ */
+private fun String.splitParameters(): List<String> {
+    val parameters = mutableListOf<String>()
+    val current = StringBuilder()
+    var quoted = false
+    var escaped = false
+    for (c in this) {
+        when {
+            escaped -> escaped = false
+            quoted && c == '\\' -> escaped = true
+            c == '"' -> quoted = !quoted
+            c == ';' && !quoted -> {
+                parameters += current.toString()
+                current.clear()
+                continue
+            }
+        }
+        current.append(c)
+    }
+    parameters += current.toString()
+    return parameters.drop(1).map { it.trim() }
 }

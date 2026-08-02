@@ -46,6 +46,31 @@ class JsonCharsetInterceptorTest {
     }
 
     /**
+     * The charset is the only thing wrong with the header, so it is the only thing that changes: a
+     * `profile` — the one parameter the `+json` family really does carry — must reach the converter as
+     * the server sent it.
+     */
+    @Test
+    fun keepsTheOtherParametersItWasSentAlongside() {
+        val corrected = utf8JsonMediaTypeFor(
+            """application/vnd.api+json; profile="https://example.com/v1"; charset=ISO-8859-1""".toMediaType()
+        )
+
+        assertEquals(Charsets.UTF_8, corrected?.charset())
+        assertEquals("https://example.com/v1", corrected?.parameter("profile"))
+    }
+
+    /** A `;` inside a quoted parameter value is part of the value, not a separator between parameters. */
+    @Test
+    fun keepsAParameterWhoseQuotedValueContainsASemicolon() {
+        val corrected =
+            utf8JsonMediaTypeFor("""application/json; note="a;b"; charset=ISO-8859-1""".toMediaType())
+
+        assertEquals(Charsets.UTF_8, corrected?.charset())
+        assertEquals("a;b", corrected?.parameter("note"))
+    }
+
+    /**
      * The common shape on every other host this app talks to. OkHttp already reads a charset-less body
      * as UTF-8, so rewriting it would be noise — the response must be passed through untouched.
      */

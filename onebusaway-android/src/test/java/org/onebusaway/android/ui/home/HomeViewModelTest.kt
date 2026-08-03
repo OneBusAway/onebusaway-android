@@ -122,7 +122,6 @@ class HomeViewModelTest {
             headsign = "Downtown Redmond",
             board = board,
             alight = alight,
-            leaderEndStopId = alight.stopId,
             alternatives = listOf(
                 AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null),
                 // Still appears in the joined badge, but cannot be loaded without an OBA route id.
@@ -146,13 +145,13 @@ class HomeViewModelTest {
                         "40_1LINE",
                         board.stopId,
                         relationship = RouteFocusRelationship.INTERCHANGEABLE,
-                        directionHeadsign = "Federal Way Downtown",
-                        // An alternative carries the rider exactly as far as the planned leg does.
-                        endStopId = alight.stopId
+                        directionHeadsign = "Federal Way Downtown"
                     )
                 ),
-                // Where the rider leaves this route — the symbolic vehicle filter's bound (#2124).
-                endStopId = alight.stopId
+                // Where the rider leaves the ride — the one bound queue-driven selection needs (#2124),
+                // and the leg's headsign, which picks the ridden direction among the stop's arrival rows.
+                alightStopId = alight.stopId,
+                directionHeadsign = "Downtown Redmond"
             ),
             map.routeRequests.single()
         )
@@ -214,7 +213,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `focusing an alternative ETA keeps its planned-platform bound nonrestrictive`() = runTest {
+    fun `focusing an alternative ETA carries the ride's own alighting stop and the planned headsign`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
@@ -224,7 +223,6 @@ class HomeViewModelTest {
             headsign = "Downtown Redmond",
             board = RouteStopRef("40_board", "B", "Board", GeoPoint(47.6, -122.3)),
             alight = RouteStopRef("40_planned_alight", "A", "Alight", GeoPoint(47.61, -122.31)),
-            leaderEndStopId = "40_planned_alight",
             alternatives = listOf(AlternativeRouteRef("40_1LINE", null, "1 Line", null))
         )
         val segment = listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31))
@@ -240,14 +238,18 @@ class HomeViewModelTest {
         )
         advanceUntilIdle()
 
+        // An alternative substitutes for the planned leg, so it is bounded at the same alighting stop.
+        // There is no restrictive/nonrestrictive distinction any more: admission comes from the boarding
+        // stop's arrivals, which every alternative shares by construction, so the bound only has to say
+        // when the ride is over.
         assertEquals(
             ShowRouteRequest(
                 routeId = "40_1LINE",
                 directionStopId = "40_board",
                 focusTripId = "alternative-trip",
                 riddenSpans = listOf(RiddenSpan(segment)),
-                endStopId = "40_planned_alight",
-                endStopRestrictive = false
+                alightStopId = "40_planned_alight",
+                directionHeadsign = "Downtown Redmond"
             ),
             map.routeRequests.single()
         )

@@ -35,7 +35,7 @@ import org.onebusaway.android.util.haversineDistance
 const val SEGMENT_STOP_TOLERANCE_METERS = 50.0
 
 /** How close a board/alight anchor must sit to a direction shape variant to count as travelling that
- *  variant ([upstreamTo], [boundedThrough]). Same 50 m drift class as [SEGMENT_STOP_TOLERANCE_METERS],
+ *  variant ([upstreamTo]). Same 50 m drift class as [SEGMENT_STOP_TOLERANCE_METERS],
  *  but its own knob: retuning stop inclusion must not silently retune variant applicability. */
 const val VARIANT_MATCH_TOLERANCE_METERS = 50.0
 
@@ -134,87 +134,6 @@ internal fun List<RoutePolyline>.upstreamTo(anchor: GeoPoint?): List<RoutePolyli
         }
         .distinct()
 }
-
-/** A route line whose eligible travel ends at [maxDistanceAlong]. */
-internal data class BoundedRoutePath(
-    val line: Polyline,
-    val maxDistanceAlong: Double
-)
-
-/**
- * Preserve full geometry for projection while bounding travel at [anchor], the alighting point. As in
- * [upstreamTo], each receiver entry is an independent shape variant, so every variant the alighting
- * point sits on becomes its own eligible path bounded at its own alight projection — a vehicle upstream
- * on *any* variant serving the alighting point stays eligible, while a vehicle past the alighting point
- * is beyond the bound of every variant it rides and drops out (#2104). A variant that never touches the
- * alighting point can't carry a rider there, so it forms no eligible path. When the alighting point is
- * off every variant — the ride continues onto a later stay-aboard route, or the leg geometry doesn't
- * match this route's shape — there is no meaningful bound, and the whole shape stays eligible rather
- * than guessing one.
- *
- * That last fallback is deliberately the opposite of [upstreamTo]'s, which narrows to the single nearest
- * variant. The two answer different questions about the same mismatched anchor: a mismatch must not
- * multiply the *drawn* approach, and it must not drop a vehicle that is genuinely on the ride. So one
- * degrades restrictively and the other permissively, on purpose.
- *
- * The receiver may be the whole-route **merged** shape rather than a direction's own, since
- * `RouteMap.shapeForDirection` falls back to it for a direction that carried no shape on the wire. That
- * set holds both directions, so the alighting point also sits within tolerance of the reverse-direction
- * shape, which then becomes an eligible path bounded in the *opposite* travel order — a geographically
- * downstream vehicle projects upstream on it and survives. Ordinarily the poll is already narrowed by
- * trip `directionId` before this filter runs, so those vehicles never reach here; a stay-aboard
- * interline composite deliberately drops that direction filter (#2000) and is the case where the
- * geometry alone would have to exclude them, and can't.
- */
-internal fun List<RoutePolyline>.boundedThrough(anchor: GeoPoint): List<BoundedRoutePath> {
-    val projections = variantProjections(anchor)
-    return projections.travelledVariants()
-        .map { BoundedRoutePath(it.path, it.projection.distanceAlong) }
-        .ifEmpty { projections.map { BoundedRoutePath(it.path, Double.POSITIVE_INFINITY) } }
-}
-
-/** Whether [point] is near one of these paths without exceeding its along-route boundary.
- *  Since #2124 the primary keep/drop verdict is symbolic ([rideEligibility], decided once per poll
- *  from the trip's schedule), so this projection runs on the 20 Hz sampler only for the vehicles
- *  whose verdict is [RideEligibility.UNKNOWN] — each path still costs a full projection there. */
-internal fun List<BoundedRoutePath>.containsRoutePoint(
-    point: GeoPoint,
-    toleranceMeters: Double = SEGMENT_STOP_TOLERANCE_METERS
-): Boolean = any { path ->
-    val projection = path.line.nearestProjection(point.latitude, point.longitude)
-        ?: return@any false
-    projection.distanceToPoint <= toleranceMeters && projection.distanceAlong <= path.maxDistanceAlong
-}
-
-/**
- * Whether a route-focus vehicle survives the selected leg's filter. The symbolic [eligibility]
- * verdict (the trip's schedule versus the ride's end-of-ride stops, [rideEligibility]) is the
- * primary answer; only an [RideEligibility.UNKNOWN] falls back to projecting [point] against the
- * geometric [eligiblePaths].
- *
- * The explicitly requested ETA-pill trip ([focusedTripId]) always survives, ahead of both: its pin
- * is derived from the arrivals response's exact active-trip + GPS identity, while both filters are
- * reconstructed independently of it (the geometry from route-wide shapes, the symbolic verdict from
- * a schedule that may not have loaded) and can still miss it. Without this exception the route poll
- * can contain the tapped vehicle yet discard it before [RouteMapController] gets the chance to
- * frame it.
- *
- * [focusedTripId] must be the trip's exemption for the whole focus context, not the one-shot pending
- * camera fit: this filter re-runs on every vehicle sample, so keying it to a focus that resolves
- * (and clears) on the first fit would drop the framed vehicle again on the very next sample (#2099).
- */
-internal fun focusedRideKeepsVehicle(
-    vehicleTripId: String?,
-    focusedTripId: String?,
-    eligibility: RideEligibility,
-    eligiblePaths: List<BoundedRoutePath>,
-    point: GeoPoint
-): Boolean = (vehicleTripId != null && vehicleTripId == focusedTripId) ||
-    when (eligibility) {
-        RideEligibility.ELIGIBLE -> true
-        RideEligibility.INELIGIBLE -> false
-        RideEligibility.UNKNOWN -> eligiblePaths.containsRoutePoint(point)
-    }
 
 private data class VariantProjection(
     val line: RoutePolyline,

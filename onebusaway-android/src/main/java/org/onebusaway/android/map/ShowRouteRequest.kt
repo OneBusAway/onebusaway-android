@@ -41,16 +41,13 @@ package org.onebusaway.android.map
  * @property extraSegments route/directions shown alongside the primary route: stay-aboard continuations
  *   (#2000) and interchangeable routes (#2042). Each relationship controls whether vehicles remain
  *   visible across a seam or are filtered to the segment's resolved direction.
- * @property endStopId when non-null (a directions leg focus), the OBA id of the stop where the rider
- *   leaves **[routeId] itself** — the first stay-aboard seam, or the leg's alighting stop when the ride
- *   ends on this route. Each entry of [extraSegments] carries its own [RouteFocusSegment.endStopId], so
- *   every focused route states where its part of the ride ends rather than having it inferred from the
- *   others. Feeds the symbolic vehicle filter (#2124): a vehicle stays visible while its trip's schedule
- *   still reaches its route's end stop. Null (an OTP→OBA resolution failure, or a non-directions caller)
- *   leaves the filter to its geometric fallback.
- * @property endStopRestrictive whether a trip that does not serve [endStopId] is ineligible. False when
- *   an interchangeable alternative has been promoted to [routeId] by an ETA tap: that route may use a
- *   different alighting platform, so absence of the planned route's exact stop must fall back to geometry.
+ * @property alightStopId when non-null (a directions leg focus), the OBA id of the stop where the
+ *   rider leaves the ride. The one bound the queue-driven vehicle selection needs (#2124): admission
+ *   comes from the boarding stop's live arrivals, so this only has to answer "is this ride over yet",
+ *   and a trip is dropped only once its own progress is provably past this stop. Null on an OTP→OBA
+ *   resolution failure, or for a non-directions caller, which simply never retires a vehicle.
+ * @property directionHeadsign the planned leg's headsign, used to pick the ridden direction group
+ *   among the boarding stop's arrival rows — the same pick the leg card's ETA strip makes.
  */
 data class ShowRouteRequest(
     val routeId: String,
@@ -59,6 +56,6 @@ data class ShowRouteRequest(
     val initialDirectionId: Int? = null,
     val riddenSpans: List<RiddenSpan> = emptyList(),
     val extraSegments: List<RouteFocusSegment> = emptyList(),
-    val endStopId: String? = null,
-    val endStopRestrictive: Boolean = true
+    val alightStopId: String? = null,
+    val directionHeadsign: String? = null
 )

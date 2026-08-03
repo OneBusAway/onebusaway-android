@@ -131,8 +131,13 @@ internal data class RideSelection(
     val admitted: Set<String>
 )
 
-/** One of the arrivals list's (route, direction) rows, reduced to what ride selection needs. */
-internal data class RideRouteGroup(
+/**
+ * One of the arrivals list's (route, direction) rows, reduced to what ride selection needs.
+ *
+ * Public because it rides a [org.onebusaway.android.ui.home.MapDirective] from HOME's hoisted arrivals
+ * session to the map; everything else here stays internal to the map layer.
+ */
+data class RideRouteGroup(
     val routeId: String,
     val headsign: String?,
     val tripIds: List<String>

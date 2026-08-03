@@ -181,8 +181,60 @@ data class TripPlace(
     val lat: Double? = null,
     val lon: Double? = null,
     val vertexType: TripVertexType? = null,
-    val bikeShareId: String? = null
+    // The rented vehicle (or its dock) this place *is*, when the place is a vehicle-rental endpoint —
+    // null everywhere else. Replaces the bare `bikeShareId` this used to carry: the id alone can only
+    // filter the map's bike layer, while a rider being sent to a shared bike also needs to know whose
+    // it is and how to unlock it (#2150).
+    val rental: TripVehicleRental? = null
 )
+
+/**
+ * A vehicle-rental endpoint of a leg — the shared bike/scooter the rider picks up, or the dock they
+ * pick it up from (#2150). OTP models the two separately (`Place.rentalVehicle` vs.
+ * `Place.vehicleRentalStation`) but publishes the same rental facts on both, so they land on one type
+ * here and [isStation] says which it was.
+ *
+ * Every field is what the *feed* stated, carried unjudged:
+ *  - [isStation] is which of OTP's two shapes this came from, stated rather than inferred from
+ *    [stationName]: whether the rider is looking for a dock is an instruction, and a station that
+ *    published a blank name must not turn into "dockless" on the way through.
+ *  - [id] is OTP's network-qualified `network:id`, the identity the map's bike layer filters on. It is
+ *    not shown to the rider: the ids the live Puget Sound networks publish are UUIDs, which no rider
+ *    can match against a bike in front of them.
+ *  - [networkId] is the operator, from OTP's own `rentalNetwork.networkId` — a GBFS `system_id` like
+ *    `lime_seattle`, not a brand name. Turning it into one is presentation, and lives in
+ *    `RentalOperators` (the UI layer), not here.
+ *  - [androidUri]/[webUri] are the operator's deep links to *this* vehicle or station
+ *    (`rentalUris.android`/`.web`), and [networkUrl] the operator's own system URL. All three are null
+ *    on every vehicle the live OTP2 deployment serves today, which is exactly why they are carried
+ *    rather than assumed: a feed that does publish them lets the app hand the rider straight to the
+ *    bike they were routed onto.
+ *  - [rangeMeters] is `fuel.range` — how far the vehicle can still travel on its current charge,
+ *    documented by the schema as meters.
+ *
+ * OTP1 populates only [id] (its `bikeShareId`): that API carries no rental metadata at all, so a leg
+ * planned on an OTP1 region has a rental with nothing to say about its operator, and the drawer draws
+ * the plain bike row it always did.
+ */
+@Serializable
+data class TripVehicleRental(
+    val id: String? = null,
+    val isStation: Boolean = false,
+    val stationName: String? = null,
+    val networkId: String? = null,
+    val networkUrl: String? = null,
+    val androidUri: String? = null,
+    val webUri: String? = null,
+    val formFactor: RentalFormFactor? = null,
+    val propulsion: RentalPropulsion? = null,
+    val rangeMeters: Int? = null
+)
+
+/** Mirrors OTP2's `FormFactor` wire vocabulary exactly (which mirrors GBFS's `vehicle_type`). */
+enum class RentalFormFactor { BICYCLE, CAR, CARGO_BICYCLE, MOPED, OTHER, SCOOTER, SCOOTER_SEATED, SCOOTER_STANDING }
+
+/** Mirrors OTP2's `PropulsionType` wire vocabulary exactly (which mirrors GBFS's `propulsion_type`). */
+enum class RentalPropulsion { COMBUSTION, COMBUSTION_DIESEL, ELECTRIC, ELECTRIC_ASSIST, HUMAN, HYBRID, HYDROGEN_FUEL_CELL, PLUG_IN_HYBRID }
 
 @Serializable
 data class TripStep(

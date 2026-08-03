@@ -30,8 +30,12 @@ import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.api.graphql.fragment.RouteFields
 import org.onebusaway.android.api.graphql.type.AbsoluteDirection
 import org.onebusaway.android.api.graphql.type.AlertSeverityLevelType
+import org.onebusaway.android.api.graphql.type.FormFactor
 import org.onebusaway.android.api.graphql.type.Mode
+import org.onebusaway.android.api.graphql.type.PropulsionType
 import org.onebusaway.android.api.graphql.type.RelativeDirection
+import org.onebusaway.android.directions.model.RentalFormFactor
+import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripRelativeDirection
@@ -104,7 +108,7 @@ class Otp2PlanDecodeTest {
                     name = "Stop A",
                     lat = 47.61,
                     lon = -122.31,
-                    rentalVehicle = PlaceFields.RentalVehicle(vehicleId = "bs_9", name = "Bike 9")
+                    rentalVehicle = rentalVehicle()
                 )
             ),
             to = to(place(name = "Stop B", lat = 47.62, lon = -122.32)),
@@ -212,7 +216,21 @@ class Otp2PlanDecodeTest {
         assertEquals(iso("2026-07-11T10:02:30-07:00"), bus.startTime)
         assertEquals(30.seconds, bus.departureDelay)
         assertEquals(TripVertexType.BIKESHARE, bus.from.vertexType)
-        assertEquals("bs_9", bus.from.bikeShareId)
+        // The whole rental record, not just its id (#2150): who the vehicle belongs to, what it is,
+        // and the operator's own link to it — each straight off the field OTP publishes for it. The
+        // network is read from `rentalNetwork.networkId`, never parsed off the `network:id` prefix
+        // the vehicle id wears.
+        val rental = bus.from.rental!!
+        assertEquals("lime_seattle:bs_9", rental.id)
+        assertEquals("lime_seattle", rental.networkId)
+        assertEquals("https://www.li.me/", rental.networkUrl)
+        assertEquals("lime://vehicle/bs_9", rental.androidUri)
+        assertEquals("https://lime.example/vehicle/bs_9", rental.webUri)
+        assertEquals(RentalFormFactor.BICYCLE, rental.formFactor)
+        assertEquals(RentalPropulsion.ELECTRIC_ASSIST, rental.propulsion)
+        assertEquals(43356, rental.rangeMeters)
+        // A free-floating vehicle has no dock, and that absence is how the domain says so.
+        assertNull(rental.stationName)
         // OTP2's `stopCalls` include the boarding and alighting calls (1_1001 / 1_1002 here), but
         // `TripLeg.stop` carries only the stops *in between* — what the drawer counts as "N stops
         // in between" and what the reminder plan walks — so the two endpoints are dropped.
@@ -294,10 +312,43 @@ class Otp2PlanDecodeTest {
         assertNull(data.toTripItineraries()[0].legs[0].stop)
     }
 
+    /**
+     * A docked pickup — OTP's other rental shape. The dock is stated as such (`isStation`) rather
+     * than inferred from its name, so a station whose feed published a blank one can't read as a
+     * loose bike standing on the street.
+     */
+    @Test
+    fun mapsARentalStationPickup() {
+        val data = planDataWithSingleLeg(
+            mode = Mode.BICYCLE,
+            fromPlace = place(
+                name = "Pine St & 3rd Ave",
+                lat = 47.61,
+                lon = -122.33,
+                vehicleRentalStation = PlaceFields.VehicleRentalStation(
+                    stationId = "seattle_bikes:42",
+                    name = "Pine St & 3rd Ave",
+                    rentalNetwork = PlaceFields.RentalNetwork1(networkId = "seattle_bikes", url = null),
+                    rentalUris = null
+                )
+            )
+        )
+        val rental = data.toTripItineraries()[0].legs[0].from.rental!!
+        assertEquals(TripVertexType.BIKESHARE, data.toTripItineraries()[0].legs[0].from.vertexType)
+        assertEquals("seattle_bikes:42", rental.id)
+        assertEquals("seattle_bikes", rental.networkId)
+        assertTrue(rental.isStation)
+        assertEquals("Pine St & 3rd Ave", rental.stationName)
+        // A dock publishes no vehicle type — it holds whatever the operator left in it.
+        assertNull(rental.formFactor)
+        assertNull(rental.androidUri)
+    }
+
     private fun planDataWithSingleLeg(
         mode: Mode,
         itineraryStart: String? = "2026-07-11T10:00:00-07:00",
-        stopCalls: List<PlanQuery.StopCall> = emptyList()
+        stopCalls: List<PlanQuery.StopCall> = emptyList(),
+        fromPlace: PlaceFields = place(name = "X", lat = 1.0, lon = 2.0)
     ): PlanQuery.Data {
         val leg = PlanQuery.Leg(
             mode = mode,
@@ -307,7 +358,7 @@ class Otp2PlanDecodeTest {
             interlineWithPreviousLeg = null,
             start = PlanQuery.Start(scheduledTime = "2026-07-11T10:00:00-07:00", estimated = null),
             end = PlanQuery.End(scheduledTime = "2026-07-11T10:01:00-07:00", estimated = null),
-            from = from(place(name = "X", lat = 1.0, lon = 2.0)),
+            from = from(fromPlace),
             to = to(place(name = "Y", lat = 3.0, lon = 4.0)),
             route = null,
             trip = null,
@@ -358,6 +409,26 @@ class Otp2PlanDecodeTest {
         vehicleParking: PlaceFields.VehicleParking? = null,
         vehicleRentalStation: PlaceFields.VehicleRentalStation? = null
     ): PlaceFields = PlaceFields(name, lat, lon, stop, rentalVehicle, vehicleParking, vehicleRentalStation)
+
+    /**
+     * A free-floating rental vehicle, shaped like the ones the live Puget Sound OTP2 deployment
+     * returns (a `network:uuid` id, a network id of `lime_seattle`, an electric-assist bicycle) —
+     * except for the rental URIs and network URL, which that deployment publishes on nothing at all
+     * and which are here precisely because the app has to carry them the day an operator does.
+     */
+    private fun rentalVehicle(): PlaceFields.RentalVehicle = PlaceFields.RentalVehicle(
+        vehicleId = "lime_seattle:bs_9",
+        rentalNetwork = PlaceFields.RentalNetwork(networkId = "lime_seattle", url = "https://www.li.me/"),
+        rentalUris = PlaceFields.RentalUris(
+            android = "lime://vehicle/bs_9",
+            web = "https://lime.example/vehicle/bs_9"
+        ),
+        vehicleType = PlaceFields.VehicleType(
+            formFactor = FormFactor.BICYCLE,
+            propulsionType = PropulsionType.ELECTRIC_ASSIST
+        ),
+        fuel = PlaceFields.Fuel(range = 43356)
+    )
 
     /** Builds a [RouteFields] fixture (the fragment shared by the planned leg's route and each
      *  alternative leg's — see Plan.graphql). */

@@ -56,6 +56,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -96,6 +97,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
@@ -139,6 +141,7 @@ import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -1615,9 +1618,128 @@ private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+    entry.rental?.let { RentalContent(it) }
     // A walk gets its alerts under its header for the same reason a ride does — a closed dock or a
     // blocked path is about this stretch of the trip, not the trip as a whole.
     LegAlerts(entry.alerts)
+}
+
+/**
+ * What the rider needs to know about the shared bike they're being sent to (#2150): whose it is, what
+ * it is, where to find it, and how to unlock it. Before this the leg said only "Bike", which told a
+ * rider standing over an unfamiliar scooter nothing about which app opens it.
+ *
+ * Everything here is drawn from what the feed actually said, and each part is omitted rather than
+ * guessed when it didn't: an operator the app has no catalog entry for wears its raw network id (see
+ * [RentalOperators]), a dock that published no name draws no pickup line at all, and a network with
+ * neither a rental URI nor a catalog entry gets no button rather than one going somewhere approximate.
+ *
+ * The vehicle id is deliberately not shown. The ids the live networks publish are UUIDs — nothing a
+ * rider can match against the bike in front of them — so drawing one would be noise that reads like an
+ * instruction.
+ */
+@Composable
+private fun ColumnScope.RentalContent(rental: RentalPickup) {
+    val context = LocalContext.current
+    val metric = unitsAreMetric()
+    Row(
+        modifier = Modifier.padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        val name = rental.operator.displayName
+        val described = stringResource(R.string.trip_plan_rental_operator_description, name)
+        RouteBadgeChip(
+            shortName = name,
+            routeColor = rental.operator.brandColor,
+            // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
+            // chip instead of pushing the vehicle beside it off the row.
+            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH,
+            modifier = Modifier.semantics { contentDescription = described }
+        )
+        val details = listOfNotNull(
+            rental.vehicle?.let { stringResource(rentalVehicleRes(it)) },
+            rental.rangeMeters?.let {
+                stringResource(
+                    R.string.trip_plan_rental_range,
+                    ConversionUtils.getFormattedDistance(it.toDouble(), context, metric)
+                )
+            }
+        )
+        if (details.isNotEmpty()) {
+            Text(
+                text = details.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    // Where to find it: the dock by name, or the fact that there isn't one. A docked station that
+    // published no name says neither — "dockless" would send the rider looking for the wrong thing.
+    val pickup = when {
+        rental.stationName != null -> stringResource(R.string.trip_plan_rental_pick_up_at, rental.stationName)
+        rental.isDockless -> stringResource(R.string.trip_plan_rental_dockless)
+        else -> null
+    }
+    pickup?.let {
+        Text(
+            text = it,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+    rental.link?.let { link ->
+        TextButton(
+            onClick = { openRental(context, link, rental.fallback) },
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+            modifier = Modifier.padding(top = 2.dp)
+        ) {
+            Text(
+                // Only a link to *this* vehicle may say "open it"; the rest merely open the operator,
+                // and the rider still has to find the bike themselves. Nothing here claims the vehicle
+                // was reserved — see #2138 for what an actual handoff would take.
+                text = stringResource(
+                    if (link is RentalLink.Deep) {
+                        R.string.trip_plan_rental_open_in
+                    } else {
+                        R.string.trip_plan_rental_rent_with
+                    },
+                    rental.operator.displayName
+                ),
+                style = MaterialTheme.typography.labelLarge
+            )
+        }
+    }
+}
+
+/** How wide the operator chip may get before its name ellipsizes — about a dozen characters. */
+private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
+
+/**
+ * Hands the rider over: the operator's own link, and — when the device has nothing that handles a
+ * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
+ * [RentalPickup.fallback]).
+ */
+private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
+    when (link) {
+        is RentalLink.Deep -> if (!ExternalIntents.openRentalDeepLink(context, link.uri)) {
+            fallback?.let { openRental(context, it, fallback = null) }
+        }
+        is RentalLink.OperatorApp -> ExternalIntents.openRentalApp(context, link.packageName)
+        is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
+    }
+}
+
+/** What to call the rented vehicle — total over [RentalVehicleKind], so a new kind needs its word. */
+private fun rentalVehicleRes(kind: RentalVehicleKind): Int = when (kind) {
+    RentalVehicleKind.BIKE -> R.string.trip_plan_rental_bike
+    RentalVehicleKind.EBIKE -> R.string.trip_plan_rental_ebike
+    RentalVehicleKind.CARGO_BIKE -> R.string.trip_plan_rental_cargo_bike
+    RentalVehicleKind.ELECTRIC_CARGO_BIKE -> R.string.trip_plan_rental_electric_cargo_bike
+    RentalVehicleKind.SCOOTER -> R.string.trip_plan_rental_scooter
+    RentalVehicleKind.ESCOOTER -> R.string.trip_plan_rental_escooter
+    RentalVehicleKind.MOPED -> R.string.trip_plan_rental_moped
+    RentalVehicleKind.CAR -> R.string.trip_plan_rental_car
 }
 
 /**
@@ -2231,12 +2353,12 @@ private fun TripResultsErrorPreview() {
 // isolation, not a defect.
 
 /**
- * Renders [entry] alone, [expanded] or not. The row callbacks are no-ops (nothing is tappable in a
- * static preview) and the ETA strip is empty — it needs a live arrivals session, which is exactly the
+ * Renders [entry] — a ride or an on-street leg — alone, [expanded] or not. The row callbacks are
+ * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live arrivals session, which is exactly the
  * host dependency previewing one leg is meant to escape.
  */
 @Composable
-private fun TransitLegPreviewFrame(entry: TripLogEntry.Transit, expanded: Boolean = false) {
+private fun LegPreviewFrame(entry: TripLogEntry, expanded: Boolean = false) {
     CompositionLocalProvider(LocalUnitsAreMetric provides false) {
         ObaTheme {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
@@ -2263,14 +2385,14 @@ private fun TransitLegPreviewFrame(entry: TripLogEntry.Transit, expanded: Boolea
 @Composable
 private fun TransitLegPreview() {
     // Board header, "N stops" meta + realtime chip, board stop — the ride's stops stay folded away.
-    TransitLegPreviewFrame(previewTransitLeg())
+    LegPreviewFrame(previewTransitLeg())
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 340, name = "Transit leg · expanded")
 @Composable
 private fun TransitLegExpandedPreview() {
     // What the chevron reveals: every intermediate stop, on the ride's own coloured spine.
-    TransitLegPreviewFrame(previewTransitLeg(), expanded = true)
+    LegPreviewFrame(previewTransitLeg(), expanded = true)
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 300, name = "Transit leg · service alert")
@@ -2278,7 +2400,7 @@ private fun TransitLegExpandedPreview() {
 private fun TransitLegAlertPreview() {
     // The #2143 placement at leg scale: the banner sits under the route header and above "Get on at",
     // which is the adjacency the whole change is about.
-    TransitLegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_BUS_ALERT)))
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_BUS_ALERT)))
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 360, name = "Transit leg · two alerts")
@@ -2286,14 +2408,14 @@ private fun TransitLegAlertPreview() {
 private fun TransitLegTwoAlertsPreview() {
     // Loudest first, and two tinted cards stacked — the case where the leg header risks being crowded
     // off the top of the row.
-    TransitLegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_FERRY_ALERT, PREVIEW_BUS_ALERT)))
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_FERRY_ALERT, PREVIEW_BUS_ALERT)))
 }
 
 @Preview(showBackground = true, widthDp = 400, name = "Transit leg · whichever comes first")
 @Composable
 private fun TransitLegInterchangeablePreview() {
     // An interchangeable pair (#2010): one joined roundel plus the caption that says to board either.
-    TransitLegPreviewFrame(
+    LegPreviewFrame(
         previewTransitLeg(
             routeShortName = "1 Line",
             routeDisplayName = null,
@@ -2310,7 +2432,7 @@ private fun TransitLegInterchangeablePreview() {
 private fun TransitLegInterlinePreview() {
     // A stay-aboard route change (#2000/#2071). The seam row shows whether or not the leg is expanded —
     // it instructs the rider rather than merely annotating the ride — so this one stays collapsed.
-    TransitLegPreviewFrame(
+    LegPreviewFrame(
         previewTransitLeg(rideEvents = listOf(PREVIEW_RIDE_STOPS.first(), PREVIEW_INTERLINE_SEAM))
     )
 }
@@ -2320,5 +2442,64 @@ private fun TransitLegInterlinePreview() {
 private fun TransitLegNoShortNamePreview() {
     // No short name to badge, so the row leads with the long name and the boat glyph rides the spine —
     // and with no GTFS colour, the whole leg falls back to one neutral hue rather than three.
-    TransitLegPreviewFrame(previewFerryLeg())
+    LegPreviewFrame(previewFerryLeg())
+}
+
+// ---- bikeshare-leg previews ----------------------------------------------------------------------
+
+/** A rented-vehicle leg, ridden on [rental] — the shape a bikeshare itinerary's middle leg takes. */
+private fun previewRentalLeg(rental: RentalPickup) = TripLogEntry.Walk(
+    mode = StreetMode.BIKESHARE,
+    durationMinutes = 12,
+    distanceMeters = 3380.0,
+    isTransfer = false,
+    steps = emptyList(),
+    rental = rental
+)
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · known operator")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare leg · known operator, dark"
+)
+@Composable
+private fun BikeshareLegPreview() {
+    // What a Puget Sound rider actually gets today: a catalogued operator on its brand colour, an
+    // electric-assist bicycle with its remaining range, no dock to look for, and — the feed publishing
+    // no rental URI — a button that opens the operator rather than claiming to unlock this bike. Drawn
+    // in both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
+    LegPreviewFrame(
+        previewRentalLeg(
+            RentalPickup(
+                operator = RentalOperators.of("lime_seattle"),
+                vehicle = RentalVehicleKind.EBIKE,
+                stationName = null,
+                isDockless = true,
+                rangeMeters = 43356,
+                link = RentalLink.OperatorApp("com.limebike"),
+                fallback = RentalLink.Web("https://www.li.me/")
+            )
+        )
+    )
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · docked, unknown operator")
+@Composable
+private fun BikeshareLegDockedPreview() {
+    // The other end of the range: a network the catalog has never heard of, wearing its raw id on a
+    // neutral chip, with a dock to name and nothing to link to. Nothing here is invented for it.
+    LegPreviewFrame(
+        previewRentalLeg(
+            RentalPickup(
+                operator = RentalOperators.of("some_city_bikes"),
+                vehicle = null,
+                stationName = "Pine St & 3rd Ave",
+                isDockless = false,
+                rangeMeters = null,
+                link = null
+            )
+        )
+    )
 }

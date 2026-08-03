@@ -135,7 +135,9 @@ class OtpPlanDecodeTest {
         val busFrom = bus.from
         val intermediateStops = bus.intermediateStops!!
         assertEquals(TripVertexType.BIKESHARE, busFrom.vertexType)
-        assertEquals("bs_9", busFrom.bikeShareId)
+        // OTP1 carries only the rental id — no network, no vehicle type, no rental URI (#2150).
+        assertEquals("bs_9", busFrom.rental?.id)
+        assertNull(busFrom.rental?.networkId)
         assertEquals(1, intermediateStops.size)
         assertEquals("Stop Mid", intermediateStops[0].name)
     }

@@ -135,6 +135,9 @@ object TripLogBuilder {
         durationMinutes = leg.duration.inWholeMinutes,
         distanceMeters = leg.distance,
         isTransfer = isTransfer,
+        // The shared bike/scooter this leg is ridden on, when it is one (#2150) — null on a plain walk
+        // or the rider's own bike, and read from the same two endpoints [streetMode] reads.
+        rental = leg.rentalPickup(),
         // The generator emits one sub-direction per leg.step (in order), so the localized instruction and
         // the structured step distance line up by index.
         steps = walk.subDirections.orEmpty().mapIndexed { i, sub ->

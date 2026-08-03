@@ -11,9 +11,35 @@ fragment PlaceFields on Place {
     lat
     lon
     stop { gtfsId code }
-    rentalVehicle { vehicleId name }
+    # A vehicle-rental endpoint, in the two shapes OTP has for one: a free-floating vehicle, or a
+    # docked station. Both carry the same rental facts, so the adapter maps them onto one domain type
+    # (`TripVehicleRental`) and only `stationName` says which shape it came from.
+    #
+    # `rentalNetwork.networkId` is the operator, read straight off the field OTP publishes for it —
+    # never parsed out of the `network:id` prefix on `vehicleId`/`stationId` (#2138). `rentalUris` is
+    # the operator's own deep link to *this* vehicle/station; it is null on every vehicle the Puget
+    # Sound deployment serves today (checked against the live server on 2026-08-03 across all 13,396
+    # rental vehicles of both its networks), so the app must treat it as an operator capability rather
+    # than something a rental leg comes with — see `RentalOperators`.
+    #
+    # `RentalVehicle.name` is deliberately not selected: OTP fills it from the GBFS vehicle type, and
+    # every Lime and Bird vehicle in that deployment is named the literal string "Default vehicle
+    # type". `vehicleType` carries the fact that name was standing in for, in a form the app can
+    # actually word ("E-bike"), and `Place.name` above already carries whatever OTP called the place.
+    rentalVehicle {
+        vehicleId
+        rentalNetwork { networkId url }
+        rentalUris { android web }
+        vehicleType { formFactor propulsionType }
+        fuel { range }
+    }
     vehicleParking { vehicleParkingId name }
-    vehicleRentalStation { stationId name }
+    vehicleRentalStation {
+        stationId
+        name
+        rentalNetwork { networkId url }
+        rentalUris { android web }
+    }
 }
 
 # RouteFields is the planned leg's route. AlternativeRouteFields is the deliberately smaller set an

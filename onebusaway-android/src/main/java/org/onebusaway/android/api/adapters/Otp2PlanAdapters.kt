@@ -21,6 +21,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
+import org.onebusaway.android.directions.model.RentalFormFactor
+import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
 import org.onebusaway.android.directions.model.TripAlert
 import org.onebusaway.android.directions.model.TripAlertSeverity
@@ -32,6 +34,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 
@@ -169,7 +172,34 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
         hasRental = rentalVehicle != null || vehicleRentalStation != null,
         hasParking = vehicleParking != null
     ),
-    bikeShareId = rentalVehicle?.vehicleId ?: vehicleRentalStation?.stationId
+    rental = rentalVehicle?.toTripVehicleRental() ?: vehicleRentalStation?.toTripVehicleRental()
+)
+
+/** A free-floating rental vehicle: no dock to send the rider to, so `isStation` stays false. */
+private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
+    id = vehicleId,
+    networkId = rentalNetwork.networkId,
+    networkUrl = rentalNetwork.url?.ifBlank { null },
+    androidUri = rentalUris?.android?.ifBlank { null },
+    webUri = rentalUris?.web?.ifBlank { null },
+    formFactor = vehicleType?.formFactor?.rawValue.toEnum<RentalFormFactor>(),
+    propulsion = vehicleType?.propulsionType?.rawValue.toEnum<RentalPropulsion>(),
+    rangeMeters = fuel?.range
+)
+
+/**
+ * A docked rental station. It publishes no vehicle type — the dock holds whatever the operator left
+ * in it — so [TripVehicleRental.formFactor]/[TripVehicleRental.propulsion] stay null and the drawer
+ * words the leg by its own travel mode instead.
+ */
+private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
+    id = stationId,
+    isStation = true,
+    stationName = name.ifBlank { null },
+    networkId = rentalNetwork.networkId,
+    networkUrl = rentalNetwork.url?.ifBlank { null },
+    androidUri = rentalUris?.android?.ifBlank { null },
+    webUri = rentalUris?.web?.ifBlank { null }
 )
 
 /**

@@ -133,6 +133,43 @@ object ExternalIntents {
         return match?.activityInfo?.packageName
     }
 
+    /**
+     * Hands the rider to a rental operator's app (#2150): its launcher activity when it's installed,
+     * else its Play Store page so they can get it.
+     *
+     * The package has to be declared in the manifest's `<queries>` block for the installed case to be
+     * reachable at all — without it, Android 11+ package visibility makes `getLaunchIntentForPackage`
+     * return null for an app that is right there. The store fallback keeps that a degradation rather
+     * than a dead end, but a catalog entry whose package isn't declared silently never opens the app;
+     * see `RentalOperators.KnownOperator.appPackage`.
+     */
+    fun openRentalApp(context: Context, packageName: String) {
+        val launch = context.packageManager.getLaunchIntentForPackage(packageName)
+        if (launch != null) {
+            try {
+                context.startActivity(launch)
+                return
+            } catch (e: ActivityNotFoundException) {
+                // Uninstalled/disabled between the resolve and the launch — fall through to the store.
+            }
+        }
+        goToUrl(context, "https://play.google.com/store/apps/details?id=$packageName")
+    }
+
+    /**
+     * Opens an operator-supplied rental deep link, reporting whether anything handled it.
+     *
+     * Unlike [goToUrl] this doesn't toast on failure: the URI comes from a transit feed rather than
+     * from the rider, and "no app for `lime://…`" is the app's problem to fall back from, not an error
+     * to put in front of them.
+     */
+    fun openRentalDeepLink(context: Context, uri: String): Boolean = try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri.toUri()))
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    }
+
     fun goToPhoneDialer(context: Context, url: String) {
         val intent = Intent(Intent.ACTION_DIAL)
         intent.setData(url.toUri())

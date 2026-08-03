@@ -58,6 +58,15 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
         </intent>
+        <!--
+            The bikeshare operators the directions rows can hand a rider to (#2150). Declared one by
+            one rather than as a launcher-intent query, which would make every app on the device
+            visible to us: this app needs to know about exactly these, and only to answer "is it
+            installed, or does the rider need the store?". Must stay in step with the catalog in
+            RentalPickups.kt — an operator missing here still opens, but always via the Play Store.
+        -->
+        <package android:name="com.limebike" />
+        <package android:name="co.bird.android" />
     </queries>
 
     <application

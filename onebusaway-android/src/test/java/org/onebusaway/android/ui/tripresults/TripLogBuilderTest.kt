@@ -23,11 +23,14 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.Direction
+import org.onebusaway.android.directions.model.RentalFormFactor
+import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
@@ -216,6 +219,40 @@ class TripLogBuilderTest {
                     to = walkLeg.to.copy(vertexType = TripVertexType.BIKESHARE)
                 )
             )
+        )
+    }
+
+    @Test
+    fun bikeshareLegCarriesItsRental_soTheRowCanNameTheOperator() {
+        // Without this the leg says only "Bike", which tells a rider standing over an unfamiliar
+        // scooter nothing about whose it is or which app unlocks it (#2150).
+        val leg = walkLeg.copy(
+            mode = TripMode.BICYCLE,
+            from = walkLeg.from.copy(
+                vertexType = TripVertexType.BIKESHARE,
+                rental = TripVehicleRental(
+                    id = "lime_seattle:abc",
+                    networkId = "lime_seattle",
+                    formFactor = RentalFormFactor.BICYCLE,
+                    propulsion = RentalPropulsion.ELECTRIC_ASSIST
+                )
+            )
+        )
+        val rental = TripLogBuilder
+            .build(listOf(leg), listOf(walkDir), listOf(null))
+            .filterIsInstance<TripLogEntry.Walk>()
+            .single()
+            .rental!!
+        assertEquals("Lime", rental.operator.displayName)
+        assertEquals(RentalVehicleKind.EBIKE, rental.vehicle)
+
+        // The rider's own bike is nobody's rental, however the leg is otherwise shaped.
+        assertNull(
+            TripLogBuilder
+                .build(listOf(walkLeg.copy(mode = TripMode.BICYCLE)), listOf(walkDir), listOf(null))
+                .filterIsInstance<TripLogEntry.Walk>()
+                .single()
+                .rental
         )
     }
 

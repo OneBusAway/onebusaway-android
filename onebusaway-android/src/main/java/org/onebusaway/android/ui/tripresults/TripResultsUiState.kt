@@ -170,6 +170,10 @@ sealed interface TripLogEntry {
      * Tapping the leg frames [legPoints] (or, with no geometry, recentres on [focusPoint]).
      *
      * Named `Walk` because walking is overwhelmingly the case; [mode] carries the rest.
+     *
+     * [rental] is the shared vehicle a [StreetMode.BIKESHARE] leg is ridden on (#2150) — whose it is,
+     * what kind it is, and how to unlock it. Null on every other leg, and on a bikeshare leg the wire
+     * said nothing about (see [rentalPickup]).
      */
     data class Walk(
         val mode: StreetMode,
@@ -177,6 +181,7 @@ sealed interface TripLogEntry {
         val distanceMeters: Double,
         val isTransfer: Boolean,
         val steps: List<LogStep>,
+        val rental: RentalPickup? = null,
         val legPoints: List<GeoPoint> = emptyList(),
         val focusPoint: GeoPoint? = null,
         val legIndices: Set<Int> = emptySet(),

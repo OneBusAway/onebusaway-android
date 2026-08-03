@@ -199,37 +199,15 @@ class RouteMapController(
     private var basePolylines: List<RoutePolyline> = emptyList()
     private var baseStopPresentation: RouteStopPresentation? = null
 
-    // The boarding stop's arrivals, as the ride's candidate departures (#2124). Pending until the
-    // hoisted session reports its first load; Unserved when the stop names none of the ride's routes,
-    // which draws every vehicle rather than none.
-    private var rideQueue: RideQueue = RideQueue.Pending
-
-    // Which vehicles the focused ride draws, decided once per poll by [refreshRideSelection] and read
-    // as a set membership by the 20 Hz sampler. All outside leg focus.
-    private var rideVisibility: RideVisibility = RideVisibility.All
-
-    // Trips admitted to the ride so far. Carried across passes so a vehicle stays drawn once it leaves
-    // the queue (the rider is aboard by then); bounded by intersecting with what the poll still reports.
-    private var admittedRideTripIds: Set<String> = emptySet()
-
-    // The admitted trips joined to their cached schedule/shape — what the drawn approach clips.
-    private var visibleRideTrips: List<RideTrip> = emptyList()
-
-    // Stay-aboard continuations of the admitted trips, resolved off the sampler by [refreshContinuations]
-    // because the neighbour lookup can cost a request.
-    private var continuationTripIds: Set<String> = emptySet()
-
-    private var continuationJob: Job? = null
-
-    // The explicitly tapped ETA pill, admitted before the queue's first load lands so a pill tap can
-    // still frame its vehicle. Replaces #2099's filter exemption: the tapped trip is in the queue by
-    // construction once it arrives, so this is only needed for the window before it does.
-    private var seedTripIds: Set<String> = emptySet()
-
-    // Identity guards keeping [refreshRideSelection] off the frame loop, like [refreshRouteColorMemo].
-    private var rideSelectionPoll: VehiclePoll? = null
-    private var rideSelectionExtras: Map<String, VehiclePoll>? = null
-    private var rideSelectionQueue: RideQueue? = null
+    // Which live vehicles belong to the focused ride (#2124): the boarding stop's arrivals select
+    // them, this poll says where they are. Owns its own queue/admitted/continuation state and the
+    // guards that keep the decision off the frame loop.
+    private val rideSelection = RideSelectionController(
+        lookupTripState = tripObservationRepository::lookupTripState,
+        neighbourRouteOf = { tripObservationRepository.resolveNeighborTrip(it)?.routeId },
+        scope = scope,
+        onSelectionChanged = ::publishVehicleSet
+    )
 
     private data class FocusedRouteLines(
         val routeId: String,
@@ -351,15 +329,7 @@ class RouteMapController(
         this.extraRouteMaps = emptyMap()
         this.initialDirectionOverride = initialDirectionId
         this.pendingFocus = focusTripId
-        this.seedTripIds = setOfNotNull(focusTripId)
-        this.rideQueue = RideQueue.Pending
-        this.rideVisibility = RideVisibility.All
-        this.admittedRideTripIds = emptySet()
-        this.visibleRideTrips = emptyList()
-        this.continuationTripIds = emptySet()
-        this.rideSelectionPoll = null
-        this.rideSelectionExtras = null
-        this.rideSelectionQueue = null
+        rideSelection.start(focusTripId)
         // A whole-route launch has no direction to wait for, so its vehicles show as soon as they poll;
         // a direction-anchored launch (an anchor stop or a restored direction) stays Pending until the
         // route load resolves the filter (below).
@@ -408,7 +378,7 @@ class RouteMapController(
      */
     fun requestFocus(tripId: String) {
         pendingFocus = tripId
-        seedTripIds = setOf(tripId)
+        rideSelection.seed(tripId)
         tryFocusVehicle(currentVehicleLayer())
     }
 
@@ -431,7 +401,7 @@ class RouteMapController(
         // installs this request's own focus; a request carrying none leaves focus cleared, the same
         // unconditional set [start] does.
         pendingFocus = null
-        seedTripIds = emptySet()
+        rideSelection.clearSeed()
         // A reframe onto the same route+direction-stop can still carry a different (or empty) segment —
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
@@ -450,16 +420,7 @@ class RouteMapController(
             extraSegments = request.extraSegments
             alightStopId = request.alightStopId
             directionHeadsign = request.directionHeadsign
-            // The ride changed, so what was admitted under the old one must not carry over; the queue
-            // is re-derived from the next arrivals load for the new boarding stop. The in-flight
-            // continuation walk belongs to the old ride, so it is cancelled rather than left to report
-            // its result into the new one.
-            rideQueue = RideQueue.Pending
-            admittedRideTripIds = emptySet()
-            continuationTripIds = emptySet()
-            rideSelectionQueue = null
-            continuationJob?.cancel()
-            continuationJob = null
+            rideSelection.rideChanged()
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
             showDirectionStops()
@@ -515,7 +476,7 @@ class RouteMapController(
         val extraPolls = vehiclePoller.extraPolls
         // Unlike [refreshRouteColorMemo] (bottom of this function), this must run before the
         // filterToFocusedRide calls below — they are what reads the selection.
-        refreshRideSelection(poll, extraPolls)
+        rideSelection.refresh(rideFocusOrNull(), id, poll, extraPolls)
         // A stay-aboard interline is one shared block vehicle running consecutive trips across the ridden
         // routes/directions, so don't direction-filter and merge each extra route's poll — the vehicle
         // must show through every phase, not vanish when it flips direction/route at a seam (#2000).
@@ -578,101 +539,13 @@ class RouteMapController(
      * Outside leg focus, and whenever the boarding stop's arrivals cannot answer for this ride, every
      * vehicle the poll reports is kept.
      */
-    private fun List<ExtrapolatedVehicle>.filterToFocusedRide(): List<ExtrapolatedVehicle> = when (val visibility = rideVisibility) {
+    private fun List<ExtrapolatedVehicle>.filterToFocusedRide(): List<ExtrapolatedVehicle> = when (val visibility = rideSelection.visibility) {
         RideVisibility.All -> this
         is RideVisibility.Only -> filter { it.status.activeTripId in visibility.tripIds }
     }
 
-    /**
-     * Re-decide which vehicles belong to the ride, at most once per landed poll or arrivals load.
-     *
-     * Both inputs the decision reads — each trip's schedule and its reported progress — change only
-     * when a poll is replaced, so an identity compare (as [refreshRouteColorMemo] makes) keeps this off
-     * the 20 Hz sampler entirely; every frame in between re-uses the set. [visibleRideTrips] falls out
-     * of the same walk, so the drawn approach and the shown vehicles cannot disagree about which trips
-     * are the ride's.
-     */
-    private fun refreshRideSelection(poll: VehiclePoll, extras: Map<String, VehiclePoll>) {
-        if (!riddenSpans.isDrawableRide()) {
-            rideVisibility = RideVisibility.All
-            return
-        }
-        if (poll === rideSelectionPoll && extras === rideSelectionExtras && rideQueue === rideSelectionQueue) return
-        rideSelectionPoll = poll
-        rideSelectionExtras = extras
-        rideSelectionQueue = rideQueue
-        val pollTrips = pollRideTrips(poll, extras)
-        val selection = rideSelection(
-            queue = rideQueue,
-            seedTripIds = seedTripIds,
-            previouslyAdmitted = admittedRideTripIds,
-            pollTrips = pollTrips,
-            continuationTripIds = continuationTripIds,
-            ride = rideFocus()
-        )
-        rideVisibility = selection.visibility
-        admittedRideTripIds = selection.admitted
-        visibleRideTrips = when (val visibility = selection.visibility) {
-            RideVisibility.All -> pollTrips
-            is RideVisibility.Only -> pollTrips.filter { it.tripId in visibility.tripIds }
-        }
-        refreshContinuations(pollTrips)
-    }
-
-    /** Every active trip across the leader and extra polls, joined to what the observation cache holds. */
-    private fun pollRideTrips(poll: VehiclePoll, extras: Map<String, VehiclePoll>): List<RideTrip> = buildList {
-        fun collect(routeId: String, response: RouteTrips) {
-            response.forEachActiveTrip { tripId, status, activeTrip ->
-                val state = tripObservationRepository.lookupTripState(tripId)
-                add(
-                    RideTrip(
-                        tripId = tripId,
-                        routeId = response.trip(tripId)?.routeId ?: routeId,
-                        shapeId = state?.shapeId ?: activeTrip.shapeId,
-                        schedule = state?.schedule,
-                        shape = state?.polyline,
-                        distanceAlongTrip = status.distanceAlongTrip
-                    )
-                )
-            }
-        }
-        routeId?.let { collect(it, poll.response) }
-        extras.forEach { (extraRouteId, extraPoll) -> collect(extraRouteId, extraPoll.response) }
-    }
-
-    /**
-     * Resolve the stay-aboard continuations of the admitted trips, off the sampler.
-     *
-     * The neighbour lookup can miss its cache and cost a request, so it cannot run inline with the
-     * selection; the result lands in [continuationTripIds] and is picked up by the next pass. That lag
-     * is harmless — a continuation only matters once the vehicle reaches the seam, minutes in, by which
-     * time many polls have landed.
-     */
-    private fun refreshContinuations(pollTrips: List<RideTrip>) {
-        val ride = rideFocus()
-        if (ride.stayAboardHops == 0) {
-            continuationTripIds = emptySet()
-            return
-        }
-        if (admittedRideTripIds.isEmpty()) {
-            continuationTripIds = emptySet()
-            return
-        }
-        val schedules = pollTrips.associate { it.tripId to it.schedule }
-        continuationJob?.cancel()
-        continuationJob = scope.launch {
-            val resolved = rideContinuations(
-                seed = admittedRideTripIds,
-                ride = ride,
-                scheduleOf = { schedules[it] },
-                neighbourRouteOf = { tripObservationRepository.resolveNeighborTrip(it)?.routeId }
-            )
-            if (resolved != continuationTripIds) {
-                continuationTripIds = resolved
-                publishVehicleSet()
-            }
-        }
-    }
+    /** This session's ride, or null when no directions leg is focused (a plain route selects nothing). */
+    private fun rideFocusOrNull(): RideFocus? = if (riddenSpans.isDrawableRide()) rideFocus() else null
 
     /** This session's ride, as the pure selection layer needs to see it. */
     private fun rideFocus(): RideFocus = RideFocus(
@@ -690,7 +563,7 @@ class RouteMapController(
      * set does not depend on which itinerary rows are composed.
      */
     fun setRideArrivals(groups: List<RideRouteGroup>) {
-        rideQueue = rideQueueFrom(groups, rideFocus())
+        rideSelection.setArrivals(groups, rideFocus())
         // Order as in [onVehiclePoll]: the push re-selects, the approach then reads the new selection.
         publishVehicleSet()
         refreshApproachLines()
@@ -889,17 +762,7 @@ class RouteMapController(
         baseStopPresentation = null
         directionState = DirectionState.Resolved(null)
         pendingFocus = null
-        seedTripIds = emptySet()
-        rideQueue = RideQueue.Pending
-        rideVisibility = RideVisibility.All
-        admittedRideTripIds = emptySet()
-        visibleRideTrips = emptyList()
-        continuationTripIds = emptySet()
-        continuationJob?.cancel()
-        continuationJob = null
-        rideSelectionPoll = null
-        rideSelectionExtras = null
-        rideSelectionQueue = null
+        rideSelection.stop()
         publishMapPresentation()
         // setVehicleSet(null) is what clears the vehicle markers (the renderer reconciles the empty set);
         // it must be nulled together with the motion sampler, which only moves already-reconciled markers.
@@ -1213,7 +1076,7 @@ class RouteMapController(
      * Drawn from the *selected* trips rather than every active trip on the route, so the line beneath a
      * focused ride shows where the rider's own options are coming from — the same set as the markers.
      */
-    private fun scheduledApproaches(focusRouteId: String): List<List<GeoPoint>> = approachPolylines(visibleRideTrips.filter { it.routeId == focusRouteId }, boardStopIdFor(focusRouteId))
+    private fun scheduledApproaches(focusRouteId: String): List<List<GeoPoint>> = approachPolylines(rideSelection.visibleTrips.filter { it.routeId == focusRouteId }, boardStopIdFor(focusRouteId))
 
     /**
      * The upstream context drawn beneath a focused ride, per route: each active trip's own shape clipped
@@ -1285,7 +1148,7 @@ class RouteMapController(
         // is a deliberate "show the other direction" action).
         renderState.setSelectedVehicle(null)
         pendingFocus = null
-        seedTripIds = emptySet()
+        rideSelection.clearSeed()
         showDirectionStops()
         showDirectionPolylines()
         // Re-filter the vehicle set against the same poll and push it — the renderer reconciles markers on

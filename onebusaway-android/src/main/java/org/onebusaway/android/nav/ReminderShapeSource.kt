@@ -19,7 +19,7 @@ import android.util.Log
 import javax.inject.Inject
 import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
-import org.onebusaway.android.models.ObaTripSchedule
+import org.onebusaway.android.extrapolation.soleOffsetOf
 import org.onebusaway.android.util.encodePolyline
 import org.onebusaway.android.util.runCatchingCancellable
 
@@ -54,6 +54,11 @@ internal class ObaReminderShapeSource @Inject constructor(
         // whatever the operator considers the stop's position on the route. `distanceAlongTrip` and
         // the polyline's cumulative distances share a metric space by construction (see
         // SphericalGeometry.EARTH_RADIUS_METERS), so the two are directly comparable.
+        //
+        // A stop the trip serves twice (a loop or an out-and-back) yields no offset at all: the legacy
+        // launch carries only a stop id, so nothing here says which visit the rider means. Picking one
+        // would be a guess that reads plausibly and misplaces the destination by a whole lap; the ride
+        // keeps straight-line distances instead, which do not care how many times the route passes.
         val penultimateOffset = schedule.soleOffsetOf(penultimateStopId)
             ?: return@runCatchingCancellable noShape(tripId, "cannot place $penultimateStopId on this trip")
         val alightOffset = schedule.soleOffsetOf(alightStopId)
@@ -71,17 +76,6 @@ internal class ObaReminderShapeSource @Inject constructor(
             alightOffsetMeters = alightOffset
         )
     }.onFailure { Log.w(TAG, "Could not resolve a shape for trip $tripId", it) }.getOrNull()
-
-    /**
-     * This stop's one offset along the trip, or null when the trip does not serve it — or serves it
-     * more than once.
-     *
-     * A loop or an out-and-back visits the same stop twice with different offsets, and the legacy
-     * launch carries only a stop id, so nothing here says which visit the rider means. Picking one
-     * would be a guess that reads plausibly and misplaces the destination by a whole lap; the ride
-     * keeps straight-line distances instead, which do not care how many times the route passes.
-     */
-    private fun ObaTripSchedule.soleOffsetOf(stopId: String): Double? = stopTimes.filter { it.stopId == stopId }.singleOrNull()?.distanceAlongTrip
 
     private fun noShape(tripId: String, reason: String): ReminderShape? {
         Log.i(TAG, "No shape for trip $tripId: $reason")

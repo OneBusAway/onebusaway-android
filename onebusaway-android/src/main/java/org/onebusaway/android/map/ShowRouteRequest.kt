@@ -41,6 +41,13 @@ package org.onebusaway.android.map
  * @property extraSegments route/directions shown alongside the primary route: stay-aboard continuations
  *   (#2000) and interchangeable routes (#2042). Each relationship controls whether vehicles remain
  *   visible across a seam or are filtered to the segment's resolved direction.
+ * @property alightStopId when non-null (a directions leg focus), the OBA id of the stop where the
+ *   rider leaves the ride. The one bound the queue-driven vehicle selection needs (#2124): admission
+ *   comes from the boarding stop's live arrivals, so this only has to answer "is this ride over yet",
+ *   and a trip is dropped only once its own progress is provably past this stop. Null on an OTP→OBA
+ *   resolution failure, or for a non-directions caller, which simply never retires a vehicle.
+ * @property directionHeadsign the planned leg's headsign, used to pick the ridden direction group
+ *   among the boarding stop's arrival rows — the same pick the leg card's ETA strip makes.
  */
 data class ShowRouteRequest(
     val routeId: String,
@@ -48,5 +55,7 @@ data class ShowRouteRequest(
     val focusTripId: String? = null,
     val initialDirectionId: Int? = null,
     val riddenSpans: List<RiddenSpan> = emptyList(),
-    val extraSegments: List<RouteFocusSegment> = emptyList()
+    val extraSegments: List<RouteFocusSegment> = emptyList(),
+    val alightStopId: String? = null,
+    val directionHeadsign: String? = null
 )

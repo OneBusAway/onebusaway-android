@@ -68,6 +68,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
@@ -396,6 +397,44 @@ fun HomeScreen(
                 val arrivalsState = arrivalsSession?.viewModel?.state
                     ?.collectAsStateWithLifecycle()?.value ?: ArrivalsUiState.Loading
                 val arrivalsContent = arrivalsState as? ArrivalsUiState.Content
+
+                // The focused directions leg's boarding stop, hoisted for the same reason as the session
+                // above — "prevents duplicate polling" — but with a second requirement: the map's ride
+                // vehicle selection (#2124) reads these arrivals, and a session owned by the itinerary's
+                // Board row would stop polling the moment that row scrolled out of the LazyColumn, which
+                // would make what the map draws depend on where the sheet is scrolled. Null (and so
+                // inert) outside a focused leg.
+                val rideRouteFocus =
+                    ((currentFocus as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route)
+                val rideBoardStop = rideRouteFocus?.boardStop
+                val rideArrivalsSession = rememberArrivalsSession(
+                    focusedStop = rideBoardStop,
+                    sheetVisible = true,
+                    arrivalsViewModelFactory = arrivalsViewModelFactory,
+                    tutorialState = null,
+                    onArrivalsLoaded = {},
+                    revealRoute = { _, request -> homeViewModel.focusDirectionsRouteVehicleInFocusedLeg(request) },
+                    onShowTrip = onShowTrip,
+                    onEditReminder = onEditReminder,
+                    showUndoSnackbar = { _, _, _ -> }
+                )
+                // Reduced to the map's own shape here rather than in the view model, which stays free of
+                // UI types (an ArrivalInfo needs a Context to build, which is what keeps HomeViewModel's
+                // tests plain JVM ones).
+                val rideArrivalGroups = (
+                    rideArrivalsSession?.viewModel?.state
+                        ?.collectAsStateWithLifecycle()?.value as? ArrivalsUiState.Content
+                    )?.routeGroups?.map { group ->
+                    RideRouteGroup(group.routeId, group.headsign, group.trips.map { it.tripId })
+                }
+                // The same stop session is deliberately retained when focus moves between rides that
+                // board there. Key the hand-off on the ride as well as its data: entering the new route
+                // resets its selection to Pending, so it needs the session's already-loaded rows even
+                // when neither the stop id nor those rows changed.
+                LaunchedEffect(rideRouteFocus, rideArrivalGroups) {
+                    val stopId = rideBoardStop?.id ?: return@LaunchedEffect
+                    homeViewModel.onRideArrivals(stopId, rideArrivalGroups ?: return@LaunchedEffect)
+                }
                 var serviceAlertsVisible by remember(stopFocus?.stop?.id) { mutableStateOf(false) }
                 val focusBannerState: FocusBannerState? = when (currentFocus) {
                     is CurrentFocus.Stop -> FocusBannerState.Stop(
@@ -772,6 +811,11 @@ fun HomeScreen(
                                                     onEditReminder = onEditReminder,
                                                     onFocusVehicle = { request ->
                                                         homeViewModel.focusDirectionsRouteVehicle(request, ride.routeLeg, ride.legPoints)
+                                                    },
+                                                    // The focused leg's Board row reads the hoisted session rather than
+                                                    // opening a second one on the stop the map is already polling.
+                                                    hoistedSession = rideArrivalsSession?.takeIf {
+                                                        stop.stopId != null && stop.stopId == rideBoardStop?.id
                                                     }
                                                 )
                                             },

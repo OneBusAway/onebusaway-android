@@ -325,6 +325,8 @@ fun MapFeature(
                         directive.routes,
                         directive.trips
                     )
+                is MapDirective.SetRideArrivals ->
+                    mapViewModel.setRideArrivals(directive.stopId, directive.groups)
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
                 MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
                 MapDirective.ClearFocus -> mapViewModel.clearAllFocus()

@@ -85,6 +85,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.pickRideDirection
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -100,6 +101,7 @@ import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.home.arrivals.ArrivalsSession
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
@@ -388,7 +390,7 @@ fun DirectionsResultsSheet(
  * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  */
 @Composable
-fun DirectionStopEtaStrip(
+internal fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
     reachStopTime: ServerTime?,
@@ -396,7 +398,8 @@ fun DirectionStopEtaStrip(
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
     onFocusVehicle: (ShowRouteRequest) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hoistedSession: ArrivalsSession? = null
 ) {
     val stopId = stop.stopId
     val point = stop.point
@@ -406,8 +409,16 @@ fun DirectionStopEtaStrip(
     // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
     // unidentifiable stop as one with no service.
     if (stopId == null || point == null) return
-    val session = rememberArrivalsSession(
-        focusedStop = FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point),
+    // The row's own session is requested unconditionally, with a null stop when HOME already hoisted one
+    // for this stop — [rememberArrivalsSession] then builds nothing and returns null. Asking for it
+    // behind an `if` instead would put the remembers on one branch of a condition that flips when focus
+    // moves, which is exactly what Compose's slot table cannot follow.
+    val ownSession = rememberArrivalsSession(
+        focusedStop = if (hoistedSession == null) {
+            FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point)
+        } else {
+            null
+        },
         sheetVisible = true,
         arrivalsViewModelFactory = arrivalsViewModelFactory,
         tutorialState = null,
@@ -418,7 +429,28 @@ fun DirectionStopEtaStrip(
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
         showUndoSnackbar = { _, _, _ -> }
-    ) ?: return
+    )
+    // The focused leg's row reads HOME's hoisted session, so a focused ride polls its boarding stop
+    // exactly once and the map and this strip see the same arrivals.
+    val session = hoistedSession ?: ownSession ?: return
+    DirectionStopEtaStripContent(
+        routeLeg = routeLeg,
+        reachStopTime = reachStopTime,
+        session = session,
+        rowPadding = rowPadding,
+        modifier = modifier
+    )
+}
+
+/** The strip proper, over whichever session it was given. */
+@Composable
+private fun DirectionStopEtaStripContent(
+    routeLeg: RouteLegRef,
+    reachStopTime: ServerTime?,
+    session: ArrivalsSession,
+    rowPadding: Modifier,
+    modifier: Modifier
+) {
     val state by session.viewModel.state.collectAsStateWithLifecycle()
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
 
@@ -481,13 +513,11 @@ internal fun <T> interleaveRouteItems(
 internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge = plannedBadge ?: RouteBadge(fallbackLineName, null)
 
 /** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
- *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop. */
-private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? {
-    if (routeId == null) return null
-    val forRoute = filter { it.routeId == routeId }
-    return forRoute.firstOrNull { headsign != null && it.headsign.equals(headsign, ignoreCase = true) }
-        ?: forRoute.firstOrNull()
-}
+ *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop.
+ *
+ *  Delegates to [pickRideDirection] rather than repeating the rule, so the strip and the map's ride
+ *  selection resolve a leg to the same direction group by construction. */
+private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
 
 @Composable
 private fun NoEtasText(modifier: Modifier) {

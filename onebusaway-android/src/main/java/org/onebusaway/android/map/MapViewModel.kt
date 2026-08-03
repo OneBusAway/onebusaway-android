@@ -328,6 +328,8 @@ class MapViewModel @Inject constructor(
         preserveStopFocus: Boolean = false,
         riddenSpans: List<RiddenSpan> = emptyList(),
         extraSegments: List<RouteFocusSegment> = emptyList(),
+        alightStopId: String? = null,
+        directionHeadsign: String? = null,
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false,
         palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
@@ -339,15 +341,17 @@ class MapViewModel @Inject constructor(
         leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
         persistRoute(routeId, directionStopId, initialDirectionId)
         routeController.start(
-            routeId,
-            zoomToRoute,
-            directionStopId,
-            initialDirectionId,
-            focusTripId,
-            riddenSpans,
-            extraSegments,
-            itineraryContext,
-            palette
+            routeId = routeId,
+            zoomToRoute = zoomToRoute,
+            directionStopId = directionStopId,
+            initialDirectionId = initialDirectionId,
+            focusTripId = focusTripId,
+            riddenSpans = riddenSpans,
+            extraSegments = extraSegments,
+            alightStopId = alightStopId,
+            directionHeadsign = directionHeadsign,
+            itineraryContext = itineraryContext,
+            palette = palette
         )
         bikeController.start(directions = false, selectedBikeStationIds = null)
     }
@@ -451,6 +455,17 @@ class MapViewModel @Inject constructor(
         routeController.focusStop(stopId, trips, routes)
     }
 
+    /**
+     * Hand the route controller the focused leg's boarding-stop arrival rows, from which it selects the
+     * live vehicles that belong to the ride (#2124). Guarded on the stop the route session is actually
+     * anchored to, so a load still in flight when the rider moves to another leg cannot select against
+     * the wrong stop — the same staleness guard [showStopRoutes] makes against the rendered focus.
+     */
+    fun setRideArrivals(stopId: String, groups: List<RideRouteGroup>) {
+        if (routeController.directionStopId != stopId) return
+        routeController.setRideArrivals(groups)
+    }
+
     /** Clear the focused-stop layer, revealing any active single route underneath. */
     fun clearStopRoutes() = routeController.clearStopFocus()
 
@@ -503,6 +518,8 @@ class MapViewModel @Inject constructor(
                 preserveStopFocus = stopScoped,
                 riddenSpans = request.riddenSpans,
                 extraSegments = request.extraSegments,
+                alightStopId = request.alightStopId,
+                directionHeadsign = request.directionHeadsign,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
                 itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),

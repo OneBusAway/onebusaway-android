@@ -41,8 +41,6 @@ data class RentalPickup(
     val vehicle: RentalVehicleKind?,
     /** The dock's name, when the rider is picking up from one that published a name. */
     val stationName: String?,
-    /** True when there is no dock to look for — the vehicle is standing on the street. */
-    val isDockless: Boolean,
     /** How far the vehicle can still travel on its charge, in meters, when the feed says. */
     val rangeMeters: Int?,
     /** Where the row's action sends the rider, or null when there is nowhere to send them. */
@@ -136,7 +134,6 @@ internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? {
         operator = RentalOperators.of(networkId),
         vehicle = rental.vehicleKind(),
         stationName = rental.stationName,
-        isDockless = !rental.isStation,
         rangeMeters = rental.rangeMeters,
         link = links.firstOrNull(),
         // The first one that can't fail for want of an app to handle a custom scheme, and never the

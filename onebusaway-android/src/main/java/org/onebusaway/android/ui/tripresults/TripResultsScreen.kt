@@ -56,7 +56,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -1594,10 +1594,14 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
 private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (mode) {
     StreetMode.WALK ->
         if (isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
-    // A rented bike is still ridden: the verb is the same as for the rider's own bike, and only the
-    // glyph (and the map's dock markers) say where it came from.
-    StreetMode.BIKE, StreetMode.BIKESHARE ->
+    StreetMode.BIKE ->
         if (isTransfer) R.string.trip_plan_bike_transfer else R.string.step_by_step_non_transit_mode_bicycle_action
+    // A shared bike is a different act from riding your own — you have to find it and rent it first —
+    // so the leg is titled by what the rider is doing rather than by the vehicle they end up on. It's
+    // the same word the option card's glyph is announced with ([StreetMetric.BIKESHARE]), so the card
+    // and the row that expands from it name the leg alike.
+    StreetMode.BIKESHARE ->
+        if (isTransfer) R.string.trip_plan_bikeshare_transfer else R.string.transit_directions_bikeshare_label
     StreetMode.CAR ->
         if (isTransfer) R.string.trip_plan_car_transfer else R.string.step_by_step_non_transit_mode_car_action
 }
@@ -1629,10 +1633,15 @@ private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk) {
  * it is, where to find it, and how to unlock it. Before this the leg said only "Bike", which told a
  * rider standing over an unfamiliar scooter nothing about which app opens it.
  *
- * Everything here is drawn from what the feed actually said, and each part is omitted rather than
- * guessed when it didn't: an operator the app has no catalog entry for wears its raw network id (see
- * [RentalOperators]), a dock that published no name draws no pickup line at all, and a network with
- * neither a rental URI nor a catalog entry gets no button rather than one going somewhere approximate.
+ * The operator's chip is also the way over to them: it wears an open-in-new arrow and is the row's
+ * only external affordance, so the brand the rider is looking for and the thing they tap are one
+ * object rather than a chip with a button repeating its name underneath. A network with neither a
+ * rental URI nor a catalog entry has nowhere to send anyone, and its chip is a plain label — no arrow,
+ * no tap — rather than one going somewhere approximate.
+ *
+ * Everything else is drawn from what the feed actually said, and omitted rather than guessed when it
+ * didn't: an operator the app has no catalog entry for wears its raw network id (see
+ * [RentalOperators]), and a pickup with no named dock draws no pickup line.
  *
  * The vehicle id is deliberately not shown. The ids the live networks publish are UUIDs — nothing a
  * rider can match against the bike in front of them — so drawing one would be noise that reads like an
@@ -1647,16 +1656,7 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        val name = rental.operator.displayName
-        val described = stringResource(R.string.trip_plan_rental_operator_description, name)
-        RouteBadgeChip(
-            shortName = name,
-            routeColor = rental.operator.brandColor,
-            // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
-            // chip instead of pushing the vehicle beside it off the row.
-            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH,
-            modifier = Modifier.semantics { contentDescription = described }
-        )
+        OperatorChip(rental) { link -> openRental(context, link, rental.fallback) }
         val details = listOfNotNull(
             rental.vehicle?.let { stringResource(rentalVehicleRes(it)) },
             rental.rangeMeters?.let {
@@ -1674,40 +1674,55 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
             )
         }
     }
-    // Where to find it: the dock by name, or the fact that there isn't one. A docked station that
-    // published no name says neither — "dockless" would send the rider looking for the wrong thing.
-    val pickup = when {
-        rental.stationName != null -> stringResource(R.string.trip_plan_rental_pick_up_at, rental.stationName)
-        rental.isDockless -> stringResource(R.string.trip_plan_rental_dockless)
-        else -> null
-    }
-    pickup?.let {
+    rental.stationName?.let {
         Text(
-            text = it,
+            text = stringResource(R.string.trip_plan_rental_pick_up_at, it),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-    rental.link?.let { link ->
-        TextButton(
-            onClick = { openRental(context, link, rental.fallback) },
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
-            modifier = Modifier.padding(top = 2.dp)
+}
+
+/**
+ * The operator on its brand colour — and, when there is somewhere to send the rider, the tap that
+ * takes them there.
+ *
+ * The chip itself is roundel-sized, which is well under a comfortable touch target, so the tappable
+ * form reserves the interactive minimum around it ([minimumInteractiveComponentSize]) rather than
+ * leaving a rider to hit an 18dp mark. Only [RentalLink.Deep] names the exact vehicle they were routed
+ * onto, so only it is announced as opening it; the rest merely open the operator, and none of it
+ * claims a reservation was made (see #2138).
+ */
+@Composable
+private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
+    val name = rental.operator.displayName
+    val described = stringResource(R.string.trip_plan_rental_operator_description, name)
+    val link = rental.link
+    val chip = @Composable { modifier: Modifier ->
+        RouteBadgeChip(
+            shortName = name,
+            routeColor = rental.operator.brandColor,
+            // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
+            // chip instead of pushing the vehicle beside it off the row.
+            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH,
+            trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
+            modifier = modifier.semantics { contentDescription = described }
+        )
+    }
+    if (link == null) {
+        chip(Modifier)
+    } else {
+        val openLabel = stringResource(
+            if (link is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
+            name
+        )
+        Box(
+            modifier = Modifier
+                .minimumInteractiveComponentSize()
+                .clickable(onClickLabel = openLabel) { onOpen(link) },
+            contentAlignment = Alignment.Center
         ) {
-            Text(
-                // Only a link to *this* vehicle may say "open it"; the rest merely open the operator,
-                // and the rider still has to find the bike themselves. Nothing here claims the vehicle
-                // was reserved — see #2138 for what an actual handoff would take.
-                text = stringResource(
-                    if (link is RentalLink.Deep) {
-                        R.string.trip_plan_rental_open_in
-                    } else {
-                        R.string.trip_plan_rental_rent_with
-                    },
-                    rental.operator.displayName
-                ),
-                style = MaterialTheme.typography.labelLarge
-            )
+            chip(Modifier)
         }
     }
 }
@@ -2476,7 +2491,6 @@ private fun BikeshareLegPreview() {
                 operator = RentalOperators.of("lime_seattle"),
                 vehicle = RentalVehicleKind.EBIKE,
                 stationName = null,
-                isDockless = true,
                 rangeMeters = 43356,
                 link = RentalLink.OperatorApp("com.limebike"),
                 fallback = RentalLink.Web("https://www.li.me/")
@@ -2496,7 +2510,6 @@ private fun BikeshareLegDockedPreview() {
                 operator = RentalOperators.of("some_city_bikes"),
                 vehicle = null,
                 stationName = "Pine St & 3rd Ave",
-                isDockless = false,
                 rangeMeters = null,
                 link = null
             )

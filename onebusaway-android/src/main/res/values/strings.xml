@@ -1015,6 +1015,9 @@
          phrasing stays a translator's call. -->
     <string name="trip_plan_walk_transfer">Walk to transfer</string>
     <string name="trip_plan_bike_transfer">Bike to transfer</string>
+    <!-- A shared bike, as opposed to the rider's own: the leg is named for the act (finding and
+         renting one), which is what makes it different from riding the bike you brought. -->
+    <string name="trip_plan_bikeshare_transfer">Bikeshare to transfer</string>
     <string name="trip_plan_car_transfer">Drive to transfer</string>
     <!-- The rented vehicle a bikeshare leg is ridden on, in the trip-log directions. "E-" is the
          electric form of each: the feed states the propulsion, so the two are never guessed apart. -->
@@ -1026,15 +1029,14 @@
     <string name="trip_plan_rental_escooter">E-scooter</string>
     <string name="trip_plan_rental_moped">Moped</string>
     <string name="trip_plan_rental_car">Car</string>
-    <!-- Where the rider picks the rented vehicle up: a named dock, or nowhere in particular -->
-    <!-- %1$s is the rental station's name, e.g. "Pick up at Pine St &amp; 3rd Ave" -->
+    <!-- The dock the rider picks the rented vehicle up from. %1$s is the rental station's name,
+         e.g. "Pick up at Pine St &amp; 3rd Ave". A free-floating vehicle has no dock and no line. -->
     <string name="trip_plan_rental_pick_up_at">Pick up at %1$s</string>
-    <string name="trip_plan_rental_dockless">Dockless</string>
     <!-- How far the vehicle can still travel on its charge. %1$s is an already-formatted distance. -->
     <string name="trip_plan_rental_range">%1$s of range left</string>
-    <!-- The action that hands the rider to the rental operator. The first is used only when the
-         operator published a link to this exact vehicle; the second merely opens the operator. %1$s is
-         the operator's name, e.g. "Lime". -->
+    <!-- What tapping the operator's chip does, announced as its click label. The first is used only
+         when the operator published a link to this exact vehicle; the second merely opens the
+         operator. %1$s is the operator's name, e.g. "Lime". -->
     <string name="trip_plan_rental_open_in">Open in %1$s</string>
     <string name="trip_plan_rental_rent_with">Rent with %1$s</string>
     <!-- Announced for the chip naming the rental operator. %1$s is the operator's name. -->

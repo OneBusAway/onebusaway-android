@@ -175,7 +175,7 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
     rental = rentalVehicle?.toTripVehicleRental() ?: vehicleRentalStation?.toTripVehicleRental()
 )
 
-/** A free-floating rental vehicle: no dock to send the rider to, so `isStation` stays false. */
+/** A free-floating rental vehicle: no dock, so no `stationName` to walk the rider to. */
 private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
     id = vehicleId,
     networkId = rentalNetwork.networkId,
@@ -194,7 +194,6 @@ private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental =
  */
 private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
     id = stationId,
-    isStation = true,
     stationName = name.ifBlank { null },
     networkId = rentalNetwork.networkId,
     networkUrl = rentalNetwork.url?.ifBlank { null },

@@ -313,9 +313,8 @@ class Otp2PlanDecodeTest {
     }
 
     /**
-     * A docked pickup — OTP's other rental shape. The dock is stated as such (`isStation`) rather
-     * than inferred from its name, so a station whose feed published a blank one can't read as a
-     * loose bike standing on the street.
+     * A docked pickup — OTP's other rental shape. Both shapes land on one domain type, and the
+     * station's name is what survives of the difference: it is the dock the row sends the rider to.
      */
     @Test
     fun mapsARentalStationPickup() {
@@ -337,7 +336,6 @@ class Otp2PlanDecodeTest {
         assertEquals(TripVertexType.BIKESHARE, data.toTripItineraries()[0].legs[0].from.vertexType)
         assertEquals("seattle_bikes:42", rental.id)
         assertEquals("seattle_bikes", rental.networkId)
-        assertTrue(rental.isStation)
         assertEquals("Pine St & 3rd Ave", rental.stationName)
         // A dock publishes no vehicle type — it holds whatever the operator left in it.
         assertNull(rental.formFactor)

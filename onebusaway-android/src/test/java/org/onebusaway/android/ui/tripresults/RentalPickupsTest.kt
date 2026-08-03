@@ -117,22 +117,12 @@ class RentalPickupsTest {
     }
 
     @Test
-    fun `a station pickup names its dock, a free-floating one says there is none`() {
-        val docked = rentalPickup(
-            rental(networkId = "some_city_bikes", isStation = true, stationName = "Pine St & 3rd Ave")
-        )!!
+    fun `a station pickup names its dock`() {
+        val docked = rentalPickup(rental(networkId = "some_city_bikes", stationName = "Pine St & 3rd Ave"))!!
         assertEquals("Pine St & 3rd Ave", docked.stationName)
-        assertFalse(docked.isDockless)
-
-        val loose = rentalPickup(rental(networkId = "lime_seattle"))!!
-        assertNull(loose.stationName)
-        assertTrue(loose.isDockless)
-
-        // A dock that published no name is still a dock: the row draws no pickup line rather than
-        // telling the rider there is nothing to look for.
-        val unnamed = rentalPickup(rental(networkId = "some_city_bikes", isStation = true))!!
-        assertNull(unnamed.stationName)
-        assertFalse(unnamed.isDockless)
+        // Nothing to walk to on a free-floating vehicle, and the row says nothing rather than
+        // inventing a place.
+        assertNull(rentalPickup(rental(networkId = "lime_seattle"))!!.stationName)
     }
 
     @Test
@@ -143,7 +133,7 @@ class RentalPickupsTest {
         assertNull(rentalPickup(TripVehicleRental(id = "bs_9", networkId = "  ")))
         // Everything the row draws hangs off the operator, so even a named dock isn't enough on its
         // own — and OTP2, which always states the network, never produces one.
-        assertNull(rentalPickup(TripVehicleRental(id = "bs_9", isStation = true, stationName = "Dock")))
+        assertNull(rentalPickup(TripVehicleRental(id = "bs_9", stationName = "Dock")))
         assertNull(rentalPickup(null))
     }
 
@@ -152,7 +142,7 @@ class RentalPickupsTest {
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
             from = place(rental(networkId = "lime_seattle")),
-            to = place(rental(networkId = "some_city_bikes", isStation = true, stationName = "Dock"))
+            to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
         )
         // Where the rider *gets* the bike decides whose it is and whether they're hunting for a dock.
         assertEquals("Lime", leg.rentalPickup()?.operator?.displayName)
@@ -166,7 +156,7 @@ class RentalPickupsTest {
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
             from = TripPlace(name = "Origin"),
-            to = place(rental(networkId = "some_city_bikes", isStation = true, stationName = "Dock"))
+            to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
         )
         assertEquals("Dock", leg.rentalPickup()?.stationName)
     }
@@ -212,14 +202,12 @@ class RentalPickupsTest {
         networkUrl: String? = null,
         androidUri: String? = null,
         webUri: String? = null,
-        isStation: Boolean = false,
         stationName: String? = null,
         formFactor: RentalFormFactor? = null,
         propulsion: RentalPropulsion? = null,
         rangeMeters: Int? = null
     ) = TripVehicleRental(
         id = "$networkId:abc",
-        isStation = isStation,
         stationName = stationName,
         networkId = networkId,
         networkUrl = networkUrl,

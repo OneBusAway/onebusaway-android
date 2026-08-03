@@ -192,12 +192,10 @@ data class TripPlace(
  * A vehicle-rental endpoint of a leg — the shared bike/scooter the rider picks up, or the dock they
  * pick it up from (#2150). OTP models the two separately (`Place.rentalVehicle` vs.
  * `Place.vehicleRentalStation`) but publishes the same rental facts on both, so they land on one type
- * here and [isStation] says which it was.
+ * here, and [stationName] is what the rider can act on: the dock to walk to, when the pickup is one
+ * that published a name.
  *
  * Every field is what the *feed* stated, carried unjudged:
- *  - [isStation] is which of OTP's two shapes this came from, stated rather than inferred from
- *    [stationName]: whether the rider is looking for a dock is an instruction, and a station that
- *    published a blank name must not turn into "dockless" on the way through.
  *  - [id] is OTP's network-qualified `network:id`, the identity the map's bike layer filters on. It is
  *    not shown to the rider: the ids the live Puget Sound networks publish are UUIDs, which no rider
  *    can match against a bike in front of them.
@@ -219,7 +217,6 @@ data class TripPlace(
 @Serializable
 data class TripVehicleRental(
     val id: String? = null,
-    val isStation: Boolean = false,
     val stationName: String? = null,
     val networkId: String? = null,
     val networkUrl: String? = null,

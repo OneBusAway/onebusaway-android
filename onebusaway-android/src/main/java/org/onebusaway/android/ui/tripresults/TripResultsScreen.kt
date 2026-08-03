@@ -1723,7 +1723,9 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
             // enlargement would buy the arrow room by taking it from the name.
             maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH * RENTAL_OPERATOR_CHIP_SCALE,
             trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
-            modifier = Modifier.semantics { contentDescription = described }
+            // Merged, so the chip is one node reading "Lime rental" rather than that description and
+            // the bare brand name inside it announced as two.
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = described }
         )
     }
 }

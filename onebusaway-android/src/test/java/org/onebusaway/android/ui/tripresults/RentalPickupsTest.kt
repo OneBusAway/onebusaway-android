@@ -90,10 +90,28 @@ class RentalPickupsTest {
                 webUri = "https://lime.example/abc"
             )
         )!!
-        assertEquals(RentalLink.Deep("lime://vehicle/abc"), pickup.link)
-        // The rider without the Lime app installed: a second custom-scheme URI would fail the same
-        // way, so the fallback is the operator's app (store page if absent), never another deep link.
+        assertEquals(RentalLink.Deep("lime://vehicle/abc", mayNeedTheirApp = true), pickup.link)
+        // The rider without the Lime app installed: the web URI names the same vehicle and a browser
+        // always opens it, so it is the fallback rather than the operator's app.
+        assertEquals(RentalLink.Deep("https://lime.example/abc", mayNeedTheirApp = false), pickup.fallback)
+    }
+
+    @Test
+    fun `a deep link with no web one beside it falls back past every other custom scheme`() {
+        // Nothing else in the list can be one, so this is really the fallback filter's floor: an
+        // Android URI the device can't answer must not fall back to another URI it can't answer.
+        val pickup = rentalPickup(rental(networkId = "lime_seattle", androidUri = "lime://vehicle/abc"))!!
+        assertEquals(RentalLink.Deep("lime://vehicle/abc", mayNeedTheirApp = true), pickup.link)
         assertEquals(RentalLink.OperatorApp("com.limebike"), pickup.fallback)
+    }
+
+    @Test
+    fun `a network publishing only a web uri leaves the rider a link that cannot fail`() {
+        // The uncatalogued case, where the primary is all there is: it must be the http(s) one, since
+        // a chip whose only action is a scheme nothing answers does nothing at all when tapped.
+        val pickup = rentalPickup(rental(networkId = "some_city_bikes", webUri = "https://bikes.example/v/7"))!!
+        assertEquals(RentalLink.Deep("https://bikes.example/v/7", mayNeedTheirApp = false), pickup.link)
+        assertNull(pickup.fallback)
     }
 
     @Test

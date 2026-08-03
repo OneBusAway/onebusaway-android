@@ -151,7 +151,7 @@ object ExternalIntents {
             try {
                 context.startActivity(launch.addCategory(Intent.CATEGORY_LAUNCHER))
                 return true
-            } catch (e: ActivityNotFoundException) {
+            } catch (_: ActivityNotFoundException) {
                 // Uninstalled/disabled between the resolve and the launch — fall through to the store.
             }
         }
@@ -170,7 +170,7 @@ object ExternalIntents {
     fun openFeedUri(context: Context, uri: String): Boolean = try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri.toUri()))
         true
-    } catch (e: ActivityNotFoundException) {
+    } catch (_: ActivityNotFoundException) {
         false
     }
 

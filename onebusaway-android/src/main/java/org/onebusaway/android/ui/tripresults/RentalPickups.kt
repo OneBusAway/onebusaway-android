@@ -48,7 +48,7 @@ data class RentalPickup(
     /**
      * Where to send them instead when nothing on the device handles [link] — the rider who was offered
      * a `lime://` deep link and hasn't got Lime installed. Null when [link] is all there is, and never
-     * itself a [RentalLink.Deep]: a second custom-scheme URI would fail the same way the first did.
+     * itself a link that could fail the same way (see [RentalLink.Deep.mayNeedTheirApp]).
      */
     val fallback: RentalLink? = null
 )
@@ -81,8 +81,16 @@ data class RentalOperator(
  */
 sealed interface RentalLink {
 
-    /** The operator's own deep link to this vehicle/dock (`rentalUris.android`, else `.web`). */
-    data class Deep(val uri: String) : RentalLink
+    /**
+     * The operator's own deep link to this vehicle/dock (`rentalUris.android`, else `.web`).
+     *
+     * [mayNeedTheirApp] tells the two apart where it matters, which is whether following the link can
+     * fail: an Android URI is free to wear a scheme only the operator's own app answers (`lime://…`),
+     * so a device without that app handles nothing, while `rentalUris.web` is an http(s) URL by GBFS's
+     * definition and a browser always answers it. Only the former needs a [RentalPickup.fallback] —
+     * and only the latter can *be* one.
+     */
+    data class Deep(val uri: String, val mayNeedTheirApp: Boolean) : RentalLink
 
     /** The operator's Android app, by package — launched if installed, else its store page. */
     data class OperatorApp(val packageName: String) : RentalLink
@@ -137,17 +145,20 @@ internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? {
         stationName = rental.stationName,
         rangeMeters = rental.rangeMeters,
         link = links.firstOrNull(),
-        // The first one that can't fail for want of an app to handle a custom scheme, and never the
-        // primary itself — so a row with only a deep link has no fallback rather than a retry of it.
-        fallback = links.drop(1).firstOrNull { it !is RentalLink.Deep }
+        // The first one that can't fail for want of an app to answer a custom scheme, and never the
+        // primary itself — so a row whose only link is one of those has no fallback rather than a
+        // retry of it.
+        fallback = links.drop(1).firstOrNull { !(it is RentalLink.Deep && it.mayNeedTheirApp) }
     )
 }
 
 /**
  * Every action this rental offers, most specific first: the operator's deep link to this very vehicle,
  * then their app, then their site. The Android URI leads the web one because it is what the operator
- * published *for* an Android handoff (the pattern Google's micromobility deep links document); the
- * catalog's app package comes next because opening the app the rider already has beats a web page; and
+ * published *for* an Android handoff (the pattern Google's micromobility deep links document) — and the
+ * web one follows it rather than being dropped, since it names the same vehicle and, being an ordinary
+ * URL, is the one thing that still works on a device the Android URI's scheme means nothing to. The
+ * catalog's app package comes next because opening the app the rider already has beats a web page, and
  * the feed's own `rentalNetwork.url` outranks the catalog's site because it came from the operator.
  *
  * Empty when nothing at all is known — an unknown network with no URIs, which is every network the app
@@ -156,8 +167,8 @@ internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? {
 private fun TripVehicleRental.links(networkId: String): List<RentalLink> {
     val known = RentalOperators.known(networkId)
     return listOfNotNull(
-        androidUri?.let { RentalLink.Deep(it) },
-        webUri?.let { RentalLink.Deep(it) },
+        androidUri?.let { RentalLink.Deep(it, mayNeedTheirApp = true) },
+        webUri?.let { RentalLink.Deep(it, mayNeedTheirApp = false) },
         known?.appPackage?.let { RentalLink.OperatorApp(it) },
         networkUrl?.let { RentalLink.Web(it) },
         known?.webUrl?.let { RentalLink.Web(it) }

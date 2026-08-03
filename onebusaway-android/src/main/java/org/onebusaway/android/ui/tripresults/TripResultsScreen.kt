@@ -56,7 +56,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -1652,9 +1651,8 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
     val context = LocalContext.current
     val metric = unitsAreMetric()
     Row(
-        modifier = Modifier.padding(top = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         OperatorChip(rental) { link -> openRental(context, link, rental.fallback) }
         val details = listOfNotNull(
@@ -1687,11 +1685,14 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
  * The operator on its brand colour — and, when there is somewhere to send the rider, the tap that
  * takes them there.
  *
- * The chip itself is roundel-sized, which is well under a comfortable touch target, so the tappable
- * form reserves the interactive minimum around it ([minimumInteractiveComponentSize]) rather than
- * leaving a rider to hit an 18dp mark. Only [RentalLink.Deep] names the exact vehicle they were routed
- * onto, so only it is announced as opening it; the rest merely open the operator, and none of it
- * claims a reservation was made (see #2138).
+ * The tap area is the chip plus [RENTAL_OPERATOR_CHIP_TAP_PADDING], which lands short of the 48dp
+ * interactive minimum — deliberately: reserving the full minimum around a chip this size padded the
+ * row by a dozen dp above and below and made the leg read as three loosely-spaced blocks rather than
+ * one. The chip is drawn at [RENTAL_OPERATOR_CHIP_SCALE] partly to keep what is left a comfortable
+ * mark, and it is never the only way on — the row it sits in is itself a tap target.
+ *
+ * Only [RentalLink.Deep] names the exact vehicle the rider was routed onto, so only it is announced as
+ * opening it; the rest merely open the operator, and none of it claims a reservation was made (#2138).
  */
 @Composable
 private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
@@ -1705,11 +1706,12 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
         )
     }
     Box(
-        modifier = if (link == null) {
-            Modifier
-        } else {
-            Modifier.minimumInteractiveComponentSize().clickable(onClickLabel = openLabel) { onOpen(link) }
-        },
+        // Padding *after* clickable, so the breathing room around the chip is part of what the rider
+        // can hit rather than a dead margin outside it.
+        modifier = when (link) {
+            null -> Modifier
+            else -> Modifier.clickable(onClickLabel = openLabel) { onOpen(link) }
+        }.padding(vertical = RENTAL_OPERATOR_CHIP_TAP_PADDING),
         contentAlignment = Alignment.Center
     ) {
         RouteBadgeChip(
@@ -1732,6 +1734,9 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
  * the directions board badge uses, rather than a size of its own.
  */
 private const val RENTAL_OPERATOR_CHIP_SCALE = 1.5f
+
+/** The breathing room above and below the operator chip, which is also part of its tap area. */
+private val RENTAL_OPERATOR_CHIP_TAP_PADDING = 3.dp
 
 /** How wide the operator chip may get before its name ellipsizes, at scale 1 — a dozen characters. */
 private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp

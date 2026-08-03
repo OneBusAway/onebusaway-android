@@ -562,9 +562,10 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
     ) {
         ModeSymbolGlyph(symbol)
         symbol.alert?.let { severity ->
+            val severityLabel = stringResource(severity.labelRes)
             Icon(
                 painter = painterResource(R.drawable.baseline_warning_24),
-                contentDescription = stringResource(R.string.directions_leg_service_alert),
+                contentDescription = stringResource(R.string.directions_leg_service_alert, severityLabel),
                 tint = alertAccentColor(severity),
                 modifier = Modifier.size(SYMBOL_ALERT_SIZE)
             )

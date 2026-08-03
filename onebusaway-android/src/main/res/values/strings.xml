@@ -983,9 +983,15 @@
          expands the alert to its full description. -->
     <string name="directions_alert_show_details">Show alert details</string>
     <string name="directions_alert_hide_details">Hide alert details</string>
+    <!-- Localized labels for the shared alert tones. These are announced on every severity-tinted
+         alert card and interpolated into the affected-leg marker below. -->
+    <string name="service_alert_severity_info">Information</string>
+    <string name="service_alert_severity_warning">Warning</string>
+    <string name="service_alert_severity_severe">Severe</string>
     <!-- Read after a leg's symbol on an itinerary option card when a service alert affects that leg.
-         Announced in place, so it reads e.g. "1 Line, service alert". -->
-    <string name="directions_leg_service_alert">service alert</string>
+         %1$s is the localized severity label, announced in place so it reads e.g.
+         "1 Line, Severe service alert". -->
+    <string name="directions_leg_service_alert">%1$s service alert</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>

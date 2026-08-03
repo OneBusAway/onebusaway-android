@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.compose.components
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,7 +24,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import org.onebusaway.android.R
 
 /**
  * How loudly a service alert is drawn — the app's single alert-severity vocabulary, shared by every
@@ -37,7 +42,11 @@ import androidx.compose.ui.unit.dp
  * a set is its `max()`, and a list of alerts sorts worst-first by `sortedByDescending`. Any new tone
  * must be declared in its place on that scale, not appended.
  */
-enum class AlertSeverity { INFO, WARNING, ERROR }
+enum class AlertSeverity(@StringRes val labelRes: Int) {
+    INFO(R.string.service_alert_severity_info),
+    WARNING(R.string.service_alert_severity_warning),
+    ERROR(R.string.service_alert_severity_severe)
+}
 
 /**
  * The colour a service alert of [severity] is marked in when it *annotates* something else rather than
@@ -63,7 +72,8 @@ fun alertAccentColor(severity: AlertSeverity): Color = when (severity) {
  * second copy of the table below would eventually get wrong.
  *
  * [onClick] makes the whole card the tap target; a card with nothing to open passes null and takes no
- * clickable at all rather than an empty one.
+ * clickable at all rather than an empty one. The card also exposes [severity] as a localized state
+ * description, because its container colour is otherwise invisible to a screen reader.
  */
 @Composable
 fun AlertSurface(
@@ -72,6 +82,7 @@ fun AlertSurface(
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
+    val severityDescription = stringResource(severity.labelRes)
     val (container, onContainer) = when (severity) {
         AlertSeverity.ERROR ->
             MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
@@ -87,7 +98,8 @@ fun AlertSurface(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .semantics { stateDescription = severityDescription },
         content = content
     )
 }

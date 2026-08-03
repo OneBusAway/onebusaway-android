@@ -29,6 +29,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * Generates a set of step-by-step directions that can be shown to the user from a list of trip
@@ -50,6 +51,13 @@ class DirectionsGenerator(
      * @return the totalDistance
      */
     var totalDistance = 0.0
+
+    /**
+     * The rider's unit system, read once here rather than per leg inside the generation loop —
+     * [ConversionUtils.getFormattedDistanceParts] takes it as a parameter precisely so its callers
+     * resolve it high up. Declared above [init], which is what runs the generation.
+     */
+    private val unitsAreMetric = PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)
 
     init {
         convertToDirectionList()
@@ -127,7 +135,7 @@ class DirectionsGenerator(
         }
         mainDirectionText += "\n[" +
             ConversionUtils
-                .getFormattedDistance(leg.distance, applicationContext) +
+                .getFormattedDistance(leg.distance, applicationContext, unitsAreMetric) +
             " - " +
             ConversionUtils.getFormattedDurationTextNoSeconds(legDuration, false, applicationContext) +
             " ]"

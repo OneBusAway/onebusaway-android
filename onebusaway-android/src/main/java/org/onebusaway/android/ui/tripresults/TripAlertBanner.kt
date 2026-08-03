@@ -39,7 +39,6 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
@@ -53,8 +52,8 @@ import org.onebusaway.android.ui.icons.AppIcons
  * severity-tinted [AlertSurface] so a suspension reads the same here as it does on the arrivals
  * screen.
  *
- * Collapsed it is the rides the alert applies to plus the feed's headline — enough to know the
- * itinerary below it is in doubt. Tapping expands the full description in place, plus the agency's own
+ * Collapsed it is the feed's headline alone — enough, under the leg's own header, to know that ride is
+ * in doubt. Tapping expands the full description in place, plus the agency's own
  * "more details" page when the alert names one. Expanding inline rather than opening a dialog keeps
  * the alert beside the itinerary it contradicts, which is the comparison the rider is actually making;
  * it also means this composable needs nothing from the host (no Activity, no callback threading)
@@ -82,13 +81,6 @@ internal fun TripAlertBanner(alert: TripAlertItem, modifier: Modifier = Modifier
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                if (alert.routeLabels.isNotEmpty()) {
-                    Text(
-                        text = alert.routeLabels.joinToString(),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
                 Text(text = alert.summary, style = MaterialTheme.typography.bodyMedium)
                 if (expanded) {
                     AlertDetail(alert)

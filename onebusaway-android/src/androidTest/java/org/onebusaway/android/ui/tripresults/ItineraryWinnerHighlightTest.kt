@@ -28,6 +28,7 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
+import org.onebusaway.android.util.PreferenceUtils
 
 /** Semantic coverage for the category emphasis in the itinerary option picker (#2054). */
 class ItineraryWinnerHighlightTest {
@@ -96,7 +97,8 @@ class ItineraryWinnerHighlightTest {
             )
         }
 
-        val zeroDistance = ConversionUtils.getFormattedDistanceParts(0.0, context)
+        val zeroDistance = ConversionUtils
+            .getFormattedDistanceParts(0.0, context, PreferenceUtils.getUnitsAreMetricFromPreferences(context))
             .joinToString(separator = "") { it.text }
         composeRule.onNodeWithText(zeroDistance).assertExists()
     }

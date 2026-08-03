@@ -99,6 +99,7 @@ import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
+import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.icons.AppIcons
@@ -669,7 +670,7 @@ private fun DirectionsAdvancedSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val imperial = remember { !PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
+    val imperial = !unitsAreMetric()
     // Which options this region can actually serve. OTP2 deleted `maxWalkDistance` from its routing
     // API, so the distance field would be silently ignored there (#1780 wired the OTP2 path without
     // it); OTP1 in turn has no cycling-optimization knob that doesn't collide with the `optimize`

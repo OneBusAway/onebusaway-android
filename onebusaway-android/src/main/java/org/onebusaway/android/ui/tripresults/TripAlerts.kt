@@ -17,38 +17,38 @@ package org.onebusaway.android.ui.tripresults
 
 import org.onebusaway.android.directions.model.TripAlert
 import org.onebusaway.android.directions.model.TripAlertSeverity
-import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 
 /**
- * One service alert affecting the shown itinerary, as the directions banner draws it (#2143).
+ * One service alert affecting a leg of the shown itinerary, as the directions draw it (#2143).
  *
  * Identity is [contentId] — a key over the rider-visible text — not the alert id, for the same reason
  * the arrivals banner keys on content (#1593): a feed that republishes the same disruption under a
- * fresh id would otherwise read as a new alert, and within a single itinerary the *same* alert arrives
- * once per leg it applies to, which must collapse to one row.
+ * fresh id would otherwise read as a new alert, and one leg can be handed the same alert twice.
  *
- * [routeLabels] names the rides the alert came attached to, in travel order. It is what turns "service
- * is suspended" into something the rider can act on when a trip has more than one ride, and it is a
- * structural fact — which legs OTP hung the alert on — not an inference from the alert text.
+ * Nothing here names the affected ride, because nothing needs to: the row is drawn under that ride's
+ * own header in the directions, so its position states what a route label used to have to.
  */
 data class TripAlertItem(
     val contentId: String,
     val summary: String,
     val description: String?,
     val url: String?,
-    val severity: AlertSeverity,
-    val routeLabels: List<String>
+    val severity: AlertSeverity
 ) {
     /** Whether tapping the row reveals anything beyond [summary]. */
     val hasDetail: Boolean get() = !description.isNullOrBlank() || !url.isNullOrBlank()
 }
 
 /**
- * Every alert on this itinerary's legs, collapsed to one row per distinct alert and ordered
- * loudest-first so a suspension can't sit below a parking notice.
+ * This leg's own alerts as rows, one per distinct alert and loudest first so a suspension can't sit
+ * below a parking notice.
+ *
+ * Per **leg**, not per itinerary: the rows are drawn with the leg they belong to, which is what tells
+ * the rider *where* in the trip the trouble is. An alert OTP hangs on two legs of one trip therefore
+ * draws once under each — they are two separate facts about two separate rides, and collapsing them to
+ * a single row somewhere else is what the head-of-itinerary banner used to do.
  *
  * No active-window check: OTP has already scoped each leg's alerts to that leg's own time window (see
  * the `alerts` selection in `Plan.graphql`), so re-deciding it here would mean re-implementing the
@@ -59,23 +59,31 @@ data class TripAlertItem(
  *
  * Pure, so it is unit-testable without a plan, a `Context`, or a renderer.
  */
-fun TripItinerary.alertItems(): List<TripAlertItem> = legs
-    .flatMap { leg -> leg.alerts.map { alert -> alert to leg.routeDisplayLabel() } }
-    .groupBy { (alert, _) -> alert.contentKey() }
-    .mapNotNull { (contentId, group) ->
-        val alert = group.first().first
+internal fun TripLeg.alertItems(): List<TripAlertItem> = alerts
+    .mapNotNull { alert ->
         val summary = alert.header ?: alert.description ?: return@mapNotNull null
         TripAlertItem(
-            contentId = contentId,
+            contentId = alert.contentKey(),
             summary = summary,
             // Suppressed when it *is* the summary, so a header-less alert doesn't print its text twice.
             description = alert.description?.takeIf { it != summary },
             url = alert.url,
-            severity = alert.severity.tone(),
-            routeLabels = group.mapNotNull { (_, label) -> label }.distinct()
+            severity = alert.severity.tone()
         )
     }
-    .sortedByDescending { it.severity }
+    .asRows()
+
+/**
+ * Several legs' alerts as one leg's worth of rows — what a folded interline chain draws, the rider
+ * being aboard for all of them with only the leader's header to hang them under.
+ *
+ * Mirrors [loudestAlertTone]'s single/collection pair, and exists so "one row per distinct alert,
+ * loudest first" is stated once, here, rather than re-derived by whoever merges legs next.
+ */
+internal fun List<TripAlertItem>.mergedWith(others: List<TripAlertItem>): List<TripAlertItem> = (this + others).asRows()
+
+/** The shared rule: one row per distinct alert, loudest first. */
+private fun List<TripAlertItem>.asRows(): List<TripAlertItem> = distinctBy { it.contentId }.sortedByDescending { it.severity }
 
 /**
  * The loudest tone among this leg's own alerts, or null when it carries none — what marks the leg's

@@ -47,8 +47,7 @@ class AlertAccessibilityTest {
                         summary = "Service is suspended",
                         description = null,
                         url = null,
-                        severity = AlertSeverity.ERROR,
-                        routeLabels = listOf("1 Line")
+                        severity = AlertSeverity.ERROR
                     )
                 )
             }

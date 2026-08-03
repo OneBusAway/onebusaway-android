@@ -26,6 +26,7 @@ import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.util.PreferenceUtils
 
 /**
  * Coverage for the option card's street-distance metric lines (#2122): a card measures **every** street
@@ -82,7 +83,8 @@ class OptionCardStreetMetricsTest {
     // ---- fixtures -----------------------------------------------------------------------------------
 
     /** The distance line's text, assembled from its parts exactly as the card draws them. */
-    private fun distance(meters: Double) = ConversionUtils.getFormattedDistanceParts(meters, context)
+    private fun distance(meters: Double) = ConversionUtils
+        .getFormattedDistanceParts(meters, context, PreferenceUtils.getUnitsAreMetricFromPreferences(context))
         .joinToString(separator = "") { it.text }
 
     private fun option(vararg distances: Pair<StreetMode, Double>) = ItineraryOption(

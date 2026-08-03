@@ -66,9 +66,9 @@ sealed interface ModeSymbol {
      *
      * It marks only what the card draws. An alert on a leg the summary abbreviates away — one too short
      * for a glyph ([ModeSymbols.NEGLIGIBLE_STREET_METERS]), or a car leg the app has no art for — has no
-     * symbol to hang on, and is carried by the banner below the picker, which lists every alert
-     * unconditionally. Attributing it to a neighbouring symbol instead would point the rider at the
-     * wrong leg, which is worse than abbreviating it.
+     * symbol to hang on, and is carried by that leg's own row in the directions instead: the log draws
+     * every leg, however short, so the row is always there to hold it. Attributing it to a neighbouring
+     * symbol instead would point the rider at the wrong leg, which is worse than abbreviating it.
      */
     val alert: AlertSeverity?
 
@@ -179,7 +179,9 @@ sealed interface TripLogEntry {
         val steps: List<LogStep>,
         val legPoints: List<GeoPoint> = emptyList(),
         val focusPoint: GeoPoint? = null,
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /** This leg's service alerts, drawn under its header (#2143) — see [TripAlertItem]. */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This leg as the map's focus target — see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
@@ -222,7 +224,13 @@ sealed interface TripLogEntry {
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
         val legPoints: List<GeoPoint> = emptyList(),
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /**
+         * This ride's service alerts, drawn under its route header (#2143) — see [TripAlertItem]. A
+         * folded interline chain carries the alerts of every leg it swallowed, deduped: the rider is
+         * aboard for all of them, and the chain draws only one header to hang them under.
+         */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This ride as the map's focus target — every leg of a folded chain; see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
@@ -476,16 +484,14 @@ sealed interface TripResultsUiState {
     /**
      * @param options the itinerary option cards (1–3)
      * @param selectedIndex the currently-selected option
-     * @param directions the directions for the selected option
-     * @param alerts the service alerts affecting the selected option (#2143), loudest first. Per
-     *   *option*, not per plan: which disruptions apply is exactly what distinguishes an itinerary
-     *   routed over suspended service from the one beside it that isn't.
+     * @param directions the directions for the selected option — each leg carrying its own service
+     *   alerts (#2143), so a disruption is drawn against the ride it actually affects rather than
+     *   pooled at the head of the itinerary
      */
     data class Success(
         val options: List<ItineraryOption>,
         val selectedIndex: Int,
-        val directions: List<TripLogEntry>,
-        val alerts: List<TripAlertItem> = emptyList()
+        val directions: List<TripLogEntry>
     ) : TripResultsUiState
 
     data class Error(val message: String) : TripResultsUiState

@@ -80,11 +80,9 @@ class TripResultsViewModel @Inject constructor(
                     _state.value = TripResultsUiState.Success(
                         options = options,
                         selectedIndex = selectedIndex,
-                        directions = directions,
-                        // A pure projection of the plan the server already sent (#2143) — no I/O, so
-                        // it doesn't go through the repository, and the banner can't lag the
-                        // directions it sits above.
-                        alerts = selected?.alertItems().orEmpty()
+                        // Each leg carries its own alerts (#2143), attached as the log is built, so an
+                        // alert can't lag or outlive the leg it is drawn under.
+                        directions = directions
                     )
                 },
                 onFailure = { error ->

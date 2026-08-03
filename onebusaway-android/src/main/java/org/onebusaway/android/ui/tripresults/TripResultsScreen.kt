@@ -1698,7 +1698,20 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
     val name = rental.operator.displayName
     val described = stringResource(R.string.trip_plan_rental_operator_description, name)
     val link = rental.link
-    val chip = @Composable { modifier: Modifier ->
+    val openLabel = link?.let {
+        stringResource(
+            if (it is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
+            name
+        )
+    }
+    Box(
+        modifier = if (link == null) {
+            Modifier
+        } else {
+            Modifier.minimumInteractiveComponentSize().clickable(onClickLabel = openLabel) { onOpen(link) }
+        },
+        contentAlignment = Alignment.Center
+    ) {
         RouteBadgeChip(
             shortName = name,
             routeColor = rental.operator.brandColor,
@@ -1708,24 +1721,8 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
             // enlargement would buy the arrow room by taking it from the name.
             maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH * RENTAL_OPERATOR_CHIP_SCALE,
             trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
-            modifier = modifier.semantics { contentDescription = described }
+            modifier = Modifier.semantics { contentDescription = described }
         )
-    }
-    if (link == null) {
-        chip(Modifier)
-    } else {
-        val openLabel = stringResource(
-            if (link is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
-            name
-        )
-        Box(
-            modifier = Modifier
-                .minimumInteractiveComponentSize()
-                .clickable(onClickLabel = openLabel) { onOpen(link) },
-            contentAlignment = Alignment.Center
-        ) {
-            chip(Modifier)
-        }
     }
 }
 
@@ -1746,10 +1743,10 @@ private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
  */
 private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
     when (link) {
-        is RentalLink.Deep -> if (!ExternalIntents.openRentalDeepLink(context, link.uri)) {
+        is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
             fallback?.let { openRental(context, it, fallback = null) }
         }
-        is RentalLink.OperatorApp -> ExternalIntents.openRentalApp(context, link.packageName)
+        is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
         is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
     }
 }
@@ -2480,6 +2477,17 @@ private fun TransitLegNoShortNamePreview() {
 
 // ---- bikeshare-leg previews ----------------------------------------------------------------------
 
+/** The pickup a Puget Sound rider actually gets today: a catalogued operator, an e-bike, no dock. */
+private fun previewLimePickup() = RentalPickup(
+    operator = RentalOperators.of("lime_seattle"),
+    vehicle = RentalVehicleKind.EBIKE,
+    stationName = null,
+    rangeMeters = 43356,
+    // No live network publishes a rental URI, so the chip opens the operator rather than this vehicle.
+    link = RentalLink.OperatorApp("com.limebike"),
+    fallback = RentalLink.Web("https://www.li.me/")
+)
+
 /** A rented-vehicle leg, ridden on [rental] — the shape a bikeshare itinerary's middle leg takes. */
 private fun previewRentalLeg(rental: RentalPickup) = TripLogEntry.Walk(
     mode = StreetMode.BIKESHARE,
@@ -2503,18 +2511,7 @@ private fun BikeshareLegPreview() {
     // electric-assist bicycle with its remaining range, no dock to look for, and — the feed publishing
     // no rental URI — a chip that opens the operator rather than claiming to unlock this bike. Drawn in
     // both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
-    LegPreviewFrame(
-        previewRentalLeg(
-            RentalPickup(
-                operator = RentalOperators.of("lime_seattle"),
-                vehicle = RentalVehicleKind.EBIKE,
-                stationName = null,
-                rangeMeters = 43356,
-                link = RentalLink.OperatorApp("com.limebike"),
-                fallback = RentalLink.Web("https://www.li.me/")
-            )
-        )
-    )
+    LegPreviewFrame(previewRentalLeg(previewLimePickup()))
 }
 
 /** The walk that fetches the bike, the ride, and the walk from where it's left. */
@@ -2527,16 +2524,7 @@ private fun previewBikeshareItinerary() = listOf(
         isTransfer = false,
         steps = listOf(LogStep("Head north on 3rd Ave", distanceMeters = 210.0))
     ),
-    previewRentalLeg(
-        RentalPickup(
-            operator = RentalOperators.of("lime_seattle"),
-            vehicle = RentalVehicleKind.EBIKE,
-            stationName = null,
-            rangeMeters = 43356,
-            link = RentalLink.OperatorApp("com.limebike"),
-            fallback = RentalLink.Web("https://www.li.me/")
-        )
-    ),
+    previewRentalLeg(previewLimePickup()),
     TripLogEntry.Walk(
         mode = StreetMode.WALK,
         durationMinutes = 2,

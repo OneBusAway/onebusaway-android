@@ -63,12 +63,13 @@ data class RentalPickup(
  * inventing a brand for it.
  */
 data class RentalOperator(
-    val networkId: String,
     val displayName: String,
-    /** ARGB, or null to let the chip take the app's neutral tint (see `RouteBadgeChip`). */
-    val brandColor: Int?,
-    /** True when this operator came out of the catalog rather than the network-id fallback. */
-    val isKnown: Boolean
+    /**
+     * ARGB, or null to let the chip take the app's neutral tint (see `RouteBadgeChip`) — which is also
+     * how a caller tells a catalogued operator from one wearing its raw network id, since every catalog
+     * entry states a colour.
+     */
+    val brandColor: Int?
 )
 
 /**
@@ -203,7 +204,7 @@ object RentalOperators {
         /**
          * The operator's Android app. Must also be listed in the manifest's `<queries>` block, or
          * Android 11+ package visibility hides it from `getLaunchIntentForPackage` and the app the
-         * rider has installed looks absent — see `ExternalIntents.openRentalApp`.
+         * rider has installed looks absent — see `ExternalIntents.openAppOrStoreListing`.
          */
         val appPackage: String?,
         val webUrl: String?
@@ -230,11 +231,6 @@ object RentalOperators {
      */
     fun of(networkId: String): RentalOperator {
         val known = known(networkId)
-        return RentalOperator(
-            networkId = networkId,
-            displayName = known?.displayName ?: networkId,
-            brandColor = known?.brandColor,
-            isKnown = known != null
-        )
+        return RentalOperator(displayName = known?.displayName ?: networkId, brandColor = known?.brandColor)
     }
 }

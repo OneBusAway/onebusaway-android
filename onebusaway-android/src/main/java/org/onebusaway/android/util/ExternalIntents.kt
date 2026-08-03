@@ -27,6 +27,7 @@ import android.net.Uri
 import android.os.Build
 import android.text.TextUtils
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import com.google.android.gms.common.GoogleApiAvailability
 import org.onebusaway.android.R
@@ -134,36 +135,39 @@ object ExternalIntents {
     }
 
     /**
-     * Hands the rider to a rental operator's app (#2150): its launcher activity when it's installed,
-     * else its Play Store page so they can get it.
+     * Hands the user to another app: its launcher activity when it's installed, else its Google Play
+     * listing so they can get it. Returns whether the installed app was opened — the difference
+     * callers report to analytics ("opened it" vs. "sent them to download it").
      *
-     * The package has to be declared in the manifest's `<queries>` block for the installed case to be
-     * reachable at all — without it, Android 11+ package visibility makes `getLaunchIntentForPackage`
-     * return null for an app that is right there. The store fallback keeps that a degradation rather
-     * than a dead end, but a catalog entry whose package isn't declared silently never opens the app;
-     * see `RentalOperators.KnownOperator.appPackage`.
+     * Android 11+ package visibility applies: a package the manifest's `<queries>` block doesn't
+     * declare is invisible to [PackageManager.getLaunchIntentForPackage] however installed it is, and
+     * always takes the store path. The store fallback makes that a degradation rather than a dead end,
+     * so an undeclared package is a quiet miss — see the bikeshare operators' packages there, which
+     * must stay in step with `RentalOperators`' catalog.
      */
-    fun openRentalApp(context: Context, packageName: String) {
+    fun openAppOrStoreListing(context: Context, packageName: String): Boolean {
         val launch = context.packageManager.getLaunchIntentForPackage(packageName)
         if (launch != null) {
             try {
-                context.startActivity(launch)
-                return
+                context.startActivity(launch.addCategory(Intent.CATEGORY_LAUNCHER))
+                return true
             } catch (e: ActivityNotFoundException) {
                 // Uninstalled/disabled between the resolve and the launch — fall through to the store.
             }
         }
-        goToUrl(context, "https://play.google.com/store/apps/details?id=$packageName")
+        goToUrl(context, context.getString(R.string.google_play_listing_prefix, packageName))
+        return false
     }
 
     /**
-     * Opens an operator-supplied rental deep link, reporting whether anything handled it.
+     * Opens a URI published by a transit feed — a rental operator's deep link to one vehicle (#2150) —
+     * reporting whether anything on the device handled it.
      *
-     * Unlike [goToUrl] this doesn't toast on failure: the URI comes from a transit feed rather than
-     * from the rider, and "no app for `lime://…`" is the app's problem to fall back from, not an error
-     * to put in front of them.
+     * Unlike [goToUrl] this doesn't toast on failure: the URI came from a feed rather than from the
+     * user, and "no app for `lime://…`" is the caller's cue to fall back, not an error to put in front
+     * of them.
      */
-    fun openRentalDeepLink(context: Context, uri: String): Boolean = try {
+    fun openFeedUri(context: Context, uri: String): Boolean = try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri.toUri()))
         true
     } catch (e: ActivityNotFoundException) {
@@ -412,29 +416,8 @@ object ExternalIntents {
      * @param region region to launch a payment Intent for
      */
     fun startPaymentIntent(activity: Activity, region: Region) {
-        val manager = activity.packageManager
-        val paymentAndroidAppId = region.paymentAndroidAppId.orEmpty()
-        var intent = manager.getLaunchIntentForPackage(paymentAndroidAppId)
-        if (intent != null) {
-            // Launch installed app
-            intent.addCategory(Intent.CATEGORY_LAUNCHER)
-            activity.startActivity(intent)
-            AnalyticsEntryPoint.get(activity).reportUiEvent(
-                PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                activity.getString(R.string.analytics_label_button_fare_payment),
-                activity.getString(R.string.analytics_label_open_app)
-            )
-        } else {
-            // Go to Play Store listing to download app
-            intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(activity.getString(R.string.google_play_listing_prefix, paymentAndroidAppId).toUri())
-            activity.startActivity(intent)
-            AnalyticsEntryPoint.get(activity).reportUiEvent(
-                PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                activity.getString(R.string.analytics_label_button_fare_payment),
-                activity.getString(R.string.analytics_label_download_app)
-            )
-        }
+        val opened = openAppOrStoreListing(activity, region.paymentAndroidAppId.orEmpty())
+        reportAppHandoff(activity, R.string.analytics_label_button_fare_payment, opened)
     }
 
     /**
@@ -444,27 +427,16 @@ object ExternalIntents {
      * @param context context to launch the fare payment app or Google Play store from
      */
     fun launchTampaHoprApp(context: Context) {
-        val manager = context.packageManager
-        var intent = manager.getLaunchIntentForPackage(context.getString(R.string.hopr_android_app_id))
-        if (intent != null) {
-            // Launch installed app
-            intent.addCategory(Intent.CATEGORY_LAUNCHER)
-            context.startActivity(intent)
-            AnalyticsEntryPoint.get(context).reportUiEvent(
-                PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                context.getString(R.string.analytics_label_button_bike_share),
-                context.getString(R.string.analytics_label_open_app)
-            )
-        } else {
-            // Go to Play Store listing to download app
-            intent = Intent(Intent.ACTION_VIEW)
-            intent.setData(context.getString(R.string.google_play_listing_prefix, context.getString(R.string.hopr_android_app_id)).toUri())
-            context.startActivity(intent)
-            AnalyticsEntryPoint.get(context).reportUiEvent(
-                PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
-                context.getString(R.string.analytics_label_button_bike_share),
-                context.getString(R.string.analytics_label_download_app)
-            )
-        }
+        val opened = openAppOrStoreListing(context, context.getString(R.string.hopr_android_app_id))
+        reportAppHandoff(context, R.string.analytics_label_button_bike_share, opened)
+    }
+
+    /** Reports a hand-off to another app: which button sent the user, and whether it opened or downloaded. */
+    private fun reportAppHandoff(context: Context, @StringRes buttonLabel: Int, opened: Boolean) {
+        AnalyticsEntryPoint.get(context).reportUiEvent(
+            PlausibleAnalytics.REPORT_FARE_PAYMENT_EVENT_URL,
+            context.getString(buttonLabel),
+            context.getString(if (opened) R.string.analytics_label_open_app else R.string.analytics_label_download_app)
+        )
     }
 }

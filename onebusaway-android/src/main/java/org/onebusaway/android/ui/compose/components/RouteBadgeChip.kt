@@ -163,10 +163,11 @@ private val CHEVRON_LEAN_ALLOWANCE = ROUTE_BADGE_HEIGHT * JOIN_LEAN_RATIO / 2
  * a route number alone never says. [leadingIconDescription] labels it for TalkBack; the mode is real
  * information, not decoration, so it is worth announcing.
  *
- * [trailingIcon] does the same after the name, for a glyph that qualifies the chip rather than the thing
- * it names — the bikeshare operator chip marks itself as a way *out* of the app with an open-in-new arrow
- * (#2150). Left unlabelled by default: what such a chip does is said by its own click label, and
- * announcing the arrow separately would only repeat it.
+ * [trailingIcon] puts one after the name instead, for a glyph that qualifies the chip rather than the
+ * thing it names — the bikeshare operator chip marks itself as a way *out* of the app with an
+ * open-in-new arrow (#2150). It takes no description, unlike the leading one: such a glyph says what
+ * the chip *does*, which is already the chip's own click label, so announcing it again would only
+ * repeat that.
  */
 @Composable
 fun RouteBadgeChip(
@@ -177,8 +178,7 @@ fun RouteBadgeChip(
     maxWidth: Dp = Dp.Unspecified,
     leadingIcon: Int? = null,
     leadingIconDescription: String? = null,
-    trailingIcon: Int? = null,
-    trailingIconDescription: String? = null
+    trailingIcon: Int? = null
 ) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     Surface(
@@ -198,8 +198,7 @@ fun RouteBadgeChip(
             horizontalPadding = 3.dp * scale,
             leadingIcon = leadingIcon,
             leadingIconDescription = leadingIconDescription,
-            trailingIcon = trailingIcon,
-            trailingIconDescription = trailingIconDescription
+            trailingIcon = trailingIcon
         )
     }
 }
@@ -215,8 +214,7 @@ private fun BadgeContent(
     leadingIcon: Int?,
     leadingIconDescription: String?,
     modifier: Modifier = Modifier,
-    trailingIcon: Int? = null,
-    trailingIconDescription: String? = null
+    trailingIcon: Int? = null
 ) {
     val base = MaterialTheme.typography.labelMedium
     // Scale every text metric together — the line box with the glyphs (labelMedium's 16sp line height
@@ -259,7 +257,7 @@ private fun BadgeContent(
         if (trailingIcon != null) {
             Icon(
                 painter = painterResource(trailingIcon),
-                contentDescription = trailingIconDescription,
+                contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(BADGE_ICON_SIZE * scale)
             )

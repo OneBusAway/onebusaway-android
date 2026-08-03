@@ -28,8 +28,8 @@ fragment PlaceFields on Place {
     # actually word ("E-bike"), and `Place.name` above already carries whatever OTP called the place.
     rentalVehicle {
         vehicleId
-        rentalNetwork { networkId url }
-        rentalUris { android web }
+        rentalNetwork { ...RentalNetworkFields }
+        rentalUris { ...RentalUriFields }
         vehicleType { formFactor propulsionType }
         fuel { range }
     }
@@ -37,9 +37,25 @@ fragment PlaceFields on Place {
     vehicleRentalStation {
         stationId
         name
-        rentalNetwork { networkId url }
-        rentalUris { android web }
+        rentalNetwork { ...RentalNetworkFields }
+        rentalUris { ...RentalUriFields }
     }
+}
+
+# The rental facts a vehicle and a station state identically — OTP types both endpoints' network and
+# URIs the same way (`VehicleRentalNetwork!` / `VehicleRentalUris`), so these are named fragments
+# rather than the same selection inlined under each, for the reason PlaceFields itself gives above:
+# Apollo generates one type instead of two structurally-identical ones, and the adapter maps them with
+# one function rather than two copies. (They hang off the two concrete types rather than their
+# `RentalPlace` union, which — being a union — has no fields of its own to select.)
+fragment RentalNetworkFields on VehicleRentalNetwork {
+    networkId
+    url
+}
+
+fragment RentalUriFields on VehicleRentalUris {
+    android
+    web
 }
 
 # RouteFields is the planned leg's route. AlternativeRouteFields is the deliberately smaller set an

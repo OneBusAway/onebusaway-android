@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -40,13 +39,11 @@ class RentalPickupsTest {
         val lime = RentalOperators.of("lime_seattle")
         assertEquals("Lime", lime.displayName)
         assertEquals(0xFF00DD00.toInt(), lime.brandColor)
-        assertTrue(lime.isKnown)
 
         // The honest fallback: no invented brand, no colour asserting one, just what OTP said.
         val unknown = RentalOperators.of("some_city_bikes")
         assertEquals("some_city_bikes", unknown.displayName)
         assertNull(unknown.brandColor)
-        assertFalse(unknown.isKnown)
     }
 
     @Test
@@ -56,7 +53,9 @@ class RentalPickupsTest {
         assertNull(RentalOperators.known("lime_portland"))
         assertNull(RentalOperators.known("lime"))
         assertNull(RentalOperators.known("limelight_bikes"))
-        assertFalse(RentalOperators.of("lime_portland").isKnown)
+        // ...so it presents as its own id, on no brand's colour.
+        assertEquals("lime_portland", RentalOperators.of("lime_portland").displayName)
+        assertNull(RentalOperators.of("lime_portland").brandColor)
     }
 
     @Test

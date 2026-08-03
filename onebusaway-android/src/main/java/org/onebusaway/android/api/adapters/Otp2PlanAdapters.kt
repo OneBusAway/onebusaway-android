@@ -21,6 +21,8 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
+import org.onebusaway.android.api.graphql.fragment.RentalNetworkFields
+import org.onebusaway.android.api.graphql.fragment.RentalUriFields
 import org.onebusaway.android.directions.model.RentalFormFactor
 import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
@@ -176,12 +178,10 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
 )
 
 /** A free-floating rental vehicle: no dock, so no `stationName` to walk the rider to. */
-private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
+private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
     id = vehicleId,
-    networkId = rentalNetwork.networkId,
-    networkUrl = rentalNetwork.url?.ifBlank { null },
-    androidUri = rentalUris?.android?.ifBlank { null },
-    webUri = rentalUris?.web?.ifBlank { null },
+    network = rentalNetwork.rentalNetworkFields,
+    uris = rentalUris?.rentalUriFields,
     formFactor = vehicleType?.formFactor?.rawValue.toEnum<RentalFormFactor>(),
     propulsion = vehicleType?.propulsionType?.rawValue.toEnum<RentalPropulsion>(),
     rangeMeters = fuel?.range
@@ -192,13 +192,36 @@ private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental =
  * in it — so [TripVehicleRental.formFactor]/[TripVehicleRental.propulsion] stay null and the drawer
  * words the leg by its own travel mode instead.
  */
-private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = TripVehicleRental(
+private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
     id = stationId,
-    stationName = name.ifBlank { null },
-    networkId = rentalNetwork.networkId,
-    networkUrl = rentalNetwork.url?.ifBlank { null },
-    androidUri = rentalUris?.android?.ifBlank { null },
-    webUri = rentalUris?.web?.ifBlank { null }
+    network = rentalNetwork.rentalNetworkFields,
+    uris = rentalUris?.rentalUriFields,
+    stationName = name.ifBlank { null }
+)
+
+/**
+ * The rental facts both endpoint shapes state identically, mapped once: OTP types their network and
+ * URIs the same way, and the shared Plan.graphql fragments hand this the same generated types from
+ * either. Blank→null on every URL, the same normalization the route names get above.
+ */
+private fun toTripVehicleRental(
+    id: String?,
+    network: RentalNetworkFields,
+    uris: RentalUriFields?,
+    stationName: String? = null,
+    formFactor: RentalFormFactor? = null,
+    propulsion: RentalPropulsion? = null,
+    rangeMeters: Int? = null
+): TripVehicleRental = TripVehicleRental(
+    id = id,
+    stationName = stationName,
+    networkId = network.networkId,
+    networkUrl = network.url?.ifBlank { null },
+    androidUri = uris?.android?.ifBlank { null },
+    webUri = uris?.web?.ifBlank { null },
+    formFactor = formFactor,
+    propulsion = propulsion,
+    rangeMeters = rangeMeters
 )
 
 /**

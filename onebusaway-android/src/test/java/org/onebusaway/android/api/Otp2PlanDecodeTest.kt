@@ -27,6 +27,8 @@ import org.onebusaway.android.api.adapters.toTripItineraries
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.AlternativeRouteFields
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
+import org.onebusaway.android.api.graphql.fragment.RentalNetworkFields
+import org.onebusaway.android.api.graphql.fragment.RentalUriFields
 import org.onebusaway.android.api.graphql.fragment.RouteFields
 import org.onebusaway.android.api.graphql.type.AbsoluteDirection
 import org.onebusaway.android.api.graphql.type.AlertSeverityLevelType
@@ -327,7 +329,10 @@ class Otp2PlanDecodeTest {
                 vehicleRentalStation = PlaceFields.VehicleRentalStation(
                     stationId = "seattle_bikes:42",
                     name = "Pine St & 3rd Ave",
-                    rentalNetwork = PlaceFields.RentalNetwork1(networkId = "seattle_bikes", url = null),
+                    rentalNetwork = PlaceFields.RentalNetwork1(
+                        __typename = "VehicleRentalNetwork",
+                        rentalNetworkFields = network("seattle_bikes")
+                    ),
                     rentalUris = null
                 )
             )
@@ -416,10 +421,16 @@ class Otp2PlanDecodeTest {
      */
     private fun rentalVehicle(): PlaceFields.RentalVehicle = PlaceFields.RentalVehicle(
         vehicleId = "lime_seattle:bs_9",
-        rentalNetwork = PlaceFields.RentalNetwork(networkId = "lime_seattle", url = "https://www.li.me/"),
+        rentalNetwork = PlaceFields.RentalNetwork(
+            __typename = "VehicleRentalNetwork",
+            rentalNetworkFields = network("lime_seattle", url = "https://www.li.me/")
+        ),
         rentalUris = PlaceFields.RentalUris(
-            android = "lime://vehicle/bs_9",
-            web = "https://lime.example/vehicle/bs_9"
+            __typename = "VehicleRentalUris",
+            rentalUriFields = RentalUriFields(
+                android = "lime://vehicle/bs_9",
+                web = "https://lime.example/vehicle/bs_9"
+            )
         ),
         vehicleType = PlaceFields.VehicleType(
             formFactor = FormFactor.BICYCLE,
@@ -427,6 +438,9 @@ class Otp2PlanDecodeTest {
         ),
         fuel = PlaceFields.Fuel(range = 43356)
     )
+
+    /** The network fragment both rental shapes carry — see the RentalNetworkFields fragment in Plan.graphql. */
+    private fun network(networkId: String, url: String? = null) = RentalNetworkFields(networkId = networkId, url = url)
 
     /** Builds a [RouteFields] fixture (the fragment shared by the planned leg's route and each
      *  alternative leg's — see Plan.graphql). */

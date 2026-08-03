@@ -34,6 +34,7 @@ import org.onebusaway.android.api.contract.ReminderWebService
 import org.onebusaway.android.api.contract.SurveyWebService
 import org.onebusaway.android.api.contract.WeatherWebService
 import org.onebusaway.android.api.net.ApiParamsInterceptor
+import org.onebusaway.android.api.net.JsonCharsetInterceptor
 import org.onebusaway.android.api.net.ObaEndpointResolver
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -64,6 +65,8 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(resolver: ObaEndpointResolver): OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(ApiParamsInterceptor(resolver))
+        // This is the client that needs it: the OBA API declares `charset=ISO-8859-1` on UTF-8 bytes.
+        .addInterceptor(JsonCharsetInterceptor())
         .apply {
             if (BuildConfig.DEBUG) {
                 addInterceptor(
@@ -145,6 +148,12 @@ object NetworkModule {
 
     /** A plain OkHttp client (debug logging only, no [ApiParamsInterceptor]), optionally [configure]d. */
     private fun plainClient(configure: OkHttpClient.Builder.() -> Unit = {}): OkHttpClient = OkHttpClient.Builder()
+        // Carried by every JSON client, not only the one caught misdeclaring its charset: what
+        // [JsonCharsetInterceptor] states is a property of the *format* (RFC 8259), so a second server
+        // picking up the same misconfiguration is a no-op here rather than a fresh round of mojibake in
+        // region names or trip-planner text. On today's hosts — all of which declare no charset, which
+        // already means UTF-8 — it does nothing at all.
+        .addInterceptor(JsonCharsetInterceptor())
         .apply {
             if (BuildConfig.DEBUG) {
                 addInterceptor(

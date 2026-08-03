@@ -22,8 +22,33 @@ import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 
-/** Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model. */
-internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData = DtoArrivalData(this, directionId)
+/**
+ * Adapts a modernized [ArrivalDeparture] DTO (arrivals fetch) to the [ArrivalData] model, or drops an
+ * unrecoverable frequency row whose scheduled and predicted times were all replaced by the server's
+ * no-prediction sentinel.
+ */
+internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData? = takeUnless { hasCollapsedFrequencySentinel }?.let { DtoArrivalData(it, directionId) }
+
+/**
+ * For a frequency instance, the server's predicted-time setters also overwrite the corresponding
+ * scheduled times. When both timepoint predictions are absent, that destroys the original scheduled
+ * dwell and leaves all four timestamps equal to either the bare sentinel (`-1` / `0`) or its
+ * `slack * 1000 - 1` spelling. The positive spelling always ends in `999`, because schedule slack is
+ * whole seconds. With neither a prediction nor a schedule left, there is no honest time to display;
+ * discard that row instead of inventing one from the frequency window.
+ *
+ * Requiring a frequency row and all four timestamps to agree keeps this tied to the server path that
+ * collapses the schedule; the suffix check is an arithmetic signature, not a magnitude threshold.
+ */
+private val ArrivalDeparture.hasCollapsedFrequencySentinel: Boolean
+    get() {
+        val candidate = predictedArrivalTime
+        return frequency != null &&
+            predictedDepartureTime == candidate &&
+            scheduledArrivalTime == candidate &&
+            scheduledDepartureTime == candidate &&
+            (candidate <= 0L || candidate % 1_000L == 999L)
+    }
 
 /**
  * Decodes a wire `predicted{Arrival,Departure}Time` into "the instant" or **`null`** ("no prediction"),

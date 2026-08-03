@@ -21,6 +21,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.api.contract.ArrivalDeparture
+import org.onebusaway.android.api.contract.Frequency
 import org.onebusaway.android.api.contract.Position
 import org.onebusaway.android.api.contract.TripStatus
 
@@ -36,6 +37,7 @@ class ArrivalAdaptersTest {
 
     private fun arrival(tripId: String = "trip", tripStatus: TripStatus? = null) = ArrivalDeparture(routeId = "route", tripId = tripId, stopId = "stop", tripStatus = tripStatus)
         .asArrivalData(directionId = null)
+        .let(::requireNotNull)
 
     @Test
     fun `no trip status is not plottable`() {
@@ -119,5 +121,71 @@ class ArrivalAdaptersTest {
             1_785_706_260_000L,
             predictedServerTimeOrNull(1_785_706_260_000L, scheduledDwellMs = 30_000L)?.epochMs
         )
+    }
+
+    @Test
+    fun `a frequency row whose scheduled times were collapsed onto the sentinel is discarded`() {
+        val artifact = 29_999L
+        val data = ArrivalDeparture(
+            routeId = "route",
+            tripId = "trip",
+            stopId = "stop",
+            predicted = true,
+            scheduledArrivalTime = artifact,
+            predictedArrivalTime = artifact,
+            scheduledDepartureTime = artifact,
+            predictedDepartureTime = artifact,
+            frequency = Frequency(
+                startTime = 1_785_706_000_000L,
+                endTime = 1_785_709_600_000L,
+                headway = 600L
+            )
+        ).asArrivalData(directionId = null)
+
+        assertNull(data)
+    }
+
+    @Test
+    fun `a frequency row collapsed onto the bare sentinel is discarded`() {
+        val data = ArrivalDeparture(
+            routeId = "route",
+            tripId = "trip",
+            stopId = "stop",
+            predicted = true,
+            scheduledArrivalTime = -1L,
+            predictedArrivalTime = -1L,
+            scheduledDepartureTime = -1L,
+            predictedDepartureTime = -1L,
+            frequency = Frequency(
+                startTime = 1_785_706_000_000L,
+                endTime = 1_785_709_600_000L,
+                headway = 600L
+            )
+        ).asArrivalData(directionId = null)
+
+        assertNull(data)
+    }
+
+    @Test
+    fun `a real frequency prediction with collapsed scheduled times is kept`() {
+        val prediction = 1_785_706_260_123L
+        val data = ArrivalDeparture(
+            routeId = "route",
+            tripId = "trip",
+            stopId = "stop",
+            predicted = true,
+            scheduledArrivalTime = prediction,
+            predictedArrivalTime = prediction,
+            scheduledDepartureTime = prediction,
+            predictedDepartureTime = prediction,
+            frequency = Frequency(
+                startTime = 1_785_706_000_000L,
+                endTime = 1_785_709_600_000L,
+                headway = 600L
+            )
+        ).asArrivalData(directionId = null)
+
+        assertEquals(prediction, data?.predictedArrivalTime?.epochMs)
+        assertEquals(prediction, data?.predictedDepartureTime?.epochMs)
     }
 }

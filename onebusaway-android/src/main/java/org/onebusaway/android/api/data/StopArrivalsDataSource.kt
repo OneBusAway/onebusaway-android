@@ -55,13 +55,14 @@ class StopArrivals internal constructor(
     val stop: ObaStop? get() = refs.stop(stopId)?.let(::DtoStop)
 
     /**
-     * The arrivals/departures, adapted to the [ArrivalData] model (display-ready), collapsed to one
-     * entry per trip instance (see [collapseDuplicateTripInstances] / #1710 / #2012). Downstream may
-     * rely on `(tripId, serviceDate, stopSequence)` being unique across this list — the ETA strip
-     * keys its pills by exactly that triple.
+     * The arrivals/departures, adapted to the [ArrivalData] model (display-ready), with unrecoverable
+     * corrupt timestamps dropped and duplicate trip instances collapsed (see
+     * [collapseDuplicateTripInstances] / #1710 / #2012). Downstream may rely on
+     * `(tripId, serviceDate, stopSequence)` being unique across this list — the ETA strip keys its
+     * pills by exactly that triple.
      */
     val arrivals: List<ArrivalData>
-        get() = entry.arrivalsAndDepartures.map {
+        get() = entry.arrivalsAndDepartures.mapNotNull {
             it.asArrivalData(refs.trip(it.tripId)?.directionId?.toIntOrNull())
         }
             .collapseDuplicateTripInstances { tripId -> refs.trip(tripId)?.blockId }
@@ -69,7 +70,8 @@ class StopArrivals internal constructor(
     /** Every referenced route (for the map overlay). */
     val routes: List<ObaRoute> get() = refs.routes.map(::DtoRoute)
 
-    val hasArrivals: Boolean get() = entry.arrivalsAndDepartures.isNotEmpty()
+    /** True only when at least one wire row survives adaptation into a displayable arrival. */
+    val hasArrivals: Boolean get() = arrivals.isNotEmpty()
 
     /** Resolves a route from the references pool by id, or null when absent. */
     fun route(id: String): ObaRoute? = refs.route(id)?.let(::DtoRoute)

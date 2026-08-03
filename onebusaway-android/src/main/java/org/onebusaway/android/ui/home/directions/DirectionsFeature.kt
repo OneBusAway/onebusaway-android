@@ -85,6 +85,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.pickRideDirection
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
@@ -481,13 +482,11 @@ internal fun <T> interleaveRouteItems(
 internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge = plannedBadge ?: RouteBadge(fallbackLineName, null)
 
 /** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
- *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop. */
-private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? {
-    if (routeId == null) return null
-    val forRoute = filter { it.routeId == routeId }
-    return forRoute.firstOrNull { headsign != null && it.headsign.equals(headsign, ignoreCase = true) }
-        ?: forRoute.firstOrNull()
-}
+ *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop.
+ *
+ *  Delegates to [pickRideDirection] rather than repeating the rule, so the strip and the map's ride
+ *  selection resolve a leg to the same direction group by construction. */
+private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
 
 @Composable
 private fun NoEtasText(modifier: Modifier) {

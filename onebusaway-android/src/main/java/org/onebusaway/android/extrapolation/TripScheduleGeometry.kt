@@ -28,8 +28,20 @@ fun ObaTripSchedule.offsetsOf(stopId: String): List<Double> = stopTimes.filter {
 /**
  * This stop's one offset along the trip, or null when the trip does not serve it — or serves it more
  * than once, which nothing here can disambiguate from a stop id alone.
+ *
+ * A single indexed pass that gives up at the second match, rather than materializing every offset just
+ * to ask whether there was exactly one: the callers run this per trip on each poll, over schedules of
+ * a few dozen stop times.
  */
-fun ObaTripSchedule.soleOffsetOf(stopId: String): Double? = offsetsOf(stopId).singleOrNull()
+fun ObaTripSchedule.soleOffsetOf(stopId: String): Double? {
+    var found = -1
+    for (i in stopTimes.indices) {
+        if (stopTimes[i].stopId != stopId) continue
+        if (found >= 0) return null
+        found = i
+    }
+    return if (found >= 0) stopTimes[found].distanceAlongTrip else null
+}
 
 /**
  * Finds the index of the first stop in the segment bracketing [distanceAlongTrip]. The segment

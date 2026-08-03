@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.onebusaway.android.extrapolation.ExtrapolatedVehicle
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
+import org.onebusaway.android.extrapolation.data.forEachActiveTrip
 import org.onebusaway.android.extrapolation.extrapolatedVehicles
 import org.onebusaway.android.extrapolation.extrapolationFromState
 import org.onebusaway.android.map.render.ContinuationArrow
@@ -97,7 +98,7 @@ class RouteMapController(
     private val vehiclePoller = RouteVehiclePoller(
         tripObservationRepository = tripObservationRepository,
         scope = scope,
-        onPoll = ::publishVehicleSet
+        onPoll = ::onVehiclePoll
     )
 
     // The focused-stop layer (the exact trips arriving at one stop). It owns its own load job and
@@ -732,6 +733,41 @@ class RouteMapController(
         )
     }
 
+    /**
+     * A landed poll: re-derive the drawn approach, then push the vehicle set.
+     *
+     * A poll is the only thing that can change the approach without also redrawing the route — it is what
+     * lands the schedule/shape backfill the symbolic derivation reads, and what changes which trips are
+     * active. Every other [publishVehicleSet] caller (load, direction switch, reframe) runs
+     * [showDirectionPolylines], which derives the approach itself, so hanging this off the poll rather
+     * than off the push keeps those paths from deriving it twice.
+     */
+    private fun onVehiclePoll() {
+        refreshApproachLines()
+        publishVehicleSet()
+    }
+
+    /**
+     * Re-derive the drawn approach as the poll's schedule/shape backfill lands. The symbolic inputs are
+     * fetched asynchronously behind the poll that reports the vehicles, so the draw at load time usually
+     * has only geometry to answer with; this upgrades it in place the moment a trip can answer instead of
+     * leaving the ride's approach on the fallback until the next direction switch.
+     *
+     * Republishes only on an actual change, compared on the drawn lines themselves rather than on a poll
+     * counter — most polls carry the same active trips and so redraw nothing.
+     */
+    private fun refreshApproachLines() {
+        if (routeShape == null) return
+        val leaderRouteId = routeId ?: return
+        // Only a focused ride has an approach; a plain route draws its whole shape and never re-derives.
+        if (!riddenSpans.isDrawableRide()) return
+        val next = approachLines(focusedRouteLines(leaderRouteId), riddenPath)
+        if (next != basePolylines) {
+            basePolylines = next
+            publishMapPresentation()
+        }
+    }
+
     /** Recompute + push the vehicle set (the renderer reconciles markers from it), then resolve any pending focus. */
     private fun publishVehicleSet() {
         val layer = currentVehicleLayer()
@@ -1059,29 +1095,105 @@ class RouteMapController(
         }
     }
 
-    /** Re-draw the base route for [currentDirectionId]. Called on load and on every direction switch. */
-    private fun showDirectionPolylines() {
-        if (routeShape == null) return
+    /** The leader plus every extra segment's drawn lines — the routes a focused ride is drawn from. */
+    private fun focusedRouteLines(leaderRouteId: String): List<FocusedRouteLines> {
+        fun RouteFocusSegment.polylines(): List<RoutePolyline> = routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
+        return listOf(FocusedRouteLines(leaderRouteId, null, directionPolylines(currentDirectionId))) +
+            extraSegments.map { FocusedRouteLines(it.routeId, it.relationship, it.polylines()) }
+    }
+
+    /** Where the rider boards [focusRouteId] — the anchor its approach is clipped at. */
+    private fun boardStopIdFor(focusRouteId: String): String? = if (focusRouteId == routeId) {
+        directionStopId
+    } else {
+        extraSegments.firstOrNull { it.routeId == focusRouteId }?.anchorStopId
+    }
+
+    /** The poll [focusRouteId]'s active trips come out of — the leader's, or that extra route's own. */
+    private fun pollResponseFor(focusRouteId: String): RouteTrips? = if (focusRouteId == routeId) {
+        vehiclePoller.leaderPoll?.response
+    } else {
+        vehiclePoller.extraPolls[focusRouteId]?.response
+    }
+
+    /**
+     * [approachPolylines] over [focusRouteId]'s currently-active trips, read from the observation cache
+     * the poll's backfill warms. Empty whenever no active trip can decide it (none running, the
+     * backfill hasn't landed, no trip serves the boarding stop exactly once), which is the caller's
+     * signal to fall back to the geometric approach.
+     */
+    private fun scheduledApproaches(focusRouteId: String): List<List<GeoPoint>> {
+        val response = pollResponseFor(focusRouteId) ?: return emptyList()
+        val trips = buildList {
+            response.forEachActiveTrip { tripId, _, activeTrip ->
+                val state = tripObservationRepository.lookupTripState(tripId)
+                add(
+                    RideTrip(
+                        tripId = tripId,
+                        routeId = focusRouteId,
+                        shapeId = state?.shapeId ?: activeTrip.shapeId,
+                        schedule = state?.schedule,
+                        shape = state?.polyline,
+                        distanceAlongTrip = null
+                    )
+                )
+            }
+        }
+        return approachPolylines(trips, boardStopIdFor(focusRouteId))
+    }
+
+    /**
+     * The upstream context drawn beneath a focused ride, per route: each active trip's own shape clipped
+     * at the boarding stop (#2124's symbolic method, see [RouteApproach]), falling back to projecting the
+     * boarding point onto the direction's geometry when no trip can answer. The fallback is the older
+     * path unchanged — it just stopped being the primary one, because a direction's geometry can arrive
+     * as disjoint pieces and the projection then clips the wrong one.
+     *
+     * The symbolic lines inherit the route's own drawn style by copying one of its polylines, so an
+     * approach looks identical however it was derived.
+     *
+     * Takes the whole [riddenPath] rather than the boarding point and focus flag separately: both are
+     * derived from it here, so they cannot be passed in disagreeing, and callers that already hold the
+     * path don't rebuild it.
+     */
+    private fun approachLines(routeLines: List<FocusedRouteLines>, riddenPath: List<GeoPoint>): List<RoutePolyline> {
         val boardPoint = riddenPath.firstOrNull()
         val isLegFocus = riddenPath.isDrawableSegment()
-        val leaderRouteId = routeId ?: return
-        fun RouteFocusSegment.polylines(): List<RoutePolyline> = routeMap()?.let { directionPolylines(it, directionId()) }.orEmpty()
-        val focusedRouteLines = listOf(
-            FocusedRouteLines(leaderRouteId, null, directionPolylines(currentDirectionId))
-        ) +
-            extraSegments.map { FocusedRouteLines(it.routeId, it.relationship, it.polylines()) }
-        val approaches = focusedRouteLines
+        return routeLines
             // Interchangeable routes approach the same platform. Stay-aboard continuations begin after
             // boarding, so they are part of the selected ride rather than its upstream context.
             .filter { route ->
                 !isLegFocus || route.relationship != RouteFocusRelationship.STAY_ABOARD
             }
-            .groupBy({ it.routeId }, { it.polylines.upstreamTo(boardPoint) })
-            .mapValues { (_, lines) -> lines.flatten() }
+            .groupBy { it.routeId }
+            .mapValues { (focusRouteId, group) ->
+                val scheduled = if (isLegFocus) scheduledApproaches(focusRouteId) else emptyList()
+                // Resolved only where it is used: on the whole-route path [scheduled] is empty by
+                // construction, and flattening every drawn polyline just to read the first is waste.
+                val template = if (scheduled.isEmpty()) null else group.firstNotNullOfOrNull { it.polylines.firstOrNull() }
+                if (template != null) {
+                    scheduled.map { template.copy(points = it) }
+                } else {
+                    group.flatMap { it.polylines.upstreamTo(boardPoint) }
+                }
+            }
+            .values
+            .flatten()
+    }
+
+    /** Re-draw the base route for [currentDirectionId]. Called on load and on every direction switch. */
+    private fun showDirectionPolylines() {
+        if (routeShape == null) return
+        val leaderRouteId = routeId ?: return
+        // Built once and shared: [riddenPath] re-flattens the ride's spans on every read.
+        val ridePath = riddenPath
+        val isLegFocus = ridePath.isDrawableSegment()
+        val focusedRouteLines = focusedRouteLines(leaderRouteId)
+        val approaches = approachLines(focusedRouteLines, ridePath)
         focusedVehiclePathsByRoute = if (isLegFocus) {
             // Unlike the drawn context, vehicle eligibility extends through the selected ride. Include
             // stay-aboard continuations too: their vehicles belong until the rider's alighting point.
-            val alightPoint = riddenPath.last()
+            val alightPoint = ridePath.last()
             focusedRouteLines
                 .groupBy(
                     { it.routeId },
@@ -1100,7 +1212,7 @@ class RouteMapController(
         }
         // In leg focus, only the approaches to the boarding point remain as route context. Stay-aboard
         // continuations happen after boarding and are already represented by the selected leg overlay.
-        basePolylines = approaches.values.flatten()
+        basePolylines = approaches
         publishMapPresentation()
         publishVehicleSet()
     }

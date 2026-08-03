@@ -46,6 +46,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.SituationUtils
 import org.onebusaway.android.util.getRouteDisplayName
@@ -80,7 +81,7 @@ internal fun planActiveAlerts(
  */
 internal fun activeAlertFor(situationIds: List<String>, activeSituationIds: Set<String>): String? = situationIds.firstOrNull { it in activeSituationIds }
 
-/** Maps an ObaSituation severity onto the three banner styles, matching the legacy SituationAlert. */
+/** Maps an ObaSituation severity onto the shared [AlertSeverity] tones, matching the legacy SituationAlert. */
 internal fun severityOf(severity: String?): AlertSeverity = when (severity) {
     ObaSituation.SEVERITY_NO_IMPACT -> AlertSeverity.INFO
     ObaSituation.SEVERITY_SEVERE, ObaSituation.SEVERITY_VERY_SEVERE -> AlertSeverity.ERROR

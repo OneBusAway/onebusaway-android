@@ -21,6 +21,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
@@ -58,16 +59,31 @@ data class ItineraryOption(
 sealed interface ModeSymbol {
 
     /**
+     * The loudest service alert affecting the leg(s) this symbol stands for, or null when none do — the
+     * warning triangle the card draws beside it (#2143). Per *symbol* rather than per itinerary, so a
+     * card says **where** in the trip the trouble is: a rider scanning the picker can see that one
+     * option's rail leg is the suspended one while the option beside it rides a bus around it.
+     *
+     * It marks only what the card draws. An alert on a leg the summary abbreviates away — one too short
+     * for a glyph ([ModeSymbols.NEGLIGIBLE_STREET_METERS]), or a car leg the app has no art for — has no
+     * symbol to hang on, and is carried by that leg's own row in the directions instead: the log draws
+     * every leg, however short, so the row is always there to hold it. Attributing it to a neighbouring
+     * symbol instead would point the rider at the wrong leg, which is worse than abbreviating it.
+     */
+    val alert: AlertSeverity?
+
+    /**
      * An on-street leg, drawn as its mode's glyph alone — how the rider covers the ground between (or
      * instead of) rides. Legs shorter than [ModeSymbols.NEGLIGIBLE_STREET_METERS] carry no symbol at
      * all; see there for why.
      */
-    data class Street(val mode: StreetMode) : ModeSymbol
+    data class Street(val mode: StreetMode, override val alert: AlertSeverity? = null) : ModeSymbol
 
     /** A ride, drawn as one route roundel — which names every route it can be taken on, or becomes
      *  along the way (see [LegBadge]), and falls back to the mode glyph for a ride that names no
-     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two. */
-    data class Transit(val badge: LegBadge) : ModeSymbol
+     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two — and one
+     *  triangle, marking an alert on any leg of the chain. */
+    data class Transit(val badge: LegBadge, override val alert: AlertSeverity? = null) : ModeSymbol
 }
 
 /**
@@ -163,7 +179,9 @@ sealed interface TripLogEntry {
         val steps: List<LogStep>,
         val legPoints: List<GeoPoint> = emptyList(),
         val focusPoint: GeoPoint? = null,
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /** This leg's service alerts, drawn under its header (#2143) — see [TripAlertItem]. */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This leg as the map's focus target — see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
@@ -206,7 +224,13 @@ sealed interface TripLogEntry {
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
         val legPoints: List<GeoPoint> = emptyList(),
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /**
+         * This ride's service alerts, drawn under its route header (#2143) — see [TripAlertItem]. A
+         * folded interline chain carries the alerts of every leg it swallowed, deduped: the rider is
+         * aboard for all of them, and the chain draws only one header to hang them under.
+         */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This ride as the map's focus target — every leg of a folded chain; see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
@@ -460,7 +484,9 @@ sealed interface TripResultsUiState {
     /**
      * @param options the itinerary option cards (1–3)
      * @param selectedIndex the currently-selected option
-     * @param directions the directions for the selected option
+     * @param directions the directions for the selected option — each leg carrying its own service
+     *   alerts (#2143), so a disruption is drawn against the ride it actually affects rather than
+     *   pooled at the head of the itinerary
      */
     data class Success(
         val options: List<ItineraryOption>,

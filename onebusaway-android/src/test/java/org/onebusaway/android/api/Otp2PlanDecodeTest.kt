@@ -29,8 +29,10 @@ import org.onebusaway.android.api.graphql.fragment.AlternativeRouteFields
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.api.graphql.fragment.RouteFields
 import org.onebusaway.android.api.graphql.type.AbsoluteDirection
+import org.onebusaway.android.api.graphql.type.AlertSeverityLevelType
 import org.onebusaway.android.api.graphql.type.Mode
 import org.onebusaway.android.api.graphql.type.RelativeDirection
+import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripVertexType
@@ -82,7 +84,9 @@ class Otp2PlanDecodeTest {
                 )
             ),
             // A non-transit leg has no alternatives — OTP returns null rather than erroring.
-            nextLegs = null
+            nextLegs = null,
+            // Nor any alerts; OTP returns an empty list rather than null on a leg with nothing to report.
+            alerts = emptyList()
         )
         val busLeg = PlanQuery.Leg(
             mode = Mode.BUS,
@@ -130,6 +134,24 @@ class Otp2PlanDecodeTest {
                     trip = PlanQuery.Trip1(tripHeadsign = "Downtown via 7th"),
                     from = PlanQuery.From1(stop = PlanQuery.Stop(gtfsId = "1_1001")),
                     to = PlanQuery.To1(stop = PlanQuery.Stop1(gtfsId = "1_1002"))
+                )
+            ),
+            // Two alerts OTP scoped to this leg (#2143): one it stated a severity for, one it did
+            // not, and one whose header/url the feed left blank.
+            alerts = listOf(
+                PlanQuery.Alert(
+                    id = "alert_1",
+                    alertHeaderText = "5 is on reroute",
+                    alertDescriptionText = "Detoured via 4th Ave. See https://example.org/detour",
+                    alertUrl = "https://example.org/detour",
+                    alertSeverityLevel = AlertSeverityLevelType.SEVERE
+                ),
+                PlanQuery.Alert(
+                    id = "alert_2",
+                    alertHeaderText = "",
+                    alertDescriptionText = "Elevator out of service",
+                    alertUrl = "",
+                    alertSeverityLevel = null
                 )
             )
         )
@@ -215,6 +237,23 @@ class Otp2PlanDecodeTest {
         assertEquals("1_1002", alternative.toStopId)
         // A walk leg's `nextLegs` is null on the wire, not an error — it maps to no alternatives.
         assertTrue(walk.alternatives.isEmpty())
+
+        // The leg's service alerts (#2143) come across as OTP scoped them, severity included.
+        assertEquals(2, bus.alerts.size)
+        val severe = bus.alerts[0]
+        assertEquals("alert_1", severe.id)
+        assertEquals("5 is on reroute", severe.header)
+        assertEquals("Detoured via 4th Ave. See https://example.org/detour", severe.description)
+        assertEquals("https://example.org/detour", severe.url)
+        assertEquals(TripAlertSeverity.SEVERE, severe.severity)
+        // Blank header/url normalize to null (one representation of "the feed didn't publish this"),
+        // and an unstated severity lands on the wire vocabulary's own UNKNOWN_SEVERITY token.
+        val unstated = bus.alerts[1]
+        assertNull(unstated.header)
+        assertNull(unstated.url)
+        assertEquals("Elevator out of service", unstated.description)
+        assertEquals(TripAlertSeverity.UNKNOWN_SEVERITY, unstated.severity)
+        assertTrue(walk.alerts.isEmpty())
     }
 
     /** An unrecognized wire `Mode` (Apollo's `UNKNOWN__` sentinel) must degrade to null, not throw. */
@@ -275,7 +314,8 @@ class Otp2PlanDecodeTest {
             stopCalls = stopCalls,
             legGeometry = null,
             steps = null,
-            nextLegs = null
+            nextLegs = null,
+            alerts = emptyList()
         )
         val node = PlanQuery.Node(
             start = itineraryStart,

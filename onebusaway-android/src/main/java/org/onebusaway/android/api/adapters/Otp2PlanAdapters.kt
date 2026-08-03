@@ -22,6 +22,8 @@ import kotlin.time.toKotlinDuration
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
+import org.onebusaway.android.directions.model.TripAlert
+import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegAlternative
@@ -89,7 +91,27 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     // OTP's own alternative-leg search for this leg (#2010) — null on a non-transit leg, and carried
     // over unjudged: interchangeability is decided by `interchangeableRoutes()`, which needs the whole
     // itinerary (the next leg's departure) and so can't be answered leg-at-a-time here.
-    alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() }
+    alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() },
+    // Already scoped by OTP to this leg's entities and time window (#2143) — see the `alerts`
+    // selection in Plan.graphql. Empty rather than null on a leg with nothing to report.
+    alerts = alerts.orEmpty().filterNotNull().map { it.toTripAlert() }
+)
+
+/**
+ * Blank→null on every text field, same normalization the route names get above: OTP returns `""` for
+ * a translation the feed didn't publish (`alertDescriptionText` is even non-null in the schema), so
+ * without this the domain would carry an empty header that reads as present and renders as a blank
+ * row.
+ */
+private fun PlanQuery.Alert.toTripAlert(): TripAlert = TripAlert(
+    id = id,
+    header = alertHeaderText?.ifBlank { null },
+    description = alertDescriptionText.ifBlank { null },
+    url = alertUrl?.ifBlank { null },
+    // An unrecognized severity (a schema the server has moved past) lands on the same
+    // UNKNOWN_SEVERITY the wire vocabulary already has a token for, which the banner styles as a
+    // warning — an alert whose severity we can't read is still an alert.
+    severity = alertSeverityLevel?.rawValue.toEnum<TripAlertSeverity>() ?: TripAlertSeverity.UNKNOWN_SEVERITY
 )
 
 /**

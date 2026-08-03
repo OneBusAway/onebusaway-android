@@ -51,6 +51,7 @@ import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.components.RemoveCustomRegionDialog
 import org.onebusaway.android.ui.compose.components.regionRowClickable
 import org.onebusaway.android.ui.compose.theme.ObaTheme
+import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.RegionUtils
 
@@ -186,8 +187,7 @@ private fun distanceText(distanceMeters: Float?): String {
     if (distanceMeters == null) {
         return stringResource(R.string.region_unavailable)
     }
-    val context = LocalContext.current
-    val metric = remember { PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
+    val metric = unitsAreMetric()
     val format = remember { NumberFormat.getInstance().apply { maximumFractionDigits = 1 } }
     return if (metric) {
         val km = distanceMeters / 1000.0

@@ -123,6 +123,26 @@ query Plan(
                         from { stop { gtfsId } }
                         to { stop { gtfsId } }
                     }
+                    # Service alerts OTP itself considers applicable to this leg (#2143) — the ones the
+                    # rider needs before they trust the itinerary, e.g. "1 Line service is suspended
+                    # from Capitol Hill Station to Stadium Station". OTP scopes them two ways, and
+                    # both are the server's call, not this client's: to the entities the leg actually
+                    # uses (its route/trip/stops), and to the leg's own time window — verified against
+                    # the live server, where an alert whose active period ends today attaches to a leg
+                    # planned for today and not to the same leg planned for next week, while an
+                    # open-ended one attaches to both. So there is no active-window check on the client
+                    # side of this field.
+                    #
+                    # `alertHeaderText`/`alertDescriptionText`/`alertUrl` are the language-negotiated
+                    # singular forms; their `*Translations` siblings are @deprecated in the vendored
+                    # schema and would fail this repo's -PwarningsAsErrors gate.
+                    alerts {
+                        id
+                        alertHeaderText
+                        alertDescriptionText
+                        alertUrl
+                        alertSeverityLevel
+                    }
                     legGeometry {
                         points
                         length

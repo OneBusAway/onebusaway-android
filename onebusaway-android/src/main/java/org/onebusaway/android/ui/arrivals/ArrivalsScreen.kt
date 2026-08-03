@@ -45,7 +45,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
@@ -83,6 +82,7 @@ import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.components.ArrivalRowCallbacks
 import org.onebusaway.android.ui.arrivals.components.RouteArrivalRow
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
+import org.onebusaway.android.ui.compose.components.AlertSurface
 import org.onebusaway.android.ui.compose.components.LoadingContent
 import org.onebusaway.android.ui.compose.components.MenuRow
 import org.onebusaway.android.ui.icons.AppIcons
@@ -617,23 +617,7 @@ private fun SwipeToHide(onHide: () -> Unit, content: @Composable () -> Unit) {
 
 @Composable
 private fun AlertRow(alert: AlertItem, onClick: () -> Unit) {
-    val (container, onContainer) = when (alert.severity) {
-        AlertSeverity.ERROR ->
-            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
-        AlertSeverity.WARNING ->
-            MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.onTertiaryContainer
-        AlertSeverity.INFO ->
-            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-    }
-    Surface(
-        color = container,
-        contentColor = onContainer,
-        shape = MaterialTheme.shapes.small,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 4.dp)
-            .clickable { onClick() }
-    ) {
+    AlertSurface(severity = alert.severity, onClick = onClick) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 painter = painterResource(R.drawable.baseline_warning_24),

@@ -142,7 +142,10 @@ object TripLogBuilder {
         },
         legPoints = legPoints,
         focusPoint = walk.focusPoint(),
-        legIndices = setOf(legIndex)
+        legIndices = setOf(legIndex),
+        // A walk carries alerts too (a closed dock, a blocked path) and has its own header to draw
+        // them under, so moving alerts onto the legs loses none of what the head banner used to pool.
+        alerts = leg.alertItems()
     )
 
     /**
@@ -174,7 +177,10 @@ object TripLogBuilder {
                 stopEvents(board),
             legPoints = leader.legPoints + legPoints,
             // The rider stays aboard across the seam, so the whole chain is one focus target.
-            legIndices = leader.legIndices + legIndex
+            legIndices = leader.legIndices + legIndex,
+            // Likewise one header to hang alerts under: the continuation's own alerts join the
+            // leader's, deduped so an alert scoped to the whole chain isn't drawn once per leg.
+            alerts = leader.alerts.mergedWith(leg.alertItems())
         )
     }
 
@@ -202,7 +208,8 @@ object TripLogBuilder {
             rideEvents = stopEvents(board),
             routeLeg = routeLeg,
             legPoints = legPoints,
-            legIndices = setOf(legIndex)
+            legIndices = setOf(legIndex),
+            alerts = leg.alertItems()
         )
     }
 

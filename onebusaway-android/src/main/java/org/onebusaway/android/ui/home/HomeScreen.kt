@@ -404,7 +404,9 @@ fun HomeScreen(
                 // Board row would stop polling the moment that row scrolled out of the LazyColumn, which
                 // would make what the map draws depend on where the sheet is scrolled. Null (and so
                 // inert) outside a focused leg.
-                val rideBoardStop = ((currentFocus as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route)?.boardStop
+                val rideRouteFocus =
+                    ((currentFocus as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route)
+                val rideBoardStop = rideRouteFocus?.boardStop
                 val rideArrivalsSession = rememberArrivalsSession(
                     focusedStop = rideBoardStop,
                     sheetVisible = true,
@@ -425,7 +427,11 @@ fun HomeScreen(
                     )?.routeGroups?.map { group ->
                     RideRouteGroup(group.routeId, group.headsign, group.trips.map { it.tripId })
                 }
-                LaunchedEffect(rideBoardStop?.id, rideArrivalGroups) {
+                // The same stop session is deliberately retained when focus moves between rides that
+                // board there. Key the hand-off on the ride as well as its data: entering the new route
+                // resets its selection to Pending, so it needs the session's already-loaded rows even
+                // when neither the stop id nor those rows changed.
+                LaunchedEffect(rideRouteFocus, rideArrivalGroups) {
                     val stopId = rideBoardStop?.id ?: return@LaunchedEffect
                     homeViewModel.onRideArrivals(stopId, rideArrivalGroups ?: return@LaunchedEffect)
                 }

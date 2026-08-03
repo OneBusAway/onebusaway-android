@@ -346,6 +346,9 @@ class RideSelectionControllerTest {
         assertEquals(setOf("t1"), h.visibleTripIds())
 
         h.controller.rideChanged()
+        // The route redraw happens before the next selection pass. Its approach must not read trips
+        // derived from the ride that just ended during that window.
+        assertTrue(h.controller.visibleTrips.isEmpty())
         h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
 
         // Back to Pending with no seed: nothing is admitted until the new stop's arrivals land.

@@ -215,7 +215,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `focusing an alternative ETA carries the ride's own alighting stop and the planned headsign`() = runTest {
+    fun `focusing an alternative ETA keeps the planned route boardable and uses the alternative headsign`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
         val job = launch { map.collect() }
@@ -225,7 +225,7 @@ class HomeViewModelTest {
             headsign = "Downtown Redmond",
             board = RouteStopRef("40_board", "B", "Board", GeoPoint(47.6, -122.3)),
             alight = RouteStopRef("40_planned_alight", "A", "Alight", GeoPoint(47.61, -122.31)),
-            alternatives = listOf(AlternativeRouteRef("40_1LINE", null, "1 Line", null))
+            alternatives = listOf(AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null))
         )
         val segment = listOf(GeoPoint(47.6, -122.3), GeoPoint(47.61, -122.31))
 
@@ -250,11 +250,44 @@ class HomeViewModelTest {
                 directionStopId = "40_board",
                 focusTripId = "alternative-trip",
                 riddenSpans = listOf(RiddenSpan(segment)),
+                extraSegments = listOf(
+                    RouteFocusSegment(
+                        routeId = "40_2LINE",
+                        anchorStopId = "40_board",
+                        relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                        directionHeadsign = "Downtown Redmond"
+                    )
+                ),
                 alightStopId = "40_planned_alight",
-                directionHeadsign = "Downtown Redmond"
+                directionHeadsign = "Federal Way Downtown"
             ),
             map.routeRequests.single()
         )
+        job.cancel()
+    }
+
+    @Test
+    fun `focusing the planned ETA keeps every alternative route boardable`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val leg = rideLeg()
+
+        vm.focusDirectionsRouteVehicle(
+            request = ShowRouteRequest(
+                routeId = "40_2LINE",
+                directionStopId = "40_board",
+                focusTripId = "planned-trip"
+            ),
+            routeLeg = leg,
+            fallbackPoints = listOf(leg.board!!.point!!, leg.alight!!.point!!)
+        )
+        advanceUntilIdle()
+
+        val entered = map.routeRequests.single()
+        assertEquals("Downtown Redmond", entered.directionHeadsign)
+        assertEquals(listOf("40_1LINE"), entered.extraSegments.map { it.routeId })
         job.cancel()
     }
 
@@ -287,6 +320,30 @@ class HomeViewModelTest {
         assertEquals(1, map.rideArrivals.size)
         assertEquals("40_board", map.rideArrivals.single().stopId)
         assertEquals(groups(), map.rideArrivals.single().groups)
+        job.cancel()
+    }
+
+    @Test
+    fun `a boarding stop with an id but no point marks its ride arrivals unserved`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val leg = rideLeg().copy(
+            board = RouteStopRef("40_board", "B", "Board", point = null)
+        )
+
+        vm.focusItineraryRouteLeg(
+            leg,
+            FocusedLeg(listOf(GeoPoint(47.6, -122.3), leg.alight!!.point!!), setOf(1))
+        )
+        advanceUntilIdle()
+
+        assertEquals("40_board", map.routeRequests.single().directionStopId)
+        assertEquals(
+            MapDirective.SetRideArrivals("40_board", emptyList()),
+            map.rideArrivals.single()
+        )
         job.cancel()
     }
 
@@ -347,9 +404,9 @@ class HomeViewModelTest {
         assertEquals("tapped", entered.focusTripId)
         assertEquals(listOf(RiddenSpan(points)), entered.riddenSpans)
         assertEquals("40_alight", entered.alightStopId)
-        assertEquals("Downtown Redmond", entered.directionHeadsign)
-        // The alternative stays loadable alongside the planned route, as it was for the leg itself.
-        assertEquals(listOf("40_1LINE"), entered.extraSegments.map { it.routeId })
+        assertEquals("Federal Way Downtown", entered.directionHeadsign)
+        // Changing which route leads the focus does not change the set the rider may board.
+        assertEquals(listOf("40_2LINE"), entered.extraSegments.map { it.routeId })
         job.cancel()
     }
 

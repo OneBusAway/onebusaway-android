@@ -726,22 +726,14 @@ class HomeViewModel @Inject constructor(
         // anchored to that same platform, so focusing the joined badge shows the whole corridor rather
         // than whichever route OTP happened to choose for the itinerary. Unresolved alternatives remain
         // useful in the badge/ETA UI but cannot be loaded on the map, so they are omitted here.
-        val alternativeSegments = routeLeg.alternatives.mapNotNull { alternative ->
-            val alternativeRouteId = alternative.routeId ?: return@mapNotNull null
-            RouteFocusSegment(
-                routeId = alternativeRouteId,
-                anchorStopId = routeLeg.board?.stopId,
-                relationship = RouteFocusRelationship.INTERCHANGEABLE,
-                directionHeadsign = alternative.headsign
-            )
-        }
+        val routes = routeLeg.routesForFocus(routeId)
         focusItineraryRouteLegOnMap(
             routeId,
             spans = routeLeg.riddenSpansOr(fallbackLeg.points),
             directionStopId = routeLeg.board?.stopId,
-            extraSegments = routeLeg.extraSegments + alternativeSegments,
+            extraSegments = routes.extraSegments,
             alightStopId = routeLeg.alight?.stopId,
-            directionHeadsign = routeLeg.headsign,
+            directionHeadsign = routes.leaderHeadsign,
             boardStop = routeLeg.board?.asFocusedStop()
         )
     }
@@ -755,19 +747,21 @@ class HomeViewModel @Inject constructor(
      * Takes the same ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits
      * in draw the same ride.
      *
-     * When the ETA is for an interchangeable alternative, its bound is nonrestrictive because the
-     * alternative may use a different alighting platform id than the planned route.
+     * The route set is re-centered on the tapped route without narrowing the ride to it: every other
+     * interchangeable option stays loaded and selected from the same arrivals queue.
      */
     fun focusDirectionsRouteVehicle(
         request: ShowRouteRequest,
         routeLeg: RouteLegRef,
         fallbackPoints: List<GeoPoint>
     ) {
+        val routes = routeLeg.routesForFocus(request.routeId)
         enterDirectionsRouteFocus(
             request.copy(
                 riddenSpans = routeLeg.riddenSpansOr(fallbackPoints),
+                extraSegments = routes.extraSegments,
                 alightStopId = routeLeg.alight?.stopId,
-                directionHeadsign = routeLeg.headsign
+                directionHeadsign = routes.leaderHeadsign
             ),
             boardStop = routeLeg.board?.asFocusedStop()
         )
@@ -783,15 +777,81 @@ class HomeViewModel @Inject constructor(
     fun focusDirectionsRouteVehicleInFocusedLeg(request: ShowRouteRequest) {
         val current = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route ?: return
         enterDirectionsRouteFocus(
-            request.copy(
-                riddenSpans = current.request.riddenSpans,
-                extraSegments = current.request.extraSegments,
-                alightStopId = current.request.alightStopId,
-                directionHeadsign = current.request.directionHeadsign
-            ),
+            current.request.releader(request),
             boardStop = current.boardStop
         )
     }
+
+    /**
+     * All routes the rider may board, expressed relative to whichever one [leaderRouteId] the focused
+     * ETA belongs to. Keeping the leader out of the focused ride's segments is significant: the route
+     * controller treats it as the primary poll and polls only the *other* segment ids.
+     */
+    private fun RouteLegRef.routesForFocus(leaderRouteId: String): FocusedRideRoutes {
+        val boardStopId = board?.stopId
+        val boardable = buildList {
+            routeId?.let {
+                add(
+                    RouteFocusSegment(
+                        routeId = it,
+                        anchorStopId = boardStopId,
+                        relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                        directionHeadsign = headsign
+                    )
+                )
+            }
+            alternatives.mapNotNullTo(this) { alternative ->
+                val id = alternative.routeId ?: return@mapNotNullTo null
+                RouteFocusSegment(
+                    routeId = id,
+                    anchorStopId = boardStopId,
+                    relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                    directionHeadsign = alternative.headsign
+                )
+            }
+        }.distinctBy { it.routeId }
+        return FocusedRideRoutes(
+            leaderHeadsign = boardable.firstOrNull { it.routeId == leaderRouteId }?.directionHeadsign,
+            extraSegments = extraSegments + boardable.filterNot { it.routeId == leaderRouteId }
+        )
+    }
+
+    /**
+     * Move an already-focused interchangeable ride onto [next]'s leader without losing the route that
+     * used to lead it. A pill tap changes which route supplies the primary poll; it does not change the
+     * set of routes the rider may board.
+     */
+    private fun ShowRouteRequest.releader(next: ShowRouteRequest): ShowRouteRequest {
+        if (next.routeId == routeId) {
+            return next.copy(
+                riddenSpans = riddenSpans,
+                extraSegments = extraSegments,
+                alightStopId = alightStopId,
+                directionHeadsign = directionHeadsign
+            )
+        }
+        val nextLeader = extraSegments.firstOrNull {
+            it.routeId == next.routeId && it.relationship == RouteFocusRelationship.INTERCHANGEABLE
+        }
+        val previousLeader = RouteFocusSegment(
+            routeId = routeId,
+            anchorStopId = directionStopId,
+            relationship = RouteFocusRelationship.INTERCHANGEABLE,
+            directionHeadsign = directionHeadsign
+        )
+        return next.copy(
+            riddenSpans = riddenSpans,
+            extraSegments = (extraSegments.filterNot { it.routeId == next.routeId } + previousLeader)
+                .distinctBy { it.routeId },
+            alightStopId = alightStopId,
+            directionHeadsign = nextLeader?.directionHeadsign
+        )
+    }
+
+    private data class FocusedRideRoutes(
+        val leaderHeadsign: String?,
+        val extraSegments: List<RouteFocusSegment>
+    )
 
     /**
      * This planned stop as a focusable one, or null when it cannot be: the arrivals session the map's
@@ -872,6 +932,12 @@ class HomeViewModel @Inject constructor(
         // withinDirections: this route is drilled into *from* a trip plan, so the map keeps the rest of
         // the trip beneath it as de-emphasized context (#2048).
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false, withinDirections = true))
+        // A stop id is enough to anchor the route direction, but the hoisted arrivals session also
+        // needs a point because it is built from FocusedStop. Classify that no-session case explicitly
+        // as Unserved instead of leaving ride selection Pending (which would hide every vehicle).
+        if (boardStop == null && request.directionStopId != null) {
+            emitMapDirective(MapDirective.SetRideArrivals(request.directionStopId, emptyList()))
+        }
     }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */

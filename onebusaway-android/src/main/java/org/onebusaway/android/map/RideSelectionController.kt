@@ -134,6 +134,7 @@ internal class RideSelectionController(
         queue = RideQueue.Pending
         admitted = emptySet()
         continuations = emptySet()
+        visibleTrips = emptyList()
         lastInputs = null
         continuationJob?.cancel()
         continuationJob = null

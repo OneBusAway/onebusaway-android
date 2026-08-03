@@ -46,6 +46,33 @@ import org.onebusaway.android.models.RouteTrips
  * [neighbourRouteOf]) rather than the whole repository, so every rule here is reachable from a JVM test
  * without a map host — the same shape [StopFocusController] takes its nearby-stops loader in.
  */
+/**
+ * Everything the ride selection reads that can change between passes, as one value.
+ *
+ * The guard in [RideSelectionController.refresh] compares this whole, and the pass that follows takes
+ * its inputs from nowhere else — so "an input the guard forgot" is not a mistake that can be made here.
+ * It was made twice before this existed: a tapped ETA pill was seeded but not admitted until the next
+ * poll, and a resolved stay-aboard continuation likewise waited a poll to be drawn. Both were one
+ * hand-written `&&` short of correct, and neither was visible at the call site.
+ *
+ * **Adding a field here is the whole change.** It joins the guard and the pass together; forgetting one
+ * of the two stops compiling. `RideSelectionControllerTest` pins the field count so a new input also
+ * has to arrive with a test proving it invalidates.
+ *
+ * Compared by value, not identity: [poll]/[extras] hold instances a landed poll replaces wholesale, so
+ * value and identity agree for them, while [ride] is rebuilt from the controller's fields on every
+ * frame and [seed]/[queue] change in place between polls — for those, identity would never match and
+ * the guard would never hold.
+ */
+internal data class RideSelectionInputs(
+    val ride: RideFocus,
+    val poll: VehiclePoll,
+    val extras: Map<String, VehiclePoll>,
+    val queue: RideQueue,
+    val seed: Set<String>,
+    val continuations: Set<String>
+)
+
 internal class RideSelectionController(
     private val lookupTripState: (String) -> TripState?,
     private val neighbourRouteOf: suspend (String) -> String?,
@@ -71,16 +98,8 @@ internal class RideSelectionController(
      */
     private var seed: Set<String> = emptySet()
 
-    // What [refresh] was last run against. Identity compares for the polls, like RouteMapController's
-    // colour memo: a landed poll replaces its VehiclePoll (and the extras map) wholesale rather than
-    // mutating it. [lastSeed] compares by value — it is at most one id, and a pill tap changes it in
-    // place, between polls. Every input the selection reads has to be here: a tap seeds and then
-    // rebuilds the vehicle set in the same breath, so a guard that missed the seed would hand the
-    // camera a layer without the very vehicle the rider asked for, and the focus would drop silently.
-    private var lastPoll: VehiclePoll? = null
-    private var lastExtras: Map<String, VehiclePoll>? = null
-    private var lastQueue: RideQueue? = null
-    private var lastSeed: Set<String>? = null
+    /** What [refresh] was last run against; see [RideSelectionInputs] for why it is one value. */
+    private var lastInputs: RideSelectionInputs? = null
 
     /** Which vehicles to draw. [RideVisibility.All] whenever no ride is focused, or the stop can't answer. */
     var visibility: RideVisibility = RideVisibility.All
@@ -115,7 +134,7 @@ internal class RideSelectionController(
         queue = RideQueue.Pending
         admitted = emptySet()
         continuations = emptySet()
-        lastQueue = null
+        lastInputs = null
         continuationJob?.cancel()
         continuationJob = null
     }
@@ -130,10 +149,7 @@ internal class RideSelectionController(
         seed = emptySet()
         visibility = RideVisibility.All
         visibleTrips = emptyList()
-        lastPoll = null
-        lastExtras = null
-        lastQueue = null
-        lastSeed = null
+        lastInputs = null
         continuationJob?.cancel()
         continuationJob = null
     }
@@ -159,19 +175,19 @@ internal class RideSelectionController(
             visibility = RideVisibility.All
             return
         }
-        if (poll === lastPoll && extras === lastExtras && queue === lastQueue && seed == lastSeed) return
-        lastPoll = poll
-        lastExtras = extras
-        lastQueue = queue
-        lastSeed = seed
-        val pollTrips = pollRideTrips(leaderRouteId, poll, extras)
+        val inputs = RideSelectionInputs(ride, poll, extras, queue, seed, continuations)
+        if (inputs == lastInputs) return
+        lastInputs = inputs
+        // Everything below reads `inputs`, never the fields it was gathered from — that is what keeps
+        // the guard and the pass in step.
+        val pollTrips = pollRideTrips(leaderRouteId, inputs.poll, inputs.extras)
         val selection = rideSelection(
-            queue = queue,
-            seedTripIds = seed,
+            queue = inputs.queue,
+            seedTripIds = inputs.seed,
             previouslyAdmitted = admitted,
             pollTrips = pollTrips,
-            continuationTripIds = continuations,
-            ride = ride
+            continuationTripIds = inputs.continuations,
+            ride = inputs.ride
         )
         visibility = selection.visibility
         admitted = selection.admitted
@@ -179,7 +195,7 @@ internal class RideSelectionController(
             RideVisibility.All -> pollTrips
             is RideVisibility.Only -> pollTrips.filter { it.tripId in current.tripIds }
         }
-        refreshContinuations(ride, pollTrips)
+        refreshContinuations(inputs.ride, pollTrips)
     }
 
     /** Every active trip across the leader and extra polls, joined to what the observation cache holds. */

@@ -235,6 +235,59 @@ class RideSelectionControllerTest {
         assertTrue(h.visibleTripIds().isEmpty())
     }
 
+    /**
+     * A tripwire, not a behaviour test. Each input the selection reads has an invalidation test in this
+     * section; adding a seventh without one is how the two shipped instances of this bug happened, so
+     * a new field fails here until it is covered.
+     */
+    @Test
+    fun `every guarded input has an invalidation test`() {
+        // Compose's compiler adds a synthetic `$stable`; the declared inputs are the rest.
+        val inputs = RideSelectionInputs::class.java.declaredFields
+            .map { it.name }
+            .filterNot { it.startsWith("$") }
+            .sorted()
+        assertEquals(
+            "A new selection input needs an invalidation test alongside the others in this section",
+            listOf("continuations", "extras", "poll", "queue", "ride", "seed"),
+            inputs
+        )
+    }
+
+    @Test
+    fun `a resolved continuation is admitted against the poll already in hand`() {
+        // The continuation walk lands asynchronously and republishes; if the guard ignored it, the
+        // interline vehicle would wait a whole poll to be drawn.
+        val h = harness("t1" to schedule("board" to 100.0, nextTripId = "t2"), "t2" to ridden)
+        h.neighbourRoutes["t2"] = "route_b"
+        val interlined = ride(continuation("route_b"))
+        h.controller.start(focusTripId = null)
+        h.controller.setArrivals(groups("t1"), interlined)
+        val landed = poll("t1", "t2")
+
+        h.controller.refresh(interlined, "route_a", landed, emptyMap())
+
+        // The walk ran during that pass and republished; the republish re-enters refresh against the
+        // same poll, and must not be turned away.
+        h.controller.refresh(interlined, "route_a", landed, emptyMap())
+        assertTrue(h.visibleTripIds().containsAll(setOf("t1", "t2")))
+    }
+
+    @Test
+    fun `a changed ride re-runs the selection against the poll already in hand`() {
+        val h = harness("t1" to ridden)
+        h.controller.start(focusTripId = null)
+        h.controller.setArrivals(groups("t1"), ride())
+        val landed = poll("t1")
+        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        assertEquals(setOf("t1"), h.visibleTripIds())
+
+        // Same poll and queue, but the rider now alights where this trip has already passed.
+        h.controller.refresh(ride(alightStopId = "board"), "route_a", poll("t1", progress = 500.0), emptyMap())
+
+        assertTrue(h.visibleTripIds().isEmpty())
+    }
+
     @Test
     fun `a landed poll re-runs the selection`() {
         val h = harness("t1" to ridden)

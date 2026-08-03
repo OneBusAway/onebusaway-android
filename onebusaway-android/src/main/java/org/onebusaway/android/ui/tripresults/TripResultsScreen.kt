@@ -1702,9 +1702,11 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
         RouteBadgeChip(
             shortName = name,
             routeColor = rental.operator.brandColor,
+            scale = RENTAL_OPERATOR_CHIP_SCALE,
             // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
-            // chip instead of pushing the vehicle beside it off the row.
-            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH,
+            // chip instead of pushing the vehicle beside it off the row. Scaled with the chip, or the
+            // enlargement would buy the arrow room by taking it from the name.
+            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH * RENTAL_OPERATOR_CHIP_SCALE,
             trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
             modifier = modifier.semantics { contentDescription = described }
         )
@@ -1727,7 +1729,14 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
     }
 }
 
-/** How wide the operator chip may get before its name ellipsizes — about a dozen characters. */
+/**
+ * How much bigger the operator chip is than a route roundel. It is the leg's brand *and* its only tap
+ * target, and it carries a glyph beside the name, so it is drawn above roundel size — the same 1.5×
+ * the directions board badge uses, rather than a size of its own.
+ */
+private const val RENTAL_OPERATOR_CHIP_SCALE = 1.5f
+
+/** How wide the operator chip may get before its name ellipsizes, at scale 1 — a dozen characters. */
 private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
 
 /**
@@ -2369,16 +2378,25 @@ private fun TripResultsErrorPreview() {
 
 /**
  * Renders [entry] — a ride or an on-street leg — alone, [expanded] or not. The row callbacks are
- * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live arrivals session, which is exactly the
- * host dependency previewing one leg is meant to escape.
+ * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live
+ * arrivals session, which is exactly the host dependency previewing one leg is meant to escape.
  */
 @Composable
 private fun LegPreviewFrame(entry: TripLogEntry, expanded: Boolean = false) {
+    LegsPreviewFrame(listOf(entry), if (expanded) setOf(0) else emptySet())
+}
+
+/**
+ * The same, for a short run of consecutive legs — where what's being looked at is how a leg sits
+ * against its neighbours (spacing, the spine's colour flip at each node) rather than the leg alone.
+ */
+@Composable
+private fun LegsPreviewFrame(entries: List<TripLogEntry>, expanded: Set<Int> = emptySet()) {
     CompositionLocalProvider(LocalUnitsAreMetric provides false) {
         ObaTheme {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column {
-                    rememberLogRows(listOf(entry), if (expanded) setOf(0) else emptySet()).forEach { row ->
+                    rememberLogRows(entries, expanded).forEach { row ->
                         key(row.key) {
                             LogRow(
                                 model = row,
@@ -2483,8 +2501,8 @@ private fun previewRentalLeg(rental: RentalPickup) = TripLogEntry.Walk(
 private fun BikeshareLegPreview() {
     // What a Puget Sound rider actually gets today: a catalogued operator on its brand colour, an
     // electric-assist bicycle with its remaining range, no dock to look for, and — the feed publishing
-    // no rental URI — a button that opens the operator rather than claiming to unlock this bike. Drawn
-    // in both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
+    // no rental URI — a chip that opens the operator rather than claiming to unlock this bike. Drawn in
+    // both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
     LegPreviewFrame(
         previewRentalLeg(
             RentalPickup(
@@ -2497,6 +2515,51 @@ private fun BikeshareLegPreview() {
             )
         )
     )
+}
+
+/** The walk that fetches the bike, the ride, and the walk from where it's left. */
+private fun previewBikeshareItinerary() = listOf(
+    TripLogEntry.Terminal(kind = TerminalKind.START, time = ServerTime(0L), place = "3rd Ave & Pike St"),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 3,
+        distanceMeters = 210.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head north on 3rd Ave", distanceMeters = 210.0))
+    ),
+    previewRentalLeg(
+        RentalPickup(
+            operator = RentalOperators.of("lime_seattle"),
+            vehicle = RentalVehicleKind.EBIKE,
+            stationName = null,
+            rangeMeters = 43356,
+            link = RentalLink.OperatorApp("com.limebike"),
+            fallback = RentalLink.Web("https://www.li.me/")
+        )
+    ),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 2,
+        distanceMeters = 140.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head west on Denny Way", distanceMeters = 140.0))
+    ),
+    TripLogEntry.Terminal(kind = TerminalKind.ARRIVE, time = ServerTime(17 * 60_000L), place = "Seattle Center")
+)
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 420, name = "Bikeshare itinerary · walk, ride, walk")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    heightDp = 420,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare itinerary · walk, ride, walk, dark"
+)
+@Composable
+private fun BikeshareItineraryPreview() {
+    // The ride between its neighbours — where the operator chip has to hold its own against the walk
+    // rows above and below it without swamping them.
+    LegsPreviewFrame(previewBikeshareItinerary())
 }
 
 @Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · docked, unknown operator")

@@ -31,6 +31,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.FakeLocationRepository
 import org.onebusaway.android.map.ItineraryPins
 import org.onebusaway.android.map.RiddenSpan
+import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -71,6 +72,7 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val routeCommands get() = sent.filterIsInstance<MapDirective.ShowRoute>()
     val routesShown get() = sent.filterIsInstance<MapDirective.ShowRoute>().map { it.request.routeId }
     val stopRoutes get() = sent.filterIsInstance<MapDirective.ShowStopRoutes>()
+    val rideArrivals get() = sent.filterIsInstance<MapDirective.SetRideArrivals>()
     val clearStopRoutesCount get() = sent.count { it is MapDirective.ClearStopRoutes }
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
@@ -253,6 +255,115 @@ class HomeViewModelTest {
             ),
             map.routeRequests.single()
         )
+        job.cancel()
+    }
+
+    // -- the focused leg's boarding-stop arrivals, which select the ride's vehicles (#2124) --
+
+    /** A leg on 40_2LINE boarding at 40_board and alighting at 40_alight, with one alternative. */
+    private fun rideLeg() = RouteLegRef(
+        routeId = "40_2LINE",
+        headsign = "Downtown Redmond",
+        board = RouteStopRef("40_board", "B", "Board", GeoPoint(47.6, -122.3)),
+        alight = RouteStopRef("40_alight", "A", "Alight", GeoPoint(47.61, -122.31)),
+        alternatives = listOf(AlternativeRouteRef("40_1LINE", "Federal Way Downtown", "1 Line", null))
+    )
+
+    private fun groups() = listOf(RideRouteGroup("40_2LINE", "Downtown Redmond", listOf("t1", "t2")))
+
+    @Test
+    fun `the focused leg's boarding-stop arrivals reach the map`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val leg = rideLeg()
+        vm.focusItineraryRouteLeg(leg, FocusedLeg(listOf(leg.board!!.point!!, leg.alight!!.point!!), setOf(1)))
+        advanceUntilIdle()
+
+        vm.onRideArrivals("40_board", groups())
+        advanceUntilIdle()
+
+        assertEquals(1, map.rideArrivals.size)
+        assertEquals("40_board", map.rideArrivals.single().stopId)
+        assertEquals(groups(), map.rideArrivals.single().groups)
+        job.cancel()
+    }
+
+    @Test
+    fun `arrivals for a stop other than the focused leg's boarding stop are dropped`() = runTest {
+        // The hoisted session is re-keyed when the focus moves, so a load already in flight for the
+        // previous leg must not select vehicles against the new one.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val leg = rideLeg()
+        vm.focusItineraryRouteLeg(leg, FocusedLeg(listOf(leg.board!!.point!!, leg.alight!!.point!!), setOf(1)))
+        advanceUntilIdle()
+
+        vm.onRideArrivals("40_some_other_stop", groups())
+        advanceUntilIdle()
+
+        assertTrue(map.rideArrivals.isEmpty())
+        job.cancel()
+    }
+
+    @Test
+    fun `arrivals arriving outside a focused leg are dropped`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+
+        vm.onRideArrivals("40_board", groups())
+        advanceUntilIdle()
+
+        assertTrue(map.rideArrivals.isEmpty())
+        job.cancel()
+    }
+
+    @Test
+    fun `a pill tap in the hoisted session rides the focused leg's own ride`() = runTest {
+        // The hoisted session sits above the itinerary and cannot close over the leg's row, so the ride
+        // is read back off the focus: the tapped route/trip must arrive carrying that ride's spans,
+        // alighting stop and headsign, not bare.
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+        val leg = rideLeg()
+        val points = listOf(leg.board!!.point!!, leg.alight!!.point!!)
+        vm.focusItineraryRouteLeg(leg, FocusedLeg(points, setOf(1)))
+        advanceUntilIdle()
+
+        vm.focusDirectionsRouteVehicleInFocusedLeg(
+            ShowRouteRequest(routeId = "40_1LINE", directionStopId = "40_board", focusTripId = "tapped")
+        )
+        advanceUntilIdle()
+
+        val entered = map.routeRequests.last()
+        assertEquals("40_1LINE", entered.routeId)
+        assertEquals("tapped", entered.focusTripId)
+        assertEquals(listOf(RiddenSpan(points)), entered.riddenSpans)
+        assertEquals("40_alight", entered.alightStopId)
+        assertEquals("Downtown Redmond", entered.directionHeadsign)
+        // The alternative stays loadable alongside the planned route, as it was for the leg itself.
+        assertEquals(listOf("40_1LINE"), entered.extraSegments.map { it.routeId })
+        job.cancel()
+    }
+
+    @Test
+    fun `a pill tap outside a focused leg does nothing`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val job = launch { map.collect() }
+        advanceUntilIdle()
+
+        vm.focusDirectionsRouteVehicleInFocusedLeg(ShowRouteRequest(routeId = "40_1LINE"))
+        advanceUntilIdle()
+
+        assertTrue(map.routeRequests.isEmpty())
         job.cancel()
     }
 

@@ -47,7 +47,6 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
-import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
 import org.onebusaway.android.ui.tripresults.RouteStopRef
@@ -813,15 +812,10 @@ class HomeViewModel @Inject constructor(
      * set does not depend on which itinerary rows happen to be composed. Dropped unless a leg is focused
      * and the load is for *its* boarding stop, matching how [onArrivalsLoaded] guards the stop-focus path.
      */
-    fun onRideArrivals(stopId: String, groups: List<RouteRowGroup>) {
+    fun onRideArrivals(stopId: String, groups: List<RideRouteGroup>) {
         val focus = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route ?: return
         if (focus.boardStop?.id != stopId) return
-        emitMapDirective(
-            MapDirective.SetRideArrivals(
-                stopId = stopId,
-                groups = groups.map { RideRouteGroup(it.routeId, it.headsign, it.trips.map { trip -> trip.tripId }) }
-            )
-        )
+        emitMapDirective(MapDirective.SetRideArrivals(stopId, groups))
     }
 
     /**

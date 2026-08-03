@@ -68,6 +68,7 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
+import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
@@ -415,10 +416,15 @@ fun HomeScreen(
                     onEditReminder = onEditReminder,
                     showUndoSnackbar = { _, _, _ -> }
                 )
+                // Reduced to the map's own shape here rather than in the view model, which stays free of
+                // UI types (an ArrivalInfo needs a Context to build, which is what keeps HomeViewModel's
+                // tests plain JVM ones).
                 val rideArrivalGroups = (
                     rideArrivalsSession?.viewModel?.state
                         ?.collectAsStateWithLifecycle()?.value as? ArrivalsUiState.Content
-                    )?.routeGroups
+                    )?.routeGroups?.map { group ->
+                    RideRouteGroup(group.routeId, group.headsign, group.trips.map { it.tripId })
+                }
                 LaunchedEffect(rideBoardStop?.id, rideArrivalGroups) {
                     val stopId = rideBoardStop?.id ?: return@LaunchedEffect
                     homeViewModel.onRideArrivals(stopId, rideArrivalGroups ?: return@LaunchedEffect)

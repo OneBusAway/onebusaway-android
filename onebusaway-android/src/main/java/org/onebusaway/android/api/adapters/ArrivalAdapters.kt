@@ -38,16 +38,19 @@ internal fun ArrivalDeparture.asArrivalData(directionId: Int?): ArrivalData? = t
  * discard that row instead of inventing one from the frequency window.
  *
  * Requiring a frequency row and all four timestamps to agree keeps this tied to the server path that
- * collapses the schedule; the suffix check is an arithmetic signature, not a magnitude threshold.
+ * collapses the schedule. For the positive spelling, the arithmetic signature (`999` milliseconds)
+ * is not sufficient by itself because a real epoch can have that suffix; the candidate must also
+ * predate the frequency service window. We deliberately do not impose an upper bound because visits
+ * at downstream stops can occur after the trip-origin frequency window ends.
  */
 private val ArrivalDeparture.hasCollapsedFrequencySentinel: Boolean
     get() {
+        val frequencyStartTime = frequency?.startTime ?: return false
         val candidate = predictedArrivalTime
-        return frequency != null &&
-            predictedDepartureTime == candidate &&
+        return predictedDepartureTime == candidate &&
             scheduledArrivalTime == candidate &&
             scheduledDepartureTime == candidate &&
-            (candidate <= 0L || candidate % 1_000L == 999L)
+            (candidate <= 0L || (candidate < frequencyStartTime && candidate % 1_000L == 999L))
     }
 
 /**

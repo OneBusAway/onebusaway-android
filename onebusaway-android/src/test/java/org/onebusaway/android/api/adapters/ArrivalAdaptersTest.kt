@@ -167,8 +167,8 @@ class ArrivalAdaptersTest {
     }
 
     @Test
-    fun `a real frequency prediction with collapsed scheduled times is kept`() {
-        val prediction = 1_785_706_260_123L
+    fun `a real frequency prediction ending in 999 with collapsed scheduled times is kept`() {
+        val prediction = 1_785_706_260_999L
         val data = ArrivalDeparture(
             routeId = "route",
             tripId = "trip",

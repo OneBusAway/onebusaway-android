@@ -61,7 +61,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Full-grid tests + check (all brands)
         run: ./gradlew test check -PbuildAllBrands=true --build-cache -x lint -PwarningsAsErrors=true --stacktrace
@@ -84,7 +84,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: Android Lint (obaGoogleDebug)
         run: ./gradlew :onebusaway-android:lintObaGoogleDebug --build-cache -PwarningsAsErrors=true --stacktrace
@@ -141,7 +141,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Gradle cache
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v6.2.0
 
       - name: AVD cache
         uses: actions/cache@v6

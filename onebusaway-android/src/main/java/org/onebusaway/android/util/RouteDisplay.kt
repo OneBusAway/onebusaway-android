@@ -35,9 +35,11 @@ val ROUTE_NAME_ORDER: Comparator<String> = AlphanumComparator()
  * whichever of them the trip planner picked, and which one it did pick is still on the option card's
  * header line and its ETA strip.
  *
- * Shared by the two places a ride's routes are *badged* — the drawer/picker's joined chip (`legBadge`) and
- * the label on its line on the map (`itineraryRouteBadges`, #2083) — so a rider looking at both at once
- * can't be shown one ride named in two orders. It is deliberately not what
+ * Shared by the places routes are *badged together* — the drawer/picker's joined chip (`legBadge`), the
+ * label on a ride's line on the map (`itineraryRouteBadges`, #2083), and the routes a stop marker names at
+ * transit-centre zoom (#2107) — so a rider looking at two at once can't be shown one set of routes named in
+ * two orders. The dedupe is a badge's rule wherever it applies: a badge has only the name to show, so two
+ * routes sharing one (the feeds do collide) would draw as the same row twice. It is deliberately not what
  * [org.onebusaway.android.directions.model.interchangeableRoutes] applies when it produces the candidates:
  * that list is also what the map's route focus loads (#2063), so it sorts by the same order but keeps every
  * route, name collisions included. Deduplication is a badge's rule, not the plan's.

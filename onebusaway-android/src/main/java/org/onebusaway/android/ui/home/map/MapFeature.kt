@@ -95,6 +95,7 @@ import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -458,9 +459,12 @@ fun MapFeature(
             Text(
                 text = String.format(
                     Locale.US,
-                    "Zoom %.2f · route %.2f×",
+                    "Zoom %.2f · route %.2f× · %s",
                     zoom,
-                    routeLineWidthScale(zoom)
+                    routeLineWidthScale(zoom),
+                    // The stop band this zoom falls in, so the dot/full/routes thresholds can be tuned
+                    // against the map rather than by arithmetic (#2107).
+                    stopZoomBand(zoom)
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.labelMedium,

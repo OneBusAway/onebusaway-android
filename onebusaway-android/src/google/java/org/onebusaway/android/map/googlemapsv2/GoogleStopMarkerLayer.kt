@@ -18,13 +18,19 @@ package org.onebusaway.android.map.googlemapsv2
 import android.content.Context
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
 import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.map.render.StopIconKind
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRoute
+import org.onebusaway.android.map.render.StopRouteLabelBitmaps
 import org.onebusaway.android.map.render.stopIconKind
+import org.onebusaway.android.map.render.stopRouteLabel
 import org.onebusaway.android.map.render.stopZIndex
+import org.onebusaway.android.util.ThemeUtils
 
 /** Owns non-route stop marker identity, icon reconciliation, tap lookup, and disposal. */
 internal class GoogleStopMarkerLayer(
@@ -34,6 +40,17 @@ internal class GoogleStopMarkerLayer(
     private val markerByStopId = HashMap<String, Marker>()
     private val stopByMarker = HashMap<Marker, StopMarker>()
     private val kindByStopId = HashMap<String, StopIconKind>()
+
+    // The transit-centre route label beside each stop (#2107), reconciled alongside its marker rather
+    // than redrawn: at the zoom these appear the map still loads stops on every pan, and labels torn down
+    // and re-added on each of those publishes would blink while the markers under them held still.
+    private val labelByStopId = HashMap<String, Marker>()
+
+    // One descriptor per distinct set of routes: a transit centre's bays repeat each other's routes, and a
+    // label bitmap is mostly transparent lift, so sharing them is worth more here than for a stop icon.
+    // The flavor's own memoizer, so the label bitmap is built only on a miss (see [BitmapDescriptorCache]).
+    private val labelIcons =
+        BitmapDescriptorCache(LABEL_ICON_CACHE_SIZE) { BitmapDescriptorFactory.fromBitmap(it) }
 
     fun render(stops: List<StopMarker>, focusedStopId: String?, band: StopBand) {
         val markerStops = stops.filterNot(StopMarker::routeStop)
@@ -46,6 +63,7 @@ internal class GoogleStopMarkerLayer(
                 kindByStopId.remove(entry.key)
                 entry.value.remove()
                 gone.remove()
+                removeLabel(entry.key)
             }
         }
 
@@ -83,6 +101,11 @@ internal class GoogleStopMarkerLayer(
             }
             kindByStopId[stop.id] = kind
         }
+
+        // A second pass, after every marker exists: markers added in one pass with their labels would
+        // leave each label under the icons of the stops added after it (the SDK breaks a z-index tie by
+        // add order), which at these zooms is exactly the neighbour a rider is comparing against.
+        for (stop in markerStops) renderLabel(stop, band)
     }
 
     fun stopForMarker(marker: Marker): StopMarker? = stopByMarker[marker]
@@ -90,8 +113,67 @@ internal class GoogleStopMarkerLayer(
     fun dispose() {
         markerByStopId.values.forEach(Marker::remove)
         markerByStopId.clear()
+        labelByStopId.values.forEach(Marker::remove)
+        labelByStopId.clear()
+        labelIcons.clear()
         stopByMarker.clear()
         kindByStopId.clear()
+    }
+
+    /**
+     * Add, re-stamp or drop [stop]'s route label so it matches what the stop names at [band]. Its marker
+     * is registered in [stopByMarker] like the stop's own, so tapping a label focuses the stop it labels
+     * — it reads as part of that marker, and a label that swallowed the tap would read as a dead one.
+     */
+    private fun renderLabel(stop: StopMarker, band: StopBand) {
+        val routes = stopRouteLabel(stop, band)
+        if (routes.isEmpty()) {
+            removeLabel(stop.id)
+            return
+        }
+        val existing = labelByStopId[stop.id]
+        if (existing == null) {
+            val marker = map.addMarkerOrFail(
+                MarkerOptions()
+                    .position(stop.point.toLatLng())
+                    .icon(labelIcon(routes))
+                    // The lift above the stop is baked into the bitmap, so the label is centered on the
+                    // stop's own point exactly as a route label is on its line (see StopRouteLabelBitmaps).
+                    .anchor(0.5f, 0.5f)
+                    .zIndex(STOP_ROUTE_LABEL_Z_INDEX)
+            )
+            labelByStopId[stop.id] = marker
+            stopByMarker[marker] = stop
+        } else {
+            // The label's own previous stop, which is what it was drawn from — a label exists only where
+            // the last render was in the labelling band, so its routes are the ones on the pill.
+            val previous = stopByMarker[existing]
+            if (previous?.routes != routes) existing.setIcon(labelIcon(routes))
+            if (previous?.point != stop.point) existing.position = stop.point.toLatLng()
+            stopByMarker[existing] = stop
+        }
+    }
+
+    private fun removeLabel(stopId: String) {
+        labelByStopId.remove(stopId)?.let {
+            stopByMarker.remove(it)
+            it.remove()
+        }
+    }
+
+    /**
+     * The shared descriptor for a label naming [routes], drawn in the current theme.
+     *
+     * A live label is re-iconed only when its routes change (see [renderLabel]) — the theme can't change
+     * under one, since a light/dark switch recreates the activity and with it the map, this layer and this
+     * cache. The label is drawn from the unrendered [StopRoute]s that survive that recreate in the view
+     * model, which is what re-colours the labels rather than restoring the ones drawn before the switch.
+     */
+    private fun labelIcon(routes: List<StopRoute>): BitmapDescriptor {
+        val darkMode = ThemeUtils.isInDarkMode(context)
+        return labelIcons.get(StopRouteLabelBitmaps.labelKey(routes, darkMode)) {
+            StopRouteLabelBitmaps.label(context, routes, darkMode)
+        }
     }
 
     private fun icon(stop: StopMarker, kind: StopIconKind): BitmapDescriptor = when (kind) {
@@ -110,5 +192,10 @@ internal class GoogleStopMarkerLayer(
             StopIconFactory.anchorX(context, stop.direction) to
                 StopIconFactory.anchorY(context, stop.direction)
         else -> 0.5f to 0.5f
+    }
+
+    private companion object {
+        /** Comfortably more distinct route sets than a viewport at transit-centre zoom holds stops. */
+        const val LABEL_ICON_CACHE_SIZE = 64
     }
 }

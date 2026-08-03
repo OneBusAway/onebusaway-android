@@ -24,9 +24,10 @@ import org.junit.runner.RunWith
 
 /**
  * The stacked route-label bitmap (#2083): a label naming an interchangeable ride draws one row per route,
- * each filled with that route's own line colour. Instrumented rather than a JVM test because this is
- * `Canvas` drawing — the unit-test `android.graphics` stubs draw nothing — so the rows are checked the only
- * way they can be: by reading the pixels back.
+ * each filled with that route's own line colour — and, where a single column would grow too tall, several
+ * columns of them (#2107). Instrumented rather than a JVM test because this is `Canvas` drawing — the
+ * unit-test `android.graphics` stubs draw nothing — so the cells are checked the only way they can be: by
+ * reading the pixels back.
  */
 @RunWith(AndroidJUnit4::class)
 class RouteBadgeBitmapTest {
@@ -89,7 +90,38 @@ class RouteBadgeBitmapTest {
         assertEquals(green, stacked.rowFill(row = 1, rows = 2))
     }
 
+    @Test
+    fun aGridIsAsWideAsItsColumns_eachSizedToItsOwnWidestName() {
+        // The transit-centre stop label (#2107) widens instead of overflowing, and a column is only as wide
+        // as something in it: the narrow column beside a long name stays narrow.
+        val short = listOf(BadgedRoute("8", blue), BadgedRoute("40", blue))
+        val long = listOf(BadgedRoute("Seattle - Bremerton", green), BadgedRoute("Bainbridge", green))
+        val grid = grid(listOf(short, long))
+
+        // Exactly its two columns side by side — not two of the wider one.
+        assertEquals(badge(short).width + badge(long).width, grid.width)
+        // Two rows, as tall as a single column of two.
+        assertEquals(badge(short).height, grid.height)
+        // Each column carries its own routes' colour, left to right.
+        assertEquals(blue, grid.getPixel(SAMPLE_INSET_PX, rowCenterY(grid, row = 0, rows = 2)))
+        assertEquals(green, grid.getPixel(grid.width - SAMPLE_INSET_PX, rowCenterY(grid, row = 1, rows = 2)))
+    }
+
+    @Test
+    fun oneColumnDrawsExactlyWhatTheUnstackedBadgeDoes() {
+        // badge() is badgeGrid()'s single-column case, so a label on a line is unaffected by the grid.
+        val routes = listOf(BadgedRoute("1 Line", blue), BadgedRoute("2 Line", green))
+        val single = badge(routes)
+        val asGrid = grid(listOf(routes))
+
+        assertEquals(single.width, asGrid.width)
+        assertEquals(single.height, asGrid.height)
+        assertTrue(single.sameAs(asGrid))
+    }
+
     private fun badge(routes: List<BadgedRoute>, scale: Float = 1f): Bitmap = ContinuationBadgeBitmaps.badge(routes, density = 1f, darkMode = false, scale = scale)
+
+    private fun grid(columns: List<List<BadgedRoute>>): Bitmap = ContinuationBadgeBitmaps.badgeGrid(columns, density = 1f, darkMode = false, scale = 1f)
 
     /** The fill colour of one row, read from inside its leading padding. */
     private fun Bitmap.rowFill(row: Int, rows: Int): Int = getPixel(SAMPLE_INSET_PX, rowCenterY(this, row, rows))

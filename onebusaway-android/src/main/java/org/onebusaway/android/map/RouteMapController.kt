@@ -451,11 +451,15 @@ class RouteMapController(
             alightStopId = request.alightStopId
             directionHeadsign = request.directionHeadsign
             // The ride changed, so what was admitted under the old one must not carry over; the queue
-            // is re-derived from the next arrivals load for the new boarding stop.
+            // is re-derived from the next arrivals load for the new boarding stop. The in-flight
+            // continuation walk belongs to the old ride, so it is cancelled rather than left to report
+            // its result into the new one.
             rideQueue = RideQueue.Pending
             admittedRideTripIds = emptySet()
             continuationTripIds = emptySet()
             rideSelectionQueue = null
+            continuationJob?.cancel()
+            continuationJob = null
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
             showDirectionStops()
@@ -650,6 +654,10 @@ class RouteMapController(
             continuationTripIds = emptySet()
             return
         }
+        if (admittedRideTripIds.isEmpty()) {
+            continuationTripIds = emptySet()
+            return
+        }
         val schedules = pollTrips.associate { it.tripId to it.schedule }
         continuationJob?.cancel()
         continuationJob = scope.launch {
@@ -683,8 +691,9 @@ class RouteMapController(
      */
     fun setRideArrivals(groups: List<RideRouteGroup>) {
         rideQueue = rideQueueFrom(groups, rideFocus())
-        refreshApproachLines()
+        // Order as in [onVehiclePoll]: the push re-selects, the approach then reads the new selection.
         publishVehicleSet()
+        refreshApproachLines()
     }
 
     /**
@@ -818,8 +827,11 @@ class RouteMapController(
      * than off the push keeps those paths from deriving it twice.
      */
     private fun onVehiclePoll() {
-        refreshApproachLines()
+        // Push first: the vehicle set is what re-runs the ride selection, and the approach is drawn from
+        // its result ([visibleRideTrips]). Deriving the approach first would clip this poll's lines from
+        // the *previous* poll's selected trips.
         publishVehicleSet()
+        refreshApproachLines()
     }
 
     /**

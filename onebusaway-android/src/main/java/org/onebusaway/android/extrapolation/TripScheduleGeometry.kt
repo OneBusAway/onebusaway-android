@@ -18,14 +18,6 @@ package org.onebusaway.android.extrapolation
 import org.onebusaway.android.models.ObaTripSchedule
 
 /**
- * Every offset along the trip at which it serves [stopId], in travel order — empty when it doesn't,
- * and more than one entry for a loop or out-and-back that passes the stop again. Callers decide what
- * an ambiguous stop means to them; none of them may guess a visit (see [ObaTripSchedule.soleOffsetOf]
- * and the map's ride-eligibility filter, which refuse in different ways).
- */
-fun ObaTripSchedule.offsetsOf(stopId: String): List<Double> = stopTimes.filter { it.stopId == stopId }.map { it.distanceAlongTrip }
-
-/**
  * This stop's one offset along the trip, or null when the trip does not serve it — or serves it more
  * than once, which nothing here can disambiguate from a stop id alone.
  *

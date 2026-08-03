@@ -201,12 +201,13 @@ class RideQueueTest {
     }
 
     @Test
-    fun theBlockEndSentinelTerminatesTheWalk() = runTest {
-        // OBA sends "" rather than null for a block-end neighbour (#2003).
+    fun aBlockEndTerminatesTheWalk() = runTest {
+        // The last trip of a block has no next one. OBA spells that ""; it is blanked to null at the
+        // wire boundary (#2003, TripAdapters.toObaTripSchedule), so it reaches here as a plain null.
         val found = continuations(
             seed = setOf("t1"),
             hops = 2,
-            schedules = mapOf("t1" to schedule("board" to 0.0, nextTripId = "")),
+            schedules = mapOf("t1" to schedule("board" to 0.0, nextTripId = null)),
             routes = emptyMap()
         )
         assertEquals(emptySet<String>(), found)

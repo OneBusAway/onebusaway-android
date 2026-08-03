@@ -23,9 +23,9 @@ import org.onebusaway.android.util.GeoPoint
  * rider boards, taken from a trip's own shape clipped at the boarding stop's server-computed
  * `distanceAlongTrip`, rather than by projecting the boarding point onto `stops-for-route` geometry.
  *
- * This is [rideEligibility]'s twin. That one decides which vehicles belong to the ride; this one
- * decides which line they run along to reach it. Both relate a stop id to a trip through the same
- * pair of server-computed quantities along the same shape, so neither needs a projection or a
+ * This is [rideSelection]'s twin. That one decides which vehicles belong to the ride; this one decides
+ * which line they run along to reach it. Both read the same [RideTrip]s and relate a stop id to a trip
+ * through server-computed quantities along that trip's own shape, so neither needs a projection or a
  * tolerance, and the two can't disagree about where the ride begins and ends.
  *
  * Why it replaces the projection as the primary answer: `stops-for-route` hands a direction its
@@ -53,7 +53,7 @@ import org.onebusaway.android.util.GeoPoint
  * Null at every step that can't be decided exactly, so the caller falls back to the geometric
  * [upstreamTo] rather than drawing a guess: the trip doesn't serve the stop (a different direction's
  * trip, or a short-turn), it serves it more than once (a loop — no single boarding to clip at, the
- * same refusal [soleOffsetOf] and [rideBoundEligibility] make), or the schedule/shape hasn't been
+ * same refusal [soleOffsetOf] and [provablyPastAlight] make), or the schedule/shape hasn't been
  * backfilled yet.
  *
  * A trip that *starts* at the boarding stop clips to a pair of coincident points — [subPolyline]

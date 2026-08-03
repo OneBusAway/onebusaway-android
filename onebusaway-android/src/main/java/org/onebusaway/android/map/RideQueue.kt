@@ -209,8 +209,9 @@ internal fun rideQueueFrom(groups: List<RideRouteGroup>, ride: RideFocus): RideQ
  * a same-route neighbour is accepted here, because a self-interline rides one route through two
  * phases and the rider stays aboard across it.
  *
- * [neighbourRouteOf] resolves the neighbour trip's route (a cached lookup); an empty id is OBA's
- * block-end sentinel (#2003) and terminates the walk, as does a null.
+ * [neighbourRouteOf] resolves the neighbour trip's route (a cached lookup); a trip that resolves to
+ * none terminates the walk, as does a schedule with no next trip — OBA's block-end sentinel is blanked
+ * to null at the wire boundary (#2003), so it arrives here simply as "no next trip".
  */
 internal suspend fun rideContinuations(
     seed: Set<String>,
@@ -229,7 +230,6 @@ internal suspend fun rideContinuations(
         // independent, so a serial loop would stall the whole hop behind the slowest one.
         val candidates = frontier.mapNotNullTo(LinkedHashSet()) { tripId ->
             scheduleOf(tripId)?.nextTripId
-                ?.takeIf { it.isNotEmpty() }
                 // Visited guard: a feed that links a block back on itself must not loop forever.
                 ?.takeIf { it !in seed && it !in found }
         }

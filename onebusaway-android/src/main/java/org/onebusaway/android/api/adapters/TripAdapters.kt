@@ -108,7 +108,15 @@ fun TripSchedule.toObaTripSchedule(): ObaTripSchedule {
             it.distanceAlongTrip
         )
     }
-    return TripScheduleData(times.toTypedArray(), timeZone, previousTripId, nextTripId)
+    // OBA sends "" rather than omitting the neighbour trip at a block's ends (#2003). Blanked to null
+    // here, at the wire boundary, so no consumer has to know the sentinel — the same treatment
+    // [DtoTripStatus.activeTripId] gets above.
+    return TripScheduleData(
+        times.toTypedArray(),
+        timeZone,
+        previousTripId?.ifBlank { null },
+        nextTripId?.ifBlank { null }
+    )
 }
 
 /**

@@ -90,6 +90,7 @@ import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.directions.DirectionStopEtaStrip
 import org.onebusaway.android.ui.home.directions.DirectionsErrorSnackbar
+import org.onebusaway.android.ui.home.directions.DirectionsExitConfirmDialog
 import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
@@ -825,6 +826,18 @@ fun HomeScreen(
                                             longPressPoint = null
                                         },
                                         onDismiss = { longPressPoint = null }
+                                    )
+                                }
+                                // Neither Back nor a tap on the map background leaves outright while a trip
+                                // is drawn — each stages this question instead (#2140). The VM owns the latch
+                                // because the two gestures reach it from different places (the BackHandler
+                                // above, and the map's own click callback), and it is answered here.
+                                val showExitConfirm by homeViewModel.pendingDirectionsExit
+                                    .collectAsStateWithLifecycle()
+                                if (showExitConfirm) {
+                                    DirectionsExitConfirmDialog(
+                                        onConfirm = homeViewModel::confirmExitDirections,
+                                        onDismiss = homeViewModel::dismissDirectionsExit
                                     )
                                 }
                             }

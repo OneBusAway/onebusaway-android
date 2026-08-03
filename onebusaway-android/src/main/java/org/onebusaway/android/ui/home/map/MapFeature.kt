@@ -213,8 +213,10 @@ fun MapFeature(
             override fun onBikeClick(station: BikeStation) {
                 val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+                    // Refused (directions owns the map): leave before the map tears the trip down —
+                    // the same order the stop tap above uses, home focus first, map render after.
+                    if (!homeViewModel.onBikeStationFocused(station.id)) return
                     mapViewModel.clearAllFocus()
-                    homeViewModel.onBikeStationFocused(station.id)
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,

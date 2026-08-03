@@ -603,6 +603,37 @@ fun DirectionsErrorSnackbar(
 }
 
 /**
+ * "Leave these directions?" — the modal shown when a gesture would close directions on a trip that is
+ * drawn on the map (#2140). A planned trip is several deliberate acts (two endpoints, a time, a mode,
+ * the option picked from the results), and the two gestures that discard it — Back, and a tap on the
+ * map background — are the two cheapest gestures on the screen, so it was far too easy to spend the
+ * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
+ * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
+ * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ */
+@Composable
+fun DirectionsExitConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
+        text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.directions_exit_confirm_discard))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+}
+
+/**
  * Pick a From/To point directly on the home map: a fixed center crosshair the map pans under, and a
  * bottom confirm. [onConfirm] captures the map's current center; the caller resolves it to a
  * [org.onebusaway.android.ui.tripplan.TripEndpoint.MapPoint].

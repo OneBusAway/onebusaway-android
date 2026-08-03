@@ -1652,7 +1652,7 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
     val metric = unitsAreMetric()
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         OperatorChip(rental) { link -> openRental(context, link, rental.fallback) }
         val details = listOfNotNull(

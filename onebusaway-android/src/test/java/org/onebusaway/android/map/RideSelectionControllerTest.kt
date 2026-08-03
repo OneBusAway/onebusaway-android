@@ -202,6 +202,40 @@ class RideSelectionControllerTest {
     }
 
     @Test
+    fun `tapping a pill admits it against the poll already in hand`() {
+        // The pill tap seeds and then rebuilds the vehicle set in the same breath, with no new poll in
+        // between. If the guard ignored the seed, the layer handed to the camera would not contain the
+        // tapped vehicle, and the focus would drop silently (#1992) — the vehicle then appearing on its
+        // own one poll later. Observed on device: an E Line pill with a "vehicle on map" pin whose tap
+        // went nowhere and resolved itself unaided.
+        val h = harness("t1" to ridden, "tapped" to ridden)
+        h.controller.start(focusTripId = null)
+        h.controller.setArrivals(groups("t1"), ride())
+        val landed = poll("t1", "tapped")
+        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        assertEquals(setOf("t1"), h.visibleTripIds())
+
+        h.controller.seed("tapped")
+        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+
+        assertTrue("tapped" in h.visibleTripIds())
+    }
+
+    @Test
+    fun `abandoning the pill focus takes effect against the poll already in hand`() {
+        val h = harness("tapped" to ridden)
+        h.controller.start(focusTripId = "tapped")
+        val landed = poll("tapped")
+        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        assertEquals(setOf("tapped"), h.visibleTripIds())
+
+        h.controller.clearSeed()
+        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+
+        assertTrue(h.visibleTripIds().isEmpty())
+    }
+
+    @Test
     fun `a landed poll re-runs the selection`() {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)

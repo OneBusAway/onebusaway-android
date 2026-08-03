@@ -71,11 +71,16 @@ internal class RideSelectionController(
      */
     private var seed: Set<String> = emptySet()
 
-    // What [refresh] was last run against. Identity compares, like RouteMapController's colour memo: a
-    // landed poll replaces its VehiclePoll (and the extras map) wholesale rather than mutating it.
+    // What [refresh] was last run against. Identity compares for the polls, like RouteMapController's
+    // colour memo: a landed poll replaces its VehiclePoll (and the extras map) wholesale rather than
+    // mutating it. [lastSeed] compares by value — it is at most one id, and a pill tap changes it in
+    // place, between polls. Every input the selection reads has to be here: a tap seeds and then
+    // rebuilds the vehicle set in the same breath, so a guard that missed the seed would hand the
+    // camera a layer without the very vehicle the rider asked for, and the focus would drop silently.
     private var lastPoll: VehiclePoll? = null
     private var lastExtras: Map<String, VehiclePoll>? = null
     private var lastQueue: RideQueue? = null
+    private var lastSeed: Set<String>? = null
 
     /** Which vehicles to draw. [RideVisibility.All] whenever no ride is focused, or the stop can't answer. */
     var visibility: RideVisibility = RideVisibility.All
@@ -128,6 +133,7 @@ internal class RideSelectionController(
         lastPoll = null
         lastExtras = null
         lastQueue = null
+        lastSeed = null
         continuationJob?.cancel()
         continuationJob = null
     }
@@ -153,10 +159,11 @@ internal class RideSelectionController(
             visibility = RideVisibility.All
             return
         }
-        if (poll === lastPoll && extras === lastExtras && queue === lastQueue) return
+        if (poll === lastPoll && extras === lastExtras && queue === lastQueue && seed == lastSeed) return
         lastPoll = poll
         lastExtras = extras
         lastQueue = queue
+        lastSeed = seed
         val pollTrips = pollRideTrips(leaderRouteId, poll, extras)
         val selection = rideSelection(
             queue = queue,

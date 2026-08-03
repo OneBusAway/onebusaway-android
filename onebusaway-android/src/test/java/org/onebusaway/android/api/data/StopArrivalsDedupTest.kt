@@ -16,10 +16,12 @@
 package org.onebusaway.android.api.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.onebusaway.android.api.contract.ArrivalDeparture
 import org.onebusaway.android.api.contract.ArrivalsForStop
 import org.onebusaway.android.api.contract.EntryWithReferences
+import org.onebusaway.android.api.contract.Frequency
 import org.onebusaway.android.api.contract.Position
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.TripReference
@@ -57,6 +59,41 @@ class StopArrivalsDedupTest {
             .map { Triple(it.tripId, it.serviceDate, it.stopSequence) }
 
         assertEquals(instances.distinct(), instances)
+    }
+
+    @Test
+    fun `a corrupt frequency row is not exposed as an arrival`() {
+        val artifact = 29_999L
+        val snapshot = StopArrivals(
+            data = EntryWithReferences(
+                entry = ArrivalsForStop(
+                    stopId = "stop",
+                    arrivalsAndDepartures = listOf(
+                        ArrivalDeparture(
+                            routeId = "route",
+                            tripId = "trip",
+                            stopId = "stop",
+                            predicted = true,
+                            scheduledArrivalTime = artifact,
+                            predictedArrivalTime = artifact,
+                            scheduledDepartureTime = artifact,
+                            predictedDepartureTime = artifact,
+                            frequency = Frequency(
+                                startTime = 1_785_706_000_000L,
+                                endTime = 1_785_709_600_000L,
+                                headway = 600L
+                            )
+                        )
+                    )
+                ),
+                references = References()
+            ),
+            currentTime = 1_785_706_000_000L,
+            minutesAfter = 65
+        )
+
+        assertEquals(0, snapshot.arrivals.size)
+        assertFalse(snapshot.hasArrivals)
     }
 
     private companion object {

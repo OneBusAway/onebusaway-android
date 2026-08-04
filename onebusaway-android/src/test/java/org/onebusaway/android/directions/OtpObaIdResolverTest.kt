@@ -32,12 +32,17 @@ import org.onebusaway.android.models.RouteStopGroup
  */
 class OtpObaIdResolverTest {
 
-    // The region's covered OBA agencies (id + name), as agencies-with-coverage would report them.
+    // The region's covered OBA agencies (id + name), verbatim from Puget Sound's
+    // agencies-with-coverage (checked 2026-08-04). Note 97 is Everett Transit: Skagit and Whatcom are
+    // in the OTP graph but are NOT covered OBA agencies, which is why they resolve to null below.
     private val coverage = listOf(
         agency("1", "Metro Transit"),
-        agency("40", "Sound Transit"),
+        agency("3", "Pierce Transit"),
         agency("19", "Intercity Transit"),
-        agency("97", "Skagit Transit")
+        agency("23", "City of Seattle"),
+        agency("29", "Community Transit"),
+        agency("40", "Sound Transit"),
+        agency("97", "Everett Transit")
     )
 
     /** Stops-for-route stub: the OBA stop ids each route serves, or a failure for an unstubbed route. */
@@ -154,16 +159,25 @@ class OtpObaIdResolverTest {
     }
 
     @Test
-    fun nameFallback_forUuidAgencyId() = runTest {
-        // Skagit uses a UUID agency id in OTP; only the name resolves it to OBA agency "97".
-        assertEquals(
-            "97_42",
+    fun unresolvable_forAnAgencyTheRegionDoesNotCover() = runTest {
+        // Skagit is in the Puget Sound OTP graph (with a UUID agency id, so nothing is derivable from
+        // it) but is not a covered OBA agency, so neither rule can name it. OTP will happily plan a leg
+        // on it; the drawer degrades rather than inventing an id.
+        assertNull(
             resolver().obaRouteId(
                 "Skagit:42",
                 agencyGtfsId = "Skagit:e0e4541a-2714-487b-b30c-f5c6cb4a310f",
                 agencyName = "Skagit Transit"
             )
         )
+    }
+
+    @Test
+    fun derivedSuffixWins_evenWhereAnotherFeedSharesTheAgency() = runTest {
+        // Sound Transit is published under four OTP feeds (kcm, Pierce, CommTrans, and its own "40"),
+        // all suffixed :40 — every one resolves to the single OBA agency 40.
+        assertEquals("40_560", resolver().obaRouteId("Pierce:560", agencyGtfsId = "Pierce:40", agencyName = "Sound Transit"))
+        assertEquals("40_515", resolver().obaRouteId("CommTrans:515", agencyGtfsId = "CommTrans:40", agencyName = "Sound Transit"))
     }
 
     @Test

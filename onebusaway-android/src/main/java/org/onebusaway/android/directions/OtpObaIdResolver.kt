@@ -34,8 +34,14 @@ import org.onebusaway.android.models.AgencyContact
  * the agency prefix is remapped. For a **route** the OBA agency id is **derived** from the OTP agency
  * gtfsId's suffix and then **verified** against the region's agencies-with-coverage; where the derived
  * value isn't a covered agency — feeds whose GTFS `agency_id` diverges from OBA's (verified for Puget
- * Sound: Intercity is `19:0` in OTP but agency `19` in OBA; Skagit uses a UUID agency id) — it falls
- * back to matching the OTP agency **name** against the covered agencies.
+ * Sound: Intercity is `19:0` in OTP but agency `19` in OBA) — it falls back to matching the OTP agency
+ * **name** against the covered agencies. Some OTP agencies are in neither: Puget Sound's graph plans on
+ * Skagit and Whatcom, which OBA does not cover at all, and those correctly resolve to null.
+ *
+ * Membership is all the derived suffix is checked for, not identity — a feed whose GTFS `agency_id`
+ * collided with a *different* OBA agency's id would resolve silently to the wrong agency. That does not
+ * happen in Puget Sound today (every derived hit's OBA name equals the OTP agency name), but nothing
+ * here enforces it; the regions-directory mapping below is the real fix.
  *
  * A **stop** does not get that prefix, because a route's agency does not own the stops it calls at
  * (#2170). Verified against the live Puget Sound deployments: ST route 522 is `kcm:100232` under agency

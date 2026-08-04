@@ -87,7 +87,6 @@ class DirectionRowFocusTest {
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
-        realtime = RealtimeState.OnTime,
         rideEvents = listOf(RideEvent.Stop(LogStop("Capitol Hill Station", stopMidPoint))),
         routeLeg = routeLeg,
         legPoints = transitLegPoints,
@@ -166,7 +165,7 @@ class DirectionRowFocusTest {
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()
 
         // Tapping the transit header highlights the route but does not reveal the stops (#2040).
-        composeRule.onNodeWithText(transitTitle).performClick()
+        composeRule.onNodeWithText(requireNotNull(transit.headsign)).performClick()
         assertEquals("1_100", captured?.first?.routeId)
         assertEquals(FocusedLeg(transitLegPoints, setOf(1)), captured?.second)
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()

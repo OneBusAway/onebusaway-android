@@ -77,8 +77,7 @@ class DirectionRowInterlineBadgeTest {
         headsign = "Rainier Beach",
         board = RouteStopRef("1_500", "500", "3rd Ave & Pine St", boardPoint),
         alight = RouteStopRef("1_600", "600", "Rainier Ave S & S Alaska St", alightPoint),
-        interlineTransitions = mapOf(1 to transition),
-        badge = interlinedBadge
+        interlineTransitions = mapOf(1 to transition)
     )
 
     private val ride = TripLogEntry.Transit(
@@ -91,7 +90,6 @@ class DirectionRowInterlineBadgeTest {
         boardTime = ServerTime(2 * 60_000L),
         exitTime = ServerTime(32 * 60_000L),
         durationMinutes = 30,
-        realtime = RealtimeState.Unknown,
         rideEvents = listOf(RideEvent.Transition(transition)),
         routeLeg = interlinedLegRef,
         legPoints = listOf(boardPoint, seamPoint, alightPoint)

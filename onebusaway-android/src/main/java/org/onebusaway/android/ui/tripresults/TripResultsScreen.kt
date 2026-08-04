@@ -94,7 +94,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -122,6 +121,7 @@ import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
 import org.onebusaway.android.ui.compose.components.AlertSeverity
+import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
@@ -1816,8 +1816,7 @@ private fun ColumnScope.BoardContent(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
 ) {
-    val context = LocalContext.current
-    // The route/headsign/meta block highlights the leg on the map; expanding its steps is the scaffold's
+    // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
     // own chevron segment (#2040), not a side effect of this tap. The board stop + ETA strip below is a
     // third, separate tap target that zooms to the stop. Because this control is this inner block rather
     // than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
@@ -1827,47 +1826,19 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClick = onFocus)
     ) {
-        // A ride the rider may take on any of several routes badges them all as one joined roundel
-        // ("1 Line/2 Line", #2010). A ride the *vehicle* changes route during does not (#2071): the
-        // drawer draws a row per segment, so the header badges only the route boarded and each route the
-        // vehicle becomes is badged at the seam the rider reaches it at (TransitionContent) — the
-        // header's roundel says what to board, not everything the ride will eventually be called. The
-        // option card above still joins them ("5 > 12", #2049); it has one line for the whole ride.
-        // A route that publishes no short name gets no roundel and leads with its long name — see
-        // routeDisplayShortName.
-        val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
-        SegmentIdentity(
-            title = entry.routeDisplayName?.takeIf { it != entry.routeShortName },
-            headsign = entry.headsign,
-            roundel = when {
-                joined != null -> ({ RouteBadgeChip(joined.routes, scale = BADGE_SCALE, join = joined.join) })
-                entry.routeShortName != null ->
-                    ({ RouteBadgeChip(entry.routeShortName, ridePresentationColor(entry.routeColorHex), scale = BADGE_SCALE) })
-                else -> null
+        val boardable = entry.boardableRoutes()
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            boardable.forEach { route ->
+                SegmentIdentity(badge = route.badge, name = route.name, headsign = route.headsign)
             }
-        )
-        // What an interchangeable badge means: any of those routes will do, so board the first to
-        // arrive. Their arrivals share one route-badged ETA strip under the board stop (#2010/#2099). A ride that changes
-        // route under the rider carries the opposite instruction — board this one and stay on it — and
-        // gives it in its own row further down the ride (TransitionContent); its badge never reaches
-        // this header, so it cannot pick this caption up.
-        if (joined != null) {
+        }
+        if (boardable.size > 1) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 1.dp)
             )
-        }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val meta = transitMeta(entry, context)
-            if (meta.isNotEmpty()) {
-                Text(
-                    text = meta,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            RealtimeChip(entry.realtime)
         }
     }
     // Directly under the route header and above the boarding instruction (#2143): the alert is about
@@ -1901,11 +1872,11 @@ private fun ColumnScope.StopContent(stop: LogStop) {
  * A stay-aboard interline (#2000): the vehicle keeps going but its route changes, so the rider is told
  * to stay on board — never to get off and reboard.
  *
- * Laid out as the board row of the ride's *next segment* (#2071) — badge, fuller name, headsign, by the
- * same rules a board row uses — since that is what the seam is: the header above named the route
- * boarded, and this names the route the rider goes on to ride, at the point they reach it. The
- * instruction and the seam stop follow, so a route with no long name reads
- * `[12] / Interlaken Park / Stay on board / At Mount Baker Transit Center`.
+ * Laid out as the board row of the ride's *next segment* (#2071) — roundel and headsign, by the same
+ * rules a board row uses — since that is what the seam is: the header above named the route boarded, and
+ * this names the route the rider goes on to ride, at the point they reach it. The instruction and the
+ * seam stop follow, so a route reads
+ * `[12] → Interlaken Park / Stay on board / At Mount Baker Transit Center`.
  *
  * With nothing at all to name the new route by — no badge, no name, no headsign — the instruction says
  * so itself rather than standing over a blank.
@@ -1913,15 +1884,14 @@ private fun ColumnScope.StopContent(stop: LogStop) {
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
-    val title = transition.routeDisplayName?.takeIf { it != transition.badge?.shortName }
     SegmentIdentity(
-        title = title,
-        headsign = headsign,
-        roundel = transition.badge?.let { badge ->
-            { RouteBadgeChip(badge.shortName, badge.routeColor, scale = BADGE_SCALE) }
-        }
+        badge = transition.badge,
+        // Only ever the stand-in for a missing roundel, as on a board row: a route with a roundel is
+        // named by it alone (#2151).
+        name = transition.routeDisplayName.takeIf { transition.badge == null },
+        headsign = headsign
     )
-    val named = transition.badge != null || title != null || headsign != null
+    val named = transition.badge != null || transition.routeDisplayName != null || headsign != null
     Text(
         text = stringResource(
             if (named) R.string.step_by_step_transit_stay_on_board else R.string.step_by_step_transit_interline_unknown_route
@@ -1940,45 +1910,38 @@ private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
 }
 
 /**
- * How a row names the route the rider is about to be on: its [roundel], the fuller name beside it, and
- * the [headsign] under both.
+ * How a row names one route the rider is about to be on: its roundel and, on the same line, where that
+ * route is headed.
  *
  * One composable rather than two so the ride's segments can't drift apart (#2071). The rider boards a
  * segment at the board row and reaches every later one at a seam row, and those are the same act — a
  * padding or type tweak landing on one of them and not the other would make one ride read as two
- * different kinds of thing.
+ * different kinds of thing. It names exactly one route, so a board row offering several draws it once
+ * per route (#2151).
  *
- * [roundel] is a slot rather than a badge value because the two rows draw genuinely different chips: a
- * board row may draw the joined "1 Line/2 Line" roundel, which is outlined, where a seam always draws
- * the plain single one. Null draws none — and takes its spacing with it — for a route publishing no
- * short name. [title] is null when the name would merely repeat the roundel, and the weight falls to a
- * spacer, so whatever follows is laid out the same either way.
+ * The roundel and the headsign together already say what to board, so the route's long name isn't
+ * printed beside them (#2151); [name] is drawn only in the roundel's place, for a route publishing no
+ * short name — see [BoardableRoute]. The headsign takes the app's shared "heading toward X" treatment
+ * ([DirectionHeadsign], #1823) rather than a setting of its own, so the sign on the bus reads the same
+ * here as on an arrivals row.
  */
 @Composable
-private fun SegmentIdentity(title: String?, headsign: String?, roundel: (@Composable () -> Unit)?) {
+private fun SegmentIdentity(badge: RouteBadge?, name: String?, headsign: String?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (roundel != null) {
-            roundel()
+        if (badge != null) {
+            RouteBadgeChip(badge.shortName, badge.routeColor, scale = BADGE_SCALE)
             Spacer(Modifier.width(8.dp))
-        }
-        if (title != null) {
+        } else if (name != null) {
             Text(
-                text = title,
+                text = name,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                color = MaterialTheme.colorScheme.onSurface
             )
-        } else {
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
         }
-    }
-    headsign?.let {
-        Text(
-            text = it,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Weighted so a long headsign ellipsizes against the row rather than pushing the roundel off it.
+        headsign?.let { DirectionHeadsign(it, Modifier.weight(1f)) }
     }
 }
 
@@ -2011,37 +1974,6 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-/** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
-@Composable
-private fun RealtimeChip(state: RealtimeState) {
-    // labelMedium text over a 14%-alpha tint of itself, so it takes the text tier: the iOS display
-    // colors sit at 2.7-3.2:1 on that tint, which is what the retired trip_realtime_* palette had been
-    // hand-picked to avoid. Read off the state's own [ScheduleDeviation.Status] rather than named here,
-    // so a re-hue of the shared palette can't leave this screen behind. That palette's polarity
-    // contradicted the arrivals drawer: blue meant "early" here and "late" there, in one app (#2043).
-    val text = when (state) {
-        RealtimeState.Unknown -> return
-        RealtimeState.OnTime -> stringResource(R.string.trip_plan_realtime_on_time)
-        is RealtimeState.Late ->
-            pluralStringResource(R.plurals.trip_plan_realtime_late, state.minutes.toInt(), state.minutes.toInt())
-        is RealtimeState.Early ->
-            pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
-    }
-    val color = colorResource(state.status.textColorRes)
-    Spacer(Modifier.width(8.dp))
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(Modifier.size(6.dp).clip(CircleShape).background(color))
-        Spacer(Modifier.width(5.dp))
-        Text(text = text, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 
@@ -2083,13 +2015,6 @@ private fun deltaText(minutes: Long, context: Context): String {
 
 /** The walk leg's distance ("0.2 mi"); blank when the leg carries no distance. Its duration is the delta. */
 private fun walkMeta(entry: TripLogEntry.Walk, context: Context, metric: Boolean): String = if (entry.distanceMeters > 0.0) ConversionUtils.getFormattedDistance(entry.distanceMeters, context, metric) else ""
-
-/** The transit leg's stop count ("5 stops"); blank when unknown (e.g. the OTP2 path). Duration is the delta. */
-private fun transitMeta(entry: TripLogEntry.Transit, context: Context): String = if (entry.stopCount > 0) {
-    context.resources.getQuantityString(R.plurals.trip_plan_intermediate_stops, entry.stopCount, entry.stopCount)
-} else {
-    ""
-}
 
 // ---- previews ------------------------------------------------------------------------------------
 //
@@ -2172,9 +2097,8 @@ private fun previewTransitLeg(
     mode: TransitMode = TransitMode.BUS,
     routeColorHex: String? = "1B6EF3",
     headsign: String? = "Rainier Beach",
-    realtime: RealtimeState = RealtimeState.OnTime,
     rideEvents: List<RideEvent> = PREVIEW_RIDE_STOPS,
-    badge: LegBadge? = null,
+    alternatives: List<AlternativeRouteRef> = emptyList(),
     alerts: List<TripAlertItem> = emptyList()
 ) = TripLogEntry.Transit(
     routeShortName = routeShortName,
@@ -2186,22 +2110,21 @@ private fun previewTransitLeg(
     boardTime = ServerTime(4 * 60_000L),
     exitTime = ServerTime(20 * 60_000L),
     durationMinutes = 16,
-    realtime = realtime,
     rideEvents = rideEvents,
     routeLeg = RouteLegRef(
         routeId = "1_100",
         headsign = headsign,
         board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
         alight = RouteStopRef("1_600", "600", "Rainier Ave S & S Alaska St", null),
-        badge = badge
+        alternatives = alternatives
     ),
     alerts = alerts
 )
 
 /**
- * A Washington State Ferries run: no route short name, so no badge — the long name is the row's title
- * and the boat glyph rides the spine. Built off [previewTransitLeg] and then re-timed, since an hour
- * on a boat is the one thing about it that isn't a bus ride's shape.
+ * A Washington State Ferries run: no route short name, so no badge — the long name stands in the
+ * roundel's place and the boat glyph rides the spine. Built off [previewTransitLeg] and then re-timed,
+ * since an hour on a boat is the one thing about it that isn't a bus ride's shape.
  */
 private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = previewTransitLeg(
     routeShortName = null,
@@ -2209,7 +2132,6 @@ private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = preview
     mode = TransitMode.FERRY,
     routeColorHex = null,
     headsign = "Bremerton",
-    realtime = RealtimeState.Unknown,
     rideEvents = emptyList(),
     alerts = alerts
 ).copy(
@@ -2299,7 +2221,6 @@ private fun previewDirections(alerted: Boolean = false) = listOf(
     // seam row, which is why the seam sits among the stops rather than before them.
     previewTransitLeg(
         rideEvents = PREVIEW_RIDE_STOPS.take(2) + PREVIEW_INTERLINE_SEAM + PREVIEW_RIDE_STOPS.drop(2),
-        badge = PREVIEW_BUS_CHAIN_BADGE,
         alerts = listOfNotNull(PREVIEW_BUS_ALERT.takeIf { alerted })
     ),
     previewFerryLeg(alerts = listOfNotNull(PREVIEW_FERRY_ALERT.takeIf { alerted })),
@@ -2421,7 +2342,7 @@ private fun LegsPreviewFrame(entries: List<TripLogEntry>, expanded: Set<Int> = e
 @Preview(showBackground = true, widthDp = 400, name = "Transit leg · collapsed")
 @Composable
 private fun TransitLegPreview() {
-    // Board header, "N stops" meta + realtime chip, board stop — the ride's stops stay folded away.
+    // Board header (roundel + headsign) and board stop — the ride's stops stay folded away.
     LegPreviewFrame(previewTransitLeg())
 }
 
@@ -2451,7 +2372,8 @@ private fun TransitLegTwoAlertsPreview() {
 @Preview(showBackground = true, widthDp = 400, name = "Transit leg · whichever comes first")
 @Composable
 private fun TransitLegInterchangeablePreview() {
-    // An interchangeable pair (#2010): one joined roundel plus the caption that says to board either.
+    // An interchangeable pair (#2010/#2151): a line per route, each with its own headsign — the two
+    // share the track but not where they end up — plus the caption that says to board either.
     LegPreviewFrame(
         previewTransitLeg(
             routeShortName = "1 Line",
@@ -2459,7 +2381,14 @@ private fun TransitLegInterchangeablePreview() {
             mode = TransitMode.RAIL,
             routeColorHex = "00A651",
             headsign = "Angle Lake",
-            badge = PREVIEW_RAIL_PAIR_BADGE
+            alternatives = listOf(
+                AlternativeRouteRef(
+                    routeId = "40_2LINE",
+                    headsign = "Downtown Redmond",
+                    shortName = "2 Line",
+                    routeColor = 0xFF0075C4.toInt()
+                )
+            )
         )
     )
 }
@@ -2477,7 +2406,7 @@ private fun TransitLegInterlinePreview() {
 @Preview(showBackground = true, widthDp = 400, name = "Transit leg · unnamed route (ferry)")
 @Composable
 private fun TransitLegNoShortNamePreview() {
-    // No short name to badge, so the row leads with the long name and the boat glyph rides the spine —
+    // No short name to badge, so the long name stands in its place and the boat glyph rides the spine —
     // and with no GTFS colour, the whole leg falls back to one neutral hue rather than three.
     LegPreviewFrame(previewFerryLeg())
 }

@@ -27,18 +27,19 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
-import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
 /**
- * Verifies that a ride's interchangeable routes (#2010) reach the rider in both places they're drawn:
- * the itinerary option card's joined roundel at the top, and the ride's own joined badge in the trip
- * log (with its "whichever comes first" caption). A ride with a single route badges only that route and
- * says nothing about alternatives.
+ * Verifies that a ride's interchangeable routes (#2010) reach the rider in both places they're drawn,
+ * in the form each place carries: the itinerary option card joins them into one roundel at the top,
+ * where it has a single line to stand for the whole ride, and the trip log gives each its own line —
+ * roundel, headsign, and the "whichever comes first" caption under them (#2151). A ride with a single
+ * route draws one line and says nothing about alternatives.
  *
  * The on-device counterpart to [org.onebusaway.android.directions.model.InterchangeableRoutesTest]
- * (which decides *which* routes qualify) and `RouteBadgesTest` (which builds the badge).
+ * (which decides *which* routes qualify), `RouteBadgesTest` (which builds the badge) and
+ * `BoardableRoutesTest` (which builds the log's lines).
  */
 class DirectionRowAlternativeRoutesTest {
 
@@ -64,14 +65,6 @@ class DirectionRowAlternativeRoutesTest {
                 shortName = "1 Line",
                 routeColor = 0xFF00A651.toInt()
             )
-        ),
-        badge = LegBadge(
-            listOf(
-                RouteBadge("1 Line", 0xFF00A651.toInt()),
-                RouteBadge("2 Line", 0xFF0075C4.toInt())
-            ),
-            TransitMode.RAIL,
-            RouteBadgeJoin.ANY_OF
         )
     )
 
@@ -85,7 +78,6 @@ class DirectionRowAlternativeRoutesTest {
         boardTime = ServerTime(2 * 60_000L),
         exitTime = ServerTime(32 * 60_000L),
         durationMinutes = 30,
-        realtime = RealtimeState.Unknown,
         rideEvents = emptyList(),
         routeLeg = interlinedLegRef,
         legPoints = listOf(boardPoint, alightPoint)
@@ -94,7 +86,15 @@ class DirectionRowAlternativeRoutesTest {
     private fun state(routeLeg: RouteLegRef) = TripResultsUiState.Success(
         options = listOf(
             ItineraryOption(
-                symbols = listOfNotNull(routeLeg.badge).map { ModeSymbol.Transit(it) },
+                symbols = listOf(
+                    ModeSymbol.Transit(
+                        legBadge(
+                            RouteBadge("2 Line", 0xFF0075C4.toInt()),
+                            routeLeg.alternatives.map { RouteBadge(it.shortName, it.routeColor) },
+                            TransitMode.RAIL
+                        )
+                    )
+                ),
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
                 endTime = ServerTime(32 * 60_000L)
@@ -104,14 +104,27 @@ class DirectionRowAlternativeRoutesTest {
         directions = listOf(ride.copy(routeLeg = routeLeg))
     )
 
-    /** Both roundels — the option card's and the ride's — name each interchangeable route. */
+    /** Both surfaces — the option card's joined roundel and the log's lines — name each route. */
     @Test
     fun interchangeableRoutesAreBadgedInThePickerAndTheLog() {
         composeRule.setContent { TripResultsList(state = state(interlinedLegRef)) }
 
-        // One node per route in each of the two badges: the option card's and the ride's.
+        // One node per route on each surface: the option card's joined roundel, and the log's own line.
         composeRule.onAllNodesWithText("1 Line").assertCountEquals(2)
         composeRule.onAllNodesWithText("2 Line").assertCountEquals(2)
+    }
+
+    /**
+     * Each of the log's lines says where *its* route is headed (#2151). The pair shares the track but
+     * not its destination, which is the thing the joined roundel had nowhere to put — and the reason a
+     * rider offered the choice can make it.
+     */
+    @Test
+    fun eachLineInTheLogNamesItsOwnRoutesHeadsign() {
+        composeRule.setContent { TripResultsList(state = state(interlinedLegRef)) }
+
+        composeRule.onNodeWithText("Downtown Redmond").assertExists()
+        composeRule.onNodeWithText("Federal Way Downtown").assertExists()
     }
 
     /** The ride carries the caption that makes the badge an instruction, not just a label. */
@@ -124,12 +137,11 @@ class DirectionRowAlternativeRoutesTest {
             .assertExists()
     }
 
-    /** A ride the rider can't substitute anything for badges its own route and adds no caption. */
+    /** A ride the rider can't substitute anything for draws one line and adds no caption. */
     @Test
     fun rideWithoutInterchangeableRoutesBadgesOnlyItsOwnRoute() {
         val soloRef = interlinedLegRef.copy(
-            alternatives = emptyList(),
-            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())), TransitMode.RAIL, RouteBadgeJoin.ANY_OF)
+            alternatives = emptyList()
         )
         composeRule.setContent { TripResultsList(state = state(soloRef)) }
 

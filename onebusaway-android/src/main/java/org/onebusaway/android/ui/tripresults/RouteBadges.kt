@@ -23,6 +23,7 @@ import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
+import org.onebusaway.android.util.ROUTE_NAME_ORDER
 import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.riddenRouteHue
@@ -95,6 +96,25 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
     mode,
     RouteBadgeJoin.ANY_OF
 )
+
+/** One route/headsign line in a transit leg's board instruction. */
+internal data class BoardableRoute(val badge: RouteBadge?, val name: String?, val headsign: String?)
+
+/**
+ * The planned route and its interchangeable alternatives, in natural route-name order. Unlike a joined
+ * badge, these lines keep same-named routes because their headsigns can distinguish them (#2151).
+ */
+internal fun TripLogEntry.Transit.boardableRoutes(): List<BoardableRoute> {
+    val planned = BoardableRoute(
+        badge = routeShortName?.let { RouteBadge(it, ridePresentationColor(routeColorHex)) },
+        name = routeDisplayName.takeIf { routeShortName == null },
+        headsign = headsign
+    )
+    val alternatives = routeLeg.alternatives.map { BoardableRoute(RouteBadge(it.shortName, it.routeColor), null, it.headsign) }
+    return (listOf(planned) + alternatives).sortedWith(
+        compareBy(ROUTE_NAME_ORDER) { it.badge?.shortName ?: it.name.orEmpty() }
+    )
+}
 
 /**
  * The transit leg's roundel as the **directions drawer** draws one: its short name and parsed GTFS

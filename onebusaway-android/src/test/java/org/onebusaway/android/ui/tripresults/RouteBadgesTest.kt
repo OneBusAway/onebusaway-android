@@ -16,7 +16,6 @@
 package org.onebusaway.android.ui.tripresults
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -45,7 +44,7 @@ class RouteBadgesTest {
         )
 
         assertEquals(listOf("1 Line", "2 Line"), badge.routes.map { it.shortName })
-        assertTrue(badge.isInterchangeable)
+        assertEquals(RouteBadgeJoin.ANY_OF, badge.join)
     }
 
     /** …and the mirror-image plan produces the identical badge. */
@@ -74,7 +73,7 @@ class RouteBadgesTest {
         val badge = legBadge(planned = RouteBadge("8", null), alternatives = emptyList(), mode = TransitMode.BUS)
 
         assertEquals(listOf("8"), badge.routes.map { it.shortName })
-        assertFalse(badge.isInterchangeable)
+        assertEquals(RouteBadgeJoin.ANY_OF, badge.join)
     }
 
     /** A route can't appear twice in one badge, however it reached the list. */
@@ -199,9 +198,6 @@ class RouteBadgesTest {
 
         assertEquals(listOf("12", "10"), badge.routes.map { it.shortName })
         assertEquals(RouteBadgeJoin.THEN, badge.join)
-        assertTrue(badge.isJoined)
-        // "Board either one" is the wrong instruction here: there is one vehicle, and it becomes the 10.
-        assertFalse(badge.isInterchangeable)
     }
 
     /** A self-interline is invisible to the rider — same route, same vehicle — so it badges once. */
@@ -210,7 +206,6 @@ class RouteBadgesTest {
         val badge = rideBadgeOf(transitLeg("12"), transitLeg("12", interline = true))
 
         assertEquals(listOf("12"), badge.routes.map { it.shortName })
-        assertFalse(badge.isJoined)
     }
 
     /** A ride with no route change is the leg's own badge: its interchangeable routes, slashed. */
@@ -222,7 +217,6 @@ class RouteBadgesTest {
 
         assertEquals(listOf("1 Line", "2 Line"), badge.routes.map { it.shortName })
         assertEquals(RouteBadgeJoin.ANY_OF, badge.join)
-        assertTrue(badge.isInterchangeable)
     }
 
     /**

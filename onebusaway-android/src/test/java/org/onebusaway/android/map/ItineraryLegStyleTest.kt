@@ -11,6 +11,7 @@ import org.junit.Test
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
@@ -31,7 +32,7 @@ import org.onebusaway.android.util.routeBadgeChipColor
 @SuppressLint("RestrictedApi") // Hct, Material's vendored color-science util; see AdjacencyRouteColors.kt.
 class ItineraryLegStyleTest {
 
-    private val bikeShareDock = TripPlace(vertexType = TripVertexType.BIKESHARE, bikeShareId = "dock-1")
+    private val bikeShareDock = TripPlace(vertexType = TripVertexType.BIKESHARE, rental = TripVehicleRental(id = "dock-1"))
 
     @Test
     fun `a bicycle leg from a rental dock is bikeshare, from anywhere else own-bike`() {

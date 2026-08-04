@@ -96,6 +96,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
@@ -139,6 +140,7 @@ import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -1591,10 +1593,14 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
 private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (mode) {
     StreetMode.WALK ->
         if (isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
-    // A rented bike is still ridden: the verb is the same as for the rider's own bike, and only the
-    // glyph (and the map's dock markers) say where it came from.
-    StreetMode.BIKE, StreetMode.BIKESHARE ->
+    StreetMode.BIKE ->
         if (isTransfer) R.string.trip_plan_bike_transfer else R.string.step_by_step_non_transit_mode_bicycle_action
+    // A shared bike is a different act from riding your own — you have to find it and rent it first —
+    // so the leg is titled by what the rider is doing rather than by the vehicle they end up on. It's
+    // the same word the option card's glyph is announced with ([StreetMetric.BIKESHARE]), so the card
+    // and the row that expands from it name the leg alike.
+    StreetMode.BIKESHARE ->
+        if (isTransfer) R.string.trip_plan_bikeshare_transfer else R.string.transit_directions_bikeshare_label
     StreetMode.CAR ->
         if (isTransfer) R.string.trip_plan_car_transfer else R.string.step_by_step_non_transit_mode_car_action
 }
@@ -1615,9 +1621,153 @@ private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk) {
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+    entry.rental?.let { RentalContent(it) }
     // A walk gets its alerts under its header for the same reason a ride does — a closed dock or a
     // blocked path is about this stretch of the trip, not the trip as a whole.
     LegAlerts(entry.alerts)
+}
+
+/**
+ * What the rider needs to know about the shared bike they're being sent to (#2150): whose it is, what
+ * it is, where to find it, and how to unlock it. Before this the leg said only "Bike", which told a
+ * rider standing over an unfamiliar scooter nothing about which app opens it.
+ *
+ * The operator's chip is also the way over to them: it wears an open-in-new arrow and is the row's
+ * only external affordance, so the brand the rider is looking for and the thing they tap are one
+ * object rather than a chip with a button repeating its name underneath. A network with neither a
+ * rental URI nor a catalog entry has nowhere to send anyone, and its chip is a plain label — no arrow,
+ * no tap — rather than one going somewhere approximate.
+ *
+ * Everything else is drawn from what the feed actually said, and omitted rather than guessed when it
+ * didn't: an operator the app has no catalog entry for wears its raw network id (see
+ * [RentalOperators]), and a pickup with no named dock draws no pickup line.
+ *
+ * The vehicle id is deliberately not shown. The ids the live networks publish are UUIDs — nothing a
+ * rider can match against the bike in front of them — so drawing one would be noise that reads like an
+ * instruction.
+ */
+@Composable
+private fun ColumnScope.RentalContent(rental: RentalPickup) {
+    val context = LocalContext.current
+    val metric = unitsAreMetric()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        OperatorChip(rental) { link -> openRental(context, link, rental.fallback) }
+        val details = listOfNotNull(
+            rental.vehicle?.let { stringResource(rentalVehicleRes(it)) },
+            rental.rangeMeters?.let {
+                stringResource(
+                    R.string.trip_plan_rental_range,
+                    ConversionUtils.getFormattedDistance(it.toDouble(), context, metric)
+                )
+            }
+        )
+        if (details.isNotEmpty()) {
+            Text(
+                text = details.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    rental.stationName?.let {
+        Text(
+            text = stringResource(R.string.trip_plan_rental_pick_up_at, it),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * The operator on its brand colour — and, when there is somewhere to send the rider, the tap that
+ * takes them there.
+ *
+ * The tap area is the chip plus [RENTAL_OPERATOR_CHIP_TAP_PADDING], which lands short of the 48dp
+ * interactive minimum — deliberately: reserving the full minimum around a chip this size padded the
+ * row by a dozen dp above and below and made the leg read as three loosely-spaced blocks rather than
+ * one. The chip is drawn at [RENTAL_OPERATOR_CHIP_SCALE] partly to keep what is left a comfortable
+ * mark, and it is never the only way on — the row it sits in is itself a tap target.
+ *
+ * Only [RentalLink.Deep] names the exact vehicle the rider was routed onto, so only it is announced as
+ * opening it; the rest merely open the operator, and none of it claims a reservation was made (#2138).
+ */
+@Composable
+private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
+    val name = rental.operator.displayName
+    val described = stringResource(R.string.trip_plan_rental_operator_description, name)
+    val link = rental.link
+    val openLabel = link?.let {
+        stringResource(
+            if (it is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
+            name
+        )
+    }
+    Box(
+        // Padding *after* clickable, so the breathing room around the chip is part of what the rider
+        // can hit rather than a dead margin outside it.
+        modifier = when (link) {
+            null -> Modifier
+            else -> Modifier.clickable(onClickLabel = openLabel) { onOpen(link) }
+        }.padding(vertical = RENTAL_OPERATOR_CHIP_TAP_PADDING),
+        contentAlignment = Alignment.Center
+    ) {
+        RouteBadgeChip(
+            shortName = name,
+            routeColor = rental.operator.brandColor,
+            scale = RENTAL_OPERATOR_CHIP_SCALE,
+            // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
+            // chip instead of pushing the vehicle beside it off the row. Scaled with the chip, or the
+            // enlargement would buy the arrow room by taking it from the name.
+            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH * RENTAL_OPERATOR_CHIP_SCALE,
+            trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
+            // Merged, so the chip is one node reading "Lime rental" rather than that description and
+            // the bare brand name inside it announced as two.
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = described }
+        )
+    }
+}
+
+/**
+ * How much bigger the operator chip is than a route roundel. It is the leg's brand *and* its only tap
+ * target, and it carries a glyph beside the name, so it is drawn above roundel size — the same 1.5×
+ * the directions board badge uses, rather than a size of its own.
+ */
+private const val RENTAL_OPERATOR_CHIP_SCALE = 1.5f
+
+/** The breathing room above and below the operator chip, which is also part of its tap area. */
+private val RENTAL_OPERATOR_CHIP_TAP_PADDING = 3.dp
+
+/** How wide the operator chip may get before its name ellipsizes, at scale 1 — a dozen characters. */
+private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
+
+/**
+ * Hands the rider over: the operator's own link, and — when the device has nothing that handles a
+ * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
+ * [RentalPickup.fallback]).
+ */
+private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
+    when (link) {
+        is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
+            fallback?.let { openRental(context, it, fallback = null) }
+        }
+        is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
+        is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
+    }
+}
+
+/** What to call the rented vehicle — total over [RentalVehicleKind], so a new kind needs its word. */
+private fun rentalVehicleRes(kind: RentalVehicleKind): Int = when (kind) {
+    RentalVehicleKind.BIKE -> R.string.trip_plan_rental_bike
+    RentalVehicleKind.EBIKE -> R.string.trip_plan_rental_ebike
+    RentalVehicleKind.CARGO_BIKE -> R.string.trip_plan_rental_cargo_bike
+    RentalVehicleKind.ELECTRIC_CARGO_BIKE -> R.string.trip_plan_rental_electric_cargo_bike
+    RentalVehicleKind.SCOOTER -> R.string.trip_plan_rental_scooter
+    RentalVehicleKind.ESCOOTER -> R.string.trip_plan_rental_escooter
+    RentalVehicleKind.MOPED -> R.string.trip_plan_rental_moped
+    RentalVehicleKind.CAR -> R.string.trip_plan_rental_car
 }
 
 /**
@@ -2231,17 +2381,26 @@ private fun TripResultsErrorPreview() {
 // isolation, not a defect.
 
 /**
- * Renders [entry] alone, [expanded] or not. The row callbacks are no-ops (nothing is tappable in a
- * static preview) and the ETA strip is empty — it needs a live arrivals session, which is exactly the
- * host dependency previewing one leg is meant to escape.
+ * Renders [entry] — a ride or an on-street leg — alone, [expanded] or not. The row callbacks are
+ * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live
+ * arrivals session, which is exactly the host dependency previewing one leg is meant to escape.
  */
 @Composable
-private fun TransitLegPreviewFrame(entry: TripLogEntry.Transit, expanded: Boolean = false) {
+private fun LegPreviewFrame(entry: TripLogEntry, expanded: Boolean = false) {
+    LegsPreviewFrame(listOf(entry), if (expanded) setOf(0) else emptySet())
+}
+
+/**
+ * The same, for a short run of consecutive legs — where what's being looked at is how a leg sits
+ * against its neighbours (spacing, the spine's colour flip at each node) rather than the leg alone.
+ */
+@Composable
+private fun LegsPreviewFrame(entries: List<TripLogEntry>, expanded: Set<Int> = emptySet()) {
     CompositionLocalProvider(LocalUnitsAreMetric provides false) {
         ObaTheme {
             Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
                 Column {
-                    rememberLogRows(listOf(entry), if (expanded) setOf(0) else emptySet()).forEach { row ->
+                    rememberLogRows(entries, expanded).forEach { row ->
                         key(row.key) {
                             LogRow(
                                 model = row,
@@ -2263,14 +2422,14 @@ private fun TransitLegPreviewFrame(entry: TripLogEntry.Transit, expanded: Boolea
 @Composable
 private fun TransitLegPreview() {
     // Board header, "N stops" meta + realtime chip, board stop — the ride's stops stay folded away.
-    TransitLegPreviewFrame(previewTransitLeg())
+    LegPreviewFrame(previewTransitLeg())
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 340, name = "Transit leg · expanded")
 @Composable
 private fun TransitLegExpandedPreview() {
     // What the chevron reveals: every intermediate stop, on the ride's own coloured spine.
-    TransitLegPreviewFrame(previewTransitLeg(), expanded = true)
+    LegPreviewFrame(previewTransitLeg(), expanded = true)
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 300, name = "Transit leg · service alert")
@@ -2278,7 +2437,7 @@ private fun TransitLegExpandedPreview() {
 private fun TransitLegAlertPreview() {
     // The #2143 placement at leg scale: the banner sits under the route header and above "Get on at",
     // which is the adjacency the whole change is about.
-    TransitLegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_BUS_ALERT)))
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_BUS_ALERT)))
 }
 
 @Preview(showBackground = true, widthDp = 400, heightDp = 360, name = "Transit leg · two alerts")
@@ -2286,14 +2445,14 @@ private fun TransitLegAlertPreview() {
 private fun TransitLegTwoAlertsPreview() {
     // Loudest first, and two tinted cards stacked — the case where the leg header risks being crowded
     // off the top of the row.
-    TransitLegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_FERRY_ALERT, PREVIEW_BUS_ALERT)))
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_FERRY_ALERT, PREVIEW_BUS_ALERT)))
 }
 
 @Preview(showBackground = true, widthDp = 400, name = "Transit leg · whichever comes first")
 @Composable
 private fun TransitLegInterchangeablePreview() {
     // An interchangeable pair (#2010): one joined roundel plus the caption that says to board either.
-    TransitLegPreviewFrame(
+    LegPreviewFrame(
         previewTransitLeg(
             routeShortName = "1 Line",
             routeDisplayName = null,
@@ -2310,7 +2469,7 @@ private fun TransitLegInterchangeablePreview() {
 private fun TransitLegInterlinePreview() {
     // A stay-aboard route change (#2000/#2071). The seam row shows whether or not the leg is expanded —
     // it instructs the rider rather than merely annotating the ride — so this one stays collapsed.
-    TransitLegPreviewFrame(
+    LegPreviewFrame(
         previewTransitLeg(rideEvents = listOf(PREVIEW_RIDE_STOPS.first(), PREVIEW_INTERLINE_SEAM))
     )
 }
@@ -2320,5 +2479,98 @@ private fun TransitLegInterlinePreview() {
 private fun TransitLegNoShortNamePreview() {
     // No short name to badge, so the row leads with the long name and the boat glyph rides the spine —
     // and with no GTFS colour, the whole leg falls back to one neutral hue rather than three.
-    TransitLegPreviewFrame(previewFerryLeg())
+    LegPreviewFrame(previewFerryLeg())
+}
+
+// ---- bikeshare-leg previews ----------------------------------------------------------------------
+
+/** The pickup a Puget Sound rider actually gets today: a catalogued operator, an e-bike, no dock. */
+private fun previewLimePickup() = RentalPickup(
+    operator = RentalOperators.of("lime_seattle"),
+    vehicle = RentalVehicleKind.EBIKE,
+    stationName = null,
+    rangeMeters = 43356,
+    // No live network publishes a rental URI, so the chip opens the operator rather than this vehicle.
+    link = RentalLink.OperatorApp("com.limebike"),
+    fallback = RentalLink.Web("https://www.li.me/")
+)
+
+/** A rented-vehicle leg, ridden on [rental] — the shape a bikeshare itinerary's middle leg takes. */
+private fun previewRentalLeg(rental: RentalPickup) = TripLogEntry.Walk(
+    mode = StreetMode.BIKESHARE,
+    durationMinutes = 12,
+    distanceMeters = 3380.0,
+    isTransfer = false,
+    steps = emptyList(),
+    rental = rental
+)
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · known operator")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare leg · known operator, dark"
+)
+@Composable
+private fun BikeshareLegPreview() {
+    // What a Puget Sound rider actually gets today: a catalogued operator on its brand colour, an
+    // electric-assist bicycle with its remaining range, no dock to look for, and — the feed publishing
+    // no rental URI — a chip that opens the operator rather than claiming to unlock this bike. Drawn in
+    // both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
+    LegPreviewFrame(previewRentalLeg(previewLimePickup()))
+}
+
+/** The walk that fetches the bike, the ride, and the walk from where it's left. */
+private fun previewBikeshareItinerary() = listOf(
+    TripLogEntry.Terminal(kind = TerminalKind.START, time = ServerTime(0L), place = "3rd Ave & Pike St"),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 3,
+        distanceMeters = 210.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head north on 3rd Ave", distanceMeters = 210.0))
+    ),
+    previewRentalLeg(previewLimePickup()),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 2,
+        distanceMeters = 140.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head west on Denny Way", distanceMeters = 140.0))
+    ),
+    TripLogEntry.Terminal(kind = TerminalKind.ARRIVE, time = ServerTime(17 * 60_000L), place = "Seattle Center")
+)
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 420, name = "Bikeshare itinerary · walk, ride, walk")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    heightDp = 420,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare itinerary · walk, ride, walk, dark"
+)
+@Composable
+private fun BikeshareItineraryPreview() {
+    // The ride between its neighbours — where the operator chip has to hold its own against the walk
+    // rows above and below it without swamping them.
+    LegsPreviewFrame(previewBikeshareItinerary())
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · docked, unknown operator")
+@Composable
+private fun BikeshareLegDockedPreview() {
+    // The other end of the range: a network the catalog has never heard of, wearing its raw id on a
+    // neutral chip, with a dock to name and nothing to link to. Nothing here is invented for it.
+    LegPreviewFrame(
+        previewRentalLeg(
+            RentalPickup(
+                operator = RentalOperators.of("some_city_bikes"),
+                vehicle = null,
+                stationName = "Pine St & 3rd Ave",
+                rangeMeters = null,
+                link = null
+            )
+        )
+    )
 }

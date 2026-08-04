@@ -270,10 +270,10 @@ class DirectionsMapController(private val host: MapHost) {
             for (leg in itinerary.legs) {
                 if (leg.mode == TripMode.BICYCLE) {
                     if (leg.from.vertexType == TripVertexType.BIKESHARE) {
-                        leg.from.bikeShareId?.let { ids.add(it) }
+                        leg.from.rental?.id?.let { ids.add(it) }
                     }
                     if (leg.to.vertexType == TripVertexType.BIKESHARE) {
-                        leg.to.bikeShareId?.let { ids.add(it) }
+                        leg.to.rental?.id?.let { ids.add(it) }
                     }
                 }
             }

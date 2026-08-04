@@ -90,13 +90,25 @@ class StopsForRouteRepositoryTest {
     }
 
     @Test
+    fun `stop ids come from the references pool and share the same fetch`() = runTest {
+        val fake = FakeFetch().apply { results["r"] = Result.success(entryWith(listOf("1_a", "29_b"))) }
+        val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
+
+        repository.routeMap("r")
+
+        assertEquals(listOf("1_a", "29_b"), repository.routeStopIds("r").getOrThrow())
+        assertEquals(listOf("r"), fake.calls)
+    }
+
+    @Test
     fun `no endpoint yields null map but a stop-list failure`() = runTest {
         val fake = FakeFetch() // default success(null) = no endpoint
         val repository = DefaultStopsForRouteRepository(backgroundScope, fetch = fake::get)
 
-        // The map treats "no region" as nothing-to-show; the stop list treats it as an error to surface.
+        // The map treats "no region" as nothing-to-show; the stop lists treat it as an error to surface.
         assertNull(repository.routeMap("r").getOrThrow())
         assertTrue(repository.routeStopGroups("r").isFailure)
+        assertTrue(repository.routeStopIds("r").isFailure)
     }
 
     // Not covered here: an unexpected crash *inside* the fetch block (the fetch lambda throwing rather

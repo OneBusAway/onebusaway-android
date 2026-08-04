@@ -49,6 +49,7 @@ class FocusedTripRepositoryTest {
         val catalogs = mutableMapOf<String, Result<List<RouteStopGroup>>>()
         override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = catalogs[routeId] ?: Result.success(emptyList())
         override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
+        override suspend fun routeStopIds(routeId: String): Result<List<String>> = Result.success(emptyList())
     }
 
     @Test

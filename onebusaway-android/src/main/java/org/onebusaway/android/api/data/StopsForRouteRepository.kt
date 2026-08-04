@@ -51,6 +51,7 @@ import org.onebusaway.android.util.runCatchingCancellable
  * - [routeStopGroups] — the per-direction stop list (route info + a focused stop's trips).
  * - [routeMap] — the full route map: stops tagged with direction membership, selectable directions,
  *   and decoded shapes (the route overlay).
+ * - [routeStopIds] — just the ids of every stop the route serves.
  *
  * The wire DTO stays encapsulated here; callers only ever see the model projections.
  */
@@ -69,6 +70,16 @@ interface StopsForRouteRepository {
      * IO / HTTP / non-OK code, matching the legacy `MapDataSource.routeMap`.
      */
     suspend fun routeMap(routeId: String): Result<RouteMapData?>
+
+    /**
+     * Every OBA stop id the route serves — the whole references pool, not only the ids a direction
+     * group happens to list. This is the authoritative answer to "which OBA stop is this?" for a
+     * planned transit leg, whose stops OTP names in a different id space (see
+     * [org.onebusaway.android.directions.OtpObaIdResolver]). [Result.failure] on IO / HTTP / non-OK
+     * code **and** when there is no endpoint to contact — a caller that can't get the route's stops
+     * cannot name one of them, so there is nothing to degrade to.
+     */
+    suspend fun routeStopIds(routeId: String): Result<List<String>>
 }
 
 /**
@@ -113,6 +124,10 @@ class DefaultStopsForRouteRepository internal constructor(
         // runCatchingCancellable rethrows a CancellationException (raised by withContext if the caller is
         // cancelled mid-decode) rather than reporting the abandoned work as a failure.
         return runCatchingCancellable { withContext(Dispatchers.Default) { fetched.toRouteMapData(routeId) } }
+    }
+
+    override suspend fun routeStopIds(routeId: String): Result<List<String>> = entry(routeId).mapCatching { fetched ->
+        fetched?.references?.stops?.map { it.id } ?: throw noEndpoint()
     }
 
     /**

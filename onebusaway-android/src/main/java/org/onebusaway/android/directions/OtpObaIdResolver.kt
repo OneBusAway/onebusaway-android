@@ -16,9 +16,13 @@
 package org.onebusaway.android.directions
 
 import javax.inject.Inject
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.models.AgencyContact
 
 /**
@@ -27,11 +31,19 @@ import org.onebusaway.android.models.AgencyContact
  *
  * OTP2 ids are `{feedId}:{entityId}` and agency ids `{feedId}:{obaAgencyId}`; OBA ids are
  * `{obaAgencyId}_{entityId}`. The **entity id** (route/stop number) is identical on both sides, so only
- * the agency prefix is remapped. The OBA agency id is **derived** from the OTP agency gtfsId's suffix
- * and then **verified** against the region's agencies-with-coverage; where the derived value isn't a
- * covered agency — feeds whose GTFS `agency_id` diverges from OBA's (verified for Puget Sound:
- * Intercity is `19:0` in OTP but agency `19` in OBA; Skagit uses a UUID agency id) — it falls back to
- * matching the OTP agency **name** against the covered agencies.
+ * the agency prefix is remapped. For a **route** the OBA agency id is **derived** from the OTP agency
+ * gtfsId's suffix and then **verified** against the region's agencies-with-coverage; where the derived
+ * value isn't a covered agency — feeds whose GTFS `agency_id` diverges from OBA's (verified for Puget
+ * Sound: Intercity is `19:0` in OTP but agency `19` in OBA; Skagit uses a UUID agency id) — it falls
+ * back to matching the OTP agency **name** against the covered agencies.
+ *
+ * A **stop** does not get that prefix, because a route's agency does not own the stops it calls at
+ * (#2170). Verified against the live Puget Sound deployments: ST route 522 is `kcm:100232` under agency
+ * `kcm:40` in OTP and `40_100232` in OBA, yet every stop it serves is a King County Metro stop —
+ * `kcm:23561` in OTP is `1_23561` in OBA, and `40_23561` does not exist. A single route can even span
+ * two OBA agencies' stops (KCM route `1_102558` calls at both `1_*` and `29_*` stops). So a stop is
+ * resolved against the route's **actual** OBA stop list rather than by guessing its prefix — see
+ * [obaStopId].
  *
  * This is the client-side stand-in for an authoritative OTP-agency → OBA-agency map in the regions
  * directory: when that field lands it becomes the resolution/override source in place of the
@@ -39,24 +51,43 @@ import org.onebusaway.android.models.AgencyContact
  * degrade (e.g. to plain leg framing) rather than issuing a request that would 404 / return null.
  */
 class OtpObaIdResolver @Inject constructor(
-    private val agenciesDataSource: AgenciesDataSource
+    private val agenciesDataSource: AgenciesDataSource,
+    private val stopsForRoute: StopsForRouteRepository
 ) {
     private val mutex = Mutex()
     private var cachedAgencies: List<AgencyContact>? = null
 
     /** The OBA route id for an OTP transit leg's route, or null when the agency can't be resolved. */
-    suspend fun obaRouteId(routeGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? = obaId(routeGtfsId, agencyGtfsId, agencyName)
-
-    /**
-     * The OBA stop id for a stop reached on an OTP transit leg. The stop is namespaced under the leg's
-     * route agency (that's the agency serving it here), so it takes the same resolved agency prefix.
-     */
-    suspend fun obaStopId(stopGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? = obaId(stopGtfsId, agencyGtfsId, agencyName)
-
-    private suspend fun obaId(entityGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? {
-        val entity = gtfsEntitySuffix(entityGtfsId) ?: return null
+    suspend fun obaRouteId(routeGtfsId: String?, agencyGtfsId: String?, agencyName: String?): String? {
+        val entity = gtfsEntitySuffix(routeGtfsId) ?: return null
         val agency = resolveAgency(agencyGtfsId, agencyName) ?: return null
         return "${agency}_$entity"
+    }
+
+    /**
+     * The OBA stop id for a stop called at on an OTP transit leg travelling [obaRouteId], or null when
+     * the route's stops can't be reached or none of them is this stop.
+     *
+     * The GTFS entity id is the same on both sides; only the OBA agency prefix has to be found, and the
+     * one place it is *stated* rather than guessed is the route's own OBA stop list. So this looks the
+     * entity up there, using OBA's id contract (`{agencyId}_{entityId}`, split at the first `_` — see
+     * `AgencyAndId.convertFromString`) to compare. It goes through the shared, cached
+     * [StopsForRouteRepository], which the drawer's route focus and the route map already fetch for the
+     * very same routes, so a planned leg normally resolves off a cache hit.
+     */
+    suspend fun obaStopId(stopGtfsId: String?, obaRouteId: String?): String? {
+        val entity = gtfsEntitySuffix(stopGtfsId) ?: return null
+        val routeId = obaRouteId ?: return null
+        val stopIds = stopsForRoute.routeStopIds(routeId).getOrNull() ?: return null
+        return stopIds.firstOrNull { it.substringAfter('_', missingDelimiterValue = "") == entity }
+    }
+
+    /**
+     * Warms the route stop lists [obaStopId] resolves against, so an itinerary's legs pay for one
+     * round of concurrent fetches rather than one serial fetch each while the drawer shows Loading.
+     */
+    suspend fun prefetchRouteStops(obaRouteIds: Collection<String>): Unit = coroutineScope {
+        obaRouteIds.distinct().map { async { stopsForRoute.routeStopIds(it) } }.awaitAll()
     }
 
     /**

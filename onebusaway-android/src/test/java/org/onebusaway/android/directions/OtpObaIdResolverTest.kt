@@ -20,11 +20,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.api.data.AgenciesDataSource
+import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.models.AgencyContact
+import org.onebusaway.android.models.RouteMapData
+import org.onebusaway.android.models.RouteStopGroup
 
 /**
- * JVM tests for [OtpObaIdResolver]'s derive → verify → name-fallback resolution, over Puget-Sound-shaped
- * agency data (verified against the live OTP/OBA deployments).
+ * JVM tests for [OtpObaIdResolver]'s derive → verify → name-fallback route resolution and its
+ * resolve-against-the-route's-own-stops stop resolution (#2170), over Puget-Sound-shaped data (verified
+ * against the live OTP/OBA deployments).
  */
 class OtpObaIdResolverTest {
 
@@ -36,9 +40,26 @@ class OtpObaIdResolverTest {
         agency("97", "Skagit Transit")
     )
 
-    private fun resolver(agencies: Result<List<AgencyContact>> = Result.success(coverage)) = OtpObaIdResolver(object : AgenciesDataSource {
-        override suspend fun getAgencies() = agencies
-    })
+    /** Stops-for-route stub: the OBA stop ids each route serves, or a failure for an unstubbed route. */
+    private class RouteStops(private val stops: Map<String, List<String>>) : StopsForRouteRepository {
+        val calls = mutableListOf<String>()
+        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = Result.success(emptyList())
+        override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
+        override suspend fun routeStopIds(routeId: String): Result<List<String>> {
+            calls += routeId
+            return stops[routeId]?.let { Result.success(it) } ?: Result.failure(IllegalStateException("offline"))
+        }
+    }
+
+    private fun resolver(
+        agencies: Result<List<AgencyContact>> = Result.success(coverage),
+        routeStops: StopsForRouteRepository = RouteStops(emptyMap())
+    ) = OtpObaIdResolver(
+        object : AgenciesDataSource {
+            override suspend fun getAgencies() = agencies
+        },
+        routeStops
+    )
 
     private fun agency(id: String, name: String) = AgencyContact(id = id, name = name, email = null, url = null, phone = null)
 
@@ -52,11 +73,66 @@ class OtpObaIdResolverTest {
     }
 
     @Test
-    fun stopTakesTheSameAgencyPrefix() = runTest {
-        assertEquals(
-            "1_13585",
-            resolver().obaStopId("kcm:13585", agencyGtfsId = "kcm:1", agencyName = "Metro Transit")
-        )
+    fun stopIsNamedByTheRouteItIsServedOn() = runTest {
+        val routeStops = RouteStops(mapOf("1_102574" to listOf("1_13580", "1_13585")))
+        assertEquals("1_13585", resolver(routeStops = routeStops).obaStopId("kcm:13585", "1_102574"))
+    }
+
+    @Test
+    fun stopDoesNotTakeItsRouteAgencyPrefix() = runTest {
+        // #2170: ST 522 is agency 40 in both OTP (kcm:40) and OBA (40_100232), but every stop it calls
+        // at is a Metro stop — 40_23561 does not exist. The route's own stop list is what says so.
+        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561", "1_38567")))
+        assertEquals("1_23561", resolver(routeStops = routeStops).obaStopId("kcm:23561", "40_100232"))
+    }
+
+    @Test
+    fun stopIsFoundWhenARouteSpansTwoAgenciesStops() = runTest {
+        // KCM 931 calls at both Metro (1_*) and Community Transit (29_*) stops, so no single prefix
+        // could have been guessed for the leg at all.
+        val routeStops = RouteStops(mapOf("1_102558" to listOf("1_75995", "29_2229")))
+        val resolver = resolver(routeStops = routeStops)
+        assertEquals("29_2229", resolver.obaStopId("CommTrans:2229", "1_102558"))
+        assertEquals("1_75995", resolver.obaStopId("kcm:75995", "1_102558"))
+    }
+
+    @Test
+    fun stopEntityIdKeepsItsOwnUnderscores() = runTest {
+        // OBA splits an id at its *first* underscore (AgencyAndId.convertFromString), so an entity id
+        // containing one still matches.
+        val routeStops = RouteStops(mapOf("40_TLINE" to listOf("40_T05_T1")))
+        assertEquals("40_T05_T1", resolver(routeStops = routeStops).obaStopId("40:T05_T1", "40_TLINE"))
+    }
+
+    @Test
+    fun stopUnresolvable_whenTheRouteDoesNotServeIt() = runTest {
+        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561")))
+        assertNull(resolver(routeStops = routeStops).obaStopId("kcm:99999", "40_100232"))
+    }
+
+    @Test
+    fun stopUnresolvable_whenTheRouteStopsCannotBeFetched() = runTest {
+        // Nothing to fall back on: guessing the prefix is exactly the bug. Callers degrade instead.
+        assertNull(resolver().obaStopId("kcm:23561", "40_100232"))
+    }
+
+    @Test
+    fun stopUnresolvable_whenTheRouteItselfIsUnresolvable() = runTest {
+        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561")))
+        assertNull(resolver(routeStops = routeStops).obaStopId("kcm:23561", null))
+        // No point asking for a route we can't name.
+        assertEquals(emptyList<String>(), routeStops.calls)
+    }
+
+    @Test
+    fun prefetchWarmsEachRouteOnce() = runTest {
+        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561"), "1_102558" to listOf("29_2229")))
+        val resolver = resolver(routeStops = routeStops)
+
+        resolver.prefetchRouteStops(listOf("40_100232", "1_102558", "40_100232"))
+
+        assertEquals(setOf("40_100232", "1_102558"), routeStops.calls.toSet())
+        assertEquals(2, routeStops.calls.size)
     }
 
     @Test

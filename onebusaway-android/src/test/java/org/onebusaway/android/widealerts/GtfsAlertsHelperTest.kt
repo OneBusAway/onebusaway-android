@@ -63,6 +63,9 @@ class GtfsAlertsHelperTest {
         assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(GtfsRealtime.Alert.newBuilder().build(), nowMs))
     }
 
+    // Mirrors the deprecated-but-still-universal `active_period` read in the helper under test;
+    // see the rationale on [GtfsAlertsHelper.isStartDateWithin24Hours].
+    @Suppress("DEPRECATION")
     private fun alertStartingAt(startSec: Long): GtfsRealtime.Alert = GtfsRealtime.Alert.newBuilder()
         .addActivePeriod(GtfsRealtime.TimeRange.newBuilder().setStart(startSec).build())
         .build()

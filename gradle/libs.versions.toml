@@ -68,7 +68,7 @@ okhttp = "5.4.0"
 kotlinxSerializationJson = "1.11.0"
 coroutines = "1.11.0"
 material = "1.14.0"
-gtfsRealtime = "0.1.0"
+gtfsRealtime = "0.2.0"
 maplibre = "13.4.1"
 # Test-only
 androidxTestRunner = "1.7.0"

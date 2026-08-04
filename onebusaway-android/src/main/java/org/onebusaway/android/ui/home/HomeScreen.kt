@@ -673,15 +673,21 @@ fun HomeScreen(
                                 }
                             }
 
-                            // Lift the FABs above the whole collapsed sheet peek; the target changes only on settle
-                            // and MapChrome animates it. Local here since the screen holds the live SheetState. Only
-                            // while the sheet is shown at peek — a hidden sheet also rests at PartiallyExpanded now.
-                            val fabInsetTarget =
-                                if (sheetShown && sheetState.currentValue == SheetValue.PartiallyExpanded) {
-                                    collapsedPeekDp
+                            // Lift the FABs above whichever sheet is resting over the map — the collapsed arrivals
+                            // peek, or in directions the results drawer (whose settled height the map inset above
+                            // already tracks). The target changes only on settle and MapChrome animates it. Local
+                            // here since the screen holds the live SheetState. The arrivals term counts only while
+                            // that sheet is shown at peek — a hidden sheet also rests at PartiallyExpanded now.
+                            val fabInsetTarget = mapControlsBottomInset(
+                                arrivalsPeek = collapsedPeekDp,
+                                arrivalsAtPeek = sheetShown &&
+                                    sheetState.currentValue == SheetValue.PartiallyExpanded,
+                                directionsSheet = if (showResultsSheet) {
+                                    with(density) { directionsSheetHeightPx.toDp() }
                                 } else {
                                     0.dp
                                 }
+                            )
                             Box(Modifier.fillMaxSize()) {
                                 // The map, with the chrome drawn over it: weather/donation/route-header/survey. The
                                 // list "tabs" are now their own NavHost destinations, so HOME is always the map.

@@ -15,6 +15,9 @@
  */
 package org.onebusaway.android.ui.home
 
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+
 /**
  * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
  * /`BackHandler` so the parity-sensitive behavior (the part that can't be exercised in a JVM test
@@ -48,6 +51,26 @@ internal fun focusBannerTopEdge(
     is CurrentFocus.Directions -> directionsFormBottomPx
     CurrentFocus.None, is CurrentFocus.BikeStation -> 0
 }
+
+/**
+ * How far to lift the map's floating controls (my-location, zoom, layers) off the bottom edge so they
+ * stay in the visible map band above whichever bottom sheet is resting over it.
+ *
+ * [arrivalsPeek] is the collapsed arrivals peek, counted only while the arrivals sheet rests *at* that
+ * peek ([arrivalsAtPeek]) — an expanded arrivals sheet covers the controls outright, so lifting to it
+ * would only park them behind a full-height panel. [directionsSheet] is the directions results drawer's
+ * settled height, or zero when that drawer isn't shown; it always counts, because the drawer rests at a
+ * fraction of the window and the controls belong above it in either of its two positions (#2155).
+ *
+ * The two sheets are mutually exclusive today — directions focus is not stop focus, so [shouldShowSheet]
+ * keeps the arrivals sheet hidden for the whole of directions mode — but taking the larger clears either
+ * one without depending on that.
+ */
+internal fun mapControlsBottomInset(
+    arrivalsPeek: Dp,
+    arrivalsAtPeek: Boolean,
+    directionsSheet: Dp
+): Dp = maxOf(if (arrivalsAtPeek) arrivalsPeek else 0.dp, directionsSheet)
 
 /** The drag-handle toggle target: a full sheet collapses to peek; anything else expands to full. */
 internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState = if (current == ArrivalsSheetState.Expanded) ArrivalsSheetState.Collapsed else ArrivalsSheetState.Expanded

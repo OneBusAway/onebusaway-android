@@ -205,6 +205,14 @@ private fun TripVehicleRental.vehicleKind(): RentalVehicleKind? {
  * only region publishing an `otpBaseGraphqlUrl` (checked against the live regions directory,
  * 2026-08-03), and its OTP serves exactly these two networks (13,395 `lime_seattle` vehicles and one
  * `bird-seattle-washington`, from the deployment's own `rentalVehicles` query the same day).
+ *
+ * The brand colours — the one fact here with no published source at all, sampled from each operator's
+ * own store icon — were signed off on 2026-08-03 (#2156) rather than dropped for a neutral chip, since
+ * naming the operator a rider can *recognise* is what #2150 is for. They are meant to be temporary in
+ * this form: the intended home is a brand registry shared across the OBA implementations, at which
+ * point [KnownOperator.brandColor] becomes a lookup into it rather than a hex kept here. (The sibling
+ * iOS app made the other choice and paints every rental surface one app-owned purple — worth knowing
+ * before anyone re-opens this.)
  */
 object RentalOperators {
 

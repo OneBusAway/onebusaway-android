@@ -88,8 +88,10 @@ class TripPlanViewModelTest {
 
     private class FakeTripPlanRepository(var result: Result<List<TripItinerary>>) : TripPlanRepository {
         var calls = 0
+        var lastParams: TripPlanParams? = null
         override suspend fun plan(params: TripPlanParams): Result<List<TripItinerary>> {
             calls++
+            lastParams = params
             return result
         }
 
@@ -346,6 +348,39 @@ class TripPlanViewModelTest {
     }
 
     @Test
+    fun `setModeSelection updates the form and replans`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
+        val selected = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE)
+
+        vm.setModeSelection(selected)
+        advanceUntilIdle()
+
+        assertEquals(selected, vm.formState.value.modes)
+        // The modes are part of the request, so a completed form must ask again with the new ones.
+        assertEquals(2, plan.calls)
+        assertEquals(selected, (vm.planState.value as PlanResult.Success).params?.modes)
+    }
+
+    /** The menu reports a tap on the already-checked item; an identical request is not worth re-issuing. */
+    @Test
+    fun `re-picking the current mode does not replan`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
+
+        vm.setModeSelection(vm.formState.value.modes)
+        advanceUntilIdle()
+
+        assertEquals(1, plan.calls)
+    }
+
+    @Test
     fun `applyAdvancedSettings carries the street preferences into the plan request`() = runTest {
         val vm = viewModel()
         setBothEndpoints(vm)
@@ -488,6 +523,26 @@ class TripPlanViewModelTest {
         runCurrent()
 
         assertEquals(PlanResult.Error(TripPlanError.Unknown), vm.planState.value)
+    }
+
+    @Test
+    fun `a my-location endpoint survives a re-plan when there is no fresh fix`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        val setFrom = TripEndpoint.CurrentLocation(lat = 47.6, lon = -122.3)
+        vm.setEndpoint(TripEndpointSlot.FROM, setFrom)
+        vm.setEndpoint(TripEndpointSlot.TO, destination)
+        advanceUntilIdle()
+
+        vm.setArriving(true)
+        advanceUntilIdle()
+
+        // The re-read at submit (#2134) finds nothing — the fake reports no fix — so the endpoint must
+        // stay exactly as the rider set it, both in the form and in the request. Moving it to a *newer*
+        // fix is TripPlanFormStateTest's job: a real one is an android.location.Location.
+        assertEquals(2, plan.calls)
+        assertEquals(setFrom, vm.formState.value.from)
+        assertEquals(setFrom, plan.lastParams?.from)
     }
 
     @Test

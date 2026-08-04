@@ -73,30 +73,54 @@ internal object ModeSymbols {
         // One badge per ride, at the leg it's boarded at; every other transit leg is a continuation the
         // rider never acts on, and is already named inside its leader's badge.
         val rides = Interlines.chains(legs).associate { chain ->
-            chain.leaderIndex to rideBadge(legs, chain, substitutable[chain.leaderIndex])
+            chain.leaderIndex to ModeSymbol.Transit(
+                badge = rideBadge(legs, chain, substitutable[chain.leaderIndex]),
+                // The whole ride, not just the leg boarded at: the rider stays aboard across an
+                // interline seam, so an alert on any leg of the chain is an alert on the one roundel
+                // that stands for it (#2143).
+                alert = legs.subList(chain.leaderIndex, chain.alightIndex + 1).loudestAlertTone()
+            )
         }
         val symbols = legs.mapIndexedNotNull { i, leg ->
             when {
-                leg.mode?.isTransit == true -> rides[i]?.let { ModeSymbol.Transit(it) }
+                leg.mode?.isTransit == true -> rides[i]
                 leg.mode?.isOnStreetNonTransit == true -> leg.streetSymbolOrNull()
                 else -> null
             }
         }
         // Two street legs in a row are one act to the rider ("walk, then walk"), so they draw one glyph.
-        val collapsed = symbols.filterConsecutiveDuplicateStreets()
+        val collapsed = symbols.mergeConsecutiveStreets()
         // "Unless it's the only icon": a trip that is nothing but a short stroll still has to say what
         // it is, so a sequence emptied by the threshold falls back to its longest street leg.
-        return collapsed.ifEmpty { listOfNotNull(legs.longestStreetLeg()?.let { ModeSymbol.Street(it.streetMode()) }) }
+        return collapsed.ifEmpty {
+            listOfNotNull(legs.longestStreetLeg()?.let { ModeSymbol.Street(it.streetMode(), it.loudestAlertTone()) })
+        }
     }
 
     /** The leg's symbol, or null when it's too short to be worth drawing ([NEGLIGIBLE_STREET_METERS]). */
-    private fun TripLeg.streetSymbolOrNull(): ModeSymbol.Street? = if (distance >= NEGLIGIBLE_STREET_METERS) ModeSymbol.Street(streetMode()) else null
+    private fun TripLeg.streetSymbolOrNull(): ModeSymbol.Street? = if (distance >= NEGLIGIBLE_STREET_METERS) {
+        ModeSymbol.Street(streetMode(), loudestAlertTone())
+    } else {
+        null
+    }
 
     /** The longest on-street leg, i.e. the one a street-only trip is really about; null if there is none. */
-    private fun List<TripLeg>.longestStreetLeg(): TripLeg? = filter { it.mode?.isOnStreetNonTransit == true }.maxByOrNull { it.distance }
+    private fun List<TripLeg>.longestStreetLeg(): TripLeg? = streetLegs().maxByOrNull { it.distance }
 
-    private fun List<ModeSymbol>.filterConsecutiveDuplicateStreets(): List<ModeSymbol> = filterIndexed { i, symbol ->
-        symbol !is ModeSymbol.Street || getOrNull(i - 1) != symbol
+    /**
+     * Collapses a run of same-mode street symbols into one, carrying the loudest alert any of them
+     * brought. A merge rather than a filter because the run is *one glyph standing for several legs*:
+     * dropping the later ones outright would drop an alert the rider is entitled to see beside it
+     * (see [ModeSymbol.alert]).
+     */
+    private fun List<ModeSymbol>.mergeConsecutiveStreets(): List<ModeSymbol> = fold(mutableListOf()) { acc, symbol ->
+        val previous = acc.lastOrNull()
+        if (symbol is ModeSymbol.Street && previous is ModeSymbol.Street && previous.mode == symbol.mode) {
+            acc[acc.lastIndex] = previous.copy(alert = listOfNotNull(previous.alert, symbol.alert).maxOrNull())
+        } else {
+            acc += symbol
+        }
+        acc
     }
 }
 
@@ -124,3 +148,23 @@ internal fun TripLeg.streetMode(): StreetMode = when (mode) {
     TripMode.CAR -> StreetMode.CAR
     else -> StreetMode.WALK
 }
+
+/**
+ * How far the trip covers on each street mode it uses, in meters — the option card's metric lines
+ * (#2122). Split by the same [streetMode] the card's symbols are drawn from, so a card cannot show a
+ * bikeshare glyph and then count that ride's distance as walking.
+ *
+ * A mode the trip never travels on is **absent**, not zero: the card draws a line per entry, and "0 ft
+ * of biking" on a plain transit trip is a line about something that didn't happen. Every on-street leg
+ * counts, including the ones too short for a symbol ([ModeSymbols.NEGLIGIBLE_STREET_METERS]) — the
+ * threshold is about what's worth *drawing* as a step of the trip, while these are totals, and dropping
+ * a 100 m transfer walk from them would under-report the walking a rider is being asked to do.
+ *
+ * Pure, like the rest of this file, so `ModeSymbolsTest` covers it without a `Context`.
+ */
+internal fun List<TripLeg>.streetDistancesMeters(): Map<StreetMode, Double> = streetLegs()
+    .groupBy { it.streetMode() }
+    .mapValues { (_, legs) -> legs.sumOf { it.distance } }
+
+/** The legs the rider covers under their own power — the ones [streetMode] can speak for. */
+private fun List<TripLeg>.streetLegs(): List<TripLeg> = filter { it.mode?.isOnStreetNonTransit == true }

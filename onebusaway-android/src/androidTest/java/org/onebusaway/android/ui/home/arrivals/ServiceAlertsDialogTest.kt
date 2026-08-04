@@ -18,9 +18,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.AlertItem
-import org.onebusaway.android.ui.arrivals.AlertSeverity
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.StopHeader
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
 class ServiceAlertsDialogTest {

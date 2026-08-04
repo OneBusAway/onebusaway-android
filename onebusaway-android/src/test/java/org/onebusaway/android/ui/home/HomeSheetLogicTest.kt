@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.home
 
+import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -59,6 +60,53 @@ class HomeSheetLogicTest {
         assertEquals(
             180,
             focusBannerTopEdge(CurrentFocus.Directions(), 240, directionsFormBottomPx = 180)
+        )
+    }
+
+    // --- mapControlsBottomInset ---
+
+    @Test
+    fun `the map controls sit at the bottom edge with no sheet over the map`() {
+        assertEquals(
+            0.dp,
+            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = false, directionsSheet = 0.dp)
+        )
+    }
+
+    @Test
+    fun `a peeking arrivals sheet lifts the map controls, an expanded one does not`() {
+        assertEquals(
+            200.dp,
+            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 0.dp)
+        )
+        assertEquals(
+            0.dp,
+            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = false, directionsSheet = 0.dp)
+        )
+    }
+
+    @Test
+    fun `the directions drawer lifts the map controls in both of its resting positions`() {
+        // Expanded (a fraction of the window) and collapsed to its handle-only peek.
+        assertEquals(
+            320.dp,
+            mapControlsBottomInset(arrivalsPeek = 0.dp, arrivalsAtPeek = false, directionsSheet = 320.dp)
+        )
+        assertEquals(
+            48.dp,
+            mapControlsBottomInset(arrivalsPeek = 0.dp, arrivalsAtPeek = false, directionsSheet = 48.dp)
+        )
+    }
+
+    @Test
+    fun `with both sheets reporting a height the controls clear the taller one`() {
+        assertEquals(
+            320.dp,
+            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 320.dp)
+        )
+        assertEquals(
+            200.dp,
+            mapControlsBottomInset(arrivalsPeek = 200.dp, arrivalsAtPeek = true, directionsSheet = 48.dp)
         )
     }
 

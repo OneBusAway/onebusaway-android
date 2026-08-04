@@ -31,6 +31,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -58,6 +60,9 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -65,6 +70,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -86,14 +92,55 @@ private val RAIL_WIDTH = 44.dp
 /** Diameter of the endpoint dot, in the rail and in the suggestion row that fills that endpoint. */
 private val ENDPOINT_DOT_SIZE = 12.dp
 
+/** The box the endpoint dot occupies when it stands in a menu row's leading icon slot. */
+private val ENDPOINT_DOT_ICON_SIZE = 22.dp
+
 /** Clear space between an endpoint glyph and the dotted connector running to the other one. */
 private val CONNECTOR_GLYPH_CLEARANCE = 12.dp
 
 /**
- * Height of the action bar. Snug around its 40dp icon buttons; those keep a full 48dp touch target
+ * Side of every icon button in the form, at both bands. Load-bearing beyond its own size: paired with
+ * [TRAILING_GUTTER] it's what puts the reverse button in the same column as the action bar's buttons.
+ */
+private val ICON_BUTTON_SIZE = 40.dp
+
+/**
+ * Height of the action bar — snug around its icon buttons, which keep a full 48dp touch target
  * regardless, because Material expands it beyond their bounds.
  */
-private val ACTION_BAR_HEIGHT = 40.dp
+private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
+
+/**
+ * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
+ * [RAIL_WIDTH], and shared by both bands for the same reason: so their buttons line up in one column.
+ * Applied through [formBand] rather than by hand, so there is one gutter and not two that agree.
+ */
+private val TRAILING_GUTTER = 4.dp
+
+/** Clear space between the endpoint rows' content and the reverse button beside them. */
+private val REVERSE_CLEARANCE = 4.dp
+
+/**
+ * The shape the card's two bands share: full width, inset at the trailing edge by [TRAILING_GUTTER].
+ * One expression rather than a gutter restated per band, because — paired with a single
+ * [ICON_BUTTON_SIZE] — it is the whole reason the reverse button lands in the same column as the
+ * action bar's buttons. Two bands that lay themselves out independently agree on that only if the
+ * measurement they agree on is written once.
+ */
+private fun Modifier.formBand() = fillMaxWidth().padding(end = TRAILING_GUTTER)
+
+/** Rider-facing order for the two mode menus; intentionally independent of enum declaration order. */
+private val VEHICLE_MODE_ORDER = listOf(
+    VehicleMode.ALL_TRANSIT,
+    VehicleMode.BUS,
+    VehicleMode.RAIL,
+    VehicleMode.NONE
+)
+private val STREET_MODE_ORDER = listOf(
+    StreetMode.WALK,
+    StreetMode.BICYCLE,
+    StreetMode.WALK_AND_BIKESHARE
+)
 
 /**
  * Stable UIAutomator/Compose-test handles for the trip-plan form. Surfaced as resource-ids by the
@@ -111,9 +158,20 @@ object TripPlanTestTags {
     const val MY_LOCATION_SUFFIX = "MyLocation"
     const val PICK_ON_MAP_SUFFIX = "PickOnMap"
 
-    /** The action bar's two time segments. */
+    /** The action bar's two time segments, and its two mode pickers. */
     const val WHEN_MODE = "tripPlanWhenMode"
     const val WHEN_TIME = "tripPlanWhenTime"
+    const val VEHICLE_MODE = "tripPlanVehicleMode"
+    const val STREET_MODE = "tripPlanStreetMode"
+
+    /** The swap-endpoints button. */
+    const val REVERSE = "tripPlanReverse"
+
+    /** The action bar's trailing button, which reverse is column-aligned with. */
+    const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
+
+    /** The day dropdown inside the combined date/time picker ([TripDateTimeDialog]). */
+    const val PICKER_DAY = "tripPlanPickerDay"
 }
 
 /**
@@ -146,10 +204,11 @@ val TripEndpointSlot.tagPrefix: String
  * per-field chrome. What differs is the bottom band: transit is scheduled travel, so the form always
  * states when the trip is for, as a "Depart · now" callout whose two halves open separate pickers.
  *
- * That band doubles as the form's action bar, carrying reverse and additional-preferences as well. It's
- * the reason the endpoint rows can run full width: everything acting on the *whole trip* lives on one
- * line, and only what acts on a single endpoint lives in that endpoint's row (which, currently, is
- * nothing — see [EndpointRow]). The card measures 146dp against the old layout's 216dp.
+ * That band doubles as the form's action bar, carrying the mode pickers and additional-preferences as
+ * well. It's the reason the endpoint rows carry no per-field chrome: everything acting on the trip's
+ * *terms* lives on one line, and nothing acts on a single endpoint (see [EndpointRow]). The one action
+ * on the endpoints themselves — reverse — sits beside the pair, centred on the divider between them.
+ * The card measures 146dp against the old layout's 216dp.
  *
  * Stateless and driven by [TripPlanFormState]; the date/time/current-location actions are platform
  * interactions launched by the host.
@@ -163,29 +222,44 @@ fun TripPlanForm(
     onPickOnMap: (TripEndpointSlot) -> Unit,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit,
+    onPickDateTime: () -> Unit,
+    availableStreetModes: List<StreetMode>,
+    onVehicleModeSelected: (VehicleMode) -> Unit,
+    onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
     onAdvancedSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.padding(vertical = 4.dp)) {
-        // One row per endpoint, in TripEndpointSlot's declaration order (origin above destination) —
-        // the enum is the list of rows.
-        TripEndpointSlot.entries.forEachIndexed { index, slot ->
-            if (index > 0) {
-                // Inset past the rail so the hairline starts where the text does, leaving the origin
-                // and destination glyphs reading as one continuous column.
-                HairlineDivider(startIndent = RAIL_WIDTH, endIndent = 12.dp)
+        Row(modifier = Modifier.formBand(), verticalAlignment = Alignment.CenterVertically) {
+            // The rows take the width the button doesn't, rather than running full width beneath it —
+            // which is what stops a long place name, and the divider, from sliding under the button.
+            // Centring the sibling button against the resulting block lands it on that divider.
+            Column(Modifier.weight(1f)) {
+                // One row per endpoint, in TripEndpointSlot's declaration order (origin above
+                // destination) — the enum is the list of rows.
+                TripEndpointSlot.entries.forEachIndexed { index, slot ->
+                    if (index > 0) {
+                        // Inset past the rail so the hairline starts where the text does, leaving the
+                        // origin and destination glyphs reading as one continuous column.
+                        HairlineDivider(startIndent = RAIL_WIDTH, endIndent = REVERSE_CLEARANCE)
+                    }
+                    EndpointRow(
+                        slot = slot,
+                        endpoint = state.endpointAt(slot),
+                        suggestions = state.suggestionsAt(slot),
+                        onQueryChange = { onQueryChange(slot, it) },
+                        onSelect = { onSelect(slot, it) },
+                        onCurrentLocation = { onCurrentLocation(slot) },
+                        onPickOnMap = { onPickOnMap(slot) }
+                    )
+                }
             }
-            EndpointRow(
-                slot = slot,
-                endpoint = state.endpointAt(slot),
-                suggestions = state.suggestionsAt(slot),
-                onQueryChange = { onQueryChange(slot, it) },
-                onSelect = { onSelect(slot, it) },
-                onCurrentLocation = { onCurrentLocation(slot) },
-                onPickOnMap = { onPickOnMap(slot) }
+            FormIconButton(
+                painter = painterResource(R.drawable.ic_swap_direction),
+                contentDescription = stringResource(R.string.tripplanner_reverse),
+                onClick = onReverse,
+                modifier = Modifier.testTag(TripPlanTestTags.REVERSE)
             )
         }
         // Full-width, unlike the one above: this one separates the endpoints from the actions, rather
@@ -196,12 +270,35 @@ fun TripPlanForm(
             departNow = state.departNow,
             dateLabel = state.dateLabel,
             timeLabel = state.timeLabel,
+            modes = state.modes,
+            availableStreetModes = availableStreetModes,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
-            onPickDate = onPickDate,
-            onPickTime = onPickTime,
-            onReverse = onReverse,
+            onPickDateTime = onPickDateTime,
+            onVehicleModeSelected = onVehicleModeSelected,
+            onStreetModeSelected = onStreetModeSelected,
             onAdvancedSettings = onAdvancedSettings
+        )
+    }
+}
+
+/**
+ * The form's one icon-button shape: fixed size, muted tint, the glyph as its own label. Shared rather
+ * than repeated, because reverse now sits in a different band from the rest — the two bands read as one
+ * set of controls only if nothing about the buttons is restated per site and free to drift.
+ */
+@Composable
+private fun FormIconButton(
+    painter: Painter,
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    IconButton(onClick = onClick, modifier = modifier.size(ICON_BUTTON_SIZE)) {
+        Icon(
+            painter = painter,
+            contentDescription = contentDescription,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -214,8 +311,9 @@ private fun HairlineDivider(startIndent: Dp = 0.dp, endIndent: Dp = 0.dp) {
 
 /**
  * One trip-plan endpoint: a rail glyph naming the endpoint's kind, and the place itself in a
- * borderless field. There is no pill and no trailing button, which is what lets the row run the full
- * width of the card; the actions that used to sit here are in the suggestion list and the action bar.
+ * borderless field. There is no pill and no trailing button, which is what lets the row give its whole
+ * width to the place name; the actions that used to sit here are in the suggestion list and the action
+ * bar.
  *
  * The row is one persistent text field in every state — a resolved endpoint is the same field showing
  * a name, not a different kind of row. That matters beyond tidiness: swapping a read-only Text in and
@@ -240,7 +338,6 @@ private fun EndpointRow(
     onPickOnMap: () -> Unit
 ) {
     val tagPrefix = slot.tagPrefix
-    val isOrigin = slot == TripEndpointSlot.FROM
     // The endpoint as the field should read it. A resolved endpoint is not a different *kind* of row
     // — it is the same field showing a name — so nothing is swapped in or out as it resolves.
     val endpointText = endpointLabel(endpoint)
@@ -250,6 +347,28 @@ private fun EndpointRow(
     // recomposition fights the field's own state and makes the IME echo edits the user never made.
     var field by remember { mutableStateOf(TextFieldValue(endpointText)) }
     var menuOpen by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // Choosing any row of the menu below names the endpoint, so it ends the edit rather than being a
+    // step in it: the field gives up focus and the keyboard goes with it. Hung off the choice rather
+    // than off the row's state, because focus is one resource shared with the sibling row — "this row
+    // isn't being edited" is also true the instant the other row takes focus, and reconciling to that
+    // would pull the keyboard down mid-handoff. Wrapping the action keeps a later row from forgetting.
+    fun choosing(action: () -> Unit): () -> Unit = {
+        menuOpen = false
+        // clearFocus() is what closes the keyboard the field raised; hide() is a cheap backstop.
+        focusManager.clearFocus()
+        keyboard?.hide()
+        action()
+    }
+
+    // The keyboard's own accept key is a choice like any other: by the time it is pressed the geocoder
+    // has already answered, and the rider is confirming the result they can see at the top of the list
+    // rather than asking for it. With nothing to confirm it just ends the edit — which is all it did
+    // before, having been wired to nothing at all.
+    val acceptTopSuggestion = choosing { suggestions.firstOrNull()?.let(onSelect) }
 
     // Adopt the hosted endpoint only when it actually says something different — a suggestion picked,
     // a location filled in, a reversed trip. While the user types, the endpoint is echoing the text
@@ -269,7 +388,7 @@ private fun EndpointRow(
             modifier = Modifier.fillMaxWidth().height(ENDPOINT_ROW_HEIGHT),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            EndpointRail(endpoint = endpoint, isOrigin = isOrigin)
+            EndpointRail(endpoint = endpoint, slot = slot)
             BasicTextField(
                 value = field,
                 onValueChange = { value ->
@@ -283,13 +402,15 @@ private fun EndpointRow(
                     }
                 },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { acceptTopSuggestion() }),
                 // The device's own position is named in its own colour, matching its rail dot, so the
                 // one endpoint the rider didn't choose is identifiable without reading it. A chosen
                 // place is ordinary text — colouring every endpoint would say nothing.
                 textStyle = LocalTextStyle.current.merge(MaterialTheme.typography.bodyLarge)
                     .copy(
                         color = if (endpoint is TripEndpoint.CurrentLocation) {
-                            endpointColor(endpoint, isOrigin)
+                            endpointColor(endpoint, slot)
                         } else {
                             MaterialTheme.colorScheme.onSurface
                         }
@@ -319,7 +440,7 @@ private fun EndpointRow(
                     }
                 }
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(REVERSE_CLEARANCE))
         }
 
         // The two ways to fill an endpoint that aren't typing. They used to be permanent icon buttons on
@@ -329,10 +450,7 @@ private fun EndpointRow(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.tripplanner_current_location)) },
                 leadingIcon = { CurrentLocationDotIcon() },
-                onClick = {
-                    menuOpen = false
-                    onCurrentLocation()
-                },
+                onClick = choosing(onCurrentLocation),
                 modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.MY_LOCATION_SUFFIX)
             )
             DropdownMenuItem(
@@ -340,10 +458,7 @@ private fun EndpointRow(
                 // The crosshair the pick overlay itself puts at the centre of the map, so the row
                 // shows the tool it opens.
                 leadingIcon = { PinnedActionIcon(painterResource(R.drawable.ic_my_location)) },
-                onClick = {
-                    menuOpen = false
-                    onPickOnMap()
-                },
+                onClick = choosing(onPickOnMap),
                 modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.PICK_ON_MAP_SUFFIX)
             )
             if (suggestions.isNotEmpty()) {
@@ -356,10 +471,7 @@ private fun EndpointRow(
                         } else {
                             null
                         },
-                        onClick = {
-                            onSelect(place)
-                            menuOpen = false
-                        },
+                        onClick = choosing { onSelect(place) },
                         modifier = Modifier.testTag(tagPrefix + TripPlanTestTags.SUGGESTION_SUFFIX)
                     )
                 }
@@ -369,17 +481,28 @@ private fun EndpointRow(
 }
 
 /**
- * The colour that identifies an endpoint. Blue wherever the trip is anchored to the device's own
- * position, at either end — that is a different kind of fact from a chosen place, so it outranks the
- * start/destination distinction rather than sitting beside it. Otherwise the origin takes the theme's
- * primary and the destination the fixed red.
+ * The colour that says which end of the trip an endpoint is: the theme's primary for the origin
+ * (green in the OBA brand, whatever a white-label brand sets) and the fixed red for the destination.
+ *
+ * Public because the rail is not the only place a rider names an endpoint — the map long-press menu
+ * offers the same two ends, and marks its rows with these same hues so the row and the endpoint it
+ * fills read as one thing.
  */
 @Composable
-private fun endpointColor(endpoint: TripEndpoint, isOrigin: Boolean): Color = when {
-    endpoint is TripEndpoint.CurrentLocation ->
-        colorResource(R.color.trip_plan_endpoint_current_location)
-    isOrigin -> MaterialTheme.colorScheme.primary
-    else -> colorResource(R.color.trip_destination_marker)
+fun endpointSlotColor(slot: TripEndpointSlot): Color = when (slot) {
+    TripEndpointSlot.FROM -> MaterialTheme.colorScheme.primary
+    TripEndpointSlot.TO -> colorResource(R.color.trip_destination_marker)
+}
+
+/**
+ * The colour that identifies an endpoint. Blue wherever the trip is anchored to the device's own
+ * position, at either end — that is a different kind of fact from a chosen place, so it outranks the
+ * start/destination distinction rather than sitting beside it. Otherwise it is the slot's own colour.
+ */
+@Composable
+private fun endpointColor(endpoint: TripEndpoint, slot: TripEndpointSlot): Color = when (endpoint) {
+    is TripEndpoint.CurrentLocation -> colorResource(R.color.trip_plan_endpoint_current_location)
+    else -> endpointSlotColor(slot)
 }
 
 /**
@@ -388,7 +511,8 @@ private fun endpointColor(endpoint: TripEndpoint, isOrigin: Boolean): Color = wh
  * instead — that it is a stop rather than an address is something no colour in the set encodes.
  */
 @Composable
-private fun EndpointRail(endpoint: TripEndpoint, isOrigin: Boolean) {
+private fun EndpointRail(endpoint: TripEndpoint, slot: TripEndpointSlot) {
+    val isOrigin = slot == TripEndpointSlot.FROM
     val connectorColor = MaterialTheme.colorScheme.outlineVariant
     Box(
         modifier = Modifier.width(RAIL_WIDTH).height(ENDPOINT_ROW_HEIGHT),
@@ -424,7 +548,7 @@ private fun EndpointRail(endpoint: TripEndpoint, isOrigin: Boolean) {
         if (endpoint.isTransit) {
             BusIcon()
         } else {
-            EndpointDot(endpointColor(endpoint, isOrigin))
+            EndpointDot(endpointColor(endpoint, slot))
         }
     }
 }
@@ -436,15 +560,32 @@ private fun EndpointDot(color: Color) {
 }
 
 /**
- * The dot at icon size, for the suggestion row that fills an endpoint with the device's position —
- * the row and the endpoint it produces then show the same mark, rather than a crosshair that turns
- * into a dot once chosen.
+ * The dot in a menu row's leading icon slot. Every row that *offers* to fill an endpoint shows the
+ * mark that endpoint will carry once filled, rather than a separate glyph that turns into a dot on
+ * being chosen.
  */
 @Composable
-private fun CurrentLocationDotIcon() {
-    Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
-        EndpointDot(colorResource(R.color.trip_plan_endpoint_current_location))
+private fun EndpointDotIcon(color: Color, modifier: Modifier = Modifier) {
+    Box(modifier.size(ENDPOINT_DOT_ICON_SIZE), contentAlignment = Alignment.Center) {
+        EndpointDot(color)
     }
+}
+
+/** [EndpointDotIcon] for the suggestion row that fills an endpoint with the device's position. */
+@Composable
+private fun CurrentLocationDotIcon() {
+    EndpointDotIcon(colorResource(R.color.trip_plan_endpoint_current_location))
+}
+
+/**
+ * [EndpointDotIcon] for a row elsewhere that offers to fill one named end of the trip — the map
+ * long-press menu's "directions from/to here" (#2112). Takes a [modifier] rather than tagging
+ * itself: the tag belongs to whichever feature draws the row, since more than one of them can be
+ * on screen at once.
+ */
+@Composable
+fun TripEndpointDotIcon(slot: TripEndpointSlot, modifier: Modifier = Modifier) {
+    EndpointDotIcon(endpointSlotColor(slot), modifier)
 }
 
 @Composable
@@ -469,11 +610,12 @@ private fun PinnedActionIcon(painter: Painter) {
 }
 
 /**
- * The bottom band: when the trip is for, plus the two actions that apply to the trip as a whole.
+ * The bottom band: when the trip is for, and how it may be travelled.
  *
  * The time reads as one sentence — "Depart · now" — split into two separately-tappable segments, each
- * opening its own menu. Reverse and additional preferences sit at the trailing edge, which is why
- * neither endpoint row needs a trailing slot at all.
+ * opening its own menu. The mode pickers and additional preferences sit at the trailing edge; reverse
+ * is not here, because it acts on the two endpoints rather than on the trip's terms, and so lives
+ * beside them (#2110).
  */
 @Composable
 private fun TripActionBar(
@@ -481,15 +623,17 @@ private fun TripActionBar(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    modes: TripModeSelection,
+    availableStreetModes: List<StreetMode>,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit,
-    onReverse: () -> Unit,
+    onPickDateTime: () -> Unit,
+    onVehicleModeSelected: (VehicleMode) -> Unit,
+    onStreetModeSelected: (StreetMode) -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().height(ACTION_BAR_HEIGHT),
+        modifier = Modifier.formBand().height(ACTION_BAR_HEIGHT),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -512,7 +656,7 @@ private fun TripActionBar(
         WhenTimeSegment(
             // The bar's one flexible slot, and the only part of it that can grow: a pinned label is a
             // full date and time, longer in other locales and at a large font scale. Taking all the
-            // remaining width does both jobs — it holds the two trailing buttons against the right
+            // remaining width does both jobs — it holds the trailing buttons against the right
             // edge, and it caps the label so it ellipsizes rather than shoving them off. The button
             // inside stays its own width at the slot's start, so the tap target doesn't span the gap.
             modifier = Modifier.weight(1f),
@@ -520,26 +664,113 @@ private fun TripActionBar(
             dateLabel = dateLabel,
             timeLabel = timeLabel,
             onDepartNow = onDepartNow,
-            onPickDate = onPickDate,
-            onPickTime = onPickTime
+            onPickDateTime = onPickDateTime
         )
-        IconButton(onClick = onReverse, modifier = Modifier.size(40.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.ic_swap_direction),
-                contentDescription = stringResource(R.string.tripplanner_reverse),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        IconButton(onClick = onAdvancedSettings, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = AppIcons.Settings,
-                contentDescription = stringResource(R.string.trip_plan_advanced_settings),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-        Spacer(Modifier.width(4.dp))
+        ModePicker(
+            selected = modes.vehicle,
+            options = VEHICLE_MODE_ORDER,
+            icon = { vehicleModeIcon(it) },
+            label = { vehicleModeLabel(it) },
+            testTag = TripPlanTestTags.VEHICLE_MODE,
+            onSelected = onVehicleModeSelected
+        )
+        ModePicker(
+            // Display-only substitution, deliberately not written back to the selection: a street mode
+            // this region can't serve degrades on the way to a request
+            // ([TripModeSelection.availableIn]) and never by rewriting what the rider chose, so a
+            // rider who picks their own bike at home still has it after passing through an OTP1
+            // region. Showing walking here matches the trip that will actually be planned.
+            selected = modes.street.takeIf { it in availableStreetModes } ?: StreetMode.WALK,
+            options = STREET_MODE_ORDER.filter { it in availableStreetModes },
+            icon = { streetModeIcon(it) },
+            label = { streetModeLabel(it) },
+            testTag = TripPlanTestTags.STREET_MODE,
+            onSelected = onStreetModeSelected
+        )
+        FormIconButton(
+            painter = rememberVectorPainter(AppIcons.Settings),
+            contentDescription = stringResource(R.string.trip_plan_advanced_settings),
+            onClick = onAdvancedSettings,
+            modifier = Modifier.testTag(TripPlanTestTags.ADVANCED_SETTINGS)
+        )
     }
 }
+
+/** A selected mode glyph that expands to icon-and-label choices, then collapses again. */
+@Composable
+private fun <T> ModePicker(
+    selected: T,
+    options: List<T>,
+    icon: @Composable (T) -> Int,
+    label: @Composable (T) -> String,
+    testTag: String,
+    onSelected: (T) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = label(selected)
+    Box {
+        FormIconButton(
+            painter = painterResource(icon(selected)),
+            contentDescription = selectedLabel,
+            onClick = { expanded = true },
+            modifier = Modifier.testTag(testTag)
+        )
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(label(option)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(icon(option)),
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = if (option == selected) {
+                        { Icon(AppIcons.Check, contentDescription = null) }
+                    } else {
+                        null
+                    },
+                    onClick = {
+                        expanded = false
+                        onSelected(option)
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun vehicleModeIcon(mode: VehicleMode): Int = when (mode) {
+    VehicleMode.ALL_TRANSIT -> R.drawable.ic_bus_railway
+    VehicleMode.BUS -> R.drawable.ic_directions_bus
+    VehicleMode.RAIL -> R.drawable.ic_train
+    VehicleMode.NONE -> R.drawable.ic_no_transfer
+}
+
+@Composable
+private fun vehicleModeLabel(mode: VehicleMode): String = stringResource(
+    when (mode) {
+        VehicleMode.ALL_TRANSIT -> R.string.vehicle_mode_all_transit
+        VehicleMode.BUS -> R.string.vehicle_mode_bus
+        VehicleMode.RAIL -> R.string.vehicle_mode_rail
+        VehicleMode.NONE -> R.string.vehicle_mode_none
+    }
+)
+
+private fun streetModeIcon(mode: StreetMode): Int = when (mode) {
+    StreetMode.WALK -> R.drawable.ic_directions_walk
+    StreetMode.BICYCLE -> R.drawable.ic_directions_bike
+    StreetMode.WALK_AND_BIKESHARE -> R.drawable.ic_bike_rental
+}
+
+@Composable
+private fun streetModeLabel(mode: StreetMode): String = stringResource(
+    when (mode) {
+        StreetMode.WALK -> R.string.street_mode_walk
+        StreetMode.BICYCLE -> R.string.street_mode_bicycle
+        StreetMode.WALK_AND_BIKESHARE -> R.string.street_mode_walk_and_bikeshare
+    }
+)
 
 /** Leaving vs arriving — the first half of the "when" sentence. */
 @Composable
@@ -568,9 +799,10 @@ private fun WhenModeSegment(arriving: Boolean, onSetArriving: (Boolean) -> Unit)
 }
 
 /**
- * When the trip is for — the second half of the sentence. Reads "now" until a date or time is picked,
- * then the pinned instant. The menu keeps both Material pickers one tap away rather than folding them
- * into a single date-and-time flow, so changing just the time doesn't walk through a calendar.
+ * When the trip is for — the second half of the sentence. Reads "now" until an instant is pinned, then
+ * that instant. The menu is the two answers a rider actually has — leave now, or say when — with the
+ * date and the time settled together in one dialog ([TripDateTimeDialog], #2117) rather than as two
+ * menu rows that each set the whole instant from one of its halves.
  */
 @Composable
 private fun WhenTimeSegment(
@@ -579,8 +811,7 @@ private fun WhenTimeSegment(
     dateLabel: String,
     timeLabel: String,
     onDepartNow: () -> Unit,
-    onPickDate: () -> Unit,
-    onPickTime: () -> Unit
+    onPickDateTime: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val nowLabel = stringResource(R.string.trip_plan_now)
@@ -614,14 +845,24 @@ private fun WhenTimeSegment(
                     onDepartNow()
                 }
             )
-            DropdownMenuItem(text = { Text(stringResource(R.string.trip_plan_choose_date)) }, onClick = {
-                expanded = false
-                onPickDate()
-            })
-            DropdownMenuItem(text = { Text(stringResource(R.string.trip_plan_choose_time)) }, onClick = {
-                expanded = false
-                onPickTime()
-            })
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.trip_plan_choose_date_time)) },
+                trailingIcon = if (!departNow) {
+                    {
+                        Icon(
+                            imageVector = AppIcons.Check,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                } else {
+                    null
+                },
+                onClick = {
+                    expanded = false
+                    onPickDateTime()
+                }
+            )
         }
     }
 }
@@ -697,7 +938,9 @@ private fun TripPlanFormPreview() {
             onQueryChange = { _, _ -> }, onSelect = { _, _ -> },
             onCurrentLocation = {}, onPickOnMap = {},
             onSetArriving = {}, onDepartNow = {},
-            onPickDate = {}, onPickTime = {},
+            onPickDateTime = {},
+            availableStreetModes = StreetMode.entries,
+            onVehicleModeSelected = {}, onStreetModeSelected = {},
             onReverse = {}, onAdvancedSettings = {}
         )
     }

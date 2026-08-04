@@ -16,10 +16,7 @@
 package org.onebusaway.android.ui.home.directions
 
 import android.content.Context
-import android.text.format.DateFormat
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -44,9 +41,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
@@ -61,6 +56,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -69,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -80,11 +77,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.material.datepicker.MaterialDatePicker
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
-import java.util.Calendar
-import java.util.TimeZone
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlinx.coroutines.flow.Flow
@@ -93,18 +85,24 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.directions.util.OtpTarget
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.map.pickRideDirection
+import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
 import org.onebusaway.android.ui.arrivals.components.EtaStrip
+import org.onebusaway.android.ui.arrivals.components.EtaStripMarker
 import org.onebusaway.android.ui.arrivals.rememberArrivalRowCallbacks
+import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_TOUCH_TARGET_HEIGHT
-import org.onebusaway.android.ui.compose.components.RouteBadgeChip
+import org.onebusaway.android.ui.compose.components.MenuRow
+import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.SheetDragHandle
 import org.onebusaway.android.ui.compose.components.SwitchRow
-import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.navigationBarBottomPadding
+import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.home.arrivals.ArrivalsSession
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
@@ -112,6 +110,8 @@ import org.onebusaway.android.ui.tripplan.AdvancedSettings
 import org.onebusaway.android.ui.tripplan.BikePreference
 import org.onebusaway.android.ui.tripplan.CyclingPreference
 import org.onebusaway.android.ui.tripplan.StreetMode
+import org.onebusaway.android.ui.tripplan.TripDateTimeDialog
+import org.onebusaway.android.ui.tripplan.TripEndpointDotIcon
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripModeSelection
 import org.onebusaway.android.ui.tripplan.TripPlanError
@@ -131,6 +131,7 @@ import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tripresults.focusTransit
 import org.onebusaway.android.ui.tripresults.rideCoveringLegs
 import org.onebusaway.android.util.BikeshareAvailability
+import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -159,8 +160,18 @@ fun DirectionsFormCard(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val activity = context.findActivity()
     var showAdvanced by remember { mutableStateOf(false) }
+    // The instant the picker opens on, captured when it is opened rather than read from the form on
+    // each recomposition: under the "now" anchor the form's own dateTimeMillis is the moment the
+    // ViewModel was built, which a form left open has long outrun (see [TripPlanViewModel.pickerStartMillis]).
+    // Saved, not merely remembered, so a rotation mid-pick doesn't close the dialog on the rider — the
+    // fragment-based pickers this replaced survived one, and the dialog's own state is saveable too.
+    var pickerStartMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
+    val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
+    val availableStreetModes = StreetMode.entries.filter { it.isAvailableIn(bikeshare, usesOtp2) }
+    val vehicleModePreference = stringResource(R.string.preference_key_trip_plan_vehicle_mode)
+    val streetModePreference = stringResource(R.string.preference_key_trip_plan_street_mode)
 
     // containerSize (px) reflects the actual available window; Configuration.screenHeightDp is lint-flagged
     // as unreliable across insets/multi-window. Match the HomeScreen peek-cap pattern.
@@ -183,8 +194,16 @@ fun DirectionsFormCard(
                 onPickOnMap = onPickEndpoint,
                 onSetArriving = viewModel::setArriving,
                 onDepartNow = viewModel::setDepartNow,
-                onPickDate = { pickTripDate(activity, viewModel) },
-                onPickTime = { pickTripTime(activity, viewModel) },
+                onPickDateTime = { pickerStartMillis = viewModel.pickerStartMillis() },
+                availableStreetModes = availableStreetModes,
+                onVehicleModeSelected = { vehicle ->
+                    viewModel.setModeSelection(state.modes.copy(vehicle = vehicle))
+                    PreferenceUtils.saveString(vehicleModePreference, vehicle.name)
+                },
+                onStreetModeSelected = { street ->
+                    viewModel.setModeSelection(state.modes.copy(street = street))
+                    PreferenceUtils.saveString(streetModePreference, street.name)
+                },
                 onReverse = viewModel::reverseTrip,
                 onAdvancedSettings = { showAdvanced = true }
             )
@@ -192,6 +211,16 @@ fun DirectionsFormCard(
     }
     if (showAdvanced) {
         DirectionsAdvancedSettingsDialog(viewModel = viewModel, onDismiss = { showAdvanced = false })
+    }
+    pickerStartMillis?.let { start ->
+        TripDateTimeDialog(
+            initialMillis = start,
+            onDismiss = { pickerStartMillis = null },
+            onConfirm = { millis ->
+                viewModel.setDateTime(millis)
+                pickerStartMillis = null
+            }
+        )
     }
 }
 
@@ -210,46 +239,6 @@ private fun setCurrentLocation(context: Context, viewModel: TripPlanViewModel, s
         R.string.no_location_permission
     }
     Toast.makeText(context, messageRes, Toast.LENGTH_SHORT).show()
-}
-
-private fun pickTripDate(activity: AppCompatActivity, viewModel: TripPlanViewModel) {
-    val current = viewModel.formState.value.dateTimeMillis
-    val picker = MaterialDatePicker.Builder.datePicker()
-        .setTitleText(R.string.trip_plan_date)
-        .setSelection(current)
-        .build()
-    picker.addOnPositiveButtonClickListener { selection ->
-        // Read the selection in UTC, exactly as the user saw it (matches the legacy form).
-        val utc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = selection }
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = current
-            set(Calendar.YEAR, utc.get(Calendar.YEAR))
-            set(Calendar.MONTH, utc.get(Calendar.MONTH))
-            set(Calendar.DAY_OF_MONTH, utc.get(Calendar.DAY_OF_MONTH))
-        }
-        viewModel.setDateTime(calendar.timeInMillis)
-    }
-    picker.show(activity.supportFragmentManager, "DATE_PICKER")
-}
-
-private fun pickTripTime(activity: AppCompatActivity, viewModel: TripPlanViewModel) {
-    val current = viewModel.formState.value.dateTimeMillis
-    val calendar = Calendar.getInstance().apply { timeInMillis = current }
-    val timeFormat =
-        if (DateFormat.is24HourFormat(activity)) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H
-    val picker = MaterialTimePicker.Builder()
-        .setTimeFormat(timeFormat)
-        .setHour(calendar.get(Calendar.HOUR_OF_DAY))
-        .setMinute(calendar.get(Calendar.MINUTE))
-        .setTitleText(R.string.trip_plan_time)
-        .setTheme(R.style.ThemeOverlay_App_TimePicker)
-        .build()
-    picker.addOnPositiveButtonClickListener {
-        calendar.set(Calendar.HOUR_OF_DAY, picker.hour)
-        calendar.set(Calendar.MINUTE, picker.minute)
-        viewModel.setDateTime(calendar.timeInMillis)
-    }
-    picker.show(activity.supportFragmentManager, "TIME_PICKER")
 }
 
 /** The expanded directions sheet's share of the window height (the collapsed peek is handle-only). */
@@ -284,7 +273,7 @@ fun DirectionsResultsSheet(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     onSheetHeightPx: (Int) -> Unit,
     // The itinerary leg indices of a route label tapped on the map, as they arrive. Required rather than
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
@@ -388,22 +377,30 @@ fun DirectionsResultsSheet(
  * Spins up a per-stop arrivals session keyed to [stop] — so it polls only while shown — and picks the
  * route group matching the leg (by route id, then headsign). Ids on [routeLeg]/[stop] are OBA-format.
  *
- * A leg with interchangeable routes ([RouteLegRef.alternatives], #2010) gets one further strip per such
- * route below the planned one, each behind its own route badge so the pills can't be mistaken for the
- * planned route's — that badge is the only thing distinguishing them, since a pill shows an ETA and no
- * route. All of them read the one arrivals poll this stop already runs, so the extra routes cost no
- * extra request. An alternative with no OBA id, or with nothing upcoming at this stop, is simply left
- * out — its name still appears on the card's "or …" line.
+ * A leg with interchangeable routes ([RouteLegRef.alternatives], #2010) combines every matching route
+ * into this one strip in arrival order. Each ETA pill carries its route's small badge, so the rider can
+ * scan one timeline to see which interchangeable route comes first without losing the route identity.
+ * All routes read the one arrivals poll this stop already runs, so alternatives cost no extra request.
+ * An alternative with no OBA id, or with nothing upcoming at this stop, is simply left out — its name
+ * still appears on the card's "or …" line.
+ *
+ * The strip is live arrivals *as of now*, but the rider is somewhere up the plan, so [reachStopTime] —
+ * when the plan has them reach this stop — is ruled across it (#2125): departures before it are ones
+ * they can't be here for, and the first pill after the rule is the soonest one they can actually board.
+ * Null when the plan puts nothing before this ride (the rider is at the stop from the start, so every
+ * departure is theirs to take) — the strip then draws no rule rather than one placed at a guess.
  */
 @Composable
-fun DirectionStopEtaStrip(
+internal fun DirectionStopEtaStrip(
     routeLeg: RouteLegRef,
     stop: RouteStopRef,
+    reachStopTime: ServerTime?,
     arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     onShowTrip: (tripId: String, stopId: String) -> Unit,
     onEditReminder: (ReminderEditorArgs) -> Unit,
     onFocusVehicle: (ShowRouteRequest) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    hoistedSession: ArrivalsSession? = null
 ) {
     val stopId = stop.stopId
     val point = stop.point
@@ -413,8 +410,16 @@ fun DirectionStopEtaStrip(
     // arrivals" is reserved for a stop we *did* look up (below) — saying it here would report an
     // unidentifiable stop as one with no service.
     if (stopId == null || point == null) return
-    val session = rememberArrivalsSession(
-        focusedStop = FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point),
+    // The row's own session is requested unconditionally, with a null stop when HOME already hoisted one
+    // for this stop — [rememberArrivalsSession] then builds nothing and returns null. Asking for it
+    // behind an `if` instead would put the remembers on one branch of a condition that flips when focus
+    // moves, which is exactly what Compose's slot table cannot follow.
+    val ownSession = rememberArrivalsSession(
+        focusedStop = if (hoistedSession == null) {
+            FocusedStop(id = stopId, name = stop.name, code = stop.stopCode, point = point)
+        } else {
+            null
+        },
         sheetVisible = true,
         arrivalsViewModelFactory = arrivalsViewModelFactory,
         tutorialState = null,
@@ -425,7 +430,28 @@ fun DirectionStopEtaStrip(
         onShowTrip = onShowTrip,
         onEditReminder = onEditReminder,
         showUndoSnackbar = { _, _, _ -> }
-    ) ?: return
+    )
+    // The focused leg's row reads HOME's hoisted session, so a focused ride polls its boarding stop
+    // exactly once and the map and this strip see the same arrivals.
+    val session = hoistedSession ?: ownSession ?: return
+    DirectionStopEtaStripContent(
+        routeLeg = routeLeg,
+        reachStopTime = reachStopTime,
+        session = session,
+        rowPadding = rowPadding,
+        modifier = modifier
+    )
+}
+
+/** The strip proper, over whichever session it was given. */
+@Composable
+private fun DirectionStopEtaStripContent(
+    routeLeg: RouteLegRef,
+    reachStopTime: ServerTime?,
+    session: ArrivalsSession,
+    rowPadding: Modifier,
+    modifier: Modifier
+) {
     val state by session.viewModel.state.collectAsStateWithLifecycle()
     val callbacks = rememberArrivalRowCallbacks(session.handler, session.viewModel)
 
@@ -435,47 +461,64 @@ fun DirectionStopEtaStrip(
         content.routeGroups.pickRoute(alternative.routeId, alternative.headsign)
             ?.let { alternative to it }
     }
-    if (plannedGroup == null && alternativeGroups.isEmpty()) {
+    val routeTrips = buildList {
+        plannedGroup?.let { add(routeLeg.etaPlannedBadge(it.representative.lineName) to it.trips) }
+        alternativeGroups.forEach { (alternative, group) ->
+            add(RouteBadge(alternative.shortName, alternative.routeColor) to group.trips)
+        }
+    }
+    val interleaved = interleaveRouteItems(routeTrips) { it.displayTime.epochMs }
+    if (interleaved.isEmpty()) {
         NoEtasText(rowPadding)
         return
     }
-    Column(modifier) {
-        if (plannedGroup == null) {
-            NoEtasText(rowPadding)
-        } else {
-            EtaStrip(
-                trips = plannedGroup.trips,
-                actionsFor = { content.actions[it.tripId] },
-                callbacks = callbacks,
-                modifier = rowPadding
-            )
-        }
-        alternativeGroups.forEach { (alternative, group) ->
-            Row(
-                modifier = rowPadding,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RouteBadgeChip(alternative.shortName, alternative.routeColor)
-                Spacer(Modifier.width(8.dp))
-                EtaStrip(
-                    trips = group.trips,
-                    actionsFor = { content.actions[it.tripId] },
-                    callbacks = callbacks,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-        }
-    }
+    val badgesByTrip = interleaved.associate { (trip, badge) -> trip to badge }
+    EtaStrip(
+        trips = interleaved.map { it.first },
+        actionsFor = { content.actions[it.tripId] },
+        callbacks = callbacks,
+        modifier = modifier.then(rowPadding),
+        routeBadgeFor = { badgesByTrip[it] },
+        marker = reachStopTime?.let { rememberReachStopMarker(it) }
+    )
 }
 
-/** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
- *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop. */
-private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? {
-    if (routeId == null) return null
-    val forRoute = filter { it.routeId == routeId }
-    return forRoute.firstOrNull { headsign != null && it.headsign.equals(headsign, ignoreCase = true) }
-        ?: forRoute.firstOrNull()
+/** The strip's "you get here at …" rule for [reachStopTime]. The clock string is memoized because the
+ *  format call is locale work that only changes with the plan, not with each arrivals poll. */
+@Composable
+private fun rememberReachStopMarker(reachStopTime: ServerTime): EtaStripMarker {
+    val context = LocalContext.current
+    val clock = remember(reachStopTime, context) { DisplayFormat.formatTime(context, reachStopTime.epochMs) }
+    return EtaStripMarker(
+        at = reachStopTime,
+        contentDescription = stringResource(R.string.directions_stop_eta_reach_stop, clock),
+        passedStateDescription = stringResource(R.string.directions_stop_eta_departure_missed)
+    )
 }
+
+/**
+ * Flattens route-specific, already-ordered arrival lists into one chronological strip. Kotlin's sort
+ * is stable, so equal-time arrivals retain route order (planned first, then alternatives), avoiding
+ * visual jitter when two interchangeable routes share an ETA.
+ */
+internal fun <T> interleaveRouteItems(
+    routes: List<Pair<RouteBadge, List<T>>>,
+    timeOf: (T) -> Long
+): List<Pair<T, RouteBadge>> = routes
+    .flatMap { (badge, items) -> items.map { it to badge } }
+    .sortedBy { (item, _) -> timeOf(item) }
+
+/** The planned route's own badge, falling back to the arrivals display name only for legacy fixtures.
+ * It is carried explicitly rather than recovered from the joined badge by name: distinct routes may
+ * publish the same name, and the joined badge deliberately deduplicates those names. */
+internal fun RouteLegRef.etaPlannedBadge(fallbackLineName: String): RouteBadge = plannedBadge ?: RouteBadge(fallbackLineName, null)
+
+/** The group for [routeId] at this stop: matched by OBA route id, preferring [headsign]'s direction.
+ *  Null when the route has no OBA id (unresolved) or nothing upcoming at the stop.
+ *
+ *  Delegates to [pickRideDirection] rather than repeating the rule, so the strip and the map's ride
+ *  selection resolve a leg to the same direction group by construction. */
+private fun List<RouteRowGroup>.pickRoute(routeId: String?, headsign: String?): RouteRowGroup? = pickRideDirection(routeId, headsign, routeIdOf = { it.routeId }, headsignOf = { it.headsign })
 
 @Composable
 private fun NoEtasText(modifier: Modifier) {
@@ -488,30 +531,53 @@ private fun NoEtasText(modifier: Modifier) {
 }
 
 /**
- * The modal menu shown when the user long-presses the map: "directions from here" / "directions to
- * here", each of which enters directions focus and fills that endpoint with the pressed point.
+ * Stable handles for [DirectionsLongPressMenu]'s endpoint dots, so a render can sample the dot
+ * itself rather than guessing at Material's menu-row padding.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+object DirectionsLongPressMenuTestTags {
+    const val FROM_DOT = "directionsFromHereDot"
+    const val TO_DOT = "directionsToHereDot"
+}
+
+/**
+ * The menu shown when the user long-presses the map: "directions from here" / "directions to here",
+ * each of which enters directions focus and fills that endpoint with the pressed point.
+ *
+ * The same centered dialog every other long-press menu in the app uses (#2112), rather than the
+ * bottom sheet it was: a long press means the same thing wherever the rider does it, and the map is
+ * the one surface where a sheet rising from the bottom also covers what was just pressed. The rows
+ * are marked with the trip-plan rail's own endpoint dots, so the row names the end of the trip it
+ * fills by the same green/red the form will show once it is filled.
+ *
+ * Always expanded — the host renders this only while there is a pressed point, and dismissal clears
+ * it (see HomeScreen).
+ */
 @Composable
 fun DirectionsLongPressMenu(
     onChooseSlot: (TripEndpointSlot) -> Unit,
     onDismiss: () -> Unit
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(Modifier.navigationBarsPadding()) {
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.directions_from_here)) },
-                leadingContent = {
-                    Icon(painterResource(R.drawable.ic_my_location), contentDescription = null)
-                },
-                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.FROM) }
-            )
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.directions_to_here)) },
-                leadingContent = { Icon(AppIcons.Place, contentDescription = null) },
-                modifier = Modifier.clickable { onChooseSlot(TripEndpointSlot.TO) }
-            )
-        }
+    CenteredLongPressMenu(expanded = true, onDismissRequest = onDismiss) {
+        MenuRow(
+            textRes = R.string.directions_from_here,
+            leadingIcon = {
+                TripEndpointDotIcon(
+                    TripEndpointSlot.FROM,
+                    Modifier.testTag(DirectionsLongPressMenuTestTags.FROM_DOT)
+                )
+            },
+            onClick = { onChooseSlot(TripEndpointSlot.FROM) }
+        )
+        MenuRow(
+            textRes = R.string.directions_to_here,
+            leadingIcon = {
+                TripEndpointDotIcon(
+                    TripEndpointSlot.TO,
+                    Modifier.testTag(DirectionsLongPressMenuTestTags.TO_DOT)
+                )
+            },
+            onClick = { onChooseSlot(TripEndpointSlot.TO) }
+        )
     }
 }
 
@@ -568,6 +634,37 @@ fun DirectionsErrorSnackbar(
 }
 
 /**
+ * "Leave these directions?" — the modal shown when a gesture would close directions on a trip that is
+ * drawn on the map (#2140). A planned trip is several deliberate acts (two endpoints, a time, a mode,
+ * the option picked from the results), and the two gestures that discard it — Back, and a tap on the
+ * map background — are the two cheapest gestures on the screen, so it was far too easy to spend the
+ * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
+ * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
+ * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ */
+@Composable
+fun DirectionsExitConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
+        text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.directions_exit_confirm_discard))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) }
+        }
+    )
+}
+
+/**
  * Pick a From/To point directly on the home map: a fixed center crosshair the map pans under, and a
  * bottom confirm. [onConfirm] captures the map's current center; the caller resolves it to a
  * [org.onebusaway.android.ui.tripplan.TripEndpoint.MapPoint].
@@ -603,7 +700,7 @@ private fun DirectionsAdvancedSettingsDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val imperial = remember { !PreferenceUtils.getUnitsAreMetricFromPreferences(context) }
+    val imperial = !unitsAreMetric()
     // Which options this region can actually serve. OTP2 deleted `maxWalkDistance` from its routing
     // API, so the distance field would be silently ignored there (#1780 wired the OTP2 path without
     // it); OTP1 in turn has no cycling-optimization knob that doesn't collide with the `optimize`
@@ -612,30 +709,9 @@ private fun DirectionsAdvancedSettingsDialog(
     val usesOtp2 = remember { OtpTarget.resolve(context).usesOtp2 }
     val bikeshare = remember { BikeshareAvailability.isTripPlanningEnabled(context) }
 
-    // The mode choice is two independent questions — what you'll ride, and how you'll cover the
-    // street at either end — so they get a picker each rather than one list of every combination.
-    val vehicleOptions = listOf(
-        stringResource(R.string.vehicle_mode_all_transit) to VehicleMode.ALL_TRANSIT,
-        stringResource(R.string.vehicle_mode_bus) to VehicleMode.BUS,
-        stringResource(R.string.vehicle_mode_rail) to VehicleMode.RAIL,
-        stringResource(R.string.vehicle_mode_none) to VehicleMode.NONE
-    )
-    val streetOptions = listOf(
-        stringResource(R.string.street_mode_walk) to StreetMode.WALK,
-        stringResource(R.string.street_mode_walk_and_bikeshare) to StreetMode.WALK_AND_BIKESHARE,
-        stringResource(R.string.street_mode_bicycle) to StreetMode.BICYCLE
-    ).filter { (_, mode) -> mode.isAvailableIn(bikeshare, usesOtp2) }
-
     val current = remember { viewModel.formState.value }
-    var vehicleMode by remember { mutableStateOf(current.modes.vehicle) }
-    // Holds the rider's actual choice, including a street mode this region can't serve — a preference
-    // carried in from another region. Confirming the dialog must not overwrite that with the fallback
-    // below; like the max-walk field on OTP2, a setting the rider can't act on here is carried through
-    // untouched rather than eroded. The request degrades it at build time (TripModeSelection.availableIn).
-    var streetMode by remember { mutableStateOf(current.modes.street) }
-    // What the picker can show, by the same rule that filtered its options: an unofferable stored mode
-    // reads as the walking fallback the request will really use.
-    val offeredStreetMode = streetMode.takeIf { it.isAvailableIn(bikeshare, usesOtp2) } ?: StreetMode.WALK
+    val offeredStreetMode = current.modes.street
+        .takeIf { it.isAvailableIn(bikeshare, usesOtp2) } ?: StreetMode.WALK
     var minimizeTransfers by remember { mutableStateOf(current.optimizeTransfers) }
     var wheelchair by remember { mutableStateOf(current.wheelchair) }
     // Rounded, not truncated: the field's value is converted back to metres on confirm, so
@@ -667,8 +743,6 @@ private fun DirectionsAdvancedSettingsDialog(
 
     // Preference keys resolved in composition (stringResource) so the confirm handler doesn't read
     // resource values off LocalContext.current (lint: LocalContextGetResourceValueCall).
-    val prefKeyVehicleMode = stringResource(R.string.preference_key_trip_plan_vehicle_mode)
-    val prefKeyStreetMode = stringResource(R.string.preference_key_trip_plan_street_mode)
     val prefKeyMaxWalk = stringResource(R.string.preference_key_trip_plan_maximum_walking_distance)
     val prefKeyWalkPreference = stringResource(R.string.preference_key_trip_plan_walk_preference)
     val prefKeyCyclingPreference = stringResource(R.string.preference_key_trip_plan_cycling_preference)
@@ -684,19 +758,6 @@ private fun DirectionsAdvancedSettingsDialog(
             // rows, and AlertDialog content doesn't scroll on its own — at large font scales the
             // switches at the bottom would otherwise be unreachable.
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                PreferenceDropdownRow(
-                    label = stringResource(R.string.vehicle_mode_label),
-                    options = vehicleOptions,
-                    selected = vehicleMode,
-                    onSelected = { vehicleMode = it }
-                )
-                PreferenceDropdownRow(
-                    label = stringResource(R.string.street_mode_label),
-                    options = streetOptions,
-                    selected = offeredStreetMode,
-                    onSelected = { streetMode = it },
-                    modifier = Modifier.padding(top = 8.dp)
-                )
                 if (usesOtp2) {
                     PreferenceSliderRow(
                         label = stringResource(R.string.walk_preference_label),
@@ -770,7 +831,7 @@ private fun DirectionsAdvancedSettingsDialog(
                 }
                 viewModel.applyAdvancedSettings(
                     AdvancedSettings(
-                        modes = TripModeSelection(vehicleMode, streetMode),
+                        modes = current.modes,
                         maxWalkMeters = maxWalkMeters,
                         optimizeTransfers = minimizeTransfers,
                         wheelchair = wheelchair,
@@ -781,8 +842,6 @@ private fun DirectionsAdvancedSettingsDialog(
                 )
                 // Every option is saved whether or not this region's protocol showed its control, so
                 // the value survives a move to a region that can use it (see [AdvancedSettings]).
-                PreferenceUtils.saveString(prefKeyVehicleMode, vehicleMode.name)
-                PreferenceUtils.saveString(prefKeyStreetMode, streetMode.name)
                 PreferenceUtils.saveDouble(prefKeyMaxWalk, maxWalkMeters ?: Double.MAX_VALUE)
                 PreferenceUtils.saveString(prefKeyWalkPreference, walkPreference.name)
                 PreferenceUtils.saveString(prefKeyCyclingPreference, cyclingPreference.name)

@@ -20,6 +20,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.TripDetailsEntry
@@ -105,5 +106,37 @@ class TripDetailsDecodeTest {
         assertEquals("Metro", data.references.agency(route.agencyId)?.name)
         assertEquals("Second", data.references.stop("1_s2")?.name)
         assertNull(data.references.trip("nope"))
+    }
+
+    @Test
+    fun `a block end's empty neighbour trip ids become null in the domain`() {
+        // OBA sends "" rather than omitting prev/next at the ends of a block (#2003). Left as-is they
+        // read as real ids and get looked up, so they are blanked at this boundary — the one place that
+        // has to know the sentinel.
+        val blockEndBody = """
+        {
+          "version": 2, "code": 200, "currentTime": 1782347930000, "text": "OK",
+          "data": {
+            "entry": {
+              "tripId": "1_t",
+              "serviceDate": 1782284400000,
+              "schedule": {
+                "timeZone": "America/Los_Angeles",
+                "previousTripId": "",
+                "nextTripId": "",
+                "stopTimes": [ { "stopId": "1_s1", "arrivalTime": 60180, "departureTime": 60180 } ]
+              }
+            },
+            "references": { "trips": [], "routes": [], "agencies": [], "stops": [] }
+          }
+        }
+        """.trimIndent()
+
+        val envelope: ObaEnvelope<EntryWithReferences<TripDetailsEntry>> =
+            json.decodeFromString(blockEndBody)
+        val schedule = envelope.data!!.entry.schedule!!.toObaTripSchedule()
+
+        assertNull(schedule.previousTripId)
+        assertNull(schedule.nextTripId)
     }
 }

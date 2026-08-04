@@ -22,10 +22,18 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.substitutableRoutes
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.models.ObaShape
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
+
+/**
+ * Which of a drawn itinerary's two terminus pins to draw. A terminus the rider set to their current
+ * location goes unpinned: the map's location layer already marks that exact point with the blue dot, so
+ * a pin on top of it is redundant (#2111). Both pins are drawn unless a terminus says otherwise.
+ */
+data class ItineraryPins(val start: Boolean = true, val end: Boolean = true)
 
 /**
  * The trip-plan directions use case (the legacy `DirectionsMapController`): draws an itinerary's legs
@@ -73,9 +81,11 @@ class DirectionsMapController(private val host: MapHost) {
      * Draw [itinerary]'s leg polylines + start/end pins and frame it, stroking every leg through
      * [palette] — the directions view's own, which is the theme-aware colour the drawer badges this leg
      * with (see [directionsRouteLinePalette]). Passed per draw rather than held, so the palette that
-     * resolved the current theme is the one this itinerary was drawn with.
+     * resolved the current theme is the one this itinerary was drawn with. [pins] withholds a terminus
+     * pin the trip's own endpoint made redundant (see [ItineraryPins]); framing is unaffected, since a
+     * withheld pin doesn't move where the trip starts.
      */
-    fun start(itinerary: TripItinerary, palette: RouteLinePalette) {
+    fun start(itinerary: TripItinerary, palette: RouteLinePalette, pins: ItineraryPins) {
         val legs = itinerary.legs
         if (legs.isEmpty()) {
             return
@@ -124,8 +134,9 @@ class DirectionsMapController(private val host: MapHost) {
         }
         // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
         // [itineraryLegStyle], which also decides the hairline case a ride wears.
+        val caps = itineraryLegCaps(legs)
         legLines = drawableLegs.map { (legIndex, _, points, style) ->
-            val caps = itineraryLegCaps(legs, legIndex)
+            val legCaps = caps[legIndex]
             ItineraryLegLine(
                 legIndex,
                 RoutePolyline(
@@ -134,8 +145,15 @@ class DirectionsMapController(private val host: MapHost) {
                     widthProfile = style.widthProfile,
                     dash = style.dash,
                     case = style.case,
-                    roundStartCap = style.roundCaps && caps.start,
-                    roundEndCap = style.roundCaps && caps.end
+                    // A cutover (#2127) and a bulb are alternatives, not additions — the cut goes precisely
+                    // where the ride runs on and the bulb is therefore withheld, which is what this `when`
+                    // says and what a pair of booleans left each renderer to decide for itself.
+                    startMark = when {
+                        legCaps.startSeam -> RouteLineMark.INTERLINE_CUT
+                        style.roundCaps && legCaps.start -> RouteLineMark.BULB
+                        else -> RouteLineMark.NONE
+                    },
+                    endMark = if (style.roundCaps && legCaps.end) RouteLineMark.BULB else RouteLineMark.NONE
                 )
             )
         }
@@ -143,10 +161,10 @@ class DirectionsMapController(private val host: MapHost) {
         focusedLegIndices = emptySet()
         publishLegs()
 
-        if (startLat != null && startLon != null) {
+        if (pins.start && startLat != null && startLon != null) {
             directionsMarkerIds.add(host.addMarker(startLat, startLon, HUE_GREEN))
         }
-        if (endLat != null && endLon != null) {
+        if (pins.end && endLat != null && endLon != null) {
             directionsMarkerIds.add(host.addMarker(endLat, endLon, HUE_RED))
         }
         // Published after the pins, since the static layer is redrawn wholesale on each emission that
@@ -252,10 +270,10 @@ class DirectionsMapController(private val host: MapHost) {
             for (leg in itinerary.legs) {
                 if (leg.mode == TripMode.BICYCLE) {
                     if (leg.from.vertexType == TripVertexType.BIKESHARE) {
-                        leg.from.bikeShareId?.let { ids.add(it) }
+                        leg.from.rental?.id?.let { ids.add(it) }
                     }
                     if (leg.to.vertexType == TripVertexType.BIKESHARE) {
-                        leg.to.bikeShareId?.let { ids.add(it) }
+                        leg.to.rental?.id?.let { ids.add(it) }
                     }
                 }
             }

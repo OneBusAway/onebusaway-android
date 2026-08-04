@@ -33,6 +33,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
+import org.onebusaway.android.map.ItineraryPins
+import org.onebusaway.android.map.RiddenSpan
+import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteFocusRelationship
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.map.ShowRouteRequest
@@ -46,6 +49,7 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.region.RegionStatus
 import org.onebusaway.android.ui.tripresults.FocusedLeg
 import org.onebusaway.android.ui.tripresults.RouteLegRef
+import org.onebusaway.android.ui.tripresults.RouteStopRef
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.toGeoPoint
 
@@ -312,8 +316,18 @@ class HomeViewModel @Inject constructor(
         _showWelcomeTutorial.value = false
     }
 
-    fun onBikeStationFocused(id: String) {
+    /**
+     * A bike dock was tapped on the map. Directions owns the map while a trip is being planned — and the
+     * docks drawn there are the trip's *own*, since the bike layer runs seeded from the itinerary — so a
+     * tap there is refused rather than allowed to take the screen, exactly as a stop tap is (#2097).
+     * Letting it through discarded the whole plan in one tap on the very screen #2140 protects.
+     *
+     * Returns whether the focus was taken, so the map can leave its own render state alone when it wasn't.
+     */
+    fun onBikeStationFocused(id: String): Boolean {
+        if (_currentFocus.value is CurrentFocus.Directions) return false
         pushFocus(CurrentFocus.BikeStation(id))
+        return true
     }
 
     /**
@@ -566,6 +580,9 @@ class HomeViewModel @Inject constructor(
             is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
             CurrentFocus.None -> return
         }
+        // A stray background tap is the cheapest gesture on the map; where it would take a planned trip
+        // off it, it asks first (#2140) — judged on the transition the `when` above just decided.
+        if (stageDirectionsExitConfirmation(focus, target)) return
         pushFocus(target)
         when {
             target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
@@ -588,7 +605,7 @@ class HomeViewModel @Inject constructor(
     private fun itineraryOverviewDirective(from: CurrentFocus): MapDirective = if (from.keepsDrawnItinerary) {
         MapDirective.ClearItineraryLegFocus
     } else {
-        shownItinerary?.let { MapDirective.ShowItinerary(it) } ?: MapDirective.ClearFocus
+        shownItinerary ?: MapDirective.ClearFocus
     }
 
     /** Clears the complete focus hierarchy. Used by the focus banner's explicit close control. */
@@ -610,24 +627,34 @@ class HomeViewModel @Inject constructor(
         if (_currentFocus.value is CurrentFocus.Directions) return
         presentedRoutes = emptySet()
         pendingFocus = null
+        // A fresh entry has nothing drawn yet — the previous visit's trip is long off the map, and a
+        // stale record of it would make the first Back out of an empty form ask to discard it (#2140).
+        shownItinerary = null
         pushFocus(CurrentFocus.Directions(), undoViewport)
     }
 
-    // The itinerary currently drawn in directions mode, cached so returning from a route sub-focus (a
-    // map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on its own.
-    private var shownItinerary: TripItinerary? = null
+    // The draw of the itinerary currently shown in directions mode, cached so returning from a route
+    // sub-focus (a map-background tap) can redraw it — the results VM's selection flow doesn't re-emit on
+    // its own. Held as the whole directive rather than just the itinerary, so a redraw reproduces the
+    // terminus pins the trip was drawn with instead of quietly restoring a suppressed one. Read together
+    // with a directions focus it also answers "has the rider a trip to lose?" — the #2140 gate — which is
+    // why it is now cleared whenever the trip leaves the map. On its own it does not: it deliberately
+    // outlives the exit (see [exitDirections]), so the gate always pairs it with the focus.
+    private var shownItinerary: MapDirective.ShowItinerary? = null
 
     /**
      * Draw [itinerary] on the home map and frame the whole trip (only meaningful in
      * [CurrentFocus.Directions]). Showing the full itinerary drops any leg route focus, so an option-card
-     * tap returns to the overview.
+     * tap returns to the overview. [pins] withholds the terminus pin of an endpoint the rider set to
+     * their current location, which the blue dot already marks (#2111).
      */
-    fun showItineraryOnMap(itinerary: TripItinerary) {
-        shownItinerary = itinerary
+    fun showItineraryOnMap(itinerary: TripItinerary, pins: ItineraryPins = ItineraryPins()) {
+        val draw = MapDirective.ShowItinerary(itinerary, pins)
+        shownItinerary = draw
         // Showing the whole trip drops any leg sub-focus; the ShowItinerary below is the redraw. Guarded so
         // a call from outside directions can't push a directions focus.
         if (directionsSubFocus != null) pushFocus(CurrentFocus.Directions())
-        emitMapDirective(MapDirective.ShowItinerary(itinerary))
+        emitMapDirective(draw)
     }
 
     /** The leg the user has drilled into from the itinerary overview, if any. */
@@ -675,7 +702,7 @@ class HomeViewModel @Inject constructor(
      */
     private fun applyLegFocus(leg: FocusedLeg, from: CurrentFocus) {
         if (!from.keepsDrawnItinerary) {
-            shownItinerary?.let { emitMapDirective(MapDirective.ShowItinerary(it)) }
+            shownItinerary?.let { emitMapDirective(it) }
         }
         emitMapDirective(MapDirective.FocusItineraryLeg(leg.points, leg.legIndices))
     }
@@ -699,20 +726,15 @@ class HomeViewModel @Inject constructor(
         // anchored to that same platform, so focusing the joined badge shows the whole corridor rather
         // than whichever route OTP happened to choose for the itinerary. Unresolved alternatives remain
         // useful in the badge/ETA UI but cannot be loaded on the map, so they are omitted here.
-        val alternativeSegments = routeLeg.alternatives.mapNotNull { alternative ->
-            val alternativeRouteId = alternative.routeId ?: return@mapNotNull null
-            RouteFocusSegment(
-                routeId = alternativeRouteId,
-                anchorStopId = routeLeg.board?.stopId,
-                relationship = RouteFocusRelationship.INTERCHANGEABLE,
-                directionHeadsign = alternative.headsign
-            )
-        }
+        val routes = routeLeg.routesForFocus(routeId)
         focusItineraryRouteLegOnMap(
             routeId,
-            segment = fallbackLeg.points,
+            spans = routeLeg.riddenSpansOr(fallbackLeg.points),
             directionStopId = routeLeg.board?.stopId,
-            extraSegments = routeLeg.extraSegments + alternativeSegments
+            extraSegments = routes.extraSegments,
+            alightStopId = routeLeg.alight?.stopId,
+            directionHeadsign = routes.leaderHeadsign,
+            boardStop = routeLeg.board?.asFocusedStop()
         )
     }
 
@@ -720,23 +742,165 @@ class HomeViewModel @Inject constructor(
      * A pill tap in a directions leg's inline ETA strip: enter that leg's route focus and focus/animate/
      * ping the tapped trip's live vehicle — [request] already carries the route, direction-anchor stop,
      * and focusTripId (built by the shared arrivals handler), so this just rides the same ShowRoute path
-     * as the arrivals drawer, adding the traveled [segment] over the route.
+     * as the arrivals drawer, adding the ride [routeLeg] is travelled on over the route and that leg's
+     * own end-of-ride stop (the arrivals handler knows the route and stop tapped, not the planned ride).
+     * Takes the same ref-plus-fallback pair the drawer's leg tap does, so a pill and the leg card it sits
+     * in draw the same ride.
+     *
+     * The route set is re-centered on the tapped route without narrowing the ride to it: every other
+     * interchangeable option stays loaded and selected from the same arrivals queue.
      */
-    fun focusDirectionsRouteVehicle(request: ShowRouteRequest, segment: List<GeoPoint>) {
-        enterDirectionsRouteFocus(request.copy(highlightedSegment = segment))
+    fun focusDirectionsRouteVehicle(
+        request: ShowRouteRequest,
+        routeLeg: RouteLegRef,
+        fallbackPoints: List<GeoPoint>
+    ) {
+        val routes = routeLeg.routesForFocus(request.routeId)
+        enterDirectionsRouteFocus(
+            request.copy(
+                riddenSpans = routeLeg.riddenSpansOr(fallbackPoints),
+                extraSegments = routes.extraSegments,
+                alightStopId = routeLeg.alight?.stopId,
+                directionHeadsign = routes.leaderHeadsign
+            ),
+            boardStop = routeLeg.board?.asFocusedStop()
+        )
     }
 
     /**
-     * Recontextualizes the map onto [routeId] with the traveled [segment] drawn thick over it, and
+     * A pill tap in the *focused* leg's ETA strip, which reads HOME's hoisted session rather than one of
+     * its own. That session sits above the itinerary and so cannot close over the leg's row — but it does
+     * not need to: a tap there is by definition within the focused leg, whose ride (its spans, extra
+     * segments, alighting stop and headsign) is already captured on the current focus. Re-enter with
+     * [request]'s tapped route/trip carried over that same ride.
+     */
+    fun focusDirectionsRouteVehicleInFocusedLeg(request: ShowRouteRequest) {
+        val current = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route ?: return
+        enterDirectionsRouteFocus(
+            current.request.releader(request),
+            boardStop = current.boardStop
+        )
+    }
+
+    /**
+     * All routes the rider may board, expressed relative to whichever one [leaderRouteId] the focused
+     * ETA belongs to. Keeping the leader out of the focused ride's segments is significant: the route
+     * controller treats it as the primary poll and polls only the *other* segment ids.
+     */
+    private fun RouteLegRef.routesForFocus(leaderRouteId: String): FocusedRideRoutes {
+        val boardStopId = board?.stopId
+        val boardable = buildList {
+            routeId?.let {
+                add(
+                    RouteFocusSegment(
+                        routeId = it,
+                        anchorStopId = boardStopId,
+                        relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                        directionHeadsign = headsign
+                    )
+                )
+            }
+            alternatives.mapNotNullTo(this) { alternative ->
+                val id = alternative.routeId ?: return@mapNotNullTo null
+                RouteFocusSegment(
+                    routeId = id,
+                    anchorStopId = boardStopId,
+                    relationship = RouteFocusRelationship.INTERCHANGEABLE,
+                    directionHeadsign = alternative.headsign
+                )
+            }
+        }.distinctBy { it.routeId }
+        return FocusedRideRoutes(
+            leaderHeadsign = boardable.firstOrNull { it.routeId == leaderRouteId }?.directionHeadsign,
+            extraSegments = extraSegments + boardable.filterNot { it.routeId == leaderRouteId }
+        )
+    }
+
+    /**
+     * Move an already-focused interchangeable ride onto [next]'s leader without losing the route that
+     * used to lead it. A pill tap changes which route supplies the primary poll; it does not change the
+     * set of routes the rider may board.
+     */
+    private fun ShowRouteRequest.releader(next: ShowRouteRequest): ShowRouteRequest {
+        if (next.routeId == routeId) {
+            return next.copy(
+                riddenSpans = riddenSpans,
+                extraSegments = extraSegments,
+                alightStopId = alightStopId,
+                directionHeadsign = directionHeadsign
+            )
+        }
+        val nextLeader = extraSegments.firstOrNull {
+            it.routeId == next.routeId && it.relationship == RouteFocusRelationship.INTERCHANGEABLE
+        }
+        val previousLeader = RouteFocusSegment(
+            routeId = routeId,
+            anchorStopId = directionStopId,
+            relationship = RouteFocusRelationship.INTERCHANGEABLE,
+            directionHeadsign = directionHeadsign
+        )
+        return next.copy(
+            riddenSpans = riddenSpans,
+            extraSegments = (extraSegments.filterNot { it.routeId == next.routeId } + previousLeader)
+                .distinctBy { it.routeId },
+            alightStopId = alightStopId,
+            directionHeadsign = nextLeader?.directionHeadsign
+        )
+    }
+
+    private data class FocusedRideRoutes(
+        val leaderHeadsign: String?,
+        val extraSegments: List<RouteFocusSegment>
+    )
+
+    /**
+     * This planned stop as a focusable one, or null when it cannot be: the arrivals session the map's
+     * ride selection reads is keyed by OBA stop id and needs a location, so a leg whose OTP→OBA stop
+     * resolution failed simply has no boarding stop to poll.
+     */
+    private fun RouteStopRef.asFocusedStop(): FocusedStop? {
+        val id = stopId ?: return null
+        val at = point ?: return null
+        return FocusedStop(id = id, name = name, code = stopCode, point = at)
+    }
+
+    /**
+     * The boarding stop's arrivals landed for the focused leg — hand the map the rows the ride's routes
+     * are listed in, so it can select which vehicles belong to the ride (#2124).
+     *
+     * Reported by the hoisted session in HOME rather than by the leg card's strip, so the map's vehicle
+     * set does not depend on which itinerary rows happen to be composed. Dropped unless a leg is focused
+     * and the load is for *its* boarding stop, matching how [onArrivalsLoaded] guards the stop-focus path.
+     */
+    fun onRideArrivals(stopId: String, groups: List<RideRouteGroup>) {
+        val focus = (_currentFocus.value as? CurrentFocus.Directions)?.subFocus as? DirectionsSubFocus.Route ?: return
+        if (focus.boardStop?.id != stopId) return
+        emitMapDirective(MapDirective.SetRideArrivals(stopId, groups))
+    }
+
+    /**
+     * The ride to draw over the route, preferring the per-route spans the leg was built with (#2127) and
+     * falling back to the tapped row's own joined geometry ([fallbackPoints]) as a single span. The fallback
+     * covers a ride whose ref carries no spans at all — an OTP1 plan, or a leg the results repository
+     * couldn't resolve — where one undivided span is exactly what the map drew before there were spans to
+     * divide.
+     */
+    private fun RouteLegRef.riddenSpansOr(fallbackPoints: List<GeoPoint>): List<RiddenSpan> = riddenSpans.ifEmpty { listOf(RiddenSpan(fallbackPoints)) }
+
+    /**
+     * Recontextualizes the map onto [routeId] with the traveled ride ([spans]) drawn thick over it, and
      * records the overview as the back target so a map-background tap (or Back) returns to the itinerary.
      * Ids are already OBA-format.
      */
     fun focusItineraryRouteLegOnMap(
         routeId: String,
-        segment: List<GeoPoint> = emptyList(),
+        spans: List<RiddenSpan> = emptyList(),
         directionStopId: String? = null,
         directionId: Int? = null,
         extraSegments: List<RouteFocusSegment> = emptyList(),
+        alightStopId: String? = null,
+        directionHeadsign: String? = null,
+        boardStop: FocusedStop? = null,
         undoViewport: MapViewport? = null
     ) {
         enterDirectionsRouteFocus(
@@ -744,10 +908,13 @@ class HomeViewModel @Inject constructor(
                 routeId = routeId,
                 directionStopId = directionStopId,
                 initialDirectionId = directionId,
-                highlightedSegment = segment,
-                extraSegments = extraSegments
+                riddenSpans = spans,
+                extraSegments = extraSegments,
+                alightStopId = alightStopId,
+                directionHeadsign = directionHeadsign
             ),
-            undoViewport
+            boardStop = boardStop,
+            undoViewport = undoViewport
         )
     }
 
@@ -758,16 +925,29 @@ class HomeViewModel @Inject constructor(
      */
     private fun enterDirectionsRouteFocus(
         request: ShowRouteRequest,
+        boardStop: FocusedStop? = null,
         undoViewport: MapViewport? = null
     ) {
-        pushFocus(CurrentFocus.Directions(DirectionsSubFocus.Route(request)), undoViewport)
+        pushFocus(CurrentFocus.Directions(DirectionsSubFocus.Route(request, boardStop)), undoViewport)
         // withinDirections: this route is drilled into *from* a trip plan, so the map keeps the rest of
         // the trip beneath it as de-emphasized context (#2048).
         emitMapDirective(MapDirective.ShowRoute(request, stopScoped = false, withinDirections = true))
+        // A stop id is enough to anchor the route direction, but the hoisted arrivals session also
+        // needs a point because it is built from FocusedStop. Classify that no-session case explicitly
+        // as Unserved instead of leaving ride selection Pending (which would hide every vehicle).
+        if (boardStop == null && request.directionStopId != null) {
+            emitMapDirective(MapDirective.SetRideArrivals(request.directionStopId, emptyList()))
+        }
     }
 
     /** Clear the drawn itinerary while staying in directions (the plan became unsubmittable). */
-    fun clearShownItineraryOnMap() = emitMapDirective(MapDirective.ClearItinerary)
+    fun clearShownItineraryOnMap() {
+        shownItinerary = null
+        // The trip this asked about is gone, so the question goes with it rather than being left on
+        // screen offering to discard something the rider can no longer see.
+        _pendingDirectionsExit.value = false
+        emitMapDirective(MapDirective.ClearItinerary)
+    }
 
     /** Show the resolved From/To endpoints as green/red pins (before a plan); a null endpoint drops it. */
     fun setDirectionsEndpointsOnMap(from: GeoPoint?, to: GeoPoint?) = emitMapDirective(MapDirective.SetDirectionsEndpoints(from, to))
@@ -775,20 +955,65 @@ class HomeViewModel @Inject constructor(
     // Leave directions focus, returning the map to nearby stops. Private: the only way out is
     // [navigateBackInDirections]'s last step, so a control can't jump straight out of a focused leg —
     // exactly the behaviour #2075 removed.
+    // [shownItinerary] deliberately survives this: backing *into* the directions focus we just left has to
+    // put the trip back on the map. A later fresh entry resets it (see [enterDirections]).
     private fun exitDirections() = clearMapFocus()
+
+    // Whether a gesture that would leave directions is waiting on the rider's confirmation. Set only by
+    // [stageDirectionsExitConfirmation]; the host shows a modal dialog off it and answers with
+    // [confirmExitDirections] / [dismissDirectionsExit]. It carries no "which gesture asked", because
+    // there is only one answer to give: every gesture that reaches it wants the same exit.
+    private val _pendingDirectionsExit = MutableStateFlow(false)
+    val pendingDirectionsExit: StateFlow<Boolean> = _pendingDirectionsExit.asStateFlow()
+
+    /**
+     * Intercept a focus change that would take a drawn trip off the map, staging a confirmation instead
+     * of making it — and reporting whether it did, so the caller stops where it is (#2140).
+     *
+     * Judged on the transition ([from] → [to]), not on which gesture asked: every caller already decides
+     * where its gesture lands, so reading that decision keeps this from re-deriving — and later drifting
+     * from — the level rules they encode. Any move out of directions while a trip is drawn costs the
+     * rider their whole plan; every move that stays inside it, such as stepping back out of a
+     * drilled-into leg, costs them nothing. An unplanned form has no trip to lose, so it leaves free.
+     */
+    private fun stageDirectionsExitConfirmation(from: CurrentFocus, to: CurrentFocus): Boolean {
+        val leavesDrawnTrip = from is CurrentFocus.Directions &&
+            to !is CurrentFocus.Directions &&
+            shownItinerary != null
+        if (!leavesDrawnTrip) return false
+        _pendingDirectionsExit.value = true
+        return true
+    }
+
+    /**
+     * The rider confirmed the staged exit: leave directions, dropping the trip. The guard is what keeps
+     * this from becoming a public door around [exitDirections] being private — without it a control
+     * could call it from a drilled-into leg and jump straight out, the behaviour #2075 removed.
+     */
+    fun confirmExitDirections() {
+        if (!_pendingDirectionsExit.value) return
+        exitDirections()
+    }
+
+    /** The rider declined the staged exit (or dismissed the dialog): stay on the trip. */
+    fun dismissDirectionsExit() {
+        _pendingDirectionsExit.value = false
+    }
 
     /**
      * The system Back gesture while in directions. A leg the user drilled into — its route, or an
      * on-street leg framed on its own — steps back out of that leg first, so Back reverses the drill-in
      * (restoring the camera it moved) instead of leaving the trip behind (#2075); only from the plain
-     * itinerary overview does Back exit directions. The map-background tap drops a level the same way,
-     * but jumps straight to the overview, while Back walks the legs the user visited in order — matching
-     * how a stop's route focus already behaves under each gesture.
+     * itinerary overview does Back exit directions — and with a trip drawn there, only after the rider
+     * confirms it (#2140). The map-background tap drops a level the same way, but jumps straight to the
+     * overview, while Back walks the legs the user visited in order — matching how a stop's route focus
+     * already behaves under each gesture.
      */
     fun navigateBackInDirections() {
         // The false guard is belt-and-braces: reaching a leg sub-focus always pushed the overview it was
         // entered from, so there is history to pop.
         if (directionsSubFocus != null && navigateBackFocus()) return
+        if (stageDirectionsExitConfirmation(_currentFocus.value, CurrentFocus.None)) return
         exitDirections()
     }
 
@@ -839,6 +1064,9 @@ class HomeViewModel @Inject constructor(
 
     private fun replaceFocus(focus: CurrentFocus) {
         _currentFocus.value = focus
+        // A staged "leave the trip?" question is only ever asked of the focus that raised it, so any
+        // move off directions — the confirmed exit itself, or a deep link taking the map — answers it.
+        if (focus !is CurrentFocus.Directions) _pendingDirectionsExit.value = false
         CurrentFocusPersistence.write(savedState, focus)
     }
 
@@ -998,6 +1226,20 @@ sealed interface MapDirective {
         val trips: Set<FocusedTrip> = emptySet()
     ) : MapDirective
 
+    /**
+     * The focused leg's boarding stop has fresh arrivals: the (route, direction) rows they were grouped
+     * into, for the map's ride vehicle selection (#2124).
+     *
+     * Carries the rows rather than a finished verdict because the map is what authoritatively knows the
+     * ride — which routes are boardable, how many stay-aboard continuations it has, where it alights —
+     * so deriving the queue there keeps that knowledge in one place. Distinct from [ShowStopRoutes],
+     * which drives the *focused-stop* layer and is gated on stop focus that directions refuses (#2097).
+     */
+    data class SetRideArrivals(
+        val stopId: String,
+        val groups: List<RideRouteGroup>
+    ) : MapDirective
+
     /** Clear an active focused-stop route view when the focused stop changes or is removed. */
     object ClearStopRoutes : MapDirective
 
@@ -1021,7 +1263,11 @@ sealed interface MapDirective {
     ) : MapDirective
 
     /** Draw [itinerary]'s legs + start/end pins on the home map (trip-plan directions focus). */
-    data class ShowItinerary(val itinerary: TripItinerary) : MapDirective
+    data class ShowItinerary(
+        val itinerary: TripItinerary,
+        /** Which terminus pins the trip wears — a current-location endpoint claims none (#2111). */
+        val pins: ItineraryPins = ItineraryPins()
+    ) : MapDirective
 
     /** Recenter the map on a tapped itinerary step's point (recenter + zoom to street level). */
     data class FocusItineraryPoint(val point: GeoPoint) : MapDirective

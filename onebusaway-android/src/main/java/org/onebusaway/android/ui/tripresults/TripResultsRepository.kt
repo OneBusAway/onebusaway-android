@@ -25,12 +25,13 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
-import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
+import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.interchangeableRoutes
 import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.substitutableRoutes
 import org.onebusaway.android.directions.util.DirectionsGenerator
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
 import org.onebusaway.android.util.runCatchingCancellable
@@ -38,7 +39,7 @@ import org.onebusaway.android.util.runCatchingCancellable
 /**
  * Projects [TripItinerary] objects onto the Compose results model. The turn-by-turn directions reuse
  * the legacy [DirectionsGenerator] (which needs a [Context] for resources), and the option cards carry
- * structured data (mode symbols / duration / time range / walk distance) formatted by the UI. All
+ * structured data (mode symbols / duration / time range / street distances) formatted by the UI. All
  * on the IO thread so [TripResultsViewModel] stays JVM-testable.
  */
 interface TripResultsRepository {
@@ -72,10 +73,9 @@ class DefaultTripResultsRepository @Inject constructor(
         durationMinutes = itinerary.duration.inWholeMinutes,
         startTime = itinerary.startTime,
         endTime = itinerary.startTime + itinerary.duration,
-        // Total walking (meters) across the trip's WALK legs; the card formats it to the user's units.
-        walkDistanceMeters = itinerary.legs
-            .filter { it.mode == TripMode.WALK }
-            .sumOf { it.distance }
+        // How far the trip goes on each street mode it uses (meters), one metric line each on the card
+        // (#2122); the card formats them to the user's units.
+        streetDistanceMeters = itinerary.legs.streetDistancesMeters()
     )
 
     override suspend fun directionsFor(
@@ -135,7 +135,20 @@ class DefaultTripResultsRepository @Inject constructor(
                     directionHeadsign = legs[j].headsign
                 )
             }
-            val alternatives = substitutable[chain.leaderIndex]
+            // The ride's own geometry, one span per leg it is ridden as, in travel order — the map draws the
+            // drilled-into ride from these (#2127). Built here rather than by splitting the joined focus
+            // geometry later because this is where both halves are known at once: the leg's shape, and the
+            // OBA route id that colours it. `startsCutover` reads the same chain transitions the drawer's
+            // "stay on board" rows do, so the two mark one ride's route changes identically. A leg with no
+            // geometry contributes an empty span rather than being dropped — the spans stay aligned to the
+            // ride's legs, and the map skips one it can't draw.
+            val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
+                RiddenSpan(
+                    points = legs[j].legGeometry?.decodedPoints().orEmpty(),
+                    routeId = otpObaIdResolver.obaRouteId(legs[j].routeId, legs[j].agencyId, legs[j].agencyName),
+                    startsCutover = j in chain.transitionLegIndices
+                )
+            }
             refs[chain.leaderIndex] = RouteLegRef(
                 routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
                 headsign = leader.headsign,
@@ -143,15 +156,11 @@ class DefaultTripResultsRepository @Inject constructor(
                 alight = legs[chain.alightIndex].to.resolveStop(legs[chain.alightIndex]),
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
-                alternatives = alternatives.map { it.resolve() },
-                // Built here, alongside the option cards' badges, so the drawer renders one rather than
-                // deriving it per row (#2010). The drawer's board row draws only the interchangeable
-                // form; on an interlined ride it names each segment at its own row instead (#2071), so
-                // the "5 > 12" this returns for one of those is drawn on the option card alone. Still
-                // built by the shared [rideBadge] rather than short-cut to the interchangeable case —
-                // that is where the two forms are held apart, invariant check and all, and the card's
-                // badge would otherwise be the only thing keeping it honest.
-                badge = rideBadge(legs, chain, alternatives)
+                riddenSpans = riddenSpans,
+                alternatives = substitutable[chain.leaderIndex].map { it.resolve() },
+                // Alternatives cannot identify which same-named route was planned; the ETA strip needs
+                // this route's own color (#2099).
+                plannedBadge = leader.plannedBadge()
             )
         }
         return refs

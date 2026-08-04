@@ -83,10 +83,10 @@ class DirectionRowFocusTest {
         mode = TransitMode.BUS,
         routeColorHex = "1B6EF3",
         headsign = "Rainier Beach",
+        reachStopTime = ServerTime(3 * 60_000L),
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
-        realtime = RealtimeState.OnTime,
         rideEvents = listOf(RideEvent.Stop(LogStop("Capitol Hill Station", stopMidPoint))),
         routeLeg = routeLeg,
         legPoints = transitLegPoints,
@@ -165,7 +165,7 @@ class DirectionRowFocusTest {
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()
 
         // Tapping the transit header highlights the route but does not reveal the stops (#2040).
-        composeRule.onNodeWithText(transitTitle).performClick()
+        composeRule.onNodeWithText(requireNotNull(transit.headsign)).performClick()
         assertEquals("1_100", captured?.first?.routeId)
         assertEquals(FocusedLeg(transitLegPoints, setOf(1)), captured?.second)
         composeRule.onNodeWithText(midStopName).assertDoesNotExist()
@@ -212,7 +212,7 @@ class DirectionRowFocusTest {
         composeRule.setContent {
             TripResultsList(
                 state = fullState,
-                stopEtaStrip = { _, stop, _ -> Text("ETASTRIP@${stop.name}") }
+                stopEtaStrip = { _, stop -> Text("ETASTRIP@${stop.name}") }
             )
         }
 

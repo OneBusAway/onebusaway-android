@@ -103,8 +103,45 @@ data class TripLeg(
     // (#2010) — the raw candidate set, straight off the wire. Includes later trips of this leg's own
     // route. Which of them the drawer may present as interchangeable is decided by
     // [interchangeableRoutes], not here. Always empty on the OTP1 path, which has no equivalent.
-    val alternatives: List<TripLegAlternative> = emptyList()
+    val alternatives: List<TripLegAlternative> = emptyList(),
+    // The service alerts OTP considers applicable to this leg (#2143) — already scoped by the server
+    // to the leg's own entities *and* its time window (see the `alerts` selection in Plan.graphql),
+    // so nothing here needs an active-window check. Always empty on the OTP1 path: the REST `/plan`
+    // response this app's regions serve carries no leg alerts at all (verified against the live OTP1
+    // server), so there is nothing to map rather than a mapping left undone.
+    val alerts: List<TripAlert> = emptyList()
 )
+
+/**
+ * One service alert attached to a [TripLeg] — a disruption the rider has to know about before they
+ * trust the itinerary, which is the whole point of surfacing it in the planner: an itinerary routed
+ * over suspended service looks perfectly ordinary otherwise (#2143).
+ *
+ * [id] is OTP's own global alert id, stable for as long as the feed publishes the alert under the
+ * same id. It is *not* used as the rider-facing row identity — a feed that republishes the same
+ * disruption under a fresh id would then read as a new alert, the #1593 failure — so the trip-results
+ * layer keys rows on the alert's content instead. It is kept because it is the only thing that
+ * identifies the alert back to OTP.
+ *
+ * [header] and [description] are GTFS-realtime `header_text`/`description_text`, already
+ * language-negotiated by OTP. Both are plain text, not HTML (unlike the OBA `situation` path's
+ * description) — GTFS-rt `TranslatedString` carries no markup.
+ */
+@Serializable
+data class TripAlert(
+    val id: String,
+    val header: String? = null,
+    val description: String? = null,
+    val url: String? = null,
+    val severity: TripAlertSeverity = TripAlertSeverity.UNKNOWN_SEVERITY
+)
+
+/**
+ * Mirrors OTP2's `AlertSeverityLevelType` wire vocabulary exactly (verified against the vendored
+ * `schema.graphqls`), same discipline as [TripMode]. Mapping it onto the app's three alert-banner
+ * styles is the presentation layer's job, not this model's.
+ */
+enum class TripAlertSeverity { INFO, WARNING, SEVERE, UNKNOWN_SEVERITY }
 
 /**
  * One departure from OTP's alternative-leg search for a [TripLeg] (OTP2 `Leg.nextLegs`, #2010): a
@@ -144,8 +181,59 @@ data class TripPlace(
     val lat: Double? = null,
     val lon: Double? = null,
     val vertexType: TripVertexType? = null,
-    val bikeShareId: String? = null
+    // The rented vehicle (or its dock) this place *is*, when the place is a vehicle-rental endpoint —
+    // null everywhere else. Replaces the bare `bikeShareId` this used to carry: the id alone can only
+    // filter the map's bike layer, while a rider being sent to a shared bike also needs to know whose
+    // it is and how to unlock it (#2150).
+    val rental: TripVehicleRental? = null
 )
+
+/**
+ * A vehicle-rental endpoint of a leg — the shared bike/scooter the rider picks up, or the dock they
+ * pick it up from (#2150). OTP models the two separately (`Place.rentalVehicle` vs.
+ * `Place.vehicleRentalStation`) but publishes the same rental facts on both, so they land on one type
+ * here, and [stationName] is what the rider can act on: the dock to walk to, when the pickup is one
+ * that published a name.
+ *
+ * Every field is what the *feed* stated, carried unjudged:
+ *  - [id] is OTP's network-qualified `network:id`, the identity the map's bike layer filters on. It is
+ *    not shown to the rider: the ids the live Puget Sound networks publish are UUIDs, which no rider
+ *    can match against a bike in front of them.
+ *  - [networkId] is the operator, from OTP's own `rentalNetwork.networkId` — a GBFS `system_id` like
+ *    `lime_seattle`, not a brand name. Turning it into one is presentation, and lives in
+ *    `RentalOperators` (the UI layer), not here.
+ *  - [androidUri]/[webUri] are the operator's deep links to *this* vehicle or station
+ *    (`rentalUris.android`/`.web`), and [networkUrl] the operator's own system URL. All three are null
+ *    on every vehicle the live OTP2 deployment serves today, which is exactly why they are carried
+ *    rather than assumed: a feed that does publish them lets the app hand the rider straight to the
+ *    bike they were routed onto. All three are **absolute or absent** — a feed value naming no scheme
+ *    is dropped at the wire boundary, since nothing on the device can open one (see
+ *    `Otp2PlanAdapters.absoluteUriOrNull`), so a reader may open what it finds here.
+ *  - [rangeMeters] is `fuel.range` — how far the vehicle can still travel on its current charge,
+ *    documented by the schema as meters.
+ *
+ * OTP1 populates only [id] (its `bikeShareId`): that API carries no rental metadata at all, so a leg
+ * planned on an OTP1 region has a rental with nothing to say about its operator, and the drawer draws
+ * the plain bike row it always did.
+ */
+@Serializable
+data class TripVehicleRental(
+    val id: String? = null,
+    val stationName: String? = null,
+    val networkId: String? = null,
+    val networkUrl: String? = null,
+    val androidUri: String? = null,
+    val webUri: String? = null,
+    val formFactor: RentalFormFactor? = null,
+    val propulsion: RentalPropulsion? = null,
+    val rangeMeters: Int? = null
+)
+
+/** Mirrors OTP2's `FormFactor` wire vocabulary exactly (which mirrors GBFS's `vehicle_type`). */
+enum class RentalFormFactor { BICYCLE, CAR, CARGO_BICYCLE, MOPED, OTHER, SCOOTER, SCOOTER_SEATED, SCOOTER_STANDING }
+
+/** Mirrors OTP2's `PropulsionType` wire vocabulary exactly (which mirrors GBFS's `propulsion_type`). */
+enum class RentalPropulsion { COMBUSTION, COMBUSTION_DIESEL, ELECTRIC, ELECTRIC_ASSIST, HUMAN, HYBRID, HYDROGEN_FUEL_CELL, PLUG_IN_HYBRID }
 
 @Serializable
 data class TripStep(

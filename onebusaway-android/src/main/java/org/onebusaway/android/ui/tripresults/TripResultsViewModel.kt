@@ -73,12 +73,15 @@ class TripResultsViewModel @Inject constructor(
         viewModelScope.launch {
             repository.summarize(itineraries).fold(
                 onSuccess = { options ->
-                    val directions = itineraries.getOrNull(selectedIndex)
+                    val selected = itineraries.getOrNull(selectedIndex)
+                    val directions = selected
                         ?.let { repository.directionsFor(it).getOrDefault(emptyList()) }
                         .orEmpty()
                     _state.value = TripResultsUiState.Success(
                         options = options,
                         selectedIndex = selectedIndex,
+                        // Each leg carries its own alerts (#2143), attached as the log is built, so an
+                        // alert can't lag or outlive the leg it is drawn under.
                         directions = directions
                     )
                 },

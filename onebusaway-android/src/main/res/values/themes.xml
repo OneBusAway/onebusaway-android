@@ -57,12 +57,6 @@
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
     </style>
 
-    <!-- Time Picker Style  -->
-    <style name="ThemeOverlay.App.TimePicker" parent="ThemeOverlay.Material3.MaterialTimePicker">
-        <item name="colorTertiaryContainer">?attr/colorSecondary</item>
-        <item name="colorOnTertiaryContainer">?attr/colorOnSecondary</item>
-    </style>
-
     <!-- Clear Dialog Theming  -->
     <style name="ThemeOverlay.App.DeleteDialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
         <item name="materialAlertDialogTitleIconStyle">@style/Widget.App.DialogIcon.Error</item>

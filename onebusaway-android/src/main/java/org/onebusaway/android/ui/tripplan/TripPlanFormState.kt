@@ -40,6 +40,14 @@ sealed interface TripEndpoint {
     val isTransit: Boolean get() = false
 
     /**
+     * This endpoint *is* the device's own position, which the map already marks with the location
+     * layer's blue dot. Such an endpoint is given no pin of its own — neither the standalone From/To
+     * pin shown while the form is being filled in nor the drawn itinerary's terminus pin — since a pin
+     * dropped on top of the blue dot says nothing the dot doesn't (#2111).
+     */
+    val isDeviceLocation: Boolean get() = this is CurrentLocation
+
+    /**
      * The text this endpoint carries itself (a typed query or a resolved place name), or null for the
      * fixed-label kinds ([CurrentLocation]/[MapPoint]) whose label is a string resource resolved by the
      * Android layer. Keeps the shared part of the endpoint→label mapping in one place instead of
@@ -157,6 +165,13 @@ data class TripPlanFormState(
     val canSubmit: Boolean
         get() = from.hasCoordinates && to.hasCoordinates
 
+    /**
+     * Either end of the trip is the device's own position, so a re-plan has to re-read the fix first —
+     * see [withDeviceLocationAt].
+     */
+    val hasDeviceLocationEndpoint: Boolean
+        get() = from.isDeviceLocation || to.isDeviceLocation
+
     /** The endpoint currently in [slot]. */
     fun endpointAt(slot: TripEndpointSlot): TripEndpoint = when (slot) {
         TripEndpointSlot.FROM -> from
@@ -210,6 +225,27 @@ data class TripPlanFormState(
         val filled = withEndpoint(slot, endpoint)
         if (here == null || !endpointAt(slot.other).isEmpty) return filled
         return filled.withEndpoint(slot.other, here)
+    }
+
+    /**
+     * This form with either end that is the device's own position moved to [here], the latest fix (#2134).
+     *
+     * "My location" names *where the rider is*, not where they were standing when they tapped it — but
+     * a [TripEndpoint.CurrentLocation] carries the coordinate it was built from, so without this every
+     * re-plan after the first (a mode change, a date nudge, editing the other end) re-sent the fix the
+     * endpoint was created with and the trip kept starting from where the form was first filled in. The
+     * fix is re-read at submit for the same reason the clock is — see [toParams].
+     *
+     * A null [here] — no fix yet, or the location permission is gone — leaves both ends alone: the
+     * coordinate an endpoint already holds is the best answer available, and blanking it would only turn
+     * a submittable form unsubmittable.
+     */
+    fun withDeviceLocationAt(here: TripEndpoint.CurrentLocation?): TripPlanFormState {
+        if (here == null) return this
+        return copy(
+            from = if (from.isDeviceLocation) here else from,
+            to = if (to.isDeviceLocation) here else to
+        )
     }
 
     /** The current advanced options, for persistence by the host. */

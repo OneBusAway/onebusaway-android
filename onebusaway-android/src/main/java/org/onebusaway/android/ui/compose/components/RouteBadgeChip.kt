@@ -162,6 +162,12 @@ private val CHEVRON_LEAN_ALLOWANCE = ROUTE_BADGE_HEIGHT * JOIN_LEAN_RATIO / 2
  * [leadingIcon] puts a glyph inside the chip, ahead of the name — the mode the route is ridden on, which
  * a route number alone never says. [leadingIconDescription] labels it for TalkBack; the mode is real
  * information, not decoration, so it is worth announcing.
+ *
+ * [trailingIcon] puts one after the name instead, for a glyph that qualifies the chip rather than the
+ * thing it names — the bikeshare operator chip marks itself as a way *out* of the app with an
+ * open-in-new arrow (#2150). It takes no description, unlike the leading one: such a glyph says what
+ * the chip *does*, which is already the chip's own click label, so announcing it again would only
+ * repeat that.
  */
 @Composable
 fun RouteBadgeChip(
@@ -171,7 +177,8 @@ fun RouteBadgeChip(
     scale: Float = 1f,
     maxWidth: Dp = Dp.Unspecified,
     leadingIcon: Int? = null,
-    leadingIconDescription: String? = null
+    leadingIconDescription: String? = null,
+    trailingIcon: Int? = null
 ) {
     val (container, content) = rememberRouteBadgeColors(routeColor)
     Surface(
@@ -190,7 +197,8 @@ fun RouteBadgeChip(
             scale = scale,
             horizontalPadding = 3.dp * scale,
             leadingIcon = leadingIcon,
-            leadingIconDescription = leadingIconDescription
+            leadingIconDescription = leadingIconDescription,
+            trailingIcon = trailingIcon
         )
     }
 }
@@ -205,7 +213,8 @@ private fun BadgeContent(
     horizontalPadding: Dp,
     leadingIcon: Int?,
     leadingIconDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    trailingIcon: Int? = null
 ) {
     val base = MaterialTheme.typography.labelMedium
     // Scale every text metric together — the line box with the glyphs (labelMedium's 16sp line height
@@ -240,8 +249,19 @@ private fun BadgeContent(
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            // Weighted so the name yields the room the trailing glyph needs and ellipsizes into what
+            // is left, rather than pushing the glyph out of a chip capped by `maxWidth`.
+            modifier = if (trailingIcon != null) Modifier.weight(1f, fill = false) else Modifier,
             color = contentColor
         )
+        if (trailingIcon != null) {
+            Icon(
+                painter = painterResource(trailingIcon),
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(BADGE_ICON_SIZE * scale)
+            )
+        }
     }
 }
 

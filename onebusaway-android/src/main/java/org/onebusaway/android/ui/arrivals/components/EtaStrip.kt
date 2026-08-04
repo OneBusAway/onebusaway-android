@@ -36,6 +36,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +46,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.IntrinsicMeasurable
 import androidx.compose.ui.layout.IntrinsicMeasureScope
@@ -55,8 +58,12 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.MultiContentMeasurePolicy
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -74,6 +81,8 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.MaterialSymbols
 import org.onebusaway.android.ui.compose.components.MenuRow
+import org.onebusaway.android.ui.compose.components.RouteBadge
+import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.tightLineStyle
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -89,12 +98,48 @@ import org.onebusaway.android.util.DisplayFormat
 // not a gesture on this strip.
 
 /**
+ * A moment ruled across the strip's timeline: a vertical rule standing where [at] falls among the
+ * departures, with the pills before it dimmed as ones the moment has already passed. The directions
+ * drawer rules when the rider reaches the stop (#2125), so a plan whose walk lands after the next two
+ * departures reads as such instead of as if the rider were standing at the stop already.
+ *
+ * The marker names the *moment*, not a pill position: [EtaStrip] places it against the very list it
+ * draws, so the rule cannot come to disagree with the pills it is drawn between. It reads them in
+ * order, so the strip's trips must be chronological for the rule to divide them into a before and an
+ * after — which is what the pill order means anyway.
+ *
+ * [contentDescription] is what a screen reader reads for the rule itself; [passedStateDescription] is
+ * what it reads on each pill the rule has passed, since a pill's dimming is otherwise invisible to it
+ * and a rule further down the row comes too late to explain a departure already announced.
+ */
+internal data class EtaStripMarker(
+    val at: ServerTime,
+    val contentDescription: String,
+    val passedStateDescription: String
+)
+
+/**
+ * How many of [items] fall before [moment] — i.e. the index the strip's marker rule stands at, given
+ * chronologically-ordered items. Kept as a pure function (and JVM-tested) because the boundary rule is
+ * the whole meaning of the marker: an item exactly *at* [moment] counts as not-yet-passed and stays
+ * after the rule, so a trip plan whose walk is timed to the vehicle — OTP hands back the identical
+ * instant for both — cannot rule out the very departure it boards.
+ *
+ * Generic over the item, taking its time as [timeOf], so the caller needn't build a throwaway list of
+ * times to count over (the same shape [interleaveRouteItems][
+ * org.onebusaway.android.ui.home.directions.interleaveRouteItems] uses).
+ */
+internal fun <T> countBefore(items: List<T>, moment: ServerTime, timeOf: (T) -> ServerTime): Int = items.count { timeOf(it) < moment }
+
+/**
  * The horizontally-scrollable strip of per-trip ETA pills below the direction name. Pills are shown
  * in feed order from the first one; the strip never auto-scrolls, so a trip whose ETA has gone
  * negative just keeps counting down in place. When the pills overflow the row, a chevron appears at
  * that edge to signal there's more to scroll to; tapping it moves the strip one viewport that
  * direction (or to the end, whichever is closer). The chevron's own tap target is a narrow side
  * gutter separate from the pills, so it never blocks the strip's own drag-to-scroll.
+ *
+ * [marker] optionally rules one moment across the strip — see [EtaStripMarker].
  */
 @Composable
 internal fun EtaStrip(
@@ -103,6 +148,8 @@ internal fun EtaStrip(
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
     firstPillModifier: Modifier = Modifier,
+    routeBadgeFor: (ArrivalInfo) -> RouteBadge? = { null },
+    marker: EtaStripMarker? = null,
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
     // the strip mid-scroll.
     state: LazyListState = rememberLazyListState()
@@ -112,6 +159,13 @@ internal fun EtaStrip(
     // a redundant per-pill ticker/coroutine (issue #1781). ServerTime(0) is an inert placeholder for
     // the (pill-less) empty-trips case; nothing reads it since the pill loop below never runs.
     val liveNow = rememberLiveServerTime(trips.firstOrNull()?.serverNow ?: ServerTime(0L))
+    // Remembered because reading the live clock above recomposes this whole body once a second, and
+    // this would otherwise re-run the caller's lambda over every trip on each of those ticks. It only
+    // changes when the trips or the badge source do.
+    val hasRouteBadges = remember(trips, routeBadgeFor) { trips.any { routeBadgeFor(it) != null } }
+    // Where the marker's moment falls among these departures. Remembered for the same reason: the live
+    // clock recomposes this body every second, but the answer only moves when a poll brings new trips.
+    val markerIndex = remember(trips, marker) { marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } }
 
     // The strip viewport width in px, for the one-viewport chevron jump below.
     var viewportPx by remember { mutableIntStateOf(0) }
@@ -149,7 +203,13 @@ internal fun EtaStrip(
                 // An invisible tallest-variant pill (two-line ETA + clock subline), measured to size
                 // the row and never placed — so it's never drawn, takes no input, adds no semantics.
                 // Constant params, so it never recomposes on the live clock tick.
-                EtaPill(eta = 10, color = Color.Transparent, predicted = false, clockTime = "0:00")
+                EtaPill(
+                    eta = 10,
+                    color = Color.Transparent,
+                    predicted = false,
+                    clockTime = "0:00",
+                    routeBadge = if (hasRouteBadges) RouteBadge("00", null) else null
+                )
             }
         ) {
             LazyRow(
@@ -161,26 +221,37 @@ internal fun EtaStrip(
             ) {
                 itemsIndexed(
                     trips,
-                    // Trip-instance identity, so a poll that drops an aged-out leading trip keeps the
+                    // Route + trip-instance identity, so a poll that drops an aged-out leading trip keeps the
                     // viewport on the surviving pills instead of shifting by an index. It's the SAME
                     // (tripId, serviceDate, stopSequence) triple the arrivals dedup collapses to one
-                    // entry (see collapseDuplicateTripInstances) — tripId alone is NOT unique (a loop
-                    // route's two genuine visits to one stop share it), and a duplicate LazyRow key
-                    // is a fatal throw at measure time, so uniqueness here rests on that dedup rather
-                    // than on the feed being well-behaved (#2012). The NUL separator is the same
-                    // can't-occur-in-an-id joiner routeRowKey uses, written as an escape rather than pasted
-                    // raw, which had made this file binary to grep and code review (#2012).
-                    key = { _, trip -> "${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
+                    // entry within one route (see collapseDuplicateTripInstances); routeId keeps that
+                    // invariant valid when the directions drawer interleaves several routes (#2099).
+                    // tripId alone is NOT unique (a loop route's two genuine visits to one stop share
+                    // it), and a duplicate LazyRow key is a fatal throw at measure time. The NUL
+                    // separator is the same can't-occur-in-an-id joiner routeRowKey uses, written as an
+                    // escape rather than pasted raw, which had made this file binary to grep (#2012).
+                    key = { _, trip -> "${trip.routeId}\u0000${trip.tripId}\u0000${trip.serviceDate}\u0000${trip.stopSequence}" }
                 ) { index, trip ->
                     // The first pill carries the caller's anchor modifier (e.g. the tutorial spotlight).
                     val pillModifier = if (index == 0) firstPillModifier else Modifier
-                    EtaPillWithMenu(
-                        trip = trip,
-                        liveNow = liveNow,
-                        actions = actionsFor(trip),
-                        callbacks = callbacks,
-                        modifier = pillModifier
-                    )
+                    // The rule rides inside the item it precedes: a LazyListScope can't emit a lone item
+                    // partway through an itemsIndexed block without splitting the trips in two and
+                    // duplicating the pill below. Null on every other item, so only one carries it.
+                    MarkedItem(marker?.takeIf { markerIndex == index }) {
+                        EtaPillWithMenu(
+                            trip = trip,
+                            liveNow = liveNow,
+                            actions = actionsFor(trip),
+                            callbacks = callbacks,
+                            routeBadge = routeBadgeFor(trip),
+                            modifier = pillModifier.passedByMarker(marker, isPassed = index < (markerIndex ?: 0))
+                        )
+                    }
+                }
+                // A marker past the last departure — the rider gets to the stop after everything the feed
+                // knows about — closes the strip instead of vanishing.
+                if (marker != null && markerIndex != null && markerIndex >= trips.size) {
+                    item(key = ETA_STRIP_MARKER_TAG) { EtaStripMarkerRule(marker) }
                 }
             }
         }
@@ -197,6 +268,70 @@ internal fun EtaStrip(
 
 /** The gap between adjacent ETA pills, for the LazyRow's [Arrangement.spacedBy]. */
 private val PILL_SPACING = 6.dp
+
+/** How faint a pill the strip's [EtaStripMarker] has already passed goes. Still legible — it's a real
+ *  departure — but clearly behind the ones after the rule. */
+private const val PASSED_PILL_ALPHA = 0.38f
+
+/** The marker rule's width. */
+private val MARKER_WIDTH = 3.dp
+
+/** A stable handle on the marker rule, so a render test can sample it without matching on its colour.
+ *  Doubles as its LazyRow key on the one path where the rule is an item of its own — a trip-identity key
+ *  is a NUL-joined tuple of OBA ids, so a bare word can't collide with one. */
+internal const val ETA_STRIP_MARKER_TAG = "etaStripMarker"
+
+/** One LazyRow item: [pill], preceded by [marker]'s rule when this is the pill it stands before. Spaced
+ *  as two adjacent pills would be, so the rule doesn't crowd the strip's rhythm. A [marker] of null —
+ *  every other pill, and every pill on the unmarked arrivals path — emits the pill alone, adding no
+ *  layout node of its own. */
+@Composable
+private fun MarkedItem(marker: EtaStripMarker?, pill: @Composable () -> Unit) {
+    if (marker == null) {
+        pill()
+        return
+    }
+    Row(
+        Modifier.fillMaxHeight(),
+        horizontalArrangement = Arrangement.spacedBy(PILL_SPACING),
+        verticalAlignment = Alignment.Bottom
+    ) {
+        EtaStripMarkerRule(marker)
+        pill()
+    }
+}
+
+/**
+ * The marker itself: a full-height rounded rule in the theme's primary colour, standing between the
+ * departures on either side of the moment it marks. It names that moment for a screen reader, since a
+ * rule says nothing on its own; what the dimming beside it means is said on the dimmed pills
+ * ([passedByMarker]), where a screen reader actually meets it.
+ */
+@Composable
+private fun EtaStripMarkerRule(marker: EtaStripMarker) {
+    VerticalDivider(
+        modifier = Modifier
+            .testTag(ETA_STRIP_MARKER_TAG)
+            .clip(RoundedCornerShape(MARKER_WIDTH / 2))
+            .semantics { contentDescription = marker.contentDescription },
+        thickness = MARKER_WIDTH,
+        color = MaterialTheme.colorScheme.primary
+    )
+}
+
+/**
+ * Marks this pill as one the strip's [marker] has already passed: dimmed, and — because the dimming is
+ * invisible to a screen reader — carrying the marker's own words for what being on that side of the rule
+ * means. Still fully readable and tappable: it's a real departure, just not one this plan can use.
+ *
+ * A no-op when [isPassed] is false or there is no marker, and free on that path — `Modifier.alpha`
+ * returns the receiver unchanged at 1f, so the unmarked arrivals strip grows no graphics layer.
+ */
+private fun Modifier.passedByMarker(marker: EtaStripMarker?, isPassed: Boolean): Modifier = if (marker == null || !isPassed) {
+    this
+} else {
+    alpha(PASSED_PILL_ALPHA).semantics { stateDescription = marker.passedStateDescription }
+}
 
 /**
  * Wraps [content] (the strip's LazyRow) in a layout whose height is fixed to a measured [reference]
@@ -268,7 +403,8 @@ private fun EtaPillWithMenu(
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    routeBadge: RouteBadge? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes
@@ -292,6 +428,7 @@ private fun EtaPillWithMenu(
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
             clockTime = clockTime,
+            routeBadge = routeBadge,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true }
         )
@@ -328,6 +465,15 @@ internal fun TripActionsMenu(
 }
 
 /**
+ * How wide a pill's route roundel may grow before its name ellipsizes — the option cards' own
+ * OPTION_BADGE_MAX_WIDTH rule (TripResultsScreen), at pill scale. Only bites on a route badged by its
+ * long name (one publishing no short name — both badge sources feeding a pill fall back to the long
+ * name), which would otherwise stretch one pill far past its neighbours and turn the strip's even
+ * rhythm into a single wide outlier. A route number never comes near it. Tune here.
+ */
+private val PILL_BADGE_MAX_WIDTH = 72.dp
+
+/**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
  * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
@@ -346,6 +492,7 @@ internal fun EtaPill(
     color: Color,
     predicted: Boolean,
     modifier: Modifier = Modifier,
+    routeBadge: RouteBadge? = null,
     // The trip's live vehicle is drawn on the map right now (#1992): show the "on the map" pin instead of
     // the rss glyph, cueing that a tap on this pill reframes the map to that vehicle. Implies [predicted]
     // (a drawn vehicle is always real-time), so it wins when both would apply.
@@ -398,14 +545,25 @@ internal fun EtaPill(
             // guessed independently of the actual text metrics.
             Column(
                 modifier = Modifier.padding(
-                    start = 6.dp,
-                    end = 6.dp,
+                    // A badged direction pill puts another element at its top edge. Reserve the live
+                    // indicator's overlaid corner on both sides so it cannot cover the roundel and the
+                    // roundel remains visually centered.
+                    start = if (routeBadge == null) 6.dp else indicatorSize,
+                    end = if (routeBadge == null) 6.dp else indicatorSize,
                     top = topPadding,
                     bottom = bottomPadding
                 ),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(clockTimeGap)
             ) {
+                if (routeBadge != null) {
+                    RouteBadgeChip(
+                        shortName = routeBadge.shortName,
+                        routeColor = routeBadge.routeColor,
+                        scale = 0.8f,
+                        maxWidth = PILL_BADGE_MAX_WIDTH
+                    )
+                }
                 if (etaParts == null) {
                     Text(
                         text = stringResource(R.string.stop_info_eta_now),
@@ -481,6 +639,7 @@ private fun northgatePills(count: Int) = List(count) { previewArrival("40", "Nor
 @Composable
 private fun EtaStripPreviewFrame(
     trips: List<ArrivalInfo>,
+    marker: EtaStripMarker? = null,
     state: LazyListState = rememberLazyListState()
 ) {
     ObaTheme {
@@ -493,6 +652,7 @@ private fun EtaStripPreviewFrame(
                     trips = trips,
                     actionsFor = { null },
                     callbacks = previewRowCallbacks(),
+                    marker = marker,
                     state = state
                 )
             }
@@ -515,6 +675,22 @@ private fun EtaStripScrolledPreview() {
     EtaStripPreviewFrame(
         trips = northgatePills(7),
         state = remember { LazyListState(firstVisibleItemIndex = 2, firstVisibleItemScrollOffset = 30) }
+    )
+}
+
+@Preview(showBackground = true, widthDp = 240, name = "EtaStrip · marked (rider arrives)")
+@Composable
+private fun EtaStripMarkedPreview() {
+    // The directions case: the rider's walk lands after the first two departures (northgatePills run
+    // 3, 11, 19, 27 minutes out against a serverNow of 0), so the rule stands before the third and the
+    // two it has passed are dimmed.
+    EtaStripPreviewFrame(
+        trips = northgatePills(4),
+        marker = EtaStripMarker(
+            at = ServerTime(16 * 60_000L),
+            contentDescription = "You get to this stop at 3:19pm",
+            passedStateDescription = "Leaves before you get here"
+        )
     )
 }
 

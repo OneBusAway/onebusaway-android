@@ -15,13 +15,16 @@
  */
 package org.onebusaway.android.ui.tripresults
 
+import androidx.annotation.StringRes
+import org.onebusaway.android.R
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
@@ -30,15 +33,20 @@ import org.onebusaway.android.util.ScheduleDeviation
  *  - [symbols] — the trip as a left-to-right sequence of mode symbols (see [ModeSymbol]).
  *  - [durationMinutes] — whole-minute trip length, formatted like the arrivals ETA pill.
  *  - [startTime]/[endTime] — the server-clock trip endpoints, unwrapped only at the time formatter.
- *  - [walkDistanceMeters] — total walking across the trip's legs, in meters; the card formats it to the
- *    user's units (miles/km, or feet/meters for short walks). 0 when the trip has no walking.
+ *  - [streetDistanceMeters] — how far the trip covers under the rider's own power, in meters, **per
+ *    street mode**; the card draws a metric line for each and formats it to the user's units
+ *    (miles/km, or feet/meters for short distances). A mode the trip never uses is absent rather than
+ *    zero, so the card can show what a trip actually does: a bike-only option says how far it rides
+ *    instead of printing "0 ft" of walking, and a walk-and-bikeshare one says how far it does each
+ *    (#2122). Comparing options ([itineraryWinnerCategories]) does read an absent mode as zero — none
+ *    of it is the least of it — which is the one place the two spellings mean the same thing.
  */
 data class ItineraryOption(
     val symbols: List<ModeSymbol>,
     val durationMinutes: Long,
     val startTime: ServerTime,
     val endTime: ServerTime,
-    val walkDistanceMeters: Double = 0.0
+    val streetDistanceMeters: Map<StreetMode, Double> = emptyMap()
 )
 
 /**
@@ -50,16 +58,31 @@ data class ItineraryOption(
 sealed interface ModeSymbol {
 
     /**
+     * The loudest service alert affecting the leg(s) this symbol stands for, or null when none do — the
+     * warning triangle the card draws beside it (#2143). Per *symbol* rather than per itinerary, so a
+     * card says **where** in the trip the trouble is: a rider scanning the picker can see that one
+     * option's rail leg is the suspended one while the option beside it rides a bus around it.
+     *
+     * It marks only what the card draws. An alert on a leg the summary abbreviates away — one too short
+     * for a glyph ([ModeSymbols.NEGLIGIBLE_STREET_METERS]), or a car leg the app has no art for — has no
+     * symbol to hang on, and is carried by that leg's own row in the directions instead: the log draws
+     * every leg, however short, so the row is always there to hold it. Attributing it to a neighbouring
+     * symbol instead would point the rider at the wrong leg, which is worse than abbreviating it.
+     */
+    val alert: AlertSeverity?
+
+    /**
      * An on-street leg, drawn as its mode's glyph alone — how the rider covers the ground between (or
      * instead of) rides. Legs shorter than [ModeSymbols.NEGLIGIBLE_STREET_METERS] carry no symbol at
      * all; see there for why.
      */
-    data class Street(val mode: StreetMode) : ModeSymbol
+    data class Street(val mode: StreetMode, override val alert: AlertSeverity? = null) : ModeSymbol
 
     /** A ride, drawn as one route roundel — which names every route it can be taken on, or becomes
      *  along the way (see [LegBadge]), and falls back to the mode glyph for a ride that names no
-     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two. */
-    data class Transit(val badge: LegBadge) : ModeSymbol
+     *  route. One symbol per *boarding*, so a stay-aboard interline is one roundel, not two — and one
+     *  triangle, marking an alert on any leg of the chain. */
+    data class Transit(val badge: LegBadge, override val alert: AlertSeverity? = null) : ModeSymbol
 }
 
 /**
@@ -82,20 +105,11 @@ data class LegBadge(
     val mode: TransitMode,
     // Stated at every construction, with no default. It is moot for the single-route badge most rides
     // get — nothing to divide, so no relation to name — but a *joined* badge that forgot to say would
-    // take a default silently, and the join is not merely a divider shape: [isInterchangeable] reads it
-    // to decide whether the drawer tells the rider to board whichever route comes first. Getting that by
-    // omission is a wrong instruction, not a wrong pixel.
+    // take a default silently, and the join is not merely a divider shape: it says which of the two
+    // ways a ride names several routes this badge stands for, and a card promising a choice the rider
+    // doesn't have is a wrong instruction, not a wrong pixel.
     val join: RouteBadgeJoin
 ) {
-    /** Whether this ride has more than one route on its badge, i.e. the chip is a joined/multicolor one. */
-    val isJoined: Boolean get() = routes.size > 1
-
-    /** Whether the badge offers a *choice* of routes — as opposed to naming a ride that becomes another
-     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. The
-     *  drawer's board row draws only this form: the other names routes the rider does not reach until
-     *  later in the ride, and it has a row down there to name each of them at (#2071). */
-    val isInterchangeable: Boolean get() = isJoined && join == RouteBadgeJoin.ANY_OF
-
     /** True when the ride names no route at all, and can only be shown as its mode. */
     val isUnnamed: Boolean get() = routes.isEmpty()
 }
@@ -146,6 +160,10 @@ sealed interface TripLogEntry {
      * Tapping the leg frames [legPoints] (or, with no geometry, recentres on [focusPoint]).
      *
      * Named `Walk` because walking is overwhelmingly the case; [mode] carries the rest.
+     *
+     * [rental] is the shared vehicle a [StreetMode.BIKESHARE] leg is ridden on (#2150) — whose it is,
+     * what kind it is, and how to unlock it. Null on every other leg, and on a bikeshare leg the wire
+     * said nothing about (see [rentalPickup]).
      */
     data class Walk(
         val mode: StreetMode,
@@ -153,9 +171,12 @@ sealed interface TripLogEntry {
         val distanceMeters: Double,
         val isTransfer: Boolean,
         val steps: List<LogStep>,
+        val rental: RentalPickup? = null,
         val legPoints: List<GeoPoint> = emptyList(),
         val focusPoint: GeoPoint? = null,
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /** This leg's service alerts, drawn under its header (#2143) — see [TripAlertItem]. */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This leg as the map's focus target — see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
@@ -174,6 +195,15 @@ sealed interface TripLogEntry {
      * then draws no roundel and leads with [routeDisplayName]; see
      * [routeDisplayShortName][org.onebusaway.android.directions.model.routeDisplayShortName]. [mode] is
      * what the rider boards, and picks the Board node's glyph — a ferry leg must not read as a bus.
+     *
+     * [reachStopTime] and [boardTime] are different moments and both matter: the rider gets to the stop
+     * at the first (the end of whatever leg precedes this one) and the vehicle leaves at the second. The
+     * gap between them is the planned wait, and it's what the Board node's live ETA strip marks (#2125) —
+     * without it the strip reads as if the rider were standing at the stop already. It is **null** when
+     * nothing precedes the ride: the plan then puts the rider at the stop from the start, so there is no
+     * wait, and — crucially — no departure is out of their reach. Substituting [boardTime] there would
+     * dim every departure earlier than the one the plan happened to pick, which for a "leave at 5pm" plan
+     * read at 3pm is the whole strip, and is the opposite of the truth.
      */
     data class Transit(
         val routeShortName: String?,
@@ -181,24 +211,23 @@ sealed interface TripLogEntry {
         val mode: TransitMode,
         val routeColorHex: String?,
         val headsign: String?,
+        val reachStopTime: ServerTime?,
         val boardTime: ServerTime,
         val exitTime: ServerTime,
         val durationMinutes: Long,
-        val realtime: RealtimeState,
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
         val legPoints: List<GeoPoint> = emptyList(),
-        val legIndices: Set<Int> = emptySet()
+        val legIndices: Set<Int> = emptySet(),
+        /**
+         * This ride's service alerts, drawn under its route header (#2143) — see [TripAlertItem]. A
+         * folded interline chain carries the alerts of every leg it swallowed, deduped: the rider is
+         * aboard for all of them, and the chain draws only one header to hang them under.
+         */
+        val alerts: List<TripAlertItem> = emptyList()
     ) : TripLogEntry {
         /** This ride as the map's focus target — every leg of a folded chain; see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
-
-        /**
-         * How many intermediate stops the ride passes — derived from [rideEvents] rather than stored, so
-         * the "N stops" summary can't disagree with the list the leg expands to (it did when a folded
-         * interline continuation's stops were merged but its count wasn't).
-         */
-        val stopCount: Int get() = rideEvents.count { it is RideEvent.Stop }
     }
 }
 
@@ -247,6 +276,36 @@ enum class TerminalKind { START, ARRIVE }
 enum class StreetMode { WALK, BIKE, BIKESHARE, CAR }
 
 /**
+ * A street mode the option cards can *present*: what its glyph is called aloud, and the category its
+ * distance competes in across the picker (#2122). One entry per presentable mode, so the two halves
+ * cannot disagree — a mode with a category but no line would announce a win the rider never sees, and a
+ * mode with a line but no category could never be emphasized.
+ *
+ * [StreetMode.CAR] is deliberately absent, which is the single statement of "the cards can't show a car
+ * leg": the app ships no car art and the planner never asks OTP for car modes (see the mode picker,
+ * `org.onebusaway.android.ui.tripplan.TripModeSelection`). Adding car planning means adding an entry
+ * here, its drawable, and its ink bounds — and nothing else has to be remembered.
+ *
+ * Declaration order is the order a card stacks its distance lines, walking first: it is the mode nearly
+ * every option has, so it lands in the same place on every card and the picker row reads across.
+ */
+enum class StreetMetric(
+    val mode: StreetMode,
+    @param:StringRes val labelRes: Int,
+    val winner: WinnerCategory
+) {
+    WALK(StreetMode.WALK, R.string.step_by_step_non_transit_mode_walk_action, WinnerCategory.LEAST_WALKING),
+    BIKE(StreetMode.BIKE, R.string.step_by_step_non_transit_mode_bicycle_action, WinnerCategory.LEAST_BIKING),
+    BIKESHARE(StreetMode.BIKESHARE, R.string.transit_directions_bikeshare_label, WinnerCategory.LEAST_BIKESHARING);
+
+    companion object {
+
+        /** How to present [mode], or null when it is one the cards can't show ([StreetMode.CAR]). */
+        fun of(mode: StreetMode): StreetMetric? = entries.firstOrNull { it.mode == mode }
+    }
+}
+
+/**
  * What a [TripLogEntry.Transit] leg is ridden on, narrowed from [TripMode] to the vehicle families the
  * app ships a glyph for — so the renderer's glyph choice is total and an on-street mode can't reach it.
  *
@@ -287,46 +346,17 @@ data class LogStep(val text: String, val distanceMeters: Double = 0.0, val point
 data class LogStop(val name: String, val point: GeoPoint? = null)
 
 /**
- * The real-time state of a transit board, shown as an on-time / delayed chip. [Unknown] (no real-time
- * data) renders no chip; which of the others applies is [ScheduleDeviation]'s call, shared with the
- * arrivals drawer (#2043); [Late]/[Early] carry the deviation worded in whole minutes.
- *
- * Each case names the [ScheduleDeviation.Status] it displays as, so the chip reads its color off the
- * shared palette instead of re-spelling the state→color mapping — the same coupling that used to let
- * this screen and the arrivals drawer disagree about which hue meant "early".
- */
-sealed interface RealtimeState {
-    val status: ScheduleDeviation.Status
-
-    data object Unknown : RealtimeState {
-        override val status = ScheduleDeviation.Status.SCHEDULED
-    }
-
-    data object OnTime : RealtimeState {
-        override val status = ScheduleDeviation.Status.ON_TIME
-    }
-
-    data class Late(val minutes: Long) : RealtimeState {
-        override val status = ScheduleDeviation.Status.DELAYED
-    }
-
-    data class Early(val minutes: Long) : RealtimeState {
-        override val status = ScheduleDeviation.Status.EARLY
-    }
-}
-
-/**
  * The route/stop identity of a transit leg, carried on its leg card so tapping the leg highlights the
  * route on the map and its Board/Alight sub-items can show each stop's live ETA strip. Ids are already
  * **OBA-format** — resolved from OTP's GTFS ids at build time (see [org.onebusaway.android.directions
  * .OtpObaIdResolver]); [routeId]/[RouteStopRef.stopId] are null when they couldn't be resolved (an
  * unknown agency, or the OTP1 path). [headsign] disambiguates which direction group's ETAs to show.
  *
- * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop shows each
- * one's live ETA strip under the planned route's, so the rider can see which of them comes first.
- * [badge] is the leg's finished roundel (planned route joined by those alternatives), built once by
- * the repository rather than re-derived per row while composing; null where no badge was built at all
- * (fixtures), which is not the same as a badge that found no route to name.
+ * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop interleaves
+ * their live arrivals with the planned route's in one ETA strip, badging each pill by route (#2099),
+ * so the rider can see which of them comes first.
+ * [plannedBadge] identifies the planned route's own segment independently of [alternatives], including
+ * when another route publishes the same public name.
  */
 data class RouteLegRef(
     val routeId: String?,
@@ -345,8 +375,14 @@ data class RouteLegRef(
     // there. The map focus draws each segment's shape + stops and the shared vehicle across them.
     // Empty for an ordinary leg. Carried straight onto [org.onebusaway.android.map.ShowRouteRequest].
     val extraSegments: List<RouteFocusSegment> = emptyList(),
+    // The geometry the rider actually travels on this card, split at each route it is ridden as — one span
+    // for an ordinary leg, one per leg of a folded interline chain (#2000). Drawing the ride from these
+    // rather than from one joined polyline is what lets each span keep its own route's colour and lets the
+    // cutover between them be marked (#2127); built beside [extraSegments] from the same chain analysis, so
+    // the two can't disagree about where a ride changes route. Empty where no ref was resolved.
+    val riddenSpans: List<RiddenSpan> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
-    val badge: LegBadge? = null
+    val plannedBadge: RouteBadge? = null
 )
 
 /**
@@ -373,8 +409,8 @@ data class InterlineTransition(
 )
 
 /**
- * An interchangeable route on a transit leg: its display name and color for the badge beside its ETA
- * strip, plus the same OBA-id/headsign pair [RouteLegRef] carries for the planned route, used to pick
+ * An interchangeable route on a transit leg: its display name and color for the badge inside each ETA
+ * pill, plus the same OBA-id/headsign pair [RouteLegRef] carries for the planned route, used to pick
  * that route's direction group out of the board stop's arrivals. [routeId] is null when the OTP route
  * couldn't be resolved onto an OBA id — the route still names itself on the leg's badge, but has no
  * ETA strip to show.
@@ -402,7 +438,9 @@ sealed interface TripResultsUiState {
     /**
      * @param options the itinerary option cards (1–3)
      * @param selectedIndex the currently-selected option
-     * @param directions the directions for the selected option
+     * @param directions the directions for the selected option — each leg carrying its own service
+     *   alerts (#2143), so a disruption is drawn against the ride it actually affects rather than
+     *   pooled at the head of the itinerary
      */
     data class Success(
         val options: List<ItineraryOption>,

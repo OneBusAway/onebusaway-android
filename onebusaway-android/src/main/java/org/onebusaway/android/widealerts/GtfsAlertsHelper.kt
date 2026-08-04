@@ -51,7 +51,14 @@ object GtfsAlertsHelper {
      * `active_period.start` is POSIX **seconds** per the GTFS-rt spec — a fixed unit, not a
      * magnitude guess. (The OBA `situation` path is the polymorphic one; its seconds-vs-millis
      * rule lives in `situationEpochToMillis` and does not apply here.)
+     *
+     * `active_period` is `[deprecated = true]` as of the proto shipped in
+     * gtfs-realtime-bindings 0.2.0, superseded by `communication_period` / `impact_period`. We
+     * keep reading it because that is the field feeds in the wild actually populate — dropping it
+     * would silence every alert we surface today — so the migration can't be done at the bump.
+     * Tracked by https://github.com/OneBusAway/onebusaway-android/issues/2160.
      */
+    @Suppress("DEPRECATION")
     fun isStartDateWithin24Hours(alert: GtfsRealtime.Alert, nowMs: Long): Boolean {
         if (alert.activePeriodCount == 0) return false
         val elapsed = nowMs - alert.getActivePeriod(0).start * MILLIS_PER_SECOND

@@ -46,14 +46,14 @@ object ConversionUtils {
     private const val FEET_PER_METER = 3.281
 
     /**
-     * Return a formatted String for a distance. Should be in proper units according to
-     * preferences (either metric or imperial).
+     * Return a formatted String for a distance, in [metric] or imperial units.
      *
      * @param meters distance in meters
      * @param applicationContext context to look up resources
+     * @param metric whether to render metric units; see [getFormattedDistanceParts] on resolving it
      * @return formatted string of distance
      */
-    fun getFormattedDistance(meters: Double, applicationContext: Context): String = getFormattedDistanceParts(meters, applicationContext).joinToString(" ") { it.text }
+    fun getFormattedDistance(meters: Double, applicationContext: Context, metric: Boolean): String = getFormattedDistanceParts(meters, applicationContext, metric).joinToString(" ") { it.text }
 
     /**
      * The same distance as [getFormattedDistance], but as its structured value + unit parts (mirroring
@@ -61,14 +61,23 @@ object ConversionUtils {
      * bold value with a smaller unit — can do so without re-splitting a joined string. The value is the
      * emphasized part, the unit abbreviation the un-emphasized one.
      *
+     * The unit choice is a **parameter, not a preference read**: resolving it here would make a leaf
+     * formatter reach [PreferenceUtils.repo] — and through it `Application.get()` — which is fine on a
+     * device but throws under layoutlib, taking every Compose preview of a screen that shows a distance
+     * down with it. Callers resolve it once, high up: composables via
+     * [org.onebusaway.android.ui.compose.unitsAreMetric], others via
+     * [PreferenceUtils.getUnitsAreMetricFromPreferences].
+     *
      * @param meters distance in meters
      * @param applicationContext context to look up resources
+     * @param metric whether to render metric units
      */
     fun getFormattedDistanceParts(
         meters: Double,
-        applicationContext: Context
+        applicationContext: Context,
+        metric: Boolean
     ): List<DisplayFormat.EtaPart> {
-        val (value, unitRes) = if (PreferenceUtils.getUnitsAreMetricFromPreferences(applicationContext)) {
+        val (value, unitRes) = if (metric) {
             if (meters < 1000) {
                 String.format(Locale.getDefault(), OTPConstants.FORMAT_DISTANCE_METERS, meters) to
                     R.string.meters_abbreviation

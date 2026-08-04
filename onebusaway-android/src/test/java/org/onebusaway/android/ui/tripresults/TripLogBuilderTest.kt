@@ -16,18 +16,20 @@
 package org.onebusaway.android.ui.tripresults
 
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.Direction
+import org.onebusaway.android.directions.model.RentalFormFactor
+import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegGeometry
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
@@ -220,7 +222,41 @@ class TripLogBuilderTest {
     }
 
     @Test
-    fun transitEntry_carriesTimesColorStopsAndRealtime() {
+    fun bikeshareLegCarriesItsRental_soTheRowCanNameTheOperator() {
+        // Without this the leg says only "Bike", which tells a rider standing over an unfamiliar
+        // scooter nothing about whose it is or which app unlocks it (#2150).
+        val leg = walkLeg.copy(
+            mode = TripMode.BICYCLE,
+            from = walkLeg.from.copy(
+                vertexType = TripVertexType.BIKESHARE,
+                rental = TripVehicleRental(
+                    id = "lime_seattle:abc",
+                    networkId = "lime_seattle",
+                    formFactor = RentalFormFactor.BICYCLE,
+                    propulsion = RentalPropulsion.ELECTRIC_ASSIST
+                )
+            )
+        )
+        val rental = TripLogBuilder
+            .build(listOf(leg), listOf(walkDir), listOf(null))
+            .filterIsInstance<TripLogEntry.Walk>()
+            .single()
+            .rental!!
+        assertEquals("Lime", rental.operator.displayName)
+        assertEquals(RentalVehicleKind.EBIKE, rental.vehicle)
+
+        // The rider's own bike is nobody's rental, however the leg is otherwise shaped.
+        assertNull(
+            TripLogBuilder
+                .build(listOf(walkLeg.copy(mode = TripMode.BICYCLE)), listOf(walkDir), listOf(null))
+                .filterIsInstance<TripLogEntry.Walk>()
+                .single()
+                .rental
+        )
+    }
+
+    @Test
+    fun transitEntry_carriesTimesColorAndStops() {
         val transit = TripLogBuilder
             .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef))
             .filterIsInstance<TripLogEntry.Transit>()
@@ -232,10 +268,40 @@ class TripLogBuilderTest {
         assertEquals(ServerTime(4 * 60_000L), transit.boardTime)
         assertEquals(ServerTime(20 * 60_000L), transit.exitTime)
         assertEquals(16L, transit.durationMinutes)
-        assertEquals(1, transit.stopCount)
         assertEquals("Capitol Hill Station", transit.stopNames().single())
-        assertEquals(RealtimeState.Late(2), transit.realtime)
         assertEquals(transitRef, transit.routeLeg)
+    }
+
+    @Test
+    fun transitEntry_reachesTheStopWhenTheLegBeforeItEnds() {
+        // The rider is at the board stop when the walk that got them there finishes — 4 minutes in —
+        // which is a different moment from the ride's own departure whenever the plan builds in a wait.
+        // The Board row's ETA strip rules the live departures at this instant (#2125).
+        val transit = TripLogBuilder
+            .build(
+                legs = listOf(walkLeg, transitLeg.copy(startTime = ServerTime(9 * 60_000L))),
+                flatDirections = listOf(walkDir, boardDir, alightDir),
+                routeLegRefs = listOf(null, transitRef)
+            )
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertEquals(walkLeg.endTime, transit.reachStopTime)
+        assertEquals(ServerTime(9 * 60_000L), transit.boardTime)
+    }
+
+    @Test
+    fun anItineraryOpeningOnTransit_hasNoArrivalAtTheStopToMark() {
+        // Nothing precedes the ride, so the rider is at the stop from the start: there is no wait, and
+        // no departure is out of their reach. Standing the ride's own departure in would dim every
+        // earlier one — for a "leave at 5pm" plan read at 3pm, the whole strip — so the absence is
+        // carried as null rather than substituted for.
+        val transit = TripLogBuilder
+            .build(listOf(transitLeg), listOf(boardDir, alightDir), listOf(transitRef))
+            .filterIsInstance<TripLogEntry.Transit>()
+            .single()
+
+        assertNull(transit.reachStopTime)
     }
 
     @Test
@@ -256,7 +322,6 @@ class TripLogBuilderTest {
             .single()
 
         assertEquals(listOf("Capitol Hill Station"), transit.stopNames())
-        assertEquals(1, transit.stopCount)
     }
 
     @Test
@@ -320,8 +385,8 @@ class TripLogBuilderTest {
                 }
             }
         )
-        // …and the "N stops" summary counts the whole ride, not just the leader leg's share.
-        assertEquals(2, transit.stopCount)
+        // …so the ride lists the whole chain's stops, not just the leader leg's share.
+        assertEquals(2, transit.stopNames().size)
     }
 
     @Test
@@ -340,7 +405,7 @@ class TripLogBuilderTest {
         ).filterIsInstance<TripLogEntry.Transit>().single()
 
         assertTrue("a self-interline shows no seam row", transit.rideEvents.none { it is RideEvent.Transition })
-        assertEquals(2, transit.stopCount)
+        assertEquals(2, transit.stopNames().size)
     }
 
     /**
@@ -405,59 +470,5 @@ class TripLogBuilderTest {
 
         assertNull(transit.routeShortName)
         assertEquals("Seattle - Bremerton", transit.routeDisplayName)
-    }
-
-    // --- The shared on-time band (#2043) ---------------------------------------------------------
-    //
-    // The trip planner used to round the delay to the nearest minute and call only an exact 0 "on
-    // time", giving it a ±30 s window while the arrivals drawer had none. Both now bucket through
-    // ScheduleDeviation, so the same vehicle can't read on-time in one screen and late in the other.
-
-    /** The realtime state for a transit leg whose departure is [delaySeconds] off schedule. */
-    private fun realtimeStateFor(delaySeconds: Long, realTime: Boolean = true): RealtimeState {
-        val leg = transitLeg.copy(realTime = realTime, departureDelay = delaySeconds.seconds)
-        return TripLogBuilder
-            .build(listOf(leg), listOf(boardDir, alightDir), listOf(transitRef))
-            .filterIsInstance<TripLogEntry.Transit>()
-            .single()
-            .realtime
-    }
-
-    @Test
-    fun deviationJustInsideTheBand_isOnTime() {
-        // Both of these used to round to ±1 minute and render as late/early.
-        assertEquals(RealtimeState.OnTime, realtimeStateFor(89))
-        assertEquals(RealtimeState.OnTime, realtimeStateFor(-89))
-    }
-
-    @Test
-    fun deviationJustOutsideTheBand_isLateOrEarly() {
-        assertEquals(RealtimeState.Late(2), realtimeStateFor(91))
-        assertEquals(RealtimeState.Early(2), realtimeStateFor(-91))
-    }
-
-    /**
-     * The band's edges always round to at least one minute, so a Late/Early chip can never read
-     * "0 min late" — the case the old `minutes == 0L` bucket used to absorb.
-     */
-    @Test
-    fun lateAndEarlyChipsNeverReportZeroMinutes() {
-        for (seconds in longArrayOf(91, 120, 200, -91, -120, -200)) {
-            val state = realtimeStateFor(seconds)
-            val minutes = when (state) {
-                is RealtimeState.Late -> state.minutes
-                is RealtimeState.Early -> state.minutes
-                else -> error("$seconds s must bucket as late or early, was $state")
-            }
-            assertTrue("$seconds s must report at least a minute, was $minutes", minutes >= 1)
-        }
-    }
-
-    /** No real-time data means no chip, whatever the leg's delay field happens to hold. */
-    @Test
-    fun withoutRealtime_isUnknownWhateverTheDeviation() {
-        assertEquals(RealtimeState.Unknown, realtimeStateFor(0, realTime = false))
-        assertEquals(RealtimeState.Unknown, realtimeStateFor(600, realTime = false))
-        assertEquals(RealtimeState.Unknown, realtimeStateFor(-600, realTime = false))
     }
 }

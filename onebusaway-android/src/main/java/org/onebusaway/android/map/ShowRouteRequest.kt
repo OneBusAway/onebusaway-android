@@ -15,8 +15,6 @@
  */
 package org.onebusaway.android.map
 
-import org.onebusaway.android.util.GeoPoint
-
 /**
  * The intent to show a route on the map — the single payload every "show route on map" launcher builds
  * and both UI transports carry opaquely (the navigation reveal in `MapReveal` and the home
@@ -36,18 +34,28 @@ import org.onebusaway.android.util.GeoPoint
  * @property initialDirectionId when non-null (a route-continuation or adjacency-badge tap), the GTFS
  *   direction to show instead of the route's default — validated against the loaded route's directions
  *   by [RouteMapController], falling back to the default when it doesn't match.
- * @property highlightedSegment when non-empty (a trip-plan transit leg drilled into route focus), the
- *   polyline of the board→alight portion the user rides — drawn as a thick line over the full route so
- *   the traveled segment stands out. Empty for every non-directions "show route" caller.
+ * @property riddenSpans when non-empty (a trip-plan transit leg drilled into route focus), the board→alight
+ *   portion the user rides — drawn as a thick line over the full route so the traveled segment stands out.
+ *   One [RiddenSpan] per route the ride is taken on, which is one for an ordinary leg and several across a
+ *   stay-aboard interline. Empty for every non-directions "show route" caller.
  * @property extraSegments route/directions shown alongside the primary route: stay-aboard continuations
  *   (#2000) and interchangeable routes (#2042). Each relationship controls whether vehicles remain
  *   visible across a seam or are filtered to the segment's resolved direction.
+ * @property alightStopId when non-null (a directions leg focus), the OBA id of the stop where the
+ *   rider leaves the ride. The one bound the queue-driven vehicle selection needs (#2124): admission
+ *   comes from the boarding stop's live arrivals, so this only has to answer "is this ride over yet",
+ *   and a trip is dropped only once its own progress is provably past this stop. Null on an OTP→OBA
+ *   resolution failure, or for a non-directions caller, which simply never retires a vehicle.
+ * @property directionHeadsign the planned leg's headsign, used to pick the ridden direction group
+ *   among the boarding stop's arrival rows — the same pick the leg card's ETA strip makes.
  */
 data class ShowRouteRequest(
     val routeId: String,
     val directionStopId: String? = null,
     val focusTripId: String? = null,
     val initialDirectionId: Int? = null,
-    val highlightedSegment: List<GeoPoint> = emptyList(),
-    val extraSegments: List<RouteFocusSegment> = emptyList()
+    val riddenSpans: List<RiddenSpan> = emptyList(),
+    val extraSegments: List<RouteFocusSegment> = emptyList(),
+    val alightStopId: String? = null,
+    val directionHeadsign: String? = null
 )

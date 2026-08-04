@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals
 
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 
 /** The stop being viewed, for the arrivals screen header. */
 data class StopHeader(
@@ -66,9 +67,6 @@ data class AlertItem(
     val summary: String,
     val severity: AlertSeverity
 )
-
-/** Maps ObaSituation severity onto the three banner styles, matching the legacy SituationAlert. */
-enum class AlertSeverity { INFO, WARNING, ERROR }
 
 /** UI state for the arrivals screen. */
 sealed interface ArrivalsUiState {

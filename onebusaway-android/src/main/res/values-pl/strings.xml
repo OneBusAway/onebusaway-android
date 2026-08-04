@@ -480,11 +480,6 @@
         %1$s\nModel: %2$s\nWersja OS: %3$s / %4$d\n\nNie udało się zaplanować podróży przy użyciu URL: %5$s\n\n
     </string>
 
-    <!-- Android Maps v2 -->
-    <string name="install_google_maps_positive_button">Instaluj</string>
-    <string name="please_install_google_maps_dialog_title">Zainstaluj Google Maps</string>
-    <string name="no_play_store">Twoje urządzenie nie ma zainstalowanego Sklepu Google Play. Znajdź inny sposób by zainstalować Google Maps.
-    </string>
     <string name="ok">OK</string>
 
     <!-- Application Preferences -->
@@ -944,6 +939,36 @@
     <string name="preferences_push_test_device_name_summary">Identyfikuje to urządzenie dla administratorów przedsiębiorstwa komunikacyjnego, np. &#8220;Pixel 9 Piotra&#8221;. Dopóki nie zostanie ustawiona, urządzenie rejestruje się normalnie zamiast jako testowe.</string>
     <string name="no_description_available">Brak dostępnego opisu</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
+
+    <!-- Trip Planner strings -->
+    <string name="trip_plan_leaving">Wyjazd</string>
+    <string name="trip_plan_arriving">Przyjazd</string>
+    <string name="trip_plan_date">Data</string>
+
+    <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
+    <!-- Errors -->
+    <string name="tripplanner_error_not_defined">Przepraszamy, coś poszło nie tak. Spróbuj ponownie.</string>
+    <string name="tripplanner_error_request_timeout">Sprawdź połączenie internetowe i spróbuj ponownie.
+    </string>
+    <string name="tripplanner_error_system">Sprawdź połączenie internetowe i spróbuj ponownie.
+    </string>
+    <string name="tripplanner_error_outside_bounds">Miejsce początkowe lub docelowe jest poza obszarem sieci transportowej</string>
+    <string name="tripplanner_error_path_not_found">Nie można znaleźć pasującej trasy między miejscem początkowym a docelowym</string>
+    <string name="tripplanner_error_no_transit_times">Czasy przejazdów dla wybranej daty są niedostępne</string>
+    <string name="tripplanner_error_bogus_parameter">Coś poszło nie tak. Zmień opcje podróży i spróbuj ponownie.</string>
+    <string name="tripplanner_error_geocode_from_not_found">Nie znaleziono miejsca początkowego</string>
+    <string name="tripplanner_error_geocode_to_not_found">Nie znaleziono miejsca docelowego</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">Nie znaleziono miejsca początkowego i docelowego</string>
+    <string name="tripplanner_error_too_close">Podróż jest zbyt krótka</string>
+    <string name="tripplanner_error_location_not_accessible">Wybrana lokalizacja jest niedostępna</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Miejsce początkowe jest niejednoznaczne</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Miejsce docelowe jest niejednoznaczne</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">Miejsce początkowe i docelowe są niejednoznaczne</string>
+    <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje roweru i spróbuj ponownie</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Aktualna lokalizacja</string>
+    <string name="tripplanner_reverse">Odwróć</string>
+
 
     <!-- Step-by-step screen -->
     <!-- Transit -->

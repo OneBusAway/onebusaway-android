@@ -41,6 +41,7 @@ import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.render.StopRoute
 import org.onebusaway.android.map.render.primaryRouteType
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.models.NearbyStops
@@ -51,6 +52,8 @@ import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.RegionUtils
+import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.toGeoPoint
 
 /**
@@ -460,7 +463,8 @@ class StopsMapController(
                     existing.point == marker.point &&
                     existing.direction == marker.direction &&
                     existing.routeType == marker.routeType &&
-                    existing.favorite == marker.favorite
+                    existing.favorite == marker.favorite &&
+                    existing.routes == marker.routes
                 ) {
                     existing
                 } else {
@@ -505,16 +509,27 @@ class StopsMapController(
             renderState.setFocusedStopId(null)
             return
         }
-        val newlyAccumulated = !stopAccum.containsKey(stop.id)
-        if (newlyAccumulated) {
-            routes?.let { cacheRoutes(it) }
+        // Cached before the marker is built or re-labelled, and whether or not the stop is new: these are
+        // the routes serving the stop the caller is focusing, and they are what its label names. An
+        // already-accumulated stop is the case that matters — one rendered from the persistent cache
+        // carries no route names at all (see [labelRoutes]), so dropping the ones the arrivals response
+        // just handed us would leave the *focused* stop the one stop on screen with no label.
+        routes?.let { cacheRoutes(it) }
+        val existing = stopAccum[stop.id]
+        val labelled = labelRoutes(stop)
+        val markerChanged = existing == null || existing.routes != labelled
+        if (existing == null) {
             stopAccum[stop.id] = toStopMarker(stop)
+        } else if (markerChanged) {
+            // Only the label changes: everything else about an accumulated marker came from the nearby
+            // load and stays as it is, so a copy keeps the rest referentially stable for the renderers.
+            stopAccum[stop.id] = existing.copy(routes = labelled)
         }
         // Focus before publishing (like clearStops): publishStops reads focusedStopId for the
         // presentation's keep-the-focused-stop fallback. With a route presentation active the marker
         // list keys off the focus even for an already-accumulated stop, so republish then too.
         renderState.setFocusedStopId(stop.id)
-        if (newlyAccumulated || routePresentation != null) {
+        if (markerChanged || routePresentation != null) {
             publishStops()
         }
     }
@@ -542,9 +557,26 @@ class StopsMapController(
             direction,
             routeType,
             stop,
-            favorite = stop.id in favoriteIds
+            favorite = stop.id in favoriteIds,
+            routes = labelRoutes(stop)
         )
     }
+
+    /**
+     * The routes serving [stop], for the marker's transit-centre label (#2107): their names and the
+     * colours the agency published, left unrendered for the renderer to draw through the badge policy
+     * (see [StopRoute]). Resolved from [cachedRoutes] — the routes the stop responses reported — so a
+     * stop whose routes haven't been loaded yet simply carries none and draws no label until they have,
+     * the same graceful degradation [primaryRouteType] already makes for the icon. (That is the persistent
+     * stop cache's case: it stores each route's *type* but not its name, so a cache render labels nothing
+     * until the network response for the same viewport lands.)
+     */
+    private fun labelRoutes(stop: ObaStop): List<StopRoute> = stop.routeIds
+        .mapNotNull { cachedRoutes[it] }
+        .map { StopRoute(getRouteDisplayName(it), it.color) }
+        // The order every other set of badged routes is read in — deduplicated by name and in the app's
+        // one route-name order.
+        .inInterchangeableOrder(StopRoute::shortName)
 
     /** Rebuild the rendered marker list from canonical nearby data and the current route presentation. */
     private fun publishStops() {
@@ -591,7 +623,13 @@ internal fun applyRouteStopPresentation(
     return source.values.map { marker ->
         marker.copy(
             point = presentation.projectedPoints[marker.id] ?: marker.point,
-            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty()
+            presentedRoutes = presentation.routeDirectionsByStopId[marker.id].orEmpty(),
+            // No transit-centre route labels (#2107) in a route presentation. A presentation names the
+            // routes on screen itself — labelled on the lines they belong to, and in adjacency view
+            // through a palette that deliberately assigns each one a distinct hue so they can be told
+            // apart (#2043). A stop label built from the routes' own GTFS colours would name those same
+            // routes a second time, in a second colour, right beside the line saying otherwise.
+            routes = emptyList()
         )
     }
 }

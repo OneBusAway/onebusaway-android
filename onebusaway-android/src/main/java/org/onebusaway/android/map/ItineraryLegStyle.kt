@@ -16,6 +16,7 @@
 package org.onebusaway.android.map
 
 import org.onebusaway.android.directions.model.InterchangeableRoute
+import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripVertexType
@@ -25,11 +26,13 @@ import org.onebusaway.android.map.layout.RouteBadgeRequest
 import org.onebusaway.android.map.layout.placeRouteBadges
 import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ITINERARY_ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.util.COLOURLESS_RIDE_HUE_ANCHOR
@@ -141,18 +144,41 @@ internal fun itineraryLegStyle(
  */
 internal data class ItineraryLegLine(val legIndex: Int, val line: RoutePolyline)
 
-/** Bulb-bearing ends of one itinerary leg; an interline continuation has no visible internal seam. */
-internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean)
+/**
+ * Bulb-bearing ends of one itinerary leg, plus whether it begins at an interline **cutover** (#2127).
+ *
+ * An interline continuation has no visible internal seam — no bulbs, because the rider never gets off — but
+ * a continuation onto a *different* route is cut across at that join ([RouteLineMark.INTERLINE_CUT]). The two
+ * are one decision made in one place: a bulb pair says "alight here, board there", so the join a rider
+ * stays seated through has to be marked as something else or not at all, and until now it was not at all.
+ * [startSeam] therefore never coincides with [start] — a cut goes exactly where the bulb is withheld.
+ */
+internal data class ItineraryLegCaps(val start: Boolean, val end: Boolean, val startSeam: Boolean = false)
 
-internal fun itineraryLegCaps(legs: List<TripLeg>, index: Int): ItineraryLegCaps {
-    val leg = legs[index]
-    val transit = leg.mode?.isTransit == true
-    val continuesPrevious = transit &&
-        leg.interlineWithPreviousLeg &&
-        legs.getOrNull(index - 1)?.mode?.isTransit == true
-    val next = legs.getOrNull(index + 1)
-    val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
-    return ItineraryLegCaps(start = !continuesPrevious, end = !continuesIntoNext)
+/**
+ * How every leg of [legs] is finished at each end, index-aligned to it.
+ *
+ * Whole-itinerary rather than per leg because that is what the questions read: which legs a ride continues
+ * through, and which of those joins change route. The cutovers are exactly the transitions
+ * [Interlines.chains] reports, so the map cuts the line in the same places the drawer tells the rider to stay
+ * on board, and nowhere else — a self-interline (the same route reversing onto itself) contributes none,
+ * since nothing about the ride changed there.
+ */
+internal fun itineraryLegCaps(legs: List<TripLeg>): List<ItineraryLegCaps> {
+    val seamLegs = Interlines.chains(legs).flatMapTo(mutableSetOf()) { it.transitionLegIndices }
+    return legs.mapIndexed { index, leg ->
+        val transit = leg.mode?.isTransit == true
+        val continuesPrevious = transit &&
+            leg.interlineWithPreviousLeg &&
+            legs.getOrNull(index - 1)?.mode?.isTransit == true
+        val next = legs.getOrNull(index + 1)
+        val continuesIntoNext = transit && next?.mode?.isTransit == true && next.interlineWithPreviousLeg
+        ItineraryLegCaps(
+            start = !continuesPrevious,
+            end = !continuesIntoNext,
+            startSeam = index in seamLegs
+        )
+    }
 }
 
 /**
@@ -217,6 +243,9 @@ internal data class ItinerarySubstitute(val route: InterchangeableRoute, val rou
  * same focus the drawer's row for that ride does. It deliberately does *not* lead to the route's own map,
  * which is what a label on this view must never do: the rider is reading a trip, and a stray tap must not
  * trade the whole itinerary for one route (see [RouteBadgeTap]).
+ *
+ * These are also the map's only labels that follow the zoom (#2102), receding with the lines they name
+ * rather than holding a fixed pixel size — see [ITINERARY_ROUTE_BADGE_SCALE_PROFILE].
  */
 internal fun itineraryRouteBadges(
     legs: List<ItineraryDrawableLeg>,
@@ -247,7 +276,8 @@ internal fun itineraryRouteBadges(
             RouteBadgeRequest(
                 routes = ride.badgedRoutes(palette),
                 paths = ridden.map { RouteBadgePath(it.drawable.points) },
-                tap = RouteBadgeTap.FocusItineraryRide(ridden.mapTo(mutableSetOf()) { it.drawable.index })
+                tap = RouteBadgeTap.FocusItineraryRide(ridden.mapTo(mutableSetOf()) { it.drawable.index }),
+                scale = ITINERARY_ROUTE_BADGE_SCALE_PROFILE
             )
         }
     )

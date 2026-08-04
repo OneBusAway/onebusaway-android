@@ -29,6 +29,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 
@@ -95,7 +96,10 @@ fun OtpPlaceDto.toTripPlace(): TripPlace = TripPlace(
     lat = lat,
     lon = lon,
     vertexType = vertexType.toEnum<TripVertexType>(),
-    bikeShareId = bikeShareId
+    // OTP1's `/plan` carries the rental *id* and nothing else — no network, no vehicle type, no
+    // rental URI — so the rental this mints can only identify the vehicle/dock to the map's bike
+    // layer, and the directions drawer draws the plain bike row it always did (#2150).
+    rental = bikeShareId?.let { TripVehicleRental(id = it) }
 )
 
 fun OtpWalkStepDto.toTripStep(): TripStep = TripStep(

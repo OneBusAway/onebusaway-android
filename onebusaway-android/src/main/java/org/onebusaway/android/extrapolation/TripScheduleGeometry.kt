@@ -18,9 +18,27 @@ package org.onebusaway.android.extrapolation
 import org.onebusaway.android.models.ObaTripSchedule
 
 /**
+ * This stop's one offset along the trip, or null when the trip does not serve it — or serves it more
+ * than once, which nothing here can disambiguate from a stop id alone.
+ *
+ * A single indexed pass that gives up at the second match, rather than materializing every offset just
+ * to ask whether there was exactly one: the callers run this per trip on each poll, over schedules of
+ * a few dozen stop times.
+ */
+fun ObaTripSchedule.soleOffsetOf(stopId: String): Double? {
+    var found = -1
+    for (i in stopTimes.indices) {
+        if (stopTimes[i].stopId != stopId) continue
+        if (found >= 0) return null
+        found = i
+    }
+    return if (found >= 0) stopTimes[found].distanceAlongTrip else null
+}
+
+/**
  * Finds the index of the first stop in the segment bracketing [distanceAlongTrip]. The segment
- * spans `stopTimes[result]`..`stopTimes[result + 1]`. Lives here because schedule geometry is only
- * needed by the extrapolators ([GammaExtrapolator], [replaySchedule]).
+ * spans `stopTimes[result]`..`stopTimes[result + 1]`. Lives here with the rest of the
+ * "search a schedule's stop times" logic, which `ObaTripSchedule`'s own doc places in this package.
  *
  * @throws IndexOutOfBoundsException if the distance is before the first stop, after the last stop,
  *         or there are fewer than 2 stops.

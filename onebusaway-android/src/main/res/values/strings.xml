@@ -605,12 +605,6 @@
         %1$s\nModel: %2$s\nOS Version: %3$s / %4$d\n\nUnable to plan trip using URL: %5$s\n\n
     </string>
 
-    <!-- Android Maps v2 -->
-    <string name="install_google_maps_positive_button">Install</string>
-    <string name="please_install_google_maps_dialog_title">Please install Google Maps</string>
-    <string name="no_play_store">Your device doesn’t have the Play Store installed. Please find
-        another way to install Google Maps.
-    </string>
     <string name="ok">OK</string>
 
     <!-- Application Preferences -->
@@ -957,14 +951,18 @@
     <string name="trip_plan_now">now</string>
     <!-- A pinned departure/arrival in the time callout: date, then time. -->
     <string name="trip_plan_date_time">%1$s, %2$s</string>
+    <!-- The one row of the time callout's menu that opens the combined date/time picker. -->
+    <string name="trip_plan_choose_date_time">Choose date and time…</string>
+    <!-- The third row of that picker's day dropdown, which opens the calendar. -->
     <string name="trip_plan_choose_date">Choose date…</string>
-    <string name="trip_plan_choose_time">Choose time…</string>
+    <!-- The two days that dropdown names outright; any other day shows as its own date. -->
+    <string name="trip_plan_date_today">Today</string>
+    <string name="trip_plan_date_tomorrow">Tomorrow</string>
     <!-- Accessibility click label for either half of the time callout. -->
     <string name="trip_plan_change_when">Change when</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_date">Date</string>
-    <string name="trip_plan_time">Time</string>
     <string name="trip_plan_pick_on_map">Pick location on map</string>
     <string name="trip_plan_use_this_location">Use this location</string>
     <string name="trip_plan_map_location">Selected location</string>
@@ -972,15 +970,41 @@
     <string name="directions_to_here">Directions to here</string>
     <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
-    <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
-         stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
-    <string name="directions_whichever_comes_first">whichever comes first</string>
+    <!-- Caption under a transit leg's route lines, when several routes go between the same two stops
+         without making the rider late for the rest of the trip (the lines read e.g. "1 Line" / "2 Line"). -->
+    <string name="directions_whichever_comes_first">Whichever comes first</string>
+    <!-- Content description for the rule drawn across a Board row's live ETA strip at the moment the
+         plan has the rider reach that stop. %1$s is a clock time, e.g. "3:19pm". -->
+    <string name="directions_stop_eta_reach_stop">You get to this stop at %1$s</string>
+    <!-- Spoken state of each departure drawn before that rule: one leaving before the rider can be at
+         the stop. Read on the departure itself, since its dimmed appearance says nothing aloud. -->
+    <string name="directions_stop_eta_departure_missed">Leaves before you get here</string>
+    <!-- Content descriptions for the chevron on a service-alert banner above the directions, which
+         expands the alert to its full description. -->
+    <string name="directions_alert_show_details">Show alert details</string>
+    <string name="directions_alert_hide_details">Hide alert details</string>
+    <!-- Localized labels for the shared alert tones. These are announced on every severity-tinted
+         alert card and interpolated into the affected-leg marker below. -->
+    <string name="service_alert_severity_info">Information</string>
+    <string name="service_alert_severity_warning">Warning</string>
+    <string name="service_alert_severity_severe">Severe</string>
+    <!-- Read after a leg's symbol on an itinerary option card when a service alert affects that leg.
+         %1$s is the localized severity label, announced in place so it reads e.g.
+         "1 Line, Severe service alert". -->
+    <string name="directions_leg_service_alert">%1$s service alert</string>
+    <!-- Confirmation shown when a gesture (Back, or a tap on the map background) would close directions
+         while a planned trip is drawn on the map, since that discards the whole plan. -->
+    <string name="directions_exit_confirm_title">Leave these directions?</string>
+    <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
+    <string name="directions_exit_confirm_discard">Discard</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>
     <!-- Accessibility announcements for values emphasized as the best among the itinerary options. -->
     <string name="trip_plan_winner_shortest_travel_time">Shortest travel time</string>
     <string name="trip_plan_winner_least_walking">Least walking</string>
+    <string name="trip_plan_winner_least_biking">Least biking</string>
+    <string name="trip_plan_winner_least_bikesharing">Least bikeshare riding</string>
     <string name="trip_plan_winner_earliest_arrival">Earliest arrival</string>
     <string name="trip_plan_winner_latest_departure">Latest departure</string>
     <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->
@@ -991,7 +1015,32 @@
          phrasing stays a translator's call. -->
     <string name="trip_plan_walk_transfer">Walk to transfer</string>
     <string name="trip_plan_bike_transfer">Bike to transfer</string>
+    <!-- A shared bike, as opposed to the rider's own: the leg is named for the act (finding and
+         renting one), which is what makes it different from riding the bike you brought. -->
+    <string name="trip_plan_bikeshare_transfer">Bikeshare to transfer</string>
     <string name="trip_plan_car_transfer">Drive to transfer</string>
+    <!-- The rented vehicle a bikeshare leg is ridden on, in the trip-log directions. "E-" is the
+         electric form of each: the feed states the propulsion, so the two are never guessed apart. -->
+    <string name="trip_plan_rental_bike">Bike</string>
+    <string name="trip_plan_rental_ebike">E-bike</string>
+    <string name="trip_plan_rental_cargo_bike">Cargo bike</string>
+    <string name="trip_plan_rental_electric_cargo_bike">Electric cargo bike</string>
+    <string name="trip_plan_rental_scooter">Scooter</string>
+    <string name="trip_plan_rental_escooter">E-scooter</string>
+    <string name="trip_plan_rental_moped">Moped</string>
+    <string name="trip_plan_rental_car">Car</string>
+    <!-- The dock the rider picks the rented vehicle up from. %1$s is the rental station's name,
+         e.g. "Pick up at Pine St &amp; 3rd Ave". A free-floating vehicle has no dock and no line. -->
+    <string name="trip_plan_rental_pick_up_at">Pick up at %1$s</string>
+    <!-- How far the vehicle can still travel on its charge. %1$s is an already-formatted distance. -->
+    <string name="trip_plan_rental_range">%1$s of range left</string>
+    <!-- What tapping the operator's chip does, announced as its click label. The first is used only
+         when the operator published a link to this exact vehicle; the second merely opens the
+         operator. %1$s is the operator's name, e.g. "Lime". -->
+    <string name="trip_plan_rental_open_in">Open in %1$s</string>
+    <string name="trip_plan_rental_rent_with">Rent with %1$s</string>
+    <!-- Announced for the chip naming the rental operator. %1$s is the operator's name. -->
+    <string name="trip_plan_rental_operator_description">Operated by %1$s</string>
     <!-- A leg's elapsed duration in the trip-log's narrow time column. Abbreviated units, kept inside
          the format string (rather than appended in code) so spacing and word order stay translatable.
          Keep the two forms spaced alike — they share one column. -->
@@ -999,22 +1048,6 @@
     <string name="trip_plan_delta_minutes">%1$dmin</string>
     <!-- An hour or more: %1$d is whole hours, %2$d the remaining minutes -->
     <string name="trip_plan_delta_hours_minutes">%1$dh %2$dmin</string>
-    <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
-    <string name="trip_plan_realtime_on_time">On time</string>
-    <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->
-    <plurals name="trip_plan_realtime_late">
-        <item quantity="one">%1$d min late</item>
-        <item quantity="other">%1$d min late</item>
-    </plurals>
-    <plurals name="trip_plan_realtime_early">
-        <item quantity="one">%1$d min early</item>
-        <item quantity="other">%1$d min early</item>
-    </plurals>
-    <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
-    <plurals name="trip_plan_intermediate_stops">
-        <item quantity="one">%1$d stop</item>
-        <item quantity="other">%1$d stops</item>
-    </plurals>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>
@@ -1238,13 +1271,11 @@
     <!-- Mode selection, split into two independent questions: which vehicles the rider will board,
          and how they cover the street portions. Not every street option is offered everywhere -
          bikeshare needs a rental network, and carrying your own bike needs an OTP2 region. -->
-    <string name="vehicle_mode_label">Ride</string>
     <string name="vehicle_mode_all_transit">Any transit</string>
     <string name="vehicle_mode_bus">Bus only</string>
     <string name="vehicle_mode_rail">Rail only</string>
     <string name="vehicle_mode_none">No transit</string>
 
-    <string name="street_mode_label">Getting around</string>
     <string name="street_mode_walk">Walk</string>
     <string name="street_mode_walk_and_bikeshare">Walk &amp; bikeshare</string>
     <string name="street_mode_bicycle">My own bike</string>

@@ -95,6 +95,7 @@ import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -213,8 +214,10 @@ fun MapFeature(
             override fun onBikeClick(station: BikeStation) {
                 val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
                 if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+                    // Refused (directions owns the map): leave before the map tears the trip down —
+                    // the same order the stop tap above uses, home focus first, map render after.
+                    if (!homeViewModel.onBikeStationFocused(station.id)) return
                     mapViewModel.clearAllFocus()
-                    homeViewModel.onBikeStationFocused(station.id)
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
@@ -322,6 +325,8 @@ fun MapFeature(
                         directive.routes,
                         directive.trips
                     )
+                is MapDirective.SetRideArrivals ->
+                    mapViewModel.setRideArrivals(directive.stopId, directive.groups)
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
                 MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
                 MapDirective.ClearFocus -> mapViewModel.clearAllFocus()
@@ -334,7 +339,7 @@ fun MapFeature(
                         directive.animate
                     )
                 is MapDirective.ShowItinerary ->
-                    mapViewModel.showItinerary(directive.itinerary)
+                    mapViewModel.showItinerary(directive.itinerary, directive.pins)
                 is MapDirective.FocusItineraryPoint ->
                     mapViewModel.focusItineraryPoint(directive.point)
                 is MapDirective.FocusItineraryLeg ->
@@ -456,9 +461,12 @@ fun MapFeature(
             Text(
                 text = String.format(
                     Locale.US,
-                    "Zoom %.2f · route %.2f×",
+                    "Zoom %.2f · route %.2f× · %s",
                     zoom,
-                    routeLineWidthScale(zoom)
+                    routeLineWidthScale(zoom),
+                    // The stop band this zoom falls in, so the dot/full/routes thresholds can be tuned
+                    // against the map rather than by arithmetic (#2107).
+                    stopZoomBand(zoom)
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.labelMedium,

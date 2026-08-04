@@ -21,7 +21,13 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toKotlinDuration
 import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
+import org.onebusaway.android.api.graphql.fragment.RentalNetworkFields
+import org.onebusaway.android.api.graphql.fragment.RentalUriFields
+import org.onebusaway.android.directions.model.RentalFormFactor
+import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
+import org.onebusaway.android.directions.model.TripAlert
+import org.onebusaway.android.directions.model.TripAlertSeverity
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripLegAlternative
@@ -30,6 +36,7 @@ import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.directions.model.TripRelativeDirection
 import org.onebusaway.android.directions.model.TripStep
+import org.onebusaway.android.directions.model.TripVehicleRental
 import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.time.ServerTime
 
@@ -89,7 +96,27 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     // OTP's own alternative-leg search for this leg (#2010) — null on a non-transit leg, and carried
     // over unjudged: interchangeability is decided by `interchangeableRoutes()`, which needs the whole
     // itinerary (the next leg's departure) and so can't be answered leg-at-a-time here.
-    alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() }
+    alternatives = nextLegs.orEmpty().map { it.toTripLegAlternative() },
+    // Already scoped by OTP to this leg's entities and time window (#2143) — see the `alerts`
+    // selection in Plan.graphql. Empty rather than null on a leg with nothing to report.
+    alerts = alerts.orEmpty().filterNotNull().map { it.toTripAlert() }
+)
+
+/**
+ * Blank→null on every text field, same normalization the route names get above: OTP returns `""` for
+ * a translation the feed didn't publish (`alertDescriptionText` is even non-null in the schema), so
+ * without this the domain would carry an empty header that reads as present and renders as a blank
+ * row.
+ */
+private fun PlanQuery.Alert.toTripAlert(): TripAlert = TripAlert(
+    id = id,
+    header = alertHeaderText?.ifBlank { null },
+    description = alertDescriptionText.ifBlank { null },
+    url = alertUrl?.ifBlank { null },
+    // An unrecognized severity (a schema the server has moved past) lands on the same
+    // UNKNOWN_SEVERITY the wire vocabulary already has a token for, which the banner styles as a
+    // warning — an alert whose severity we can't read is still an alert.
+    severity = alertSeverityLevel?.rawValue.toEnum<TripAlertSeverity>() ?: TripAlertSeverity.UNKNOWN_SEVERITY
 )
 
 /**
@@ -147,8 +174,74 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
         hasRental = rentalVehicle != null || vehicleRentalStation != null,
         hasParking = vehicleParking != null
     ),
-    bikeShareId = rentalVehicle?.vehicleId ?: vehicleRentalStation?.stationId
+    rental = rentalVehicle?.toTripVehicleRental() ?: vehicleRentalStation?.toTripVehicleRental()
 )
+
+/** A free-floating rental vehicle: no dock, so no `stationName` to walk the rider to. */
+private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
+    id = vehicleId,
+    network = rentalNetwork.rentalNetworkFields,
+    uris = rentalUris?.rentalUriFields,
+    formFactor = vehicleType?.formFactor?.rawValue.toEnum<RentalFormFactor>(),
+    propulsion = vehicleType?.propulsionType?.rawValue.toEnum<RentalPropulsion>(),
+    rangeMeters = fuel?.range
+)
+
+/**
+ * A docked rental station. It publishes no vehicle type — the dock holds whatever the operator left
+ * in it — so [TripVehicleRental.formFactor]/[TripVehicleRental.propulsion] stay null and the drawer
+ * words the leg by its own travel mode instead.
+ */
+private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
+    id = stationId,
+    network = rentalNetwork.rentalNetworkFields,
+    uris = rentalUris?.rentalUriFields,
+    stationName = name.ifBlank { null }
+)
+
+/**
+ * The rental facts both endpoint shapes state identically, mapped once: OTP types their network and
+ * URIs the same way, and the shared Plan.graphql fragments hand this the same generated types from
+ * either. Every URL is normalized by [absoluteUriOrNull], which subsumes the blank→null the route
+ * names get above.
+ */
+private fun toTripVehicleRental(
+    id: String?,
+    network: RentalNetworkFields,
+    uris: RentalUriFields?,
+    stationName: String? = null,
+    formFactor: RentalFormFactor? = null,
+    propulsion: RentalPropulsion? = null,
+    rangeMeters: Int? = null
+): TripVehicleRental = TripVehicleRental(
+    id = id,
+    stationName = stationName,
+    networkId = network.networkId,
+    networkUrl = network.url.absoluteUriOrNull(),
+    androidUri = uris?.android.absoluteUriOrNull(),
+    webUri = uris?.web.absoluteUriOrNull(),
+    formFactor = formFactor,
+    propulsion = propulsion,
+    rangeMeters = rangeMeters
+)
+
+/**
+ * A feed-published URI the app could actually open, or null — blank, or naming no scheme.
+ *
+ * `Uri.parse` turns `lime.example/ride/abc` into a perfectly good *relative* URI that nothing on the
+ * device can view, so an `ACTION_VIEW` on one is a dead tap (or a toast) under a chip that promised
+ * to open the operator. Dropping it here instead leaves the rental's remaining links to be offered in
+ * their own right, and makes [TripVehicleRental]'s three URLs absolute-or-absent for every reader.
+ *
+ * The check is the wire format's own grammar rather than a guess at the string's shape: RFC 3986 §3.1
+ * defines a scheme as an ASCII letter followed by letters, digits, `+`, `-` or `.`, then a colon —
+ * which is exactly what Android dispatches an intent on. (The sibling iOS app guards the same field
+ * the same way, for the same reason: there, a scheme-less `URL(string:)` is non-nil too.)
+ */
+private fun String?.absoluteUriOrNull(): String? = this?.takeIf { URI_SCHEME.containsMatchIn(it) }
+
+/** RFC 3986 §3.1: `scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) ":"`. */
+private val URI_SCHEME = Regex("""^[a-zA-Z][a-zA-Z0-9+.\-]*:""")
 
 /**
  * OTP2's `Place.stop`/`rentalVehicle`/`vehicleParking`/`vehicleRentalStation` are populated

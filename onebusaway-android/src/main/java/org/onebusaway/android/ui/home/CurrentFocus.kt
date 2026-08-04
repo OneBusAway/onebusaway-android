@@ -52,8 +52,17 @@ sealed interface DirectionsSubFocus {
      * focus (route id, the boarding stop the direction is narrowed to, the ridden `highlightedSegment`,
      * and — for a followed vehicle — its `focusTripId`) so restoring after a back-press replays it
      * faithfully. (Each stop's live ETAs are shown inline in the drawer's Board/Alight rows, not here.)
+     *
+     * [boardStop] is where the rider gets on. It is carried on the focus, rather than read off whichever
+     * itinerary row happens to be composed, because the map's ride selection reads the boarding stop's
+     * live arrivals: HOME hoists one arrivals session for this stop, so the session's lifetime is the
+     * focus rather than a `LazyColumn` row's and scrolling the itinerary cannot change what the map
+     * draws. Null when the leg's OTP→OBA stop resolution failed or it carries no location.
      */
-    data class Route(val request: ShowRouteRequest) : DirectionsSubFocus
+    data class Route(
+        val request: ShowRouteRequest,
+        val boardStop: FocusedStop? = null
+    ) : DirectionsSubFocus
 
     /**
      * An on-street (walk/bike) leg framed on its own, with the rest of the trip receding to context

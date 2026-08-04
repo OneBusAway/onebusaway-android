@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.tripresults
 
 import android.app.Activity
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
@@ -56,10 +57,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -91,8 +94,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontFamily
@@ -116,6 +119,9 @@ import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
+import org.onebusaway.android.ui.compose.components.AlertSeverity
+import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.EtaDurationText
 import org.onebusaway.android.ui.compose.components.EtaPartsText
 import org.onebusaway.android.ui.compose.components.LoadingContent
@@ -125,13 +131,16 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
+import org.onebusaway.android.ui.compose.components.alertAccentColor
 import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.compose.theme.isDarkTheme
+import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 import org.onebusaway.android.ui.tripplan.TripPlanParams
 import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ExternalIntents
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.parseObaHexColor
 
@@ -300,6 +309,20 @@ private const val SYMBOL_SEPARATOR_ALPHA = 0.6f
 
 private val SYMBOL_GAP = 4.dp
 
+/**
+ * The warning triangle marking a mode symbol whose leg carries a service alert (#2143), and the gap
+ * between the two. Tucked closer than [SYMBOL_GAP] separates two symbols by, so it annotates the symbol
+ * beside it rather than reading as one — at equal spacing a row of `[walk] ⚠ > [1 Line] ⚠` reads as
+ * six steps instead of two legs with a caveat each.
+ *
+ * It sits a little *below* [SYMBOL_HEIGHT] rather than distinctly under it. The first cut was small
+ * enough to read as a footnote, which is the wrong register for "this train isn't running": a marker
+ * the rider is meant to catch while scanning the picker has to hold its own against the roundel it
+ * qualifies without displacing it as the thing being read. Tune both here.
+ */
+private val SYMBOL_ALERT_SIZE = 17.dp
+private val SYMBOL_ALERT_GAP = 2.dp
+
 /** The gap between two wrapped lines of the summary — [SYMBOL_GAP] itself, so the wrap reads as one
  *  evenly-spaced field of symbols rather than as two stacked rows, and stays so if that gap is retuned. */
 private val SYMBOL_LINE_GAP = SYMBOL_GAP
@@ -346,12 +369,9 @@ private fun OptionCard(
     val textColor = colorResource(
         if (selected) R.color.trip_plan_header_text_selected else R.color.trip_plan_header_text
     )
-    val winnerDescriptions = buildList {
-        if (WinnerCategory.SHORTEST_TRAVEL_TIME in winners) add(stringResource(R.string.trip_plan_winner_shortest_travel_time))
-        if (WinnerCategory.LEAST_WALKING in winners) add(stringResource(R.string.trip_plan_winner_least_walking))
-        if (WinnerCategory.EARLIEST_ARRIVAL in winners) add(stringResource(R.string.trip_plan_winner_earliest_arrival))
-        if (WinnerCategory.LATEST_DEPARTURE in winners) add(stringResource(R.string.trip_plan_winner_latest_departure))
-    }
+    // Read off the categories themselves, in their declaration order, so a category added to the enum is
+    // announced without a second list here having to be kept in step with it.
+    val winnerDescriptions = WinnerCategory.entries.filter { it in winners }.map { stringResource(it.labelRes) }
     Surface(
         color = background,
         contentColor = textColor,
@@ -534,13 +554,40 @@ private fun packLines(widths: List<Int>, limit: Int, gap: Int): List<IntRange> {
 /** How wide one of [packLines]' lines is: its symbols, plus a [gap] between each neighbouring pair. */
 private fun lineWidth(widths: List<Int>, line: IntRange, gap: Int): Int = line.sumOf { widths[it] } + gap * (line.last - line.first)
 
-/** One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel. */
+/**
+ * One symbol of a card's summary line: a bare mode glyph, or the ride's route roundel — followed by a
+ * warning triangle when a service alert affects the leg(s) it stands for (#2143).
+ *
+ * The triangle rides *inside* the symbol, at a tighter gap than [SYMBOL_GAP] separates symbols by, so
+ * it reads as an annotation on the leg to its left rather than as a step of the trip in its own right —
+ * or, worse, as belonging to the symbol on the other side of the chevron.
+ */
 @Composable
 private fun ModeSymbolContent(symbol: ModeSymbol) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(SYMBOL_ALERT_GAP),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ModeSymbolGlyph(symbol)
+        symbol.alert?.let { severity ->
+            val severityLabel = stringResource(severity.labelRes)
+            Icon(
+                painter = painterResource(R.drawable.baseline_warning_24),
+                contentDescription = stringResource(R.string.directions_leg_service_alert, severityLabel),
+                tint = alertAccentColor(severity),
+                modifier = Modifier.size(SYMBOL_ALERT_SIZE)
+            )
+        }
+    }
+}
+
+/** [ModeSymbolContent] without its alert marker: the symbol proper. */
+@Composable
+private fun ModeSymbolGlyph(symbol: ModeSymbol) {
     when (symbol) {
         // A glyph alone — there is nothing to name about a walk.
-        is ModeSymbol.Street -> streetModeIcon(symbol.mode)?.let { glyph ->
-            ModeGlyph(glyph, stringResource(streetModeLabel(symbol.mode)))
+        is ModeSymbol.Street -> StreetMetric.of(symbol.mode)?.let { metric ->
+            ModeGlyph(metric.glyph.iconRes, stringResource(metric.labelRes))
         }
         // Every badge leads with the mode it's ridden on, which a route number never says on its own. A
         // route publishing no short name badges its long name, capped to [OPTION_BADGE_MAX_WIDTH] and
@@ -567,20 +614,22 @@ private fun ModeSymbolContent(symbol: ModeSymbol) {
 }
 
 /**
- * The lower half of an option card: what the trip costs (duration, walking) and when it runs, each metric
- * outlined where it wins its category. Takes the [winners] set itself rather than a flag per category, so
- * a new [WinnerCategory] is one line here and nothing at the call site.
+ * The lower half of an option card: what the trip costs (duration, and the ground the rider covers under
+ * their own power) and when it runs, each metric outlined where it wins its category. Takes the [winners]
+ * set itself rather than a flag per category, so a new [WinnerCategory] is one line here and nothing at
+ * the call site.
  */
 @Composable
 private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
     val context = LocalContext.current
-    val leastWalking = WinnerCategory.LEAST_WALKING in winners
+    // Named for the units, not `metric`, to stay clear of the StreetMetric the distance rows destructure.
+    val metricUnits = unitsAreMetric()
     val winnerOutlineColor = MaterialTheme.colorScheme.outline.copy(alpha = WINNER_OUTLINE_ALPHA)
     Column(
         modifier = Modifier.padding(CARD_SECTION_PADDING),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Duration + walk distance read as one stat group, so they sit tighter together than the
+        // Duration + the street distances read as one stat group, so they sit tighter together than the
         // card's other lines.
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             // Duration — a leading hourglass + the ETA-pill-formatted trip length.
@@ -597,18 +646,20 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
                     unitSize = METRIC_UNIT_SIZE
                 )
             }
-            // Total walking for the trip — a leading walk glyph mirroring the duration row's hourglass,
-            // with the distance styled like the duration (bold value + smaller unit). In the user's units
-            // (miles/km, or feet/meters for short walks). Hidden when the trip has no walking.
-            if (option.walkDistanceMeters > 0.0 || leastWalking) {
+            // How far the trip goes on each street mode, one line each (#2122) — a leading mode glyph
+            // mirroring the duration row's hourglass, with the distance styled like the duration (bold
+            // value + smaller unit) and in the user's units (miles/km, or feet/meters for short hops).
+            // A card used to say only how far it walked, which left a bikeshare trip's ride unmeasured
+            // and a bike-only one claiming "0 ft" as its whole street distance.
+            streetDistanceLines(option.streetDistanceMeters, winners).forEach { (metric, meters) ->
                 MetricRow(
-                    MetricGlyph.WALK,
-                    contentDescription = stringResource(R.string.step_by_step_non_transit_mode_walk_action),
-                    winner = leastWalking,
+                    metric.glyph,
+                    contentDescription = stringResource(metric.labelRes),
+                    winner = metric.winner in winners,
                     outlineColor = winnerOutlineColor
                 ) {
                     EtaPartsText(
-                        ConversionUtils.getFormattedDistanceParts(option.walkDistanceMeters, context),
+                        ConversionUtils.getFormattedDistanceParts(meters, context, metricUnits),
                         modifier = Modifier.alignByBaseline(),
                         numberSize = METRIC_NUMBER_SIZE,
                         unitSize = METRIC_UNIT_SIZE
@@ -628,9 +679,32 @@ private fun StatsColumn(option: ItineraryOption, winners: Set<WinnerCategory>) {
 }
 
 /**
+ * Which street-distance lines a card draws, and how far each says — its per-mode totals read in
+ * [StreetMetric] order rather than in travel order, so cards measuring the same modes list them in the
+ * same order and the picker row reads across. Cards measuring *different* modes do stagger below their
+ * first line — a bikeshare option carries a line its walk-only neighbour hasn't got — but that
+ * difference is itself what the rider is choosing between.
+ *
+ * A mode the trip doesn't use draws no line, unless this option **won** that mode's category by not
+ * using it: then it shows its "0 ft", since the outline needs a value to sit on and "needs none of it"
+ * is worth saying.
+ *
+ * Only the modes the cards can present are considered at all — [StreetMetric] is that list, so a mode
+ * with no glyph can't reach a line here and a mode with no line can't be announced as a winner.
+ */
+private fun streetDistanceLines(
+    distances: Map<StreetMode, Double>,
+    winners: Set<WinnerCategory>
+): List<Pair<StreetMetric, Double>> = StreetMetric.entries.mapNotNull { metric ->
+    val meters = distances[metric.mode] ?: 0.0
+    if (meters > 0.0 || metric.winner in winners) metric to meters else null
+}
+
+/**
  * One option-card stat line: a leading glyph followed by its value [content], drawn so the glyph and
  * the value occupy exactly the same band — same top edge, same bottom edge, both sitting on the value's
- * baseline (#2076). Shared by the duration and walk-distance rows so the two stay in lockstep.
+ * baseline (#2076). Shared by every row of the stat group — the duration and each street distance — so
+ * they all stay in lockstep.
  *
  * The glyph is sized and placed by its *ink*, not by its box: the box is inflated from the wanted ink
  * height by the asset's own ink fraction ([MetricGlyph]), and the row's alignment line is the ink's
@@ -653,13 +727,13 @@ private fun MetricRow(
     val density = LocalDensity.current
     val inkHeight = digitCapHeight(density, METRIC_NUMBER_SIZE)
     val box = glyph.boxFor(inkHeight)
-    // Levelling by ink leaves each glyph a different box width (the two assets ink different fractions
-    // of their viewport), which would step the rows' values apart horizontally. Reserve the widest
+    // Levelling by ink leaves each glyph a different box width (no two assets ink the same fraction of
+    // their viewport), which would step the rows' values apart horizontally. Reserve the widest
     // row's box for every row: Icon fits-and-centres the vector, so the extra width only centres the
     // glyph — the height still drives its scale.
     val column = inkHeight * WIDEST_BOX_FACTOR
     Row(
-        modifier = winnerOutline(winner, outlineColor),
+        modifier = Modifier.winnerOutline(winner, outlineColor),
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Icon(
@@ -675,21 +749,24 @@ private fun MetricRow(
 
 /**
  * A metric row's leading glyph, together with where the glyph's ink actually sits inside its 24-unit
- * vector viewport — read off the asset's `pathData` bounds, and *not* the same for both: the hourglass
- * inks y[2, 22], the walker y[1.5, 23]. Carrying the bounds is what lets [MetricRow] work in ink.
+ * vector viewport — read off the asset's `pathData` bounds, and no two of them the same: the hourglass
+ * inks y[2, 22], the walker y[1.5, 23], the bicycle y[1.5, 22], the rental bike y[1, 22.497]. Carrying
+ * the bounds is what lets [MetricRow] work in ink.
  *
- * These four numbers are transcribed by hand from the asset, so re-read them whenever you swap a
- * drawable, edit its path, or re-import it from Material — nothing checks them for you, and a stale
- * reading un-levels its row quietly rather than loudly.
+ * These numbers are transcribed by hand from the asset, so re-read them whenever you swap a drawable,
+ * edit its path, or re-import it from Material — nothing checks them for you, and a stale reading
+ * un-levels its row quietly rather than loudly.
  *
  * The assets stay uncropped — cropping would only delete the ink fraction, not the levelling — and for
- * the walker it can't be done at all: `ic_directions_walk` is also a mode glyph ([streetModeIcon]) and
- * a step icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside
- * it, so a crop would mean a second copy of its path.
+ * the street glyphs it can't be done at all: each is also a mode glyph ([streetModeIcon]) and a step
+ * icon, where it has to sit at the same visual weight as the uncropped bus/rail glyphs beside it, so a
+ * crop would mean a second copy of its path.
  */
 private enum class MetricGlyph(@DrawableRes val iconRes: Int, val inkTop: Float, val inkBottom: Float) {
     DURATION(R.drawable.hourglass_24, inkTop = 2f, inkBottom = 22f),
-    WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f);
+    WALK(R.drawable.ic_directions_walk, inkTop = 1.5f, inkBottom = 23f),
+    BIKE(R.drawable.ic_directions_bike, inkTop = 1.5f, inkBottom = 22f),
+    BIKESHARE(R.drawable.ic_bike_rental, inkTop = 1f, inkBottom = 22.497f);
 
     /** What the icon box has to be scaled by for this glyph's ink alone to stand a wanted height. */
     val boxFactor: Float = GLYPH_VIEWPORT / (inkBottom - inkTop)
@@ -750,17 +827,17 @@ private fun ScheduleMetric(text: String, winner: Boolean, outlineColor: Color) {
         text = text,
         style = MaterialTheme.typography.bodySmall,
         maxLines = 1,
-        modifier = winnerOutline(winner, outlineColor)
+        modifier = Modifier.winnerOutline(winner, outlineColor)
     )
 }
 
 /** Adds no layout or drawing when [winner] is false, preserving the existing ordinary metric rows. */
-private fun winnerOutline(winner: Boolean, color: Color): Modifier = if (winner) {
-    Modifier
+private fun Modifier.winnerOutline(winner: Boolean, color: Color): Modifier = if (winner) {
+    this
         .border(WINNER_OUTLINE_WIDTH, color, RoundedCornerShape(WINNER_OUTLINE_RADIUS))
         .padding(horizontal = 3.dp, vertical = 1.dp)
 } else {
-    Modifier
+    this
 }
 
 /**
@@ -779,37 +856,42 @@ fun TripResultsList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit = { _, _ -> },
     onFocusLeg: (FocusedLeg) -> Unit = {},
     onFocusPoint: (GeoPoint) -> Unit = {},
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit = { _, _, _ -> },
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit = { _, _ -> },
     reminderControl: @Composable () -> Unit = {}
 ) {
-    Box(
-        modifier
-            .fillMaxSize()
-            .background(colorResource(R.color.md_theme_surfaceContainer))
-    ) {
-        when (state) {
-            TripResultsUiState.Loading -> LoadingContent(Modifier.align(Alignment.Center))
+    // Resolved once for the whole drawer rather than by each distance row: the rows below run one per
+    // walk step, and a leaf resolve is a Hilt entry-point hop plus a locale query every time one enters
+    // composition. A preview (or any other host) that has already pinned the units keeps its value.
+    CompositionLocalProvider(LocalUnitsAreMetric provides unitsAreMetric()) {
+        Box(
+            modifier
+                .fillMaxSize()
+                .background(colorResource(R.color.md_theme_surfaceContainer))
+        ) {
+            when (state) {
+                TripResultsUiState.Loading -> LoadingContent(Modifier.align(Alignment.Center))
 
-            is TripResultsUiState.Error -> Text(
-                text = state.message,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(32.dp)
-            )
+                is TripResultsUiState.Error -> Text(
+                    text = state.message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(32.dp)
+                )
 
-            is TripResultsUiState.Success -> TripLogList(
-                state = state,
-                bottomInset = bottomInset,
-                scheduleWinnerMode = scheduleWinnerMode,
-                onSelectOption = onSelectOption,
-                onFocusRouteLeg = onFocusRouteLeg,
-                onFocusLeg = onFocusLeg,
-                onFocusPoint = onFocusPoint,
-                stopEtaStrip = stopEtaStrip,
-                reminderControl = reminderControl
-            )
+                is TripResultsUiState.Success -> TripLogList(
+                    state = state,
+                    bottomInset = bottomInset,
+                    scheduleWinnerMode = scheduleWinnerMode,
+                    onSelectOption = onSelectOption,
+                    onFocusRouteLeg = onFocusRouteLeg,
+                    onFocusLeg = onFocusLeg,
+                    onFocusPoint = onFocusPoint,
+                    stopEtaStrip = stopEtaStrip,
+                    reminderControl = reminderControl
+                )
+            }
         }
     }
 }
@@ -834,7 +916,7 @@ fun TripResultsSheet(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp
 ) {
@@ -970,32 +1052,15 @@ private fun TripLogList(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit,
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
-    val dark = MaterialTheme.colorScheme.isDarkTheme()
-    // A walk's spine and any route whose colour we can't use: an outline-toned line, with the surface
-    // showing through as the glyph so a filled neutral node still reads.
-    val neutral = RouteLineColors(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.surface)
     val expanded = remember(entries) { mutableStateSetOf<Int>() }
     val onToggle: (Int) -> Unit = remember(expanded) { { i -> if (!expanded.add(i)) expanded.remove(i) } }
-    // Snapshotted to a plain Set so it can key the memo below — reading it here is also what makes a
-    // toggle recompose this list.
-    val expandedEntries = expanded.toSet()
-    val rows = remember(entries, expandedEntries, neutral, dark) {
-        flattenLog(
-            entries = entries,
-            expandedEntries = expandedEntries,
-            neutral = neutral,
-            // The agency's GTFS colour re-toned to stay legible on this theme's surface, so a near-black
-            // or near-white route can't hand us an invisible spine. Same system as the leg's route badge —
-            // including its answer for a route that publishes no colour at all
-            // ([ridePresentationColor]), so a ferry's spine, its roundel and its line on the map are one
-            // hue rather than three fallbacks.
-            rideColors = { routeLineColors(ridePresentationColor(it.routeColorHex), dark, neutral) }
-        )
-    }
+    // Snapshotted to a plain Set so it can key the memo in rememberLogRows — reading it here is also
+    // what makes a toggle recompose this list.
+    val rows = rememberLogRows(entries, expanded.toSet())
 
     // The surface reaches the bottom edge; a bottom content padding lets the final leg row be scrolled
     // clear of the nav chrome without an empty strip below the list.
@@ -1018,6 +1083,34 @@ private fun TripLogList(
     }
 }
 
+/**
+ * The [entries] flattened into timeline rows, with the spine and band colours this theme resolves.
+ *
+ * Held apart from [TripLogList] so a single leg can be rendered through the very same pipeline (see the
+ * leg previews at the foot of this file) — the colour resolution is the part a second call site would
+ * otherwise copy and let drift.
+ */
+@Composable
+private fun rememberLogRows(entries: List<TripLogEntry>, expandedEntries: Set<Int>): List<LogRowModel> {
+    val dark = MaterialTheme.colorScheme.isDarkTheme()
+    // A walk's spine and any route whose colour we can't use: an outline-toned line, with the surface
+    // showing through as the glyph so a filled neutral node still reads.
+    val neutral = RouteLineColors(MaterialTheme.colorScheme.outline, MaterialTheme.colorScheme.surface)
+    return remember(entries, expandedEntries, neutral, dark) {
+        flattenLog(
+            entries = entries,
+            expandedEntries = expandedEntries,
+            neutral = neutral,
+            // The agency's GTFS colour re-toned to stay legible on this theme's surface, so a near-black
+            // or near-white route can't hand us an invisible spine. Same system as the leg's route badge —
+            // including its answer for a route that publishes no colour at all
+            // ([ridePresentationColor]), so a ferry's spine, its roundel and its line on the map are one
+            // hue rather than three fallbacks.
+            rideColors = { routeLineColors(ridePresentationColor(it.routeColorHex), dark, neutral) }
+        )
+    }
+}
+
 /** Renders one flattened [model] row — its map-focus tap wiring and body — dispatched by content kind. */
 @Composable
 private fun LogRow(
@@ -1026,7 +1119,7 @@ private fun LogRow(
     onFocusRouteLeg: (RouteLegRef, FocusedLeg) -> Unit,
     onFocusLeg: (FocusedLeg) -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
 ) {
     val i = model.entryIndex
     when (val content = model.content) {
@@ -1301,29 +1394,30 @@ private class RowChrome(density: Density, private val model: LogRowModel, timeWi
 }
 
 /**
- * The glyph for an on-street leg — inside its node on the spine, and as its symbol on an option card.
+ * The glyph for an on-street leg — inside its node on the spine, as its symbol on an option card, and
+ * leading that mode's distance line. All three read the same [StreetMetric.glyph], so a mode can't be
+ * drawn one way as a symbol and another as a metric.
+ *
  * A rented bike takes a rental glyph (`ic_bike_rental`: Material Symbols' `car_rental` key over a
  * bicycle instead of a car) rather than the plain bicycle, so a shared bike doesn't read as the one the
  * rider brought — the same distinction the map draws between a bikeshare dock and a bike.
  *
- * Null for [StreetMode.CAR]: the app ships no car drawable because its planner never asks OTP for car
- * modes (the mode picker offers none — see `org.onebusaway.android.ui.tripplan.TripModeSelection`), and
- * a bare ring is honest where a walking figure would be wrong. Add `ic_directions_car` here if car
- * planning is ever offered.
+ * Null for [StreetMode.CAR], which [StreetMetric] doesn't list: the app ships no car drawable because
+ * its planner never asks OTP for car modes (the mode picker offers none — see
+ * `org.onebusaway.android.ui.tripplan.TripModeSelection`), and a bare ring is honest where a walking
+ * figure would be wrong. Offering car planning means a [StreetMetric] entry and a [MetricGlyph] with its
+ * ink bounds.
  */
-private fun streetModeIcon(mode: StreetMode): Int? = when (mode) {
-    StreetMode.WALK -> R.drawable.ic_directions_walk
-    StreetMode.BIKE -> R.drawable.ic_directions_bike
-    StreetMode.BIKESHARE -> R.drawable.ic_bike_rental
-    StreetMode.CAR -> null
-}
+private fun streetModeIcon(mode: StreetMode): Int? = StreetMetric.of(mode)?.glyph?.iconRes
 
-/** What to call [mode] aloud, for a glyph standing on its own on an option card. */
-private fun streetModeLabel(mode: StreetMode): Int = when (mode) {
-    StreetMode.WALK -> R.string.step_by_step_non_transit_mode_walk_action
-    StreetMode.BIKE -> R.string.step_by_step_non_transit_mode_bicycle_action
-    StreetMode.BIKESHARE -> R.string.transit_directions_bikeshare_label
-    StreetMode.CAR -> R.string.step_by_step_non_transit_mode_car_action
+/**
+ * The glyph a presentable street mode is drawn with — total, since [StreetMetric] holds exactly the
+ * modes the cards can show, so the compiler asks for the art whenever one is added.
+ */
+private val StreetMetric.glyph: MetricGlyph get() = when (this) {
+    StreetMetric.WALK -> MetricGlyph.WALK
+    StreetMetric.BIKE -> MetricGlyph.BIKE
+    StreetMetric.BIKESHARE -> MetricGlyph.BIKESHARE
 }
 
 /**
@@ -1499,10 +1593,14 @@ private fun ColumnScope.TerminalContent(entry: TripLogEntry.Terminal) {
 private fun streetActionRes(mode: StreetMode, isTransfer: Boolean): Int = when (mode) {
     StreetMode.WALK ->
         if (isTransfer) R.string.trip_plan_walk_transfer else R.string.step_by_step_non_transit_mode_walk_action
-    // A rented bike is still ridden: the verb is the same as for the rider's own bike, and only the
-    // glyph (and the map's dock markers) say where it came from.
-    StreetMode.BIKE, StreetMode.BIKESHARE ->
+    StreetMode.BIKE ->
         if (isTransfer) R.string.trip_plan_bike_transfer else R.string.step_by_step_non_transit_mode_bicycle_action
+    // A shared bike is a different act from riding your own — you have to find it and rent it first —
+    // so the leg is titled by what the rider is doing rather than by the vehicle they end up on. It's
+    // the same word the option card's glyph is announced with ([StreetMetric.BIKESHARE]), so the card
+    // and the row that expands from it name the leg alike.
+    StreetMode.BIKESHARE ->
+        if (isTransfer) R.string.trip_plan_bikeshare_transfer else R.string.transit_directions_bikeshare_label
     StreetMode.CAR ->
         if (isTransfer) R.string.trip_plan_car_transfer else R.string.step_by_step_non_transit_mode_car_action
 }
@@ -1515,13 +1613,176 @@ private fun ColumnScope.WalkHeaderContent(entry: TripLogEntry.Walk) {
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurface
     )
-    val meta = walkMeta(entry, context)
+    val meta = walkMeta(entry, context, unitsAreMetric())
     if (meta.isNotEmpty()) {
         Text(
             text = meta,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+    entry.rental?.let { RentalContent(it) }
+    // A walk gets its alerts under its header for the same reason a ride does — a closed dock or a
+    // blocked path is about this stretch of the trip, not the trip as a whole.
+    LegAlerts(entry.alerts)
+}
+
+/**
+ * What the rider needs to know about the shared bike they're being sent to (#2150): whose it is, what
+ * it is, where to find it, and how to unlock it. Before this the leg said only "Bike", which told a
+ * rider standing over an unfamiliar scooter nothing about which app opens it.
+ *
+ * The operator's chip is also the way over to them: it wears an open-in-new arrow and is the row's
+ * only external affordance, so the brand the rider is looking for and the thing they tap are one
+ * object rather than a chip with a button repeating its name underneath. A network with neither a
+ * rental URI nor a catalog entry has nowhere to send anyone, and its chip is a plain label — no arrow,
+ * no tap — rather than one going somewhere approximate.
+ *
+ * Everything else is drawn from what the feed actually said, and omitted rather than guessed when it
+ * didn't: an operator the app has no catalog entry for wears its raw network id (see
+ * [RentalOperators]), and a pickup with no named dock draws no pickup line.
+ *
+ * The vehicle id is deliberately not shown. The ids the live networks publish are UUIDs — nothing a
+ * rider can match against the bike in front of them — so drawing one would be noise that reads like an
+ * instruction.
+ */
+@Composable
+private fun ColumnScope.RentalContent(rental: RentalPickup) {
+    val context = LocalContext.current
+    val metric = unitsAreMetric()
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        OperatorChip(rental) { link -> openRental(context, link, rental.fallback) }
+        val details = listOfNotNull(
+            rental.vehicle?.let { stringResource(rentalVehicleRes(it)) },
+            rental.rangeMeters?.let {
+                stringResource(
+                    R.string.trip_plan_rental_range,
+                    ConversionUtils.getFormattedDistance(it.toDouble(), context, metric)
+                )
+            }
+        )
+        if (details.isNotEmpty()) {
+            Text(
+                text = details.joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+    rental.stationName?.let {
+        Text(
+            text = stringResource(R.string.trip_plan_rental_pick_up_at, it),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * The operator on its brand colour — and, when there is somewhere to send the rider, the tap that
+ * takes them there.
+ *
+ * The tap area is the chip plus [RENTAL_OPERATOR_CHIP_TAP_PADDING], which lands short of the 48dp
+ * interactive minimum — deliberately: reserving the full minimum around a chip this size padded the
+ * row by a dozen dp above and below and made the leg read as three loosely-spaced blocks rather than
+ * one. The chip is drawn at [RENTAL_OPERATOR_CHIP_SCALE] partly to keep what is left a comfortable
+ * mark, and it is never the only way on — the row it sits in is itself a tap target.
+ *
+ * Only [RentalLink.Deep] names the exact vehicle the rider was routed onto, so only it is announced as
+ * opening it; the rest merely open the operator, and none of it claims a reservation was made (#2138).
+ */
+@Composable
+private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
+    val name = rental.operator.displayName
+    val described = stringResource(R.string.trip_plan_rental_operator_description, name)
+    val link = rental.link
+    val openLabel = link?.let {
+        stringResource(
+            if (it is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
+            name
+        )
+    }
+    Box(
+        // Padding *after* clickable, so the breathing room around the chip is part of what the rider
+        // can hit rather than a dead margin outside it.
+        modifier = when (link) {
+            null -> Modifier
+            else -> Modifier.clickable(onClickLabel = openLabel) { onOpen(link) }
+        }.padding(vertical = RENTAL_OPERATOR_CHIP_TAP_PADDING),
+        contentAlignment = Alignment.Center
+    ) {
+        RouteBadgeChip(
+            shortName = name,
+            routeColor = rental.operator.brandColor,
+            scale = RENTAL_OPERATOR_CHIP_SCALE,
+            // A brand name is a word, not a route number: capped so a long one ellipsizes inside the
+            // chip instead of pushing the vehicle beside it off the row. Scaled with the chip, or the
+            // enlargement would buy the arrow room by taking it from the name.
+            maxWidth = RENTAL_OPERATOR_CHIP_MAX_WIDTH * RENTAL_OPERATOR_CHIP_SCALE,
+            trailingIcon = R.drawable.ic_open_in_new.takeIf { link != null },
+            // Merged, so the chip is one node reading "Lime rental" rather than that description and
+            // the bare brand name inside it announced as two.
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = described }
+        )
+    }
+}
+
+/**
+ * How much bigger the operator chip is than a route roundel. It is the leg's brand *and* its only tap
+ * target, and it carries a glyph beside the name, so it is drawn above roundel size — the same 1.5×
+ * the directions board badge uses, rather than a size of its own.
+ */
+private const val RENTAL_OPERATOR_CHIP_SCALE = 1.5f
+
+/** The breathing room above and below the operator chip, which is also part of its tap area. */
+private val RENTAL_OPERATOR_CHIP_TAP_PADDING = 3.dp
+
+/** How wide the operator chip may get before its name ellipsizes, at scale 1 — a dozen characters. */
+private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
+
+/**
+ * Hands the rider over: the operator's own link, and — when the device has nothing that handles a
+ * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
+ * [RentalPickup.fallback]).
+ */
+private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
+    when (link) {
+        is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
+            fallback?.let { openRental(context, it, fallback = null) }
+        }
+        is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
+        is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
+    }
+}
+
+/** What to call the rented vehicle — total over [RentalVehicleKind], so a new kind needs its word. */
+private fun rentalVehicleRes(kind: RentalVehicleKind): Int = when (kind) {
+    RentalVehicleKind.BIKE -> R.string.trip_plan_rental_bike
+    RentalVehicleKind.EBIKE -> R.string.trip_plan_rental_ebike
+    RentalVehicleKind.CARGO_BIKE -> R.string.trip_plan_rental_cargo_bike
+    RentalVehicleKind.ELECTRIC_CARGO_BIKE -> R.string.trip_plan_rental_electric_cargo_bike
+    RentalVehicleKind.SCOOTER -> R.string.trip_plan_rental_scooter
+    RentalVehicleKind.ESCOOTER -> R.string.trip_plan_rental_escooter
+    RentalVehicleKind.MOPED -> R.string.trip_plan_rental_moped
+    RentalVehicleKind.CAR -> R.string.trip_plan_rental_car
+}
+
+/**
+ * A leg's service alerts, under its header (#2143), loudest first.
+ *
+ * Drawn inline in the leg's row rather than as lazy items of their own: an alert belongs to the leg the
+ * way its headsign does, and hanging it off the row keeps it inside the leg's band and spine, so it
+ * cannot drift away from the ride it qualifies as the list scrolls or a leg above it expands.
+ */
+@Composable
+private fun LegAlerts(alerts: List<TripAlertItem>) {
+    alerts.forEach { alert ->
+        key(alert.contentId) {
+            TripAlertBanner(alert)
+        }
     }
 }
 
@@ -1541,7 +1802,7 @@ private fun ColumnScope.StepContent(step: LogStep) {
 @Composable
 private fun ColumnScope.StepDistanceContent(distanceMeters: Double) {
     Text(
-        text = ConversionUtils.getFormattedDistance(distanceMeters, LocalContext.current),
+        text = ConversionUtils.getFormattedDistance(distanceMeters, LocalContext.current, unitsAreMetric()),
         style = MaterialTheme.typography.labelSmall,
         fontFamily = FontFamily.Monospace,
         color = MaterialTheme.colorScheme.outline
@@ -1553,10 +1814,9 @@ private fun ColumnScope.BoardContent(
     entry: TripLogEntry.Transit,
     onFocus: () -> Unit,
     onFocusPoint: (GeoPoint) -> Unit,
-    stopEtaStrip: @Composable (RouteLegRef, RouteStopRef, List<GeoPoint>) -> Unit
+    stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit
 ) {
-    val context = LocalContext.current
-    // The route/headsign/meta block highlights the leg on the map; expanding its steps is the scaffold's
+    // The route/headsign block highlights the leg on the map; expanding its steps is the scaffold's
     // own chevron segment (#2040), not a side effect of this tap. The board stop + ETA strip below is a
     // third, separate tap target that zooms to the stop. Because this control is this inner block rather
     // than the whole row, the scaffold's touch-target floor doesn't reach it — so it carries its own. (Its
@@ -1566,49 +1826,26 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClick = onFocus)
     ) {
-        // A ride the rider may take on any of several routes badges them all as one joined roundel
-        // ("1 Line/2 Line", #2010). A ride the *vehicle* changes route during does not (#2071): the
-        // drawer draws a row per segment, so the header badges only the route boarded and each route the
-        // vehicle becomes is badged at the seam the rider reaches it at (TransitionContent) — the
-        // header's roundel says what to board, not everything the ride will eventually be called. The
-        // option card above still joins them ("5 > 12", #2049); it has one line for the whole ride.
-        // A route that publishes no short name gets no roundel and leads with its long name — see
-        // routeDisplayShortName.
-        val joined = entry.routeLeg.badge?.takeIf { it.isInterchangeable }
-        SegmentIdentity(
-            title = entry.routeDisplayName?.takeIf { it != entry.routeShortName },
-            headsign = entry.headsign,
-            roundel = when {
-                joined != null -> ({ RouteBadgeChip(joined.routes, scale = BADGE_SCALE, join = joined.join) })
-                entry.routeShortName != null ->
-                    ({ RouteBadgeChip(entry.routeShortName, ridePresentationColor(entry.routeColorHex), scale = BADGE_SCALE) })
-                else -> null
+        val boardable = entry.boardableRoutes()
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            boardable.forEach { route ->
+                SegmentIdentity(badge = route.badge, name = route.name, headsign = route.headsign)
             }
-        )
-        // What an interchangeable badge means: any of those routes will do, so board the first to
-        // arrive. Each one's own ETA strip sits under the board stop below (#2010). A ride that changes
-        // route under the rider carries the opposite instruction — board this one and stay on it — and
-        // gives it in its own row further down the ride (TransitionContent); its badge never reaches
-        // this header, so it cannot pick this caption up.
-        if (joined != null) {
+        }
+        if (boardable.size > 1) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 1.dp)
             )
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val meta = transitMeta(entry, context)
-            if (meta.isNotEmpty()) {
-                Text(
-                    text = meta,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            RealtimeChip(entry.realtime)
-        }
     }
+    // Directly under the route header and above the boarding instruction (#2143): the alert is about
+    // *this* ride, so it belongs against the ride's name, and the rider reads that service is disrupted
+    // before being told which stop to wait at. Outside the identity block above, whose tap frames the
+    // leg on the map — an alert owns its own expand tap and must not spend that one.
+    LegAlerts(entry.alerts)
     entry.routeLeg.board?.let { stop ->
         Spacer(Modifier.height(6.dp))
         StopActionLabel(
@@ -1616,7 +1853,9 @@ private fun ColumnScope.BoardContent(
             stopName = stop.name,
             onClick = { stop.point?.let(onFocusPoint) }
         )
-        stopEtaStrip(entry.routeLeg, stop, entry.legPoints)
+        // The whole ride, not just its route/stop: the strip also rules the plan's own arrival at this
+        // stop across the live ETAs (#2125), and a pill tap frames the ride's geometry on the map.
+        stopEtaStrip(entry, stop)
     }
 }
 
@@ -1633,11 +1872,11 @@ private fun ColumnScope.StopContent(stop: LogStop) {
  * A stay-aboard interline (#2000): the vehicle keeps going but its route changes, so the rider is told
  * to stay on board — never to get off and reboard.
  *
- * Laid out as the board row of the ride's *next segment* (#2071) — badge, fuller name, headsign, by the
- * same rules a board row uses — since that is what the seam is: the header above named the route
- * boarded, and this names the route the rider goes on to ride, at the point they reach it. The
- * instruction and the seam stop follow, so a route with no long name reads
- * `[12] / Interlaken Park / Stay on board / At Mount Baker Transit Center`.
+ * Laid out as the board row of the ride's *next segment* (#2071) — roundel and headsign, by the same
+ * rules a board row uses — since that is what the seam is: the header above named the route boarded, and
+ * this names the route the rider goes on to ride, at the point they reach it. The instruction and the
+ * seam stop follow, so a route reads
+ * `[12] → Interlaken Park / Stay on board / At Mount Baker Transit Center`.
  *
  * With nothing at all to name the new route by — no badge, no name, no headsign — the instruction says
  * so itself rather than standing over a blank.
@@ -1645,15 +1884,14 @@ private fun ColumnScope.StopContent(stop: LogStop) {
 @Composable
 private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
     val headsign = transition.headsign?.takeIf { it.isNotEmpty() }
-    val title = transition.routeDisplayName?.takeIf { it != transition.badge?.shortName }
     SegmentIdentity(
-        title = title,
-        headsign = headsign,
-        roundel = transition.badge?.let { badge ->
-            { RouteBadgeChip(badge.shortName, badge.routeColor, scale = BADGE_SCALE) }
-        }
+        badge = transition.badge,
+        // Only ever the stand-in for a missing roundel, as on a board row: a route with a roundel is
+        // named by it alone (#2151).
+        name = transition.routeDisplayName.takeIf { transition.badge == null },
+        headsign = headsign
     )
-    val named = transition.badge != null || title != null || headsign != null
+    val named = transition.badge != null || transition.routeDisplayName != null || headsign != null
     Text(
         text = stringResource(
             if (named) R.string.step_by_step_transit_stay_on_board else R.string.step_by_step_transit_interline_unknown_route
@@ -1672,45 +1910,38 @@ private fun ColumnScope.TransitionContent(transition: InterlineTransition) {
 }
 
 /**
- * How a row names the route the rider is about to be on: its [roundel], the fuller name beside it, and
- * the [headsign] under both.
+ * How a row names one route the rider is about to be on: its roundel and, on the same line, where that
+ * route is headed.
  *
  * One composable rather than two so the ride's segments can't drift apart (#2071). The rider boards a
  * segment at the board row and reaches every later one at a seam row, and those are the same act — a
  * padding or type tweak landing on one of them and not the other would make one ride read as two
- * different kinds of thing.
+ * different kinds of thing. It names exactly one route, so a board row offering several draws it once
+ * per route (#2151).
  *
- * [roundel] is a slot rather than a badge value because the two rows draw genuinely different chips: a
- * board row may draw the joined "1 Line/2 Line" roundel, which is outlined, where a seam always draws
- * the plain single one. Null draws none — and takes its spacing with it — for a route publishing no
- * short name. [title] is null when the name would merely repeat the roundel, and the weight falls to a
- * spacer, so whatever follows is laid out the same either way.
+ * The roundel and the headsign together already say what to board, so the route's long name isn't
+ * printed beside them (#2151); [name] is drawn only in the roundel's place, for a route publishing no
+ * short name — see [BoardableRoute]. The headsign takes the app's shared "heading toward X" treatment
+ * ([DirectionHeadsign], #1823) rather than a setting of its own, so the sign on the bus reads the same
+ * here as on an arrivals row.
  */
 @Composable
-private fun SegmentIdentity(title: String?, headsign: String?, roundel: (@Composable () -> Unit)?) {
+private fun SegmentIdentity(badge: RouteBadge?, name: String?, headsign: String?) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        if (roundel != null) {
-            roundel()
+        if (badge != null) {
+            RouteBadgeChip(badge.shortName, badge.routeColor, scale = BADGE_SCALE)
             Spacer(Modifier.width(8.dp))
-        }
-        if (title != null) {
+        } else if (name != null) {
             Text(
-                text = title,
+                text = name,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.weight(1f)
+                color = MaterialTheme.colorScheme.onSurface
             )
-        } else {
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(8.dp))
         }
-    }
-    headsign?.let {
-        Text(
-            text = it,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Weighted so a long headsign ellipsizes against the row rather than pushing the roundel off it.
+        headsign?.let { DirectionHeadsign(it, Modifier.weight(1f)) }
     }
 }
 
@@ -1743,37 +1974,6 @@ private fun StopActionLabel(actionRes: Int, stopName: String?, onClick: (() -> U
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
-    }
-}
-
-/** The on-time / delayed real-time chip; [RealtimeState.Unknown] renders nothing. */
-@Composable
-private fun RealtimeChip(state: RealtimeState) {
-    // labelMedium text over a 14%-alpha tint of itself, so it takes the text tier: the iOS display
-    // colors sit at 2.7-3.2:1 on that tint, which is what the retired trip_realtime_* palette had been
-    // hand-picked to avoid. Read off the state's own [ScheduleDeviation.Status] rather than named here,
-    // so a re-hue of the shared palette can't leave this screen behind. That palette's polarity
-    // contradicted the arrivals drawer: blue meant "early" here and "late" there, in one app (#2043).
-    val text = when (state) {
-        RealtimeState.Unknown -> return
-        RealtimeState.OnTime -> stringResource(R.string.trip_plan_realtime_on_time)
-        is RealtimeState.Late ->
-            pluralStringResource(R.plurals.trip_plan_realtime_late, state.minutes.toInt(), state.minutes.toInt())
-        is RealtimeState.Early ->
-            pluralStringResource(R.plurals.trip_plan_realtime_early, state.minutes.toInt(), state.minutes.toInt())
-    }
-    val color = colorResource(state.status.textColorRes)
-    Spacer(Modifier.width(8.dp))
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(color.copy(alpha = 0.14f))
-            .padding(horizontal = 8.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(Modifier.size(6.dp).clip(CircleShape).background(color))
-        Spacer(Modifier.width(5.dp))
-        Text(text = text, style = MaterialTheme.typography.labelMedium, color = color)
     }
 }
 
@@ -1814,162 +2014,492 @@ private fun deltaText(minutes: Long, context: Context): String {
 }
 
 /** The walk leg's distance ("0.2 mi"); blank when the leg carries no distance. Its duration is the delta. */
-private fun walkMeta(entry: TripLogEntry.Walk, context: Context): String = if (entry.distanceMeters > 0.0) ConversionUtils.getFormattedDistance(entry.distanceMeters, context) else ""
+private fun walkMeta(entry: TripLogEntry.Walk, context: Context, metric: Boolean): String = if (entry.distanceMeters > 0.0) ConversionUtils.getFormattedDistance(entry.distanceMeters, context, metric) else ""
 
-/** The transit leg's stop count ("5 stops"); blank when unknown (e.g. the OTP2 path). Duration is the delta. */
-private fun transitMeta(entry: TripLogEntry.Transit, context: Context): String = if (entry.stopCount > 0) {
-    context.resources.getQuantityString(R.plurals.trip_plan_intermediate_stops, entry.stopCount, entry.stopCount)
-} else {
-    ""
+// ---- previews ------------------------------------------------------------------------------------
+//
+// The itinerary drawer, driven through [TripResultsList] — the seam where the sheet becomes pure state:
+// everything above it ([TripResultsSheet], [DirectionsResultsSheet]) needs the host Activity, a Hilt
+// ViewModel, and a running TripPlanMonitor, none of which exist under layoutlib.
+//
+// Every preview pins [LocalUnitsAreMetric]. Distances are formatted from it rather than from the
+// rider's preference precisely so these can render: the preference read reaches Application.get(),
+// which throws here. See ConversionUtils.getFormattedDistanceParts.
+//
+// The fixtures build one trip, shared by the whole-drawer previews and the single-leg ones below, so a
+// leg cannot read one way in the itinerary and another on its own.
+
+// ---- shared fixtures -----------------------------------------------------------------------------
+
+/** The ride boarded as the 8 that becomes the 12 underneath the rider (#2000/#2049), chevron-joined. */
+private val PREVIEW_BUS_CHAIN_BADGE = LegBadge(
+    listOf(RouteBadge("8", 0xFF1B6EF3.toInt()), RouteBadge("12", 0xFFD62828.toInt())),
+    TransitMode.BUS,
+    RouteBadgeJoin.THEN
+)
+
+/** Two interchangeable rail lines (#2010), slash-joined — board whichever comes first. */
+private val PREVIEW_RAIL_PAIR_BADGE = LegBadge(
+    listOf(RouteBadge("1 Line", 0xFF00A651.toInt()), RouteBadge("2 Line", 0xFF0075C4.toInt())),
+    TransitMode.RAIL,
+    RouteBadgeJoin.ANY_OF
+)
+
+private val PREVIEW_RIDE_STOPS = listOf(
+    RideEvent.Stop(LogStop("Capitol Hill Station")),
+    RideEvent.Stop(LogStop("23rd Ave & E Union St")),
+    RideEvent.Stop(LogStop("Rainier Ave S & S McClellan St"))
+)
+
+/** The stay-aboard seam the chevroned badge stands for, reached partway through the ride (#2071). */
+private val PREVIEW_INTERLINE_SEAM = RideEvent.Transition(
+    InterlineTransition(
+        badge = RouteBadge("12", 0xFFD62828.toInt()),
+        routeDisplayName = "Route 12",
+        headsign = "Interlaken Park",
+        stop = RouteStopRef("1_550", "550", "Mount Baker Transit Center", null)
+    )
+)
+
+// One alert per travelling leg, one per severity — enough to show each tone *and* that the placement is
+// per-leg: the walk's notice, the bus's reroute and the boat's cancellation each sit under their own
+// header rather than pooling at the top of the itinerary.
+
+private val PREVIEW_WALK_ALERT = TripAlertItem(
+    contentId = "alert_sidewalk",
+    summary = "Sidewalk closed on the east side of 5th Ave",
+    description = null,
+    url = null,
+    severity = AlertSeverity.INFO
+)
+
+private val PREVIEW_BUS_ALERT = TripAlertItem(
+    contentId = "alert_reroute",
+    summary = "Route 8 is rerouted around Denny Way construction",
+    description = "Buses are using Olive Way in both directions. Stops between Denny & Stewart are " +
+        "closed; use the temporary stop at Olive & Boren.",
+    url = "https://example.transit/alerts/route-8",
+    severity = AlertSeverity.WARNING
+)
+
+private val PREVIEW_FERRY_ALERT = TripAlertItem(
+    contentId = "alert_ferry_cancelled",
+    summary = "The 4:10 PM Bremerton sailing is cancelled",
+    description = "One vessel is out of service. The next sailing is at 5:30 PM.",
+    url = null,
+    severity = AlertSeverity.ERROR
+)
+
+/** One transit leg, defaulted to an ordinary bus ride so each caller states only what it varies. */
+private fun previewTransitLeg(
+    routeShortName: String? = "8",
+    routeDisplayName: String? = "Route 8",
+    mode: TransitMode = TransitMode.BUS,
+    routeColorHex: String? = "1B6EF3",
+    headsign: String? = "Rainier Beach",
+    rideEvents: List<RideEvent> = PREVIEW_RIDE_STOPS,
+    alternatives: List<AlternativeRouteRef> = emptyList(),
+    alerts: List<TripAlertItem> = emptyList()
+) = TripLogEntry.Transit(
+    routeShortName = routeShortName,
+    routeDisplayName = routeDisplayName,
+    mode = mode,
+    routeColorHex = routeColorHex,
+    headsign = headsign,
+    reachStopTime = ServerTime(3 * 60_000L),
+    boardTime = ServerTime(4 * 60_000L),
+    exitTime = ServerTime(20 * 60_000L),
+    durationMinutes = 16,
+    rideEvents = rideEvents,
+    routeLeg = RouteLegRef(
+        routeId = "1_100",
+        headsign = headsign,
+        board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
+        alight = RouteStopRef("1_600", "600", "Rainier Ave S & S Alaska St", null),
+        alternatives = alternatives
+    ),
+    alerts = alerts
+)
+
+/**
+ * A Washington State Ferries run: no route short name, so no badge — the long name stands in the
+ * roundel's place and the boat glyph rides the spine. Built off [previewTransitLeg] and then re-timed,
+ * since an hour on a boat is the one thing about it that isn't a bus ride's shape.
+ */
+private fun previewFerryLeg(alerts: List<TripAlertItem> = emptyList()) = previewTransitLeg(
+    routeShortName = null,
+    routeDisplayName = "Seattle - Bremerton",
+    mode = TransitMode.FERRY,
+    routeColorHex = null,
+    headsign = "Bremerton",
+    rideEvents = emptyList(),
+    alerts = alerts
+).copy(
+    reachStopTime = ServerTime(20 * 60_000L),
+    boardTime = ServerTime(24 * 60_000L),
+    exitTime = ServerTime(84 * 60_000L),
+    durationMinutes = 60,
+    routeLeg = RouteLegRef(
+        routeId = "95_74",
+        headsign = "Bremerton",
+        board = RouteStopRef("95_1", null, "Seattle Ferry Terminal", null),
+        alight = RouteStopRef("95_2", null, "Bremerton Ferry Terminal", null)
+    )
+)
+
+// ---- itinerary fixtures --------------------------------------------------------------------------
+
+/**
+ * The three option cards of the picker. With [alerted], the symbols standing for the legs that carry an
+ * alert below are marked — the walk and the bus, at the tones their own alerts have, so the card and the
+ * directions name the same two rides rather than pointing at different ones.
+ */
+private fun previewOptions(alerted: Boolean = false) = listOf(
+    ItineraryOption(
+        // Both joined badges side by side: a bus that becomes the 12 with the rider aboard,
+        // chevroned (#2049), then an interchangeable rail pair, slashed (#2010) — the
+        // transfer between them being too short to draw a glyph for (#2047).
+        symbols = listOf(
+            ModeSymbol.Street(StreetMode.WALK, alert = PREVIEW_WALK_ALERT.severity.takeIf { alerted }),
+            ModeSymbol.Transit(PREVIEW_BUS_CHAIN_BADGE, alert = PREVIEW_BUS_ALERT.severity.takeIf { alerted }),
+            ModeSymbol.Transit(PREVIEW_RAIL_PAIR_BADGE),
+            ModeSymbol.Street(StreetMode.WALK)
+        ),
+        durationMinutes = 32,
+        startTime = ServerTime(0L),
+        endTime = ServerTime(32 * 60_000L),
+        streetDistanceMeters = mapOf(StreetMode.WALK to 800.0)
+    ),
+    ItineraryOption(
+        // The second leg is a ferry, which publishes no route short name — so it badges its
+        // long name, capped and ellipsized.
+        symbols = listOf(
+            ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF)),
+            ModeSymbol.Street(StreetMode.WALK),
+            ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY, RouteBadgeJoin.ANY_OF))
+        ),
+        durationMinutes = 41,
+        startTime = ServerTime(0L),
+        endTime = ServerTime(41 * 60_000L),
+        streetDistanceMeters = mapOf(StreetMode.WALK to 400.0)
+    ),
+    ItineraryOption(
+        // A bikeshare trip: walk to the dock, ride, walk from it (#2047).
+        symbols = listOf(
+            ModeSymbol.Street(StreetMode.WALK),
+            ModeSymbol.Street(StreetMode.BIKESHARE),
+            ModeSymbol.Street(StreetMode.WALK)
+        ),
+        durationMinutes = 18,
+        startTime = ServerTime(0L),
+        endTime = ServerTime(18 * 60_000L),
+        // Both of its street modes measured, the ride as well as the walk (#2122).
+        streetDistanceMeters = mapOf(StreetMode.WALK to 500.0, StreetMode.BIKESHARE to 2300.0)
+    )
+)
+
+/**
+ * The selected option's directions: a walk, the interlined bus ride its chevroned badge stands for, a
+ * ferry, and both terminals. With [alerted], each travelling leg also carries its own alert (#2143).
+ */
+private fun previewDirections(alerted: Boolean = false) = listOf(
+    TripLogEntry.Terminal(
+        kind = TerminalKind.START,
+        time = ServerTime(0L),
+        place = "5th Ave & Pine St"
+    ),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 4,
+        distanceMeters = 320.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head north on 5th Ave", distanceMeters = 107.0)),
+        alerts = listOfNotNull(PREVIEW_WALK_ALERT.takeIf { alerted })
+    ),
+    // The ride the first option's chevron badge stands for: boarded once as the 8, becoming the 12 at
+    // Mount Baker without the rider getting off. The header badges only the 8; the 12 arrives at its own
+    // seam row, which is why the seam sits among the stops rather than before them.
+    previewTransitLeg(
+        rideEvents = PREVIEW_RIDE_STOPS.take(2) + PREVIEW_INTERLINE_SEAM + PREVIEW_RIDE_STOPS.drop(2),
+        alerts = listOfNotNull(PREVIEW_BUS_ALERT.takeIf { alerted })
+    ),
+    previewFerryLeg(alerts = listOfNotNull(PREVIEW_FERRY_ALERT.takeIf { alerted })),
+    TripLogEntry.Terminal(
+        kind = TerminalKind.ARRIVE,
+        time = ServerTime(90 * 60_000L),
+        place = "Bremerton"
+    )
+)
+
+private fun previewSuccess(alerted: Boolean = false) = TripResultsUiState.Success(
+    options = previewOptions(alerted),
+    selectedIndex = 0,
+    directions = previewDirections(alerted)
+)
+
+/**
+ * Renders [state] as the drawer draws it. [metric] pins the unit system, which is both what makes these
+ * render at all and what lets one fixture be checked in either unit system.
+ */
+@Composable
+private fun TripDrawerPreviewFrame(state: TripResultsUiState, metric: Boolean = false) {
+    CompositionLocalProvider(LocalUnitsAreMetric provides metric) {
+        ObaTheme {
+            TripResultsList(state)
+        }
+    }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, widthDp = 400, heightDp = 900, name = "Itinerary · full trip")
 @Composable
 private fun TripResultsPreview() {
-    ObaTheme {
-        val state = TripResultsUiState.Success(
-            options = listOf(
-                ItineraryOption(
-                    // Both joined badges side by side: a bus that becomes the 12 with the rider aboard,
-                    // chevroned (#2049), then an interchangeable rail pair, slashed (#2010) — the
-                    // transfer between them being too short to draw a glyph for (#2047).
-                    symbols = listOf(
-                        ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Transit(
-                            LegBadge(
-                                listOf(
-                                    RouteBadge("8", 0xFF1B6EF3.toInt()),
-                                    RouteBadge("12", 0xFFD62828.toInt())
-                                ),
-                                TransitMode.BUS,
-                                RouteBadgeJoin.THEN
+    TripDrawerPreviewFrame(previewSuccess())
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 900, name = "Itinerary · metric units")
+@Composable
+private fun TripResultsMetricPreview() {
+    // The same trip in km/m. Worth its own preview because the unit swap changes how wide the option
+    // cards' distance lines run, which is where the summary symbols get squeezed.
+    TripDrawerPreviewFrame(previewSuccess(), metric = true)
+}
+
+/**
+ * Alerts on every travelling leg (#2143): a banner under each leg's own header, and the triangles on the
+ * option card marking the same two legs. Rendered in both themes — the severity container tints are the
+ * part most likely to go wrong in dark.
+ */
+@Preview(showBackground = true, widthDp = 400, heightDp = 900, name = "Itinerary · service alerts")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    heightDp = 900,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Itinerary · service alerts, dark"
+)
+@Composable
+private fun TripResultsAlertsPreview() {
+    TripDrawerPreviewFrame(previewSuccess(alerted = true))
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 240, name = "Itinerary · loading")
+@Composable
+private fun TripResultsLoadingPreview() {
+    TripDrawerPreviewFrame(TripResultsUiState.Loading)
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 240, name = "Itinerary · error")
+@Composable
+private fun TripResultsErrorPreview() {
+    TripDrawerPreviewFrame(TripResultsUiState.Error("No itineraries found between these places."))
+}
+
+// ---- transit-leg previews ------------------------------------------------------------------------
+//
+// One leg on its own, run through the same [rememberLogRows] pipeline the drawer uses, so what these
+// show is what the list draws — spine, band, nodes and all. A lone leg has no neighbouring leg to hand
+// its spine to, so the rail stops at the exit node rather than running on; that truncation is the
+// isolation, not a defect.
+
+/**
+ * Renders [entry] — a ride or an on-street leg — alone, [expanded] or not. The row callbacks are
+ * no-ops (nothing is tappable in a static preview) and the ETA strip is empty — it needs a live
+ * arrivals session, which is exactly the host dependency previewing one leg is meant to escape.
+ */
+@Composable
+private fun LegPreviewFrame(entry: TripLogEntry, expanded: Boolean = false) {
+    LegsPreviewFrame(listOf(entry), if (expanded) setOf(0) else emptySet())
+}
+
+/**
+ * The same, for a short run of consecutive legs — where what's being looked at is how a leg sits
+ * against its neighbours (spacing, the spine's colour flip at each node) rather than the leg alone.
+ */
+@Composable
+private fun LegsPreviewFrame(entries: List<TripLogEntry>, expanded: Set<Int> = emptySet()) {
+    CompositionLocalProvider(LocalUnitsAreMetric provides false) {
+        ObaTheme {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                Column {
+                    rememberLogRows(entries, expanded).forEach { row ->
+                        key(row.key) {
+                            LogRow(
+                                model = row,
+                                onToggle = {},
+                                onFocusRouteLeg = { _, _ -> },
+                                onFocusLeg = {},
+                                onFocusPoint = {},
+                                stopEtaStrip = { _, _ -> }
                             )
-                        ),
-                        ModeSymbol.Transit(
-                            LegBadge(
-                                listOf(
-                                    RouteBadge("1 Line", 0xFF00A651.toInt()),
-                                    RouteBadge("2 Line", 0xFF0075C4.toInt())
-                                ),
-                                TransitMode.RAIL,
-                                RouteBadgeJoin.ANY_OF
-                            )
-                        ),
-                        ModeSymbol.Street(StreetMode.WALK)
-                    ),
-                    durationMinutes = 32,
-                    startTime = ServerTime(0L),
-                    endTime = ServerTime(32 * 60_000L),
-                    walkDistanceMeters = 800.0
-                ),
-                ItineraryOption(
-                    // The second leg is a ferry, which publishes no route short name — so it badges its
-                    // long name, capped and ellipsized.
-                    symbols = listOf(
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("48", null)), TransitMode.BUS, RouteBadgeJoin.ANY_OF)),
-                        ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Transit(LegBadge(listOf(RouteBadge("Seattle - Bremerton", null)), TransitMode.FERRY, RouteBadgeJoin.ANY_OF))
-                    ),
-                    durationMinutes = 41,
-                    startTime = ServerTime(0L),
-                    endTime = ServerTime(41 * 60_000L),
-                    walkDistanceMeters = 400.0
-                ),
-                ItineraryOption(
-                    // A bikeshare trip: walk to the dock, ride, walk from it (#2047).
-                    symbols = listOf(
-                        ModeSymbol.Street(StreetMode.WALK),
-                        ModeSymbol.Street(StreetMode.BIKESHARE),
-                        ModeSymbol.Street(StreetMode.WALK)
-                    ),
-                    durationMinutes = 18,
-                    startTime = ServerTime(0L),
-                    endTime = ServerTime(18 * 60_000L),
-                    walkDistanceMeters = 500.0
-                )
-            ),
-            selectedIndex = 0,
-            directions = listOf(
-                TripLogEntry.Terminal(
-                    kind = TerminalKind.START,
-                    time = ServerTime(0L),
-                    place = "5th Ave & Pine St"
-                ),
-                TripLogEntry.Walk(
-                    mode = StreetMode.WALK,
-                    durationMinutes = 4,
-                    distanceMeters = 320.0,
-                    isTransfer = false,
-                    steps = listOf(LogStep("Head north on 5th Ave", distanceMeters = 107.0))
-                ),
-                TripLogEntry.Transit(
-                    routeShortName = "8",
-                    routeDisplayName = "Route 8",
-                    mode = TransitMode.BUS,
-                    routeColorHex = "1B6EF3",
-                    headsign = "Rainier Beach",
-                    boardTime = ServerTime(4 * 60_000L),
-                    exitTime = ServerTime(20 * 60_000L),
-                    durationMinutes = 16,
-                    realtime = RealtimeState.OnTime,
-                    // The same ride the first option's chevron badge stands for: boarded once as the 8,
-                    // becoming the 12 at Mount Baker without the rider getting off (#2000/#2049). Here
-                    // the header badges only the 8 and the 12 arrives at its own seam row (#2071).
-                    rideEvents = listOf(
-                        RideEvent.Stop(LogStop("Capitol Hill Station")),
-                        RideEvent.Stop(LogStop("23rd Ave & E Union St")),
-                        RideEvent.Transition(
-                            InterlineTransition(
-                                badge = RouteBadge("12", 0xFFD62828.toInt()),
-                                routeDisplayName = "Route 12",
-                                headsign = "Interlaken Park",
-                                stop = RouteStopRef("1_550", "550", "Mount Baker Transit Center", null)
-                            )
-                        ),
-                        RideEvent.Stop(LogStop("Rainier Ave S & S McClellan St"))
-                    ),
-                    routeLeg = RouteLegRef(
-                        routeId = "1_100",
-                        headsign = "Rainier Beach",
-                        board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
-                        alight = RouteStopRef("1_600", "600", "Rainier & Alaska", null),
-                        badge = LegBadge(
-                            listOf(
-                                RouteBadge("8", 0xFF1B6EF3.toInt()),
-                                RouteBadge("12", 0xFFD62828.toInt())
-                            ),
-                            TransitMode.BUS,
-                            RouteBadgeJoin.THEN
-                        )
-                    )
-                ),
-                // A Washington State Ferries run: no route short name, so no badge — the long name is
-                // the row's title and the boat glyph rides the spine.
-                TripLogEntry.Transit(
-                    routeShortName = null,
-                    routeDisplayName = "Seattle - Bremerton",
-                    mode = TransitMode.FERRY,
-                    routeColorHex = null,
-                    headsign = "Bremerton",
-                    boardTime = ServerTime(24 * 60_000L),
-                    exitTime = ServerTime(84 * 60_000L),
-                    durationMinutes = 60,
-                    realtime = RealtimeState.Unknown,
-                    rideEvents = emptyList(),
-                    routeLeg = RouteLegRef(
-                        routeId = "95_74",
-                        headsign = "Bremerton",
-                        board = RouteStopRef("95_1", null, "Seattle Ferry Terminal", null),
-                        alight = RouteStopRef("95_2", null, "Bremerton Ferry Terminal", null)
-                    )
-                ),
-                TripLogEntry.Terminal(
-                    kind = TerminalKind.ARRIVE,
-                    time = ServerTime(90 * 60_000L),
-                    place = "Bremerton"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Transit leg · collapsed")
+@Composable
+private fun TransitLegPreview() {
+    // Board header (roundel + headsign) and board stop — the ride's stops stay folded away.
+    LegPreviewFrame(previewTransitLeg())
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 340, name = "Transit leg · expanded")
+@Composable
+private fun TransitLegExpandedPreview() {
+    // What the chevron reveals: every intermediate stop, on the ride's own coloured spine.
+    LegPreviewFrame(previewTransitLeg(), expanded = true)
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 300, name = "Transit leg · service alert")
+@Composable
+private fun TransitLegAlertPreview() {
+    // The #2143 placement at leg scale: the banner sits under the route header and above "Get on at",
+    // which is the adjacency the whole change is about.
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_BUS_ALERT)))
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 360, name = "Transit leg · two alerts")
+@Composable
+private fun TransitLegTwoAlertsPreview() {
+    // Loudest first, and two tinted cards stacked — the case where the leg header risks being crowded
+    // off the top of the row.
+    LegPreviewFrame(previewTransitLeg(alerts = listOf(PREVIEW_FERRY_ALERT, PREVIEW_BUS_ALERT)))
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Transit leg · whichever comes first")
+@Composable
+private fun TransitLegInterchangeablePreview() {
+    // An interchangeable pair (#2010/#2151): a line per route, each with its own headsign — the two
+    // share the track but not where they end up — plus the caption that says to board either.
+    LegPreviewFrame(
+        previewTransitLeg(
+            routeShortName = "1 Line",
+            routeDisplayName = null,
+            mode = TransitMode.RAIL,
+            routeColorHex = "00A651",
+            headsign = "Angle Lake",
+            alternatives = listOf(
+                AlternativeRouteRef(
+                    routeId = "40_2LINE",
+                    headsign = "Downtown Redmond",
+                    shortName = "2 Line",
+                    routeColor = 0xFF0075C4.toInt()
                 )
             )
         )
-        TripResultsList(state)
-    }
+    )
+}
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 300, name = "Transit leg · interline seam")
+@Composable
+private fun TransitLegInterlinePreview() {
+    // A stay-aboard route change (#2000/#2071). The seam row shows whether or not the leg is expanded —
+    // it instructs the rider rather than merely annotating the ride — so this one stays collapsed.
+    LegPreviewFrame(
+        previewTransitLeg(rideEvents = listOf(PREVIEW_RIDE_STOPS.first(), PREVIEW_INTERLINE_SEAM))
+    )
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Transit leg · unnamed route (ferry)")
+@Composable
+private fun TransitLegNoShortNamePreview() {
+    // No short name to badge, so the long name stands in its place and the boat glyph rides the spine —
+    // and with no GTFS colour, the whole leg falls back to one neutral hue rather than three.
+    LegPreviewFrame(previewFerryLeg())
+}
+
+// ---- bikeshare-leg previews ----------------------------------------------------------------------
+
+/** The pickup a Puget Sound rider actually gets today: a catalogued operator, an e-bike, no dock. */
+private fun previewLimePickup() = RentalPickup(
+    operator = RentalOperators.of("lime_seattle"),
+    vehicle = RentalVehicleKind.EBIKE,
+    stationName = null,
+    rangeMeters = 43356,
+    // No live network publishes a rental URI, so the chip opens the operator rather than this vehicle.
+    link = RentalLink.OperatorApp("com.limebike"),
+    fallback = RentalLink.Web("https://www.li.me/")
+)
+
+/** A rented-vehicle leg, ridden on [rental] — the shape a bikeshare itinerary's middle leg takes. */
+private fun previewRentalLeg(rental: RentalPickup) = TripLogEntry.Walk(
+    mode = StreetMode.BIKESHARE,
+    durationMinutes = 12,
+    distanceMeters = 3380.0,
+    isTransfer = false,
+    steps = emptyList(),
+    rental = rental
+)
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · known operator")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare leg · known operator, dark"
+)
+@Composable
+private fun BikeshareLegPreview() {
+    // What a Puget Sound rider actually gets today: a catalogued operator on its brand colour, an
+    // electric-assist bicycle with its remaining range, no dock to look for, and — the feed publishing
+    // no rental URI — a chip that opens the operator rather than claiming to unlock this bike. Drawn in
+    // both themes because a saturated brand colour is exactly what the chip's tinting has to tame.
+    LegPreviewFrame(previewRentalLeg(previewLimePickup()))
+}
+
+/** The walk that fetches the bike, the ride, and the walk from where it's left. */
+private fun previewBikeshareItinerary() = listOf(
+    TripLogEntry.Terminal(kind = TerminalKind.START, time = ServerTime(0L), place = "3rd Ave & Pike St"),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 3,
+        distanceMeters = 210.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head north on 3rd Ave", distanceMeters = 210.0))
+    ),
+    previewRentalLeg(previewLimePickup()),
+    TripLogEntry.Walk(
+        mode = StreetMode.WALK,
+        durationMinutes = 2,
+        distanceMeters = 140.0,
+        isTransfer = false,
+        steps = listOf(LogStep("Head west on Denny Way", distanceMeters = 140.0))
+    ),
+    TripLogEntry.Terminal(kind = TerminalKind.ARRIVE, time = ServerTime(17 * 60_000L), place = "Seattle Center")
+)
+
+@Preview(showBackground = true, widthDp = 400, heightDp = 420, name = "Bikeshare itinerary · walk, ride, walk")
+@Preview(
+    showBackground = true,
+    widthDp = 400,
+    heightDp = 420,
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
+    name = "Bikeshare itinerary · walk, ride, walk, dark"
+)
+@Composable
+private fun BikeshareItineraryPreview() {
+    // The ride between its neighbours — where the operator chip has to hold its own against the walk
+    // rows above and below it without swamping them.
+    LegsPreviewFrame(previewBikeshareItinerary())
+}
+
+@Preview(showBackground = true, widthDp = 400, name = "Bikeshare leg · docked, unknown operator")
+@Composable
+private fun BikeshareLegDockedPreview() {
+    // The other end of the range: a network the catalog has never heard of, wearing its raw id on a
+    // neutral chip, with a dock to name and nothing to link to. Nothing here is invented for it.
+    LegPreviewFrame(
+        previewRentalLeg(
+            RentalPickup(
+                operator = RentalOperators.of("some_city_bikes"),
+                vehicle = null,
+                stationName = "Pine St & 3rd Ave",
+                rangeMeters = null,
+                link = null
+            )
+        )
+    )
 }

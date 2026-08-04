@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
+import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.PreferenceUtils
 
@@ -73,18 +74,18 @@ internal val VEHICLE_REFRESH_PERIOD_MS = TimeUnit.SECONDS.toMillis(10)
 
 /**
  * The delay before the next vehicle refresh when (re)starting the poll — e.g. on resume. So resuming
- * mid-period waits only the remainder. Pure and unit-tested; [lastUpdated]/[now] are nanosecond
- * timestamps (`SystemClock.elapsedRealtimeNanos()`).
+ * mid-period waits only the remainder. Pure and unit-tested; both readings are on the monotonic clock
+ * ([ElapsedTime]), the only one that measures a real interval across a backgrounded map.
  *
- *  - never loaded ([lastUpdated] == 0) → a full period
+ *  - never loaded ([lastUpdated] == null) → a full period
  *  - already overdue → a near-immediate refresh (100 ms)
  *  - otherwise → the remaining time in the current period
  */
-internal fun nextVehicleDelay(lastUpdated: Long, now: Long): Long {
-    if (lastUpdated == 0L) {
+internal fun nextVehicleDelay(lastUpdated: ElapsedTime?, now: ElapsedTime): Long {
+    if (lastUpdated == null) {
         return VEHICLE_REFRESH_PERIOD_MS
     }
-    val elapsedMillis = TimeUnit.NANOSECONDS.toMillis(now - lastUpdated)
+    val elapsedMillis = (now - lastUpdated).inWholeMilliseconds
     return if (elapsedMillis > VEHICLE_REFRESH_PERIOD_MS) {
         100L
     } else {

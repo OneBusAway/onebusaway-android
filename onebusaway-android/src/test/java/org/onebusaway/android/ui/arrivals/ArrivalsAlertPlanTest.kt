@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.models.ObaSituation
 import org.onebusaway.android.models.contentKey
+import org.onebusaway.android.ui.compose.components.AlertSeverity
 
 /**
  * Unit tests for [planActiveAlerts], the pure fold that turns a stop's situations into active-alert

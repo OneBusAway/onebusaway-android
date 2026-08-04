@@ -25,20 +25,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotFocused
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.ui.compose.Channel
+import org.onebusaway.android.ui.compose.assertDominant
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 
@@ -83,6 +89,25 @@ class TripPlanFormRenderTest {
             "expected the resting form to measure 146dp (±$allowance), but it was $height",
             (height - 146.dp).value.absoluteValue <= allowance.value
         )
+    }
+
+    @Test
+    fun modePickersExpandToLabelsAndReportTheSelection() {
+        var vehicle: VehicleMode? = null
+        var street: StreetMode? = null
+        renderForm(
+            state = { plannedState },
+            onVehicleModeSelected = { vehicle = it },
+            onStreetModeSelected = { street = it }
+        )
+
+        composeRule.onNodeWithTag(TripPlanTestTags.VEHICLE_MODE).performClick()
+        composeRule.onNodeWithText("Rail only").performClick()
+        assertEquals(VehicleMode.RAIL, vehicle)
+
+        composeRule.onNodeWithTag(TripPlanTestTags.STREET_MODE).performClick()
+        composeRule.onNodeWithText("My own bike").performClick()
+        assertEquals(StreetMode.BICYCLE, street)
     }
 
     @Test
@@ -179,12 +204,107 @@ class TripPlanFormRenderTest {
         composeRule.onNodeWithTag(FROM_PICK_ON_MAP).assertIsDisplayed()
     }
 
+    /**
+     * Naming an endpoint from the menu ends the edit. The field is a text box only while a place is
+     * being chosen, so a choice that leaves it focused leaves the keyboard standing over the map with
+     * nothing left for the rider to type — worst with "Your location", which they reach for precisely
+     * to avoid typing. Both kinds of row are checked, since a geocoded result names the endpoint just
+     * as completely. The keyboard itself isn't assertable here; the focus that raises it is.
+     */
+    @Test
+    fun choosingFromTheMenuEndsTheEdit() {
+        renderForm(
+            plannedState.copy(
+                from = TripEndpoint.FreeText(""),
+                toSuggestions = listOf(TripEndpoint.Geocoded("Pike Brewing Company", 47.60, -122.34))
+            )
+        )
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_MY_LOCATION).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
+
+        // The second half is also the handoff: the row is editable again after the first choice let go
+        // of the focus it shares with its sibling.
+        composeRule.onNodeWithTag(TO_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Pike Brewing Company").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TO_FIELD).assertIsNotFocused()
+    }
+
+    /**
+     * The keyboard's accept key takes the top result. It used to be wired to nothing: it closed the
+     * keyboard and left the endpoint as the free text the rider had typed, which no plan can be made
+     * from — so the one key that says "that's the one" was the one way of leaving the field that
+     * didn't name a place.
+     */
+    @Test
+    fun theAcceptKeyTakesTheTopSuggestion() {
+        val top = TripEndpoint.Geocoded("Pike St & 3rd Ave", 47.61, -122.33, isTransit = true)
+        var chosen: TripEndpoint.Geocoded? = null
+        renderForm(
+            state = {
+                plannedState.copy(
+                    from = TripEndpoint.FreeText("Pike"),
+                    fromSuggestions = listOf(top, TripEndpoint.Geocoded("Pike Brewing Company", 47.60, -122.34))
+                )
+            },
+            onSelect = { slot, place -> if (slot == TripEndpointSlot.FROM) chosen = place }
+        )
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).performImeAction()
+        composeRule.waitForIdle()
+
+        assertEquals("the accept key should resolve the endpoint", top, chosen)
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
+    }
+
+    /** With nothing to accept, the key still ends the edit rather than leaving the keyboard standing. */
+    @Test
+    fun theAcceptKeyEndsTheEditWithNoSuggestions() {
+        renderForm(plannedState.copy(from = TripEndpoint.FreeText("Pike")))
+
+        composeRule.onNodeWithTag(FROM_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(FROM_FIELD).performImeAction()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(FROM_FIELD).assertIsNotFocused()
+    }
+
     @Test
     fun theActionBarStatesWhenTheTripIsFor() {
         renderForm(plannedState)
 
         composeRule.onNodeWithTag(TripPlanTestTags.WHEN_MODE).assertIsDisplayed()
         composeRule.onNodeWithText("now").assertIsDisplayed()
+    }
+
+    /**
+     * The time menu offers the two answers a rider has — leave now, or say when — and the second is one
+     * row, not the separate "Choose date…"/"Choose time…" pair it replaced (#2117). Both of those set
+     * the *whole* instant from one of its halves, so pinning tomorrow evening cost two trips through
+     * the menu and two re-plans.
+     */
+    @Test
+    fun theTimeMenuPinsAnInstantInOneRow() {
+        var picks = 0
+        renderForm(state = { plannedState }, onPickDateTime = { picks++ })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+        composeRule.onNodeWithText("Choose date and time…").performClick()
+
+        assertEquals("the one row should open the combined picker", 1, picks)
+        assertEquals(
+            "the split date/time rows should be gone",
+            0,
+            composeRule.onAllNodesWithText("Choose time…").fetchSemanticsNodes().size
+        )
     }
 
     /**
@@ -207,19 +327,76 @@ class TripPlanFormRenderTest {
             }
         )
 
-        val withNow = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withNow = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         departNow = false
         composeRule.waitForIdle()
-        val withPinnedTime = composeRule.onNodeWithContentDescription(ADVANCED_SETTINGS)
-            .getUnclippedBoundsInRoot().right
+        val withPinnedTime = bounds(TripPlanTestTags.ADVANCED_SETTINGS).right
 
         assertEquals(
             "the trailing buttons moved when the time label grew",
             withNow,
             withPinnedTime
         )
+    }
+
+    /**
+     * Reverse acts on the two endpoints, so it sits beside them rather than in the action bar (#2110):
+     * clear of both fields and centred across the pair, which puts it on the divider between them.
+     * Position is the whole point of the move, so it's asserted rather than left to the eye.
+     */
+    @Test
+    fun reverseSitsBetweenTheTwoEndpointFields() {
+        renderForm(plannedState)
+
+        val button = bounds(TripPlanTestTags.REVERSE)
+        val from = bounds(FROM_FIELD)
+        val to = bounds(TO_FIELD)
+
+        assertTrue(
+            "reverse should sit clear of both fields, but started at ${button.left} against " +
+                "${from.right} and ${to.right}",
+            button.left >= from.right && button.left >= to.right
+        )
+        // Compare the rendered pixel centres exactly; any different pixel is a real misalignment.
+        val buttonCenter = (button.top + button.bottom) / 2f
+        val betweenRows = (from.bottom + to.top) / 2f
+        val buttonCenterPx = with(composeRule.density) { buttonCenter.toPx() }.roundToInt()
+        val dividerCenterPx = with(composeRule.density) { betweenRows.toPx() }.roundToInt()
+        assertEquals(
+            "reverse should be centred between the rows at $betweenRows, but sat at $buttonCenter",
+            dividerCenterPx,
+            buttonCenterPx
+        )
+    }
+
+    /**
+     * Reverse and additional-preferences sit in one trailing column, across two bands that lay
+     * themselves out independently. The form spells that out — both bands take their width and their
+     * trailing gutter from one shared modifier, and every button one size — but nothing makes a band
+     * keep using either, so the alignment is still the part of the move most able to drift, and the
+     * part worth pinning.
+     */
+    @Test
+    fun reverseIsColumnAlignedWithTheActionBarsTrailingButton() {
+        renderForm(plannedState)
+
+        assertEquals(
+            "reverse should share a trailing edge with additional-preferences",
+            bounds(TripPlanTestTags.ADVANCED_SETTINGS).right,
+            bounds(TripPlanTestTags.REVERSE).right
+        )
+    }
+
+    /** The form is stateless, so the swap itself is the host's; what's checked here is the ask. */
+    @Test
+    fun tappingReverseFiresTheReverseCallback() {
+        var reversed = false
+        renderForm(state = { plannedState }, onReverse = { reversed = true })
+
+        composeRule.onNodeWithTag(TripPlanTestTags.REVERSE).performClick()
+
+        assertTrue("tapping reverse should ask the host to swap the endpoints", reversed)
     }
 
     /**
@@ -305,24 +482,8 @@ class TripPlanFormRenderTest {
         assertDominant(railDot(row = 1), Channel.BLUE, "a destination at the device's position")
     }
 
-    private enum class Channel { RED, GREEN, BLUE }
-
-    /**
-     * Dominance rather than an exact hex, so the rule survives a palette tweak and holds in both
-     * themes — but strictly, with no tolerance to tune: the sample is the centre of a 12dp filled
-     * circle, so it is the fill colour itself, not an antialiased edge.
-     */
-    private fun assertDominant(color: Color, channel: Channel, what: String) {
-        val (dominant, others) = when (channel) {
-            Channel.RED -> color.red to listOf(color.green, color.blue)
-            Channel.GREEN -> color.green to listOf(color.red, color.blue)
-            Channel.BLUE -> color.blue to listOf(color.red, color.green)
-        }
-        assertTrue(
-            "$what should read $channel, but its dot was $color",
-            others.all { dominant > it }
-        )
-    }
+    /** Where a tagged node sits in the form, for the tests that are about position. */
+    private fun bounds(tag: String) = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
 
     /** Samples the centre of a row's rail dot. Mirrors the form's own 4dp pad / 48dp row / 1dp rule. */
     private fun railDot(row: Int): Color {
@@ -346,7 +507,11 @@ class TripPlanFormRenderTest {
         state: () -> TripPlanFormState,
         onQueryChange: (TripEndpointSlot, String) -> Unit = { _, _ -> },
         onSelect: (TripEndpointSlot, TripEndpoint.Geocoded) -> Unit = { _, _ -> },
-        onCurrentLocation: (TripEndpointSlot) -> Unit = {}
+        onCurrentLocation: (TripEndpointSlot) -> Unit = {},
+        onVehicleModeSelected: (VehicleMode) -> Unit = {},
+        onStreetModeSelected: (StreetMode) -> Unit = {},
+        onReverse: () -> Unit = {},
+        onPickDateTime: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
@@ -359,9 +524,11 @@ class TripPlanFormRenderTest {
                         onPickOnMap = {},
                         onSetArriving = {},
                         onDepartNow = {},
-                        onPickDate = {},
-                        onPickTime = {},
-                        onReverse = {},
+                        onPickDateTime = onPickDateTime,
+                        availableStreetModes = StreetMode.entries,
+                        onVehicleModeSelected = onVehicleModeSelected,
+                        onStreetModeSelected = onStreetModeSelected,
+                        onReverse = onReverse,
                         onAdvancedSettings = {}
                     )
                 }
@@ -371,9 +538,6 @@ class TripPlanFormRenderTest {
 
     private companion object {
         const val FORM = "tripPlanFormRoot"
-
-        /** The advanced-settings button's contentDescription — the bar's last trailing child. */
-        const val ADVANCED_SETTINGS = "Additional Trip Preferences"
         val RAIL_WIDTH_DP = 44.dp
         val FROM_FIELD = TripPlanTestTags.FROM_PREFIX + TripPlanTestTags.FIELD_SUFFIX
         val TO_FIELD = TripPlanTestTags.TO_PREFIX + TripPlanTestTags.FIELD_SUFFIX

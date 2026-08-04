@@ -563,6 +563,7 @@
     <string name="preferences_experimental_regions_title">Regiony eksperymentalne</string>
     <string name="preferences_experimental_regions_summary">Włącza regiony, które moga być niestabilne
     </string>
+    <string name="map_zoom_in_for_more_stops">Przybliż mapę, aby zobaczyć wszystkie przystanki</string>
     <string name="preferences_experimental_regions_enable_warning">Regiony eksperymentalne moga być niestabilne
         z nieprawdziwym czasem przyjazdu! Iść dalej?
     </string>
@@ -781,6 +782,115 @@
         <item>Incognito autorstwa Christophera Schreinera</item>
         <item>Trójkąt flagi autorstwa Austina Andrewsa</item>
     </string-array>
+
+    <!-- Trip Planner strings -->
+
+    <!-- Placeholders shown in the empty directions endpoint fields. -->
+    <string name="trip_plan_from_hint">Wybierz start podróży</string>
+    <string name="trip_plan_to_hint">Wybierz cel podróży</string>
+    <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
+         sentence next to Leaving/Arriving, not as a heading. -->
+    <string name="trip_plan_now">teraz</string>
+    <!-- A pinned departure/arrival in the time callout: date, then time. -->
+    <string name="trip_plan_date_time">%1$s, %2$s</string>
+    <string name="trip_plan_choose_date">Wybierz datę…</string>
+    <string name="trip_plan_choose_time">Wybierz godzinę…</string>
+    <!-- Accessibility click label for either half of the time callout. -->
+    <string name="trip_plan_change_when">Zmień czas</string>
+    <string name="trip_plan_leaving">Odjazd</string>
+    <string name="trip_plan_arriving">Przyjazd</string>
+    <string name="trip_plan_date">Data</string>
+    <string name="trip_plan_time">Godzina</string>
+    <string name="trip_plan_pick_on_map">Wybierz punkt na mapie</string>
+    <string name="trip_plan_use_this_location">Użyj tej lokalizacji</string>
+    <string name="trip_plan_map_location">Wybrana lokalizacja</string>
+    <string name="directions_from_here">Trasa stąd</string>
+    <string name="directions_to_here">Trasa dotąd</string>
+    <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
+    <string name="directions_stop_no_arrivals">Brak najbliższych odjazdów</string>
+    <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
+         stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
+    <string name="directions_whichever_comes_first">dowolny z nich (co przyjedzie pierwsze)</string>
+    <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
+    <string name="trip_plan_options_scroll_previous">Pokaż poprzednie opcje</string>
+    <string name="trip_plan_options_scroll_more">Pokaż więcej opcji</string>
+    <!-- Accessibility announcements for values emphasized as the best among the itinerary options. -->
+    <string name="trip_plan_winner_shortest_travel_time">Najkrótszy czas podróży</string>
+    <string name="trip_plan_winner_least_walking">Najmniej chodzenia</string>
+    <string name="trip_plan_winner_earliest_arrival">Najwcześniejszy przyjazd</string>
+    <string name="trip_plan_winner_latest_departure">Najpóźniejszy odjazd</string>
+    <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->
+    <string name="trip_plan_expand_leg">Pokaż szczegóły</string>
+    <string name="trip_plan_collapse_leg">Ukryj szczegóły</string>
+    <!-- An on-street leg that connects two transit rides (a transfer), vs. a first/last-mile one. One
+         string per travel mode, rather than assembling a verb and "to transfer" at runtime, so the
+         phrasing stays a translator's call. -->
+    <string name="trip_plan_walk_transfer">Przejdź pieszo na przesiadkę</string>
+    <string name="trip_plan_bike_transfer">Przejedź rowerem na przesiadkę</string>
+    <string name="trip_plan_car_transfer">Przejedź samochodem na przesiadkę</string>
+    <!-- A leg's elapsed duration in the trip-log's narrow time column. Abbreviated units, kept inside
+         the format string (rather than appended in code) so spacing and word order stay translatable.
+         Keep the two forms spaced alike — they share one column. -->
+    <!-- Under an hour: %1$d is whole minutes -->
+    <string name="trip_plan_delta_minutes">%1$d min</string>
+    <!-- An hour or more: %1$d is whole hours, %2$d the remaining minutes -->
+    <string name="trip_plan_delta_hours_minutes">%1$d godz. %2$d min</string>
+    <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
+    <string name="trip_plan_realtime_on_time">Zgodnie z planem</string>
+    <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->
+    <plurals name="trip_plan_realtime_late">
+        <item quantity="one">%1$d min opóźnienia</item>
+        <item quantity="few">%1$d min opóźnienia</item>
+        <item quantity="many">%1$d min opóźnienia</item>
+        <item quantity="other">%1$d min opóźnienia</item>
+    </plurals>
+    <plurals name="trip_plan_realtime_early">
+        <item quantity="one">%1$d min przed czasem</item>
+        <item quantity="few">%1$d min przed czasem</item>
+        <item quantity="many">%1$d min przed czasem</item>
+        <item quantity="other">%1$d min przed czasem</item>
+    </plurals>
+    <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
+    <plurals name="trip_plan_intermediate_stops">
+        <item quantity="one">%1$d przystanek</item>
+        <item quantity="few">%1$d przystanki</item>
+        <item quantity="many">%1$d przystanków</item>
+        <item quantity="other">%1$d przystanka</item>
+    </plurals>
+
+    <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
+    <!-- Errors -->
+    <!-- Trip-plan error category headers (the consistent heading on the error snackbar; the specific
+         wire message is shown as the reason line beneath). One header per category, so e.g. every
+         no-route failure reads "Cannot find route" with its distinct reason below. -->
+    <string name="tripplanner_error_header_connectivity">Nie można połączyć się z planerem podróży</string>
+    <string name="tripplanner_error_header_location">Nie można znaleźć tej lokalizacji</string>
+    <string name="tripplanner_error_header_schedule">Brak kursów w wybranym czasie</string>
+    <string name="tripplanner_error_header_no_route">Nie znaleziono trasy</string>
+    <string name="tripplanner_error_header_request">Nie udało się zaplanować tej podróży</string>
+    <string name="tripplanner_error_not_defined">Przepraszamy, coś poszło nie tak. Spróbuj ponownie.</string>
+    <string name="tripplanner_error_request_timeout">Sprawdź połączenie z internetem i spróbuj ponownie.</string>
+    <string name="tripplanner_error_system">Sprawdź połączenie z internetem i spróbuj ponownie.</string>
+    <string name="tripplanner_error_outside_bounds">Punkt początkowy lub docelowy znajduje się poza obszarem obsługi komunikacji</string>
+    <string name="tripplanner_error_path_not_found">Nie udało się znaleźć odpowiedniej trasy między punktem początkowym a docelowym</string>
+    <string name="tripplanner_error_no_transit_times">Rozkłady jazdy dla wybranej daty są niedostępne</string>
+    <string name="tripplanner_error_outside_service_period">Wybrana data wykracza poza dostępny rozkład jazdy</string>
+    <string name="tripplanner_error_bogus_parameter">Coś poszło nie tak. Zmień opcje podróży i spróbuj ponownie.</string>
+    <string name="tripplanner_error_geocode_from_not_found">Nie znaleziono punktu początkowego</string>
+    <string name="tripplanner_error_geocode_to_not_found">Nie znaleziono celu podróży</string>
+    <string name="tripplanner_error_geocode_from_to_not_found">Nie znaleziono punktu początkowego ani celu podróży</string>
+    <string name="tripplanner_error_too_close">Trasa jest zbyt krótka</string>
+    <string name="tripplanner_error_location_not_accessible">Wybrana lokalizacja jest niedostępna</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Punkt początkowy jest jednoznacznie nieokreślony</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Cel podróży jest jednoznacznie nieokreślony</string>
+    <string name="tripplanner_error_geocode_from_to_ambiguous">Punkt początkowy i cel podróży są niejednoznaczne</string>
+    <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje trasy rowerowej i spróbuj ponownie</string>
+    <!-- When routing from my location -->
+    <string name="tripplanner_current_location">Moja lokalizacja</string>
+
+    <string name="tripplanner_reverse">Odwróć trasę</string>
+
+
     <string name="title_activity_about">O aplikacji</string>
 
     <string name="preferred_temperature_unit">Preferowana jednostka temperatury</string>
@@ -827,39 +937,13 @@
     <string name="more_info">Więcej informacji</string>
     <string name="display_test_alerts">Wyświetl alerty testowe</string>
     <string name="display_test_wide_alerts_for_regions">Wyświetl szerokie alerty testowe dla regionów</string>
+    <string name="preferences_push_test_device_title">Zarejestruj jako urządzenie testowe</string>
+    <string name="preferences_push_test_device_summary">Rejestruje to urządzenie w grupie testowej do podglądu powiadomień push o alertach dotyczących usług. Wymaga podania nazwy urządzenia testowego.</string>
+    <string name="preferences_push_test_device_unnamed_summary">Jeszcze nieaktywne &#8212; ustaw nazwę urządzenia testowego poniżej. Do tego czasu urządzenie rejestruje się w trybie normalnym.</string>
+    <string name="preferences_push_test_device_name_title">Nazwa urządzenia testowego</string>
+    <string name="preferences_push_test_device_name_summary">Identyfikuje to urządzenie dla administratorów przedsiębiorstwa komunikacyjnego, np. &#8220;Pixel 9 Piotra&#8221;. Dopóki nie zostanie ustawiona, urządzenie rejestruje się normalnie zamiast jako testowe.</string>
     <string name="no_description_available">Brak dostępnego opisu</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
-
-    <!-- Trip Planner strings -->
-    <string name="trip_plan_leaving">Wyjazd</string>
-    <string name="trip_plan_arriving">Przyjazd</string>
-    <string name="trip_plan_date">Data</string>
-    <string name="trip_plan_time">Czas</string>
-
-    <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
-    <!-- Errors -->
-    <string name="tripplanner_error_not_defined">Przepraszamy, coś poszło nie tak. Spróbuj ponownie.</string>
-    <string name="tripplanner_error_request_timeout">Sprawdź połączenie internetowe i spróbuj ponownie.
-    </string>
-    <string name="tripplanner_error_system">Sprawdź połączenie internetowe i spróbuj ponownie.
-    </string>
-    <string name="tripplanner_error_outside_bounds">Miejsce początkowe lub docelowe jest poza obszarem sieci transportowej</string>
-    <string name="tripplanner_error_path_not_found">Nie można znaleźć pasującej trasy między miejscem początkowym a docelowym</string>
-    <string name="tripplanner_error_no_transit_times">Czasy przejazdów dla wybranej daty są niedostępne</string>
-    <string name="tripplanner_error_bogus_parameter">Coś poszło nie tak. Zmień opcje podróży i spróbuj ponownie.</string>
-    <string name="tripplanner_error_geocode_from_not_found">Nie znaleziono miejsca początkowego</string>
-    <string name="tripplanner_error_geocode_to_not_found">Nie znaleziono miejsca docelowego</string>
-    <string name="tripplanner_error_geocode_from_to_not_found">Nie znaleziono miejsca początkowego i docelowego</string>
-    <string name="tripplanner_error_too_close">Podróż jest zbyt krótka</string>
-    <string name="tripplanner_error_location_not_accessible">Wybrana lokalizacja jest niedostępna</string>
-    <string name="tripplanner_error_geocode_from_ambiguous">Miejsce początkowe jest niejednoznaczne</string>
-    <string name="tripplanner_error_geocode_to_ambiguous">Miejsce docelowe jest niejednoznaczne</string>
-    <string name="tripplanner_error_geocode_from_to_ambiguous">Miejsce początkowe i docelowe są niejednoznaczne</string>
-    <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje roweru i spróbuj ponownie</string>
-    <!-- When routing from my location -->
-    <string name="tripplanner_current_location">Aktualna lokalizacja</string>
-    <string name="tripplanner_reverse">Odwróć</string>
-
 
     <!-- Step-by-step screen -->
     <!-- Transit -->
@@ -972,6 +1056,20 @@
     <string name="wheelchair_accessible">Unikaj schodów</string>
     <string name="transit_directions_bikeshare_label">Rower miejski</string>
 
+    <!-- Wybór trybu, podzielony na dwa niezależne pytania: jakimi pojazdami pasażer będzie podróżować,
+         oraz jak pokonuje odcinki uliczne. Nie każda opcja uliczna jest dostępna wszędzie -
+         rower miejski wymaga sieci wypożyczalni, a zabranie własnego roweru wymaga regionu z OTP2. -->
+    <string name="vehicle_mode_label">Przejazd</string>
+    <string name="vehicle_mode_all_transit">Dowolny transport publiczny</string>
+    <string name="vehicle_mode_bus">Tylko autobus</string>
+    <string name="vehicle_mode_rail">Tylko pociąg/tramwaj</string>
+    <string name="vehicle_mode_none">Bez transportu publicznego</string>
+
+    <string name="street_mode_label">Poruszanie się</string>
+    <string name="street_mode_walk">Pieszo</string>
+    <string name="street_mode_walk_and_bikeshare">Pieszo i rower miejski</string>
+    <string name="street_mode_bicycle">Własny rower</string>
+
     <!-- Bikeshare -->
     <string name="bike_info_window_bikes_title">Rowery</string>
     <string name="bike_info_window_spaces_title">Miejsca</string>
@@ -993,4 +1091,10 @@
     <!-- Accessibility content descriptions for ETA rows -->
 
     <string name="map_option_layers">Przycisk warstw mapy</string>
+
+    <!-- Ekran obsługiwanych przewoźników -->
+    <string name="agencies_title">Obsługiwani przewoźnicy</string>
+    <string name="agencies_empty">Nie znaleziono przewoźników dla bieżącego regionu.</string>
+    <string name="retry">Spróbuj ponownie</string>
+    <string name="navigate_up">Przejdź w górę</string>
 </resources>

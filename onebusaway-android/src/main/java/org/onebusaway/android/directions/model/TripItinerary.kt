@@ -196,6 +196,10 @@ data class TripPlace(
  * that published a name.
  *
  * Every field is what the *feed* stated, carried unjudged:
+ *  - [kind] is which of those two shapes OTP populated, recorded because merging them here would
+ *    otherwise lose it — and [id] means a different thing in each (a `vehicleId`, or a `stationId`).
+ *    Read it, never [stationName], to tell a loose vehicle from a dock: a station that published no
+ *    name is still a station. Null only on the OTP1 path, which states neither.
  *  - [id] is OTP's network-qualified `network:id`, the identity the map's bike layer filters on. It is
  *    not shown to the rider: the ids the live Puget Sound networks publish are UUIDs, which no rider
  *    can match against a bike in front of them.
@@ -219,6 +223,7 @@ data class TripPlace(
 @Serializable
 data class TripVehicleRental(
     val id: String? = null,
+    val kind: RentalEndpointKind? = null,
     val stationName: String? = null,
     val networkId: String? = null,
     val networkUrl: String? = null,
@@ -228,6 +233,17 @@ data class TripVehicleRental(
     val propulsion: RentalPropulsion? = null,
     val rangeMeters: Int? = null
 )
+
+/**
+ * Which rental endpoint a [TripVehicleRental] describes: a free-floating vehicle
+ * (`Place.rentalVehicle`) or a dock (`Place.vehicleRentalStation`).
+ *
+ * Structural, from which field OTP populated — not read off the values, which cannot tell them apart:
+ * both carry an id, and a dock may publish no name. It decides what [TripVehicleRental.id] identifies,
+ * which is why a link that names a *vehicle* to the operator's app (#2158) is built for one and never
+ * the other.
+ */
+enum class RentalEndpointKind { VEHICLE, STATION }
 
 /** Mirrors OTP2's `FormFactor` wire vocabulary exactly (which mirrors GBFS's `vehicle_type`). */
 enum class RentalFormFactor { BICYCLE, CAR, CARGO_BICYCLE, MOPED, OTHER, SCOOTER, SCOOTER_SEATED, SCOOTER_STANDING }

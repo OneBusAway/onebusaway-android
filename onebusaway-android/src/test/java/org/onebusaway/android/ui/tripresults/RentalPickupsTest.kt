@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.directions.model.RentalEndpointKind
 import org.onebusaway.android.directions.model.RentalFormFactor
 import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripLeg
@@ -98,8 +99,9 @@ class RentalPickupsTest {
 
     @Test
     fun `a deep link with no web one beside it falls back past every other custom scheme`() {
-        // Nothing else in the list can be one, so this is really the fallback filter's floor: an
-        // Android URI the device can't answer must not fall back to another URI it can't answer.
+        // The fallback filter's floor: an Android URI the device can't answer must not fall back to
+        // another URI it can't answer — including the one the app synthesizes, which sits right behind
+        // this one and would fail for exactly the same reason.
         val pickup = rentalPickup(rental(networkId = "lime_seattle", androidUri = "lime://vehicle/abc"))!!
         assertEquals(RentalLink.Deep("lime://vehicle/abc", mayNeedTheirApp = true), pickup.link)
         assertEquals(RentalLink.OperatorApp("com.limebike"), pickup.fallback)
@@ -115,11 +117,67 @@ class RentalPickupsTest {
     }
 
     @Test
-    fun `without rental uris a catalogued operator still has somewhere to send the rider`() {
-        // Every vehicle the live Puget Sound deployment serves is this case: no rentalUris at all.
+    fun `without rental uris the app builds the operator's own link to the vehicle`() {
+        // Every vehicle the live Puget Sound deployment serves is this case: no rentalUris at all. The
+        // shape is Lime's own, from the cities where it publishes the field (see RentalOperators) —
+        // pinned here so a change to it has to be a deliberate one.
         val pickup = rentalPickup(rental(networkId = "lime_seattle"))!!
+        val link = pickup.link as RentalLink.Synthesized
+        assertEquals("limebike", link.template.scheme)
+        assertEquals("map", link.template.host)
+        assertEquals("selected_vehicle_id", link.template.vehicleIdParam)
+        assertEquals("generated_at", link.template.timestampParam)
+        // The network prefix OTP qualifies the id with is not part of the operator's own id for it.
+        assertEquals("abc", link.vehicleId)
+        // It can fail for want of the app, so it keeps the fallback the plain app launch would have
+        // been — which is also why aiming it costs nothing: a rider without Lime still lands on the
+        // Play listing rather than on a marketing page.
+        assertEquals(RentalLink.OperatorApp("com.limebike"), pickup.fallback)
+    }
+
+    @Test
+    fun `an operator that publishes a link keeps it, however good the one we could build`() {
+        // Ordering: feed-published first, synthesized second. Both name the vehicle, but only one of
+        // them is the operator saying what they meant.
+        val pickup = rentalPickup(rental(networkId = "lime_seattle", androidUri = "limebike://map?x=1"))!!
+        assertEquals(RentalLink.Deep("limebike://map?x=1", mayNeedTheirApp = true), pickup.link)
+    }
+
+    @Test
+    fun `a catalogued operator with no sourced link shape opens its app, not a guess`() {
+        // Bird's own GBFS publishes no Android URI that takes a vehicle id, so nothing is invented for
+        // it: the row opens the app it already knows about (#2158).
+        val pickup = rentalPickup(rental(networkId = "bird-seattle-washington"))!!
+        assertEquals(RentalLink.OperatorApp("co.bird.android"), pickup.link)
+        assertEquals(RentalLink.Web("https://www.bird.co/"), pickup.fallback)
+    }
+
+    @Test
+    fun `a dock gets no vehicle link, however well the operator is known`() {
+        // The id of a station endpoint is a station id; no `selected_vehicle_id` will ever match it, so
+        // the row falls through to the app launch rather than naming a vehicle that isn't one.
+        val pickup = rentalPickup(
+            rental(networkId = "lime_seattle", kind = RentalEndpointKind.STATION, stationName = "Pine St")
+        )!!
         assertEquals(RentalLink.OperatorApp("com.limebike"), pickup.link)
-        assertEquals(RentalLink.Web("https://www.li.me/"), pickup.fallback)
+    }
+
+    @Test
+    fun `an id with nothing under its network prefix builds no link`() {
+        // An empty `selected_vehicle_id` would be a link that names no vehicle while claiming to.
+        assertEquals(
+            RentalLink.OperatorApp("com.limebike"),
+            rentalPickup(rental(networkId = "lime_seattle", id = "lime_seattle:"))!!.link
+        )
+        assertEquals(
+            RentalLink.OperatorApp("com.limebike"),
+            rentalPickup(rental(networkId = "lime_seattle", id = null))!!.link
+        )
+        // An unqualified id is the id: nothing to strip, and it is what the operator would know it by.
+        assertEquals(
+            "solo",
+            (rentalPickup(rental(networkId = "lime_seattle", id = "solo"))!!.link as RentalLink.Synthesized).vehicleId
+        )
     }
 
     @Test
@@ -135,7 +193,13 @@ class RentalPickupsTest {
 
     @Test
     fun `a station pickup names its dock`() {
-        val docked = rentalPickup(rental(networkId = "some_city_bikes", stationName = "Pine St & 3rd Ave"))!!
+        val docked = rentalPickup(
+            rental(
+                networkId = "some_city_bikes",
+                kind = RentalEndpointKind.STATION,
+                stationName = "Pine St & 3rd Ave"
+            )
+        )!!
         assertEquals("Pine St & 3rd Ave", docked.stationName)
         // Nothing to walk to on a free-floating vehicle, and the row says nothing rather than
         // inventing a place.
@@ -159,7 +223,9 @@ class RentalPickupsTest {
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
             from = place(rental(networkId = "lime_seattle")),
-            to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
+            to = place(
+                rental(networkId = "some_city_bikes", kind = RentalEndpointKind.STATION, stationName = "Dock")
+            )
         )
         // Where the rider *gets* the bike decides whose it is and whether they're hunting for a dock.
         assertEquals("Lime", leg.rentalPickup()?.operator?.displayName)
@@ -173,7 +239,9 @@ class RentalPickupsTest {
         val leg = TripLeg(
             mode = TripMode.BICYCLE,
             from = TripPlace(name = "Origin"),
-            to = place(rental(networkId = "some_city_bikes", stationName = "Dock"))
+            to = place(
+                rental(networkId = "some_city_bikes", kind = RentalEndpointKind.STATION, stationName = "Dock")
+            )
         )
         assertEquals("Dock", leg.rentalPickup()?.stationName)
     }
@@ -222,9 +290,12 @@ class RentalPickupsTest {
         stationName: String? = null,
         formFactor: RentalFormFactor? = null,
         propulsion: RentalPropulsion? = null,
-        rangeMeters: Int? = null
+        rangeMeters: Int? = null,
+        id: String? = "$networkId:abc",
+        kind: RentalEndpointKind = RentalEndpointKind.VEHICLE
     ) = TripVehicleRental(
-        id = "$networkId:abc",
+        id = id,
+        kind = kind,
         stationName = stationName,
         networkId = networkId,
         networkUrl = networkUrl,

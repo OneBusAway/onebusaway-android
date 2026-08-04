@@ -160,19 +160,28 @@ object ExternalIntents {
     }
 
     /**
-     * Opens a URI published by a transit feed — a rental operator's deep link to one vehicle (#2150) —
-     * reporting whether anything on the device handled it.
+     * Opens a rental operator's deep link to one vehicle — the one their feed published (#2150), or the
+     * one the app built to their own published shape (#2158) — reporting whether anything on the device
+     * handled it.
      *
-     * Unlike [goToUrl] this doesn't toast on failure: the URI came from a feed rather than from the
-     * user, and "no app for `lime://…`" is the caller's cue to fall back, not an error to put in front
-     * of them.
+     * Unlike [goToUrl] this doesn't toast on failure: the URI wasn't typed by the user, and "no app for
+     * `limebike://…`" is the caller's cue to fall back, not an error to put in front of them.
+     *
+     * Note what this can and cannot report. It answers "did anything on the device claim the scheme?" —
+     * so a device without the operator's app falls back cleanly. It cannot see the operator's app taking
+     * the URI and then failing on its contents, which is a real outcome for the link the app builds
+     * itself (see `RentalOperators.LIME_VEHICLE_URI`): there the hand-off succeeded, and the rider is
+     * looking at the operator's error screen with no fallback left to run.
      */
-    fun openFeedUri(context: Context, uri: String): Boolean = try {
-        context.startActivity(Intent(Intent.ACTION_VIEW, uri.toUri()))
+    fun openFeedUri(context: Context, uri: Uri): Boolean = try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
         true
     } catch (_: ActivityNotFoundException) {
         false
     }
+
+    /** [openFeedUri] for a URI the feed published as a string. */
+    fun openFeedUri(context: Context, uri: String): Boolean = openFeedUri(context, uri.toUri())
 
     fun goToPhoneDialer(context: Context, url: String) {
         val intent = Intent(Intent.ACTION_DIAL)

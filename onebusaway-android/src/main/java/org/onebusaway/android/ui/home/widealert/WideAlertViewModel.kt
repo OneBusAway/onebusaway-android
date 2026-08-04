@@ -48,7 +48,9 @@ class WideAlertViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            regionRepo.region.map { it?.id }.distinctUntilChanged().flatMapLatest { regionId ->
+            // The *sidecar's* id for the region (#2165) — it's what the alerts URL embeds, and for
+            // every region but a deep-link-added one it is the same value as Region.id.
+            regionRepo.region.map { it?.sidecarId }.distinctUntilChanged().flatMapLatest { regionId ->
                 if (regionId == null) flowOf(null) else wideAlertsRepo.wideAlerts(regionId.toString())
             }.collect { _wideAlert.value = it }
         }

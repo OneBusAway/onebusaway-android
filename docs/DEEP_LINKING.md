@@ -36,8 +36,14 @@ makes it current. Ampersands inside a nested URL must be percent-encoded as `%26
 | `otp-url` | no | `Region.otpBaseUrl` — the trip-planning server |
 | `sidecar-url` | no | `Region.sidecarBaseUrl` |
 | `umami-url` / `umami-id` | no | `Region.umamiAnalytics` |
+| `region-id` | no | `Region.sidecarRegionId` — the id the **sidecar** knows this deployment by |
 
-A custom region behaves like a directory region with three deliberate differences:
+`region-id` is what the sidecar itself emits on the links it generates
+([obacloud#1040](https://github.com/OneBusAway/obacloud/pull/1040)). It is optional on both ends: a link
+without it (or with a value that isn't a number) is accepted unchanged, it just leaves the region unable
+to reach the sidecar's region-scoped endpoints. See "Two ids" below.
+
+A custom region behaves like a directory region with four deliberate differences:
 
 - **It survives regions-directory refreshes.** `RegionDao.replaceAll` deletes only `custom = 0` rows, so
   a refresh can't take the rider's own region with it, and `RegionCache.loadRegions` unions custom
@@ -48,9 +54,35 @@ A custom region behaves like a directory region with three deliberate difference
   auto-selection must not silently undo.
 - **Its id is negative** (counting down from `-2`), so it can't collide with a directory id (those are
   `>= 0`) or with the `-1` "no region" sentinel in the region-id preference. Ids are never reused, so a
-  stale reference resolves to nothing rather than to somebody else's server.
+  stale reference resolves to nothing rather than to somebody else's server. This stays true even when
+  the link supplies `region-id` — see below.
+- **It may carry two ids.** `Region.id` is ours; `Region.sidecarRegionId` is the server's.
 
 Re-sending the same `oba-url` **updates that region in place** rather than adding a duplicate.
+
+#### Two ids
+
+`Region.id` is a primary key we assign, and for a custom region it is a locally-invented negative number
+the sidecar has never heard of. That id is not inert — it is formatted straight into every region-scoped
+sidecar URL (`…/api/v2/regions/{id}/push_registrations`, `…/api/v2/regions/{id}/alarms`, and the v1
+weather / studies / alerts endpoints), so before
+[#2165](https://github.com/OneBusAway/onebusaway-android/issues/2165) a deep-link-added region addressed
+all of them with an id the server would 404. Service-alert push registration and arrival reminders could
+never work for one.
+
+`region-id` fixes that, and is kept as a **separate** field (`Region.sidecarRegionId`) rather than
+adopted as `Region.id`:
+
+- Every sidecar call reads `Region.sidecarId` (`sidecarRegionId ?: id`). A directory region has no
+  override and needs none — our primary key *is* the directory's id.
+- The local id stays negative, so the id-space invariant above survives intact. Adopting the server's id
+  as the primary key would put a custom row back into the directory's space, where the next directory
+  refresh carrying the same id collides with it: `RegionDao.replaceAll` deletes only `custom = 0` rows,
+  so the custom row survives the delete and the directory insert lands on top of it.
+
+This diverges from OneBusAway for iOS ([#1234](https://github.com/OneBusAway/onebusaway-ios/pull/1234)),
+which uses the supplied id directly. The two ids genuinely mean different things — our primary key vs.
+the sidecar's name for the same deployment — and conflating them is what created this bug.
 
 Capability flags (`supportsObaDiscoveryApis`, `supportsObaRealtimeApis`) are set true because
 `RegionUtils.isRegionUsable` requires them — they are *declarations*, not observations: nothing has
@@ -166,6 +198,11 @@ adb shell am start -a android.intent.action.VIEW \
 # Custom region (raises the confirmation dialog; nothing is written until you accept)
 adb shell am start -a android.intent.action.VIEW \
   -d 'onebusaway://add-region?name=Test%20Deployment&oba-url=https://api.example.com' \
+  com.joulespersecond.seattlebusbot
+
+# Custom region naming the sidecar's own id, so its region-scoped endpoints resolve
+adb shell am start -a android.intent.action.VIEW \
+  -d 'onebusaway://add-region?name=Puget%20Sound&oba-url=https://api.pugetsound.onebusaway.org&sidecar-url=https://sidecar.onebusaway.org&region-id=1' \
   com.joulespersecond.seattlebusbot
 
 # Trip (keep the URL single-quoted so the shell doesn't split on &)

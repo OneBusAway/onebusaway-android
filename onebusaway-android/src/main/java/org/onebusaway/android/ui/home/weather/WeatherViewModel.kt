@@ -63,9 +63,11 @@ class WeatherViewModel @Inject constructor(
     init {
         // Self-subscribe to the current region: fetch the forecast once per region id, clear when none.
         // Keyed on the region id, so weather follows the *region* (not the map viewport — panning out of
-        // range no longer clears it). Replaces the host's MapFeature setRegion push.
+        // range no longer clears it). Replaces the host's MapFeature setRegion push. The id is the
+        // *sidecar's* (#2165) because that is what the weather URL embeds — for every region but a
+        // deep-link-added one it is the same value as Region.id.
         viewModelScope.launch {
-            regionRepo.region.map { it?.id }.distinctUntilChanged().collect { setRegion(it) }
+            regionRepo.region.map { it?.sidecarId }.distinctUntilChanged().collect { setRegion(it) }
         }
         // Observe the hide-weather preference reactively (replaces the on-resume refreshHiddenPref poll).
         // The pref stores "weather enabled" (default true), so hidden = !enabled.

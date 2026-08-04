@@ -138,6 +138,28 @@ class CustomRegionsTest {
         assertNull(region.umamiAnalytics)
     }
 
+    // --- the sidecar's id for the region (#2165) ---
+
+    @Test
+    fun `the link's region-id addresses the sidecar without entering the directory id space`() {
+        // The whole point of keeping the two apart: the sidecar hears the id it published, while the
+        // primary key stays negative, where a directory refresh carrying region 19 can never land on it.
+        val region = customRegion(FIRST_CUSTOM_REGION_ID, request.copy(regionId = 19L))
+        assertEquals(19L, region.sidecarId)
+        assertEquals(FIRST_CUSTOM_REGION_ID, region.id)
+        assertTrue("the local id must stay out of the directory's space", region.id < NO_REGION_ID)
+    }
+
+    @Test
+    fun `a region with no region-id addresses the sidecar by its own id`() {
+        // The pre-#2165 behaviour, which is also the right one for every directory region: our primary
+        // key *is* the directory's id there, so there is nothing to override.
+        val region = customRegion(FIRST_CUSTOM_REGION_ID, request)
+        assertNull(region.sidecarRegionId)
+        assertEquals(FIRST_CUSTOM_REGION_ID, region.sidecarId)
+        assertEquals(1L, Region(id = 1L).sidecarId)
+    }
+
     @Test
     fun `a custom region has no contact email, so no problem-report address is offered`() {
         // Deliberately not iOS's placeholder example@example.com: ReportTypeRepository offers the

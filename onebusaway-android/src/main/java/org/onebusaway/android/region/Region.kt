@@ -70,10 +70,29 @@ data class Region(
     // auto-replaces one — the rider chose this server deliberately, so a closer directory region
     // silently taking over would undo that. Custom regions carry no [bounds], so they are also never
     // auto-*selected* (getClosestRegion can't measure a distance to them).
-    val custom: Boolean = false
+    val custom: Boolean = false,
+    // The id the *sidecar* knows this deployment by, when it differs from [id] — set only from the
+    // `add-region` deep link's `region-id` parameter (#2165), null for every directory region. The two
+    // ids genuinely mean different things: [id] is our primary key, and for a custom region it is a
+    // locally-invented negative number the sidecar has never heard of, so addressing the sidecar with it
+    // 404s every push registration and arrival reminder. Kept as a separate field rather than adopting
+    // the server's id as [id] so custom ids stay out of the directory's id space — see the id-space
+    // comment in CustomRegions.kt. Read through [sidecarId], never directly.
+    val sidecarRegionId: Long? = null
 ) {
     val umamiAnalyticsUrl: String? get() = umamiAnalytics?.url
     val umamiAnalyticsId: String? get() = umamiAnalytics?.id
+
+    /**
+     * The region id to address the sidecar with — [sidecarRegionId] when the link supplied one,
+     * otherwise [id]. For a directory region the two are the same value by definition (our primary key
+     * *is* the directory's id); the distinction exists only for custom regions (#2165).
+     *
+     * Every sidecar endpoint that embeds a region id goes through this: alarms and push registrations
+     * (v2, via `sidecarRegionUrl`), and weather, studies and wide alerts (v1, via their `regionID`
+     * placeholders).
+     */
+    val sidecarId: Long get() = sidecarRegionId ?: id
 
     /**
      * Whether this region's trip planning speaks OTP 2.x GraphQL — true exactly when it publishes an

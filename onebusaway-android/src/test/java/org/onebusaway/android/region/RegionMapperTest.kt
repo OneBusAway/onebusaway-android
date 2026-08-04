@@ -152,4 +152,35 @@ class RegionMapperTest {
         assertEquals("juris", back.open311Servers[0].jurisdictionId)
         assertEquals("https://umami", back.umamiAnalytics?.url)
     }
+
+    @Test
+    fun `a custom region's two ids survive the cache separately`() {
+        // #2165: the local primary key and the sidecar's id for the same deployment are distinct facts,
+        // so losing either one in the cache would put the region back to addressing the sidecar with an
+        // id it has never heard of after the next cold start.
+        val original = Region(
+            id = -2L,
+            name = "Deep Link",
+            obaBaseUrl = "https://oba",
+            custom = true,
+            sidecarRegionId = 19L
+        )
+
+        val back = RegionMapper.toRegion(RegionMapper.toEntities(original))
+
+        assertEquals(-2L, back.id)
+        assertEquals(19L, back.sidecarRegionId)
+        assertEquals(19L, back.sidecarId)
+        assertTrue(back.custom)
+    }
+
+    @Test
+    fun `a directory region addresses the sidecar by its own id`() {
+        val back = RegionMapper.toRegion(
+            RegionMapper.toEntities(Region(id = 1L, name = "Puget Sound", obaBaseUrl = "https://oba"))
+        )
+
+        assertNull(back.sidecarRegionId)
+        assertEquals(1L, back.sidecarId)
+    }
 }

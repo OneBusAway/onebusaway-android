@@ -25,7 +25,6 @@ import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * One of the (up to three) itinerary option cards shown above the directions. Carries structured data
@@ -106,18 +105,18 @@ data class LegBadge(
     val mode: TransitMode,
     // Stated at every construction, with no default. It is moot for the single-route badge most rides
     // get — nothing to divide, so no relation to name — but a *joined* badge that forgot to say would
-    // take a default silently, and the join is not merely a divider shape: [isInterchangeable] reads it
-    // to decide whether the drawer tells the rider to board whichever route comes first. Getting that by
-    // omission is a wrong instruction, not a wrong pixel.
+    // take a default silently, and the join is not merely a divider shape: it says which of the two
+    // ways a ride names several routes this badge stands for, and a card promising a choice the rider
+    // doesn't have is a wrong instruction, not a wrong pixel.
     val join: RouteBadgeJoin
 ) {
     /** Whether this ride has more than one route on its badge, i.e. the chip is a joined/multicolor one. */
     val isJoined: Boolean get() = routes.size > 1
 
     /** Whether the badge offers a *choice* of routes — as opposed to naming a ride that becomes another
-     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. The
-     *  drawer's board row draws only this form: the other names routes the rider does not reach until
-     *  later in the ride, and it has a row down there to name each of them at (#2071). */
+     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. Only the
+     *  option cards draw either joined form: the drawer names one route per line, from the ride's own
+     *  routes ([TripLogEntry.Transit.boardableRoutes], #2151) and its seam rows (#2071). */
     val isInterchangeable: Boolean get() = isJoined && join == RouteBadgeJoin.ANY_OF
 
     /** True when the ride names no route at all, and can only be shown as its mode. */
@@ -225,7 +224,6 @@ sealed interface TripLogEntry {
         val boardTime: ServerTime,
         val exitTime: ServerTime,
         val durationMinutes: Long,
-        val realtime: RealtimeState,
         val rideEvents: List<RideEvent>,
         val routeLeg: RouteLegRef,
         val legPoints: List<GeoPoint> = emptyList(),
@@ -239,13 +237,6 @@ sealed interface TripLogEntry {
     ) : TripLogEntry {
         /** This ride as the map's focus target — every leg of a folded chain; see [FocusedLeg]. */
         val focus: FocusedLeg get() = FocusedLeg(legPoints, legIndices)
-
-        /**
-         * How many intermediate stops the ride passes — derived from [rideEvents] rather than stored, so
-         * the "N stops" summary can't disagree with the list the leg expands to (it did when a folded
-         * interline continuation's stops were merged but its count wasn't).
-         */
-        val stopCount: Int get() = rideEvents.count { it is RideEvent.Stop }
     }
 }
 
@@ -362,35 +353,6 @@ data class LogStep(val text: String, val distanceMeters: Double = 0.0, val point
  * the trip-plan model has no per-intermediate-stop timestamp (only the board/exit times are known).
  */
 data class LogStop(val name: String, val point: GeoPoint? = null)
-
-/**
- * The real-time state of a transit board, shown as an on-time / delayed chip. [Unknown] (no real-time
- * data) renders no chip; which of the others applies is [ScheduleDeviation]'s call, shared with the
- * arrivals drawer (#2043); [Late]/[Early] carry the deviation worded in whole minutes.
- *
- * Each case names the [ScheduleDeviation.Status] it displays as, so the chip reads its color off the
- * shared palette instead of re-spelling the state→color mapping — the same coupling that used to let
- * this screen and the arrivals drawer disagree about which hue meant "early".
- */
-sealed interface RealtimeState {
-    val status: ScheduleDeviation.Status
-
-    data object Unknown : RealtimeState {
-        override val status = ScheduleDeviation.Status.SCHEDULED
-    }
-
-    data object OnTime : RealtimeState {
-        override val status = ScheduleDeviation.Status.ON_TIME
-    }
-
-    data class Late(val minutes: Long) : RealtimeState {
-        override val status = ScheduleDeviation.Status.DELAYED
-    }
-
-    data class Early(val minutes: Long) : RealtimeState {
-        override val status = ScheduleDeviation.Status.EARLY
-    }
-}
 
 /**
  * The route/stop identity of a transit leg, carried on its leg card so tapping the leg highlights the

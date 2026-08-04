@@ -91,7 +91,6 @@ class DirectionRowInterlineBadgeTest {
         boardTime = ServerTime(2 * 60_000L),
         exitTime = ServerTime(32 * 60_000L),
         durationMinutes = 30,
-        realtime = RealtimeState.Unknown,
         rideEvents = listOf(RideEvent.Transition(transition)),
         routeLeg = interlinedLegRef,
         legPoints = listOf(boardPoint, seamPoint, alightPoint)

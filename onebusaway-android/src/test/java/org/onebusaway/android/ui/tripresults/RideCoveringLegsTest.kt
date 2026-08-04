@@ -50,7 +50,6 @@ class RideCoveringLegsTest {
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
-        realtime = RealtimeState.Unknown,
         rideEvents = emptyList(),
         routeLeg = RouteLegRef("1_$shortName", "Downtown", null, null),
         legIndices = legIndices

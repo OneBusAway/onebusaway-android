@@ -87,7 +87,6 @@ class DirectionRowFocusTest {
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
-        realtime = RealtimeState.OnTime,
         rideEvents = listOf(RideEvent.Stop(LogStop("Capitol Hill Station", stopMidPoint))),
         routeLeg = routeLeg,
         legPoints = transitLegPoints,

@@ -23,7 +23,6 @@ import org.onebusaway.android.directions.model.routeDisplayName
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.geoPointOrNull
 
 /**
@@ -158,8 +157,8 @@ object TripLogBuilder {
      * durations, so the ledger's elapsed delta always agrees with the two times printed beside it (the
      * rider is aboard for that whole span, seam dwell included). The continuation's own events append in
      * travel order — its [transition] seam (when it changes route) first, then the stops it passes after
-     * that seam — so the merged ride reads `stops… → "stay aboard for route X" → stops…` and the leg's
-     * "N stops" summary counts the whole chain.
+     * that seam — so the merged ride reads `stops… → "stay aboard for route X" → stops…`, the whole
+     * chain under one header.
      */
     private fun foldIntoLeader(
         entries: MutableList<TripLogEntry>,
@@ -206,7 +205,6 @@ object TripLogBuilder {
             boardTime = leg.startTime,
             exitTime = leg.endTime,
             durationMinutes = leg.duration.inWholeMinutes,
-            realtime = leg.realtimeState(),
             // Only this leg's own stops; a folded chain's later legs append theirs after their seam.
             rideEvents = stopEvents(board),
             routeLeg = routeLeg,
@@ -220,9 +218,7 @@ object TripLogBuilder {
      * A transit leg's intermediate stops: the board direction's sub-directions, in travel order.
      *
      * A stop the generator could label neither by name nor by code is dropped rather than carried as an
-     * empty string — the timeline would otherwise draw a node and a blank line for it. Dropping it here
-     * rather than at the renderer also keeps [TripLogEntry.Transit.stopCount] honest: the "N stops"
-     * summary counts exactly the stops the leg can actually list.
+     * empty string — the timeline would otherwise draw a node and a blank line for it.
      */
     private fun stopEvents(board: Direction): List<RideEvent> = board.subDirections.orEmpty()
         .map { LogStop(it.directionText.str(), it.focusPoint()) }
@@ -239,25 +235,6 @@ object TripLogBuilder {
 
     /** True for a walk leg flanked by transit on both sides — a transfer, vs. a first/last-mile walk. */
     private fun List<TripLeg>.isTransferAt(i: Int): Boolean = getOrNull(i - 1)?.mode?.isTransit == true && getOrNull(i + 1)?.mode?.isTransit == true
-
-    /**
-     * Real-time board state from the leg's [TripLeg.realTime] flag + [TripLeg.departureDelay].
-     *
-     * Which bucket the leg falls in is [ScheduleDeviation]'s call, shared with the arrivals drawer
-     * (#2043); this used to round to the nearest minute and treat only an exact 0 as on time, giving
-     * the trip planner a ±30 s window where the rest of the app had none. The rounded minute count
-     * still supplies the "N min late/early" text — the band decides the bucket, the rounding only
-     * words it, and the band's edges (±90 s) always round to at least 1, so there is no "0 min late".
-     */
-    private fun TripLeg.realtimeState(): RealtimeState {
-        val minutes = ScheduleDeviation.roundedMinutes(departureDelay)
-        return when (ScheduleDeviation.status(realTime, departureDelay)) {
-            ScheduleDeviation.Status.SCHEDULED -> RealtimeState.Unknown
-            ScheduleDeviation.Status.ON_TIME -> RealtimeState.OnTime
-            ScheduleDeviation.Status.DELAYED -> RealtimeState.Late(minutes)
-            ScheduleDeviation.Status.EARLY -> RealtimeState.Early(-minutes)
-        }
-    }
 
     /** The point this direction refers to, or null when the underlying place had no coordinates. */
     private fun Direction.focusPoint(): GeoPoint? = geoPointOrNull(focusLat, focusLon)

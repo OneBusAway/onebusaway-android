@@ -70,7 +70,6 @@ class TripLogRowsTest {
         boardTime = ServerTime(4 * 60_000L),
         exitTime = ServerTime(20 * 60_000L),
         durationMinutes = 16,
-        realtime = RealtimeState.OnTime,
         rideEvents = events,
         routeLeg = RouteLegRef("1_100", "Rainier Beach", null, null)
     )

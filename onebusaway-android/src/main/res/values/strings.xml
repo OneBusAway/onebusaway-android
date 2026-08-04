@@ -970,9 +970,9 @@
     <string name="directions_to_here">Directions to here</string>
     <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">No upcoming arrivals</string>
-    <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
-         stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
-    <string name="directions_whichever_comes_first">whichever comes first</string>
+    <!-- Caption under a transit leg's route lines, when several routes go between the same two stops
+         without making the rider late for the rest of the trip (the lines read e.g. "1 Line" / "2 Line"). -->
+    <string name="directions_whichever_comes_first">Whichever comes first</string>
     <!-- Content description for the rule drawn across a Board row's live ETA strip at the moment the
          plan has the rider reach that stop. %1$s is a clock time, e.g. "3:19pm". -->
     <string name="directions_stop_eta_reach_stop">You get to this stop at %1$s</string>
@@ -1048,22 +1048,6 @@
     <string name="trip_plan_delta_minutes">%1$dmin</string>
     <!-- An hour or more: %1$d is whole hours, %2$d the remaining minutes -->
     <string name="trip_plan_delta_hours_minutes">%1$dh %2$dmin</string>
-    <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
-    <string name="trip_plan_realtime_on_time">On time</string>
-    <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->
-    <plurals name="trip_plan_realtime_late">
-        <item quantity="one">%1$d min late</item>
-        <item quantity="other">%1$d min late</item>
-    </plurals>
-    <plurals name="trip_plan_realtime_early">
-        <item quantity="one">%1$d min early</item>
-        <item quantity="other">%1$d min early</item>
-    </plurals>
-    <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
-    <plurals name="trip_plan_intermediate_stops">
-        <item quantity="one">%1$d stop</item>
-        <item quantity="other">%1$d stops</item>
-    </plurals>
 
 
     <string name="tripplanner_no_server_selected_error">No region selected</string>

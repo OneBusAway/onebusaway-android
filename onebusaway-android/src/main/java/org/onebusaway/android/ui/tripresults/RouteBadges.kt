@@ -97,6 +97,41 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
 )
 
 /**
+ * How one boardable route names itself on a directions row: its roundel, and where it is headed.
+ *
+ * [badge] is null for a route publishing no short name — the row then leads with [name], the fuller
+ * name, in the roundel's place. [name] is null whenever [badge] is set: with the roundel there the row
+ * doesn't print the long name beside it (#2151), so exactly one of the two identifies the route and
+ * the renderer has no rule of its own to apply.
+ */
+internal data class BoardableRoute(val badge: RouteBadge?, val name: String?, val headsign: String?)
+
+/**
+ * The routes the rider may board this ride on — the planned one, plus everything ruled interchangeable
+ * with it (#2010) — each named as a directions row draws it.
+ *
+ * In the same natural-name order, and under the same by-name deduplication, as the option card's joined
+ * roundel ([legBadge]), so the picker and the drawer can't disagree about what the choice is. That the
+ * list has more than one entry *is* the choice: the drawer gives each entry its own line and captions
+ * them "whichever comes first" (#2151), where the option card joins them into a single chip. A line per
+ * route is what lets each say where it is headed — two interchangeable routes share the ride but not
+ * their headsigns, and the joined chip had nowhere to put them.
+ *
+ * The planned route is named by the drawer's narrower roundel rule ([shortNameBadge]) — no roundel for a
+ * route publishing no short name — rather than the option cards' [plannedBadge], since these lines are
+ * what the drawer draws.
+ */
+internal fun TripLogEntry.Transit.boardableRoutes(): List<BoardableRoute> {
+    val planned = BoardableRoute(
+        badge = routeShortName?.let { RouteBadge(it, ridePresentationColor(routeColorHex)) },
+        name = routeDisplayName.takeIf { routeShortName == null },
+        headsign = headsign
+    )
+    val alternatives = routeLeg.alternatives.map { BoardableRoute(RouteBadge(it.shortName, it.routeColor), null, it.headsign) }
+    return (listOf(planned) + alternatives).inInterchangeableOrder { it.badge?.shortName ?: it.name.orEmpty() }
+}
+
+/**
  * The transit leg's roundel as the **directions drawer** draws one: its short name and parsed GTFS
  * color, and *no* badge at all for a route publishing no short name.
  *

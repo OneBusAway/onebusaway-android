@@ -347,6 +347,53 @@ class Otp2PlanDecodeTest {
         assertNull(rental.androidUri)
     }
 
+    /**
+     * A feed URL naming no scheme is dropped rather than carried: `Uri.parse` would make a relative
+     * URI of it that nothing on the device can view, so it would reach the rider as a chip promising
+     * to open the operator and then doing nothing. The rental's other links stand on their own.
+     */
+    @Test
+    fun dropsAFeedUrlThatNamesNoScheme() {
+        val data = planDataWithSingleLeg(
+            mode = Mode.BICYCLE,
+            fromPlace = place(
+                name = "Bike",
+                lat = 47.61,
+                lon = -122.33,
+                rentalVehicle = rentalVehicle(
+                    networkUrl = "www.li.me",
+                    androidUri = "lime.example/vehicle/bs_9",
+                    webUri = "  "
+                )
+            )
+        )
+        val rental = data.toTripItineraries()[0].legs[0].from.rental!!
+        assertNull(rental.networkUrl)
+        assertNull(rental.androidUri)
+        assertNull(rental.webUri)
+        // Everything that isn't a URL is untouched — one bad field costs only itself.
+        assertEquals("lime_seattle", rental.networkId)
+        assertEquals(43356, rental.rangeMeters)
+    }
+
+    /** A scheme is the whole test: an operator's own is as openable as `https`, and as welcome. */
+    @Test
+    fun keepsAnyUriThatNamesAScheme() {
+        val data = planDataWithSingleLeg(
+            mode = Mode.BICYCLE,
+            fromPlace = place(
+                name = "Bike",
+                lat = 47.61,
+                lon = -122.33,
+                rentalVehicle = rentalVehicle(androidUri = "lime-bike+v2://vehicle/bs_9")
+            )
+        )
+        assertEquals(
+            "lime-bike+v2://vehicle/bs_9",
+            data.toTripItineraries()[0].legs[0].from.rental!!.androidUri
+        )
+    }
+
     private fun planDataWithSingleLeg(
         mode: Mode,
         itineraryStart: String? = "2026-07-11T10:00:00-07:00",
@@ -419,18 +466,19 @@ class Otp2PlanDecodeTest {
      * except for the rental URIs and network URL, which that deployment publishes on nothing at all
      * and which are here precisely because the app has to carry them the day an operator does.
      */
-    private fun rentalVehicle(): PlaceFields.RentalVehicle = PlaceFields.RentalVehicle(
+    private fun rentalVehicle(
+        networkUrl: String? = "https://www.li.me/",
+        androidUri: String? = "lime://vehicle/bs_9",
+        webUri: String? = "https://lime.example/vehicle/bs_9"
+    ): PlaceFields.RentalVehicle = PlaceFields.RentalVehicle(
         vehicleId = "lime_seattle:bs_9",
         rentalNetwork = PlaceFields.RentalNetwork(
             __typename = "VehicleRentalNetwork",
-            rentalNetworkFields = network("lime_seattle", url = "https://www.li.me/")
+            rentalNetworkFields = network("lime_seattle", url = networkUrl)
         ),
         rentalUris = PlaceFields.RentalUris(
             __typename = "VehicleRentalUris",
-            rentalUriFields = RentalUriFields(
-                android = "lime://vehicle/bs_9",
-                web = "https://lime.example/vehicle/bs_9"
-            )
+            rentalUriFields = RentalUriFields(android = androidUri, web = webUri)
         ),
         vehicleType = PlaceFields.VehicleType(
             formFactor = FormFactor.BICYCLE,

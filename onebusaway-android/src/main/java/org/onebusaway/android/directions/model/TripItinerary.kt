@@ -206,7 +206,9 @@ data class TripPlace(
  *    (`rentalUris.android`/`.web`), and [networkUrl] the operator's own system URL. All three are null
  *    on every vehicle the live OTP2 deployment serves today, which is exactly why they are carried
  *    rather than assumed: a feed that does publish them lets the app hand the rider straight to the
- *    bike they were routed onto.
+ *    bike they were routed onto. All three are **absolute or absent** — a feed value naming no scheme
+ *    is dropped at the wire boundary, since nothing on the device can open one (see
+ *    `Otp2PlanAdapters.absoluteUriOrNull`), so a reader may open what it finds here.
  *  - [rangeMeters] is `fuel.range` — how far the vehicle can still travel on its current charge,
  *    documented by the schema as meters.
  *

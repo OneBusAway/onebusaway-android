@@ -202,7 +202,8 @@ private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleR
 /**
  * The rental facts both endpoint shapes state identically, mapped once: OTP types their network and
  * URIs the same way, and the shared Plan.graphql fragments hand this the same generated types from
- * either. Blank→null on every URL, the same normalization the route names get above.
+ * either. Every URL is normalized by [absoluteUriOrNull], which subsumes the blank→null the route
+ * names get above.
  */
 private fun toTripVehicleRental(
     id: String?,
@@ -216,13 +217,31 @@ private fun toTripVehicleRental(
     id = id,
     stationName = stationName,
     networkId = network.networkId,
-    networkUrl = network.url?.ifBlank { null },
-    androidUri = uris?.android?.ifBlank { null },
-    webUri = uris?.web?.ifBlank { null },
+    networkUrl = network.url.absoluteUriOrNull(),
+    androidUri = uris?.android.absoluteUriOrNull(),
+    webUri = uris?.web.absoluteUriOrNull(),
     formFactor = formFactor,
     propulsion = propulsion,
     rangeMeters = rangeMeters
 )
+
+/**
+ * A feed-published URI the app could actually open, or null — blank, or naming no scheme.
+ *
+ * `Uri.parse` turns `lime.example/ride/abc` into a perfectly good *relative* URI that nothing on the
+ * device can view, so an `ACTION_VIEW` on one is a dead tap (or a toast) under a chip that promised
+ * to open the operator. Dropping it here instead leaves the rental's remaining links to be offered in
+ * their own right, and makes [TripVehicleRental]'s three URLs absolute-or-absent for every reader.
+ *
+ * The check is the wire format's own grammar rather than a guess at the string's shape: RFC 3986 §3.1
+ * defines a scheme as an ASCII letter followed by letters, digits, `+`, `-` or `.`, then a colon —
+ * which is exactly what Android dispatches an intent on. (The sibling iOS app guards the same field
+ * the same way, for the same reason: there, a scheme-less `URL(string:)` is non-nil too.)
+ */
+private fun String?.absoluteUriOrNull(): String? = this?.takeIf { URI_SCHEME.containsMatchIn(it) }
+
+/** RFC 3986 §3.1: `scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) ":"`. */
+private val URI_SCHEME = Regex("""^[a-zA-Z][a-zA-Z0-9+.\-]*:""")
 
 /**
  * OTP2's `Place.stop`/`rentalVehicle`/`vehicleParking`/`vehicleRentalStation` are populated

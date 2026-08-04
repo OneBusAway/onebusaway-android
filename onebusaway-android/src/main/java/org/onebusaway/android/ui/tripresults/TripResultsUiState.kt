@@ -110,15 +110,6 @@ data class LegBadge(
     // doesn't have is a wrong instruction, not a wrong pixel.
     val join: RouteBadgeJoin
 ) {
-    /** Whether this ride has more than one route on its badge, i.e. the chip is a joined/multicolor one. */
-    val isJoined: Boolean get() = routes.size > 1
-
-    /** Whether the badge offers a *choice* of routes — as opposed to naming a ride that becomes another
-     *  route under the rider ([RouteBadgeJoin.THEN]), which is one route to board, not several. Only the
-     *  option cards draw either joined form: the drawer names one route per line, from the ride's own
-     *  routes ([TripLogEntry.Transit.boardableRoutes], #2151) and its seam rows (#2071). */
-    val isInterchangeable: Boolean get() = isJoined && join == RouteBadgeJoin.ANY_OF
-
     /** True when the ride names no route at all, and can only be shown as its mode. */
     val isUnnamed: Boolean get() = routes.isEmpty()
 }
@@ -364,11 +355,8 @@ data class LogStop(val name: String, val point: GeoPoint? = null)
  * [alternatives] are the interchangeable routes for this leg (#2010) — the board stop interleaves
  * their live arrivals with the planned route's in one ETA strip, badging each pill by route (#2099),
  * so the rider can see which of them comes first.
- * [plannedBadge] identifies the planned route's own segment independently of [badge], whose routes are
- * name-sorted and may deduplicate two distinct routes publishing the same public name.
- * [badge] is the leg's finished roundel (planned route joined by those alternatives), built once by
- * the repository rather than re-derived per row while composing; null where no badge was built at all
- * (fixtures), which is not the same as a badge that found no route to name.
+ * [plannedBadge] identifies the planned route's own segment independently of [alternatives], including
+ * when another route publishes the same public name.
  */
 data class RouteLegRef(
     val routeId: String?,
@@ -394,8 +382,7 @@ data class RouteLegRef(
     // the two can't disagree about where a ride changes route. Empty where no ref was resolved.
     val riddenSpans: List<RiddenSpan> = emptyList(),
     val alternatives: List<AlternativeRouteRef> = emptyList(),
-    val plannedBadge: RouteBadge? = null,
-    val badge: LegBadge? = null
+    val plannedBadge: RouteBadge? = null
 )
 
 /**

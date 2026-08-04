@@ -1024,14 +1024,6 @@ private val LOG_EDGE_GAP = 4.dp
 private const val BADGE_SCALE = 1.5f
 
 /**
- * The gap between a board row's route lines when a ride offers a choice of several (#2151). Barely more
- * than a hairline: the lines are one instruction ("board whichever of these comes first"), so they need
- * their roundels prised apart rather than separated — a gap wide enough to read as a list would undo the
- * caption below them.
- */
-private val ROUTE_LINE_GAP = 1.5.dp
-
-/**
  * How far the timeline's fixed metrics stretch with the user's font scale, capped at the platform's 2×
  * ceiling so a large text size can't crowd the content off a narrow screen. [TIME_WIDTH] is sized for
  * the default scale, so the ledger's clock time — its primary information — can't clip at an
@@ -1834,30 +1826,17 @@ private fun ColumnScope.BoardContent(
             .defaultMinSize(minHeight = ROW_MIN_TOUCH_HEIGHT)
             .clickable(onClick = onFocus)
     ) {
-        // A ride the rider may take on any of several routes gets a line per route (#2151) rather than
-        // the option card's joined "1 Line/2 Line" roundel (#2010) — the drawer has the width for a line
-        // each, and each line can then say where that route is headed, which the joined chip couldn't.
-        // A ride the *vehicle* changes route during is not listed here at all (#2071): the drawer draws
-        // a row per segment, so this header names only the route boarded and each route the vehicle
-        // becomes is named at the seam the rider reaches it at (TransitionContent) — the header says
-        // what to board, not everything the ride will eventually be called.
         val boardable = entry.boardableRoutes()
-        boardable.forEachIndexed { i, route ->
-            if (i > 0) Spacer(Modifier.height(ROUTE_LINE_GAP))
-            SegmentIdentity(badge = route.badge, name = route.name, headsign = route.headsign)
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            boardable.forEach { route ->
+                SegmentIdentity(badge = route.badge, name = route.name, headsign = route.headsign)
+            }
         }
-        // What a list of routes means: any of them will do, so board the first to arrive. Their arrivals
-        // share one route-badged ETA strip under the board stop (#2010/#2099). A ride that changes route
-        // under the rider carries the opposite instruction — board this one and stay on it — and gives
-        // it in its own row further down the ride (TransitionContent); its routes never reach this
-        // header, so it cannot pick this caption up.
         if (boardable.size > 1) {
             Text(
                 text = stringResource(R.string.directions_whichever_comes_first),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                // Set off the lines it captions by a hair, so it reads as their footing rather than as
-                // another line in the list.
                 modifier = Modifier.padding(top = 1.dp)
             )
         }
@@ -2119,7 +2098,6 @@ private fun previewTransitLeg(
     routeColorHex: String? = "1B6EF3",
     headsign: String? = "Rainier Beach",
     rideEvents: List<RideEvent> = PREVIEW_RIDE_STOPS,
-    badge: LegBadge? = null,
     alternatives: List<AlternativeRouteRef> = emptyList(),
     alerts: List<TripAlertItem> = emptyList()
 ) = TripLogEntry.Transit(
@@ -2138,8 +2116,7 @@ private fun previewTransitLeg(
         headsign = headsign,
         board = RouteStopRef("1_500", "500", "Pine St & 3rd Ave", null),
         alight = RouteStopRef("1_600", "600", "Rainier Ave S & S Alaska St", null),
-        alternatives = alternatives,
-        badge = badge
+        alternatives = alternatives
     ),
     alerts = alerts
 )
@@ -2244,7 +2221,6 @@ private fun previewDirections(alerted: Boolean = false) = listOf(
     // seam row, which is why the seam sits among the stops rather than before them.
     previewTransitLeg(
         rideEvents = PREVIEW_RIDE_STOPS.take(2) + PREVIEW_INTERLINE_SEAM + PREVIEW_RIDE_STOPS.drop(2),
-        badge = PREVIEW_BUS_CHAIN_BADGE,
         alerts = listOfNotNull(PREVIEW_BUS_ALERT.takeIf { alerted })
     ),
     previewFerryLeg(alerts = listOfNotNull(PREVIEW_FERRY_ALERT.takeIf { alerted })),
@@ -2405,7 +2381,6 @@ private fun TransitLegInterchangeablePreview() {
             mode = TransitMode.RAIL,
             routeColorHex = "00A651",
             headsign = "Angle Lake",
-            badge = PREVIEW_RAIL_PAIR_BADGE,
             alternatives = listOf(
                 AlternativeRouteRef(
                     routeId = "40_2LINE",

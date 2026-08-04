@@ -72,18 +72,17 @@ class BoardableRoutesTest {
         )
     }
 
-    /**
-     * Two routes publishing one public name collapse to a single line, exactly as they collapse on the
-     * joined roundel ([legBadge]) — the rider is being offered one name, so a caption promising a choice
-     * between two of it would be nonsense.
-     */
+    /** Same-named routes remain distinct because their headsigns tell the rider which vehicle is which. */
     @Test
-    fun routesSharingAPublicNameCollapseToOneLine() {
+    fun routesSharingAPublicNameKeepTheirHeadsignLines() {
         val routes = ride(shortName = "40", headsign = "Downtown Seattle")
             .withAlternatives(alternative("40", "Northgate"))
             .boardableRoutes()
 
-        assertEquals(listOf("40"), routes.map { it.badge?.shortName })
+        assertEquals(
+            listOf("40" to "Downtown Seattle", "40" to "Northgate"),
+            routes.map { it.badge?.shortName to it.headsign }
+        )
     }
 
     /**

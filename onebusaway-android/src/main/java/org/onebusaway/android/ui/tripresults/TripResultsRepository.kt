@@ -149,7 +149,6 @@ class DefaultTripResultsRepository @Inject constructor(
                     startsCutover = j in chain.transitionLegIndices
                 )
             }
-            val alternatives = substitutable[chain.leaderIndex]
             refs[chain.leaderIndex] = RouteLegRef(
                 routeId = otpObaIdResolver.obaRouteId(leader.routeId, leader.agencyId, leader.agencyName),
                 headsign = leader.headsign,
@@ -158,19 +157,10 @@ class DefaultTripResultsRepository @Inject constructor(
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
                 riddenSpans = riddenSpans,
-                alternatives = alternatives.map { it.resolve() },
-                // Kept separately from the joined badge: natural-name ordering means the joined form
-                // cannot identify which segment was planned, and same-named routes may collapse to one.
-                // The route-badged ETA strip needs this route's own color even in either case (#2099).
-                plannedBadge = leader.plannedBadge(),
-                // Built here, alongside the option cards' badges, so the drawer renders one rather than
-                // deriving it per row (#2010). The drawer's board row draws only the interchangeable
-                // form; on an interlined ride it names each segment at its own row instead (#2071), so
-                // the "5 > 12" this returns for one of those is drawn on the option card alone. Still
-                // built by the shared [rideBadge] rather than short-cut to the interchangeable case —
-                // that is where the two forms are held apart, invariant check and all, and the card's
-                // badge would otherwise be the only thing keeping it honest.
-                badge = rideBadge(legs, chain, alternatives)
+                alternatives = substitutable[chain.leaderIndex].map { it.resolve() },
+                // Alternatives cannot identify which same-named route was planned; the ETA strip needs
+                // this route's own color (#2099).
+                plannedBadge = leader.plannedBadge()
             )
         }
         return refs

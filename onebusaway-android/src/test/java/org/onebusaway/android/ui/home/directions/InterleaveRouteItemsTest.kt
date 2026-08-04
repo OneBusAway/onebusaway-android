@@ -18,11 +18,8 @@ package org.onebusaway.android.ui.home.directions
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.onebusaway.android.ui.compose.components.RouteBadge
-import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.tripresults.AlternativeRouteRef
-import org.onebusaway.android.ui.tripresults.LegBadge
 import org.onebusaway.android.ui.tripresults.RouteLegRef
-import org.onebusaway.android.ui.tripresults.TransitMode
 
 class InterleaveRouteItemsTest {
 
@@ -62,10 +59,7 @@ class InterleaveRouteItemsTest {
             alternatives = listOf(
                 AlternativeRouteRef("1_alternative", "Downtown", alternative.shortName, alternative.routeColor)
             ),
-            plannedBadge = planned,
-            // The joined presentation deduplicates identical public names, so it cannot be used to
-            // recover which route was planned.
-            badge = LegBadge(listOf(alternative), TransitMode.RAIL, RouteBadgeJoin.ANY_OF)
+            plannedBadge = planned
         )
 
         assertEquals(planned, routeLeg.etaPlannedBadge("A Line"))

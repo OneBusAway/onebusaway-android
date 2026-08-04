@@ -27,7 +27,6 @@ import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.compose.components.RouteBadge
-import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 import org.onebusaway.android.util.GeoPoint
 
@@ -66,14 +65,6 @@ class DirectionRowAlternativeRoutesTest {
                 shortName = "1 Line",
                 routeColor = 0xFF00A651.toInt()
             )
-        ),
-        badge = LegBadge(
-            listOf(
-                RouteBadge("1 Line", 0xFF00A651.toInt()),
-                RouteBadge("2 Line", 0xFF0075C4.toInt())
-            ),
-            TransitMode.RAIL,
-            RouteBadgeJoin.ANY_OF
         )
     )
 
@@ -95,7 +86,15 @@ class DirectionRowAlternativeRoutesTest {
     private fun state(routeLeg: RouteLegRef) = TripResultsUiState.Success(
         options = listOf(
             ItineraryOption(
-                symbols = listOfNotNull(routeLeg.badge).map { ModeSymbol.Transit(it) },
+                symbols = listOf(
+                    ModeSymbol.Transit(
+                        legBadge(
+                            RouteBadge("2 Line", 0xFF0075C4.toInt()),
+                            routeLeg.alternatives.map { RouteBadge(it.shortName, it.routeColor) },
+                            TransitMode.RAIL
+                        )
+                    )
+                ),
                 durationMinutes = 32L,
                 startTime = ServerTime(0L),
                 endTime = ServerTime(32 * 60_000L)
@@ -142,8 +141,7 @@ class DirectionRowAlternativeRoutesTest {
     @Test
     fun rideWithoutInterchangeableRoutesBadgesOnlyItsOwnRoute() {
         val soloRef = interlinedLegRef.copy(
-            alternatives = emptyList(),
-            badge = LegBadge(listOf(RouteBadge("2 Line", 0xFF0075C4.toInt())), TransitMode.RAIL, RouteBadgeJoin.ANY_OF)
+            alternatives = emptyList()
         )
         composeRule.setContent { TripResultsList(state = state(soloRef)) }
 

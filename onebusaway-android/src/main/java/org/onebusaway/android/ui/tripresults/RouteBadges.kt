@@ -23,6 +23,7 @@ import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.directions.model.routeDisplayShortName
 import org.onebusaway.android.ui.compose.components.RouteBadge
 import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
+import org.onebusaway.android.util.ROUTE_NAME_ORDER
 import org.onebusaway.android.util.inInterchangeableOrder
 import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.riddenRouteHue
@@ -96,30 +97,12 @@ internal fun legBadge(planned: RouteBadge?, alternatives: List<RouteBadge>, mode
     RouteBadgeJoin.ANY_OF
 )
 
-/**
- * How one boardable route names itself on a directions row: its roundel, and where it is headed.
- *
- * [badge] is null for a route publishing no short name — the row then leads with [name], the fuller
- * name, in the roundel's place. [name] is null whenever [badge] is set: with the roundel there the row
- * doesn't print the long name beside it (#2151), so exactly one of the two identifies the route and
- * the renderer has no rule of its own to apply.
- */
+/** One route/headsign line in a transit leg's board instruction. */
 internal data class BoardableRoute(val badge: RouteBadge?, val name: String?, val headsign: String?)
 
 /**
- * The routes the rider may board this ride on — the planned one, plus everything ruled interchangeable
- * with it (#2010) — each named as a directions row draws it.
- *
- * In the same natural-name order, and under the same by-name deduplication, as the option card's joined
- * roundel ([legBadge]), so the picker and the drawer can't disagree about what the choice is. That the
- * list has more than one entry *is* the choice: the drawer gives each entry its own line and captions
- * them "whichever comes first" (#2151), where the option card joins them into a single chip. A line per
- * route is what lets each say where it is headed — two interchangeable routes share the ride but not
- * their headsigns, and the joined chip had nowhere to put them.
- *
- * The planned route is named by the drawer's narrower roundel rule ([shortNameBadge]) — no roundel for a
- * route publishing no short name — rather than the option cards' [plannedBadge], since these lines are
- * what the drawer draws.
+ * The planned route and its interchangeable alternatives, in natural route-name order. Unlike a joined
+ * badge, these lines keep same-named routes because their headsigns can distinguish them (#2151).
  */
 internal fun TripLogEntry.Transit.boardableRoutes(): List<BoardableRoute> {
     val planned = BoardableRoute(
@@ -128,7 +111,9 @@ internal fun TripLogEntry.Transit.boardableRoutes(): List<BoardableRoute> {
         headsign = headsign
     )
     val alternatives = routeLeg.alternatives.map { BoardableRoute(RouteBadge(it.shortName, it.routeColor), null, it.headsign) }
-    return (listOf(planned) + alternatives).inInterchangeableOrder { it.badge?.shortName ?: it.name.orEmpty() }
+    return (listOf(planned) + alternatives).sortedWith(
+        compareBy(ROUTE_NAME_ORDER) { it.badge?.shortName ?: it.name.orEmpty() }
+    )
 }
 
 /**

@@ -382,7 +382,8 @@ object ExternalIntents {
      * payment-app warning the user hasn't opted out of, returns that region so the caller can show
      * the warning dialog and then call [startPaymentIntent]; otherwise launches the payment
      * intent directly (installed app, else the Google Play listing) and returns null. Returns null
-     * when there is no current region (e.g. a custom API URL is set).
+     * when there is no current region (e.g. a custom API URL is set), or when the region names no
+     * payment app.
      * @param activity activity to launch the fare payment app or Google Play store from
      * @return the region whose payment warning must be shown first, or null if already handled
      */
@@ -390,6 +391,14 @@ object ExternalIntents {
         val region = RegionEntryPoint.get(activity).currentRegion()
         if (region == null) {
             // If a custom API URL is set (i.e., no region), then no op
+            return null
+        }
+        // No app to launch: no warning dialog either, or the rider confirms one and nothing happens.
+        // The drawer gates its Pay Fare row on this same field (NavItemsRepository.payFareAvailable),
+        // but re-pulls the gate only when the region *id* changes, so a directory refresh that empties
+        // the field on the same region leaves the row drawn. Emptiness is judged exactly as that gate
+        // judges it, so the two cannot disagree about which regions can pay a fare.
+        if (region.paymentAndroidAppId.isNullOrEmpty()) {
             return null
         }
 
@@ -411,12 +420,16 @@ object ExternalIntents {
 
     /**
      * Launches the payment app for the provided region if it's already installed, and if not
-     * directs the user to the listing in Google Play where it can be downloaded
+     * directs the user to the listing in Google Play where it can be downloaded. A region naming no
+     * payment app launches nothing: an empty package id resolves to no launcher and would send the
+     * rider to a Play listing for a package called "" (see [payFareOrWarningRegion], which stops that
+     * region a step earlier — this is the entry the warning dialog's confirm path calls directly).
      * @param activity Activity to use to launch the Intent
      * @param region region to launch a payment Intent for
      */
     fun startPaymentIntent(activity: Activity, region: Region) {
-        val opened = openAppOrStoreListing(activity, region.paymentAndroidAppId.orEmpty())
+        val appId = region.paymentAndroidAppId?.ifEmpty { null } ?: return
+        val opened = openAppOrStoreListing(activity, appId)
         reportAppHandoff(activity, R.string.analytics_label_button_fare_payment, opened)
     }
 

@@ -19,6 +19,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
@@ -28,8 +29,10 @@ import androidx.core.graphics.drawable.IconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
+import org.onebusaway.android.util.vehicleGlyphRes
 
 /**
  * The rendered content of one tracked row's notification.
@@ -54,6 +57,8 @@ data class TrackedRouteCard(
     val progressMax: Int,
     /** The departures after the next one, as points further back along the road. */
     val progressPoints: List<Int>,
+    /** The glyph for this row's mode — a bus, tram, train, subway, or ferry. */
+    @param:DrawableRes val vehicleIconRes: Int,
     val indeterminate: Boolean,
     /**
      * The most-recently-tracked session: the one promoted to the status-bar chip and ranked to the
@@ -118,6 +123,7 @@ class TripTrackingNotifications @Inject constructor(
             progress = 0,
             progressMax = trackingBarSpan(),
             progressPoints = emptyList(),
+            vehicleIconRes = R.drawable.ic_bus,
             indeterminate = true,
             primary = true,
             sortKey = sortKey(0)
@@ -187,16 +193,21 @@ class TripTrackingNotifications @Inject constructor(
         // the points are the ones further back. Per-*stop* segments would be the richer rendering, but
         // they would need the trip's remaining stop list, which this feature does not fetch — a
         // deliberate follow-up, not an omission to paper over with a guess.
+        // Three segments rather than one, so the vehicle icon sits in a blank instead of having the
+        // line drawn straight through it: the run behind it, the gap, and the run on to the stop.
         .setProgressSegments(
-            listOf(NotificationCompat.ProgressStyle.Segment(card.progressMax).setColor(color))
+            trackingBarSegments(card.progress).pieces().map { (length, isGap) ->
+                NotificationCompat.ProgressStyle.Segment(length)
+                    .setColor(if (isGap) Color.TRANSPARENT else color)
+            }
         )
         .setProgressPoints(
             card.progressPoints.map { NotificationCompat.ProgressStyle.Point(it).setColor(color) }
         )
         .setProgress(card.progress)
         .setProgressIndeterminate(card.indeterminate)
-        // The bus, at the head of the approach; it marches right as the arrival closes in.
-        .setProgressTrackerIcon(tinted(R.drawable.ic_bus, color))
+        // The vehicle, at the head of the approach; it marches right as the arrival closes in.
+        .setProgressTrackerIcon(tinted(card.vehicleIconRes, color))
         // The rider's own stop, anchoring the right-hand end: what every bus on the bar is driving
         // toward, and where the tracker lands as it arrives.
         .setProgressEndIcon(tinted(R.drawable.stop_flag, color))
@@ -249,7 +260,13 @@ class TripTrackingNotifications @Inject constructor(
      * line of it is a string or colour lookup against the app's resources; the decisions it renders
      * are all made in [TrackingPolicy].
      */
-    fun card(route: TrackedRoute, outcome: TrackingOutcome, rank: Int): TrackedRouteCard {
+    fun card(
+        route: TrackedRoute,
+        outcome: TrackingOutcome,
+        rank: Int,
+        /** The row's GTFS route type, or null when the response's references didn't carry it. */
+        vehicleType: Int?
+    ): TrackedRouteCard {
         val departures = (outcome as? TrackingOutcome.Live)?.departures.orEmpty()
         val next = departures.firstOrNull()
         return TrackedRouteCard(
@@ -271,6 +288,7 @@ class TripTrackingNotifications @Inject constructor(
             progress = next?.let { trackingBarPosition(it.eta) } ?: 0,
             progressMax = trackingBarSpan(),
             progressPoints = departures.drop(1).map { trackingBarPosition(it.eta) },
+            vehicleIconRes = vehicleGlyphRes(vehicleType ?: ObaRoute.TYPE_BUS),
             // Indeterminate only while nothing is known — a spinner otherwise reads as "still
             // working on it" when the answer is already on screen.
             indeterminate = departures.isEmpty(),

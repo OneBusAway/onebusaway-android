@@ -170,6 +170,42 @@ class TrackingPolicyTest {
         assertEquals(TRACKING_HORIZON.inWholeSeconds.toInt(), trackingBarSpan())
     }
 
+    @Test
+    fun `the bar leaves a blank for the vehicle icon`() {
+        val middle = trackingBarSpan() / 2
+        val segments = trackingBarSegments(middle)
+
+        assertTrue(segments.gap > 0)
+        // The blank straddles the vehicle rather than starting at it.
+        assertTrue(segments.behind < middle)
+        assertTrue(segments.behind + segments.gap > middle)
+    }
+
+    @Test
+    fun `the bar's pieces always tile it exactly`() {
+        listOf(0, 1, trackingBarSpan() / 3, trackingBarSpan() - 1, trackingBarSpan()).forEach { at ->
+            val segments = trackingBarSegments(at)
+            assertEquals(trackingBarSpan(), segments.behind + segments.gap + segments.ahead)
+        }
+    }
+
+    @Test
+    fun `the blank never hangs off either end`() {
+        // A vehicle at the stop, or one pinned at the far end, still gets a blank that is on the bar.
+        assertEquals(0, trackingBarSegments(0).behind)
+        val atStop = trackingBarSegments(trackingBarSpan())
+        assertEquals(0, atStop.ahead)
+        assertTrue(atStop.behind >= 0)
+    }
+
+    @Test
+    fun `zero-length pieces are not drawn`() {
+        // A vehicle at the very start has nothing behind it; the template cannot draw a segment of
+        // no length, so that piece is dropped rather than emitted as an empty one.
+        assertTrue(trackingBarSegments(0).pieces().all { it.first > 0 })
+        assertTrue(trackingBarSegments(trackingBarSpan()).pieces().all { it.first > 0 })
+    }
+
     // --- Giving up -----------------------------------------------------------------------------
 
     @Test

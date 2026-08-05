@@ -191,7 +191,9 @@ class TripTrackingService : Service() {
             return
         }
 
-        val cards = resolved.mapIndexed { rank, it -> notifications.card(it.route, it.outcome, rank) }
+        val cards = resolved.mapIndexed { rank, it ->
+            notifications.card(it.route, it.outcome, rank, vehicleTypeFor(it.route.key))
+        }
         if (!post(cards)) return
 
         pollInterval = trackingPollInterval(
@@ -225,6 +227,9 @@ class TripTrackingService : Service() {
         }
         return true
     }
+
+    /** The row's GTFS route type from its stop's references pool, or null when not yet fetched. */
+    private fun vehicleTypeFor(key: TrackedRouteKey): Int? = snapshots[key.stopId]?.routeTypes?.get(key.routeId)
 
     /** One tracked row resolved against the freshest snapshot for its stop. */
     private data class Resolved(val route: TrackedRoute, val outcome: TrackingOutcome)
@@ -292,6 +297,7 @@ class TripTrackingService : Service() {
         result.onSuccess { response ->
             snapshots[stopId] = StopSnapshot(
                 arrivals = response.arrivals,
+                routeTypes = response.routes.associate { it.id to it.type },
                 serverTime = ServerTime(response.currentTime),
                 receivedAt = receivedAt
             )
@@ -352,6 +358,8 @@ class TripTrackingService : Service() {
     /** A stop's last good arrivals response and the monotonic reading it landed at. */
     private data class StopSnapshot(
         val arrivals: List<ArrivalData>,
+        /** Route id to GTFS route type, so a tracked row can be drawn with its own mode's glyph. */
+        val routeTypes: Map<String, Int>,
         val serverTime: ServerTime,
         val receivedAt: ElapsedTime
     ) {

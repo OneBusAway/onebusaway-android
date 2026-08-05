@@ -220,3 +220,30 @@ fun trackingBarPosition(eta: Duration): Int {
 }
 
 private const val MS_PER_MINUTE = 60 * 1000L
+
+/**
+ * The bar split into the run [behind] the vehicle, the [gap] its icon sits in, and the [ahead] run
+ * on to the stop. The three always sum to [trackingBarSpan].
+ */
+data class TrackingBarSegments(val behind: Int, val gap: Int, val ahead: Int) {
+    /** The pieces in draw order, each with whether it is the blank. Zero-length pieces are dropped —
+     *  a segment of no length is not a thing the template can draw. */
+    fun pieces(): List<Pair<Int, Boolean>> = listOf(behind to false, gap to true, ahead to false).filter { it.first > 0 }
+}
+
+/**
+ * How much of the bar is left blank for the vehicle icon, as a share of the span. The template draws
+ * the tracker icon *on top of* the bar rather than breaking the line for it, so without this the line
+ * runs straight through the vehicle. A visual allowance sized against a 24dp glyph on a
+ * notification-width bar — it is not a duration and means nothing in time.
+ */
+private const val ICON_GAP_FRACTION = 0.08
+
+/** Splits the bar so the vehicle at [vehicleAt] sits in a blank rather than on the line. */
+fun trackingBarSegments(vehicleAt: Int): TrackingBarSegments {
+    val span = trackingBarSpan()
+    val gap = (span * ICON_GAP_FRACTION).toInt().coerceIn(1, span)
+    // Centred on the vehicle, then slid inside the bar so the blank never hangs off either end.
+    val behind = (vehicleAt - gap / 2).coerceIn(0, span - gap)
+    return TrackingBarSegments(behind = behind, gap = gap, ahead = span - behind - gap)
+}

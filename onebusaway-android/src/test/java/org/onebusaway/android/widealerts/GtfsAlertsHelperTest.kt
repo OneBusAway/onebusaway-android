@@ -81,6 +81,7 @@ class GtfsAlertsHelperTest {
     }
 
     @Test
+    // Exercises the deprecated active_period fallback; see https://github.com/OneBusAway/onebusaway-android/issues/2160.
     @Suppress("DEPRECATION")
     fun `alert with both fields prefers communication period over active period`() {
         // #2160: communication_period wins when both are populated, even if active_period alone

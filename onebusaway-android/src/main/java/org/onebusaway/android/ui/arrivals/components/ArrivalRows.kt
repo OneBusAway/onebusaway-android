@@ -502,13 +502,17 @@ internal fun RouteActionsMenu(
             onShowRouteOnMap()
         }
         if (onToggleTracking != null) {
+            // The eye ties the item to the mark it toggles — the row's own tracking eye — and its
+            // struck-through twin shows which way the tap goes rather than restating the label.
             MenuRow(
                 textRes = if (tracked) {
                     R.string.bus_options_menu_untrack_route
                 } else {
                     R.string.bus_options_menu_track_route
                 },
-                icon = ImageVector.vectorResource(R.drawable.ic_directions_bus)
+                icon = ImageVector.vectorResource(
+                    if (tracked) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+                )
             ) {
                 onDismiss()
                 onToggleTracking()

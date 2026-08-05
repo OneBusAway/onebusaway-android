@@ -43,17 +43,9 @@ import org.onebusaway.android.util.ScheduleDeviation
  * thing, rather than a revision counter that has to be remembered to bump.
  */
 data class TrackedRouteCard(
-    val rowId: String,
-    val notificationId: Int,
-    val stopId: String,
-    val stopName: String,
-    val routeId: String,
-    /** Labels the selected row's leg when the card's tap opens the map on it. */
-    val routeShortName: String,
-    /** The row's direction, so the map selects the one the rider is watching. */
-    val headsign: String,
-    val stopLat: Double,
-    val stopLon: Double,
+    /** The row this renders. Held whole rather than copied field by field: everything the card needs
+     *  about *what* is tracked already lives here, and two names for one headsign can drift. */
+    val route: TrackedRoute,
     val title: String,
     /** The row's strip, as one line: "4 min · 12 min · 24 min". The card's text on every platform,
      *  and the whole of it below Android 16, where there are no metrics to lay out. */
@@ -71,7 +63,9 @@ data class TrackedRouteCard(
     val primary: Boolean,
     /** Ranks the cards against each other, most-recently-tracked first. */
     val sortKey: String
-)
+) {
+    val notificationId: Int get() = trackingNotificationId(route.id)
+}
 
 /**
  * One departure as a metric tile: a countdown over the clock time it is due.
@@ -111,44 +105,28 @@ private const val DEPARTURE_SEPARATOR = "  ·  "
 /**
  * Builds the Live Update notification for a tracked route row.
  *
- * On Android 16+ this is a `ProgressStyle` notification requesting the promoted-ongoing treatment,
+ * On Android 16+ this is a `MetricStyle` notification requesting the promoted-ongoing treatment,
  * which is what puts the countdown in the status-bar chip and on the Lock Screen without the rider
  * unlocking anything — the closest platform analogue to the iOS Live Activity this mirrors. Below
- * that it degrades to a plain ongoing notification carrying the same departures in its text plus a
- * legacy determinate progress bar; `NotificationCompat` is used throughout so the degradation is a
- * single explicit branch rather than two builders.
+ * that it degrades to the plain standard template, whose text line already carries the same
+ * departures, so only the tile layout is lost.
  *
  * The card is deliberately **not** a rendering of the Compose `EtaStrip`: a custom `RemoteViews`
  * layout disqualifies a notification from the Live Update treatment entirely, so the row is
- * expressed inside the standard template — its departures as the text line, and the road they are
- * driving down as the progress bar (see the diagram in [TrackingPolicy]).
+ * expressed inside the standard template — one tile per departure, each a countdown over the clock
+ * time it is due, which is the ETA pill's own split at notification scale.
  */
 class TripTrackingNotifications @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
 
-    /** The card shown before the first arrivals response lands, so the service can promote to the
-     *  foreground immediately (the platform gives it seconds, not a network round trip). */
-    fun pending(route: TrackedRoute): Notification = builder(
-        TrackedRouteCard(
-            rowId = route.id,
-            notificationId = trackingNotificationId(route.id),
-            stopId = route.key.stopId,
-            stopName = route.stopName,
-            routeId = route.key.routeId,
-            routeShortName = route.routeName,
-            headsign = route.key.headsign,
-            stopLat = route.stopLat,
-            stopLon = route.stopLon,
-            title = title(route),
-            text = context.getString(R.string.trip_tracking_pending),
-            shortText = null,
-            colorRes = R.color.theme_primary,
-            metrics = emptyList(),
-            primary = true,
-            sortKey = sortKey(0)
-        )
-    ).build()
+    /**
+     * The card shown before the first arrivals response lands, so the service can promote to the
+     * foreground immediately (the platform gives it seconds, not a network round trip). Rendered
+     * through [card] rather than assembled by hand, so the first card of every session cannot drift
+     * from the ones that follow it.
+     */
+    fun pending(route: TrackedRoute): Notification = build(card(route, TrackingOutcome.Pending, rank = 0))
 
     fun build(card: TrackedRouteCard): Notification = builder(card).build()
 
@@ -158,7 +136,7 @@ class TripTrackingNotifications @Inject constructor(
             .setSmallIcon(R.drawable.ic_bus)
             .setContentTitle(card.title)
             .setContentText(card.text)
-            .setSubText(card.stopName)
+            .setSubText(card.route.stopName)
             .setColor(color)
             // Deliberately NOT setColorized(true): a colorized notification is disqualified from the
             // Android 16 Live Update treatment, and this one would have qualified as colorized on
@@ -237,12 +215,12 @@ class TripTrackingNotifications @Inject constructor(
         val intent = Intent(context, HomeActivity::class.java)
             .putStopRouteReveal(
                 StopRouteReveal(
-                    stopId = card.stopId,
-                    stopName = card.stopName,
-                    point = GeoPoint(card.stopLat, card.stopLon),
-                    routeId = card.routeId,
-                    routeShortName = card.routeShortName,
-                    headsign = card.headsign.takeIf(String::isNotBlank)
+                    stopId = card.route.key.stopId,
+                    stopName = card.route.stopName,
+                    point = GeoPoint(card.route.stopLat, card.route.stopLon),
+                    routeId = card.route.key.routeId,
+                    routeShortName = card.route.routeName,
+                    headsign = card.route.key.headsign.takeIf(String::isNotBlank)
                 )
             )
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
@@ -252,7 +230,7 @@ class TripTrackingNotifications @Inject constructor(
     private fun untrack(card: TrackedRouteCard): PendingIntent {
         val intent = Intent(context, TripTrackingReceiver::class.java)
             .setAction(TripTrackingReceiver.ACTION_UNTRACK)
-            .putExtra(TripTrackingReceiver.EXTRA_ROW_ID, card.rowId)
+            .putExtra(TripTrackingReceiver.EXTRA_ROW_ID, card.route.id)
         return PendingIntent.getBroadcast(
             context,
             card.notificationId,
@@ -286,48 +264,38 @@ class TripTrackingNotifications @Inject constructor(
         rank: Int
     ): TrackedRouteCard {
         val departures = (outcome as? TrackingOutcome.Live)?.departures.orEmpty()
-        val next = departures.firstOrNull()
+        val metrics = departures.map(::metric)
         return TrackedRouteCard(
-            rowId = route.id,
-            notificationId = trackingNotificationId(route.id),
-            stopId = route.key.stopId,
-            stopName = route.stopName,
-            routeId = route.key.routeId,
-            routeShortName = route.routeName,
-            headsign = route.key.headsign,
-            stopLat = route.stopLat,
-            stopLon = route.stopLon,
+            route = route,
             title = title(route),
-            text = if (departures.isEmpty()) {
+            text = if (metrics.isEmpty()) {
                 context.getString(R.string.trip_tracking_pending)
             } else {
-                departures.joinToString(DEPARTURE_SEPARATOR) { label(it) }
+                metrics.joinToString(DEPARTURE_SEPARATOR, transform = ::label)
             },
             // The chip gets the next departure alone — it is a handful of characters in the status
             // bar, so the rest of the strip has nowhere to go.
-            shortText = next?.let(::label),
+            shortText = metrics.firstOrNull()?.let(::label),
             // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
-            colorRes = next?.status?.displayColorRes ?: R.color.theme_primary,
-            metrics = departures.map(::metric),
+            colorRes = departures.firstOrNull()?.status?.displayColorRes ?: R.color.theme_primary,
+            metrics = metrics,
             primary = rank == 0,
             sortKey = sortKey(rank)
         )
     }
 
     /**
-     * One departure as it appears in the strip. A bus still seconds away floors to zero minutes,
-     * which the arrivals pill renders as "NOW", so the card says the same rather than "0 min".
+     * One departure as a metric tile: the countdown with its unit, or a whole phrase where a number
+     * would be wrong, over the clock time it is due.
+     *
+     * The single place a departure is put into words. The strip line and the status-bar chip are both
+     * derived from these tiles ([label]) rather than formatted again — split, moving the "0 minutes
+     * means NOW" cutoff in one would leave the chip saying "Now" while the tile beside it said "0 min".
      */
-    private fun label(departure: TrackedDeparture): String = when {
-        departure.canceled -> context.getString(R.string.trip_tracking_canceled)
-        departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
-        else -> context.getString(R.string.trip_tracking_short_eta, departure.etaMinutes.toInt())
-    }
-
-    /** One departure as a metric tile: the countdown, its unit, and the clock time it is due. */
     private fun metric(departure: TrackedDeparture): TrackedMetric = TrackedMetric(
         value = when {
             departure.canceled -> context.getString(R.string.trip_tracking_canceled)
+            // A bus still seconds away floors to zero minutes, which the arrivals pill renders "NOW".
             departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
             else -> departure.etaMinutes.toString()
         },
@@ -337,6 +305,9 @@ class TripTrackingNotifications @Inject constructor(
         label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
         semanticStyle = semanticStyle(departure)
     )
+
+    /** A tile flattened back to one string, for the card's text line and the status-bar chip. */
+    private fun label(metric: TrackedMetric): String = listOfNotNull(metric.value, metric.unit).joinToString(" ")
 
     /**
      * The platform tone for a departure. Early counts as a warning rather than praise, matching how

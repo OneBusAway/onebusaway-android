@@ -47,17 +47,23 @@ data class TrackedMatch(
     val status: ScheduleDeviation.Status
 )
 
-/** One departure as the card shows it: the same arrival, measured against a particular "now". */
+/**
+ * One departure as the card shows it: [match] measured against a particular "now". The arrival's own
+ * facts are reached through it rather than copied out, so a new one (occupancy, a vehicle id) is
+ * added to [TrackedMatch] alone.
+ */
 data class TrackedDeparture(
+    val match: TrackedMatch,
     val eta: Duration,
     /** The whole minutes the card prints — see [etaMinutes]. */
-    val etaMinutes: Long,
+    val etaMinutes: Long
+) {
     /** When it is due, for the clock time printed beneath the countdown. */
-    val displayTime: ServerTime,
-    val predicted: Boolean,
-    val canceled: Boolean,
-    val status: ScheduleDeviation.Status
-)
+    val displayTime: ServerTime get() = match.displayTime
+    val predicted: Boolean get() = match.predicted
+    val canceled: Boolean get() = match.canceled
+    val status: ScheduleDeviation.Status get() = match.status
+}
 
 /** What a tick says one tracked row's card should do. */
 sealed interface TrackingOutcome {
@@ -158,12 +164,9 @@ fun trackingOutcome(matches: List<TrackedMatch>, now: ServerTime): TrackingOutco
 }
 
 private fun TrackedMatch.toDeparture(now: ServerTime) = TrackedDeparture(
+    match = this,
     eta = displayTime - now,
-    etaMinutes = etaMinutes(displayTime, now),
-    displayTime = displayTime,
-    predicted = predicted,
-    canceled = canceled,
-    status = status
+    etaMinutes = etaMinutes(displayTime, now)
 )
 
 /**

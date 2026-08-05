@@ -32,7 +32,6 @@ import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.MathUtils
 import org.onebusaway.android.util.ScheduleDeviation
-import org.onebusaway.android.util.vehicleGlyphRes
 
 /**
  * Flavor-neutral generation of vehicle marker bitmaps. Lives in `src/main` so both the Google flavor
@@ -266,7 +265,7 @@ object VehicleBitmaps {
         canvas.translate(pad, pad)
 
         // Colored disc (the route's display color, or gray when not real-time) + mode glyph, outlined.
-        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, vehicleGlyphRes(type), onColor, GLYPH_SIZE, outline)
+        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), onColor, GLYPH_SIZE, outline)
 
         // Heading arrow, rotated about the disc center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {
@@ -285,6 +284,15 @@ object VehicleBitmaps {
             }
         }
         return bitmap
+    }
+
+    @DrawableRes
+    private fun glyphRes(vehicleType: Int): Int = when (vehicleType) {
+        ObaRoute.TYPE_FERRY -> R.drawable.ic_ferry
+        ObaRoute.TYPE_TRAM -> R.drawable.ic_tram
+        ObaRoute.TYPE_SUBWAY -> R.drawable.ic_subway
+        ObaRoute.TYPE_RAIL -> R.drawable.ic_train
+        else -> R.drawable.ic_bus
     }
 
     private fun supportedVehicleType(vehicleType: Int): Boolean = vehicleType == ObaRoute.TYPE_BUS ||

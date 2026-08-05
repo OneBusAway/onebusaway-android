@@ -20,6 +20,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import org.onebusaway.android.tracking.TrackedRouteStore
 import org.onebusaway.android.tracking.TripTrackingController
 
 /**
@@ -36,9 +37,16 @@ interface TripTrackingEntryPoint {
 
     fun tripTrackingController(): TripTrackingController
 
+    fun trackedRouteStore(): TrackedRouteStore
+
     companion object {
         /** Resolves the [TripTrackingController] singleton from any [context] (its application is used). */
-        fun get(context: Context): TripTrackingController = EntryPointAccessors.fromApplication(context, TripTrackingEntryPoint::class.java)
-            .tripTrackingController()
+        fun get(context: Context): TripTrackingController = accessor(context).tripTrackingController()
+
+        /** Resolves the [TrackedRouteStore] singleton — which rows are tracked, for a surface that
+         *  reads that state without acting on it and cannot be constructor-injected. */
+        fun store(context: Context): TrackedRouteStore = accessor(context).trackedRouteStore()
+
+        private fun accessor(context: Context) = EntryPointAccessors.fromApplication(context, TripTrackingEntryPoint::class.java)
     }
 }

@@ -27,11 +27,10 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.coroutines.flow.Flow
 import org.onebusaway.android.time.WallTime
 
 /**
- * The one way in and out of trip tracking, for every surface that offers it.
+ * Starting and stopping trip tracking, for every surface that offers it.
  *
  * Writing the tracked set and running the service are deliberately one call: the store persists the
  * intention and the service renders it, and a surface that did only the first would leave a rider
@@ -39,6 +38,10 @@ import org.onebusaway.android.time.WallTime
  * the reasons a Track tap cannot take (notifications switched off, the platform declining a
  * foreground start) are all things the rider can act on, so each surface reports them in its own
  * idiom.
+ *
+ * Deliberately the *action* door only. Reading which rows are tracked goes to [TrackedRouteStore]
+ * directly, which is a `@Singleton` and injectable: re-exporting its state here would give one fact
+ * two front doors, and the next surface a coin flip over which is canonical.
  */
 @Singleton
 class TripTrackingController @Inject constructor(
@@ -57,9 +60,6 @@ class TripTrackingController @Inject constructor(
 
     /** True when [key]'s route row is currently tracked. */
     fun isTracking(key: TrackedRouteKey): Boolean = store.isTracking(key)
-
-    /** The tracked row keys, live — for surfaces that label a row by whether it is tracked. */
-    val trackedKeys: Flow<Set<TrackedRouteKey>> get() = store.trackedKeys
 
     /**
      * Starts tracking [route], or — when its row is already tracked — promotes that session.

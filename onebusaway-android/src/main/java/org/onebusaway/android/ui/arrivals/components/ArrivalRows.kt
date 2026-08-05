@@ -98,8 +98,8 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
-    /** Starts or stops the live countdown notification for this whole route row (#2166). */
-    val onToggleTracking: (RouteRowGroup) -> Unit,
+    /** Starts or stops the live countdown notification for this arrival's whole route row (#2166). */
+    val onToggleTracking: (ArrivalInfo) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
@@ -233,13 +233,13 @@ internal fun ArrivalAlertIndicator(
  * flag on the row. The eye says "marked", not a value, so it does not need a colour to spend.
  */
 @Composable
-internal fun TrackedRouteIndicator(modifier: Modifier = Modifier, iconSize: Dp = 24.dp) {
-    Box(modifier, contentAlignment = Alignment.Center) {
+internal fun TrackedRouteIndicator(modifier: Modifier = Modifier) {
+    Box(modifier.size(CORNER_TOUCH_SIZE), contentAlignment = Alignment.Center) {
         Icon(
             painter = painterResource(R.drawable.ic_visibility),
             contentDescription = stringResource(R.string.stop_info_arrival_tracked),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(iconSize)
+            modifier = Modifier.size(CORNER_GLYPH_SIZE)
         )
     }
 }
@@ -425,23 +425,18 @@ fun RouteArrivalRow(
                 // the row rather than tucked into the badge beside the alert triangle. Its own layer
                 // for the same reason the star is: a corner mark must not reflow the headsign or the
                 // pills under it.
-                Box(
+                TrackedRouteIndicator(
                     Modifier
                         .align(Alignment.TopEnd)
                         .padding(end = TRACKED_MARK_END_INSET)
-                ) {
-                    TrackedRouteIndicator(
-                        iconSize = CORNER_GLYPH_SIZE,
-                        modifier = Modifier.size(CORNER_TOUCH_SIZE)
-                    )
-                }
+                )
             }
             RouteActionsMenu(
                 expanded = menuExpanded,
                 onDismiss = { menuExpanded = false },
                 onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
                 onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } },
-                onToggleTracking = { callbacks.onToggleTracking(group) },
+                onToggleTracking = { callbacks.onToggleTracking(representative) },
                 tracked = tracked
             )
         }
@@ -490,8 +485,8 @@ internal fun RouteActionsMenu(
     onDismiss: () -> Unit,
     onShowRouteOnMap: () -> Unit,
     onShowSchedule: (() -> Unit)?,
-    onToggleTracking: (() -> Unit)? = null,
-    tracked: Boolean = false
+    onToggleTracking: () -> Unit,
+    tracked: Boolean
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(
@@ -501,22 +496,20 @@ internal fun RouteActionsMenu(
             onDismiss()
             onShowRouteOnMap()
         }
-        if (onToggleTracking != null) {
-            // The eye ties the item to the mark it toggles — the row's own tracking eye — and its
-            // struck-through twin shows which way the tap goes rather than restating the label.
-            MenuRow(
-                textRes = if (tracked) {
-                    R.string.bus_options_menu_untrack_route
-                } else {
-                    R.string.bus_options_menu_track_route
-                },
-                icon = ImageVector.vectorResource(
-                    if (tracked) R.drawable.ic_visibility_off else R.drawable.ic_visibility
-                )
-            ) {
-                onDismiss()
-                onToggleTracking()
-            }
+        // The eye ties the item to the mark it toggles — the row's own tracking eye — and its
+        // struck-through twin shows which way the tap goes rather than restating the label.
+        MenuRow(
+            textRes = if (tracked) {
+                R.string.bus_options_menu_untrack_route
+            } else {
+                R.string.bus_options_menu_track_route
+            },
+            icon = ImageVector.vectorResource(
+                if (tracked) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+            )
+        ) {
+            onDismiss()
+            onToggleTracking()
         }
         if (onShowSchedule != null) {
             MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {

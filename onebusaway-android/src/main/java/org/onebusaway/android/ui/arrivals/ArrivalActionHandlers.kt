@@ -153,9 +153,9 @@ fun createArrivalActionHandler(
     }
 
     /** Starts or stops the live countdown notification for this whole route row (#2166). */
-    override fun onToggleTracking(group: RouteRowGroup) {
+    override fun onToggleTracking(arrival: ArrivalInfo) {
         val content = currentContent()
-        val route = group.representative.toTrackedRoute(
+        val route = arrival.toTrackedRoute(
             stopName = content?.header?.name.orEmpty(),
             stopLat = content?.stopLat ?: 0.0,
             stopLon = content?.stopLon ?: 0.0

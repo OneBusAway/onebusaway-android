@@ -20,8 +20,6 @@ import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import org.onebusaway.android.R
-import org.onebusaway.android.models.ObaRoute
 
 /**
  * Loads a drawable that the caller knows exists, failing with the offending resource name instead of
@@ -54,21 +52,4 @@ private fun safeResourceName(context: Context, resId: Int): String = try {
     context.resources.getResourceName(resId)
 } catch (_: android.content.res.Resources.NotFoundException) {
     "0x${resId.toString(16)}"
-}
-
-/**
- * The glyph for a vehicle of the given GTFS [vehicleType] — a bus unless the feed says otherwise, so
- * a type the app has no artwork for (cable car, gondola, funicular) still gets a vehicle rather than
- * nothing.
- *
- * Shared so the map's vehicle markers and the trip-tracking notification cannot disagree about what
- * a ferry looks like; it was the map renderer's private helper until the notification needed it too.
- */
-@DrawableRes
-fun vehicleGlyphRes(vehicleType: Int): Int = when (vehicleType) {
-    ObaRoute.TYPE_FERRY -> R.drawable.ic_ferry
-    ObaRoute.TYPE_TRAM -> R.drawable.ic_tram
-    ObaRoute.TYPE_SUBWAY -> R.drawable.ic_subway
-    ObaRoute.TYPE_RAIL -> R.drawable.ic_train
-    else -> R.drawable.ic_bus
 }

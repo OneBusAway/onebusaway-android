@@ -33,16 +33,6 @@ object MapParams {
      * Wins over [ROUTE_DIRECTION_STOP_ID] when it is still a valid direction of the restored route.
      */
     const val ROUTE_DIRECTION_ID = ".RouteDirectionId"
-
-    /**
-     * The headsign of the direction a launch means, when the caller knows it outright rather than
-     * inferring it from a stop — a tracked arrivals row is one direction by definition (#2166), so it
-     * can name it instead of leaving the map to work it out from [ROUTE_DIRECTION_STOP_ID].
-     */
-    const val ROUTE_DIRECTION_HEADSIGN = ".RouteDirectionHeadsign"
-
-    /** The route's display name, for a launch that selects a route row and must label its leg. */
-    const val ROUTE_SHORT_NAME = ".RouteShortName"
     const val CENTER_LAT = ".MapCenterLat"
     const val CENTER_LON = ".MapCenterLon"
     const val ZOOM = ".MapZoom"

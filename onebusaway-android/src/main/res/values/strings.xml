@@ -1373,8 +1373,7 @@
     <string name="trip_tracking_title">%1$s to %2$s</string>
     <string name="trip_tracking_pending">Getting arrival times&#8230;</string>
     <!-- One departure in the tracked row's strip, and in the Android 16+ status bar chip, where
-         every character counts -->
-    <string name="trip_tracking_short_eta">%1$d min</string>
+         every character counts. A countdown is the bare number plus trip_tracking_unit_minutes. -->
     <string name="trip_tracking_short_now">Now</string>
     <string name="trip_tracking_canceled">Canceled</string>
     <!-- The unit beside a bare countdown on the Android 16+ metric tiles -->

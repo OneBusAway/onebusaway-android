@@ -170,8 +170,8 @@ fun Intent.putStopRouteReveal(reveal: StopRouteReveal): Intent = apply {
     putExtra(MapParams.CENTER_LAT, reveal.point.latitude)
     putExtra(MapParams.CENTER_LON, reveal.point.longitude)
     putExtra(MapParams.ROUTE_ID, reveal.routeId)
-    putExtra(MapParams.ROUTE_SHORT_NAME, reveal.routeShortName)
-    putExtra(MapParams.ROUTE_DIRECTION_HEADSIGN, reveal.headsign)
+    putExtra(EXTRA_ROUTE_SHORT_NAME, reveal.routeShortName)
+    putExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN, reveal.headsign)
 }
 
 /**
@@ -182,7 +182,7 @@ fun Intent.putStopRouteReveal(reveal: StopRouteReveal): Intent = apply {
 fun Intent.readStopRouteReveal(): StopRouteReveal? {
     val stopId = getStringExtra(MapParams.STOP_ID) ?: return null
     val routeId = getStringExtra(MapParams.ROUTE_ID) ?: return null
-    val routeShortName = getStringExtra(MapParams.ROUTE_SHORT_NAME) ?: return null
+    val routeShortName = getStringExtra(EXTRA_ROUTE_SHORT_NAME) ?: return null
     val lat = extras?.getDouble(MapParams.CENTER_LAT) ?: return null
     val lon = extras?.getDouble(MapParams.CENTER_LON) ?: return null
     if (lat == 0.0 || lon == 0.0) return null
@@ -192,6 +192,16 @@ fun Intent.readStopRouteReveal(): StopRouteReveal? {
         point = GeoPoint(lat, lon),
         routeId = routeId,
         routeShortName = routeShortName,
-        headsign = getStringExtra(MapParams.ROUTE_DIRECTION_HEADSIGN)
+        headsign = getStringExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN)
     )
 }
+
+/**
+ * The two extras only this file writes and reads. Their neighbours in [MapParams] are genuinely
+ * shared — HomeActivity, MapViewModel and the focus persistence all read STOP_ID/ROUTE_ID/CENTER_* —
+ * but nothing in the map subsystem reads these, and the headsign reaches it through
+ * [ShowRouteRequest.directionHeadsign] rather than by being parsed there. Keeping them here means
+ * changing the map's intent handling does not require proving they are unused.
+ */
+private const val EXTRA_ROUTE_DIRECTION_HEADSIGN = ".RouteDirectionHeadsign"
+private const val EXTRA_ROUTE_SHORT_NAME = ".RouteShortName"

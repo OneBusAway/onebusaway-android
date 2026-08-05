@@ -154,8 +154,8 @@ interface ArrivalActionHandler {
     fun onShowTripStatus(arrival: ArrivalInfo)
     fun onSetReminder(arrival: ArrivalInfo)
 
-    /** Starts or stops the live countdown notification for this whole route row (#2166). */
-    fun onToggleTracking(group: RouteRowGroup)
+    /** Starts or stops the live countdown notification for this arrival's whole route row (#2166). */
+    fun onToggleTracking(arrival: ArrivalInfo)
     fun onShowRouteSchedule(scheduleUrl: String)
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)

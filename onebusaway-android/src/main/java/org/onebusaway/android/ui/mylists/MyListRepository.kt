@@ -232,7 +232,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
-    private val trackedKeys = TripTrackingEntryPoint.get(context).trackedKeys
+    private val trackedKeys = TripTrackingEntryPoint.store(context).trackedKeys
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_stops, R.string.preference_key_default_stop_sort)

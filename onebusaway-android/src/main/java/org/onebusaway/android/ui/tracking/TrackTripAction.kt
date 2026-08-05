@@ -24,6 +24,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.TripTrackingEntryPoint
 import org.onebusaway.android.tracking.TrackedRoute
 import org.onebusaway.android.tracking.TripTrackingController
+import org.onebusaway.android.ui.mylists.ArrivalBadge
 
 /**
  * The Track action, shared by every surface that offers it (#2166) — the arrivals drawer's route-row
@@ -54,6 +55,14 @@ fun AppCompatActivity.toggleRouteTracking(route: TrackedRoute) {
         null -> toast(getString(R.string.trip_tracking_started, route.routeName))
     }
 }
+
+/**
+ * The Track action for a My Lists arrival badge, whose row may not name a trackable route (a response
+ * that carried no stop or route to key on). Shared by both starred-stop lists so the decision that a
+ * badge with nothing to track does nothing at all is made once, alongside the toggle it delegates to,
+ * rather than repeated as an identical lambda at each list.
+ */
+fun AppCompatActivity.badgeTracking(): (ArrivalBadge) -> Unit = { badge -> badge.trackable?.let(::toggleRouteTracking) }
 
 /**
  * Asks for POST_NOTIFICATIONS after a Track tap found notifications switched off. On Android 13+ the

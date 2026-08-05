@@ -138,11 +138,8 @@ class TrackingPolicyTest {
         assertEquals(49.seconds, nextRenderDelay(listOf(elevenPast), untilNextPoll = 5.minutes))
     }
 
-    @Test
-    fun `a whole minute remains when the clock is exactly on the boundary`() {
-        // Not zero: the number that just changed is right for the minute that has only now started.
-        assertEquals(1.minutes, nextRenderDelay(listOf(ON_THE_MINUTE), untilNextPoll = 5.minutes))
-    }
+    // That a clock sitting exactly on the boundary has a whole minute to run — rather than zero — is
+    // untilNextMinute's own contract, pinned in ServerTimeTickerTest.
 
     @Test
     fun `the soonest row decides, not the last one`() {

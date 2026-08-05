@@ -813,8 +813,8 @@
     <string name="tripplanner_error_geocode_from_to_not_found">Nie znaleziono punktu początkowego ani celu podróży</string>
     <string name="tripplanner_error_too_close">Trasa jest zbyt krótka</string>
     <string name="tripplanner_error_location_not_accessible">Wybrana lokalizacja jest niedostępna</string>
-    <string name="tripplanner_error_geocode_from_ambiguous">Punkt początkowy jest jednoznacznie nieokreślony</string>
-    <string name="tripplanner_error_geocode_to_ambiguous">Cel podróży jest jednoznacznie nieokreślony</string>
+    <string name="tripplanner_error_geocode_from_ambiguous">Punkt początkowy jest niejednoznaczny</string>
+    <string name="tripplanner_error_geocode_to_ambiguous">Cel podróży jest niejednoznaczny</string>
     <string name="tripplanner_error_geocode_from_to_ambiguous">Punkt początkowy i cel podróży są niejednoznaczne</string>
     <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje trasy rowerowej i spróbuj ponownie</string>
 

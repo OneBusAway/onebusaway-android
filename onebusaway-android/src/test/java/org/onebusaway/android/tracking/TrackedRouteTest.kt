@@ -142,6 +142,32 @@ class TrackedRouteTest {
         assertNull(TrackedRoutesJson.decode(ROW_WITH_NO_STOP))
     }
 
+    @Test
+    fun `a payload tracking one row twice is unreadable`() {
+        // withTracked can never produce it, so it did not come from this app — and taken at face value
+        // it would draw the same card twice, with the second post silently replacing the first (one
+        // notification id per row).
+        val duplicated = listOf(route(), route())
+
+        assertNull(TrackedRoutesJson.decode(TrackedRoutesJson.encode(duplicated)))
+    }
+
+    @Test
+    fun `a payload holding more rows than the cap is unreadable`() {
+        // Which of the rider's rows to drop is not a decision the decoder gets to make quietly, so an
+        // over-cap list is discarded whole rather than truncated.
+        val overCap = (0..MAX_TRACKED_ROUTES).map { route(stopId = "stop_$it") }
+
+        assertNull(TrackedRoutesJson.decode(TrackedRoutesJson.encode(overCap)))
+    }
+
+    @Test
+    fun `a full list is still readable`() {
+        val full = (1..MAX_TRACKED_ROUTES).map { route(stopId = "stop_$it") }
+
+        assertEquals(full, TrackedRoutesJson.decode(TrackedRoutesJson.encode(full)))
+    }
+
     private companion object {
         const val ROW_WITH_NO_STOP =
             """[{"key":{"stopId":"","routeId":"1_40","headsign":"X"},"routeName":"40",""" +

@@ -155,7 +155,7 @@ fun StopRow(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
-                ArrivalsRow(item.arrivals, onToggleTracking)
+                ArrivalsRow(item.arrivals, onToggleTracking, onClick)
             }
         }
         RowActionsMenu(expanded, actions) { expanded = false }
@@ -163,9 +163,14 @@ fun StopRow(
 }
 
 /** The starred-stops live arrivals: a spinner while loading, then a scrollable row of badges (hidden
- *  when there are none). Null means this list doesn't show arrivals (e.g. recents). */
+ *  when there are none). Null means this list doesn't show arrivals (e.g. recents). [onStopClick] is
+ *  the enclosing row's tap, which a trackable badge has to re-offer (see [ArrivalBadgeChip]). */
 @Composable
-private fun ArrivalsRow(arrivals: StopArrivals?, onToggleTracking: ((ArrivalBadge) -> Unit)?) {
+private fun ArrivalsRow(
+    arrivals: StopArrivals?,
+    onToggleTracking: ((ArrivalBadge) -> Unit)?,
+    onStopClick: () -> Unit
+) {
     when (arrivals) {
         null -> {}
         StopArrivals.Loading -> CircularProgressIndicator(
@@ -179,7 +184,7 @@ private fun ArrivalsRow(arrivals: StopArrivals?, onToggleTracking: ((ArrivalBadg
                     .horizontalScroll(rememberScrollState())
             ) {
                 arrivals.badges.forEach { badge ->
-                    ArrivalBadgeChip(badge, onToggleTracking)
+                    ArrivalBadgeChip(badge, onToggleTracking, onStopClick)
                 }
             }
         }
@@ -189,11 +194,17 @@ private fun ArrivalsRow(arrivals: StopArrivals?, onToggleTracking: ((ArrivalBadg
 /**
  * One arrival badge, with the Track long-press menu when the badge names a trip that can be followed
  * (#2166). The row's own long press is the stop menu, so the badge stops the gesture from reaching it
- * — a long press *on a bus* is about that bus.
+ * — a long press *on a bus* is about that bus. Its *tap* is still the row's, but has to be re-offered
+ * as [onStopClick] rather than left to bubble: `combinedClickable` is a terminal gesture handler, so
+ * once the badge takes the long press it consumes the tap too, and a mis-hit would do nothing.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ArrivalBadgeChip(badge: ArrivalBadge, onToggleTracking: ((ArrivalBadge) -> Unit)?) {
+private fun ArrivalBadgeChip(
+    badge: ArrivalBadge,
+    onToggleTracking: ((ArrivalBadge) -> Unit)?,
+    onStopClick: () -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     // Non-null only when this badge names a trip *and* the host offers the action; capturing it as one
     // nullable lambda keeps the two conditions from having to be re-checked at every use below.
@@ -211,9 +222,9 @@ private fun ArrivalBadgeChip(badge: ArrivalBadge, onToggleTracking: ((ArrivalBad
                 .then(
                     if (onTrack != null) {
                         Modifier.combinedClickable(
-                            // Tap is left to the row (open the stop); only the long press is the
-                            // badge's own, so a mis-hit still does the expected thing.
-                            onClick = {},
+                            // Only the long press is the badge's own; a tap does what the row does, so
+                            // a mis-hit still opens the stop.
+                            onClick = onStopClick,
                             onLongClick = { expanded = true }
                         )
                     } else {

@@ -49,9 +49,15 @@ internal object TrackedRoutesJson {
      * Deliberately narrow: [IllegalArgumentException] covers malformed JSON (`SerializationException`
      * extends it) and JSON that decodes but violates [TrackedRoute]'s own `require`s. Anything else is
      * not a bad payload and must not be silenced.
+     *
+     * A list that decodes cleanly but breaks the *list's* invariants — a key tracked twice, or more
+     * rows than [MAX_TRACKED_ROUTES] — is unreadable for the same reason: `withTracked` is the only
+     * thing that ever builds a tracked list, so a list it could not have produced did not come from
+     * this app. [load] publishes what comes back here as-is, and repairing it would silently pick
+     * which of the rider's rows to drop.
      */
     fun decode(value: String): List<TrackedRoute>? = try {
-        json.decodeFromString<List<TrackedRoute>>(value)
+        json.decodeFromString<List<TrackedRoute>>(value).takeIf { it.holdsTrackedInvariants() }
     } catch (_: IllegalArgumentException) {
         null
     }
@@ -102,6 +108,18 @@ class TrackedRouteStore @Inject constructor(
      */
     fun track(route: TrackedRoute, now: WallTime) {
         update { it.withTracked(route.copy(startedAtMs = now.epochMs)) }
+    }
+
+    /**
+     * Puts the tracked set back to exactly [routes] — the undo half of [track], for a caller whose own
+     * work failed after the write.
+     *
+     * Not a general setter, and not interchangeable with [untrack]: a [track] call can *promote* a row
+     * that was already tracked, so undoing it means restoring the list that was there, not removing the
+     * row. Takes a list this store previously published, which is why it needs no invariant check.
+     */
+    fun restore(routes: List<TrackedRoute>) {
+        update { routes }
     }
 
     /** Stops tracking the session identified by [key]. */

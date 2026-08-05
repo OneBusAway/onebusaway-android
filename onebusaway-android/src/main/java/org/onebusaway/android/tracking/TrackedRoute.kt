@@ -100,5 +100,15 @@ const val MAX_TRACKED_ROUTES = 3
  */
 fun List<TrackedRoute>.withTracked(route: TrackedRoute): List<TrackedRoute> = (listOf(route) + filterNot { it.key == route.key }).take(MAX_TRACKED_ROUTES)
 
+/**
+ * True when this list is one [withTracked] could have produced: no key tracked twice, and no more
+ * rows than [MAX_TRACKED_ROUTES].
+ *
+ * Lives beside the rule it mirrors, because the only caller is the decoder: a stored list is the one
+ * way a list reaches the store without having been built by [withTracked], and one that breaks these
+ * invariants would draw a duplicate card or blow past the cap.
+ */
+fun List<TrackedRoute>.holdsTrackedInvariants(): Boolean = size <= MAX_TRACKED_ROUTES && distinctBy { it.key }.size == size
+
 /** This list without the session identified by [key] (the "stop tracking" action). */
 fun List<TrackedRoute>.withoutKey(key: TrackedRouteKey): List<TrackedRoute> = filterNot { it.key == key }

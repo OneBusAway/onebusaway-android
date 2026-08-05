@@ -145,6 +145,36 @@ class TrackedRouteStoreTest {
         assertEquals(later, store.routes.value.single().startedAt)
     }
 
+    // What a stored list breaking the tracked-set invariants does is pinned on the decoder instead
+    // (TrackedRouteTest): rejecting one makes load() log the discard, and android.util.Log is
+    // unmocked in plain JVM tests.
+
+    @Test
+    fun `restoring puts back the list a failed track promoted away from`() {
+        // The rollback a refused foreground start needs: the tap re-tracked a row that was already
+        // running, so undoing it means the previous order, not untracking the row.
+        val store = TrackedRouteStore(FakePreferencesRepository())
+        store.track(route(stopId = "1_100"), NOW)
+        store.track(route(stopId = "1_200"), NOW)
+        val before = store.routes.value
+
+        store.track(route(stopId = "1_100"), NOW)
+        store.restore(before)
+
+        assertEquals(before, store.routes.value)
+    }
+
+    @Test
+    fun `a restored list is what a later process sees`() {
+        val preferences = FakePreferencesRepository()
+        val store = TrackedRouteStore(preferences)
+        store.track(route(), NOW)
+
+        store.restore(emptyList())
+
+        assertEquals(emptyList<TrackedRoute>(), TrackedRouteStore(preferences).routes.value)
+    }
+
     private companion object {
         val NOW = WallTime(1_700_000_000_000L)
     }

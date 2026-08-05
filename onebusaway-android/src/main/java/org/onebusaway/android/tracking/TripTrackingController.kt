@@ -69,15 +69,18 @@ class TripTrackingController @Inject constructor(
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             return Refusal.NOTIFICATIONS_DISABLED
         }
+        val before = store.routes.value
         store.track(route, WallTime.now())
         return try {
             ContextCompat.startForegroundService(context, Intent(context, TripTrackingService::class.java))
             null
         } catch (e: IllegalStateException) {
             // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException. Roll the
-            // store back rather than leave a tracked trip nothing is rendering.
+            // store back rather than leave a tracked trip nothing is rendering — back to the list that
+            // was there, not by untracking the row: this tap may have been a re-track of a row already
+            // running, and untracking would then stop a session the rider still has.
             Log.w(TAG, "Foreground start refused; not tracking ${route.key}", e)
-            store.untrack(route.key)
+            store.restore(before)
             Refusal.SERVICE_REFUSED
         }
     }

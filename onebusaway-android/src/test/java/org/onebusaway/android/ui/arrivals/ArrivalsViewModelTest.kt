@@ -29,9 +29,19 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.onebusaway.android.testing.FakePreferencesRepository
 import org.onebusaway.android.testing.MainDispatcherRule
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.tracking.TrackedTripStore
 import org.onebusaway.android.ui.compose.components.AlertSeverity
+
+/**
+ * Builds the ViewModel with a real, empty [TrackedTripStore] over an in-memory preferences fake.
+ * The store is a plain reactive overlay here — no test in this file tracks a trip — so a factory
+ * saves threading the same throwaway store through every construction. Named for the type it
+ * returns, so it shadows the constructor and the call sites read unchanged.
+ */
+private fun ArrivalsViewModel(stopId: String, repository: ArrivalsRepository) = ArrivalsViewModel(stopId, repository, TrackedTripStore(FakePreferencesRepository()))
 
 /** The arguments of a single [ArrivalsRepository.favoriteRoute] call, for assertions. */
 private data class FavoriteRouteCall(

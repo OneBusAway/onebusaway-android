@@ -43,11 +43,19 @@ fun StopListDestination(
     viewModel: MyListViewModel<StopListItem>,
     @StringRes emptyText: Int,
     onClick: (StopListItem) -> Unit,
-    actions: (StopListItem) -> List<RowAction>
+    actions: (StopListItem) -> List<RowAction>,
+    // Long-pressing an arrival badge starts or stops that bus's live countdown (#2166). Only the
+    // starred-stops lists pass it — they are the only ones that render arrival badges at all.
+    onToggleTracking: ((ArrivalBadge) -> Unit)? = null
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     MyListContent(state, emptyText = stringResource(emptyText), itemKey = { it.id }) { stop ->
-        StopRow(stop, onClick = { onClick(stop) }, actions = actions(stop))
+        StopRow(
+            stop,
+            onClick = { onClick(stop) },
+            actions = actions(stop),
+            onToggleTracking = onToggleTracking
+        )
     }
 }
 

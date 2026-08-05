@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -60,6 +61,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -76,6 +78,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.rememberLiveServerTime
+import org.onebusaway.android.tracking.trackedInstanceId
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
@@ -150,6 +153,9 @@ internal fun EtaStrip(
     firstPillModifier: Modifier = Modifier,
     routeBadgeFor: (ArrivalInfo) -> RouteBadge? = { null },
     marker: EtaStripMarker? = null,
+    // Trip instances with a live countdown running (#2166) — the pill menu's verb depends on it.
+    // Empty for the display-only hosts (directions, trip results), which offer no tracking action.
+    trackedInstances: Set<String> = emptySet(),
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
     // the strip mid-scroll.
     state: LazyListState = rememberLazyListState()
@@ -244,6 +250,7 @@ internal fun EtaStrip(
                             actions = actionsFor(trip),
                             callbacks = callbacks,
                             routeBadge = routeBadgeFor(trip),
+                            tracked = trackedInstanceId(trip.stopId, trip.tripId, trip.serviceDate) in trackedInstances,
                             modifier = pillModifier.passedByMarker(marker, isPassed = index < (markerIndex ?: 0))
                         )
                     }
@@ -395,8 +402,9 @@ private fun ReferencePillHeightFrame(
 }
 
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
- *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
- *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta. */
+ *  the menu (trip details / reminder / track / report). [liveNow] is the strip's one shared ticking
+ *  clock (issue #1781) — counts this pill down between polls rather than freezing at the poll-time
+ *  eta. [tracked] is whether this exact trip instance has a live countdown notification (#2166). */
 @Composable
 private fun EtaPillWithMenu(
     trip: ArrivalInfo,
@@ -404,7 +412,8 @@ private fun EtaPillWithMenu(
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
-    routeBadge: RouteBadge? = null
+    routeBadge: RouteBadge? = null,
+    tracked: Boolean = false
 ) {
     var expanded by remember { mutableStateOf(false) }
     // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes
@@ -432,24 +441,43 @@ private fun EtaPillWithMenu(
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true }
         )
-        TripActionsMenu(expanded, { expanded = false }, trip, actions, callbacks)
+        TripActionsMenu(expanded, { expanded = false }, trip, actions, callbacks, tracked)
     }
 }
 
-/** The per-trip menu opened by long-pressing a pill: trip details, a reminder, or a problem report
- *  for that specific trip. Route-wide actions live on the row's long-press menu ([RouteActionsMenu]). */
+/** The per-trip menu opened by long-pressing a pill: trip details, a reminder, tracking, or a problem
+ *  report for that specific trip. Route-wide actions live on the row's long-press menu
+ *  ([RouteActionsMenu]).
+ *
+ *  [tracked] is whether this *exact* instance is the one being tracked, not merely whether some trip
+ *  on the same (stop, route, headsign) is: a sibling pill offers "track this bus", which repoints the
+ *  session at it rather than opening a second card — see `TrackedTripKey`. */
 @Composable
 internal fun TripActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     arrival: ArrivalInfo,
     actions: ArrivalActions?,
-    callbacks: ArrivalRowCallbacks
+    callbacks: ArrivalRowCallbacks,
+    tracked: Boolean = false
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(R.string.bus_options_menu_show_trip_details, MaterialSymbols.TripStatus) {
             onDismiss()
             callbacks.onShowTripStatus(arrival)
+        }
+        MenuRow(
+            textRes = if (tracked) {
+                R.string.bus_options_menu_untrack_trip
+            } else {
+                R.string.bus_options_menu_track_trip
+            },
+            leadingIcon = {
+                Icon(painter = painterResource(R.drawable.ic_directions_bus), contentDescription = null)
+            }
+        ) {
+            onDismiss()
+            callbacks.onToggleTracking(arrival)
         }
         MenuRow(R.string.bus_options_menu_set_reminder, MaterialSymbols.AddReminder) {
             onDismiss()

@@ -366,6 +366,25 @@
             android:name=".directions.realtime.TripPlanMonitorAlarmReceiver"
             android:exported="false" />
 
+        <!-- Live countdowns for the buses the rider chose to track (#2166). Polls arrivals for the
+             tracked stops and keeps one Live Update notification per tracked trip. No platform
+             foregroundServiceType covers "watch a bus for the rider"; specialUse is the sanctioned
+             catch-all, and the subtype documents it for Play review. -->
+        <service
+            android:name=".tracking.TripTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="transit_trip_tracking" />
+        </service>
+
+        <!-- The tracking notification's "stop tracking" action and swipe-away. Triggered only by the
+             app's own explicit-component PendingIntents, so it needs no cross-app access. -->
+        <receiver
+            android:name=".tracking.TripTrackingReceiver"
+            android:exported="false" />
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version"/>

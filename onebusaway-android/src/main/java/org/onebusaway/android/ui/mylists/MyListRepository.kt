@@ -38,6 +38,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.NetworkEntryPoint
 import org.onebusaway.android.app.di.RegionEntryPoint
+import org.onebusaway.android.app.di.TripTrackingEntryPoint
 import org.onebusaway.android.database.oba.ReminderRow
 import org.onebusaway.android.database.oba.RouteListRow
 import org.onebusaway.android.database.oba.RouteRecentRow
@@ -47,6 +48,7 @@ import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
+import org.onebusaway.android.ui.arrivals.toTrackedTrip
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -229,6 +231,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
+    private val trackedInstances = TripTrackingEntryPoint.get(context).trackedInstances
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_stops, R.string.preference_key_default_stop_sort)
@@ -251,10 +254,16 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
             if (stops.isEmpty()) {
                 flowOf(stops)
             } else {
-                arrivalsPoll(context, stops.map { it.id })
-                    .map { byStop ->
-                        stops.map { it.copy(arrivals = StopArrivals.Loaded(byStop[it.id].orEmpty())) }
+                // The tracked set is combined in rather than baked into the poll so a Track from any
+                // surface re-labels these badges immediately, instead of waiting out the 60s cycle.
+                combine(
+                    arrivalsPoll(context, stops.associate { it.id to it.name }),
+                    trackedInstances
+                ) { byStop, tracked ->
+                    stops.map { stop ->
+                        stop.copy(arrivals = StopArrivals.Loaded(byStop[stop.id].orEmpty().flagTracked(tracked)))
                     }
+                }
                     .onStart { emit(stops) }
             }
         }
@@ -348,10 +357,12 @@ private const val ARRIVALS_REFRESH_MS = 60_000L
 private const val ARRIVALS_MINUTES_AFTER = 35
 private const val MAX_ARRIVALS_PER_STOP = 3
 
-/** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. */
-private fun arrivalsPoll(context: Context, stopIds: List<String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
+/** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS].
+ *  [stopNames] is keyed by stop id; the name rides along because a badge the rider can track has to
+ *  carry the stop it is tracked at into the notification. */
+private fun arrivalsPoll(context: Context, stopNames: Map<String, String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
     while (true) {
-        emit(fetchArrivals(context, stopIds))
+        emit(fetchArrivals(context, stopNames))
         delay(ARRIVALS_REFRESH_MS)
     }
 }
@@ -360,15 +371,19 @@ private fun arrivalsPoll(context: Context, stopIds: List<String>): Flow<Map<Stri
  *  refresh latency is the slowest single request, not their sum. */
 private suspend fun fetchArrivals(
     context: Context,
-    stopIds: List<String>
+    stopNames: Map<String, String>
 ): Map<String, List<ArrivalBadge>> = coroutineScope {
-    stopIds.map { stopId -> async { stopId to fetchStopBadges(context, stopId) } }
+    stopNames.map { (stopId, stopName) -> async { stopId to fetchStopBadges(context, stopId, stopName) } }
         .awaitAll()
         .toMap()
 }
 
 /** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
-private suspend fun fetchStopBadges(context: Context, stopId: String): List<ArrivalBadge> = runCatchingCancellable {
+private suspend fun fetchStopBadges(
+    context: Context,
+    stopId: String,
+    stopName: String
+): List<ArrivalBadge> = runCatchingCancellable {
     val snapshot = NetworkEntryPoint.getStopArrivals(context)
         .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
         .getOrThrow()
@@ -376,10 +391,16 @@ private suspend fun fetchStopBadges(context: Context, stopId: String): List<Arri
     // rows don't render the favorite star.
     convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
         .take(MAX_ARRIVALS_PER_STOP)
-        .map { it.toBadge(context) }
+        .map { it.toBadge(context, stopName) }
 }.getOrDefault(emptyList())
 
-private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
+/** Re-flags each badge against the live set of tracked trip instances (#2166). */
+private fun List<ArrivalBadge>.flagTracked(tracked: Set<String>): List<ArrivalBadge> = map { badge ->
+    val instanceId = badge.trackable?.instanceId
+    badge.copy(tracked = instanceId != null && instanceId in tracked)
+}
+
+private fun ArrivalInfo.toBadge(context: Context, stopName: String): ArrivalBadge {
     val etaText = if (eta <= 0) {
         context.getString(R.string.starred_stop_arrival_now)
     } else {
@@ -394,6 +415,8 @@ private fun ArrivalInfo.toBadge(context: Context): ArrivalBadge {
         // The badge paints white text on this color, so it takes the on-fill tier directly off the
         // arrival (#2043). This used to reverse-map the foreground color resource id back to a
         // badge color, which silently fell through to "scheduled" for any id it didn't recognize.
-        colorRes = fillColor
+        colorRes = fillColor,
+        // Null when the response named no trip to follow — the badge then has no track action.
+        trackable = toTrackedTrip(stopName)
     )
 }

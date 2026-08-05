@@ -129,6 +129,7 @@ internal fun rememberArrivalRowCallbacks(
         onEtaClick = handler::onFocusVehicleOnMap,
         onShowTripStatus = handler::onShowTripStatus,
         onSetReminder = handler::onSetReminder,
+        onToggleTracking = handler::onToggleTracking,
         onShowRouteSchedule = handler::onShowRouteSchedule,
         onReportArrivalProblem = handler::onReportArrivalProblem,
         onShowAlert = handler::onShowAlert
@@ -152,6 +153,9 @@ interface ArrivalActionHandler {
     fun onFocusVehicleOnMap(arrival: ArrivalInfo)
     fun onShowTripStatus(arrival: ArrivalInfo)
     fun onSetReminder(arrival: ArrivalInfo)
+
+    /** Starts or stops the live countdown notification for this exact arrival (#2166). */
+    fun onToggleTracking(arrival: ArrivalInfo)
     fun onShowRouteSchedule(scheduleUrl: String)
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
@@ -435,6 +439,7 @@ internal fun ArrivalsList(
                     if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
+                    trackedInstances = content.trackedInstances,
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
                 )

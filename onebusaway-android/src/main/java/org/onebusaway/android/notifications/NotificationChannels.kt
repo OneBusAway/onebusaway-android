@@ -37,6 +37,15 @@ object NotificationChannels {
     const val ARRIVAL_REMINDERS_ID = "arrival_reminders"
 
     /**
+     * The live countdown for a bus the rider chose to track (#2166). Deliberately quiet
+     * ([NotificationManager.IMPORTANCE_LOW]): the card re-posts every few seconds so the countdown
+     * keeps advancing, and any alerting importance would turn that into a continuous buzz. The
+     * urgency is carried by the card being *promoted* on Android 16+ — a status-bar chip and a Lock
+     * Screen presence — not by it making noise.
+     */
+    const val TRIP_TRACKING_ID = "trip_tracking"
+
+    /**
      * Ongoing destination-reminder progress (the foreground-service distance notification) and the
      * trip-feedback follow-ups. Deliberately quiet ([NotificationManager.IMPORTANCE_LOW], no
      * vibration): the distance notification re-posts on every location update, so alerting on it
@@ -94,6 +103,16 @@ object NotificationChannels {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notifications to remind the user of an arriving bus."
+            }
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                TRIP_TRACKING_ID,
+                "Bus tracking",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "A live countdown for a bus you chose to track."
+                setShowBadge(false)
             }
         )
         registerDestinationChannels(manager)

@@ -96,6 +96,8 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
+    /** Starts or stops the live countdown notification for this exact arrival (#2166). */
+    val onToggleTracking: (ArrivalInfo) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
@@ -275,7 +277,11 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    etaAnchor: Modifier = Modifier
+    etaAnchor: Modifier = Modifier,
+    // The trip instances with a live countdown running (#2166), so each pill's menu offers the right
+    // verb. Defaulted empty: the hosts that reuse this row purely to display arrivals (directions, the
+    // trip-results stop strips) offer no tracking action and need no plumbing for it.
+    trackedInstances: Set<String> = emptySet()
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -366,7 +372,8 @@ fun RouteArrivalRow(
                         trips = group.trips,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
-                        firstPillModifier = etaAnchor
+                        firstPillModifier = etaAnchor,
+                        trackedInstances = trackedInstances
                     )
                 }
             }
@@ -671,6 +678,7 @@ internal fun previewRowCallbacks(
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},
+    onToggleTracking = {},
     onShowRouteSchedule = onShowRouteSchedule,
     onReportArrivalProblem = {},
     onShowAlert = {}

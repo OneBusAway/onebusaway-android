@@ -425,7 +425,11 @@ fun RouteArrivalRow(
                 // the row rather than tucked into the badge beside the alert triangle. Its own layer
                 // for the same reason the star is: a corner mark must not reflow the headsign or the
                 // pills under it.
-                Box(Modifier.align(Alignment.TopEnd)) {
+                Box(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = TRACKED_MARK_END_INSET)
+                ) {
                     TrackedRouteIndicator(
                         iconSize = CORNER_GLYPH_SIZE,
                         modifier = Modifier.size(CORNER_TOUCH_SIZE)
@@ -468,6 +472,11 @@ private val ROW_VERTICAL_PADDING = 8.dp
  *  each sits flush in its corner with no compensating offset, and so the three read as one family. */
 private val CORNER_TOUCH_SIZE = 28.dp
 private val CORNER_GLYPH_SIZE = 20.dp
+
+/** Breathing room between the tracking eye and the card's right edge, tuned by eye. Only the eye
+ *  takes it: the star sits flush in the opposite corner, where its tapered points read as inset
+ *  already, and nudging it would move a mark this change has no business touching. */
+private val TRACKED_MARK_END_INSET = 3.dp
 
 /** The route-level long-press menu: show the whole route on the map (always), start or stop this
  *  row's live countdown notification (#2166), and — when [onShowSchedule] is non-null (the route has

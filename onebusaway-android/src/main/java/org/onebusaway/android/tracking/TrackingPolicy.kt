@@ -22,6 +22,7 @@ import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.etaMinutes
+import org.onebusaway.android.time.untilNextMinute
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -131,12 +132,28 @@ val TRACKING_POLL_INTERVAL_NEAR: Duration = 20.seconds
 val TRACKING_NEAR_THRESHOLD: Duration = 5.minutes
 
 /**
- * How often the cards are re-rendered between polls. Faster than the poll so the countdown keeps
- * advancing against the server clock projected forward locally, rather than freezing for a minute
- * at a time; the service suppresses a re-post whose rendered content is unchanged, so a tick that
- * changes nothing costs nothing.
+ * The floor on [nextRenderDelay], so a wake-up computed as "right now" cannot spin the render loop.
+ * Only reachable through [untilNextPoll][nextRenderDelay] — the minute term is positive by
+ * construction.
  */
-val TRACKING_TICK: Duration = 15.seconds
+private val MIN_RENDER_DELAY: Duration = 1.seconds
+
+/**
+ * How long the render loop sleeps before drawing the cards again: until the soonest countdown turns
+ * over, or until the next poll is due, whichever comes first.
+ *
+ * [nows] is the server-clock instant each rendered row was measured against (one per row, since each
+ * stop's projection is anchored on its own response); [untilNextPoll] is how long until the oldest
+ * tracked stop is due another fetch.
+ *
+ * This used to be a flat 15s tick, which put the re-render on a grid with no relationship to the
+ * minute the number actually changes on: a card rendered a moment before the turnover kept a stale,
+ * one-minute-high countdown until the next grid point, so the shade routinely read one more than the
+ * arrivals row it was copied from (measured on device: the row flipped at the boundary, the card up
+ * to 18s later — always high, because a stale countdown is a larger one). Waking *on* the boundary
+ * instead is both exact and cheaper: one wake-up a minute rather than four.
+ */
+fun nextRenderDelay(nows: List<ServerTime>, untilNextPoll: Duration): Duration = (nows.map(::untilNextMinute) + untilNextPoll).min().coerceAtLeast(MIN_RENDER_DELAY)
 
 /**
  * What to do with one tracked row, given every arrival the freshest response holds for it and the

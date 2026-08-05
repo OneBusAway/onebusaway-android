@@ -127,6 +127,52 @@ class TrackingPolicyTest {
         assertEquals(TRACKING_POLL_INTERVAL, trackingPollInterval(null))
     }
 
+    // --- When to draw again --------------------------------------------------------------------
+
+    @Test
+    fun `the next render lands on the minute the countdown turns over`() {
+        // The whole point: a card drawn mid-minute must next be drawn when its number changes, not on
+        // some grid of its own — that offset is what made the shade read a minute higher than the row.
+        val elevenPast = ServerTime(ON_THE_MINUTE.epochMs + 11_000L)
+
+        assertEquals(49.seconds, nextRenderDelay(listOf(elevenPast), untilNextPoll = 5.minutes))
+    }
+
+    @Test
+    fun `a whole minute remains when the clock is exactly on the boundary`() {
+        // Not zero: the number that just changed is right for the minute that has only now started.
+        assertEquals(1.minutes, nextRenderDelay(listOf(ON_THE_MINUTE), untilNextPoll = 5.minutes))
+    }
+
+    @Test
+    fun `the soonest row decides, not the last one`() {
+        val soon = ServerTime(ON_THE_MINUTE.epochMs + 50_000L) // turns over in 10s
+        val later = ServerTime(ON_THE_MINUTE.epochMs + 20_000L) // turns over in 40s
+
+        assertEquals(10.seconds, nextRenderDelay(listOf(later, soon), untilNextPoll = 5.minutes))
+    }
+
+    @Test
+    fun `a poll due sooner than the turnover wakes the loop first`() {
+        // The near-departure cadence is 20s, well inside a minute; a render that slept to the
+        // turnover anyway would sit on predictions it had already been told to refresh.
+        assertEquals(TRACKING_POLL_INTERVAL_NEAR, nextRenderDelay(listOf(now), untilNextPoll = TRACKING_POLL_INTERVAL_NEAR))
+    }
+
+    @Test
+    fun `a row with no response yet waits for its poll`() {
+        // Nothing rendered has a countdown, so the only thing left to wake for is the fetch.
+        assertEquals(TRACKING_POLL_INTERVAL, nextRenderDelay(emptyList(), untilNextPoll = TRACKING_POLL_INTERVAL))
+    }
+
+    @Test
+    fun `an overdue poll never spins the loop`() {
+        // A poll already past due would compute as "wake immediately", which with a render loop means
+        // a hot loop; the floor is what keeps a failing stop from being hammered.
+        assertTrue(nextRenderDelay(emptyList(), untilNextPoll = Duration.ZERO) >= 1.seconds)
+        assertTrue(nextRenderDelay(emptyList(), untilNextPoll = -30.seconds) >= 1.seconds)
+    }
+
     // --- Giving up -----------------------------------------------------------------------------
 
     @Test
@@ -158,5 +204,11 @@ class TrackingPolicyTest {
     @Test
     fun `a card whose stop never answers is given up on`() {
         assertEquals(TrackingOutcome.Retire, pendingOutcome(TRACKING_PENDING_TIMEOUT + 1.seconds))
+    }
+
+    private companion object {
+        /** A minute-aligned instant, since [now] is deliberately not one and the wake-up tests are
+         *  about exactly where in the minute the clock sits. */
+        val ON_THE_MINUTE = ServerTime(1_700_000_040_000L)
     }
 }

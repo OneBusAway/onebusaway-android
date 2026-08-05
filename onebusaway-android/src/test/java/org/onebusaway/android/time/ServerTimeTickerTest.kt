@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.time
 
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -25,6 +27,22 @@ import org.junit.Test
  * device clock skew (#1612), mirroring `serverNowMs` in `VehicleInfoWindow`.
  */
 class ServerTimeTickerTest {
+
+    @Test
+    fun `the next minute is when the printed ETA changes, and never zero away`() {
+        // The contract a surface that redraws on a schedule depends on: wake here and the number is
+        // exactly one lower; wake later and it stayed a minute high in between.
+        val onTheMinute = ServerTime(1_700_000_040_000L)
+        val elevenPast = ServerTime(onTheMinute.epochMs + 11_000L)
+        val due = ServerTime(onTheMinute.epochMs + 5 * 60_000L)
+
+        assertEquals(49.seconds, untilNextMinute(elevenPast))
+        // On the boundary a whole minute remains — the minute that has only just started.
+        assertEquals(1.minutes, untilNextMinute(onTheMinute))
+        // And it really is the instant the printed number changes.
+        assertEquals(5L, etaMinutes(due, elevenPast))
+        assertEquals(4L, etaMinutes(due, elevenPast + untilNextMinute(elevenPast)))
+    }
 
     @Test
     fun `at the capture instant it equals the server time`() {

@@ -20,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 
 /**
@@ -71,5 +72,17 @@ internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, 
  * structural instead of a promise in a comment.
  */
 fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
+
+/**
+ * How long from [now] until every [etaMinutes] measured against it prints one less — i.e. until this
+ * clock crosses into its next whole minute. Always positive: on the boundary itself, a whole minute
+ * remains until the *next* one.
+ *
+ * For a surface that recomputes on its own schedule rather than continuously. Countdowns only change
+ * at this instant, so waking here is both the least it can do and the most it needs to: anything
+ * coarser leaves the number one minute high for the rest of the interval, which is exactly how two
+ * surfaces showing the same arrival come to disagree by one.
+ */
+fun untilNextMinute(now: ServerTime): Duration = (MS_PER_MINUTE - now.epochMs % MS_PER_MINUTE).milliseconds
 
 private const val MS_PER_MINUTE = 60 * 1000L

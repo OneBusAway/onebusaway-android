@@ -36,8 +36,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onebusaway.android.api.data.StopArrivalsDataSource
@@ -91,6 +90,14 @@ class TripTrackingService : Service() {
 
     /** The last good arrivals response per stop, with the monotonic reading it was received at. */
     private val snapshots = mutableMapOf<String, StopSnapshot>()
+
+    /**
+     * When each stop was last *asked*, which is not when it last answered. The poll cadence has to
+     * run off this rather than off [StopSnapshot.receivedAt]: a stop whose fetches keep failing has
+     * no receipt to age, so a receipt-based cadence would call it due forever and retry it as fast
+     * as the loop can turn.
+     */
+    private val attempts = mutableMapOf<String, ElapsedTime>()
 
     /** The last card posted per notification id, so an unchanged tick costs no re-post. */
     private val rendered = mutableMapOf<Int, TrackedRouteCard>()
@@ -152,24 +159,23 @@ class TripTrackingService : Service() {
     }
 
     /**
-     * Re-renders on every tick *and* on every change to the tracked set. Combining the two sources
-     * is what makes "stop tracking" instant: the store emission wakes the loop rather than the card
-     * sitting there until the next tick.
+     * Re-renders when the cards' numbers are next due to change *and* on every change to the tracked
+     * set. `collectLatest` is what makes "stop tracking" instant: a store emission cancels the sleep
+     * rather than leaving the card up until the next wake-up.
      */
     private suspend fun runRenderLoop() {
-        val ticker = flow {
+        store.routes.collectLatest { routes ->
             while (true) {
-                emit(Unit)
-                delay(TRACKING_TICK)
+                delay(refresh(routes))
             }
         }
-        combine(store.routes, ticker) { routes, _ -> routes }.collect { routes -> refresh(routes) }
     }
 
-    private suspend fun refresh(routes: List<TrackedRoute>) {
+    /** Draws the cards, and answers how long they stay right for — see [nextRenderDelay]. */
+    private suspend fun refresh(routes: List<TrackedRoute>): Duration {
         if (routes.isEmpty()) {
             stopTracking()
-            return
+            return Duration.INFINITE
         }
         forgetUntracked(routes)
         fetchStaleStops(routes)
@@ -178,22 +184,45 @@ class TripTrackingService : Service() {
 
         val retiring = resolved.filter { it.outcome is TrackingOutcome.Retire }
         if (retiring.isNotEmpty()) {
-            // Dropping them from the store re-emits the tracked list, which brings us straight back
-            // here with the survivors; take their cards down now so nothing lingers in between.
+            // Dropping them from the store re-emits the tracked list, which cancels this sleep and
+            // brings us straight back here with the survivors; take their cards down now so nothing
+            // lingers in between.
             retiring.forEach { done ->
                 notificationManager.cancel(trackingNotificationId(done.route.id))
                 rendered.remove(trackingNotificationId(done.route.id))
             }
             store.untrackAll(retiring.map { it.route.key })
-            return
+            return Duration.INFINITE
         }
 
         val cards = resolved.mapIndexed { rank, it -> notifications.card(it.route, it.outcome, rank) }
-        if (!post(cards)) return
+        if (!post(cards)) return Duration.INFINITE
 
         pollInterval = trackingPollInterval(
             resolved.mapNotNull { (it.outcome as? TrackingOutcome.Live)?.departures?.first()?.eta }.minOrNull()
         )
+        // Computed after the poll, not before it: a fetch that just landed re-dates the stop, and its
+        // response is the anchor the countdowns are now projected from.
+        return nextRenderDelay(renderedNows(routes), untilNextPoll(routes))
+    }
+
+    /**
+     * The server-clock instant each row's card was just measured against. A row with no response yet
+     * contributes none — its card shows a placeholder, which no minute turnover changes.
+     */
+    private fun renderedNows(routes: List<TrackedRoute>): List<ServerTime> {
+        val elapsed = elapsedClock.now()
+        return routes.mapNotNull { snapshots[it.key.stopId]?.serverNow(elapsed) }
+    }
+
+    /** How long until the stop that has gone longest unasked is due another fetch. */
+    private fun untilNextPoll(routes: List<TrackedRoute>): Duration {
+        val elapsed = elapsedClock.now()
+        return routes.map { it.key.stopId }
+            .distinct()
+            .minOfOrNull { stopId ->
+                attempts[stopId]?.let { pollInterval - (elapsed - it) } ?: Duration.ZERO
+            } ?: Duration.ZERO
     }
 
     /** Posts the cards, keeping the foreground anchor on the most-recently-tracked one. */
@@ -290,14 +319,17 @@ class TripTrackingService : Service() {
         routes.map { it.key.stopId }
             .distinct()
             .filter { stopId ->
-                val existing = snapshots[stopId]
-                existing == null || elapsedClock.now() - existing.receivedAt >= pollInterval
+                val asked = attempts[stopId]
+                asked == null || elapsedClock.now() - asked >= pollInterval
             }
             .map { stopId -> async { fetch(stopId) } }
             .awaitAll()
     }
 
     private suspend fun fetch(stopId: String) {
+        // Stamped before the request, so the cadence measures from when the stop was asked whether or
+        // not it answers.
+        attempts[stopId] = elapsedClock.now()
         // The arrivals screen's own default window. Tracking a row needs only the next few
         // departures, so there is nothing here to size the window around — unlike the earlier design,
         // which pinned one trip that might sit far out and had to be kept provably inside the window.
@@ -337,6 +369,7 @@ class TripTrackingService : Service() {
         }
         val liveStops = routes.mapTo(mutableSetOf()) { it.key.stopId }
         snapshots.keys.retainAll(liveStops)
+        attempts.keys.retainAll(liveStops)
     }
 
     /**

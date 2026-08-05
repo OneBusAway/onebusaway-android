@@ -17,6 +17,7 @@ package org.onebusaway.android.tracking
 
 import androidx.annotation.ColorRes
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.time.ServerTime
@@ -32,7 +33,7 @@ import org.onebusaway.android.time.ServerTime
  * wrong number on the Lock Screen.
  */
 
-/** The freshest facts about one tracked trip, lifted out of an arrivals response. */
+/** One upcoming arrival on a tracked row, as lifted out of an arrivals response. */
 data class TrackedMatch(
     /** The instant the countdown runs to: the predicted arrival/departure when the server gave a
      *  usable one, else the scheduled — the same choice the arrivals ETA pill makes. */
@@ -45,62 +46,80 @@ data class TrackedMatch(
     @param:ColorRes val fillColorRes: Int
 )
 
-/** What a tick says one tracked trip's card should do. */
+/** One departure as the card shows it: the same arrival, measured against a particular "now". */
+data class TrackedDeparture(
+    val eta: Duration,
+    /** The whole minutes the card prints — see [etaMinutes]. */
+    val etaMinutes: Long,
+    val predicted: Boolean,
+    val canceled: Boolean,
+    @param:ColorRes val fillColorRes: Int
+)
+
+/** What a tick says one tracked row's card should do. */
 sealed interface TrackingOutcome {
 
     /**
-     * No arrivals response for this trip's stop yet — the first fetch is still in flight or still
-     * failing. Deliberately distinct from every other outcome: a trip nobody has managed to look up
-     * has not departed, has not been cancelled, and has no number to count down, so the card holds
-     * its placeholder rather than inventing one of those.
+     * No arrivals response for this row's stop yet — the first fetch is still in flight or still
+     * failing. Deliberately distinct from every other outcome: a row nobody has managed to look up
+     * has not stopped running and has no numbers to show, so the card holds its placeholder rather
+     * than inventing either.
      */
     data object Pending : TrackingOutcome
 
     /**
-     * Still upcoming. [etaMinutes] is the number the card shows; [eta] is the exact remaining
-     * interval, which drives the progress bar and the poll cadence.
+     * The row's upcoming departures, soonest first and never empty. This is the whole point of
+     * tracking a row rather than a vehicle: when the soonest bus pulls away it simply drops off the
+     * front and the one behind it becomes the countdown, instead of the card retiring.
      */
-    data class Waiting(
-        val eta: Duration,
-        val etaMinutes: Long,
-        val predicted: Boolean
-    ) : TrackingOutcome
+    data class Live(val departures: List<TrackedDeparture>) : TrackingOutcome
 
-    /** At the stop now, or moments past it — the hand-off moment the whole feature exists for. */
-    data object Arriving : TrackingOutcome
-
-    /** The agency cancelled this trip. Shown, then retired on the usual linger. */
-    data object Canceled : TrackingOutcome
-
-    /** Done: drop the trip from the tracked set and take its card down. */
+    /** Done: the row has no upcoming departures left. Drop it and take its card down. */
     data object Retire : TrackingOutcome
 }
 
 /**
- * How long a card stays up past its own arrival time before retiring. The rider is boarding in this
- * window, and a card that vanishes the instant the countdown hits zero takes the confirmation away
- * at the one moment it is being looked at.
+ * How long a departure stays on the card past its own time. The rider is boarding in this window,
+ * and a number that vanishes the instant it hits zero takes the confirmation away at the one moment
+ * it is being looked at.
  */
 val TRACKING_LINGER: Duration = 2.minutes
 
 /**
- * How long a card may sit with nothing known about its trip before it is given up on. Bounds the
- * one way tracking could otherwise outlive its usefulness indefinitely: a stop whose arrivals fetch
- * keeps failing would leave an unresolvable card — and the foreground service behind it — up for as
- * long as the rider left it there.
+ * How many departures the card lists. The row's strip can run much longer, but a notification is
+ * read at a glance: past three the line stops being scannable and starts being a paragraph.
+ */
+const val TRACKING_MAX_DEPARTURES = 3
+
+/**
+ * The shortest span the progress bar is drawn over. Without a floor, a lone departure two minutes
+ * out would span the whole bar and the tracker would never appear to move; with it, a single
+ * imminent bus reads as what it is — nearly here.
+ */
+val TRACKING_MIN_HORIZON: Duration = 15.minutes
+
+/**
+ * How long a tracked row keeps running before the session is retired regardless. A row almost always
+ * has a next bus, so unlike a pinned vehicle it has no natural end; without this, a rider who tracks
+ * a row and forgets leaves a foreground service running until they notice. Generous on purpose — the
+ * bound exists to end forgotten sessions, not to cut short a real wait.
+ */
+val MAX_TRACKING_DURATION: Duration = 2.hours
+
+/**
+ * How long a card may sit with nothing known about its row before it is given up on. Bounds the
+ * other way tracking could outlive its usefulness: a stop whose arrivals fetch keeps failing would
+ * otherwise leave an unresolvable card — and the foreground service behind it — up indefinitely.
  */
 val TRACKING_PENDING_TIMEOUT: Duration = 2.minutes
 
-/** What to do with a card that has been [waited] long with no response for its stop. */
-fun pendingOutcome(waited: Duration): TrackingOutcome = if (waited > TRACKING_PENDING_TIMEOUT) TrackingOutcome.Retire else TrackingOutcome.Pending
-
-/** Poll cadence while the bus is still a way off — the arrivals screen's own 60s. */
+/** Poll cadence while the next bus is still a way off — the arrivals screen's own 60s. */
 val TRACKING_POLL_INTERVAL: Duration = 60.seconds
 
 /**
  * Poll cadence inside [TRACKING_NEAR_THRESHOLD]. Tightened because this is the stretch where a
  * minute of stale prediction is the difference between walking out now and missing the bus; the
- * request cost is bounded by [MAX_TRACKED_TRIPS] stops and by how briefly the endgame lasts.
+ * request cost is bounded by [MAX_TRACKED_ROUTES] stops and by how briefly the endgame lasts.
  */
 val TRACKING_POLL_INTERVAL_NEAR: Duration = 20.seconds
 
@@ -124,30 +143,37 @@ val TRACKING_TICK: Duration = 15.seconds
 fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
 
 /**
- * What to do with one tracked trip, given the freshest [match] for it (null when the instance is no
- * longer in the arrivals window at all) and the server-clock [now].
+ * What to do with one tracked row, given every arrival the freshest response holds for it and the
+ * server-clock [now].
+ *
+ * Departures already gone (past [TRACKING_LINGER]) drop off the front; what remains is sorted
+ * soonest-first and capped at [TRACKING_MAX_DEPARTURES]. An empty result means the row has nothing
+ * upcoming at all — service has ended for the day, or the row has left the arrivals window — and is
+ * the row's only natural end.
  */
-fun trackingOutcome(match: TrackedMatch?, now: ServerTime): TrackingOutcome {
-    // Gone from the response entirely: either it has long since departed and fallen out of the
-    // window, or the trip was dropped from the feed. Either way there is nothing left to count down
-    // to, and continuing to show the last known number would be inventing data.
-    if (match == null) return TrackingOutcome.Retire
-
-    val eta = match.displayTime - now
-    if (eta < -TRACKING_LINGER) return TrackingOutcome.Retire
-    if (match.canceled) return TrackingOutcome.Canceled
-    if (eta <= Duration.ZERO) return TrackingOutcome.Arriving
-    return TrackingOutcome.Waiting(
-        eta = eta,
-        etaMinutes = etaMinutes(match.displayTime, now),
-        predicted = match.predicted
-    )
+fun trackingOutcome(matches: List<TrackedMatch>, now: ServerTime): TrackingOutcome {
+    val departures = matches
+        .map { it.toDeparture(now) }
+        .filter { it.eta >= -TRACKING_LINGER }
+        .sortedBy { it.eta }
+        .take(TRACKING_MAX_DEPARTURES)
+    return if (departures.isEmpty()) TrackingOutcome.Retire else TrackingOutcome.Live(departures)
 }
+
+private fun TrackedMatch.toDeparture(now: ServerTime) = TrackedDeparture(
+    eta = displayTime - now,
+    etaMinutes = etaMinutes(displayTime, now),
+    predicted = predicted,
+    canceled = canceled,
+    fillColorRes = fillColorRes
+)
+
+/** What to do with a card that has been [waited] long with no response for its stop. */
+fun pendingOutcome(waited: Duration): TrackingOutcome = if (waited > TRACKING_PENDING_TIMEOUT) TrackingOutcome.Retire else TrackingOutcome.Pending
 
 /**
  * How long to wait before the next arrivals fetch, given the [soonest] remaining ETA across every
- * tracked trip (null when nothing is waiting — an arriving or cancelled card needs no more data,
- * but the loop still ticks it down to its retirement).
+ * tracked row (null when nothing is upcoming).
  */
 fun trackingPollInterval(soonest: Duration?): Duration = if (soonest != null && soonest <= TRACKING_NEAR_THRESHOLD) {
     TRACKING_POLL_INTERVAL_NEAR
@@ -155,27 +181,37 @@ fun trackingPollInterval(soonest: Duration?): Duration = if (soonest != null && 
     TRACKING_POLL_INTERVAL
 }
 
-/**
- * How far along the rider's wait a tracked trip is, in seconds, against a span of
- * [TrackedTrip.plannedWaitSeconds].
+/*
+ * The progress bar is a timeline of the row, laid out left-to-right in time:
  *
- * Clamped at both ends, so an arrival that slips past the originally-promised time parks the
- * tracker at the start of the bar rather than running off it. A delay genuinely does move the
- * tracker backwards — that is the honest rendering of "it got further away", and the alternative
- * (rescaling the span on every poll) is a bar that only ever advances while the bus recedes.
+ *   0 ─────────────●━━━━━━━━━╸────○──────────○───────── span
+ *   (the stop)     tracker: your next bus    later departures
+ *
+ * The span runs out to the furthest departure shown (never shorter than [TRACKING_MIN_HORIZON]), the
+ * tracker sits at the next one, and each departure after that is a point further along. So the
+ * filled part is exactly the wait the rider is serving, and it drains as the bus closes in; when
+ * that bus goes, the next becomes the tracker and the bar re-spans around what is left.
+ *
+ * Everything is derived per render from the departures themselves — nothing is captured at Track
+ * time — so a delay simply moves the marks rather than silently rescaling a bar underneath them.
  */
-fun trackingProgress(trip: TrackedTrip, outcome: TrackingOutcome): Int {
-    val span = trackingProgressMax(trip)
-    return when (outcome) {
-        // Nothing known yet, so nothing has been covered; the bar is drawn indeterminate anyway.
-        TrackingOutcome.Pending -> 0
-        // Here, cancelled, or done — the wait is over either way, and a full bar says so.
-        is TrackingOutcome.Waiting -> (span - outcome.eta.inWholeSeconds).coerceIn(0L, span.toLong()).toInt()
-        else -> span
-    }
+
+/** The bar's span in seconds: out to the furthest shown departure, floored at [TRACKING_MIN_HORIZON]. */
+fun trackingProgressMax(departures: List<TrackedDeparture>): Int = maxOf(departures.last().eta, TRACKING_MIN_HORIZON)
+    .inWholeSeconds
+    .coerceAtLeast(1L)
+    .toInt()
+
+/** Where the tracker sits: the next departure, in seconds along the bar. */
+fun trackingProgress(departures: List<TrackedDeparture>): Int = departures.first().eta.clampToBar(trackingProgressMax(departures))
+
+/** The departures after the next one, as points along the bar. */
+fun trackingProgressPoints(departures: List<TrackedDeparture>): List<Int> {
+    val span = trackingProgressMax(departures)
+    return departures.drop(1).map { it.eta.clampToBar(span) }
 }
 
-/** The progress bar's span for [trip]; at least one second, so a bar always has somewhere to go. */
-fun trackingProgressMax(trip: TrackedTrip): Int = trip.plannedWaitSeconds.coerceAtLeast(1)
+/** Seconds along a bar of [span], with a just-departed (negative) ETA pinned to the near end. */
+private fun Duration.clampToBar(span: Int): Int = inWholeSeconds.coerceIn(0L, span.toLong()).toInt()
 
 private const val MS_PER_MINUTE = 60 * 1000L

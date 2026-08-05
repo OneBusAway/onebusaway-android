@@ -154,8 +154,8 @@ interface ArrivalActionHandler {
     fun onShowTripStatus(arrival: ArrivalInfo)
     fun onSetReminder(arrival: ArrivalInfo)
 
-    /** Starts or stops the live countdown notification for this exact arrival (#2166). */
-    fun onToggleTracking(arrival: ArrivalInfo)
+    /** Starts or stops the live countdown notification for this whole route row (#2166). */
+    fun onToggleTracking(group: RouteRowGroup)
     fun onShowRouteSchedule(scheduleUrl: String)
     fun onReportArrivalProblem(actions: ArrivalActions)
     fun onShowAlert(alertId: String)
@@ -439,7 +439,7 @@ internal fun ArrivalsList(
                     if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
-                    trackedInstances = content.trackedInstances,
+                    trackedRows = content.trackedRows,
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
                 )

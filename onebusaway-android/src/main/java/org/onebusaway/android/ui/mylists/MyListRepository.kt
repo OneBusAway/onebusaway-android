@@ -46,9 +46,10 @@ import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
-import org.onebusaway.android.ui.arrivals.toTrackedTrip
+import org.onebusaway.android.ui.arrivals.toTrackedRoute
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -231,7 +232,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
     private val importGate = entryPoint.importGate()
     private val region = RegionEntryPoint.get(context).region
     private val sort = MutableStateFlow(PreferenceUtils.getStopSortOrderFromPreferences(context))
-    private val trackedInstances = TripTrackingEntryPoint.get(context).trackedInstances
+    private val trackedKeys = TripTrackingEntryPoint.get(context).trackedKeys
 
     override fun setSort(order: Int) {
         saveSortOrder(context, order, R.array.sort_stops, R.string.preference_key_default_stop_sort)
@@ -258,7 +259,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
                 // surface re-labels these badges immediately, instead of waiting out the 60s cycle.
                 combine(
                     arrivalsPoll(context, stops.associate { it.id to it.name }),
-                    trackedInstances
+                    trackedKeys
                 ) { byStop, tracked ->
                     stops.map { stop ->
                         stop.copy(arrivals = StopArrivals.Loaded(byStop[stop.id].orEmpty().flagTracked(tracked)))
@@ -394,10 +395,10 @@ private suspend fun fetchStopBadges(
         .map { it.toBadge(context, stopName) }
 }.getOrDefault(emptyList())
 
-/** Re-flags each badge against the live set of tracked trip instances (#2166). */
-private fun List<ArrivalBadge>.flagTracked(tracked: Set<String>): List<ArrivalBadge> = map { badge ->
-    val instanceId = badge.trackable?.instanceId
-    badge.copy(tracked = instanceId != null && instanceId in tracked)
+/** Re-flags each badge against the live set of tracked route rows (#2166). */
+private fun List<ArrivalBadge>.flagTracked(tracked: Set<TrackedRouteKey>): List<ArrivalBadge> = map { badge ->
+    val key = badge.trackable?.key
+    badge.copy(tracked = key != null && key in tracked)
 }
 
 private fun ArrivalInfo.toBadge(context: Context, stopName: String): ArrivalBadge {
@@ -416,7 +417,7 @@ private fun ArrivalInfo.toBadge(context: Context, stopName: String): ArrivalBadg
         // arrival (#2043). This used to reverse-map the foreground color resource id back to a
         // badge color, which silently fell through to "scheduled" for any id it didn't recognize.
         colorRes = fillColor,
-        // Null when the response named no trip to follow — the badge then has no track action.
-        trackable = toTrackedTrip(stopName)
+        // Null when the response named no stop/route to key on — no track action on the badge then.
+        trackable = toTrackedRoute(stopName)
     )
 }

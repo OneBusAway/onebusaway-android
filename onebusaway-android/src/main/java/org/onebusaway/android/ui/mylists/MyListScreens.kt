@@ -32,7 +32,7 @@ import org.onebusaway.android.ui.search.DefaultStopSearchRepository
 import org.onebusaway.android.ui.search.RouteSearchResult
 import org.onebusaway.android.ui.search.SearchViewModel
 import org.onebusaway.android.ui.search.StopSearchResult
-import org.onebusaway.android.ui.tracking.toggleTripTracking
+import org.onebusaway.android.ui.tracking.toggleRouteTracking
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -103,7 +103,7 @@ internal fun AppCompatActivity.starredStopsTab(
                 viewModel.remove(it.id)
             }
         },
-        onToggleTracking = { badge -> badge.trackable?.let { toggleTripTracking(it) } }
+        onToggleTracking = { badge -> badge.trackable?.let { toggleRouteTracking(it) } }
     )
 }
 

@@ -27,7 +27,6 @@ import android.util.Log
 import androidx.core.app.ServiceCompat
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlin.math.ceil
 import kotlin.time.Duration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,15 +47,15 @@ import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.DefaultArrivalsRepository
 
 /**
- * Keeps the rider's tracked buses on the Lock Screen as live, self-updating countdowns.
+ * Keeps the rider's tracked route rows on the Lock Screen as live, self-updating countdowns.
  *
  * **Why a poll and not a push.** The obvious vehicle would be the push registration the app already
  * has (#1957): OBACloud knows the device's token and the region already fans arrival reminders out
  * over it. It cannot serve this. The sidecar's only trip-shaped endpoint is `alarms`, which
  * registers a *one-shot* "notify me N seconds before this departure" — a single fire, no stream, no
- * per-trip countdown channel to subscribe to. There is nothing on the server to receive, so this
- * polls, and pays for it by being short-lived: the session lasts exactly as long as the trips the
- * rider named are still upcoming, and the service stops itself the moment the last one retires.
+ * per-row countdown channel to subscribe to. There is nothing on the server to receive, so this
+ * polls, and pays for it by being bounded: a row retires when it runs out of departures, and the
+ * whole session retires after [MAX_TRACKING_DURATION] regardless.
  *
  * **Which clock.** Every countdown is measured against the server clock — the response's own
  * `currentTime`, projected forward between polls by *monotonic* elapsed device time, exactly as the
@@ -64,14 +63,14 @@ import org.onebusaway.android.ui.arrivals.DefaultArrivalsRepository
  * so it is the single place in the app where clock skew would be most visible and least
  * explicable; the projection never subtracts a device wall-clock reading from a server one.
  *
- * The tracked set itself lives in [TrackedTripStore], not here. This service renders it: it collects
- * the store, so a "stop tracking" tap from the notification takes effect immediately, and a sticky
- * restart after a process death picks the session back up from the store rather than from an intent.
+ * The tracked set itself lives in [TrackedRouteStore], not here. This service renders it: it
+ * collects the store, so a "stop tracking" tap from the notification takes effect immediately, and a
+ * sticky restart after a process death picks the session back up from the store, not from an intent.
  */
 @AndroidEntryPoint
 class TripTrackingService : Service() {
 
-    @Inject lateinit var store: TrackedTripStore
+    @Inject lateinit var store: TrackedRouteStore
 
     @Inject lateinit var stopArrivals: StopArrivalsDataSource
 
@@ -89,21 +88,22 @@ class TripTrackingService : Service() {
     private val snapshots = mutableMapOf<String, StopSnapshot>()
 
     /** The last card posted per notification id, so an unchanged tick costs no re-post. */
-    private val rendered = mutableMapOf<Int, TrackedTripCard>()
+    private val rendered = mutableMapOf<Int, TrackedRouteCard>()
 
     /**
-     * The freshest remaining wait per tracked instance, seeded from the wait at Track time. Only use:
-     * sizing the arrivals window wide enough that the tracked trip is provably inside it, so
-     * "absent from the response" can be read as "gone" rather than "outside the window we asked for".
+     * When each row's session began, so a forgotten one cannot run forever. A row nearly always has
+     * a next bus, so unlike a pinned vehicle it has no natural end (see [MAX_TRACKING_DURATION]).
+     * Monotonic and service-local: it restarts with the service, which is the right behaviour for a
+     * backstop against forgetting rather than a promise about total duration.
      */
-    private val expectedWait = mutableMapOf<String, Duration>()
+    private val startedAt = mutableMapOf<TrackedRouteKey, ElapsedTime>()
 
     /**
-     * When each trip's card first went data-less, so a stop whose fetches keep failing does not leave
-     * an unresolvable card — and a foreground service behind it — up indefinitely. Cleared the moment
-     * the trip resolves against a response.
+     * When each row's card first went data-less, so a stop whose fetches keep failing does not leave
+     * an unresolvable card — and a foreground service behind it — up indefinitely. Cleared the
+     * moment the row resolves against a response.
      */
-    private val pendingSince = mutableMapOf<String, ElapsedTime>()
+    private val pendingSince = mutableMapOf<TrackedRouteKey, ElapsedTime>()
 
     /** The notification the platform currently treats as this foreground service's own. */
     private var anchorId: Int? = null
@@ -121,7 +121,7 @@ class TripTrackingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val primary = store.trips.value.firstOrNull()
+        val primary = store.routes.value.firstOrNull()
         if (primary == null) {
             // Nothing to show — but the platform still expects a startForeground for the
             // startForegroundService that got us here, so promote and immediately retire.
@@ -133,13 +133,13 @@ class TripTrackingService : Service() {
         // Must promote promptly (the platform allows seconds, not a network round trip), so the very
         // first card is a placeholder. A later start while already running re-promotes the card that
         // is already on screen rather than flashing the placeholder back over a live countdown.
-        val anchorCard = rendered[trackingNotificationId(primary.instanceId)]
+        val anchorCard = rendered[trackingNotificationId(primary.id)]
         val notification = anchorCard?.let(notifications::build) ?: notifications.pending(primary)
-        if (!promoteToForeground(trackingNotificationId(primary.instanceId), notification)) {
+        if (!promoteToForeground(trackingNotificationId(primary.id), notification)) {
             stopSelf()
             return START_NOT_STICKY
         }
-        anchorId = trackingNotificationId(primary.instanceId)
+        anchorId = trackingNotificationId(primary.id)
 
         if (renderJob == null) {
             renderJob = serviceScope.launch { runRenderLoop() }
@@ -166,43 +166,41 @@ class TripTrackingService : Service() {
                 delay(TRACKING_TICK)
             }
         }
-        combine(store.trips, ticker) { trips, _ -> trips }.collect { trips -> refresh(trips) }
+        combine(store.routes, ticker) { routes, _ -> routes }.collect { routes -> refresh(routes) }
     }
 
-    private suspend fun refresh(trips: List<TrackedTrip>) {
-        if (trips.isEmpty()) {
+    private suspend fun refresh(routes: List<TrackedRoute>) {
+        if (routes.isEmpty()) {
             stopTracking()
             return
         }
-        forgetUntracked(trips)
-        fetchStaleStops(trips)
+        forgetUntracked(routes)
+        fetchStaleStops(routes)
 
-        val resolved = trips.map { trip -> resolve(trip) }
+        val resolved = routes.map { route -> Resolved(route, outcomeFor(route)) }
 
         val retiring = resolved.filter { it.outcome is TrackingOutcome.Retire }
         if (retiring.isNotEmpty()) {
             // Dropping them from the store re-emits the tracked list, which brings us straight back
             // here with the survivors; take their cards down now so nothing lingers in between.
-            retiring.forEach { take ->
-                notificationManager.cancel(trackingNotificationId(take.trip.instanceId))
-                rendered.remove(trackingNotificationId(take.trip.instanceId))
-                store.untrack(take.trip.key)
+            retiring.forEach { done ->
+                notificationManager.cancel(trackingNotificationId(done.route.id))
+                rendered.remove(trackingNotificationId(done.route.id))
+                store.untrack(done.route.key)
             }
             return
         }
 
-        val cards = resolved.mapIndexed { rank, it ->
-            notifications.card(it.trip, it.outcome, it.match, rank)
-        }
+        val cards = resolved.mapIndexed { rank, it -> notifications.card(it.route, it.outcome, rank) }
         if (!post(cards)) return
 
         pollInterval = trackingPollInterval(
-            resolved.mapNotNull { (it.outcome as? TrackingOutcome.Waiting)?.eta }.minOrNull()
+            resolved.mapNotNull { (it.outcome as? TrackingOutcome.Live)?.departures?.first()?.eta }.minOrNull()
         )
     }
 
     /** Posts the cards, keeping the foreground anchor on the most-recently-tracked one. */
-    private fun post(cards: List<TrackedTripCard>): Boolean {
+    private fun post(cards: List<TrackedRouteCard>): Boolean {
         val primary = cards.first()
         val anchorMoved = anchorId != primary.notificationId
         if (anchorMoved || rendered[primary.notificationId] != primary) {
@@ -211,7 +209,7 @@ class TripTrackingService : Service() {
                 return false
             }
             if (anchorMoved) {
-                // Re-anchoring can take the previous anchor's notification down with it (the platform
+                // Re-anchoring takes the previous anchor's notification down with it (the platform
                 // allows one foreground notification per service). Forget every other render so the
                 // loop below re-posts them all instead of suppressing them as unchanged.
                 rendered.keys.retainAll(setOf(primary.notificationId))
@@ -228,31 +226,29 @@ class TripTrackingService : Service() {
         return true
     }
 
-    /** One tracked trip resolved against the freshest snapshot for its stop. */
-    private data class Resolved(
-        val trip: TrackedTrip,
-        val match: TrackedMatch?,
-        val outcome: TrackingOutcome
-    )
+    /** One tracked row resolved against the freshest snapshot for its stop. */
+    private data class Resolved(val route: TrackedRoute, val outcome: TrackingOutcome)
 
-    private fun resolve(trip: TrackedTrip): Resolved {
-        val snapshot = snapshots[trip.key.stopId]
-            ?: return Resolved(trip, match = null, outcome = pendingOutcome(trip.instanceId))
-        pendingSince.remove(trip.instanceId)
+    private fun outcomeFor(route: TrackedRoute): TrackingOutcome {
+        val since = startedAt.getOrPut(route.key) { elapsedClock.now() }
+        if (elapsedClock.now() - since > MAX_TRACKING_DURATION) {
+            Log.d(TAG, "Tracking session for ${route.key} exceeded $MAX_TRACKING_DURATION - retiring")
+            return TrackingOutcome.Retire
+        }
+
+        val snapshot = snapshots[route.key.stopId] ?: return pendingOutcomeFor(route.key)
+        pendingSince.remove(route.key)
 
         val now = snapshot.serverNow(elapsedClock.now())
-        val arrival = snapshot.arrivals.firstOrNull {
-            trackedInstanceId(it.stopId, it.tripId, it.serviceDate) == trip.instanceId
-        }
-        val match = arrival?.let { toMatch(it, now) }
-        val outcome = trackingOutcome(match, now)
-        (outcome as? TrackingOutcome.Waiting)?.let { expectedWait[trip.instanceId] = it.eta }
-        return Resolved(trip, match, outcome)
+        val matches = snapshot.arrivals
+            .filter { it.belongsTo(route.key) }
+            .map { toMatch(it, now) }
+        return trackingOutcome(matches, now)
     }
 
     /** Holds a data-less card until the fetches have had long enough to be called hopeless. */
-    private fun pendingOutcome(instanceId: String): TrackingOutcome {
-        val since = pendingSince.getOrPut(instanceId) { elapsedClock.now() }
+    private fun pendingOutcomeFor(key: TrackedRouteKey): TrackingOutcome {
+        val since = pendingSince.getOrPut(key) { elapsedClock.now() }
         return pendingOutcome(elapsedClock.now() - since)
     }
 
@@ -273,18 +269,23 @@ class TripTrackingService : Service() {
     }
 
     /** Fetches any stop whose snapshot is missing or older than the current [pollInterval]. */
-    private suspend fun fetchStaleStops(trips: List<TrackedTrip>) {
-        trips.map { it.key.stopId }.distinct().forEach { stopId ->
+    private suspend fun fetchStaleStops(routes: List<TrackedRoute>) {
+        routes.map { it.key.stopId }.distinct().forEach { stopId ->
             val existing = snapshots[stopId]
             if (existing != null && elapsedClock.now() - existing.receivedAt < pollInterval) return@forEach
-            fetch(stopId, windowMinutes(trips, stopId))
+            fetch(stopId)
         }
     }
 
-    private suspend fun fetch(stopId: String, minutesAfter: Int) {
+    private suspend fun fetch(stopId: String) {
+        // The arrivals screen's own default window. Tracking a row needs only the next few
+        // departures, so there is nothing here to size the window around — unlike the earlier design,
+        // which pinned one trip that might sit far out and had to be kept provably inside the window.
+        val result = withContext(Dispatchers.IO) {
+            stopArrivals.arrivals(stopId, DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT)
+        }
         // Stamp the receipt as close to the response as possible: it is the baseline the server clock
         // is projected forward from between polls.
-        val result = withContext(Dispatchers.IO) { stopArrivals.arrivals(stopId, minutesAfter) }
         val receivedAt = elapsedClock.now()
         result.onSuccess { response ->
             snapshots[stopId] = StopSnapshot(
@@ -293,37 +294,23 @@ class TripTrackingService : Service() {
                 receivedAt = receivedAt
             )
         }.onFailure {
-            // Keep the previous snapshot and let its countdown keep projecting; a dropped poll is not
-            // a reason to take a card down. Retirement is decided by the trip's own time, not by ours.
+            // Keep the previous snapshot and let its countdowns keep projecting; a dropped poll is not
+            // a reason to take a card down. Retirement is decided by the row's own times, not by ours.
             Log.w(TAG, "Tracking poll for stop $stopId failed - keeping the last good arrivals", it)
         }
     }
 
-    /**
-     * How far ahead to ask for arrivals at [stopId]: far enough to provably contain every trip
-     * tracked there, so [trackingOutcome] can read "absent from the response" as "this trip is gone"
-     * rather than "we asked for too narrow a window". Sized off the trips' own remaining waits (the
-     * wait at Track time until a live one replaces it) plus slack for a delay that pushes one out.
-     */
-    private fun windowMinutes(trips: List<TrackedTrip>, stopId: String): Int {
-        val longest = trips.filter { it.key.stopId == stopId }.maxOf { trip ->
-            expectedWait[trip.instanceId]?.inWholeSeconds ?: trip.plannedWaitSeconds.toLong()
-        }
-        val needed = ceil(longest / 60.0).toInt() + TRACKING_WINDOW_SLACK_MINUTES
-        return maxOf(DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT, needed)
-    }
-
-    /** Drops per-trip bookkeeping for sessions that are no longer tracked. */
-    private fun forgetUntracked(trips: List<TrackedTrip>) {
-        val live = trips.mapTo(mutableSetOf()) { it.instanceId }
-        expectedWait.keys.retainAll(live)
+    /** Drops per-row bookkeeping for sessions that are no longer tracked. */
+    private fun forgetUntracked(routes: List<TrackedRoute>) {
+        val live = routes.mapTo(mutableSetOf()) { it.key }
+        startedAt.keys.retainAll(live)
         pendingSince.keys.retainAll(live)
-        val liveIds = trips.mapTo(mutableSetOf()) { trackingNotificationId(it.instanceId) }
+        val liveIds = routes.mapTo(mutableSetOf()) { trackingNotificationId(it.id) }
         rendered.keys.filterNot { it in liveIds }.forEach { id ->
             notificationManager.cancel(id)
             rendered.remove(id)
         }
-        val liveStops = trips.mapTo(mutableSetOf()) { it.key.stopId }
+        val liveStops = routes.mapTo(mutableSetOf()) { it.key.stopId }
         snapshots.keys.retainAll(liveStops)
     }
 
@@ -378,10 +365,10 @@ class TripTrackingService : Service() {
         const val TAG = "TripTrackingService"
 
         /**
-         * Extra arrivals window past the longest tracked wait. Absorbs a delay that pushes a tracked
-         * trip out past the time it was tracked at, so a late bus keeps its card instead of falling
-         * out of the requested window and being read as gone.
+         * Whether this arrival is one of the tracked row's. The same (stop, route, headsign) triple
+         * the arrivals drawer groups its rows by, so the card lists exactly the departures the row
+         * shows — a null headsign normalizes to the empty string, matching how the key is built.
          */
-        const val TRACKING_WINDOW_SLACK_MINUTES = 20
+        fun ArrivalData.belongsTo(key: TrackedRouteKey): Boolean = stopId == key.stopId && routeId == key.routeId && headsign.orEmpty() == key.headsign
     }
 }

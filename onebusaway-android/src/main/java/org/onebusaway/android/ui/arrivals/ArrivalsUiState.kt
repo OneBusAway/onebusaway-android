@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.arrivals
 
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 
 /** The stop being viewed, for the arrivals screen header. */
@@ -96,11 +97,11 @@ sealed interface ArrivalsUiState {
         /** The starred route ids, live — a row's star + the drawer-header promotion read from this, so a
          *  toggle from any surface re-flags the list without a re-fetch (#1751). */
         val favoriteRouteIds: Set<String> = emptySet(),
-        /** The trip instances currently being tracked as a live countdown notification (#2166), live —
-         *  a pill's menu reads this to offer "stop tracking" instead of "track", so a Track from any
-         *  surface (this list, another stop's list, the notification's own action) re-flags the menu
-         *  with no re-fetch. Keyed by `trackedInstanceId`. */
-        val trackedInstances: Set<String> = emptySet(),
+        /** The route rows currently being tracked as a live countdown notification (#2166), live — a
+         *  row's menu reads this to offer "stop tracking" instead of "track", so a Track from any
+         *  surface (this list, a starred stop, the notification's own action) re-flags the menu with
+         *  no re-fetch. */
+        val trackedRows: Set<TrackedRouteKey> = emptySet(),
         val alerts: List<AlertItem> = emptyList(),
         val hiddenAlertCount: Int = 0,
         val routeDisplayNames: List<String> = emptyList(),

@@ -22,26 +22,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import org.onebusaway.android.R
 import org.onebusaway.android.app.di.TripTrackingEntryPoint
-import org.onebusaway.android.tracking.TrackedTrip
+import org.onebusaway.android.tracking.TrackedRoute
 import org.onebusaway.android.tracking.TripTrackingController
 
 /**
- * The Track action, shared by every surface that offers it (#2166) — the arrivals drawer's ETA-pill
+ * The Track action, shared by every surface that offers it (#2166) — the arrivals drawer's route-row
  * menu and the starred-stop arrival badges in My Lists.
  *
- * One implementation on purpose: the two surfaces must agree about what a second tap means (stop, if
- * this exact instance is the one running; otherwise start, which repoints the existing session at
- * the bus just named — see `TrackedTripKey`), and about how each refusal is reported. Split across
- * two call sites, that agreement is a convention; here it is the code.
+ * One implementation on purpose: the two surfaces must agree about what a second tap on the same row
+ * means (stop tracking it) and about how each refusal is reported. Split across two call sites, that
+ * agreement is a convention; here it is the code.
  */
-fun AppCompatActivity.toggleTripTracking(trip: TrackedTrip) {
+fun AppCompatActivity.toggleRouteTracking(route: TrackedRoute) {
     val controller = TripTrackingEntryPoint.get(this)
-    if (controller.isTracking(trip.instanceId)) {
-        controller.untrack(trip.key)
-        toast(getString(R.string.trip_tracking_stopped, trip.routeName))
+    if (controller.isTracking(route.key)) {
+        controller.untrack(route.key)
+        toast(getString(R.string.trip_tracking_stopped, route.routeName))
         return
     }
-    when (controller.track(trip)) {
+    when (controller.track(route)) {
         TripTrackingController.Refusal.NOTIFICATIONS_DISABLED -> {
             // On Android 13+ the rider may simply never have been asked; ask now, so a second tap
             // succeeds instead of hitting the same wall.
@@ -52,7 +51,7 @@ fun AppCompatActivity.toggleTripTracking(trip: TrackedTrip) {
         TripTrackingController.Refusal.SERVICE_REFUSED ->
             toast(getString(R.string.trip_tracking_unavailable))
 
-        null -> toast(getString(R.string.trip_tracking_started, trip.routeName))
+        null -> toast(getString(R.string.trip_tracking_started, route.routeName))
     }
 }
 

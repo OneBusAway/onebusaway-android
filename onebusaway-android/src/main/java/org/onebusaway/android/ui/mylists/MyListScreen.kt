@@ -231,9 +231,9 @@ private fun ArrivalBadgeChip(badge: ArrivalBadge, onToggleTracking: ((ArrivalBad
         if (onTrack != null) {
             val label = stringResource(
                 if (badge.tracked) {
-                    R.string.bus_options_menu_untrack_trip
+                    R.string.bus_options_menu_untrack_route
                 } else {
-                    R.string.bus_options_menu_track_trip
+                    R.string.bus_options_menu_track_route
                 }
             )
             RowActionsMenu(expanded, listOf(RowAction(label, onTrack))) { expanded = false }

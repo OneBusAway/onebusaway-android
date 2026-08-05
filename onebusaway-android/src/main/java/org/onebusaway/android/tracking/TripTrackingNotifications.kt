@@ -31,25 +31,28 @@ import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
 
 /**
- * The rendered content of one tracked trip's notification.
+ * The rendered content of one tracked row's notification.
  *
  * A value type on purpose: [TripTrackingService] re-renders every tick so the countdown keeps
  * advancing between polls, and comparing this to the previous render is what lets it skip the
  * re-post when nothing the rider can see has changed — the direct comparison of the meaningful
  * thing, rather than a revision counter that has to be remembered to bump.
  */
-data class TrackedTripCard(
-    val instanceId: String,
+data class TrackedRouteCard(
+    val rowId: String,
     val notificationId: Int,
     val stopId: String,
     val stopName: String,
     val title: String,
+    /** The row's strip, as one line: "4 min · 12 min · 24 min". */
     val text: String,
     /** The status-bar chip text on Android 16+ ("4 min"); null while there is no number to show. */
     val shortText: String?,
     @param:ColorRes val colorRes: Int,
     val progress: Int,
     val progressMax: Int,
+    /** The departures after the next one, as points along the bar. */
+    val progressPoints: List<Int>,
     val indeterminate: Boolean,
     /**
      * The most-recently-tracked session: the one promoted to the status-bar chip and ranked to the
@@ -62,28 +65,38 @@ data class TrackedTripCard(
 )
 
 /**
- * The notification id for a tracked trip. Derived from the trip instance so a card keeps its
- * identity across re-renders, service restarts, and reordering — an index-derived id would make two
- * trips swap cards when the rider tracks a third.
+ * The notification id for a tracked row. Derived from the row's own identity so a card keeps it
+ * across re-renders, service restarts, and reordering — an index-derived id would make two rows swap
+ * cards when the rider tracks a third.
  *
- * Namespaced into its own high range so a hash collision cannot land on one of the app's other
- * fixed notification ids (the trip-plan monitor's, the destination reminder's), which are all small
- * constants.
+ * Namespaced into its own high range so a hash collision cannot land on one of the app's other fixed
+ * notification ids (the trip-plan monitor's, the destination reminder's), which are small constants.
  */
-fun trackingNotificationId(instanceId: String): Int = TRACKING_ID_BASE or (instanceId.hashCode() and TRACKING_ID_MASK)
+fun trackingNotificationId(rowId: String): Int = TRACKING_ID_BASE or (rowId.hashCode() and TRACKING_ID_MASK)
 
 private const val TRACKING_ID_BASE = 0x7B000000
 private const val TRACKING_ID_MASK = 0x00FFFFFF
 
 /**
- * Builds the Live Update notification for a tracked trip.
+ * Separates the departures on the card's one line. The same separator the My-tab reminder rows use
+ * for their subtitle, so the two read as the same kind of list.
+ */
+private const val DEPARTURE_SEPARATOR = "  ·  "
+
+/**
+ * Builds the Live Update notification for a tracked route row.
  *
  * On Android 16+ this is a `ProgressStyle` notification requesting the promoted-ongoing treatment,
  * which is what puts the countdown in the status-bar chip and on the Lock Screen without the rider
  * unlocking anything — the closest platform analogue to the iOS Live Activity this mirrors. Below
- * that it degrades to a plain ongoing notification carrying the same countdown in its text plus a
+ * that it degrades to a plain ongoing notification carrying the same departures in its text plus a
  * legacy determinate progress bar; `NotificationCompat` is used throughout so the degradation is a
  * single explicit branch rather than two builders.
+ *
+ * The card is deliberately **not** a rendering of the Compose `EtaStrip`: a custom `RemoteViews`
+ * layout disqualifies a notification from the Live Update treatment entirely, so the row is
+ * expressed inside the standard template — its departures as the text line, and its timeline as the
+ * progress bar (see the diagram in [TrackingPolicy]).
  */
 class TripTrackingNotifications @Inject constructor(
     @param:ApplicationContext private val context: Context
@@ -91,27 +104,28 @@ class TripTrackingNotifications @Inject constructor(
 
     /** The card shown before the first arrivals response lands, so the service can promote to the
      *  foreground immediately (the platform gives it seconds, not a network round trip). */
-    fun pending(trip: TrackedTrip): Notification = builder(
-        TrackedTripCard(
-            instanceId = trip.instanceId,
-            notificationId = trackingNotificationId(trip.instanceId),
-            stopId = trip.key.stopId,
-            stopName = trip.stopName,
-            title = title(trip),
+    fun pending(route: TrackedRoute): Notification = builder(
+        TrackedRouteCard(
+            rowId = route.id,
+            notificationId = trackingNotificationId(route.id),
+            stopId = route.key.stopId,
+            stopName = route.stopName,
+            title = title(route),
             text = context.getString(R.string.trip_tracking_pending),
             shortText = null,
             colorRes = R.color.theme_primary,
             progress = 0,
-            progressMax = trackingProgressMax(trip),
+            progressMax = 1,
+            progressPoints = emptyList(),
             indeterminate = true,
             primary = true,
             sortKey = sortKey(0)
         )
     ).build()
 
-    fun build(card: TrackedTripCard): Notification = builder(card).build()
+    fun build(card: TrackedRouteCard): Notification = builder(card).build()
 
-    private fun builder(card: TrackedTripCard): NotificationCompat.Builder {
+    private fun builder(card: TrackedRouteCard): NotificationCompat.Builder {
         val color = ContextCompat.getColor(context, card.colorRes)
         val builder = NotificationCompat.Builder(context, NotificationChannels.TRIP_TRACKING_ID)
             .setSmallIcon(R.drawable.ic_bus)
@@ -135,13 +149,13 @@ class TripTrackingNotifications @Inject constructor(
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSortKey(card.sortKey)
-            // The rider explicitly asked to watch this bus, so the promoted session outranks the
-            // ones it superseded; both stay below anything that alerts (the channel is LOW).
+            // The rider explicitly asked to watch this row, so the promoted session outranks the
+            // ones it superseded; both stay silent (the channel has no sound, vibration, or lights).
             .setPriority(
                 if (card.primary) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_LOW
             )
             .setContentIntent(openArrivals(card))
-            // Swiping the card away is the same intent as the action: stop watching this bus. Without
+            // Swiping the card away is the same intent as the action: stop watching this row. Without
             // it a dismissed card would come straight back on the next tick.
             .setDeleteIntent(untrack(card))
             .addAction(
@@ -159,26 +173,31 @@ class TripTrackingNotifications @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
             builder.setStyle(progressStyle(card, color))
         } else {
-            // The pre-16 fallback: the classic determinate bar. The countdown itself is in the text,
-            // so a device that shows neither still reads correctly.
+            // The pre-16 fallback: the classic determinate bar, which has no notion of points, so it
+            // shows the wait for the next departure alone. The full strip is in the text, so a device
+            // that shows neither bar still reads correctly.
             builder.setProgress(card.progressMax, card.progress, card.indeterminate)
         }
         return builder
     }
 
-    private fun progressStyle(card: TrackedTripCard, color: Int): NotificationCompat.ProgressStyle = NotificationCompat.ProgressStyle()
-        // One segment spanning the rider's whole wait; the tracker icon rides along it. Splitting it
-        // into per-stop segments would need the trip's remaining stop list, which this feature does
-        // not fetch — a deliberate follow-up, not an omission to paper over with a guess.
+    private fun progressStyle(card: TrackedRouteCard, color: Int): NotificationCompat.ProgressStyle = NotificationCompat.ProgressStyle()
+        // One segment spanning the row's timeline; the tracker rides it to the next departure and the
+        // points mark the ones after. Per-*stop* segments would be the richer rendering, but they
+        // would need the trip's remaining stop list, which this feature does not fetch — a deliberate
+        // follow-up, not an omission to paper over with a guess.
         .setProgressSegments(
             listOf(NotificationCompat.ProgressStyle.Segment(card.progressMax).setColor(color))
+        )
+        .setProgressPoints(
+            card.progressPoints.map { NotificationCompat.ProgressStyle.Point(it).setColor(color) }
         )
         .setProgress(card.progress)
         .setProgressIndeterminate(card.indeterminate)
         .setProgressTrackerIcon(IconCompat.createWithResource(context, R.drawable.ic_bus))
 
     /** Tapping the card opens the arrivals list for the stop being watched. */
-    private fun openArrivals(card: TrackedTripCard): PendingIntent {
+    private fun openArrivals(card: TrackedRouteCard): PendingIntent {
         val intent = ArrivalsListLauncher.Builder(context, card.stopId)
             .setStopName(card.stopName)
             .intent
@@ -186,10 +205,10 @@ class TripTrackingNotifications @Inject constructor(
         return PendingIntent.getActivity(context, card.notificationId, intent, pendingIntentFlags())
     }
 
-    private fun untrack(card: TrackedTripCard): PendingIntent {
+    private fun untrack(card: TrackedRouteCard): PendingIntent {
         val intent = Intent(context, TripTrackingReceiver::class.java)
             .setAction(TripTrackingReceiver.ACTION_UNTRACK)
-            .putExtra(TripTrackingReceiver.EXTRA_INSTANCE_ID, card.instanceId)
+            .putExtra(TripTrackingReceiver.EXTRA_ROW_ID, card.rowId)
         return PendingIntent.getBroadcast(
             context,
             card.notificationId,
@@ -198,10 +217,10 @@ class TripTrackingNotifications @Inject constructor(
         )
     }
 
-    private fun title(trip: TrackedTrip): String = if (trip.key.headsign.isBlank()) {
-        trip.routeName
+    private fun title(route: TrackedRoute): String = if (route.key.headsign.isBlank()) {
+        route.routeName
     } else {
-        context.getString(R.string.trip_tracking_title, trip.routeName, trip.key.headsign)
+        context.getString(R.string.trip_tracking_title, route.routeName, route.key.headsign)
     }
 
     private fun pendingIntentFlags(): Int {
@@ -213,54 +232,48 @@ class TripTrackingNotifications @Inject constructor(
     }
 
     /**
-     * Renders one tracked trip's card. Kept here rather than in [TripTrackingService] because every
-     * line of it is a string lookup against the app's resources; the decisions it renders are all
-     * made in [TrackingPolicy].
+     * Renders one tracked row's card. Kept here rather than in [TripTrackingService] because every
+     * line of it is a string or colour lookup against the app's resources; the decisions it renders
+     * are all made in [TrackingPolicy].
      */
-    fun card(
-        trip: TrackedTrip,
-        outcome: TrackingOutcome,
-        match: TrackedMatch?,
-        rank: Int
-    ): TrackedTripCard {
-        val waiting = outcome as? TrackingOutcome.Waiting
-        // Null unless there is a number worth printing. A trip still seconds away floors to zero
-        // minutes — the arrivals pill calls that "NOW", so the card says "arriving now" too rather
-        // than counting down to "0 min".
-        val minutes = waiting?.etaMinutes?.toInt()?.takeIf { it > 0 }
-        val arriving = outcome is TrackingOutcome.Arriving || (waiting != null && minutes == null)
-        return TrackedTripCard(
-            instanceId = trip.instanceId,
-            notificationId = trackingNotificationId(trip.instanceId),
-            stopId = trip.key.stopId,
-            stopName = trip.stopName,
-            title = title(trip),
-            text = when {
-                outcome is TrackingOutcome.Canceled -> context.getString(R.string.trip_tracking_canceled)
-                arriving -> context.getString(R.string.trip_tracking_arriving_now)
-                minutes == null -> context.getString(R.string.trip_tracking_pending)
-                waiting.predicted ->
-                    context.resources
-                        .getQuantityString(R.plurals.trip_tracking_arrives_in, minutes, minutes)
-                else ->
-                    context.resources
-                        .getQuantityString(R.plurals.trip_tracking_scheduled_in, minutes, minutes)
+    fun card(route: TrackedRoute, outcome: TrackingOutcome, rank: Int): TrackedRouteCard {
+        val departures = (outcome as? TrackingOutcome.Live)?.departures.orEmpty()
+        val next = departures.firstOrNull()
+        return TrackedRouteCard(
+            rowId = route.id,
+            notificationId = trackingNotificationId(route.id),
+            stopId = route.key.stopId,
+            stopName = route.stopName,
+            title = title(route),
+            text = if (departures.isEmpty()) {
+                context.getString(R.string.trip_tracking_pending)
+            } else {
+                departures.joinToString(DEPARTURE_SEPARATOR) { label(it) }
             },
-            shortText = when {
-                outcome is TrackingOutcome.Canceled -> null
-                arriving -> context.getString(R.string.trip_tracking_short_now)
-                minutes == null -> null
-                else -> context.getString(R.string.trip_tracking_short_eta, minutes)
-            },
-            colorRes = match?.fillColorRes ?: R.color.theme_primary,
-            progress = trackingProgress(trip, outcome),
-            progressMax = trackingProgressMax(trip),
-            // Indeterminate only while nothing is known. Once the bus is here or the trip is off, a
-            // full bar reads as done, where a spinner would read as "still working on it".
-            indeterminate = outcome is TrackingOutcome.Pending,
+            // The chip gets the next departure alone — it is a handful of characters in the status
+            // bar, so the rest of the strip has nowhere to go.
+            shortText = next?.let(::label),
+            // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
+            colorRes = next?.fillColorRes ?: R.color.theme_primary,
+            progress = if (departures.isEmpty()) 0 else trackingProgress(departures),
+            progressMax = if (departures.isEmpty()) 1 else trackingProgressMax(departures),
+            progressPoints = if (departures.isEmpty()) emptyList() else trackingProgressPoints(departures),
+            // Indeterminate only while nothing is known — a spinner otherwise reads as "still
+            // working on it" when the answer is already on screen.
+            indeterminate = departures.isEmpty(),
             primary = rank == 0,
             sortKey = sortKey(rank)
         )
+    }
+
+    /**
+     * One departure as it appears in the strip. A bus still seconds away floors to zero minutes,
+     * which the arrivals pill renders as "NOW", so the card says the same rather than "0 min".
+     */
+    private fun label(departure: TrackedDeparture): String = when {
+        departure.canceled -> context.getString(R.string.trip_tracking_canceled)
+        departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
+        else -> context.getString(R.string.trip_tracking_short_eta, departure.etaMinutes.toInt())
     }
 
     /** Ranks cards most-recently-tracked first — sort keys order lexicographically, ascending. */

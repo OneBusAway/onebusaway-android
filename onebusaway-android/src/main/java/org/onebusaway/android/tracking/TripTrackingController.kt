@@ -38,7 +38,7 @@ import kotlinx.coroutines.flow.Flow
 @Singleton
 class TripTrackingController @Inject constructor(
     @param:ApplicationContext private val context: Context,
-    private val store: TrackedTripStore
+    private val store: TrackedRouteStore
 ) {
 
     /** Why a Track tap did not take. */
@@ -50,35 +50,35 @@ class TripTrackingController @Inject constructor(
         SERVICE_REFUSED
     }
 
-    /** True when [instanceId] is the exact trip instance currently being tracked for its session. */
-    fun isTracking(instanceId: String): Boolean = store.isTracking(instanceId)
+    /** True when [key]'s route row is currently tracked. */
+    fun isTracking(key: TrackedRouteKey): Boolean = store.isTracking(key)
 
-    /** The tracked trip instances, live — for surfaces that label a row by whether it is tracked. */
-    val trackedInstances: Flow<Set<String>> get() = store.trackedInstances
+    /** The tracked row keys, live — for surfaces that label a row by whether it is tracked. */
+    val trackedKeys: Flow<Set<TrackedRouteKey>> get() = store.trackedKeys
 
     /**
-     * Starts (or, for a session that is already live, repoints and promotes) tracking of [trip].
+     * Starts tracking [route], or — when its row is already tracked — promotes that session.
      * Returns null on success, else why it did not take.
      */
-    fun track(trip: TrackedTrip): Refusal? {
+    fun track(route: TrackedRoute): Refusal? {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) {
             return Refusal.NOTIFICATIONS_DISABLED
         }
-        store.track(trip)
+        store.track(route)
         return try {
             ContextCompat.startForegroundService(context, Intent(context, TripTrackingService::class.java))
             null
         } catch (e: IllegalStateException) {
             // ForegroundServiceStartNotAllowedException (API 31+) is an IllegalStateException. Roll the
             // store back rather than leave a tracked trip nothing is rendering.
-            Log.w(TAG, "Foreground start refused; not tracking ${trip.key}", e)
-            store.untrack(trip.key)
+            Log.w(TAG, "Foreground start refused; not tracking ${route.key}", e)
+            store.untrack(route.key)
             Refusal.SERVICE_REFUSED
         }
     }
 
-    /** Stops tracking the session identified by [key]; the service retires itself once empty. */
-    fun untrack(key: TrackedTripKey) {
+    /** Stops tracking the row identified by [key]; the service retires itself once empty. */
+    fun untrack(key: TrackedRouteKey) {
         store.untrack(key)
     }
 

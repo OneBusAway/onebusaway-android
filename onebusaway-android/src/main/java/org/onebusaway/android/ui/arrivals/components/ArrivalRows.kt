@@ -70,9 +70,11 @@ import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
+import org.onebusaway.android.ui.arrivals.trackedRouteKey
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
@@ -96,8 +98,8 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
-    /** Starts or stops the live countdown notification for this exact arrival (#2166). */
-    val onToggleTracking: (ArrivalInfo) -> Unit,
+    /** Starts or stops the live countdown notification for this whole route row (#2166). */
+    val onToggleTracking: (RouteRowGroup) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
@@ -278,10 +280,10 @@ fun RouteArrivalRow(
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
     etaAnchor: Modifier = Modifier,
-    // The trip instances with a live countdown running (#2166), so each pill's menu offers the right
-    // verb. Defaulted empty: the hosts that reuse this row purely to display arrivals (directions, the
+    // The route rows with a live countdown running (#2166), so this row's menu offers the right verb.
+    // Defaulted empty: the hosts that reuse this row purely to display arrivals (directions, the
     // trip-results stop strips) offer no tracking action and need no plumbing for it.
-    trackedInstances: Set<String> = emptySet()
+    trackedRows: Set<TrackedRouteKey> = emptySet()
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -372,8 +374,7 @@ fun RouteArrivalRow(
                         trips = group.trips,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
-                        firstPillModifier = etaAnchor,
-                        trackedInstances = trackedInstances
+                        firstPillModifier = etaAnchor
                     )
                 }
             }
@@ -397,7 +398,9 @@ fun RouteArrivalRow(
                 expanded = menuExpanded,
                 onDismiss = { menuExpanded = false },
                 onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
-                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } }
+                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } },
+                onToggleTracking = { callbacks.onToggleTracking(group) },
+                tracked = representative.trackedRouteKey() in trackedRows
             )
         }
     }
@@ -422,8 +425,10 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** The route-level long-press menu: show the whole route on the map (always), and — when [onShowSchedule]
- *  is non-null (the route has a schedule) — open its schedule. A dumb view: both actions arrive pre-bound.
+/** The route-level long-press menu: show the whole route on the map (always), start or stop this
+ *  row's live countdown notification (#2166), and — when [onShowSchedule] is non-null (the route has
+ *  a schedule) — open its schedule. A dumb view: every action arrives pre-bound, and [tracked] only
+ *  picks the tracking item's wording.
  *  The route's star lives as the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on
  *  each pill's long-press menu ([TripActionsMenu]). */
 @Composable
@@ -431,7 +436,9 @@ internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     onShowRouteOnMap: () -> Unit,
-    onShowSchedule: (() -> Unit)?
+    onShowSchedule: (() -> Unit)?,
+    onToggleTracking: (() -> Unit)? = null,
+    tracked: Boolean = false
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(
@@ -440,6 +447,19 @@ internal fun RouteActionsMenu(
         ) {
             onDismiss()
             onShowRouteOnMap()
+        }
+        if (onToggleTracking != null) {
+            MenuRow(
+                textRes = if (tracked) {
+                    R.string.bus_options_menu_untrack_route
+                } else {
+                    R.string.bus_options_menu_track_route
+                },
+                icon = ImageVector.vectorResource(R.drawable.ic_directions_bus)
+            ) {
+                onDismiss()
+                onToggleTracking()
+            }
         }
         if (onShowSchedule != null) {
             MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {

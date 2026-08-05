@@ -24,7 +24,7 @@ import javax.inject.Inject
 /**
  * Handles the tracking notification's "stop tracking" action and its swipe-away.
  *
- * The write goes to [TrackedTripStore], not to [TripTrackingService]: the store is the source of
+ * The write goes to [TrackedRouteStore], not to [TripTrackingService]: the store is the source of
  * truth, so the tap is honoured even if the service is between restarts, and the running service
  * picks it up on its next emission of the tracked list — which is immediate, since it collects the
  * store rather than polling it.
@@ -32,16 +32,16 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class TripTrackingReceiver : BroadcastReceiver() {
 
-    @Inject lateinit var store: TrackedTripStore
+    @Inject lateinit var store: TrackedRouteStore
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_UNTRACK) return
-        val instanceId = intent.getStringExtra(EXTRA_INSTANCE_ID) ?: return
-        store.untrackInstance(instanceId)
+        val rowId = intent.getStringExtra(EXTRA_ROW_ID) ?: return
+        store.untrackById(rowId)
     }
 
     companion object {
         const val ACTION_UNTRACK = "org.onebusaway.android.tracking.UNTRACK"
-        const val EXTRA_INSTANCE_ID = "org.onebusaway.android.tracking.INSTANCE_ID"
+        const val EXTRA_ROW_ID = "org.onebusaway.android.tracking.ROW_ID"
     }
 }

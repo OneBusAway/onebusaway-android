@@ -21,14 +21,14 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
-import org.onebusaway.android.tracking.TrackedTrip
-import org.onebusaway.android.tracking.TrackedTripKey
+import org.onebusaway.android.tracking.TrackedRoute
+import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueLauncher
-import org.onebusaway.android.ui.tracking.toggleTripTracking
+import org.onebusaway.android.ui.tracking.toggleRouteTracking
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.util.ExternalIntents
@@ -152,23 +152,17 @@ fun createArrivalActionHandler(
         )
     }
 
-    /**
-     * Starts or stops the live countdown notification for this arrival (#2166).
-     *
-     * "Stop" only when this *exact* instance is the one running; a sibling pill of the same
-     * (stop, route, headsign) starts, which repoints the existing session at the arrival the rider
-     * just named rather than opening a second card for the same bus (see `TrackedTripKey`).
-     */
-    override fun onToggleTracking(arrival: ArrivalInfo) {
-        val trip = arrival.toTrackedTrip(currentContent()?.header?.name.orEmpty())
-        if (trip == null) {
+    /** Starts or stops the live countdown notification for this whole route row (#2166). */
+    override fun onToggleTracking(group: RouteRowGroup) {
+        val route = group.representative.toTrackedRoute(currentContent()?.header?.name.orEmpty())
+        if (route == null) {
             // A partial/omitted API response leaves tripId or stopId blank, and neither can be
             // resolved against a later response — so there is nothing to follow. Refuse up front
             // rather than tracking something that could never be matched again.
             Toast.makeText(activity, R.string.trip_tracking_unavailable, Toast.LENGTH_SHORT).show()
             return
         }
-        activity.toggleTripTracking(trip)
+        activity.toggleRouteTracking(route)
     }
 
     override fun onShowRouteSchedule(scheduleUrl: String) {
@@ -236,26 +230,21 @@ fun createArrivalActionHandler(
 }
 
 /**
- * This arrival as a trackable trip (#2166), or null when it cannot be tracked.
+ * The route row this arrival belongs to (#2166), or null when the response named no stop or route to
+ * key on — the tracking service re-resolves the row against every later response by exactly that
+ * triple, so a row with a blank part could never be found again.
  *
- * Null exactly when the response left [ArrivalInfo.tripId] or [ArrivalInfo.stopId] blank: the
- * countdown re-resolves its trip against every later response by that pair, so a trip with no id to
- * match on could never be found again. Refusing here is what lets the tracking service read "absent
- * from the response" as "this bus is gone" rather than as a lookup that never had a chance.
- *
- * [plannedWaitSeconds] is the wait as it stands right now — a same-domain [ServerTime] difference,
- * so no device clock enters it — and becomes the span of the notification's progress bar.
+ * Defined on the arrival rather than on [RouteRowGroup] because both surfaces that offer tracking
+ * reach it through one: the drawer's row menu via its representative, and a My Lists arrival badge,
+ * which *is* a single arrival but identifies the same row.
  */
-internal fun ArrivalInfo.toTrackedTrip(stopName: String): TrackedTrip? {
-    if (tripId.isBlank() || stopId.isBlank()) return null
-    return TrackedTrip(
-        key = TrackedTripKey(stopId = stopId, routeId = routeId, headsign = headsign.orEmpty()),
-        tripId = tripId,
-        serviceDate = serviceDate,
-        routeName = lineName,
-        stopName = stopName,
-        plannedWaitSeconds = (displayTime - serverNow).inWholeSeconds
-            .coerceIn(0L, Int.MAX_VALUE.toLong())
-            .toInt()
-    )
+internal fun ArrivalInfo.trackedRouteKey(): TrackedRouteKey? = if (stopId.isBlank() || routeId.isBlank()) {
+    null
+} else {
+    TrackedRouteKey(stopId = stopId, routeId = routeId, headsign = headsign.orEmpty())
+}
+
+/** This arrival's route row as a trackable session, or null when it cannot be tracked. */
+internal fun ArrivalInfo.toTrackedRoute(stopName: String): TrackedRoute? = trackedRouteKey()?.let { key ->
+    TrackedRoute(key = key, routeName = lineName, stopName = stopName)
 }

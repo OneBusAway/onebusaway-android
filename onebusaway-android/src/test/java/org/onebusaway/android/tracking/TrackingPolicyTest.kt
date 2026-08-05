@@ -15,23 +15,25 @@
  */
 package org.onebusaway.android.tracking
 
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 
 /**
- * The rules the tracking notification lives by: when it counts down, when it says the bus is here,
- * and when it takes itself away. Everything here is measured against a *server*-clock now that the
- * test supplies, which is the whole reason these decisions live outside the service.
+ * The rules the tracking notification lives by: which departures a row shows, when it rolls onto the
+ * next one, when it retires, and how its timeline is laid out. Everything here is measured against a
+ * *server*-clock now that the test supplies, which is why these decisions live outside the service.
  */
 class TrackingPolicyTest {
 
     private val now = ServerTime(1_700_000_000_000L)
 
     private fun match(
-        inTime: kotlin.time.Duration,
+        inTime: Duration,
         predicted: Boolean = true,
         canceled: Boolean = false
     ) = TrackedMatch(
@@ -41,20 +43,13 @@ class TrackingPolicyTest {
         fillColorRes = 0
     )
 
-    private fun trip(plannedWaitSeconds: Int = 600) = TrackedTrip(
-        key = TrackedTripKey("1_100", "1_40", "Downtown Seattle"),
-        tripId = "trip_1",
-        serviceDate = 1L,
-        routeName = "40",
-        stopName = "Pine St & 3rd Ave",
-        plannedWaitSeconds = plannedWaitSeconds
-    )
+    private fun live(vararg matches: TrackedMatch) = trackingOutcome(matches.toList(), now) as TrackingOutcome.Live
 
     @Test
-    fun `an upcoming arrival counts down`() {
-        val outcome = trackingOutcome(match(4.minutes), now)
+    fun `a row lists its upcoming departures soonest first`() {
+        val outcome = live(match(24.minutes), match(4.minutes), match(12.minutes))
 
-        assertEquals(TrackingOutcome.Waiting(4.minutes, etaMinutes = 4, predicted = true), outcome)
+        assertEquals(listOf(4L, 12L, 24L), outcome.departures.map { it.etaMinutes })
     }
 
     @Test
@@ -70,81 +65,101 @@ class TrackingPolicyTest {
     }
 
     @Test
-    fun `a scheduled arrival counts down as scheduled`() {
-        val outcome = trackingOutcome(match(4.minutes, predicted = false), now)
+    fun `the card lists no more departures than it can show at a glance`() {
+        val outcome = live(match(4.minutes), match(12.minutes), match(24.minutes), match(36.minutes))
 
-        assertEquals(false, (outcome as TrackingOutcome.Waiting).predicted)
+        assertEquals(TRACKING_MAX_DEPARTURES, outcome.departures.size)
     }
 
     @Test
-    fun `the bus is arriving the moment the countdown reaches zero`() {
-        assertEquals(TrackingOutcome.Arriving, trackingOutcome(match(0.seconds), now))
+    fun `a departure stays on the card through the boarding moment`() {
+        val outcome = live(match(-TRACKING_LINGER), match(12.minutes))
+
+        assertEquals(2, outcome.departures.size)
+        assertTrue(outcome.departures.first().etaMinutes <= 0)
     }
 
     @Test
-    fun `a card stays up through the boarding moment`() {
-        assertEquals(TrackingOutcome.Arriving, trackingOutcome(match(-TRACKING_LINGER), now))
+    fun `the card rolls onto the next bus rather than retiring`() {
+        // The whole reason tracking follows the row: the bus the rider was watching pulls away and
+        // the one behind it becomes the countdown, instead of the card vanishing.
+        val outcome = live(match(-TRACKING_LINGER - 1.seconds), match(12.minutes))
+
+        assertEquals(listOf(12L), outcome.departures.map { it.etaMinutes })
     }
 
     @Test
-    fun `a card retires once the linger is over`() {
-        val outcome = trackingOutcome(match(-TRACKING_LINGER - 1.seconds), now)
+    fun `a row with nothing upcoming retires`() {
+        assertEquals(TrackingOutcome.Retire, trackingOutcome(emptyList(), now))
+    }
+
+    @Test
+    fun `a row whose last departure has gone retires`() {
+        val outcome = trackingOutcome(listOf(match(-TRACKING_LINGER - 1.seconds)), now)
 
         assertEquals(TrackingOutcome.Retire, outcome)
     }
 
     @Test
-    fun `a trip that has left the arrivals window retires`() {
-        assertEquals(TrackingOutcome.Retire, trackingOutcome(null, now))
+    fun `a cancelled departure is carried through so the card can say so`() {
+        val outcome = live(match(4.minutes, canceled = true), match(12.minutes))
+
+        assertTrue(outcome.departures.first().canceled)
     }
 
     @Test
-    fun `a cancelled trip says so instead of counting down`() {
-        assertEquals(TrackingOutcome.Canceled, trackingOutcome(match(4.minutes, canceled = true), now))
+    fun `a scheduled departure is carried through as scheduled`() {
+        assertEquals(false, live(match(4.minutes, predicted = false)).departures.first().predicted)
     }
 
     @Test
-    fun `a cancelled trip still retires on the usual linger`() {
-        val outcome = trackingOutcome(match(-TRACKING_LINGER - 1.seconds, canceled = true), now)
-
-        assertEquals(TrackingOutcome.Retire, outcome)
-    }
-
-    @Test
-    fun `polling tightens as the bus gets close`() {
+    fun `polling tightens as the next bus gets close`() {
         assertEquals(TRACKING_POLL_INTERVAL, trackingPollInterval(TRACKING_NEAR_THRESHOLD + 1.seconds))
         assertEquals(TRACKING_POLL_INTERVAL_NEAR, trackingPollInterval(TRACKING_NEAR_THRESHOLD))
         assertEquals(TRACKING_POLL_INTERVAL_NEAR, trackingPollInterval(30.seconds))
     }
 
     @Test
-    fun `nothing waiting polls at the relaxed cadence`() {
+    fun `nothing upcoming polls at the relaxed cadence`() {
         assertEquals(TRACKING_POLL_INTERVAL, trackingPollInterval(null))
     }
 
-    @Test
-    fun `progress advances across the wait`() {
-        val trip = trip(plannedWaitSeconds = 600)
+    // --- The timeline bar ----------------------------------------------------------------------
 
-        assertEquals(0, trackingProgress(trip, trackingOutcome(match(10.minutes), now)))
-        assertEquals(300, trackingProgress(trip, trackingOutcome(match(5.minutes), now)))
+    @Test
+    fun `the bar spans out to the furthest departure shown`() {
+        val departures = live(match(4.minutes), match(12.minutes), match(24.minutes)).departures
+
+        assertEquals(24 * 60, trackingProgressMax(departures))
     }
 
     @Test
-    fun `a delay walks the tracker backwards rather than off the bar`() {
-        // The bus was 10 minutes out when tracked and is now 15 minutes out. The honest rendering is
-        // the tracker back at the start, not a silently rescaled bar that only ever advances.
-        val trip = trip(plannedWaitSeconds = 600)
+    fun `the tracker sits at the next departure and the rest are points`() {
+        val departures = live(match(4.minutes), match(12.minutes), match(24.minutes)).departures
 
-        assertEquals(0, trackingProgress(trip, trackingOutcome(match(15.minutes), now)))
+        assertEquals(4 * 60, trackingProgress(departures))
+        assertEquals(listOf(12 * 60, 24 * 60), trackingProgressPoints(departures))
     }
 
     @Test
-    fun `an arrived trip fills the bar`() {
-        val trip = trip(plannedWaitSeconds = 600)
+    fun `a lone imminent bus still has a bar to move along`() {
+        // Without the horizon floor a single departure would span the whole bar, and the tracker
+        // would sit at the far end however close the bus got.
+        val departures = live(match(2.minutes)).departures
 
-        assertEquals(600, trackingProgress(trip, trackingOutcome(match(0.seconds), now)))
+        assertEquals(TRACKING_MIN_HORIZON.inWholeSeconds.toInt(), trackingProgressMax(departures))
+        assertEquals(2 * 60, trackingProgress(departures))
+        assertEquals(emptyList<Int>(), trackingProgressPoints(departures))
     }
+
+    @Test
+    fun `a just-departed bus pins the tracker to the near end`() {
+        val departures = live(match(-30.seconds), match(12.minutes)).departures
+
+        assertEquals(0, trackingProgress(departures))
+    }
+
+    // --- Giving up -----------------------------------------------------------------------------
 
     @Test
     fun `a card with no data yet holds while the fetches are still young`() {
@@ -154,16 +169,5 @@ class TrackingPolicyTest {
     @Test
     fun `a card whose stop never answers is given up on`() {
         assertEquals(TrackingOutcome.Retire, pendingOutcome(TRACKING_PENDING_TIMEOUT + 1.seconds))
-    }
-
-    @Test
-    fun `nothing known yet leaves the bar at the start`() {
-        assertEquals(0, trackingProgress(trip(), TrackingOutcome.Pending))
-    }
-
-    @Test
-    fun `a bus tracked with no wait left still has a bar to fill`() {
-        // A zero span would make the progress bar undrawable; the floor keeps it well-formed.
-        assertEquals(1, trackingProgressMax(trip(plannedWaitSeconds = 0)))
     }
 }

@@ -61,7 +61,7 @@
     <string name="search_hint">Wyszukaj przystanki lub trasy</string>
     <string name="checkmark_description">Wybrane oznaczenia</string>
 
-    <!--  Option strings -->
+    <!-- Option strings -->
     <string name="map_option_mylocation">Moja pozycja</string>
     <string name="map_option_search">Wyszukaj</string>
     <string name="cancel">Anuluj</string>
@@ -98,13 +98,12 @@
     <string name="bus_options_menu_show_route_schedule">Pokaż rozkład jazdy linii</string>
     <string name="bus_options_menu_report_trip_problem">Zgłoś problem z kursem</string>
 
-    <!--  Stop Info -->
+    <!-- Stop Info -->
     <string name="stop_info_ontime">Na czas</string>
     <string name="stop_info_arrived_ontime">Przyjechał na czas</string>
     <string name="stop_info_departed_ontime">Odjechał o czasie</string>
     <plurals name="stop_info_arrive_delayed" tools:ignore="MissingQuantity">
         <item quantity="one">1 minuta spóźnienia</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
             minut spóźnienia
@@ -112,7 +111,6 @@
     </plurals>
     <plurals name="stop_info_arrive_early" tools:ignore="MissingQuantity">
         <item quantity="one">1 minut wcześniej</item>
-        <!-- Below element should remain on same line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
             minut wcześniej
@@ -120,7 +118,6 @@
     </plurals>
     <plurals name="stop_info_depart_delayed" tools:ignore="MissingQuantity">
         <item quantity="one">Odjechał 1 minutę spóźniony</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Odjechał
             <xliff:g id="count">%d</xliff:g>
             minut spóźniony
@@ -128,7 +125,6 @@
     </plurals>
     <plurals name="stop_info_depart_early" tools:ignore="MissingQuantity">
         <item quantity="one">Odjechał 1 minutę za szybko</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Odjechał
             <xliff:g id="count">%d</xliff:g>
             minut wcześniej
@@ -136,7 +132,6 @@
     </plurals>
     <plurals name="stop_info_arrived_delayed" tools:ignore="MissingQuantity">
         <item quantity="one">Przybył 1 minutę spóźniony</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Przyjechał
             <xliff:g id="count">%d</xliff:g>
             minut spóźniony
@@ -144,7 +139,6 @@
     </plurals>
     <plurals name="stop_info_arrived_early" tools:ignore="MissingQuantity">
         <item quantity="one">Przyjechał 1 minutę wcześniej</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Przyjechał
             <xliff:g id="count">%d</xliff:g>
             minut wcześniej
@@ -152,7 +146,6 @@
     </plurals>
     <plurals name="stop_info_status_late_without_arrive_depart" tools:ignore="MissingQuantity">
         <item quantity="one">1 minutę spóźniony</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
             minut spóźniony
@@ -160,7 +153,6 @@
     </plurals>
     <plurals name="stop_info_status_early_without_arrive_depart" tools:ignore="MissingQuantity">
         <item quantity="one">1 minut wcześniej</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%d</xliff:g>
             minut wcześniej
@@ -201,7 +193,6 @@
     <string name="stop_info_nodata_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_nodata_hours_minutes" tools:ignore="MissingQuantity">
         <item quantity="one">Brak przyjazdów przez następną godzinę i %1$d min.</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Brak przyjazdów przez następne
             <xliff:g id="count">%2$d</xliff:g>
             godz. i %1$d min.
@@ -209,7 +200,6 @@
     </plurals>
     <plurals name="stop_info_nodata_hours_minutes_short_format" tools:ignore="MissingQuantity">
         <item quantity="one">1 godz. %1$d+ min</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>godz. %1$d+ min
         </item>
     </plurals>
@@ -219,7 +209,6 @@
     <string name="stop_info_no_additional_data_minutes_short_format">%1$d+ min</string>
     <plurals name="stop_info_no_additional_data_hours_minutes" tools:ignore="MissingQuantity">
         <item quantity="one">Brak następnych przyjazdów przez godzinę i %1$d min.</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">Brak następnych przyjazdów przez następne
             <xliff:g id="count">%2$d</xliff:g>
             godz. i %1$d min.
@@ -227,7 +216,6 @@
     </plurals>
     <plurals name="stop_info_no_additional_data_hours_minutes_short_format" tools:ignore="MissingQuantity">
         <item quantity="one">1 godz. %1$d+ min</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other"><xliff:g id="count">%2$d</xliff:g>godz. %1$d+ min
         </item>
     </plurals>
@@ -264,8 +252,6 @@
     <string name="feedback_msg">Czy zostałeś powiadomiony we właściwym czasie, aby wysiąść na swoim przystanku?</string>
     <string name="feedback_freeText">Napisz swoją opinię</string>
 
-    <!-- Destination reminder feedback Preferences -->
-
     <!-- Destination reminder change location accuracy -->
     <string name="main_changelocationmode_title">Wysoka dokładność lokalizacji nie jest włączona</string>
     <string name="main_changelocationmode">Twoje obecne ustawienie “Metoda lokalizacji” na urządzeniu może nie powiadomić Cię o zbliżaniu się do celu z powodu niedokładnych informacji o pozycji. Czy chcesz teraz zmienić “Metodę lokalizacji” urządzenia na “Wysoka dokładność”?
@@ -274,9 +260,7 @@
     <!-- Stop Details -->
     <string name="stop_details_code">Przystanek # %1$s</string>
 
-    <!-- Arrival Time Style B -->
-
-    <!-- Route Info  -->
+    <!-- Route Info -->
     <string name="route_info_context_get_stop_info">Pokaż informację przyjazdu</string>
     <string name="route_info_context_showonmap">Pokaż na mapie</string>
     <string name="route_info_no_shape_data">Przepraszamy, informacje na mapie nie są dostępne dla tej trasy.
@@ -320,7 +304,7 @@
     <string name="my_context_remove_star">Usuń ulubione</string>
     <string name="my_context_show_schedule">Pokaż rozkład</string>
 
-    <!-- Service Alerts  -->
+    <!-- Service Alerts -->
     <string name="situation_more_details">Więcej szczegółów</string>
     <string name="hide">Ukryj</string>
     <string name="hide_all">Ukryj wszystko</string>
@@ -345,7 +329,6 @@
     <string name="find_hint_nofavoritestops">Znajdź przystanek wpisując numer przystanku w wyszkiwarce.\n\nNumer przystanku ma od 3 do 5 cyfer i może być znaleziony na oznaczeniu przystanku lub jego osłonie.
     </string>
     <string name="find_hint_nofavoriteroutes">Znajdź trasę wpisując jej nazwę lub numer w wyszukiwarce.
-
     </string>
     <string name="find_hint_noresults">Brak wyników Twojego wyszukiwania.</string>
     <string name="search_stop_hint">Wpisz numer przystanku</string>
@@ -358,7 +341,7 @@
     <string name="starred_stops_shortcut">Ulubione przystanki</string>
     <string name="route_name">Trasa %s</string>
 
-    <!--  Trip info -->
+    <!-- Trip info -->
     <string name="trip_info_name_hint">Dodaj nazwę przypomnienia</string>
     <string name="trip_info_route">Trasa %s</string>
     <string name="trip_info_depart">Odjeżdza o %s</string>
@@ -372,7 +355,7 @@
     <string name="trip_info_option_showstop">Pokaż przystanek</string>
     <string name="trip_info_separator">-</string>
 
-    <!--  Trip list -->
+    <!-- Trip list -->
     <string name="trip_list_notrips">Nie masz żadnych przypomnień.\n\nMożesz stworzyć przypomnienia
         klikając na przyjeżdzający autobus.
     </string>
@@ -380,12 +363,6 @@
     <string name="trip_list_context_delete">Usuń podróż</string>
     <string name="trip_list_context_showstop">Pokaż przystanek</string>
     <string name="trip_list_context_showroute">Pokaż trasę</string>
-
-    <!--  Trip notifications -->
-
-    <!-- Occupancy -->
-
-
 
     <!-- Trip notifications (new format) -->
     <string name="trip_stat_gone_arrived">Linia %s przyjechała.</string>
@@ -395,22 +372,18 @@
     <string name="trip_stat_arriving">Linia %1$s przyjeżdża za %2$d min!</string>
     <string name="trip_stat_departing">Linia %1$s odjeżdża za %2$d min!</string>
 
-    <!-- Foreground Service notifications -->
-
     <!-- Report problem -->
     <string name="report_problem_comment_hint">opcjonalnie</string>
     <string name="report_problem_send">Wyślij</string>
     <string name="report_problem_hint">Twoje zgłoszenie pomoże %1$s rozwiązać problem!</string>
     <string name="report_problem_error">Nie można wysłać Twojego zgłoszenia. Spróbować ponownie?</string>
     <string name="report_problem_invalid_argument">Wybierz kategorię problemu.</string>
-    <!-- TODO: Modes -->
     <string name="report_problem_onvehicle_bus">Jesteś w autobusie?</string>
     <string name="report_problem_uservehicle_hint">opcjonalnie</string>
 
     <!-- Region list -->
     <plurals name="distance_miles" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostała 1 mila</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało mil
@@ -418,7 +391,6 @@
     </plurals>
     <plurals name="distance_feet" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostała jedna stopa</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało stóp
@@ -426,7 +398,6 @@
     </plurals>
     <plurals name="distance_kilometers" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostał 1 kilometr</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało kilometrów
@@ -434,7 +405,6 @@
     </plurals>
     <plurals name="distance_meters" tools:ignore="MissingQuantity">
         <item quantity="one">Pozostał 1 metr</item>
-        <!-- Entire element below should be on a single line if XML is reformatted - see #99 -->
         <item quantity="other">
             <xliff:g id="count">%s</xliff:g>
             pozostało metrów
@@ -450,7 +420,7 @@
     <string name="region_selected_auto">wybrano automatycznie</string>
     <string name="region_selected_manually">wybrano ręcznie</string>
 
-    <!--  Bug report -->
+    <!-- Bug report -->
     <string name="bug_report_subject">%1$s Android: Opinie</string>
     <string name="bug_report_body">Zażalenia, pochwały lub zgłoszenia błędów są mile widziane!\n\n\nWersja aplikacji:
         %1$s\nModel: %2$s\nWersja systemu: %3$s / %4$d\nGoogle Play Services: %5$s\n
@@ -536,7 +506,6 @@
     <string name="preferences_left_hand_mode_summary">Przenosi niektóre przyciski na lewą stronę ekranu
     </string>
 
-
     <string name="preferences_oba_api_servername_title">Serwer API %1$s</string>
     <string name="preferences_oba_api_servername_summary">Określa serwer używany w wywołaniach API %1$s</string>
     <string name="preferences_oba_api_servername_hint">example.KiedyBus.org</string>
@@ -575,13 +544,9 @@
     <string name="preferences_powered_by_oba_summary">Dowiedz się więcej o tym projekcie
     </string>
 
-
-
-
-
-
     <string name="preferences_about_title">O programie</string>
     <string name="preferences_about_summary">Wersja, producent, informacje o licencji</string>
+
     <!-- Units -->
     <string name="feet_abbreviation">ft</string>
     <string name="miles_abbreviation">mi</string>
@@ -736,9 +701,7 @@
     <string name="location_permissions_message">Aby poprawić Twoje wrażenia, włącz lokalizację, aby:\n- Wyświetlać Twoją pozycję w czasie rzeczywistym na mapie.\n- Automatycznie ustawiać lokalną agencję transportową.\n\nTwoje dane lokalizacyjne nie są przez nas zbierane. Alternatywnie możesz ręcznie wybrać swój region bez włączania uprawnień lokalizacyjnych.</string>
     <string name="no_thanks">Nie, dziękuję</string>
 
-
     <!-- About -->
-    <!-- About screen: structured prose; the name lists are in the string-arrays below -->
     <string name="about_welcome_title">Witaj w %1$s!</string>
     <string name="about_intro">%1$s została stworzona przez zespół wolontariuszy i opiera się na poświęceniu, pasji oraz talentach jej współtwórców open source.</string>
     <string name="about_contributors_header">Współtwórcy Kodu:</string>
@@ -779,18 +742,12 @@
     </string-array>
 
     <!-- Trip Planner strings -->
-
-    <!-- Placeholders shown in the empty directions endpoint fields. -->
     <string name="trip_plan_from_hint">Wybierz start podróży</string>
     <string name="trip_plan_to_hint">Wybierz cel podróży</string>
-    <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
-         sentence next to Leaving/Arriving, not as a heading. -->
     <string name="trip_plan_now">teraz</string>
-    <!-- A pinned departure/arrival in the time callout: date, then time. -->
     <string name="trip_plan_date_time">%1$s, %2$s</string>
     <string name="trip_plan_choose_date">Wybierz datę…</string>
     <string name="trip_plan_choose_time">Wybierz godzinę…</string>
-    <!-- Accessibility click label for either half of the time callout. -->
     <string name="trip_plan_change_when">Zmień czas</string>
     <string name="trip_plan_leaving">Odjazd</string>
     <string name="trip_plan_arriving">Przyjazd</string>
@@ -801,38 +758,22 @@
     <string name="trip_plan_map_location">Wybrana lokalizacja</string>
     <string name="directions_from_here">Trasa stąd</string>
     <string name="directions_to_here">Trasa dotąd</string>
-    <!-- Shown under a transit leg's Board/Alight row when that stop has no upcoming arrivals for the route -->
     <string name="directions_stop_no_arrivals">Brak najbliższych odjazdów</string>
-    <!-- Caption beside a transit leg's joined route badge, when several routes go between the same two
-         stops without making the rider late for the rest of the trip (badge reads e.g. "1 Line/2 Line"). -->
     <string name="directions_whichever_comes_first">dowolny z nich (co przyjedzie pierwsze)</string>
-    <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Pokaż poprzednie opcje</string>
     <string name="trip_plan_options_scroll_more">Pokaż więcej opcji</string>
-    <!-- Accessibility announcements for values emphasized as the best among the itinerary options. -->
     <string name="trip_plan_winner_shortest_travel_time">Najkrótszy czas podróży</string>
     <string name="trip_plan_winner_least_walking">Najmniej chodzenia</string>
     <string name="trip_plan_winner_earliest_arrival">Najwcześniejszy przyjazd</string>
     <string name="trip_plan_winner_latest_departure">Najpóźniejszy odjazd</string>
-    <!-- Content descriptions for the control that expands/collapses a leg's minor events (walk steps / stops) in the trip-log directions -->
     <string name="trip_plan_expand_leg">Pokaż szczegóły</string>
     <string name="trip_plan_collapse_leg">Ukryj szczegóły</string>
-    <!-- An on-street leg that connects two transit rides (a transfer), vs. a first/last-mile one. One
-         string per travel mode, rather than assembling a verb and "to transfer" at runtime, so the
-         phrasing stays a translator's call. -->
     <string name="trip_plan_walk_transfer">Przejdź pieszo na przesiadkę</string>
     <string name="trip_plan_bike_transfer">Przejedź rowerem na przesiadkę</string>
     <string name="trip_plan_car_transfer">Przejedź samochodem na przesiadkę</string>
-    <!-- A leg's elapsed duration in the trip-log's narrow time column. Abbreviated units, kept inside
-         the format string (rather than appended in code) so spacing and word order stay translatable.
-         Keep the two forms spaced alike — they share one column. -->
-    <!-- Under an hour: %1$d is whole minutes -->
     <string name="trip_plan_delta_minutes">%1$d min</string>
-    <!-- An hour or more: %1$d is whole hours, %2$d the remaining minutes -->
     <string name="trip_plan_delta_hours_minutes">%1$d godz. %2$d min</string>
-    <!-- Real-time status chip on a transit leg's board, in the trip-log directions -->
     <string name="trip_plan_realtime_on_time">Zgodnie z planem</string>
-    <!-- How far a transit leg's departure runs behind / ahead of schedule, e.g. "3 min late" -->
     <plurals name="trip_plan_realtime_late">
         <item quantity="one">%1$d min opóźnienia</item>
         <item quantity="few">%1$d min opóźnienia</item>
@@ -845,7 +786,6 @@
         <item quantity="many">%1$d min przed czasem</item>
         <item quantity="other">%1$d min przed czasem</item>
     </plurals>
-    <!-- Number of intermediate stops a transit leg passes through, e.g. "5 stops" -->
     <plurals name="trip_plan_intermediate_stops">
         <item quantity="one">%1$d przystanek</item>
         <item quantity="few">%1$d przystanki</item>
@@ -855,9 +795,6 @@
 
     <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
     <!-- Errors -->
-    <!-- Trip-plan error category headers (the consistent heading on the error snackbar; the specific
-         wire message is shown as the reason line beneath). One header per category, so e.g. every
-         no-route failure reads "Cannot find route" with its distinct reason below. -->
     <string name="tripplanner_error_header_connectivity">Nie można połączyć się z planerem podróży</string>
     <string name="tripplanner_error_header_location">Nie można znaleźć tej lokalizacji</string>
     <string name="tripplanner_error_header_schedule">Brak kursów w wybranym czasie</string>
@@ -880,11 +817,9 @@
     <string name="tripplanner_error_geocode_to_ambiguous">Cel podróży jest jednoznacznie nieokreślony</string>
     <string name="tripplanner_error_geocode_from_to_ambiguous">Punkt początkowy i cel podróży są niejednoznaczne</string>
     <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje trasy rowerowej i spróbuj ponownie</string>
-    <!-- When routing from my location -->
+
     <string name="tripplanner_current_location">Moja lokalizacja</string>
-
     <string name="tripplanner_reverse">Odwróć trasę</string>
-
 
     <string name="title_activity_about">O aplikacji</string>
 
@@ -901,7 +836,6 @@
     <string name="donation_dismiss_dialog_maybe_later_button">Może później</string>
     <string name="donation_dismiss_dialog_back_button">Wstecz</string>
     <string name="title_activity_donation_learn_more">Dlaczego potrzebujemy Twojej pomocy</string>
-    <!-- "(c)" here is the "501(c)(3)" US tax-code designation, not a copyright symbol. -->
     <string name="donation_learn_more_explanation" tools:ignore="TypographyOther">Mamy wielkie plany na ulepszenie %1$s, ale nie możemy tego zrobić bez Twojej pomocy. Ta aplikacja jest obecnie tworzona w 100%% dzięki pracy wolontariuszy, i potrzebujemy Ciebie, abyś pomógł nam sfinansować przyszły rozwój.\n\nJako kluczowy projekt Open Transit Software Foundation, organizacji non-profit 501(c)(3), polegamy na dobrej woli użytkowników takich jak Ty, aby kontynuować działanie i ulepszanie tego oprogramowania.\n\nCo roku tylko mała część naszych użytkowników dokonuje darowizn, ale każdy wkład, duży czy mały, pomaga zapewnić, że %1$s pozostanie darmowe, aktualne i dostępne dla wszystkich. Mała darowizna, nawet tylko koszt tygodniowego dojazdu do pracy, 27,50 dolarów, może zrobić różnicę.\n\nTwoja darowizna odliczalna od podatku zapewnia, że %1$s pozostanie darmowe i dostępne dla każdego. Kształtujmy razem przyszłość transportu publicznego!\n\nDziękujemy,\nZespół %1$s</string>
     <string name="preferences_reset_donation_timestamps_title">Zresetuj Znaczniki Czasu Dotacji</string>
     <string name="preferences_reset_donation_timestamps_summary">Dotknięcie tej opcji spowoduje wyczyszczenie znaczników czasu ’Przypomnij mi później’ i ’Nie przeszkadzaj mi’ związanych z prośbami o darowizny.</string>
@@ -911,7 +845,7 @@
     <string name="preferences_preferred_map_option_normal3d">Domyślna mapa z budynkami 3D</string>
     <string name="preferences_preferred_map_option_satellite">Mapa satelitarna</string>
 
-    <!--Survey-->
+    <!-- Survey -->
     <string name="preferences_show_available_studies_title">Pokaż dostępne badania</string>
     <string name="preferences_show_available_studies_body">Dołącz do badań, aby pomóc w poprawie doświadczeń z transportem i aplikacją.</string>
     <string name="dismiss_survey">Odrzuć ankietę</string>
@@ -939,36 +873,6 @@
     <string name="preferences_push_test_device_name_summary">Identyfikuje to urządzenie dla administratorów przedsiębiorstwa komunikacyjnego, np. &#8220;Pixel 9 Piotra&#8221;. Dopóki nie zostanie ustawiona, urządzenie rejestruje się normalnie zamiast jako testowe.</string>
     <string name="no_description_available">Brak dostępnego opisu</string>
     <string name="close_donation_card">Zamknij kartę darowizny</string>
-
-    <!-- Trip Planner strings -->
-    <string name="trip_plan_leaving">Wyjazd</string>
-    <string name="trip_plan_arriving">Przyjazd</string>
-    <string name="trip_plan_date">Data</string>
-
-    <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
-    <!-- Errors -->
-    <string name="tripplanner_error_not_defined">Przepraszamy, coś poszło nie tak. Spróbuj ponownie.</string>
-    <string name="tripplanner_error_request_timeout">Sprawdź połączenie internetowe i spróbuj ponownie.
-    </string>
-    <string name="tripplanner_error_system">Sprawdź połączenie internetowe i spróbuj ponownie.
-    </string>
-    <string name="tripplanner_error_outside_bounds">Miejsce początkowe lub docelowe jest poza obszarem sieci transportowej</string>
-    <string name="tripplanner_error_path_not_found">Nie można znaleźć pasującej trasy między miejscem początkowym a docelowym</string>
-    <string name="tripplanner_error_no_transit_times">Czasy przejazdów dla wybranej daty są niedostępne</string>
-    <string name="tripplanner_error_bogus_parameter">Coś poszło nie tak. Zmień opcje podróży i spróbuj ponownie.</string>
-    <string name="tripplanner_error_geocode_from_not_found">Nie znaleziono miejsca początkowego</string>
-    <string name="tripplanner_error_geocode_to_not_found">Nie znaleziono miejsca docelowego</string>
-    <string name="tripplanner_error_geocode_from_to_not_found">Nie znaleziono miejsca początkowego i docelowego</string>
-    <string name="tripplanner_error_too_close">Podróż jest zbyt krótka</string>
-    <string name="tripplanner_error_location_not_accessible">Wybrana lokalizacja jest niedostępna</string>
-    <string name="tripplanner_error_geocode_from_ambiguous">Miejsce początkowe jest niejednoznaczne</string>
-    <string name="tripplanner_error_geocode_to_ambiguous">Miejsce docelowe jest niejednoznaczne</string>
-    <string name="tripplanner_error_geocode_from_to_ambiguous">Miejsce początkowe i docelowe są niejednoznaczne</string>
-    <string name="tripplanner_error_triangle">Coś poszło nie tak. Zmień opcje roweru i spróbuj ponownie</string>
-    <!-- When routing from my location -->
-    <string name="tripplanner_current_location">Aktualna lokalizacja</string>
-    <string name="tripplanner_reverse">Odwróć</string>
-
 
     <!-- Step-by-step screen -->
     <!-- Transit -->
@@ -1081,9 +985,6 @@
     <string name="wheelchair_accessible">Unikaj schodów</string>
     <string name="transit_directions_bikeshare_label">Rower miejski</string>
 
-    <!-- Wybór trybu, podzielony na dwa niezależne pytania: jakimi pojazdami pasażer będzie podróżować,
-         oraz jak pokonuje odcinki uliczne. Nie każda opcja uliczna jest dostępna wszędzie -
-         rower miejski wymaga sieci wypożyczalni, a zabranie własnego roweru wymaga regionu z OTP2. -->
     <string name="vehicle_mode_label">Przejazd</string>
     <string name="vehicle_mode_all_transit">Dowolny transport publiczny</string>
     <string name="vehicle_mode_bus">Tylko autobus</string>
@@ -1102,7 +1003,6 @@
     <string name="bike_station_title">Dotknij, aby zarezerwować rower</string>
     <string name="floating_bike_title">Dotknij, aby zarezerwować ten rower</string>
 
-
     <!-- Travel Behaviour data collection -->
     <string name="remind_me_latter">Przypomnij mi później</string>
     <string name="map_option_zoom_out">Oddal</string>
@@ -1112,8 +1012,6 @@
     <!-- Destination reminder feedback Activity -->
     <string name="feedback_like_button_description">Tak, zostałem powiadomiony we właściwym czasie</string>
     <string name="feedback_dislike_button_description">Nie, nie zostałem powiadomiony we właściwym czasie</string>
-
-    <!-- Accessibility content descriptions for ETA rows -->
 
     <string name="map_option_layers">Przycisk warstw mapy</string>
 

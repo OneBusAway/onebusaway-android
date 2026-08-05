@@ -63,8 +63,37 @@ class GtfsAlertsHelperTest {
         assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(GtfsRealtime.Alert.newBuilder().build(), nowMs))
     }
 
-    // Mirrors the deprecated-but-still-universal `active_period` read in the helper under test;
-    // see the rationale on [GtfsAlertsHelper.isStartDateWithin24Hours].
+    @Test
+    fun `communication period only alert within 24 hours is surfaced`() {
+        // #2160: a feed that only populates the new field must still be readable, not silenced.
+        val alert = GtfsRealtime.Alert.newBuilder()
+            .addCommunicationPeriod(GtfsRealtime.TimeRange.newBuilder().setStart(nowSec - hourSec).build())
+            .build()
+        assertTrue(GtfsAlertsHelper.isStartDateWithin24Hours(alert, nowMs))
+    }
+
+    @Test
+    fun `communication period only alert outside 24 hours is not surfaced`() {
+        val alert = GtfsRealtime.Alert.newBuilder()
+            .addCommunicationPeriod(GtfsRealtime.TimeRange.newBuilder().setStart(nowSec - 25 * hourSec).build())
+            .build()
+        assertFalse(GtfsAlertsHelper.isStartDateWithin24Hours(alert, nowMs))
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun `alert with both fields prefers communication period over active period`() {
+        // #2160: communication_period wins when both are populated, even if active_period alone
+        // would put the alert outside the 24h window.
+        val alert = GtfsRealtime.Alert.newBuilder()
+            .addCommunicationPeriod(GtfsRealtime.TimeRange.newBuilder().setStart(nowSec - hourSec).build())
+            .addActivePeriod(GtfsRealtime.TimeRange.newBuilder().setStart(nowSec - 25 * hourSec).build())
+            .build()
+        assertTrue(GtfsAlertsHelper.isStartDateWithin24Hours(alert, nowMs))
+    }
+
+    // Mirrors the deprecated-but-still-universal `active_period` fallback read in the helper
+    // under test; see the rationale on [GtfsAlertsHelper.isStartDateWithin24Hours].
     @Suppress("DEPRECATION")
     private fun alertStartingAt(startSec: Long): GtfsRealtime.Alert = GtfsRealtime.Alert.newBuilder()
         .addActivePeriod(GtfsRealtime.TimeRange.newBuilder().setStart(startSec).build())

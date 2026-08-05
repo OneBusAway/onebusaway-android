@@ -47,22 +47,34 @@ object GtfsAlertsHelper {
             )
 
     /**
-     * These alerts come straight off a raw GTFS-realtime feed, not the OBA API, so
-     * `active_period.start` is POSIX **seconds** per the GTFS-rt spec — a fixed unit, not a
-     * magnitude guess. (The OBA `situation` path is the polymorphic one; its seconds-vs-millis
-     * rule lives in `situationEpochToMillis` and does not apply here.)
+     * These alerts come straight off a raw GTFS-realtime feed, not the OBA API, so a period's
+     * `start` is POSIX **seconds** per the GTFS-rt spec — a fixed unit, not a magnitude guess.
+     * (The OBA `situation` path is the polymorphic one; its seconds-vs-millis rule lives in
+     * `situationEpochToMillis` and does not apply here.)
      *
-     * `active_period` is `[deprecated = true]` as of the proto shipped in
-     * gtfs-realtime-bindings 0.2.0, superseded by `communication_period` / `impact_period`. We
-     * keep reading it because that is the field feeds in the wild actually populate — dropping it
-     * would silence every alert we surface today — so the migration can't be done at the bump.
-     * Tracked by https://github.com/OneBusAway/onebusaway-android/issues/2160.
+     * "Should we show this to the user in the next 24h" maps to `communication_period`, so it's
+     * preferred when a feed populates it. `active_period` is `[deprecated = true]` as of the
+     * proto shipped in gtfs-realtime-bindings 0.2.0, but feeds in the wild still only populate
+     * it, so [activePeriodStartSec] stays as a fallback — dropping it would silence every alert
+     * on those feeds. Tracked by https://github.com/OneBusAway/onebusaway-android/issues/2160.
      */
-    @Suppress("DEPRECATION")
     fun isStartDateWithin24Hours(alert: GtfsRealtime.Alert, nowMs: Long): Boolean {
-        if (alert.activePeriodCount == 0) return false
-        val elapsed = nowMs - alert.getActivePeriod(0).start * MILLIS_PER_SECOND
+        val startSec = communicationPeriodStartSec(alert) ?: activePeriodStartSec(alert) ?: return false
+        val elapsed = nowMs - startSec * MILLIS_PER_SECOND
         return elapsed in 0..DAY_MS
+    }
+
+    private fun communicationPeriodStartSec(alert: GtfsRealtime.Alert): Long? {
+        if (alert.communicationPeriodCount == 0) return null
+        return alert.getCommunicationPeriod(0).start
+    }
+
+    // Fallback for feeds that only populate the deprecated active_period; see the rationale on
+    // isStartDateWithin24Hours. Drop this once communication_period is the only field in the wild.
+    @Suppress("DEPRECATION")
+    private fun activePeriodStartSec(alert: GtfsRealtime.Alert): Long? {
+        if (alert.activePeriodCount == 0) return null
+        return alert.getActivePeriod(0).start
     }
 
     private fun isAlertRead(context: Context, entity: GtfsRealtime.FeedEntity): Boolean = DatabaseEntryPoint.get(context).alertsRepository().isAlertExists(entity.id)

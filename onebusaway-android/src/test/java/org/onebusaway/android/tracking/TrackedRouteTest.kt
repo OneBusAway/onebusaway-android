@@ -32,7 +32,9 @@ class TrackedRouteTest {
     ) = TrackedRoute(
         key = TrackedRouteKey(stopId, routeId, headsign),
         routeName = routeName,
-        stopName = "Pine St & 3rd Ave"
+        stopName = "Pine St & 3rd Ave",
+        stopLat = 47.61,
+        stopLon = -122.33
     )
 
     @Test
@@ -142,7 +144,7 @@ class TrackedRouteTest {
 
     private companion object {
         const val ROW_WITH_NO_STOP =
-            """[{"key":{"stopId":"","routeId":"1_40","headsign":"X"},""" +
-                """"routeName":"40","stopName":"Pine"}]"""
+            """[{"key":{"stopId":"","routeId":"1_40","headsign":"X"},"routeName":"40",""" +
+                """"stopName":"Pine","stopLat":47.61,"stopLon":-122.33}]"""
     }
 }

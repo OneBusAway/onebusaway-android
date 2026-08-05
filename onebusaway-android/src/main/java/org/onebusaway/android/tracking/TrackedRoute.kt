@@ -45,12 +45,17 @@ data class TrackedRouteKey(
  *
  * @param routeName the route's display name, resolved when tracking starts (the notification title)
  * @param stopName the stop's display name, resolved when tracking starts
+ * @param stopLat the stop's latitude, and [stopLon] its longitude — carried so tapping the card can
+ *        focus the map on the stop, which needs a location and not just an id. Resolved when tracking
+ *        starts because that is when the arrivals response holding it is already in hand.
  */
 @Serializable
 data class TrackedRoute(
     val key: TrackedRouteKey,
     val routeName: String,
-    val stopName: String
+    val stopName: String,
+    val stopLat: Double,
+    val stopLon: Double
 ) {
     init {
         require(key.stopId.isNotBlank()) { "A tracked route must name a stop" }

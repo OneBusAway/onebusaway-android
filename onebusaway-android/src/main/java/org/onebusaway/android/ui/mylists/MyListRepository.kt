@@ -258,7 +258,7 @@ class StarredStopsRepository(private val context: Context) : MyListRepository<St
                 // The tracked set is combined in rather than baked into the poll so a Track from any
                 // surface re-labels these badges immediately, instead of waiting out the 60s cycle.
                 combine(
-                    arrivalsPoll(context, stops.associate { it.id to it.name }),
+                    arrivalsPoll(context, stops),
                     trackedKeys
                 ) { byStop, tracked ->
                     stops.map { stop ->
@@ -358,12 +358,12 @@ private const val ARRIVALS_REFRESH_MS = 60_000L
 private const val ARRIVALS_MINUTES_AFTER = 35
 private const val MAX_ARRIVALS_PER_STOP = 3
 
-/** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS].
- *  [stopNames] is keyed by stop id; the name rides along because a badge the rider can track has to
- *  carry the stop it is tracked at into the notification. */
-private fun arrivalsPoll(context: Context, stopNames: Map<String, String>): Flow<Map<String, List<ArrivalBadge>>> = flow {
+/** Emits the per-stop arrival badges immediately, then re-emits every [ARRIVALS_REFRESH_MS]. Takes the
+ *  whole [stops] rather than their ids: a badge the rider can track has to carry the stop's name and
+ *  location into the notification, which is where the map focus behind a card tap comes from. */
+private fun arrivalsPoll(context: Context, stops: List<StopListItem>): Flow<Map<String, List<ArrivalBadge>>> = flow {
     while (true) {
-        emit(fetchArrivals(context, stopNames))
+        emit(fetchArrivals(context, stops))
         delay(ARRIVALS_REFRESH_MS)
     }
 }
@@ -372,9 +372,9 @@ private fun arrivalsPoll(context: Context, stopNames: Map<String, String>): Flow
  *  refresh latency is the slowest single request, not their sum. */
 private suspend fun fetchArrivals(
     context: Context,
-    stopNames: Map<String, String>
+    stops: List<StopListItem>
 ): Map<String, List<ArrivalBadge>> = coroutineScope {
-    stopNames.map { (stopId, stopName) -> async { stopId to fetchStopBadges(context, stopId, stopName) } }
+    stops.map { stop -> async { stop.id to fetchStopBadges(context, stop) } }
         .awaitAll()
         .toMap()
 }
@@ -382,17 +382,16 @@ private suspend fun fetchArrivals(
 /** One stop's badges. [convertArrivals] already sorts by ETA; a non-OK code/error yields no badges. */
 private suspend fun fetchStopBadges(
     context: Context,
-    stopId: String,
-    stopName: String
+    stop: StopListItem
 ): List<ArrivalBadge> = runCatchingCancellable {
     val snapshot = NetworkEntryPoint.getStopArrivals(context)
-        .arrivals(stopId, ARRIVALS_MINUTES_AFTER)
+        .arrivals(stop.id, ARRIVALS_MINUTES_AFTER)
         .getOrThrow()
     // Server clock as the ETA baseline so badges cancel device clock skew (#1612). These badge
     // rows don't render the favorite star.
     convertArrivals(context, snapshot.arrivals, ServerTime(snapshot.currentTime), false)
         .take(MAX_ARRIVALS_PER_STOP)
-        .map { it.toBadge(context, stopName) }
+        .map { it.toBadge(context, stop) }
 }.getOrDefault(emptyList())
 
 /** Re-flags each badge against the live set of tracked route rows (#2166). */
@@ -401,7 +400,7 @@ private fun List<ArrivalBadge>.flagTracked(tracked: Set<TrackedRouteKey>): List<
     badge.copy(tracked = key != null && key in tracked)
 }
 
-private fun ArrivalInfo.toBadge(context: Context, stopName: String): ArrivalBadge {
+private fun ArrivalInfo.toBadge(context: Context, stop: StopListItem): ArrivalBadge {
     val etaText = if (eta <= 0) {
         context.getString(R.string.starred_stop_arrival_now)
     } else {
@@ -418,6 +417,6 @@ private fun ArrivalInfo.toBadge(context: Context, stopName: String): ArrivalBadg
         // badge color, which silently fell through to "scheduled" for any id it didn't recognize.
         colorRes = fillColor,
         // Null when the response named no stop/route to key on — no track action on the badge then.
-        trackable = toTrackedRoute(stopName)
+        trackable = toTrackedRoute(stop.name, stop.lat, stop.lon)
     )
 }

@@ -29,7 +29,9 @@ class TrackedRouteStoreTest {
     private fun route(stopId: String = "1_100", headsign: String = "Downtown Seattle") = TrackedRoute(
         key = TrackedRouteKey(stopId, "1_40", headsign),
         routeName = "40",
-        stopName = "Pine St & 3rd Ave"
+        stopName = "Pine St & 3rd Ave",
+        stopLat = 47.61,
+        stopLon = -122.33
     )
 
     @Test

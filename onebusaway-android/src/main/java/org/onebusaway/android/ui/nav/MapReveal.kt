@@ -125,32 +125,73 @@ fun SavedStateHandle.consumeStopReveal(): StopReveal? {
 }
 
 /**
- * Writes [request] onto an intent bound for `HomeActivity`, so a launch from *outside* the NavHost —
- * a notification's PendingIntent — can ask the map to focus a route the way an in-app caller does
- * with [revealRouteOnMap].
+ * A stop focused on the map with one of its route rows selected inside it — the arrivals drawer's own
+ * "stop, then route" view.
  *
- * The saved-state round trip above cannot serve that: it hands the request between destinations that
- * already exist, and a PendingIntent fired from the shade has no NavController to hand it to. So this
- * is the same request in the only vocabulary an Intent has, using the [MapParams] keys the map's
- * other intent state already lives under. Read back by [readRouteReveal], which is why the two sit
- * together.
- *
- * Only the fields a launch can meaningfully carry: the route, the stop it is scoped to, and that
- * stop's direction. The rest of [ShowRouteRequest] describes a trip already on screen (ridden spans,
- * extra segments, an alight stop) and has no meaning to a cold start.
+ * Deliberately *not* standalone route focus. Framing the route alone drops the rider onto the whole
+ * line with no drawer and no sense of where they are on it; what a tracked row means is "this route,
+ * at my stop", which is a route selected subordinate to a stop focus (`CurrentFocus.Stop` carrying a
+ * `StopRouteSelection`). The two look similar from the outside and are easy to confuse.
  */
-fun Intent.putRouteReveal(request: ShowRouteRequest): Intent = apply {
-    putExtra(MapParams.ROUTE_ID, request.routeId)
-    putExtra(MapParams.ROUTE_DIRECTION_STOP_ID, request.directionStopId)
-    putExtra(MapParams.ROUTE_DIRECTION_HEADSIGN, request.directionHeadsign)
+data class StopRouteReveal(
+    val stopId: String,
+    val stopName: String?,
+    val point: GeoPoint,
+    val routeId: String,
+    /** Labels the selected row's leg; the drawer resolves everything else off the arrivals row. */
+    val routeShortName: String,
+    val headsign: String?
+) {
+    /**
+     * The request that selects this row *within* the focused stop. Carrying `directionStopId` is what
+     * makes it stop-scoped rather than standalone — see `HomeViewModel.selectArrivalRoute`, which
+     * branches on exactly that.
+     */
+    fun request(): ShowRouteRequest = ShowRouteRequest(
+        routeId = routeId,
+        directionStopId = stopId,
+        directionHeadsign = headsign
+    )
 }
 
-/** The route reveal a launch intent carries, or null when it is not one. See [putRouteReveal]. */
-fun Intent.readRouteReveal(): ShowRouteRequest? {
+/**
+ * Writes [reveal] onto an intent bound for `HomeActivity`, so a launch from *outside* the NavHost — a
+ * notification's PendingIntent — can open the map on a stop with one of its routes selected.
+ *
+ * The saved-state round trips above cannot serve that: they hand a reveal between destinations that
+ * already exist, and a PendingIntent fired from the shade has no NavController to hand it to. So this
+ * is the same reveal in the only vocabulary an Intent has, over the [MapParams] keys the map's other
+ * intent state already lives under — including the stop half that `FocusedStop.fromIntent` reads for
+ * a cold start. Read back by [readStopRouteReveal], which is why the two sit together.
+ */
+fun Intent.putStopRouteReveal(reveal: StopRouteReveal): Intent = apply {
+    putExtra(MapParams.STOP_ID, reveal.stopId)
+    putExtra(MapParams.STOP_NAME, reveal.stopName)
+    putExtra(MapParams.CENTER_LAT, reveal.point.latitude)
+    putExtra(MapParams.CENTER_LON, reveal.point.longitude)
+    putExtra(MapParams.ROUTE_ID, reveal.routeId)
+    putExtra(MapParams.ROUTE_SHORT_NAME, reveal.routeShortName)
+    putExtra(MapParams.ROUTE_DIRECTION_HEADSIGN, reveal.headsign)
+}
+
+/**
+ * The stop-scoped route reveal a launch intent carries, or null when it is not one — which includes an
+ * intent carrying only the stop half, since that is an ordinary stop focus and not this. See
+ * [putStopRouteReveal].
+ */
+fun Intent.readStopRouteReveal(): StopRouteReveal? {
+    val stopId = getStringExtra(MapParams.STOP_ID) ?: return null
     val routeId = getStringExtra(MapParams.ROUTE_ID) ?: return null
-    return ShowRouteRequest(
+    val routeShortName = getStringExtra(MapParams.ROUTE_SHORT_NAME) ?: return null
+    val lat = extras?.getDouble(MapParams.CENTER_LAT) ?: return null
+    val lon = extras?.getDouble(MapParams.CENTER_LON) ?: return null
+    if (lat == 0.0 || lon == 0.0) return null
+    return StopRouteReveal(
+        stopId = stopId,
+        stopName = getStringExtra(MapParams.STOP_NAME),
+        point = GeoPoint(lat, lon),
         routeId = routeId,
-        directionStopId = getStringExtra(MapParams.ROUTE_DIRECTION_STOP_ID),
-        directionHeadsign = getStringExtra(MapParams.ROUTE_DIRECTION_HEADSIGN)
+        routeShortName = routeShortName,
+        headsign = getStringExtra(MapParams.ROUTE_DIRECTION_HEADSIGN)
     )
 }

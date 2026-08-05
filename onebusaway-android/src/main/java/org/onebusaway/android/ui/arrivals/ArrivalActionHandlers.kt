@@ -154,7 +154,12 @@ fun createArrivalActionHandler(
 
     /** Starts or stops the live countdown notification for this whole route row (#2166). */
     override fun onToggleTracking(group: RouteRowGroup) {
-        val route = group.representative.toTrackedRoute(currentContent()?.header?.name.orEmpty())
+        val content = currentContent()
+        val route = group.representative.toTrackedRoute(
+            stopName = content?.header?.name.orEmpty(),
+            stopLat = content?.stopLat ?: 0.0,
+            stopLon = content?.stopLon ?: 0.0
+        )
         if (route == null) {
             // A partial/omitted API response leaves tripId or stopId blank, and neither can be
             // resolved against a later response — so there is nothing to follow. Refuse up front
@@ -245,6 +250,16 @@ internal fun ArrivalInfo.trackedRouteKey(): TrackedRouteKey? = if (stopId.isBlan
 }
 
 /** This arrival's route row as a trackable session, or null when it cannot be tracked. */
-internal fun ArrivalInfo.toTrackedRoute(stopName: String): TrackedRoute? = trackedRouteKey()?.let { key ->
-    TrackedRoute(key = key, routeName = lineName, stopName = stopName)
+internal fun ArrivalInfo.toTrackedRoute(
+    stopName: String,
+    stopLat: Double,
+    stopLon: Double
+): TrackedRoute? = trackedRouteKey()?.let { key ->
+    TrackedRoute(
+        key = key,
+        routeName = lineName,
+        stopName = stopName,
+        stopLat = stopLat,
+        stopLon = stopLon
+    )
 }

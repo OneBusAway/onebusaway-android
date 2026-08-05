@@ -32,6 +32,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
@@ -179,8 +182,8 @@ class TripTrackingService : Service() {
             retiring.forEach { done ->
                 notificationManager.cancel(trackingNotificationId(done.route.id))
                 rendered.remove(trackingNotificationId(done.route.id))
-                store.untrack(done.route.key)
             }
+            store.untrackAll(retiring.map { it.route.key })
             return
         }
 
@@ -233,11 +236,9 @@ class TripTrackingService : Service() {
         val snapshot = snapshots[route.key.stopId] ?: return pendingOutcomeFor(route.key)
         pendingSince.remove(route.key)
 
-        val now = snapshot.serverNow(elapsedClock.now())
-        val matches = snapshot.arrivals
-            .filter { it.belongsTo(route.key) }
-            .map { toMatch(it, now) }
-        return trackingOutcome(matches, now)
+        // Only the outcome depends on "now": every field of a TrackedMatch is fixed by the response
+        // that produced it, so the matches were built once when it landed (see [StopSnapshot]).
+        return trackingOutcome(snapshot.matches[route.key].orEmpty(), snapshot.serverNow(elapsedClock.now()))
     }
 
     /** Holds a data-less card until the fetches have had long enough to be called hopeless. */
@@ -247,11 +248,27 @@ class TripTrackingService : Service() {
     }
 
     /**
-     * The arrival's tracked facts. Built through [ArrivalInfo] rather than read off [ArrivalData]
-     * directly so the choice of instant — departure at the first stop, arrival elsewhere; prediction
-     * only when the server actually supplied one (#1687) — and the lateness colour are the arrivals
-     * list's, not a second implementation of the same rules that could drift from it.
+     * Every row in a response, with its arrivals already lifted to [TrackedMatch] — grouped by the
+     * same (stop, route, headsign) key a tracked row is, so resolving one is a map lookup.
+     *
+     * Done once here rather than per row per tick because none of a match's fields move with the
+     * clock: the display instant, whether it is predicted, its cancellation, and its deviation are
+     * all settled by the response. Only [trackingOutcome] needs a live "now". Building them per tick
+     * meant constructing an [ArrivalInfo] every 15s to read four fixed values — and its `init`
+     * eagerly formats three status strings this never reads.
+     *
+     * Built through [ArrivalInfo] rather than read off [ArrivalData] directly so the choice of
+     * instant — departure at the first stop, arrival elsewhere; prediction only when the server
+     * actually supplied one (#1687) — and the deviation bucket are the arrivals list's, not a second
+     * implementation of the same rules that could drift from it.
      */
+    private fun matchesByRow(
+        arrivals: List<ArrivalData>,
+        now: ServerTime
+    ): Map<TrackedRouteKey, List<TrackedMatch>> = arrivals
+        .groupBy { TrackedRouteKey(it.stopId, it.routeId, it.headsign.orEmpty()) }
+        .mapValues { (_, rowArrivals) -> rowArrivals.map { toMatch(it, now) } }
+
     private fun toMatch(arrival: ArrivalData, now: ServerTime): TrackedMatch {
         val info = ArrivalInfo(this, arrival, now, includeArrivalDepartureInStatusLabel = false)
         return TrackedMatch(
@@ -262,29 +279,43 @@ class TripTrackingService : Service() {
         )
     }
 
-    /** Fetches any stop whose snapshot is missing or older than the current [pollInterval]. */
-    private suspend fun fetchStaleStops(routes: List<TrackedRoute>) {
-        routes.map { it.key.stopId }.distinct().forEach { stopId ->
-            val existing = snapshots[stopId]
-            if (existing != null && elapsedClock.now() - existing.receivedAt < pollInterval) return@forEach
-            fetch(stopId)
-        }
+    /**
+     * Fetches any stop whose snapshot is missing or older than the current [pollInterval], the stale
+     * ones concurrently — a tick's re-render waits on the slowest request rather than their sum (the
+     * same fan-out the starred-stops badge poll uses). The snapshot writes stay on this scope's Main
+     * dispatcher, so the map needs no synchronization.
+     */
+    private suspend fun fetchStaleStops(routes: List<TrackedRoute>) = coroutineScope {
+        routes.map { it.key.stopId }
+            .distinct()
+            .filter { stopId ->
+                val existing = snapshots[stopId]
+                existing == null || elapsedClock.now() - existing.receivedAt >= pollInterval
+            }
+            .map { stopId -> async { fetch(stopId) } }
+            .awaitAll()
     }
 
     private suspend fun fetch(stopId: String) {
         // The arrivals screen's own default window. Tracking a row needs only the next few
         // departures, so there is nothing here to size the window around — unlike the earlier design,
         // which pinned one trip that might sit far out and had to be kept provably inside the window.
+        // The adaptation and the per-row lift both happen here, off the main thread, so the tick that
+        // consumes them does no work beyond a map lookup.
         val result = withContext(Dispatchers.IO) {
             stopArrivals.arrivals(stopId, DefaultArrivalsRepository.MINUTES_AFTER_DEFAULT)
+                .map { response ->
+                    val serverTime = ServerTime(response.currentTime)
+                    serverTime to matchesByRow(response.arrivals, serverTime)
+                }
         }
         // Stamp the receipt as close to the response as possible: it is the baseline the server clock
         // is projected forward from between polls.
         val receivedAt = elapsedClock.now()
-        result.onSuccess { response ->
+        result.onSuccess { (serverTime, matches) ->
             snapshots[stopId] = StopSnapshot(
-                arrivals = response.arrivals,
-                serverTime = ServerTime(response.currentTime),
+                matches = matches,
+                serverTime = serverTime,
                 receivedAt = receivedAt
             )
         }.onFailure {
@@ -340,9 +371,12 @@ class TripTrackingService : Service() {
         stopSelf()
     }
 
-    /** A stop's last good arrivals response and the monotonic reading it landed at. */
+    /**
+     * A stop's last good arrivals response — already lifted to per-row [TrackedMatch]es (see
+     * [matchesByRow]) — and the monotonic reading it landed at.
+     */
     private data class StopSnapshot(
-        val arrivals: List<ArrivalData>,
+        val matches: Map<TrackedRouteKey, List<TrackedMatch>>,
         val serverTime: ServerTime,
         val receivedAt: ElapsedTime
     ) {
@@ -356,12 +390,5 @@ class TripTrackingService : Service() {
 
     private companion object {
         const val TAG = "TripTrackingService"
-
-        /**
-         * Whether this arrival is one of the tracked row's. The same (stop, route, headsign) triple
-         * the arrivals drawer groups its rows by, so the card lists exactly the departures the row
-         * shows — a null headsign normalizes to the empty string, matching how the key is built.
-         */
-        fun ArrivalData.belongsTo(key: TrackedRouteKey): Boolean = stopId == key.stopId && routeId == key.routeId && headsign.orEmpty() == key.headsign
     }
 }

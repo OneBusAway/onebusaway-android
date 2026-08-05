@@ -109,6 +109,12 @@ class TrackedRouteStore @Inject constructor(
         update { it.withoutKey(key) }
     }
 
+    /** Stops tracking every row in [keys] as one write — a batch retirement is one logical change,
+     *  and per-key writes would each rewrite the stored list. */
+    fun untrackAll(keys: Collection<TrackedRouteKey>) {
+        update { list -> list.filterNot { it.key in keys } }
+    }
+
     /** Stops tracking whichever session the notification with this row [id] belongs to. */
     fun untrackById(id: String) {
         _routes.value.firstOrNull { it.id == id }?.let { untrack(it.key) }

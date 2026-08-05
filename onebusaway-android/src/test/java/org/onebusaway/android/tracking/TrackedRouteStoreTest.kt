@@ -101,6 +101,18 @@ class TrackedRouteStoreTest {
     }
 
     @Test
+    fun `untracking a batch removes exactly those rows`() {
+        val store = TrackedRouteStore(FakePreferencesRepository())
+        store.track(route(stopId = "1_100"), NOW)
+        store.track(route(stopId = "1_200"), NOW)
+        store.track(route(stopId = "1_300"), NOW)
+
+        store.untrackAll(listOf(route(stopId = "1_100").key, route(stopId = "1_300").key))
+
+        assertEquals(listOf(tracked(stopId = "1_200")), store.routes.value)
+    }
+
+    @Test
     fun `clearing removes everything`() {
         val store = TrackedRouteStore(FakePreferencesRepository())
         store.track(route(stopId = "1_100"), NOW)

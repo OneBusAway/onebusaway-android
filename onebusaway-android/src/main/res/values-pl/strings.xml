@@ -747,12 +747,10 @@
     <string name="trip_plan_now">teraz</string>
     <string name="trip_plan_date_time">%1$s, %2$s</string>
     <string name="trip_plan_choose_date">Wybierz datę…</string>
-    <string name="trip_plan_choose_time">Wybierz godzinę…</string>
     <string name="trip_plan_change_when">Zmień czas</string>
     <string name="trip_plan_leaving">Odjazd</string>
     <string name="trip_plan_arriving">Przyjazd</string>
     <string name="trip_plan_date">Data</string>
-    <string name="trip_plan_time">Godzina</string>
     <string name="trip_plan_pick_on_map">Wybierz punkt na mapie</string>
     <string name="trip_plan_use_this_location">Użyj tej lokalizacji</string>
     <string name="trip_plan_map_location">Wybrana lokalizacja</string>
@@ -773,25 +771,6 @@
     <string name="trip_plan_car_transfer">Przejedź samochodem na przesiadkę</string>
     <string name="trip_plan_delta_minutes">%1$d min</string>
     <string name="trip_plan_delta_hours_minutes">%1$d godz. %2$d min</string>
-    <string name="trip_plan_realtime_on_time">Zgodnie z planem</string>
-    <plurals name="trip_plan_realtime_late">
-        <item quantity="one">%1$d min opóźnienia</item>
-        <item quantity="few">%1$d min opóźnienia</item>
-        <item quantity="many">%1$d min opóźnienia</item>
-        <item quantity="other">%1$d min opóźnienia</item>
-    </plurals>
-    <plurals name="trip_plan_realtime_early">
-        <item quantity="one">%1$d min przed czasem</item>
-        <item quantity="few">%1$d min przed czasem</item>
-        <item quantity="many">%1$d min przed czasem</item>
-        <item quantity="other">%1$d min przed czasem</item>
-    </plurals>
-    <plurals name="trip_plan_intermediate_stops">
-        <item quantity="one">%1$d przystanek</item>
-        <item quantity="few">%1$d przystanki</item>
-        <item quantity="many">%1$d przystanków</item>
-        <item quantity="other">%1$d przystanka</item>
-    </plurals>
 
     <string name="tripplanner_no_server_selected_error">Nie wybrano regionu</string>
     <!-- Errors -->
@@ -985,13 +964,11 @@
     <string name="wheelchair_accessible">Unikaj schodów</string>
     <string name="transit_directions_bikeshare_label">Rower miejski</string>
 
-    <string name="vehicle_mode_label">Przejazd</string>
     <string name="vehicle_mode_all_transit">Dowolny transport publiczny</string>
     <string name="vehicle_mode_bus">Tylko autobus</string>
     <string name="vehicle_mode_rail">Tylko pociąg/tramwaj</string>
     <string name="vehicle_mode_none">Bez transportu publicznego</string>
 
-    <string name="street_mode_label">Poruszanie się</string>
     <string name="street_mode_walk">Pieszo</string>
     <string name="street_mode_walk_and_bikeshare">Pieszo i rower miejski</string>
     <string name="street_mode_bicycle">Własny rower</string>

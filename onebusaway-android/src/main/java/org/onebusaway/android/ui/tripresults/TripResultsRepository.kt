@@ -112,12 +112,9 @@ class DefaultTripResultsRepository @Inject constructor(
         substitutable: List<List<InterchangeableRoute>>
     ): List<RouteLegRef?> {
         val refs = MutableList<RouteLegRef?>(legs.size) { null }
-        // Each leg's OBA route id, resolved once up front: every stop below is resolved *against* its
-        // leg's route (a route's agency doesn't own its stops — #2170), so the route id is needed before
-        // any stop is. Warming the route stop lists here lets the itinerary's legs share one round of
-        // concurrent fetches instead of blocking on one each.
-        val obaRouteIds = legs.map { otpObaIdResolver.obaRouteId(it.routeId, it.agencyId, it.agencyName) }
-        otpObaIdResolver.prefetchRouteStops(obaRouteIds.filterNotNull())
+        // Every OBA id this itinerary needs, resolved in one network round (#2170) and index-aligned to
+        // `legs`, so each leg's stops can only be named on that leg's own route.
+        val ids = otpObaIdResolver.resolveLegs(legs)
         for (chain in Interlines.chains(legs)) {
             val leader = legs[chain.leaderIndex]
             val transitions = chain.transitionLegIndices.associateWith { j ->
@@ -125,7 +122,7 @@ class DefaultTripResultsRepository @Inject constructor(
                     badge = legs[j].shortNameBadge(),
                     routeDisplayName = legs[j].routeDisplayName(),
                     headsign = legs[j].headsign,
-                    stop = legs[j].from.resolveStop(obaRouteIds[j])
+                    stop = legs[j].from.toStopRef(ids[j].fromStopId)
                 )
             }
             // The ride's legs beyond the leader — each continued onto on the same vehicle, boarding at
@@ -133,10 +130,9 @@ class DefaultTripResultsRepository @Inject constructor(
             // matches — a self-interline) and shows the shared vehicle across them (#2000). A leg whose
             // route can't be resolved to an OBA id is dropped (it can't be loaded), same as the leader.
             val extraSegments = ((chain.leaderIndex + 1)..chain.alightIndex).mapNotNull { j ->
-                val routeId = obaRouteIds[j] ?: return@mapNotNull null
                 RouteFocusSegment(
-                    routeId = routeId,
-                    anchorStopId = otpObaIdResolver.obaStopId(legs[j].from.stopId, routeId),
+                    routeId = ids[j].routeId ?: return@mapNotNull null,
+                    anchorStopId = ids[j].fromStopId,
                     directionHeadsign = legs[j].headsign
                 )
             }
@@ -150,15 +146,15 @@ class DefaultTripResultsRepository @Inject constructor(
             val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
                 RiddenSpan(
                     points = legs[j].legGeometry?.decodedPoints().orEmpty(),
-                    routeId = obaRouteIds[j],
+                    routeId = ids[j].routeId,
                     startsCutover = j in chain.transitionLegIndices
                 )
             }
             refs[chain.leaderIndex] = RouteLegRef(
-                routeId = obaRouteIds[chain.leaderIndex],
+                routeId = ids[chain.leaderIndex].routeId,
                 headsign = leader.headsign,
-                board = leader.from.resolveStop(obaRouteIds[chain.leaderIndex]),
-                alight = legs[chain.alightIndex].to.resolveStop(obaRouteIds[chain.alightIndex]),
+                board = leader.from.toStopRef(ids[chain.leaderIndex].fromStopId),
+                alight = legs[chain.alightIndex].to.toStopRef(ids[chain.alightIndex].toStopId),
                 interlineTransitions = transitions,
                 extraSegments = extraSegments,
                 riddenSpans = riddenSpans,
@@ -183,12 +179,11 @@ class DefaultTripResultsRepository @Inject constructor(
     }
 
     /**
-     * The stop as the drawer/map refer to it — its OBA id resolved against [obaRouteId], the route the
-     * leg calls there on (#2170). The name/code/point stand on their own, so a stop whose OBA id can't
-     * be resolved is still labelled and framed; it just gets no arrivals board.
+     * The stop as the drawer/map refer to it. The name/code/point stand on their own, so a stop whose
+     * OBA id couldn't be resolved is still labelled and framed; it just gets no arrivals board.
      */
-    private suspend fun TripPlace.resolveStop(obaRouteId: String?) = RouteStopRef(
-        stopId = otpObaIdResolver.obaStopId(stopId, obaRouteId),
+    private fun TripPlace.toStopRef(obaStopId: String?) = RouteStopRef(
+        stopId = obaStopId,
         stopCode = stopCode,
         name = name,
         point = geoPointOrNull(lat, lon)

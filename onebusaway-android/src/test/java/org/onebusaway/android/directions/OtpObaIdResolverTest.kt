@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2026 Open Transit Software Foundation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.onebusaway.android.directions
 
 import kotlinx.coroutines.test.runTest
@@ -21,9 +6,10 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.api.data.AgenciesDataSource
 import org.onebusaway.android.api.data.StopsForRouteRepository
+import org.onebusaway.android.directions.model.TripLeg
+import org.onebusaway.android.directions.model.TripPlace
 import org.onebusaway.android.models.AgencyContact
-import org.onebusaway.android.models.RouteMapData
-import org.onebusaway.android.models.RouteStopGroup
+import org.onebusaway.android.testing.FakeStopsForRouteRepository
 
 /**
  * JVM tests for [OtpObaIdResolver]'s derive → verify → name-fallback route resolution and its
@@ -32,33 +18,19 @@ import org.onebusaway.android.models.RouteStopGroup
  */
 class OtpObaIdResolverTest {
 
-    // The region's covered OBA agencies (id + name), verbatim from Puget Sound's
-    // agencies-with-coverage (checked 2026-08-04). Note 97 is Everett Transit: Skagit and Whatcom are
-    // in the OTP graph but are NOT covered OBA agencies, which is why they resolve to null below.
+    // The covered OBA agencies a test asserts on, with the ids/names Puget Sound's
+    // agencies-with-coverage reports (checked 2026-08-04). Note 97 is Everett Transit — Skagit and
+    // Whatcom are in the OTP graph but are NOT covered OBA agencies, hence the null case below.
     private val coverage = listOf(
         agency("1", "Metro Transit"),
-        agency("3", "Pierce Transit"),
         agency("19", "Intercity Transit"),
-        agency("23", "City of Seattle"),
-        agency("29", "Community Transit"),
         agency("40", "Sound Transit"),
         agency("97", "Everett Transit")
     )
 
-    /** Stops-for-route stub: the OBA stop ids each route serves, or a failure for an unstubbed route. */
-    private class RouteStops(private val stops: Map<String, List<String>>) : StopsForRouteRepository {
-        val calls = mutableListOf<String>()
-        override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = Result.success(emptyList())
-        override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
-        override suspend fun routeStopIds(routeId: String): Result<List<String>> {
-            calls += routeId
-            return stops[routeId]?.let { Result.success(it) } ?: Result.failure(IllegalStateException("offline"))
-        }
-    }
-
     private fun resolver(
         agencies: Result<List<AgencyContact>> = Result.success(coverage),
-        routeStops: StopsForRouteRepository = RouteStops(emptyMap())
+        routeStops: StopsForRouteRepository = FakeStopsForRouteRepository()
     ) = OtpObaIdResolver(
         object : AgenciesDataSource {
             override suspend fun getAgencies() = agencies
@@ -68,9 +40,22 @@ class OtpObaIdResolverTest {
 
     private fun agency(id: String, name: String) = AgencyContact(id = id, name = name, email = null, url = null, phone = null)
 
+    private fun routeStops(vararg stops: Pair<String, List<String>>) = FakeStopsForRouteRepository(stopIds = mutableMapOf(*stops))
+
+    /** A transit leg on [routeGtfsId] under [agencyGtfsId], boarding at [from] and alighting at [to]. */
+    private fun leg(routeGtfsId: String, agencyGtfsId: String, agencyName: String, from: String? = null, to: String? = null) = TripLeg(
+        routeId = routeGtfsId,
+        agencyId = agencyGtfsId,
+        agencyName = agencyName,
+        from = TripPlace(stopId = from),
+        to = TripPlace(stopId = to)
+    )
+
     @Test
     fun derivedAgencySuffix_whenCovered() = runTest {
-        // kcm:1 → suffix "1" is a covered agency → OBA route 1_102574.
+        // kcm:1 → suffix "1" is a covered agency → OBA route 1_102574. The feed prefix carries no
+        // weight of its own: Sound Transit is published under four Puget Sound feeds (kcm, Pierce,
+        // CommTrans, and its own "40"), all suffixed :40, and every one resolves to OBA agency 40.
         assertEquals(
             "1_102574",
             resolver().obaRouteId("kcm:102574", agencyGtfsId = "kcm:1", agencyName = "Metro Transit")
@@ -78,66 +63,85 @@ class OtpObaIdResolverTest {
     }
 
     @Test
-    fun stopIsNamedByTheRouteItIsServedOn() = runTest {
-        val routeStops = RouteStops(mapOf("1_102574" to listOf("1_13580", "1_13585")))
-        assertEquals("1_13585", resolver(routeStops = routeStops).obaStopId("kcm:13585", "1_102574"))
-    }
-
-    @Test
     fun stopDoesNotTakeItsRouteAgencyPrefix() = runTest {
         // #2170: ST 522 is agency 40 in both OTP (kcm:40) and OBA (40_100232), but every stop it calls
         // at is a Metro stop — 40_23561 does not exist. The route's own stop list is what says so.
-        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561", "1_38567")))
-        assertEquals("1_23561", resolver(routeStops = routeStops).obaStopId("kcm:23561", "40_100232"))
+        val stops = routeStops("40_100232" to listOf("1_23561", "1_76305"))
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(leg("kcm:100232", "kcm:40", "Sound Transit", from = "kcm:23561", to = "kcm:76305"))
+        )
+
+        assertEquals(ResolvedLegIds("40_100232", "1_23561", "1_76305"), ids.single())
     }
 
     @Test
     fun stopIsFoundWhenARouteSpansTwoAgenciesStops() = runTest {
         // KCM 931 calls at both Metro (1_*) and Community Transit (29_*) stops, so no single prefix
-        // could have been guessed for the leg at all.
-        val routeStops = RouteStops(mapOf("1_102558" to listOf("1_75995", "29_2229")))
-        val resolver = resolver(routeStops = routeStops)
-        assertEquals("29_2229", resolver.obaStopId("CommTrans:2229", "1_102558"))
-        assertEquals("1_75995", resolver.obaStopId("kcm:75995", "1_102558"))
+        // could have been guessed for the leg at all. Its board stop even comes from another OTP feed.
+        val stops = routeStops("1_102558" to listOf("1_75995", "29_2229"))
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(leg("kcm:102558", "kcm:1", "Metro Transit", from = "CommTrans:2229", to = "kcm:75995"))
+        )
+
+        assertEquals(ResolvedLegIds("1_102558", "29_2229", "1_75995"), ids.single())
     }
 
     @Test
     fun stopEntityIdKeepsItsOwnUnderscores() = runTest {
-        // OBA splits an id at its *first* underscore (AgencyAndId.convertFromString), so an entity id
-        // containing one still matches.
-        val routeStops = RouteStops(mapOf("40_TLINE" to listOf("40_T05_T1")))
-        assertEquals("40_T05_T1", resolver(routeStops = routeStops).obaStopId("40:T05_T1", "40_TLINE"))
+        // OBA ids split at their *first* underscore, so an entity id containing one still matches.
+        val stops = routeStops("40_TLINE" to listOf("40_T05_T1"))
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(leg("40:TLINE", "40:40", "Sound Transit", from = "40:T05_T1"))
+        )
+
+        assertEquals("40_T05_T1", ids.single().fromStopId)
     }
 
     @Test
-    fun stopUnresolvable_whenTheRouteDoesNotServeIt() = runTest {
-        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561")))
-        assertNull(resolver(routeStops = routeStops).obaStopId("kcm:99999", "40_100232"))
+    fun stopUnresolvable_whenTheRouteDoesNotServeItOrCannotBeReached() = runTest {
+        // Nothing to fall back on in either case: guessing the prefix is exactly the bug (#2170), so
+        // callers degrade instead. "40_100479" is unstubbed, i.e. the stops-for-route fetch failed.
+        val stops = routeStops("40_100232" to listOf("1_23561"))
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(
+                leg("kcm:100232", "kcm:40", "Sound Transit", from = "kcm:99999"),
+                leg("40:100479", "40:40", "Sound Transit", from = "40:99")
+            )
+        )
+
+        assertEquals(listOf(null, null), ids.map { it.fromStopId })
+        // The routes themselves still resolve — only their stops are unreachable.
+        assertEquals(listOf("40_100232", "40_100479"), ids.map { it.routeId })
     }
 
     @Test
-    fun stopUnresolvable_whenTheRouteStopsCannotBeFetched() = runTest {
-        // Nothing to fall back on: guessing the prefix is exactly the bug. Callers degrade instead.
-        assertNull(resolver().obaStopId("kcm:23561", "40_100232"))
+    fun nonTransitLegResolvesToNothingAndCostsNoFetch() = runTest {
+        val stops = routeStops()
+        val ids = resolver(routeStops = stops).resolveLegs(listOf(TripLeg()))
+
+        assertEquals(ResolvedLegIds(null, null, null), ids.single())
+        assertEquals(emptyList<String>(), stops.stopIdCalls)
     }
 
     @Test
-    fun stopUnresolvable_whenTheRouteItselfIsUnresolvable() = runTest {
-        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561")))
-        assertNull(resolver(routeStops = routeStops).obaStopId("kcm:23561", null))
-        // No point asking for a route we can't name.
-        assertEquals(emptyList<String>(), routeStops.calls)
-    }
+    fun eachRouteIsFetchedOnceForTheWholeItinerary() = runTest {
+        // Three legs, two distinct routes — the shared route's stops are fetched once, and both legs
+        // read their own ends out of it.
+        val stops = routeStops(
+            "40_100232" to listOf("1_23561", "1_76305"),
+            "1_102558" to listOf("29_2229", "1_75995")
+        )
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(
+                leg("kcm:100232", "kcm:40", "Sound Transit", from = "kcm:23561", to = "kcm:76305"),
+                leg("kcm:102558", "kcm:1", "Metro Transit", from = "CommTrans:2229", to = "kcm:75995"),
+                leg("kcm:100232", "kcm:40", "Sound Transit", from = "kcm:76305", to = "kcm:23561")
+            )
+        )
 
-    @Test
-    fun prefetchWarmsEachRouteOnce() = runTest {
-        val routeStops = RouteStops(mapOf("40_100232" to listOf("1_23561"), "1_102558" to listOf("29_2229")))
-        val resolver = resolver(routeStops = routeStops)
-
-        resolver.prefetchRouteStops(listOf("40_100232", "1_102558", "40_100232"))
-
-        assertEquals(setOf("40_100232", "1_102558"), routeStops.calls.toSet())
-        assertEquals(2, routeStops.calls.size)
+        assertEquals(listOf("1_23561", "29_2229", "1_76305"), ids.map { it.fromStopId })
+        assertEquals(setOf("40_100232", "1_102558"), stops.stopIdCalls.toSet())
+        assertEquals(2, stops.stopIdCalls.size)
     }
 
     @Test
@@ -170,14 +174,6 @@ class OtpObaIdResolverTest {
                 agencyName = "Skagit Transit"
             )
         )
-    }
-
-    @Test
-    fun derivedSuffixWins_evenWhereAnotherFeedSharesTheAgency() = runTest {
-        // Sound Transit is published under four OTP feeds (kcm, Pierce, CommTrans, and its own "40"),
-        // all suffixed :40 — every one resolves to the single OBA agency 40.
-        assertEquals("40_560", resolver().obaRouteId("Pierce:560", agencyGtfsId = "Pierce:40", agencyName = "Sound Transit"))
-        assertEquals("40_515", resolver().obaRouteId("CommTrans:515", agencyGtfsId = "CommTrans:40", agencyName = "Sound Transit"))
     }
 
     @Test

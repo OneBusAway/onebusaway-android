@@ -23,7 +23,15 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.onebusaway.android.api.data.AgenciesDataSource
 import org.onebusaway.android.api.data.StopsForRouteRepository
+import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.models.AgencyContact
+
+/** The OBA ids one planned transit leg resolves to; null anywhere OBA can't name the entity. */
+data class ResolvedLegIds(
+    val routeId: String?,
+    val fromStopId: String?,
+    val toStopId: String?
+)
 
 /**
  * Resolves an OTP transit leg's GTFS ids onto the OBA ids the where-API expects, so a planned trip's
@@ -49,7 +57,13 @@ import org.onebusaway.android.models.AgencyContact
  * `kcm:23561` in OTP is `1_23561` in OBA, and `40_23561` does not exist. A single route can even span
  * two OBA agencies' stops (KCM route `1_102558` calls at both `1_*` and `29_*` stops). So a stop is
  * resolved against the route's **actual** OBA stop list rather than by guessing its prefix — see
- * [obaStopId].
+ * [resolveLegs].
+ *
+ * That makes this path network-bound where it used to be pure string work: resolving an itinerary costs
+ * one stops-for-route fetch per distinct transit route, and it is the *cold* one — the drawer's route
+ * focus and the route map read the same shared cache, but only after the rider taps a leg, which cannot
+ * happen until this has returned. [resolveLegs] therefore fetches an itinerary's routes in one
+ * concurrent round rather than one serial round trip per leg.
  *
  * This is the client-side stand-in for an authoritative OTP-agency → OBA-agency map in the regions
  * directory: when that field lands it becomes the resolution/override source in place of the
@@ -71,30 +85,39 @@ class OtpObaIdResolver @Inject constructor(
     }
 
     /**
-     * The OBA stop id for a stop called at on an OTP transit leg travelling [obaRouteId], or null when
-     * the route's stops can't be reached or none of them is this stop.
+     * The OBA ids for each of [legs], index-aligned to it — a non-transit leg, or one whose route or
+     * stops can't be reached, yields nulls rather than being dropped.
      *
-     * The GTFS entity id is the same on both sides; only the OBA agency prefix has to be found, and the
-     * one place it is *stated* rather than guessed is the route's own OBA stop list. So this looks the
-     * entity up there, using OBA's id contract (`{agencyId}_{entityId}`, split at the first `_` — see
-     * `AgencyAndId.convertFromString`) to compare. It goes through the shared, cached
-     * [StopsForRouteRepository], which the drawer's route focus and the route map already fetch for the
-     * very same routes, so a planned leg normally resolves off a cache hit.
+     * Resolving the whole itinerary at once rather than one entity at a time is what lets each route's
+     * stops be fetched once, concurrently, and indexed once; it also means a leg's stop ids can only
+     * ever be looked up on that leg's own route.
      */
-    suspend fun obaStopId(stopGtfsId: String?, obaRouteId: String?): String? {
-        val entity = gtfsEntitySuffix(stopGtfsId) ?: return null
-        val routeId = obaRouteId ?: return null
-        val stopIds = stopsForRoute.routeStopIds(routeId).getOrNull() ?: return null
-        return stopIds.firstOrNull { it.substringAfter('_', missingDelimiterValue = "") == entity }
+    suspend fun resolveLegs(legs: List<TripLeg>): List<ResolvedLegIds> = coroutineScope {
+        val routeIds = legs.map { obaRouteId(it.routeId, it.agencyId, it.agencyName) }
+        val stopsByRoute = routeIds.filterNotNull().distinct()
+            .map { routeId -> async { routeId to stopIndex(routeId) } }
+            .awaitAll().toMap()
+        legs.mapIndexed { i, leg ->
+            val stops = routeIds[i]?.let { stopsByRoute[it] }.orEmpty()
+            ResolvedLegIds(
+                routeId = routeIds[i],
+                fromStopId = gtfsEntitySuffix(leg.from.stopId)?.let(stops::get),
+                toStopId = gtfsEntitySuffix(leg.to.stopId)?.let(stops::get)
+            )
+        }
     }
 
     /**
-     * Warms the route stop lists [obaStopId] resolves against, so an itinerary's legs pay for one
-     * round of concurrent fetches rather than one serial fetch each while the drawer shows Loading.
+     * A route's stops keyed by GTFS entity id, empty when they can't be reached. The entity id is the
+     * same on both sides; only the OBA agency prefix has to be found, and the one place it is *stated*
+     * rather than guessed is this list. Keyed by splitting each OBA id at its **first** `_`, which is
+     * OBA's own id contract (`AgencyAndId.convertFromString`, server-side — the rule is not implemented
+     * in this repo), so an entity id containing underscores survives intact.
      */
-    suspend fun prefetchRouteStops(obaRouteIds: Collection<String>): Unit = coroutineScope {
-        obaRouteIds.distinct().map { async { stopsForRoute.routeStopIds(it) } }.awaitAll()
-    }
+    private suspend fun stopIndex(obaRouteId: String): Map<String, String> = stopsForRoute.routeStopIds(obaRouteId)
+        .getOrNull()
+        .orEmpty()
+        .associateBy { it.substringAfter('_', missingDelimiterValue = "") }
 
     /**
      * The OBA agency id for an OTP agency: the gtfsId suffix when it names a covered agency, else the

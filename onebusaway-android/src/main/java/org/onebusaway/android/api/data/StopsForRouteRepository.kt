@@ -72,12 +72,8 @@ interface StopsForRouteRepository {
     suspend fun routeMap(routeId: String): Result<RouteMapData?>
 
     /**
-     * Every OBA stop id the route serves — the whole references pool, not only the ids a direction
-     * group happens to list. This is the authoritative answer to "which OBA stop is this?" for a
-     * planned transit leg, whose stops OTP names in a different id space (see
-     * [org.onebusaway.android.directions.OtpObaIdResolver]). [Result.failure] on IO / HTTP / non-OK
-     * code **and** when there is no endpoint to contact — a caller that can't get the route's stops
-     * cannot name one of them, so there is nothing to degrade to.
+     * Every stop id the route serves — the whole references pool, not only the ids a direction group
+     * happens to list. Same failure contract as [routeStopGroups].
      */
     suspend fun routeStopIds(routeId: String): Result<List<String>>
 }

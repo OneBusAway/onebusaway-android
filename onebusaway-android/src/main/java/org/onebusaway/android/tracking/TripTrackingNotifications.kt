@@ -72,12 +72,26 @@ data class TrackedRouteCard(
  * lateness reaches a template that has no colour of its own to spend on it.
  */
 data class TrackedMetric(
-    val value: String,
-    /** Null for a value that is already a whole phrase ("Now", "Canceled"). */
-    val unit: String?,
+    val value: TrackedMetricValue,
     val label: String,
     val semanticStyle: Int
 )
+
+/**
+ * What a tile shows. Split so a countdown reaches the template as a **number**, not as text that
+ * happens to be digits: the template treats a numeric metric as the headline value and lays its unit
+ * out beside it, where a string is just a string. This is also the only lever on how big the number
+ * is drawn — nothing in `MetricStyle`, `Metric`, or `MetricValue` exposes a text size, so the type of
+ * the value is all the say the app gets.
+ */
+sealed interface TrackedMetricValue {
+
+    /** A bare countdown, e.g. 4 with "min" beside it. */
+    data class Countdown(val minutes: Int, val unit: String) : TrackedMetricValue
+
+    /** A departure better said in words than counted down — "Now", "Canceled". */
+    data class Phrase(val text: String) : TrackedMetricValue
+}
 
 /**
  * The notification id for a tracked row. Derived from the row's own identity so a card keeps it
@@ -193,15 +207,13 @@ class TripTrackingNotifications @Inject constructor(
     private fun metricStyle(card: TrackedRouteCard): NotificationCompat.MetricStyle = NotificationCompat.MetricStyle()
         .setMetrics(
             card.metrics.map { metric ->
-                NotificationCompat.Metric(
-                    if (metric.unit == null) {
-                        NotificationCompat.Metric.FixedText(metric.value)
-                    } else {
-                        NotificationCompat.Metric.FixedText(metric.value, metric.unit)
-                    },
-                    metric.label,
-                    metric.semanticStyle
-                )
+                val value = when (val v = metric.value) {
+                    is TrackedMetricValue.Countdown ->
+                        NotificationCompat.Metric.FixedInt(v.minutes, v.unit)
+
+                    is TrackedMetricValue.Phrase -> NotificationCompat.Metric.FixedText(v.text)
+                }
+                NotificationCompat.Metric(value, metric.label, metric.semanticStyle)
             }
         )
         // The next departure is the one the status-bar chip is cut from — the same choice
@@ -290,13 +302,17 @@ class TripTrackingNotifications @Inject constructor(
     /** One departure as a metric tile: the countdown, its unit, and the clock time it is due. */
     private fun metric(departure: TrackedDeparture): TrackedMetric = TrackedMetric(
         value = when {
-            departure.canceled -> context.getString(R.string.trip_tracking_canceled)
-            departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
-            else -> departure.etaMinutes.toString()
+            departure.canceled ->
+                TrackedMetricValue.Phrase(context.getString(R.string.trip_tracking_canceled))
+
+            departure.etaMinutes <= 0 ->
+                TrackedMetricValue.Phrase(context.getString(R.string.trip_tracking_short_now))
+
+            else -> TrackedMetricValue.Countdown(
+                minutes = departure.etaMinutes.toInt(),
+                unit = context.getString(R.string.trip_tracking_unit_minutes)
+            )
         },
-        // Only a bare number takes a unit; "Now" and "Canceled" are already whole phrases.
-        unit = context.getString(R.string.trip_tracking_unit_minutes)
-            .takeIf { !departure.canceled && departure.etaMinutes > 0 },
         label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
         semanticStyle = semanticStyle(departure)
     )

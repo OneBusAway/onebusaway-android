@@ -41,9 +41,12 @@ data class TrackedMatch(
     /** True when [displayTime] is a real-time prediction rather than the timetable. */
     val predicted: Boolean,
     val canceled: Boolean,
-    /** The schedule-deviation fill colour of the arrival this was lifted from, so the card is tinted
-     *  by lateness exactly like its ETA pill. */
-    @param:ColorRes val fillColorRes: Int
+    /** The arrival's schedule-deviation colour in the **display** tier (#2043) — the one meant for
+     *  large text and graphics on a surface, and the only one with a `values-night` variant. Every
+     *  coloured thing on the card is a graphic drawn on the notification's own background, so this is
+     *  the tier that belongs here; the fill tier exists for white text on a filled shape, which the
+     *  card never does. */
+    @param:ColorRes val displayColorRes: Int
 )
 
 /** One departure as the card shows it: the same arrival, measured against a particular "now". */
@@ -53,7 +56,7 @@ data class TrackedDeparture(
     val etaMinutes: Long,
     val predicted: Boolean,
     val canceled: Boolean,
-    @param:ColorRes val fillColorRes: Int
+    @param:ColorRes val displayColorRes: Int
 )
 
 /** What a tick says one tracked row's card should do. */
@@ -167,7 +170,7 @@ private fun TrackedMatch.toDeparture(now: ServerTime) = TrackedDeparture(
     etaMinutes = etaMinutes(displayTime, now),
     predicted = predicted,
     canceled = canceled,
-    fillColorRes = fillColorRes
+    displayColorRes = displayColorRes
 )
 
 /** What to do with a card that has been [waited] long with no response for its stop. */

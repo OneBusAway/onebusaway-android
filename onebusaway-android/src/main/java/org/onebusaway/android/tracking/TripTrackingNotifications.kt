@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.ColorRes
+import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -195,10 +196,18 @@ class TripTrackingNotifications @Inject constructor(
         .setProgress(card.progress)
         .setProgressIndeterminate(card.indeterminate)
         // The bus, at the head of the approach; it marches right as the arrival closes in.
-        .setProgressTrackerIcon(IconCompat.createWithResource(context, R.drawable.ic_bus))
+        .setProgressTrackerIcon(tinted(R.drawable.ic_bus, color))
         // The rider's own stop, anchoring the right-hand end: what every bus on the bar is driving
         // toward, and where the tracker lands as it arrives.
-        .setProgressEndIcon(IconCompat.createWithResource(context, R.drawable.stop_flag))
+        .setProgressEndIcon(tinted(R.drawable.stop_flag, color))
+
+    /**
+     * A drawable as a notification icon in [color]. The tint is not decoration: both of these vectors
+     * are authored as flat `#000000` glyphs for use over the app's own surfaces, and a notification
+     * draws them over the *system's* background — which is near-black in dark mode, so untinted they
+     * disappear entirely. Tinting also keeps them on the same deviation colour as the bar they ride.
+     */
+    private fun tinted(@DrawableRes drawable: Int, color: Int): IconCompat = IconCompat.createWithResource(context, drawable).setTint(color)
 
     /** Tapping the card opens the arrivals list for the stop being watched. */
     private fun openArrivals(card: TrackedRouteCard): PendingIntent {
@@ -258,7 +267,7 @@ class TripTrackingNotifications @Inject constructor(
             // bar, so the rest of the strip has nowhere to go.
             shortText = next?.let(::label),
             // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
-            colorRes = next?.fillColorRes ?: R.color.theme_primary,
+            colorRes = next?.displayColorRes ?: R.color.theme_primary,
             progress = next?.let { trackingBarPosition(it.eta) } ?: 0,
             progressMax = trackingBarSpan(),
             progressPoints = departures.drop(1).map { trackingBarPosition(it.eta) },

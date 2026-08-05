@@ -264,7 +264,9 @@ class TripTrackingService : Service() {
             displayTime = info.displayTime,
             predicted = info.predicted,
             canceled = info.status == Status.CANCELED,
-            fillColorRes = info.fillColor
+            // The display tier, not the fill tier: the card paints graphics on the notification
+            // background rather than white text on a filled shape, and only this tier is mode-aware.
+            displayColorRes = info.color
         )
     }
 

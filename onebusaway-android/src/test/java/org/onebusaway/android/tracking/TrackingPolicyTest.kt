@@ -40,7 +40,7 @@ class TrackingPolicyTest {
         displayTime = now + inTime,
         predicted = predicted,
         canceled = canceled,
-        fillColorRes = 0
+        displayColorRes = 0
     )
 
     private fun live(vararg matches: TrackedMatch) = trackingOutcome(matches.toList(), now) as TrackingOutcome.Live

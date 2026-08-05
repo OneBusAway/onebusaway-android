@@ -22,6 +22,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -126,6 +127,27 @@ class TrackingPolicyTest {
     }
 
     // --- Giving up -----------------------------------------------------------------------------
+
+    @Test
+    fun `a session inside its bound keeps running`() {
+        val started = WallTime(1_700_000_000_000L)
+
+        assertEquals(false, trackingSessionExpired(started, started + MAX_TRACKING_DURATION))
+    }
+
+    @Test
+    fun `a forgotten session expires`() {
+        val started = WallTime(1_700_000_000_000L)
+
+        assertTrue(trackingSessionExpired(started, started + MAX_TRACKING_DURATION + 1.seconds))
+    }
+
+    @Test
+    fun `a row stored before sessions were dated reads as long expired`() {
+        // Its startedAtMs decodes to 0, which is how those rows should go rather than coming back to
+        // life on the next launch.
+        assertTrue(trackingSessionExpired(WallTime(0), WallTime(1_700_000_000_000L)))
+    }
 
     @Test
     fun `a card with no data yet holds while the fetches are still young`() {

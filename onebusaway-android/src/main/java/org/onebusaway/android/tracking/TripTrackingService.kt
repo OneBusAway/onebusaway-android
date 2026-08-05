@@ -43,6 +43,7 @@ import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.DefaultArrivalsRepository
 
@@ -89,14 +90,6 @@ class TripTrackingService : Service() {
 
     /** The last card posted per notification id, so an unchanged tick costs no re-post. */
     private val rendered = mutableMapOf<Int, TrackedRouteCard>()
-
-    /**
-     * When each row's session began, so a forgotten one cannot run forever. A row nearly always has
-     * a next bus, so unlike a pinned vehicle it has no natural end (see [MAX_TRACKING_DURATION]).
-     * Monotonic and service-local: it restarts with the service, which is the right behaviour for a
-     * backstop against forgetting rather than a promise about total duration.
-     */
-    private val startedAt = mutableMapOf<TrackedRouteKey, ElapsedTime>()
 
     /**
      * When each row's card first went data-less, so a stop whose fetches keep failing does not leave
@@ -230,8 +223,9 @@ class TripTrackingService : Service() {
     private data class Resolved(val route: TrackedRoute, val outcome: TrackingOutcome)
 
     private fun outcomeFor(route: TrackedRoute): TrackingOutcome {
-        val since = startedAt.getOrPut(route.key) { elapsedClock.now() }
-        if (elapsedClock.now() - since > MAX_TRACKING_DURATION) {
+        // Wall clock, and the session's own persisted start: the bound has to hold across the service
+        // being killed and restored, which is exactly when a forgotten session would otherwise reset.
+        if (trackingSessionExpired(route.startedAt, WallTime.now())) {
             Log.d(TAG, "Tracking session for ${route.key} exceeded $MAX_TRACKING_DURATION - retiring")
             return TrackingOutcome.Retire
         }
@@ -303,7 +297,6 @@ class TripTrackingService : Service() {
     /** Drops per-row bookkeeping for sessions that are no longer tracked. */
     private fun forgetUntracked(routes: List<TrackedRoute>) {
         val live = routes.mapTo(mutableSetOf()) { it.key }
-        startedAt.keys.retainAll(live)
         pendingSince.keys.retainAll(live)
         val liveIds = routes.mapTo(mutableSetOf()) { trackingNotificationId(it.id) }
         rendered.keys.filterNot { it in liveIds }.forEach { id ->

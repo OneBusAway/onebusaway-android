@@ -16,6 +16,7 @@
 package org.onebusaway.android.tracking
 
 import kotlinx.serialization.Serializable
+import org.onebusaway.android.time.WallTime
 
 /**
  * What the rider tracks: a **route row at a stop** — the (stop, route, headsign) triple the arrivals
@@ -48,6 +49,13 @@ data class TrackedRouteKey(
  * @param stopLat the stop's latitude, and [stopLon] its longitude — carried so tapping the card can
  *        focus the map on the stop, which needs a location and not just an id. Resolved when tracking
  *        starts because that is when the arrivals response holding it is already in hand.
+ * @param startedAtMs when the rider started this session, on the device wall clock. Stamped by
+ *        [TrackedRouteStore.track] rather than by whoever built the route, because a My Lists badge is
+ *        rebuilt on every arrivals poll and would otherwise re-date a session it merely re-rendered.
+ *        Persisted, and wall-clock rather than monotonic, because its whole job is to survive the
+ *        process dying: it is what stops a session the rider forgot about a week ago from coming back
+ *        to life the next time the app opens. A row stored before this field existed decodes to 0 and
+ *        so reads as long expired, which is the right way for those to go.
  */
 @Serializable
 data class TrackedRoute(
@@ -55,12 +63,16 @@ data class TrackedRoute(
     val routeName: String,
     val stopName: String,
     val stopLat: Double,
-    val stopLon: Double
+    val stopLon: Double,
+    val startedAtMs: Long = 0
 ) {
     init {
         require(key.stopId.isNotBlank()) { "A tracked route must name a stop" }
         require(key.routeId.isNotBlank()) { "A tracked route must name a route" }
     }
+
+    /** [startedAtMs] in its own domain; minted here rather than at each comparison. */
+    val startedAt: WallTime get() = WallTime(startedAtMs)
 
     /**
      * A stable scalar identity for the row, for the places that cannot carry the triple — notably

@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.time.WallTime
 
 private const val TAG = "TrackedRouteStore"
 
@@ -90,12 +91,17 @@ class TrackedRouteStore @Inject constructor(
     fun isTracking(key: TrackedRouteKey): Boolean = _routes.value.any { it.key == key }
 
     /**
-     * Starts tracking [route], or — when its row is already tracked — promotes that session to the
-     * prominent slot. Never a silent no-op: a rider who taps Track on a row they are already
-     * tracking is asking for it to be the one they see (onebusaway-ios #1243).
+     * Starts tracking [route] as of [now], or — when its row is already tracked — promotes that
+     * session to the prominent slot and re-dates it. Never a silent no-op: a rider who taps Track on a
+     * row they are already tracking is asking for it to be the one they see (onebusaway-ios #1243),
+     * and asking again is asking for the full session again, not the tail of an old one.
+     *
+     * The stamp is applied here rather than trusted from [route] because callers build a
+     * [TrackedRoute] to *describe* a row — a My Lists badge rebuilds one on every arrivals poll — and
+     * only this call means "the rider started watching it".
      */
-    fun track(route: TrackedRoute) {
-        update { it.withTracked(route) }
+    fun track(route: TrackedRoute, now: WallTime) {
+        update { it.withTracked(route.copy(startedAtMs = now.epochMs)) }
     }
 
     /** Stops tracking the session identified by [key]. */

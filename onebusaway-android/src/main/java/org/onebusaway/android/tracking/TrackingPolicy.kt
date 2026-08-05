@@ -20,6 +20,7 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -96,8 +97,9 @@ const val TRACKING_MAX_DEPARTURES = 3
 /**
  * How long a tracked row keeps running before the session is retired regardless. A row almost always
  * has a next bus, so unlike a pinned vehicle it has no natural end; without this, a rider who tracks
- * a row and forgets leaves a foreground service running until they notice. Generous on purpose — the
- * bound exists to end forgotten sessions, not to cut short a real wait.
+ * a row and forgets leaves a foreground service running until they notice — and, since the tracked
+ * set is restored when the app reopens, would find it waiting for them days later. Generous on
+ * purpose: the bound exists to end forgotten sessions, not to cut short a real wait.
  */
 val MAX_TRACKING_DURATION: Duration = 2.hours
 
@@ -163,6 +165,14 @@ private fun TrackedMatch.toDeparture(now: ServerTime) = TrackedDeparture(
     canceled = canceled,
     status = status
 )
+
+/**
+ * Whether a session begun at [startedAt] has outlived [MAX_TRACKING_DURATION] by [now]. Both are the
+ * device wall clock — the one clock that survives the process dying, which is the point: a monotonic
+ * reading restarts with the service and would let a forgotten session run again from zero every time
+ * the app reopened.
+ */
+fun trackingSessionExpired(startedAt: WallTime, now: WallTime): Boolean = now - startedAt > MAX_TRACKING_DURATION
 
 /** What to do with a card that has been [waited] long with no response for its stop. */
 fun pendingOutcome(waited: Duration): TrackingOutcome = if (waited > TRACKING_PENDING_TIMEOUT) TrackingOutcome.Retire else TrackingOutcome.Pending

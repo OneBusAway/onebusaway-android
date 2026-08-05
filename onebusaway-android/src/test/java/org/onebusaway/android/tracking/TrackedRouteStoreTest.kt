@@ -22,6 +22,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.testing.FakePreferencesRepository
+import org.onebusaway.android.time.WallTime
 
 /** The tracked set as riders mutate it, and its survival across a process death. */
 class TrackedRouteStoreTest {
@@ -34,30 +35,33 @@ class TrackedRouteStoreTest {
         stopLon = -122.33
     )
 
+    /** The same row as the store holds it: [TrackedRouteStore.track] stamps when the session began. */
+    private fun tracked(stopId: String = "1_100", headsign: String = "Downtown Seattle") = route(stopId, headsign).copy(startedAtMs = NOW.epochMs)
+
     @Test
     fun `tracking a row records it`() {
         val store = TrackedRouteStore(FakePreferencesRepository())
 
-        store.track(route())
+        store.track(route(), NOW)
 
-        assertEquals(listOf(route()), store.routes.value)
+        assertEquals(listOf(tracked()), store.routes.value)
         assertTrue(store.isTracking(route().key))
     }
 
     @Test
     fun `the tracked set survives a process death`() {
         val preferences = FakePreferencesRepository()
-        TrackedRouteStore(preferences).track(route())
+        TrackedRouteStore(preferences).track(route(), NOW)
 
         // A fresh store over the same storage is what a sticky service restart sees.
-        assertEquals(listOf(route()), TrackedRouteStore(preferences).routes.value)
+        assertEquals(listOf(tracked()), TrackedRouteStore(preferences).routes.value)
     }
 
     @Test
     fun `untracking the last row clears the stored slot`() {
         val preferences = FakePreferencesRepository()
         val store = TrackedRouteStore(preferences)
-        store.track(route())
+        store.track(route(), NOW)
 
         store.untrack(route().key)
 
@@ -68,19 +72,19 @@ class TrackedRouteStoreTest {
     @Test
     fun `the notification action untracks the row its card was posted for`() {
         val store = TrackedRouteStore(FakePreferencesRepository())
-        store.track(route(stopId = "1_100"))
-        store.track(route(stopId = "1_200"))
+        store.track(route(stopId = "1_100"), NOW)
+        store.track(route(stopId = "1_200"), NOW)
 
         store.untrackById(route(stopId = "1_100").id)
 
-        assertEquals(listOf(route(stopId = "1_200")), store.routes.value)
+        assertEquals(listOf(tracked(stopId = "1_200")), store.routes.value)
     }
 
     @Test
     fun `an untracked row is no longer reported as tracked`() {
         val store = TrackedRouteStore(FakePreferencesRepository())
-        store.track(route(headsign = "Downtown Seattle"))
-        store.track(route(headsign = "Ballard"))
+        store.track(route(headsign = "Downtown Seattle"), NOW)
+        store.track(route(headsign = "Ballard"), NOW)
 
         store.untrack(route(headsign = "Ballard").key)
 
@@ -91,7 +95,7 @@ class TrackedRouteStoreTest {
     @Test
     fun `the key overlay follows the tracked set`() = runTest {
         val store = TrackedRouteStore(FakePreferencesRepository())
-        store.track(route())
+        store.track(route(), NOW)
 
         assertEquals(setOf(route().key), store.trackedKeys.first())
     }
@@ -99,11 +103,37 @@ class TrackedRouteStoreTest {
     @Test
     fun `clearing removes everything`() {
         val store = TrackedRouteStore(FakePreferencesRepository())
-        store.track(route(stopId = "1_100"))
-        store.track(route(stopId = "1_200"))
+        store.track(route(stopId = "1_100"), NOW)
+        store.track(route(stopId = "1_200"), NOW)
 
         store.clear()
 
         assertEquals(emptyList<TrackedRoute>(), store.routes.value)
+    }
+
+    @Test
+    fun `tracking stamps when the session began`() {
+        val store = TrackedRouteStore(FakePreferencesRepository())
+
+        store.track(route(), NOW)
+
+        assertEquals(NOW, store.routes.value.single().startedAt)
+    }
+
+    @Test
+    fun `re-tracking a live row re-dates it`() {
+        // Asking again is asking for the whole session again, not the tail of the old one — otherwise
+        // a row re-tracked all afternoon would still retire on the first tap's clock.
+        val store = TrackedRouteStore(FakePreferencesRepository())
+        store.track(route(), NOW)
+
+        val later = WallTime(NOW.epochMs + 60_000)
+        store.track(route(), later)
+
+        assertEquals(later, store.routes.value.single().startedAt)
+    }
+
+    private companion object {
+        val NOW = WallTime(1_700_000_000_000L)
     }
 }

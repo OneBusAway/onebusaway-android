@@ -121,8 +121,13 @@ class TripTrackingNotifications @Inject constructor(
             .setColor(color)
             .setColorized(true)
             .setOngoing(true)
+            // The only re-alert guard the card needs: it re-posts every few seconds as the countdown
+            // advances, and this keeps the platform from treating each re-post as a fresh arrival.
+            // Deliberately NOT setSilent(true) — that stamps the notification FLAG_SILENT, which asks
+            // the platform to treat it as a low-attention notification and is at odds with the
+            // promoted-ongoing request below. Actual silence is the channel's job
+            // (NotificationChannels.TRIP_TRACKING_ID: no sound, no vibration, no lights).
             .setOnlyAlertOnce(true)
-            .setSilent(true)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSortKey(card.sortKey)

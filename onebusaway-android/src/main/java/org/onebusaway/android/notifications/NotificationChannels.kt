@@ -37,13 +37,26 @@ object NotificationChannels {
     const val ARRIVAL_REMINDERS_ID = "arrival_reminders"
 
     /**
-     * The live countdown for a bus the rider chose to track (#2166). Deliberately quiet
-     * ([NotificationManager.IMPORTANCE_LOW]): the card re-posts every few seconds so the countdown
-     * keeps advancing, and any alerting importance would turn that into a continuous buzz. The
-     * urgency is carried by the card being *promoted* on Android 16+ — a status-bar chip and a Lock
-     * Screen presence — not by it making noise.
+     * The live countdown for a bus the rider chose to track (#2166).
+     *
+     * [NotificationManager.IMPORTANCE_DEFAULT], but with its sound, vibration, and lights all turned
+     * off — silent in practice, without being *ranked* as silent. The distinction matters: the card
+     * only earns the Android 16+ promoted treatment (the status-bar chip, the Lock Screen presence)
+     * if the platform considers it important enough to show there, and a low-importance channel is
+     * the standard way to tell it the opposite. Silence has to come from the channel's own switches,
+     * which are also the ones the rider can change; the "don't re-alert" job belongs to the
+     * notification's `setOnlyAlertOnce`, since the card re-posts every few seconds as it counts down.
      */
-    const val TRIP_TRACKING_ID = "trip_tracking"
+    const val TRIP_TRACKING_ID = "trip_tracking_v2"
+
+    /**
+     * The first id this channel shipped under, at [NotificationManager.IMPORTANCE_LOW]. A channel's
+     * importance can only ever be *lowered* by the app, so raising it meant a new id; this one is
+     * deleted so a device that ran an earlier build of #2166 does not keep a dead settings row (and a
+     * dead channel the rider might mistake for the live one). Only pre-merge builds ever created it,
+     * so this line can go once those are gone.
+     */
+    private const val OBSOLETE_TRIP_TRACKING_ID = "trip_tracking"
 
     /**
      * Ongoing destination-reminder progress (the foreground-service distance notification) and the
@@ -105,14 +118,19 @@ object NotificationChannels {
                 description = "Notifications to remind the user of an arriving bus."
             }
         )
+        manager.deleteNotificationChannel(OBSOLETE_TRIP_TRACKING_ID)
         manager.createNotificationChannel(
             NotificationChannel(
                 TRIP_TRACKING_ID,
                 "Bus tracking",
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "A live countdown for a bus you chose to track."
                 setShowBadge(false)
+                // Silent by configuration, not by rank — see TRIP_TRACKING_ID.
+                setSound(null, null)
+                enableVibration(false)
+                enableLights(false)
             }
         )
         registerDestinationChannels(manager)

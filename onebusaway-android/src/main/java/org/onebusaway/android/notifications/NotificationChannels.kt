@@ -40,12 +40,15 @@ object NotificationChannels {
      * The live countdown for a bus the rider chose to track (#2166).
      *
      * [NotificationManager.IMPORTANCE_DEFAULT], but with its sound, vibration, and lights all turned
-     * off — silent in practice, without being *ranked* as silent. The distinction matters: the card
-     * only earns the Android 16+ promoted treatment (the status-bar chip, the Lock Screen presence)
-     * if the platform considers it important enough to show there, and a low-importance channel is
-     * the standard way to tell it the opposite. Silence has to come from the channel's own switches,
-     * which are also the ones the rider can change; the "don't re-alert" job belongs to the
-     * notification's `setOnlyAlertOnce`, since the card re-posts every few seconds as it counts down.
+     * off — silent in practice, without being *ranked* as silent.
+     *
+     * Not a Live Update requirement: that rules out only [NotificationManager.IMPORTANCE_MIN], so
+     * `IMPORTANCE_LOW` would qualify too. The reason to sit above LOW is the lock screen, where a
+     * silent-ranked notification is minimized to an icon rather than shown as a card — which is
+     * precisely where a countdown the rider asked for needs to be readable. Silence therefore comes
+     * from the channel's own switches, which are also the ones the rider can change; the "don't
+     * re-alert" job belongs to the notification's `setOnlyAlertOnce`, since the card re-posts every
+     * few seconds as it counts down.
      */
     const val TRIP_TRACKING_ID = "trip_tracking_v2"
 

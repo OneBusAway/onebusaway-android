@@ -119,7 +119,11 @@ class TripTrackingNotifications @Inject constructor(
             .setContentText(card.text)
             .setSubText(card.stopName)
             .setColor(color)
-            .setColorized(true)
+            // Deliberately NOT setColorized(true): a colorized notification is disqualified from the
+            // Android 16 Live Update treatment, and this one would have qualified as colorized on
+            // every device (isColorized() is true for a colorized *foreground-service* notification
+            // even without the colorized-notification permission). The lateness colour still reaches
+            // the card through setColor and the progress segment.
             .setOngoing(true)
             // The only re-alert guard the card needs: it re-posts every few seconds as the countdown
             // advances, and this keeps the platform from treating each re-post as a fresh arrival.

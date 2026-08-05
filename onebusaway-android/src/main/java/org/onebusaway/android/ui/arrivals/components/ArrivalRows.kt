@@ -222,10 +222,9 @@ internal fun ArrivalAlertIndicator(
 
 /**
  * The "this row is being tracked" eye (#2166): a live countdown notification is running for this
- * (stop, route, headsign). Purely a status mark, unlike its neighbour the alert triangle — tracking
- * is started and stopped from the row's long-press menu, so a tap target here would be a second,
- * quieter way to do something the rider did not aim at. Sized and placed to match the triangle; see
- * the corner they share in [RouteArrivalRow].
+ * (stop, route, headsign). Purely a status mark — tracking is started and stopped from the row's
+ * long-press menu, so a tap target here would be a second, quieter way to do something the rider did
+ * not aim at. Drawn in the row's top-right corner; see [RouteArrivalRow].
  */
 @Composable
 internal fun TrackedRouteIndicator(modifier: Modifier = Modifier, iconSize: Dp = 24.dp) {
@@ -367,31 +366,18 @@ fun RouteArrivalRow(
                         containerColor = badgeContainer,
                         endContainerColor = mapRouteColor?.let(::Color) ?: Color.Unspecified
                     )
-                    // The corner is shared by two marks: the tracking eye and the service-alert
-                    // triangle. One right-aligned row, so they gravitate to the divider together and
-                    // the triangle keeps its established flush-right spot when both are showing —
-                    // the eye joins to its left rather than displacing it.
-                    Row(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            // Cancel the row's vertical padding so the glyphs' tops line up with the
-                            // corner star, which floats at the card's very top (above this padding)
-                            // rather than inside the row's content box.
-                            .offset(y = -ROW_VERTICAL_PADDING)
-                    ) {
-                        if (tracked) {
-                            TrackedRouteIndicator(
-                                iconSize = CORNER_GLYPH_SIZE,
-                                modifier = Modifier.size(CORNER_TOUCH_SIZE)
-                            )
-                        }
-                        if (onAlertClick != null) {
-                            ArrivalAlertIndicator(
-                                onClick = onAlertClick,
-                                iconSize = CORNER_GLYPH_SIZE,
-                                modifier = Modifier.size(CORNER_TOUCH_SIZE)
-                            )
-                        }
+                    if (onAlertClick != null) {
+                        ArrivalAlertIndicator(
+                            onClick = onAlertClick,
+                            iconSize = CORNER_GLYPH_SIZE,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(CORNER_TOUCH_SIZE)
+                                // Cancel the row's vertical padding so the triangle's top lines up with
+                                // the corner star, which floats at the card's very top (above this
+                                // padding) rather than inside the row's content box.
+                                .offset(y = -ROW_VERTICAL_PADDING)
+                        )
                     }
                 }
                 // A full-height thin divider sets the route chip apart from the ETA pills, so the two
@@ -419,11 +405,24 @@ fun RouteArrivalRow(
                         isFavorite = isFavorite,
                         onClick = { callbacks.onRouteFavorite(routeActions) },
                         tint = colorResource(R.color.navdrawer_icon_tint),
-                        iconSize = 20.dp,
+                        iconSize = CORNER_GLYPH_SIZE,
                         // Tighten the button's touch box to the icon + a small margin, like the corner
                         // overflow icon below, instead of Material's 48dp default — keeps the star flush
                         // in the corner with no compensating offset.
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(CORNER_TOUCH_SIZE)
+                    )
+                }
+            }
+            if (tracked) {
+                // The row's own top-right corner, opposite the favourite star and past the headsign —
+                // the whole row is what is being watched, not the route chip, so the mark belongs on
+                // the row rather than tucked into the badge beside the alert triangle. Its own layer
+                // for the same reason the star is: a corner mark must not reflow the headsign or the
+                // pills under it.
+                Box(Modifier.align(Alignment.TopEnd)) {
+                    TrackedRouteIndicator(
+                        iconSize = CORNER_GLYPH_SIZE,
+                        modifier = Modifier.size(CORNER_TOUCH_SIZE)
                     )
                 }
             }
@@ -458,9 +457,9 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** The footprint of each mark in the badge's shared top-right corner, and the glyph inside it. Both
- *  marks use these so the eye and the alert triangle are the same size and sit on the same line —
- *  the same tight box the corner star uses. */
+/** The footprint of a mark in one of the row's corners, and the glyph inside it — the favourite star,
+ *  the service-alert triangle, the tracking eye. One tight box rather than Material's 48dp default, so
+ *  each sits flush in its corner with no compensating offset, and so the three read as one family. */
 private val CORNER_TOUCH_SIZE = 28.dp
 private val CORNER_GLYPH_SIZE = 20.dp
 

@@ -15,8 +15,10 @@
  */
 package org.onebusaway.android.ui.nav
 
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
+import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.util.GeoPoint
 
@@ -120,4 +122,35 @@ fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     set(RESULT_MAP_STOP_LON, null)
     if (stopId == null || lat == null || lon == null) return null
     return StopReveal(stopId, GeoPoint(lat, lon))
+}
+
+/**
+ * Writes [request] onto an intent bound for `HomeActivity`, so a launch from *outside* the NavHost —
+ * a notification's PendingIntent — can ask the map to focus a route the way an in-app caller does
+ * with [revealRouteOnMap].
+ *
+ * The saved-state round trip above cannot serve that: it hands the request between destinations that
+ * already exist, and a PendingIntent fired from the shade has no NavController to hand it to. So this
+ * is the same request in the only vocabulary an Intent has, using the [MapParams] keys the map's
+ * other intent state already lives under. Read back by [readRouteReveal], which is why the two sit
+ * together.
+ *
+ * Only the fields a launch can meaningfully carry: the route, the stop it is scoped to, and that
+ * stop's direction. The rest of [ShowRouteRequest] describes a trip already on screen (ridden spans,
+ * extra segments, an alight stop) and has no meaning to a cold start.
+ */
+fun Intent.putRouteReveal(request: ShowRouteRequest): Intent = apply {
+    putExtra(MapParams.ROUTE_ID, request.routeId)
+    putExtra(MapParams.ROUTE_DIRECTION_STOP_ID, request.directionStopId)
+    putExtra(MapParams.ROUTE_DIRECTION_HEADSIGN, request.directionHeadsign)
+}
+
+/** The route reveal a launch intent carries, or null when it is not one. See [putRouteReveal]. */
+fun Intent.readRouteReveal(): ShowRouteRequest? {
+    val routeId = getStringExtra(MapParams.ROUTE_ID) ?: return null
+    return ShowRouteRequest(
+        routeId = routeId,
+        directionStopId = getStringExtra(MapParams.ROUTE_DIRECTION_STOP_ID),
+        directionHeadsign = getStringExtra(MapParams.ROUTE_DIRECTION_HEADSIGN)
+    )
 }

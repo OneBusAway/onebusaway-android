@@ -74,6 +74,7 @@ import org.onebusaway.android.ui.nav.RESULT_MAP_STOP_ID
 import org.onebusaway.android.ui.nav.consumeRouteReveal
 import org.onebusaway.android.ui.nav.consumeStopReveal
 import org.onebusaway.android.ui.nav.navigateFromHome
+import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
 import org.onebusaway.android.ui.report.reportGraph
@@ -269,7 +270,16 @@ internal fun LaunchIntentEffect(
         lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
             launchIntents.collect { i ->
                 onSideEffects(i)
-                IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
+                // A route reveal is map state, not a destination, so it is handled here rather than
+                // through IntentRouteMapper — which correctly resolves these to None (they carry no
+                // data URI) and would otherwise leave the launch sitting on a bare map. The two are
+                // exclusive: an intent either names a screen to open or a route to frame.
+                val reveal = i.readRouteReveal()
+                if (reveal != null) {
+                    navController.revealRouteOnMap(reveal)
+                } else {
+                    IntentRouteMapper.routeForIntent(i)?.let { navController.navigateFromHome(it) }
+                }
             }
         }
     }

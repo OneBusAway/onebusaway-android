@@ -26,8 +26,10 @@ import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import org.onebusaway.android.R
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.notifications.NotificationChannels
-import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
+import org.onebusaway.android.ui.HomeActivity
+import org.onebusaway.android.ui.nav.putRouteReveal
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.ScheduleDeviation
 
@@ -44,6 +46,9 @@ data class TrackedRouteCard(
     val notificationId: Int,
     val stopId: String,
     val stopName: String,
+    val routeId: String,
+    /** The row's direction, so the map frames the one the rider is watching. */
+    val headsign: String,
     val title: String,
     /** The row's strip, as one line: "4 min · 12 min · 24 min". The card's text on every platform,
      *  and the whole of it below Android 16, where there are no metrics to lay out. */
@@ -125,6 +130,8 @@ class TripTrackingNotifications @Inject constructor(
             notificationId = trackingNotificationId(route.id),
             stopId = route.key.stopId,
             stopName = route.stopName,
+            routeId = route.key.routeId,
+            headsign = route.key.headsign,
             title = title(route),
             text = context.getString(R.string.trip_tracking_pending),
             shortText = null,
@@ -166,7 +173,7 @@ class TripTrackingNotifications @Inject constructor(
             .setPriority(
                 if (card.primary) NotificationCompat.PRIORITY_DEFAULT else NotificationCompat.PRIORITY_LOW
             )
-            .setContentIntent(openArrivals(card))
+            .setContentIntent(openRouteOnMap(card))
             // Swiping the card away is the same intent as the action: stop watching this row. Without
             // it a dismissed card would come straight back on the next tick.
             .setDeleteIntent(untrack(card))
@@ -208,11 +215,21 @@ class TripTrackingNotifications @Inject constructor(
         // [TrackedRouteCard.shortText] makes, told to the template instead of formatted by hand.
         .setCriticalMetric(0)
 
-    /** Tapping the card opens the arrivals list for the stop being watched. */
-    private fun openArrivals(card: TrackedRouteCard): PendingIntent {
-        val intent = ArrivalsListLauncher.Builder(context, card.stopId)
-            .setStopName(card.stopName)
-            .intent
+    /**
+     * Tapping the card frames the watched row on the map: this route, scoped to this stop and this
+     * direction. The arrivals *list* was the first target, but it answers a question the card has
+     * already answered — the next departures are printed on it. What the card cannot show is where
+     * the vehicles actually are, which is the reason to open the app at all.
+     */
+    private fun openRouteOnMap(card: TrackedRouteCard): PendingIntent {
+        val intent = Intent(context, HomeActivity::class.java)
+            .putRouteReveal(
+                ShowRouteRequest(
+                    routeId = card.routeId,
+                    directionStopId = card.stopId,
+                    directionHeadsign = card.headsign.takeIf(String::isNotBlank)
+                )
+            )
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         return PendingIntent.getActivity(context, card.notificationId, intent, pendingIntentFlags())
     }
@@ -260,6 +277,8 @@ class TripTrackingNotifications @Inject constructor(
             notificationId = trackingNotificationId(route.id),
             stopId = route.key.stopId,
             stopName = route.stopName,
+            routeId = route.key.routeId,
+            headsign = route.key.headsign,
             title = title(route),
             text = if (departures.isEmpty()) {
                 context.getString(R.string.trip_tracking_pending)

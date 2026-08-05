@@ -1375,6 +1375,8 @@
     <string name="trip_tracking_short_eta">%1$d min</string>
     <string name="trip_tracking_short_now">Now</string>
     <string name="trip_tracking_canceled">Canceled</string>
+    <!-- The unit beside a bare countdown on the Android 16+ metric tiles -->
+    <string name="trip_tracking_unit_minutes">min</string>
     <string name="trip_tracking_stop_action">Stop tracking</string>
     <string name="trip_tracking_started">Tracking %1$s</string>
     <string name="trip_tracking_stopped">Stopped tracking %1$s</string>

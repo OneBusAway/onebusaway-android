@@ -70,6 +70,13 @@ class ArrivalInfo(
     val fillColor: Int
 
     /**
+     * The bucketed schedule-deviation state behind [color]/[fillColor]. Exposed for surfaces that
+     * need the *state* rather than a colour — the tracking notification maps it onto the platform's
+     * semantic tones (#2166), which are its own way of saying "on time" or "watch out".
+     */
+    val deviationStatus: ScheduleDeviation.Status
+
+    /**
      * True if there is real-time arrival info available for this trip, false if there is not.
      */
     val predicted: Boolean
@@ -218,6 +225,7 @@ class ArrivalInfo(
         // [ScheduleDeviation.status] call below, so they can never contradict each other.
         val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
         val deviationStatus = ScheduleDeviation.status(hasPrediction, deviation)
+        this.deviationStatus = deviationStatus
         color = deviationStatus.displayColorRes
         fillColor = deviationStatus.fillColorRes
 

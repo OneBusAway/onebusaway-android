@@ -15,12 +15,12 @@
  */
 package org.onebusaway.android.tracking
 
-import androidx.annotation.ColorRes
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * Every rule the trip-tracking notification obeys, as pure functions over a server-clock "now".
@@ -41,12 +41,9 @@ data class TrackedMatch(
     /** True when [displayTime] is a real-time prediction rather than the timetable. */
     val predicted: Boolean,
     val canceled: Boolean,
-    /** The arrival's schedule-deviation colour in the **display** tier (#2043) — the one meant for
-     *  large text and graphics on a surface, and the only one with a `values-night` variant. Every
-     *  coloured thing on the card is a graphic drawn on the notification's own background, so this is
-     *  the tier that belongs here; the fill tier exists for white text on a filled shape, which the
-     *  card never does. */
-    @param:ColorRes val displayColorRes: Int
+    /** The arrival's bucketed schedule-deviation state. Carried as the state rather than a colour so
+     *  the card can render it as the platform's own semantic tone as well as a hue. */
+    val status: ScheduleDeviation.Status
 )
 
 /** One departure as the card shows it: the same arrival, measured against a particular "now". */
@@ -54,9 +51,11 @@ data class TrackedDeparture(
     val eta: Duration,
     /** The whole minutes the card prints — see [etaMinutes]. */
     val etaMinutes: Long,
+    /** When it is due, for the clock time printed beneath the countdown. */
+    val displayTime: ServerTime,
     val predicted: Boolean,
     val canceled: Boolean,
-    @param:ColorRes val displayColorRes: Int
+    val status: ScheduleDeviation.Status
 )
 
 /** What a tick says one tracked row's card should do. */
@@ -93,15 +92,6 @@ val TRACKING_LINGER: Duration = 2.minutes
  * read at a glance: past three the line stops being scannable and starts being a paragraph.
  */
 const val TRACKING_MAX_DEPARTURES = 3
-
-/**
- * How far ahead the progress bar reaches. Deliberately a **constant**: the bar is a road, and a fixed
- * span is what makes a fixed span of time the same distance every tick, so the buses drawn on it
- * move at their real speed instead of sliding around as the scale rescales under them. A departure
- * further out than this waits at the far end until it enters the window — which is the honest
- * rendering of "still a long way off".
- */
-val TRACKING_HORIZON: Duration = 30.minutes
 
 /**
  * How long a tracked row keeps running before the session is retired regardless. A row almost always
@@ -168,9 +158,10 @@ fun trackingOutcome(matches: List<TrackedMatch>, now: ServerTime): TrackingOutco
 private fun TrackedMatch.toDeparture(now: ServerTime) = TrackedDeparture(
     eta = displayTime - now,
     etaMinutes = etaMinutes(displayTime, now),
+    displayTime = displayTime,
     predicted = predicted,
     canceled = canceled,
-    displayColorRes = displayColorRes
+    status = status
 )
 
 /** What to do with a card that has been [waited] long with no response for its stop. */
@@ -186,64 +177,4 @@ fun trackingPollInterval(soonest: Duration?): Duration = if (soonest != null && 
     TRACKING_POLL_INTERVAL
 }
 
-/*
- * The progress bar is a *road*, not a completion meter — the rider is standing still and the buses
- * are coming to them:
- *
- *   0 ────○────────────○────━━━━━━━━━━━━🚌──────────────┤ span
- *         a later      the one    the next bus       the stop
- *         departure    after it   (the tracker)      (end icon)
- *
- * Time runs right-to-left, so the stop is the right-hand end and every bus is drawn at how far it
- * still has to come. As a bus closes in it marches **rightward** toward the stop, reaching the end
- * as it arrives; the filled part behind it is the approach it has already made. When it arrives and
- * drops off the row, the one behind it becomes the tracker and keeps coming.
- *
- * The span is fixed ([TRACKING_HORIZON]), which is what makes that motion real: a constant scale
- * means a minute of waiting is always the same distance, so the buses move at their true speed
- * rather than drifting as a variable scale rescaled underneath them. Positions are derived per
- * render from the departures themselves, so a delay simply walks a bus backwards.
- */
-
-/** The bar's span in seconds — a constant, so the scale never moves. See [TRACKING_HORIZON]. */
-fun trackingBarSpan(): Int = TRACKING_HORIZON.inWholeSeconds.toInt()
-
-/**
- * Where a bus [eta] away is drawn: measured back from the stop at the right-hand end, so a bus
- * arriving now sits at the end and one a full [TRACKING_HORIZON] out sits at the start. Clamped at
- * both ends — a bus beyond the horizon waits at the start, and one already at the stop (a negative
- * ETA, still inside its linger) stays pinned at the end rather than running off it.
- */
-fun trackingBarPosition(eta: Duration): Int {
-    val span = trackingBarSpan()
-    return (span - eta.inWholeSeconds).coerceIn(0L, span.toLong()).toInt()
-}
-
 private const val MS_PER_MINUTE = 60 * 1000L
-
-/**
- * The bar split into the run [behind] the vehicle, the [gap] its icon sits in, and the [ahead] run
- * on to the stop. The three always sum to [trackingBarSpan].
- */
-data class TrackingBarSegments(val behind: Int, val gap: Int, val ahead: Int) {
-    /** The pieces in draw order, each with whether it is the blank. Zero-length pieces are dropped —
-     *  a segment of no length is not a thing the template can draw. */
-    fun pieces(): List<Pair<Int, Boolean>> = listOf(behind to false, gap to true, ahead to false).filter { it.first > 0 }
-}
-
-/**
- * How much of the bar is left blank for the vehicle icon, as a share of the span. The template draws
- * the tracker icon *on top of* the bar rather than breaking the line for it, so without this the line
- * runs straight through the vehicle. A visual allowance sized against a 24dp glyph on a
- * notification-width bar — it is not a duration and means nothing in time.
- */
-private const val ICON_GAP_FRACTION = 0.08
-
-/** Splits the bar so the vehicle at [vehicleAt] sits in a blank rather than on the line. */
-fun trackingBarSegments(vehicleAt: Int): TrackingBarSegments {
-    val span = trackingBarSpan()
-    val gap = (span * ICON_GAP_FRACTION).toInt().coerceIn(1, span)
-    // Centred on the vehicle, then slid inside the bar so the blank never hangs off either end.
-    val behind = (vehicleAt - gap / 2).coerceIn(0, span - gap)
-    return TrackingBarSegments(behind = behind, gap = gap, ahead = span - behind - gap)
-}

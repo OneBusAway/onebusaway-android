@@ -19,20 +19,17 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Build
 import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.IconCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import org.onebusaway.android.R
-import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.ui.arrivals.ArrivalsListLauncher
-import org.onebusaway.android.util.vehicleGlyphRes
+import org.onebusaway.android.util.DisplayFormat
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The rendered content of one tracked row's notification.
@@ -48,18 +45,14 @@ data class TrackedRouteCard(
     val stopId: String,
     val stopName: String,
     val title: String,
-    /** The row's strip, as one line: "4 min · 12 min · 24 min". */
+    /** The row's strip, as one line: "4 min · 12 min · 24 min". The card's text on every platform,
+     *  and the whole of it below Android 16, where there are no metrics to lay out. */
     val text: String,
     /** The status-bar chip text on Android 16+ ("4 min"); null while there is no number to show. */
     val shortText: String?,
     @param:ColorRes val colorRes: Int,
-    val progress: Int,
-    val progressMax: Int,
-    /** The departures after the next one, as points further back along the road. */
-    val progressPoints: List<Int>,
-    /** The glyph for this row's mode — a bus, tram, train, subway, or ferry. */
-    @param:DrawableRes val vehicleIconRes: Int,
-    val indeterminate: Boolean,
+    /** One tile per upcoming departure, soonest first; empty until the first response lands. */
+    val metrics: List<TrackedMetric>,
     /**
      * The most-recently-tracked session: the one promoted to the status-bar chip and ranked to the
      * top. onebusaway-ios does this with ActivityKit's `relevanceScore` (their #1243); Android's
@@ -68,6 +61,22 @@ data class TrackedRouteCard(
     val primary: Boolean,
     /** Ranks the cards against each other, most-recently-tracked first. */
     val sortKey: String
+)
+
+/**
+ * One departure as a metric tile: a countdown over the clock time it is due.
+ *
+ * The split mirrors the arrivals drawer's ETA pill exactly — a big number with its unit, and the
+ * scheduled time small underneath — which is what makes the card read as the row it came from.
+ * [semanticStyle] is the platform's own vocabulary for "this is fine" / "watch out", and is how
+ * lateness reaches a template that has no colour of its own to spend on it.
+ */
+data class TrackedMetric(
+    val value: String,
+    /** Null for a value that is already a whole phrase ("Now", "Canceled"). */
+    val unit: String?,
+    val label: String,
+    val semanticStyle: Int
 )
 
 /**
@@ -120,11 +129,7 @@ class TripTrackingNotifications @Inject constructor(
             text = context.getString(R.string.trip_tracking_pending),
             shortText = null,
             colorRes = R.color.theme_primary,
-            progress = 0,
-            progressMax = trackingBarSpan(),
-            progressPoints = emptyList(),
-            vehicleIconRes = R.drawable.ic_bus,
-            indeterminate = true,
+            metrics = emptyList(),
             primary = true,
             sortKey = sortKey(0)
         )
@@ -177,48 +182,31 @@ class TripTrackingNotifications @Inject constructor(
             card.shortText?.let(builder::setShortCriticalText)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-            builder.setStyle(progressStyle(card, color))
-        } else {
-            // The pre-16 fallback: the classic determinate bar, which has no notion of points, so it
-            // shows the wait for the next departure alone. The full strip is in the text, so a device
-            // that shows neither bar still reads correctly.
-            builder.setProgress(card.progressMax, card.progress, card.indeterminate)
+        // MetricStyle is Android 16+; below it the card is the standard template, whose text line
+        // already carries the same departures. Nothing is lost but the layout.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && card.metrics.isNotEmpty()) {
+            builder.setStyle(metricStyle(card))
         }
         return builder
     }
 
-    private fun progressStyle(card: TrackedRouteCard, color: Int): NotificationCompat.ProgressStyle = NotificationCompat.ProgressStyle()
-        // One segment spanning the road to the stop; the tracker is the next bus driving along it and
-        // the points are the ones further back. Per-*stop* segments would be the richer rendering, but
-        // they would need the trip's remaining stop list, which this feature does not fetch — a
-        // deliberate follow-up, not an omission to paper over with a guess.
-        // Three segments rather than one, so the vehicle icon sits in a blank instead of having the
-        // line drawn straight through it: the run behind it, the gap, and the run on to the stop.
-        .setProgressSegments(
-            trackingBarSegments(card.progress).pieces().map { (length, isGap) ->
-                NotificationCompat.ProgressStyle.Segment(length)
-                    .setColor(if (isGap) Color.TRANSPARENT else color)
+    private fun metricStyle(card: TrackedRouteCard): NotificationCompat.MetricStyle = NotificationCompat.MetricStyle()
+        .setMetrics(
+            card.metrics.map { metric ->
+                NotificationCompat.Metric(
+                    if (metric.unit == null) {
+                        NotificationCompat.Metric.FixedText(metric.value)
+                    } else {
+                        NotificationCompat.Metric.FixedText(metric.value, metric.unit)
+                    },
+                    metric.label,
+                    metric.semanticStyle
+                )
             }
         )
-        .setProgressPoints(
-            card.progressPoints.map { NotificationCompat.ProgressStyle.Point(it).setColor(color) }
-        )
-        .setProgress(card.progress)
-        .setProgressIndeterminate(card.indeterminate)
-        // The vehicle, at the head of the approach; it marches right as the arrival closes in.
-        .setProgressTrackerIcon(tinted(card.vehicleIconRes, color))
-        // The rider's own stop, anchoring the right-hand end: what every bus on the bar is driving
-        // toward, and where the tracker lands as it arrives.
-        .setProgressEndIcon(tinted(R.drawable.stop_flag, color))
-
-    /**
-     * A drawable as a notification icon in [color]. The tint is not decoration: both of these vectors
-     * are authored as flat `#000000` glyphs for use over the app's own surfaces, and a notification
-     * draws them over the *system's* background — which is near-black in dark mode, so untinted they
-     * disappear entirely. Tinting also keeps them on the same deviation colour as the bar they ride.
-     */
-    private fun tinted(@DrawableRes drawable: Int, color: Int): IconCompat = IconCompat.createWithResource(context, drawable).setTint(color)
+        // The next departure is the one the status-bar chip is cut from — the same choice
+        // [TrackedRouteCard.shortText] makes, told to the template instead of formatted by hand.
+        .setCriticalMetric(0)
 
     /** Tapping the card opens the arrivals list for the stop being watched. */
     private fun openArrivals(card: TrackedRouteCard): PendingIntent {
@@ -263,9 +251,7 @@ class TripTrackingNotifications @Inject constructor(
     fun card(
         route: TrackedRoute,
         outcome: TrackingOutcome,
-        rank: Int,
-        /** The row's GTFS route type, or null when the response's references didn't carry it. */
-        vehicleType: Int?
+        rank: Int
     ): TrackedRouteCard {
         val departures = (outcome as? TrackingOutcome.Live)?.departures.orEmpty()
         val next = departures.firstOrNull()
@@ -284,14 +270,8 @@ class TripTrackingNotifications @Inject constructor(
             // bar, so the rest of the strip has nowhere to go.
             shortText = next?.let(::label),
             // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
-            colorRes = next?.displayColorRes ?: R.color.theme_primary,
-            progress = next?.let { trackingBarPosition(it.eta) } ?: 0,
-            progressMax = trackingBarSpan(),
-            progressPoints = departures.drop(1).map { trackingBarPosition(it.eta) },
-            vehicleIconRes = vehicleGlyphRes(vehicleType ?: ObaRoute.TYPE_BUS),
-            // Indeterminate only while nothing is known — a spinner otherwise reads as "still
-            // working on it" when the answer is already on screen.
-            indeterminate = departures.isEmpty(),
+            colorRes = next?.status?.displayColorRes ?: R.color.theme_primary,
+            metrics = departures.map(::metric),
             primary = rank == 0,
             sortKey = sortKey(rank)
         )
@@ -305,6 +285,32 @@ class TripTrackingNotifications @Inject constructor(
         departure.canceled -> context.getString(R.string.trip_tracking_canceled)
         departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
         else -> context.getString(R.string.trip_tracking_short_eta, departure.etaMinutes.toInt())
+    }
+
+    /** One departure as a metric tile: the countdown, its unit, and the clock time it is due. */
+    private fun metric(departure: TrackedDeparture): TrackedMetric = TrackedMetric(
+        value = when {
+            departure.canceled -> context.getString(R.string.trip_tracking_canceled)
+            departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
+            else -> departure.etaMinutes.toString()
+        },
+        // Only a bare number takes a unit; "Now" and "Canceled" are already whole phrases.
+        unit = context.getString(R.string.trip_tracking_unit_minutes)
+            .takeIf { !departure.canceled && departure.etaMinutes > 0 },
+        label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
+        semanticStyle = semanticStyle(departure)
+    )
+
+    /**
+     * The platform tone for a departure. Early counts as a warning rather than praise, matching how
+     * the app words it elsewhere: a bus running ahead is one the rider can miss. A scheduled time is
+     * left unspecified — it is a timetable entry, not a measurement, so it has no news either way.
+     */
+    private fun semanticStyle(departure: TrackedDeparture): Int = when {
+        departure.canceled -> NotificationCompat.SEMANTIC_STYLE_DANGER
+        !departure.predicted -> NotificationCompat.SEMANTIC_STYLE_UNSPECIFIED
+        departure.status == ScheduleDeviation.Status.ON_TIME -> NotificationCompat.SEMANTIC_STYLE_SAFE
+        else -> NotificationCompat.SEMANTIC_STYLE_CAUTION
     }
 
     /** Ranks cards most-recently-tracked first — sort keys order lexicographically, ascending. */

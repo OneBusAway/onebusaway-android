@@ -22,6 +22,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The rules the tracking notification lives by: which departures a row shows, when it rolls onto the
@@ -40,7 +41,7 @@ class TrackingPolicyTest {
         displayTime = now + inTime,
         predicted = predicted,
         canceled = canceled,
-        displayColorRes = 0
+        status = ScheduleDeviation.Status.ON_TIME
     )
 
     private fun live(vararg matches: TrackedMatch) = trackingOutcome(matches.toList(), now) as TrackingOutcome.Live
@@ -122,88 +123,6 @@ class TrackingPolicyTest {
     @Test
     fun `nothing upcoming polls at the relaxed cadence`() {
         assertEquals(TRACKING_POLL_INTERVAL, trackingPollInterval(null))
-    }
-
-    // --- The road to the stop -------------------------------------------------------------------
-
-    @Test
-    fun `a bus arriving now is at the stop end of the bar`() {
-        assertEquals(trackingBarSpan(), trackingBarPosition(Duration.ZERO))
-    }
-
-    @Test
-    fun `a bus a full horizon away is at the far end`() {
-        assertEquals(0, trackingBarPosition(TRACKING_HORIZON))
-    }
-
-    @Test
-    fun `a bus drives toward the stop as it closes in`() {
-        // The whole point of the flip: the rider stands still at the right-hand end and the buses
-        // come to them, so a shorter ETA is further right.
-        assertTrue(trackingBarPosition(4.minutes) > trackingBarPosition(12.minutes))
-        assertTrue(trackingBarPosition(12.minutes) > trackingBarPosition(24.minutes))
-    }
-
-    @Test
-    fun `the nearest bus leads and the rest trail behind it`() {
-        val departures = live(match(4.minutes), match(12.minutes), match(24.minutes)).departures
-        val positions = departures.map { trackingBarPosition(it.eta) }
-
-        assertEquals(positions.sortedDescending(), positions)
-    }
-
-    @Test
-    fun `a bus beyond the horizon waits at the far end`() {
-        assertEquals(0, trackingBarPosition(TRACKING_HORIZON + 20.minutes))
-    }
-
-    @Test
-    fun `a bus at the stop stays pinned there rather than running off the end`() {
-        // Still inside its linger, so it is on the card with a negative ETA.
-        assertEquals(trackingBarSpan(), trackingBarPosition(-30.seconds))
-    }
-
-    @Test
-    fun `the scale never moves`() {
-        // A constant span is what makes the motion real: a minute of waiting is the same distance
-        // whatever else is on the bar, so the buses travel at their true speed.
-        assertEquals(TRACKING_HORIZON.inWholeSeconds.toInt(), trackingBarSpan())
-    }
-
-    @Test
-    fun `the bar leaves a blank for the vehicle icon`() {
-        val middle = trackingBarSpan() / 2
-        val segments = trackingBarSegments(middle)
-
-        assertTrue(segments.gap > 0)
-        // The blank straddles the vehicle rather than starting at it.
-        assertTrue(segments.behind < middle)
-        assertTrue(segments.behind + segments.gap > middle)
-    }
-
-    @Test
-    fun `the bar's pieces always tile it exactly`() {
-        listOf(0, 1, trackingBarSpan() / 3, trackingBarSpan() - 1, trackingBarSpan()).forEach { at ->
-            val segments = trackingBarSegments(at)
-            assertEquals(trackingBarSpan(), segments.behind + segments.gap + segments.ahead)
-        }
-    }
-
-    @Test
-    fun `the blank never hangs off either end`() {
-        // A vehicle at the stop, or one pinned at the far end, still gets a blank that is on the bar.
-        assertEquals(0, trackingBarSegments(0).behind)
-        val atStop = trackingBarSegments(trackingBarSpan())
-        assertEquals(0, atStop.ahead)
-        assertTrue(atStop.behind >= 0)
-    }
-
-    @Test
-    fun `zero-length pieces are not drawn`() {
-        // A vehicle at the very start has nothing behind it; the template cannot draw a segment of
-        // no length, so that piece is dropped rather than emitted as an empty one.
-        assertTrue(trackingBarSegments(0).pieces().all { it.first > 0 })
-        assertTrue(trackingBarSegments(trackingBarSpan()).pieces().all { it.first > 0 })
     }
 
     // --- Giving up -----------------------------------------------------------------------------

@@ -21,6 +21,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.time.etaMinutes
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
@@ -138,14 +139,6 @@ val TRACKING_NEAR_THRESHOLD: Duration = 5.minutes
 val TRACKING_TICK: Duration = 15.seconds
 
 /**
- * The ETA in whole minutes: each instant floored to its minute and *then* subtracted, which is what
- * `ArrivalInfo.liveEta` does. Reproduced rather than approximated with [Duration.inWholeMinutes]
- * because the two disagree by a minute for most of every minute, and a shade card that says "3 min"
- * beside a drawer pill saying "4" reads as a bug in both.
- */
-fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
-
-/**
  * What to do with one tracked row, given every arrival the freshest response holds for it and the
  * server-clock [now].
  *
@@ -189,5 +182,3 @@ fun trackingPollInterval(soonest: Duration?): Duration = if (soonest != null && 
 } else {
     TRACKING_POLL_INTERVAL
 }
-
-private const val MS_PER_MINUTE = 60 * 1000L

@@ -70,11 +70,9 @@ import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
-import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
-import org.onebusaway.android.ui.arrivals.trackedRouteKey
 import org.onebusaway.android.ui.compose.components.CenteredLongPressMenu
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
 import org.onebusaway.android.ui.compose.components.FavoriteStarButton
@@ -304,10 +302,11 @@ fun RouteArrivalRow(
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
     etaAnchor: Modifier = Modifier,
-    // The route rows with a live countdown running (#2166), so this row's menu offers the right verb.
-    // Defaulted empty: the hosts that reuse this row purely to display arrivals (directions, the
-    // trip-results stop strips) offer no tracking action and need no plumbing for it.
-    trackedRows: Set<TrackedRouteKey> = emptySet()
+    // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
+    // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
+    // membership is the list's business, and this row is also drawn by hosts (directions, the
+    // trip-results stop strips) that know nothing about tracking.
+    tracked: Boolean = false
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -321,7 +320,6 @@ fun RouteArrivalRow(
     // The menu's always-present item ("Show route on map") labels the long-press for accessibility, and
     // disambiguates the row's long press from the ETA pill's own trip-actions long press.
     val routeMenuLabel = stringResource(R.string.bus_options_menu_show_route_on_map)
-    val tracked = representative.trackedRouteKey() in trackedRows
     val displayedRouteNames = selectedRouteNames.takeIf { selected }.orEmpty()
     val compoundBadge = displayedRouteNames.size > 1
     val selectionBorder = selectionColor

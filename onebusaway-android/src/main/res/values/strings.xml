@@ -1372,12 +1372,11 @@
     <!-- Route name, then headsign: "40 to Downtown Seattle" -->
     <string name="trip_tracking_title">%1$s to %2$s</string>
     <string name="trip_tracking_pending">Getting arrival times&#8230;</string>
-    <!-- One departure in the tracked row's strip, and in the Android 16+ status bar chip, where
-         every character counts. A countdown is the bare number plus trip_tracking_unit_minutes. -->
+    <!-- A departure with no number to show, in the tracked row's strip and the Android 16+ status
+         bar chip. A countdown is formatted by DisplayFormat.formatEtaParts, which brings its own
+         localized units. -->
     <string name="trip_tracking_short_now">Now</string>
     <string name="trip_tracking_canceled">Canceled</string>
-    <!-- The unit beside a bare countdown on the Android 16+ metric tiles -->
-    <string name="trip_tracking_unit_minutes">min</string>
     <string name="trip_tracking_stop_action">Stop tracking</string>
     <string name="trip_tracking_started">Tracking %1$s</string>
     <string name="trip_tracking_stopped">Stopped tracking %1$s</string>

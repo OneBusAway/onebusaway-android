@@ -62,3 +62,14 @@ private fun rememberTickingElapsedTime(): ElapsedTime {
  * as a pure function so it's JVM-unit-testable without Compose.
  */
 internal fun liveServerTime(serverTime: ServerTime, anchorElapsed: ElapsedTime, nowElapsed: ElapsedTime): ServerTime = serverTime + (nowElapsed - anchorElapsed).coerceAtLeast(Duration.ZERO)
+
+/**
+ * The whole minutes between [now] and [displayTime]: each instant floored to its own minute and
+ * *then* subtracted — not the whole minutes of the difference, which disagrees for most of every
+ * minute. It is the number the arrivals ETA pill prints, so anything else showing an ETA for the
+ * same arrival has to compute it this way or be off by one; sharing the function is what makes that
+ * structural instead of a promise in a comment.
+ */
+fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epochMs / MS_PER_MINUTE - now.epochMs / MS_PER_MINUTE
+
+private const val MS_PER_MINUTE = 60 * 1000L

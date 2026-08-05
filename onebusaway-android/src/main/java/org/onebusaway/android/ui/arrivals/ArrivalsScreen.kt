@@ -439,7 +439,7 @@ internal fun ArrivalsList(
                     if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
-                    trackedRows = content.trackedRows,
+                    tracked = group.representative.trackedRouteKey() in content.trackedRows,
                     // Glide up/down as the alert section above is toggled in/out.
                     modifier = Modifier.animateItem()
                 )

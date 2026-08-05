@@ -47,6 +47,7 @@ import org.onebusaway.android.time.ElapsedClock
 import org.onebusaway.android.time.ElapsedTime
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.time.liveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.DefaultArrivalsRepository
 
@@ -382,10 +383,10 @@ class TripTrackingService : Service() {
     ) {
         /**
          * The server clock now: this response's own `currentTime` advanced by the monotonic time
-         * since it arrived. Two same-domain operations — an [ElapsedTime] difference and a
-         * [ServerTime] shift — so no device wall clock enters the countdown (#1612).
+         * since it arrived — the #1612 extrapolation, shared with the arrivals strip's live ticker
+         * rather than restated here, so the zero clamp guarding a fresh anchor comes with it.
          */
-        fun serverNow(elapsed: ElapsedTime): ServerTime = serverTime + (elapsed - receivedAt)
+        fun serverNow(elapsed: ElapsedTime): ServerTime = liveServerTime(serverTime, receivedAt, elapsed)
     }
 
     private companion object {

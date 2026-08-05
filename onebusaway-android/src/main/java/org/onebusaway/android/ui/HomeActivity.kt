@@ -66,7 +66,7 @@ import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
-import org.onebusaway.android.ui.nav.readStopRouteReveal
+import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
@@ -249,9 +249,12 @@ class HomeActivity : AppCompatActivity() {
      * correctly resolves this intent to no destination, since the reveal is map state and not a screen.
      */
     private fun maybeRevealTrackedRouteFromIntent(intent: Intent) {
-        val reveal = intent.readStopRouteReveal() ?: return
-        viewModel.revealStop(FocusedStop(reveal.stopId, reveal.stopName, null, reveal.point))
-        viewModel.selectArrivalRoute(reveal.request(), reveal.routeShortName, reveal.headsign)
+        val route = intent.readRouteReveal() ?: return
+        // The stop half through the app's one reader of it, rather than a second parse of the same
+        // keys — which is also how the stop's code survives the trip.
+        val stop = FocusedStop.fromIntent(intent) ?: return
+        viewModel.revealStop(stop)
+        viewModel.selectArrivalRoute(route.request(stop.id), route.routeShortName, route.headsign)
     }
 
     /**
@@ -445,7 +448,7 @@ fun Context.startHomeActivity(route: String) {
  * when it carries no usable stop — an id plus a real (non-zero) location. A plain launch carries
  * neither, so focus stays null. Parsing lives here with the intent contract, off HomeModels.
  */
-private fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
+internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
     val lat = extras.getDouble(MapParams.CENTER_LAT)

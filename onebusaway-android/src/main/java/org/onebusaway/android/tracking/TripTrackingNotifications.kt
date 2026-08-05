@@ -28,7 +28,8 @@ import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
 import org.onebusaway.android.ui.HomeActivity
-import org.onebusaway.android.ui.nav.StopRouteReveal
+import org.onebusaway.android.ui.home.FocusedStop
+import org.onebusaway.android.ui.nav.RouteRevealExtras
 import org.onebusaway.android.ui.nav.putStopRouteReveal
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
@@ -214,10 +215,13 @@ class TripTrackingNotifications @Inject constructor(
     private fun openStopRouteOnMap(card: TrackedRouteCard): PendingIntent {
         val intent = Intent(context, HomeActivity::class.java)
             .putStopRouteReveal(
-                StopRouteReveal(
-                    stopId = card.route.key.stopId,
-                    stopName = card.route.stopName,
-                    point = GeoPoint(card.route.stopLat, card.route.stopLon),
+                stop = FocusedStop(
+                    id = card.route.key.stopId,
+                    name = card.route.stopName,
+                    code = null,
+                    point = GeoPoint(card.route.stopLat, card.route.stopLon)
+                ),
+                route = RouteRevealExtras(
                     routeId = card.route.key.routeId,
                     routeShortName = card.route.routeName,
                     headsign = card.route.key.headsign.takeIf(String::isNotBlank)
@@ -292,19 +296,25 @@ class TripTrackingNotifications @Inject constructor(
      * derived from these tiles ([label]) rather than formatted again — split, moving the "0 minutes
      * means NOW" cutoff in one would leave the chip saying "Now" while the tile beside it said "0 min".
      */
-    private fun metric(departure: TrackedDeparture): TrackedMetric = TrackedMetric(
-        value = when {
-            departure.canceled -> context.getString(R.string.trip_tracking_canceled)
-            // A bus still seconds away floors to zero minutes, which the arrivals pill renders "NOW".
-            departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
-            else -> departure.etaMinutes.toString()
-        },
-        // Only a bare number takes a unit; "Now" and "Canceled" are already whole phrases.
-        unit = context.getString(R.string.trip_tracking_unit_minutes)
-            .takeIf { !departure.canceled && departure.etaMinutes > 0 },
-        label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
-        semanticStyle = semanticStyle(departure)
-    )
+    private fun metric(departure: TrackedDeparture): TrackedMetric {
+        // The app's one ETA formatter, not a hand-built "N min": the tracking window runs to 65
+        // minutes, so past the hour this is the difference between the card saying "63 min" and every
+        // other surface saying "1hr 3min" (#1777). Its parts alternate number/unit, so the trailing
+        // unit is the tile's small text and everything before it the value.
+        val parts = DisplayFormat.formatEtaParts(context, departure.etaMinutes)
+        return TrackedMetric(
+            value = when {
+                departure.canceled -> context.getString(R.string.trip_tracking_canceled)
+                // A bus still seconds away floors to zero minutes; the arrivals pill renders that "NOW".
+                departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
+                else -> parts.dropLast(1).joinToString("") { it.text }
+            },
+            // Only a bare countdown takes a unit; "Now" and "Canceled" are already whole phrases.
+            unit = parts.last().text.takeIf { !departure.canceled && departure.etaMinutes > 0 },
+            label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
+            semanticStyle = semanticStyle(departure)
+        )
+    }
 
     /** A tile flattened back to one string, for the card's text line and the status-bar chip. */
     private fun label(metric: TrackedMetric): String = listOfNotNull(metric.value, metric.unit).joinToString(" ")

@@ -124,39 +124,50 @@ class TrackingPolicyTest {
         assertEquals(TRACKING_POLL_INTERVAL, trackingPollInterval(null))
     }
 
-    // --- The timeline bar ----------------------------------------------------------------------
+    // --- The road to the stop -------------------------------------------------------------------
 
     @Test
-    fun `the bar spans out to the furthest departure shown`() {
+    fun `a bus arriving now is at the stop end of the bar`() {
+        assertEquals(trackingBarSpan(), trackingBarPosition(Duration.ZERO))
+    }
+
+    @Test
+    fun `a bus a full horizon away is at the far end`() {
+        assertEquals(0, trackingBarPosition(TRACKING_HORIZON))
+    }
+
+    @Test
+    fun `a bus drives toward the stop as it closes in`() {
+        // The whole point of the flip: the rider stands still at the right-hand end and the buses
+        // come to them, so a shorter ETA is further right.
+        assertTrue(trackingBarPosition(4.minutes) > trackingBarPosition(12.minutes))
+        assertTrue(trackingBarPosition(12.minutes) > trackingBarPosition(24.minutes))
+    }
+
+    @Test
+    fun `the nearest bus leads and the rest trail behind it`() {
         val departures = live(match(4.minutes), match(12.minutes), match(24.minutes)).departures
+        val positions = departures.map { trackingBarPosition(it.eta) }
 
-        assertEquals(24 * 60, trackingProgressMax(departures))
+        assertEquals(positions.sortedDescending(), positions)
     }
 
     @Test
-    fun `the tracker sits at the next departure and the rest are points`() {
-        val departures = live(match(4.minutes), match(12.minutes), match(24.minutes)).departures
-
-        assertEquals(4 * 60, trackingProgress(departures))
-        assertEquals(listOf(12 * 60, 24 * 60), trackingProgressPoints(departures))
+    fun `a bus beyond the horizon waits at the far end`() {
+        assertEquals(0, trackingBarPosition(TRACKING_HORIZON + 20.minutes))
     }
 
     @Test
-    fun `a lone imminent bus still has a bar to move along`() {
-        // Without the horizon floor a single departure would span the whole bar, and the tracker
-        // would sit at the far end however close the bus got.
-        val departures = live(match(2.minutes)).departures
-
-        assertEquals(TRACKING_MIN_HORIZON.inWholeSeconds.toInt(), trackingProgressMax(departures))
-        assertEquals(2 * 60, trackingProgress(departures))
-        assertEquals(emptyList<Int>(), trackingProgressPoints(departures))
+    fun `a bus at the stop stays pinned there rather than running off the end`() {
+        // Still inside its linger, so it is on the card with a negative ETA.
+        assertEquals(trackingBarSpan(), trackingBarPosition(-30.seconds))
     }
 
     @Test
-    fun `a just-departed bus pins the tracker to the near end`() {
-        val departures = live(match(-30.seconds), match(12.minutes)).departures
-
-        assertEquals(0, trackingProgress(departures))
+    fun `the scale never moves`() {
+        // A constant span is what makes the motion real: a minute of waiting is the same distance
+        // whatever else is on the bar, so the buses travel at their true speed.
+        assertEquals(TRACKING_HORIZON.inWholeSeconds.toInt(), trackingBarSpan())
     }
 
     // --- Giving up -----------------------------------------------------------------------------

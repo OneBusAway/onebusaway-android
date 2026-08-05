@@ -51,7 +51,7 @@ data class TrackedRouteCard(
     @param:ColorRes val colorRes: Int,
     val progress: Int,
     val progressMax: Int,
-    /** The departures after the next one, as points along the bar. */
+    /** The departures after the next one, as points further back along the road. */
     val progressPoints: List<Int>,
     val indeterminate: Boolean,
     /**
@@ -95,8 +95,8 @@ private const val DEPARTURE_SEPARATOR = "  ·  "
  *
  * The card is deliberately **not** a rendering of the Compose `EtaStrip`: a custom `RemoteViews`
  * layout disqualifies a notification from the Live Update treatment entirely, so the row is
- * expressed inside the standard template — its departures as the text line, and its timeline as the
- * progress bar (see the diagram in [TrackingPolicy]).
+ * expressed inside the standard template — its departures as the text line, and the road they are
+ * driving down as the progress bar (see the diagram in [TrackingPolicy]).
  */
 class TripTrackingNotifications @Inject constructor(
     @param:ApplicationContext private val context: Context
@@ -115,7 +115,7 @@ class TripTrackingNotifications @Inject constructor(
             shortText = null,
             colorRes = R.color.theme_primary,
             progress = 0,
-            progressMax = 1,
+            progressMax = trackingBarSpan(),
             progressPoints = emptyList(),
             indeterminate = true,
             primary = true,
@@ -182,10 +182,10 @@ class TripTrackingNotifications @Inject constructor(
     }
 
     private fun progressStyle(card: TrackedRouteCard, color: Int): NotificationCompat.ProgressStyle = NotificationCompat.ProgressStyle()
-        // One segment spanning the row's timeline; the tracker rides it to the next departure and the
-        // points mark the ones after. Per-*stop* segments would be the richer rendering, but they
-        // would need the trip's remaining stop list, which this feature does not fetch — a deliberate
-        // follow-up, not an omission to paper over with a guess.
+        // One segment spanning the road to the stop; the tracker is the next bus driving along it and
+        // the points are the ones further back. Per-*stop* segments would be the richer rendering, but
+        // they would need the trip's remaining stop list, which this feature does not fetch — a
+        // deliberate follow-up, not an omission to paper over with a guess.
         .setProgressSegments(
             listOf(NotificationCompat.ProgressStyle.Segment(card.progressMax).setColor(color))
         )
@@ -194,7 +194,11 @@ class TripTrackingNotifications @Inject constructor(
         )
         .setProgress(card.progress)
         .setProgressIndeterminate(card.indeterminate)
+        // The bus, at the head of the approach; it marches right as the arrival closes in.
         .setProgressTrackerIcon(IconCompat.createWithResource(context, R.drawable.ic_bus))
+        // The rider's own stop, anchoring the right-hand end: what every bus on the bar is driving
+        // toward, and where the tracker lands as it arrives.
+        .setProgressEndIcon(IconCompat.createWithResource(context, R.drawable.stop_flag))
 
     /** Tapping the card opens the arrivals list for the stop being watched. */
     private fun openArrivals(card: TrackedRouteCard): PendingIntent {
@@ -255,9 +259,9 @@ class TripTrackingNotifications @Inject constructor(
             shortText = next?.let(::label),
             // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
             colorRes = next?.fillColorRes ?: R.color.theme_primary,
-            progress = if (departures.isEmpty()) 0 else trackingProgress(departures),
-            progressMax = if (departures.isEmpty()) 1 else trackingProgressMax(departures),
-            progressPoints = if (departures.isEmpty()) emptyList() else trackingProgressPoints(departures),
+            progress = next?.let { trackingBarPosition(it.eta) } ?: 0,
+            progressMax = trackingBarSpan(),
+            progressPoints = departures.drop(1).map { trackingBarPosition(it.eta) },
             // Indeterminate only while nothing is known — a spinner otherwise reads as "still
             // working on it" when the answer is already on screen.
             indeterminate = departures.isEmpty(),

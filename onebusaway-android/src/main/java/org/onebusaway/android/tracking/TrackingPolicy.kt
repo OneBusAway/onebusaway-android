@@ -92,11 +92,13 @@ val TRACKING_LINGER: Duration = 2.minutes
 const val TRACKING_MAX_DEPARTURES = 3
 
 /**
- * The shortest span the progress bar is drawn over. Without a floor, a lone departure two minutes
- * out would span the whole bar and the tracker would never appear to move; with it, a single
- * imminent bus reads as what it is — nearly here.
+ * How far ahead the progress bar reaches. Deliberately a **constant**: the bar is a road, and a fixed
+ * span is what makes a fixed span of time the same distance every tick, so the buses drawn on it
+ * move at their real speed instead of sliding around as the scale rescales under them. A departure
+ * further out than this waits at the far end until it enters the window — which is the honest
+ * rendering of "still a long way off".
  */
-val TRACKING_MIN_HORIZON: Duration = 15.minutes
+val TRACKING_HORIZON: Duration = 30.minutes
 
 /**
  * How long a tracked row keeps running before the session is retired regardless. A row almost always
@@ -182,36 +184,36 @@ fun trackingPollInterval(soonest: Duration?): Duration = if (soonest != null && 
 }
 
 /*
- * The progress bar is a timeline of the row, laid out left-to-right in time:
+ * The progress bar is a *road*, not a completion meter — the rider is standing still and the buses
+ * are coming to them:
  *
- *   0 ─────────────●━━━━━━━━━╸────○──────────○───────── span
- *   (the stop)     tracker: your next bus    later departures
+ *   0 ────○────────────○────━━━━━━━━━━━━🚌──────────────┤ span
+ *         a later      the one    the next bus       the stop
+ *         departure    after it   (the tracker)      (end icon)
  *
- * The span runs out to the furthest departure shown (never shorter than [TRACKING_MIN_HORIZON]), the
- * tracker sits at the next one, and each departure after that is a point further along. So the
- * filled part is exactly the wait the rider is serving, and it drains as the bus closes in; when
- * that bus goes, the next becomes the tracker and the bar re-spans around what is left.
+ * Time runs right-to-left, so the stop is the right-hand end and every bus is drawn at how far it
+ * still has to come. As a bus closes in it marches **rightward** toward the stop, reaching the end
+ * as it arrives; the filled part behind it is the approach it has already made. When it arrives and
+ * drops off the row, the one behind it becomes the tracker and keeps coming.
  *
- * Everything is derived per render from the departures themselves — nothing is captured at Track
- * time — so a delay simply moves the marks rather than silently rescaling a bar underneath them.
+ * The span is fixed ([TRACKING_HORIZON]), which is what makes that motion real: a constant scale
+ * means a minute of waiting is always the same distance, so the buses move at their true speed
+ * rather than drifting as a variable scale rescaled underneath them. Positions are derived per
+ * render from the departures themselves, so a delay simply walks a bus backwards.
  */
 
-/** The bar's span in seconds: out to the furthest shown departure, floored at [TRACKING_MIN_HORIZON]. */
-fun trackingProgressMax(departures: List<TrackedDeparture>): Int = maxOf(departures.last().eta, TRACKING_MIN_HORIZON)
-    .inWholeSeconds
-    .coerceAtLeast(1L)
-    .toInt()
+/** The bar's span in seconds — a constant, so the scale never moves. See [TRACKING_HORIZON]. */
+fun trackingBarSpan(): Int = TRACKING_HORIZON.inWholeSeconds.toInt()
 
-/** Where the tracker sits: the next departure, in seconds along the bar. */
-fun trackingProgress(departures: List<TrackedDeparture>): Int = departures.first().eta.clampToBar(trackingProgressMax(departures))
-
-/** The departures after the next one, as points along the bar. */
-fun trackingProgressPoints(departures: List<TrackedDeparture>): List<Int> {
-    val span = trackingProgressMax(departures)
-    return departures.drop(1).map { it.eta.clampToBar(span) }
+/**
+ * Where a bus [eta] away is drawn: measured back from the stop at the right-hand end, so a bus
+ * arriving now sits at the end and one a full [TRACKING_HORIZON] out sits at the start. Clamped at
+ * both ends — a bus beyond the horizon waits at the start, and one already at the stop (a negative
+ * ETA, still inside its linger) stays pinned at the end rather than running off it.
+ */
+fun trackingBarPosition(eta: Duration): Int {
+    val span = trackingBarSpan()
+    return (span - eta.inWholeSeconds).coerceIn(0L, span.toLong()).toInt()
 }
-
-/** Seconds along a bar of [span], with a just-departed (negative) ETA pinned to the near end. */
-private fun Duration.clampToBar(span: Int): Int = inWholeSeconds.coerceIn(0L, span.toLong()).toInt()
 
 private const val MS_PER_MINUTE = 60 * 1000L

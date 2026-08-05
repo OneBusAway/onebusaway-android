@@ -30,15 +30,16 @@ import org.onebusaway.android.models.RouteStopGroup
  */
 class FakeStopsForRouteRepository(
     val stopGroups: MutableMap<String, Result<List<RouteStopGroup>>> = mutableMapOf(),
-    val stopIds: MutableMap<String, List<String>> = mutableMapOf()
+    val stopIds: MutableMap<String, List<String>> = mutableMapOf(),
+    val routeMaps: MutableMap<String, Result<RouteMapData?>> = mutableMapOf()
 ) : StopsForRouteRepository {
 
     /** Route ids passed to [routeStopIds], in call order — for asserting fetches are not repeated. */
     val stopIdCalls = mutableListOf<String>()
 
-    override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = stopGroups[routeId] ?: Result.success(emptyList())
+    override suspend fun routeStopGroups(routeId: String): Result<List<RouteStopGroup>> = stopGroups[routeId] ?: Result.failure(IllegalStateException("no stop groups stubbed for $routeId"))
 
-    override suspend fun routeMap(routeId: String): Result<RouteMapData?> = Result.success(null)
+    override suspend fun routeMap(routeId: String): Result<RouteMapData?> = routeMaps[routeId] ?: Result.failure(IllegalStateException("no route map stubbed for $routeId"))
 
     override suspend fun routeStopIds(routeId: String): Result<List<String>> {
         stopIdCalls += routeId

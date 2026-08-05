@@ -112,12 +112,17 @@ class OtpObaIdResolver @Inject constructor(
      * same on both sides; only the OBA agency prefix has to be found, and the one place it is *stated*
      * rather than guessed is this list. Keyed by splitting each OBA id at its **first** `_`, which is
      * OBA's own id contract (`AgencyAndId.convertFromString`, server-side — the rule is not implemented
-     * in this repo), so an entity id containing underscores survives intact.
+     * in this repo), so an entity id containing underscores survives intact. A suffix that names more
+     * than one of the route's stops (two agencies' stops sharing an entity id) is ambiguous and dropped
+     * rather than picking one arbitrarily — the caller degrades exactly as it does for an unreachable
+     * stop.
      */
     private suspend fun stopIndex(obaRouteId: String): Map<String, String> = stopsForRoute.routeStopIds(obaRouteId)
         .getOrNull()
         .orEmpty()
-        .associateBy { it.substringAfter('_', missingDelimiterValue = "") }
+        .groupBy { it.substringAfter('_', missingDelimiterValue = "") }
+        .mapNotNull { (suffix, ids) -> ids.singleOrNull()?.let { suffix to it } }
+        .toMap()
 
     /**
      * The OBA agency id for an OTP agency: the gtfsId suffix when it names a covered agency, else the

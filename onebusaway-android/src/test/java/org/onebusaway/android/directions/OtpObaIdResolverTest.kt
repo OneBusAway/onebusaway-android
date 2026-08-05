@@ -87,6 +87,18 @@ class OtpObaIdResolverTest {
     }
 
     @Test
+    fun stopUnresolvable_whenTwoAgenciesShareTheSameEntityId() = runTest {
+        // Two of the route's stops split to the same suffix ("123") under different agencies — nothing
+        // says which one the leg's board stop actually is, so it's dropped rather than picking one.
+        val stops = routeStops("40_100232" to listOf("1_123", "29_123"))
+        val ids = resolver(routeStops = stops).resolveLegs(
+            listOf(leg("kcm:100232", "kcm:40", "Sound Transit", from = "kcm:123"))
+        )
+
+        assertNull(ids.single().fromStopId)
+    }
+
+    @Test
     fun stopEntityIdKeepsItsOwnUnderscores() = runTest {
         // OBA ids split at their *first* underscore, so an entity id containing one still matches.
         val stops = routeStops("40_TLINE" to listOf("40_T05_T1"))

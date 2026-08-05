@@ -225,6 +225,12 @@ internal fun ArrivalAlertIndicator(
  * (stop, route, headsign). Purely a status mark — tracking is started and stopped from the row's
  * long-press menu, so a tap target here would be a second, quieter way to do something the rider did
  * not aim at. Drawn in the row's top-right corner; see [RouteArrivalRow].
+ *
+ * Deliberately colourless: `onSurfaceVariant` is the Material role for a secondary icon on a surface,
+ * and it keeps the mark out of the deviation palette. Green would have been the obvious "this is on"
+ * hue, but green already means *on time* everywhere else on this row (the ETA pills, the status
+ * pill), and a green mark in its corner would read as a claim about the arrivals rather than as a
+ * flag on the row. The eye says "marked", not a value, so it does not need a colour to spend.
  */
 @Composable
 internal fun TrackedRouteIndicator(modifier: Modifier = Modifier, iconSize: Dp = 24.dp) {
@@ -232,7 +238,7 @@ internal fun TrackedRouteIndicator(modifier: Modifier = Modifier, iconSize: Dp =
         Icon(
             painter = painterResource(R.drawable.ic_visibility),
             contentDescription = stringResource(R.string.stop_info_arrival_tracked),
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(iconSize)
         )
     }

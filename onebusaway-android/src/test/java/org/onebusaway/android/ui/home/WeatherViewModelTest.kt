@@ -43,22 +43,27 @@ private class FakeWeatherRepository(var result: Result<WeatherData>) : WeatherRe
 /**
  * A [WeatherRepository] whose fetches stay in flight until the test answers them, so a load can be left
  * outstanding across a region switch and then completed out of order.
+ *
+ * Each fetch gets its own response, addressed by the order it was made rather than by region id: the
+ * case most worth testing is two sidecar hosts that know their region by the *same* id (#2165), where
+ * the id names no particular request. Answering a fetch the ViewModel has already cancelled is the point
+ * of the fake, so [answer] deliberately doesn't care whether anyone is still listening.
  */
 private class SuspendingWeatherRepository : WeatherRepository {
     val requestedRegions = mutableListOf<Long>()
-    private val pending = mutableMapOf<Long, CompletableDeferred<WeatherData>>()
+    private val pending = mutableListOf<CompletableDeferred<WeatherData>>()
 
     override suspend fun currentForecast(regionId: Long): Result<WeatherData> {
         requestedRegions.add(regionId)
-        return Result.success(pendingFor(regionId).await())
+        val response = CompletableDeferred<WeatherData>()
+        pending += response
+        return Result.success(response.await())
     }
 
-    /** The sidecar for [regionId] answers, whether or not that region is still the current one. */
-    fun answer(regionId: Long, data: WeatherData) {
-        pendingFor(regionId).complete(data)
+    /** The sidecar answers the [index]th fetch (0-based, in the order the fetches were made). */
+    fun answer(index: Int, data: WeatherData) {
+        pending[index].complete(data)
     }
-
-    private fun pendingFor(regionId: Long) = pending.getOrPut(regionId) { CompletableDeferred() }
 }
 
 /**
@@ -151,11 +156,34 @@ class WeatherViewModelTest {
 
         // Region 1's sidecar answers late, after the switch. Its forecast belongs to an endpoint that is
         // no longer current, so it must not reach the chip.
-        repo.answer(1, staleForecast)
+        repo.answer(0, staleForecast)
         advanceUntilIdle()
         assertNull(vm.state.value.data)
 
-        repo.answer(2, forecast)
+        repo.answer(1, forecast)
+        advanceUntilIdle()
+        assertEquals(forecast, vm.state.value.data)
+    }
+
+    @Test
+    fun `a superseded fetch cannot land when both hosts know the region by the same id`() = runTest {
+        val regions = FakeRegionRepository()
+        val repo = SuspendingWeatherRepository()
+        val vm = WeatherViewModel(repo, regions, FakePreferencesRepository())
+
+        regions.emit(region(1, sidecarBaseUrl = "https://a.example/"))
+        advanceUntilIdle()
+        regions.emit(region(2, sidecarBaseUrl = "https://b.example/", sidecarRegionId = 1))
+        advanceUntilIdle()
+        // Both fetches carry sidecar id 1 (#2165) — only the host differs, so nothing about the id
+        // distinguishes the outstanding fetch from the current one. Ordering is all there is to go on.
+        assertEquals(listOf(1L, 1L), repo.requestedRegions)
+
+        repo.answer(0, staleForecast) // host a answers late
+        advanceUntilIdle()
+        assertNull(vm.state.value.data)
+
+        repo.answer(1, forecast) // host b answers
         advanceUntilIdle()
         assertEquals(forecast, vm.state.value.data)
     }
@@ -167,7 +195,8 @@ class WeatherViewModelTest {
         val vm = WeatherViewModel(repo, regions, FakePreferencesRepository())
 
         regions.emit(region(1))
-        repo.answer(1, forecast)
+        advanceUntilIdle()
+        repo.answer(0, forecast)
         advanceUntilIdle()
         assertEquals(forecast, vm.state.value.data)
 

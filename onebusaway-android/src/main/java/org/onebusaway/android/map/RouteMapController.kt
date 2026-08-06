@@ -58,6 +58,69 @@ import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.toGeoPoint
 
 /**
+ * The part of a [ShowRouteRequest] that describes **the ride drawn on the route** — the trip-plan leg a
+ * rider drilled into — as one value, so [RouteMapController.reframe] can decide "is this a different
+ * ride?" with a single comparison instead of a hand-written chain over four fields it also has to
+ * assign by hand (#2149).
+ *
+ * [RouteMapController.start] and [RouteMapController.reframe] both take it from a request via [of], so
+ * the two entries cannot honour different fields — the divergence #1797 fixed one layer up, and the
+ * reason `reframe`'s KDoc used to warn that `start`'s parameter list needed a matching update.
+ *
+ * **Adding a field here is the whole change**: it joins the guard, both entries and the redraw
+ * together. `RouteMapGuardInputsTest` pins this against [ShowRouteRequest]'s own field set, so a new
+ * request field has to be sorted into "part of the ride" (here) or "handled by name in `reframe`"
+ * rather than silently ignored by one of them.
+ *
+ * Compared by value, not identity: the spans/segments are rebuilt per request by the launcher, so an
+ * identity compare would report a change on every re-tap and redraw the same ride.
+ */
+internal data class RouteFocusSpec(
+    val riddenSpans: List<RiddenSpan>,
+    val extraSegments: List<RouteFocusSegment>,
+    val alightStopId: String?,
+    val directionHeadsign: String?
+) {
+    companion object {
+        /** No leg drilled in — every non-directions route launch, and the state [RouteMapController.stop] returns to. */
+        val None = RouteFocusSpec(emptyList(), emptyList(), null, null)
+
+        fun of(request: ShowRouteRequest) = RouteFocusSpec(
+            riddenSpans = request.riddenSpans,
+            extraSegments = request.extraSegments,
+            alightStopId = request.alightStopId,
+            directionHeadsign = request.directionHeadsign
+        )
+    }
+}
+
+/**
+ * Everything a drawn vehicle's colour is resolved from, as one value (#2149).
+ *
+ * The memo behind [RouteMapController.displayedRouteColor] is invalidated by comparing this whole, and
+ * the resolution it guards reads its inputs from nowhere else — so "an input the guard forgot" is not a
+ * mistake that can be made here. It used to be three separate fields compared by a hand-written `||`
+ * chain, while the resolution took one input as a parameter and reached for another as a field: a
+ * fourth input had two places to register and neither was enforced. A miss shows up as vehicles drawn
+ * in a stale route colour until the next poll — a plausible-looking wrong answer, not a visible failure.
+ *
+ * The `response` a vehicle resolves against is not a field here because it is a *projection* of this
+ * value: every vehicle is paired with the poll it came out of, which is either [poll] or one of
+ * [extras] (an extra route's vehicle resolves its trip/route out of that route's references, #2043).
+ *
+ * Compared by value, not identity: [poll]/[extras] hold instances a landed poll replaces wholesale and
+ * [palette] is set once per session, so value and identity agree for them, while [assignment] is a
+ * small map the adjacency layer republishes — for it, identity would clear the memo more often than
+ * the colours actually change.
+ */
+internal data class RouteColorInputs(
+    val poll: VehiclePoll,
+    val extras: Map<String, VehiclePoll>,
+    val assignment: Map<RouteDirectionKey, Int>,
+    val palette: RouteLinePalette
+)
+
+/**
  * Drives the home map while it is showing a single route. Given a route id (via [start]), it loads the
  * route's shape and metadata, draws the shape into [MapHost.renderState], hands the route's stops to the
  * shared [stopsController] (so they accumulate and focus like nearby stops), and continuously tracks the
@@ -129,12 +192,18 @@ class RouteMapController(
     var directionStopId: String? = null
         private set
 
+    // The trip-plan leg this session draws, as one value: which spans are ridden, which extra routes ride
+    // along, where the rider gets off, which direction they board. [RouteFocusSpec.None] for every
+    // non-directions route launch. Set from a [ShowRouteRequest] in start() and reframe() — one
+    // assignment, so no redraw can key off a fresh span list against a stale alighting bound — and
+    // restored to None in stop(). The four reads below are derived from it, never separately assigned.
+    private var routeFocus: RouteFocusSpec = RouteFocusSpec.None
+
     // The board→alight ride of a trip-plan transit leg drilled into route focus, drawn thick over the full
     // route (empty for every non-directions route launch) — one span per route it is ridden on, so a
-    // stay-aboard interline keeps each route's own colour and its cutover marks (see [RiddenSpan]). Set in
-    // start(); overlaid last in publishMapPresentation so it survives re-publishes (vehicle polls,
-    // direction changes).
-    private var riddenSpans: List<RiddenSpan> = emptyList()
+    // stay-aboard interline keeps each route's own colour and its cutover marks (see [RiddenSpan]).
+    // Overlaid last in publishMapPresentation so it survives re-publishes (vehicle polls, direction changes).
+    private val riddenSpans: List<RiddenSpan> get() = routeFocus.riddenSpans
 
     // The same ride as one path — where the rider boards and alights, what to frame, which stops and
     // vehicles are on it. Those questions are about the ride, not about which route each part of it is
@@ -155,17 +224,17 @@ class RouteMapController(
 
     // Additional route/directions shown with the primary route: either stay-aboard continuations (#2000)
     // or interchangeable routes (#2042). Their relationship controls vehicle filtering; both contribute
-    // their relevant shape and stops. Set in start(); the maps/polls below are rebuilt as routes load.
-    private var extraSegments: List<RouteFocusSegment> = emptyList()
+    // their relevant shape and stops. The maps/polls below are rebuilt as routes load.
+    private val extraSegments: List<RouteFocusSegment> get() = routeFocus.extraSegments
 
     // The OBA stop where the rider leaves the whole ride (null outside leg focus, or when the OTP→OBA
     // resolution failed). The one bound the queue-driven selection needs: admission comes from the
     // boarding stop's arrivals, so this only has to answer "is this ride over yet".
-    private var alightStopId: String? = null
+    private val alightStopId: String? get() = routeFocus.alightStopId
 
     // The planned leg's headsign, used to pick the ridden direction group among the boarding stop's
     // arrival rows — the same pick the leg card's ETA strip makes.
-    private var directionHeadsign: String? = null
+    private val directionHeadsign: String? get() = routeFocus.directionHeadsign
 
     // Distinct other route ids to load and poll alongside the leader. A self-interline segment reuses the
     // leader route, so it is excluded (its shape/stops/vehicles already come from the leader).
@@ -261,9 +330,9 @@ class RouteMapController(
     // is replaced — including extraPolls, since a composite's vehicles resolve out of several responses
     // and a per-call identity check would clear the memo on every alternation.
     private val routeColorMemo = HashMap<String, Int?>()
-    private var routeColorMemoPoll: VehiclePoll? = null
-    private var routeColorMemoExtras: Map<String, VehiclePoll>? = null
-    private var routeColorMemoAssignment: Map<RouteDirectionKey, Int> = emptyMap()
+
+    /** What [routeColorMemo] holds colours for; see [RouteColorInputs] for why it is one value. */
+    private var routeColorInputs: RouteColorInputs? = null
 
     // The one-shot route shape/stops/header load. The long-running periodic vehicle poll lives in
     // [vehiclePoller], suspended/resumed independently with the map lifecycle.
@@ -288,40 +357,39 @@ class RouteMapController(
     private var pendingFocus: String? = null
 
     /**
-     * Show route [routeId]: load the route + header and start the vehicle poll. [zoomToRoute] frames
-     * the shape once it loads (consumed once). [directionStopId], when non-null, narrows the overlay to
-     * the single direction that serves that stop (the arrivals "show vehicles on map" launch); null
-     * shows the whole route. [initialDirectionId] is an explicit badge/restore override that wins over
-     * the anchor stop when it's still a valid direction.
-     * [focusTripId], when non-null, asks the map to fit that trip's live vehicle together with the
-     * originating [directionStopId] once the vehicle appears; the on-load framing is deferred until that
-     * decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent, and a
-     * route frame is the fallback when no such vehicle exists.
+     * Show [request]'s route: load the route + header and start the vehicle poll. [zoomToRoute] frames
+     * the shape once it loads (consumed once). [ShowRouteRequest.directionStopId], when non-null,
+     * narrows the overlay to the single direction that serves that stop (the arrivals "show vehicles on
+     * map" launch); null shows the whole route. [ShowRouteRequest.initialDirectionId] is an explicit
+     * badge/restore override that wins over the anchor stop when it's still a valid direction.
+     * [ShowRouteRequest.focusTripId], when non-null, asks the map to fit that trip's live vehicle
+     * together with the originating stop once the vehicle appears; the on-load framing is deferred until
+     * that decision so a successful vehicle+stop fit isn't first yanked out to the whole-route extent,
+     * and a route frame is the fallback when no such vehicle exists.
      *
-     * [palette] renders this session's route colours. It is the one thing a drill-in from the directions
-     * drawer changes about how the route is drawn: the leg the rider tapped keeps the badge colour it had in
-     * the itinerary, so the whole corridor it belongs to is drawn in that colour too rather than shifting to
-     * the basemap palette the moment the rider drills in.
+     * Takes the whole [request], like [reframe] — the two entries into a route session then honour one
+     * field set by construction, rather than a parameter list here that has to be kept in step with the
+     * request by hand (#1797, #2149).
+     *
+     * [itineraryContext] and [palette] are not part of the request: they are what the *view* the drill-in
+     * came from hands down. [palette] renders this session's route colours, and is the one thing a
+     * drill-in from the directions drawer changes about how the route is drawn: the leg the rider tapped
+     * keeps the badge colour it had in the itinerary, so the whole corridor it belongs to is drawn in
+     * that colour too rather than shifting to the basemap palette the moment the rider drills in.
      */
     fun start(
-        routeId: String,
+        request: ShowRouteRequest,
         zoomToRoute: Boolean,
-        directionStopId: String? = null,
-        initialDirectionId: Int? = null,
-        focusTripId: String? = null,
-        riddenSpans: List<RiddenSpan> = emptyList(),
-        extraSegments: List<RouteFocusSegment> = emptyList(),
-        alightStopId: String? = null,
-        directionHeadsign: String? = null,
         itineraryContext: List<RoutePolyline> = emptyList(),
         palette: RouteLinePalette
     ) {
+        val routeId = request.routeId
+        val focusTripId = request.focusTripId
+        val directionStopId = request.directionStopId
+        val initialDirectionId = request.initialDirectionId
         this.routeId = routeId
         this.directionStopId = directionStopId
-        this.riddenSpans = riddenSpans
-        this.extraSegments = extraSegments
-        this.alightStopId = alightStopId
-        this.directionHeadsign = directionHeadsign
+        this.routeFocus = RouteFocusSpec.of(request)
         this.itineraryContext = itineraryContext
         this.palette = palette
         // (Re)built as the extra routes load in onRouteLoaded; cleared here so a prior focus's routes
@@ -391,7 +459,8 @@ class RouteMapController(
      * initial-load tail ([onRouteLoaded]) uses; absent a focus, [frameRoute] controls whether to reframe
      * now via [MapHost.frameRoute]. Undo restoration passes false before applying its captured viewport.
      * Takes the whole [request] rather than picking fields, so a new [ShowRouteRequest] field is at least
-     * reachable here — though [start]'s own parameter list still needs a matching update (#1797).
+     * reachable here — and [start] now takes the whole request too, so the two no longer have to be kept
+     * in step by hand (#1797, #2149).
      */
     fun reframe(request: ShowRouteRequest, frameRoute: Boolean = true) {
         // [request] carries the whole desired focus state, so a previous request's focus ends here —
@@ -402,24 +471,20 @@ class RouteMapController(
         // unconditional set [start] does.
         pendingFocus = null
         rideSelection.clearSeed()
-        // A reframe onto the same route+direction-stop can still carry a different (or empty) segment —
+        // A reframe onto the same route+direction-stop can still carry a different (or empty) ride —
         // e.g. tapping a different leg of the same route. Re-emphasize the polyline and re-filter the
         // shown stops so a stale segment doesn't linger. start() sets this unconditionally; here we only
         // republish when it actually changes.
-        if (riddenSpans != request.riddenSpans ||
-            extraSegments != request.extraSegments ||
-            alightStopId != request.alightStopId ||
-            directionHeadsign != request.directionHeadsign
-        ) {
-            riddenSpans = request.riddenSpans
-            // Move all the segment fields together so a redraw can't key off fresh riddenSpans while
-            // extraSegments or the alighting bound stays stale (or vice versa). No reload here (reframe
-            // contract), so extra routes aren't re-fetched — in practice this path is only hit for a
-            // same-route+direction re-tap where changed extras are already loaded (a new cross-route id
-            // requires a full re-enter).
-            extraSegments = request.extraSegments
-            alightStopId = request.alightStopId
-            directionHeadsign = request.directionHeadsign
+        //
+        // One value, one comparison, one assignment ([RouteFocusSpec]): a redraw cannot key off fresh
+        // riddenSpans while the alighting bound stays stale, and a field added to the ride cannot be
+        // left out of the guard while the redraw below reads it (#2149). No reload here (reframe
+        // contract), so extra routes aren't re-fetched — in practice this path is only hit for a
+        // same-route+direction re-tap where changed extras are already loaded (a new cross-route id
+        // requires a full re-enter).
+        val focus = RouteFocusSpec.of(request)
+        if (focus != routeFocus) {
+            routeFocus = focus
             rideSelection.rideChanged()
             // Re-draw against the already-loaded routes so a stale segment doesn't linger; each show*
             // call publishes.
@@ -519,9 +584,13 @@ class RouteMapController(
         } else {
             merged
         }
-        refreshRouteColorMemo(poll, extraPolls, stopFocus.routeColors.value)
+        // Gathered once, then both the memo guard and the resolution it guards read this and nothing else
+        // — that is what keeps a new colour input from being registered in one place and forgotten in the
+        // other (#2149).
+        val colors = RouteColorInputs(poll, extraPolls, stopFocus.routeColors.value, palette)
+        refreshRouteColorMemo(colors)
         return MapVehicles(
-            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source) },
+            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors) },
             response = poll.response
         )
     }
@@ -746,10 +815,7 @@ class RouteMapController(
         selectionJob = null
         routeId = null
         directionStopId = null
-        riddenSpans = emptyList()
-        extraSegments = emptyList()
-        alightStopId = null
-        directionHeadsign = null
+        routeFocus = RouteFocusSpec.None
         itineraryContext = emptyList()
         palette = BASEMAP_ROUTE_LINE_PALETTE
         extraRouteMaps = emptyMap()
@@ -1164,8 +1230,11 @@ class RouteMapController(
      * Builds the render [VehicleMarker] from a display-free [ExtrapolatedVehicle], carrying the
      * draw-time live-vs-scheduled flag through (the renderer picks its icon from it) and the color its
      * route is currently drawn with (the disc rides its own line's color, #2043).
+     *
+     * [response] is the poll this vehicle came out of — one of [colors]' own polls, since that pairing is
+     * what [sampleVehicles] builds the vehicle list from.
      */
-    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips): VehicleMarker = VehicleMarker(
+    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips, colors: RouteColorInputs): VehicleMarker = VehicleMarker(
         // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
         activeTripId = status.activeTripId.orEmpty(),
         point = point,
@@ -1174,7 +1243,7 @@ class RouteMapController(
         fixTimeMs = fixTimeMs,
         bearing = bearing,
         dataFixPoint = dataFixPoint,
-        routeColor = displayedRouteColor(response, status.activeTripId)
+        routeColor = displayedRouteColor(colors, response, status.activeTripId)
     )
 
     /**
@@ -1194,45 +1263,39 @@ class RouteMapController(
      * a 15-vehicle route would churn thousands of throwaway allocations a second on the frame loop to
      * recompute a value that can only change when a new poll lands (every 10-30 s).
      */
-    private fun displayedRouteColor(response: RouteTrips, activeTripId: String?): Int? {
+    private fun displayedRouteColor(
+        colors: RouteColorInputs,
+        response: RouteTrips,
+        activeTripId: String?
+    ): Int? {
         val tripId = activeTripId ?: return null
         // Not getOrPut: a legitimately-null color must stay memoized rather than re-resolving forever.
         if (!routeColorMemo.containsKey(tripId)) {
-            routeColorMemo[tripId] = resolveDisplayedRouteColor(response, routeColorMemoAssignment, tripId)
+            routeColorMemo[tripId] = resolveDisplayedRouteColor(colors, response, tripId)
         }
         return routeColorMemo[tripId]
     }
 
-    /** Drops the [routeColorMemo] when anything it was derived from has been replaced. */
-    private fun refreshRouteColorMemo(
-        poll: VehiclePoll,
-        extras: Map<String, VehiclePoll>,
-        assignment: Map<RouteDirectionKey, Int>
-    ) {
-        // Identity compares: a new poll, extra-poll map or adjacency assignment is a fresh instance.
-        if (poll !== routeColorMemoPoll ||
-            extras !== routeColorMemoExtras ||
-            assignment !== routeColorMemoAssignment
-        ) {
-            routeColorMemoPoll = poll
-            routeColorMemoExtras = extras
-            routeColorMemoAssignment = assignment
+    /** Drops the [routeColorMemo] when anything it was derived from has been replaced — see [RouteColorInputs]. */
+    private fun refreshRouteColorMemo(colors: RouteColorInputs) {
+        if (colors != routeColorInputs) {
+            routeColorInputs = colors
             routeColorMemo.clear()
         }
     }
 
     private fun resolveDisplayedRouteColor(
+        colors: RouteColorInputs,
         response: RouteTrips,
-        assignment: Map<RouteDirectionKey, Int>,
         activeTripId: String
     ): Int? {
         val trip = response.trip(activeTripId) ?: return null
-        val assigned = assignment[RouteDirectionKey(trip.routeId, trip.directionId)]
+        val assigned = colors.assignment[RouteDirectionKey(trip.routeId, trip.directionId)]
         // Exactly what RouteViewGeometry does for the lines: an adjacency-assigned hue is already a
         // drawn color and passes through, while an agency's GTFS color goes through the map's route-line
         // policy (#2041) first. Skipping that policy here would put the disc on the raw agency color
         // while its line drew the normalized one — the disagreement this resolution exists to prevent.
-        return assigned ?: palette.lineColor(response.route(trip.routeId)?.color)
+        return assigned ?: colors.palette.lineColor(response.route(trip.routeId)?.color)
     }
 }
 

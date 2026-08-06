@@ -24,7 +24,6 @@ import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.etaMinutes
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The rules the tracking notification lives by: which departures a row shows, when it rolls onto the
@@ -42,8 +41,7 @@ class TrackingPolicyTest {
     ) = TrackedMatch(
         displayTime = now + inTime,
         predicted = predicted,
-        canceled = canceled,
-        status = ScheduleDeviation.Status.ON_TIME
+        canceled = canceled
     )
 
     private fun live(vararg matches: TrackedMatch) = trackingOutcome(matches.toList(), now) as TrackingOutcome.Live

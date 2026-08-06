@@ -20,7 +20,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.annotation.ColorRes
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,7 +32,6 @@ import org.onebusaway.android.ui.nav.RouteRevealExtras
 import org.onebusaway.android.ui.nav.putStopRouteReveal
 import org.onebusaway.android.util.DisplayFormat
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * The rendered content of one tracked row's notification.
@@ -53,7 +51,6 @@ data class TrackedRouteCard(
     val text: String,
     /** The status-bar chip text on Android 16+ ("4 min"); null while there is no number to show. */
     val shortText: String?,
-    @param:ColorRes val colorRes: Int,
     /** One tile per upcoming departure, soonest first; empty until the first response lands. */
     val metrics: List<TrackedMetric>,
     /**
@@ -69,19 +66,30 @@ data class TrackedRouteCard(
 }
 
 /**
- * One departure as a metric tile: a countdown over the clock time it is due.
+ * One departure as a metric tile: the clock time it is due, captioning the countdown to it.
  *
- * The split mirrors the arrivals drawer's ETA pill exactly — a big number with its unit, and the
- * scheduled time small underneath — which is what makes the card read as the row it came from.
- * [semanticStyle] is the platform's own vocabulary for "this is fine" / "watch out", and is how
- * lateness reaches a template that has no colour of its own to spend on it.
+ * Note the order, which is the template's and not ours: a metric tile is a small caption *above* a
+ * large value, so [dueAt] sits on top and the countdown below — the inverse of the arrivals drawer's
+ * ETA pill, which leads with the number. The countdown stays the value rather than the caption
+ * because that is the half the template emphasises and cuts the status-bar chip from, and the
+ * countdown is what the rider is watching.
+ *
+ * Deliberately carries no colour. `Metric` takes a semantic style that tints the value — safe,
+ * caution, danger — and the card used to map lateness onto it. The tiles then read as three
+ * differently-coloured numbers in a shade full of other apps' notifications, which is a lot of
+ * emphasis for a distinction the rider can already make from the times themselves. Lateness is still
+ * on the row they tracked it from, in the palette that app-side surface owns.
+ *
+ * [value] and [unit] are kept apart here for the text line and the chip to join, *not* to be handed
+ * to `FixedText(value, unit)`: the template renders that unit against the caption, so splitting them
+ * there reads as "4:27 PM (min)" over a bare "4".
  */
 data class TrackedMetric(
     val value: String,
     /** Null for a value that is already a whole phrase ("Now", "Canceled"). */
     val unit: String?,
-    val label: String,
-    val semanticStyle: Int
+    /** The clock time the departure is due ("4:27 PM") — the tile's caption. */
+    val dueAt: String
 )
 
 /**
@@ -114,8 +122,9 @@ private const val DEPARTURE_SEPARATOR = "  ·  "
  *
  * The card is deliberately **not** a rendering of the Compose `EtaStrip`: a custom `RemoteViews`
  * layout disqualifies a notification from the Live Update treatment entirely, so the row is
- * expressed inside the standard template — one tile per departure, each a countdown over the clock
- * time it is due, which is the ETA pill's own split at notification scale.
+ * expressed inside the standard template — one tile per departure, each the countdown to it under
+ * the clock time it is due. The tile's own order, caption over value, is the template's to choose;
+ * see [TrackedMetric].
  */
 class TripTrackingNotifications @Inject constructor(
     @param:ApplicationContext private val context: Context
@@ -132,18 +141,22 @@ class TripTrackingNotifications @Inject constructor(
     fun build(card: TrackedRouteCard): Notification = builder(card).build()
 
     private fun builder(card: TrackedRouteCard): NotificationCompat.Builder {
-        val color = ContextCompat.getColor(context, card.colorRes)
         val builder = NotificationCompat.Builder(context, NotificationChannels.TRIP_TRACKING_ID)
             .setSmallIcon(R.drawable.ic_bus)
             .setContentTitle(card.title)
             .setContentText(card.text)
             .setSubText(card.route.stopName)
-            .setColor(color)
+            // The brand colour, and deliberately not the next departure's lateness: one accent for a
+            // card listing three departures could only ever describe one of them, and the shade is
+            // not where this app's lateness palette is legible anyway (see [TrackedMetric], which
+            // gives up its per-tile tint for the same reason). Theme-aware through theme_primary
+            // (brand_color / brand_color_dark), and per-brand for the white-label flavours, which
+            // each define both.
+            .setColor(ContextCompat.getColor(context, R.color.theme_primary))
             // Deliberately NOT setColorized(true): a colorized notification is disqualified from the
             // Android 16 Live Update treatment, and this one would have qualified as colorized on
             // every device (isColorized() is true for a colorized *foreground-service* notification
-            // even without the colorized-notification permission). The lateness colour still reaches
-            // the card through setColor and the progress segment.
+            // even without the colorized-notification permission).
             .setOngoing(true)
             // The only re-alert guard the card needs: it re-posts every few seconds as the countdown
             // advances, and this keeps the platform from treating each re-post as a fresh arrival.
@@ -188,13 +201,13 @@ class TripTrackingNotifications @Inject constructor(
         .setMetrics(
             card.metrics.map { metric ->
                 NotificationCompat.Metric(
-                    if (metric.unit == null) {
-                        NotificationCompat.Metric.FixedText(metric.value)
-                    } else {
-                        NotificationCompat.Metric.FixedText(metric.value, metric.unit)
-                    },
-                    metric.label,
-                    metric.semanticStyle
+                    // The countdown whole ("4 min"), not split into `FixedText(value, unit)`. A
+                    // metric tile is a caption over a number, and the template renders the unit
+                    // against the *caption*, not the number — so the split came out as
+                    // "4:27 PM (min)" over a bare "4". Flattened through [countdown], the same way
+                    // the text line and the chip are, so all three read alike.
+                    NotificationCompat.Metric.FixedText(countdown(metric)),
+                    metric.dueAt
                 )
             }
         )
@@ -275,13 +288,11 @@ class TripTrackingNotifications @Inject constructor(
             text = if (metrics.isEmpty()) {
                 context.getString(R.string.trip_tracking_pending)
             } else {
-                metrics.joinToString(DEPARTURE_SEPARATOR, transform = ::label)
+                metrics.joinToString(DEPARTURE_SEPARATOR, transform = ::countdown)
             },
             // The chip gets the next departure alone — it is a handful of characters in the status
             // bar, so the rest of the strip has nowhere to go.
-            shortText = metrics.firstOrNull()?.let(::label),
-            // Tinted by the *next* departure's lateness, matching the pill the rider tapped from.
-            colorRes = departures.firstOrNull()?.status?.displayColorRes ?: R.color.theme_primary,
+            shortText = metrics.firstOrNull()?.let(::countdown),
             metrics = metrics,
             primary = rank == 0,
             sortKey = sortKey(rank)
@@ -293,7 +304,7 @@ class TripTrackingNotifications @Inject constructor(
      * would be wrong, over the clock time it is due.
      *
      * The single place a departure is put into words. The strip line and the status-bar chip are both
-     * derived from these tiles ([label]) rather than formatted again — split, moving the "0 minutes
+     * derived from these tiles ([countdown]) rather than formatted again — split, moving the "0 minutes
      * means NOW" cutoff in one would leave the chip saying "Now" while the tile beside it said "0 min".
      */
     private fun metric(departure: TrackedDeparture): TrackedMetric {
@@ -311,25 +322,13 @@ class TripTrackingNotifications @Inject constructor(
             },
             // Only a bare countdown takes a unit; "Now" and "Canceled" are already whole phrases.
             unit = parts.last().text.takeIf { !departure.canceled && departure.etaMinutes > 0 },
-            label = DisplayFormat.formatTime(context, departure.displayTime.epochMs),
-            semanticStyle = semanticStyle(departure)
+            dueAt = DisplayFormat.formatTime(context, departure.displayTime.epochMs)
         )
     }
 
-    /** A tile flattened back to one string, for the card's text line and the status-bar chip. */
-    private fun label(metric: TrackedMetric): String = listOfNotNull(metric.value, metric.unit).joinToString(" ")
-
-    /**
-     * The platform tone for a departure. Early counts as a warning rather than praise, matching how
-     * the app words it elsewhere: a bus running ahead is one the rider can miss. A scheduled time is
-     * left unspecified — it is a timetable entry, not a measurement, so it has no news either way.
-     */
-    private fun semanticStyle(departure: TrackedDeparture): Int = when {
-        departure.canceled -> NotificationCompat.SEMANTIC_STYLE_DANGER
-        !departure.predicted -> NotificationCompat.SEMANTIC_STYLE_UNSPECIFIED
-        departure.status == ScheduleDeviation.Status.ON_TIME -> NotificationCompat.SEMANTIC_STYLE_SAFE
-        else -> NotificationCompat.SEMANTIC_STYLE_CAUTION
-    }
+    /** A tile's countdown as one string ("4 min", "Now") — the tile's own number, and what the
+     *  card's text line and the status-bar chip are cut from. */
+    private fun countdown(metric: TrackedMetric): String = listOfNotNull(metric.value, metric.unit).joinToString(" ")
 
     /** Ranks cards most-recently-tracked first — sort keys order lexicographically, ascending. */
     private fun sortKey(rank: Int): String = rank.toString().padStart(2, '0')

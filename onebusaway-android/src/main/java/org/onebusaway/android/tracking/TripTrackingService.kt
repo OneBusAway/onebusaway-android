@@ -305,8 +305,7 @@ class TripTrackingService : Service() {
         return TrackedMatch(
             displayTime = info.displayTime,
             predicted = info.predicted,
-            canceled = info.status == Status.CANCELED,
-            status = info.deviationStatus
+            canceled = info.status == Status.CANCELED
         )
     }
 

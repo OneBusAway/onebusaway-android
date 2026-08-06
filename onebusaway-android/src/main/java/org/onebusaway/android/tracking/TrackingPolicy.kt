@@ -23,7 +23,6 @@ import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.etaMinutes
 import org.onebusaway.android.time.untilNextMinute
-import org.onebusaway.android.util.ScheduleDeviation
 
 /**
  * Every rule the trip-tracking notification obeys, as pure functions over a server-clock "now".
@@ -43,10 +42,7 @@ data class TrackedMatch(
     val displayTime: ServerTime,
     /** True when [displayTime] is a real-time prediction rather than the timetable. */
     val predicted: Boolean,
-    val canceled: Boolean,
-    /** The arrival's bucketed schedule-deviation state. Carried as the state rather than a colour so
-     *  the card can render it as the platform's own semantic tone as well as a hue. */
-    val status: ScheduleDeviation.Status
+    val canceled: Boolean
 )
 
 /**
@@ -64,7 +60,6 @@ data class TrackedDeparture(
     val displayTime: ServerTime get() = match.displayTime
     val predicted: Boolean get() = match.predicted
     val canceled: Boolean get() = match.canceled
-    val status: ScheduleDeviation.Status get() = match.status
 }
 
 /** What a tick says one tracked row's card should do. */

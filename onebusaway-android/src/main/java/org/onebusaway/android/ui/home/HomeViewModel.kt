@@ -883,7 +883,7 @@ class HomeViewModel @Inject constructor(
      * falling back to the tapped row's own joined geometry ([fallbackPoints]) as a single span. The fallback
      * covers a ride whose ref carries no spans at all — an OTP1 plan, or a leg the results repository
      * couldn't resolve — where one undivided span is exactly what the map drew before there were spans to
-     * divide.
+     * divide, and, carrying no [RiddenSpan.plannedColor] either, in the shown route's colour as it did then.
      */
     private fun RouteLegRef.riddenSpansOr(fallbackPoints: List<GeoPoint>): List<RiddenSpan> = riddenSpans.ifEmpty { listOf(RiddenSpan(fallbackPoints)) }
 

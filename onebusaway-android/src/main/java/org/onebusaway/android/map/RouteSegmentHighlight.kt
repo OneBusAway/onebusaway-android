@@ -18,6 +18,7 @@ package org.onebusaway.android.map
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
@@ -25,9 +26,11 @@ import org.onebusaway.android.util.haversineDistance
 
 /**
  * Presenting a trip-plan leg's **ridden segment** over its route in route focus: draw the route's approach
- * to the boarding point, the segment cased on top, and keep only the segment's stops. Pure
- * geometry over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop] (like [RouteViewGeometry] /
- * [projectStopsOntoPolylines]), so it stays JVM-testable and out of [RouteMapController]'s state plumbing.
+ * to the boarding point, the segment cased on top, keep only the segment's stops, and pick which colour the
+ * segment is drawn from ([riddenSpanColorSource] — the source, not the rendering, which stays with the
+ * caller's palette). Pure, over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop]/[ObaRoute] (like
+ * [RouteViewGeometry] / [projectStopsOntoPolylines]), so it stays JVM-testable and out of
+ * [RouteMapController]'s state plumbing.
  */
 
 /** How close a stop must sit to the ridden path to count as "on the segment" — well below transit stop
@@ -57,12 +60,36 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
  * `Interlines.chains` transitions the drawer and the itinerary map read, so all three mark the same joins. A
  * self-interline — one route reversing onto itself — is a span boundary with no cutover, exactly as it is a
  * seam the drawer announces nothing at.
+ *
+ * [plannedColor] is the GTFS colour the *plan* published for that route, already parsed — the same source
+ * the itinerary's own line for this leg was styled from — carried along so the span can be drawn before
+ * [routeId]'s route has loaded (see [riddenSpanColorSource]). Null when the plan published none.
  */
 data class RiddenSpan(
     val points: List<GeoPoint>,
     val routeId: String? = null,
+    val plannedColor: Int? = null,
     val startsCutover: Boolean = false
 )
+
+/**
+ * The colour a ridden span is drawn from, for a palette to render: its own route's published colour once
+ * that route has loaded ([loadedRoute]), else the colour the plan gave it ([RiddenSpan.plannedColor]). Null
+ * when neither publishes one, which is the caller's own fallback — the same `palette.lineColor(…) ?: …`
+ * shape every other route line on this map is coloured by.
+ *
+ * The plan answers for the load window, which is a network round trip the rider spends looking at the map
+ * (#2186). Nothing answered for it before: the span was drawn in the *shown route's* colour, which until
+ * the load lands is the renderer's `DEFAULT_ROUTE_LINE_COLOR` — so tapping a leg flashed the ride pure blue
+ * before it settled into its route's colour. The plan already published that colour; it just wasn't asked.
+ *
+ * A loaded route then answers alone, its own missing colour included, rather than the plan filling in for
+ * it: the corridor beneath the span is drawn from that same route (`directionPolylines`), so a span that
+ * kept a planned colour there would be a line its own approach couldn't match. Passing the route itself
+ * rather than its colour is what keeps "hasn't loaded" and "loaded, publishes nothing" apart — they take
+ * opposite branches here, and a bare `Int?` cannot tell them apart.
+ */
+internal fun riddenSpanColorSource(span: RiddenSpan, loadedRoute: ObaRoute?): Int? = if (loadedRoute == null) span.plannedColor else loadedRoute.color
 
 /** The whole ride as one path, for the questions that are about the ride and not about its routes: where
  *  the rider boards and alights, what to frame, which stops are on it. */

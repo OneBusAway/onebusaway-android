@@ -301,9 +301,13 @@ class RouteMapController(
     private val isInterlineComposite: Boolean
         get() = extraSegments.any { it.relationship == RouteFocusRelationship.STAY_ABOARD }
 
-    /** The loaded [RouteMap] backing an extra segment: the leader's own route when the ids match (a
-     *  self-interline's other direction), else its separately-loaded route (null until it loads). */
-    private fun RouteFocusSegment.routeMap(): RouteMap? = if (routeId == this@RouteMapController.routeId) routeShape else extraRouteMaps[routeId]
+    /** The loaded [RouteMap] a piece of the ride is drawn from — an extra segment, or a ridden span
+     *  ([spanColor]): the leader's own route when the ids match (a self-interline's other direction) or the
+     *  piece names none, else that route's separately-loaded map. Null until that load lands, which is what
+     *  a caller reads as "not loaded yet". */
+    private fun loadedRouteMap(id: String?): RouteMap? = if (id == null || id == routeId) routeShape else extraRouteMaps[id]
+
+    private fun RouteFocusSegment.routeMap(): RouteMap? = loadedRouteMap(routeId)
 
     private fun RouteFocusSegment.directionId(): Int? = routeMap()?.let { route -> resolveRouteFocusSegmentDirection(this, route) }
 
@@ -687,15 +691,12 @@ class RouteMapController(
      * over can't disagree. A stay-aboard interline therefore changes colour at its cutover exactly as the
      * itinerary map and the drawer's badges do, instead of drawing two routes as one.
      *
-     * Falls back to [leaderColor] for a span whose route isn't identified or hasn't loaded yet: the shown
-     * route's colour is what the whole ride used to draw in, so an unresolved span looks exactly as it did
-     * before rather than dropping to a default the rest of the view isn't using. A late-loading extra route
-     * republishes, so the fallback lasts only as long as the load.
+     * Which colour it asks the palette for is [riddenSpanColorSource]: until the span's route has loaded
+     * there is none to ask for, and the span draws in the one the plan gave it instead. [leaderColor] is the
+     * last resort either way — the shown route's colour, which is what the whole ride used to draw in — and
+     * a late-loading extra route republishes, so a span reaches its own colour as soon as there is one.
      */
-    private fun spanColor(span: RiddenSpan, leaderColor: Int): Int {
-        val route = span.routeId?.takeIf { it != routeId }?.let { extraRouteMaps[it] } ?: return leaderColor
-        return palette.lineColor(route.route?.color) ?: leaderColor
-    }
+    private fun spanColor(span: RiddenSpan, leaderColor: Int): Int = palette.lineColor(riddenSpanColorSource(span, loadedRouteMap(span.routeId)?.route)) ?: leaderColor
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -856,8 +857,9 @@ class RouteMapController(
     // state is resolved into plain data first ([selectedTripRenderInput]); the mode-merging policy lives
     // in the pure function, so this stays a plumb-through.
     private fun publishMapPresentation() {
-        // Both the selected trip's fallback and the ridden segment draw in the shown route's colour;
-        // resolve it once so a publish runs the colour policy a single time.
+        // The shown route's colour: what the selected trip falls back to, and what a ridden span falls back
+        // to when neither its own route nor the plan can colour it ([spanColor]). Resolved once here rather
+        // than by each consumer, so the two can't answer it differently.
         val routeColor = currentRouteColor()
         // One snapshot of the focused-stop layer for the whole publish, so the plan can't read a
         // half-swapped focus (its geometry and stops resolve independently).

@@ -30,16 +30,33 @@ import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
-/** JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment], [routePolylinesWithSegment]). */
+/**
+ * JVM tests for the pure trip-plan-leg segment highlighting helpers ([onSegment],
+ * [routePolylinesWithSegment], [riddenSpanColorSource]).
+ */
 class RouteSegmentHighlightTest {
 
     // A straight segment running north along a meridian.
     private val segment = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33))
 
     private fun stop(id: String, lat: Double, lon: Double) = ObaStopElement(id = id, lat = lat, lon = lon)
+
+    /** A route whose load has landed, publishing [color] — the only thing the colour rule reads off one. */
+    private fun loadedRoute(color: Int?) = object : ObaRoute {
+        override val id = "45"
+        override val shortName = "45"
+        override val longName: String? = null
+        override val description: String? = null
+        override val type = ObaRoute.TYPE_BUS
+        override val url: String? = null
+        override val color = color
+        override val textColor: Int? = null
+        override val agencyId = "agency"
+    }
 
     /** An ordinary ride: one route, so one span, cut nowhere. */
     private fun ride(points: List<GeoPoint>) = listOf(RiddenSpan(points))
@@ -187,6 +204,33 @@ class RouteSegmentHighlightTest {
         val result = routePolylinesWithSegment(emptyList(), spans, colorOf = { 7 })
 
         assertEquals(listOf(segment), result.map { it.points })
+    }
+
+    @Test
+    fun riddenSpanColorSource_beforeItsRouteLoads_takesThePlannedColour() {
+        // #2186: the load is a network round trip the rider spends looking at the map, and the span had
+        // nothing to draw from until it landed — leaving it on the caller's fallback, a pure blue.
+        val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
+
+        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loadedRoute = null))
+        // Nothing to stand in with either: the caller's fallback answers, as it did for the whole ride.
+        assertEquals(null, riddenSpanColorSource(span.copy(plannedColor = null), loadedRoute = null))
+    }
+
+    @Test
+    fun riddenSpanColorSource_onceItsRouteLoads_takesTheRoutesOwnColour() {
+        val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
+
+        assertEquals(0xFFD22630.toInt(), riddenSpanColorSource(span, loadedRoute(0xFFD22630.toInt())))
+    }
+
+    @Test
+    fun riddenSpanColorSource_aLoadedRouteWithNoUsableColour_doesNotFallBackToThePlannedColour() {
+        // The corridor beneath the span is drawn from the loaded route, so a span that kept a planned colour
+        // here would be a line its own approach couldn't match: both take the caller's fallback instead.
+        val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
+
+        assertEquals(null, riddenSpanColorSource(span, loadedRoute(null)))
     }
 
     @Test

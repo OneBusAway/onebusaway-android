@@ -236,3 +236,18 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
         )
     }
 }
+
+/**
+ * Adds `regions.sidecar_region_id`: the id the sidecar knows a deployment by, when it differs from the
+ * row's own `_id` (#2165). Only a custom region added by an `add-region` link carrying `region-id` ever
+ * has one, so NULL — every existing cached row, and every directory row forever — is exactly right: it
+ * reads back as "address the sidecar by `_id`", which is what the app did before. Purely additive, no
+ * other v12 table/column changes. Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `regions` ADD COLUMN `sidecar_region_id` INTEGER"
+        )
+    }
+}

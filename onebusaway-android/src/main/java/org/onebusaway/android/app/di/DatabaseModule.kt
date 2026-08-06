@@ -25,6 +25,7 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import org.onebusaway.android.database.AppDatabase
 import org.onebusaway.android.database.MIGRATION_10_11
+import org.onebusaway.android.database.MIGRATION_11_12
 import org.onebusaway.android.database.MIGRATION_1_2
 import org.onebusaway.android.database.MIGRATION_2_3
 import org.onebusaway.android.database.MIGRATION_3_4
@@ -77,7 +78,8 @@ object DatabaseModule {
         MIGRATION_7_8,
         MIGRATION_8_9,
         MIGRATION_9_10,
-        MIGRATION_10_11
+        MIGRATION_10_11,
+        MIGRATION_11_12
     ).build()
 
     @Provides

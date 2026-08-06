@@ -298,7 +298,7 @@ class SurveyViewModel @Inject constructor(
         val base = region.sidecarBaseUrl ?: return null
         return base +
             context.getString(R.string.studies_api_endpoint)
-                .replace("regionID", region.id.toString())
+                .replace("regionID", region.sidecarId.toString())
     }
 
     private fun submitUrl(hero: Boolean): String {

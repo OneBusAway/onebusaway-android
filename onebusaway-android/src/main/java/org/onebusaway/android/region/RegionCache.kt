@@ -108,7 +108,9 @@ class RegionCache @Inject constructor(
      * Re-adding a server already present updates that region in place — matched on the exact
      * [Region.obaBaseUrl], so it keeps its id and stays the same entity to anything holding a reference
      * (the persisted region-id preference, most of all). Otherwise it gets a fresh id from
-     * [nextCustomRegionId]. Deliberately does *not* go through [save], whose `isRegionUsable` filter and
+     * [nextCustomRegionId]. Either way that id is *local* — the sidecar's own id for the deployment, when
+     * the link named one, rides along separately as [Region.sidecarRegionId] (#2165) and never becomes
+     * the row's key. Deliberately does *not* go through [save], whose `isRegionUsable` filter and
      * whole-cache replace are the directory refresh's business.
      */
     suspend fun saveCustom(request: CustomRegionRequest): Region {

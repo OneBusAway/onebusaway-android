@@ -28,7 +28,13 @@ data class CustomRegionRequest(
     val otpBaseUrl: String? = null,
     val sidecarBaseUrl: String? = null,
     val umamiAnalyticsUrl: String? = null,
-    val umamiAnalyticsId: String? = null
+    val umamiAnalyticsId: String? = null,
+    /**
+     * The id the sidecar knows this deployment by (`region-id`, #2165) — optional on both ends, so a
+     * link without it behaves exactly as before. Becomes [Region.sidecarRegionId], *not* [Region.id]:
+     * the local id stays negative (see the id-space comment below).
+     */
+    val regionId: Long? = null
 )
 
 /*
@@ -37,6 +43,14 @@ data class CustomRegionRequest(
  *   >= 0   a region from the OBA regions directory (Tampa is 0)
  *   -1     [NO_REGION_ID] — the region-id preference's "no region set" sentinel
  *   <= -2  a user-added custom region (#2027)
+ *
+ * A custom region stays in the negative half even when the `add-region` link names the server's own id
+ * (`region-id`, #2165): that id goes to [Region.sidecarRegionId] instead. Adopting it as [Region.id]
+ * would put a custom row back into the directory's space, where the next directory refresh carrying the
+ * same id collides with it on the primary key — `RegionDao.replaceAll` deletes only `custom = 0` rows,
+ * so the custom row would survive the delete and the insert would land on top of it. The two ids mean
+ * different things (our primary key vs. the sidecar's name for the same deployment), and conflating
+ * them is what created the bug this fixes.
  *
  * Anything reading or writing the region-id preference must go through [NO_REGION_ID] rather than
  * testing the sign: `id < 0` would swallow every custom region, which is exactly the bug that shipped
@@ -102,6 +116,10 @@ internal fun customRegion(id: Long, request: CustomRegionRequest): Region = Regi
     umamiAnalytics = request.umamiAnalyticsUrl?.let {
         Region.UmamiAnalyticsConfig(url = it, id = request.umamiAnalyticsId)
     },
+    // The server's own id for this deployment, when the link named one — kept apart from [id] so the
+    // sidecar is addressed by a name it recognizes without a custom region entering the directory's id
+    // space. Null leaves Region.sidecarId falling back to [id], i.e. the pre-#2165 behaviour.
+    sidecarRegionId = request.regionId,
     // See the KDoc: declared so the region is usable, not observed from the server.
     supportsObaDiscoveryApis = true,
     supportsObaRealtimeApis = true,

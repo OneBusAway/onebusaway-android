@@ -36,7 +36,9 @@ import org.onebusaway.android.SmokeTest
  * `cached_stops.wheelchair_boarding` as NULL for existing rows (#1029); that [MIGRATION_8_9] adds
  * `regions.supports_otp_graphql_bikeshare` as NULL (reading back as false) for existing rows; and that
  * [MIGRATION_9_10] adds `regions.custom` as 0, so every region cached before custom regions existed
- * (#2027) reads back as a directory region and survives no differently than before.
+ * (#2027) reads back as a directory region and survives no differently than before; and that
+ * [MIGRATION_11_12] adds `regions.sidecar_region_id` as NULL, so a cached region keeps addressing the
+ * sidecar by its own `_id` (#2165).
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -283,6 +285,32 @@ class AppDatabaseMigrationTest {
         db.query("SELECT format_version FROM navigation_sessions WHERE session_id='session'").use { cursor ->
             cursor.moveToFirst()
             assertEquals(1, cursor.getInt(0))
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate11To12_addsSidecarRegionIdNullForExistingRegions() {
+        helper.createDatabase(TEST_DB, 11).use { db ->
+            // A region cached before the sidecar started naming its own id (#2165) - it is addressed by
+            // its own _id, which is the pre-#2165 behaviour and the right one for a directory region.
+            db.execSQL(
+                "INSERT INTO regions " +
+                    "(_id, name, oba_base_url, siri_base_url, lang, contact_email, " +
+                    "supports_api_discovery, supports_api_realtime, supports_siri_realtime) " +
+                    "VALUES (1, 'Puget Sound', 'https://oba', 'https://siri', 'en_US', 'a@b.c', 1, 1, 1)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 12.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 12, true, MIGRATION_11_12)
+
+        db.query("SELECT sidecar_region_id FROM regions WHERE _id = 1").use { c ->
+            c.moveToFirst()
+            assertTrue(
+                "a region cached before #2165 must have NULL sidecar_region_id (addressed by _id)",
+                c.isNull(0)
+            )
         }
         db.close()
     }

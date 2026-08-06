@@ -21,11 +21,15 @@ import org.onebusaway.android.util.PreferenceUtils
 class GtfsAlerts @Inject constructor(
     @param:ApplicationContext private val context: Context
 ) {
-    private val fetchedRegions = ConcurrentHashMap.newKeySet<String>()
+    // Fetch-once memo, keyed on the resolved endpoint rather than on [regionId]. The id alone is not a
+    // sidecar identity: a deep-link-added region carries the id its own sidecar knows it by (#2165), so
+    // it can equal a directory region's id on a different host — and keying on it would then suppress
+    // the second region's fetch entirely. The URL embeds both host and id, so it is the honest key.
+    private val fetchedEndpoints = ConcurrentHashMap.newKeySet<String>()
 
     fun fetchAlerts(regionId: String, callback: GtfsAlertCallBack) {
         val pathUrl = getGtfsAlertsUrl(regionId) ?: return
-        if (!fetchedRegions.add(regionId)) {
+        if (!fetchedEndpoints.add(pathUrl)) {
             Log.d(TAG, "Alerts already fetched for region: $regionId")
             return
         }
@@ -54,7 +58,7 @@ class GtfsAlerts @Inject constructor(
                 }
                 processAlerts(feed.entityList, now, callback)
             } catch (error: Exception) {
-                fetchedRegions.remove(regionId)
+                fetchedEndpoints.remove(pathUrl)
                 Log.e(TAG, "Error fetching GTFS alert data for region: $regionId", error)
             }
         }.start()

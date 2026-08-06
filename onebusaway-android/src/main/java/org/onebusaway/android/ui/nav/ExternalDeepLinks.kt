@@ -73,6 +73,7 @@ object ExternalDeepLinks {
     private const val PARAM_SIDECAR_URL = "sidecar-url"
     private const val PARAM_UMAMI_URL = "umami-url"
     private const val PARAM_UMAMI_ID = "umami-id"
+    private const val PARAM_REGION_ID = "region-id"
 
     /** App links are `https` only — a plaintext link to one of [WEB_HOSTS] is not a deep link. */
     private const val WEB_SCHEME = "https"
@@ -147,6 +148,11 @@ object ExternalDeepLinks {
      *
      * Note this is stricter than the pre-#2027 Android behaviour, where `add-region?oba-url=…` alone set
      * a pair of API-URL preferences. Such a link no longer resolves — see `docs/DEEP_LINKING.md`.
+     *
+     * `region-id` (#2165) is optional on both ends — the sidecar only started emitting it — so a link
+     * without it, or with one that isn't a number, parses exactly as it did before rather than being
+     * rejected: the region is still perfectly usable, it just can't reach the sidecar's region-scoped
+     * endpoints.
      */
     private fun parseAddRegionLink(link: Link): Target? {
         val name = link.params.nonBlank(PARAM_NAME) ?: return null
@@ -158,7 +164,8 @@ object ExternalDeepLinks {
                 otpBaseUrl = link.params.nonBlank(PARAM_OTP_URL),
                 sidecarBaseUrl = link.params.nonBlank(PARAM_SIDECAR_URL),
                 umamiAnalyticsUrl = link.params.nonBlank(PARAM_UMAMI_URL),
-                umamiAnalyticsId = link.params.nonBlank(PARAM_UMAMI_ID)
+                umamiAnalyticsId = link.params.nonBlank(PARAM_UMAMI_ID),
+                regionId = link.params.nonBlank(PARAM_REGION_ID)?.toLongOrNull()
             )
         )
     }

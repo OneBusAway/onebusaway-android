@@ -60,6 +60,10 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
  * server, which the directory publishes separately from the OTP1 `supports_otp_bikeshare` because the
  * two servers genuinely differ. NULL (every existing cached row) reads back as false until the next
  * regions refresh.
+ *
+ * v12 adds `regions.sidecar_region_id` (#2165): the id the sidecar knows a deployment by, when an
+ * `add-region` deep link names one that differs from the row's own `_id`. NULL everywhere else, which
+ * reads back as "address the sidecar by `_id`".
  */
 @Database(
     entities = [
@@ -79,7 +83,7 @@ import org.onebusaway.android.database.widealerts.entity.AlertEntity
         CachedStopRecord::class,
         CachedRouteTypeRecord::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {

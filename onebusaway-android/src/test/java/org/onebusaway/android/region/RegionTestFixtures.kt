@@ -95,7 +95,9 @@ internal fun region(
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
     otpContactEmail: String? = null,
-    custom: Boolean = false
+    custom: Boolean = false,
+    sidecarBaseUrl: String? = null,
+    sidecarRegionId: Long? = null
 ): Region = Region(
     id = id,
     name = "Region $id",
@@ -121,8 +123,9 @@ internal fun region(
     paymentAndroidAppId = null,
     paymentWarningTitle = null,
     paymentWarningBody = null,
-    sidecarBaseUrl = null,
+    sidecarBaseUrl = sidecarBaseUrl,
     plausibleAnalyticsServerUrl = null,
     umamiAnalytics = null,
-    custom = custom
+    custom = custom,
+    sidecarRegionId = sidecarRegionId
 )

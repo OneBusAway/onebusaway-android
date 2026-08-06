@@ -114,11 +114,17 @@ private const val DEPARTURE_SEPARATOR = "  ·  "
 /**
  * Builds the Live Update notification for a tracked route row.
  *
- * On Android 16+ this is a `MetricStyle` notification requesting the promoted-ongoing treatment,
- * which is what puts the countdown in the status-bar chip and on the Lock Screen without the rider
- * unlocking anything — the closest platform analogue to the iOS Live Activity this mirrors. Below
- * that it degrades to the plain standard template, whose text line already carries the same
- * departures, so only the tile layout is lost.
+ * Two platform thresholds, and they are not the same one:
+ *
+ *  - **Android 16+** takes the promoted-ongoing request, which is what puts the countdown in the
+ *    status-bar chip and on the Lock Screen without the rider unlocking anything — the closest
+ *    platform analogue to the iOS Live Activity this mirrors.
+ *  - **Android 17+** takes `MetricStyle`, the tile layout (androidx marks it `@RequiresApi(37)`).
+ *
+ * So Android 16 gets the chip with the plain standard template behind it, and everything below gets
+ * an ordinary ongoing notification. All three carry the same departures on the text line, which is
+ * why the Track action is offered on every version down to `minSdk`: what degrades is the
+ * glanceability, not the tracking.
  *
  * The card is deliberately **not** a rendering of the Compose `EtaStrip`: a custom `RemoteViews`
  * layout disqualifies a notification from the Live Update treatment entirely, so the row is
@@ -189,9 +195,14 @@ class TripTrackingNotifications @Inject constructor(
             card.shortText?.let(builder::setShortCriticalText)
         }
 
-        // MetricStyle is Android 16+; below it the card is the standard template, whose text line
-        // already carries the same departures. Nothing is lost but the layout.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA && card.metrics.isNotEmpty()) {
+        // MetricStyle is Android 17+, not 16: androidx marks both it and Metric @RequiresApi(37).
+        // This gate said BAKLAVA (36), so an Android 16 device built the tiles, posted them, and had
+        // the platform drop them on the floor — the card fell back to the standard template by
+        // accident rather than on purpose, and the tiles had never once rendered before an OS
+        // upgrade proved it. Below 17 that text line already carries the same departures, so nothing
+        // is lost but the layout; the promoted chip and the Lock Screen are a separate, lower bar
+        // (36, just above).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.CINNAMON_BUN && card.metrics.isNotEmpty()) {
             builder.setStyle(metricStyle(card))
         }
         return builder

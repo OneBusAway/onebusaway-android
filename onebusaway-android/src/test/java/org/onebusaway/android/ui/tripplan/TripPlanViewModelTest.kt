@@ -121,6 +121,17 @@ class TripPlanViewModelTest {
         override fun now(): Long = nowMillis
     }
 
+    /**
+     * A clock that moves *between reads*, walking [readings] and then holding the last one. Where
+     * [FakeClock] holds still — and so cannot tell one read apart from two — this makes the number of
+     * reads a helper takes observable.
+     */
+    private class TickingClock(var readings: List<Long>) : TimeProvider {
+        var index = 0
+
+        override fun now(): Long = readings[minOf(index++, readings.lastIndex)]
+    }
+
     private fun viewModel(
         geocode: GeocodeRepository = FakeGeocodeRepository(Result.success(emptyList())),
         plan: TripPlanRepository = FakeTripPlanRepository(Result.success(listOf(TripItinerary()))),
@@ -726,6 +737,28 @@ class TripPlanViewModelTest {
     @Test
     fun `a form starts on today`() = runTest {
         assertEquals(TripDay.TODAY, viewModel().formState.value.dayRelation)
+    }
+
+    /**
+     * Pinning the clock takes *one* reading, which then serves as both the instant pinned and the
+     * reference its day is measured against. Two readings can straddle midnight, and the trip the
+     * rider just pinned to "now" would come back labelled with a different day than the clock it was
+     * taken from — so the clock is read at the call site and passed down, never inside the helper.
+     */
+    @Test
+    fun `pinning the clock takes a single reading, even across midnight`() = runTest {
+        val midnight = LocalDate.of(2026, 6, 11).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val clock = TickingClock(listOf(midnight - 1))
+        val vm = viewModel(clock = clock)
+
+        // From here the clock ticks over midnight on its second read, so a helper that reads it again
+        // mid-write lands on the next day and labels 23:59:59.999 as something other than today.
+        clock.readings = listOf(midnight - 1, midnight)
+        clock.index = 0
+        vm.setDepartNow()
+
+        assertEquals(TripDay.TODAY, vm.formState.value.dayRelation)
+        assertEquals(midnight - 1, vm.formState.value.dateTimeMillis)
     }
 
     @Test

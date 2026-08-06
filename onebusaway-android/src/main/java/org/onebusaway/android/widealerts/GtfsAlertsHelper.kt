@@ -3,8 +3,11 @@ package org.onebusaway.android.widealerts
 import android.content.Context
 import com.google.transit.realtime.GtfsRealtime
 import java.util.Locale
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.database.widealerts.entity.AlertEntity
+import org.onebusaway.android.time.ServerTime
 
 /** Pure selection helpers and read-state persistence for wide GTFS alerts. */
 object GtfsAlertsHelper {
@@ -32,10 +35,10 @@ object GtfsAlertsHelper {
     fun isValidEntity(
         context: Context,
         entity: GtfsRealtime.FeedEntity,
-        nowMs: Long
+        now: ServerTime
     ): Boolean = isAgencyWideAlert(entity.alert) &&
         isHighSeverity(entity.alert) &&
-        isStartDateWithin24Hours(entity.alert, nowMs) &&
+        isStartDateWithin24Hours(entity.alert, now) &&
         !isAlertRead(context, entity)
 
     private fun isAgencyWideAlert(alert: GtfsRealtime.Alert): Boolean = alert.informedEntityList.any { it.hasAgencyId() }
@@ -47,35 +50,49 @@ object GtfsAlertsHelper {
             )
 
     /**
-     * These alerts come straight off a raw GTFS-realtime feed, not the OBA API, so a period's
-     * `start` is POSIX **seconds** per the GTFS-rt spec — a fixed unit, not a magnitude guess.
-     * (The OBA `situation` path is the polymorphic one; its seconds-vs-millis rule lives in
-     * `situationEpochToMillis` and does not apply here.)
+     * True when *any* range of the alert's selected period list started within the last 24 hours of
+     * [now] — the feed's own server clock (#1612), so device clock skew can't leak into the window.
      *
-     * "Should we show this to the user in the next 24h" maps to `communication_period`, so it's
-     * preferred when a feed populates it. `active_period` is `[deprecated = true]` as of the
-     * proto shipped in gtfs-realtime-bindings 0.2.0, but feeds in the wild still only populate
-     * it, so [activePeriodStartSec] stays as a fallback — dropping it would silence every alert
-     * on those feeds. Tracked by https://github.com/OneBusAway/onebusaway-android/issues/2160.
+     * `communication_period` and `active_period` are both `repeated TimeRange`, and the spec treats
+     * an alert as applicable during **any** of its configured ranges, so every range is checked
+     * rather than index 0: an alert whose first range is stale but whose second opened an hour ago
+     * is exactly the case index-0-only silently dropped
+     * (https://github.com/OneBusAway/onebusaway-android/issues/2175).
      */
-    fun isStartDateWithin24Hours(alert: GtfsRealtime.Alert, nowMs: Long): Boolean {
-        val startSec = communicationPeriodStartSec(alert) ?: activePeriodStartSec(alert) ?: return false
-        val elapsed = nowMs - startSec * MILLIS_PER_SECOND
-        return elapsed in 0..DAY_MS
+    fun isStartDateWithin24Hours(alert: GtfsRealtime.Alert, now: ServerTime): Boolean = selectedPeriods(alert).any { range ->
+        // `start` is optional: a range without one begins at "the beginning of time" per the spec,
+        // which is never within the last 24h — so an absent start is a non-match, not an epoch 0.
+        range.hasStart() && (now - serverTimeFromGtfsSeconds(range.start)) in RECENT_START_WINDOW
     }
 
-    private fun communicationPeriodStartSec(alert: GtfsRealtime.Alert): Long? {
-        if (alert.communicationPeriodCount == 0) return null
-        return alert.getCommunicationPeriod(0).start
+    /**
+     * The period list the "did it start recently" question is answered from.
+     *
+     * "Should we show this to the user in the next 24h" maps to `communication_period`, so it's
+     * preferred when a feed populates it. `active_period` is `[deprecated = true]` as of the proto
+     * shipped in gtfs-realtime-bindings 0.2.0, but feeds in the wild still only populate it, so
+     * [deprecatedActivePeriods] stays as a fallback — dropping it would silence every alert on those
+     * feeds. Tracked by https://github.com/OneBusAway/onebusaway-android/issues/2160.
+     */
+    private fun selectedPeriods(alert: GtfsRealtime.Alert): List<GtfsRealtime.TimeRange> = if (alert.communicationPeriodCount > 0) {
+        alert.communicationPeriodList
+    } else {
+        deprecatedActivePeriods(alert)
     }
 
     // Fallback for feeds that only populate the deprecated active_period; see the rationale on
-    // isStartDateWithin24Hours. Drop this once communication_period is the only field in the wild.
+    // selectedPeriods. Drop this once communication_period is the only field in the wild.
     @Suppress("DEPRECATION")
-    private fun activePeriodStartSec(alert: GtfsRealtime.Alert): Long? {
-        if (alert.activePeriodCount == 0) return null
-        return alert.getActivePeriod(0).start
-    }
+    private fun deprecatedActivePeriods(alert: GtfsRealtime.Alert): List<GtfsRealtime.TimeRange> = alert.activePeriodList
+
+    /**
+     * Mints a raw GTFS-realtime timestamp into the server clock domain. These alerts come straight
+     * off a raw GTFS-realtime feed, not the OBA API, so the wire unit is POSIX **seconds** per the
+     * GTFS-rt spec — a fixed unit, not a magnitude guess. (The OBA `situation` path is the
+     * polymorphic one; its seconds-vs-millis rule lives in `situationEpochToMillis` and does not
+     * apply here.) This is the one place that conversion happens for this feed.
+     */
+    fun serverTimeFromGtfsSeconds(epochSec: Long): ServerTime = ServerTime(epochSec * MILLIS_PER_SECOND)
 
     private fun isAlertRead(context: Context, entity: GtfsRealtime.FeedEntity): Boolean = DatabaseEntryPoint.get(context).alertsRepository().isAlertExists(entity.id)
 
@@ -87,5 +104,7 @@ object GtfsAlertsHelper {
 
     private const val DEFAULT_LANGUAGE_CODE = "en"
     private const val MILLIS_PER_SECOND = 1_000L
-    private const val DAY_MS = 24L * 60L * 60L * 1_000L
+
+    /** How long ago a period may have started and still count as "just started". */
+    private val RECENT_START_WINDOW = Duration.ZERO..24.hours
 }

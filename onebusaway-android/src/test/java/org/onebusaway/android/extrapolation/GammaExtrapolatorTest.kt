@@ -165,17 +165,14 @@ class GammaExtrapolatorTest {
 
     @Test
     fun `no schedule means no extrapolation`() {
-        val state = busState(schedule = null)
-        assertTrue(
-            state.extrapolate(WallTime(ANCHOR_TIME + 60_000L)) is ExtrapolationResult.MissingSchedule
-        )
+        assertTrue(gammaResult(schedule = null, dtSec = 60.0) is ExtrapolationResult.MissingSchedule)
     }
 
     @Test
     fun `a vehicle past the last scheduled stop has nothing to follow`() {
-        val state = busState(speedUp, distanceAlongTrip = 3500.0)
         assertTrue(
-            state.extrapolate(WallTime(ANCHOR_TIME + 60_000L)) is ExtrapolationResult.MissingSchedule
+            gammaResult(speedUp, dtSec = 60.0, distanceAlongTrip = 3500.0)
+                is ExtrapolationResult.MissingSchedule
         )
     }
 
@@ -187,10 +184,7 @@ class GammaExtrapolatorTest {
                 Triple(1000.0, 100L, 100L),
                 Triple(3000.0, 300L, 300L)
             )
-        val state = busState(degenerate)
-        assertTrue(
-            state.extrapolate(WallTime(ANCHOR_TIME + 60_000L)) is ExtrapolationResult.MissingSchedule
-        )
+        assertTrue(gammaResult(degenerate, dtSec = 60.0) is ExtrapolationResult.MissingSchedule)
     }
 
     // --- Helpers ---
@@ -213,11 +207,24 @@ class GammaExtrapolatorTest {
     /** The pre-#2137 extrapolation: one speed, held for the whole interval. */
     private fun straightLine(dtSec: Double): ProbDistribution = AffineTransformDistribution(buildH34SpeedDistribution(10.0), ANCHOR_DIST, dtSec / MPS_TO_MPH)
 
+    // Driven straight at GammaExtrapolator rather than through TripState.extrapolate, which
+    // now selects the first-passage model for buses. TripState's own guards are covered by
+    // TripStateTest; what these tests are about is the speed model's own behaviour.
     private fun extrapolate(schedule: ObaTripSchedule, dtSec: Double): ProbDistribution {
-        val result = busState(schedule).extrapolate(WallTime(ANCHOR_TIME + (dtSec * 1000).toLong()))
+        val result = gammaResult(schedule, dtSec)
         assertTrue("expected Success, got $result", result is ExtrapolationResult.Success)
         return (result as ExtrapolationResult.Success).distribution
     }
+
+    private fun gammaResult(
+        schedule: ObaTripSchedule?,
+        dtSec: Double,
+        distanceAlongTrip: Double = ANCHOR_DIST
+    ): ExtrapolationResult = GammaExtrapolator(busState(schedule, distanceAlongTrip)).doExtrapolate(
+        distanceAlongTrip,
+        WallTime(ANCHOR_TIME),
+        WallTime(ANCHOR_TIME + (dtSec * 1000).toLong())
+    )
 
     private fun busState(schedule: ObaTripSchedule?, distanceAlongTrip: Double = ANCHOR_DIST): TripState {
         val state =

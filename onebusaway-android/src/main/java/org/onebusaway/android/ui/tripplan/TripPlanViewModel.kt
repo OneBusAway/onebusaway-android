@@ -355,8 +355,7 @@ class TripPlanViewModel @Inject constructor(
      * clock, and the rider. A "depart now" trip planned five minutes ago is a trip from five minutes ago
      * and from wherever they were standing then.
      *
-     * [replanOrClearResult] is exactly that re-submission — it re-reads the device fix and the clock at
-     * submit — so refreshing is that one call and nothing else. A trip pinned to an explicit instant
+     * Refreshing is [replanOrClearResult] and nothing else. A trip pinned to an explicit instant
      * re-plans that same instant, picking up whatever the server now says about it rather than silently
      * re-timing the trip the rider asked for.
      */
@@ -399,10 +398,13 @@ class TripPlanViewModel @Inject constructor(
     }
 
     /**
-     * Called after any form change: hand the latest plan inputs to the [planInputs] pipeline, which
+     * Submits the form as it now stands: hand the latest plan inputs to the [planInputs] pipeline, which
      * re-plans when both endpoints resolve and otherwise drops a stale result back to [PlanResult.Idle]
      * so a changed or cleared endpoint can't leave an old route on screen (the results sheet keys off
      * [PlanResult.Success]). Emitting supersedes any in-flight plan via the collector's [mapLatest].
+     *
+     * Every form edit ends here, but nothing about it is edit-specific — [refreshPlan] re-submits an
+     * unchanged form through the same path rather than needing one of its own.
      */
     private fun replanOrClearResult() {
         // Re-read the device fix here, at submit, so a "my location" end plans from where the rider is

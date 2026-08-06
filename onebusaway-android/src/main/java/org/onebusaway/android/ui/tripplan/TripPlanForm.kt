@@ -41,6 +41,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -84,13 +85,21 @@ import org.onebusaway.android.ui.icons.AppIcons
 private val ENDPOINT_ROW_HEIGHT = 48.dp
 
 /**
- * Width of the leading rail — sized so the dot's leading edge lands exactly on Material's 16dp
- * keyline. Reused as the dividers' inset, so the hairline starts where the text does.
+ * Material's content keyline: where the card's content begins, in both bands — the endpoint dot's
+ * leading edge above, the "when" sentence's first character below. Written once and derived from,
+ * rather than restated per band, for the same reason [TRAILING_GUTTER] is: two bands that lay
+ * themselves out independently land on one keyline only if the keyline itself is one value.
  */
-private val RAIL_WIDTH = 44.dp
+private val CONTENT_KEYLINE = 16.dp
 
 /** Diameter of the endpoint dot, in the rail and in the suggestion row that fills that endpoint. */
 private val ENDPOINT_DOT_SIZE = 12.dp
+
+/**
+ * Width of the leading rail — the dot centred in it, which is what puts its leading edge on
+ * [CONTENT_KEYLINE]. Reused as the dividers' inset, so the hairline starts where the text does.
+ */
+private val RAIL_WIDTH = CONTENT_KEYLINE * 2 + ENDPOINT_DOT_SIZE
 
 /** The box the endpoint dot occupies when it stands in a menu row's leading icon slot. */
 private val ENDPOINT_DOT_ICON_SIZE = 22.dp
@@ -110,17 +119,18 @@ private val ICON_BUTTON_SIZE = 40.dp
  */
 private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
 
+/** [SegmentButton]'s own horizontal padding, held apart because [ACTION_BAR_START_INSET] subtracts it. */
+private val SEGMENT_TEXT_INSET = 6.dp
+
 /**
  * Where the action bar's content starts, now that the bar carries no leading glyph of its own (#2135).
  *
- * The band above it opens with [RAIL_WIDTH] of endpoint rail; this one opens with the "when" sentence,
- * and [SegmentButton] insets its own text by 6dp, so 10dp here lands that text on the same 16dp keyline
- * the endpoint dots sit on. The 34dp the retired glyph gives back is what pays for the refresh button.
+ * The band above opens with [RAIL_WIDTH] of endpoint rail; this one opens with the "when" sentence, so
+ * it reaches [CONTENT_KEYLINE] by padding — less the padding [SegmentButton] already applies, since it
+ * is the sentence's *text* that belongs on the keyline and not its press surface. The rest of what the
+ * retired glyph gives back is what pays for the refresh button.
  */
-private val ACTION_BAR_START_INSET = 10.dp
-
-/** Material 3's disabled-content alpha, applied by hand where a call site sets its own tint. */
-private const val DISABLED_ICON_ALPHA = 0.38f
+private val ACTION_BAR_START_INSET = CONTENT_KEYLINE - SEGMENT_TEXT_INSET
 
 /**
  * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
@@ -313,16 +323,17 @@ private fun FormIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    IconButton(onClick = onClick, enabled = enabled, modifier = modifier.size(ICON_BUTTON_SIZE)) {
-        Icon(
-            painter = painter,
-            contentDescription = contentDescription,
-            // The tint is stated here rather than inherited from the button's content colour, so the
-            // disabled case has to be stated too — otherwise a disabled button draws at full strength
-            // and reads as one that simply doesn't work.
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                .copy(alpha = if (enabled) 1f else DISABLED_ICON_ALPHA)
-        )
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        // The tint travels as the button's content colour rather than being set on the Icon, so the
+        // disabled case comes from Material's own token instead of an alpha restated here.
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = modifier.size(ICON_BUTTON_SIZE)
+    ) {
+        Icon(painter = painter, contentDescription = contentDescription)
     }
 }
 
@@ -909,7 +920,7 @@ private fun SegmentButton(
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).
             .clickable(onClickLabel = stringResource(R.string.trip_plan_change_when), onClick = onClick)
-            .padding(horizontal = 6.dp)
+            .padding(horizontal = SEGMENT_TEXT_INSET)
             .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)

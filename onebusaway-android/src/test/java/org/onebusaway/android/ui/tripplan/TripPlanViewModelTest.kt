@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.tripplan
 
 import java.io.IOException
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -137,6 +139,13 @@ class TripPlanViewModelTest {
             FakeAdvancedSettingsRepository()
         )
     }
+
+    /**
+     * A wall-clock instant on [date], in the device's own zone — the zone the form reasons about days
+     * in, so a fixed epoch millis would place these cases on a different date depending on where the
+     * test runs.
+     */
+    private fun millisOn(date: LocalDate, hour: Int): Long = date.atTime(hour, 0).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     /** Sets both resolved endpoints (which auto-submits a plan once both have coordinates). */
     private fun setBothEndpoints(vm: TripPlanViewModel) {
@@ -656,6 +665,50 @@ class TripPlanViewModelTest {
         assertFalse(state.departNow)
         // Pinned to the clock at the moment of the switch, not to the stale construction stamp.
         assertEquals(60_000L, state.dateTimeMillis)
+    }
+
+    /**
+     * The callout names the day in words where there is a word for it (#2185), so the ViewModel
+     * settles which day a pinned instant falls on alongside the labels it formats.
+     */
+    @Test
+    fun `a pinned instant is classified by the day it falls on`() = runTest {
+        val today = LocalDate.of(2026, 6, 10)
+        val vm = viewModel(clock = FakeClock(millisOn(today, hour = 9)))
+
+        vm.setDateTime(millisOn(today, hour = 17))
+        assertEquals(TripDay.TODAY, vm.formState.value.dayRelation)
+
+        vm.setDateTime(millisOn(today.plusDays(1), hour = 8))
+        assertEquals(TripDay.TOMORROW, vm.formState.value.dayRelation)
+
+        vm.setDateTime(millisOn(today.plusDays(2), hour = 8))
+        assertEquals(TripDay.OTHER, vm.formState.value.dayRelation)
+
+        // Yesterday is a different day, not a near-enough one — the relation is about the calendar,
+        // not about how far off the instant is.
+        vm.setDateTime(millisOn(today.minusDays(1), hour = 23))
+        assertEquals(TripDay.OTHER, vm.formState.value.dayRelation)
+    }
+
+    /**
+     * Calendar days, not elapsed hours: half an hour past midnight is *tomorrow* to a rider standing
+     * there at 23:30, and would be "today" to any rule that measured the gap instead of the date.
+     */
+    @Test
+    fun `the day a pinned instant falls on is measured in dates, not hours`() = runTest {
+        val today = LocalDate.of(2026, 6, 10)
+        val vm = viewModel(clock = FakeClock(millisOn(today, hour = 23)))
+
+        vm.setDateTime(millisOn(today.plusDays(1), hour = 0))
+
+        assertEquals(TripDay.TOMORROW, vm.formState.value.dayRelation)
+    }
+
+    /** A trip anchored to "now" is by definition for today. */
+    @Test
+    fun `a form starts on today`() = runTest {
+        assertEquals(TripDay.TODAY, viewModel().formState.value.dayRelation)
     }
 
     @Test

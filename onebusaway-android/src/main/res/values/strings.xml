@@ -949,8 +949,15 @@
     <!-- The directions form's time callout, e.g. "Leaving · now". Lowercase: it reads as part of a
          sentence next to Leaving/Arriving, not as a heading. -->
     <string name="trip_plan_now">now</string>
-    <!-- A pinned departure/arrival in the time callout: date, then time. -->
+    <!-- A pinned departure/arrival stated in full, at the head of the time callout's menu: date,
+         then time. -->
     <string name="trip_plan_date_time">%1$s, %2$s</string>
+    <!-- The same instant as the callout itself states it, leading with the time because that is what
+         a rider is reading for, and naming the day only when it isn't today. A trip later today is
+         just the time, with no suffix at all. Lowercase, like trip_plan_now: it reads as part of a
+         sentence next to Leaving/Arriving. %1$s is the time, %2$s the date. -->
+    <string name="trip_plan_time_tomorrow">%1$s, tomorrow</string>
+    <string name="trip_plan_time_date">%1$s, %2$s</string>
     <!-- The one row of the time callout's menu that opens the combined date/time picker. -->
     <string name="trip_plan_choose_date_time">Choose date and time…</string>
     <!-- The third row of that picker's day dropdown, which opens the calendar. -->

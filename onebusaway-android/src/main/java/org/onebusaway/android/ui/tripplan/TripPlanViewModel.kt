@@ -20,6 +20,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -85,9 +87,6 @@ class TripPlanViewModel @Inject constructor(
 
     private val _formState = MutableStateFlow(
         TripPlanFormState(
-            dateTimeMillis = initialDateTimeMillis,
-            dateLabel = formatDate(initialDateTimeMillis),
-            timeLabel = formatTime(initialDateTimeMillis),
             modes = initialSettings.modes,
             maxWalkMeters = initialSettings.maxWalkMeters,
             optimizeTransfers = initialSettings.optimizeTransfers,
@@ -95,7 +94,7 @@ class TripPlanViewModel @Inject constructor(
             walkPreference = initialSettings.walkPreference,
             cyclingPreference = initialSettings.cyclingPreference,
             bikePreference = initialSettings.bikePreference
-        )
+        ).withWhen(initialDateTimeMillis, departNow = true)
     )
     val formState: StateFlow<TripPlanFormState> = _formState.asStateFlow()
 
@@ -254,14 +253,7 @@ class TripPlanViewModel @Inject constructor(
      * the time together, so this is one write and one re-plan for both halves.
      */
     fun setDateTime(millis: Long) {
-        _formState.update {
-            it.copy(
-                dateTimeMillis = millis,
-                departNow = false,
-                dateLabel = formatDate(millis),
-                timeLabel = formatTime(millis)
-            )
-        }
+        _formState.update { it.withWhen(millis, departNow = false) }
         replanOrClearResult()
     }
 
@@ -272,14 +264,7 @@ class TripPlanViewModel @Inject constructor(
      */
     fun setDepartNow() {
         val now = timeProvider.now()
-        _formState.update {
-            it.copy(
-                dateTimeMillis = now,
-                departNow = true,
-                dateLabel = formatDate(now),
-                timeLabel = formatTime(now)
-            )
-        }
+        _formState.update { it.withWhen(now, departNow = true) }
         replanOrClearResult()
     }
 
@@ -296,14 +281,7 @@ class TripPlanViewModel @Inject constructor(
             } else {
                 // Pin to the clock now, not to dateTimeMillis — under the "now" anchor that field
                 // still holds the instant the ViewModel was built, which may be long past.
-                val now = timeProvider.now()
-                state.copy(
-                    arriving = true,
-                    departNow = false,
-                    dateTimeMillis = now,
-                    dateLabel = formatDate(now),
-                    timeLabel = formatTime(now)
-                )
+                state.copy(arriving = true).withWhen(timeProvider.now(), departNow = false)
             }
         }
         replanOrClearResult()
@@ -362,17 +340,13 @@ class TripPlanViewModel @Inject constructor(
         itineraries: List<TripItinerary>
     ) {
         _formState.update {
+            // A restored trip carries the instant it was planned for, so it is pinned rather than
+            // anchored to "now" — re-anchoring would silently re-time the very trip being restored.
             it.copy(
                 from = from ?: it.from,
                 to = to ?: it.to,
-                dateTimeMillis = dateTimeMillis,
-                // A restored trip carries the instant it was planned for, so it is pinned rather than
-                // anchored to "now" — re-anchoring would silently re-time the very trip being restored.
-                departNow = false,
-                dateLabel = formatDate(dateTimeMillis),
-                timeLabel = formatTime(dateTimeMillis),
                 arriving = arriving
-            )
+            ).withWhen(dateTimeMillis, departNow = false)
         }
         if (itineraries.isNotEmpty()) {
             _planState.value = PlanResult.Success(itineraries)
@@ -399,9 +373,42 @@ class TripPlanViewModel @Inject constructor(
         planInputs.trySend(if (form.canSubmit) form.toParams(timeProvider.now()) else null)
     }
 
+    /**
+     * This form with its "when" set to [millis], and every label describing it re-derived in the same
+     * write. The three are one fact about one instant — the date, the time, and which day that is —
+     * so they move together and can never be left describing the instant before.
+     */
+    private fun TripPlanFormState.withWhen(millis: Long, departNow: Boolean): TripPlanFormState = copy(
+        dateTimeMillis = millis,
+        departNow = departNow,
+        dateLabel = formatDate(millis),
+        timeLabel = formatTime(millis),
+        dayRelation = dayRelationOf(millis)
+    )
+
     private fun formatDate(millis: Long): String = SimpleDateFormat(DATE_PATTERN, Locale.getDefault()).format(Date(millis))
 
     private fun formatTime(millis: Long): String = SimpleDateFormat(TIME_PATTERN, Locale.getDefault()).format(Date(millis))
+
+    /**
+     * Which day [millis] falls on, in the device's own zone — the same wall clock [formatDate] renders
+     * in, and the one the picker composes its instants in ([TripDateTimeDialog]).
+     *
+     * Read against the clock at the moment the label is written, which is what makes this a label and
+     * not live state: a form left open across midnight keeps saying what it said when the rider pinned
+     * the trip, exactly as the picker's own day dropdown holds its "Today" for as long as it is open.
+     * The instant itself never moves, so the trip that gets planned is unaffected either way.
+     */
+    private fun dayRelationOf(millis: Long): TripDay {
+        val zone = ZoneId.systemDefault()
+        val day = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+        val today = Instant.ofEpochMilli(timeProvider.now()).atZone(zone).toLocalDate()
+        return when (day) {
+            today -> TripDay.TODAY
+            today.plusDays(1) -> TripDay.TOMORROW
+            else -> TripDay.OTHER
+        }
+    }
 
     private companion object {
         const val SUGGEST_DEBOUNCE_MS = 350L

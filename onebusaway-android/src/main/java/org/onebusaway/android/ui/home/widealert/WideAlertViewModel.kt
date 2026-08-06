@@ -48,10 +48,15 @@ class WideAlertViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // The *sidecar's* id for the region (#2165) — it's what the alerts URL embeds, and for
-            // every region but a deep-link-added one it is the same value as Region.id.
-            regionRepo.region.map { it?.sidecarId }.distinctUntilChanged().flatMapLatest { regionId ->
-                if (regionId == null) flowOf(null) else wideAlertsRepo.wideAlerts(regionId.toString())
+            // Keyed on the whole Region.sidecarTarget — the sidecar host plus the id it embeds (#2165)
+            // — not the id alone, which a deep-link-added region can share with a directory region on a
+            // different host; keying on it alone would make that switch look like no change.
+            regionRepo.region.map { it?.sidecarTarget }.distinctUntilChanged().flatMapLatest { target ->
+                if (target == null) {
+                    flowOf(null)
+                } else {
+                    wideAlertsRepo.wideAlerts(target.regionId.toString())
+                }
             }.collect { _wideAlert.value = it }
         }
     }

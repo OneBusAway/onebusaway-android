@@ -95,6 +95,19 @@ data class Region(
     val sidecarId: Long get() = sidecarRegionId ?: id
 
     /**
+     * The sidecar endpoint this region addresses: the host **and** [sidecarId]. [sidecarId] on its own
+     * does not identify a sidecar — a deep-link-added region carries the id its *own* sidecar knows it
+     * by (#2165), which can equal a directory region's [id] on a completely different host. So anything
+     * keying on "which sidecar am I talking to" — a `distinctUntilChanged` over the region flow, a
+     * fetched-once memo — must compare this pair; keying on the id alone makes such a switch look like
+     * no change at all and leaves the feature showing the previous host's data.
+     *
+     * Call sites that merely *build* a URL don't need it: they read [sidecarBaseUrl] and [sidecarId]
+     * together at the moment of the call, so they can't go stale.
+     */
+    val sidecarTarget: SidecarTarget get() = SidecarTarget(sidecarBaseUrl, sidecarId)
+
+    /**
      * Whether this region's trip planning speaks OTP 2.x GraphQL — true exactly when it publishes an
      * [otpBaseGraphqlUrl]. The single definition of that protocol signal, shared by the request
      * builder's endpoint resolution and the bikeshare capability gate so the two can't disagree about
@@ -126,4 +139,10 @@ data class Region(
     }
 
     data class UmamiAnalyticsConfig(val url: String? = null, val id: String? = null)
+
+    /**
+     * A region-scoped sidecar endpoint: the sidecar host plus the region id that host embeds. The unit
+     * of identity for sidecar-keyed state — see [sidecarTarget].
+     */
+    data class SidecarTarget(val baseUrl: String?, val regionId: Long)
 }

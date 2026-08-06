@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.preferences.PreferencesRepository
+import org.onebusaway.android.region.Region
 import org.onebusaway.android.region.RegionRepository
 
 /**
@@ -58,16 +59,16 @@ class WeatherViewModel @Inject constructor(
     val state: StateFlow<WeatherUiState> = _state.asStateFlow()
 
     // Guard so the forecast is fetched once per region (not on every region emission).
-    private var fetchedRegionId: Long? = null
+    private var fetchedTarget: Region.SidecarTarget? = null
 
     init {
-        // Self-subscribe to the current region: fetch the forecast once per region id, clear when none.
-        // Keyed on the region id, so weather follows the *region* (not the map viewport — panning out of
-        // range no longer clears it). Replaces the host's MapFeature setRegion push. The id is the
-        // *sidecar's* (#2165) because that is what the weather URL embeds — for every region but a
-        // deep-link-added one it is the same value as Region.id.
+        // Self-subscribe to the current region: fetch the forecast once per sidecar endpoint, clear when
+        // none. Keyed on the region, so weather follows the *region* (not the map viewport — panning out
+        // of range no longer clears it). Replaces the host's MapFeature setRegion push. The key is the
+        // whole Region.sidecarTarget rather than the id alone, because a deep-link-added region's sidecar
+        // id (#2165) can collide with a directory region's on a different host — see sidecarTarget.
         viewModelScope.launch {
-            regionRepo.region.map { it?.sidecarId }.distinctUntilChanged().collect { setRegion(it) }
+            regionRepo.region.map { it?.sidecarTarget }.distinctUntilChanged().collect { setRegion(it) }
         }
         // Observe the hide-weather preference reactively (replaces the on-resume refreshHiddenPref poll).
         // The pref stores "weather enabled" (default true), so hidden = !enabled.
@@ -86,19 +87,19 @@ class WeatherViewModel @Inject constructor(
         }
     }
 
-    /** Fetch the forecast once per region, or clear it when [regionId] is null. */
-    private fun setRegion(regionId: Long?) {
-        if (regionId == null) {
-            fetchedRegionId = null
+    /** Fetch the forecast once per sidecar endpoint, or clear it when [target] is null. */
+    private fun setRegion(target: Region.SidecarTarget?) {
+        if (target == null) {
+            fetchedTarget = null
             _state.update { it.copy(data = null) }
             return
         }
-        if (fetchedRegionId == regionId) {
+        if (fetchedTarget == target) {
             return
         }
-        fetchedRegionId = regionId
+        fetchedTarget = target
         viewModelScope.launch {
-            weatherRepo.currentForecast(regionId).onSuccess { data ->
+            weatherRepo.currentForecast(target.regionId).onSuccess { data ->
                 _state.update { it.copy(data = data) }
             }
         }

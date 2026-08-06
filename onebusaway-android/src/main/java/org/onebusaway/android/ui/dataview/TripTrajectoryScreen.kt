@@ -65,8 +65,13 @@ private val ScheduleColor = Color(0xFF4488FF)
 private val TrajectoryColor = Color(0xFF44CC44)
 private val EstimateColor = Color(0xFFBBBBBB)
 private val ConfidenceColor = Color(0x66BBBBBB)
-private val PdfSeparatorColor = Color(0xAAFFFFFF)
-private val PdfColor = Color(0x40BBBBBB)
+
+// The density is a filled shape rather than a line, so it reads as lighter than its alpha
+// suggests; it carries more weight than the 0x40 it started at without competing with the
+// trajectory itself. The percentile ticks sit on top of that fill, so they go near-solid black
+// for contrast against it rather than white, which the fill had started to wash out.
+private val PdfSeparatorColor = Color(0xF2000000)
+private val PdfColor = Color(0x8ACCCCCC)
 private val GridColor = Color(0xFF333333)
 private val NowColor = Color(0xFFFF4444)
 private val DeviationColor = Color(0xFFFFAA00)

@@ -41,6 +41,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -84,13 +85,21 @@ import org.onebusaway.android.ui.icons.AppIcons
 private val ENDPOINT_ROW_HEIGHT = 48.dp
 
 /**
- * Width of the leading rail — sized so the dot's leading edge lands exactly on Material's 16dp
- * keyline. Reused as the dividers' inset, so the hairline starts where the text does.
+ * Material's content keyline: where the card's content begins, in both bands — the endpoint dot's
+ * leading edge above, the "when" sentence's first character below. Written once and derived from,
+ * rather than restated per band, for the same reason [TRAILING_GUTTER] is: two bands that lay
+ * themselves out independently land on one keyline only if the keyline itself is one value.
  */
-private val RAIL_WIDTH = 44.dp
+private val CONTENT_KEYLINE = 16.dp
 
 /** Diameter of the endpoint dot, in the rail and in the suggestion row that fills that endpoint. */
 private val ENDPOINT_DOT_SIZE = 12.dp
+
+/**
+ * Width of the leading rail — the dot centred in it, which is what puts its leading edge on
+ * [CONTENT_KEYLINE]. Reused as the dividers' inset, so the hairline starts where the text does.
+ */
+private val RAIL_WIDTH = CONTENT_KEYLINE * 2 + ENDPOINT_DOT_SIZE
 
 /** The box the endpoint dot occupies when it stands in a menu row's leading icon slot. */
 private val ENDPOINT_DOT_ICON_SIZE = 22.dp
@@ -109,6 +118,19 @@ private val ICON_BUTTON_SIZE = 40.dp
  * regardless, because Material expands it beyond their bounds.
  */
 private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
+
+/** [SegmentButton]'s own horizontal padding, held apart because [ACTION_BAR_START_INSET] subtracts it. */
+private val SEGMENT_TEXT_INSET = 6.dp
+
+/**
+ * Where the action bar's content starts, now that the bar carries no leading glyph of its own (#2135).
+ *
+ * The band above opens with [RAIL_WIDTH] of endpoint rail; this one opens with the "when" sentence, so
+ * it reaches [CONTENT_KEYLINE] by padding — less the padding [SegmentButton] already applies, since it
+ * is the sentence's *text* that belongs on the keyline and not its press surface. The rest of what the
+ * retired glyph gives back is what pays for the refresh button.
+ */
+private val ACTION_BAR_START_INSET = CONTENT_KEYLINE - SEGMENT_TEXT_INSET
 
 /**
  * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
@@ -166,6 +188,9 @@ object TripPlanTestTags {
 
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
+
+    /** The action bar's re-plan-this-same-trip button. */
+    const val REFRESH = "tripPlanRefresh"
 
     /** The action bar's trailing button, which reverse is column-aligned with. */
     const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
@@ -227,6 +252,7 @@ fun TripPlanForm(
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -272,11 +298,13 @@ fun TripPlanForm(
             timeLabel = state.timeLabel,
             modes = state.modes,
             availableStreetModes = availableStreetModes,
+            canRefresh = state.canSubmit,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
             onPickDateTime = onPickDateTime,
             onVehicleModeSelected = onVehicleModeSelected,
             onStreetModeSelected = onStreetModeSelected,
+            onRefresh = onRefresh,
             onAdvancedSettings = onAdvancedSettings
         )
     }
@@ -292,14 +320,20 @@ private fun FormIconButton(
     painter: Painter,
     contentDescription: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
-    IconButton(onClick = onClick, modifier = modifier.size(ICON_BUTTON_SIZE)) {
-        Icon(
-            painter = painter,
-            contentDescription = contentDescription,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        // The tint travels as the button's content colour rather than being set on the Icon, so the
+        // disabled case comes from Material's own token instead of an alpha restated here.
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+        ),
+        modifier = modifier.size(ICON_BUTTON_SIZE)
+    ) {
+        Icon(painter = painter, contentDescription = contentDescription)
     }
 }
 
@@ -613,9 +647,13 @@ private fun PinnedActionIcon(painter: Painter) {
  * The bottom band: when the trip is for, and how it may be travelled.
  *
  * The time reads as one sentence — "Depart · now" — split into two separately-tappable segments, each
- * opening its own menu. The mode pickers and additional preferences sit at the trailing edge; reverse
- * is not here, because it acts on the two endpoints rather than on the trip's terms, and so lives
- * beside them (#2110).
+ * opening its own menu. The mode pickers, refresh and additional preferences sit at the trailing edge;
+ * reverse is not here, because it acts on the two endpoints rather than on the trip's terms, and so
+ * lives beside them (#2110).
+ *
+ * The bar opened with a clock glyph in a [RAIL_WIDTH] rail until #2135. It said nothing the sentence
+ * beside it didn't already say in words, and the bar had no width to spare for the refresh button, so
+ * it is the glyph that went — see [ACTION_BAR_START_INSET] for what keeps the sentence on its keyline.
  */
 @Composable
 private fun TripActionBar(
@@ -625,28 +663,19 @@ private fun TripActionBar(
     timeLabel: String,
     modes: TripModeSelection,
     availableStreetModes: List<StreetMode>,
+    canRefresh: Boolean,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
     onPickDateTime: () -> Unit,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.formBand().height(ACTION_BAR_HEIGHT),
+        modifier = Modifier.formBand().padding(start = ACTION_BAR_START_INSET).height(ACTION_BAR_HEIGHT),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.width(RAIL_WIDTH).height(ACTION_BAR_HEIGHT),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrival_time),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
         WhenModeSegment(arriving = arriving, onSetArriving = onSetArriving)
         Text(
             text = "·",
@@ -686,6 +715,15 @@ private fun TripActionBar(
             label = { streetModeLabel(it) },
             testTag = TripPlanTestTags.STREET_MODE,
             onSelected = onStreetModeSelected
+        )
+        FormIconButton(
+            painter = painterResource(R.drawable.ic_action_navigation_refresh),
+            contentDescription = stringResource(R.string.trip_plan_refresh),
+            onClick = onRefresh,
+            // Nothing to re-plan until the form names both ends of a trip. Disabled rather than absent,
+            // so the bar's trailing buttons don't shuffle sideways as the rider fills the form in.
+            enabled = canRefresh,
+            modifier = Modifier.testTag(TripPlanTestTags.REFRESH)
         )
         FormIconButton(
             painter = rememberVectorPainter(AppIcons.Settings),
@@ -882,7 +920,7 @@ private fun SegmentButton(
             // The value is the label, so TalkBack reads it as-is; the click label supplies the verb the
             // bare text can't ("Depart" alone doesn't say it's changeable).
             .clickable(onClickLabel = stringResource(R.string.trip_plan_change_when), onClick = onClick)
-            .padding(horizontal = 6.dp)
+            .padding(horizontal = SEGMENT_TEXT_INSET)
             .testTag(testTag),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -941,7 +979,7 @@ private fun TripPlanFormPreview() {
             onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
-            onReverse = {}, onAdvancedSettings = {}
+            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}
         )
     }
 }

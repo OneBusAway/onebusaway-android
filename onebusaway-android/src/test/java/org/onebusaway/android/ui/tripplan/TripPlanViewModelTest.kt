@@ -624,6 +624,66 @@ class TripPlanViewModelTest {
         assertEquals(120_000L, (vm.planState.value as PlanResult.Success).params?.dateTimeMillis)
     }
 
+    /**
+     * Refresh's whole reason for existing (#2135): a "depart now" trip is planned against a clock that
+     * keeps moving, and until this there was no way to ask for the same trip against the current one
+     * without editing the trip.
+     */
+    @Test
+    fun `refreshing a depart-now trip re-plans it against the current clock`() = runTest {
+        val clock = FakeClock(0L)
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = clock)
+        setBothEndpoints(vm)
+        advanceUntilIdle()
+        assertEquals(1, plan.calls)
+        assertEquals(0L, plan.lastParams?.dateTimeMillis)
+
+        clock.nowMillis = 600_000L
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(2, plan.calls)
+        assertEquals(600_000L, plan.lastParams?.dateTimeMillis)
+    }
+
+    /** A pinned trip is re-planned, not re-timed — refresh must not quietly move what the rider asked for. */
+    @Test
+    fun `refreshing a pinned trip re-plans the same instant`() = runTest {
+        val clock = FakeClock(0L)
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan, clock = clock)
+        setBothEndpoints(vm)
+        vm.setDateTime(1_700_000_000_000L)
+        advanceUntilIdle()
+        val callsBefore = plan.calls
+
+        clock.nowMillis = 600_000L
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(callsBefore + 1, plan.calls)
+        assertEquals(1_700_000_000_000L, plan.lastParams?.dateTimeMillis)
+        assertFalse(vm.formState.value.departNow)
+    }
+
+    /**
+     * Refresh on a form that names only one end has no trip to re-plan. The button is disabled there,
+     * so this pins the ViewModel's own half: it must not issue a request for an incomplete form.
+     */
+    @Test
+    fun `refreshing an incomplete form plans nothing`() = runTest {
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+        vm.setEndpoint(TripEndpointSlot.FROM, origin)
+        advanceUntilIdle()
+
+        vm.refreshPlan()
+        advanceUntilIdle()
+
+        assertEquals(0, plan.calls)
+    }
+
     @Test
     fun `a restored trip stays pinned to the instant it was planned for`() = runTest {
         val vm = viewModel(clock = FakeClock(0L))

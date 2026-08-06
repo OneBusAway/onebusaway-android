@@ -66,6 +66,7 @@ import org.onebusaway.android.ui.nav.ExternalDeepLinks
 import org.onebusaway.android.ui.nav.IntentRouteMapper
 import org.onebusaway.android.ui.nav.NavHelp
 import org.onebusaway.android.ui.nav.NavRoutes
+import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
@@ -230,9 +231,30 @@ class HomeActivity : AppCompatActivity() {
     private fun applyLaunchIntentSideEffects(intent: Intent) {
         applyIntentSideEffects(intent)
         maybeRestoreDirectionsFromIntent(intent)
+        maybeRevealTrackedRouteFromIntent(intent)
         if (intent.extras?.getBoolean(TutorialPrefs.TUTORIAL_WELCOME) == true) {
             viewModel.requestWelcomeTutorial()
         }
+    }
+
+    /**
+     * Re-entry from a trip-tracking notification (#2166): focus the watched stop, then select the
+     * watched route row inside it — [HomeViewModel.selectArrivalRoute]'s stop-scoped branch, the same
+     * transition a tap in the arrivals drawer makes.
+     *
+     * Two calls rather than one because the second requires the first: selecting a route *within* a
+     * stop needs a stop focus to be subordinate to, and `selectArrivalRoute` returns without doing
+     * anything if the current focus is not one. Run here, with the other launch-intent focus changes,
+     * because this is where the [HomeViewModel] is — [IntentRouteMapper] stays a pure translator and
+     * correctly resolves this intent to no destination, since the reveal is map state and not a screen.
+     */
+    private fun maybeRevealTrackedRouteFromIntent(intent: Intent) {
+        val route = intent.readRouteReveal() ?: return
+        // The stop half through the app's one reader of it, rather than a second parse of the same
+        // keys — which is also how the stop's code survives the trip.
+        val stop = FocusedStop.fromIntent(intent) ?: return
+        viewModel.revealStop(stop)
+        viewModel.selectArrivalRoute(route.request(stop.id), route.routeShortName, route.headsign)
     }
 
     /**
@@ -426,7 +448,7 @@ fun Context.startHomeActivity(route: String) {
  * when it carries no usable stop — an id plus a real (non-zero) location. A plain launch carries
  * neither, so focus stays null. Parsing lives here with the intent contract, off HomeModels.
  */
-private fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
+internal fun FocusedStop.Companion.fromIntent(intent: Intent): FocusedStop? {
     val extras = intent.extras ?: return null
     val id = extras.getString(MapParams.STOP_ID) ?: return null
     val lat = extras.getDouble(MapParams.CENTER_LAT)

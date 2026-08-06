@@ -37,6 +37,31 @@ object NotificationChannels {
     const val ARRIVAL_REMINDERS_ID = "arrival_reminders"
 
     /**
+     * The live countdown for a bus the rider chose to track (#2166).
+     *
+     * [NotificationManager.IMPORTANCE_DEFAULT], but with its sound, vibration, and lights all turned
+     * off — silent in practice, without being *ranked* as silent.
+     *
+     * Not a Live Update requirement: that rules out only [NotificationManager.IMPORTANCE_MIN], so
+     * `IMPORTANCE_LOW` would qualify too. The reason to sit above LOW is the lock screen, where a
+     * silent-ranked notification is minimized to an icon rather than shown as a card — which is
+     * precisely where a countdown the rider asked for needs to be readable. Silence therefore comes
+     * from the channel's own switches, which are also the ones the rider can change; the "don't
+     * re-alert" job belongs to the notification's `setOnlyAlertOnce`, since the card re-posts every
+     * few seconds as it counts down.
+     */
+    const val TRIP_TRACKING_ID = "trip_tracking_v2"
+
+    /**
+     * The first id this channel shipped under, at [NotificationManager.IMPORTANCE_LOW]. A channel's
+     * importance can only ever be *lowered* by the app, so raising it meant a new id; this one is
+     * deleted so a device that ran an earlier build of #2166 does not keep a dead settings row (and a
+     * dead channel the rider might mistake for the live one). Only pre-merge builds ever created it,
+     * so this line can go once those are gone.
+     */
+    private const val OBSOLETE_TRIP_TRACKING_ID = "trip_tracking"
+
+    /**
      * Ongoing destination-reminder progress (the foreground-service distance notification) and the
      * trip-feedback follow-ups. Deliberately quiet ([NotificationManager.IMPORTANCE_LOW], no
      * vibration): the distance notification re-posts on every location update, so alerting on it
@@ -94,6 +119,21 @@ object NotificationChannels {
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = "Notifications to remind the user of an arriving bus."
+            }
+        )
+        manager.deleteNotificationChannel(OBSOLETE_TRIP_TRACKING_ID)
+        manager.createNotificationChannel(
+            NotificationChannel(
+                TRIP_TRACKING_ID,
+                "Bus tracking",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "A live countdown for a bus you chose to track."
+                setShowBadge(false)
+                // Silent by configuration, not by rank — see TRIP_TRACKING_ID.
+                setSound(null, null)
+                enableVibration(false)
+                enableLights(false)
             }
         )
         registerDestinationChannels(manager)

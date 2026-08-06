@@ -96,6 +96,8 @@ class ArrivalRowCallbacks(
     val onEtaClick: (ArrivalInfo) -> Unit,
     val onShowTripStatus: (ArrivalInfo) -> Unit,
     val onSetReminder: (ArrivalInfo) -> Unit,
+    /** Starts or stops the live countdown notification for this arrival's whole route row (#2166). */
+    val onToggleTracking: (ArrivalInfo) -> Unit,
     val onShowRouteSchedule: (String) -> Unit,
     val onReportArrivalProblem: (ArrivalActions) -> Unit,
     /** Opens the service-alert dialog for the given situation id (the per-row alert indicator). */
@@ -216,6 +218,30 @@ internal fun ArrivalAlertIndicator(
     }
 }
 
+/**
+ * The "this row is being tracked" eye (#2166): a live countdown notification is running for this
+ * (stop, route, headsign). Purely a status mark — tracking is started and stopped from the row's
+ * long-press menu, so a tap target here would be a second, quieter way to do something the rider did
+ * not aim at. Drawn in the row's top-right corner; see [RouteArrivalRow].
+ *
+ * Deliberately colourless: `onSurfaceVariant` is the Material role for a secondary icon on a surface,
+ * and it keeps the mark out of the deviation palette. Green would have been the obvious "this is on"
+ * hue, but green already means *on time* everywhere else on this row (the ETA pills, the status
+ * pill), and a green mark in its corner would read as a claim about the arrivals rather than as a
+ * flag on the row. The eye says "marked", not a value, so it does not need a colour to spend.
+ */
+@Composable
+internal fun TrackedRouteIndicator(modifier: Modifier = Modifier) {
+    Box(modifier.size(CORNER_TOUCH_SIZE), contentAlignment = Alignment.Center) {
+        Icon(
+            painter = painterResource(R.drawable.ic_visibility),
+            contentDescription = stringResource(R.string.stop_info_arrival_tracked),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(CORNER_GLYPH_SIZE)
+        )
+    }
+}
+
 /** Adapts the [ArrivalInfo] display model onto [ArrivalRowVisual]. Shared by the interactive Style
  *  A row and the report-flow picker (which wrap it with their own click + card). [onAlertClick] adds
  *  the tappable alert indicator when the arrival is affected by an active alert (null hides it). */
@@ -275,7 +301,12 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
-    etaAnchor: Modifier = Modifier
+    etaAnchor: Modifier = Modifier,
+    // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
+    // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
+    // membership is the list's business, and this row is also drawn by hosts (directions, the
+    // trip-results stop strips) that know nothing about tracking.
+    tracked: Boolean = false
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -342,10 +373,10 @@ fun RouteArrivalRow(
                     if (onAlertClick != null) {
                         ArrivalAlertIndicator(
                             onClick = onAlertClick,
-                            iconSize = 20.dp,
+                            iconSize = CORNER_GLYPH_SIZE,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .size(28.dp)
+                                .size(CORNER_TOUCH_SIZE)
                                 // Cancel the row's vertical padding so the triangle's top lines up with
                                 // the corner star, which floats at the card's very top (above this
                                 // padding) rather than inside the row's content box.
@@ -378,19 +409,33 @@ fun RouteArrivalRow(
                         isFavorite = isFavorite,
                         onClick = { callbacks.onRouteFavorite(routeActions) },
                         tint = colorResource(R.color.navdrawer_icon_tint),
-                        iconSize = 20.dp,
+                        iconSize = CORNER_GLYPH_SIZE,
                         // Tighten the button's touch box to the icon + a small margin, like the corner
                         // overflow icon below, instead of Material's 48dp default — keeps the star flush
                         // in the corner with no compensating offset.
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(CORNER_TOUCH_SIZE)
                     )
                 }
+            }
+            if (tracked) {
+                // The row's own top-right corner, opposite the favourite star and past the headsign —
+                // the whole row is what is being watched, not the route chip, so the mark belongs on
+                // the row rather than tucked into the badge beside the alert triangle. Its own layer
+                // for the same reason the star is: a corner mark must not reflow the headsign or the
+                // pills under it.
+                TrackedRouteIndicator(
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = TRACKED_MARK_END_INSET)
+                )
             }
             RouteActionsMenu(
                 expanded = menuExpanded,
                 onDismiss = { menuExpanded = false },
                 onShowRouteOnMap = { callbacks.onShowRouteOnMap(representative) },
-                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } }
+                onShowSchedule = scheduleUrl?.let { url -> { callbacks.onShowRouteSchedule(url) } },
+                onToggleTracking = { callbacks.onToggleTracking(representative) },
+                tracked = tracked
             )
         }
     }
@@ -415,8 +460,21 @@ internal fun alertClick(
  *  keep the two in sync via this single value rather than a bare literal on each side. */
 private val ROW_VERTICAL_PADDING = 8.dp
 
-/** The route-level long-press menu: show the whole route on the map (always), and — when [onShowSchedule]
- *  is non-null (the route has a schedule) — open its schedule. A dumb view: both actions arrive pre-bound.
+/** The footprint of a mark in one of the row's corners, and the glyph inside it — the favourite star,
+ *  the service-alert triangle, the tracking eye. One tight box rather than Material's 48dp default, so
+ *  each sits flush in its corner with no compensating offset, and so the three read as one family. */
+private val CORNER_TOUCH_SIZE = 28.dp
+private val CORNER_GLYPH_SIZE = 20.dp
+
+/** Breathing room between the tracking eye and the card's right edge, tuned by eye. Only the eye
+ *  takes it: the star sits flush in the opposite corner, where its tapered points read as inset
+ *  already, and nudging it would move a mark this change has no business touching. */
+private val TRACKED_MARK_END_INSET = 3.dp
+
+/** The route-level long-press menu: show the whole route on the map (always), start or stop this
+ *  row's live countdown notification (#2166), and — when [onShowSchedule] is non-null (the route has
+ *  a schedule) — open its schedule. A dumb view: every action arrives pre-bound, and [tracked] only
+ *  picks the tracking item's wording.
  *  The route's star lives as the row's own corner toggle ([FavoriteStarButton]); per-trip actions live on
  *  each pill's long-press menu ([TripActionsMenu]). */
 @Composable
@@ -424,7 +482,9 @@ internal fun RouteActionsMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     onShowRouteOnMap: () -> Unit,
-    onShowSchedule: (() -> Unit)?
+    onShowSchedule: (() -> Unit)?,
+    onToggleTracking: () -> Unit,
+    tracked: Boolean
 ) {
     CenteredLongPressMenu(expanded = expanded, onDismissRequest = onDismiss) {
         MenuRow(
@@ -433,6 +493,21 @@ internal fun RouteActionsMenu(
         ) {
             onDismiss()
             onShowRouteOnMap()
+        }
+        // The eye ties the item to the mark it toggles — the row's own tracking eye — and its
+        // struck-through twin shows which way the tap goes rather than restating the label.
+        MenuRow(
+            textRes = if (tracked) {
+                R.string.bus_options_menu_untrack_route
+            } else {
+                R.string.bus_options_menu_track_route
+            },
+            icon = ImageVector.vectorResource(
+                if (tracked) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+            )
+        ) {
+            onDismiss()
+            onToggleTracking()
         }
         if (onShowSchedule != null) {
             MenuRow(R.string.bus_options_menu_show_route_schedule, MaterialSymbols.Schedule) {
@@ -671,6 +746,7 @@ internal fun previewRowCallbacks(
     onEtaClick = {},
     onShowTripStatus = {},
     onSetReminder = {},
+    onToggleTracking = {},
     onShowRouteSchedule = onShowRouteSchedule,
     onReportArrivalProblem = {},
     onShowAlert = {}

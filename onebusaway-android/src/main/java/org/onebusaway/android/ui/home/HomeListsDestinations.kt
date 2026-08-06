@@ -47,6 +47,7 @@ import org.onebusaway.android.ui.mylists.stopActions
 import org.onebusaway.android.ui.nav.NavRoutes
 import org.onebusaway.android.ui.nav.revealRouteOnMap
 import org.onebusaway.android.ui.nav.revealStopOnMap
+import org.onebusaway.android.ui.tracking.badgeTracking
 import org.onebusaway.android.util.PreferenceUtils
 
 /**
@@ -86,7 +87,8 @@ fun NavGraphBuilder.homeListsGraph(navController: NavHostController) {
                         R.string.my_context_remove_star,
                         onShowOnMap = { id, lat, lon -> navController.revealStopOnMap(id, lat, lon) }
                     ) { vm.remove(it.id) }
-                }
+                },
+                onToggleTracking = host.badgeTracking()
             )
         }
     }

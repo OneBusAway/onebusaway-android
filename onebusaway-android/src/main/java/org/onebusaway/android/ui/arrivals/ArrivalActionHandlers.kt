@@ -21,11 +21,14 @@ import org.onebusaway.android.R
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.FirebaseMessagingEntryPoint
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.tracking.TrackedRoute
+import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.dialogs.StopDetailsHost
 import org.onebusaway.android.ui.arrivals.dialogs.showSituationDialog
 import org.onebusaway.android.ui.nav.ReminderEditorArgs
 import org.onebusaway.android.ui.report.infrastructure.DefaultIssueType
 import org.onebusaway.android.ui.report.infrastructure.InfrastructureIssueLauncher
+import org.onebusaway.android.ui.tracking.toggleRouteTracking
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripinfo.TripInfoLauncher
 import org.onebusaway.android.util.ExternalIntents
@@ -149,6 +152,24 @@ fun createArrivalActionHandler(
         )
     }
 
+    /** Starts or stops the live countdown notification for this whole route row (#2166). */
+    override fun onToggleTracking(arrival: ArrivalInfo) {
+        val content = currentContent()
+        val route = arrival.toTrackedRoute(
+            stopName = content?.header?.name.orEmpty(),
+            stopLat = content?.stopLat ?: 0.0,
+            stopLon = content?.stopLon ?: 0.0
+        )
+        if (route == null) {
+            // A partial/omitted API response leaves tripId or stopId blank, and neither can be
+            // resolved against a later response — so there is nothing to follow. Refuse up front
+            // rather than tracking something that could never be matched again.
+            Toast.makeText(activity, R.string.trip_tracking_unavailable, Toast.LENGTH_SHORT).show()
+            return
+        }
+        activity.toggleRouteTracking(route)
+    }
+
     override fun onShowRouteSchedule(scheduleUrl: String) {
         ExternalIntents.goToUrl(activity, scheduleUrl)
     }
@@ -211,4 +232,34 @@ fun createArrivalActionHandler(
             content.stopLon
         )
     }
+}
+
+/**
+ * The route row this arrival belongs to (#2166), or null when the response named no stop or route to
+ * key on — the tracking service re-resolves the row against every later response by exactly that
+ * triple, so a row with a blank part could never be found again.
+ *
+ * Defined on the arrival rather than on [RouteRowGroup] because both surfaces that offer tracking
+ * reach it through one: the drawer's row menu via its representative, and a My Lists arrival badge,
+ * which *is* a single arrival but identifies the same row.
+ */
+internal fun ArrivalInfo.trackedRouteKey(): TrackedRouteKey? = if (stopId.isBlank() || routeId.isBlank()) {
+    null
+} else {
+    TrackedRouteKey(stopId = stopId, routeId = routeId, headsign = headsign.orEmpty())
+}
+
+/** This arrival's route row as a trackable session, or null when it cannot be tracked. */
+internal fun ArrivalInfo.toTrackedRoute(
+    stopName: String,
+    stopLat: Double,
+    stopLon: Double
+): TrackedRoute? = trackedRouteKey()?.let { key ->
+    TrackedRoute(
+        key = key,
+        routeName = lineName,
+        stopName = stopName,
+        stopLat = stopLat,
+        stopLon = stopLon
+    )
 }

@@ -437,7 +437,8 @@ private fun EtaPillWithMenu(
 }
 
 /** The per-trip menu opened by long-pressing a pill: trip details, a reminder, or a problem report
- *  for that specific trip. Route-wide actions live on the row's long-press menu ([RouteActionsMenu]). */
+ *  for that specific trip. Route-wide actions — including tracking, which follows the whole row
+ *  rather than one vehicle — live on the row's long-press menu ([RouteActionsMenu]). */
 @Composable
 internal fun TripActionsMenu(
     expanded: Boolean,

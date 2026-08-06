@@ -26,6 +26,7 @@ import org.onebusaway.android.models.ArrivalData
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.etaMinutes
 import org.onebusaway.android.ui.report.TripReportContext
 import org.onebusaway.android.util.ArrivalInfoUtils
 import org.onebusaway.android.util.DisplayFormat
@@ -68,6 +69,13 @@ class ArrivalInfo(
      */
     @get:ColorRes
     val fillColor: Int
+
+    /**
+     * The bucketed schedule-deviation state behind [color]/[fillColor]. Exposed for surfaces that
+     * need the *state* rather than a colour — the tracking notification maps it onto the platform's
+     * semantic tones (#2166), which are its own way of saying "on time" or "watch out".
+     */
+    val deviationStatus: ScheduleDeviation.Status
 
     /**
      * True if there is real-time arrival info available for this trip, false if there is not.
@@ -146,7 +154,7 @@ class ArrivalInfo(
      * [now], counting down between polls until a fresh poll (a brand-new [ArrivalInfo], with a fresh
      * [serverNow]) supersedes it.
      */
-    fun liveEta(now: ServerTime): Long = displayTime.epochMs / MS_IN_MINS - now.epochMs / MS_IN_MINS
+    fun liveEta(now: ServerTime): Long = etaMinutes(displayTime, now)
 
     /** Flattens this arrival into the report flow's scalar context (was ObaArrivalInfo-based). */
     fun toTripReportContext(): TripReportContext = TripReportContext(
@@ -218,6 +226,7 @@ class ArrivalInfo(
         // [ScheduleDeviation.status] call below, so they can never contradict each other.
         val deviation = predictedTime?.let { it - scheduled } ?: Duration.ZERO
         val deviationStatus = ScheduleDeviation.status(hasPrediction, deviation)
+        this.deviationStatus = deviationStatus
         color = deviationStatus.displayColorRes
         fillColor = deviationStatus.fillColorRes
 
@@ -409,9 +418,5 @@ class ArrivalInfo(
                 context.getString(R.string.trip_stat_lessthanone_departing, routeDisplayName)
             }
         }
-    }
-
-    companion object {
-        private const val MS_IN_MINS = 60 * 1000
     }
 }

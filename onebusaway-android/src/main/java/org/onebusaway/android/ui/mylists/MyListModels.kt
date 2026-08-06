@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.mylists
 
 import androidx.annotation.ColorRes
+import org.onebusaway.android.tracking.TrackedRoute
 
 /**
  * A stop row for the My-tab starred/recent lists. [name] is the user-facing `UI_NAME` (reused for
@@ -45,10 +46,20 @@ sealed interface StopArrivals {
     data class Loaded(val badges: List<ArrivalBadge>) : StopArrivals
 }
 
-/** One "route · ETA" arrival badge; [colorRes] is the lateness color. */
+/**
+ * One "route · ETA" arrival badge; [colorRes] is the lateness color.
+ *
+ * [trackable] is this badge's route row, which the rider can pin to the Lock Screen as a live
+ * countdown (#2166) — null when the response named no stop or route to key on, which is also the
+ * only state where the badge has no long-press action. [tracked] is whether that row is the one
+ * currently being tracked, so the menu offers the right verb; it comes off the tracked-route store
+ * as a live overlay, so tracking from anywhere re-labels the badge with no re-fetch.
+ */
 data class ArrivalBadge(
     val text: String,
-    @param:ColorRes val colorRes: Int
+    @param:ColorRes val colorRes: Int,
+    val trackable: TrackedRoute? = null,
+    val tracked: Boolean = false
 )
 
 /** A route row for the My-tab starred/recent lists. */

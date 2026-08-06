@@ -31,6 +31,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.onebusaway.android.time.WallTime
+import org.onebusaway.android.tracking.TrackedRouteKey
+import org.onebusaway.android.tracking.TrackedRouteStore
 
 /**
  * ViewModel for the arrivals screen. The 60-second polling loop lives in the screen (driven by the
@@ -47,7 +49,8 @@ import org.onebusaway.android.time.WallTime
  */
 class ArrivalsViewModel @AssistedInject constructor(
     @Assisted private val stopId: String,
-    private val repository: ArrivalsRepository
+    private val repository: ArrivalsRepository,
+    private val trackedRoutes: TrackedRouteStore
 ) : ViewModel() {
 
     @AssistedFactory
@@ -76,10 +79,11 @@ class ArrivalsViewModel @AssistedInject constructor(
             loaded,
             repository.alertHideState(),
             repository.favoriteRouteIds(),
+            trackedRoutes.trackedKeys,
             fatalError
-        ) { data, hideState, favoriteRouteIds, error ->
+        ) { data, hideState, favoriteRouteIds, trackedRows, error ->
             when {
-                data != null -> data.toContent(hideState, favoriteRouteIds)
+                data != null -> data.toContent(hideState, favoriteRouteIds, trackedRows)
                 error != null -> ArrivalsUiState.Error(error)
                 else -> ArrivalsUiState.Loading
             }
@@ -266,7 +270,8 @@ class ArrivalsViewModel @AssistedInject constructor(
 
     private fun ArrivalsData.toContent(
         hideState: AlertHideState,
-        favoriteRouteIds: Set<String>
+        favoriteRouteIds: Set<String>,
+        trackedRows: Set<TrackedRouteKey>
     ): ArrivalsUiState.Content {
         val shown = activeAlerts.filterNot { hideState.isHidden(it, hideAlertsByDefault) }
         val hiddenCount = activeAlerts.size - shown.size
@@ -281,6 +286,7 @@ class ArrivalsViewModel @AssistedInject constructor(
             isStale = isStale,
             actions = actions,
             favoriteRouteIds = favoriteRouteIds,
+            trackedRows = trackedRows,
             alerts = shown,
             hiddenAlertCount = hiddenCount,
             routeDisplayNames = routeDisplayNames,

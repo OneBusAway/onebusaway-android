@@ -1363,4 +1363,23 @@
     <string name="agencies_empty">No agencies found for the current region.</string>
     <string name="retry">Retry</string>
     <string name="navigate_up">Navigate up</string>
+
+    <!-- Trip tracking: the live countdown notification for a bus the rider chose to track (#2166) -->
+    <!-- Content description for the eye on a route badge whose row has a live countdown running -->
+    <string name="stop_info_arrival_tracked">Tracking this route</string>
+    <string name="bus_options_menu_track_route">Track route arrivals</string>
+    <string name="bus_options_menu_untrack_route">Stop tracking route arrivals</string>
+    <!-- Route name, then headsign: "40 to Downtown Seattle" -->
+    <string name="trip_tracking_title">%1$s to %2$s</string>
+    <string name="trip_tracking_pending">Getting arrival times&#8230;</string>
+    <!-- A departure with no number to show, in the tracked row's strip and the Android 16+ status
+         bar chip. A countdown is formatted by DisplayFormat.formatEtaParts, which brings its own
+         localized units. -->
+    <string name="trip_tracking_short_now">Now</string>
+    <string name="trip_tracking_canceled">Canceled</string>
+    <string name="trip_tracking_stop_action">Stop tracking</string>
+    <string name="trip_tracking_started">Tracking %1$s</string>
+    <string name="trip_tracking_stopped">Stopped tracking %1$s</string>
+    <string name="trip_tracking_notifications_disabled">Turn on notifications to track a bus</string>
+    <string name="trip_tracking_unavailable">This route cannot be tracked</string>
 </resources>

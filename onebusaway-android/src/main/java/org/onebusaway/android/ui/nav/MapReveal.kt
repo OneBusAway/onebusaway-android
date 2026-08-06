@@ -15,9 +15,12 @@
  */
 package org.onebusaway.android.ui.nav
 
+import android.content.Intent
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavController
+import org.onebusaway.android.map.MapParams
 import org.onebusaway.android.map.ShowRouteRequest
+import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -121,3 +124,78 @@ fun SavedStateHandle.consumeStopReveal(): StopReveal? {
     if (stopId == null || lat == null || lon == null) return null
     return StopReveal(stopId, GeoPoint(lat, lon))
 }
+
+/**
+ * The route half of a stop-scoped reveal: which of a focused stop's rows to select inside it.
+ *
+ * Deliberately *not* standalone route focus. Framing the route alone drops the rider onto the whole
+ * line with no drawer and no sense of where they are on it; what a tracked row means is "this route,
+ * at my stop", which is a route selected subordinate to a stop focus (`CurrentFocus.Stop` carrying a
+ * `StopRouteSelection`). The two look similar from the outside and are easy to confuse.
+ *
+ * Only the route half, because the stop half of the same intent is already parsed by
+ * `FocusedStop.fromIntent` — one contract wants one reader, and two of them drift.
+ */
+data class RouteRevealExtras(
+    val routeId: String,
+    /** Labels the selected row's leg; the drawer resolves everything else off the arrivals row. */
+    val routeShortName: String,
+    val headsign: String?
+) {
+    /**
+     * The request that selects this row *within* the stop focused at [stopId]. Carrying
+     * `directionStopId` is what makes it stop-scoped rather than standalone — see
+     * `HomeViewModel.selectArrivalRoute`, which branches on exactly that.
+     */
+    fun request(stopId: String): ShowRouteRequest = ShowRouteRequest(
+        routeId = routeId,
+        directionStopId = stopId,
+        directionHeadsign = headsign
+    )
+}
+
+/**
+ * Writes a stop-scoped route reveal onto an intent bound for `HomeActivity`, so a launch from
+ * *outside* the NavHost — a notification's PendingIntent — can open the map on [stop] with one of its
+ * routes selected.
+ *
+ * The saved-state round trips above cannot serve that: they hand a reveal between destinations that
+ * already exist, and a PendingIntent fired from the shade has no NavController to hand it to. So this
+ * is the same reveal in the only vocabulary an Intent has, over the [MapParams] keys the map's other
+ * intent state already lives under — the stop half deliberately in the exact shape
+ * `FocusedStop.fromIntent` reads, so that stays the one parser of it.
+ */
+fun Intent.putStopRouteReveal(stop: FocusedStop, route: RouteRevealExtras): Intent = apply {
+    putExtra(MapParams.STOP_ID, stop.id)
+    putExtra(MapParams.STOP_NAME, stop.name)
+    putExtra(MapParams.STOP_CODE, stop.code)
+    putExtra(MapParams.CENTER_LAT, stop.point.latitude)
+    putExtra(MapParams.CENTER_LON, stop.point.longitude)
+    putExtra(MapParams.ROUTE_ID, route.routeId)
+    putExtra(EXTRA_ROUTE_SHORT_NAME, route.routeShortName)
+    putExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN, route.headsign)
+}
+
+/**
+ * The route half a launch intent carries, or null when it is not a route reveal. The stop half is
+ * read by `FocusedStop.fromIntent`; a caller needs both. See [putStopRouteReveal].
+ */
+fun Intent.readRouteReveal(): RouteRevealExtras? {
+    val routeId = getStringExtra(MapParams.ROUTE_ID) ?: return null
+    val routeShortName = getStringExtra(EXTRA_ROUTE_SHORT_NAME) ?: return null
+    return RouteRevealExtras(
+        routeId = routeId,
+        routeShortName = routeShortName,
+        headsign = getStringExtra(EXTRA_ROUTE_DIRECTION_HEADSIGN)
+    )
+}
+
+/**
+ * The two extras only this file writes and reads. Their neighbours in [MapParams] are genuinely
+ * shared — HomeActivity, MapViewModel and the focus persistence all read STOP_ID/ROUTE_ID/CENTER_* —
+ * but nothing in the map subsystem reads these, and the headsign reaches it through
+ * [ShowRouteRequest.directionHeadsign] rather than by being parsed there. Keeping them here means
+ * changing the map's intent handling does not require proving they are unused.
+ */
+private const val EXTRA_ROUTE_DIRECTION_HEADSIGN = ".RouteDirectionHeadsign"
+private const val EXTRA_ROUTE_SHORT_NAME = ".RouteShortName"

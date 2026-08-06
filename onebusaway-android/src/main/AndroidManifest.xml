@@ -44,6 +44,10 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <!-- For notifications, POST_NOTIFICATIONS is required when targeting Android 12 or higher-->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Android 16 Live Updates: without this the platform silently declines to promote the
+         trip-tracking countdown (#2166), so it never reaches the status-bar chip or the lock screen.
+         Non-runtime, and inert below API 36. The rider can still turn it off per-app in Settings. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
 
     <uses-feature
         android:glEsVersion="0x00020000"
@@ -364,6 +368,25 @@
              planned further out; app-internal, so not exported and targeted explicitly. -->
         <receiver
             android:name=".directions.realtime.TripPlanMonitorAlarmReceiver"
+            android:exported="false" />
+
+        <!-- Live countdowns for the buses the rider chose to track (#2166). Polls arrivals for the
+             tracked stops and keeps one Live Update notification per tracked trip. No platform
+             foregroundServiceType covers "watch a bus for the rider"; specialUse is the sanctioned
+             catch-all, and the subtype documents it for Play review. -->
+        <service
+            android:name=".tracking.TripTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="transit_trip_tracking" />
+        </service>
+
+        <!-- The tracking notification's "stop tracking" action and swipe-away. Triggered only by the
+             app's own explicit-component PendingIntents, so it needs no cross-app access. -->
+        <receiver
+            android:name=".tracking.TripTrackingReceiver"
             android:exported="false" />
 
         <meta-data

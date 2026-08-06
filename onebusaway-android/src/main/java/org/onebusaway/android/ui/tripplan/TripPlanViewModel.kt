@@ -20,6 +20,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
@@ -44,6 +47,7 @@ import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.location.LocationRepository
 import org.onebusaway.android.location.SearchCenter
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.TimeProvider
 
 /**
@@ -71,7 +75,7 @@ class TripPlanViewModel @Inject constructor(
      */
     fun mapPickerCenter(): Location? = searchCenter.current()
 
-    private val initialDateTimeMillis = timeProvider.now()
+    private val initialNow = WallTime(timeProvider.now())
     private val initialSettings = settingsRepository.load()
 
     /**
@@ -85,9 +89,6 @@ class TripPlanViewModel @Inject constructor(
 
     private val _formState = MutableStateFlow(
         TripPlanFormState(
-            dateTimeMillis = initialDateTimeMillis,
-            dateLabel = formatDate(initialDateTimeMillis),
-            timeLabel = formatTime(initialDateTimeMillis),
             modes = initialSettings.modes,
             maxWalkMeters = initialSettings.maxWalkMeters,
             optimizeTransfers = initialSettings.optimizeTransfers,
@@ -95,7 +96,7 @@ class TripPlanViewModel @Inject constructor(
             walkPreference = initialSettings.walkPreference,
             cyclingPreference = initialSettings.cyclingPreference,
             bikePreference = initialSettings.bikePreference
-        )
+        ).withWhen(initialNow, departNow = true, now = initialNow)
     )
     val formState: StateFlow<TripPlanFormState> = _formState.asStateFlow()
 
@@ -254,14 +255,8 @@ class TripPlanViewModel @Inject constructor(
      * the time together, so this is one write and one re-plan for both halves.
      */
     fun setDateTime(millis: Long) {
-        _formState.update {
-            it.copy(
-                dateTimeMillis = millis,
-                departNow = false,
-                dateLabel = formatDate(millis),
-                timeLabel = formatTime(millis)
-            )
-        }
+        val now = WallTime(timeProvider.now())
+        _formState.update { it.withWhen(WallTime(millis), departNow = false, now = now) }
         replanOrClearResult()
     }
 
@@ -271,15 +266,10 @@ class TripPlanViewModel @Inject constructor(
      * instant that was abandoned.
      */
     fun setDepartNow() {
-        val now = timeProvider.now()
-        _formState.update {
-            it.copy(
-                dateTimeMillis = now,
-                departNow = true,
-                dateLabel = formatDate(now),
-                timeLabel = formatTime(now)
-            )
-        }
+        // One reading, serving as both the instant to pin and the reference its day is measured
+        // against. Two reads could straddle midnight and label the clock's own "now" as tomorrow.
+        val now = WallTime(timeProvider.now())
+        _formState.update { it.withWhen(now, departNow = true, now = now) }
         replanOrClearResult()
     }
 
@@ -290,20 +280,16 @@ class TripPlanViewModel @Inject constructor(
      * instant in the form's time callout, which is the thing the rider then moves.
      */
     fun setArriving(arriving: Boolean) {
+        // Read outside the update, so the pinned instant and the day it is labelled with come from
+        // one reading — and so a retried update can't re-read the clock mid-write.
+        val now = WallTime(timeProvider.now())
         _formState.update { state ->
             if (!arriving || !state.departNow) {
                 state.copy(arriving = arriving)
             } else {
                 // Pin to the clock now, not to dateTimeMillis — under the "now" anchor that field
                 // still holds the instant the ViewModel was built, which may be long past.
-                val now = timeProvider.now()
-                state.copy(
-                    arriving = true,
-                    departNow = false,
-                    dateTimeMillis = now,
-                    dateLabel = formatDate(now),
-                    timeLabel = formatTime(now)
-                )
+                state.copy(arriving = true).withWhen(now, departNow = false, now = now)
             }
         }
         replanOrClearResult()
@@ -379,18 +365,15 @@ class TripPlanViewModel @Inject constructor(
         arriving: Boolean,
         itineraries: List<TripItinerary>
     ) {
+        val now = WallTime(timeProvider.now())
         _formState.update {
+            // A restored trip carries the instant it was planned for, so it is pinned rather than
+            // anchored to "now" — re-anchoring would silently re-time the very trip being restored.
             it.copy(
                 from = from ?: it.from,
                 to = to ?: it.to,
-                dateTimeMillis = dateTimeMillis,
-                // A restored trip carries the instant it was planned for, so it is pinned rather than
-                // anchored to "now" — re-anchoring would silently re-time the very trip being restored.
-                departNow = false,
-                dateLabel = formatDate(dateTimeMillis),
-                timeLabel = formatTime(dateTimeMillis),
                 arriving = arriving
-            )
+            ).withWhen(WallTime(dateTimeMillis), departNow = false, now = now)
         }
         if (itineraries.isNotEmpty()) {
             _planState.value = PlanResult.Success(itineraries)
@@ -420,9 +403,50 @@ class TripPlanViewModel @Inject constructor(
         planInputs.trySend(if (form.canSubmit) form.toParams(timeProvider.now()) else null)
     }
 
+    /**
+     * This form with its "when" set to [instant], and every label describing it re-derived in the same
+     * write. The three are one fact about one instant — the date, the time, and which day that is —
+     * so they move together and can never be left describing the instant before.
+     *
+     * [now] is passed in rather than read here, so one clock reading serves the whole write: the caller
+     * that pins *the clock itself* hands the same value as both arguments, and no update can straddle
+     * midnight between choosing an instant and deciding which day it falls on.
+     */
+    private fun TripPlanFormState.withWhen(instant: WallTime, departNow: Boolean, now: WallTime): TripPlanFormState = copy(
+        dateTimeMillis = instant.epochMs,
+        departNow = departNow,
+        dateLabel = formatDate(instant.epochMs),
+        timeLabel = formatTime(instant.epochMs),
+        dayRelation = dayRelationOf(instant, now)
+    )
+
     private fun formatDate(millis: Long): String = SimpleDateFormat(DATE_PATTERN, Locale.getDefault()).format(Date(millis))
 
     private fun formatTime(millis: Long): String = SimpleDateFormat(TIME_PATTERN, Locale.getDefault()).format(Date(millis))
+
+    /**
+     * Which day [instant] falls on relative to [now]. Both are [WallTime] — the device's own clock,
+     * which is the domain a rider's "today" belongs to and the one [formatDate] renders in; a server
+     * instant compared against it here would be a #1612-class skew bug, and now won't compile.
+     *
+     * Measured against the clock at the moment the label is *written*, which is what makes this a label
+     * and not live state: a form left open across midnight keeps saying what it said when the rider
+     * pinned the trip, exactly as the picker's own day dropdown holds its "Today" for as long as it is
+     * open. The instant itself never moves, so the trip that gets planned is unaffected either way.
+     */
+    private fun dayRelationOf(instant: WallTime, now: WallTime): TripDay {
+        val zone = ZoneId.systemDefault()
+        val day = instant.toLocalDate(zone)
+        val today = now.toLocalDate(zone)
+        return when (day) {
+            today -> TripDay.TODAY
+            today.plusDays(1) -> TripDay.TOMORROW
+            else -> TripDay.OTHER
+        }
+    }
+
+    /** The calendar day this instant falls on in [zone] — an unwrap for java.time, which wants millis. */
+    private fun WallTime.toLocalDate(zone: ZoneId): LocalDate = Instant.ofEpochMilli(epochMs).atZone(zone).toLocalDate()
 
     private companion object {
         const val SUGGEST_DEBOUNCE_MS = 350L
@@ -434,9 +458,12 @@ class TripPlanViewModel @Inject constructor(
          */
         val REVERSE_GEOCODE_TIMEOUT = 4.seconds
 
-        // Mirror OTPConstants.TRIP_PLAN_DATE/TIME_STRING_FORMAT (inlined to keep this JVM-pure).
+        // Inlined rather than taken from OTPConstants.TRIP_PLAN_DATE/TIME_STRING_FORMAT, to keep this
+        // JVM-pure. The hour is `h`, not that constant's `hh`: an hour is never zero-padded when
+        // spoken, and the callout now leads with the time (#2185), so "06:44 PM" put its widest,
+        // least-informative character first.
         const val DATE_PATTERN = "MMMM dd"
-        const val TIME_PATTERN = "hh:mm a"
+        const val TIME_PATTERN = "h:mm a"
     }
 }
 

@@ -120,6 +120,17 @@ data class AdvancedSettings(
     val bikePreference: BikePreference = BikePreference.MEDIUM
 )
 
+/**
+ * Which day a pinned trip instant falls on, as a rider would name it. Settled where the form's
+ * date/time labels are — against a clock reading, in the ViewModel — so the callout can state the
+ * day in words instead of a date whenever there is a word for it (#2185).
+ */
+enum class TripDay {
+    TODAY,
+    TOMORROW,
+    OTHER
+}
+
 /** A fully-specified plan request handed to [TripPlanRepository]. */
 data class TripPlanParams(
     val from: TripEndpoint,
@@ -153,6 +164,13 @@ data class TripPlanFormState(
     val departNow: Boolean = true,
     val dateLabel: String = "",
     val timeLabel: String = "",
+    /**
+     * Which day [dateTimeMillis] falls on, relative to the clock as it read when the labels above
+     * were written. The callout leads with the time and names the day only when it isn't today, so
+     * this travels with [dateLabel]/[timeLabel] rather than being re-derived per recomposition —
+     * one instant, one set of labels, no way for them to disagree.
+     */
+    val dayRelation: TripDay = TripDay.TODAY,
     val modes: TripModeSelection = TripModeSelection(),
     val wheelchair: Boolean = false,
     val optimizeTransfers: Boolean = false,

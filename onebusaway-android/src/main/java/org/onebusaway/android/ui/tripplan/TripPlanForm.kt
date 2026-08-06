@@ -186,6 +186,9 @@ object TripPlanTestTags {
     const val VEHICLE_MODE = "tripPlanVehicleMode"
     const val STREET_MODE = "tripPlanStreetMode"
 
+    /** The pinned instant, stated in full at the head of the time segment's menu. */
+    const val WHEN_TIME_HEADER = "tripPlanWhenTimeHeader"
+
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
 
@@ -296,6 +299,7 @@ fun TripPlanForm(
             departNow = state.departNow,
             dateLabel = state.dateLabel,
             timeLabel = state.timeLabel,
+            dayRelation = state.dayRelation,
             modes = state.modes,
             availableStreetModes = availableStreetModes,
             canRefresh = state.canSubmit,
@@ -661,6 +665,7 @@ private fun TripActionBar(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    dayRelation: TripDay,
     modes: TripModeSelection,
     availableStreetModes: List<StreetMode>,
     canRefresh: Boolean,
@@ -692,6 +697,7 @@ private fun TripActionBar(
             departNow = departNow,
             dateLabel = dateLabel,
             timeLabel = timeLabel,
+            dayRelation = dayRelation,
             onDepartNow = onDepartNow,
             onPickDateTime = onPickDateTime
         )
@@ -848,6 +854,7 @@ private fun WhenTimeSegment(
     departNow: Boolean,
     dateLabel: String,
     timeLabel: String,
+    dayRelation: TripDay,
     onDepartNow: () -> Unit,
     onPickDateTime: () -> Unit
 ) {
@@ -855,16 +862,27 @@ private fun WhenTimeSegment(
     val nowLabel = stringResource(R.string.trip_plan_now)
     Box(modifier) {
         SegmentButton(
-            text = if (departNow) {
-                nowLabel
-            } else {
-                stringResource(R.string.trip_plan_date_time, dateLabel, timeLabel)
-            },
+            text = if (departNow) nowLabel else whenLabel(dayRelation, dateLabel, timeLabel),
             emphasized = false,
             testTag = TripPlanTestTags.WHEN_TIME,
             onClick = { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (!departNow) {
+                // The pinned instant in full, stated once at the head of the menu. The callout is the
+                // action bar's one elastic slot and routinely ellipsizes — its abbreviated label is
+                // what fits, not necessarily what the rider needs to check — so the menu it opens is
+                // where the whole date and time are legible. A "now" trip has no such instant to state.
+                Text(
+                    text = stringResource(R.string.trip_plan_date_time, dateLabel, timeLabel),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .testTag(TripPlanTestTags.WHEN_TIME_HEADER)
+                )
+                HorizontalDivider()
+            }
             DropdownMenuItem(
                 text = { Text(nowLabel) },
                 trailingIcon = if (departNow) {
@@ -903,6 +921,20 @@ private fun WhenTimeSegment(
             )
         }
     }
+}
+
+/**
+ * A pinned instant as the callout states it (#2185): the time first, then the day — but only when the
+ * day needs saying at all. Most pinned trips are for later today, where the date was pure noise
+ * crowding out the one part the rider is reading for; tomorrow has a word, so it gets the word; and
+ * anything further out falls back to its date. The full instant is still one tap away, at the head of
+ * the menu this segment opens.
+ */
+@Composable
+private fun whenLabel(dayRelation: TripDay, dateLabel: String, timeLabel: String): String = when (dayRelation) {
+    TripDay.TODAY -> timeLabel
+    TripDay.TOMORROW -> stringResource(R.string.trip_plan_time_tomorrow, timeLabel)
+    TripDay.OTHER -> stringResource(R.string.trip_plan_time_date, timeLabel, dateLabel)
 }
 
 /** One tappable half of the "when" sentence: text plus a small chevron, on a rounded press surface. */

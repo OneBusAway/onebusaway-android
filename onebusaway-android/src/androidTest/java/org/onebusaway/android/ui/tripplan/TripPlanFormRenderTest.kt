@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -309,6 +310,62 @@ class TripPlanFormRenderTest {
     }
 
     /**
+     * A pinned instant reads time-first, and states the day only when the day needs stating (#2185).
+     * The callout is the bar's one elastic slot and routinely ellipsizes, so a date the rider already
+     * knows — today's — is exactly what pushes the time they opened the form for off the end.
+     */
+    @Test
+    fun aTripLaterTodayReadsAsJustItsTime() {
+        renderForm(pinnedOn(TripDay.TODAY))
+
+        composeRule.onNodeWithText("3:45 PM").assertIsDisplayed()
+        assertEquals(
+            "a trip later today should not restate today's date",
+            0,
+            composeRule.onAllNodesWithText("June 10", substring = true).fetchSemanticsNodes().size
+        )
+    }
+
+    @Test
+    fun aTripTomorrowNamesTheDayInWords() {
+        renderForm(pinnedOn(TripDay.TOMORROW))
+
+        composeRule.onNodeWithText("3:45 PM, tomorrow").assertIsDisplayed()
+    }
+
+    @Test
+    fun aTripFurtherOutFallsBackToItsDate() {
+        renderForm(pinnedOn(TripDay.OTHER))
+
+        composeRule.onNodeWithText("3:45 PM, June 10").assertIsDisplayed()
+    }
+
+    /**
+     * What the shortened callout leaves out has to stay reachable: the menu it opens states the pinned
+     * instant in full, above the choices, so the rider can check what the trip is pinned to without
+     * opening the picker to find out.
+     */
+    @Test
+    fun theTimeMenuStatesThePinnedInstantInFull() {
+        renderForm(pinnedOn(TripDay.TODAY))
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME_HEADER)
+            .assertTextEquals("June 10, 3:45 PM")
+    }
+
+    /** A trip anchored to "now" has no pinned instant, so there is nothing to state above the rows. */
+    @Test
+    fun theTimeMenuStatesNothingForANowTrip() {
+        renderForm(plannedState)
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME).performClick()
+
+        composeRule.onNodeWithTag(TripPlanTestTags.WHEN_TIME_HEADER).assertDoesNotExist()
+    }
+
+    /**
      * The action bar's trailing buttons stay put whatever the time segment reads. The segment is the
      * bar's one flexible slot, so it has to both hold the buttons against the edge when the label is
      * the single word "now" and cap itself when the label is a full date and time — sharing that
@@ -544,6 +601,9 @@ class TripPlanFormRenderTest {
         val y = with(d) { (4.dp + 24.dp + 49.dp * row).roundToPx() }
         return pixels[x, y]
     }
+
+    /** [plannedState] with its trip pinned to an instant that falls on [day]. */
+    private fun pinnedOn(day: TripDay) = plannedState.copy(departNow = false, dayRelation = day)
 
     private fun renderForm(
         state: TripPlanFormState,

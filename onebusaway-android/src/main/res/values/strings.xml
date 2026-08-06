@@ -1367,8 +1367,8 @@
     <!-- Trip tracking: the live countdown notification for a bus the rider chose to track (#2166) -->
     <!-- Content description for the eye on a route badge whose row has a live countdown running -->
     <string name="stop_info_arrival_tracked">Tracking this route</string>
-    <string name="bus_options_menu_track_route">Track this route</string>
-    <string name="bus_options_menu_untrack_route">Stop tracking this route</string>
+    <string name="bus_options_menu_track_route">Track route arrivals</string>
+    <string name="bus_options_menu_untrack_route">Stop tracking route arrivals</string>
     <!-- Route name, then headsign: "40 to Downtown Seattle" -->
     <string name="trip_tracking_title">%1$s to %2$s</string>
     <string name="trip_tracking_pending">Getting arrival times&#8230;</string>

@@ -26,6 +26,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import org.onebusaway.android.R
 import org.onebusaway.android.notifications.NotificationChannels
+import org.onebusaway.android.time.isEtaNow
 import org.onebusaway.android.ui.HomeActivity
 import org.onebusaway.android.ui.home.FocusedStop
 import org.onebusaway.android.ui.nav.RouteRevealExtras
@@ -324,15 +325,20 @@ class TripTrackingNotifications @Inject constructor(
         // other surface saying "1hr 3min" (#1777). Its parts alternate number/unit, so the trailing
         // unit is the tile's small text and everything before it the value.
         val parts = DisplayFormat.formatEtaParts(context, departure.etaMinutes)
+        val now = isEtaNow(departure.etaMinutes)
         return TrackedMetric(
             value = when {
                 departure.canceled -> context.getString(R.string.trip_tracking_canceled)
-                // A bus still seconds away floors to zero minutes; the arrivals pill renders that "NOW".
-                departure.etaMinutes <= 0 -> context.getString(R.string.trip_tracking_short_now)
+                // A bus still seconds away floors to zero minutes, and one that has just pulled out is
+                // still being boarded — [isEtaNow] is the same cutoff the arrivals pill renders "NOW" at,
+                // shared rather than restated so the shade and the row it was copied from cannot disagree
+                // (#2177). Every departure the card can hold is inside it anyway (see TRACKING_LINGER),
+                // so this is the whole of the card's non-canceled past.
+                now -> context.getString(R.string.trip_tracking_short_now)
                 else -> parts.dropLast(1).joinToString("") { it.text }
             },
             // Only a bare countdown takes a unit; "Now" and "Canceled" are already whole phrases.
-            unit = parts.last().text.takeIf { !departure.canceled && departure.etaMinutes > 0 },
+            unit = parts.last().text.takeIf { !departure.canceled && !now },
             dueAt = DisplayFormat.formatTime(context, departure.displayTime.epochMs)
         )
     }

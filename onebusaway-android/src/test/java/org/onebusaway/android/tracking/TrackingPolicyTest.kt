@@ -24,6 +24,7 @@ import org.junit.Test
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.etaMinutes
+import org.onebusaway.android.time.isEtaNow
 
 /**
  * The rules the tracking notification lives by: which departures a row shows, when it rolls onto the
@@ -77,7 +78,9 @@ class TrackingPolicyTest {
         val outcome = live(match(-TRACKING_LINGER), match(12.minutes))
 
         assertEquals(2, outcome.departures.size)
-        assertTrue(outcome.departures.first().etaMinutes <= 0)
+        // Not merely "still listed": at the far edge of the linger it must still *read* "Now", which is
+        // the only thing the card knows how to say about a departure that has gone (#2177).
+        assertTrue(isEtaNow(outcome.departures.first().etaMinutes))
     }
 
     @Test

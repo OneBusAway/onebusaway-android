@@ -70,6 +70,7 @@ import org.onebusaway.android.models.FrequencyWindow
 import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.isEtaNow
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.RouteRowGroup
@@ -553,7 +554,7 @@ private fun EtaContent(
         Modifier
     }
     Row(modifier = rowModifier) {
-        if (eta == 0L) {
+        if (isEtaNow(eta)) {
             Text(
                 text = stringResource(R.string.stop_info_eta_now),
                 fontSize = 30.sp,
@@ -789,7 +790,8 @@ private fun RouteArrivalRowPreview() {
                     isFavorite = true,
                     callbacks = callbacks
                 )
-                // A single-arrival route with a just-departed (recent-past) pill leading.
+                // A single-arrival route led by a just-departed pill — inside the NOW window, so it
+                // renders "NOW" rather than a negative countdown (#2177).
                 RouteArrivalRow(
                     group = RouteRowGroup(
                         listOf(

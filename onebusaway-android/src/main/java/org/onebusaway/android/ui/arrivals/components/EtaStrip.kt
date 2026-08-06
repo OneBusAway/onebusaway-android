@@ -75,6 +75,7 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.models.Status
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.isEtaNow
 import org.onebusaway.android.time.rememberLiveServerTime
 import org.onebusaway.android.ui.arrivals.ArrivalActions
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
@@ -479,12 +480,12 @@ private val PILL_BADGE_MAX_WIDTH = 72.dp
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
  * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
  * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
- * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([eta] == 0) always
+ * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([isEtaNow]) always
  * omits it too — it's a single centered label — so it's shorter by content; the strip levels it back
  * to its neighbours' height with fillMaxHeight (see EtaStrip's ReferencePillHeightFrame / EtaPillWithMenu).
  *
- * Every pill renders at the same size regardless of [eta] — a recent-past (negative-ETA) trip shows
- * its negative countdown in place at the same size as the upcoming ones, not a smaller pill.
+ * Every pill renders at the same size regardless of [eta] — a trip already gone past the NOW window
+ * shows its negative countdown in place at the same size as the upcoming ones, not a smaller pill.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -529,7 +530,7 @@ internal fun EtaPill(
     }
     // Numbers stay bold-sized, only the unit letters shrink (see formatEtaParts for the part shape;
     // etaAnnotatedString for why they render as a single AnnotatedString).
-    val etaParts = if (eta != 0L) DisplayFormat.formatEtaParts(LocalContext.current, eta) else null
+    val etaParts = if (isEtaNow(eta)) null else DisplayFormat.formatEtaParts(LocalContext.current, eta)
     // See tightLineStyle's doc: keyed to each Text's own (dominant) size, so the padding/gap values
     // below are the actual on-screen spacing rather than a guess fighting Android's hidden font padding.
     val baseTextStyle = LocalTextStyle.current
@@ -719,8 +720,11 @@ private fun EtaPillVariantsPreview() {
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
-                // A recent-past arrival: same size as the upcoming ones — negative ETAs aren't shrunk.
+                // An arrival gone past the NOW window: same size as the upcoming ones — negative ETAs
+                // aren't shrunk.
                 EtaPill(-3, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "2:57pm")
+                // Still inside it, so still NOW — as is 0 (#2177).
+                EtaPill(-1, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "2:59pm")
                 EtaPill(0, colorResource(R.color.stop_info_ontime_fill), predicted = true, clockTime = "3:00pm")
                 EtaPill(5, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "3:05pm")
                 EtaPill(12, colorResource(R.color.stop_info_early_fill), predicted = true, clockTime = "3:12pm")

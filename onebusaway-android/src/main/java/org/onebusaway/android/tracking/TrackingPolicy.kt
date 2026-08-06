@@ -19,6 +19,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
+import org.onebusaway.android.time.NOW_WINDOW
 import org.onebusaway.android.time.ServerTime
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.time.etaMinutes
@@ -85,11 +86,12 @@ sealed interface TrackingOutcome {
 }
 
 /**
- * How long a departure stays on the card past its own time. The rider is boarding in this window,
- * and a number that vanishes the instant it hits zero takes the confirmation away at the one moment
- * it is being looked at.
+ * How long a departure stays on the card past its own time: exactly as long as it still reads
+ * "Now" ([NOW_WINDOW]), by definition rather than by coincidence. The card has no rendering for a
+ * departure that has stopped being "Now" — a negative countdown on a Lock Screen is not something
+ * it ever wants to show — so the two windows being one value is what keeps that true.
  */
-val TRACKING_LINGER: Duration = 2.minutes
+val TRACKING_LINGER: Duration = NOW_WINDOW
 
 /**
  * How many departures the card lists. The row's strip can run much longer, but a notification is

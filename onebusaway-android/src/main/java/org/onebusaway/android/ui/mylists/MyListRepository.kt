@@ -46,6 +46,7 @@ import org.onebusaway.android.database.oba.StopListRow
 import org.onebusaway.android.database.oba.StopRecentRow
 import org.onebusaway.android.database.oba.TripDepartureTime
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.isEtaNow
 import org.onebusaway.android.tracking.TrackedRouteKey
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.ui.arrivals.convertArrivals
@@ -401,7 +402,10 @@ private fun List<ArrivalBadge>.flagTracked(tracked: Set<TrackedRouteKey>): List<
 }
 
 private fun ArrivalInfo.toBadge(context: Context, stop: StopListItem): ArrivalBadge {
-    val etaText = if (eta <= 0) {
+    // The same NOW cutoff every other ETA surface uses (#2177). This used to be a bare `eta <= 0`,
+    // which called a bus that left five minutes ago — well within the arrivals response's past
+    // window — "Now"; outside the window it now reports the negative minutes like the pills do.
+    val etaText = if (isEtaNow(eta)) {
         context.getString(R.string.starred_stop_arrival_now)
     } else {
         context.getString(R.string.starred_stop_arrival_min, eta.toInt())

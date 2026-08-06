@@ -18,6 +18,8 @@ package org.onebusaway.android.time
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -25,6 +27,9 @@ import org.junit.Test
  * in the server clock domain used to count ETA pills down between polls (issue #1781). It anchors on
  * a poll's server-clock reading and advances it by elapsed **device** time, so the result is immune to
  * device clock skew (#1612), mirroring `serverNowMs` in `VehicleInfoWindow`.
+ *
+ * Also covers the two shared rules every ETA surface reads off that clock: [etaMinutes]/[untilNextMinute],
+ * the number and when it turns over, and [isEtaNow], the cutoff at which the number gives way to "NOW".
  */
 class ServerTimeTickerTest {
 
@@ -42,6 +47,30 @@ class ServerTimeTickerTest {
         // And it really is the instant the printed number changes.
         assertEquals(5L, etaMinutes(due, elevenPast))
         assertEquals(4L, etaMinutes(due, elevenPast + untilNextMinute(elevenPast)))
+    }
+
+    @Test
+    fun `NOW covers the whole window a departure is still being boarded in`() {
+        // Issue #2177: this used to be an exact-zero test in the ETA pill, so NOW was reachable for at
+        // most the one minute a departure spent at zero and a bus that had just pulled out printed
+        // "-1min" — while the trip-tracking notification, on the same departure, said "Now".
+        assertFalse(isEtaNow(1))
+        assertTrue(isEtaNow(0))
+        assertTrue(isEtaNow(-1))
+        assertTrue(isEtaNow(-2))
+        // Past the window it is a countdown again: the arrivals response reaches further back than
+        // this, and a bus that left three minutes ago is gone rather than here.
+        assertFalse(isEtaNow(-3))
+    }
+
+    @Test
+    fun `the window's far edge is the last minute the tracking card holds a departure`() {
+        // The notification drops a departure once it is past TRACKING_LINGER, and renders every one it
+        // keeps as "Now" — so the two only stay consistent if nothing it can still hold falls outside
+        // the NOW window. Stated as a test because the shade disagreeing with the arrivals row it was
+        // copied from is exactly what #2177 was.
+        assertTrue(isEtaNow(-NOW_WINDOW.inWholeMinutes))
+        assertFalse(isEtaNow(-NOW_WINDOW.inWholeMinutes - 1))
     }
 
     @Test

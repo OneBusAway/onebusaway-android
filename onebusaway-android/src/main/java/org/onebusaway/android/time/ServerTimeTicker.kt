@@ -21,6 +21,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.delay
 
 /**
@@ -84,5 +85,29 @@ fun etaMinutes(displayTime: ServerTime, now: ServerTime): Long = displayTime.epo
  * surfaces showing the same arrival come to disagree by one.
  */
 fun untilNextMinute(now: ServerTime): Duration = (MS_PER_MINUTE - now.epochMs % MS_PER_MINUTE).milliseconds
+
+/**
+ * How long past its own time a departure still reads as "NOW" (issue #2177). The bus is at the
+ * stop and the rider is boarding across this window, so it is the answer to the question they are
+ * actually asking; a countdown that reverts to a number the instant it touches zero takes the
+ * confirmation away at the one moment it is being looked at.
+ *
+ * Two minutes rather than "any time in the past" because the arrivals window really does reach
+ * further back than that — the OBA arrivals request keeps recently-departed trips for a few minutes
+ * — and a bus that left five minutes ago is gone, not here. Past this it is honest to say how long
+ * ago it went.
+ */
+val NOW_WINDOW: Duration = 2.minutes
+
+/**
+ * Whether an ETA of [minutes] whole minutes (as [etaMinutes] computes it) reads as "NOW" rather
+ * than as a countdown.
+ *
+ * The single place the cutoff lives, for the same reason [etaMinutes] is the single place the
+ * number does: the ETA strip, the flat arrival row, the starred-stop badge and the trip-tracking
+ * notification all show the *same* departure, and when each restated the cutoff for itself they
+ * disagreed — the shade said "Now" while the arrivals row beside it said "-2min" (#2177).
+ */
+fun isEtaNow(minutes: Long): Boolean = minutes <= 0L && minutes >= -NOW_WINDOW.inWholeMinutes
 
 private const val MS_PER_MINUTE = 60 * 1000L

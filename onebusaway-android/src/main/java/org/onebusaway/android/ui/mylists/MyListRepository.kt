@@ -19,6 +19,7 @@ import android.content.Context
 import android.text.format.DateUtils
 import androidx.annotation.ArrayRes
 import androidx.annotation.StringRes
+import androidx.annotation.VisibleForTesting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -400,8 +401,24 @@ private fun List<ArrivalBadge>.flagTracked(tracked: Set<TrackedRouteKey>): List<
     badge.copy(tracked = key != null && key in tracked)
 }
 
+/**
+ * Whether a badge's ETA reads "NOW": the arrival falls in the current minute, and only then.
+ *
+ * Deliberately *not* `eta <= 0`, which is what this used to be (#2180). Departed buses reach this
+ * surface routinely — the arrivals request sends no `minutesBefore`, so the server's own past window
+ * applies, and [convertArrivals] keeps negative ETAs whenever "Show departed buses" is on (the
+ * default) — so an unbounded test labelled a bus that left five minutes ago "NOW". Exact zero is the
+ * cutoff [org.onebusaway.android.ui.arrivals.components.EtaPill] and the flat arrival row have always
+ * used; a departed bus shows its negative minutes here the way it does there.
+ *
+ * Kept as a pure function so the rule is JVM-testable — the rest of [toBadge] needs a `Context` for
+ * its strings, and that is exactly how the wrong cutoff went unnoticed.
+ */
+@VisibleForTesting
+internal fun badgeEtaIsNow(eta: Long): Boolean = eta == 0L
+
 private fun ArrivalInfo.toBadge(context: Context, stop: StopListItem): ArrivalBadge {
-    val etaText = if (eta <= 0) {
+    val etaText = if (badgeEtaIsNow(eta)) {
         context.getString(R.string.starred_stop_arrival_now)
     } else {
         context.getString(R.string.starred_stop_arrival_min, eta.toInt())

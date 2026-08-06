@@ -420,9 +420,12 @@ class TripPlanViewModel @Inject constructor(
          */
         val REVERSE_GEOCODE_TIMEOUT = 4.seconds
 
-        // Mirror OTPConstants.TRIP_PLAN_DATE/TIME_STRING_FORMAT (inlined to keep this JVM-pure).
+        // Inlined rather than taken from OTPConstants.TRIP_PLAN_DATE/TIME_STRING_FORMAT, to keep this
+        // JVM-pure. The hour is `h`, not that constant's `hh`: an hour is never zero-padded when
+        // spoken, and the callout now leads with the time (#2185), so "06:44 PM" put its widest,
+        // least-informative character first.
         const val DATE_PATTERN = "MMMM dd"
-        const val TIME_PATTERN = "hh:mm a"
+        const val TIME_PATTERN = "h:mm a"
     }
 }
 

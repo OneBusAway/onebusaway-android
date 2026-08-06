@@ -575,6 +575,23 @@ class TripPlanViewModelTest {
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
     }
 
+    /**
+     * A single-digit hour isn't padded — "6:44 PM", not "06:44 PM". Asserted as the absence of the
+     * pad rather than against a literal, which would pin the runner's locale: the padding is the
+     * pattern's doing (`h`, not `hh`) and so is locale-independent, but the digits aren't.
+     */
+    @Test
+    fun `the time label does not zero-pad the hour`() = runTest {
+        val vm = viewModel()
+
+        vm.setDateTime(millisOn(LocalDate.of(2026, 6, 10), hour = 6))
+
+        assertFalse(
+            "expected an unpadded hour, but the label was ${vm.formState.value.timeLabel}",
+            vm.formState.value.timeLabel.startsWith("0")
+        )
+    }
+
     @Test
     fun `a form starts anchored to now`() = runTest {
         assertTrue(viewModel().formState.value.departNow)

@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.delay
+import org.onebusaway.android.directions.util.ConversionUtils
+import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.icons.AppIcons
 
 private const val UI_TICK_MS = 1_000L
@@ -63,6 +65,7 @@ private val ScheduleColor = Color(0xFF4488FF)
 private val TrajectoryColor = Color(0xFF44CC44)
 private val EstimateColor = Color(0xFFBBBBBB)
 private val ConfidenceColor = Color(0x66BBBBBB)
+private val PdfSeparatorColor = Color(0xAAFFFFFF)
 private val PdfColor = Color(0x40BBBBBB)
 private val GridColor = Color(0xFF333333)
 private val NowColor = Color(0xFFFF4444)
@@ -141,6 +144,13 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         }
     }
     val labelPaint = remember(density) { textPaint(density, android.graphics.Color.LTGRAY, 15f) }
+    // Units resolved once here, not inside the formatter: reading the preference from a leaf would
+    // reach Application.get(), which throws under layoutlib and takes every preview down with it.
+    val context = LocalContext.current
+    val metric = unitsAreMetric()
+    val formatDistance: (Double) -> String = remember(context, metric) {
+        { meters -> ConversionUtils.getFormattedDistance(meters, context, metric) }
+    }
     val nowLabelPaint = remember(density) { textPaint(density, "#FF4444".toColorInt(), 15f) }
     val deviationLabelPaint = remember(density) {
         textPaint(density, "#FFAA00".toColorInt(), 16.5f, bold = true)
@@ -177,19 +187,26 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         )
         if (!viewport.setupVisibleWindow(size.width, size.height)) return@Canvas
 
-        drawGrid(viewport, labelPaint, timeFormat)
+        drawGrid(viewport, labelPaint, timeFormat, formatDistance)
         drawSchedule(viewport, trajectory.schedule)
         drawObservations(viewport, trajectory.observations)
-        trajectory.extrapolation?.let { drawExtrapolation(viewport, it, labelPaint, deviationLabelPaint) }
+        trajectory.extrapolation?.let {
+            drawExtrapolation(viewport, it, labelPaint, deviationLabelPaint, formatDistance)
+        }
         drawNowLine(viewport, trajectory.nowMs.epochMs, nowLabelPaint, timeFormat)
     }
 }
 
-private fun DrawScope.drawGrid(viewport: GraphViewport, labelPaint: Paint, timeFormat: String) {
+private fun DrawScope.drawGrid(
+    viewport: GraphViewport,
+    labelPaint: Paint,
+    timeFormat: String,
+    formatDistance: (Double) -> String
+) {
     val native = drawContext.canvas.nativeCanvas
     viewport.forEachDistTick { x, dist ->
         drawLine(GridColor, Offset(x, viewport.marginTop), Offset(x, viewport.graphBottom), 2f)
-        native.drawText("${dist.toInt()}m", x + 2f, viewport.graphBottom + labelPaint.textSize, labelPaint)
+        native.drawText(formatDistance(dist), x + 2f, viewport.graphBottom + labelPaint.textSize, labelPaint)
     }
     viewport.forEachTimeTick { y, time ->
         drawLine(GridColor, Offset(viewport.marginLeft, y), Offset(viewport.graphRight, y), 2f)
@@ -230,12 +247,13 @@ private fun DrawScope.drawExtrapolation(
     viewport: GraphViewport,
     series: ExtrapolationSeries,
     labelPaint: Paint,
-    deviationLabelPaint: Paint
+    deviationLabelPaint: Paint,
+    formatDistance: (Double) -> String
 ) {
     val anchor = Offset(viewport.toPixelX(series.anchor.distanceMeters), viewport.toPixelY(series.anchor.timeMs.epochMs))
     val median = Offset(viewport.toPixelX(series.medianMeters), viewport.toPixelY(series.nowMs.epochMs))
 
-    // 80% CI: dashed lines from the anchor to the low/high bounds at "now".
+    // 98% CI: dashed lines from the anchor to the low/high bounds at "now" — the outer reach.
     val low = Offset(viewport.toPixelX(series.lowMeters), viewport.toPixelY(series.nowMs.epochMs))
     val high = Offset(viewport.toPixelX(series.highMeters), viewport.toPixelY(series.nowMs.epochMs))
     drawLine(ConfidenceColor, anchor, low, 3f, pathEffect = CiDashes)
@@ -254,6 +272,16 @@ private fun DrawScope.drawExtrapolation(
             close()
         }
         drawPath(path, PdfColor)
+
+        // Ticks at the 10th/50th/90th, rising from the axis to the density's own height there, so
+        // each one reads as a division of the shape rather than a line drawn over it.
+        series.separatorMeters.forEach { meters ->
+            val height = pdfHeightAt(series.pdf, meters)
+            if (height > 0f) {
+                val x = viewport.toPixelX(meters)
+                drawLine(PdfSeparatorColor, Offset(x, baseY), Offset(x, baseY - height * maxPx), 2f)
+            }
+        }
     }
 
     // Median estimate, solid: anchor -> projected point where it meets the "now" line.
@@ -263,7 +291,7 @@ private fun DrawScope.drawExtrapolation(
     // landing at the median distance — the centerline of the position PDF below.
     drawLine(EstimateColor, median, Offset(median.x, viewport.graphBottom), 3f, pathEffect = CiDashes)
     drawContext.canvas.nativeCanvas.drawText(
-        "~${series.medianMeters.toInt()}m",
+        "~${formatDistance(series.medianMeters)}",
         median.x + 4f,
         viewport.graphBottom - 6f,
         labelPaint
@@ -292,4 +320,19 @@ private fun DrawScope.drawNowLine(viewport: GraphViewport, nowMs: Long, nowLabel
     drawLine(NowColor, Offset(viewport.marginLeft, y), Offset(viewport.graphRight, y), 2f, pathEffect = NowDashes)
     val label = "now ${DateFormat.format(timeFormat, nowMs)}"
     drawContext.canvas.nativeCanvas.drawText(label, viewport.marginLeft + 5f, y - 4f, nowLabelPaint)
+}
+
+/**
+ * The density's normalized height at [meters], interpolated between the bins either side. Zero
+ * outside the histogram's range, so a separator that falls off the clipped tail draws nothing
+ * rather than a full-height line at the edge.
+ */
+private fun pdfHeightAt(bins: List<PdfBin>, meters: Double): Float {
+    if (bins.size < 2) return 0f
+    if (meters < bins.first().distanceMeters || meters > bins.last().distanceMeters) return 0f
+    val i = bins.indexOfLast { it.distanceMeters <= meters }.coerceIn(0, bins.size - 2)
+    val span = bins[i + 1].distanceMeters - bins[i].distanceMeters
+    if (span <= 0.0) return bins[i].normalizedHeight.toFloat()
+    val fraction = (meters - bins[i].distanceMeters) / span
+    return (bins[i].normalizedHeight + fraction * (bins[i + 1].normalizedHeight - bins[i].normalizedHeight)).toFloat()
 }

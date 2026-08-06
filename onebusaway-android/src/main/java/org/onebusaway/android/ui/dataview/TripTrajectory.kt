@@ -51,6 +51,8 @@ data class ExtrapolationSeries(
     val lowMeters: Double,
     val highMeters: Double,
     val pdf: List<PdfBin>,
+    /** Distances of [PDF_SEPARATOR_QUANTILES], for tick marks inside the density. */
+    val separatorMeters: List<Double> = emptyList(),
     val scheduleAtMedianMs: ServerTime? = null
 )
 
@@ -81,9 +83,20 @@ const val PDF_BIN_HIGH_QUANTILE = 0.95
 /** Number of bins across the position-PDF histogram. */
 const val PDF_BIN_COUNT = 160
 
-/** The 80% credible interval bounds drawn from the anchor. */
-const val CI_LOW_QUANTILE = 0.10
-const val CI_HIGH_QUANTILE = 0.90
+/**
+ * The credible-interval bounds drawn as a wedge from the anchor: a wide 98% span, so the wedge
+ * shows the full plausible reach rather than the bulk. The bulk is read off the density instead,
+ * from [PDF_SEPARATOR_QUANTILES].
+ */
+const val CI_LOW_QUANTILE = 0.01
+const val CI_HIGH_QUANTILE = 0.99
+
+/**
+ * Quantiles ticked inside the position density. These carry the reading the wedge used to: where
+ * the middle 80% sits and where its centre is. Splitting the two means one glance gives both the
+ * outside edge of the estimate and its shape.
+ */
+val PDF_SEPARATOR_QUANTILES = listOf(0.10, 0.50, 0.90)
 
 /**
  * The position-PDF histogram: [binCount] equal-width bins spanning the distribution's
@@ -204,6 +217,9 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
         lowMeters = low,
         highMeters = high,
         pdf = pdfBins(distribution),
+        separatorMeters = PDF_SEPARATOR_QUANTILES
+            .map { distribution.quantile(it) }
+            .filter { it.isFinite() },
         scheduleAtMedianMs = interpolateScheduleTime(schedule, median)
     )
 }

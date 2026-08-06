@@ -77,6 +77,9 @@ private fun PlanQuery.Leg.toTripLeg(): TripLeg = TripLeg(
     headsign = trip?.tripHeadsign,
     tripId = trip?.gtfsId,
     realTime = realTime ?: false,
+    // Null on every leg that isn't a street leg, which is where the question doesn't arise — see the
+    // field's note in Plan.graphql and on [TripLeg.rentedVehicle].
+    rentedVehicle = rentedBike ?: false,
     interlineWithPreviousLeg = interlineWithPreviousLeg ?: false,
     distance = distance ?: 0.0,
     duration = (duration ?: 0.0).seconds,

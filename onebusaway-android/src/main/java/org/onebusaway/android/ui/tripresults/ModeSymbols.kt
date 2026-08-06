@@ -19,7 +19,6 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.directions.model.TripVertexType
 
 /**
  * Builds the [ModeSymbol] sequence an itinerary option card shows (#2047) — the whole trip in travel
@@ -132,19 +131,22 @@ internal object ModeSymbols {
  * verb, everything else walks — so the timeline's header can't disagree with the step text the same
  * leg produced.
  *
- * A `BICYCLE` leg is a *rented* bike when either of its endpoints is a vehicle-rental place: OTP
- * populates `rentalVehicle`/`vehicleRentalStation` on exactly those places, which the adapter turns
- * into [TripVertexType.BIKESHARE] (see `Otp2PlanAdapters.inferVertexType`), so reading it is a
- * structural fact rather than a guess about the leg. Either endpoint counts, not just the pick-up: a
- * dockless rental can be left at a plain street corner and a docked one starts at a station, and both
- * are the same act to the rider.
+ * A `BICYCLE` leg is a *rented* bike when OTP says the rider is on a hired one — [TripLeg.rentedVehicle],
+ * the server's own `rentedBike`, which it sets from the routing state that produced the leg. This used
+ * to be read off the leg's endpoints instead (either one being a vehicle-rental place), which is a
+ * structural signal rather than a guess but still an inference about a fact the server states outright
+ * (#2159). Reading the stated field also gives the OTP1 path the split, which endpoint metadata alone
+ * could not.
+ *
+ * The two were checked against the live OTP2 deployment before the switch (2026-08-06, 60 bikeshare
+ * plans over 784 legs) and never disagreed on a `BICYCLE` leg: all 58 rental rides were both flagged
+ * and endpoint-marked, and an own-bike plan's ride came back flagged false with no rental endpoint.
+ * They disagree only on the *walk* legs either side of a rental ride — 58 of them, each ending at the
+ * hired vehicle and so endpoint-marked, none flagged, because a walk to a bike is not ridden on one —
+ * which this never asked about, since only `BICYCLE` reaches the branch.
  */
 internal fun TripLeg.streetMode(): StreetMode = when (mode) {
-    TripMode.BICYCLE -> if (from.vertexType == TripVertexType.BIKESHARE || to.vertexType == TripVertexType.BIKESHARE) {
-        StreetMode.BIKESHARE
-    } else {
-        StreetMode.BIKE
-    }
+    TripMode.BICYCLE -> if (rentedVehicle) StreetMode.BIKESHARE else StreetMode.BIKE
     TripMode.CAR -> StreetMode.CAR
     else -> StreetMode.WALK
 }

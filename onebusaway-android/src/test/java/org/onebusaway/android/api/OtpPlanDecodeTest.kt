@@ -18,6 +18,7 @@ package org.onebusaway.android.api
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -151,6 +152,33 @@ class OtpPlanDecodeTest {
         val error = response.error!!
         assertEquals(404, error.id)
         assertEquals("Path not found", error.msg)
+    }
+
+    /**
+     * OTP1 publishes the same `rentedBike` OTP2 does, on every leg (#2159) — so this path gets the
+     * bikeshare/own-bike split too, which the endpoint metadata alone never gave it: OTP1's `/plan`
+     * carries a bare `bikeShareId` and no network, vehicle type or rental URI at all.
+     */
+    @Test
+    fun mapsTheRentedVehicleFlag() {
+        val body = """
+            { "plan": { "itineraries": [ { "startTime": 1, "legs": [
+              { "mode": "BICYCLE", "startTime": 1, "endTime": 2, "rentedBike": true,
+                "from": { "name": "X", "vertexType": "BIKESHARE", "bikeShareId": "bs_9" },
+                "to": { "name": "Y" } },
+              { "mode": "BICYCLE", "startTime": 1, "endTime": 2, "rentedBike": false,
+                "from": { "name": "X" }, "to": { "name": "Y" } },
+              { "mode": "WALK", "startTime": 1, "endTime": 2,
+                "from": { "name": "X" }, "to": { "name": "Y" } }
+            ] } ] } }
+        """.trimIndent()
+
+        val legs = OtpPlanParser.parse(body).plan!!.itineraries[0].toTripItinerary().legs
+        assertTrue(legs[0].rentedVehicle)
+        assertFalse(legs[1].rentedVehicle)
+        // A leg that didn't state it isn't one whose rental status is unknown — OTP1 states it on
+        // every leg, so absence means a response that isn't OTP1's `/plan`.
+        assertFalse(legs[2].rentedVehicle)
     }
 
     /** An unknown enum string must degrade to null rather than blow up the whole parse. */

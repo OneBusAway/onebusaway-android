@@ -19,7 +19,6 @@ import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
-import org.onebusaway.android.directions.model.TripVertexType
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.RouteBadgeRequest
@@ -71,17 +70,19 @@ internal data class ItineraryLegStyle(
 internal enum class ItineraryLegKind { WALK, BIKE, BIKESHARE, CAR, TRANSIT }
 
 /**
- * Which stroke this leg draws. A bikeshare leg is a `BICYCLE` leg that *starts* at a rental dock, which is
- * how OTP models one: walk to the dock, ride, dock again. It reads only the near end deliberately — this
- * asks what the rider is doing for the whole leg, not where its docks are, which is
- * [DirectionsMapController.bikeStationIdsFromItinerary]'s question (it reads both ends, because a ride has
- * a station to show at each).
+ * Which stroke this leg draws. A bikeshare leg is a `BICYCLE` leg OTP flagged as ridden on a hired vehicle
+ * ([TripLeg.rentedVehicle], the server's own `rentedBike`) — the same fact the option card's
+ * [streetMode][org.onebusaway.android.ui.tripresults.streetMode] reads, so the line under a card can't be
+ * a plain bike while the card's glyph says bikeshare. It used to be inferred from the leg *starting* at a
+ * rental place, which asked where the docks were in order to answer what the rider is doing (#2159); where
+ * the docks are is [DirectionsMapController.bikeStationIdsFromItinerary]'s question, and it still reads
+ * both endpoints, because a ride has a station to show at each.
  */
 internal fun TripLeg.legKind(): ItineraryLegKind = when {
     mode?.isTransit == true -> ItineraryLegKind.TRANSIT
     mode == TripMode.CAR -> ItineraryLegKind.CAR
     mode == TripMode.BICYCLE ->
-        if (from.vertexType == TripVertexType.BIKESHARE) ItineraryLegKind.BIKESHARE else ItineraryLegKind.BIKE
+        if (rentedVehicle) ItineraryLegKind.BIKESHARE else ItineraryLegKind.BIKE
     // Everything else walks, matching how the drawer's timeline classifies a leg it has no verb for.
     else -> ItineraryLegKind.WALK
 }

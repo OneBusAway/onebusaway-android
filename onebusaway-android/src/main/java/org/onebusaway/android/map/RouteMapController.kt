@@ -301,11 +301,13 @@ class RouteMapController(
     private val isInterlineComposite: Boolean
         get() = extraSegments.any { it.relationship == RouteFocusRelationship.STAY_ABOARD }
 
-    /** The loaded [RouteMap] a piece of the ride is drawn from — an extra segment, or a ridden span
-     *  ([spanColor]): the leader's own route when the ids match (a self-interline's other direction) or the
-     *  piece names none, else that route's separately-loaded map. Null until that load lands, which is what
-     *  a caller reads as "not loaded yet". */
-    private fun loadedRouteMap(id: String?): RouteMap? = if (id == null || id == routeId) routeShape else extraRouteMaps[id]
+    /** The loaded [RouteMap] a piece of the ride naming route [id] is drawn from — an extra segment, or a
+     *  ridden span ([spanColor]): the leader's own route when the ids match (a self-interline's other
+     *  direction), else that route's separately-loaded map. Null until that load lands, which is what a
+     *  caller reads as "not loaded yet". Takes an id a piece actually names: a piece naming *no* route has
+     *  no map of its own to wait for, and answering the leader's for it would say a route it isn't ridden
+     *  as is the one that colours it. */
+    private fun loadedRouteMap(id: String): RouteMap? = if (id == routeId) routeShape else extraRouteMaps[id]
 
     private fun RouteFocusSegment.routeMap(): RouteMap? = loadedRouteMap(routeId)
 
@@ -681,7 +683,8 @@ class RouteMapController(
      * The shown route's colour as this map draws it (also the band tint's basis): the agency's hue put
      * through this session's [palette], or the default when the route carries no usable colour. The palette
      * is what makes a drill-in land on the colour the itinerary's own line had, which is why it travels with
-     * it; the ridden segment resolves its own colour per span ([spanColor]) rather than through here.
+     * it; a ridden segment resolves its own colour per span ([spanColor]) and reaches this only for a span
+     * that names no route at all.
      */
     private fun currentRouteColor(): Int = palette.lineColor((_loadedRoute.value as? LoadedRoute.Loaded)?.route?.color) ?: DEFAULT_ROUTE_LINE_COLOR
 
@@ -700,8 +703,19 @@ class RouteMapController(
      * with its own null. That is the whole point of declining to stand in for a loaded route here: the
      * corridor beneath the span is drawn from that same route, so both must reach the fallback together or
      * the span is a line its own approach can't match.
+     *
+     * A span naming **no** route is the exception, and takes the other branch entirely: no load will ever
+     * answer for it, so the plan has the only colour it will ever have — permanently, not for a window. Such
+     * a span is either a ride leg whose route couldn't be resolved to an OBA id (dropped from
+     * [extraSegments] too, so no corridor of its own is drawn to match) or the whole undivided ride the
+     * drawer falls back to, which has no plan colour either and draws in the shown route's, as that ride
+     * always has. Never the leader's loaded route: it is not ridden as that route, and borrowing its colour
+     * would draw the mid-ride change of route away.
      */
-    private fun spanColor(span: RiddenSpan): Int? = palette.lineColor(riddenSpanColorSource(span, loadedRouteMap(span.routeId)?.route))
+    private fun spanColor(span: RiddenSpan): Int? = when (val id = span.routeId) {
+        null -> palette.lineColor(riddenSpanColorSource(span, loadedRoute = null)) ?: currentRouteColor()
+        else -> palette.lineColor(riddenSpanColorSource(span, loadedRouteMap(id)?.route))
+    }
 
     /**
      * Resolve (or clear) the selected vehicle's route continuation (#1691); driven by [selectionJob]'s
@@ -863,8 +877,9 @@ class RouteMapController(
     // in the pure function, so this stays a plumb-through.
     private fun publishMapPresentation() {
         // The shown route's colour, for the selected trip to fall back to. A ridden span resolves its own
-        // ([spanColor]) and reaches the renderer's default the way every other route line does, so it isn't
-        // a consumer of this.
+        // ([spanColor]) and reaches the renderer's default the way every other route line does, so it reads
+        // this only in the one case that has no route to resolve through — and asks for it there itself,
+        // rather than every publish resolving it for a span that usually doesn't want it.
         val routeColor = currentRouteColor()
         // One snapshot of the focused-stop layer for the whole publish, so the plan can't read a
         // half-swapped focus (its geometry and stops resolve independently).

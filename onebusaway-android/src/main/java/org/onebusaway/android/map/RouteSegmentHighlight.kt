@@ -89,6 +89,11 @@ data class RiddenSpan(
  * colour would be a line its own approach couldn't match. Passing the route itself rather than its colour
  * is what keeps "hasn't loaded" and "loaded, publishes nothing" apart — they take opposite branches here,
  * and a bare `Int?` cannot tell them apart.
+ *
+ * A span whose [RiddenSpan.routeId] never resolved is handed no [loadedRoute] at all — not the ride's shown
+ * route, which is not what it is ridden as — so the plan answers for it permanently rather than for a load
+ * window. The caller decides what a span with neither is (see [RouteMapController.spanColor]); here it is
+ * the same "nothing published a colour" null as any other.
  */
 internal fun riddenSpanColorSource(span: RiddenSpan, loadedRoute: ObaRoute?): Int? = if (loadedRoute == null) span.plannedColor else loadedRoute.color
 

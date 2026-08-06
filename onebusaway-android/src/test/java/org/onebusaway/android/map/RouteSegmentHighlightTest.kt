@@ -235,6 +235,17 @@ class RouteSegmentHighlightTest {
     }
 
     @Test
+    fun riddenSpanColorSource_aSpanNamingNoRoute_keepsThePlannedColourForGood() {
+        // An interline leg whose route didn't resolve to an OBA id: nothing will ever load for it, and the
+        // caller hands it no route rather than the ride's shown one — which is a route it isn't ridden as.
+        // So the plan is its colour permanently, not for a load window, and the mid-ride change of route
+        // the span exists to show survives the load instead of flattening into the leader's colour.
+        val span = RiddenSpan(segment, routeId = null, plannedColor = 0xFF00A94F.toInt())
+
+        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loadedRoute = null))
+    }
+
+    @Test
     fun upstreamTo_clipsEveryVariantAtTheBoardingPoint_dropsVariantsThatNeverReachIt() {
         val trunk = RoutePolyline(color = 1, points = listOf(GeoPoint(47.58, -122.33), GeoPoint(47.66, -122.33)))
         // Reaches the boarding point up a western street instead, then branches east — a second valid

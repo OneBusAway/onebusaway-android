@@ -74,11 +74,14 @@ data class TripTrajectory(
     val nowMs: ServerTime = ServerTime(0L)
 )
 
-/** Lower bound of the position-PDF histogram window (quantile). */
-const val PDF_BIN_LOW_QUANTILE = 0.0
-
-/** Upper bound of the position-PDF histogram window (quantile) — the long tail is clipped. */
-const val PDF_BIN_HIGH_QUANTILE = 0.95
+/**
+ * The position-PDF histogram window, in quantiles: nearly the whole distribution, so the density
+ * is drawn out to where it genuinely runs out rather than being cut off mid-slope. A visible
+ * truncation at the right edge now means the *distribution* ends there — the first-passage model
+ * clamps at the last scheduled stop — not that the window did the cutting.
+ */
+const val PDF_BIN_LOW_QUANTILE = 0.001
+const val PDF_BIN_HIGH_QUANTILE = 0.999
 
 /** Number of bins across the position-PDF histogram. */
 const val PDF_BIN_COUNT = 160

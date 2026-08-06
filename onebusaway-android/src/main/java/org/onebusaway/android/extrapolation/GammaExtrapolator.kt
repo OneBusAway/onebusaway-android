@@ -16,15 +16,14 @@
 package org.onebusaway.android.extrapolation
 
 import kotlin.math.exp
-import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.AffineTransformDistribution
 import org.onebusaway.android.extrapolation.math.prob.FrozenDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaDistribution
 import org.onebusaway.android.extrapolation.math.prob.GammaMixtureDistribution
+import org.onebusaway.android.extrapolation.math.prob.PiecewiseLinearTransformDistribution
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
-import org.onebusaway.android.models.ObaTripSchedule
 import org.onebusaway.android.time.WallTime
 
 // H34 two-gamma mixture parameters, fitted on span-weighted King County Metro data (in mph).
@@ -43,37 +42,69 @@ internal const val MPS_TO_MPH = 2.23694
  * Per-trip extrapolator for bus-like routes using the H34 two-gamma mixture speed distribution
  * model. Conditioned on scheduled speed only; the slow component (constant shape) captures
  * delayed/stopped vehicles while the fast component is ensemble-mean-locked to the schedule speed.
+ *
+ * The sampled speed is a *pace* relative to the schedule, not a fixed ground speed held for the
+ * whole horizon: it is carried forward along the schedule's own distance-against-travel-time curve
+ * ([TravelProfile]), so an express route crossing from a freeway segment onto city streets bends
+ * there — median and confidence interval together — rather than gliding on at freeway speed until
+ * the next fix lands (#2137).
  */
 class GammaExtrapolator(state: TripState) : Extrapolator(state) {
 
-    // One extrapolator exists per immutable TripState, so the fitted distribution needs no
-    // cache key — instance identity is the invalidation.
-    private var cachedDistribution: ProbDistribution? = null
+    /** The two query-time-independent halves of the model: how fast, and along what. */
+    private class Fit(val speedDist: ProbDistribution, val profile: TravelProfile)
+
+    // One extrapolator exists per immutable TripState, whose anchor distance is likewise frozen, so
+    // this is really a per-instance memo — the distance key just keeps a direct doExtrapolate caller
+    // from reading a fit built for a different position. NaN never equals anything, so the first
+    // call always computes; a null fit is memoized too, since it can't start succeeding.
+    private var cachedFit: Fit? = null
+    private var cachedFitDist = Double.NaN
 
     override fun doExtrapolate(
         lastDist: Double,
         lastTime: WallTime,
         queryTime: WallTime
     ): ExtrapolationResult {
+        val fit = resolveFit(lastDist) ?: return ExtrapolationResult.MissingSchedule
         val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
-        val speedDist = resolveDistribution() ?: return ExtrapolationResult.MissingSchedule
+
+        // Two composed changes of variable: speed (mph) → schedule travel time spent (s) → distance
+        // (m). A vehicle running at x mph where the schedule budgets v_anchor covers, in dtSec of
+        // wall time, the ground the schedule allows dtSec * x / v_anchor seconds for; the profile
+        // then says where that much scheduled travel puts it. Both maps are monotone, so every
+        // quantile is carried along the same bent curve.
+        //
+        // dtSec is 0 only when queried at exactly the anchor instant (WallTime is whole millis, so
+        // there is no arbitrarily-small-but-positive case). It needs no special handling: the affine
+        // collapses to a point mass at zero travel time, which the profile maps back to lastDist.
+        val paceToScheduleSeconds = dtSec / (fit.profile.anchorSpeedMps * MPS_TO_MPH)
         return ExtrapolationResult.Success(
-            AffineTransformDistribution(speedDist, lastDist, dtSec / MPS_TO_MPH)
+            PiecewiseLinearTransformDistribution(
+                AffineTransformDistribution(fit.speedDist, 0.0, paceToScheduleSeconds),
+                fit.profile.travelSeconds,
+                fit.profile.distances
+            )
         )
     }
 
-    private fun resolveDistribution(): ProbDistribution? {
-        cachedDistribution?.let {
-            return it
-        }
-
-        val lastStatus = state.history.lastOrNull()?.status ?: return null
-        val schedule = state.schedule
-        val scheduleSpeed =
-            schedule?.speedAtDistance(lastStatus.scheduledDistanceAlongTrip ?: return null)
-                ?: return null
-
-        return buildH34SpeedDistribution(scheduleSpeed).also { cachedDistribution = it }
+    /**
+     * The speed model and travel profile for a vehicle at [lastDist], or null when the schedule
+     * can't support one.
+     *
+     * Both are keyed off where the vehicle **actually is**, not where the schedule says it should
+     * be. Scheduled speeds are a property of the ground — a freeway segment stays a freeway segment
+     * — so a bus running late is still governed by the zone it currently occupies, and starting the
+     * profile anywhere but its real position would extrapolate from a place it isn't.
+     */
+    private fun resolveFit(lastDist: Double): Fit? {
+        if (cachedFitDist == lastDist) return cachedFit
+        cachedFitDist = lastDist
+        cachedFit =
+            state.schedule?.travelProfileFrom(lastDist)?.let {
+                Fit(buildH34SpeedDistribution(it.anchorSpeedMps), it)
+            }
+        return cachedFit
     }
 }
 
@@ -119,30 +150,6 @@ internal fun buildH34SpeedDistribution(schedSpeedMps: Double): ProbDistribution 
 
     val fast = GammaDistribution(alpha2, scale2)
     return FrozenDistribution(GammaMixtureDistribution(m, slow, fast))
-}
-
-/**
- * The scheduled segment speed (m/s) at a given distance along the trip, or null if the schedule has
- * too few stops or the distance is out of bounds. Only the gamma model conditions on schedule speed.
- */
-private fun ObaTripSchedule.speedAtDistance(distanceAlongTrip: Double): Double? {
-    if (stopTimes.size < 2) return null
-
-    val segmentStart = try {
-        findSegmentStartIndex(distanceAlongTrip)
-    } catch (e: IndexOutOfBoundsException) {
-        return null
-    }
-
-    val distDelta =
-        stopTimes[segmentStart + 1].distanceAlongTrip - stopTimes[segmentStart].distanceAlongTrip
-    val timeDelta: Duration = stopTimes[segmentStart + 1].arrivalTime - stopTimes[segmentStart].departureTime
-
-    return if (distDelta > 0 && timeDelta > Duration.ZERO) {
-        distDelta / timeDelta.toDouble(DurationUnit.SECONDS)
-    } else {
-        null
-    }
 }
 
 private fun sigmoid(x: Double): Double = 1.0 / (1.0 + exp(-x))

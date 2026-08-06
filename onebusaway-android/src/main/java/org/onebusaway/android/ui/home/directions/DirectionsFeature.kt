@@ -205,6 +205,7 @@ fun DirectionsFormCard(
                     PreferenceUtils.saveString(streetModePreference, street.name)
                 },
                 onReverse = viewModel::reverseTrip,
+                onRefresh = viewModel::refreshPlan,
                 onAdvancedSettings = { showAdvanced = true }
             )
         }

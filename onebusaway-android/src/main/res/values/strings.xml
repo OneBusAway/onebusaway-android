@@ -960,6 +960,9 @@
     <string name="trip_plan_date_tomorrow">Tomorrow</string>
     <!-- Accessibility click label for either half of the time callout. -->
     <string name="trip_plan_change_when">Change when</string>
+    <!-- The directions action bar's button that re-plans the same trip against the current time and
+         the rider's current position. Glyph-only, so this names it for TalkBack and its tooltip. -->
+    <string name="trip_plan_refresh">Refresh directions</string>
     <string name="trip_plan_leaving">Leaving</string>
     <string name="trip_plan_arriving">Arriving</string>
     <string name="trip_plan_date">Date</string>

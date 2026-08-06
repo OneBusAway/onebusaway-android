@@ -111,6 +111,18 @@ private val ICON_BUTTON_SIZE = 40.dp
 private val ACTION_BAR_HEIGHT = ICON_BUTTON_SIZE
 
 /**
+ * Where the action bar's content starts, now that the bar carries no leading glyph of its own (#2135).
+ *
+ * The band above it opens with [RAIL_WIDTH] of endpoint rail; this one opens with the "when" sentence,
+ * and [SegmentButton] insets its own text by 6dp, so 10dp here lands that text on the same 16dp keyline
+ * the endpoint dots sit on. The 34dp the retired glyph gives back is what pays for the refresh button.
+ */
+private val ACTION_BAR_START_INSET = 10.dp
+
+/** Material 3's disabled-content alpha, applied by hand where a call site sets its own tint. */
+private const val DISABLED_ICON_ALPHA = 0.38f
+
+/**
  * Gap between the card's trailing edge and the icon buttons against it. The trailing counterpart of
  * [RAIL_WIDTH], and shared by both bands for the same reason: so their buttons line up in one column.
  * Applied through [formBand] rather than by hand, so there is one gutter and not two that agree.
@@ -166,6 +178,9 @@ object TripPlanTestTags {
 
     /** The swap-endpoints button. */
     const val REVERSE = "tripPlanReverse"
+
+    /** The action bar's re-plan-this-same-trip button. */
+    const val REFRESH = "tripPlanRefresh"
 
     /** The action bar's trailing button, which reverse is column-aligned with. */
     const val ADVANCED_SETTINGS = "tripPlanAdvancedSettings"
@@ -227,6 +242,7 @@ fun TripPlanForm(
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
     onReverse: () -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -272,11 +288,13 @@ fun TripPlanForm(
             timeLabel = state.timeLabel,
             modes = state.modes,
             availableStreetModes = availableStreetModes,
+            canRefresh = state.canSubmit,
             onSetArriving = onSetArriving,
             onDepartNow = onDepartNow,
             onPickDateTime = onPickDateTime,
             onVehicleModeSelected = onVehicleModeSelected,
             onStreetModeSelected = onStreetModeSelected,
+            onRefresh = onRefresh,
             onAdvancedSettings = onAdvancedSettings
         )
     }
@@ -292,13 +310,18 @@ private fun FormIconButton(
     painter: Painter,
     contentDescription: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
-    IconButton(onClick = onClick, modifier = modifier.size(ICON_BUTTON_SIZE)) {
+    IconButton(onClick = onClick, enabled = enabled, modifier = modifier.size(ICON_BUTTON_SIZE)) {
         Icon(
             painter = painter,
             contentDescription = contentDescription,
+            // The tint is stated here rather than inherited from the button's content colour, so the
+            // disabled case has to be stated too — otherwise a disabled button draws at full strength
+            // and reads as one that simply doesn't work.
             tint = MaterialTheme.colorScheme.onSurfaceVariant
+                .copy(alpha = if (enabled) 1f else DISABLED_ICON_ALPHA)
         )
     }
 }
@@ -613,9 +636,13 @@ private fun PinnedActionIcon(painter: Painter) {
  * The bottom band: when the trip is for, and how it may be travelled.
  *
  * The time reads as one sentence — "Depart · now" — split into two separately-tappable segments, each
- * opening its own menu. The mode pickers and additional preferences sit at the trailing edge; reverse
- * is not here, because it acts on the two endpoints rather than on the trip's terms, and so lives
- * beside them (#2110).
+ * opening its own menu. The mode pickers, refresh and additional preferences sit at the trailing edge;
+ * reverse is not here, because it acts on the two endpoints rather than on the trip's terms, and so
+ * lives beside them (#2110).
+ *
+ * The bar opened with a clock glyph in a [RAIL_WIDTH] rail until #2135. It said nothing the sentence
+ * beside it didn't already say in words, and the bar had no width to spare for the refresh button, so
+ * it is the glyph that went — see [ACTION_BAR_START_INSET] for what keeps the sentence on its keyline.
  */
 @Composable
 private fun TripActionBar(
@@ -625,28 +652,19 @@ private fun TripActionBar(
     timeLabel: String,
     modes: TripModeSelection,
     availableStreetModes: List<StreetMode>,
+    canRefresh: Boolean,
     onSetArriving: (Boolean) -> Unit,
     onDepartNow: () -> Unit,
     onPickDateTime: () -> Unit,
     onVehicleModeSelected: (VehicleMode) -> Unit,
     onStreetModeSelected: (StreetMode) -> Unit,
+    onRefresh: () -> Unit,
     onAdvancedSettings: () -> Unit
 ) {
     Row(
-        modifier = Modifier.formBand().height(ACTION_BAR_HEIGHT),
+        modifier = Modifier.formBand().padding(start = ACTION_BAR_START_INSET).height(ACTION_BAR_HEIGHT),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(
-            modifier = Modifier.width(RAIL_WIDTH).height(ACTION_BAR_HEIGHT),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_arrival_time),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
-        }
         WhenModeSegment(arriving = arriving, onSetArriving = onSetArriving)
         Text(
             text = "·",
@@ -686,6 +704,15 @@ private fun TripActionBar(
             label = { streetModeLabel(it) },
             testTag = TripPlanTestTags.STREET_MODE,
             onSelected = onStreetModeSelected
+        )
+        FormIconButton(
+            painter = painterResource(R.drawable.ic_action_navigation_refresh),
+            contentDescription = stringResource(R.string.trip_plan_refresh),
+            onClick = onRefresh,
+            // Nothing to re-plan until the form names both ends of a trip. Disabled rather than absent,
+            // so the bar's trailing buttons don't shuffle sideways as the rider fills the form in.
+            enabled = canRefresh,
+            modifier = Modifier.testTag(TripPlanTestTags.REFRESH)
         )
         FormIconButton(
             painter = rememberVectorPainter(AppIcons.Settings),
@@ -941,7 +968,7 @@ private fun TripPlanFormPreview() {
             onPickDateTime = {},
             availableStreetModes = StreetMode.entries,
             onVehicleModeSelected = {}, onStreetModeSelected = {},
-            onReverse = {}, onAdvancedSettings = {}
+            onReverse = {}, onRefresh = {}, onAdvancedSettings = {}
         )
     }
 }

@@ -345,6 +345,25 @@ class TripPlanViewModel @Inject constructor(
         replanOrClearResult()
     }
 
+    /**
+     * Re-plans the trip the form already states, without changing what it states (#2135).
+     *
+     * Every other action that re-plans does so as a side effect of editing the trip, which left no way
+     * to ask for the *same* trip again — the closest thing was re-picking "now" from the time menu,
+     * which only worked because it happened to re-submit, and which pins nothing a rider who is already
+     * on "now" wants changed. But the two things a plan is measured against both move on their own: the
+     * clock, and the rider. A "depart now" trip planned five minutes ago is a trip from five minutes ago
+     * and from wherever they were standing then.
+     *
+     * [replanOrClearResult] is exactly that re-submission — it re-reads the device fix and the clock at
+     * submit — so refreshing is that one call and nothing else. A trip pinned to an explicit instant
+     * re-plans that same instant, picking up whatever the server now says about it rather than silently
+     * re-timing the trip the rider asked for.
+     */
+    fun refreshPlan() {
+        replanOrClearResult()
+    }
+
     /** Clears a surfaced error after the host shows it. */
     fun clearPlanResult() {
         _planState.value = PlanResult.Idle

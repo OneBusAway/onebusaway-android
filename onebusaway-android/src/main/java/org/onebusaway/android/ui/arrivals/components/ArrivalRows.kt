@@ -623,7 +623,9 @@ internal fun OnMapIndicator(color: Color, modifier: Modifier = Modifier) {
     )
 }
 
-private fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
+/** The package's one "a canceled trip's text is struck through" rule — the flat row, the ETA pill and
+ *  its clock lines all read it, so they can't drift apart. */
+internal fun strikeThroughIf(canceled: Boolean): TextDecoration = if (canceled) TextDecoration.LineThrough else TextDecoration.None
 
 /**
  * Renders [DisplayFormat.formatEtaParts] output as a single [AnnotatedString] — not separate Text

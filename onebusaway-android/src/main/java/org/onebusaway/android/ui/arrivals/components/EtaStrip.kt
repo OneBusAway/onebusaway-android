@@ -66,7 +66,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
@@ -163,6 +162,21 @@ internal fun EtaStrip(
     // this would otherwise re-run the caller's lambda over every trip on each of those ticks. It only
     // changes when the trips or the badge source do.
     val hasRouteBadges = remember(trips, routeBadgeFor) { trips.any { routeBadgeFor(it) != null } }
+    // Every pill's clock time, formatted once here for the whole strip rather than per pill: the
+    // reference pill below needs the same answer the pills do (see referenceClock), and formatting is a
+    // locale-aware DateUtils round trip. Remembered for the same reason as above — the live clock
+    // recomposes this body every second, but these only move when a poll brings new trips.
+    val context = LocalContext.current
+    val clocks = remember(trips, context) { trips.map { it.arrivalClock(context) } }
+    // The tallest pill variant this strip needs. A pill carrying a struck-through timetable time
+    // (#2167) is one clock line taller than its neighbours, and the reference pill has to match the
+    // strip's tallest or the taller pill would be measured short and clipped. Per-strip, so a strip
+    // where nothing was corrected keeps exactly the height it had.
+    val referenceClock = remember(clocks) {
+        // Measured for height only, so the times themselves are arbitrary; all that matters is whether
+        // there are one or two clock lines.
+        ArrivalClock(expected = "0:00", corrects = "0:01".takeIf { clocks.any { clock -> clock.corrects != null } })
+    }
     // Where the marker's moment falls among these departures. Remembered for the same reason: the live
     // clock recomposes this body every second, but the answer only moves when a poll brings new trips.
     val markerIndex = remember(trips, marker) { marker?.let { countBefore(trips, it.at) { trip -> trip.displayTime } } }
@@ -200,14 +214,15 @@ internal fun EtaStrip(
         ReferencePillHeightFrame(
             modifier = Modifier.weight(1f),
             reference = {
-                // An invisible tallest-variant pill (two-line ETA + clock subline), measured to size
-                // the row and never placed — so it's never drawn, takes no input, adds no semantics.
-                // Constant params, so it never recomposes on the live clock tick.
+                // An invisible tallest-variant pill (ETA + clock subline, plus the struck timetable
+                // line when any pill here has one), measured to size the row and never placed — so
+                // it's never drawn, takes no input, adds no semantics. Constant params, so it never
+                // recomposes on the live clock tick.
                 EtaPill(
                     eta = 10,
                     color = Color.Transparent,
                     predicted = false,
-                    clockTime = "0:00",
+                    clock = referenceClock,
                     routeBadge = if (hasRouteBadges) RouteBadge("00", null) else null
                 )
             }
@@ -240,6 +255,7 @@ internal fun EtaStrip(
                     MarkedItem(marker?.takeIf { markerIndex == index }) {
                         EtaPillWithMenu(
                             trip = trip,
+                            clock = clocks[index],
                             liveNow = liveNow,
                             actions = actionsFor(trip),
                             callbacks = callbacks,
@@ -396,10 +412,13 @@ private fun ReferencePillHeightFrame(
 
 /** A single ETA pill with its long-press per-trip menu. Tap focuses the vehicle; long-press opens
  *  the menu (trip details / reminder / report). [liveNow] is the strip's one shared ticking clock
- *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta. */
+ *  (issue #1781) — counts this pill down between polls rather than freezing at the poll-time eta.
+ *  [clock] is this trip's entry in the strip's once-per-poll formatted clock times (see EtaStrip),
+ *  passed in rather than derived here because this composable recomposes every second. */
 @Composable
 private fun EtaPillWithMenu(
     trip: ArrivalInfo,
+    clock: ArrivalClock,
     liveNow: ServerTime,
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
@@ -407,13 +426,6 @@ private fun EtaPillWithMenu(
     routeBadge: RouteBadge? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // trip.displayTime only changes on a fresh poll, but liveNow (and so this composable) recomposes
-    // every second (issue #1781's ticker) — memoize so the locale-aware format call doesn't re-run on
-    // every tick.
-    val context = LocalContext.current
-    val clockTime = remember(trip.displayTime, context) {
-        DisplayFormat.formatTime(context, trip.displayTime.epochMs)
-    }
     // fillMaxHeight here and on the pill so the colored Surface stretches to the strip's tallest pill
     // (the strip fixes its row height to the tallest pill via ReferencePillHeightFrame — see
     // EtaStrip), levelling the shorter single-line NOW pill up to its neighbours.
@@ -427,7 +439,7 @@ private fun EtaPillWithMenu(
             predicted = trip.predicted,
             onMap = trip.vehicleOnMap,
             canceled = trip.status == Status.CANCELED,
-            clockTime = clockTime,
+            clock = clock,
             routeBadge = routeBadge,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true }
@@ -477,8 +489,9 @@ private val PILL_BADGE_MAX_WIDTH = 72.dp
 /**
  * The prominent white-on-lateness ETA pill — one per trip in a route row's strip (and the Home legend
  * dialog, which passes no clicks). [onClick] taps focus that trip's vehicle + stop; [onLongClick]
- * opens the trip menu; [canceled] strikes the text through. [clockTime] is the small "1:10pm"-style
- * clock time shown below the ETA (issue #1786); null omits that line (e.g. the Home legend's
+ * opens the trip menu; [canceled] strikes the text through. [clock] is the small "1:10pm"-style
+ * clock time shown below the ETA (issue #1786) — with the timetable time it corrects struck through
+ * above it when there is one (#2167); null omits those lines entirely (e.g. the Home legend's
  * illustrative pills, which aren't tied to a real arrival time). The "NOW" pill ([eta] == 0) always
  * omits it too — it's a single centered label — so it's shorter by content; the strip levels it back
  * to its neighbours' height with fillMaxHeight (see EtaStrip's ReferencePillHeightFrame / EtaPillWithMenu).
@@ -499,11 +512,11 @@ internal fun EtaPill(
     // (a drawn vehicle is always real-time), so it wins when both would apply.
     onMap: Boolean = false,
     canceled: Boolean = false,
-    clockTime: String? = null,
+    clock: ArrivalClock? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
-    val decoration = if (canceled) TextDecoration.LineThrough else null
+    val decoration = strikeThroughIf(canceled)
     val shape = RoundedCornerShape(8.dp)
     val numberSize = 28.sp
     // "NOW" reads a touch too urgent at the full number size, so its glyph is dialed back slightly —
@@ -598,13 +611,15 @@ internal fun EtaPill(
                 // The NOW pill (etaParts == null) drops the clock subline — it's a single centered
                 // label, stretched to its neighbours' height by fillMaxHeight rather than by a second
                 // line of its own.
-                if (clockTime != null && etaParts != null) {
-                    Text(
-                        text = clockTime,
+                if (clock != null && etaParts != null) {
+                    CorrectedClockTime(
+                        clock = clock,
                         fontSize = clockTimeSize,
                         color = Color.White.copy(alpha = 0.8f),
-                        textDecoration = decoration,
-                        style = remember(baseTextStyle, clockTimeSize) { tightLineStyle(baseTextStyle, clockTimeSize) }
+                        // Same trim the ETA line gets, so a corrected pill's two clock lines stack as
+                        // tightly as the single line did rather than gaining a line box each.
+                        style = remember(baseTextStyle, clockTimeSize) { tightLineStyle(baseTextStyle, clockTimeSize) },
+                        canceled = canceled
                     )
                 }
             }
@@ -695,6 +710,20 @@ private fun EtaStripMarkedPreview() {
     )
 }
 
+@Preview(showBackground = true, widthDp = 240, name = "EtaStrip · corrected clock time")
+@Composable
+private fun EtaStripCorrectedPreview() {
+    // The first bus is running 4 minutes behind its timetable, so its pill strikes the scheduled time
+    // through above the one it's now expected at (#2167). The second is on its timetable time and
+    // shows one clock line — levelled to its neighbour's height by the strip, as the NOW pill is.
+    EtaStripPreviewFrame(
+        trips = listOf(
+            previewArrival("8", "Rainier Beach", etaMinutes = 6, scheduleDeviationMinutes = 4, tripId = "trip_1"),
+            previewArrival("8", "Rainier Beach", etaMinutes = 14, tripId = "trip_2")
+        )
+    )
+}
+
 @Preview(showBackground = true, widthDp = 240, name = "EtaStrip · fits (no chevron)")
 @Composable
 private fun EtaStripFitsPreview() {
@@ -708,7 +737,7 @@ private fun EtaStripFitsPreview() {
 }
 
 /** A gallery of individual [EtaPill] states (not the strip): recent-past, "Now", the lateness
- *  colors, a canceled pill, and the past-an-hour "Xhr Ymin" form. */
+ *  colors, a canceled pill, the corrected clock (#2167), and the past-an-hour "Xhr Ymin" form. */
 @Preview(showBackground = true)
 @Composable
 private fun EtaPillVariantsPreview() {
@@ -720,21 +749,27 @@ private fun EtaPillVariantsPreview() {
                 verticalAlignment = Alignment.Bottom
             ) {
                 // A recent-past arrival: same size as the upcoming ones — negative ETAs aren't shrunk.
-                EtaPill(-3, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "2:57pm")
-                EtaPill(0, colorResource(R.color.stop_info_ontime_fill), predicted = true, clockTime = "3:00pm")
-                EtaPill(5, colorResource(R.color.stop_info_delayed_fill), predicted = true, clockTime = "3:05pm")
-                EtaPill(12, colorResource(R.color.stop_info_early_fill), predicted = true, clockTime = "3:12pm")
-                EtaPill(22, colorResource(R.color.stop_info_scheduled_fill), predicted = false, clockTime = "3:22pm")
+                EtaPill(-3, colorResource(R.color.stop_info_delayed_fill), predicted = true, clock = ArrivalClock("2:57pm"))
+                EtaPill(0, colorResource(R.color.stop_info_ontime_fill), predicted = true, clock = ArrivalClock("3:00pm"))
+                // Late, and so showing the timetable time it corrects struck through above (#2167).
+                EtaPill(
+                    5,
+                    colorResource(R.color.stop_info_delayed_fill),
+                    predicted = true,
+                    clock = ArrivalClock(expected = "3:05pm", corrects = "3:00pm")
+                )
+                EtaPill(12, colorResource(R.color.stop_info_early_fill), predicted = true, clock = ArrivalClock("3:12pm"))
+                EtaPill(22, colorResource(R.color.stop_info_scheduled_fill), predicted = false, clock = ArrivalClock("3:22pm"))
                 EtaPill(
                     8,
                     colorResource(R.color.stop_info_scheduled_fill),
                     predicted = false,
                     canceled = true,
-                    clockTime = "3:08pm"
+                    clock = ArrivalClock("3:08pm")
                 )
                 // Past an hour: the number switches to hours, the leftover minutes fold into the label (#1777).
-                EtaPill(83, colorResource(R.color.stop_info_scheduled_fill), predicted = true, clockTime = "4:23pm")
-                EtaPill(125, colorResource(R.color.stop_info_early_fill), predicted = false, clockTime = "5:05pm")
+                EtaPill(83, colorResource(R.color.stop_info_scheduled_fill), predicted = true, clock = ArrivalClock("4:23pm"))
+                EtaPill(125, colorResource(R.color.stop_info_early_fill), predicted = false, clock = ArrivalClock("5:05pm"))
             }
         }
     }

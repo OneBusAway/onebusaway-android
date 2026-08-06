@@ -241,6 +241,50 @@ class ArrivalInfoTest {
         assertEquals(R.color.stop_info_early_fill, deviating(-91).fillColor)
         assertEquals(R.color.stop_info_scheduled_fill, deviating(600, predicted = false).fillColor)
     }
+
+    // --- The timetable time behind displayTime (#2167) --------------------------------------------
+    //
+    // The clock surfaces print the correction — the struck-through scheduled time over the expected
+    // one — so scheduledTime has to be the *same* arrival-vs-departure choice displayTime made, and
+    // has to survive a prediction rather than being overwritten by it.
+
+    @Test
+    fun `scheduledTime keeps the timetable time a prediction moved`() {
+        val info = genuinePrediction
+
+        assertEquals(scheduledArrival, info.scheduledTime.epochMs)
+        assertEquals(1_783_119_500_000L, info.displayTime.epochMs)
+    }
+
+    @Test
+    fun `scheduledTime equals displayTime when there is no usable prediction`() {
+        // Including the closed-stop sentinel, which normalizes to no prediction: the two agree, so
+        // nothing is struck through.
+        val unpredicted = infoFor(arrival(predicted = false, predictedArrivalTime = 0L))
+        assertEquals(unpredicted.displayTime, unpredicted.scheduledTime)
+
+        val suppressed = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
+        assertEquals(suppressed.displayTime, suppressed.scheduledTime)
+    }
+
+    @Test
+    fun `at the first stop scheduledTime is the scheduled departure`() {
+        // stopSequence 0 makes this a departure, and displayTime follows the departure pair — the
+        // timetable time has to follow it there, not stay on the (unused) arrival time.
+        val info = infoFor(
+            FakeArrivalData(
+                predicted = true,
+                predictedArrivalTime = ServerTime(scheduledArrival),
+                scheduledArrivalTime = ServerTime(scheduledArrival),
+                stopSequence = 0,
+                scheduledDepartureTime = ServerTime(scheduledArrival + 120_000L),
+                predictedDepartureTime = ServerTime(scheduledArrival + 300_000L)
+            )
+        )
+
+        assertEquals(scheduledArrival + 120_000L, info.scheduledTime.epochMs)
+        assertEquals(scheduledArrival + 300_000L, info.displayTime.epochMs)
+    }
 }
 
 /** Minimal [ArrivalData] stub; only the arrival-time fields matter for these ETA assertions. */

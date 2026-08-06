@@ -48,6 +48,17 @@ class ArrivalInfo(
 
     val displayTime: ServerTime
 
+    /**
+     * The timetable time behind [displayTime]: the same arrival-vs-departure choice [displayTime]
+     * makes (see the init block), before any prediction corrects it. Equal to [displayTime] whenever
+     * the server gave no usable prediction, so a surface can always compare the two.
+     *
+     * Exposed so the clock-time surfaces can show the correction itself rather than only its
+     * consequences — see
+     * [arrivalClock][org.onebusaway.android.ui.arrivals.components.arrivalClock] (#2167).
+     */
+    val scheduledTime: ServerTime
+
     val statusText: String
 
     val timeText: String
@@ -206,6 +217,7 @@ class ArrivalInfo(
         // timestamp from "now" and render garbage (~ -29,718,596 min).
         val hasPrediction = data.predicted && predictedTime != null
 
+        scheduledTime = scheduled
         if (hasPrediction) {
             predicted = true
             displayTime = predictedTime

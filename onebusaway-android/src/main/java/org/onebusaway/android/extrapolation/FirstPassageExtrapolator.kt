@@ -15,34 +15,11 @@
  */
 package org.onebusaway.android.extrapolation
 
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.FirstPassageDistribution
 import org.onebusaway.android.time.WallTime
-
-/**
- * Gamma-process dispersion, in seconds: the time to cover ground the schedule budgets `tau` seconds
- * for has variance `tau * THETA_SECONDS`.
- *
- * Calibrated on a day of King County Metro AVL (1.3M polls, 11.6M same-trip fix pairs), on trips
- * held out from the fit. Chosen so the 80% band covers 80% *at every horizon* rather than on
- * average — pooling is actively misleading here, because a model too narrow at short horizons and
- * too wide at long ones has those errors cancel in the aggregate.
- *
- * See `extrapolation-science/h36_params.json` for the fit and its validation.
- */
-private const val THETA_SECONDS = 25.236
-
-/**
- * How long a vehicle really takes to cover its route relative to the schedule, in the mean: buses
- * run about 5% slower than the timetable allows.
- *
- * Fitted jointly with [THETA_SECONDS]. It is not cosmetic — first-passage times are right-skewed, so
- * a process whose *mean* matches the schedule has a *median* that runs ahead of it, and the median
- * is what positions the vehicle marker. Without this the marker sat 20-30% past the scheduled
- * position at short horizons.
- */
-private const val MEAN_TRAVEL_MULTIPLIER = 1.0508
 
 /**
  * Per-trip extrapolator for bus-like routes that models the time a vehicle takes to get places
@@ -56,15 +33,18 @@ private const val MEAN_TRAVEL_MULTIPLIER = 1.0508
  *
  * That difference is measured, not assumed. Conditioned on elapsed time, the spread of ground
  * covered grows as `dt^0.477` in the AVL data, and a persistent per-trip pace factor fits to zero.
- * Held out from the fit, this model's 80% band covers 0.76–0.84 at every horizon from 30 seconds to
- * 12 minutes; a held-pace model tuned on the same data covers 0.41 at 30 seconds and 0.97 at 12
- * minutes, because a constant relative spread cannot be right at more than one horizon.
+ * A held-pace model tuned on the same data covers 0.41 of its claimed 80% at 30 seconds and 0.97 at
+ * 12 minutes, because a constant relative spread cannot be right at more than one horizon.
  *
- * Known residuals, measured and left in deliberately: the left tail is about 3 points heavier than
- * the model at every horizon — trips that fall badly behind are more common than a single gamma
- * process allows, and it is not simply stalled buses, whose frequency decays with the horizon as
- * expected. And at the shortest horizons the median still runs ~20% past the scheduled position,
- * because at a gamma shape near 1 no single parameter pair matches both centre and spread.
+ * Both model parameters are read off the vehicle's schedule deviation rather than being constants —
+ * see [DeviationModel] for what deviation predicts and why. Held out from the fit, that takes the
+ * worst (horizon x deviation) cell's coverage error from 0.278 to 0.089, and the early-vehicle band
+ * from 0.602 to 0.799 against a nominal 0.800.
+ *
+ * Known residual, measured and left in deliberately: the left tail is a few points heavier than the
+ * model at every horizon — trips that fall badly behind are more common than a single gamma process
+ * allows. It is not simply stalled buses, whose frequency decays with the horizon as expected, and
+ * conditioning on deviation does not absorb it either, so it is a genuinely separate defect.
  */
 class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
 
@@ -82,13 +62,18 @@ class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
     ): ExtrapolationResult {
         val profile = resolveProfile(lastDist) ?: return ExtrapolationResult.MissingSchedule
         val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
+        // The anchor's deviation, not a running estimate: the model reads it once, from the same
+        // fix the extrapolation starts at. Letting it evolve over the horizon would be more
+        // faithful -- the drift measurement is exactly that equation of motion -- but it would
+        // cost the closed form this whole approach is built on.
+        val deviation = state.anchor?.scheduleDeviation ?: Duration.ZERO
         return ExtrapolationResult.Success(
             FirstPassageDistribution(
                 dtSec,
                 profile.scheduleSeconds,
                 profile.distances,
-                THETA_SECONDS,
-                MEAN_TRAVEL_MULTIPLIER
+                DeviationModel.dispersionFor(deviation),
+                DeviationModel.travelMultiplierFor(deviation)
             )
         )
     }

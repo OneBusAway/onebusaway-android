@@ -47,7 +47,7 @@ class GtfsAlerts @Inject constructor(
                 // server/device crossing, resolved here at the boundary so the downstream check
                 // stays a pure function of its inputs.
                 val now = if (feed.hasHeader() && feed.header.hasTimestamp()) {
-                    ServerTime(feed.header.timestamp * 1_000L)
+                    GtfsAlertsHelper.serverTimeFromGtfsSeconds(feed.header.timestamp)
                 } else {
                     Log.w(TAG, "GTFS alert feed for region $regionId omitted its timestamp; using the device clock")
                     ServerTime(WallTime.now().epochMs)
@@ -66,7 +66,7 @@ class GtfsAlerts @Inject constructor(
         callback: GtfsAlertCallBack
     ) {
         for (entity in alerts) {
-            if (!GtfsAlertsHelper.isValidEntity(context, entity, now.epochMs)) continue
+            if (!GtfsAlertsHelper.isValidEntity(context, entity, now)) continue
             val alert = entity.alert
             val title = GtfsAlertsHelper.getAlertTitle(alert)
             val description = GtfsAlertsHelper.getAlertDescription(alert)

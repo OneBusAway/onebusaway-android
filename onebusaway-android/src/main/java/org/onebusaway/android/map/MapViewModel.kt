@@ -315,21 +315,19 @@ class MapViewModel @Inject constructor(
     }
 
     /**
-     * Enter route mode for [routeId], framing its bounding box unless [zoomToRoute] is false (a silent
-     * restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from the
-     * current one — re-selecting the active route is handled (re-framed) by [toRoute].
+     * Enter route mode for [request]'s route, framing its bounding box unless [zoomToRoute] is false (a
+     * silent restore). Callers ([toRoute] and the restore in `init`) only ever pass a route different from
+     * the current one — re-selecting the active route is handled (re-framed) by [toRoute].
+     *
+     * The request is handed to the controller whole, exactly as [RouteMapController.reframe] takes it, so
+     * a field added to [ShowRouteRequest] can't be honoured by one entry and dropped by the other (#1797,
+     * #2149). The remaining parameters are what *this view* contributes on top of the request:
+     * whether to keep the current stop focus / drawn itinerary, and what the route is drawn with.
      */
     private fun enterRoute(
-        routeId: String,
+        request: ShowRouteRequest,
         zoomToRoute: Boolean,
-        directionStopId: String?,
-        initialDirectionId: Int? = null,
-        focusTripId: String? = null,
         preserveStopFocus: Boolean = false,
-        riddenSpans: List<RiddenSpan> = emptyList(),
-        extraSegments: List<RouteFocusSegment> = emptyList(),
-        alightStopId: String? = null,
-        directionHeadsign: String? = null,
         itineraryContext: List<RoutePolyline> = emptyList(),
         preserveItinerary: Boolean = false,
         palette: RouteLinePalette = BASEMAP_ROUTE_LINE_PALETTE
@@ -339,17 +337,10 @@ class MapViewModel @Inject constructor(
         // Preserve based on the transition's origin rather than the context list: an itinerary whose
         // legs have no drawable geometry still has start/end pins and retained controller state to keep.
         leaveCurrentView(clearStopFocus = !preserveStopFocus, keepItinerary = preserveItinerary)
-        persistRoute(routeId, directionStopId, initialDirectionId)
+        persistRoute(request.routeId, request.directionStopId, request.initialDirectionId)
         routeController.start(
-            routeId = routeId,
+            request = request,
             zoomToRoute = zoomToRoute,
-            directionStopId = directionStopId,
-            initialDirectionId = initialDirectionId,
-            focusTripId = focusTripId,
-            riddenSpans = riddenSpans,
-            extraSegments = extraSegments,
-            alightStopId = alightStopId,
-            directionHeadsign = directionHeadsign,
             itineraryContext = itineraryContext,
             palette = palette
         )
@@ -510,16 +501,9 @@ class MapViewModel @Inject constructor(
             routeController.reframe(request, frameRoute)
         } else {
             enterRoute(
-                request.routeId,
+                request,
                 zoomToRoute = frameRoute,
-                directionStopId = request.directionStopId,
-                initialDirectionId = request.initialDirectionId,
-                focusTripId = request.focusTripId,
                 preserveStopFocus = stopScoped,
-                riddenSpans = request.riddenSpans,
-                extraSegments = request.extraSegments,
-                alightStopId = request.alightStopId,
-                directionHeadsign = request.directionHeadsign,
                 // Read before entering: the transition tears the drawn itinerary down, and this is what
                 // survives it.
                 itineraryContext = if (withinDirections) directionsController.contextPolylines() else emptyList(),
@@ -711,11 +695,13 @@ class MapViewModel @Inject constructor(
             // deliberately doesn't write it, so a process-death restore keeps the saved camera rather
             // than re-framing the route.
             enterRoute(
-                restoreRouteId,
+                ShowRouteRequest(
+                    routeId = restoreRouteId,
+                    directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
+                    // A user-selected direction persisted before process death wins over the anchor stop.
+                    initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID]
+                ),
                 zoomToRoute = savedStateHandle[MapParams.ZOOM_TO_ROUTE] ?: false,
-                directionStopId = savedStateHandle[MapParams.ROUTE_DIRECTION_STOP_ID],
-                // A user-selected direction persisted before process death wins over the anchor stop.
-                initialDirectionId = savedStateHandle[MapParams.ROUTE_DIRECTION_ID],
                 preserveStopFocus = false
             )
         } else {

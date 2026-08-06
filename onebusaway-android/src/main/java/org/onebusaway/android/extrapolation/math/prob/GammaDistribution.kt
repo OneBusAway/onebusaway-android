@@ -55,6 +55,9 @@ class GammaDistribution(val alpha: Double, val scale: Double) : ProbDistribution
         private const val MAX_ITERATIONS = 200
         private const val EPSILON = 1e-10
 
+        /** Stand-in for zero in the continued fraction, so a vanishing term can't divide by 0. */
+        private const val TINY = 1e-30
+
         private fun regularizedGammaP(a: Double, x: Double): Double {
             if (x <= 0) return 0.0
 
@@ -68,7 +71,14 @@ class GammaDistribution(val alpha: Double, val scale: Double) : ProbDistribution
                 }
                 sum * exp(-x + a * ln(x) - lnGamma(a))
             } else {
-                var c = 1.0
+                // Modified Lentz evaluation of the continued fraction for Q(a, x). The numerator
+                // ratio starts at 1/TINY rather than 1: it stands in for a leading term of zero,
+                // and seeding it with 1 instead makes the first iteration fold in a spurious
+                // `an / 1` term the fraction never converges away from. That understated the CDF
+                // across this whole branch — by 11 points at x = a + 1, still 5 points an order of
+                // magnitude out — which is upper-tail territory, so it biased every extrapolated
+                // confidence band inward.
+                var c = 1.0 / TINY
                 var d = 1.0 / (x - a + 1)
                 var f = d
 
@@ -77,11 +87,11 @@ class GammaDistribution(val alpha: Double, val scale: Double) : ProbDistribution
                     val bn = x - a + 1 + 2 * n
 
                     d = bn + an * d
-                    if (abs(d) < 1e-30) d = 1e-30
+                    if (abs(d) < TINY) d = TINY
                     d = 1.0 / d
 
                     c = bn + an / c
-                    if (abs(c) < 1e-30) c = 1e-30
+                    if (abs(c) < TINY) c = TINY
 
                     val delta = c * d
                     f *= delta

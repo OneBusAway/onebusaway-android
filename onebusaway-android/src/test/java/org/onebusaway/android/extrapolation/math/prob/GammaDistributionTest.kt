@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.extrapolation.math.prob
 
+import kotlin.math.exp
 import kotlin.math.ln
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -72,6 +73,26 @@ class GammaDistributionTest {
     fun `CDF approaches 1 for large x`() {
         val dist = GammaDistribution(3.0, 2.0)
         assertTrue(dist.cdf(100.0) > 0.999)
+    }
+
+    @Test
+    fun `CDF matches the closed form for an integer shape`() {
+        // The series and continued-fraction halves of the CDF meet at x = alpha + 1; everything
+        // above it — the whole upper tail, where the extrapolator reads its confidence bands — is
+        // the continued fraction, which nothing else here pins to an independent value. Round-trip
+        // tests can't see an error in it, because the quantile inverts the same function.
+        for (shape in listOf(1, 2, 3, 7)) {
+            val scale = 2.0
+            val dist = GammaDistribution(shape.toDouble(), scale)
+            for (z in listOf(0.5, 1.0, 2.0, 4.0, 5.0, 8.0, 12.0, 25.0)) {
+                assertEquals(
+                    "shape=$shape at z=$z",
+                    erlangCdf(shape, z),
+                    dist.cdf(z * scale),
+                    1e-9
+                )
+            }
+        }
     }
 
     // --- Quantile-CDF round-trip ---
@@ -165,5 +186,20 @@ class GammaDistributionTest {
     @Test(expected = IllegalArgumentException::class)
     fun `scale must be positive`() {
         GammaDistribution(1.0, 0.0)
+    }
+
+    /**
+     * The Erlang CDF — the gamma's exact closed form when the shape is a positive integer:
+     * `1 - e^-z * sum(z^j / j!)` for j below [shape]. An independent oracle, sharing no code with
+     * the incomplete-gamma routine under test.
+     */
+    private fun erlangCdf(shape: Int, z: Double): Double {
+        var term = 1.0
+        var sum = 1.0
+        for (j in 1 until shape) {
+            term *= z / j
+            sum += term
+        }
+        return 1.0 - exp(-z) * sum
     }
 }

@@ -17,37 +17,37 @@ package org.onebusaway.android.ui.arrivals.components
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.isSpecified
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
 import org.onebusaway.android.ui.arrivals.ArrivalInfo
 import org.onebusaway.android.util.DisplayFormat
 
 // The one place the app decides *and draws* "this bus is no longer coming at its timetable time"
-// (issue #2167, parity with onebusaway-ios#1224/#1237). Every surface that prints a clock time for an
-// arrival should read its pair from [arrivalClock] and draw it with [CorrectedClockTime], so the rule
-// and the words live here rather than being re-derived per call site.
+// (issue #2167, parity with onebusaway-ios#1224/#1237), so every surface that prints a clock time for
+// an arrival can take both from here rather than re-deriving them.
 
 /**
  * An arrival's clock time as a rider should read it: the time it is now [expected] at, and — when a
  * prediction moved it — the timetable time that prediction [corrects], to be shown struck through.
  * [corrects] is null when there is nothing to correct, which is the common case.
+ *
+ * A plain display pair, not a validated one: [arrivalClockOf] is the canonical producer and will never
+ * hand back a [corrects] equal to [expected], but the constructor doesn't enforce that, so a caller
+ * building one by hand (the strip's measured-only reference pill) can.
  */
-internal data class ArrivalClock(val expected: String, val corrects: String?)
+internal data class ArrivalClock(val expected: String, val corrects: String? = null)
 
 /**
  * This arrival's [ArrivalClock], formatted for the current locale/12h-24h setting.
@@ -63,10 +63,13 @@ internal data class ArrivalClock(val expected: String, val corrects: String?)
  *
  * Both fall out of comparing what is actually printed, so there is no threshold to pick here.
  */
-internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock = arrivalClockOf(
-    expected = DisplayFormat.formatTime(context, displayTime.epochMs),
-    scheduled = DisplayFormat.formatTime(context, scheduledTime.epochMs)
-)
+internal fun ArrivalInfo.arrivalClock(context: Context): ArrivalClock {
+    val expected = DisplayFormat.formatTime(context, displayTime.epochMs)
+    // Without a usable prediction the two are the same instant, so the second format call is a
+    // guaranteed-identical string — skip it rather than pay for it on every scheduled-only arrival.
+    if (scheduledTime == displayTime) return ArrivalClock(expected)
+    return arrivalClockOf(expected = expected, scheduled = DisplayFormat.formatTime(context, scheduledTime.epochMs))
+}
 
 /** The formatted-string rule itself, split out so it is testable without a `Context`. */
 @VisibleForTesting
@@ -76,13 +79,8 @@ internal fun arrivalClockOf(expected: String, scheduled: String): ArrivalClock =
 )
 
 /** How much fainter the struck timetable time is drawn than the time that replaced it — present, but
- *  clearly the superseded one of the two. Applied to [CorrectedClockTime]'s own [Color], so it works
- *  the same on the pill's white-on-fill text as on a surface-coloured caller. */
+ *  clearly the superseded one of the two. */
 private const val CORRECTED_ALPHA = 0.75f
-
-/** The gap between the struck line and the time below it. Zero: [style]'s trimmed line boxes already
- *  sit flush, and these two are one reading rather than two lines of text. */
-private val CORRECTED_LINE_SPACING = 0.dp
 
 /**
  * A clock time, with the timetable time it corrects struck through directly above it when there is
@@ -94,18 +92,19 @@ private val CORRECTED_LINE_SPACING = 0.dp
  * row and imply nothing about their relationship.
  *
  * [canceled] strikes the whole thing through, as a canceled trip's other text is; the timetable line
- * is struck either way.
+ * is struck either way. It's the trip's state rather than a [TextDecoration] because this composable
+ * already owns one strikethrough of its own, and only it can say how the two compose.
  */
 @Composable
 internal fun CorrectedClockTime(
     clock: ArrivalClock,
+    color: Color,
+    fontSize: TextUnit,
+    style: TextStyle,
     modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    style: TextStyle = LocalTextStyle.current,
     canceled: Boolean = false
 ) {
-    val canceledDecoration = if (canceled) TextDecoration.LineThrough else null
+    val canceledDecoration = strikeThroughIf(canceled)
     val corrects = clock.corrects
     if (corrects == null) {
         Text(
@@ -118,15 +117,21 @@ internal fun CorrectedClockTime(
         )
         return
     }
-    val spoken = stringResource(R.string.stop_info_clock_corrected, corrects, clock.expected)
+    val context = LocalContext.current
+    // Held across recompositions: a corrected pill recomposes on every ETA rollover, and this is a
+    // getString + format each time. It only changes when a fresh poll brings a new pair.
+    val spoken = remember(clock, context) {
+        context.getString(R.string.stop_info_clock_corrected, corrects, clock.expected)
+    }
+    // No verticalArrangement: [style]'s trimmed line boxes already sit flush, which is what these two
+    // want — they are one reading, not two lines of text.
     Column(
         modifier = modifier.semantics(mergeDescendants = true) { contentDescription = spoken },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(CORRECTED_LINE_SPACING)
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = corrects,
-            color = if (color.isSpecified) color.copy(alpha = color.alpha * CORRECTED_ALPHA) else color,
+            color = color.copy(alpha = color.alpha * CORRECTED_ALPHA),
             fontSize = fontSize,
             textDecoration = TextDecoration.LineThrough,
             style = style

@@ -250,7 +250,7 @@ class ArrivalInfoTest {
 
     @Test
     fun `scheduledTime keeps the timetable time a prediction moved`() {
-        val info = infoFor(arrival(predicted = true, predictedArrivalTime = 1_783_119_500_000L))
+        val info = genuinePrediction
 
         assertEquals(scheduledArrival, info.scheduledTime.epochMs)
         assertEquals(1_783_119_500_000L, info.displayTime.epochMs)
@@ -260,10 +260,9 @@ class ArrivalInfoTest {
     fun `scheduledTime equals displayTime when there is no usable prediction`() {
         // Including the closed-stop sentinel, which normalizes to no prediction: the two agree, so
         // nothing is struck through.
-        assertEquals(
-            infoFor(arrival(predicted = false, predictedArrivalTime = 0L)).displayTime,
-            infoFor(arrival(predicted = false, predictedArrivalTime = 0L)).scheduledTime
-        )
+        val unpredicted = infoFor(arrival(predicted = false, predictedArrivalTime = 0L))
+        assertEquals(unpredicted.displayTime, unpredicted.scheduledTime)
+
         val suppressed = infoFor(arrival(predicted = true, predictedArrivalTime = -1L))
         assertEquals(suppressed.displayTime, suppressed.scheduledTime)
     }

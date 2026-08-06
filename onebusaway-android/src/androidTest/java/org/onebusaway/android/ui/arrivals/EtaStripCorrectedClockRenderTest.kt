@@ -19,7 +19,9 @@ import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
@@ -94,14 +96,12 @@ class EtaStripCorrectedClockRenderTest {
     }
 
     @Test
-    fun aPillOnItsTimetableTimeHasNothingToStrikeThrough() {
+    fun aPillOnItsTimetableTimeDrawsOneClockLine() {
         setContent(etaMinutes = 6, deviationMinutes = 0)
 
-        composeRule.onNodeWithText(clockAt(6)).assertIsDisplayed()
-        composeRule
-            .onNodeWithContentDescription(
-                context.getString(R.string.stop_info_clock_corrected, clockAt(6), clockAt(6))
-            )
-            .assertDoesNotExist()
+        // Exactly one line carrying that time, not two identical ones — the failure mode of striking a
+        // time through and replacing it with itself, which is why the rule compares formatted strings.
+        // The unmerged tree, since the clickable pill merges its children's text into one node.
+        composeRule.onAllNodesWithText(clockAt(6), useUnmergedTree = true).assertCountEquals(1)
     }
 }

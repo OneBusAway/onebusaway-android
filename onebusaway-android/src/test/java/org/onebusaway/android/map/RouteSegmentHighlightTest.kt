@@ -30,7 +30,6 @@ import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
-import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
@@ -44,19 +43,6 @@ class RouteSegmentHighlightTest {
     private val segment = listOf(GeoPoint(47.60, -122.33), GeoPoint(47.62, -122.33))
 
     private fun stop(id: String, lat: Double, lon: Double) = ObaStopElement(id = id, lat = lat, lon = lon)
-
-    /** A route whose load has landed, publishing [color] — the only thing the colour rule reads off one. */
-    private fun loadedRoute(color: Int?) = object : ObaRoute {
-        override val id = "45"
-        override val shortName = "45"
-        override val longName: String? = null
-        override val description: String? = null
-        override val type = ObaRoute.TYPE_BUS
-        override val url: String? = null
-        override val color = color
-        override val textColor: Int? = null
-        override val agencyId = "agency"
-    }
 
     /** An ordinary ride: one route, so one span, cut nowhere. */
     private fun ride(points: List<GeoPoint>) = listOf(RiddenSpan(points))
@@ -212,37 +198,38 @@ class RouteSegmentHighlightTest {
         // nothing to draw from until it landed — leaving it on the caller's fallback, a pure blue.
         val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
 
-        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loadedRoute = null))
+        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loaded = null))
         // Nothing to stand in with either: the colour stays unstated and the renderer's default draws it.
-        assertEquals(null, riddenSpanColorSource(span.copy(plannedColor = null), loadedRoute = null))
+        assertEquals(null, riddenSpanColorSource(span.copy(plannedColor = null), loaded = null))
     }
 
     @Test
     fun riddenSpanColorSource_onceItsRouteLoads_takesTheRoutesOwnColour() {
         val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
 
-        assertEquals(0xFFD22630.toInt(), riddenSpanColorSource(span, loadedRoute(0xFFD22630.toInt())))
+        assertEquals(0xFFD22630.toInt(), riddenSpanColorSource(span, LoadedSpanRoute(0xFFD22630.toInt())))
     }
 
     @Test
-    fun riddenSpanColorSource_aLoadedRouteWithNoUsableColour_doesNotFallBackToThePlannedColour() {
-        // The corridor beneath the span is drawn from the loaded route, and states no colour for it either,
-        // so a span that kept a planned colour here would be a line its own approach couldn't match: both
-        // leave the colour unstated and take the renderer's default together.
+    fun riddenSpanColorSource_aLandedLoadWithNoUsableColour_doesNotFallBackToThePlannedColour() {
+        // The corridor beneath the span is drawn from the same landed load, and states no colour for it
+        // either, so a span that kept a planned colour here would be a line its own approach couldn't match:
+        // both leave the colour unstated and take the renderer's default together. A load that landed
+        // carrying no route at all is this case, not the pre-load one — it has nothing left to wait for.
         val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
 
-        assertEquals(null, riddenSpanColorSource(span, loadedRoute(null)))
+        assertEquals(null, riddenSpanColorSource(span, LoadedSpanRoute(publishedColor = null)))
     }
 
     @Test
     fun riddenSpanColorSource_aSpanNamingNoRoute_keepsThePlannedColourForGood() {
         // An interline leg whose route didn't resolve to an OBA id: nothing will ever load for it, and the
-        // caller hands it no route rather than the ride's shown one — which is a route it isn't ridden as.
+        // caller hands it no load rather than the ride's shown route — which is a route it isn't ridden as.
         // So the plan is its colour permanently, not for a load window, and the mid-ride change of route
         // the span exists to show survives the load instead of flattening into the leader's colour.
         val span = RiddenSpan(segment, routeId = null, plannedColor = 0xFF00A94F.toInt())
 
-        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loadedRoute = null))
+        assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loaded = null))
     }
 
     @Test

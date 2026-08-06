@@ -711,10 +711,16 @@ class RouteMapController(
      * drawer falls back to, which has no plan colour either and draws in the shown route's, as that ride
      * always has. Never the leader's loaded route: it is not ridden as that route, and borrowing its colour
      * would draw the mid-ride change of route away.
+     *
+     * The load is read as [LoadedSpanRoute] off the *map*, not off its route: a [RouteMap] whose response
+     * carried no route in its references has still landed, and answers with the colour it has (none) — the
+     * very colour [directionPolylines] draws its corridor in. Reading `route` for the landing instead would
+     * make that span the one case where the two disagree. A load that *failed* is a different thing and
+     * stays absent: nothing will republish for it, so the plan keeps that span for good.
      */
     private fun spanColor(span: RiddenSpan): Int? = when (val id = span.routeId) {
-        null -> palette.lineColor(riddenSpanColorSource(span, loadedRoute = null)) ?: currentRouteColor()
-        else -> palette.lineColor(riddenSpanColorSource(span, loadedRouteMap(id)?.route))
+        null -> palette.lineColor(riddenSpanColorSource(span, loaded = null)) ?: currentRouteColor()
+        else -> palette.lineColor(riddenSpanColorSource(span, loadedRouteMap(id)?.let { LoadedSpanRoute(it.route?.color) }))
     }
 
     /**

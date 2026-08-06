@@ -87,6 +87,18 @@ data class TripLeg(
     // previous leg's card instead of emitting a spurious get-off/get-on pair (#2000). Always false on
     // the OTP1 path.
     val interlineWithPreviousLeg: Boolean = false,
+    // Whether the rider covers this leg on a *hired* vehicle — OTP's `rentedBike`, published on both
+    // protocols (OTP2 `Leg.rentedBike`, OTP1 `leg.rentedBike`). The one thing that separates a
+    // bikeshare ride from a ride on the rider's own bike, since OTP gives both the plain `BICYCLE`
+    // mode; read rather than inferred from the leg's endpoints (#2159). Despite the wire name it is
+    // not bike-specific on OTP2 — the server sets it from `isRentingVehicle()` — so the domain calls
+    // it what it means.
+    //
+    // False rather than null when the wire didn't say: OTP2 leaves it null on exactly the legs that
+    // aren't street legs (transit legs, zero-distance transfer legs), where "is the rider on a hired
+    // vehicle" has no meaning, and OTP1 states it on every leg. So there is no leg where the
+    // difference between "false" and "unstated" is a fact about the trip.
+    val rentedVehicle: Boolean = false,
     val distance: Double = 0.0,
     @Serializable(with = DurationSerializer::class) val duration: Duration = Duration.ZERO,
     @Serializable(with = DurationSerializer::class) val departureDelay: Duration = Duration.ZERO,

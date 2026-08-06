@@ -68,6 +68,10 @@ fun OtpLegDto.toTripLeg(): TripLeg = TripLeg(
     headsign = headsign,
     tripId = tripId,
     realTime = realTime ?: false,
+    // OTP1 publishes the same fact under the same name as OTP2 (see [TripLeg.rentedVehicle]), so the
+    // bikeshare/own-bike split works on this path too — which endpoint inference never gave it, OTP1's
+    // `/plan` carrying no rental facts beyond a bare `bikeShareId`.
+    rentedVehicle = rentedBike ?: false,
     distance = distance ?: 0.0,
     duration = (duration?.toLong() ?: 0L).seconds,
     departureDelay = (departureDelay?.toInt() ?: 0).seconds,

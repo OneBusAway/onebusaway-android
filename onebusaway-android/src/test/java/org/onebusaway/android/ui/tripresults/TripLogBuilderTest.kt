@@ -199,22 +199,19 @@ class TripLogBuilderTest {
         assertEquals(StreetMode.BIKE, modeOf(walkLeg.copy(mode = TripMode.BICYCLE)))
         assertEquals(StreetMode.CAR, modeOf(walkLeg.copy(mode = TripMode.CAR)))
         assertEquals(StreetMode.WALK, modeOf(walkLeg.copy(mode = TripMode.WALK)))
-        // A bike picked up at — or returned to — a rental place is a *shared* bike, and draws the
-        // bikeshare glyph rather than the rider's-own-bike one (#2047).
+        // A bike OTP says the rider hired is a *shared* bike, and draws the bikeshare glyph rather
+        // than the rider's-own-bike one (#2047) — read off the leg's own flag (#2159), so the
+        // timeline can't call a leg a rental that the option card above it calls an own-bike ride.
         assertEquals(
             StreetMode.BIKESHARE,
-            modeOf(
-                walkLeg.copy(
-                    mode = TripMode.BICYCLE,
-                    from = walkLeg.from.copy(vertexType = TripVertexType.BIKESHARE)
-                )
-            )
+            modeOf(walkLeg.copy(mode = TripMode.BICYCLE, rentedVehicle = true))
         )
         assertEquals(
             StreetMode.BIKESHARE,
             modeOf(
                 walkLeg.copy(
                     mode = TripMode.BICYCLE,
+                    rentedVehicle = true,
                     to = walkLeg.to.copy(vertexType = TripVertexType.BIKESHARE)
                 )
             )
@@ -227,6 +224,7 @@ class TripLogBuilderTest {
         // scooter nothing about whose it is or which app unlocks it (#2150).
         val leg = walkLeg.copy(
             mode = TripMode.BICYCLE,
+            rentedVehicle = true,
             from = walkLeg.from.copy(
                 vertexType = TripVertexType.BIKESHARE,
                 rental = TripVehicleRental(

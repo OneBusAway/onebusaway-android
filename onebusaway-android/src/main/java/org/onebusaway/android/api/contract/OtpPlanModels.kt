@@ -116,6 +116,11 @@ data class OtpLegDto(
     val headsign: String? = null,
     val tripId: String? = null,
     val realTime: Boolean? = null,
+    // OTP1's `Leg.rentedBike`, the counterpart of OTP2's field of the same name: true when the rider
+    // is on a hired bike for the whole leg (`states[0].isBikeRenting() && states[last].isBikeRenting()`
+    // in OTP1's GraphPathToTripPlanConverter). Serialized on every leg, so absence here means a
+    // response that isn't OTP1's `/plan` at all.
+    val rentedBike: Boolean? = null,
     val distance: Double? = null,
     val duration: Double? = null,
     val departureDelay: Double? = null,

@@ -113,6 +113,16 @@ query Plan(
                     duration
                     distance
                     realTime
+                    # Whether the rider is on a hired vehicle for this leg — the fact that separates a
+                    # bikeshare ride from one on the rider's own bike, which `mode` does not (OTP calls
+                    # both plain `BICYCLE`). Stated by the server rather than inferred from the leg's
+                    # endpoints: OTP sets it from the routing state itself
+                    # (`StreetPathToLegsMapper` → `withRentedVehicle(firstState.isRentingVehicle())`),
+                    # so despite the legacy field name it means *any* rented vehicle, and it is non-null
+                    # on every street leg. It is null on a transit leg and on OTP's zero-distance
+                    # transfer legs — neither of which is a street leg at all (`Leg.rentedVehicle()`
+                    # defaults to null), so the adapter's null→false loses nothing.
+                    rentedBike
                     interlineWithPreviousLeg
                     start {
                         scheduledTime

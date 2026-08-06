@@ -116,10 +116,19 @@ enum class RentalVehicleKind { BIKE, EBIKE, CARGO_BIKE, ELECTRIC_CARGO_BIKE, SCO
  *
  * Either endpoint's rental counts, and the pickup wins when both do: a docked trip starts and ends at a
  * station, a dockless one may start at a vehicle and end nowhere in particular, and it is where the
- * rider *gets* the bike that decides whether they're looking for a dock. That mirrors
- * [streetMode][org.onebusaway.android.ui.tripresults.streetMode], which reads the same two endpoints to
- * decide the leg is a rental at all, so a leg cannot be a bikeshare leg with no rental to show or the
- * other way round.
+ * rider *gets* the bike that decides whether they're looking for a dock.
+ *
+ * **A rental leg with no rental endpoint draws the bikeshare glyph and no operator chip**, and that is
+ * the intended degradation (#2159). Whether the leg is a rental is now OTP's own
+ * [rentedVehicle][TripLeg.rentedVehicle] flag, read by
+ * [streetMode][org.onebusaway.android.ui.tripresults.streetMode]; everything the row says *about* the
+ * vehicle — whose it is, what kind, which dock, where the unlock tap goes — exists only on the endpoint
+ * places, so a leg flagged as hired whose endpoints carry no rental has the fact but not the facts.
+ * Saying "you ride a shared bike here" without naming an operator is the honest reading of that, and
+ * strictly more than the plain-bike row this leg would otherwise get: it beats both inventing an
+ * operator and hiding a rental the server stated. The live OTP2 deployment does not produce such a leg
+ * today (every flagged ride there also has a rental endpoint — see [streetMode]); the OTP1 path reaches
+ * the same row by the other route, its endpoints carrying a bare `bikeShareId` with no network to name.
  */
 internal fun TripLeg.rentalPickup(): RentalPickup? = if (streetMode() == StreetMode.BIKESHARE) {
     rentalPickup(from.rental ?: to.rental)

@@ -268,10 +268,10 @@ enum class TerminalKind { START, ARRIVE }
  * leg the rider *rents*, split out because the two are different acts to the rider (find a dock vs.
  * take the bike you brought) and the app draws them with different symbols.
  *
- * [BIKESHARE] is not a wire mode: OTP calls such a leg `BICYCLE` like any other and says it's a rental
- * by giving the leg a vehicle-rental endpoint ([TripVertexType.BIKESHARE][
- * org.onebusaway.android.directions.model.TripVertexType]) — a structural fact off the wire, not a
- * guess. See `ModeSymbols.streetMode`.
+ * [BIKESHARE] is not a wire *mode*: OTP calls such a leg `BICYCLE` like any other and says it's a rental
+ * on a separate field, [TripLeg.rentedVehicle][org.onebusaway.android.directions.model.TripLeg] (its own
+ * `rentedBike`, on both OTP protocols) — read as stated rather than inferred from the leg's endpoints
+ * (#2159). See `ModeSymbols.streetMode`.
  */
 enum class StreetMode { WALK, BIKE, BIKESHARE, CAR }
 

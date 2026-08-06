@@ -35,14 +35,26 @@ class ItineraryLegStyleTest {
     private val bikeShareDock = TripPlace(vertexType = TripVertexType.BIKESHARE, rental = TripVehicleRental(id = "dock-1"))
 
     @Test
-    fun `a bicycle leg from a rental dock is bikeshare, from anywhere else own-bike`() {
+    fun `a bicycle leg OTP flagged as hired is bikeshare, any other is own-bike`() {
         assertEquals(
             ItineraryLegKind.BIKESHARE,
-            TripLeg(mode = TripMode.BICYCLE, from = bikeShareDock).legKind()
+            TripLeg(mode = TripMode.BICYCLE, rentedVehicle = true, from = bikeShareDock).legKind()
         )
         assertEquals(
             ItineraryLegKind.BIKE,
             TripLeg(mode = TripMode.BICYCLE, from = TripPlace(name = "Home")).legKind()
+        )
+        // The flag, not the dock the leg starts at (#2159): a rider setting off from beside a rental
+        // dock on their own bike is riding their own bike, and OTP is the one that knows which.
+        assertEquals(
+            ItineraryLegKind.BIKE,
+            TripLeg(mode = TripMode.BICYCLE, from = bikeShareDock).legKind()
+        )
+        // ...and a hired ride keeps its stroke wherever it starts, which a dockless one may be nowhere
+        // in particular.
+        assertEquals(
+            ItineraryLegKind.BIKESHARE,
+            TripLeg(mode = TripMode.BICYCLE, rentedVehicle = true, from = TripPlace(name = "Kerb")).legKind()
         )
     }
 

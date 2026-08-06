@@ -75,8 +75,8 @@ data class RiddenSpan(
 /**
  * The colour a ridden span is drawn from, for a palette to render: its own route's published colour once
  * that route has loaded ([loadedRoute]), else the colour the plan gave it ([RiddenSpan.plannedColor]). Null
- * when neither publishes one, which is the caller's own fallback — the same `palette.lineColor(…) ?: …`
- * shape every other route line on this map is coloured by.
+ * when neither publishes one — a colour left unstated, which the renderer resolves to its default, exactly
+ * as it does for a route line whose route publishes nothing usable.
  *
  * The plan answers for the load window, which is a network round trip the rider spends looking at the map
  * (#2186). Nothing answered for it before: the span was drawn in the *shown route's* colour, which until
@@ -84,10 +84,11 @@ data class RiddenSpan(
  * before it settled into its route's colour. The plan already published that colour; it just wasn't asked.
  *
  * A loaded route then answers alone, its own missing colour included, rather than the plan filling in for
- * it: the corridor beneath the span is drawn from that same route (`directionPolylines`), so a span that
- * kept a planned colour there would be a line its own approach couldn't match. Passing the route itself
- * rather than its colour is what keeps "hasn't loaded" and "loaded, publishes nothing" apart — they take
- * opposite branches here, and a bare `Int?` cannot tell them apart.
+ * it: the corridor beneath the span is drawn from that same route (`directionPolylines`), which states no
+ * colour for it either — so both reach the renderer's default together, where a span that kept a planned
+ * colour would be a line its own approach couldn't match. Passing the route itself rather than its colour
+ * is what keeps "hasn't loaded" and "loaded, publishes nothing" apart — they take opposite branches here,
+ * and a bare `Int?` cannot tell them apart.
  */
 internal fun riddenSpanColorSource(span: RiddenSpan, loadedRoute: ObaRoute?): Int? = if (loadedRoute == null) span.plannedColor else loadedRoute.color
 

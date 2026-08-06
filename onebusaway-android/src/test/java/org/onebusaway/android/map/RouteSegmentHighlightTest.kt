@@ -213,7 +213,7 @@ class RouteSegmentHighlightTest {
         val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
 
         assertEquals(0xFF00A94F.toInt(), riddenSpanColorSource(span, loadedRoute = null))
-        // Nothing to stand in with either: the caller's fallback answers, as it did for the whole ride.
+        // Nothing to stand in with either: the colour stays unstated and the renderer's default draws it.
         assertEquals(null, riddenSpanColorSource(span.copy(plannedColor = null), loadedRoute = null))
     }
 
@@ -226,8 +226,9 @@ class RouteSegmentHighlightTest {
 
     @Test
     fun riddenSpanColorSource_aLoadedRouteWithNoUsableColour_doesNotFallBackToThePlannedColour() {
-        // The corridor beneath the span is drawn from the loaded route, so a span that kept a planned colour
-        // here would be a line its own approach couldn't match: both take the caller's fallback instead.
+        // The corridor beneath the span is drawn from the loaded route, and states no colour for it either,
+        // so a span that kept a planned colour here would be a line its own approach couldn't match: both
+        // leave the colour unstated and take the renderer's default together.
         val span = RiddenSpan(segment, routeId = "45", plannedColor = 0xFF00A94F.toInt())
 
         assertEquals(null, riddenSpanColorSource(span, loadedRoute(null)))

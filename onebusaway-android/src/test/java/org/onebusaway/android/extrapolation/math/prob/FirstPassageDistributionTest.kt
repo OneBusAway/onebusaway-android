@@ -22,6 +22,13 @@ import org.junit.Test
 
 private const val THETA = 25.236
 
+/**
+ * Quantiles are found by bisecting the remaining schedule, so they carry that search's residue.
+ * A centimetre is far below anything drawable and comfortably above the residue the iteration
+ * count guarantees — asserting tighter would be pinning the constant, not the behaviour.
+ */
+private const val SEARCH_TOLERANCE_M = 0.01
+
 class FirstPassageDistributionTest {
 
     // A schedule running 2000m in 400s at a steady 5 m/s, one knot every 500m.
@@ -111,8 +118,7 @@ class FirstPassageDistributionTest {
     @Test
     fun `the vehicle never runs past the end of the schedule`() {
         val dist = at(3600.0)
-        // Tolerance is the bisection's own residue, not slop in the clamp.
-        assertEquals(2000.0, dist.quantile(0.999), 1e-6)
+        assertEquals(2000.0, dist.quantile(0.999), SEARCH_TOLERANCE_M)
         assertEquals(1.0, dist.cdf(2000.0), 0.0)
         assertEquals(0.0, dist.pdf(2000.0), 0.0)
     }
@@ -120,8 +126,8 @@ class FirstPassageDistributionTest {
     @Test
     fun `at the anchor instant the vehicle is exactly where it was seen`() {
         val dist = at(0.0)
-        assertEquals(0.0, dist.quantile(0.5), 1e-6)
-        assertEquals(0.0, dist.quantile(0.99), 1e-6)
+        assertEquals(0.0, dist.quantile(0.5), SEARCH_TOLERANCE_M)
+        assertEquals(0.0, dist.quantile(0.99), SEARCH_TOLERANCE_M)
         assertEquals(0.0, dist.cdf(-1e-9), 0.0)
     }
 

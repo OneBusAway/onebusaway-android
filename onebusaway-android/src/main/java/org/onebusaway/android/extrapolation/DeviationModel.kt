@@ -44,7 +44,8 @@ import org.onebusaway.android.extrapolation.math.MonotoneSpline
  * it smooths away curvature the data genuinely supports. Placing the outermost knots where about
  * a percent of observations sit, and clamping beyond them, is what fixed it.
  *
- * See `extrapolation-science/h37_penalized_params.json` for the fit and its validation.
+ * Fitted and validated in the companion research repo (extrapolation-science, H37); the fit
+ * artifacts live there rather than in this tree, as with the speed models before it.
  */
 internal object DeviationModel {
 

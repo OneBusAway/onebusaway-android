@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.dataview
 
 import kotlin.time.Duration.Companion.seconds
+import org.onebusaway.android.extrapolation.BAND_HIGH_QUANTILE
+import org.onebusaway.android.extrapolation.BAND_LOW_QUANTILE
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
@@ -37,8 +39,9 @@ data class ScheduleStop(
 data class PdfBin(val distanceMeters: Double, val normalizedHeight: Double)
 
 /**
- * The extrapolation overlay at [nowMs]: the median estimate and the 80% CI bounds projected from the
- * [anchor], plus the position PDF histogram. Distances in meters, times on the server clock.
+ * The extrapolation overlay at [nowMs]: the median estimate and the outer credible bounds
+ * ([CI_LOW_QUANTILE]..[CI_HIGH_QUANTILE]) projected from the [anchor], plus the position PDF
+ * histogram and the quantile ticks that divide it. Distances in meters, times on the server clock.
  *
  * [scheduleAtMedianMs] is the server-clock time the schedule says the vehicle should reach the
  * median distance — the schedule-deviation reference. Null when the median falls outside the
@@ -87,12 +90,14 @@ const val PDF_BIN_HIGH_QUANTILE = 0.999
 const val PDF_BIN_COUNT = 160
 
 /**
- * The credible-interval bounds drawn as a wedge from the anchor: a wide 98% span, so the wedge
- * shows the full plausible reach rather than the bulk. The bulk is read off the density instead,
- * from [PDF_SEPARATOR_QUANTILES].
+ * The credible-interval bounds drawn as a wedge from the anchor: the full plausible reach rather
+ * than the bulk, which is read off the density instead via [PDF_SEPARATOR_QUANTILES].
+ *
+ * Deliberately the same span the map's uncertainty band uses, so the two views of one distribution
+ * are not silently answering different questions.
  */
-const val CI_LOW_QUANTILE = 0.01
-const val CI_HIGH_QUANTILE = 0.99
+const val CI_LOW_QUANTILE = BAND_LOW_QUANTILE
+const val CI_HIGH_QUANTILE = BAND_HIGH_QUANTILE
 
 /**
  * Quantiles ticked inside the position density. These carry the reading the wedge used to: where
@@ -220,8 +225,10 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
         lowMeters = low,
         highMeters = high,
         pdf = pdfBins(distribution),
+        // 0.5 is one of the separators and inverting the CDF is the expensive part here, so the
+        // median already computed above is reused rather than solved for a second time.
         separatorMeters = PDF_SEPARATOR_QUANTILES
-            .map { distribution.quantile(it) }
+            .map { if (it == 0.5) median else distribution.quantile(it) }
             .filter { it.isFinite() },
         scheduleAtMedianMs = interpolateScheduleTime(schedule, median)
     )

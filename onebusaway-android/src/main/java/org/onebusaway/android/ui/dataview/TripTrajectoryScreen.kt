@@ -331,13 +331,16 @@ private fun DrawScope.drawNowLine(viewport: GraphViewport, nowMs: Long, nowLabel
  * The density's normalized height at [meters], interpolated between the bins either side. Zero
  * outside the histogram's range, so a separator that falls off the clipped tail draws nothing
  * rather than a full-height line at the edge.
+ *
+ * `pdfBins` lays its centres out at a constant pitch, so the bracketing index is arithmetic rather
+ * than a search.
  */
 private fun pdfHeightAt(bins: List<PdfBin>, meters: Double): Float {
     if (bins.size < 2) return 0f
     if (meters < bins.first().distanceMeters || meters > bins.last().distanceMeters) return 0f
-    val i = bins.indexOfLast { it.distanceMeters <= meters }.coerceIn(0, bins.size - 2)
-    val span = bins[i + 1].distanceMeters - bins[i].distanceMeters
-    if (span <= 0.0) return bins[i].normalizedHeight.toFloat()
-    val fraction = (meters - bins[i].distanceMeters) / span
+    val pitch = bins[1].distanceMeters - bins[0].distanceMeters
+    val position = (meters - bins.first().distanceMeters) / pitch
+    val i = position.toInt().coerceIn(0, bins.size - 2)
+    val fraction = position - i
     return (bins[i].normalizedHeight + fraction * (bins[i + 1].normalizedHeight - bins[i].normalizedHeight)).toFloat()
 }

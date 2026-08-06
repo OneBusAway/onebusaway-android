@@ -58,7 +58,14 @@ class GammaDistribution(val alpha: Double, val scale: Double) : ProbDistribution
         /** Stand-in for zero in the continued fraction, so a vanishing term can't divide by 0. */
         private const val TINY = 1e-30
 
-        private fun regularizedGammaP(a: Double, x: Double): Double {
+        /**
+         * The regularized lower incomplete gamma P(a, x) — the gamma CDF's kernel, in the
+         * normalized coordinates where scale has already been divided out. Exposed because
+         * [FirstPassageDistribution] root-finds over the *shape*, so it evaluates this thousands
+         * of times per second with a fixed x; going through a [GammaDistribution] instance would
+         * allocate one per evaluation.
+         */
+        internal fun regularizedGammaP(a: Double, x: Double): Double {
             if (x <= 0) return 0.0
 
             return if (x < a + 1) {

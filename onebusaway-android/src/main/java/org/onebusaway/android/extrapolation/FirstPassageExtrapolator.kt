@@ -48,47 +48,40 @@ import org.onebusaway.android.time.WallTime
  */
 class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
 
-    // One extrapolator per immutable TripState, whose anchor distance is likewise frozen, so this
-    // is a per-instance memo; the distance key just stops a direct doExtrapolate caller from
-    // reading a profile built for a different position. NaN never equals anything, so the first
-    // call always computes, and a null profile is memoized too since it cannot start succeeding.
-    private var cachedProfile: PassageProfile? = null
-    private var cachedProfileDist = Double.NaN
+    /**
+     * The schedule ahead of the vehicle, and how far off schedule it is — both fixed for the life of
+     * this extrapolator, since [Extrapolator] is built per immutable snapshot.
+     *
+     * The profile starts from where the vehicle **actually is**, not its `scheduledDistanceAlongTrip`:
+     * the model asks how long the road ahead should take, which is a property of that road, so a late
+     * bus is still governed by the stretch it currently occupies.
+     */
+    private val fit: Fit? by lazy(LazyThreadSafetyMode.NONE) {
+        val anchor = state.anchor ?: return@lazy null
+        val profile = state.schedule?.passageProfileFrom(anchor.distanceAlongTrip ?: return@lazy null)
+        profile?.let { Fit(it, anchor.scheduleDeviation) }
+    }
+
+    private class Fit(val profile: PassageProfile, val deviation: Duration)
 
     override fun doExtrapolate(
         lastDist: Double,
         lastTime: WallTime,
         queryTime: WallTime
     ): ExtrapolationResult {
-        val profile = resolveProfile(lastDist) ?: return ExtrapolationResult.MissingSchedule
+        val current = fit ?: return ExtrapolationResult.MissingSchedule
         val dtSec = (queryTime - lastTime).toDouble(DurationUnit.SECONDS)
-        // The anchor's deviation, not a running estimate: the model reads it once, from the same
-        // fix the extrapolation starts at. Letting it evolve over the horizon would be more
-        // faithful -- the drift measurement is exactly that equation of motion -- but it would
-        // cost the closed form this whole approach is built on.
-        val deviation = state.anchor?.scheduleDeviation ?: Duration.ZERO
+        // Deviation is read once, from the fix the extrapolation starts at, rather than tracked as
+        // it evolves. Letting it evolve would be more faithful -- the drift measurement is exactly
+        // that equation of motion -- but it would cost the closed form this approach is built on.
         return ExtrapolationResult.Success(
             FirstPassageDistribution(
                 dtSec,
-                profile.scheduleSeconds,
-                profile.distances,
-                DeviationModel.dispersionFor(deviation),
-                DeviationModel.travelMultiplierFor(deviation)
+                current.profile.scheduleSeconds,
+                current.profile.distances,
+                DeviationModel.dispersionFor(current.deviation),
+                DeviationModel.travelMultiplierFor(current.deviation)
             )
         )
-    }
-
-    /**
-     * The schedule ahead of a vehicle at [lastDist], or null when there isn't one.
-     *
-     * Keyed off where the vehicle **actually is**, not its `scheduledDistanceAlongTrip`: the model
-     * asks how long the road ahead should take, which is a property of that road, so a late bus is
-     * still governed by the stretch it currently occupies.
-     */
-    private fun resolveProfile(lastDist: Double): PassageProfile? {
-        if (cachedProfileDist == lastDist) return cachedProfile
-        cachedProfileDist = lastDist
-        cachedProfile = state.schedule?.passageProfileFrom(lastDist)
-        return cachedProfile
     }
 }

@@ -15,13 +15,20 @@
  */
 package org.onebusaway.android.extrapolation.math.prob
 
-/** Bisection steps used to invert the CDF — ~1e-12 of the horizon after this many halvings. */
-private const val QUANTILE_ITERATIONS = 40
+/**
+ * Bisection steps used to invert the CDF.
+ *
+ * The bracket is the whole remaining schedule, at most ~1800s, so 20 halvings resolve the answer to
+ * under 2ms of schedule time — a couple of centimetres of road. Every extra step costs an
+ * incomplete-gamma evaluation on a path that runs per vehicle per frame, and buys resolution far
+ * below anything drawable.
+ */
+private const val QUANTILE_ITERATIONS = 20
 
 /** Central-difference step for [FirstPassageDistribution.pdf], as a fraction of the profile's extent. */
 private const val PDF_STEP_FRACTION = 1e-4
 
-/** Quadrature samples for [FirstPassageDistribution.mean]; matches [FrozenDistribution]'s resolution. */
+/** Quadrature samples for [FirstPassageDistribution.mean]. */
 private const val MEAN_SAMPLES = 64
 
 /**
@@ -75,15 +82,22 @@ class FirstPassageDistribution(
         }
     }
 
+    /** [elapsedSeconds] in units of [theta] — the incomplete gamma's x, fixed across every query. */
+    private val elapsedOverTheta = elapsedSeconds / theta
+
     /**
      * P(the vehicle has already covered [tau] seconds' worth of schedule). Decreasing in [tau] —
      * the further ahead you look, the less likely it has got there.
+     *
+     * Only the *shape* varies with [tau], so this calls the incomplete-gamma kernel directly rather
+     * than building a [GammaDistribution] per evaluation: quantile inversion runs this 20 times, per
+     * vehicle, per frame.
      */
     private fun reached(tau: Double): Double {
         // No ground takes no time, so it is certainly covered. (A zero gamma shape is not a
         // distribution, which is the same statement.)
         if (tau <= 0.0) return 1.0
-        return GammaDistribution(meanTravelMultiplier * tau / theta, theta).cdf(elapsedSeconds)
+        return GammaDistribution.regularizedGammaP(meanTravelMultiplier * tau / theta, elapsedOverTheta)
     }
 
     override fun cdf(x: Double): Double {
@@ -131,7 +145,8 @@ class FirstPassageDistribution(
     /**
      * Mean position, by midpoint quadrature over the quantile function. No consumer of an
      * extrapolated distance reads the mean — the map, the band and the trajectory view all work in
-     * quantiles — so the approximation buys simplicity at no cost. Computed on demand, once.
+     * quantiles — so the approximation buys simplicity at no cost. It is `lazy` because each sample
+     * costs a quantile inversion; nothing currently triggers it.
      */
     override val mean: Double by lazy(LazyThreadSafetyMode.NONE) {
         var sum = 0.0

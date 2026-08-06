@@ -72,9 +72,12 @@ fun ObaTripSchedule.findSegmentStartIndex(distanceAlongTrip: Double): Int {
  * says it should take to *first reach* each point ahead.
  *
  * Unlike [TravelProfile] this counts scheduled dwells, because it is compared against wall-clock
- * elapsed time and a vehicle really does spend the dwell. A dwell shows up as a plateau — schedule
- * time advances while distance does not — and [scheduleSecondsTo] resolves a plateau to its
- * *arrival* edge, since that is the moment the vehicle first arrives.
+ * elapsed time and a vehicle really does spend the dwell. A dwell shows up as a plateau: schedule
+ * time advances while distance does not.
+ *
+ * Deliberately just the two arrays. Reading the curve is [FirstPassageDistribution]'s job, and it
+ * needs the mapping in both directions with its own plateau conventions, so a lookup here would be
+ * a second copy of the same interpolation rather than a service to anyone.
  *
  * @property scheduleSeconds cumulative scheduled seconds from the anchor; starts at 0, non-decreasing
  * @property distances distance along the trip in meters at each knot; starts at the anchor's own
@@ -84,44 +87,7 @@ class PassageProfile
 internal constructor(
     val scheduleSeconds: DoubleArray,
     val distances: DoubleArray
-) {
-    /** Distance reached after [seconds] of schedule, clamped to the profile's ends. */
-    fun distanceAfter(seconds: Double): Double {
-        if (seconds <= scheduleSeconds.first()) return distances.first()
-        if (seconds >= scheduleSeconds.last()) return distances.last()
-        var lo = 0
-        var hi = scheduleSeconds.size - 1
-        while (lo < hi) {
-            val mid = (lo + hi) / 2
-            if (scheduleSeconds[mid] < seconds) lo = mid + 1 else hi = mid
-        }
-        val span = scheduleSeconds[lo] - scheduleSeconds[lo - 1]
-        if (span <= 0.0) return distances[lo]
-        val fraction = (seconds - scheduleSeconds[lo - 1]) / span
-        return distances[lo - 1] + fraction * (distances[lo] - distances[lo - 1])
-    }
-
-    /** Total scheduled seconds the profile covers — the anchor to the last stop. */
-    val horizonSeconds: Double
-        get() = scheduleSeconds.last()
-
-    /** Scheduled seconds from the anchor to first reach [distance], clamped to the profile's ends. */
-    fun scheduleSecondsTo(distance: Double): Double {
-        if (distance <= distances.first()) return scheduleSeconds.first()
-        if (distance >= distances.last()) return scheduleSeconds.last()
-        // First knot at or beyond the distance: on a dwell plateau that is the arrival edge.
-        var lo = 0
-        var hi = distances.size - 1
-        while (lo < hi) {
-            val mid = (lo + hi) / 2
-            if (distances[mid] < distance) lo = mid + 1 else hi = mid
-        }
-        val span = distances[lo] - distances[lo - 1]
-        if (span <= 0.0) return scheduleSeconds[lo]
-        val fraction = (distance - distances[lo - 1]) / span
-        return scheduleSeconds[lo - 1] + fraction * (scheduleSeconds[lo] - scheduleSeconds[lo - 1])
-    }
-}
+)
 
 /**
  * Builds the [PassageProfile] from [startDist] to the last scheduled stop, or null on the same

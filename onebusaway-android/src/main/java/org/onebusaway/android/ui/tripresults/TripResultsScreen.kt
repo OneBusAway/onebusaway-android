@@ -119,6 +119,7 @@ import org.onebusaway.android.directions.realtime.TripPlanMonitor
 import org.onebusaway.android.directions.realtime.TripPlanNotifications
 import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.time.ServerTime
+import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.ui.compose.LocalUnitsAreMetric
 import org.onebusaway.android.ui.compose.components.AlertSeverity
 import org.onebusaway.android.ui.compose.components.DirectionHeadsign
@@ -1691,8 +1692,12 @@ private fun ColumnScope.RentalContent(rental: RentalPickup) {
  * one. The chip is drawn at [RENTAL_OPERATOR_CHIP_SCALE] partly to keep what is left a comfortable
  * mark, and it is never the only way on — the row it sits in is itself a tap target.
  *
- * Only [RentalLink.Deep] names the exact vehicle the rider was routed onto, so only it is announced as
- * opening it; the rest merely open the operator, and none of it claims a reservation was made (#2138).
+ * A link that names the vehicle is announced as opening it; the rest merely open the operator, and none
+ * of it claims a reservation was made (#2138). The link the app builds itself (#2158) is announced the
+ * same way as one the operator published, because what the chip promises is what the tap does — it
+ * opens their app — and it is aimed at this vehicle either way. It is deliberately not hedged into its
+ * own wording: "Open in Lime (maybe on your bike)" is not a sentence, and the rider has no action to
+ * take differently on the answer.
  */
 @Composable
 private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
@@ -1701,7 +1706,7 @@ private fun OperatorChip(rental: RentalPickup, onOpen: (RentalLink) -> Unit) {
     val link = rental.link
     val openLabel = link?.let {
         stringResource(
-            if (it is RentalLink.Deep) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
+            if (it.namesTheVehicle) R.string.trip_plan_rental_open_in else R.string.trip_plan_rental_rent_with,
             name
         )
     }
@@ -1747,12 +1752,20 @@ private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
  * Hands the rider over: the operator's own link, and — when the device has nothing that handles a
  * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
  * [RentalPickup.fallback]).
+ *
+ * A synthesized link is built *here*, at the tap, rather than when the row was drawn: it stamps the
+ * moment it was made (#2158), and a rider who opened the sheet and came back to it later would
+ * otherwise send the operator's app a stamp from whenever the plan happened to load.
  */
 private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
     when (link) {
         is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
             fallback?.let { openRental(context, it, fallback = null) }
         }
+        is RentalLink.Synthesized ->
+            if (!ExternalIntents.openFeedUri(context, RentalDeepLinks.vehicleUri(link, WallTime.now()))) {
+                fallback?.let { openRental(context, it, fallback = null) }
+            }
         is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
         is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
     }

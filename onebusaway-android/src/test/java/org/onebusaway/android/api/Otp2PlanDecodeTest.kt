@@ -36,6 +36,7 @@ import org.onebusaway.android.api.graphql.type.FormFactor
 import org.onebusaway.android.api.graphql.type.Mode
 import org.onebusaway.android.api.graphql.type.PropulsionType
 import org.onebusaway.android.api.graphql.type.RelativeDirection
+import org.onebusaway.android.directions.model.RentalEndpointKind
 import org.onebusaway.android.directions.model.RentalFormFactor
 import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAlertSeverity
@@ -229,6 +230,9 @@ class Otp2PlanDecodeTest {
         // network is read from `rentalNetwork.networkId`, never parsed off the `network:id` prefix
         // the vehicle id wears.
         val rental = bus.from.rental!!
+        // Which of OTP's two rental shapes this came from, recorded rather than re-derived from the
+        // values: it is what says the id names a vehicle (#2158).
+        assertEquals(RentalEndpointKind.VEHICLE, rental.kind)
         assertEquals("lime_seattle:bs_9", rental.id)
         assertEquals("lime_seattle", rental.networkId)
         assertEquals("https://www.li.me/", rental.networkUrl)
@@ -388,6 +392,8 @@ class Otp2PlanDecodeTest {
         assertEquals("seattle_bikes:42", rental.id)
         assertEquals("seattle_bikes", rental.networkId)
         assertEquals("Pine St & 3rd Ave", rental.stationName)
+        // A dock, said structurally — so nothing downstream reads its station id as a vehicle's.
+        assertEquals(RentalEndpointKind.STATION, rental.kind)
         // A dock publishes no vehicle type — it holds whatever the operator left in it.
         assertNull(rental.formFactor)
         assertNull(rental.androidUri)

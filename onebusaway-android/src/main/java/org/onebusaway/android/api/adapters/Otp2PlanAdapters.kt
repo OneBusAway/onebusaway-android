@@ -23,6 +23,7 @@ import org.onebusaway.android.api.graphql.PlanQuery
 import org.onebusaway.android.api.graphql.fragment.PlaceFields
 import org.onebusaway.android.api.graphql.fragment.RentalNetworkFields
 import org.onebusaway.android.api.graphql.fragment.RentalUriFields
+import org.onebusaway.android.directions.model.RentalEndpointKind
 import org.onebusaway.android.directions.model.RentalFormFactor
 import org.onebusaway.android.directions.model.RentalPropulsion
 import org.onebusaway.android.directions.model.TripAbsoluteDirection
@@ -183,6 +184,7 @@ private fun PlaceFields.toTripPlace(): TripPlace = TripPlace(
 /** A free-floating rental vehicle: no dock, so no `stationName` to walk the rider to. */
 private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
     id = vehicleId,
+    kind = RentalEndpointKind.VEHICLE,
     network = rentalNetwork.rentalNetworkFields,
     uris = rentalUris?.rentalUriFields,
     formFactor = vehicleType?.formFactor?.rawValue.toEnum<RentalFormFactor>(),
@@ -197,6 +199,7 @@ private fun PlaceFields.RentalVehicle.toTripVehicleRental(): TripVehicleRental =
  */
 private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleRental = toTripVehicleRental(
     id = stationId,
+    kind = RentalEndpointKind.STATION,
     network = rentalNetwork.rentalNetworkFields,
     uris = rentalUris?.rentalUriFields,
     stationName = name.ifBlank { null }
@@ -210,6 +213,7 @@ private fun PlaceFields.VehicleRentalStation.toTripVehicleRental(): TripVehicleR
  */
 private fun toTripVehicleRental(
     id: String?,
+    kind: RentalEndpointKind,
     network: RentalNetworkFields,
     uris: RentalUriFields?,
     stationName: String? = null,
@@ -218,6 +222,7 @@ private fun toTripVehicleRental(
     rangeMeters: Int? = null
 ): TripVehicleRental = TripVehicleRental(
     id = id,
+    kind = kind,
     stationName = stationName,
     networkId = network.networkId,
     networkUrl = network.url.absoluteUriOrNull(),

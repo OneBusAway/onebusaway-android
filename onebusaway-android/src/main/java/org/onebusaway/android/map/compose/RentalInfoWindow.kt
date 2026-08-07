@@ -44,7 +44,6 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeChip
 import org.onebusaway.android.ui.compose.components.rentalVehicleRes
 import org.onebusaway.android.ui.compose.unitsAreMetric
 import org.onebusaway.android.ui.tripresults.RentalLink
-import org.onebusaway.android.util.PreferenceUtils
 
 // Info-window contents sit on a white bubble, so text uses fixed dark colors.
 private val RentalPrimary = Color(0xDE000000)
@@ -141,10 +140,15 @@ private fun RentalCount(title: String, count: Int) {
  *
  * Not a composable — the renderers set it as the marker's `snippet`, which is what the map SDKs read
  * for a marker's content description, and they hold a `Context` rather than a composition.
+ *
+ * [metric] is passed in rather than read here for the reason `ConversionUtils.getFormattedDistanceParts`
+ * gives: a leaf formatter that reaches for the preference seam is one a caller can't hoist. That matters
+ * on this path — the renderers call this once per marker per static render, so reading the preference
+ * inside would be up to 500 reads per camera settle, on the main thread, for a value the render loop
+ * already holds.
  */
-fun rentalContentDescription(context: Context, place: RentalPlace): String {
+fun rentalContentDescription(context: Context, place: RentalPlace, metric: Boolean): String {
     val detail = rentalDetailOf(place)
-    val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
     val parts = buildList {
         detail.pickup?.operator?.displayName?.let {
             add(context.getString(R.string.trip_plan_rental_operator_description, it))

@@ -275,7 +275,7 @@ class MapLibreRenderer(
                             .position(rental.point.toLatLng())
                             .icon(iconFactory.fromBitmap(bitmap))
                             .title(rental.place.name)
-                            .snippet(rentalContentDescription(context, rental.place))
+                            .snippet(rentalContentDescription(context, rental.place, metric))
                     )
                     staticAnnotations.add(marker)
                     rentalByMarker[marker] = rental

@@ -311,7 +311,7 @@ class GoogleMapRenderer(
                     val marker = map.addMarkerOrFail(
                         options
                             .title(rental.place.name)
-                            .snippet(rentalContentDescription(context, rental.place))
+                            .snippet(rentalContentDescription(context, rental.place, metric))
                     )
                     staticMarkers.add(marker)
                     rentalByMarker[marker] = rental

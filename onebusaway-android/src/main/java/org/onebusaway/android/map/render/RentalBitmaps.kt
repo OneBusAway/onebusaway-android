@@ -101,35 +101,37 @@ object RentalBitmaps {
      */
     fun labelled(context: Context, base: Bitmap, label: String, cacheKey: String): RentalIcon {
         val density = context.resources.displayMetrics.density
-        val paint = labelPaint(density)
-        val padPx = LABEL_PADDING_DP * density
-        val gapPx = LABEL_GAP_DP * density
-        val chipHeight = paint.textSize + padPx * 2f
-        val blockPx = gapPx + chipHeight
-        val height = (base.height + blockPx * 2f).toInt()
-        val chipWidth = paint.measureText(label) + padPx * 2f
-        val width = maxOf(base.width.toFloat(), chipWidth).toInt()
-
-        val bitmap = labelledCache.get(cacheKey) ?: createBitmap(width, height).also { out ->
-            val canvas = Canvas(out)
-            val left = (width - base.width) / 2f
-            canvas.drawBitmap(base, left, blockPx, null)
-            val chipLeft = (width - chipWidth) / 2f
-            val chipTop = blockPx + base.height + gapPx
-            val chip = RectF(chipLeft, chipTop, chipLeft + chipWidth, chipTop + chipHeight)
-            val radius = chipHeight / 2f
-            canvas.drawRoundRect(chip, radius, radius, chipBackgroundPaint())
-            // Baseline placed off the font metrics rather than by eye, so the chip stays centred at
-            // any density and for any script.
-            val baseline = chip.centerY() - (paint.descent() + paint.ascent()) / 2f
-            canvas.drawText(label, chip.centerX(), baseline, paint)
-            labelledCache.put(cacheKey, out)
-        }
+        // The label block's height depends only on the type size and padding, never on the string, so
+        // the anchor resolves without measuring text — which is what keeps a cache *hit* free of any
+        // Paint allocation or text measurement. This runs once per marker per render (up to the
+        // density budget's 500) on the main thread, so paying for a measure here would be 500 wasted
+        // measurements on every camera settle.
+        val blockPx = (LABEL_GAP_DP + LABEL_TEXT_DP + LABEL_PADDING_DP * 2f) * density
+        val bitmap = labelledCache.get(cacheKey)
+            ?: drawLabelled(density, base, label, blockPx).also { labelledCache.put(cacheKey, it) }
         return RentalIcon(bitmap, anchorV = (blockPx + base.height) / bitmap.height)
     }
 
-    /** The plain, unlabelled form of [big] — stated as a [RentalIcon] so callers take one path. */
-    fun bigIcon(context: Context, layer: RentalLayer, kind: RentalKind): RentalIcon = RentalIcon(big(context, layer, kind), anchorV = 1f)
+    /** Renders one labelled pin — the cache-miss half of [labelled], and the only text work. */
+    private fun drawLabelled(density: Float, base: Bitmap, label: String, blockPx: Float): Bitmap {
+        val paint = labelPaint(density)
+        val padPx = LABEL_PADDING_DP * density
+        val chipHeight = paint.textSize + padPx * 2f
+        val chipWidth = paint.measureText(label) + padPx * 2f
+        val width = maxOf(base.width.toFloat(), chipWidth).toInt()
+        val out = createBitmap(width, (base.height + blockPx * 2f).toInt())
+        val canvas = Canvas(out)
+        canvas.drawBitmap(base, (width - base.width) / 2f, blockPx, null)
+        val chipLeft = (width - chipWidth) / 2f
+        val chipTop = blockPx + base.height + LABEL_GAP_DP * density
+        val chip = RectF(chipLeft, chipTop, chipLeft + chipWidth, chipTop + chipHeight)
+        val radius = chipHeight / 2f
+        canvas.drawRoundRect(chip, radius, radius, chipBackgroundPaint())
+        // Baseline placed off the font metrics rather than by eye, so the chip stays centred at any
+        // density and for any script.
+        canvas.drawText(label, chip.centerX(), chip.centerY() - (paint.descent() + paint.ascent()) / 2f, paint)
+        return out
+    }
 
     private fun glyphFor(layer: RentalLayer, kind: RentalKind): Int = when (kind) {
         // Any dock is a dock — the rider is looking for a rack, whatever is racked in it.

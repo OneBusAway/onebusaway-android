@@ -16,6 +16,8 @@
 package org.onebusaway.android.ui.dataview
 
 import kotlin.time.Duration.Companion.seconds
+import org.onebusaway.android.extrapolation.BAND_HIGH_QUANTILE
+import org.onebusaway.android.extrapolation.BAND_LOW_QUANTILE
 import org.onebusaway.android.extrapolation.ExtrapolationResult
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.math.prob.ProbDistribution
@@ -37,8 +39,9 @@ data class ScheduleStop(
 data class PdfBin(val distanceMeters: Double, val normalizedHeight: Double)
 
 /**
- * The extrapolation overlay at [nowMs]: the median estimate and the 80% CI bounds projected from the
- * [anchor], plus the position PDF histogram. Distances in meters, times on the server clock.
+ * The extrapolation overlay at [nowMs]: the median estimate and the outer credible bounds
+ * ([CI_LOW_QUANTILE]..[CI_HIGH_QUANTILE]) projected from the [anchor], plus the position PDF
+ * histogram and the quantile ticks that divide it. Distances in meters, times on the server clock.
  *
  * [scheduleAtMedianMs] is the server-clock time the schedule says the vehicle should reach the
  * median distance — the schedule-deviation reference. Null when the median falls outside the
@@ -51,6 +54,8 @@ data class ExtrapolationSeries(
     val lowMeters: Double,
     val highMeters: Double,
     val pdf: List<PdfBin>,
+    /** Distances of [PDF_SEPARATOR_QUANTILES], for tick marks inside the density. */
+    val separatorMeters: List<Double> = emptyList(),
     val scheduleAtMedianMs: ServerTime? = null
 )
 
@@ -72,18 +77,34 @@ data class TripTrajectory(
     val nowMs: ServerTime = ServerTime(0L)
 )
 
-/** Lower bound of the position-PDF histogram window (quantile). */
-const val PDF_BIN_LOW_QUANTILE = 0.0
-
-/** Upper bound of the position-PDF histogram window (quantile) — the long tail is clipped. */
-const val PDF_BIN_HIGH_QUANTILE = 0.95
+/**
+ * The position-PDF histogram window, in quantiles: nearly the whole distribution, so the density
+ * is drawn out to where it genuinely runs out rather than being cut off mid-slope. A visible
+ * truncation at the right edge now means the *distribution* ends there — the first-passage model
+ * clamps at the last scheduled stop — not that the window did the cutting.
+ */
+const val PDF_BIN_LOW_QUANTILE = 0.001
+const val PDF_BIN_HIGH_QUANTILE = 0.999
 
 /** Number of bins across the position-PDF histogram. */
 const val PDF_BIN_COUNT = 160
 
-/** The 80% credible interval bounds drawn from the anchor. */
-const val CI_LOW_QUANTILE = 0.10
-const val CI_HIGH_QUANTILE = 0.90
+/**
+ * The credible-interval bounds drawn as a wedge from the anchor: the full plausible reach rather
+ * than the bulk, which is read off the density instead via [PDF_SEPARATOR_QUANTILES].
+ *
+ * Deliberately the same span the map's uncertainty band uses, so the two views of one distribution
+ * are not silently answering different questions.
+ */
+const val CI_LOW_QUANTILE = BAND_LOW_QUANTILE
+const val CI_HIGH_QUANTILE = BAND_HIGH_QUANTILE
+
+/**
+ * Quantiles ticked inside the position density. These carry the reading the wedge used to: where
+ * the middle 80% sits and where its centre is. Splitting the two means one glance gives both the
+ * outside edge of the estimate and its shape.
+ */
+val PDF_SEPARATOR_QUANTILES = listOf(0.10, 0.50, 0.90)
 
 /**
  * The position-PDF histogram: [binCount] equal-width bins spanning the distribution's
@@ -204,6 +225,11 @@ private fun extrapolationSeries(state: TripState, schedule: List<ScheduleStop>, 
         lowMeters = low,
         highMeters = high,
         pdf = pdfBins(distribution),
+        // 0.5 is one of the separators and inverting the CDF is the expensive part here, so the
+        // median already computed above is reused rather than solved for a second time.
+        separatorMeters = PDF_SEPARATOR_QUANTILES
+            .map { if (it == 0.5) median else distribution.quantile(it) }
+            .filter { it.isFinite() },
         scheduleAtMedianMs = interpolateScheduleTime(schedule, median)
     )
 }

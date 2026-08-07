@@ -45,7 +45,6 @@ import org.onebusaway.android.models.ObaRoute
  */
 @Composable
 fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
-    val context = LocalContext.current
     val argb = color.toArgb()
     val modes = listOf(
         ObaRoute.TYPE_BUS to "bus",
@@ -54,28 +53,56 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
         ObaRoute.TYPE_TRAM to "tram",
         ObaRoute.TYPE_FERRY to "ferry"
     )
-    val dirLabels = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW", "—")
 
     Column(Modifier.background(Color.White).padding(8.dp)) {
-        Row {
-            Spacer(Modifier.width(56.dp))
-            dirLabels.forEach {
-                Text(it, Modifier.width(44.dp), fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
-        }
+        DirectionHeader()
         modes.forEach { (type, name) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(name, Modifier.width(56.dp), fontSize = 12.sp)
-                for (dir in 0..8) {
-                    // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
-                    // (not a production render path), so calling it here is intentional.
-                    @Suppress("VisibleForTests")
-                    val bmp = remember(type, dir, argb) {
-                        VehicleBitmaps.previewBitmap(context, type, dir, argb).asImageBitmap()
-                    }
-                    Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(48.dp))
-                }
+            MarkerRow(label = name, vehicleType = type, argb = argb, pips = 0)
+        }
+    }
+}
+
+/**
+ * The occupancy axis: one bus row per pip count, across every heading octant. Its reason for existing
+ * is the arrow-vs-pip clearance — the S/SE/SW octants swing the heading chevron closest to the pip row,
+ * so that corner of the grid is what a geometry change has to be checked against.
+ */
+@Composable
+fun VehicleOccupancyGrid(color: Color = Color(0xFF2266CC)) {
+    val argb = color.toArgb()
+
+    Column(Modifier.background(Color.White).padding(8.dp)) {
+        DirectionHeader()
+        for (pips in 0..3) {
+            MarkerRow(label = "$pips pip", vehicleType = ObaRoute.TYPE_BUS, argb = argb, pips = pips)
+        }
+    }
+}
+
+@Composable
+private fun DirectionHeader() {
+    val dirLabels = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW", "—")
+    Row {
+        Spacer(Modifier.width(56.dp))
+        dirLabels.forEach {
+            Text(it, Modifier.width(44.dp), fontSize = 10.sp, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun MarkerRow(label: String, vehicleType: Int, argb: Int, pips: Int) {
+    val context = LocalContext.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.width(56.dp), fontSize = 12.sp)
+        for (dir in 0..8) {
+            // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
+            // (not a production render path), so calling it here is intentional.
+            @Suppress("VisibleForTests")
+            val bmp = remember(vehicleType, dir, argb, pips) {
+                VehicleBitmaps.previewBitmap(context, vehicleType, dir, argb, pips).asImageBitmap()
             }
+            Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(48.dp))
         }
     }
 }
@@ -84,4 +111,10 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
 @Composable
 private fun VehicleMarkerGridPreview() {
     VehicleMarkerGrid()
+}
+
+@Preview(showBackground = true, widthDp = 460, heightDp = 280)
+@Composable
+private fun VehicleOccupancyGridPreview() {
+    VehicleOccupancyGrid()
 }

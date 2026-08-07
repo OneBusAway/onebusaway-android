@@ -123,6 +123,9 @@ object MarkerRendering {
      * gets a black hairline ring of that width and the glyph a matching outline. The circular counterpart
      * of [drawPinAndGlyph]: the route/trip maps center a vehicle badge on the route line rather than
      * floating a teardrop pin off it (#1752). The heading arrow (vehicles) is layered on top by the caller.
+     *
+     * [glyphCyPx] overrides the glyph's vertical center (default: the disc's), so a caller that layers
+     * something else inside the disc — the vehicle marker's occupancy pips — can lift the glyph clear of it.
      */
     fun drawCircleAndGlyph(
         canvas: Canvas,
@@ -133,7 +136,8 @@ object MarkerRendering {
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
         glyphSize: Float,
-        outline: Float
+        outline: Float,
+        glyphCyPx: Float? = null
     ) {
         val center = contentPx / 2f
         val radius = center - outline
@@ -147,15 +151,16 @@ object MarkerRendering {
         paint.color = fillColor
         canvas.drawCircle(center, center, radius - outline, paint)
 
-        // Glyph centered on the disc.
-        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+        // Glyph centered on the disc, unless the caller lifted it.
+        drawGlyph(canvas, context, glyphRes, center, glyphCyPx ?: center, glyphSize / 2f * scale, outline, glyphColor)
     }
 
     /**
      * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
-     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph].
+     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph],
+     * and the stamp [VehicleBitmaps] repeats for each occupancy pip.
      */
-    private fun drawGlyph(
+    internal fun drawGlyph(
         canvas: Canvas,
         context: Context,
         @DrawableRes glyphRes: Int,

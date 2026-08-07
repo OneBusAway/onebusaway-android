@@ -29,6 +29,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withRotation
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.MathUtils
 import org.onebusaway.android.util.ScheduleDeviation
@@ -39,8 +40,8 @@ import org.onebusaway.android.util.ScheduleDeviation
  * share one implementation + the LRU cache. This is the icon half of the old `VehicleOverlay`.
  *
  * The marker is composed at draw time — a disc filled with the color its route is currently drawn
- * with, a mode glyph (bus/rail/…) centered on it, and a heading arrow at the rim, both in whichever
- * of black/white reads on that disc — rather than decoding one of
+ * with, a mode glyph (bus/rail/…) on it, up to three occupancy pips beneath the glyph, and a heading
+ * arrow at the rim, all in whichever of black/white reads on that disc — rather than decoding one of
  * the ~225 pre-composited `ic_marker_with_*` rasters. It's a **centered** badge (anchored at its center,
  * not a teardrop tip) so a vehicle sits on the route centerline like the trip map's estimate marker,
  * rather than floating off the line as a pin (#1752).
@@ -53,7 +54,10 @@ object VehicleBitmaps {
 
     private const val DEFAULT_VEHICLE_TYPE = ObaRoute.TYPE_BUS // fall back on bus
 
-    private const val MAX_CACHE_SIZE = 15
+    // Distinct icons in flight ≈ 8 heading octants × the 4 occupancy levels, per (mode, disc color) —
+    // so one busy route's working set is ~32. Sized for two of those; a miss only costs a re-render.
+    // The Google flavor has a second-level BitmapDescriptor cache in front of this; maplibre doesn't.
+    private const val MAX_CACHE_SIZE = 64
 
     /** The composited marker fills a square this many dp on a side (the former raster's size). */
     private const val MARKER_SIZE_DP = 40f
@@ -62,6 +66,26 @@ object VehicleBitmaps {
     private const val PAD_GRID = 0.6f
 
     private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
+
+    /**
+     * The mode glyph's vertical center (grid units), lifted from the disc's own center (12) to leave
+     * room for the occupancy pip row below it.
+     *
+     * Constant whether or not this vehicle has pips: occupancy flickers between a value and absent as
+     * feeds gap, and a glyph that re-centered on each poll would make a parked marker twitch. The
+     * lift is ~2 dp, so a pipless marker is imperceptibly different from the pre-#2194 one.
+     */
+    private const val GLYPH_CY_GRID = 10.6f
+
+    // Occupancy pip row (grid units): up to three person silhouettes centered under the mode glyph.
+    // The row's band (y 15.9..18.9) clears the heading arrow in every octant — the arrow's rotated
+    // chevron reaches y 20.66 at due south, its nearest approach.
+    private const val PIP_SIZE_GRID = 3f
+    private const val PIP_SPACING_GRID = 0.5f
+    private const val PIP_ROW_CY_GRID = 17.4f
+
+    /** The most pips a marker draws — the top occupancy bucket. */
+    private const val MAX_PIPS = 3
 
     // Heading-arrow chevron geometry, in 24-grid units: tip just inside the disc's top rim, pointing
     // outward, then rotated about the disc center by the heading octant. Mirrors the former pin arrow.
@@ -95,14 +119,15 @@ object VehicleBitmaps {
         vehicleType(vehicle, response),
         discColor(context, vehicle),
         directionIndex(vehicle),
+        occupancyPips(vehicle),
         sizeScale
     )
 
     /**
      * A stable key identifying the icon [vehicleBitmap] returns for this vehicle — its type, heading
-     * octant, disc color, and size scale, the only inputs that change the bitmap. A renderer caches
-     * one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames even when the
-     * bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
+     * octant, disc color, occupancy pip count, and size scale, the only inputs that change the bitmap.
+     * A renderer caches one wrapper (a Google `BitmapDescriptor`) per key so it reuses it across frames
+     * even when the bounded bitmap LRU evicts and recreates the underlying [Bitmap] on a busy route.
      *
      * The color component is the **resolved ARGB value**, not a color resource id: a route color
      * (#2043) is a raw ARGB int off the wire with no resource id to name it. Keying on the resolved
@@ -120,6 +145,7 @@ object VehicleBitmaps {
             vehicleType(vehicle, response),
             directionIndex(vehicle),
             discColor(context, vehicle),
+            occupancyPips(vehicle),
             sizeScale
         )
 
@@ -156,6 +182,34 @@ object VehicleBitmaps {
     fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
     /**
+     * How many occupancy pips this vehicle's marker draws (0..[MAX_PIPS]).
+     *
+     * Only when the vehicle is live: a scheduled vehicle has no observed occupancy, and a gray marker
+     * that grew pips would be reporting data it doesn't have (#959).
+     */
+    internal fun occupancyPips(vehicle: VehicleMarker): Int = if (vehicle.isRealtime) {
+        occupancyPips(vehicle.status.occupancyStatus)
+    } else {
+        0
+    }
+
+    /**
+     * The GTFS-realtime occupancy bucketed onto the marker's three pips — a coarse empty/some/most/full
+     * scale, since seven named levels can't be told apart at map scale.
+     *
+     * An absent occupancy and [Occupancy.EMPTY] both draw nothing: the marker has no way to say "no
+     * data" distinctly from "nobody aboard", and drawing zero pips for both is the reading that can't
+     * mislead — an unequipped fleet looks the same as it did before occupancy existed.
+     */
+    @VisibleForTesting
+    fun occupancyPips(occupancy: Occupancy?): Int = when (occupancy) {
+        null, Occupancy.EMPTY -> 0
+        Occupancy.MANY_SEATS_AVAILABLE -> 1
+        Occupancy.FEW_SEATS_AVAILABLE, Occupancy.STANDING_ROOM_ONLY -> 2
+        Occupancy.CRUSHED_STANDING_ROOM_ONLY, Occupancy.FULL, Occupancy.NOT_ACCEPTING_PASSENGERS -> MAX_PIPS
+    }
+
+    /**
      * The disc color: the vehicle's **route color** when it's live, gray when it isn't. So the marker
      * encodes route identity + liveness, never punctuality (#2043).
      *
@@ -178,10 +232,11 @@ object VehicleBitmaps {
 
     /**
      * The 8-way heading slot (0..7) the icon for [vehicle] uses. Exposed so the renderer can cheaply
-     * detect when a gliding vehicle's direction arrow needs re-stamping — the tinted bitmap only changes
-     * when this index does (the disc color is the route's, so it doesn't change between polls). A live
-     * vehicle always has a heading, so
-     * the undirected slot ([UNDIRECTED]) isn't reachable from here.
+     * detect when a gliding vehicle's direction arrow needs re-stamping — between polls this index is
+     * the only icon input that moves, since the disc color is the route's and the occupancy pips come
+     * off the last poll's status; both change only at a poll, where the reconcile re-stamps every marker
+     * unconditionally. A live vehicle always has a heading, so the undirected slot ([UNDIRECTED]) isn't
+     * reachable from here.
      */
     fun directionIndex(vehicle: VehicleMarker): Int {
         // The path bearing is already a compass direction; the server orientation needs converting.
@@ -206,11 +261,12 @@ object VehicleBitmaps {
         vehicleType: Int,
         color: Int,
         halfWind: Int,
+        pips: Int,
         sizeScale: Float
     ): Bitmap {
-        val key = createBitmapCacheKey(vehicleType, halfWind, color, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, halfWind, color, pips, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, halfWind, color, sizeScale)
+            ?: renderMarker(context, vehicleType, halfWind, color, pips, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
@@ -219,33 +275,44 @@ object VehicleBitmaps {
         vehicleType: Int,
         halfWind: Int,
         color: Int,
+        pips: Int,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        return "$type $halfWind $color ${sizeScale.toBits()}"
+        return "$type $halfWind $color $pips ${sizeScale.toBits()}"
     }
 
     /**
-     * Uncached render of a single marker for a given type/heading/color. Exposed for the
+     * Uncached render of a single marker for a given type/heading/color/occupancy. Exposed for the
      * `@Preview` grid (and tests); the production path goes through [vehicleBitmap] which caches.
      */
     @VisibleForTesting
-    fun previewBitmap(context: Context, vehicleType: Int, halfWind: Int, color: Int): Bitmap = renderMarker(context, vehicleType, halfWind, color, 1f)
+    fun previewBitmap(
+        context: Context,
+        vehicleType: Int,
+        halfWind: Int,
+        color: Int,
+        pips: Int = 0
+    ): Bitmap = renderMarker(context, vehicleType, halfWind, color, pips, 1f)
 
     /**
-     * Composites the colored disc, the mode glyph, and (unless undirected) the heading arrow — each
-     * with a hairline black outline (a cheap 8-way dilate: the element stamped black at [OUTLINE_GRID]
-     * offsets, then the fill on top) so the disc, glyph, and arrow read distinctly against each other
-     * and the map. The disc is centered in the padded bitmap, so consumers anchor it at its center.
+     * Composites the colored disc, the mode glyph, [pips] occupancy silhouettes under it, and (unless
+     * undirected) the heading arrow — each with a hairline black outline (a cheap 8-way dilate: the
+     * element stamped black at [OUTLINE_GRID] offsets, then the fill on top) so they read distinctly
+     * against each other and the map. The disc is centered in the padded bitmap, so consumers anchor
+     * it at its center.
      *
-     * The glyph and arrow take whichever of black/white reads on [color] rather than a hardcoded
-     * white, since a route may be drawn in a shade too pale to carry white.
+     * The glyph, pips, and arrow take whichever of black/white reads on [color] rather than a hardcoded
+     * white, since a route may be drawn in a shade too pale to carry white. Occupancy rides the same ink
+     * as the rest of the marker rather than a color ramp of its own: the disc's color already means
+     * route identity (#2043), and a second color scale on a 40 dp icon would compete with it (#1079).
      */
     private fun renderMarker(
         context: Context,
         vehicleType: Int,
         halfWind: Int,
         color: Int,
+        pips: Int,
         sizeScale: Float
     ): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
@@ -265,7 +332,37 @@ object VehicleBitmaps {
         canvas.translate(pad, pad)
 
         // Colored disc (the route's display color, or gray when not real-time) + mode glyph, outlined.
-        MarkerRendering.drawCircleAndGlyph(canvas, context, contentPx, scale, color, glyphRes(type), onColor, GLYPH_SIZE, outline)
+        MarkerRendering.drawCircleAndGlyph(
+            canvas,
+            context,
+            contentPx,
+            scale,
+            color,
+            glyphRes(type),
+            onColor,
+            GLYPH_SIZE,
+            outline,
+            GLYPH_CY_GRID * scale
+        )
+
+        // Occupancy pips: a centered row of person silhouettes below the glyph, still inside the disc.
+        if (pips > 0) {
+            val rowWidth = pips * PIP_SIZE_GRID + (pips - 1) * PIP_SPACING_GRID
+            var pipCx = (MarkerRendering.GRID - rowWidth + PIP_SIZE_GRID) / 2f
+            repeat(pips) {
+                MarkerRendering.drawGlyph(
+                    canvas,
+                    context,
+                    R.drawable.ic_occupancy,
+                    pipCx * scale,
+                    PIP_ROW_CY_GRID * scale,
+                    PIP_SIZE_GRID / 2f * scale,
+                    outline,
+                    onColor
+                )
+                pipCx += PIP_SIZE_GRID + PIP_SPACING_GRID
+            }
+        }
 
         // Heading arrow, rotated about the disc center by the octant (undirected = no arrow).
         if (halfWind != UNDIRECTED) {

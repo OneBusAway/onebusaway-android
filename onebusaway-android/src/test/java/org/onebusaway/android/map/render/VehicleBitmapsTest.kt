@@ -20,11 +20,13 @@ import org.junit.Test
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripDetails
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 
 /**
- * Pure-logic guards for [VehicleBitmaps]'s route-type resolution: the cablecar→tram promise, and the
- * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020).
+ * Pure-logic guards for [VehicleBitmaps]'s route-type resolution — the cablecar→tram promise and the
+ * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020) — plus the occupancy
+ * bucketing the marker's pips read (#2194).
  */
 class VehicleBitmapsTest {
 
@@ -97,6 +99,32 @@ class VehicleBitmapsTest {
     fun resolvedCablecarStillNormalizesToTram() {
         val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_CABLECAR))
         assertEquals(ObaRoute.TYPE_TRAM, VehicleBitmaps.routeTypeFor(response, "trip1"))
+    }
+
+    /**
+     * The whole GTFS-realtime occupancy enum, bucketed onto the marker's 0..3 pips. Pinned exhaustively
+     * because this is the only thing standing between a rider and a wrong crowding reading, and because
+     * a new enum value must be assigned a bucket deliberately rather than falling into one.
+     */
+    @Test
+    fun occupancyBucketsOntoPips() {
+        assertEquals("absent occupancy draws nothing", 0, VehicleBitmaps.occupancyPips(null))
+        assertEquals(0, VehicleBitmaps.occupancyPips(Occupancy.EMPTY))
+        assertEquals(1, VehicleBitmaps.occupancyPips(Occupancy.MANY_SEATS_AVAILABLE))
+        assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.FEW_SEATS_AVAILABLE))
+        assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.STANDING_ROOM_ONLY))
+        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
+        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.FULL))
+        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.NOT_ACCEPTING_PASSENGERS))
+    }
+
+    /** Every level stays inside the three pips the marker has room to draw. */
+    @Test
+    fun everyOccupancyLevelFitsTheMarker() {
+        for (occupancy in Occupancy.entries) {
+            val pips = VehicleBitmaps.occupancyPips(occupancy)
+            assert(pips in 0..3) { "$occupancy bucketed to $pips pips, which the marker can't draw" }
+        }
     }
 
     /** A [RouteTrips] whose references pool holds at most the given trip/route. */

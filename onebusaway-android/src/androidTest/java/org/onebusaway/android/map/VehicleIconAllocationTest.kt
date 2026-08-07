@@ -42,6 +42,7 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.ScheduleDeviation
@@ -303,6 +304,95 @@ class VehicleIconAllocationTest {
         get("b") // after clear -> miss
         assertEquals("get after clear must re-invoke the supplier", 5, supplied)
     }
+
+    // --- Occupancy pips on the disc (#2194) ------------------------------------------------------
+
+    /**
+     * Occupancy is drawn on the marker, so it has to be part of the key: a vehicle that fills up between
+     * polls must get a new icon rather than the cached emptier one. Held at one octant and one liveness,
+     * so only the pip count varies.
+     */
+    @Test
+    fun changedOccupancyMintsANewDescriptor() {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+
+        val empty = withOccupancy(vehicle!!, null)
+        val full = withOccupancy(vehicle, Occupancy.FULL)
+
+        val emptyKey = VehicleBitmaps.iconKey(context, empty, response)
+        val fullKey = VehicleBitmaps.iconKey(context, full, response)
+        assertNotEquals("occupancy must be part of the icon key", emptyKey, fullKey)
+
+        val counts = Counts()
+        val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
+        cache.get(emptyKey) { VehicleBitmaps.vehicleBitmap(context, empty, response) }
+        cache.get(fullKey) { VehicleBitmaps.vehicleBitmap(context, full, response) }
+        assertEquals("a changed pip count must mint a second descriptor", 2, counts.allocations)
+    }
+
+    /**
+     * A vehicle without real-time has no observed occupancy, so its gray marker must never grow pips
+     * however the status is populated (#959 — the old bubble showed occupancy on scheduled vehicles).
+     */
+    @Test
+    fun withoutRealtimeOccupancyDoesNotReachTheIcon() {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+
+        val plain = withOccupancy(vehicle!!, null, isRealtime = false)
+        val crowded = withOccupancy(vehicle, Occupancy.FULL, isRealtime = false)
+
+        assertEquals(
+            "occupancy must not reach a scheduled vehicle's icon",
+            VehicleBitmaps.iconKey(context, plain, response),
+            VehicleBitmaps.iconKey(context, crowded, response)
+        )
+        assertTrue(
+            "a scheduled vehicle renders the identical pipless disc whatever occupancy says",
+            VehicleBitmaps.vehicleBitmap(context, plain, response)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, crowded, response))
+        )
+    }
+
+    /**
+     * The bucketing collapses "nobody aboard" and "no data" onto zero pips, so those two must share an
+     * icon rather than mint a redundant second one.
+     */
+    @Test
+    fun emptyAndAbsentOccupancyShareAnIcon() {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+
+        val absent = withOccupancy(vehicle!!, null)
+        val empty = withOccupancy(vehicle, Occupancy.EMPTY)
+
+        assertEquals(
+            "an empty and an unreported vehicle draw the same marker",
+            VehicleBitmaps.iconKey(context, absent, response),
+            VehicleBitmaps.iconKey(context, empty, response)
+        )
+        assertTrue(
+            VehicleBitmaps.vehicleBitmap(context, absent, response)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, empty, response))
+        )
+    }
+
+    /** A copy of [vehicle] reporting [occupancy], with the bearing pinned so only the pips vary. */
+    private fun withOccupancy(
+        vehicle: VehicleMarker,
+        occupancy: Occupancy?,
+        isRealtime: Boolean = true
+    ): VehicleMarker = vehicle.copy(
+        isRealtime = isRealtime,
+        bearing = 0f,
+        status = object : ObaTripStatus by vehicle.status {
+            override val occupancyStatus: Occupancy? = occupancy
+        }
+    )
 
     /**
      * Force the realtime path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the bearing

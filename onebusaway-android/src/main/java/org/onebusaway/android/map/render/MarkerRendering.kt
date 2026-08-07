@@ -120,12 +120,11 @@ object MarkerRendering {
     /**
      * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
      * glyph tinted [glyphColor] centered on it at [glyphSize] grid units. When [outline] > 0 the disc
-     * gets a black hairline ring of that width and the glyph a matching outline. The circular counterpart
-     * of [drawPinAndGlyph]: the route/trip maps center a vehicle badge on the route line rather than
-     * floating a teardrop pin off it (#1752). The heading arrow (vehicles) is layered on top by the caller.
+     * gets a black hairline ring of that width and the glyph a matching outline.
      *
-     * [glyphCyPx] overrides the glyph's vertical center (default: the disc's), so a caller that layers
-     * something else inside the disc — the vehicle marker's occupancy pips — can lift the glyph clear of it.
+     * The circular counterpart of [drawPinAndGlyph]'s teardrop, drawn for the rental badge that sits
+     * inside its charge ring ([RentalBitmaps]). The vehicle badge is a disc too, but it stacks occupancy
+     * on its own body, so it composes the parts itself rather than coming through here.
      */
     fun drawCircleAndGlyph(
         canvas: Canvas,
@@ -136,9 +135,22 @@ object MarkerRendering {
         @DrawableRes glyphRes: Int,
         glyphColor: Int,
         glyphSize: Float,
-        outline: Float,
-        glyphCyPx: Float? = null
+        outline: Float
     ) {
+        drawDisc(canvas, contentPx, fillColor, outline)
+        // Glyph centered on the disc.
+        val center = contentPx / 2f
+        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+    }
+
+    /**
+     * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], ringed with a black
+     * hairline [outline] wide when that is > 0. The circular counterpart of [drawPinAndGlyph]'s teardrop:
+     * the route/trip maps center a vehicle badge on the route line rather than floating a pin off it
+     * (#1752). What goes *on* the disc — glyph, occupancy pips, heading arrow — the caller layers itself
+     * with [drawGlyph], since only it knows how those stack.
+     */
+    fun drawDisc(canvas: Canvas, contentPx: Int, fillColor: Int, outline: Float) {
         val center = contentPx / 2f
         val radius = center - outline
         // One Paint, filled (the default style); recolored between the ring and the fill.
@@ -150,15 +162,12 @@ object MarkerRendering {
         }
         paint.color = fillColor
         canvas.drawCircle(center, center, radius - outline, paint)
-
-        // Glyph centered on the disc, unless the caller lifted it.
-        drawGlyph(canvas, context, glyphRes, center, glyphCyPx ?: center, glyphSize / 2f * scale, outline, glyphColor)
     }
 
     /**
      * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
-     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph],
-     * and the stamp [VehicleBitmaps] repeats for each occupancy pip.
+     * in pixels), outlined when [outline] > 0. The shared stamp behind [drawPinAndGlyph]'s glyph and the
+     * vehicle marker's mode glyph.
      */
     internal fun drawGlyph(
         canvas: Canvas,

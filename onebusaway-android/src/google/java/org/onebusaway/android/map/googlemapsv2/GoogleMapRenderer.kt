@@ -73,6 +73,7 @@ import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
@@ -744,14 +745,14 @@ class GoogleMapRenderer(
                         // Center the disc badge on the vehicle location, so it sits on the route
                         // centerline like the trip map's estimate marker rather than floating off it (#1752).
                         .anchor(0.5f, 0.5f)
-                        .title(vehicleTitle(vehicle, response))
+                        .title(vehicleTitle(context, vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
                 existing.setIcon(vehicleIcon(vehicle, response))
-                existing.title = vehicleTitle(vehicle, response)
+                existing.title = vehicleTitle(context, vehicle, response)
                 vehicleByMarker[existing] = vehicle
             }
             // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
@@ -770,19 +771,6 @@ class GoogleMapRenderer(
         renderedVehicleScale = scale
         val response = lastVehicleResponse ?: return
         for ((marker, vehicle) in vehicleByMarker) marker.setIcon(vehicleIcon(vehicle, response))
-    }
-
-    /**
-     * The marker's title. Vehicles no longer show a bubble (#2194), so for them this is purely the
-     * accessible name — the Maps SDK reads a marker's title out as its content description — which is
-     * why the crowding the pips draw is spelled out here.
-     */
-    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
-        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
-        val route = response.route(trip.routeId) ?: return ""
-        val name = getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
-        val occupancy = VehicleBitmaps.occupancyLabelRes(vehicle) ?: return name
-        return name + " - " + context.getString(occupancy)
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {

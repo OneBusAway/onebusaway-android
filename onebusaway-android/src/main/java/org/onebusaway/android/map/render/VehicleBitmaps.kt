@@ -34,6 +34,7 @@ import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.MathUtils
 import org.onebusaway.android.util.ScheduleDeviation
+import org.onebusaway.android.util.requireDrawable
 
 /**
  * Flavor-neutral generation of vehicle marker bitmaps. Lives in `src/main` so both the Google flavor
@@ -55,16 +56,24 @@ object VehicleBitmaps {
 
     private const val DEFAULT_VEHICLE_TYPE = ObaRoute.TYPE_BUS // fall back on bus
 
-    // Distinct icons in flight ≈ 8 heading octants × the 4 occupancy levels, per (mode, disc color) —
-    // so one busy route's working set is ~32. Sized for two of those; a miss only costs a re-render.
-    // The Google flavor has a second-level BitmapDescriptor cache in front of this; maplibre doesn't.
-    private const val MAX_CACHE_SIZE = 64
+    // Bounded in **bytes**, not entries: one marker is ~62 KiB at xxhdpi but ~113 KiB at xxxhdpi, and a
+    // zoomed-out (half-scale) one is a quarter of that, so an entry count would mean wildly different
+    // memory on different devices for the same nominal size. 4 MiB holds ~64 full-scale markers there.
+    //
+    // The working set is 8 heading octants × up to 4 occupancy levels per (mode, disc colour) — ~40 for
+    // one route once its scheduled vehicles are counted, and stop-focus/continuation views draw several
+    // routes at once, so this is sized for a few of those rather than one. Overflow only costs a
+    // re-render. The Google flavor has a second-level BitmapDescriptor cache in front of this; maplibre
+    // doesn't, which is why the bound lives here.
+    private const val MAX_CACHE_BYTES = 4 * 1024 * 1024
 
     /** The composited marker fills a square this many dp on a side (the former raster's size). */
-    private const val MARKER_SIZE_DP = 40f
+    @VisibleForTesting
+    internal const val MARKER_SIZE_DP = 40f
 
     /** Transparent padding (grid units) around the disc so the black outline halo isn't clipped. */
-    private const val PAD_GRID = 0.6f
+    @VisibleForTesting
+    internal const val PAD_GRID = 0.6f
 
     private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
 
@@ -88,7 +97,7 @@ object VehicleBitmaps {
     private const val PIP_ROW_CY_GRID = 17.2f
 
     /** The most pips a marker draws — the top occupancy bucket. */
-    private const val MAX_PIPS = 3
+    internal const val MAX_PIPS = 3
 
     // Heading-arrow chevron geometry, in 24-grid units: tip just inside the disc's top rim, pointing
     // outward, then rotated about the disc center by the heading octant. Mirrors the former pin arrow.
@@ -99,7 +108,9 @@ object VehicleBitmaps {
     /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
 
-    private val sColoredIconCache = LruCache<String, Bitmap>(MAX_CACHE_SIZE)
+    private val sColoredIconCache = object : LruCache<String, Bitmap>(MAX_CACHE_BYTES) {
+        override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
+    }
 
     // Lazy so loading this object for the pure-logic helpers (e.g. normalizeVehicleType, unit-tested on
     // the JVM) doesn't touch android.graphics — only an on-device render allocates the Paint.
@@ -213,22 +224,6 @@ object VehicleBitmaps {
     }
 
     /**
-     * What the pips on [vehicle]'s marker say, in words, or null when it draws none.
-     *
-     * A marker bitmap is opaque to a screen reader, so this is how the crowding reaches a rider who
-     * can't see the silhouettes — the renderers append it to the marker's title, the accessible name.
-     * Keyed off the same pip count the marker draws, so the two can't drift apart; the info window this
-     * replaced had no content description at all, so its meter was silent.
-     */
-    @StringRes
-    internal fun occupancyLabelRes(vehicle: VehicleMarker): Int? = when (occupancyPips(vehicle)) {
-        1 -> R.string.realtime_many_seats_available
-        2 -> R.string.realtime_standing_room
-        MAX_PIPS -> R.string.realtime_full
-        else -> null
-    }
-
-    /**
      * The disc color: the vehicle's **route color** when it's live, gray when it isn't. So the marker
      * encodes route identity + liveness, never punctuality (#2043).
      *
@@ -312,7 +307,7 @@ object VehicleBitmaps {
         vehicleType: Int,
         halfWind: Int,
         color: Int,
-        pips: Int = 0
+        pips: Int
     ): Bitmap = renderMarker(context, vehicleType, halfWind, color, pips, 1f)
 
     /**
@@ -351,36 +346,33 @@ object VehicleBitmaps {
         // this translated content origin.
         canvas.translate(pad, pad)
 
-        // Colored disc (the route's display color, or gray when not real-time) + mode glyph, outlined.
-        MarkerRendering.drawCircleAndGlyph(
+        // Colored disc (the route's display color, or gray when not real-time), then the mode glyph
+        // lifted to leave the pip row its space.
+        MarkerRendering.drawDisc(canvas, contentPx, color, outline)
+        MarkerRendering.drawGlyph(
             canvas,
             context,
-            contentPx,
-            scale,
-            color,
             glyphRes(type),
-            onColor,
-            GLYPH_SIZE,
+            MarkerRendering.GRID / 2f * scale,
+            GLYPH_CY_GRID * scale,
+            GLYPH_SIZE / 2f * scale,
             outline,
-            GLYPH_CY_GRID * scale
+            onColor
         )
 
         // Occupancy pips: a centered row of person silhouettes below the glyph, still inside the disc.
+        // One drawable, re-bounded per pip — they're identical, so loading it three times would repeat
+        // the vector inflate and rasterize for nothing.
         if (pips > 0) {
-            val rowWidth = pips * PIP_SIZE_GRID + (pips - 1) * PIP_SPACING_GRID
-            var pipCx = (MarkerRendering.GRID - rowWidth + PIP_SIZE_GRID) / 2f
-            repeat(pips) {
-                MarkerRendering.drawGlyph(
-                    canvas,
-                    context,
-                    R.drawable.ic_occupancy,
-                    pipCx * scale,
-                    PIP_ROW_CY_GRID * scale,
-                    PIP_SIZE_GRID / 2f * scale,
-                    outline,
-                    onColor
-                )
-                pipCx += PIP_SIZE_GRID + PIP_SPACING_GRID
+            val pitch = PIP_SIZE_GRID + PIP_SPACING_GRID
+            val firstCx = (MarkerRendering.GRID - (pips - 1) * pitch) / 2f
+            val half = PIP_SIZE_GRID / 2f * scale
+            val cy = PIP_ROW_CY_GRID * scale
+            val pip = requireDrawable(context, R.drawable.ic_occupancy).mutate()
+            repeat(pips) { i ->
+                val cx = (firstCx + i * pitch) * scale
+                pip.setBounds((cx - half).toInt(), (cy - half).toInt(), (cx + half).toInt(), (cy + half).toInt())
+                MarkerRendering.drawOutlined(canvas, pip, outline, onColor)
             }
         }
 

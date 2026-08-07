@@ -480,8 +480,8 @@ data class MapRenderSnapshot(
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
     val routeModeScalesStopsWithZoom: Boolean = false,
-    // The currently focused stop id, couriered so a second tap on a selected vehicle (#2194) can deep
-    // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
+    // The focused stop, named rather than flagged on each [StopMarker] so focusing is a one-field change
+    // (see [stops]). The stop layers style it — the enlarged icon, the route-stop highlight.
     val focusedStopId: String? = null,
     // The zoom band the stops render in (full directional icon vs small dot). Derived from the camera
     // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other

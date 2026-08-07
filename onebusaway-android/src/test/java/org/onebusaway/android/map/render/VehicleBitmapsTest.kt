@@ -108,23 +108,15 @@ class VehicleBitmapsTest {
      */
     @Test
     fun occupancyBucketsOntoPips() {
+        val full = VehicleBitmaps.MAX_PIPS
         assertEquals("absent occupancy draws nothing", 0, VehicleBitmaps.occupancyPips(null))
         assertEquals(0, VehicleBitmaps.occupancyPips(Occupancy.EMPTY))
         assertEquals(1, VehicleBitmaps.occupancyPips(Occupancy.MANY_SEATS_AVAILABLE))
         assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.FEW_SEATS_AVAILABLE))
         assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.STANDING_ROOM_ONLY))
-        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
-        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.FULL))
-        assertEquals(3, VehicleBitmaps.occupancyPips(Occupancy.NOT_ACCEPTING_PASSENGERS))
-    }
-
-    /** Every level stays inside the three pips the marker has room to draw. */
-    @Test
-    fun everyOccupancyLevelFitsTheMarker() {
-        for (occupancy in Occupancy.entries) {
-            val pips = VehicleBitmaps.occupancyPips(occupancy)
-            assert(pips in 0..3) { "$occupancy bucketed to $pips pips, which the marker can't draw" }
-        }
+        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
+        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.FULL))
+        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.NOT_ACCEPTING_PASSENGERS))
     }
 
     /** A [RouteTrips] whose references pool holds at most the given trip/route. */

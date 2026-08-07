@@ -64,6 +64,7 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
@@ -592,13 +593,13 @@ class MapLibreRenderer(
                 val marker = map.addMarker(
                     MarkerOptions().position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
-                        .title(vehicleTitle(vehicle, response))
+                        .title(vehicleTitle(context, vehicle, response))
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
                 existing.icon = vehicleIcon(vehicle, response)
-                existing.title = vehicleTitle(vehicle, response)
+                existing.title = vehicleTitle(context, vehicle, response)
                 vehicleByMarker[existing] = vehicle
             }
             // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
@@ -629,20 +630,6 @@ class MapLibreRenderer(
     private fun Marker.moveTo(latLng: LatLng) {
         position = latLng
         if (isInfoWindowShown) getInfoWindow()?.update()
-    }
-
-    /**
-     * The marker's title, carrying the crowding the pips draw so it isn't sight-only (#2194) — mirroring
-     * the Google flavor. Classic maplibre markers expose no accessibility node of their own, so on this
-     * flavor the title reaches a screen reader only if #1728's SymbolManager migration gives it one; the
-     * text is set the same way regardless, so it's there when that lands.
-     */
-    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
-        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
-        val route = response.route(trip.routeId) ?: return ""
-        val name = getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
-        val occupancy = VehicleBitmaps.occupancyLabelRes(vehicle) ?: return name
-        return name + " - " + context.getString(occupancy)
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {

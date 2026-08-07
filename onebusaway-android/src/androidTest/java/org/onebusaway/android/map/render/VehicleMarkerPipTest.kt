@@ -48,34 +48,22 @@ class VehicleMarkerPipTest {
     /** Due south — the octant that swings the heading chevron closest to the pip row. */
     private val south = 4
 
-    @Test
-    fun eachPipCountIsItsOwnMarker() {
-        val markers = (0..3).map { marker(pips = it) }
-
-        for (a in 0..3) {
-            for (b in a + 1..3) {
-                assertTrue(
-                    "a $a-pip and a $b-pip marker must not render identically",
-                    !markers[a].sameAs(markers[b])
-                )
-            }
-        }
-    }
-
     /**
-     * The pips land in the band reserved for them, and each one adds ink to it.
+     * The pips land in the band reserved for them, and each one adds ink to it. Strictly increasing
+     * counts also mean the four markers are pairwise distinct, so this is the whole "the pips render"
+     * contract in one assertion.
      *
-     * Asserted as a strictly increasing count rather than "zero ink when pipless": the mode glyph sits
-     * just above the band and its outline halo may grave a pixel or two into the top of it, which would
-     * make an absolute threshold a guess about the bus artwork's exact extent. Monotonicity holds
-     * whatever that constant contribution is, and it's what the reading depends on — a rider tells a full
-     * bus from an empty one by there being *more* silhouettes.
+     * Asserted as a rising count rather than "zero ink when pipless": the mode glyph sits just above the
+     * band and its outline halo may grave a pixel or two into the top of it, which would make an absolute
+     * threshold a guess about the bus artwork's exact extent. Monotonicity holds whatever that constant
+     * contribution is, and it's what the reading depends on — a rider tells a full bus from an empty one
+     * by there being *more* silhouettes.
      */
     @Test
     fun eachPipAddsInkToThePipRow() {
-        val counts = (0..3).map { marker(pips = it).inkIn(PIP_BAND_TOP_GRID, PIP_BAND_BOTTOM_GRID) }
+        val counts = (0..VehicleBitmaps.MAX_PIPS).map { marker(pips = it).inkIn(PIP_BAND_TOP_GRID, PIP_BAND_BOTTOM_GRID) }
 
-        for (pips in 1..3) {
+        for (pips in 1..VehicleBitmaps.MAX_PIPS) {
             assertTrue(
                 "$pips pips must put more ink in the pip row than ${pips - 1} (saw $counts)",
                 counts[pips] > counts[pips - 1]
@@ -91,7 +79,8 @@ class VehicleMarkerPipTest {
     @Test
     fun theSouthHeadingArrowSurvivesAFullMarker() {
         val bare = marker(pips = 0, halfWind = south).inkIn(ARROW_BAND_TOP_GRID, ARROW_BAND_BOTTOM_GRID)
-        val full = marker(pips = 3, halfWind = south).inkIn(ARROW_BAND_TOP_GRID, ARROW_BAND_BOTTOM_GRID)
+        val full = marker(pips = VehicleBitmaps.MAX_PIPS, halfWind = south)
+            .inkIn(ARROW_BAND_TOP_GRID, ARROW_BAND_BOTTOM_GRID)
 
         assertTrue("the south-heading arrow must draw at all", bare > 0)
         assertEquals("three pips must not encroach on the heading arrow", bare, full)
@@ -102,13 +91,17 @@ class VehicleMarkerPipTest {
     private fun marker(pips: Int, halfWind: Int = 0): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, halfWind, disc, pips)
 
     /**
-     * Counts [ink]-colored pixels between two grid-unit rows. The bitmap carries a [PAD_GRID]-wide
-     * transparent border, so grid row `g` sits at `(PAD_GRID + g) * scale` pixels down.
+     * Counts [ink]-colored pixels between two grid-unit rows. The bitmap carries a transparent border of
+     * [VehicleBitmaps.PAD_GRID], so grid row `g` sits at `(PAD_GRID + g) * scale` pixels down. The
+     * transform reads the production constants — it only *locates* the band and is not what's under test;
+     * the band bounds below are the independent expectation and stay local.
      */
     private fun Bitmap.inkIn(topGrid: Float, bottomGrid: Float): Int {
-        val scale = context.resources.displayMetrics.density * MARKER_SIZE_DP / MarkerRendering.GRID
-        val top = ((PAD_GRID + topGrid) * scale).toInt().coerceIn(0, height)
-        val bottom = ((PAD_GRID + bottomGrid) * scale).toInt().coerceIn(top, height)
+        val scale = context.resources.displayMetrics.density *
+            VehicleBitmaps.MARKER_SIZE_DP /
+            MarkerRendering.GRID
+        val top = ((VehicleBitmaps.PAD_GRID + topGrid) * scale).toInt().coerceIn(0, height)
+        val bottom = ((VehicleBitmaps.PAD_GRID + bottomGrid) * scale).toInt().coerceIn(top, height)
         assertTrue("the sampled band must be at least a pixel tall", bottom > top)
 
         var count = 0
@@ -121,11 +114,9 @@ class VehicleMarkerPipTest {
     }
 
     private companion object {
-        // Mirrors of VehicleBitmaps' private geometry. Duplicated rather than opened up: a test that
-        // reads the constants it verifies would follow a geometry mistake instead of catching it.
-        const val MARKER_SIZE_DP = 40f
-        const val PAD_GRID = 0.6f
-
+        // The bands under test, stated independently of VehicleBitmaps' geometry: a test that read the
+        // constants it verifies would follow a geometry mistake instead of catching it.
+        //
         // The pip row spans grid y 15.7..18.7; sampled just inside so a half-pixel of rounding at the
         // edges can't decide the count.
         const val PIP_BAND_TOP_GRID = 16f

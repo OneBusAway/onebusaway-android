@@ -45,37 +45,15 @@ class GoogleInfoWindows(
 
     private val preRenderer = ComposeBitmapRenderer(activity, container)
     private var shownMarker: Marker? = null
-    private var content: (@Composable () -> Unit)? = null
     private var bitmap: Bitmap? = null
 
-    /** Open [marker]'s info window, rendering [content]. */
+    /** Open [marker]'s info window, pre-rendering [content] to a bitmap and showing it once captured. */
     fun open(marker: Marker, content: @Composable () -> Unit) {
         shownMarker = marker
-        this.content = content
-        render()
-    }
-
-    /** Forget the tracked window (the SDK window was dismissed by a tap away / another marker). */
-    fun clear() {
-        preRenderer.cancel()
-        shownMarker = null
-        content = null
-        // Safe to recycle: clear() runs when the window is dismissed, so the SDK (which already has its
-        // own snapshot) no longer references our bitmap.
-        bitmap?.recycle()
-        bitmap = null
-    }
-
-    /** Pre-render the live provider to a bitmap, then (re)show the window once it's captured. */
-    private fun render() {
-        val marker = shownMarker ?: return
-        val provider = content ?: return
-        preRenderer.render(provider) { captured ->
+        preRenderer.render(content) { captured ->
             if (shownMarker === marker) {
-                // Recycle the prior capture before replacing it: the SDK snapshots our view into its
-                // own static bitmap when the window shows, so the previous bitmap (from an earlier
-                // render cycle, already snapshotted) is no longer referenced. Without this, each
-                // refresh while a bubble is open leaks a full-view bitmap until GC.
+                // Recycle any prior capture before replacing it: the SDK snapshots our view into its own
+                // static bitmap when the window shows, so an earlier capture is no longer referenced.
                 bitmap?.recycle()
                 bitmap = captured
                 marker.showInfoWindow()
@@ -83,6 +61,16 @@ class GoogleInfoWindows(
                 captured.recycle() // selection changed mid-render; this capture is never shown
             }
         }
+    }
+
+    /** Forget the tracked window (the SDK window was dismissed by a tap away / another marker). */
+    fun clear() {
+        preRenderer.cancel()
+        shownMarker = null
+        // Safe to recycle: clear() runs when the window is dismissed, so the SDK (which already has its
+        // own snapshot) no longer references our bitmap.
+        bitmap?.recycle()
+        bitmap = null
     }
 
     override fun getInfoWindow(marker: Marker): View? {

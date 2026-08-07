@@ -230,11 +230,8 @@ class VehicleIconAllocationTest {
      */
     @Test
     fun changedLivenessMintsANewDescriptor() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val live = withLiveness(vehicle!!, isRealtime = true)
+        val (response, vehicle) = fixture()
+        val live = withLiveness(vehicle, isRealtime = true)
         val stale = withLiveness(vehicle, isRealtime = false)
 
         val liveKey = VehicleBitmaps.iconKey(context, live, response)
@@ -255,11 +252,8 @@ class VehicleIconAllocationTest {
      */
     @Test
     fun scheduleDeviationDoesNotAffectTheIcon() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val early = withRealtimeDeviation(vehicle!!, TimeUnit.MINUTES.toSeconds(-10))
+        val (response, vehicle) = fixture()
+        val early = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(-10))
         val late = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(10))
 
         assertEquals(
@@ -314,11 +308,8 @@ class VehicleIconAllocationTest {
      */
     @Test
     fun changedOccupancyMintsANewDescriptor() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val empty = withOccupancy(vehicle!!, null)
+        val (response, vehicle) = fixture()
+        val empty = withOccupancy(vehicle, null)
         val full = withOccupancy(vehicle, Occupancy.FULL)
 
         val emptyKey = VehicleBitmaps.iconKey(context, empty, response)
@@ -335,14 +326,12 @@ class VehicleIconAllocationTest {
     /**
      * A vehicle without real-time has no observed occupancy, so its gray marker must never grow pips
      * however the status is populated (#959 — the old bubble showed occupancy on scheduled vehicles).
+     * The realtime gate is the half of the bucketing the JVM test can't reach, which is why it's here.
      */
     @Test
     fun withoutRealtimeOccupancyDoesNotReachTheIcon() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val plain = withOccupancy(vehicle!!, null, isRealtime = false)
+        val (response, vehicle) = fixture()
+        val plain = withOccupancy(vehicle, null, isRealtime = false)
         val crowded = withOccupancy(vehicle, Occupancy.FULL, isRealtime = false)
 
         assertEquals(
@@ -357,57 +346,47 @@ class VehicleIconAllocationTest {
         )
     }
 
-    /**
-     * The bucketing collapses "nobody aboard" and "no data" onto zero pips, so those two must share an
-     * icon rather than mint a redundant second one.
-     */
-    @Test
-    fun emptyAndAbsentOccupancyShareAnIcon() {
+    /** The snapshot plus its first vehicle — the prelude every icon-contract test below opens with. */
+    private fun fixture(): Pair<RouteTrips, VehicleMarker> {
         val response = response()
         val vehicle = vehicles(response).firstOrNull()
         assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val absent = withOccupancy(vehicle!!, null)
-        val empty = withOccupancy(vehicle, Occupancy.EMPTY)
-
-        assertEquals(
-            "an empty and an unreported vehicle draw the same marker",
-            VehicleBitmaps.iconKey(context, absent, response),
-            VehicleBitmaps.iconKey(context, empty, response)
-        )
-        assertTrue(
-            VehicleBitmaps.vehicleBitmap(context, absent, response)
-                .sameAs(VehicleBitmaps.vehicleBitmap(context, empty, response))
-        )
+        return response to vehicle!!
     }
 
-    /** A copy of [vehicle] reporting [occupancy], with the bearing pinned so only the pips vary. */
+    /**
+     * A copy of [vehicle] with its bearing pinned — so the heading octant is fixed and only what the
+     * caller overrides varies — optionally forcing [isRealtime] and overriding its [status].
+     */
+    private fun pinned(
+        vehicle: VehicleMarker,
+        isRealtime: Boolean = true,
+        status: ObaTripStatus = vehicle.status
+    ): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f, status = status)
+
+    /** A copy of [vehicle] reporting [occupancy], with everything else held fixed. */
     private fun withOccupancy(
         vehicle: VehicleMarker,
         occupancy: Occupancy?,
         isRealtime: Boolean = true
-    ): VehicleMarker = vehicle.copy(
-        isRealtime = isRealtime,
-        bearing = 0f,
-        status = object : ObaTripStatus by vehicle.status {
+    ): VehicleMarker = pinned(
+        vehicle,
+        isRealtime,
+        object : ObaTripStatus by vehicle.status {
             override val occupancyStatus: Occupancy? = occupancy
         }
     )
 
-    /**
-     * Force the realtime path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the bearing
-     * so the heading octant is fixed — only the schedule deviation varies between the variants.
-     */
-    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = vehicle.copy(
-        isRealtime = true,
-        bearing = 0f,
+    /** A copy of [vehicle] running [deviationSeconds] off schedule, with everything else held fixed. */
+    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = pinned(
+        vehicle,
         status = object : ObaTripStatus by vehicle.status {
             override val scheduleDeviation: Duration = deviationSeconds.seconds
         }
     )
 
-    /** A copy of [vehicle] with [isRealtime] forced and the bearing pinned, so only liveness varies. */
-    private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f)
+    /** A copy of [vehicle] with [isRealtime] forced, so only liveness varies. */
+    private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = pinned(vehicle, isRealtime)
 
     // --- The route display color on the disc (#2043) ---------------------------------------------
 

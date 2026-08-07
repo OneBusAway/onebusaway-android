@@ -65,6 +65,7 @@ import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.showsRentalRangeLabel
 import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.map.rental.rentalLayersOf
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
@@ -700,7 +701,7 @@ class MapLibreRenderer(
      */
     private fun rentalBitmap(rental: RentalMarker, labelled: Boolean, metric: Boolean): Bitmap {
         val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
-        val charge = rental.place.fuelPercent?.toFloat()
+        val charge = rentalChargeFraction(rental.place)
         val base = RentalBitmaps.big(context, layer, rental.place.kind, charge)
         val range = rental.place.rangeMeters?.takeIf { labelled } ?: return base
         val label = ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)

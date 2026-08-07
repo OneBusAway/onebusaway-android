@@ -26,7 +26,6 @@ import org.onebusaway.android.map.layout.placeRouteBadges
 import org.onebusaway.android.map.render.BadgedRoute
 import org.onebusaway.android.map.render.ITINERARY_RIDE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_STREET_WIDTH_PROFILE
-import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
@@ -246,8 +245,8 @@ internal data class ItinerarySubstitute(val route: InterchangeableRoute, val rou
  * trade the whole itinerary for one route (see [RouteBadgeTap]).
  *
  * These follow the zoom (#2102), receding with the lines they name rather than holding a fixed pixel size
- * — on the same schedule a focused stop's adjacency labels took later (#2195), see
- * [ROUTE_BADGE_SCALE_PROFILE].
+ * — on the map's one label schedule, which a focused stop's adjacency labels also take (#2195); see
+ * [RouteBadge.scale].
  */
 internal fun itineraryRouteBadges(
     legs: List<ItineraryDrawableLeg>,
@@ -278,8 +277,7 @@ internal fun itineraryRouteBadges(
             RouteBadgeRequest(
                 routes = ride.badgedRoutes(palette),
                 paths = ridden.map { RouteBadgePath(it.drawable.points) },
-                tap = RouteBadgeTap.FocusItineraryRide(ridden.mapTo(mutableSetOf()) { it.drawable.index }),
-                scale = ROUTE_BADGE_SCALE_PROFILE
+                tap = RouteBadgeTap.FocusItineraryRide(ridden.mapTo(mutableSetOf()) { it.drawable.index })
             )
         }
     )

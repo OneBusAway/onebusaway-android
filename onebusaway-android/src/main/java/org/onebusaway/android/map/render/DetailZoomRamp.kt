@@ -129,9 +129,10 @@ private const val ROUTE_BADGE_SCALE_STEPS = 16f
  * [ContinuationBadgeBitmaps.badge] draws, ramped linearly across [rampStartZoom]..[rampEndZoom] and flat
  * on either side of it.
  *
- * A profile rather than a bare function for the reason [RouteLineWidthProfile] is one: the two kinds of
- * label on the map (adjacency, a directions itinerary's rides) answer the camera differently, and that
- * difference should be a value one of them carries rather than a branch in each renderer.
+ * A profile rather than a bare function for the reason [RouteLineWidthProfile] is one: it is carried
+ * unresolved on the label and resolved by each renderer against its live camera, so the day one kind of
+ * label should answer the camera differently from the rest, that is a value it carries rather than a
+ * branch in each renderer. Every label takes the same one today ([ROUTE_BADGE_SCALE_PROFILE]).
  */
 data class RouteBadgeScaleProfile(
     val distantScale: Float,
@@ -167,17 +168,10 @@ data class RouteBadgeScaleProfile(
 }
 
 /**
- * A label that draws at one size whatever the camera does. No label on the map takes it today — a
- * directions itinerary's rides were given a schedule by #2102 and focused-stop adjacency by #2195 — but
- * it stays the default a [RouteBadge] is born with, so a producer opts a label into a schedule rather
- * than inheriting one it never asked for.
- */
-val FIXED_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(distantScale = 1f, closeScale = 1f)
-
-/**
- * The schedule a route label drawn on a line follows — a directions itinerary's rides (#2102) and a
- * focused stop's adjacency labels (#2195) alike — on the shared detail ramp and pointing the same way as
- * everything else it rides with: half size when zoomed out, full at zoom 16 and above.
+ * What a route label drawn on a line does about the camera, on every view that draws one — a directions
+ * itinerary's rides (#2102) and a focused stop's adjacency labels (#2195): the shared detail ramp,
+ * pointing the same way as everything else it rides with, at half size when zoomed out and full at zoom
+ * 16 and above.
  *
  * A label is a fixed number of screen pixels, so at an overview zoom it is enormous relative to the
  * geometry it annotates — several of them, anchored at line midpoints that are themselves close together
@@ -185,11 +179,12 @@ val FIXED_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(distantScale = 1f, 
  * lines and stop circles around it ([RouteLineWidthProfile], [focusedRouteStopScale]) keeps the whole view
  * scaling as one thing, and hands the label its full size at the zoom where there's room for it.
  *
- * One schedule for both views rather than one apiece: the two are read against different backdrops
- * (adjacency sits over sibling routes and nearby stops, directions over a bare basemap), but they are the
- * same drawing answering the same problem, and a rider moving between the views should not find the map's
- * labels behaving differently in each. The day one of them should differ, the way to say so is a second
- * profile with its own name — not a branch in a renderer.
+ * This is the **default** a [RouteBadge] is born with rather than a schedule each producer opts into, and
+ * that is the lesson of #2195: #2102 gave the itinerary's labels a schedule while the default stayed a
+ * fixed pill, and adjacency — the older producer, in the more-used view — was simply left behind in it.
+ * A new kind of label should inherit what every other label does; a producer that wants
+ * something else says so with a profile of its own name, which is also how the two views would diverge
+ * (they are read against different backdrops, so they may yet) without a branch in a renderer.
  *
  * Deliberately a starting point to be tuned against the real map, not a settled value.
  */

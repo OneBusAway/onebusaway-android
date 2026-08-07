@@ -306,9 +306,8 @@ class MapLibreRenderer(
 
     /**
      * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102, #2195). A label
-     * on the fixed profile resolves to the same scale either side of the move and is left alone, as is a
-     * scheduled one whose camera stayed within a flat end of its ramp or moved less than one quantization
-     * step (see [RouteBadgeScaleProfile.scaleAt]).
+     * whose camera stayed within a flat end of its ramp, or moved less than one quantization step, resolves
+     * to the same scale either side of the move and is left alone (see [RouteBadgeScaleProfile.scaleAt]).
      */
     private fun updateRouteBadgeScale(zoom: Float) {
         val previous = renderedBadgeZoom

@@ -18,6 +18,7 @@ package org.onebusaway.android.map.render
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.util.GeoPoint
 
 /** The zoom schedule a route label's drawn size follows (#2102, #2195). */
 class RouteBadgeScaleProfileTest {
@@ -66,13 +67,12 @@ class RouteBadgeScaleProfileTest {
     }
 
     @Test
-    fun `a label that opts out of the schedule holds one size at every zoom`() {
-        // The default a RouteBadge takes when its producer says nothing, which is what lets a renderer's
-        // re-stamp on camera settle skip such a label entirely. Both of the map's labels-on-a-line now opt
-        // in (#2102, #2195), so nothing takes this today — but it is the behaviour the default promises,
-        // and a producer that means it has to keep getting it.
-        for (zoom in 1..21) {
-            assertEquals(1f, FIXED_ROUTE_BADGE_SCALE_PROFILE.scaleAt(zoom.toFloat()), 0f)
-        }
+    fun `it is what a label is born with, so a new one recedes without knowing to ask`() {
+        // #2195 in one assertion: the schedule is the RouteBadge default, not something each producer opts
+        // into. #2102 gave the itinerary's labels a schedule and left the default fixed, which is how
+        // adjacency — the older producer — went on drawing full-size pills at every zoom.
+        val badge = RouteBadge(routes = listOf(BadgedRoute("A", 0xFF123456.toInt())), point = GeoPoint(0.0, 0.0))
+
+        assertEquals(ROUTE_BADGE_SCALE_PROFILE, badge.scale)
     }
 }

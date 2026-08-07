@@ -339,9 +339,8 @@ class GoogleMapRenderer(
 
     /**
      * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102, #2195). A label
-     * on the fixed profile resolves to the same scale either side of the move and is left alone, as is a
-     * scheduled one whose camera stayed within a flat end of its ramp or moved less than one quantization
-     * step (see [RouteBadgeScaleProfile.scaleAt]).
+     * whose camera stayed within a flat end of its ramp, or moved less than one quantization step, resolves
+     * to the same scale either side of the move and is left alone (see [RouteBadgeScaleProfile.scaleAt]).
      */
     private fun updateRouteBadgeScale(zoom: Float) {
         val previous = renderedBadgeZoom
@@ -919,7 +918,14 @@ class GoogleMapRenderer(
         // handful of route colors, times a few route types, plus the fast-estimate + dot icons
         // — so descriptors are reused as vehicles turn, not thrashed. Bounded so a long, varied session
         // can't grow it without limit (evicting a still-shown icon just re-wraps it on next request).
-        private const val DESCRIPTOR_CACHE_SIZE = 256
+        //
+        // Route labels share this cache, and since #2195 they are the larger half of it: every label on the
+        // map now takes a zoom schedule, so a busy stop's dozen adjacency labels can each be asked for at
+        // any of the nine sizes [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize the ramp to. Sized to
+        // hold that alongside the vehicles rather than letting a zoom-out sweep evict the icons the ~20Hz
+        // vehicle re-stamp depends on. The maplibre flavor gives its labels a cache of their own, so its
+        // BADGE_ICON_CACHE_SIZE covers only the labels.
+        private const val DESCRIPTOR_CACHE_SIZE = 384
     }
 }
 

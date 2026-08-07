@@ -34,6 +34,7 @@ import org.onebusaway.android.directions.util.DirectionsGenerator
 import org.onebusaway.android.map.RiddenSpan
 import org.onebusaway.android.map.RouteFocusSegment
 import org.onebusaway.android.util.geoPointOrNull
+import org.onebusaway.android.util.parseObaHexColor
 import org.onebusaway.android.util.runCatchingCancellable
 
 /**
@@ -143,10 +144,18 @@ class DefaultTripResultsRepository @Inject constructor(
             // "stay on board" rows do, so the two mark one ride's route changes identically. A leg with no
             // geometry contributes an empty span rather than being dropped — the spans stay aligned to the
             // ride's legs, and the map skips one it can't draw.
+            //
+            // The leg's own published colour rides along so the map can draw the span before its route loads
+            // (see [riddenSpanColorSource], #2186). Deliberately the raw parse rather than
+            // [ridePresentationColor]'s colourless-ride substitution: this stands in for the route's
+            // *published* colour until that route can state it, and the map's own route lines have never had
+            // that substitution either (#2041's remaining work), so a colourless ride resolves the same way
+            // before and after the load instead of changing colour on landing.
             val riddenSpans = (chain.leaderIndex..chain.alightIndex).map { j ->
                 RiddenSpan(
                     points = legs[j].legGeometry?.decodedPoints().orEmpty(),
                     routeId = ids[j].routeId,
+                    plannedColor = parseObaHexColor(legs[j].routeColor),
                     startsCutover = j in chain.transitionLegIndices
                 )
             }

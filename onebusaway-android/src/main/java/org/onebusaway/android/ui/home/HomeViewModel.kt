@@ -880,10 +880,17 @@ class HomeViewModel @Inject constructor(
 
     /**
      * The ride to draw over the route, preferring the per-route spans the leg was built with (#2127) and
-     * falling back to the tapped row's own joined geometry ([fallbackPoints]) as a single span. The fallback
-     * covers a ride whose ref carries no spans at all — an OTP1 plan, or a leg the results repository
-     * couldn't resolve — where one undivided span is exactly what the map drew before there were spans to
-     * divide.
+     * falling back to the tapped row's own joined geometry ([fallbackPoints]) as one undivided span —
+     * exactly what the map drew before there were spans to divide, and (carrying no
+     * [RiddenSpan.plannedColor]) in the shown route's colour as it did then.
+     *
+     * Defensive rather than a live path: the results repository emits one span per ridden leg, so a ref it
+     * built always has them, and the ref the drawer synthesizes when it couldn't resolve one
+     * (`TripLogBuilder.fallbackRouteLeg`) names neither a route nor a boarding stop — so it never reaches a
+     * route focus at all, by either entry. A leg tap degrades to framing the leg ([focusItineraryRouteLeg]),
+     * and the inline ETA strip that owns the other entry draws nothing without an OBA stop id to poll. This
+     * stands so a ref that somehow arrives without spans still draws its ride rather than nothing; nothing
+     * that reaches it today has a planned colour to lose.
      */
     private fun RouteLegRef.riddenSpansOr(fallbackPoints: List<GeoPoint>): List<RiddenSpan> = riddenSpans.ifEmpty { listOf(RiddenSpan(fallbackPoints)) }
 

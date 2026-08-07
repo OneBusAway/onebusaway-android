@@ -25,9 +25,11 @@ import org.onebusaway.android.util.haversineDistance
 
 /**
  * Presenting a trip-plan leg's **ridden segment** over its route in route focus: draw the route's approach
- * to the boarding point, the segment cased on top, and keep only the segment's stops. Pure
- * geometry over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop] (like [RouteViewGeometry] /
- * [projectStopsOntoPolylines]), so it stays JVM-testable and out of [RouteMapController]'s state plumbing.
+ * to the boarding point, the segment cased on top, keep only the segment's stops, and pick which colour the
+ * segment is drawn from ([riddenSpanColorSource] — the source, not the rendering, which stays with the
+ * caller's palette). Pure, over flavor-neutral [GeoPoint]/[RoutePolyline]/[ObaStop] (like
+ * [RouteViewGeometry] / [projectStopsOntoPolylines]), so it stays JVM-testable and out of
+ * [RouteMapController]'s state plumbing.
  */
 
 /** How close a stop must sit to the ridden path to count as "on the segment" — well below transit stop
@@ -57,12 +59,53 @@ internal fun List<GeoPoint>.isDrawableSegment() = size >= 2
  * `Interlines.chains` transitions the drawer and the itinerary map read, so all three mark the same joins. A
  * self-interline — one route reversing onto itself — is a span boundary with no cutover, exactly as it is a
  * seam the drawer announces nothing at.
+ *
+ * [plannedColor] is the GTFS colour the *plan* published for that route, already parsed — the same source
+ * the itinerary's own line for this leg was styled from — carried along so the span can be drawn before
+ * [routeId]'s route has loaded (see [riddenSpanColorSource]). Null when the plan published none.
  */
 data class RiddenSpan(
     val points: List<GeoPoint>,
     val routeId: String? = null,
+    val plannedColor: Int? = null,
     val startsCutover: Boolean = false
 )
+
+/**
+ * What a ridden span's own route load has landed with: the colour that route publishes, which may be none
+ * ([publishedColor] null — an agency that states no colour, or a response that carried no route to state
+ * one). Wrapping it is what lets `null` *itself* mean "hasn't landed": the two are opposite answers, and a
+ * bare `Int?` folds them into one value — see [riddenSpanColorSource], whose whole rule is telling them
+ * apart.
+ */
+@JvmInline
+internal value class LoadedSpanRoute(val publishedColor: Int?)
+
+/**
+ * The colour a ridden span is drawn from, for a palette to render: its own route's published colour once
+ * that route's load has landed ([loaded]), else the colour the plan gave it ([RiddenSpan.plannedColor]).
+ * Null when neither publishes one — a colour left unstated, which the renderer resolves to its default,
+ * exactly as it does for a route line whose route publishes nothing usable.
+ *
+ * The plan answers for the load window, which is a network round trip the rider spends looking at the map
+ * (#2186). Nothing answered for it before: the span was drawn in the *shown route's* colour, which until
+ * the load lands is the renderer's `DEFAULT_ROUTE_LINE_COLOR` — so tapping a leg flashed the ride pure blue
+ * before it settled into its route's colour. The plan already published that colour; it just wasn't asked.
+ *
+ * A landed load then answers alone, its own missing colour included, rather than the plan filling in for it:
+ * the corridor beneath the span is drawn from that same load (`directionPolylines`), which states no colour
+ * for it either — so both reach the renderer's default together, where a span that kept a planned colour
+ * would be a line its own approach couldn't match. That is why the load is passed as [LoadedSpanRoute] and
+ * not as the colour it carries: "hasn't landed" and "landed, publishes nothing" take opposite branches here,
+ * so they must stay distinguishable all the way from the caller, including for a load that landed with no
+ * route in it at all.
+ *
+ * A span whose [RiddenSpan.routeId] never resolved is handed no load at all — not the ride's shown route,
+ * which is not what it is ridden as — so the plan answers for it permanently rather than for a window, as it
+ * does for a route whose load failed. The caller decides what a span with neither is (see
+ * [RouteMapController.spanColor]); here it is the same "nothing published a colour" null as any other.
+ */
+internal fun riddenSpanColorSource(span: RiddenSpan, loaded: LoadedSpanRoute?): Int? = if (loaded == null) span.plannedColor else loaded.publishedColor
 
 /** The whole ride as one path, for the questions that are about the ride and not about its routes: where
  *  the rider boards and alights, what to frame, which stops are on it. */

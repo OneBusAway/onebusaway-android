@@ -111,4 +111,32 @@ class RentalChargeGaugeTest {
     fun `a place stating no form factor gets no gauge`() {
         assertNull(rentalChargeFraction(vehicle(formFactor = null, rangeMeters = 20_000)))
     }
+
+    // --- The red / amber / green bands the ring is drawn in ---
+
+    @Test
+    fun `the bands run red, amber, green`() {
+        assertEquals(RentalChargeBand.LOW, rentalChargeBand(0f))
+        assertEquals(RentalChargeBand.LOW, rentalChargeBand(0.149f))
+        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.15f))
+        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.549f))
+        assertEquals(RentalChargeBand.HIGH, rentalChargeBand(0.55f))
+        assertEquals(RentalChargeBand.HIGH, rentalChargeBand(1f))
+    }
+
+    /**
+     * The specified bands left 35–55% belonging to none of them; amber covers it, so every fraction
+     * lands somewhere. A gauge with a hole in it would draw nothing for the vehicles that fall in it.
+     */
+    @Test
+    fun `the bands are contiguous, with amber covering the unspecified middle`() {
+        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.35f))
+        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.45f))
+        var f = 0f
+        while (f <= 1f) {
+            // Total by construction — the assertion is that this simply cannot throw or return null.
+            rentalChargeBand(f)
+            f += 0.01f
+        }
+    }
 }

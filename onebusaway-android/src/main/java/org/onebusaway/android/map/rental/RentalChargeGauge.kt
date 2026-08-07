@@ -105,3 +105,33 @@ fun rentalChargeFraction(place: RentalPlace): Float? {
     val max = place.formFactors.singleOrNull()?.let { ASSUMED_MAX_RANGE_METERS[it] } ?: return null
     return (range.toFloat() / max).coerceIn(0f, 1f)
 }
+
+/**
+ * The colour band a charge ring is drawn in — the battery-style red/amber/green scale.
+ *
+ * The bands are **contiguous by construction**: [LOW] runs to [CHARGE_LOW_MAX], [MEDIUM] from there to
+ * [CHARGE_MEDIUM_MAX], and [HIGH] above. There is no "between the bands" state, because a gauge with a
+ * gap in it draws nothing for the vehicles that land there.
+ */
+enum class RentalChargeBand { LOW, MEDIUM, HIGH }
+
+/** Below this the ring is red: not enough charge to count on for a trip of any length. */
+private const val CHARGE_LOW_MAX = 0.15f
+
+/**
+ * Below this the ring is amber, above it green.
+ *
+ * The original specification named three numbers — red under 15%, amber under 35%, green over 55% —
+ * which leaves 35–55% belonging to no band at all. Amber is extended to cover that span rather than
+ * green, so a half-charged vehicle reads "usable" instead of "good"; a rider who acts on green and
+ * finds a half-flat scooter is worse served than one who acts on amber and finds a better vehicle than
+ * expected.
+ */
+private const val CHARGE_MEDIUM_MAX = 0.55f
+
+/** Which band [fraction] (0..1) falls in. */
+fun rentalChargeBand(fraction: Float): RentalChargeBand = when {
+    fraction < CHARGE_LOW_MAX -> RentalChargeBand.LOW
+    fraction < CHARGE_MEDIUM_MAX -> RentalChargeBand.MEDIUM
+    else -> RentalChargeBand.HIGH
+}

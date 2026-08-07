@@ -22,13 +22,16 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.LruCache
+import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
+import org.onebusaway.android.map.rental.RentalChargeBand
 import org.onebusaway.android.map.rental.RentalKind
 import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.rentalChargeBand
 
 /**
  * Flavor-neutral generation of the rental marker bitmaps (#2168) — the small dot, the big circular
@@ -210,13 +213,16 @@ object RentalBitmaps {
             strokeCap = Paint.Cap.ROUND
         }
         if (chargeFraction == null) {
-            // Nothing published to fill it with, so the ring is simply the marker's edge.
+            // Nothing published to fill it with, so the ring is simply the marker's edge, and it wears
+            // the layer's own colour — there is no charge for a band to describe.
             ring.color = tint
             canvas.drawCircle(center, center, ringRadius, ring)
         } else {
             ring.color = RING_TRACK
             canvas.drawCircle(center, center, ringRadius, ring)
-            ring.color = tint
+            // The arc is the gauge, so it takes the charge band rather than the layer colour. The
+            // glyph inside keeps the layer colour, so a bike is still told from a scooter.
+            ring.color = ContextCompat.getColor(context, chargeBandColor(rentalChargeBand(chargeFraction)))
             // Clockwise from twelve o'clock, the direction a gauge is read.
             canvas.drawArc(
                 RectF(center - ringRadius, center - ringRadius, center + ringRadius, center + ringRadius),
@@ -245,6 +251,13 @@ object RentalBitmaps {
             )
         }
         return bitmap
+    }
+
+    @ColorRes
+    private fun chargeBandColor(band: RentalChargeBand): Int = when (band) {
+        RentalChargeBand.LOW -> R.color.rental_charge_low
+        RentalChargeBand.MEDIUM -> R.color.rental_charge_medium
+        RentalChargeBand.HIGH -> R.color.rental_charge_high
     }
 
     private fun glyphFor(layer: RentalLayer, kind: RentalKind): Int = when (kind) {

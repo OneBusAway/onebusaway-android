@@ -143,6 +143,17 @@
          markers apart at a glance without either reading as a warning colour. -->
     <color name="layer_scooters_color">#0f766e</color>
 
+    <!-- Rental charge-ring bands (#2168). Brighter than the layer colours on purpose: the ring is a
+         gauge read at a glance over a busy basemap, so it trades the layer's muted identity for
+         contrast. The glyph inside still wears the layer colour, so bikes and scooters stay
+         distinguishable.
+         Amber rather than a true yellow — pure yellow disappears against pale road fill.
+         Red/green confusion is not a barrier here: the arc's *length* carries the same value, so
+         colour is redundant reinforcement rather than the only channel. -->
+    <color name="rental_charge_low">#FF3B30</color>
+    <color name="rental_charge_medium">#FFB300</color>
+    <color name="rental_charge_high">#00C853</color>
+
     <!-- Shortcuts -->
     <color name="shortcut_icon">@color/material_gray</color>
     <color name="shortcut_background">#dfffffff</color>

@@ -57,9 +57,18 @@ object RentalBitmaps {
      */
     private const val GLYPH_SIZE = 13f
 
-    /** The charge ring's stroke, and its clearance from the disc, in dp. */
-    private const val RING_WIDTH_DP = 3f
-    private const val RING_GAP_DP = 1f
+    /**
+     * The charge ring's *visible* stroke, in dp — what a reader measures off the screen.
+     *
+     * The ring is actually stroked [RING_UNDERLAP_DP] wider than this and the disc drawn over that
+     * excess, so the two meet with no seam. Stroking them exactly tangent instead leaves a hairline of
+     * background showing between them wherever the two antialiased edges don't quite agree, which is
+     * the artifact this pair of constants exists to kill.
+     */
+    private const val RING_WIDTH_DP = 3.9f
+
+    /** How far the disc is drawn *under* the ring, hiding the junction. Never visible. */
+    private const val RING_UNDERLAP_DP = 1f
 
     /** The range label's type size and its padding, in dp. */
     private const val LABEL_TEXT_DP = 10f
@@ -70,9 +79,6 @@ object RentalBitmaps {
 
     /** The unfilled part of the charge ring — a neutral track the arc reads against. */
     private const val RING_TRACK = 0x33000000
-
-    /** A hairline round the white disc, so it holds its edge over a pale basemap. */
-    private const val DISC_OUTLINE = 0x22000000
 
     /**
      * The charge arc is quantized to this many steps for caching. A 32dp ring cannot show finer than
@@ -193,7 +199,9 @@ object RentalBitmaps {
         val canvas = Canvas(bitmap)
         val tint = layer.markerColor(context)
         val center = sizePx / 2f
-        val ringStroke = RING_WIDTH_DP * density
+        // The ring is stroked wider than it reads, and the disc covers the excess — see RING_WIDTH_DP.
+        val visibleRing = RING_WIDTH_DP * density
+        val ringStroke = visibleRing + RING_UNDERLAP_DP * density
         val ringRadius = center - ringStroke / 2f
 
         val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -219,9 +227,9 @@ object RentalBitmaps {
             )
         }
 
-        // The puck inside the ring, drawn by the shared circle-and-glyph routine the trip map's
-        // vehicle badges use — translated so its square sits inside the ring's clearance.
-        val inset = ringStroke + RING_GAP_DP * density
+        // The puck, drawn by the shared circle-and-glyph routine the trip map's vehicle badges use —
+        // inset by the ring's *visible* width, so it laps over the ring's hidden inner edge.
+        val inset = visibleRing
         val discPx = sizePx - 2 * inset
         canvas.withTranslation(inset, inset) {
             MarkerRendering.drawCircleAndGlyph(
@@ -236,17 +244,6 @@ object RentalBitmaps {
                 outline = 0f
             )
         }
-        // A hairline round the puck so a white marker still reads over pale ground.
-        canvas.drawCircle(
-            center,
-            center,
-            discPx / 2f,
-            Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = density
-                color = DISC_OUTLINE
-            }
-        )
         return bitmap
     }
 

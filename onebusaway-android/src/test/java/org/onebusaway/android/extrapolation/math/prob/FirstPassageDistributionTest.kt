@@ -64,6 +64,38 @@ class FirstPassageDistributionTest {
         FirstPassageDistribution(60.0, doubleArrayOf(0.0, 100.0, 200.0), doubleArrayOf(0.0, 1000.0, 500.0), THETA)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun `an infinite knot is rejected`() {
+        // It is non-decreasing, so only a finiteness check catches it before the quantile
+        // bisection inherits it as an unhalvable bracket.
+        FirstPassageDistribution(
+            60.0,
+            doubleArrayOf(0.0, 100.0, Double.POSITIVE_INFINITY),
+            doubleArrayOf(0.0, 500.0, 1000.0),
+            THETA
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `an infinite distance knot is rejected`() {
+        FirstPassageDistribution(
+            60.0,
+            doubleArrayOf(0.0, 100.0, 200.0),
+            doubleArrayOf(0.0, 500.0, Double.POSITIVE_INFINITY),
+            THETA
+        )
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a NaN knot is rejected`() {
+        FirstPassageDistribution(
+            60.0,
+            doubleArrayOf(0.0, 100.0, 200.0),
+            doubleArrayOf(0.0, Double.NaN, 1000.0),
+            THETA
+        )
+    }
+
     @Test
     fun `a dwell plateau is not mistaken for going backwards`() {
         // Both arrays only have to be non-decreasing: a dwell repeats a distance while the

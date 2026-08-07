@@ -73,6 +73,14 @@ class FirstPassageDistribution(
             "knot arrays must be the same length, were ${scheduleSeconds.size} and ${distances.size}"
         }
         require(scheduleSeconds.size >= 2) { "at least 2 knots are required" }
+        // An infinite knot stays non-decreasing, so it survives the check below and reaches the
+        // bisection as a bracket that halves to itself. NaN would fail that check, but as a knot
+        // that "steps back" rather than as what it is.
+        for (i in scheduleSeconds.indices) {
+            require(scheduleSeconds[i].isFinite() && distances[i].isFinite()) {
+                "knots must be finite, but knot $i is (${scheduleSeconds[i]}, ${distances[i]})"
+            }
+        }
         // Both readings of the profile -- interpolate() and the quantile bisection -- assume it only
         // ever goes forward. A knot that steps back reads as a plausible position rather than as an
         // error, so check it here instead of letting it out silently.

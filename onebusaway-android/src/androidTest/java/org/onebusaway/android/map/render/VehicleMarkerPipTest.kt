@@ -126,10 +126,10 @@ class VehicleMarkerPipTest {
         const val MARKER_SIZE_DP = 40f
         const val PAD_GRID = 0.6f
 
-        // The pip row spans grid y 15.9..18.9; sampled just inside so a half-pixel of rounding at the
+        // The pip row spans grid y 15.7..18.7; sampled just inside so a half-pixel of rounding at the
         // edges can't decide the count.
-        const val PIP_BAND_TOP_GRID = 16.2f
-        const val PIP_BAND_BOTTOM_GRID = 18.6f
+        const val PIP_BAND_TOP_GRID = 16f
+        const val PIP_BAND_BOTTOM_GRID = 18.4f
 
         // Due south puts the chevron at grid y 20.66..23. Sampled inside that, below the pip row.
         const val ARROW_BAND_TOP_GRID = 21f

@@ -79,11 +79,13 @@ object VehicleBitmaps {
     private const val GLYPH_CY_GRID = 10.6f
 
     // Occupancy pip row (grid units): up to three person silhouettes centered under the mode glyph.
-    // The row's band (y 15.9..18.9) clears the heading arrow in every octant — the arrow's rotated
-    // chevron reaches y 20.66 at due south, its nearest approach.
+    // The row (y 15.7..18.7) clears the heading arrow in every octant. The tightest octants are SE/SW,
+    // where the rotated chevron's base corner swings within ~0.95 units of the row's corner — the
+    // spacing and row height are set to hold that gap while keeping each pip a legible 5 dp; due south,
+    // the arrow's closest approach in y, is a comfortable 1.9 away.
     private const val PIP_SIZE_GRID = 3f
-    private const val PIP_SPACING_GRID = 0.5f
-    private const val PIP_ROW_CY_GRID = 17.4f
+    private const val PIP_SPACING_GRID = 0.4f
+    private const val PIP_ROW_CY_GRID = 17.2f
 
     /** The most pips a marker draws — the top occupancy bucket. */
     private const val MAX_PIPS = 3

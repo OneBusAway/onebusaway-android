@@ -26,19 +26,19 @@ import org.junit.Test
 private val LEVELS = doubleArrayOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999)
 
 /**
- * How far the tabulated inverse may sit from a direct solve, relatively. The interpolation's own
- * worst case over the tabulated range is 4e-7 (at level 0.999, the steepest curve of the set), so
- * this leaves an order of magnitude of headroom without being so loose it would miss a table that
- * had stopped being interpolated at all.
+ * How far the tabulated inverse may sit from a direct solve, relatively. This is deliberately close
+ * to the interpolation's measured worst case — 3.4e-7, at level 0.999 where the curve is steepest —
+ * so that it pins the figure `IncompleteGammaShape` documents to justify its node count, rather than
+ * merely catching a table that had stopped being interpolated at all.
  */
-private const val TABLE_TOLERANCE = 5e-6
+private const val TABLE_TOLERANCE = 1e-6
 
 class IncompleteGammaShapeTest {
 
     /**
-     * Independent, deliberately slow inversion: bisect the shape until the bracket is closed to
-     * machine precision. Same kernel as the tabulated path — this pins the *interpolation*, not the
-     * incomplete gamma, which [GammaDistributionTest] covers.
+     * The same geometric bisection the production solver runs, but to convergence rather than to a
+     * fixed 60 steps. Sharing the kernel is the point: it pins the *interpolation* and nothing else,
+     * leaving the incomplete gamma itself to [GammaDistributionTest].
      */
     private fun reference(level: Double, x: Double): Double {
         var lo = ln(1e-12)
@@ -53,12 +53,10 @@ class IncompleteGammaShapeTest {
     /** Log-spaced arguments, deliberately offset so they land between table nodes. */
     private fun sampleArguments(count: Int, min: Double = 1e-4, max: Double = 256.0) = (0 until count).map { exp(ln(min) + (ln(max) - ln(min)) * (it + 0.5) / count) }
 
-    // --- Agreement with a direct solve ---
-
-    @Test
-    fun `matches a direct solve across the tabulated range`() {
+    /** Every level, against [reference], at each of [xs]. */
+    private fun assertMatchesReference(xs: Iterable<Double>) {
         for (level in LEVELS) {
-            for (x in sampleArguments(200)) {
+            for (x in xs) {
                 val expected = reference(level, x)
                 val actual = IncompleteGammaShape.shapeFor(level, x)
                 assertTrue(
@@ -68,36 +66,24 @@ class IncompleteGammaShapeTest {
             }
         }
     }
+
+    // --- Agreement with a direct solve ---
+
+    @Test
+    fun `matches a direct solve across the tabulated range`() = assertMatchesReference(sampleArguments(200))
 
     @Test
     fun `matches a direct solve at the edges of the tabulated range`() {
         // Where the interpolation stencil is most nearly one-sided, and (at the low end) where the
         // curve is steepest in the argument.
-        val edges = listOf(1e-4, 1.02e-4, 1.1e-4, 2e-4, 200.0, 255.0, 255.99, 256.0)
-        for (level in LEVELS) {
-            for (x in edges) {
-                val expected = reference(level, x)
-                val actual = IncompleteGammaShape.shapeFor(level, x)
-                assertTrue(
-                    "level=$level x=$x expected $expected but got $actual",
-                    abs(actual - expected) <= TABLE_TOLERANCE * expected
-                )
-            }
-        }
+        assertMatchesReference(listOf(1e-4, 1.02e-4, 1.1e-4, 2e-4, 200.0, 255.0, 255.99, 256.0))
     }
 
     @Test
-    fun `solves directly outside the tabulated range`() {
-        for (level in LEVELS) {
-            for (x in listOf(1e-7, 1e-5, 9.9e-5, 300.0, 1000.0, 5000.0)) {
-                val expected = reference(level, x)
-                val actual = IncompleteGammaShape.shapeFor(level, x)
-                assertTrue(
-                    "level=$level x=$x expected $expected but got $actual",
-                    abs(actual - expected) <= TABLE_TOLERANCE * expected
-                )
-            }
-        }
+    fun `an argument outside the tabulated range is solved rather than clamped`() {
+        // Below X_MIN and above X_MAX there is no table to read, so these exercise the direct path
+        // and pin that it stays exact instead of pinning the ends of the table.
+        assertMatchesReference(listOf(1e-7, 1e-5, 9.9e-5, 300.0, 1000.0, 5000.0))
     }
 
     // --- Against closed forms ---
@@ -175,6 +161,21 @@ class IncompleteGammaShapeTest {
     }
 
     // --- Cache behaviour ---
+
+    @Test
+    fun `the uncached solve agrees with the tabulated one`() {
+        for (level in LEVELS) {
+            for (x in listOf(0.01, 1.0, 12.5, 41.0)) {
+                val tabulated = IncompleteGammaShape.shapeFor(level, x)
+                val solved = IncompleteGammaShape.solveShapeFor(level, x)
+                assertTrue(
+                    "level=$level x=$x tabulated $tabulated but solved $solved",
+                    abs(solved - tabulated) <= TABLE_TOLERANCE * tabulated
+                )
+            }
+        }
+        assertEquals(0.0, IncompleteGammaShape.solveShapeFor(0.5, 0.0), 0.0)
+    }
 
     @Test
     fun `answers survive being evicted from the table cache`() {

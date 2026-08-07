@@ -229,15 +229,22 @@ class FirstPassageDistributionTest {
         }
     }
 
-    /** Inverts [FirstPassageDistribution.cdf] the slow way: bisect distance until it brackets [p]. */
-    private fun searchQuantile(dist: FirstPassageDistribution, p: Double): Double {
-        var lo = distances.first()
-        var hi = distances.last()
-        repeat(60) {
-            val mid = (lo + hi) / 2
-            if (dist.cdf(mid) < p) lo = mid else hi = mid
+    /** Inverts [FirstPassageDistribution.cdf] the slow way, with the package's own root-finder. */
+    private fun searchQuantile(dist: FirstPassageDistribution, p: Double) = bisect(dist::cdf, p, distances.last())
+
+    @Test
+    fun `the mean matches the same quadrature taken through the quantiles`() {
+        // The mean's samples deliberately bypass the shared quantile tables, so that a 64-level
+        // sweep can't evict the levels the map draws. It must still land where the equivalent sweep
+        // through quantile() does.
+        val dist = at(120.0)
+        val samples = 64
+        var sum = 0.0
+        for (i in 0 until samples) {
+            sum += dist.quantile((i + 0.5) / samples)
         }
-        return (lo + hi) / 2
+        assertEquals(sum / samples, dist.mean, QUANTILE_TOLERANCE_M)
+        assertTrue("mean ${dist.mean} out of range", dist.mean > distances.first() && dist.mean < distances.last())
     }
 
     // --- Dwells ---

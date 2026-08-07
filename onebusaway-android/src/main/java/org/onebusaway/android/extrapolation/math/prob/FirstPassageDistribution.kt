@@ -129,9 +129,11 @@ class FirstPassageDistribution(
         if (p.isNaN()) return Double.NaN
         if (p <= 0.0) return distances.first()
         if (p >= 1.0) return distances.last()
-        val shape = IncompleteGammaShape.shapeFor(1.0 - p, elapsedOverTheta)
-        return interpolate(scheduleSeconds, distances, shape * theta / meanTravelMultiplier)
+        return positionAtShape(IncompleteGammaShape.shapeFor(1.0 - p, elapsedOverTheta))
     }
+
+    /** Where a gamma [shape] worth of schedule time puts the vehicle, clamped to the profile. */
+    private fun positionAtShape(shape: Double) = interpolate(scheduleSeconds, distances, shape * theta / meanTravelMultiplier)
 
     /**
      * Density at [x], by central difference on the CDF.
@@ -155,14 +157,18 @@ class FirstPassageDistribution(
     /**
      * Mean position, by midpoint quadrature over the quantile function. No consumer of an
      * extrapolated distance reads the mean — the map, the band and the trajectory view all work in
-     * quantiles — so the approximation buys simplicity at no cost. It is `lazy` because its samples
-     * sweep 64 distinct quantiles, which is wider than [IncompleteGammaShape] keeps tables for;
-     * nothing currently triggers it.
+     * quantiles — so the approximation buys simplicity at no cost. It is `lazy` because the sweep is
+     * genuinely expensive; nothing currently triggers it.
+     *
+     * The samples go through [IncompleteGammaShape.solveShapeFor] rather than [quantile]: 64 distinct
+     * levels through the shared tables would evict every level the map draws, so a mean here would
+     * slow the next frame down there.
      */
     override val mean: Double by lazy(LazyThreadSafetyMode.NONE) {
         var sum = 0.0
         for (i in 0 until MEAN_SAMPLES) {
-            sum += quantile((i + 0.5) / MEAN_SAMPLES)
+            val level = 1.0 - (i + 0.5) / MEAN_SAMPLES
+            sum += positionAtShape(IncompleteGammaShape.solveShapeFor(level, elapsedOverTheta))
         }
         sum / MEAN_SAMPLES
     }

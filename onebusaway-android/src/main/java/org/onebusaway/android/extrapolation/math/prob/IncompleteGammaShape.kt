@@ -36,15 +36,14 @@ private const val X_MAX = 256.0
  *
  * `ln(shape)` against `ln(x)` is a gentle monotone curve — slope about a tenth at the low end,
  * rising to 1 — so cubic interpolation over 1024 log-spaced nodes holds the worst relative error
- * below 4e-7 over the whole range, and below 1e-8 at every quantile the app actually asks for. In
- * schedule time that is under a millisecond at the horizon, against the ~2ms the 20-step bisection
- * left. Each table costs 8KB.
+ * to 3.4e-7, at the 0.999 level where the curve is steepest; the marker's median and the band's
+ * edges sit nearer 1e-9. In schedule time even the worst is under a millisecond at the horizon,
+ * against the ~2ms the 20-step bisection left. Halving the node count costs a factor of eight, and
+ * the error is pinned by `IncompleteGammaShapeTest`. Each table costs 8KB.
  */
 private const val NODE_COUNT = 1024
 private const val PAD = 2
 private const val TABLE_SIZE = NODE_COUNT + 2 * PAD
-private val LN_X_STEP = (ln(X_MAX) - ln(X_MIN)) / (NODE_COUNT - 1)
-private val LN_X_BASE = ln(X_MIN) - PAD * LN_X_STEP
 
 /**
  * Bracket for the direct solve. `P(1e-12, x)` is 1 to within 1e-11 and `P(1e4, 256)` underflows to
@@ -58,8 +57,11 @@ private const val SOLVE_ITERATIONS = 60
 /**
  * Levels held at once. Seven distinct quantiles are drawn (the marker's median, the band's edges,
  * the fast estimate, and the trajectory view's density window and separators), so the working set
- * fits with room to spare. [ProbDistribution.mean]'s quadrature would sweep past it, which is why
- * eviction is round-robin and entries fill lazily: churn costs a solve, not a table.
+ * fits with room to spare and round-robin eviction never reaches a live level.
+ *
+ * Deliberately parallel arrays rather than the codebase's `BoundedLruCache`: that is a
+ * `LinkedHashMap`, so every lookup would box the `Double` level on a path that runs per vehicle per
+ * frame. A flat scan of sixteen doubles is a handful of compares and allocates nothing.
  */
 private const val CACHE_SIZE = 16
 
@@ -79,11 +81,16 @@ private const val CACHE_SIZE = 16
  * per vehicle, per frame.
  *
  * Tables fill lazily, one node at a time, so nothing pays for a range it never queries and there is
- * no build-time hitch on the first frame. The whole entry point is synchronized: the fill is a
- * write to shared state, and an uncontended monitor costs a rounding error against the search this
- * removes.
+ * no build-time hitch on the first frame. [shapeFor] is synchronized because that fill writes shared
+ * state; the monitor is a fifth of the call's ~90ns, which is still a fraction of the twenty gamma
+ * evaluations it replaces, and both callers are on the UI thread so it is never contended.
  */
 internal object IncompleteGammaShape {
+
+    /** Node spacing and origin, in `ln(x)`. Held here rather than at file scope: a top-level
+     * non-const `val` compiles to a synthetic accessor, and these are read four times per call. */
+    private val lnStep = (ln(X_MAX) - ln(X_MIN)) / (NODE_COUNT - 1)
+    private val lnBase = ln(X_MIN) - PAD * lnStep
 
     /** Cache keys. Initialized to NaN, which never equals a level, so an empty slot cannot hit. */
     private val levels = DoubleArray(CACHE_SIZE) { Double.NaN }
@@ -97,9 +104,11 @@ internal object IncompleteGammaShape {
     /**
      * The shape `a` with `P(a, [x]) = [level]`, for `x >= 0`.
      *
-     * A [level] at or outside `(0, 1)` has no solution — `P` never reaches either end — and comes
-     * back clamped to the bracket, which is the limit the caller wants: shape 0 for a certainty and
-     * an effectively unbounded shape for an impossibility.
+     * No production caller passes a [level] outside `(0, 1)` — [FirstPassageDistribution.quantile]
+     * short-circuits `p <= 0` and `p >= 1` first — and there is no solution there anyway, since `P`
+     * reaches neither end. Such a level runs the bisection to whichever end of its bracket it can,
+     * which is the limit a caller would want: no shape at all for a certainty, and an effectively
+     * unbounded one for an impossibility.
      */
     @Synchronized
     fun shapeFor(level: Double, x: Double): Double {
@@ -108,7 +117,7 @@ internal object IncompleteGammaShape {
         if (x < X_MIN || x > X_MAX) return solve(level, x)
 
         val table = tableFor(level)
-        val u = (ln(x) - LN_X_BASE) / LN_X_STEP
+        val u = (ln(x) - lnBase) / lnStep
         val i = floor(u).toInt().coerceIn(1, TABLE_SIZE - 3)
         return exp(
             catmullRom(
@@ -120,6 +129,16 @@ internal object IncompleteGammaShape {
             )
         )
     }
+
+    /**
+     * As [shapeFor], but solved directly, touching no table.
+     *
+     * For callers that sweep many levels once — [ProbDistribution.mean]'s quadrature takes 64 — where
+     * going through the cache would allocate a table per level and evict every level the map draws,
+     * leaving the next frame to refill nodes it had already paid for. A single solve is ~20us, which
+     * is the right price for a cold sweep and the wrong one for a frame.
+     */
+    fun solveShapeFor(level: Double, x: Double): Double = if (x <= 0.0) 0.0 else solve(level, x)
 
     /** [level]'s table, evicting round-robin on a miss. */
     private fun tableFor(level: Double): DoubleArray {
@@ -137,7 +156,7 @@ internal object IncompleteGammaShape {
     private fun node(table: DoubleArray, level: Double, i: Int): Double {
         val cached = table[i]
         if (!cached.isNaN()) return cached
-        val solved = ln(solve(level, exp(LN_X_BASE + i * LN_X_STEP)))
+        val solved = ln(solve(level, exp(lnBase + i * lnStep)))
         table[i] = solved
         return solved
     }

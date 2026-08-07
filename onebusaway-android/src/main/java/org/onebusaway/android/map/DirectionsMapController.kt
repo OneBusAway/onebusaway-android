@@ -135,13 +135,17 @@ class DirectionsMapController(private val host: MapHost) {
         // Every leg's points run in travel order, but no itinerary leg stamps chevrons any more — see
         // [itineraryLegStyle], which also decides the hairline case a ride wears.
         val caps = itineraryLegCaps(legs)
-        legLines = drawableLegs.map { (legIndex, _, points, style) ->
+        legLines = drawableLegs.map { drawable ->
+            val (legIndex, _, points, style) = drawable
             val legCaps = caps[legIndex]
             ItineraryLegLine(
                 legIndex,
                 RoutePolyline(
                     style.color,
                     points,
+                    // The other routes this ride may be taken on, striped through it (#2100) so the line
+                    // says what its badge does; empty for every ride offering no alternative.
+                    stripeColors = drawable.stripeColors(palette),
                     widthProfile = style.widthProfile,
                     dash = style.dash,
                     case = style.case,

@@ -57,8 +57,11 @@ internal class RoutePolylineRenderPipeline(
     }
 }
 
+// Striping runs last, on the geometry that will actually be drawn: it cuts a line into runs, so a pass
+// that reshaped one afterwards would be reshaping the stripes instead — and cutting first would leave
+// every later pass with a dozen lines to do the work of one.
 private val DEFAULT_ROUTE_POLYLINE_PIPELINE = RoutePolylineRenderPipeline(
-    listOf(ViewportClipRoutePolylinePass(), ZoomSimplifyRoutePolylinePass())
+    listOf(ViewportClipRoutePolylinePass(), ZoomSimplifyRoutePolylinePass(), StripeRoutePolylinePass())
 )
 
 /**

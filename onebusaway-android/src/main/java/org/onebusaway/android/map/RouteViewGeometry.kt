@@ -128,7 +128,7 @@ internal fun FocusedTripGeometry.toRoutePolylines(
             RoutePolyline(
                 routeColors[shape.routeDirection] ?: mapRouteLineColorOrNull(shape.routeColor),
                 shape.points,
-                widthProfile,
+                widthProfile = widthProfile,
                 // Adjacent routes in stop focus are plain thin lines — no direction chevrons — so the
                 // mode reads as "these routes pass here", reserving chevrons for a selected route (#1985).
                 directional = false,

@@ -8,6 +8,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
 import org.onebusaway.android.directions.model.TripPlace
@@ -387,6 +388,74 @@ class ItineraryLegStyleTest {
         // style table deliberately names no `directional` for anything to get wrong.
         assertTrue(tripOf(walk = 0, ride = 1, walk2 = 2).none { it.line.directional })
     }
+
+    @Test
+    fun `a ride is striped with every other route it may be taken on, in the label's order`() {
+        // #2100: the badge on this line names both routes, each in its own colour, while the line itself
+        // was stroked in whichever one the planner picked.
+        val ride = drawableRide(
+            routeColor = 0xFF008000.toInt(),
+            substitutes = listOf(substitute("2 Line", 0xFF0000FF.toInt()), substitute("1 Line", 0xFFFF0000.toInt()))
+        )
+
+        assertEquals(
+            listOf("1 Line", "2 Line").map { name ->
+                itineraryLegStyle(
+                    ItineraryLegKind.TRANSIT,
+                    routeColor = if (name == "1 Line") 0xFFFF0000.toInt() else 0xFF0000FF.toInt(),
+                    palette = DIRECTIONS
+                ).color
+            },
+            ride.stripeColors(DIRECTIONS)
+        )
+    }
+
+    @Test
+    fun `a ride with no alternative is not striped at all`() {
+        assertEquals(emptyList<Int>(), drawableRide(routeColor = 0xFF008000.toInt()).stripeColors(DIRECTIONS))
+    }
+
+    @Test
+    fun `routes drawn in one colour stripe once, and never in the colour the line already is`() {
+        // A stripe carries no name, so two routes an agency publishes the same colour for are one stripe;
+        // and a substitute matching the planned route would stripe the line with the colour it already is.
+        // Both of these read as "the alternative is drawn here", when nothing is.
+        val ride = drawableRide(
+            routeColor = 0xFF008000.toInt(),
+            substitutes = listOf(
+                substitute("A", 0xFF0000FF.toInt()),
+                substitute("B", 0xFF0000FF.toInt()),
+                substitute("C", 0xFF008000.toInt())
+            )
+        )
+
+        assertEquals(
+            listOf(itineraryLegStyle(ItineraryLegKind.TRANSIT, 0xFF0000FF.toInt(), DIRECTIONS).color),
+            ride.stripeColors(DIRECTIONS)
+        )
+    }
+
+    /** A transit leg as the controller hands it over, with the routes offered in its place. */
+    private fun drawableRide(routeColor: Int?, substitutes: List<ItinerarySubstitute> = emptyList()) = ItineraryDrawableLeg(
+        index = 0,
+        leg = TripLeg(mode = TripMode.RAIL, routeId = "route-1", routeShortName = "Line"),
+        points = listOf(GeoPoint(47.6, -122.3), GeoPoint(47.7, -122.4)),
+        style = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, DIRECTIONS),
+        interchangeable = substitutes
+    )
+
+    private fun substitute(displayName: String, routeColor: Int?) = ItinerarySubstitute(
+        InterchangeableRoute(
+            routeId = "route-for-$displayName",
+            displayName = displayName,
+            // The colour reaches the styling already parsed, so the wire field plays no part here.
+            routeColor = null,
+            agencyId = null,
+            agencyName = null,
+            headsign = null
+        ),
+        routeColor
+    )
 
     private fun legLine(legIndex: Int, kind: ItineraryLegKind): ItineraryLegLine {
         val style = itineraryLegStyle(kind, routeColor = null, palette = DIRECTIONS)

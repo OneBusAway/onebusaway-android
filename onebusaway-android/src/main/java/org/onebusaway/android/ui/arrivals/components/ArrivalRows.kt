@@ -59,6 +59,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -306,7 +307,11 @@ fun RouteArrivalRow(
     // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
     // membership is the list's business, and this row is also drawn by hosts (directions, the
     // trip-results stop strips) that know nothing about tracking.
-    tracked: Boolean = false
+    tracked: Boolean = false,
+    // The bay this row departs from, drawn under the headsign — for the transit-centre drawer (#2107),
+    // whose list spans every stop in view and where "which bay" is half the answer. Null on every
+    // stop-scoped surface, where the stop is already the screen's subject and naming it again is noise.
+    stopLabel: String? = null
 ) {
     val representative = group.representative
     val routeActions = actionsFor(representative)
@@ -391,6 +396,18 @@ fun RouteArrivalRow(
                 Column(Modifier.weight(1f)) {
                     if (direction.isNotBlank()) {
                         DirectionHeadsign(direction)
+                        Spacer(Modifier.height(2.dp))
+                    }
+                    if (stopLabel != null) {
+                        Text(
+                            text = stopLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (direction.isNotBlank() || stopLabel != null) {
                         Spacer(Modifier.height(6.dp))
                     }
                     EtaStrip(

@@ -703,6 +703,9 @@
     <string name="preferences_experimental_regions_summary">Enables regions that may be unstable
     </string>
     <string name="map_zoom_in_for_more_stops">Zoom in to see all stops</string>
+    <!-- Shown at the end of the nearby-arrivals drawer when the server truncated its response, so
+         some stops in view are missing from the list entirely (#2107). -->
+    <string name="nearby_arrivals_limit_exceeded">Some stops in view aren\'t listed. Zoom in to see them.</string>
     <string name="preferences_map_stop_cache_size_title">Map stop cache size</string>
     <string name="preferences_map_stop_cache_size_summary">Max bus stops kept on the map while panning (currently %1$d)</string>
     <!-- Not a plural candidate: "%1$d and %2$d" are the bounds of a range, not a count that inflects. -->

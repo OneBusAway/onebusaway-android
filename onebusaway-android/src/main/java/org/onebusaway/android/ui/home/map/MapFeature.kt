@@ -81,6 +81,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.util.Locale
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.onebusaway.android.BuildConfig
 import org.onebusaway.android.R
 import org.onebusaway.android.analytics.PlausibleAnalytics
@@ -100,6 +101,7 @@ import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.map.rental.RentalKind
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
+import org.onebusaway.android.map.settledCamera
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -110,6 +112,7 @@ import org.onebusaway.android.ui.home.chrome.mapTopChromeInsetPx
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
 import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.ObaRequestErrors
@@ -135,6 +138,10 @@ private const val SHOW_DEBUG_ZOOM_INDICATOR = false
 fun MapFeature(
     mapViewModel: MapViewModel,
     homeViewModel: HomeViewModel,
+    // The transit-centre drawer's query (#2107). Created by the host (the sheet is its), fed from here,
+    // which is where the map view model lives — the same bridge role this module already plays for
+    // padding, insets, and directives.
+    nearbyArrivalsViewModel: NearbyArrivalsViewModel,
     // The sheet-driven FAB lift, computed by HomeScreen from its live SheetState (the map composes only
     // when HOME is the destination, so this lives with the sheet rather than round-tripping the VM).
     fabBottomInset: Dp,
@@ -303,6 +310,20 @@ fun MapFeature(
     }
     LaunchedEffect(mapViewModel, homeViewModel) {
         homeViewModel.directionsBottomInset.collect { mapViewModel.host.setDirectionsBottomInset(it) }
+    }
+    // Feed the transit-centre drawer's query (#2107) the settled viewport, on the same "settled" the
+    // stop and rental loaders use — so it re-queries once at drag-end rather than per intermediate idle.
+    // Collected straight into the VM, never into Compose state, so a pan doesn't recompose the map.
+    LaunchedEffect(mapViewModel, nearbyArrivalsViewModel) {
+        mapViewModel.host.settledCamera()
+            .distinctUntilChanged()
+            .collect { nearbyArrivalsViewModel.onViewportSettled(it) }
+    }
+    LaunchedEffect(mapViewModel, nearbyArrivalsViewModel) {
+        mapViewModel.renderState.snapshot
+            .map { it.stopBand }
+            .distinctUntilChanged()
+            .collect { nearbyArrivalsViewModel.onStopBand(it) }
     }
     // Publish the floating top chrome's footprint (status-bar inset + FAB-row clearance) as the map's
     // baseline top inset, so the Google compass and centered content clear the FABs instead of drawing at

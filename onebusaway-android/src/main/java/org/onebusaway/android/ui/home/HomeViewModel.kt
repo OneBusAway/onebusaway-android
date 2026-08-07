@@ -528,6 +528,47 @@ class HomeViewModel @Inject constructor(
         )
     }
 
+    /**
+     * A row of the transit-centre drawer was tapped (#2107): show that route on the map, scoped to the
+     * bay the row departs from.
+     *
+     * Reaching the same place a rider gets by tapping the bay and then its row — `CurrentFocus.Stop`
+     * with that route selected — but in **one** [pushFocus], so one Back returns straight to the nearby
+     * list rather than parking them on a per-stop panel they never asked for. It can't go through
+     * [selectArrivalRoute], which requires a stop focus to already exist; here there is none, which is
+     * exactly the condition that put the nearby list on screen.
+     */
+    fun showNearbyRouteOnMap(
+        bay: FocusedStop,
+        routeId: String,
+        shortName: String,
+        directionId: Int?,
+        headsign: String?,
+        undoViewport: MapViewport? = null
+    ) {
+        presentedRoutes = emptySet()
+        pushFocus(
+            CurrentFocus.Stop(
+                stop = bay,
+                selectedRoute = StopRouteSelection(
+                    originHeadsign = headsign,
+                    legs = listOf(RouteLeg(routeId, shortName, directionId))
+                )
+            ),
+            undoViewport
+        )
+        emitMapDirective(
+            MapDirective.ShowRoute(
+                ShowRouteRequest(
+                    routeId = routeId,
+                    directionStopId = bay.id,
+                    initialDirectionId = directionId
+                ),
+                stopScoped = true
+            )
+        )
+    }
+
     private fun selectStopRoute(
         stopFocus: CurrentFocus.Stop,
         request: ShowRouteRequest,

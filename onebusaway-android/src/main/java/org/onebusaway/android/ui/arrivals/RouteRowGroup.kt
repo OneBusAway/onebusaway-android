@@ -120,6 +120,37 @@ fun <T : RouteDirectionItem> groupByRouteDirection(
 }
 
 /**
+ * Groups [items] into (route, direction, **stop**) rows for the transit-centre drawer (#2107), which
+ * merges many bays into one list — the sibling of [groupByRouteDirection], which groups one stop's
+ * arrivals and so needs no stop in its key.
+ *
+ * **The stop is part of the identity on purpose.** A route+direction boarding from two bays inside one
+ * transit centre is two rows, not one: a merged row would either have to name both bays (the
+ * stop-by-stop scan this drawer exists to remove) or pick one, which is a claim that can be false on
+ * the ground — and sending a rider to the wrong bay is the exact failure the feature is meant to
+ * prevent. Two bays for one route is real at precisely the places this targets: rail platforms,
+ * bay-numbered centres, and construction reroutes that add a temporary boarding point.
+ *
+ * Ordering is [groupByRouteDirection]'s (agency, line, headsign) key — the same stable,
+ * non-ETA-driven order, so a row doesn't move as its countdown ticks — with [stopSortKeyOf] as a
+ * final tiebreak so the two-bay case is deterministic rather than left to incoming order.
+ */
+fun <T : RouteDirectionItem> groupByRouteDirectionAndStop(
+    items: List<T>,
+    agencyNameOf: (T) -> String?,
+    stopIdOf: (T) -> String,
+    stopSortKeyOf: (T) -> String?
+): List<List<T>> {
+    val groups = LinkedHashMap<String, MutableList<T>>()
+    for (item in items) {
+        groups.getOrPut("${stopIdOf(item)}\u0000${item.groupKey()}") { mutableListOf() }.add(item)
+    }
+    val order = routeSortComparator(agencyNameOf)
+        .thenBy(BLANK_LAST_COMPARATOR) { group: List<T> -> stopSortKeyOf(group.first()) }
+    return groups.values.sortedWith(order)
+}
+
+/**
  * Builds the (agency, line, headsign)-ordered route rows for the arrivals list (#1822; see
  * [groupByRouteDirection]). [agencyNameOf] resolves an arrival's agency display name — not carried on
  * [ArrivalInfo] itself, only resolvable from the loaded snapshot's route/agency refs (see

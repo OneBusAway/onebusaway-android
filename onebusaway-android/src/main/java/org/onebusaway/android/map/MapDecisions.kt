@@ -18,6 +18,11 @@ package org.onebusaway.android.map
 import android.os.Bundle
 import androidx.lifecycle.SavedStateHandle
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.haversineMeters
@@ -27,6 +32,23 @@ import org.onebusaway.android.util.PreferenceUtils
 
 /** Debounce before reacting to a camera move, matching the old MapWatcher poll cadence (stops + bikes). */
 internal const val STOP_LOAD_DEBOUNCE_MS = 250L
+
+/**
+ * The settled-viewport stream every viewport-scoped loader shares: debounce [STOP_LOAD_DEBOUNCE_MS],
+ * then drop any emission that lands while a gesture is still in flight — the gesture's terminating
+ * camera-idle re-arms the debounce and fires one emission at the true drag-end. Combined, these keep a
+ * whole pan to a single load instead of one per intermediate settle, which is what killed the mid-pan
+ * jank.
+ *
+ * One definition, so the stop loader, the rental loader, and the transit-centre arrivals query (#2107)
+ * cannot drift apart on what "settled" means — the expression was previously duplicated verbatim in
+ * the first two.
+ */
+@OptIn(FlowPreview::class)
+internal fun MapHost.settledCamera(): Flow<CameraSnapshot> = camera
+    .filterNotNull()
+    .debounce(STOP_LOAD_DEBOUNCE_MS)
+    .filter { !cameraInteracting.value }
 
 /** The map's initial camera (point + zoom) before the loaders / region centering take over. */
 data class MapCameraSeed(val point: GeoPoint, val zoom: Float)

@@ -1,35 +1,25 @@
 <!--
-  A kick scooter, for the rental map layer's scooter markers and its layer toggle (#2168).
+  An electric kick scooter, for the rental map layer's scooter markers and its layer toggle (#2168).
 
-  Hand-authored from plain geometry (two wheels, a deck, a raked stem, a handlebar) on the same
-  24-unit grid every other marker glyph uses, rather than imported: the app had no scooter asset, and
-  the marker glyphs are rendered at ~11 grid units where a solid, high-contrast silhouette reads far
-  better than a fine-lined one. Filled paths only, so `Drawable.setTint` recolours it whole the way
-  MarkerRendering expects.
+  Material Symbols Outlined "electric_scooter", 24dp @ opsz 24, weight 400, FILL 0, GRAD 0, ROND 50 —
+  fetched from fonts.gstatic.com's render endpoint as a Compose ImageVector and converted command-for-
+  command to this pathData:
+
+    https://fonts.gstatic.com/render/v1/Material+Symbols+Outlined/24dp/electric_scooter.kt?var=opsz,wght,FILL,GRAD,ROND@24,400,0,0,50
+
+  Same family and weight as ic_directions_bike beside it, which is the point: the two ride the same pin
+  at the same glyph size, so a mismatched stroke weight would read as two different kinds of marker.
+  Filled paths only, so `Drawable.setTint` recolours it whole the way MarkerRendering expects.
+
+  The one edit to the generated path: its two trailing zero-area subpaths ("M5,15z" and "m14,0z",
+  artifacts of the font-to-path conversion) are dropped. They cannot render anything either way.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- Rear wheel -->
     <path
         android:fillColor="#000000"
-        android:pathData="M3,18.5a2.5,2.5 0 1,0 5,0a2.5,2.5 0 1,0 -5,0Z" />
-    <!-- Front wheel -->
-    <path
-        android:fillColor="#000000"
-        android:pathData="M16,18.5a2.5,2.5 0 1,0 5,0a2.5,2.5 0 1,0 -5,0Z" />
-    <!-- Deck -->
-    <path
-        android:fillColor="#000000"
-        android:pathData="M4.5,15.6L14.8,15.6L14.8,17.4L4.5,17.4Z" />
-    <!-- Steering stem, raked forward -->
-    <path
-        android:fillColor="#000000"
-        android:pathData="M14.9,17.2L16.6,5.2L18.4,5.5L16.7,17.5Z" />
-    <!-- Handlebar -->
-    <path
-        android:fillColor="#000000"
-        android:pathData="M15.4,4L21,4L21,5.8L15.4,5.8Z" />
+        android:pathData="M5,18Q3.75,18 2.88,17.13T2,15T2.88,12.88T5,12q0.98,0 1.74,0.56T7.8,14h5.3q0.27,-1.7 1.41,-2.98T17.3,9.25L15.9,3H12V1h3.9q0.67,0 1.24,0.44t0.71,1.11L19.75,11H19q-1.65,0 -2.82,1.17T15,15v1H7.8Q7.5,16.88 6.74,17.44T5,18zM5.71,15.71Q6,15.43 6,15T5.71,14.29T5,14Q4.58,14 4.29,14.29T4,15t0.29,0.71T5,16T5.71,15.71zm11.16,1.41Q16,16.25 16,15t0.88,-2.13T19,12t2.13,0.88T22,15t-0.88,2.13T19,18T16.88,17.13zm2.84,-1.41Q20,15.43 20,15T19.71,14.29T19,14t-0.71,0.29T18,15t0.29,0.71T19,16t0.71,-0.29zM13,23L7,20h4V18l6,3H13v2z"/>
 </vector>

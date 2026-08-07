@@ -53,8 +53,8 @@ import org.onebusaway.android.map.DefaultFocusedTripRepository
 import org.onebusaway.android.map.DefaultRouteMapRepository
 import org.onebusaway.android.map.FocusedTripRepository
 import org.onebusaway.android.map.RouteMapRepository
-import org.onebusaway.android.map.bike.BikeStationsRepository
-import org.onebusaway.android.map.bike.DefaultBikeStationsRepository
+import org.onebusaway.android.map.rental.DefaultRentalPlacesRepository
+import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.nav.AndroidNavigationFeedbackRepository
 import org.onebusaway.android.nav.AndroidReminderNotificationPresenter
 import org.onebusaway.android.nav.AndroidReminderSpeechController
@@ -249,7 +249,7 @@ abstract class RepositoryModule {
     abstract fun bindRouteMapRepository(impl: DefaultRouteMapRepository): RouteMapRepository
 
     @Binds
-    abstract fun bindBikeStationsRepository(impl: DefaultBikeStationsRepository): BikeStationsRepository
+    abstract fun bindRentalPlacesRepository(impl: DefaultRentalPlacesRepository): RentalPlacesRepository
 
     // HomeViewModel's collaborators (so it can become a plain @HiltViewModel — D6).
     @Binds

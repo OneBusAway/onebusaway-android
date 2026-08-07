@@ -13,85 +13,100 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.android.map.bike
+package org.onebusaway.android.map.rental
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Unit tests for [filterStations] — the directions-mode station filter ported from
+ * Unit tests for [filterRentals] — the directions-mode filter ported from
  * `BikeLoaderCallbacks.onLoadFinished`, including the quirk that a non-null but empty filter shows
- * nothing at all (returns null) rather than clearing the overlay with an empty list.
+ * nothing at all (returns null) rather than clearing the overlay with an empty list — plus
+ * [rentalAction] and [bikeRentalUrl].
  */
-class BikeStationFilterTest {
+class RentalFilterTest {
 
-    private fun station(id: String): BikeStation = BikeStation(id = id)
+    private fun place(id: String): RentalPlace = RentalPlace(id = id)
 
-    private val all = listOf(station("a"), station("b"), station("c"))
+    private val all = listOf(place("a"), place("b"), place("c"))
+
+    private val bikes = setOf(RentalLayer.BIKES)
 
     @Test
-    fun `null filter shows all stations`() {
-        assertEquals(all, filterStations(all, selectedIds = null))
+    fun `null filter shows all places`() {
+        assertEquals(all, filterRentals(all, selectedIds = null))
     }
 
     @Test
     fun `empty filter shows nothing at all`() {
         // null return == "leave the overlay untouched", distinct from an empty-list clear.
-        assertNull(filterStations(all, selectedIds = emptyList()))
+        assertNull(filterRentals(all, selectedIds = emptyList()))
     }
 
     @Test
     fun `non-empty filter keeps only the selected ids`() {
-        val filtered = filterStations(all, selectedIds = listOf("a", "c"))
+        val filtered = filterRentals(all, selectedIds = listOf("a", "c"))
         assertEquals(listOf("a", "c"), filtered?.map { it.id })
     }
 
     @Test
     fun `filter ids not present yield an empty list`() {
-        assertEquals(emptyList<BikeStation>(), filterStations(all, selectedIds = listOf("z")))
+        assertEquals(emptyList<RentalPlace>(), filterRentals(all, selectedIds = listOf("z")))
     }
 
-    // --- bikeAction: the pure layer/mode gate from BikeshareMapController.updateData + showBikes ---
+    // --- rentalAction: the pure layer/mode gate from BikeshareMapController.updateData + showBikes ---
 
     @Test
-    fun `outside directions, bikes follow the layer toggle`() {
-        assertEquals(BikeAction.SHOW, bikeAction(isDirections = false, selectedIds = null, layerVisible = true))
-        assertEquals(BikeAction.CLEAR, bikeAction(isDirections = false, selectedIds = null, layerVisible = false))
-    }
-
-    @Test
-    fun `directions with stations always shows them, ignoring the toggle`() {
+    fun `outside directions, rentals follow the layer toggles`() {
+        assertEquals(RentalAction.SHOW, rentalAction(isDirections = false, selectedIds = null, visibleLayers = bikes))
         assertEquals(
-            BikeAction.SHOW,
-            bikeAction(isDirections = true, selectedIds = listOf("a"), layerVisible = false)
+            RentalAction.CLEAR,
+            rentalAction(isDirections = false, selectedIds = null, visibleLayers = emptySet())
+        )
+    }
+
+    /** Either layer keeps the one shared fetch alive — scooters alone are enough (#2168). */
+    @Test
+    fun `the scooters layer alone keeps the loader running`() {
+        assertEquals(
+            RentalAction.SHOW,
+            rentalAction(isDirections = false, selectedIds = null, visibleLayers = setOf(RentalLayer.SCOOTERS))
         )
     }
 
     @Test
-    fun `directions before its station filter is known leaves the overlay`() {
+    fun `directions with rentals always shows them, ignoring the toggles`() {
+        assertEquals(
+            RentalAction.SHOW,
+            rentalAction(isDirections = true, selectedIds = listOf("a"), visibleLayers = emptySet())
+        )
+    }
+
+    @Test
+    fun `directions before its filter is known leaves the overlay`() {
         // selectedIds == null in directions mode == "filter not computed yet" → don't touch the overlay.
         assertEquals(
-            BikeAction.LEAVE,
-            bikeAction(isDirections = true, selectedIds = null, layerVisible = true)
+            RentalAction.LEAVE,
+            rentalAction(isDirections = true, selectedIds = null, visibleLayers = bikes)
         )
     }
 
     @Test
-    fun `directions with an empty station filter follows the toggle`() {
-        // An itinerary with no bike stations: not a special case, just the toggle (then filterStations
+    fun `directions with an empty rental filter follows the toggles`() {
+        // An itinerary with no rentals: not a special case, just the toggles (then filterRentals
         // returns null so nothing is drawn).
         assertEquals(
-            BikeAction.SHOW,
-            bikeAction(isDirections = true, selectedIds = emptyList(), layerVisible = true)
+            RentalAction.SHOW,
+            rentalAction(isDirections = true, selectedIds = emptyList(), visibleLayers = bikes)
         )
         assertEquals(
-            BikeAction.CLEAR,
-            bikeAction(isDirections = true, selectedIds = emptyList(), layerVisible = false)
+            RentalAction.CLEAR,
+            rentalAction(isDirections = true, selectedIds = emptyList(), visibleLayers = emptySet())
         )
     }
 
-    // --- bikeRentalUrl: the OTP url-structure selection (the doubled-path fix) ---
+    // --- bikeRentalUrl: the OTP1 url-structure selection (the doubled-path fix) ---
 
     @Test
     fun `new structure inserts routers default for a server-rooted base`() {

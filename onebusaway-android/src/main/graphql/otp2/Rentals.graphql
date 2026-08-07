@@ -1,0 +1,73 @@
+# OTP 2.x GraphQL rental-vehicle map layer (issue #2168). Field names verified against the vendored
+# schema.graphqls (pinned to OpenTripPlanner v2.9.0) in this directory, and — like Plan.graphql —
+# deliberately avoids every field marked @deprecated there, so Apollo's generated code stays
+# warning-free under this repo's -PwarningsAsErrors=true CI gate. Notably that rules out
+# `VehicleRentalStation.vehiclesAvailable`/`spacesAvailable`, whose replacements
+# `availableVehicles`/`availableSpaces` also carry the per-type breakdown this query needs anyway.
+#
+# `vehicleRentalsByBbox` returns the `RentalPlace` union, i.e. both shapes at once: a free-floating
+# vehicle and a docked station. That is the whole point of using it — the OTP1 REST endpoint it
+# replaces returned only stations, with free-floating vehicles disguised as stations carrying an
+# `isFloatingBike` flag. The adapter (api/adapters/RentalPlaceAdapters.kt) maps both onto one
+# `RentalPlace` domain type whose `kind` says which it was.
+#
+# **This query has no server-side result limit.** OTP will happily return every vehicle in the box —
+# 13k+ in the one deployment reachable today — so the caller must gate the viewport before asking:
+# see RentalGuardrails.kt, which is not optional.
+query RentalsByBbox(
+    $minimumLatitude: CoordinateValue!,
+    $minimumLongitude: CoordinateValue!,
+    $maximumLatitude: CoordinateValue!,
+    $maximumLongitude: CoordinateValue!
+) {
+    vehicleRentalsByBbox(
+        minimumLatitude: $minimumLatitude
+        minimumLongitude: $minimumLongitude
+        maximumLatitude: $maximumLatitude
+        maximumLongitude: $maximumLongitude
+    ) {
+        __typename
+        ... on RentalVehicle {
+            # `vehicleId` is the id the directions path already keys a rental by (`network:id`), so
+            # the map and an itinerary's rental endpoints name the same vehicle the same way. It is
+            # nullable, so the non-null Relay `id` comes along as the fallback key — a marker with no
+            # identity at all cannot be focused or reconciled.
+            id
+            vehicleId
+            lat
+            lon
+            # `RentalVehicle.name` is deliberately not selected, for the reason Plan.graphql gives:
+            # OTP fills it from the GBFS vehicle type, and every Lime and Bird vehicle in the one
+            # reachable deployment is named the literal string "Default vehicle type". The marker and
+            # the detail window word the vehicle from `vehicleType` instead.
+            allowPickupNow
+            operative
+            rentalNetwork { ...RentalNetworkFields }
+            rentalUris { ...RentalUriFields }
+            vehicleType { formFactor propulsionType }
+            # `range` is what the range filter and the marker's label are for; `percent` is the
+            # battery reading beside it. Both are nullable in the schema and are treated as
+            # "the feed didn't say" rather than zero.
+            fuel { range percent }
+        }
+        ... on VehicleRentalStation {
+            # See the vehicle's `id`/`vehicleId` above — same rule for a dock.
+            id
+            stationId
+            name
+            lat
+            lon
+            allowPickupNow
+            allowDropoffNow
+            operative
+            realtime
+            rentalNetwork { ...RentalNetworkFields }
+            rentalUris { ...RentalUriFields }
+            # The occupancy the detail window shows, plus the per-type breakdown that tells the layer
+            # split whether this dock holds bikes or scooters — a station publishes no single
+            # `vehicleType` of its own.
+            availableVehicles { total byType { count vehicleType { formFactor propulsionType } } }
+            availableSpaces { total }
+        }
+    }
+}

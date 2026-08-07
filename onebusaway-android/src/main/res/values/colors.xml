@@ -139,6 +139,9 @@
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>
     <color name="layer_bikeshare_color">#3a4677</color>
+    <!-- The scooters layer (#2168), read far enough from the bikeshare navy above to tell two
+         markers apart at a glance without either reading as a warning colour. -->
+    <color name="layer_scooters_color">#0f766e</color>
 
     <!-- Shortcuts -->
     <color name="shortcut_icon">@color/material_gray</color>

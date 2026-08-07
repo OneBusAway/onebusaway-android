@@ -1,0 +1,35 @@
+<!--
+  A kick scooter, for the rental map layer's scooter markers and its layer toggle (#2168).
+
+  Hand-authored from plain geometry (two wheels, a deck, a raked stem, a handlebar) on the same
+  24-unit grid every other marker glyph uses, rather than imported: the app had no scooter asset, and
+  the marker glyphs are rendered at ~11 grid units where a solid, high-contrast silhouette reads far
+  better than a fine-lined one. Filled paths only, so `Drawable.setTint` recolours it whole the way
+  MarkerRendering expects.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Rear wheel -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M3,18.5a2.5,2.5 0 1,0 5,0a2.5,2.5 0 1,0 -5,0Z" />
+    <!-- Front wheel -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M16,18.5a2.5,2.5 0 1,0 5,0a2.5,2.5 0 1,0 -5,0Z" />
+    <!-- Deck -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M4.5,15.6L14.8,15.6L14.8,17.4L4.5,17.4Z" />
+    <!-- Steering stem, raked forward -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M14.9,17.2L16.6,5.2L18.4,5.5L16.7,17.5Z" />
+    <!-- Handlebar -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M15.4,4L21,4L21,5.8L15.4,5.8Z" />
+</vector>

@@ -132,6 +132,8 @@ import org.onebusaway.android.ui.compose.components.RouteBadgeJoin
 import org.onebusaway.android.ui.compose.components.RouteLineColors
 import org.onebusaway.android.ui.compose.components.ScrollChevronGutter
 import org.onebusaway.android.ui.compose.components.alertAccentColor
+import org.onebusaway.android.ui.compose.components.openRental
+import org.onebusaway.android.ui.compose.components.rentalVehicleRes
 import org.onebusaway.android.ui.compose.components.routeLineColors
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
@@ -1748,27 +1750,6 @@ private val RENTAL_OPERATOR_CHIP_MAX_WIDTH = 96.dp
  * custom-scheme deep link — whatever [fallback] the pickup kept for exactly that (see
  * [RentalPickup.fallback]).
  */
-private fun openRental(context: Context, link: RentalLink, fallback: RentalLink?) {
-    when (link) {
-        is RentalLink.Deep -> if (!ExternalIntents.openFeedUri(context, link.uri)) {
-            fallback?.let { openRental(context, it, fallback = null) }
-        }
-        is RentalLink.OperatorApp -> ExternalIntents.openAppOrStoreListing(context, link.packageName)
-        is RentalLink.Web -> ExternalIntents.goToUrl(context, link.url)
-    }
-}
-
-/** What to call the rented vehicle — total over [RentalVehicleKind], so a new kind needs its word. */
-private fun rentalVehicleRes(kind: RentalVehicleKind): Int = when (kind) {
-    RentalVehicleKind.BIKE -> R.string.trip_plan_rental_bike
-    RentalVehicleKind.EBIKE -> R.string.trip_plan_rental_ebike
-    RentalVehicleKind.CARGO_BIKE -> R.string.trip_plan_rental_cargo_bike
-    RentalVehicleKind.ELECTRIC_CARGO_BIKE -> R.string.trip_plan_rental_electric_cargo_bike
-    RentalVehicleKind.SCOOTER -> R.string.trip_plan_rental_scooter
-    RentalVehicleKind.ESCOOTER -> R.string.trip_plan_rental_escooter
-    RentalVehicleKind.MOPED -> R.string.trip_plan_rental_moped
-    RentalVehicleKind.CAR -> R.string.trip_plan_rental_car
-}
 
 /**
  * A leg's service alerts, under its header (#2143), loudest first.

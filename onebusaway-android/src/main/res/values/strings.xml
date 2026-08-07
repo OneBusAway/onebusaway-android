@@ -1294,14 +1294,28 @@
     <string name="street_mode_bicycle">My own bike</string>
     <string name="transit_directions_bikeshare_label">Bikeshare</string>
 
-    <!-- Bikeshare info window -->
-    <string name="bike_info_window_bikes_title">Bikes</string>
-
-    <!-- Bikeshare preference option -->
-    <string name="bike_info_window_spaces_title">Spaces</string>
-    <string name="layers_speedial_bikeshare_label">Bikeshare</string>
+    <!-- Bikeshare info window, on the OTP1 fallback path (no operator to name) -->
     <string name="bike_station_title">Tap to reserve a bike</string>
     <string name="floating_bike_title">Tap to reserve this bike</string>
+
+    <!-- Rental vehicle map layer (bikes + scooters) -->
+    <string name="layers_speedial_bikes_label">Bikes</string>
+    <string name="layers_speedial_scooters_label">Scooters</string>
+    <string name="layers_speedial_range_label">Range</string>
+    <string name="rental_range_filter_any">Any range</string>
+    <!-- %1$s is a formatted distance, e.g. "3 km" -->
+    <string name="rental_range_filter_at_least">%1$s or more</string>
+    <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>
+    <string name="rental_window_vehicles_title">Available</string>
+    <string name="rental_window_docks_title">Docks</string>
+    <string name="rental_window_station">Docking station</string>
+    <string name="rental_window_not_in_service">Not in service</string>
+    <string name="rental_window_no_pickup">Not available to rent right now</string>
+    <string name="rental_window_no_dropoff">Not accepting returns right now</string>
+    <!-- %1$d is a whole-number percentage, e.g. 62 -->
+    <string name="rental_window_battery">%1$d%% battery</string>
+    <!-- Marker accessibility text: %1$s is what the vehicle is, %2$s is everything else about it -->
+    <string name="rental_marker_description">%1$s. %2$s</string>
 
     <!-- Note: %1$s is replaced with app_name for white-label support -->
 

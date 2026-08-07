@@ -30,7 +30,7 @@ import org.onebusaway.android.util.requireDrawable
 
 /**
  * Shared low-level map-marker drawing, used by the flavor-neutral bitmap factories ([VehicleBitmaps],
- * [BikeBitmaps]) and the Google-flavor [StopIconFactory][org.onebusaway.android.map.googlemapsv2.StopIconFactory]
+ * [RentalBitmaps]) and the Google-flavor [StopIconFactory][org.onebusaway.android.map.googlemapsv2.StopIconFactory]
  * / renderer, so the "rasterize a drawable" and "pin_base + centered glyph" operations live in one place.
  */
 object MarkerRendering {

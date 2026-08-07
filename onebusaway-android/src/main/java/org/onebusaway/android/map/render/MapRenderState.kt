@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.onebusaway.android.map.bike.BikeStation
+import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteDirectionKey
@@ -219,16 +219,15 @@ data class VehicleMarker(
 )
 
 /**
- * One bike-rental marker. [station] is the app-owned domain type (the renderer reads its
- * name/availability for the info window and its floating-vs-station flag for the icon).
- * [bikeshareVisible] on the snapshot is the layer/directions-mode gate; the per-zoom icon band is
- * chosen live by the renderer.
+ * One rental marker — a free-floating vehicle or a dock (#2168). [place] is the app-owned domain type;
+ * the renderer reads its kind and form factor for the icon, its range for the label beneath it, and
+ * the rest for the detail window. [rentalsVisible] on the snapshot is the layer/directions-mode gate;
+ * the per-zoom icon band is chosen live by the renderer.
  */
-data class BikeMarker(
+data class RentalMarker(
     val id: String,
     val point: GeoPoint,
-    val isFloatingBike: Boolean,
-    val station: BikeStation
+    val place: RentalPlace
 )
 
 /**
@@ -427,8 +426,8 @@ data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
     val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
-    val bikeStations: List<BikeMarker> = emptyList(),
-    val bikeshareVisible: Boolean = false,
+    val rentals: List<RentalMarker> = emptyList(),
+    val rentalsVisible: Boolean = false,
     val stops: List<StopMarker> = emptyList(),
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
@@ -720,15 +719,15 @@ class MapRenderState {
 
     val selectedVehicleTripId: StateFlow<String?> = _selectedVehicleTripId.asStateFlow()
 
-    // --- Bike stations (the old BikeStationOverlay): the per-zoom icon band is chosen by the ---
-    // --- renderer; [bikeshareVisible] carries the layer/directions-mode gate. ---
+    // --- Rentals (the old BikeStationOverlay): the per-zoom icon band is chosen by the renderer; ---
+    // --- [rentalsVisible] carries the layer/directions-mode gate. ---
 
-    fun setBikeStations(stations: List<BikeMarker>, bikeshareVisible: Boolean) {
-        _snapshot.update { it.copy(bikeStations = stations, bikeshareVisible = bikeshareVisible) }
+    fun setRentals(rentals: List<RentalMarker>, rentalsVisible: Boolean) {
+        _snapshot.update { it.copy(rentals = rentals, rentalsVisible = rentalsVisible) }
     }
 
-    fun clearBikeStations() {
-        _snapshot.update { it.copy(bikeStations = emptyList()) }
+    fun clearRentals() {
+        _snapshot.update { it.copy(rentals = emptyList()) }
     }
 
     // --- Stops: the host owns accumulation/cap + focus; this just holds the current list + id. ---

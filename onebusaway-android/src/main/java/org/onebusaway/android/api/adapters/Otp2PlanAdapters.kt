@@ -236,12 +236,15 @@ private fun toTripVehicleRental(
  * to open the operator. Dropping it here instead leaves the rental's remaining links to be offered in
  * their own right, and makes [TripVehicleRental]'s three URLs absolute-or-absent for every reader.
  *
+ * `internal` because the rental *map* layer mints the same three URLs off the same OTP fields — see
+ * `RentalPlaceAdapters` — and one definition of "a link we can actually open" is the point.
+ *
  * The check is the wire format's own grammar rather than a guess at the string's shape: RFC 3986 §3.1
  * defines a scheme as an ASCII letter followed by letters, digits, `+`, `-` or `.`, then a colon —
  * which is exactly what Android dispatches an intent on. (The sibling iOS app guards the same field
  * the same way, for the same reason: there, a scheme-less `URL(string:)` is non-nil too.)
  */
-private fun String?.absoluteUriOrNull(): String? = this?.takeIf { URI_SCHEME.containsMatchIn(it) }
+internal fun String?.absoluteUriOrNull(): String? = this?.takeIf { URI_SCHEME.containsMatchIn(it) }
 
 /** RFC 3986 §3.1: `scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." ) ":"`. */
 private val URI_SCHEME = Regex("""^[a-zA-Z][a-zA-Z0-9+.\-]*:""")

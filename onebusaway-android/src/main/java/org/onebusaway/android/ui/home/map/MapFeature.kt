@@ -16,6 +16,7 @@
 package org.onebusaway.android.ui.home.map
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.widget.Toast
@@ -88,14 +89,17 @@ import org.onebusaway.android.map.MapEffect
 import org.onebusaway.android.map.MapNavigation
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.StopsBanner
-import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.compose.ObaMap
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.mapBanner
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
+import org.onebusaway.android.map.rental.RentalKind
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
 import org.onebusaway.android.ui.home.FocusedStop
@@ -108,7 +112,6 @@ import org.onebusaway.android.ui.home.focusedBikeStationId
 import org.onebusaway.android.ui.home.focusedStop
 import org.onebusaway.android.ui.tutorial.MapStopSpotlight
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.ObaRequestErrors
 import org.onebusaway.android.util.PermissionUtils
 import org.onebusaway.android.util.PreferenceUtils
@@ -211,18 +214,18 @@ fun MapFeature(
                 currentOnMapLongPress(point)
             }
 
-            override fun onBikeClick(station: BikeStation) {
-                val bikeId = homeViewModel.currentFocus.value.focusedBikeStationId
-                if (bikeId == null || !bikeId.equals(station.id, ignoreCase = true)) {
+            override fun onRentalClick(place: RentalPlace) {
+                val focusedId = homeViewModel.currentFocus.value.focusedBikeStationId
+                if (focusedId == null || !focusedId.equals(place.id, ignoreCase = true)) {
                     // Refused (directions owns the map): leave before the map tears the trip down —
                     // the same order the stop tap above uses, home focus first, map render after.
-                    if (!homeViewModel.onBikeStationFocused(station.id)) return
+                    if (!homeViewModel.onBikeStationFocused(place.id)) return
                     mapViewModel.clearAllFocus()
                 }
                 AnalyticsEntryPoint.get(context).reportUiEvent(
                     PlausibleAnalytics.REPORT_BIKE_EVENT_URL,
                     resources.getString(
-                        if (station.isFloatingBike) {
+                        if (place.kind == RentalKind.STATION) {
                             R.string.analytics_label_bike_station_marker_clicked
                         } else {
                             R.string.analytics_label_floating_bike_marker_clicked
@@ -277,8 +280,8 @@ fun MapFeature(
                 )
             }
 
-            override fun onBikeInfoWindowClick(station: BikeStation) {
-                MapNavigation.openBikeDeepLink(context, station)
+            override fun onRentalInfoWindowClick(place: RentalPlace) {
+                MapNavigation.openRentalLink(context, place)
             }
         }
     }
@@ -440,6 +443,9 @@ fun MapFeature(
     // limitExceeded), or "showing saved stops" when a load failed with cached stops on screen (offline,
     // #1754). Driven purely by map state.
     val stopsBanner by mapViewModel.stopsBanner.collectAsStateWithLifecycle()
+    // The rental layer's own refusal to draw this viewport (#2168) — shown in the same pill, behind
+    // whatever the stops loader has to say (see [mapBanner]).
+    val rentalsNeedCloserZoom by mapViewModel.rentalsNeedCloserZoom.collectAsStateWithLifecycle()
     val currentFocus by homeViewModel.currentFocus.collectAsStateWithLifecycle()
     // The map is now edge-to-edge (no solid top bar), so this notice floats as a pill at the top-center,
     // below the floating top chrome — the same shared inset (status bar + clearance) the HomeScreen
@@ -451,7 +457,7 @@ fun MapFeature(
             .mapTopChromeOverlayInset()
     ) {
         StopsInfoBanner(
-            banner = stopsBanner.forFocus(currentFocus),
+            banner = mapBanner(stopsBanner.forFocus(currentFocus), rentalsNeedCloserZoom),
             regionName = mapViewModel.currentRegionName.orEmpty(),
             onViewServiceArea = mapViewModel::zoomToRegion,
             modifier = Modifier.align(Alignment.TopCenter)
@@ -493,12 +499,15 @@ fun MapFeature(
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
     // directly. Their actions drive the map view model.
     val chrome by hiltViewModel<MapChromeViewModel>().state.collectAsStateWithLifecycle()
+    val minimumRentalRange by mapViewModel.minimumRentalRangeMeters.collectAsStateWithLifecycle()
     val mapLoading by mapViewModel.progress.collectAsStateWithLifecycle()
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
         layersVisible = chrome.layersFab,
-        bikeshareActive = chrome.bikeshareActive,
+        bikesActive = chrome.bikesActive,
+        scootersActive = chrome.scootersActive,
+        minimumRangeMeters = minimumRentalRange,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
         onMyLocation = {
@@ -517,23 +526,34 @@ fun MapFeature(
         },
         onZoomIn = { mapViewModel.zoomIn() },
         onZoomOut = { mapViewModel.zoomOut() },
-        onToggleBikeshare = {
-            val active = LayerUtils.isBikeshareLayerVisible(context)
-            // Persist the toggled state (DataStore) + drive the bike loader. MapChromeViewModel observes
-            // the visibility pref reactively, so the bikeshare-active tint updates without a host push.
-            mapViewModel.setBikeshareLayerVisible(!active, persist = true)
-            AnalyticsEntryPoint.get(context).reportUiEvent(
-                PlausibleAnalytics.REPORT_MAP_EVENT_URL,
-                resources.getString(R.string.analytics_layer_bikeshare),
-                resources.getString(
-                    if (active) {
-                        R.string.analytics_label_bikeshare_deactivated
-                    } else {
-                        R.string.analytics_label_bikeshare_activated
-                    }
-                )
-            )
-        }
+        onToggleBikes = { toggleRentalLayer(context, mapViewModel, RentalLayer.BIKES, chrome.bikesActive) },
+        onToggleScooters = {
+            toggleRentalLayer(context, mapViewModel, RentalLayer.SCOOTERS, chrome.scootersActive)
+        },
+        onMinimumRangeSelected = { mapViewModel.setMinimumRentalRangeMeters(it, persist = true) }
+    )
+}
+
+/**
+ * Flips one rental layer: persist the new value (DataStore) and drive the loader. [MapChromeViewModel]
+ * observes the visibility prefs reactively, so the row's tint updates without a host push.
+ *
+ * Both layers report to the one bikeshare analytics event, distinguished by its label — the event is
+ * "the rider changed the rental overlay", and splitting it per layer would break the existing series.
+ */
+private fun toggleRentalLayer(
+    context: Context,
+    mapViewModel: MapViewModel,
+    layer: RentalLayer,
+    active: Boolean
+) {
+    mapViewModel.setRentalLayerVisible(layer, !active, persist = true)
+    AnalyticsEntryPoint.get(context).reportUiEvent(
+        PlausibleAnalytics.REPORT_MAP_EVENT_URL,
+        context.getString(R.string.analytics_layer_bikeshare),
+        context.getString(
+            if (active) R.string.analytics_label_bikeshare_deactivated else R.string.analytics_label_bikeshare_activated
+        )
     )
 }
 
@@ -559,6 +579,7 @@ private fun StopsInfoBanner(
     val iconRes = when (lastShown) {
         StopsBanner.None,
         StopsBanner.MoreStopsAvailable -> R.drawable.ic_zoom_in
+        StopsBanner.ZoomInForRentals -> R.drawable.ic_zoom_in
         StopsBanner.ShowingSavedStops -> R.drawable.history_24
         StopsBanner.OutsideRegion -> R.drawable.ic_action_location_map
     }
@@ -614,6 +635,7 @@ private fun StopsInfoBanner(
                 Text(
                     text = when (lastShown) {
                         StopsBanner.ShowingSavedStops -> stringResource(R.string.map_showing_cached_stops)
+                        StopsBanner.ZoomInForRentals -> stringResource(R.string.map_zoom_in_for_rentals)
                         else -> stringResource(R.string.map_zoom_in_for_more_stops)
                     },
                     style = MaterialTheme.typography.bodyMedium,

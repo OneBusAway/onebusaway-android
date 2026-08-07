@@ -145,14 +145,37 @@ internal fun TripLeg.rentalPickup(): RentalPickup? = if (streetMode() == StreetM
  * the plain bike row the leg already had. OTP2 always states the network (`VehicleRentalNetwork
  * .networkId` is non-null in the pinned schema), so this drops nothing that path can produce.
  */
-internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? {
-    val networkId = rental?.networkId?.ifBlank { null } ?: return null
-    val links = rental.links(networkId)
+internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? = rentalPickup(
+    networkId = rental?.networkId,
+    androidUri = rental?.androidUri,
+    webUri = rental?.webUri,
+    networkUrl = rental?.networkUrl,
+    vehicle = rentalVehicleKind(rental?.formFactor, rental?.propulsion),
+    stationName = rental?.stationName,
+    rangeMeters = rental?.rangeMeters
+)
+
+/**
+ * The field-by-field form, shared with the rental **map** layer (#2168), whose `RentalPlace` states
+ * the same operator facts about a marker that a `TripVehicleRental` states about a leg endpoint.
+ * Written once so the two surfaces can't drift on which link a rider is offered first.
+ */
+internal fun rentalPickup(
+    networkId: String?,
+    androidUri: String?,
+    webUri: String?,
+    networkUrl: String?,
+    vehicle: RentalVehicleKind?,
+    stationName: String?,
+    rangeMeters: Int?
+): RentalPickup? {
+    val network = networkId?.ifBlank { null } ?: return null
+    val links = rentalLinks(network, androidUri, webUri, networkUrl)
     return RentalPickup(
-        operator = RentalOperators.of(networkId),
-        vehicle = rental.vehicleKind(),
-        stationName = rental.stationName,
-        rangeMeters = rental.rangeMeters,
+        operator = RentalOperators.of(network),
+        vehicle = vehicle,
+        stationName = stationName,
+        rangeMeters = rangeMeters,
         link = links.firstOrNull(),
         // The first one that can't fail for want of an app to answer a custom scheme, and never the
         // primary itself — so a row whose only link is one of those has no fallback rather than a
@@ -173,7 +196,12 @@ internal fun rentalPickup(rental: TripVehicleRental?): RentalPickup? {
  * Empty when nothing at all is known — an unknown network with no URIs, which is every network the app
  * has no catalog entry for until its feed starts publishing rental URIs.
  */
-private fun TripVehicleRental.links(networkId: String): List<RentalLink> {
+internal fun rentalLinks(
+    networkId: String,
+    androidUri: String?,
+    webUri: String?,
+    networkUrl: String?
+): List<RentalLink> {
     val known = RentalOperators.known(networkId)
     return listOfNotNull(
         androidUri?.let { RentalLink.Deep(it, mayNeedTheirApp = true) },
@@ -185,7 +213,10 @@ private fun TripVehicleRental.links(networkId: String): List<RentalLink> {
 }
 
 /** The vehicle's kind, or null when the feed named no form factor (or named [RentalFormFactor.OTHER]). */
-private fun TripVehicleRental.vehicleKind(): RentalVehicleKind? {
+internal fun rentalVehicleKind(
+    formFactor: RentalFormFactor?,
+    propulsion: RentalPropulsion?
+): RentalVehicleKind? {
     val electric = propulsion == RentalPropulsion.ELECTRIC || propulsion == RentalPropulsion.ELECTRIC_ASSIST
     return when (formFactor) {
         RentalFormFactor.BICYCLE -> if (electric) RentalVehicleKind.EBIKE else RentalVehicleKind.BIKE

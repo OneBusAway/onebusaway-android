@@ -38,12 +38,11 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
+import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.map.compose.formatDataAge
+import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
-import org.onebusaway.android.map.render.BikeBand
-import org.onebusaway.android.map.render.BikeBitmaps
-import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.MapPing
@@ -51,6 +50,9 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.RentalBand
+import org.onebusaway.android.map.render.RentalBitmaps
+import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
@@ -59,12 +61,16 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
-import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.showsRentalRangeLabel
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.rentalLayersOf
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -117,7 +123,7 @@ class MapLibreRenderer(
         context.resources.displayMetrics.density,
         caseColorOf = caseColorOf
     )
-    private val bikeByMarker = HashMap<Marker, BikeMarker>()
+    private val rentalByMarker = HashMap<Marker, RentalMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -237,7 +243,7 @@ class MapLibreRenderer(
         }
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
         // the bike / route-badge tap maps are cleared here.
-        bikeByMarker.clear()
+        rentalByMarker.clear()
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
@@ -248,26 +254,31 @@ class MapLibreRenderer(
             snapshot.stopFocusRecedesAdjacent
         )
 
-        if (snapshot.bikeshareVisible) {
-            val band = bikeZoomBand(map.cameraPosition.zoom.toFloat())
-            if (band != BikeBand.HIDDEN) {
-                for (bike in snapshot.bikeStations) {
-                    val bitmap = when {
-                        band == BikeBand.BIG && bike.isFloatingBike -> BikeBitmaps.bigFloating(context)
-                        band == BikeBand.BIG -> BikeBitmaps.bigStation(context)
-                        else -> BikeBitmaps.small(context)
+        if (snapshot.rentalsVisible) {
+            val zoom = map.cameraPosition.zoom.toFloat()
+            val band = rentalZoomBand(zoom)
+            if (band != RentalBand.HIDDEN) {
+                val labelled = showsRentalRangeLabel(zoom)
+                val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
+                for (rental in snapshot.rentals) {
+                    val bitmap = if (band == RentalBand.BIG) {
+                        rentalBitmap(rental, labelled, metric)
+                    } else {
+                        RentalBitmaps.small(context)
                     }
-                    val station = bike.station
-                    // Title is kept only so a marker tap opens the info window; the InfoWindowAdapter
-                    // renders the shared BikeInfoWindow composable instead of the title/snippet.
+                    // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
+                    // renders the shared RentalInfoWindow composable instead of the title/snippet); the
+                    // snippet is the marker's content description, so a rider using TalkBack hears the
+                    // occupancy and charge the painted label shows (#2168).
                     val marker = map.addMarker(
                         MarkerOptions()
-                            .position(bike.point.toLatLng())
+                            .position(rental.point.toLatLng())
                             .icon(iconFactory.fromBitmap(bitmap))
-                            .title(station.name)
+                            .title(rental.place.name)
+                            .snippet(rentalContentDescription(context, rental.place))
                     )
                     staticAnnotations.add(marker)
-                    bikeByMarker[marker] = bike
+                    rentalByMarker[marker] = rental
                 }
             }
         }
@@ -385,7 +396,7 @@ class MapLibreRenderer(
         tripMarkersByRole.clear()
         bandPolylines.clear()
         vehicleByMarker.clear()
-        bikeByMarker.clear()
+        rentalByMarker.clear()
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         vehicleIconDirection.clear()
@@ -679,7 +690,28 @@ class MapLibreRenderer(
 
     fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
 
-    fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
+    /**
+     * The big pin for [rental] — the layer's colour and glyph, with its range label beneath it once
+     * the camera is close enough and the feed stated a range.
+     *
+     * maplibre centres every marker icon on its point, so the labelled bitmap's symmetric padding
+     * (see [RentalBitmaps.RentalIcon]) keeps a labelled pin sitting exactly where an unlabelled one
+     * does; there is no per-marker anchor to set here, unlike the Google flavor.
+     */
+    private fun rentalBitmap(rental: RentalMarker, labelled: Boolean, metric: Boolean): Bitmap {
+        val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
+        val base = RentalBitmaps.big(context, layer, rental.place.kind)
+        val range = rental.place.rangeMeters?.takeIf { labelled } ?: return base
+        val label = ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
+        return RentalBitmaps.labelled(
+            context,
+            base,
+            label,
+            cacheKey = "$layer/${rental.place.kind}/$label"
+        ).bitmap
+    }
+
+    fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

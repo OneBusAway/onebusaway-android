@@ -63,6 +63,25 @@ sealed interface StopsBanner {
 
     /** The viewport is outside the current region; offer to frame its service area. */
     data object OutsideRegion : StopsBanner
+
+    /**
+     * The rental layer is on but the viewport is too wide (or too full) to draw it — see
+     * `RentalGuardrails`. Lives on this type rather than in its own strip because there is one
+     * informational pill at the top of the map and it can only say one thing at a time; [mapBanner]
+     * is where that precedence is decided.
+     */
+    data object ZoomInForRentals : StopsBanner
+}
+
+/**
+ * What the map's one informational pill shows. The stops banner wins whenever it has something to
+ * say: it reports on the data the map is fundamentally *for*, while the rental notice reports on an
+ * optional overlay the rider switched on.
+ */
+fun mapBanner(stops: StopsBanner, rentalsNeedCloserZoom: Boolean): StopsBanner = when {
+    stops != StopsBanner.None -> stops
+    rentalsNeedCloserZoom -> StopsBanner.ZoomInForRentals
+    else -> StopsBanner.None
 }
 
 /**
@@ -184,6 +203,21 @@ class MapHost(
     /** Set by the stop loader per load; cleared ([StopsBanner.None]) on view changes. */
     fun setStopsBanner(banner: StopsBanner) {
         _stopsBanner.value = banner
+    }
+
+    private val _rentalsNeedCloserZoom = MutableStateFlow(false)
+
+    /**
+     * Whether the rental layer refused to draw for this viewport — the zoom gate or the density budget
+     * (see `RentalGuardrails`). Its own flow rather than a [StopsBanner] value because the two loaders
+     * write independently and would otherwise clobber each other's notice; [mapBanner] resolves which
+     * one the pill actually shows.
+     */
+    val rentalsNeedCloserZoom: StateFlow<Boolean> = _rentalsNeedCloserZoom.asStateFlow()
+
+    /** Set by the rental loader per load. */
+    fun setRentalsNeedCloserZoom(needsCloserZoom: Boolean) {
+        _rentalsNeedCloserZoom.value = needsCloserZoom
     }
 
     private val _effects = MutableSharedFlow<MapEffect>(extraBufferCapacity = 8)

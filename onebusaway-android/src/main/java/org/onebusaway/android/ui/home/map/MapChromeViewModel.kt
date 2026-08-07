@@ -35,12 +35,13 @@ data class MapChromeState(
     val zoomControls: Boolean = false,
     val leftHand: Boolean = false,
     val layersFab: Boolean = false,
-    val bikeshareActive: Boolean = false
+    val bikesActive: Boolean = false,
+    val scootersActive: Boolean = false
 )
 
 /**
  * The map-chrome gates as a self-contained feature module (mirrors [org.onebusaway.android.ui.home.weather.WeatherViewModel]):
- * the show-zoom-controls / left-hand-mode / bikeshare-layer prefs + the region-derived bikeshare-enabled
+ * the show-zoom-controls / left-hand-mode / rental-layer prefs + the region-derived rental-enabled
  * predicate, pulled out of HomeViewModel/HomeUiState (the former `HomeEnvironment` collector + chrome
  * gates). [MapFeature] obtains this via `hiltViewModel()` scoped to the HOME nav entry — a
  * deliberate lighter alternative to the activity-scoped+passed-down weather/donation/survey wiring, since
@@ -59,23 +60,32 @@ class MapChromeViewModel @Inject constructor(
         // Self-collect the chrome-gate inputs from their reactive sources. All writers go through the
         // DataStore-backed PreferencesRepository, so a pref change re-derives the gates with no host push.
         viewModelScope.launch {
+            // The two rental layer toggles are combined first so the outer combine stays inside the
+            // typed five-flow overload — six inputs would fall back to the untyped vararg form.
+            val rentalLayers = combine(
+                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
+                // Scooters default off: they are the bulk of a dockless fleet, and defaulting them on
+                // buries the transit map (see [org.onebusaway.android.util.LayerUtils]).
+                prefsRepo.observeBoolean(R.string.preference_key_layer_scooters_visible, false)
+            ) { bikes, scooters -> bikes to scooters }
             combine(
                 prefsRepo.observeBoolean(R.string.preference_key_show_zoom_controls, false),
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),
-                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
+                rentalLayers,
                 regionRepo.region,
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
-            ) { zoomControls, leftHand, bikeVisible, region, otpUrl ->
-                // Reactive re-derivation of bikeshare availability for this consumer, tracking region +
+            ) { zoomControls, leftHand, (bikesVisible, scootersVisible), region, otpUrl ->
+                // Reactive re-derivation of rental availability for this consumer, tracking region +
                 // the OTP-URL pref, so this stays a live flow while the trip-planning call sites
-                // resolve theirs per-call from a Context. This chrome drives the bike-*station* layer
-                // (FAB + toggle), hence the station-layer question rather than the trip-planning one.
-                val bikeshareEnabled = BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
+                // resolve theirs per-call from a Context. This chrome drives the rental *map layer*
+                // (FAB + toggles), hence the station-layer question rather than the trip-planning one.
+                val rentalsEnabled = BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
                 MapChromeState(
                     zoomControls = zoomControls,
                     leftHand = leftHand,
-                    layersFab = bikeshareEnabled,
-                    bikeshareActive = bikeshareEnabled && bikeVisible
+                    layersFab = rentalsEnabled,
+                    bikesActive = rentalsEnabled && bikesVisible,
+                    scootersActive = rentalsEnabled && scootersVisible
                 )
             }.distinctUntilChanged().collect { _state.value = it }
         }

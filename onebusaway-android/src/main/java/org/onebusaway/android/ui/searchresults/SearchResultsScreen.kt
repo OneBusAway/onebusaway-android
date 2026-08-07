@@ -55,7 +55,8 @@ fun SearchResultsRoute(
     viewModel: SearchResultsViewModel,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit
+    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onVehicleShowOnMap: (SearchResultItem.Vehicle) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SearchResultsScreen(
@@ -64,7 +65,8 @@ fun SearchResultsRoute(
         onRetry = viewModel::retry,
         onBack = onBack,
         onRouteShowOnMap = onRouteShowOnMap,
-        onStopShowOnMap = onStopShowOnMap
+        onStopShowOnMap = onStopShowOnMap,
+        onVehicleShowOnMap = onVehicleShowOnMap
     )
 }
 
@@ -76,18 +78,20 @@ fun SearchResultsScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit
+    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onVehicleShowOnMap: (SearchResultItem.Vehicle) -> Unit
 ) {
     ListScreenScaffold(
         title = title,
         onBack = onBack,
         state = state,
         onRetry = onRetry,
-        // Route and stop ids share no namespace, so prefix to keep keys unique
+        // Route, stop and vehicle ids share no namespace, so prefix to keep keys unique
         itemKey = { item ->
             when (item) {
                 is SearchResultItem.Route -> "r:${item.id}"
                 is SearchResultItem.Stop -> "s:${item.id}"
+                is SearchResultItem.Vehicle -> "v:${item.id}"
             }
         },
         emptyContent = {
@@ -104,6 +108,7 @@ fun SearchResultsScreen(
         when (item) {
             is SearchResultItem.Route -> RouteResultRow(item, onRouteShowOnMap)
             is SearchResultItem.Stop -> StopResultRow(item, onStopShowOnMap)
+            is SearchResultItem.Vehicle -> VehicleResultRow(item, onVehicleShowOnMap)
         }
     }
 }
@@ -148,22 +153,69 @@ private fun StopResultRow(
 }
 
 /**
- * A combined-search list row: a leading result-type glyph (a route or stop marker in a consistent
- * tinted column, so the two are distinguishable at a glance), the type-specific [content], and a
- * trailing divider. The whole row is clickable via [onClick].
+ * A matched vehicle: its coach number as the title, with the ride it is running (route badge +
+ * headsign) beneath, or the operating agency when it isn't running one. A vehicle between
+ * assignments has no ride to open, so the row reports the match but isn't clickable.
+ */
+@Composable
+private fun VehicleResultRow(
+    vehicle: SearchResultItem.Vehicle,
+    onShowOnMap: (SearchResultItem.Vehicle) -> Unit
+) {
+    val ride = vehicle.ride
+    ResultRow(
+        painter = painterResource(R.drawable.ic_bus),
+        contentDescription = stringResource(R.string.search_result_coach_icon),
+        onClick = if (ride != null) ({ onShowOnMap(vehicle) }) else null
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.search_result_coach, vehicle.coachNumber),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            if (ride != null) {
+                // The route badge reads the same here as on an arrivals row, so a rider recognizes the
+                // ride before tapping into it; the headsign line is dropped when the feed omits it.
+                RouteRowContent(
+                    shortName = ride.routeShortName.orEmpty(),
+                    longName = ride.headsign,
+                    routeColor = ride.routeColor,
+                    agency = vehicle.agency
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.search_result_coach_not_in_service),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = vehicle.agency,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A combined-search list row: a leading result-type glyph (a route, stop or vehicle marker in a
+ * consistent tinted column, so they're distinguishable at a glance), the type-specific [content], and
+ * a trailing divider. The whole row is clickable via [onClick]; a null [onClick] is a row with
+ * nothing to open (a matched vehicle that isn't running a trip).
  */
 @Composable
 private fun ResultRow(
     painter: Painter,
     contentDescription: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     content: @Composable RowScope.() -> Unit
 ) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -198,13 +250,32 @@ private fun SearchResultsScreenSuccessPreview() {
                     ),
                     SearchResultItem.Route("1_40", "40", "Downtown - Northgate", null),
                     SearchResultItem.Stop("1_100", "Broadway & E Denny Way", "S", true, 47.6, -122.3),
-                    SearchResultItem.Stop("1_101", "Stop with no direction", "", false, 47.6, -122.3)
+                    SearchResultItem.Stop("1_101", "Stop with no direction", "", false, 47.6, -122.3),
+                    SearchResultItem.Vehicle(
+                        id = "1_4531",
+                        coachNumber = "4531",
+                        agency = "King County Metro",
+                        ride = SearchResultItem.Vehicle.Ride(
+                            routeId = "1_100263",
+                            tripId = "1_800587510",
+                            routeShortName = "7",
+                            routeColor = 0xFDB71A.toInt(),
+                            headsign = "Prentice St Via Rainier Ave S"
+                        )
+                    ),
+                    SearchResultItem.Vehicle(
+                        id = "1_4532",
+                        coachNumber = "4532",
+                        agency = "King County Metro",
+                        ride = null
+                    )
                 )
             ),
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }
@@ -219,7 +290,8 @@ private fun SearchResultsScreenEmptyPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }
@@ -234,7 +306,8 @@ private fun SearchResultsScreenLoadingPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }

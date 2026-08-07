@@ -76,6 +76,9 @@
     <!-- Weather API URL -->
     <string name="weather_api_endpoint">/api/v1/regions/regionID/weather.json</string>
 
+    <!-- Vehicle (coach number) search API URL -->
+    <string name="vehicles_api_endpoint">/api/v1/regions/regionID/vehicles</string>
+
     <!-- GET Survey API URL -->
     <string name="studies_api_endpoint">/api/v1/regions/regionID/surveys.json</string>
 

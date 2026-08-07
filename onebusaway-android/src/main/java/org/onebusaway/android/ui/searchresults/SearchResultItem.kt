@@ -16,8 +16,10 @@
 package org.onebusaway.android.ui.searchresults
 
 /**
- * One row of the combined search results list — a matching route or stop. The screen renders
- * these into a single heterogeneous list (routes first, then stops), matching the legacy screen.
+ * One row of the combined search results list — a matching route, stop, or vehicle. The screen
+ * renders these into a single heterogeneous list (routes first, then stops, then vehicles; the first
+ * two orderings match the legacy screen, and coach-number hits come last so a numeric query still
+ * leads with the route/stop it names).
  */
 sealed interface SearchResultItem {
 
@@ -46,4 +48,38 @@ sealed interface SearchResultItem {
         val latitude: Double,
         val longitude: Double
     ) : SearchResultItem
+
+    /**
+     * A vehicle matched by its coach number — the number painted on the bus, which riders use to
+     * find a specific vehicle (e.g. to meet someone riding it).
+     *
+     * @param id the agency-prefixed OBA vehicle id (`1_4531`), used only as the row key
+     * @param coachNumber the number as a rider reads it off the vehicle, shown as the row's title
+     * @param agency the operating agency's display name
+     * @param ride what the vehicle is running, or null when it isn't running anything right now —
+     *   which makes the row unselectable rather than hiding the match
+     */
+    data class Vehicle(
+        val id: String,
+        val coachNumber: String,
+        val agency: String,
+        val ride: Ride?
+    ) : SearchResultItem {
+
+        /**
+         * The ride a matched vehicle is on: the ids the map needs to drill into it, plus the labels
+         * that let a rider recognize it in the list before tapping.
+         *
+         * @param routeShortName the route's badge text, or null when unknown
+         * @param routeColor the route's GTFS color as an Android ARGB int, or null when unset
+         * @param headsign where the vehicle is headed, or null when unknown
+         */
+        data class Ride(
+            val routeId: String,
+            val tripId: String,
+            val routeShortName: String?,
+            val routeColor: Int?,
+            val headsign: String?
+        )
+    }
 }

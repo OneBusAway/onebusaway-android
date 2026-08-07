@@ -29,6 +29,7 @@ import androidx.navigation.navArgument
 import org.onebusaway.android.app.di.AnalyticsEntryPoint
 import org.onebusaway.android.app.di.DatabaseEntryPoint
 import org.onebusaway.android.app.di.DonationsEntryPoint
+import org.onebusaway.android.map.ShowRouteRequest
 import org.onebusaway.android.ui.compose.findActivity
 import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.donation.DonationLearnMoreScreen
@@ -123,6 +124,16 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                 },
                 onStopShowOnMap = { stop ->
                     navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
+                },
+                // A coach-number hit drills into the ride that vehicle is running — the same
+                // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens. Only a
+                // vehicle with a resolved ride is clickable, so the null branch never fires.
+                onVehicleShowOnMap = { vehicle ->
+                    vehicle.ride?.let { ride ->
+                        navController.revealRouteOnMap(
+                            ShowRouteRequest(routeId = ride.routeId, focusTripId = ride.tripId)
+                        )
+                    }
                 }
             )
         }

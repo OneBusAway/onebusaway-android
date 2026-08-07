@@ -144,12 +144,12 @@
     <!-- The scooters layer (#2168), read far enough from the bikes blue above to tell two markers
          apart at a glance without either reading as a warning colour.
 
-         ⚠ At 2.2:1 its white glyph is UNDER the 3:1 WCAG non-text-contrast floor, and it is the same
-         relative luminance as the green charge ring (1.0:1), which sits flush against it — so on a
-         well-charged scooter the ring/badge boundary is carried by hue alone and disappears for a
-         red-green colour-blind rider. Chosen deliberately for its lightness; see the marker preview
-         in #2168. #3f9dbf is the nearest hue that clears the glyph floor if this proves unreadable. -->
-    <color name="layer_scooters_color">#60b9d6</color>
+         Lightened from the original #0f766e teal, then pulled back from a first pass at #60b9d6:
+         that carried the badge's white glyph at only 2.2:1, under the 3:1 WCAG asks of a non-text
+         graphic, and shared the green charge ring's exact relative luminance (1.0:1) — which, with
+         the ring seated flush against the badge, left that boundary carried by hue alone and gone
+         for a red-green colour-blind rider. This clears the glyph floor at 3.1:1. -->
+    <color name="layer_scooters_color">#3f9dbf</color>
 
     <!-- Rental charge-ring bands (#2168). Brighter than the layer colours on purpose: the ring is a
          gauge read at a glance over a busy basemap, so it trades the layer's muted identity for

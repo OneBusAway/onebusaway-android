@@ -872,11 +872,12 @@ class GoogleMapRenderer(
     }
 
     /**
-     * Chooses the big pin for [rental]: the layer's colour and glyph, with the range label beneath it
-     * once the camera is close enough ([showsRentalRangeLabel]) and the feed actually stated a range.
+     * Chooses the big disc for [rental]: the layer's colour and glyph, its charge ring, and the range
+     * label beneath it once the camera is close enough ([showsRentalRangeLabel]) and the feed stated a
+     * range.
      *
-     * A labelled pin's bitmap extends below its tip, so its anchor moves with it — the plain pin keeps
-     * the platform default (bottom-centre), which is what the unlabelled path relies on.
+     * Every rental marker sets an explicit anchor, because the disc is centred on the point rather than
+     * pointing down at it — a labelled one then moves the anchor up, since the label hangs below.
      */
     private fun applyRentalIcon(
         options: MarkerOptions,
@@ -885,16 +886,18 @@ class GoogleMapRenderer(
         metric: Boolean
     ) {
         val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
+        val charge = rental.place.fuelPercent?.toFloat()
         val range = rental.place.rangeMeters?.takeIf { labelled }
-        if (range == null) {
-            options.icon(rentalIcons.big(layer, rental.place.kind))
-            return
+        val icon = if (range == null) {
+            rentalIcons.big(layer, rental.place.kind, charge)
+        } else {
+            rentalIcons.labelled(
+                layer,
+                rental.place.kind,
+                charge,
+                ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
+            )
         }
-        val icon = rentalIcons.labelled(
-            layer,
-            rental.place.kind,
-            ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
-        )
         options.icon(icon.descriptor).anchor(0.5f, icon.anchorV)
     }
 

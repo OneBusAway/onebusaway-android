@@ -691,23 +691,24 @@ class MapLibreRenderer(
     fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
 
     /**
-     * The big pin for [rental] — the layer's colour and glyph, with its range label beneath it once
-     * the camera is close enough and the feed stated a range.
+     * The big disc for [rental] — the layer's colour and glyph, its charge ring, and the range label
+     * beneath it once the camera is close enough and the feed stated a range.
      *
-     * maplibre centres every marker icon on its point, so the labelled bitmap's symmetric padding
-     * (see [RentalBitmaps.RentalIcon]) keeps a labelled pin sitting exactly where an unlabelled one
-     * does; there is no per-marker anchor to set here, unlike the Google flavor.
+     * maplibre centres every marker icon on its point, which is exactly where a disc belongs, and the
+     * labelled bitmap's symmetric padding (see [RentalBitmaps.RentalIcon]) keeps the disc centred in
+     * the taller bitmap — so there is no per-marker anchor to set here, unlike the Google flavor.
      */
     private fun rentalBitmap(rental: RentalMarker, labelled: Boolean, metric: Boolean): Bitmap {
         val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
-        val base = RentalBitmaps.big(context, layer, rental.place.kind)
+        val charge = rental.place.fuelPercent?.toFloat()
+        val base = RentalBitmaps.big(context, layer, rental.place.kind, charge)
         val range = rental.place.rangeMeters?.takeIf { labelled } ?: return base
         val label = ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
         return RentalBitmaps.labelled(
             context,
             base,
             label,
-            cacheKey = "$layer/${rental.place.kind}/$label"
+            cacheKey = "$layer/${rental.place.kind}/$charge/$label"
         ).bitmap
     }
 

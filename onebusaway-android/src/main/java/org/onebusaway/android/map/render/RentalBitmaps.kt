@@ -25,40 +25,69 @@ import android.util.LruCache
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import androidx.core.graphics.withTranslation
 import org.onebusaway.android.R
 import org.onebusaway.android.map.rental.RentalKind
 import org.onebusaway.android.map.rental.RentalLayer
 
 /**
- * Flavor-neutral generation of the rental marker bitmaps (#2168) — the small dot, the big pins, and
- * the range label beneath one — so the Google flavor wraps them as `BitmapDescriptor`s and maplibre
- * as `Icon`s. Descended from `BikeBitmaps`, which drew exactly two big pins (a dock and a
- * "floating bike") in one navy.
+ * Flavor-neutral generation of the rental marker bitmaps (#2168) — the small dot, the big circular
+ * pucks, and the range label beneath one — so the Google flavor wraps them as `BitmapDescriptor`s and
+ * maplibre as `Icon`s. Descended from `BikeBitmaps`, which drew exactly two teardrop pins (a dock and
+ * a "floating bike") in one navy.
  *
- * Big markers are composited from [pin_base][R.drawable.pin_base] tinted the layer's colour plus a
- * white glyph, rather than decoding a pre-rendered raster. The teardrop fills the bitmap edge-to-edge
- * with the tip at the bottom, matching the former rasters so the renderers' marker anchors are
- * unchanged — see [RentalIcon.anchorV] for the one case that moves them.
+ * **A rental draws as a disc centred on its point, not a teardrop above it.** A parked vehicle *is* at
+ * that coordinate to within a metre or two, so a pin whose tip merely points at the spot puts the
+ * artwork somewhere the vehicle isn't; the circular form is the same call the trip map already made
+ * for its vehicle badges (#1752, [MarkerRendering.drawCircleAndGlyph]), and it leaves a ring of
+ * marker edge free to carry state. Taking the cue from the Lime app, that ring is the vehicle's
+ * charge.
+ *
+ * **The ring is battery, not range** — see [big]. Its arc needs a fraction, and only `fuel.percent`
+ * is one.
  */
 object RentalBitmaps {
 
     /** Big markers fill a square this many dp on a side (the former raster's size). */
     private const val BIG_SIZE_DP = 32f
 
-    /** The glyph's 24-grid box (its artwork fills ~70% of this). */
-    private const val GLYPH_SIZE = 11f
+    /**
+     * The glyph's 24-grid box. Larger than the teardrop's 11 because a disc has no tail to leave room
+     * for — the glyph gets the whole face.
+     */
+    private const val GLYPH_SIZE = 13f
+
+    /** The charge ring's stroke, and its clearance from the disc, in dp. */
+    private const val RING_WIDTH_DP = 3f
+    private const val RING_GAP_DP = 1f
 
     /** The range label's type size and its padding, in dp. */
     private const val LABEL_TEXT_DP = 10f
     private const val LABEL_PADDING_DP = 3f
 
-    /** Gap between the pin's tip and the label chip, in dp. */
+    /** Gap between the marker and the label chip, in dp. */
     private const val LABEL_GAP_DP = 1f
 
-    // The unlabelled icons never vary, so cache them once — the maplibre renderer clears + redraws
-    // every marker on each snapshot, so without this it would re-render these per marker per render.
+    /** The unfilled part of the charge ring — a neutral track the arc reads against. */
+    private const val RING_TRACK = 0x33000000
+
+    /** A hairline round the white disc, so it holds its edge over a pale basemap. */
+    private const val DISC_OUTLINE = 0x22000000
+
+    /**
+     * The charge arc is quantized to this many steps for caching. A 32dp ring cannot show finer than
+     * this anyway (one step is under 2° of sweep), and it bounds the distinct bitmaps at
+     * `steps × layers × kinds` instead of one per battery reading in the viewport. This is a *drawing*
+     * resolution, not a reading of the data — [org.onebusaway.android.map.rental.RentalDetail] still
+     * reports the exact percentage, and the filter still reads the exact range.
+     */
+    private const val CHARGE_STEPS = 20
+
+    // The unlabelled icons never vary per vehicle unless they carry a charge ring, so cache them by
+    // everything that can change them — the maplibre renderer clears + redraws every marker on each
+    // snapshot, so without this it would re-render these per marker per render.
     private var sSmall: Bitmap? = null
-    private val bigCache = HashMap<Pair<RentalLayer, RentalKind>, Bitmap>()
+    private val bigCache = HashMap<String, Bitmap>()
 
     /**
      * Labelled markers vary per vehicle, so they get a bounded cache instead: a viewport holds at most
@@ -68,13 +97,14 @@ object RentalBitmaps {
     private val labelledCache = LruCache<String, Bitmap>(128)
 
     /**
-     * A marker bitmap and where on it the point actually is.
+     * A marker bitmap and where on it the marker's point actually is.
      *
-     * [anchorV] is the vertical fraction at which the pin's **tip** sits — 1f for a plain pin (tip at
-     * the bottom edge, the platform default) and less than that when a label hangs below it. The
-     * Google flavor passes it to `MarkerOptions.anchor`; the maplibre flavor centers every icon on its
-     * point and so ignores it, which is why [labelled] pads the bitmap symmetrically: the pin's centre
-     * stays the bitmap's centre, so a labelled marker sits exactly where an unlabelled one would there.
+     * [anchorV] is the vertical fraction the point sits at — 0.5 for a bare disc (centred, which is
+     * the whole reason for the circular form) and above that when a label hangs below it, since the
+     * disc then sits in the upper part of a taller bitmap. The Google flavor passes it to
+     * `MarkerOptions.anchor`; the maplibre flavor centres every icon on its point and so ignores it,
+     * which is why [labelled] pads the bitmap symmetrically — the disc's centre stays the bitmap's
+     * centre, so a labelled marker sits exactly where an unlabelled one would there.
      */
     data class RentalIcon(val bitmap: Bitmap, val anchorV: Float)
 
@@ -85,18 +115,34 @@ object RentalBitmaps {
     }
 
     /**
-     * The big pin for a place on [layer] of [kind]: the layer's colour, with a dock glyph for a
-     * station and the layer's own vehicle glyph for a free-floating one. That pairing is the fix for
-     * the defect this issue names — before it, a parked scooter drew the same dock pin a docking
-     * station did.
+     * The big disc for a place on [layer] of [kind]: a white puck bearing the layer's colour as its
+     * glyph — a dock glyph for a station, the layer's own vehicle glyph for a free-floating one — ringed
+     * in that same colour. That glyph pairing is the fix for the defect #2168 names: before it, a parked
+     * scooter drew the same dock marker a docking station did.
+     *
+     * [chargeFraction] (0..1) fills the ring clockwise from twelve o'clock; null draws the ring whole.
+     *
+     * **It is battery, and only ever battery.** OTP publishes two fuel facts — `fuel.percent`, "expressed
+     * from 0 to 1", and `fuel.range`, unbounded metres — and an arc can only render the first, because
+     * the second has no published maximum to be a fraction *of*. Deriving one (a "typical full charge",
+     * the largest range on screen, a per-form-factor constant) would be exactly the invented magic
+     * threshold CLAUDE.md forbids, and it would rot the moment an operator's fleet changed. So a feed
+     * that omits `percent` gets an unfilled ring rather than a guessed one, and the range it *did*
+     * publish is stated as text by [labelled]. The Lime app this takes its cue from draws the same
+     * split: the ring is charge, the number beside it is range.
      */
-    fun big(context: Context, layer: RentalLayer, kind: RentalKind): Bitmap = bigCache.getOrPut(layer to kind) { bigMarker(context, layer.pinColor(context), glyphFor(layer, kind)) }
+    fun big(context: Context, layer: RentalLayer, kind: RentalKind, chargeFraction: Float? = null): Bitmap {
+        val step = chargeFraction?.let { (it.coerceIn(0f, 1f) * CHARGE_STEPS).toInt() }
+        return bigCache.getOrPut("$layer/$kind/$step") {
+            discMarker(context, layer, kind, step?.let { it.toFloat() / CHARGE_STEPS })
+        }
+    }
 
     /**
-     * [base] with [label] on a chip beneath it — the fuel/range readout the rental layer shows above
-     * its label zoom threshold.
+     * [base] with [label] on a chip beneath it — the range readout the rental layer shows above its
+     * label zoom threshold.
      *
-     * The bitmap is padded above the pin by exactly the label block's height so the pin stays
+     * The bitmap is padded above the disc by exactly the label block's height so the disc stays
      * vertically centred (see [RentalIcon.anchorV]).
      */
     fun labelled(context: Context, base: Bitmap, label: String, cacheKey: String): RentalIcon {
@@ -109,10 +155,11 @@ object RentalBitmaps {
         val blockPx = (LABEL_GAP_DP + LABEL_TEXT_DP + LABEL_PADDING_DP * 2f) * density
         val bitmap = labelledCache.get(cacheKey)
             ?: drawLabelled(density, base, label, blockPx).also { labelledCache.put(cacheKey, it) }
-        return RentalIcon(bitmap, anchorV = (blockPx + base.height) / bitmap.height)
+        // The disc's centre, not the bitmap's bottom: the point is under the middle of the marker.
+        return RentalIcon(bitmap, anchorV = (blockPx + base.height / 2f) / bitmap.height)
     }
 
-    /** Renders one labelled pin — the cache-miss half of [labelled], and the only text work. */
+    /** Renders one labelled marker — the cache-miss half of [labelled], and the only text work. */
     private fun drawLabelled(density: Float, base: Bitmap, label: String, blockPx: Float): Bitmap {
         val paint = labelPaint(density)
         val padPx = LABEL_PADDING_DP * density
@@ -133,6 +180,76 @@ object RentalBitmaps {
         return out
     }
 
+    /** The white puck, its coloured glyph, and the charge ring around it. */
+    private fun discMarker(
+        context: Context,
+        layer: RentalLayer,
+        kind: RentalKind,
+        chargeFraction: Float?
+    ): Bitmap {
+        val density = context.resources.displayMetrics.density
+        val sizePx = (BIG_SIZE_DP * density).toInt()
+        val bitmap = createBitmap(sizePx, sizePx)
+        val canvas = Canvas(bitmap)
+        val tint = layer.markerColor(context)
+        val center = sizePx / 2f
+        val ringStroke = RING_WIDTH_DP * density
+        val ringRadius = center - ringStroke / 2f
+
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = ringStroke
+            strokeCap = Paint.Cap.ROUND
+        }
+        if (chargeFraction == null) {
+            // Nothing published to fill it with, so the ring is simply the marker's edge.
+            ring.color = tint
+            canvas.drawCircle(center, center, ringRadius, ring)
+        } else {
+            ring.color = RING_TRACK
+            canvas.drawCircle(center, center, ringRadius, ring)
+            ring.color = tint
+            // Clockwise from twelve o'clock, the direction a gauge is read.
+            canvas.drawArc(
+                RectF(center - ringRadius, center - ringRadius, center + ringRadius, center + ringRadius),
+                -90f,
+                360f * chargeFraction,
+                false,
+                ring
+            )
+        }
+
+        // The puck inside the ring, drawn by the shared circle-and-glyph routine the trip map's
+        // vehicle badges use — translated so its square sits inside the ring's clearance.
+        val inset = ringStroke + RING_GAP_DP * density
+        val discPx = sizePx - 2 * inset
+        canvas.withTranslation(inset, inset) {
+            MarkerRendering.drawCircleAndGlyph(
+                this,
+                context,
+                discPx.toInt(),
+                discPx / MarkerRendering.GRID,
+                Color.WHITE,
+                glyphFor(layer, kind),
+                tint,
+                GLYPH_SIZE,
+                outline = 0f
+            )
+        }
+        // A hairline round the puck so a white marker still reads over pale ground.
+        canvas.drawCircle(
+            center,
+            center,
+            discPx / 2f,
+            Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = density
+                color = DISC_OUTLINE
+            }
+        )
+        return bitmap
+    }
+
     private fun glyphFor(layer: RentalLayer, kind: RentalKind): Int = when (kind) {
         // Any dock is a dock — the rider is looking for a rack, whatever is racked in it.
         RentalKind.STATION -> R.drawable.bike_dock
@@ -142,24 +259,13 @@ object RentalBitmaps {
         }
     }
 
-    private fun RentalLayer.pinColor(context: Context): Int = ContextCompat.getColor(
+    private fun RentalLayer.markerColor(context: Context): Int = ContextCompat.getColor(
         context,
         when (this) {
             RentalLayer.BIKES -> R.color.layer_bikeshare_color
             RentalLayer.SCOOTERS -> R.color.layer_scooters_color
         }
     )
-
-    /** Composites pin_base (tinted [pinColor]) with a centered white [glyphRes] — no outline, tip at the bottom. */
-    private fun bigMarker(context: Context, pinColor: Int, @DrawableRes glyphRes: Int): Bitmap {
-        val scale = context.resources.displayMetrics.density * BIG_SIZE_DP / MarkerRendering.GRID
-        val sizePx = (MarkerRendering.GRID * scale).toInt()
-        val bitmap = createBitmap(sizePx, sizePx)
-        MarkerRendering.drawPinAndGlyph(
-            Canvas(bitmap), context, sizePx, scale, pinColor, glyphRes, Color.WHITE, GLYPH_SIZE, outline = 0f
-        )
-        return bitmap
-    }
 
     private fun labelPaint(density: Float) = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
@@ -168,7 +274,7 @@ object RentalBitmaps {
         isFakeBoldText = true
     }
 
-    /** A near-black chip, so the label reads over any basemap without borrowing the pin's colour. */
+    /** A near-black chip, so the label reads over any basemap without borrowing the marker's colour. */
     private fun chipBackgroundPaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = CHIP_BACKGROUND }
 
     private const val CHIP_BACKGROUND = 0xCC1A1A1A.toInt()

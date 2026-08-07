@@ -15,16 +15,6 @@
  */
 package org.onebusaway.android.extrapolation.math.prob
 
-/**
- * Bisection steps used to invert the CDF.
- *
- * The bracket is the whole remaining schedule, at most ~1800s, so 20 halvings resolve the answer to
- * under 2ms of schedule time — a couple of centimetres of road. Every extra step costs an
- * incomplete-gamma evaluation on a path that runs per vehicle per frame, and buys resolution far
- * below anything drawable.
- */
-private const val QUANTILE_ITERATIONS = 20
-
 /** Central-difference step for [FirstPassageDistribution.pdf], as a fraction of the profile's extent. */
 private const val PDF_STEP_FRACTION = 1e-4
 
@@ -73,17 +63,17 @@ class FirstPassageDistribution(
             "knot arrays must be the same length, were ${scheduleSeconds.size} and ${distances.size}"
         }
         require(scheduleSeconds.size >= 2) { "at least 2 knots are required" }
-        // An infinite knot stays non-decreasing, so it survives the check below and reaches the
-        // bisection as a bracket that halves to itself. NaN would fail that check, but as a knot
+        // An infinite knot stays non-decreasing, so it survives the check below and reaches
+        // interpolate() as a span it cannot divide by. NaN would fail that check, but as a knot
         // that "steps back" rather than as what it is.
         for (i in scheduleSeconds.indices) {
             require(scheduleSeconds[i].isFinite() && distances[i].isFinite()) {
                 "knots must be finite, but knot $i is (${scheduleSeconds[i]}, ${distances[i]})"
             }
         }
-        // Both readings of the profile -- interpolate() and the quantile bisection -- assume it only
-        // ever goes forward. A knot that steps back reads as a plausible position rather than as an
-        // error, so check it here instead of letting it out silently.
+        // Reading the profile -- in either direction -- assumes it only ever goes forward. A knot
+        // that steps back reads as a plausible position rather than as an error, so check it here
+        // instead of letting it out silently.
         for (i in 1 until scheduleSeconds.size) {
             require(scheduleSeconds[i] >= scheduleSeconds[i - 1] && distances[i] >= distances[i - 1]) {
                 "knots must be non-decreasing, but knot $i steps back"
@@ -106,8 +96,8 @@ class FirstPassageDistribution(
      * the further ahead you look, the less likely it has got there.
      *
      * Only the *shape* varies with [tau], so this calls the incomplete-gamma kernel directly rather
-     * than building a [GammaDistribution] per evaluation: quantile inversion runs this 20 times, per
-     * vehicle, per frame.
+     * than building a [GammaDistribution] per evaluation: the map's uncertainty band and the
+     * trajectory view's density read it through [pdf] tens to hundreds of times per frame.
      */
     private fun reached(tau: Double): Double {
         // No ground takes no time, so it is certainly covered. (A zero gamma shape is not a
@@ -123,20 +113,24 @@ class FirstPassageDistribution(
         return (1.0 - reached(interpolate(distances, scheduleSeconds, x))).coerceIn(0.0, 1.0)
     }
 
+    /**
+     * Solved rather than searched for. `1 - reached(tau) = p` is `P(m*tau/theta, dt/theta) = 1 - p`,
+     * so the answer in schedule time is
+     *
+     *     tau = A(1 - p, dt/theta) * theta / m
+     *
+     * where `A` inverts the incomplete gamma in its *shape* — a curve that knows nothing about
+     * theta, the travel multiplier or the schedule, and is therefore shared across every vehicle
+     * (see [IncompleteGammaShape]). Answering in schedule time rather than distance keeps it
+     * well-behaved across dwell plateaus, where a whole range of schedule times maps to one
+     * distance; [interpolate] then clamps `tau` past the end of the profile to its last knot.
+     */
     override fun quantile(p: Double): Double {
         if (p.isNaN()) return Double.NaN
         if (p <= 0.0) return distances.first()
         if (p >= 1.0) return distances.last()
-        // 1 - reached() increases in tau, so this bisects cleanly. Searching in schedule time
-        // rather than distance keeps it well-behaved across dwell plateaus, where a whole range
-        // of schedule times maps to one distance.
-        var lo = 0.0
-        var hi = scheduleSeconds.last()
-        repeat(QUANTILE_ITERATIONS) {
-            val mid = (lo + hi) / 2
-            if (1.0 - reached(mid) < p) lo = mid else hi = mid
-        }
-        return interpolate(scheduleSeconds, distances, (lo + hi) / 2)
+        val shape = IncompleteGammaShape.shapeFor(1.0 - p, elapsedOverTheta)
+        return interpolate(scheduleSeconds, distances, shape * theta / meanTravelMultiplier)
     }
 
     /**
@@ -161,8 +155,9 @@ class FirstPassageDistribution(
     /**
      * Mean position, by midpoint quadrature over the quantile function. No consumer of an
      * extrapolated distance reads the mean — the map, the band and the trajectory view all work in
-     * quantiles — so the approximation buys simplicity at no cost. It is `lazy` because each sample
-     * costs a quantile inversion; nothing currently triggers it.
+     * quantiles — so the approximation buys simplicity at no cost. It is `lazy` because its samples
+     * sweep 64 distinct quantiles, which is wider than [IncompleteGammaShape] keeps tables for;
+     * nothing currently triggers it.
      */
     override val mean: Double by lazy(LazyThreadSafetyMode.NONE) {
         var sum = 0.0

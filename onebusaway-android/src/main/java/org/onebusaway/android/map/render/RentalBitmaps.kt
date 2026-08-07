@@ -54,10 +54,11 @@ object RentalBitmaps {
     private const val BIG_SIZE_DP = 32f
 
     /**
-     * The glyph's 24-grid box. Larger than the teardrop's 11 because a disc has no tail to leave room
-     * for — the glyph gets the whole face.
+     * The glyph's 24-grid box. Well past the teardrop's 11, because a badge has no tail to leave room
+     * for and no white field to read against — the glyph *is* the badge's content, so it takes most of
+     * the face. Its artwork fills ~70% of this box, so the drawn mark is smaller than the number looks.
      */
-    private const val GLYPH_SIZE = 13f
+    private const val GLYPH_SIZE = 15.6f
 
     /**
      * The charge ring's *visible* stroke, in dp — what a reader measures off the screen.

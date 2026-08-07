@@ -398,15 +398,28 @@ class ItineraryLegStyleTest {
             substitutes = listOf(substitute("2 Line", 0xFF0000FF.toInt()), substitute("1 Line", 0xFFFF0000.toInt()))
         )
 
+        // The 1 Line's colour then the 2 Line's, which is neither the order they were offered in nor the
+        // planner's choice first — it is the order the label stacks them in.
         assertEquals(
-            listOf("1 Line", "2 Line").map { name ->
-                itineraryLegStyle(
-                    ItineraryLegKind.TRANSIT,
-                    routeColor = if (name == "1 Line") 0xFFFF0000.toInt() else 0xFF0000FF.toInt(),
-                    palette = DIRECTIONS
-                ).color
-            },
+            listOf(0xFFFF0000.toInt(), 0xFF0000FF.toInt()).map { rideColor(it) },
             ride.stripeColors(DIRECTIONS)
+        )
+    }
+
+    @Test
+    fun `the colours along a shared ride are the colours of the badge sitting on it`() {
+        // The claim the stripes are for: a rider matching the line to the label above it finds every route
+        // accounted for. Pinned here because the two are built apart — the label from the routes it names,
+        // the stripes from the colours the line takes — and prose is all that has held them together.
+        val ride = drawableRide(
+            routeColor = 0xFF008000.toInt(),
+            substitutes = listOf(substitute("1 Line", 0xFFFF0000.toInt()), substitute("A Line", 0xFF0000FF.toInt()))
+        )
+        val badge = itineraryRouteBadges(listOf(ride), DIRECTIONS).single()
+
+        assertEquals(
+            badge.routes.map { it.color }.toSet(),
+            (listOf(ride.style.color) + ride.stripeColors(DIRECTIONS)).toSet()
         )
     }
 
@@ -429,11 +442,11 @@ class ItineraryLegStyleTest {
             )
         )
 
-        assertEquals(
-            listOf(itineraryLegStyle(ItineraryLegKind.TRANSIT, 0xFF0000FF.toInt(), DIRECTIONS).color),
-            ride.stripeColors(DIRECTIONS)
-        )
+        assertEquals(listOf(rideColor(0xFF0000FF.toInt())), ride.stripeColors(DIRECTIONS))
     }
+
+    /** The colour this map draws a ride whose agency publishes [routeColor] in. */
+    private fun rideColor(routeColor: Int) = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, DIRECTIONS).color
 
     /** A transit leg as the controller hands it over, with the routes offered in its place. */
     private fun drawableRide(routeColor: Int?, substitutes: List<ItinerarySubstitute> = emptyList()) = ItineraryDrawableLeg(

@@ -15,6 +15,8 @@
  */
 package org.onebusaway.android.map.render
 
+import kotlin.math.cos
+import kotlin.math.pow
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
 import org.onebusaway.android.util.haversineDistance
@@ -55,8 +57,28 @@ internal fun leadingBearing(points: List<GeoPoint>): Float? {
 }
 
 /**
- * Web-Mercator ground resolution at zoom 0 on the equator, in meters per pixel (256px tiles). Scale to
- * a given zoom/latitude with `× cos(lat) / 2^zoom`. The single source for this constant, shared by the
- * route-render pipeline and the map-ping radius math.
+ * Web-Mercator ground resolution at zoom 0 on the equator, in meters per pixel (256px tiles). Scaled to a
+ * given zoom/latitude by [metersPerPixel], which every caller goes through.
  */
-internal const val METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO = 156543.03392804097
+private const val METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO = 156543.03392804097
+
+/** The latitude Web Mercator is cut off at — beyond it the projection runs away to infinity. */
+internal const val MAX_MERCATOR_LATITUDE = 85.05112878
+
+/**
+ * Web-Mercator ground resolution at [latitude] and [zoom], in meters per pixel — how much ground one
+ * screen pixel covers, and so the conversion between a distance meant in *screen* terms and the geometry
+ * that has to realize it.
+ *
+ * The single place this scaling is written: it was copied out three times (route simplification, stripe
+ * length, the ping radius) and the copies had already drifted apart on their guard rails, each clamping a
+ * different subset of the two inputs the formula runs away on. Both clamps live here now — [latitude] to
+ * the projection's own cutoff, [zoom] to a range no camera exceeds — so a caller gets a finite answer
+ * whatever it hands over.
+ */
+internal fun metersPerPixel(latitude: Double, zoom: Double): Double = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
+    cos(Math.toRadians(latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE))) /
+    2.0.pow(zoom.coerceIn(0.0, MAX_MERCATOR_ZOOM))
+
+/** Past this the tiles are smaller than a pixel; no map SDK the app drives goes near it. */
+private const val MAX_MERCATOR_ZOOM = 30.0

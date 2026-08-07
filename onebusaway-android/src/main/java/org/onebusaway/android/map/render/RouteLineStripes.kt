@@ -15,9 +15,7 @@
  */
 package org.onebusaway.android.map.render
 
-import kotlin.math.cos
 import kotlin.math.floor
-import kotlin.math.pow
 import kotlin.math.roundToInt
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.Polyline
@@ -66,20 +64,14 @@ internal class StripeRoutePolylinePass : RoutePolylineRenderPass {
  * Long enough to read as a run of colour rather than as a dash — this line is solid, and a stripe must not
  * start saying what [RouteLineDash] says.
  */
-internal const val STRIPE_LENGTH_IN_WIDTHS = 2.5
+private const val STRIPE_LENGTH_IN_WIDTHS = 2.5
 
 /**
- * The most runs one line is cut into. Reached only by a line far longer than the screen it is drawn on,
- * where the stripes beyond the viewport cost native lines and buy nothing.
+ * The most runs one line is cut into. Well over what a viewport holds — a stripe is a few tens of dp, so a
+ * screen shows around ten of them — so the cap binds only on a line running far off the edges of the map,
+ * where the runs beyond it cost native lines (two apiece, since each is cased) and buy nothing to look at.
  */
-internal const val MAX_STRIPES = 48
-
-/**
- * The width assumed for a line carrying no profile of its own — each renderer's own base width, before the
- * zoom scale it applies to it. Only a producer striping an unprofiled line would reach it, and none does:
- * the one striped line today is a directions ride, which is [ITINERARY_RIDE_WIDTH_PROFILE].
- */
-private const val UNPROFILED_LINE_WIDTH_DP = ROUTE_LINE_WIDTH_DP
+internal const val MAX_STRIPES = 24
 
 /**
  * This line cut into its stripes for a camera at [zoom], or the line alone when it isn't striped (which is
@@ -96,12 +88,17 @@ private fun RoutePolyline.striped(zoom: Double): List<RoutePolyline> {
     if (length <= 0.0) return listOf(this)
 
     val colors = listOf(color) + stripeColors
+    // Never more runs than the cap, and never fewer than one per colour — in that order, so a line with
+    // more routes than the cap still shows every one of them rather than losing the ones past it.
     val stripes = (length / stripeLengthMeters(zoom))
         .roundToInt()
-        .coerceIn(colors.size, maxOf(colors.size, MAX_STRIPES))
+        .coerceAtMost(MAX_STRIPES)
+        .coerceAtLeast(colors.size)
     val stride = length / stripes
-    return (0 until stripes).mapNotNull { index ->
-        val run = shape.subPolyline(index * stride, (index + 1) * stride) ?: return@mapNotNull null
+    return (0 until stripes).map { index ->
+        // A measurable line always cuts, so this is the contract holding rather than a run being dropped:
+        // dropping one would leave a gap mid-ride, where declining to cut at all just draws it as it was.
+        val run = shape.subPolyline(index * stride, (index + 1) * stride) ?: return listOf(this)
         copy(
             color = colors[index % colors.size],
             points = run,
@@ -124,11 +121,10 @@ private fun RoutePolyline.striped(zoom: Double): List<RoutePolyline> {
  */
 private fun RoutePolyline.stripeLengthMeters(zoom: Double): Double {
     val quantizedZoom = floor(zoom)
-    val widthDp = widthProfile?.thicknessAt(quantizedZoom.toFloat()) ?: UNPROFILED_LINE_WIDTH_DP
-    val metersPerDp = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
-        cos(Math.toRadians(points.midpointLatitude())) /
-        2.0.pow(quantizedZoom.coerceIn(0.0, 30.0))
-    return widthDp * STRIPE_LENGTH_IN_WIDTHS * metersPerDp
+    // The ordinary route width stands in for a line that named no profile, which is the width the renderers
+    // themselves fall back to; no producer stripes such a line today, the one striped line being a ride.
+    val widthDp = (widthProfile ?: ROUTE_LINE_WIDTH_PROFILE).thicknessAt(quantizedZoom.toFloat())
+    return widthDp * STRIPE_LENGTH_IN_WIDTHS * metersPerPixel(points.midpointLatitude(), quantizedZoom)
 }
 
 /**

@@ -87,11 +87,17 @@ internal fun List<RoutePolyline>.asSelectedRouteApproach(): List<RoutePolyline> 
  * The rider's committed journey retained around a focused transit leg. It keeps each leg's mode/route
  * colour and dash, but drops chevrons and takes a middle weight: stronger than unused route geometry,
  * weaker than the selected ridden segment.
+ *
+ * It also drops a shared ride's stripes (#2100). Striping answers "which of these routes may I board?", a
+ * question about a ride the rider is choosing; a context leg is here to say where the leg being read sits
+ * in the journey, and is drawn at half the width the stripes were cut against — so the same rhythm arrives
+ * as a fleck of noise beside the leg that is actually being read.
  */
 internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map { line ->
     line.copy(
         widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
-        directional = false
+        directional = false,
+        stripeColors = emptyList()
     )
 }
 

@@ -69,6 +69,29 @@ class GeoMathTest {
         assertNull(leadingBearing(List(3) { GeoPoint(47.6, -122.3) }))
     }
 
+    @Test
+    fun `ground resolution halves with each zoom level and narrows towards the poles`() {
+        // The 256px-tile scale everything screen-sized on this map is sized through: one tile spans the
+        // world at zoom 0, so a pixel covers 156543 m at the equator and half that per level down.
+        assertEquals(156543.03, metersPerPixel(latitude = 0.0, zoom = 0.0), 0.01)
+        assertEquals(metersPerPixel(0.0, 10.0) / 2.0, metersPerPixel(0.0, 11.0), 1e-9)
+        // A degree of longitude is shorter at 60°N by exactly a half, and so is the ground under a pixel.
+        assertEquals(metersPerPixel(0.0, 12.0) / 2.0, metersPerPixel(60.0, 12.0), 1e-6)
+    }
+
+    @Test
+    fun `both runaway inputs are clamped, so every caller gets a finite answer`() {
+        // The formula runs away at the projection's cutoff and at absurd zooms, and the callers that used to
+        // write it out each guarded a different one of the two.
+        assertEquals(
+            metersPerPixel(MAX_MERCATOR_LATITUDE, zoom = 12.0),
+            metersPerPixel(latitude = 90.0, zoom = 12.0),
+            1e-9
+        )
+        assertEquals(metersPerPixel(0.0, 30.0), metersPerPixel(0.0, zoom = 40.0), 1e-9)
+        assertEquals(metersPerPixel(0.0, 0.0), metersPerPixel(0.0, zoom = -5.0), 1e-9)
+    }
+
     private companion object {
         // The window's chord is measured over a spherical earth; a degree of slack is far tighter than any
         // difference that would matter to a mark drawn across a line.

@@ -39,8 +39,6 @@ import com.google.android.gms.maps.model.StrokeStyle
 import com.google.android.gms.maps.model.StyleSpan
 import com.google.android.gms.maps.model.TextureStyle
 import java.util.concurrent.TimeUnit
-import kotlin.math.cos
-import kotlin.math.pow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,7 +52,6 @@ import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
 import org.onebusaway.android.map.render.InterlineSeamMark
-import org.onebusaway.android.map.render.METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO
 import org.onebusaway.android.map.render.MapPing
 import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
@@ -74,6 +71,7 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.metersPerPixel
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.rental.rentalChargeFraction
@@ -574,11 +572,7 @@ class GoogleMapRenderer(
         }
         val progress = MapPing.progress(elapsed)
         val radiusPx = MapPing.MAX_RADIUS_DP * density * MapPing.radiusFraction(progress)
-        val metersPerPx =
-            METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
-                cos(Math.toRadians(center.latitude)) /
-                2.0.pow(map.cameraPosition.zoom.toDouble())
-        val radiusMeters = radiusPx * metersPerPx
+        val radiusMeters = radiusPx * metersPerPixel(center.latitude, map.cameraPosition.zoom.toDouble())
         val color = MapPing.withAlpha(pingColor, MapPing.alpha(progress))
         val existing = pingCircle
         if (existing == null) {

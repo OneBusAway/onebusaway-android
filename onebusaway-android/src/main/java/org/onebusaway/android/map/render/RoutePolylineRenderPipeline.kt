@@ -21,7 +21,6 @@ import kotlin.math.atan
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.ln
-import kotlin.math.pow
 import kotlin.math.tan
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +35,6 @@ import kotlinx.coroutines.withContext
 import org.onebusaway.android.util.EARTH_RADIUS_METERS
 import org.onebusaway.android.util.GeoPoint
 
-private const val MAX_MERCATOR_LATITUDE = 85.05112878
 private const val VIEWPORT_MARGIN_MULTIPLIER = 1.0
 private const val SIMPLIFICATION_ERROR_PIXELS = 0.75
 private const val MIN_SIMPLIFICATION_METERS = 2.0
@@ -111,10 +109,7 @@ internal class ZoomSimplifyRoutePolylinePass : RoutePolylineRenderPass {
     ): List<RoutePolyline> {
         if (polylines.none { RoutePolylineTransform.ZOOM_SIMPLIFY in it.transforms }) return polylines
         val camera = context.camera ?: return polylines
-        val latitude = camera.center.latitude.coerceIn(-MAX_MERCATOR_LATITUDE, MAX_MERCATOR_LATITUDE)
-        val metresPerPixel = METERS_PER_PIXEL_AT_EQUATOR_ZOOM_ZERO *
-            cos(Math.toRadians(latitude)) /
-            2.0.pow(camera.zoom.coerceIn(0.0, 30.0))
+        val metresPerPixel = metersPerPixel(camera.center.latitude, camera.zoom)
         val tolerance = maxOf(MIN_SIMPLIFICATION_METERS, metresPerPixel * SIMPLIFICATION_ERROR_PIXELS)
         var changed = false
         val simplified = polylines.map { polyline ->

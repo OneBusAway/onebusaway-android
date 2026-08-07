@@ -24,47 +24,22 @@ import org.onebusaway.android.map.rental.RentalLayer
 
 /**
  * The rental marker icons as Google [BitmapDescriptor]s, wrapping the shared [RentalBitmaps]
- * generation (#2168). The small dot is built once; the big discs are cached per (layer, kind, charge)
- * and the labelled ones per (…, label) — `RentalBitmaps` quantizes the charge, so both stay bounded
- * rather than growing with the fleet.
+ * generation (#2168). The small dot is built once; the big badges are cached per (layer, kind,
+ * charge) — `RentalBitmaps` quantizes the charge, so that stays bounded rather than growing with the
+ * fleet.
  */
 class RentalIcons(private val context: Context) {
 
     val small: BitmapDescriptor = BitmapDescriptorFactory.fromBitmap(RentalBitmaps.small(context))
 
-    private val big = HashMap<String, LabelledRentalIcon>()
+    private val big = HashMap<String, BitmapDescriptor>()
 
     /**
-     * The big disc for a place, centred on its point ([LabelledRentalIcon.anchorV] is 0.5), with
-     * [chargeFraction] filling its ring. Cached per (layer, kind, charge) — `RentalBitmaps` quantizes
-     * the charge, so the distinct-key count stays bounded.
+     * The big badge for a place, with [chargeFraction] filling its ring. Cached per
+     * (layer, kind, charge) — `RentalBitmaps` quantizes the charge, so the key count stays bounded
+     * rather than growing with the fleet.
      */
-    fun big(layer: RentalLayer, kind: RentalKind, chargeFraction: Float?): LabelledRentalIcon = big.getOrPut("$layer/$kind/$chargeFraction") {
-        LabelledRentalIcon(
-            BitmapDescriptorFactory.fromBitmap(RentalBitmaps.big(context, layer, kind, chargeFraction)),
-            anchorV = 0.5f
-        )
-    }
-
-    /**
-     * A big disc with [label] beneath it, plus the vertical anchor that keeps the *disc* over the
-     * point — the label hangs below it, so the anchor is no longer the bitmap's centre.
-     */
-    fun labelled(
-        layer: RentalLayer,
-        kind: RentalKind,
-        chargeFraction: Float?,
-        label: String
-    ): LabelledRentalIcon {
-        val icon = RentalBitmaps.labelled(
-            context,
-            RentalBitmaps.big(context, layer, kind, chargeFraction),
-            label,
-            cacheKey = "$layer/$kind/$chargeFraction/$label"
-        )
-        return LabelledRentalIcon(BitmapDescriptorFactory.fromBitmap(icon.bitmap), icon.anchorV)
+    fun big(layer: RentalLayer, kind: RentalKind, chargeFraction: Float?): BitmapDescriptor = big.getOrPut("$layer/$kind/$chargeFraction") {
+        BitmapDescriptorFactory.fromBitmap(RentalBitmaps.big(context, layer, kind, chargeFraction))
     }
 }
-
-/** A rental icon and the vertical anchor fraction its point sits at. */
-data class LabelledRentalIcon(val descriptor: BitmapDescriptor, val anchorV: Float)

@@ -119,19 +119,20 @@ class RentalChargeGaugeTest {
         assertEquals(RentalChargeBand.LOW, rentalChargeBand(0f))
         assertEquals(RentalChargeBand.LOW, rentalChargeBand(0.149f))
         assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.15f))
-        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.549f))
-        assertEquals(RentalChargeBand.HIGH, rentalChargeBand(0.55f))
+        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.399f))
+        assertEquals(RentalChargeBand.HIGH, rentalChargeBand(0.40f))
         assertEquals(RentalChargeBand.HIGH, rentalChargeBand(1f))
     }
 
     /**
-     * The specified bands left 35–55% belonging to none of them; amber covers it, so every fraction
-     * lands somewhere. A gauge with a hole in it would draw nothing for the vehicles that fall in it.
+     * The specified bands left 35–55% belonging to none of them; the amber/green line was settled at
+     * 40%, so every fraction lands somewhere. A gauge with a hole in it would draw nothing for the
+     * vehicles that fall in it.
      */
     @Test
-    fun `the bands are contiguous, with amber covering the unspecified middle`() {
+    fun `the bands are contiguous across the once-unspecified middle`() {
         assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.35f))
-        assertEquals(RentalChargeBand.MEDIUM, rentalChargeBand(0.45f))
+        assertEquals(RentalChargeBand.HIGH, rentalChargeBand(0.45f))
         var f = 0f
         while (f <= 1f) {
             // Total by construction — the assertion is that this simply cannot throw or return null.

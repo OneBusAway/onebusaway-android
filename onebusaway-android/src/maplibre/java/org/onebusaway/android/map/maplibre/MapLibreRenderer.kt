@@ -38,7 +38,6 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
-import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.mapRouteLineCaseColor
@@ -63,7 +62,6 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
-import org.onebusaway.android.map.render.showsRentalRangeLabel
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.map.rental.rentalLayersOf
@@ -256,21 +254,15 @@ class MapLibreRenderer(
         )
 
         if (snapshot.rentalsVisible) {
-            val zoom = map.cameraPosition.zoom.toFloat()
-            val band = rentalZoomBand(zoom)
+            val band = rentalZoomBand(map.cameraPosition.zoom.toFloat())
             if (band != RentalBand.HIDDEN) {
-                val labelled = showsRentalRangeLabel(zoom)
                 val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
                 for (rental in snapshot.rentals) {
-                    val bitmap = if (band == RentalBand.BIG) {
-                        rentalBitmap(rental, labelled, metric)
-                    } else {
-                        RentalBitmaps.small(context)
-                    }
+                    val bitmap = if (band == RentalBand.BIG) rentalBitmap(rental) else RentalBitmaps.small(context)
                     // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
                     // renders the shared RentalInfoWindow composable instead of the title/snippet); the
                     // snippet is the marker's content description, so a rider using TalkBack hears the
-                    // occupancy and charge the painted label shows (#2168).
+                    // occupancy and charge (#2168).
                     val marker = map.addMarker(
                         MarkerOptions()
                             .position(rental.point.toLatLng())
@@ -692,26 +684,17 @@ class MapLibreRenderer(
     fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
 
     /**
-     * The big disc for [rental] — the layer's colour and glyph, its charge ring, and the range label
-     * beneath it once the camera is close enough and the feed stated a range.
+     * The big badge for [rental] — the layer's colour and glyph, filled by its charge ring.
      *
-     * maplibre centres every marker icon on its point, which is exactly where a disc belongs, and the
-     * labelled bitmap's symmetric padding (see [RentalBitmaps.RentalIcon]) keeps the disc centred in
-     * the taller bitmap — so there is no per-marker anchor to set here, unlike the Google flavor.
+     * maplibre centres every marker icon on its point, which is exactly where a badge belongs, so
+     * there is no per-marker anchor to set here, unlike the Google flavor.
      */
-    private fun rentalBitmap(rental: RentalMarker, labelled: Boolean, metric: Boolean): Bitmap {
-        val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
-        val charge = rentalChargeFraction(rental.place)
-        val base = RentalBitmaps.big(context, layer, rental.place.kind, charge)
-        val range = rental.place.rangeMeters?.takeIf { labelled } ?: return base
-        val label = ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
-        return RentalBitmaps.labelled(
-            context,
-            base,
-            label,
-            cacheKey = "$layer/${rental.place.kind}/$charge/$label"
-        ).bitmap
-    }
+    private fun rentalBitmap(rental: RentalMarker): Bitmap = RentalBitmaps.big(
+        context,
+        rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES,
+        rental.place.kind,
+        rentalChargeFraction(rental.place)
+    )
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 

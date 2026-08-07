@@ -16,8 +16,6 @@
 package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** Unit tests for [rentalZoomBand] — the rental-marker icon band thresholds at zoom 12 and 15. */
@@ -39,14 +37,5 @@ class RentalZoomBandTest {
     fun bigAbove15() {
         assertEquals(RentalBand.BIG, rentalZoomBand(15.1f))
         assertEquals(RentalBand.BIG, rentalZoomBand(20f))
-    }
-
-    /** The range label starts a step inside the big-pin band, never at or below it (#2168). */
-    @Test
-    fun `range labels appear above the big-pin threshold, not at it`() {
-        assertFalse(showsRentalRangeLabel(15.1f))
-        assertFalse(showsRentalRangeLabel(16.5f))
-        assertTrue(showsRentalRangeLabel(16.6f))
-        assertTrue(showsRentalRangeLabel(19f))
     }
 }

@@ -45,7 +45,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.onebusaway.android.R
-import org.onebusaway.android.directions.util.ConversionUtils
 import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.googlemapsv2.compose.RentalIcons
@@ -77,7 +76,6 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
-import org.onebusaway.android.map.render.showsRentalRangeLabel
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.map.rental.rentalLayersOf
@@ -293,22 +291,18 @@ class GoogleMapRenderer(
         )
 
         if (snapshot.rentalsVisible) {
-            val zoom = map.cameraPosition.zoom
-            val band = rentalZoomBand(zoom)
+            val band = rentalZoomBand(map.cameraPosition.zoom)
             if (band != RentalBand.HIDDEN) {
-                val labelled = showsRentalRangeLabel(zoom)
                 val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
                 for (rental in snapshot.rentals) {
-                    val options = MarkerOptions().position(rental.point.toLatLng())
-                    if (band == RentalBand.BIG) {
-                        applyRentalIcon(options, rental, labelled, metric)
-                    } else {
-                        options.icon(rentalIcons.small)
-                    }
+                    // Centred on the point in both bands: the badge is the marker, and the small dot
+                    // has no tip to hang off the coordinate either.
+                    val options = MarkerOptions().position(rental.point.toLatLng()).anchor(0.5f, 0.5f)
+                    options.icon(if (band == RentalBand.BIG) rentalIcon(rental) else rentalIcons.small)
                     // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
                     // renders the shared RentalInfoWindow composable instead of the title text); the
                     // snippet is what the SDK reads out as the marker's content description, so the
-                    // occupancy/charge lines reach a rider who can't see the label (#2168).
+                    // occupancy/charge lines reach a rider who can't see them (#2168).
                     val marker = map.addMarkerOrFail(
                         options
                             .title(rental.place.name)
@@ -872,35 +866,12 @@ class GoogleMapRenderer(
         updateRouteBadgeScale(zoom)
     }
 
-    /**
-     * Chooses the big disc for [rental]: the layer's colour and glyph, its charge ring, and the range
-     * label beneath it once the camera is close enough ([showsRentalRangeLabel]) and the feed stated a
-     * range.
-     *
-     * Every rental marker sets an explicit anchor, because the disc is centred on the point rather than
-     * pointing down at it — a labelled one then moves the anchor up, since the label hangs below.
-     */
-    private fun applyRentalIcon(
-        options: MarkerOptions,
-        rental: RentalMarker,
-        labelled: Boolean,
-        metric: Boolean
-    ) {
-        val layer = rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES
-        val charge = rentalChargeFraction(rental.place)
-        val range = rental.place.rangeMeters?.takeIf { labelled }
-        val icon = if (range == null) {
-            rentalIcons.big(layer, rental.place.kind, charge)
-        } else {
-            rentalIcons.labelled(
-                layer,
-                rental.place.kind,
-                charge,
-                ConversionUtils.getFormattedDistance(range.toDouble(), context, metric)
-            )
-        }
-        options.icon(icon.descriptor).anchor(0.5f, icon.anchorV)
-    }
+    /** The big badge for [rental] — the layer's colour and glyph, filled by its charge ring. */
+    private fun rentalIcon(rental: RentalMarker): BitmapDescriptor = rentalIcons.big(
+        rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES,
+        rental.place.kind,
+        rentalChargeFraction(rental.place)
+    )
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 

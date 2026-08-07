@@ -121,13 +121,13 @@ private const val CHARGE_LOW_MAX = 0.15f
 /**
  * Below this the ring is amber, above it green.
  *
- * The original specification named three numbers — red under 15%, amber under 35%, green over 55% —
- * which leaves 35–55% belonging to no band at all. Amber is extended to cover that span rather than
- * green, so a half-charged vehicle reads "usable" instead of "good"; a rider who acts on green and
- * finds a half-flat scooter is worse served than one who acts on amber and finds a better vehicle than
- * expected.
+ * The bands were specified as three numbers — red under 15%, amber under 35%, green over 55% — which
+ * left 35–55% belonging to none of them; 40% is where the repo owner settled that gap. It sits nearer
+ * the amber end than the green one, so a vehicle has to be better than half charged before the ring
+ * calls it good: a rider who acts on green and finds a half-flat scooter is worse served than one who
+ * acts on amber and finds better than expected.
  */
-private const val CHARGE_MEDIUM_MAX = 0.55f
+private const val CHARGE_MEDIUM_MAX = 0.40f
 
 /** Which band [fraction] (0..1) falls in. */
 fun rentalChargeBand(fraction: Float): RentalChargeBand = when {

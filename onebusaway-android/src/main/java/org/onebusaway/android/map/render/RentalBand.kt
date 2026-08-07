@@ -27,16 +27,3 @@ fun rentalZoomBand(zoom: Float): RentalBand = when {
     zoom <= 15f -> RentalBand.SMALL
     else -> RentalBand.BIG
 }
-
-/**
- * The zoom at which a vehicle's range label appears beneath its pin (#2168).
- *
- * Above the [RentalBand.BIG] threshold rather than at it: the pin itself is what the rider is
- * scanning for, and hanging a text chip off every one of them the moment the big pins appear turns a
- * street of parked scooters into a wall of numbers. One further zoom step in, the markers are far
- * enough apart for the labels to be readable rather than merely present.
- */
-private const val RENTAL_LABEL_MIN_ZOOM = 16.5f
-
-/** Whether a vehicle's range label is shown at [zoom]. */
-fun showsRentalRangeLabel(zoom: Float): Boolean = zoom > RENTAL_LABEL_MIN_ZOOM

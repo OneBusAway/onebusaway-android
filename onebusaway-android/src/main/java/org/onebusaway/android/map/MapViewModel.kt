@@ -427,6 +427,17 @@ class MapViewModel @Inject constructor(
         renderState.setSelectedVehicle(tripId)
     }
 
+    /**
+     * Whether tapping the vehicle on [tripId] is a *second* tap on the one already selected — the host
+     * opens its trip details on that tap (#2194).
+     *
+     * Asked here because this holds the selection whichever route it arrived by: over a stop's focused
+     * route Home drives it as a focus level (#2205), elsewhere [selectVehicleTrip] sets it directly, and
+     * both land in the same render state. An adapter answering it for itself would be reading state it
+     * doesn't own, a poll behind.
+     */
+    fun isVehicleReTap(tripId: String?): Boolean = isVehicleReTap(renderState.selectedVehicleTripId.value, tripId)
+
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */
     fun centerOn(lat: Double, lon: Double, animate: Boolean) = mapHost.centerOn(lat, lon, animate)
 
@@ -769,3 +780,12 @@ class MapViewModel @Inject constructor(
         }
     }
 }
+
+/**
+ * Whether tapping the vehicle on trip [tapped] is a *second* tap on the one already selected — which is
+ * how the map opens a vehicle's trip details now that the info window is gone (#2194).
+ *
+ * A blank id names no particular vehicle (OBA sends "" at block edges, #2003), so it never counts as a
+ * re-tap: two different vehicles would compare equal and tapping the second would open the first's trip.
+ */
+internal fun isVehicleReTap(selected: String?, tapped: String?): Boolean = !tapped.isNullOrEmpty() && selected == tapped

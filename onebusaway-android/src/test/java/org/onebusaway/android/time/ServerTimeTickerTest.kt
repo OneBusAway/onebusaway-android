@@ -24,7 +24,7 @@ import org.junit.Test
  * Unit tests for [liveServerTime], the pure projection behind [rememberLiveServerTime] — a live "now"
  * in the server clock domain used to count ETA pills down between polls (issue #1781). It anchors on
  * a poll's server-clock reading and advances it by elapsed **device** time, so the result is immune to
- * device clock skew (#1612), mirroring `serverNowMs` in `VehicleInfoWindow`.
+ * device clock skew (#1612).
  */
 class ServerTimeTickerTest {
 

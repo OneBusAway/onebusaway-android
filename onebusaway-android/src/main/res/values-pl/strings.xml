@@ -664,7 +664,6 @@
         <item quantity="many">Dane zaaktualizowane %1$d min %2$d sek temu</item>
         <item quantity="other">Dane zaaktualizowane %1$d min %2$d sek temu</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Pozycja obliczona na podstawie rozkładu</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Nie strać autobusu w nocy!</string>
@@ -994,4 +993,8 @@
     <string name="agencies_empty">Nie znaleziono przewoźników dla bieżącego regionu.</string>
     <string name="retry">Spróbuj ponownie</string>
     <string name="navigate_up">Przejdź w górę</string>
+    <!-- Occupancy -->
+    <string name="realtime_many_seats_available">Wiele wolnych miejsc</string>
+    <string name="realtime_standing_room">Tylko miejsca stojące</string>
+    <string name="realtime_full">Pełny</string>
 </resources>

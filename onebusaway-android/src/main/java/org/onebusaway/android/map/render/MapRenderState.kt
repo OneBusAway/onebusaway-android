@@ -200,7 +200,7 @@ data class GenericMarker(val point: GeoPoint, val hue: Float?)
 
 /**
  * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the
- * icon, color, and info-window text from it, paired with the shared [MapVehicles.response]);
+ * icon, color, occupancy pips, and title from it, paired with the shared [MapVehicles.response]);
  * [activeTripId] is the stable key used for marker identity + animation; [isRealtime] is the
  * draw-time decision (from whatever produced the drawn point — the extrapolation anchor or the current
  * status) that selects the live-vs-scheduled icon.
@@ -480,7 +480,7 @@ data class MapRenderSnapshot(
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
     val routeModeScalesStopsWithZoom: Boolean = false,
-    // The currently focused stop id, couriered so the vehicle info-window's "more info" tap can deep
+    // The currently focused stop id, couriered so a second tap on a selected vehicle (#2194) can deep
     // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
     val focusedStopId: String? = null,
     // The zoom band the stops render in (full directional icon vs small dot). Derived from the camera
@@ -510,7 +510,7 @@ data class MapRenderSnapshot(
 }
 
 /**
- * The route-mode vehicle **set**: which vehicles exist and the [response] their icons/info-windows
+ * The route-mode vehicle **set**: which vehicles exist and the [response] their icons and titles
  * derive from. This is discrete state — it changes only at events (a new poll, a direction switch,
  * leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer reconciles
  * markers from each emission. Per-frame *motion* is a separate concern (see

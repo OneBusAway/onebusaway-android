@@ -586,7 +586,6 @@
         <item quantity="one">Tiedot päivitetty %1$d min %2$d s sitten</item>
         <item quantity="other">Tiedot päivitetty %1$d min %2$d s sitten</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Sijainti laskettu aikataulun perusteella</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Älä myöhästy bussista enää öisin!</string>
@@ -728,6 +727,9 @@
     <string name="map_option_layers">Karttatasojen painike</string>
 
     <!-- Occupancy -->
+    <string name="realtime_many_seats_available">Paljon istumapaikkoja vapaana</string>
+    <string name="realtime_standing_room">Seisomatilaa</string>
+    <string name="realtime_full">Täynnä</string>
 
     <!-- Bikeshare -->
     <string name="bike_station_title">Napauta varataksesi pyörän</string>

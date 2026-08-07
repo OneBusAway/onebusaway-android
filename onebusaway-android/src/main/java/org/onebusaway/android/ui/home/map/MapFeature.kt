@@ -240,12 +240,24 @@ fun MapFeature(
             }
 
             override fun onVehicleClick(status: ObaTripStatus) {
+                val tripId = status.activeTripId
+                // Tap to select (the trip overlay + most-recent-data dot), tap the selected one again to
+                // read it. The bubble this replaces (#2194) put the same navigation behind a chevron the
+                // rider had to aim at, and took over the map to offer it. Asked before the selection is
+                // driven, since driving it would make every tap look like a re-tap.
+                if (mapViewModel.isVehicleReTap(tripId)) {
+                    MapNavigation.openVehicleTripDetails(
+                        context,
+                        status,
+                        homeViewModel.currentFocus.value.focusedStop?.id
+                    )
+                    return
+                }
                 // Over a stop's focused route the tapped vehicle is a focus level of its own (#2205), so
                 // HOME owns the transition and the selection arrives as its directive; a background tap
                 // then unwinds it. Anywhere else (standalone route focus, directions) the tap stays what
                 // it has always been: a bare render selection with nothing to unwind. Same ask-HOME-then-
                 // render shape as the stop and bike taps above.
-                val tripId = status.activeTripId
                 if (!homeViewModel.selectFocusedRouteTrip(tripId)) {
                     mapViewModel.selectVehicleTrip(tripId)
                 }
@@ -282,14 +294,6 @@ fun MapFeature(
                     // compile error here (the one place that reads them) instead of a silent no-op.
                     null -> Unit
                 }
-            }
-
-            override fun onVehicleInfoWindowClick(status: ObaTripStatus) {
-                MapNavigation.openVehicleTripDetails(
-                    context,
-                    status,
-                    homeViewModel.currentFocus.value.focusedStop?.id
-                )
             }
 
             override fun onRentalInfoWindowClick(place: RentalPlace) {

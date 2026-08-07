@@ -334,9 +334,9 @@
     <string name="trip_info_separator">-</string>
 
     <!-- Occupancy -->
-
-
-
+    <string name="realtime_many_seats_available">Molti posti a sedere</string>
+    <string name="realtime_standing_room">Spazio in piedi</string>
+    <string name="realtime_full">Pieno</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">Non hai promemoria.\n\nPuoi creare dei promemoria toccando un autobus in arrivo alla tua fermata.</string>
@@ -603,7 +603,6 @@
         <item quantity="many">Data aggiornati %1$d min %2$d s fa</item>
         <item quantity="other">Data aggiornati %1$d min %2$d s fa</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Posizione calcolata in base all’orario</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Non perdere più l’autobus la sera!</string>

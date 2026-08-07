@@ -22,6 +22,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
@@ -210,13 +211,30 @@ object VehicleBitmaps {
     }
 
     /**
+     * What the pips on [vehicle]'s marker say, in words, or null when it draws none.
+     *
+     * A marker bitmap is opaque to a screen reader, so this is how the crowding reaches a rider who
+     * can't see the silhouettes — the renderers append it to the marker's title, the accessible name.
+     * Keyed off the same pip count the marker draws, so the two can't drift apart; the info window this
+     * replaced had no content description at all, so its meter was silent.
+     */
+    @StringRes
+    internal fun occupancyLabelRes(vehicle: VehicleMarker): Int? = when (occupancyPips(vehicle)) {
+        1 -> R.string.realtime_many_seats_available
+        2 -> R.string.realtime_standing_room
+        MAX_PIPS -> R.string.realtime_full
+        else -> null
+    }
+
+    /**
      * The disc color: the vehicle's **route color** when it's live, gray when it isn't. So the marker
      * encodes route identity + liveness, never punctuality (#2043).
      *
      * At map zoom a colored disc reads as identity — "which line is this?" — not as a schedule
      * judgement, and a rider comparing two discs has no way to tell a hue that means "late" from one
-     * that means "the 44". Deviation still has a home on the map: the info window's status chip,
-     * which is where OBA iOS puts it too.
+     * that means "the 44". Deviation is read in the arrival listings, which is where a rider decides
+     * whether to run for it; the map's job is to say which vehicle is which and where it is. (It had a
+     * second home in the vehicle info window until #2194 retired that.)
      *
      * The value is [VehicleMarker.routeColor] — the color the map is currently drawing that route's
      * line with, which is *not* always its GTFS color; see there — under the same

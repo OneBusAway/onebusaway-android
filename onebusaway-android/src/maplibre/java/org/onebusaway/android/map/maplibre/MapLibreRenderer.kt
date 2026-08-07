@@ -38,7 +38,6 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
-import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
@@ -62,6 +61,7 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.rental.rentalChargeFraction
@@ -90,8 +90,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
  *    identity set changes; the band's polylines, which carry no interaction state, are remove+re-added.
  *
- * maplibre markers have no per-marker anchor and the classic info window is title/snippet, so the rich
- * Google Compose info windows degrade to a title + snippet here (a deliberate flavor gap).
+ * maplibre markers have no per-marker anchor, so what the Google flavor anchors precisely sits by
+ * maplibre's own convention here (a deliberate flavor gap).
  *
  * The classic annotation API (Marker/Polyline/Icon/IconFactory) is deprecated in maplibre 11.x but
  * still fully functional. This whole renderer — and the tap/info-window layer it feeds — is built on
@@ -188,7 +188,7 @@ class MapLibreRenderer(
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
     // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
-    // each vehicle-set reconcile and read by [vehicleResponse].
+    // each vehicle-set reconcile, so a scale change can re-stamp the retained markers' icons.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
@@ -631,10 +631,18 @@ class MapLibreRenderer(
         if (isInfoWindowShown) getInfoWindow()?.update()
     }
 
+    /**
+     * The marker's title, carrying the crowding the pips draw so it isn't sight-only (#2194) — mirroring
+     * the Google flavor. Classic maplibre markers expose no accessibility node of their own, so on this
+     * flavor the title reaches a screen reader only if #1728's SymbolManager migration gives it one; the
+     * text is set the same way regardless, so it's there when that lands.
+     */
     private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
         val trip = response.trip(vehicle.status.activeTripId) ?: return ""
         val route = response.route(trip.routeId) ?: return ""
-        return getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
+        val name = getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
+        val occupancy = VehicleBitmaps.occupancyLabelRes(vehicle) ?: return name
+        return name + " - " + context.getString(occupancy)
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {
@@ -751,9 +759,6 @@ class MapLibreRenderer(
      * ping tap through to its vehicle via this (#1764).
      */
     fun vehicleMarkerUnderPing(marker: Marker): Marker? = if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
-
-    /** The current trips-for-route response, needed to render a vehicle's info window. */
-    fun vehicleResponse(): RouteTrips? = lastVehicleResponse
 
     companion object {
         private const val ROUTE_WIDTH_DP = 3f

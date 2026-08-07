@@ -26,16 +26,17 @@ import com.google.android.gms.maps.model.Marker
 import org.onebusaway.android.map.compose.ComposeBitmapRenderer
 
 /**
- * Renders the shared vehicle/bike info-window composables as the Google Maps info window.
+ * Renders the shared rental / pinned-trip info-window composables as the Google Maps info window.
  *
  * Google's `InfoWindowAdapter` draws the returned View into a **static bitmap of a detached view**, so
  * a bare ComposeView returned directly would render blank (composition is async and only runs while
- * attached). So a window is described by a **live content provider** (`@Composable () -> Unit` that
- * reads the current marker state): [open] stores it and pre-renders it to a bitmap (via
- * [ComposeBitmapRenderer]); [refresh] re-renders it from the same provider (e.g. after a poll, so an
- * open bubble reflects fresh data); and the adapter calls [clear] when the window is dismissed (a tap
- * away, or another marker). Markers with no provider (the trip-focus / most-recent-data markers) fall
- * through to the SDK's default title/snippet window.
+ * attached). So a window is described by a content provider (`@Composable () -> Unit`): [open] stores
+ * it and pre-renders it to a bitmap (via [ComposeBitmapRenderer]), and the adapter calls [clear] when
+ * the window is dismissed (a tap away, or another marker). Markers with no provider (the trip-focus /
+ * most-recent-data markers) fall through to the SDK's default title/snippet window.
+ *
+ * The provider was once re-read on each poll to keep the vehicle bubble current; nothing needs that
+ * now that the vehicle marker says its own piece (#2194) and the remaining windows' content is static.
  */
 class GoogleInfoWindows(
     private val activity: Activity,
@@ -47,20 +48,12 @@ class GoogleInfoWindows(
     private var content: (@Composable () -> Unit)? = null
     private var bitmap: Bitmap? = null
 
-    /** Open [marker]'s info window, rendering [content] (re-read live on every render). */
+    /** Open [marker]'s info window, rendering [content]. */
     fun open(marker: Marker, content: @Composable () -> Unit) {
         shownMarker = marker
         this.content = content
         render()
     }
-
-    /** Re-render the currently open window from its (live) provider — call when its data changes. */
-    fun refresh() {
-        if (shownMarker != null && content != null) render()
-    }
-
-    /** Whether [marker]'s info window is the one currently tracked/open (so callers don't re-[open] it). */
-    fun isShowing(marker: Marker): Boolean = shownMarker === marker
 
     /** Forget the tracked window (the SDK window was dismissed by a tap away / another marker). */
     fun clear() {

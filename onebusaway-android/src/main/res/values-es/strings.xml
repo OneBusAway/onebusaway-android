@@ -412,9 +412,9 @@
     <string name="trip_info_separator">-</string>
 
     <!-- Occupancy -->
-
-
-
+    <string name="realtime_many_seats_available">Asientos disponibles</string>
+    <string name="realtime_standing_room">Estar de pie</string>
+    <string name="realtime_full">Lleno</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">No tienes ningún recordatorio.\n\nPuedes crear recordatorios al
@@ -740,7 +740,6 @@
         <item quantity="many">Datos acualizados hace %1$d min %2$d seg</item>
         <item quantity="other">Datos acualizados hace %1$d min %2$d seg</item>
     </plurals>
-    <string name="vehicle_last_updated_scheduled">Posición calculada a partir de la planificación</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">¡Nunca pierdas el bus en la noche otra vez!</string>

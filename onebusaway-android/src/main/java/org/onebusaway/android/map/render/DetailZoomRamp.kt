@@ -167,24 +167,33 @@ data class RouteBadgeScaleProfile(
 }
 
 /**
- * A label that draws at one size whatever the camera does — every route label but a directions
- * itinerary's, which is the only one #2102 gave a schedule to.
+ * A label that draws at one size whatever the camera does. No label on the map takes it today — a
+ * directions itinerary's rides were given a schedule by #2102 and focused-stop adjacency by #2195 — but
+ * it stays the default a [RouteBadge] is born with, so a producer opts a label into a schedule rather
+ * than inheriting one it never asked for.
  */
 val FIXED_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(distantScale = 1f, closeScale = 1f)
 
 /**
- * A directions itinerary's ride labels (#2102), on the shared detail ramp and pointing the same way as
+ * The schedule a route label drawn on a line follows — a directions itinerary's rides (#2102) and a
+ * focused stop's adjacency labels (#2195) alike — on the shared detail ramp and pointing the same way as
  * everything else it rides with: half size when zoomed out, full at zoom 16 and above.
  *
  * A label is a fixed number of screen pixels, so at an overview zoom it is enormous relative to the
- * itinerary it annotates — several of them, anchored at leg midpoints that are themselves close together
+ * geometry it annotates — several of them, anchored at line midpoints that are themselves close together
  * out there, crowd each other and cover the shape the rider is trying to read. Receding with the route
  * lines and stop circles around it ([RouteLineWidthProfile], [focusedRouteStopScale]) keeps the whole view
  * scaling as one thing, and hands the label its full size at the zoom where there's room for it.
  *
+ * One schedule for both views rather than one apiece: the two are read against different backdrops
+ * (adjacency sits over sibling routes and nearby stops, directions over a bare basemap), but they are the
+ * same drawing answering the same problem, and a rider moving between the views should not find the map's
+ * labels behaving differently in each. The day one of them should differ, the way to say so is a second
+ * profile with its own name — not a branch in a renderer.
+ *
  * Deliberately a starting point to be tuned against the real map, not a settled value.
  */
-val ITINERARY_ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(
+val ROUTE_BADGE_SCALE_PROFILE = RouteBadgeScaleProfile(
     distantScale = ROUTE_DETAIL_DISTANT_SCALE,
     closeScale = 1f
 )

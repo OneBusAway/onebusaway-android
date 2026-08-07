@@ -305,10 +305,10 @@ class MapLibreRenderer(
     }
 
     /**
-     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102). A label on the
-     * fixed profile — every one but a directions itinerary's — resolves to the same scale either side of
-     * the move and is left alone, as is a scheduled one whose camera stayed within a flat end of its ramp
-     * or moved less than one quantization step (see [RouteBadgeScaleProfile.scaleAt]).
+     * Re-stamp the route labels that draw at a different size at the settled [zoom] (#2102, #2195). A label
+     * on the fixed profile resolves to the same scale either side of the move and is left alone, as is a
+     * scheduled one whose camera stayed within a flat end of its ramp or moved less than one quantization
+     * step (see [RouteBadgeScaleProfile.scaleAt]).
      */
     private fun updateRouteBadgeScale(zoom: Float) {
         val previous = renderedBadgeZoom
@@ -705,10 +705,11 @@ class MapLibreRenderer(
         private const val TRIP_BAND_WIDTH_DP = 6f
 
         // Sized to hold a whole zoom session's worth of the labels currently on the map, so panning the
-        // ramp end to end never evicts a label that is still drawn: a directions itinerary shows on the
-        // order of ten distinct pills, each of which can be asked for at any of the nine sizes
-        // [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize its ramp to, in either theme. Matches the
-        // Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges alongside its other icons.
+        // ramp end to end never evicts a label that is still drawn: a directions itinerary, or a focused
+        // stop's adjacent routes, shows on the order of ten distinct pills, each of which can be asked for
+        // at any of the nine sizes [RouteBadgeScaleProfile.scaleAt]'s sixteenths quantize its ramp to, in
+        // either theme. Matches the Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges
+        // alongside its other icons.
         private const val BADGE_ICON_CACHE_SIZE = 256
     }
 }

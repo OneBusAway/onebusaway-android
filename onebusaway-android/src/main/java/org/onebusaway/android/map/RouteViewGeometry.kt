@@ -15,6 +15,7 @@ import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
@@ -154,6 +155,11 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
  * One badge model per successfully drawn route-direction, preserving the focused-trip order that
  * mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
  * flavor renderers only draw them.
+ *
+ * Like a directions itinerary's ride labels, these follow the camera rather than holding a fixed pixel
+ * size (#2195): a focused stop's routes fan out from one point, so at an overview zoom their labels are
+ * both oversized against the lines they name and packed tightly enough to hide them — see
+ * [ROUTE_BADGE_SCALE_PROFILE].
  */
 internal fun FocusedTripGeometry.toRouteBadges(
     routes: List<ObaRoute>,
@@ -178,7 +184,8 @@ internal fun FocusedTripGeometry.toRouteBadges(
                 routes = listOf(BadgedRoute(spec.name, color)),
                 paths = spec.shapes.map { shape -> RouteBadgePath(shape.points) },
                 // An adjacency label is the way into its route: it names a route the rider hasn't opened.
-                tap = RouteBadgeTap.ShowRoute(spec.key)
+                tap = RouteBadgeTap.ShowRoute(spec.key),
+                scale = ROUTE_BADGE_SCALE_PROFILE
             )
         }
     )

@@ -56,7 +56,7 @@ fun SearchResultsRoute(
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
     onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
-    onVehicleShowOnMap: (SearchResultItem.Vehicle) -> Unit
+    onVehicleShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SearchResultsScreen(
@@ -79,7 +79,7 @@ fun SearchResultsScreen(
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
     onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
-    onVehicleShowOnMap: (SearchResultItem.Vehicle) -> Unit
+    onVehicleShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
 ) {
     ListScreenScaffold(
         title = title,
@@ -160,13 +160,14 @@ private fun StopResultRow(
 @Composable
 private fun VehicleResultRow(
     vehicle: SearchResultItem.Vehicle,
-    onShowOnMap: (SearchResultItem.Vehicle) -> Unit
+    onShowOnMap: (SearchResultItem.Vehicle.Ride) -> Unit
 ) {
     val ride = vehicle.ride
     ResultRow(
         painter = painterResource(R.drawable.ic_bus),
         contentDescription = stringResource(R.string.search_result_coach_icon),
-        onClick = if (ride != null) ({ onShowOnMap(vehicle) }) else null
+        // Only a resolved ride is something to open, so the unactionable row simply isn't clickable.
+        onClick = ride?.let { { onShowOnMap(it) } }
     ) {
         Column(Modifier.weight(1f)) {
             Text(

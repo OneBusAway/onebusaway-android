@@ -126,14 +126,11 @@ fun NavGraphBuilder.extraDestinations(navController: NavHostController) {
                     navController.revealStopOnMap(stop.id, stop.latitude, stop.longitude)
                 },
                 // A coach-number hit drills into the ride that vehicle is running — the same
-                // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens. Only a
-                // vehicle with a resolved ride is clickable, so the null branch never fires.
-                onVehicleShowOnMap = { vehicle ->
-                    vehicle.ride?.let { ride ->
-                        navController.revealRouteOnMap(
-                            ShowRouteRequest(routeId = ride.routeId, focusTripId = ride.tripId)
-                        )
-                    }
+                // route-mode-with-a-focused-vehicle view an arrivals ETA-pill tap opens.
+                onVehicleShowOnMap = { ride ->
+                    navController.revealRouteOnMap(
+                        ShowRouteRequest(routeId = ride.routeId, focusTripId = ride.tripId)
+                    )
                 }
             )
         }

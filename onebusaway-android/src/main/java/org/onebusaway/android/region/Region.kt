@@ -89,8 +89,8 @@ data class Region(
      * *is* the directory's id); the distinction exists only for custom regions (#2165).
      *
      * Every sidecar endpoint that embeds a region id goes through this: alarms and push registrations
-     * (v2, via `sidecarRegionUrl`), and weather, studies and wide alerts (v1, via their `regionID`
-     * placeholders).
+     * (v2, via `sidecarRegionUrl`), and weather, studies, wide alerts and coach-number search (v1, via
+     * their `regionID` placeholders).
      */
     val sidecarId: Long get() = sidecarRegionId ?: id
 

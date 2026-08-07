@@ -21,12 +21,14 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import javax.inject.Inject
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.onebusaway.android.R
 import org.onebusaway.android.api.adapters.colorArgb
 import org.onebusaway.android.api.contract.EntryWithReferences
 import org.onebusaway.android.api.contract.TripDetailsEntry
 import org.onebusaway.android.api.contract.VehicleSearchWebService
+import org.onebusaway.android.api.contract.activeOrOwnTripId
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
 import org.onebusaway.android.region.RegionRepository
@@ -85,30 +87,25 @@ class DefaultVehicleSearchDataSource @Inject constructor(
     private val api: ObaApiProvider
 ) : VehicleSearchDataSource {
 
-    override suspend fun vehiclesMatching(query: String): Result<List<VehicleMatch>> = coroutineScope {
+    override suspend fun vehiclesMatching(query: String): Result<List<VehicleMatch>> = runCatchingCancellable {
         val region = regionRepository.region.value
         val base = region?.sidecarBaseUrl
-            ?: return@coroutineScope Result.failure(IOException("No sidecar base URL for vehicle search"))
+            ?: throw IOException("No sidecar base URL for vehicle search")
         val url = base +
             context.getString(R.string.vehicles_api_endpoint)
                 .replace("regionID", region.sidecarId.toString())
 
-        runCatchingCancellable {
-            val matched = vehicleSearch.searchVehicles(url, query)
-                .filter { !it.vehicleId.isNullOrBlank() }
-            // A short query can match a lot of the fleet, and each match costs a trip-for-vehicle
-            // round trip. Cap the fan-out, and log the drop rather than let a truncated list read as
-            // the whole answer.
-            val capped = if (matched.size > MAX_MATCHES) {
-                Log.i(TAG, "vehiclesMatching($query): ${matched.size} matches, keeping the first $MAX_MATCHES")
-                matched.take(MAX_MATCHES)
-            } else {
-                matched
-            }
-            capped
-                .map { hit ->
-                    // Non-null by the filter above; the wire type keeps it optional.
-                    val vehicleId = hit.vehicleId.orEmpty()
+        val matched = vehicleSearch.searchVehicles(url, query)
+            .mapNotNull { hit -> hit.vehicleId?.takeIf { it.isNotBlank() }?.let { it to hit } }
+        // A short query can match a lot of the fleet, and each match costs a trip-for-vehicle round
+        // trip. Cap the fan-out, and log the drop rather than let a truncated list read as the whole
+        // answer.
+        if (matched.size > MAX_MATCHES) {
+            Log.i(TAG, "vehiclesMatching($query): ${matched.size} matches, keeping the first $MAX_MATCHES")
+        }
+        coroutineScope {
+            matched.take(MAX_MATCHES)
+                .map { (vehicleId, hit) ->
                     async {
                         VehicleMatch(
                             vehicleId = vehicleId,
@@ -118,9 +115,9 @@ class DefaultVehicleSearchDataSource @Inject constructor(
                         )
                     }
                 }
-                .map { it.await() }
-        }.onFailure { Log.e(TAG, "vehiclesMatching($query) failed", it) }
-    }
+                .awaitAll()
+        }
+    }.onFailure { Log.e(TAG, "vehiclesMatching($query) failed", it) }
 
     /**
      * The vehicle's current trip, or null when the lookup didn't produce one — a vehicle between
@@ -134,8 +131,13 @@ class DefaultVehicleSearchDataSource @Inject constructor(
 
         const val TAG = "VehicleSearchDataSource"
 
-        /** How many sidecar matches are kept (and given a trip-for-vehicle lookup); the rest are dropped. */
-        const val MAX_MATCHES = 10
+        /**
+         * How many sidecar matches are kept (and given a trip-for-vehicle lookup); the rest are
+         * dropped. Sized to OkHttp's default `maxRequestsPerHost` (5) so the fan-out is one wave
+         * rather than two, and so it can't fill the shared client's whole budget for the OBA host —
+         * the sibling route/stop searches go through the same client.
+         */
+        const val MAX_MATCHES = 5
     }
 }
 
@@ -144,9 +146,7 @@ class DefaultVehicleSearchDataSource @Inject constructor(
  * isn't in its own references (nothing to drill into). Pure, so it's exercised directly in JVM tests.
  */
 internal fun EntryWithReferences<TripDetailsEntry>.toVehicleTrip(): VehicleTrip? {
-    // The active trip is the one the vehicle is serving now; on a block rollover the entry's own
-    // tripId can still name the trip it just finished.
-    val tripId = entry.status?.activeTripId?.ifBlank { null } ?: entry.tripId
+    val tripId = entry.activeOrOwnTripId
     val trip = references.trip(tripId) ?: return null
     val route = references.route(trip.routeId)
     return VehicleTrip(

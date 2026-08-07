@@ -63,11 +63,8 @@ class DefaultSearchResultsRepository @Inject constructor(
         // missing center fails those two rather than the whole search.
         val center = searchCenter.current()
 
-        // Each search resolves a non-OK code / transport failure to Result.failure (requireData).
-        // runCatchingCancellable keeps a cancelled search out of that Result.failure, so cancellation
-        // propagates through await() and cancels the sibling searches too.
-        val routes = async { nearMe(center) { runCatchingCancellable { searchRoutes(query, it) } } }
-        val stops = async { nearMe(center) { runCatchingCancellable { searchStops(query, it) } } }
+        val routes = async { nearMe(center) { searchRoutes(query, it) } }
+        val stops = async { nearMe(center) { searchStops(query, it) } }
         val vehicles = async { vehicleSearch.vehiclesMatching(query) }
         val routeResult = routes.await()
         val stopResult = stops.await()
@@ -81,24 +78,42 @@ class DefaultSearchResultsRepository @Inject constructor(
             )
         }
 
-        // The favourite/custom-name enrichment is best-effort: a DB hiccup here must not fail a search
-        // that already has route/stop results, so treat it as a soft miss (empty map) like the lookups.
-        importGate.awaitReady()
-        val userInfo = runCatchingCancellable { stopDao.userInfoMap().toStopUserInfoMap() }
-            .getOrDefault(emptyMap())
+        val matchedStops = stopResult.getOrNull().orEmpty()
         val items = buildList {
             routeResult.getOrNull()?.let { result ->
                 result.routes.forEach { add(toRoute(it, result.agencyNames)) }
             }
-            stopResult.getOrNull()?.forEach { add(toStop(it, userInfo[it.id])) }
+            val userInfo = stopUserInfo(matchedStops)
+            matchedStops.forEach { add(toStop(it, userInfo[it.id])) }
             vehicleResult.getOrNull()?.forEach { add(toVehicle(it)) }
         }
         Result.success(items)
     }
 
-    /** Runs a location-scoped [lookup], or reports the missing center as that lookup's failure. */
-    private suspend fun <T> nearMe(center: Location?, lookup: suspend (Location) -> Result<T>): Result<T> = center?.let { lookup(it) }
-        ?: Result.failure(IOException("No search location available"))
+    /**
+     * Favourite/custom-name info for [stops], or an empty map when there are none to enrich — a
+     * coach-number-only (or location-less) search then skips the import-gate await and the query
+     * entirely. Best-effort otherwise: a DB hiccup must not fail a search that already has results,
+     * so it's a soft miss (empty map) like the lookups.
+     */
+    private suspend fun stopUserInfo(stops: List<ObaStop>): Map<String, StopUserInfo> {
+        if (stops.isEmpty()) return emptyMap()
+        importGate.awaitReady()
+        return runCatchingCancellable { stopDao.userInfoMap().toStopUserInfoMap() }
+            .getOrDefault(emptyMap())
+    }
+
+    /**
+     * Runs a location-scoped [lookup], or reports the missing center as that lookup's failure. The
+     * lookup resolves a non-OK code / transport failure to Result.failure (requireData);
+     * runCatchingCancellable keeps a cancelled search out of that Result.failure, so cancellation
+     * propagates through await() and cancels the sibling searches too.
+     */
+    private suspend fun <T> nearMe(center: Location?, lookup: suspend (Location) -> T): Result<T> = if (center == null) {
+        Result.failure(IOException("No search location available"))
+    } else {
+        runCatchingCancellable { lookup(center) }
+    }
 
     /** Searches around the user, widening to the region's default center when nothing matches. */
     private suspend fun searchRoutes(query: String, center: Location): RoutesNearResult {

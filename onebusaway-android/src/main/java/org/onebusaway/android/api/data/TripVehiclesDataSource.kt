@@ -27,6 +27,7 @@ import org.onebusaway.android.api.contract.ListWithReferences
 import org.onebusaway.android.api.contract.ObaEnvelope
 import org.onebusaway.android.api.contract.References
 import org.onebusaway.android.api.contract.TripDetailsEntry
+import org.onebusaway.android.api.contract.activeOrOwnTripId
 import org.onebusaway.android.api.net.ObaApiProvider
 import org.onebusaway.android.api.requireData
 import org.onebusaway.android.models.ObaRoute
@@ -68,7 +69,7 @@ private fun List<TripDetailsEntry>.dedupeByActiveTripKeepingBestFix(): List<Trip
     if (size < 2) return this
     val byKey = LinkedHashMap<String, TripDetailsEntry>(size)
     for (entry in this) {
-        val key = entry.status?.activeTripId?.ifBlank { null } ?: entry.tripId
+        val key = entry.activeOrOwnTripId
         val kept = byKey[key]
         if (kept == null || entry.fixRank() > kept.fixRank()) byKey[key] = entry
     }

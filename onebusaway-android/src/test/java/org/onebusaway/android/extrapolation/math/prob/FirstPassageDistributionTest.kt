@@ -23,11 +23,11 @@ import org.junit.Test
 private const val THETA = 25.236
 
 /**
- * Quantiles are found by bisecting the remaining schedule, so they carry that search's residue.
- * A centimetre is far below anything drawable and comfortably above the residue the iteration
- * count guarantees — asserting tighter would be pinning the constant, not the behaviour.
+ * Quantiles come from a tabulated inverse, so they carry its interpolation residue. A centimetre is
+ * far below anything drawable and orders of magnitude above the residue the table guarantees —
+ * asserting tighter would be pinning the table's resolution, not the behaviour.
  */
-private const val SEARCH_TOLERANCE_M = 0.01
+private const val QUANTILE_TOLERANCE_M = 0.01
 
 class FirstPassageDistributionTest {
 
@@ -66,8 +66,8 @@ class FirstPassageDistributionTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `an infinite knot is rejected`() {
-        // It is non-decreasing, so only a finiteness check catches it before the quantile
-        // bisection inherits it as an unhalvable bracket.
+        // It is non-decreasing, so only a finiteness check catches it before the profile reads as
+        // a segment of infinite extent that every position falls at the start of.
         FirstPassageDistribution(
             60.0,
             doubleArrayOf(0.0, 100.0, Double.POSITIVE_INFINITY),
@@ -172,7 +172,7 @@ class FirstPassageDistributionTest {
     @Test
     fun `the vehicle never runs past the end of the schedule`() {
         val dist = at(3600.0)
-        assertEquals(2000.0, dist.quantile(0.999), SEARCH_TOLERANCE_M)
+        assertEquals(2000.0, dist.quantile(0.999), QUANTILE_TOLERANCE_M)
         assertEquals(1.0, dist.cdf(2000.0), 0.0)
         assertEquals(0.0, dist.pdf(2000.0), 0.0)
     }
@@ -180,8 +180,8 @@ class FirstPassageDistributionTest {
     @Test
     fun `at the anchor instant the vehicle is exactly where it was seen`() {
         val dist = at(0.0)
-        assertEquals(0.0, dist.quantile(0.5), SEARCH_TOLERANCE_M)
-        assertEquals(0.0, dist.quantile(0.99), SEARCH_TOLERANCE_M)
+        assertEquals(0.0, dist.quantile(0.5), QUANTILE_TOLERANCE_M)
+        assertEquals(0.0, dist.quantile(0.99), QUANTILE_TOLERANCE_M)
         assertEquals(0.0, dist.cdf(-1e-9), 0.0)
     }
 
@@ -200,6 +200,51 @@ class FirstPassageDistributionTest {
         // The tail beyond the last knot is an atom carrying the rest of the mass.
         val atom = 1.0 - dist.cdf(2000.0 - 1e-6)
         assertEquals(1.0, sum + atom, 0.02)
+    }
+
+    // --- The closed-form quantile agrees with searching for it ---
+
+    @Test
+    fun `quantiles match inverting the cdf by search`() {
+        // The shipped quantile solves for the schedule time directly; this searches the CDF for
+        // the same crossing, which is what it replaced. Swept over the dispersion and
+        // travel-multiplier range DeviationModel spans, the whole extrapolation horizon, and the
+        // quantiles the app draws.
+        for (theta in listOf(22.0, 50.0, 146.0)) {
+            for (multiplier in listOf(1.02, 1.35)) {
+                for (dtSec in listOf(1.0, 5.0, 30.0, 90.0, 300.0, 600.0, 900.0)) {
+                    val dist =
+                        FirstPassageDistribution(dtSec, scheduleSeconds, distances, theta, multiplier)
+                    for (p in listOf(0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999)) {
+                        val searched = searchQuantile(dist, p)
+                        assertEquals(
+                            "theta=$theta m=$multiplier dt=$dtSec p=$p",
+                            searched,
+                            dist.quantile(p),
+                            QUANTILE_TOLERANCE_M
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /** Inverts [FirstPassageDistribution.cdf] the slow way, with the package's own root-finder. */
+    private fun searchQuantile(dist: FirstPassageDistribution, p: Double) = bisect(dist::cdf, p, distances.last())
+
+    @Test
+    fun `the mean matches the same quadrature taken through the quantiles`() {
+        // The mean's samples deliberately bypass the shared quantile tables, so that a 64-level
+        // sweep can't evict the levels the map draws. It must still land where the equivalent sweep
+        // through quantile() does.
+        val dist = at(120.0)
+        val samples = 64
+        var sum = 0.0
+        for (i in 0 until samples) {
+            sum += dist.quantile((i + 0.5) / samples)
+        }
+        assertEquals(sum / samples, dist.mean, QUANTILE_TOLERANCE_M)
+        assertTrue("mean ${dist.mean} out of range", dist.mean > distances.first() && dist.mean < distances.last())
     }
 
     // --- Dwells ---

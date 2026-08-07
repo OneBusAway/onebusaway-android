@@ -61,8 +61,9 @@ class GammaDistribution(val alpha: Double, val scale: Double) : ProbDistribution
         /**
          * The regularized lower incomplete gamma P(a, x) — the gamma CDF's kernel, in the
          * normalized coordinates where scale has already been divided out. Exposed because
-         * [FirstPassageDistribution] root-finds over the *shape*, so it evaluates this thousands
-         * of times per second with a fixed x; going through a [GammaDistribution] instance would
+         * [FirstPassageDistribution] varies the *shape* at a fixed x, so it evaluates this
+         * thousands of times per second — and because [IncompleteGammaShape] root-finds over the
+         * shape to tabulate that inverse. Going through a [GammaDistribution] instance would
          * allocate one per evaluation.
          */
         internal fun regularizedGammaP(a: Double, x: Double): Double {

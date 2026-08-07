@@ -73,6 +73,14 @@ class FirstPassageDistribution(
             "knot arrays must be the same length, were ${scheduleSeconds.size} and ${distances.size}"
         }
         require(scheduleSeconds.size >= 2) { "at least 2 knots are required" }
+        // Both readings of the profile -- interpolate() and the quantile bisection -- assume it only
+        // ever goes forward. A knot that steps back reads as a plausible position rather than as an
+        // error, so check it here instead of letting it out silently.
+        for (i in 1 until scheduleSeconds.size) {
+            require(scheduleSeconds[i] >= scheduleSeconds[i - 1] && distances[i] >= distances[i - 1]) {
+                "knots must be non-decreasing, but knot $i steps back"
+            }
+        }
         require(theta > 0 && theta.isFinite()) { "theta must be positive, was $theta" }
         require(meanTravelMultiplier > 0 && meanTravelMultiplier.isFinite()) {
             "meanTravelMultiplier must be positive, was $meanTravelMultiplier"

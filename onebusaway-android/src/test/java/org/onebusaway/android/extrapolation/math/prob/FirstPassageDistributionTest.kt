@@ -54,6 +54,28 @@ class FirstPassageDistributionTest {
         FirstPassageDistribution(-1.0, scheduleSeconds, distances, THETA)
     }
 
+    @Test(expected = IllegalArgumentException::class)
+    fun `a profile whose schedule clock runs backwards is rejected`() {
+        FirstPassageDistribution(60.0, doubleArrayOf(0.0, 200.0, 100.0), doubleArrayOf(0.0, 500.0, 1000.0), THETA)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `a profile that doubles back along the trip is rejected`() {
+        FirstPassageDistribution(60.0, doubleArrayOf(0.0, 100.0, 200.0), doubleArrayOf(0.0, 1000.0, 500.0), THETA)
+    }
+
+    @Test
+    fun `a dwell plateau is not mistaken for going backwards`() {
+        // Both arrays only have to be non-decreasing: a dwell repeats a distance while the
+        // schedule clock advances, and it is a legitimate profile.
+        FirstPassageDistribution(
+            60.0,
+            doubleArrayOf(0.0, 100.0, 130.0, 230.0),
+            doubleArrayOf(0.0, 500.0, 500.0, 1000.0),
+            THETA
+        )
+    }
+
     // --- The centre tracks the schedule ---
 
     @Test

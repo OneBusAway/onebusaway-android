@@ -192,7 +192,7 @@ private fun TrajectoryGraph(trajectory: TripTrajectory, modifier: Modifier) {
         )
         if (!viewport.setupVisibleWindow(size.width, size.height)) return@Canvas
 
-        drawGrid(viewport, labelPaint, timeFormat, formatDistance)
+        drawGrid(viewport, labelPaint, timeFormat, formatDistance, metric)
         drawSchedule(viewport, trajectory.schedule)
         drawObservations(viewport, trajectory.observations)
         trajectory.extrapolation?.let {
@@ -206,10 +206,17 @@ private fun DrawScope.drawGrid(
     viewport: GraphViewport,
     labelPaint: Paint,
     timeFormat: String,
-    formatDistance: (Double) -> String
+    formatDistance: (Double) -> String,
+    metric: Boolean
 ) {
     val native = drawContext.canvas.nativeCanvas
-    viewport.forEachDistTick { x, dist ->
+    // Space the ticks by what the labels can resolve, taken at the far end of the window: the
+    // formatter's resolution only coarsens with distance, so that value is safe across the whole axis.
+    val labelResolution = ConversionUtils.getFormattedDistanceResolution(
+        viewport.visMinDist + viewport.visDistRange,
+        metric
+    )
+    viewport.forEachDistTick(labelResolution) { x, dist ->
         drawLine(GridColor, Offset(x, viewport.marginTop), Offset(x, viewport.graphBottom), 2f)
         native.drawText(formatDistance(dist), x + 2f, viewport.graphBottom + labelPaint.textSize, labelPaint)
     }

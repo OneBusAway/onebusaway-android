@@ -20,8 +20,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -37,7 +35,6 @@ import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.map.rental.filterRentals
 import org.onebusaway.android.map.rental.isWithinRentalZoomGate
-import org.onebusaway.android.map.rental.matchesMinimumRange
 import org.onebusaway.android.map.rental.rentalAction
 import org.onebusaway.android.map.rental.rentalDensity
 import org.onebusaway.android.map.rental.rentalLayersOf
@@ -72,38 +69,23 @@ class RentalLayerController(
     // resume (kept off the construction path so the model stays JVM-constructible, like WeatherViewModel).
     private val visibleLayers = MutableStateFlow(emptySet<RentalLayer>())
 
-    private val minimumRange = MutableStateFlow<Int?>(null)
-
-    /** The range filter, in metres — null when the rider hasn't narrowed it. */
-    val minimumRangeMeters: StateFlow<Int?> = minimumRange.asStateFlow()
-
     private var loadJob: Job? = null
 
-    fun setLayerVisible(layer: RentalLayer, visible: Boolean, persist: Boolean = false) {
-        // The user-driven toggle persists the choice through the seam; the startup sync (which reads
-        // the pref) just applies it, so persistence stays opt-in.
+    /**
+     * Show or hide the rental layers — both together, since they come off one fetch and one map
+     * button (#2168). [persist] mirrors the old per-layer toggle: the user's tap is written through,
+     * the resume-time sync that read the preference just applies it.
+     */
+    fun setRentalsVisible(visible: Boolean, persist: Boolean = false) {
         if (persist) {
-            prefsRepository.setBoolean(layer.preferenceKey, visible)
+            prefsRepository.setBoolean(R.string.preference_key_layer_bikeshare_visible, visible)
         }
-        visibleLayers.value = if (visible) visibleLayers.value + layer else visibleLayers.value - layer
+        visibleLayers.value = if (visible) RentalLayer.entries.toSet() else emptySet()
     }
 
-    /** Apply the whole layer set at once — the resume-time sync from preferences. */
+    /** Apply the layer set directly — the resume-time sync from preferences. */
     fun setVisibleLayers(layers: Set<RentalLayer>) {
         visibleLayers.value = layers
-    }
-
-    /**
-     * Narrow the layer to vehicles with at least this much range left; null clears the filter.
-     * [persist] mirrors [setLayerVisible]: the user's choice is written through, the resume-time sync
-     * that read it just applies it.
-     */
-    fun setMinimumRangeMeters(meters: Int?, persist: Boolean = false) {
-        // Stored as 0-means-no-filter rather than as an absent key, so the preference has one type.
-        if (persist) {
-            prefsRepository.setInt(R.string.preference_key_layer_rental_min_range_meters, meters ?: 0)
-        }
-        minimumRange.value = meters
     }
 
     /**
@@ -119,11 +101,10 @@ class RentalLayerController(
                 // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
                 host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS)
                     .filter { !host.cameraInteracting.value },
-                visibleLayers,
-                minimumRange
-            ) { camera, layers, minRange -> Triple(camera, layers, minRange) }
+                visibleLayers
+            ) { camera, layers -> camera to layers }
                 // collectLatest so a newer viewport cancels an in-flight load (the old loadJob?.cancel()).
-                .collectLatest { (camera, layers, minRange) ->
+                .collectLatest { (camera, layers) ->
                     if (!BikeshareAvailability.isStationLayerEnabled(
                             regionRepository.currentRegion(),
                             prefsRepository.getString(R.string.preference_key_otp_api_url, null)
@@ -154,9 +135,8 @@ class RentalLayerController(
                             val filtered = filterRentals(places, selectedRentalIds) ?: return@collectLatest
                             showRentals(
                                 // Directions mode draws exactly the trip's own rentals: the rider is
-                                // being walked to *that* vehicle, so neither a layer toggle nor a range
-                                // preset may hide it.
-                                if (directions) filtered else filtered.forLayers(layers, minRange),
+                                // being walked to *that* vehicle, so the layer toggle may not hide it.
+                                if (directions) filtered else filtered.forLayers(layers),
                                 rentalsVisible = true
                             )
                         }
@@ -171,10 +151,11 @@ class RentalLayerController(
         host.setRentalsNeedCloserZoom(false)
     }
 
-    /** The places [layers] asks for, that also clear the range filter. */
-    private fun List<RentalPlace>.forLayers(layers: Set<RentalLayer>, minRange: Int?): List<RentalPlace> = filter { place ->
-        rentalLayersOf(place).any { it in layers } && matchesMinimumRange(place, minRange)
-    }
+    /**
+     * The places [layers] asks for. A place belonging to no layer at all — a rental car, an `OTHER` —
+     * is dropped rather than drawn under a layer it isn't (see [rentalLayersOf]).
+     */
+    private fun List<RentalPlace>.forLayers(layers: Set<RentalLayer>): List<RentalPlace> = filter { place -> rentalLayersOf(place).any { it in layers } }
 
     private fun showRentals(places: List<RentalPlace>, rentalsVisible: Boolean) {
         when (val density = rentalDensity(places)) {
@@ -206,10 +187,3 @@ class RentalLayerController(
         host.setRentalsNeedCloserZoom(false)
     }
 }
-
-/** Where each layer's toggle is persisted. Bikes keeps the legacy bikeshare key, so it survives upgrade. */
-private val RentalLayer.preferenceKey: Int
-    get() = when (this) {
-        RentalLayer.BIKES -> R.string.preference_key_layer_bikeshare_visible
-        RentalLayer.SCOOTERS -> R.string.preference_key_layer_scooters_visible
-    }

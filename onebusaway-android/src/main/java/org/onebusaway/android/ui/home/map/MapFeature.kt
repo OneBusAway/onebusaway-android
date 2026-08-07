@@ -98,7 +98,6 @@ import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.map.rental.RentalKind
-import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
@@ -499,15 +498,12 @@ fun MapFeature(
     // self-wired feature module ([MapChromeViewModel]); the map-loading bar reads the map VM's progress
     // directly. Their actions drive the map view model.
     val chrome by hiltViewModel<MapChromeViewModel>().state.collectAsStateWithLifecycle()
-    val minimumRentalRange by mapViewModel.minimumRentalRangeMeters.collectAsStateWithLifecycle()
     val mapLoading by mapViewModel.progress.collectAsStateWithLifecycle()
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
         layersVisible = chrome.layersFab,
-        bikesActive = chrome.bikesActive,
-        scootersActive = chrome.scootersActive,
-        minimumRangeMeters = minimumRentalRange,
+        rentalsActive = chrome.rentalsActive,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
         onMyLocation = {
@@ -526,28 +522,24 @@ fun MapFeature(
         },
         onZoomIn = { mapViewModel.zoomIn() },
         onZoomOut = { mapViewModel.zoomOut() },
-        onToggleBikes = { toggleRentalLayer(context, mapViewModel, RentalLayer.BIKES, chrome.bikesActive) },
-        onToggleScooters = {
-            toggleRentalLayer(context, mapViewModel, RentalLayer.SCOOTERS, chrome.scootersActive)
-        },
-        onMinimumRangeSelected = { mapViewModel.setMinimumRentalRangeMeters(it, persist = true) }
+        onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) }
     )
 }
 
 /**
- * Flips one rental layer: persist the new value (DataStore) and drive the loader. [MapChromeViewModel]
- * observes the visibility prefs reactively, so the row's tint updates without a host push.
+ * Shows or hides the rental layers: persist the new value (DataStore) and drive the loader.
+ * [MapChromeViewModel] observes the visibility preference reactively, so the button's tint updates
+ * without a host push.
  *
- * Both layers report to the one bikeshare analytics event, distinguished by its label — the event is
- * "the rider changed the rental overlay", and splitting it per layer would break the existing series.
+ * Reports to the long-standing bikeshare analytics event rather than a new one, so the series that
+ * has been counting "the rider changed the rental overlay" keeps counting the same thing.
  */
-private fun toggleRentalLayer(
+private fun toggleRentals(
     context: Context,
     mapViewModel: MapViewModel,
-    layer: RentalLayer,
     active: Boolean
 ) {
-    mapViewModel.setRentalLayerVisible(layer, !active, persist = true)
+    mapViewModel.setRentalsVisible(!active, persist = true)
     AnalyticsEntryPoint.get(context).reportUiEvent(
         PlausibleAnalytics.REPORT_MAP_EVENT_URL,
         context.getString(R.string.analytics_layer_bikeshare),

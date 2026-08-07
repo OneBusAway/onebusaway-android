@@ -52,7 +52,7 @@ class MapChromeViewModelTest {
     }
 
     @Test
-    fun `the bikes-layer preference flips the active tint reactively`() = runTest {
+    fun `the rental-layer preference flips the active tint reactively`() = runTest {
         val prefs = FakePreferencesRepository(observeValue = false)
         // A custom OTP URL makes rentals enabled (the layers FAB shows); the visible pref drives active.
         prefs.setString(R.string.preference_key_otp_api_url, "https://otp.example.org")
@@ -60,29 +60,12 @@ class MapChromeViewModelTest {
         val vm = MapChromeViewModel(prefs, FakeRegionRepository())
         advanceUntilIdle()
         assertTrue(vm.state.value.layersFab)
-        assertTrue(vm.state.value.bikesActive)
+        assertTrue(vm.state.value.rentalsActive)
 
         prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, false)
         advanceUntilIdle()
-        assertFalse(vm.state.value.bikesActive)
+        assertFalse(vm.state.value.rentalsActive)
         assertTrue(vm.state.value.layersFab) // still enabled, just not active
-    }
-
-    /** The scooters layer is its own toggle over the same fetch, and starts off (#2168). */
-    @Test
-    fun `the scooters layer is independent of the bikes layer`() = runTest {
-        val prefs = FakePreferencesRepository(observeValue = false)
-        prefs.setString(R.string.preference_key_otp_api_url, "https://otp.example.org")
-        prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, true)
-        val vm = MapChromeViewModel(prefs, FakeRegionRepository())
-        advanceUntilIdle()
-        assertTrue(vm.state.value.bikesActive)
-        assertFalse(vm.state.value.scootersActive)
-
-        prefs.setBoolean(R.string.preference_key_layer_scooters_visible, true)
-        advanceUntilIdle()
-        assertTrue(vm.state.value.scootersActive)
-        assertTrue(vm.state.value.bikesActive)
     }
 
     @Test

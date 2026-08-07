@@ -24,28 +24,18 @@ import org.onebusaway.android.map.rental.RentalLayer
 object LayerUtils {
 
     /**
-     * Which rental layers the rider has switched on — empty when the region has no rental server at
-     * all (#2168).
+     * Which rental layers to draw — every one, or none (#2168). Bikes and scooters come off a single
+     * fetch and are shown or hidden together by one map button, so this is a boolean wearing a set's
+     * clothing: the set is what the renderer needs (it picks a marker's colour and glyph from the
+     * layer a place belongs to), not a second axis of user choice.
      *
-     * Bikes defaults **on** and scooters **off**, copying the sibling iOS app's defaults and its
-     * reasoning: scooters are the large majority of a dockless fleet, so defaulting them on buries the
-     * transit map. Bikes keeps the legacy `layer_bike_selected` key, so an upgrading device carries its
-     * existing choice across.
+     * Empty when the region has no rental server at all. Defaults to on, and keeps the legacy
+     * `layer_bike_selected` key so an upgrading device carries its existing choice across.
      */
     fun visibleRentalLayers(context: Context): Set<RentalLayer> {
         if (!BikeshareAvailability.isStationLayerEnabled(context)) return emptySet()
-        val prefs = PreferencesEntryPoint.get(context)
-        return buildSet {
-            if (prefs.getBoolean(R.string.preference_key_layer_bikeshare_visible, true)) add(RentalLayer.BIKES)
-            if (prefs.getBoolean(R.string.preference_key_layer_scooters_visible, false)) add(RentalLayer.SCOOTERS)
-        }
+        val on = PreferencesEntryPoint.get(context)
+            .getBoolean(R.string.preference_key_layer_bikeshare_visible, true)
+        return if (on) RentalLayer.entries.toSet() else emptySet()
     }
-
-    /**
-     * The rider's minimum-range filter in metres, or null for "any". Stored as 0-means-no-filter so the
-     * preference has one type; see `RentalLayerController.setMinimumRangeMeters`.
-     */
-    fun minimumRentalRangeMeters(context: Context): Int? = PreferencesEntryPoint.get(context)
-        .getInt(R.string.preference_key_layer_rental_min_range_meters, 0)
-        .takeIf { it > 0 }
 }

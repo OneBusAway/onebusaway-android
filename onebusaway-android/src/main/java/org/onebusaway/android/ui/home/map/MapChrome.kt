@@ -73,17 +73,13 @@ fun MapChrome(
     zoomVisible: Boolean,
     leftHandMode: Boolean,
     layersVisible: Boolean,
-    bikesActive: Boolean,
-    scootersActive: Boolean,
-    minimumRangeMeters: Int?,
+    rentalsActive: Boolean,
     mapLoading: Boolean,
     fabBottomInsetTarget: Dp,
     onMyLocation: () -> Unit,
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
-    onToggleBikes: () -> Unit,
-    onToggleScooters: () -> Unit,
-    onMinimumRangeSelected: (Int?) -> Unit
+    onToggleRentals: () -> Unit
 ) {
     // Animate the lift here so the per-frame value only recomposes the FABs, not the hosting map
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).
@@ -111,14 +107,9 @@ fun MapChrome(
             )
         }
         if (layersVisible) {
-            LayersFab(
-                bikesActive = bikesActive,
-                scootersActive = scootersActive,
-                minimumRangeMeters = minimumRangeMeters,
-                leftHandMode = leftHandMode,
-                onToggleBikes = onToggleBikes,
-                onToggleScooters = onToggleScooters,
-                onMinimumRangeSelected = onMinimumRangeSelected,
+            RentalsFab(
+                active = rentalsActive,
+                onToggle = onToggleRentals,
                 modifier = Modifier
                     .align(sideAlign)
                     .padding(horizontal = marginHorizontal)
@@ -177,202 +168,32 @@ private fun ZoomControls(
 }
 
 /**
- * The layers FAB: tapping it expands the rental layer rows — Bikes, Scooters, and the range filter
- * (#2168) — replacing the android-fab speed-dial. Each layer row is tinted by its active state and
- * toggles that layer; the range row opens a menu of presets.
+ * The rental-layer button: one tap shows or hides bikes and scooters together (#2168).
  *
- * The two layers are separate rows over **one** fetch: `vehicleRentalsByBbox` returns everything in
- * the viewport regardless, so turning both on costs no extra request.
+ * It replaced a speed-dial that expanded to a row per layer plus a range filter. Both layers come off
+ * **one** fetch — `vehicleRentalsByBbox` returns everything in the viewport regardless — so splitting
+ * them cost a rider two taps to see the same request's results, and the split earned its complexity
+ * only if you wanted scooters hidden specifically. Tinted by [active], like the speed-dial rows were.
  */
 @Composable
-private fun LayersFab(
-    bikesActive: Boolean,
-    scootersActive: Boolean,
-    minimumRangeMeters: Int?,
-    leftHandMode: Boolean,
-    onToggleBikes: () -> Unit,
-    onToggleScooters: () -> Unit,
-    onMinimumRangeSelected: (Int?) -> Unit,
+private fun RentalsFab(
+    active: Boolean,
+    onToggle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    val iconRotation by animateFloatAsState(if (expanded) 45f else 0f, label = "layersFabIcon")
-    val alignment = if (leftHandMode) Alignment.Start else Alignment.End
-
-    Column(modifier, horizontalAlignment = alignment) {
-        AnimatedVisibility(visible = expanded) {
-            Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                LayerItem(
-                    label = stringResource(R.string.layers_speedial_bikes_label),
-                    iconRes = R.drawable.ic_directions_bike,
-                    color = colorResource(if (bikesActive) R.color.layer_bikeshare_color else R.color.layer_disabled),
-                    leftHandMode = leftHandMode,
-                    onClick = {
-                        expanded = false
-                        onToggleBikes()
-                    }
-                )
-                LayerItem(
-                    label = stringResource(R.string.layers_speedial_scooters_label),
-                    iconRes = R.drawable.ic_kick_scooter,
-                    color = colorResource(if (scootersActive) R.color.layer_scooters_color else R.color.layer_disabled),
-                    leftHandMode = leftHandMode,
-                    onClick = {
-                        expanded = false
-                        onToggleScooters()
-                    }
-                )
-                RangeFilterItem(
-                    minimumRangeMeters = minimumRangeMeters,
-                    leftHandMode = leftHandMode,
-                    onSelected = {
-                        expanded = false
-                        onMinimumRangeSelected(it)
-                    }
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        FloatingActionButton(
-            onClick = { expanded = !expanded },
-            containerColor = colorResource(R.color.theme_accent),
-            contentColor = Color.White
-        ) {
-            Icon(
-                painterResource(if (expanded) R.drawable.ic_add_white_24dp else R.drawable.ic_layers_white_24dp),
-                contentDescription = stringResource(
-                    if (expanded) R.string.map_option_layers_close else R.string.map_option_layers
-                ),
-                modifier = Modifier.size(24.dp).rotate(iconRotation)
-            )
-        }
-    }
-}
-
-/**
- * The range-filter row: the current preset on a chip, and a menu of the rest.
- *
- * The filter **fails open** — a dock, a pedal bike, and any vehicle whose feed omits its range stay
- * visible at every preset (see [org.onebusaway.android.map.rental.matchesMinimumRange]) — so this
- * narrows the map rather than emptying it.
- */
-@Composable
-private fun RangeFilterItem(
-    minimumRangeMeters: Int?,
-    leftHandMode: Boolean,
-    onSelected: (Int?) -> Unit
-) {
-    var menuOpen by remember { mutableStateOf(false) }
-    val active = minimumRangeMeters != null
-    val itemColor = colorResource(if (active) R.color.layer_bikeshare_color else R.color.layer_disabled)
-    Box {
-        SpeedDialRow(
-            leftHandMode = leftHandMode,
-            label = {
-                LayerChip(rangePresetLabel(minimumRangeMeters), itemColor)
-            },
-            fab = {
-                SmallFloatingActionButton(
-                    onClick = { menuOpen = true },
-                    containerColor = itemColor,
-                    contentColor = Color.White
-                ) {
-                    Icon(
-                        painterResource(R.drawable.ic_bike_rental),
-                        contentDescription = stringResource(R.string.layers_speedial_range_label),
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-        )
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            for (preset in RANGE_PRESETS_METERS) {
-                DropdownMenuItem(
-                    text = { Text(rangePresetLabel(preset)) },
-                    onClick = {
-                        menuOpen = false
-                        onSelected(preset)
-                    }
-                )
-            }
-        }
-    }
-}
-
-/**
- * The minimum-range presets, in metres, "any" first. Round numbers a rider can reason about rather
- * than anything the feeds publish — GBFS states a per-vehicle range and nothing about useful
- * thresholds, so these are chosen for the question being asked ("enough to get across town?").
- */
-private val RANGE_PRESETS_METERS = listOf(null, 1_000, 3_000, 5_000, 10_000)
-
-@Composable
-private fun rangePresetLabel(meters: Int?): String = if (meters == null) {
-    stringResource(R.string.rental_range_filter_any)
-} else {
-    stringResource(
-        R.string.rental_range_filter_at_least,
-        ConversionUtils.getFormattedDistance(meters.toDouble(), LocalContext.current, unitsAreMetric())
-    )
-}
-
-/** One layer row: a labeled chip beside a small FAB, tinted by the layer's active state. */
-@Composable
-private fun LayerItem(
-    label: String,
-    @DrawableRes iconRes: Int,
-    color: Color,
-    leftHandMode: Boolean,
-    onClick: () -> Unit
-) {
-    SpeedDialRow(
-        leftHandMode = leftHandMode,
-        label = { LayerChip(label, color) },
-        fab = {
-            SmallFloatingActionButton(
-                onClick = onClick,
-                containerColor = color,
-                contentColor = Color.White
-            ) {
-                Icon(
-                    painterResource(iconRes),
-                    contentDescription = label,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    )
-}
-
-@Composable
-private fun LayerChip(text: String, color: Color) {
-    Surface(shape = RoundedCornerShape(4.dp), color = color) {
-        Text(
-            text,
-            color = Color.White,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
-    }
-}
-
-/** Keeps every speed-dial row's label on the inner side, away from the screen edge the FAB hugs. */
-@Composable
-private fun SpeedDialRow(
-    leftHandMode: Boolean,
-    label: @Composable () -> Unit,
-    fab: @Composable () -> Unit
-) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    FloatingActionButton(
+        onClick = onToggle,
+        containerColor = colorResource(if (active) R.color.layer_bikeshare_color else R.color.layer_disabled),
+        contentColor = Color.White,
+        modifier = modifier
     ) {
-        if (leftHandMode) {
-            fab()
-            label()
-        } else {
-            label()
-            fab()
-        }
+        Icon(
+            painterResource(R.drawable.ic_bike_rental),
+            contentDescription = stringResource(
+                if (active) R.string.layers_rentals_hide else R.string.layers_rentals_show
+            ),
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 

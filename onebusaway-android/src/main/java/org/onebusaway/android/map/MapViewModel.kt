@@ -41,7 +41,6 @@ import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
-import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -210,14 +209,8 @@ class MapViewModel @Inject constructor(
     /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
     val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
 
-    /** The rider's minimum-range filter, in metres — null for "any". */
-    val minimumRentalRangeMeters: StateFlow<Int?> get() = rentalController.minimumRangeMeters
-
-    /** Toggle one rental layer (the host syncs the prefs on resume; the FAB persists the user's tap). */
-    fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean, persist: Boolean = false) = rentalController.setLayerVisible(layer, visible, persist)
-
-    /** Narrow the rental layers to vehicles with at least [meters] of range left; null clears it. */
-    fun setMinimumRentalRangeMeters(meters: Int?, persist: Boolean = false) = rentalController.setMinimumRangeMeters(meters, persist)
+    /** Show/hide the rental layers (the host syncs the pref on resume; the button persists the tap). */
+    fun setRentalsVisible(visible: Boolean, persist: Boolean = false) = rentalController.setRentalsVisible(visible, persist)
 
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
@@ -684,7 +677,6 @@ class MapViewModel @Inject constructor(
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
         rentalController.setVisibleLayers(LayerUtils.visibleRentalLayers(context))
-        rentalController.setMinimumRangeMeters(LayerUtils.minimumRentalRangeMeters(context))
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.

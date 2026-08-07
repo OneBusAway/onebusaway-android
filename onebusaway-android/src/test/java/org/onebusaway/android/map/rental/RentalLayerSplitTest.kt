@@ -16,14 +16,12 @@
 package org.onebusaway.android.map.rental
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.directions.model.RentalFormFactor
 
 /**
- * Unit tests for the bikes/scooters layer split ([rentalLayersOf]) and the range filter
- * ([matchesMinimumRange]) — the two policies the one rental fetch is divided by (#2168).
+ * Unit tests for the bikes/scooters layer split ([rentalLayersOf]) — how the one rental fetch is
+ * divided between the two layers, and which places belong to neither (#2168).
  */
 class RentalLayerSplitTest {
 
@@ -70,39 +68,5 @@ class RentalLayerSplitTest {
     fun `a form factor with no layer draws on neither`() {
         assertEquals(emptySet<RentalLayer>(), rentalLayersOf(place(RentalFormFactor.CAR)))
         assertEquals(emptySet<RentalLayer>(), rentalLayersOf(place(RentalFormFactor.OTHER)))
-    }
-
-    // --- The range filter fails open, which is the whole point of it ---
-
-    @Test
-    fun `no filter keeps everything`() {
-        assertTrue(matchesMinimumRange(RentalPlace(id = "a", rangeMeters = 10), minimumRangeMeters = null))
-    }
-
-    @Test
-    fun `a vehicle stating enough range survives, one stating too little does not`() {
-        assertTrue(matchesMinimumRange(RentalPlace(id = "a", rangeMeters = 5_000), minimumRangeMeters = 3_000))
-        assertTrue(matchesMinimumRange(RentalPlace(id = "a", rangeMeters = 3_000), minimumRangeMeters = 3_000))
-        assertFalse(matchesMinimumRange(RentalPlace(id = "a", rangeMeters = 2_999), minimumRangeMeters = 3_000))
-    }
-
-    /**
-     * The failing-open case: a dock, a pedal bike and any feed that omits `fuel.range` all state no
-     * range, and must stay on the map rather than being silently deleted by a preset.
-     */
-    @Test
-    fun `anything that states no range survives every preset`() {
-        assertTrue(
-            matchesMinimumRange(
-                RentalPlace(id = "dock", kind = RentalKind.STATION),
-                minimumRangeMeters = 10_000
-            )
-        )
-        assertTrue(
-            matchesMinimumRange(
-                RentalPlace(id = "pedal", kind = RentalKind.VEHICLE, rangeMeters = null),
-                minimumRangeMeters = 10_000
-            )
-        )
     }
 }

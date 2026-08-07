@@ -31,8 +31,8 @@ import org.onebusaway.android.directions.model.RentalPropulsion
  * for regions with no OTP2 endpoint). Consumers never see either wire shape.
  *
  * **Every field OTP1 cannot state is nullable, and null means "the feed didn't say"** — never a
- * substituted default. That distinction is load-bearing for the range filter, which must fail *open*
- * on a vehicle whose feed omits its range rather than silently hiding it (see [matchesMinimumRange]).
+ * substituted default, so a consumer can always tell an absent fact from a zero one: a vehicle with no
+ * published range reports null rather than 0 km, which would read as a flat battery.
  *
  * All fields but the identifying ones default, so a test can build a fixture tersely; production code
  * always arrives through an adapter.
@@ -89,12 +89,14 @@ enum class RentalKind {
 }
 
 /**
- * The two map layers the rental fetch feeds. Bikes and scooters are separate toggles over **one**
- * request (see `RentalLayerController`), so a rider who wants both pays for one fetch.
+ * The two kinds of rental the fetch feeds, which decide a marker's colour and glyph.
  *
- * Bikes ships on and scooters off, copying the sibling iOS app's defaults *and its reasoning*:
- * scooters are the large majority of a dockless fleet — 74% of the supply in iOS's launch region —
- * so defaulting them on buries the transit map the app is actually for under them.
+ * They are **not** two user-facing toggles: one map button shows and hides both together (#2168),
+ * because both come out of a single `vehicleRentalsByBbox` response, so separating them cost a rider
+ * two taps to see one request's results. The sibling iOS app does split them, defaulting scooters off
+ * on the grounds that they are the large majority of a dockless fleet and would bury the transit map —
+ * worth knowing before anyone re-opens this, since the density budget in `RentalGuardrails` is what
+ * this app leans on for that problem instead.
  */
 enum class RentalLayer { BIKES, SCOOTERS }
 
@@ -126,19 +128,4 @@ private fun RentalFormFactor.rentalLayer(): RentalLayer? = when (this) {
     RentalFormFactor.MOPED -> RentalLayer.SCOOTERS
 
     RentalFormFactor.CAR, RentalFormFactor.OTHER -> null
-}
-
-/**
- * Whether [place] survives a minimum-range filter of [minimumRangeMeters] (null = no filter).
- *
- * **Fails open, on purpose.** A docked station has no single range to speak of, a pedal bike has no
- * charge to run out of, and plenty of feeds simply omit `fuel.range`; filtering those out would make
- * a range preset quietly delete most of the map rather than narrow it. Only a vehicle that *states* a
- * range short of the threshold is hidden — the one case where the rider asked a question the data
- * actually answers.
- */
-fun matchesMinimumRange(place: RentalPlace, minimumRangeMeters: Int?): Boolean {
-    if (minimumRangeMeters == null) return true
-    val range = place.rangeMeters ?: return true
-    return range >= minimumRangeMeters
 }

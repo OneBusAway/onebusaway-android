@@ -288,7 +288,9 @@ fun DirectionsResultsSheet(
     fromSnapshot: Boolean,
     pinControl: @Composable (selectedIndex: Int) -> Unit,
     pinnedOptionIndex: Int?,
-    onTogglePin: (Int) -> Unit,
+    // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
+    // item that does nothing — the same rule the unwired picker follows.
+    onTogglePin: ((Int) -> Unit)?,
     onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier
 ) {

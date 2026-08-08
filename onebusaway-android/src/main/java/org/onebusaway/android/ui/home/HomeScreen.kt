@@ -909,7 +909,9 @@ fun HomeScreen(
                                             pinnedOptionIndex = pinnedTrip
                                                 ?.selectedIndex
                                                 ?.takeIf { pinnedTripIsOnScreen },
-                                            onTogglePin = onTogglePinOption,
+                                            // A plan with no request behind it has nothing to pin, so
+                                            // its cards carry no long press at all (#2053).
+                                            onTogglePin = onTogglePinOption.takeIf { canPin },
                                             onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )

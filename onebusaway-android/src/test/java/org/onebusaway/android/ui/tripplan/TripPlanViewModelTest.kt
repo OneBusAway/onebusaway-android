@@ -796,16 +796,24 @@ class TripPlanViewModelTest {
             modes = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE),
             wheelchair = true,
             maxWalkMeters = 800.0,
-            walkPreference = WalkPreference.MINIMUM
+            walkPreference = WalkPreference.MINIMUM,
+            cyclingPreference = CyclingPreference.FLATTEST,
+            bikePreference = BikePreference.MAXIMUM
         )
 
         vm.restorePinned(params, departNow = false, itineraries = listOf(TripItinerary()))
 
+        // Every option the request carries, not a sample of them: restorePinned copies each field by
+        // hand, so one left out (or crossed with its neighbour) is exactly the mistake this catches.
         val state = vm.formState.value
         assertEquals(TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE), state.modes)
         assertTrue(state.wheelchair)
         assertEquals(800.0, state.maxWalkMeters!!, 0.0)
         assertEquals(WalkPreference.MINIMUM, state.walkPreference)
+        assertEquals(CyclingPreference.FLATTEST, state.cyclingPreference)
+        assertEquals(BikePreference.MAXIMUM, state.bikePreference)
+        assertFalse("optimizeTransfers must arrive as the request stated it", state.optimizeTransfers)
+        assertEquals(params.arriving, state.arriving)
     }
 
     private fun pinnedParams() = TripPlanParams(

@@ -1012,7 +1012,7 @@ fun TripResultsSheet(
     // handed the option they act on: the control the one currently selected, the menu the one pressed.
     pinControl: @Composable (selectedIndex: Int) -> Unit,
     pinnedOptionIndex: Int?,
-    onTogglePin: (Int) -> Unit,
+    onTogglePin: ((Int) -> Unit)?,
     onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp

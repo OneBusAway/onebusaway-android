@@ -81,6 +81,7 @@ class DirectionsExitConfirmDialogTest {
         composeRule.onNodeWithText(pinLabel).performClick()
 
         assertEquals(1, pinned)
+        assertEquals("pinning must still perform the exit it was pressed to survive", 1, confirmed)
         assertEquals(0, dismissed)
     }
 

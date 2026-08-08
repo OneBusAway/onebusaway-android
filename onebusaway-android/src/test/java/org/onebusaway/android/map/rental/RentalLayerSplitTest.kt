@@ -83,12 +83,18 @@ class RentalLayerSplitTest {
         assertEquals(RentalLayer.BIKES, rentalMarkerLayer(mixed, setOf(RentalLayer.BIKES)))
     }
 
-    /** With both on, a mixed dock settles on its own first layer rather than flickering between them. */
+    /**
+     * With both on, a mixed dock settles on bikes — the first [RentalLayer] — whichever order its own
+     * form factors arrived in. A dock's set is the feed's `byType` order, so resolving on the place's
+     * first element instead would repaint the marker when a poll returned the same types reordered.
+     */
     @Test
-    fun `a mixed dock is stable when both layers are enabled`() {
-        val mixed = place(RentalFormFactor.BICYCLE, RentalFormFactor.SCOOTER, kind = RentalKind.STATION)
+    fun `a mixed dock settles on bikes when both layers are enabled, whatever order its types arrived in`() {
         val both = setOf(RentalLayer.BIKES, RentalLayer.SCOOTERS)
-        assertEquals(rentalMarkerLayer(mixed, both), rentalMarkerLayer(mixed, both))
+        val bikeFirst = place(RentalFormFactor.BICYCLE, RentalFormFactor.SCOOTER, kind = RentalKind.STATION)
+        val scooterFirst = place(RentalFormFactor.SCOOTER, RentalFormFactor.BICYCLE, kind = RentalKind.STATION)
+        assertEquals(RentalLayer.BIKES, rentalMarkerLayer(bikeFirst, both))
+        assertEquals(RentalLayer.BIKES, rentalMarkerLayer(scooterFirst, both))
     }
 
     @Test

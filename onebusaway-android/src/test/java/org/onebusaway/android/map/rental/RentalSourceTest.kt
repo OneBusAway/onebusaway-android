@@ -110,6 +110,36 @@ class RentalSourceTest {
         )
     }
 
+    /**
+     * The two branches treat a trailing slash differently, and both are right: OTP1 strips it, because
+     * `bikeRentalUrl` concatenates path segments onto the base and would otherwise emit `…/otp//…`;
+     * OTP2 keeps the base verbatim, because `otp2GraphQlEndpoint` trims before appending `/gtfs/v1`.
+     * Pinned here so a base with the slash can tell the branches apart.
+     */
+    @Test
+    fun `a trailing slash is stripped for OTP1 and left to the GraphQL endpoint for OTP2`() {
+        assertEquals(
+            RentalSource.Otp1("https://custom.example.org/otp"),
+            rentalSource("https://custom.example.org/otp/", customUrlUsesGraphQl = false, region = null)
+        )
+        assertEquals(
+            RentalSource.Otp2("https://custom.example.org/otp/"),
+            rentalSource("https://custom.example.org/otp/", customUrlUsesGraphQl = true, region = null)
+        )
+        assertEquals(
+            RentalSource.Otp1("https://otp.example.org/otp"),
+            rentalSource(null, false, region(otpBaseUrl = "https://otp.example.org/otp/", supportsOtpBikeshare = true))
+        )
+        assertEquals(
+            RentalSource.Otp2("https://otp2.example.org/otp/"),
+            rentalSource(
+                null,
+                false,
+                region(otpBaseGraphqlUrl = "https://otp2.example.org/otp/", supportsOtpGraphqlBikeshare = true)
+            )
+        )
+    }
+
     /** A whitespace-only custom URL is not a configured server — see `OtpTarget.customOtpApiUrl`. */
     @Test
     fun `a blank custom URL is ignored`() {

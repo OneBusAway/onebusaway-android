@@ -99,6 +99,17 @@ class Otp2RentalsDecodeTest {
         assertEquals(setOf(RentalLayer.BIKES), rentalLayersOf(dock))
     }
 
+    /**
+     * The GBFS id is what the app keys a place by, so a feed that publishes it blank — or omits it —
+     * falls back to Apollo's relay `id` rather than leaving the place unidentifiable. The two ids are
+     * different spaces, which is why the deep link is never synthesized from either (#2158).
+     */
+    @Test
+    fun `a vehicle with no usable vehicleId falls back to the relay id`() {
+        assertEquals("relay-1", data(vehicle(vehicleId = "")).toRentalPlaces().single().id)
+        assertEquals("relay-1", data(vehicle(vehicleId = null)).toRentalPlaces().single().id)
+    }
+
     /** A place with no coordinates cannot be drawn anywhere, so it is dropped rather than placed at 0,0. */
     @Test
     fun `an entity with no position is dropped`() {
@@ -121,12 +132,13 @@ class Otp2RentalsDecodeTest {
 
     private fun vehicle(
         lat: Double? = 47.61,
-        androidUri: String? = "limebike://vehicle/abc"
+        androidUri: String? = "limebike://vehicle/abc",
+        vehicleId: String? = "lime_seattle:abc"
     ) = RentalsByBboxQuery.VehicleRentalsByBbox(
         __typename = "RentalVehicle",
         onRentalVehicle = RentalsByBboxQuery.OnRentalVehicle(
             id = "relay-1",
-            vehicleId = "lime_seattle:abc",
+            vehicleId = vehicleId,
             lat = lat,
             lon = -122.33,
             allowPickupNow = true,

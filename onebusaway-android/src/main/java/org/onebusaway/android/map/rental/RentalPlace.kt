@@ -136,11 +136,19 @@ private fun RentalFormFactor.rentalLayer(): RentalLayer? = when (this) {
  * Scooters is on has to wear the scooter colour and glyph, or the map answers a question nobody asked.
  * Picking blind from the place's own set drew it as a bike there, because bikes sort first.
  *
- * Falls back to the place's own first layer, then to bikes, for a place enabled by nothing — which
- * `RentalLayerController` filters out before it ever gets here, so the fallback is a total-function
- * formality rather than a case the map reaches.
+ * A dock enabled under *both* has to settle on one, and it resolves in [RentalLayer] declaration
+ * order — bikes first — rather than by the place's own set order. That set's order is the feed's: a
+ * station's form factors come from its `availableVehicles.byType` array, so picking its first element
+ * would let a poll that returns the same dock's types in the other order repaint the marker a
+ * different colour with nothing about the dock having changed.
+ *
+ * Falls back to the place's own first layer in that same order, then to bikes, for a place enabled by
+ * nothing — which `RentalLayerController` filters out before it ever gets here, so the fallback is a
+ * total-function formality rather than a case the map reaches.
  */
 fun rentalMarkerLayer(place: RentalPlace, enabled: Set<RentalLayer>): RentalLayer {
     val belongsTo = rentalLayersOf(place)
-    return belongsTo.firstOrNull { it in enabled } ?: belongsTo.firstOrNull() ?: RentalLayer.BIKES
+    return RentalLayer.entries.firstOrNull { it in belongsTo && it in enabled }
+        ?: RentalLayer.entries.firstOrNull { it in belongsTo }
+        ?: RentalLayer.BIKES
 }

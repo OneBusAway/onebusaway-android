@@ -301,6 +301,10 @@ fun RouteArrivalRow(
     mapRouteColor: Int? = null,
     selected: Boolean = false,
     selectedRouteNames: List<String> = emptyList(),
+    // The trip of this row the map is drilled into (the stop→route→trip focus, #2205), or null. Only
+    // meaningful on the selected row, and gated on [selected] below so a stale id can't outline a pill
+    // in a row that isn't the focused one.
+    selectedTripId: String? = null,
     etaAnchor: Modifier = Modifier,
     // Whether a live countdown is running for this row (#2166) — the row's menu picks its verb and
     // glyph from it, and the corner eye appears. Resolved by the list, like [isFavorite]: set
@@ -325,6 +329,9 @@ fun RouteArrivalRow(
     val selectionBorder = selectionColor
         ?.takeIf { selected }
         ?.let { BorderStroke(2.dp, Color(it)) }
+    // The focused trip's pill wears the card's own selection border — the same stroke object — so the
+    // two outlines read as one focus rather than two unrelated highlights (#2205).
+    val pillFocus = selectionBorder?.let { border -> selectedTripId?.let { EtaPillFocus(it, border) } }
     ArrivalCard(modifier, border = selectionBorder) {
         Box(Modifier.fillMaxWidth()) {
             Row(
@@ -397,7 +404,8 @@ fun RouteArrivalRow(
                         trips = group.trips,
                         actionsFor = actionsFor,
                         callbacks = callbacks,
-                        firstPillModifier = etaAnchor
+                        firstPillModifier = etaAnchor,
+                        focus = pillFocus
                     )
                 }
             }

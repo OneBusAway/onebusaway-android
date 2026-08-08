@@ -81,13 +81,43 @@ sealed interface DirectionsSubFocus {
 internal val CurrentFocus.keepsDrawnItinerary: Boolean
     get() = this is CurrentFocus.Directions && subFocus !is DirectionsSubFocus.Route
 
+/**
+ * This focus with its innermost attention layer removed, or null when there is nothing left to peel.
+ * The one definition of the focus ladder: a stop's route selection sits under its drilled-into trip
+ * (#2205), a directions overview under its focused leg, and every top-level focus under the root.
+ *
+ * Both consumers read it from here rather than each spelling the levels out: a background tap peels one
+ * rung ([org.onebusaway.android.ui.home.HomeViewModel.unfocusMapOneLevel]), and a focus restored after
+ * process death — where only the deepest rung is persisted — rebuilds its undo history by walking the
+ * whole ladder. A new level therefore has to be added in one place for both to agree.
+ */
+internal fun CurrentFocus.peeledOneLevel(): CurrentFocus? = when (this) {
+    CurrentFocus.None -> null
+    is CurrentFocus.Stop -> when {
+        selectedRoute == null -> CurrentFocus.None
+        // The trip drilled into is the innermost rung, so it goes first — the route stays drawn and
+        // only its confidence band and pill outline are given up.
+        selectedRoute.selectedTripId != null ->
+            CurrentFocus.Stop(stop, selectedRoute.copy(selectedTripId = null))
+        else -> CurrentFocus.Stop(stop)
+    }
+    // A focused leg — its route, or an on-street leg framed on its own — becomes the plain itinerary
+    // overview; a plain overview exits.
+    is CurrentFocus.Directions -> if (subFocus == null) CurrentFocus.None else CurrentFocus.Directions()
+    is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
+}
+
 val CurrentFocus.focusedStop: FocusedStop?
     get() = (this as? CurrentFocus.Stop)?.stop
 
 val CurrentFocus.focusedBikeStationId: String?
     get() = (this as? CurrentFocus.BikeStation)?.id
 
-/** Durable route identity. Vehicle-trip focus remains a transient [ShowRouteRequest] field. */
+/**
+ * Durable route identity. It names no trip: within stop focus the drilled-into trip is a level of its own
+ * ([StopRouteSelection.selectedTripId], #2205), and the [ShowRouteRequest.focusTripId] this mints is the
+ * one-shot "fit that vehicle" camera instruction a drill-in gesture passes, not retained state.
+ */
 data class RouteTarget(
     val routeId: String,
     val directionStopId: String? = null,
@@ -124,7 +154,18 @@ data class StopRouteSelection(
     // the user sees is the resolved arrivals row itself, drawn as the drawer's focus outline — so don't
     // render this and don't duplicate the rest of the row onto the selection.
     val originHeadsign: String?,
-    val legs: List<RouteLeg>
+    val legs: List<RouteLeg>,
+    /**
+     * The one trip drilled into from this route — the stop→route→trip level (#2205), entered by tapping
+     * that trip's ETA pill or its vehicle on the map. Both gestures mean the same thing, so both land
+     * here. Null is the plain stop→route focus.
+     *
+     * A level of its own rather than a render-only vehicle selection, so a background tap peels it before
+     * the route (see [peeledOneLevel]) — which is what makes the map's
+     * [org.onebusaway.android.map.render.MapRenderState.selectedVehicleTripId] a projection of this focus
+     * rather than a second, independently-mutated truth.
+     */
+    val selectedTripId: String? = null
 ) {
     init {
         require(legs.isNotEmpty()) { "StopRouteSelection requires at least one route leg" }
@@ -134,5 +175,7 @@ data class StopRouteSelection(
     val currentLeg: RouteLeg get() = legs.last()
     fun target(stopId: String) = RouteTarget(currentLeg.routeId, stopId, currentLeg.directionId)
 
-    fun continueTo(leg: RouteLeg): StopRouteSelection = copy(legs = legs + leg)
+    /** Follow the block onto [leg]. The trip level doesn't survive: the continuation is a *different*
+     *  trip of that block, and this tap doesn't name its id. */
+    fun continueTo(leg: RouteLeg): StopRouteSelection = copy(legs = legs + leg, selectedTripId = null)
 }

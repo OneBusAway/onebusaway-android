@@ -366,6 +366,9 @@ internal fun ArrivalsList(
     selectedRouteId: String? = null,
     /** Route names in the selected vehicle block, beginning with the route on this row. */
     selectedRouteNames: List<String> = emptyList(),
+    /** The trip drilled into within the selected row (the stop→route→trip focus, #2205); null when the
+     *  selection stops at the route. */
+    selectedTripId: String? = null,
     listState: LazyListState = rememberLazyListState(),
     /** Hosts that show the stop's direction elsewhere (e.g. in their own header) set this false to
      *  avoid duplicating it as a list item. */
@@ -428,15 +431,18 @@ internal fun ArrivalsList(
             item(key = "empty") { EmptyArrivals(content.minutesAfter) }
         } else {
             itemsIndexed(routeGroups, key = { _, group -> group.key }) { index, group ->
+                // Every aspect of the map's selection applies to exactly one row, so the row-key test
+                // is made once here rather than repeated per aspect.
+                val isSelectedRow = group.key == effectiveSelectedRowKey
                 RouteArrivalRow(
                     group = group,
                     actionsFor = { content.actions[it.tripId] },
                     isFavorite = group.routeId in content.favoriteRouteIds,
                     callbacks = rowCallbacks,
                     mapRouteColor = mapRouteColors[RouteDirectionKey(group.routeId, group.directionId)],
-                    selected = group.key == effectiveSelectedRowKey,
-                    selectedRouteNames =
-                    if (group.key == effectiveSelectedRowKey) selectedRouteNames else emptyList(),
+                    selected = isSelectedRow,
+                    selectedRouteNames = if (isSelectedRow) selectedRouteNames else emptyList(),
+                    selectedTripId = selectedTripId.takeIf { isSelectedRow },
                     // The onboarding ETA spotlight anchors on the first route row's pill only.
                     etaAnchor = if (index == 0) etaAnchor else Modifier,
                     tracked = group.representative.trackedRouteKey() in content.trackedRows,

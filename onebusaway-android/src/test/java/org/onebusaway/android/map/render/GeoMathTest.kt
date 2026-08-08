@@ -17,6 +17,7 @@ package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 import org.onebusaway.android.util.GeoPoint
 
@@ -90,6 +91,17 @@ class GeoMathTest {
         )
         assertEquals(metersPerPixel(0.0, 30.0), metersPerPixel(0.0, zoom = 40.0), 1e-9)
         assertEquals(metersPerPixel(0.0, 0.0), metersPerPixel(0.0, zoom = -5.0), 1e-9)
+    }
+
+    @Test
+    fun `a reading that is not a position at all is refused, not clamped into range`() {
+        // Clamping leaves a NaN alone, and the callers scale geometry by what comes back, so a NaN answer
+        // would spread through the shapes instead of stopping at the broken reading that caused it.
+        assertThrows(IllegalArgumentException::class.java) { metersPerPixel(latitude = Double.NaN, zoom = 12.0) }
+        assertThrows(IllegalArgumentException::class.java) { metersPerPixel(latitude = 47.6, zoom = Double.NaN) }
+        assertThrows(IllegalArgumentException::class.java) {
+            metersPerPixel(latitude = Double.POSITIVE_INFINITY, zoom = 12.0)
+        }
     }
 
     private companion object {

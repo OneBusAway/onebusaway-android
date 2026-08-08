@@ -121,6 +121,19 @@ class RouteLineStripesTest {
     }
 
     @Test
+    fun `a ride shared by more routes than the cap shows every one of them, cap and all`() {
+        // The two bounds meet here, and coverage wins: the cap spares native lines nobody can tell apart,
+        // whereas a route dropped past it is a route the rider is never told they may board — the thing
+        // #2100 is about. A leg's routes are all named on the badge sitting on it, so the count that gets
+        // through is bounded by the ride itself rather than by the length of the line.
+        val extras = List(MAX_STRIPES + 4) { 0xFF000000.toInt() or it }
+
+        val striped = stripe(listOf(ride(kilometres = 400.0, stripeColors = extras)), zoom = 18.0)
+
+        assertEquals(listOf(red) + extras, striped.map { it.color })
+    }
+
+    @Test
     fun `until the first camera settles a shared ride draws whole, in its planned colour`() {
         val lines = listOf(ride(kilometres = 4.0, stripeColors = listOf(blue)))
 

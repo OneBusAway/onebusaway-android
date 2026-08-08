@@ -67,9 +67,15 @@ internal class StripeRoutePolylinePass : RoutePolylineRenderPass {
 private const val STRIPE_LENGTH_IN_WIDTHS = 2.5
 
 /**
- * The most runs one line is cut into. Well over what a viewport holds — a stripe is a few tens of dp, so a
- * screen shows around ten of them — so the cap binds only on a line running far off the edges of the map,
- * where the runs beyond it cost native lines (two apiece, since each is cased) and buy nothing to look at.
+ * The most runs one line is cut into *to hold the rhythm*. Well over what a viewport holds — a stripe is a
+ * few tens of dp, so a screen shows around ten of them — so the cap binds only on a line running far off the
+ * edges of the map, where the runs beyond it cost native lines (two apiece, since each is cased) and buy
+ * nothing to look at.
+ *
+ * It is not a bound on the colours: a ride shared by more routes than this is still cut once per route,
+ * because a stripe past the cap costs a native line nobody can tell from its neighbour while a route past it
+ * is a route the rider is never told they may board. The count that gets through is bounded by the ride —
+ * the same routes the badge on the line names — rather than by how long the line is.
  */
 internal const val MAX_STRIPES = 24
 

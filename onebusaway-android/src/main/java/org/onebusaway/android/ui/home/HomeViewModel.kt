@@ -988,6 +988,13 @@ class HomeViewModel @Inject constructor(
 
     // Whether the drawn trip can be got back after leaving, which is the whole question #2140's dialog
     // asks. False by default, so the confirmation stands exactly where it did before.
+    //
+    // It mirrors a fact this VM cannot derive, so it holds an invariant worth stating: there is exactly
+    // **one writer**, and it re-asserts on the same condition it reports ("is the drawn plan the pinned
+    // one"). Do not also clear it from `enterDirections`/`clearShownItineraryOnMap` — that looks like
+    // prudent housekeeping and is the opposite: neither of those changes the writer's condition, so
+    // nothing would restore the flag, and a pinned trip would start demanding the confirmation again.
+    // Any second writer has to come with a reason the first one cannot already express.
     private var drawnTripRecoverable = false
 
     /**

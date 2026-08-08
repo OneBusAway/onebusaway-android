@@ -164,7 +164,7 @@ internal fun evictStaleInViewport(
  * `Application`/location-settings/`PermissionUtils` reads (which stay at the call site) so the branch
  * logic — the historically error-prone permission/location flow ported from the flavor hosts — can be
  * unit-tested on the JVM. Same pattern as [zoomFulfills] / [stopRequestFulfilled] /
- * [org.onebusaway.android.map.rental.rentalAction] / [nextVehicleDelay].
+ * [nextVehicleDelay].
  */
 
 /** What the my-location request should do, given the current location/permission state. */

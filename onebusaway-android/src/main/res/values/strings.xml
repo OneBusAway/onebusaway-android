@@ -646,6 +646,8 @@
         list.
     </string>
 
+    <string name="preferences_show_rental_button_title">Show bike and scooter button</string>
+    <string name="preferences_show_rental_button_summary">Display the bike and scooter layer button on the map</string>
     <string name="preferences_show_zoom_controls_title">Show zoom controls</string>
     <string name="preferences_show_zoom_controls_summary">Display zoom controls on map
     </string>
@@ -1302,6 +1304,8 @@
     <string name="layers_rentals_show">Show bikes and scooters</string>
     <string name="layers_rentals_hide">Hide bikes and scooters</string>
     <string name="layers_rentals_loading">Loading bikes and scooters</string>
+    <string name="layers_rentals_hide_button">Hide this button</string>
+    <string name="layers_rentals_hidden_toast">Bike and scooter button hidden. Turn it back on in Settings.</string>
     <string name="layers_bikes_label">Bikes</string>
     <string name="layers_scooters_label">Scooters</string>
     <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>

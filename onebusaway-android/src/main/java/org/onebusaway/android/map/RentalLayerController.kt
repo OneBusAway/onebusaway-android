@@ -31,15 +31,12 @@ import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.RentalMarker
-import org.onebusaway.android.map.rental.RentalAction
 import org.onebusaway.android.map.rental.RentalDensity
 import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.map.rental.RentalPlacesRepository
-import org.onebusaway.android.map.rental.filterRentals
 import org.onebusaway.android.map.rental.isWithinRentalZoomGate
 import org.onebusaway.android.map.rental.preferenceKey
-import org.onebusaway.android.map.rental.rentalAction
 import org.onebusaway.android.map.rental.rentalDensity
 import org.onebusaway.android.map.rental.rentalLayersFromPreferences
 import org.onebusaway.android.map.rental.rentalLayersOf
@@ -52,10 +49,9 @@ import org.onebusaway.android.util.toLocation
 /**
  * The rental overlay — bikes and scooters (#2168), formerly the bikeshare-only `BikeLayerController`.
  * It **overlays every view** rather than being one: a cold driver over [MapHost] that loads rental
- * vehicles and docks for the current viewport whenever either layer is on (home map) or a directions
- * itinerary references specific rentals. [start] re-launches the loader for a given view (the
- * directions flag + its rental filter); [setLayerVisible] toggles a home-map layer;
- * [setMinimumRangeMeters] applies the range filter; [stop] cancels.
+ * vehicles and docks for the current viewport whenever a layer is on. [start] re-launches the loader
+ * for a view; [setRentalsVisible] and [setLayerVisible] drive the map's master button and its two mode
+ * toggles; [stop] cancels, and [hide] additionally clears the map — what directions mode does.
  *
  * **The two layers share one fetch.** `vehicleRentalsByBbox` returns everything in the box regardless,
  * so turning both on costs exactly one request; the split happens in [rentalLayersOf] after the
@@ -132,11 +128,14 @@ class RentalLayerController(
     }
 
     /**
-     * (Re)start the rental loader for the current mode. [directions] forces the rentals on (the trip's
-     * own vehicles/docks), filtered to [selectedRentalIds]; otherwise the home-map layer toggles gate
-     * them.
+     * (Re)start the rental loader. The home-map layer toggles gate what it draws.
+     *
+     * Directions mode does not call this — it calls [hide]. Rentals used to be forced on there and
+     * filtered to the trip's own vehicles, which meant an itinerary drew rental markers the rider
+     * could neither switch off nor account for; the trip's own bike legs already say where the vehicle
+     * is picked up.
      */
-    fun start(directions: Boolean, selectedRentalIds: List<String>?) {
+    fun start() {
         loadJob?.cancel()
         loadJob = scope.launch {
             combine(
@@ -155,35 +154,31 @@ class RentalLayerController(
                     ) {
                         return@collectLatest
                     }
-                    when (rentalAction(directions, selectedRentalIds, layers)) {
-                        RentalAction.LEAVE -> {}
+                    if (layers.isEmpty()) {
                         // Switching the layers off retracts the guardrail notice with them: "zoom in
                         // to see bikes and scooters" is nonsense once the rider has said they don't
                         // want to see them.
-                        RentalAction.CLEAR -> clearRentals()
-                        RentalAction.SHOW -> {
-                            // The zoom gate comes *before* the request: `vehicleRentalsByBbox` has no
-                            // server-side limit, so a region-wide viewport must cost no round trip at
-                            // all rather than 13k entities we then throw away. Directions mode is
-                            // exempt — it asks for a handful of named rentals on a trip already framed
-                            // on screen, not for whatever happens to be in the box.
-                            if (!directions && !isWithinRentalZoomGate(camera.latSpan)) {
-                                clearRentals()
-                                host.setRentalsNeedCloserZoom(true)
-                                return@collectLatest
-                            }
-                            val places = placesFor(camera) ?: return@collectLatest
-                            val filtered = filterRentals(places, selectedRentalIds) ?: return@collectLatest
-                            showRentals(
-                                // Directions mode draws exactly the trip's own rentals: the rider is
-                                // being walked to *that* vehicle, so the layer toggle may not hide it.
-                                if (directions) filtered else filtered.forLayers(layers),
-                                rentalsVisible = true
-                            )
+                        clearRentals()
+                    } else {
+                        // The zoom gate comes *before* the request: `vehicleRentalsByBbox` has no
+                        // server-side limit, so a region-wide viewport must cost no round trip at all
+                        // rather than 13k entities we then throw away.
+                        if (!isWithinRentalZoomGate(camera.latSpan)) {
+                            clearRentals()
+                            host.setRentalsNeedCloserZoom(true)
+                            return@collectLatest
                         }
+                        val places = placesFor(camera) ?: return@collectLatest
+                        showRentals(places.forLayers(layers), rentalsVisible = true)
                     }
                 }
         }
+    }
+
+    /** Leave the map with no rentals on it and the loader off — what directions mode does. */
+    fun hide() {
+        stop()
+        clearRentals()
     }
 
     fun stop() {

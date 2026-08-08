@@ -504,7 +504,9 @@ fun MapFeature(
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
-        layersVisible = chrome.layersFab,
+        // Hidden while directions own the map (#2168): the layer draws nothing there, so a button
+        // offering to toggle it would be inert — and directions already crowd this corner.
+        layersVisible = chrome.layersFab && currentFocus !is CurrentFocus.Directions,
         rentalsActive = chrome.rentalsActive,
         bikesActive = chrome.bikesActive,
         scootersActive = chrome.scootersActive,
@@ -529,7 +531,13 @@ fun MapFeature(
         onZoomOut = { mapViewModel.zoomOut() },
         onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
         onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
-        onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) }
+        onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) },
+        onHideRentalButton = {
+            PreferenceUtils.saveBoolean(resources.getString(R.string.preference_key_show_rental_button), false)
+            // The button is the only signpost to itself, so hiding it without saying where it went
+            // would look like a bug. The toast names Settings, which is the one way back.
+            Toast.makeText(context, R.string.layers_rentals_hidden_toast, Toast.LENGTH_LONG).show()
+        }
     )
 }
 

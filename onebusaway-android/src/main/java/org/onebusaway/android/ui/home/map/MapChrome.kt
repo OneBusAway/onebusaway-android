@@ -22,6 +22,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,7 +90,8 @@ fun MapChrome(
     onZoomOut: () -> Unit,
     onToggleRentals: () -> Unit,
     onToggleBikes: () -> Unit,
-    onToggleScooters: () -> Unit
+    onToggleScooters: () -> Unit,
+    onHideRentalButton: () -> Unit
 ) {
     // Animate the lift here so the per-frame value only recomposes the FABs, not the hosting map
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).
@@ -125,6 +127,7 @@ fun MapChrome(
                 onToggle = onToggleRentals,
                 onToggleBikes = onToggleBikes,
                 onToggleScooters = onToggleScooters,
+                onHide = onHideRentalButton,
                 modifier = Modifier
                     .align(sideAlign)
                     // The panel's own padding insets the FAB inside it, which would otherwise leave the
@@ -224,6 +227,7 @@ private fun RentalsFab(
     onToggle: () -> Unit,
     onToggleBikes: () -> Unit,
     onToggleScooters: () -> Unit,
+    onHide: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // The panel only exists visually while the modes are on show; off, the master reads as a plain FAB.
@@ -295,40 +299,59 @@ private fun RentalsFab(
                 if (active) 0.dp else MODE_TOGGLE_OUTLINE,
                 label = "rentalFabOutline"
             )
-            FloatingActionButton(
-                onClick = onToggle,
-                shape = RENTAL_FAB_SHAPE,
-                containerColor = fabContainer,
-                contentColor = fabContent,
-                // Border on the FAB's own shape, so the outline follows it rather than tracing a
-                // circle over a rounded square.
-                modifier = if (fabOutline > 0.dp) {
-                    Modifier.border(fabOutline, rentalColor, RENTAL_FAB_SHAPE)
-                } else {
-                    Modifier
-                }
-            ) {
-                // The spinner replaces the glyph rather than sitting beside or around it: the button is
-                // 56dp and already carries the layer's colour, so a ring around the mark would read as
-                // a second, meaningless charge ring next to the ones on the markers.
-                if (loading) {
-                    val loadingLabel = stringResource(R.string.layers_rentals_loading)
-                    CircularProgressIndicator(
-                        // Follows the button's own content colour, so a load that somehow starts while
-                        // rentals are off doesn't paint white on white.
-                        color = fabContent,
-                        strokeWidth = RENTAL_SPINNER_STROKE,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .semantics { contentDescription = loadingLabel }
-                    )
-                } else {
-                    Icon(
-                        painterResource(R.drawable.ic_bike_rental),
-                        contentDescription = stringResource(
-                            if (active) R.string.layers_rentals_hide else R.string.layers_rentals_show
+            // A Surface with combinedClickable rather than a FloatingActionButton: the FAB exposes no
+            // long-press, and wrapping one would leave two overlapping click targets fighting over the
+            // gesture. Everything a FAB gives us here — shape, elevation, container/content colour — is
+            // stated above anyway, and the mode toggles below are already built this way.
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                Surface(
+                    modifier = Modifier
+                        .size(FAB_SIZE)
+                        .combinedClickable(
+                            onClick = onToggle,
+                            onLongClick = { menuOpen = true },
+                            onLongClickLabel = stringResource(R.string.layers_rentals_hide_button)
                         ),
-                        modifier = Modifier.size(24.dp)
+                    shape = RENTAL_FAB_SHAPE,
+                    color = fabContainer,
+                    contentColor = fabContent,
+                    shadowElevation = RENTAL_SURFACE_ELEVATION,
+                    // Null rather than a zero-width stroke, which still paints a hairline at some
+                    // densities and would ring the filled state.
+                    border = if (fabOutline > 0.dp) BorderStroke(fabOutline, rentalColor) else null
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        // The spinner replaces the glyph rather than sitting beside or around it: the
+                        // button already carries the layer's colour, so a ring around the mark would
+                        // read as a second, meaningless charge ring next to the ones on the markers.
+                        if (loading) {
+                            val loadingLabel = stringResource(R.string.layers_rentals_loading)
+                            CircularProgressIndicator(
+                                color = fabContent,
+                                strokeWidth = RENTAL_SPINNER_STROKE,
+                                modifier = Modifier
+                                    .size(RENTAL_FAB_GLYPH)
+                                    .semantics { contentDescription = loadingLabel }
+                            )
+                        } else {
+                            Icon(
+                                painterResource(R.drawable.ic_bike_rental),
+                                contentDescription = stringResource(
+                                    if (active) R.string.layers_rentals_hide else R.string.layers_rentals_show
+                                ),
+                                modifier = Modifier.size(RENTAL_FAB_GLYPH)
+                            )
+                        }
+                    }
+                }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.layers_rentals_hide_button)) },
+                        onClick = {
+                            menuOpen = false
+                            onHide()
+                        }
                     )
                 }
             }
@@ -398,6 +421,15 @@ private val MODE_TOGGLE_OUTLINE = 1.5.dp
 
 /** The rental button's spinner stroke — thin enough to read as progress at 24dp, not as a ring. */
 private val RENTAL_SPINNER_STROKE = 2.dp
+
+/**
+ * The rental button's glyph, ~1.3x the 24dp a FAB icon usually takes.
+ *
+ * Bigger because this glyph is doing more work than a FAB icon normally does: it is the only thing on
+ * the button, and in the outlined state it carries the mark against white rather than sitting white on
+ * a filled disc. Applies to the spinner too, which stands in for it. Still well inside the 56dp button.
+ */
+private val RENTAL_FAB_GLYPH = 31.dp
 
 /**
  * The master FAB's corner radius, and the shape built from it.

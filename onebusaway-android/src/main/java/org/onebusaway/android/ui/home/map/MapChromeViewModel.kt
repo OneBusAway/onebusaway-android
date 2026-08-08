@@ -77,13 +77,18 @@ class MapChromeViewModel @Inject constructor(
                     RentalLayer.SCOOTERS.defaultVisible
                 )
             ) { master, bikes, scooters -> Triple(master, bikes, scooters) }
+            // The button's own visibility is a fourth, independent preference: a rider can hide the
+            // control (long-press, or Settings) without that touching which layers are switched on, so
+            // showing it again brings back exactly what they had.
+            val buttonShown = prefsRepo.observeBoolean(R.string.preference_key_show_rental_button, true)
             combine(
                 prefsRepo.observeBoolean(R.string.preference_key_show_zoom_controls, false),
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),
-                rentals,
+                rentals.combine(buttonShown) { it, shown -> it to shown },
                 regionRepo.region,
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
-            ) { zoomControls, leftHand, (master, bikes, scooters), region, otpUrl ->
+            ) { zoomControls, leftHand, (rentalPrefs, shown), region, otpUrl ->
+                val (master, bikes, scooters) = rentalPrefs
                 // Reactive re-derivation of rental availability for this consumer, tracking region +
                 // the OTP-URL pref, so this stays a live flow while the trip-planning call sites
                 // resolve theirs per-call from a Context. This chrome drives the rental *map layer*
@@ -93,7 +98,7 @@ class MapChromeViewModel @Inject constructor(
                 MapChromeState(
                     zoomControls = zoomControls,
                     leftHand = leftHand,
-                    layersFab = rentalsEnabled,
+                    layersFab = rentalsEnabled && shown,
                     rentalsActive = rentalsOn,
                     // Only meaningful while the master is on, which is also the only time the mode
                     // toggles are drawn — so their tint can't advertise a state that isn't in effect.

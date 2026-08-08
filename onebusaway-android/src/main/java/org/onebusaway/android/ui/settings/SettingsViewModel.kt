@@ -96,6 +96,7 @@ class SettingsViewModel @Inject constructor(
         showNegativeArrivals = prefs.getBoolean(R.string.preference_key_show_negative_arrivals, true),
         hideAlerts = prefs.getBoolean(R.string.preference_key_hide_alerts, false),
         showZoomControls = prefs.getBoolean(R.string.preference_key_show_zoom_controls, false),
+        showRentalButton = prefs.getBoolean(R.string.preference_key_show_rental_button, true),
         displayWeatherView = prefs.getBoolean(R.string.preference_key_display_weather_view, true),
         showAvailableStudies = prefs.getBoolean(R.string.preference_key_show_available_studies, true),
         showTutorialScreens = prefs.getBoolean(R.string.preference_key_show_tutorial_screens, true),
@@ -160,6 +161,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun onShowZoomControlsChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_zoom_controls, value)
+
+    fun onShowRentalButtonChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_show_rental_button, value)
 
     fun onDisplayWeatherViewChanged(value: Boolean) = prefs.setBoolean(R.string.preference_key_display_weather_view, value)
 

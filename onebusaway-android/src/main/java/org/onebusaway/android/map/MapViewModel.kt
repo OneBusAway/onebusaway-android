@@ -321,7 +321,7 @@ class MapViewModel @Inject constructor(
         // leaveCurrentView already restarted the stops loader when a focused stop was preserved;
         // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
         if (routeController.focusedStopId == null) stopsController.start()
-        rentalController.start(directions = false, selectedRentalIds = null)
+        rentalController.start()
     }
 
     /**
@@ -354,7 +354,7 @@ class MapViewModel @Inject constructor(
             itineraryContext = itineraryContext,
             palette = palette
         )
-        rentalController.start(directions = false, selectedRentalIds = null)
+        rentalController.start()
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
@@ -545,10 +545,10 @@ class MapViewModel @Inject constructor(
         directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
         directionsController.start(itinerary, directionsPalette(), pins)
-        rentalController.start(
-            directions = true,
-            selectedRentalIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)
-        )
+        // Directions draws no rentals (#2168): an itinerary that scattered rental markers over itself
+        // showed the rider vehicles they could neither switch off — the layer button is hidden here —
+        // nor act on, while the trip's own bike legs already say where its vehicle is picked up.
+        rentalController.hide()
     }
 
     /**
@@ -616,7 +616,7 @@ class MapViewModel @Inject constructor(
         persistRoute(null)
         stopsController.clearFocus()
         stopsController.start()
-        rentalController.start(directions = false, selectedRentalIds = null)
+        rentalController.start()
     }
 
     /**

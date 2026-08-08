@@ -32,6 +32,7 @@ class SettingsUiStateTest {
         showNegativeArrivals = true,
         hideAlerts = false,
         showZoomControls = false,
+        showRentalButton = true,
         displayWeatherView = true,
         showAvailableStudies = true,
         showTutorialScreens = true,

@@ -108,7 +108,11 @@ class OptionCardPinLongPressTest {
         }
         composeRule.waitForIdle()
 
-        composeRule.onAllNodes(hasPinLongPressAction()).assertCountEquals(0)
+        // On the *presence* of the action, not on its label: a long press registered under some other
+        // label would still be a secondary action the card cannot perform, and a label-only check would
+        // wave it through.
+        composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.OnLongClick))
+            .assertCountEquals(0)
         composeRule.onAllNodesWithText(pinLabel).assertCountEquals(0)
     }
 

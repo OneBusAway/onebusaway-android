@@ -46,11 +46,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.onebusaway.android.R
 import org.onebusaway.android.map.compose.formatDataAge
-import org.onebusaway.android.map.googlemapsv2.compose.BikeIcons
+import org.onebusaway.android.map.compose.rentalContentDescription
+import org.onebusaway.android.map.googlemapsv2.compose.RentalIcons
 import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
-import org.onebusaway.android.map.render.BikeBand
-import org.onebusaway.android.map.render.BikeMarker
 import org.onebusaway.android.map.render.ContinuationBadge
 import org.onebusaway.android.map.render.ContinuationBadgeBitmaps
 import org.onebusaway.android.map.render.CorrectionSmoother
@@ -62,6 +61,8 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.RentalBand
+import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteLineDash
@@ -73,12 +74,14 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
-import org.onebusaway.android.map.render.bikeZoomBand
+import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
+import org.onebusaway.android.util.PreferenceUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDisplayName
 
@@ -118,7 +121,7 @@ class GoogleMapRenderer(
             ContextCompat.getColor(context, R.color.map_stop_focus),
             ContextCompat.getColor(context, R.color.route_stop_outline)
         )
-    private val bikeByMarker = HashMap<Marker, BikeMarker>()
+    private val rentalByMarker = HashMap<Marker, RentalMarker>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -207,7 +210,7 @@ class GoogleMapRenderer(
     private var pingStart: WallTime? = null
     private val pingColor by lazy { ContextCompat.getColor(context, R.color.theme_primary) }
 
-    private val bikeIcons by lazy { BikeIcons(context) }
+    private val rentalIcons by lazy { RentalIcons(context) }
 
     private val density = context.resources.displayMetrics.density
 
@@ -267,7 +270,7 @@ class GoogleMapRenderer(
         staticMarkers.clear()
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
-        bikeByMarker.clear()
+        rentalByMarker.clear()
         continuationBadgeByMarker.clear()
         routeBadgeByMarker.clear()
     }
@@ -285,25 +288,26 @@ class GoogleMapRenderer(
             map.cameraPosition.zoom
         )
 
-        if (snapshot.bikeshareVisible) {
-            val band = bikeZoomBand(map.cameraPosition.zoom)
-            if (band != BikeBand.HIDDEN) {
-                for (bike in snapshot.bikeStations) {
-                    val icon = when {
-                        band == BikeBand.BIG && bike.isFloatingBike -> bikeIcons.bigFloating
-                        band == BikeBand.BIG -> bikeIcons.bigStation
-                        else -> bikeIcons.small
-                    }
-                    // Title is kept only so a marker tap opens the info window; the InfoWindowAdapter
-                    // renders the shared BikeInfoWindow composable instead of the title text.
+        if (snapshot.rentalsVisible) {
+            val band = rentalZoomBand(map.cameraPosition.zoom)
+            if (band != RentalBand.HIDDEN) {
+                val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
+                for (rental in snapshot.rentals) {
+                    // Centred on the point in both bands: the badge is the marker, and the small dot
+                    // has no tip to hang off the coordinate either.
+                    val options = MarkerOptions().position(rental.point.toLatLng()).anchor(0.5f, 0.5f)
+                    options.icon(if (band == RentalBand.BIG) rentalIcon(rental) else rentalIcons.small)
+                    // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
+                    // renders the shared RentalInfoWindow composable instead of the title text); the
+                    // snippet is what the SDK reads out as the marker's content description, so the
+                    // occupancy/charge lines reach a rider who can't see them (#2168).
                     val marker = map.addMarkerOrFail(
-                        MarkerOptions()
-                            .position(bike.point.toLatLng())
-                            .icon(icon)
-                            .title(bike.station.name)
+                        options
+                            .title(rental.place.name)
+                            .snippet(rentalContentDescription(context, rental.place, metric))
                     )
                     staticMarkers.add(marker)
-                    bikeByMarker[marker] = bike
+                    rentalByMarker[marker] = rental
                 }
             }
         }
@@ -860,7 +864,14 @@ class GoogleMapRenderer(
         updateRouteBadgeScale(zoom)
     }
 
-    fun bikeForMarker(marker: Marker): BikeMarker? = bikeByMarker[marker]
+    /** The big badge for [rental] — the layer's colour and glyph, filled by its charge ring. */
+    private fun rentalIcon(rental: RentalMarker): BitmapDescriptor = rentalIcons.big(
+        rental.layer,
+        rental.place.kind,
+        rentalChargeFraction(rental.place)
+    )
+
+    fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

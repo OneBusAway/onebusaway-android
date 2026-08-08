@@ -974,9 +974,6 @@
     <string name="street_mode_bicycle">Własny rower</string>
 
     <!-- Bikeshare -->
-    <string name="bike_info_window_bikes_title">Rowery</string>
-    <string name="bike_info_window_spaces_title">Miejsca</string>
-    <string name="layers_speedial_bikeshare_label">Rower miejski</string>
     <string name="bike_station_title">Dotknij, aby zarezerwować rower</string>
     <string name="floating_bike_title">Dotknij, aby zarezerwować ten rower</string>
 

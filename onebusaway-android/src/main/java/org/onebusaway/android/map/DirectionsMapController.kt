@@ -260,24 +260,5 @@ class DirectionsMapController(private val host: MapHost) {
         private const val HUE_GREEN = 120.0f
 
         private const val HUE_RED = 0.0f
-
-        /**
-         * The bike-share stations an itinerary references, to filter the bike overlay to the trip's own
-         * stations (ported from the legacy DirectionsMapController; passed to the bike loader).
-         */
-        fun bikeStationIdsFromItinerary(itinerary: TripItinerary): List<String> {
-            val ids = ArrayList<String>()
-            for (leg in itinerary.legs) {
-                if (leg.mode == TripMode.BICYCLE) {
-                    if (leg.from.vertexType == TripVertexType.BIKESHARE) {
-                        leg.from.rental?.id?.let { ids.add(it) }
-                    }
-                    if (leg.to.vertexType == TripVertexType.BIKESHARE) {
-                        leg.to.rental?.id?.let { ids.add(it) }
-                    }
-                }
-            }
-            return ids
-        }
     }
 }

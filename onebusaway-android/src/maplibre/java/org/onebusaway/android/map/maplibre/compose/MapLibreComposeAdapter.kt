@@ -55,9 +55,9 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.map.MapHost
-import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
@@ -277,9 +277,9 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
 /**
  * Wires map/marker/info-window taps to [callbacks] (the home-screen tap policy the host used to
  * install): a stop tap focuses + recenters via [callbacks]; a tap on empty map clears focus; a
- * vehicle/bike tap pre-renders its shared info window (via [infoWindows]) and opens it; a tap on the
- * open window deep links. The bike content is wrapped in a white bubble ([VehicleInfoWindow] draws its
- * own card, [BikeInfoWindow] is background-free), matching the Google flavor.
+ * vehicle/rental tap pre-renders its shared info window (via [infoWindows]) and opens it; a tap on the
+ * open window deep links. The rental content is wrapped in a white bubble ([VehicleInfoWindow] draws its
+ * own card, [RentalInfoWindow] is background-free), matching the Google flavor.
  */
 @Suppress("DEPRECATION") // classic Marker/InfoWindow click API; migration tracked in #1728
 private fun wireClicks(
@@ -319,11 +319,11 @@ private fun wireClicks(
             infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, vehicle.isRealtime, response) }
             return@setOnMarkerClickListener true
         }
-        val bike = renderer.bikeForMarker(marker)
-        if (bike != null) {
+        val rental = renderer.rentalForMarker(marker)
+        if (rental != null) {
             infoWindows.open(marker) {
                 Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
-                    BikeInfoWindow(bike.station)
+                    RentalInfoWindow(rental.place)
                 }
             }
             return@setOnMarkerClickListener true
@@ -346,9 +346,9 @@ private fun wireClicks(
             callbacks.onVehicleInfoWindowClick(vehicle.status)
             return@setOnInfoWindowClickListener true
         }
-        val bike = renderer.bikeForMarker(marker)
-        if (bike != null) {
-            callbacks.onBikeInfoWindowClick(bike.station)
+        val rental = renderer.rentalForMarker(marker)
+        if (rental != null) {
+            callbacks.onRentalInfoWindowClick(rental.place)
             return@setOnInfoWindowClickListener true
         }
         false

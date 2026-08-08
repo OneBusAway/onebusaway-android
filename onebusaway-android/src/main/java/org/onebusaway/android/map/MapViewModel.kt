@@ -34,7 +34,6 @@ import org.onebusaway.android.database.oba.StopDao
 import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.extrapolation.data.TripObservationRepository
 import org.onebusaway.android.location.LocationRepository
-import org.onebusaway.android.map.bike.BikeStationsRepository
 import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
@@ -42,6 +41,8 @@ import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaStop
@@ -51,7 +52,6 @@ import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
@@ -88,7 +88,7 @@ data class RouteHeader(
  * The **home map** view model: the coordinator that composes the shared [MapHost] (the flavor-neutral
  * map surface — render state, camera, padding, my-location/region framing) with the use-case
  * controllers the home map needs — [StopsMapController] (nearby stops), [RouteMapController]
- * (single-route and focused-stop route views), and [BikeLayerController] (the bikeshare overlay).
+ * (single-route and focused-stop route views), and [RentalLayerController] (the bikes/scooters overlay).
  * [showNearbyStops] / [showStopRoutes] start the matching presentation (the
  * route controller is the single source of truth for whether a route is
  * shown — there is no separate "mode" state); the controllers react to the live camera
@@ -118,7 +118,7 @@ class MapViewModel @Inject constructor(
     private val mapDataSource: MapDataSource,
     private val routeRepository: RouteMapRepository,
     private val focusedTripRepository: FocusedTripRepository,
-    private val bikeStationsRepository: BikeStationsRepository,
+    private val rentalPlacesRepository: RentalPlacesRepository,
     private val regionRepo: RegionRepository,
     private val locationRepository: LocationRepository,
     private val prefsRepository: PreferencesRepository,
@@ -195,19 +195,28 @@ class MapViewModel @Inject constructor(
     /** The current region's display name (for the out-of-range prompt), or null if none is selected. */
     val currentRegionName: String? get() = mapHost.currentRegionName
 
-    // ----- Bikeshare layer toggle (overlays every mode) -----
+    // ----- Rental layers (bikes + scooters; they overlay every mode) -----
 
-    // The bikeshare overlay (loads stations for the viewport when the layer is on / directions in play).
-    private val bikeController = BikeLayerController(
+    // The rental overlay (loads vehicles/docks for the viewport when a layer is on / directions in play).
+    private val rentalController = RentalLayerController(
         host = mapHost,
-        bikeStationsRepository = bikeStationsRepository,
+        rentalPlacesRepository = rentalPlacesRepository,
         prefsRepository = prefsRepository,
         regionRepository = regionRepo,
         scope = viewModelScope
     )
 
-    /** Toggle the home-map bikeshare layer (the host syncs the pref on resume; the FAB persists it). */
-    fun setBikeshareLayerVisible(visible: Boolean, persist: Boolean = false) = bikeController.setBikeshareLayerVisible(visible, persist)
+    /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
+    val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
+
+    /** Whether a rental load the rider tapped for is in flight — the rental button's spinner. */
+    val rentalsLoading: StateFlow<Boolean> get() = rentalController.loading
+
+    /** Show/hide rentals entirely — the map's master rental button. */
+    fun setRentalsVisible(visible: Boolean) = rentalController.setRentalsVisible(visible)
+
+    /** Show/hide one rental mode, under the master button. */
+    fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean) = rentalController.setLayerVisible(layer, visible)
 
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the
@@ -311,7 +320,7 @@ class MapViewModel @Inject constructor(
         // leaveCurrentView already restarted the stops loader when a focused stop was preserved;
         // start it only on the no-focus path so the fresh load isn't cancelled and relaunched.
         if (routeController.focusedStopId == null) stopsController.start()
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     /**
@@ -344,7 +353,7 @@ class MapViewModel @Inject constructor(
             itineraryContext = itineraryContext,
             palette = palette
         )
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     // Persist which route (if any) to restore across process death — null means nearby stops. This is
@@ -384,7 +393,7 @@ class MapViewModel @Inject constructor(
         if (!keepItinerary) directionsController.clear()
         stopsController.stop()
         routeController.stop()
-        bikeController.stop()
+        rentalController.stop()
         if (routeController.focusedStopId != null) {
             stopsController.start()
         } else {
@@ -535,10 +544,10 @@ class MapViewModel @Inject constructor(
         directionsController.clearEndpoints()
         renderState.clearRoutePolylines()
         directionsController.start(itinerary, directionsPalette(), pins)
-        bikeController.start(
-            directions = true,
-            selectedBikeStationIds = DirectionsMapController.bikeStationIdsFromItinerary(itinerary)
-        )
+        // Directions draws no rentals (#2168): an itinerary that scattered rental markers over itself
+        // showed the rider vehicles they could neither switch off — the layer button is hidden here —
+        // nor act on, while the trip's own bike legs already say where its vehicle is picked up.
+        rentalController.hide()
     }
 
     /**
@@ -606,7 +615,7 @@ class MapViewModel @Inject constructor(
         persistRoute(null)
         stopsController.clearFocus()
         stopsController.start()
-        bikeController.start(directions = false, selectedBikeStationIds = null)
+        rentalController.start()
     }
 
     /**
@@ -673,7 +682,7 @@ class MapViewModel @Inject constructor(
 
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
-        setBikeshareLayerVisible(LayerUtils.isBikeshareLayerVisible(context))
+        rentalController.syncFromPreferences()
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.

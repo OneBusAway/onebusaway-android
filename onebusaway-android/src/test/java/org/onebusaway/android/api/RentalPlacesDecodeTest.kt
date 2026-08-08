@@ -19,18 +19,20 @@ import java.io.File
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onebusaway.android.api.adapters.toBikeStations
+import org.onebusaway.android.api.adapters.toRentalPlaces
 import org.onebusaway.android.api.contract.BikeRentalStationsDto
+import org.onebusaway.android.map.rental.RentalKind
 
 /**
- * Covers the OTP bike-rental decode + the mapping onto the app-owned
- * [org.onebusaway.android.map.bike.BikeStation] domain model the map overlay consumes. The wire is
+ * Covers the OTP1 bike-rental decode + the mapping onto the app-owned
+ * [org.onebusaway.android.map.rental.RentalPlace] domain model the map overlay consumes. The wire is
  * plain JSON whose keys match the DTO field names; extra keys (e.g. `networks`) must be ignored, not
  * rejected.
  */
-class BikeStationsDecodeTest {
+class RentalPlacesDecodeTest {
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -46,14 +48,14 @@ class BikeStationsDecodeTest {
                   "id": "bike_1", "name": "Pine & 5th",
                   "x": -122.334, "y": 47.611,
                   "bikesAvailable": 4, "spacesAvailable": 6,
-                  "allowDropoff": true, "isFloatingBike": false, "realTimeData": true,
+                  "allowDropoff": true, "isFloatingBike": false,
                   "networks": ["pronto"]
                 },
                 {
                   "id": "float_2", "name": "Floating bike",
                   "x": -122.30, "y": 47.62,
                   "bikesAvailable": 1, "spacesAvailable": 0,
-                  "allowDropoff": false, "isFloatingBike": true, "realTimeData": false
+                  "allowDropoff": false, "isFloatingBike": true
                 }
               ],
               "errorsByNetwork": {}
@@ -63,7 +65,7 @@ class BikeStationsDecodeTest {
         val dto = json.decodeFromString<BikeRentalStationsDto>(body)
         assertEquals(2, dto.stations.size)
 
-        val stations = dto.toBikeStations()
+        val stations = dto.toRentalPlaces()
         assertEquals(2, stations.size)
 
         val first = stations[0]
@@ -71,24 +73,28 @@ class BikeStationsDecodeTest {
         assertEquals("Pine & 5th", first.name)
         assertEquals(-122.334, first.longitude, 1e-6)
         assertEquals(47.611, first.latitude, 1e-6)
-        assertEquals(4, first.bikesAvailable)
-        assertEquals(6, first.spacesAvailable)
-        assertTrue(first.allowDropoff)
-        assertEquals(false, first.isFloatingBike)
-        assertTrue(first.realTimeData)
+        assertEquals(4, first.vehiclesAvailableCount)
+        assertEquals(6, first.docksAvailableCount)
+        assertEquals(RentalKind.STATION, first.kind)
 
-        assertTrue(stations[1].isFloatingBike)
+        // `isFloatingBike` finally has a consumer (#2168): OTP1's free-floating vehicles arrive
+        // disguised as one-bike stations, and this is the flag that tells them apart. A vehicle
+        // reports no occupancy at all — it is one bike, not a dock holding one.
+        val floating = stations[1]
+        assertEquals(RentalKind.VEHICLE, floating.kind)
+        assertNull(floating.vehiclesAvailableCount)
+        assertNull(floating.docksAvailableCount)
     }
 
     /**
-     * Decodes the real OTP Tampa bike-rental fixture and maps it onto [org.onebusaway.android.map.bike.BikeStation],
+     * Decodes the real OTP Tampa bike-rental fixture and maps it onto [org.onebusaway.android.map.rental.RentalPlace],
      * porting the assertions from the retired live-network `BikeStationRequestTest`. Note the OTP
      * server returns ids wrapped in literal quote characters (`"bike_3566"`), preserved verbatim.
      */
     @Test
     fun decodesTampaFixture() {
         val body = File("src/androidTest/res/raw/bike_rental_tampa_all.json").readText()
-        val stations = json.decodeFromString<BikeRentalStationsDto>(body).toBikeStations()
+        val stations = json.decodeFromString<BikeRentalStationsDto>(body).toRentalPlaces()
 
         assertEquals(133, stations.size)
         stations.forEach { assertNotNull(it.name) }
@@ -99,10 +105,7 @@ class BikeStationsDecodeTest {
         assertEquals("B-1165", first.name)
         assertEquals(-82.40730666666667, first.longitude, precision)
         assertEquals(28.066505, first.latitude, precision)
-        assertEquals(1, first.bikesAvailable)
-        assertEquals(0, first.spacesAvailable)
-        assertEquals(false, first.allowDropoff)
-        assertEquals(true, first.isFloatingBike)
-        assertEquals(true, first.realTimeData)
+        assertEquals(RentalKind.VEHICLE, first.kind)
+        assertNull(first.vehiclesAvailableCount)
     }
 }

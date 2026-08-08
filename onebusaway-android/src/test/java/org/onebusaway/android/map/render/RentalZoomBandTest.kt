@@ -18,24 +18,24 @@ package org.onebusaway.android.map.render
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Unit tests for [bikeZoomBand] — the bike-marker icon band thresholds at zoom 12 and 15. */
-class BikeZoomBandTest {
+/** Unit tests for [rentalZoomBand] — the rental-marker icon band thresholds at zoom 12 and 15. */
+class RentalZoomBandTest {
 
     @Test
     fun hiddenAtOrBelow12() {
-        assertEquals(BikeBand.HIDDEN, bikeZoomBand(10f))
-        assertEquals(BikeBand.HIDDEN, bikeZoomBand(12f))
+        assertEquals(RentalBand.HIDDEN, rentalZoomBand(10f))
+        assertEquals(RentalBand.HIDDEN, rentalZoomBand(12f))
     }
 
     @Test
     fun smallBetween12And15() {
-        assertEquals(BikeBand.SMALL, bikeZoomBand(12.1f))
-        assertEquals(BikeBand.SMALL, bikeZoomBand(15f))
+        assertEquals(RentalBand.SMALL, rentalZoomBand(12.1f))
+        assertEquals(RentalBand.SMALL, rentalZoomBand(15f))
     }
 
     @Test
     fun bigAbove15() {
-        assertEquals(BikeBand.BIG, bikeZoomBand(15.1f))
-        assertEquals(BikeBand.BIG, bikeZoomBand(20f))
+        assertEquals(RentalBand.BIG, rentalZoomBand(15.1f))
+        assertEquals(RentalBand.BIG, rentalZoomBand(20f))
     }
 }

@@ -39,9 +39,20 @@ class MapChromeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
+    /**
+     * A prefs fake with the rental button's own visibility switched on.
+     *
+     * [FakePreferencesRepository] seeds an un-set boolean from its `observeValue` rather than from the
+     * default the caller declares, so the button-visible preference — which ships on — would otherwise
+     * read off here and hide the layers FAB in every test that asserts on it.
+     */
+    private fun rentalButtonShown() = FakePreferencesRepository(observeValue = false).apply {
+        setBoolean(R.string.preference_key_show_rental_button, true)
+    }
+
     @Test
     fun `the zoom-controls preference flips the gate reactively`() = runTest {
-        val prefs = FakePreferencesRepository(observeValue = false) // start gates off
+        val prefs = rentalButtonShown() // start gates off
         val vm = MapChromeViewModel(prefs, FakeRegionRepository())
         advanceUntilIdle()
         assertFalse(vm.state.value.zoomControls)
@@ -52,25 +63,25 @@ class MapChromeViewModelTest {
     }
 
     @Test
-    fun `the bikeshare-layer preference flips the active tint reactively`() = runTest {
-        val prefs = FakePreferencesRepository(observeValue = false)
-        // A custom OTP URL makes bikeshare enabled (the layers FAB shows); the visible pref drives active.
+    fun `the rental-layer preference flips the active tint reactively`() = runTest {
+        val prefs = rentalButtonShown()
+        // A custom OTP URL makes rentals enabled (the layers FAB shows); the visible pref drives active.
         prefs.setString(R.string.preference_key_otp_api_url, "https://otp.example.org")
         prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, true)
         val vm = MapChromeViewModel(prefs, FakeRegionRepository())
         advanceUntilIdle()
         assertTrue(vm.state.value.layersFab)
-        assertTrue(vm.state.value.bikeshareActive)
+        assertTrue(vm.state.value.rentalsActive)
 
         prefs.setBoolean(R.string.preference_key_layer_bikeshare_visible, false)
         advanceUntilIdle()
-        assertFalse(vm.state.value.bikeshareActive)
+        assertFalse(vm.state.value.rentalsActive)
         assertTrue(vm.state.value.layersFab) // still enabled, just not active
     }
 
     @Test
     fun `the layers FAB follows bikeshare-enabled derived from the OTP URL`() = runTest {
-        val prefs = FakePreferencesRepository(observeValue = false)
+        val prefs = rentalButtonShown()
         val vm = MapChromeViewModel(prefs, FakeRegionRepository())
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab) // no region, no custom OTP URL
@@ -83,7 +94,7 @@ class MapChromeViewModelTest {
     @Test
     fun `a region supporting OTP bikeshare enables the layers FAB`() = runTest {
         val regions = FakeRegionRepository()
-        val vm = MapChromeViewModel(FakePreferencesRepository(observeValue = false), regions)
+        val vm = MapChromeViewModel(rentalButtonShown(), regions)
         advanceUntilIdle()
         assertFalse(vm.state.value.layersFab)
 

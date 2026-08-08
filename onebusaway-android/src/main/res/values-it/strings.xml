@@ -854,11 +854,8 @@
     <string name="transit_directions_bikeshare_label">Bike sharing</string>
 
     <!-- Bikeshare info window -->
-    <string name="bike_info_window_bikes_title">Bici</string>
 
     <!-- Bikeshare preference option -->
-    <string name="bike_info_window_spaces_title">Spazi</string>
-    <string name="layers_speedial_bikeshare_label">Bike sharing</string>
     <string name="bike_station_title">Tocca per prenotare una bici</string>
     <string name="floating_bike_title">Tocca per prenotare questa bici</string>
 

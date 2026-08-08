@@ -730,11 +730,8 @@
     <!-- Occupancy -->
 
     <!-- Bikeshare -->
-    <string name="bike_info_window_bikes_title">Pyörät</string>
-    <string name="bike_info_window_spaces_title">Paikkoja</string>
     <string name="bike_station_title">Napauta varataksesi pyörän</string>
     <string name="floating_bike_title">Napauta varataksesi tämän pyörän</string>
-    <string name="layers_speedial_bikeshare_label">Kaupunkipyörät</string>
     <string name="transit_directions_bikeshare_label">Kaupunkipyörä</string>
 
     <!-- Foreground service -->

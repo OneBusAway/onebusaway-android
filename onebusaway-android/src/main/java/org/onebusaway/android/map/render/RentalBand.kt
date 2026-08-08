@@ -15,15 +15,15 @@
  */
 package org.onebusaway.android.map.render
 
-/** Which icon (if any) a bike marker shows at a given zoom — the legacy <=12 / 12-15 / >15 bands. */
-enum class BikeBand { HIDDEN, SMALL, BIG }
+/** Which icon (if any) a rental marker shows at a given zoom — the legacy <=12 / 12-15 / >15 bands. */
+enum class RentalBand { HIDDEN, SMALL, BIG }
 
 /**
- * The zoom band a bike marker falls in. Mirrors the legacy BikeStationOverlay rules: hidden at or
- * below zoom 12, the small dot up to zoom 15, the big station/floating-bike icon above 15.
+ * The zoom band a rental marker falls in. Mirrors the legacy BikeStationOverlay rules: hidden at or
+ * below zoom 12, the small dot up to zoom 15, the big pin above 15.
  */
-fun bikeZoomBand(zoom: Float): BikeBand = when {
-    zoom <= 12f -> BikeBand.HIDDEN
-    zoom <= 15f -> BikeBand.SMALL
-    else -> BikeBand.BIG
+fun rentalZoomBand(zoom: Float): RentalBand = when {
+    zoom <= 12f -> RentalBand.HIDDEN
+    zoom <= 15f -> RentalBand.SMALL
+    else -> RentalBand.BIG
 }

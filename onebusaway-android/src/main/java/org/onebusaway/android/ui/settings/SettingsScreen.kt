@@ -135,6 +135,7 @@ fun SettingsRoute(
         onShowNegativeArrivals = viewModel::onShowNegativeArrivalsChanged,
         onHideAlerts = viewModel::onHideAlertsChanged,
         onShowZoomControls = viewModel::onShowZoomControlsChanged,
+        onShowRentalButton = viewModel::onShowRentalButtonChanged,
         onDisplayWeatherView = viewModel::onDisplayWeatherViewChanged,
         onShowAvailableStudies = viewModel::onShowAvailableStudiesChanged,
         onShowTutorialScreens = viewModel::onShowTutorialScreensChanged,
@@ -175,6 +176,7 @@ class SettingsActions(
     val onShowNegativeArrivals: (Boolean) -> Unit,
     val onHideAlerts: (Boolean) -> Unit,
     val onShowZoomControls: (Boolean) -> Unit,
+    val onShowRentalButton: (Boolean) -> Unit,
     val onDisplayWeatherView: (Boolean) -> Unit,
     val onShowAvailableStudies: (Boolean) -> Unit,
     val onShowTutorialScreens: (Boolean) -> Unit,
@@ -250,6 +252,14 @@ fun SettingsScreen(
                     summary = stringResource(R.string.preferences_show_zoom_controls_summary),
                     checked = state.showZoomControls,
                     onCheckedChange = actions.onShowZoomControls
+                )
+                // The map's own long-press menu is the other way to turn this off, and the only way a
+                // rider is likely to find it; this row is how it comes back (#2168).
+                SwitchPreferenceItem(
+                    title = stringResource(R.string.preferences_show_rental_button_title),
+                    summary = stringResource(R.string.preferences_show_rental_button_summary),
+                    checked = state.showRentalButton,
+                    onCheckedChange = actions.onShowRentalButton
                 )
                 val mapOptions = stringArrayResource(R.array.preferred_map_options).toList()
                 ListPreferenceItem(

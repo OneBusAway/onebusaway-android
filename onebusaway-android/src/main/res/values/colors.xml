@@ -138,7 +138,29 @@
 
     <!-- Layers -->
     <color name="layer_disabled">#FF777777</color>
-    <color name="layer_bikeshare_color">#3a4677</color>
+    <!-- The bikes layer. Lightened from the original #3a4677 navy (#2168) — still carries a white
+         glyph at 4.4:1, comfortably over the 3:1 WCAG asks of a non-text graphic. -->
+    <color name="layer_bikeshare_color">#6070d6</color>
+    <!-- The scooters layer (#2168), read far enough from the bikes blue above to tell two markers
+         apart at a glance without either reading as a warning colour.
+
+         Lightened from the original #0f766e teal, then pulled back from a first pass at #60b9d6:
+         that carried the badge's white glyph at only 2.2:1, under the 3:1 WCAG asks of a non-text
+         graphic, and shared the green charge ring's exact relative luminance (1.0:1) — which, with
+         the ring seated flush against the badge, left that boundary carried by hue alone and gone
+         for a red-green colour-blind rider. This clears the glyph floor at 3.1:1. -->
+    <color name="layer_scooters_color">#3f9dbf</color>
+
+    <!-- Rental charge-ring bands (#2168). Brighter than the layer colours on purpose: the ring is a
+         gauge read at a glance over a busy basemap, so it trades the layer's muted identity for
+         contrast. The glyph inside still wears the layer colour, so bikes and scooters stay
+         distinguishable.
+         Amber rather than a true yellow — pure yellow disappears against pale road fill.
+         Red/green confusion is not a barrier here: the arc's *length* carries the same value, so
+         colour is redundant reinforcement rather than the only channel. -->
+    <color name="rental_charge_low">#FF3B30</color>
+    <color name="rental_charge_medium">#FFB300</color>
+    <color name="rental_charge_high">#00C853</color>
 
     <!-- Shortcuts -->
     <color name="shortcut_icon">@color/material_gray</color>

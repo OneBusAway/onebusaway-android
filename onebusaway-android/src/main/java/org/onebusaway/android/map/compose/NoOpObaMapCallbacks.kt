@@ -15,8 +15,8 @@
  */
 package org.onebusaway.android.map.compose
 
-import org.onebusaway.android.map.bike.BikeStation
 import org.onebusaway.android.map.render.StopMarker
+import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.util.GeoPoint
 
@@ -30,9 +30,9 @@ object NoOpObaMapCallbacks : ObaMapCallbacks {
 
     override fun onMapClick(point: GeoPoint?) {}
 
-    override fun onBikeClick(station: BikeStation) {}
+    override fun onRentalClick(place: RentalPlace) {}
 
     override fun onVehicleInfoWindowClick(status: ObaTripStatus) {}
 
-    override fun onBikeInfoWindowClick(station: BikeStation) {}
+    override fun onRentalInfoWindowClick(place: RentalPlace) {}
 }

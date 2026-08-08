@@ -53,9 +53,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
-import org.onebusaway.android.map.compose.BikeInfoWindow
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
@@ -339,12 +339,12 @@ private fun wireClicks(
             cb.onVehicleInfoWindowClick(vehicle.status)
             return@setOnInfoWindowClickListener
         }
-        renderer.bikeForMarker(marker)?.let { cb.onBikeInfoWindowClick(it.station) }
+        renderer.rentalForMarker(marker)?.let { cb.onRentalInfoWindowClick(it.place) }
     }
 }
 
 /**
- * Routes a native marker tap: a stop focuses + recenters; a vehicle/bike pre-renders its shared info
+ * Routes a native marker tap: a stop focuses + recenters; a vehicle/rental pre-renders its shared info
  * window (via [GoogleInfoWindows]) and opens it without recentering; a trip-focus estimate marker opens
  * the SDK's default title window. Always returns true (handled, no default camera recenter).
  */
@@ -366,12 +366,12 @@ private fun routeMarkerTap(
         infoWindows.openVehicleWindow(renderer, marker)
         return true
     }
-    val bike = renderer.bikeForMarker(marker)
-    if (bike != null) {
-        cb.onBikeClick(bike.station)
+    val rental = renderer.rentalForMarker(marker)
+    if (rental != null) {
+        cb.onRentalClick(rental.place)
         infoWindows.open(marker) {
             Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
-                BikeInfoWindow(bike.station)
+                RentalInfoWindow(rental.place)
             }
         }
         return true

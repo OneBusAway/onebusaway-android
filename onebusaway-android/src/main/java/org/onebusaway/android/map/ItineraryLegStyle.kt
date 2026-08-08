@@ -74,9 +74,7 @@ internal enum class ItineraryLegKind { WALK, BIKE, BIKESHARE, CAR, TRANSIT }
  * ([TripLeg.rentedVehicle], the server's own `rentedBike`) — the same fact the option card's
  * [streetMode][org.onebusaway.android.ui.tripresults.streetMode] reads, so the line under a card can't be
  * a plain bike while the card's glyph says bikeshare. It used to be inferred from the leg *starting* at a
- * rental place, which asked where the docks were in order to answer what the rider is doing (#2159); where
- * the docks are is [DirectionsMapController.bikeStationIdsFromItinerary]'s question, and it still reads
- * both endpoints, because a ride has a station to show at each.
+ * rental place, which asked where the docks were in order to answer what the rider is doing (#2159).
  */
 internal fun TripLeg.legKind(): ItineraryLegKind = when {
     mode?.isTransit == true -> ItineraryLegKind.TRANSIT

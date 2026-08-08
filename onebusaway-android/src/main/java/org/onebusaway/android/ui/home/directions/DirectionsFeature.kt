@@ -286,7 +286,6 @@ fun DirectionsResultsSheet(
     // `false` for [fromSnapshot] re-arms the change monitor for a trip that already departed.
     initialOptionIndex: Int,
     fromSnapshot: Boolean,
-    pinControl: @Composable (selectedIndex: Int) -> Unit,
     pinnedOptionIndex: Int?,
     // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
     // item that does nothing — the same rule the unwired picker follows.
@@ -371,7 +370,6 @@ fun DirectionsResultsSheet(
                 stopEtaStrip = stopEtaStrip,
                 initialOptionIndex = initialOptionIndex,
                 fromSnapshot = fromSnapshot,
-                pinControl = pinControl,
                 pinnedOptionIndex = pinnedOptionIndex,
                 onTogglePin = onTogglePin,
                 onOptionsSeeded = onOptionsSeeded,

@@ -97,7 +97,6 @@ import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
-import org.onebusaway.android.ui.home.directions.PinTripControl
 import org.onebusaway.android.ui.home.directions.PinnedTripCard
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
@@ -906,15 +905,6 @@ fun HomeScreen(
                                             // plan opens on the first, as it always has.
                                             initialOptionIndex = pendingResumeIndex ?: 0,
                                             fromSnapshot = directionsResults.fromSnapshot,
-                                            pinControl = { index ->
-                                                PinTripControl(
-                                                    pinned = pinnedTripIsOnScreen &&
-                                                        index == pinnedTrip?.selectedIndex,
-                                                    enabled = canPin,
-                                                    onToggle = { onTogglePinOption(index) },
-                                                    modifier = Modifier.fillMaxWidth()
-                                                )
-                                            },
                                             pinnedOptionIndex = pinnedTrip
                                                 ?.selectedIndex
                                                 ?.takeIf { pinnedTripIsOnScreen },

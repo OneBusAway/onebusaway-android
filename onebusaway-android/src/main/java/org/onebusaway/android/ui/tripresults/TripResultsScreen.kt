@@ -936,10 +936,7 @@ fun TripResultsList(
     // handed neither of these simply offers no pin affordance, which is the right rendering for them.
     pinnedOptionIndex: Int? = null,
     onTogglePin: ((Int) -> Unit)? = null,
-    // The full-width action row under the picker: the pin control, and the destination-reminder button
-    // once that feature comes back. Named for what the slot *is* rather than for the one control that
-    // used to sit in it.
-    optionActions: @Composable () -> Unit = {}
+    reminderControl: @Composable () -> Unit = {}
 ) {
     // Resolved once for the whole drawer rather than by each distance row: the rows below run one per
     // walk step, and a leaf resolve is a Hilt entry-point hop plus a locale query every time one enters
@@ -973,7 +970,7 @@ fun TripResultsList(
                     stopEtaStrip = stopEtaStrip,
                     pinnedOptionIndex = pinnedOptionIndex,
                     onTogglePin = onTogglePin,
-                    optionActions = optionActions
+                    reminderControl = reminderControl
                 )
             }
         }
@@ -1008,9 +1005,8 @@ fun TripResultsSheet(
     // reason).
     initialOptionIndex: Int,
     fromSnapshot: Boolean,
-    // The "pin this trip" control, under the picker, and the long-press pin action on a card. Both are
-    // handed the option they act on: the control the one currently selected, the menu the one pressed.
-    pinControl: @Composable (selectedIndex: Int) -> Unit,
+    // Which option is pinned, and the long-press action that toggles it (#2053). Pinning is a long
+    // press and nothing else — see [TripResultsHeader].
     pinnedOptionIndex: Int?,
     onTogglePin: ((Int) -> Unit)?,
     onOptionsSeeded: () -> Unit,
@@ -1071,20 +1067,14 @@ fun TripResultsSheet(
         stopEtaStrip = stopEtaStrip,
         pinnedOptionIndex = pinnedOptionIndex,
         onTogglePin = onTogglePin,
-        optionActions = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                // Destination reminders are off pending the navigation-mode rework; leaving the slot
-                // empty removes the affordance rather than offering one that starts nothing.
-                if (FeatureFlags.DESTINATION_REMINDERS) {
-                    ItineraryReminderControl(itineraries.getOrNull(selectedIndex), Modifier.weight(1f))
-                }
-                // The row's controls share its width evenly, so the pin reads as a full-width action
-                // while it is the only one here — which, with reminders flagged off, it is.
-                Box(Modifier.weight(1f)) { pinControl(selectedIndex) }
+        reminderControl = {
+            // Destination reminders are off pending the navigation-mode rework; leaving the slot
+            // empty removes the affordance rather than offering one that starts nothing.
+            if (FeatureFlags.DESTINATION_REMINDERS) {
+                ItineraryReminderControl(
+                    itineraries.getOrNull(selectedIndex),
+                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                )
             }
         }
     )
@@ -1171,7 +1161,7 @@ private fun TripLogList(
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     pinnedOptionIndex: Int?,
     onTogglePin: ((Int) -> Unit)?,
-    optionActions: @Composable () -> Unit
+    reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
     val expanded = remember(entries) { mutableStateSetOf<Int>() }
@@ -1195,7 +1185,7 @@ private fun TripLogList(
                 pinnedOptionIndex = pinnedOptionIndex,
                 onTogglePin = onTogglePin
             )
-            optionActions()
+            reminderControl()
             HorizontalDivider()
             Spacer(Modifier.height(LOG_EDGE_GAP))
         }

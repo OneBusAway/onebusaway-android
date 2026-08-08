@@ -120,6 +120,12 @@ object VehicleBitmaps {
     /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
 
+    /**
+     * An empty pip's fill: white at 50%, so the unfilled slots read as present but quiet — the row's
+     * length still states the scale without the empty end shouting louder than the full one.
+     */
+    private const val EMPTY_PIP_FILL = 0x80FFFFFF.toInt()
+
     private val sColoredIconCache = object : LruCache<String, Bitmap>(MAX_CACHE_BYTES) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
     }
@@ -353,6 +359,14 @@ object VehicleBitmaps {
         // indistinguishable from a white "empty" one; the row would stop saying anything at all. The
         // black rim both states share is what keeps the white ones legible on a pale disc.
         //
+        // An empty pip is washed to 50% ([EMPTY_PIP_FILL]) so it recedes behind the full ones. It takes
+        // two passes: the tab's own colour first, then the wash. [MarkerRendering.drawOutlined] builds
+        // its rim by stamping the artwork black at eight offsets, which lays solid black under the whole
+        // silhouette, not just around it — so a translucent fill painted straight onto that composites
+        // over black and comes out grey, i.e. heavier than an opaque white pip rather than lighter. The
+        // opaque first pass covers that underlay with the tab colour, leaving the wash to land on the
+        // tab exactly as a 50% white would, with the rim still at full strength.
+        //
         // The cost, accepted deliberately: on a near-black route colour the black full pips sink into the
         // tab. Reaching for [MarkerRendering.legibleOn] here would fix that and re-introduce the
         // collision, so the fix — if that turns out to matter — is a tab that carries its own surface
@@ -369,7 +383,13 @@ object VehicleBitmaps {
             repeat(MAX_PIPS) { i ->
                 val cx = (firstCx + i * pitch) * scale
                 pip.setBounds((cx - half).toInt(), (cy - half).toInt(), (cx + half).toInt(), (cy + half).toInt())
-                MarkerRendering.drawOutlined(canvas, pip, outline, if (i < fill) Color.BLACK else Color.WHITE)
+                if (i < fill) {
+                    MarkerRendering.drawOutlined(canvas, pip, outline, Color.BLACK)
+                } else {
+                    MarkerRendering.drawOutlined(canvas, pip, outline, color)
+                    pip.setTint(EMPTY_PIP_FILL)
+                    pip.draw(canvas)
+                }
             }
         }
         return bitmap

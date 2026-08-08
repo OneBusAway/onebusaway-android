@@ -98,6 +98,7 @@ import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.render.stopZoomBand
 import org.onebusaway.android.map.rental.RentalKind
+import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.ui.home.CurrentFocus
@@ -499,11 +500,15 @@ fun MapFeature(
     // directly. Their actions drive the map view model.
     val chrome by hiltViewModel<MapChromeViewModel>().state.collectAsStateWithLifecycle()
     val mapLoading by mapViewModel.progress.collectAsStateWithLifecycle()
+    val rentalsLoading by mapViewModel.rentalsLoading.collectAsStateWithLifecycle()
     MapChrome(
         zoomVisible = chrome.zoomControls,
         leftHandMode = chrome.leftHand,
         layersVisible = chrome.layersFab,
         rentalsActive = chrome.rentalsActive,
+        bikesActive = chrome.bikesActive,
+        scootersActive = chrome.scootersActive,
+        rentalsLoading = rentalsLoading,
         mapLoading = mapLoading,
         fabBottomInsetTarget = fabBottomInset,
         onMyLocation = {
@@ -522,7 +527,9 @@ fun MapFeature(
         },
         onZoomIn = { mapViewModel.zoomIn() },
         onZoomOut = { mapViewModel.zoomOut() },
-        onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) }
+        onToggleRentals = { toggleRentals(context, mapViewModel, chrome.rentalsActive) },
+        onToggleBikes = { mapViewModel.setRentalLayerVisible(RentalLayer.BIKES, !chrome.bikesActive) },
+        onToggleScooters = { mapViewModel.setRentalLayerVisible(RentalLayer.SCOOTERS, !chrome.scootersActive) }
     )
 }
 
@@ -539,7 +546,7 @@ private fun toggleRentals(
     mapViewModel: MapViewModel,
     active: Boolean
 ) {
-    mapViewModel.setRentalsVisible(!active, persist = true)
+    mapViewModel.setRentalsVisible(!active)
     AnalyticsEntryPoint.get(context).reportUiEvent(
         PlausibleAnalytics.REPORT_MAP_EVENT_URL,
         context.getString(R.string.analytics_layer_bikeshare),

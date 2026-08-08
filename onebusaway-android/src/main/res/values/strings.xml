@@ -1301,6 +1301,9 @@
     <!-- Rental vehicle map layer (bikes + scooters) -->
     <string name="layers_rentals_show">Show bikes and scooters</string>
     <string name="layers_rentals_hide">Hide bikes and scooters</string>
+    <string name="layers_rentals_loading">Loading bikes and scooters</string>
+    <string name="layers_bikes_label">Bikes</string>
+    <string name="layers_scooters_label">Scooters</string>
     <string name="map_zoom_in_for_rentals">Zoom in to see bikes and scooters</string>
     <string name="rental_window_vehicles_title">Available</string>
     <string name="rental_window_docks_title">Docks</string>

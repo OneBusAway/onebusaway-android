@@ -16,26 +16,21 @@
 package org.onebusaway.android.util
 
 import android.content.Context
-import org.onebusaway.android.R
 import org.onebusaway.android.app.di.PreferencesEntryPoint
 import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.rentalLayersFromPreferences
 
 /** Utility methods related to optional map layers. */
 object LayerUtils {
 
     /**
-     * Which rental layers to draw — every one, or none (#2168). Bikes and scooters come off a single
-     * fetch and are shown or hidden together by one map button, so this is a boolean wearing a set's
-     * clothing: the set is what the renderer needs (it picks a marker's colour and glyph from the
-     * layer a place belongs to), not a second axis of user choice.
-     *
-     * Empty when the region has no rental server at all. Defaults to on, and keeps the legacy
-     * `layer_bike_selected` key so an upgrading device carries its existing choice across.
+     * Which rental layers to draw, or empty when the region has no rental server at all (#2168). The
+     * preference reading itself lives in [rentalLayersFromPreferences], shared with the controller and
+     * the map chrome so the three cannot disagree about what is on.
      */
-    fun visibleRentalLayers(context: Context): Set<RentalLayer> {
-        if (!BikeshareAvailability.isStationLayerEnabled(context)) return emptySet()
-        val on = PreferencesEntryPoint.get(context)
-            .getBoolean(R.string.preference_key_layer_bikeshare_visible, true)
-        return if (on) RentalLayer.entries.toSet() else emptySet()
+    fun visibleRentalLayers(context: Context): Set<RentalLayer> = if (BikeshareAvailability.isStationLayerEnabled(context)) {
+        rentalLayersFromPreferences(PreferencesEntryPoint.get(context))
+    } else {
+        emptySet()
     }
 }

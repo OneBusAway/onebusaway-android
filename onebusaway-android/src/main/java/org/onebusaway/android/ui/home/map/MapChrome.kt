@@ -17,28 +17,32 @@ package org.onebusaway.android.ui.home.map
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -48,13 +52,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.R
@@ -74,12 +80,17 @@ fun MapChrome(
     leftHandMode: Boolean,
     layersVisible: Boolean,
     rentalsActive: Boolean,
+    bikesActive: Boolean,
+    scootersActive: Boolean,
+    rentalsLoading: Boolean,
     mapLoading: Boolean,
     fabBottomInsetTarget: Dp,
     onMyLocation: () -> Unit,
     onZoomIn: () -> Unit,
     onZoomOut: () -> Unit,
-    onToggleRentals: () -> Unit
+    onToggleRentals: () -> Unit,
+    onToggleBikes: () -> Unit,
+    onToggleScooters: () -> Unit
 ) {
     // Animate the lift here so the per-frame value only recomposes the FABs, not the hosting map
     // AndroidView / overlay cards (which are siblings in HomeScreen's Box).
@@ -109,11 +120,30 @@ fun MapChrome(
         if (layersVisible) {
             RentalsFab(
                 active = rentalsActive,
+                bikesActive = bikesActive,
+                scootersActive = scootersActive,
+                loading = rentalsLoading,
                 onToggle = onToggleRentals,
+                onToggleBikes = onToggleBikes,
+                onToggleScooters = onToggleScooters,
                 modifier = Modifier
                     .align(sideAlign)
-                    .padding(horizontal = marginHorizontal)
-                    .padding(bottom = LAYERS_MARGIN_BOTTOM + fabBottomInset)
+                    // The panel's own padding insets the FAB inside it, which would otherwise leave the
+                    // rental button standing off the edge further than the my-location FAB below it.
+                    // Taking that padding back out of the margin puts the two buttons on one vertical
+                    // line — and works in left-hand mode unchanged, since both hug the same edge.
+                    .padding(horizontal = (marginHorizontal - RENTAL_SURFACE_PADDING).coerceAtLeast(0.dp))
+                    // Clear the my-location FAB below rather than guess a margin: it occupies
+                    // marginBottom..marginBottom+FAB_SIZE, and the panel's own padding drops its button
+                    // that much lower again, so both are subtracted back out to leave exactly
+                    // RENTAL_FAB_GAP of air between the two buttons.
+                    .padding(
+                        bottom = marginBottom +
+                            FAB_SIZE +
+                            RENTAL_FAB_GAP -
+                            RENTAL_SURFACE_PADDING +
+                            fabBottomInset
+                    )
             )
         }
         // The my-location FAB always shows on the map (this chrome only composes on HOME, the map screen).
@@ -168,35 +198,214 @@ private fun ZoomControls(
 }
 
 /**
- * The rental-layer button: one tap shows or hides bikes and scooters together (#2168).
+ * The rental control: a master button that shows or hides rentals, which grows into a surface holding
+ * a button per mode while they are showing (#2168).
  *
- * It replaced a speed-dial that expanded to a row per layer plus a range filter. Both layers come off
- * **one** fetch — `vehicleRentalsByBbox` returns everything in the viewport regardless — so splitting
- * them cost a rider two taps to see the same request's results, and the split earned its complexity
- * only if you wanted scooters hidden specifically. Tinted by [active], like the speed-dial rows were.
+ * The surface is always present and animates between transparent and opaque rather than appearing and
+ * disappearing, so the master button keeps one parent across the transition — re-parenting it would
+ * make it jump rather than let the panel grow around it. Growth runs upward because the whole control
+ * is bottom-aligned in [MapChrome], so the mode buttons rise off the master instead of pushing it
+ * down over the my-location FAB.
+ *
+ * The modes sit under the master rather than beside it because they are a refinement of one decision,
+ * not three peers — and because both come off a single `vehicleRentalsByBbox` response, so a rider who
+ * just wants to see what is around taps once. The mode toggles keep their own settings while the
+ * master is off, so switching rentals back on restores what the rider had rather than turning
+ * everything on.
  */
 @Composable
 private fun RentalsFab(
     active: Boolean,
+    bikesActive: Boolean,
+    scootersActive: Boolean,
+    loading: Boolean,
     onToggle: () -> Unit,
+    onToggleBikes: () -> Unit,
+    onToggleScooters: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    FloatingActionButton(
-        onClick = onToggle,
-        containerColor = colorResource(if (active) R.color.layer_bikeshare_color else R.color.layer_disabled),
-        contentColor = Color.White,
-        modifier = modifier
+    // The panel only exists visually while the modes are on show; off, the master reads as a plain FAB.
+    val surfaceColor by animateColorAsState(
+        if (active) Color.White.copy(alpha = 0.9f) else Color.Transparent,
+        label = "rentalSurfaceColor"
+    )
+    val surfaceElevation by animateDpAsState(
+        if (active) RENTAL_SURFACE_ELEVATION else 0.dp,
+        label = "rentalSurfaceElevation"
+    )
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(RENTAL_SURFACE_CORNER),
+        color = surfaceColor,
+        shadowElevation = surfaceElevation
     ) {
-        Icon(
-            painterResource(R.drawable.ic_bike_rental),
-            contentDescription = stringResource(
-                if (active) R.string.layers_rentals_hide else R.string.layers_rentals_show
-            ),
-            modifier = Modifier.size(24.dp)
-        )
+        Column(
+            modifier = Modifier.padding(RENTAL_SURFACE_PADDING),
+            // Centred rather than edge-aligned: the mode toggles are narrower than the master, so
+            // centring stacks them on its axis instead of flushing them to one side of it. Which
+            // screen edge the whole control hugs is [MapChrome]'s business, not this column's — which
+            // is why left-hand mode no longer reaches in here.
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(RENTAL_SURFACE_PADDING)
+        ) {
+            AnimatedVisibility(visible = active) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(RENTAL_SURFACE_PADDING)
+                ) {
+                    ModeToggle(
+                        label = stringResource(R.string.layers_bikes_label),
+                        iconRes = R.drawable.ic_directions_bike,
+                        selectedColor = colorResource(R.color.layer_bikeshare_color),
+                        selected = bikesActive,
+                        onClick = onToggleBikes
+                    )
+                    ModeToggle(
+                        label = stringResource(R.string.layers_scooters_label),
+                        iconRes = R.drawable.ic_kick_scooter,
+                        selectedColor = colorResource(R.color.layer_scooters_color),
+                        selected = scootersActive,
+                        onClick = onToggleScooters
+                    )
+                }
+            }
+            // Same outline-vs-fill language as the mode toggles below it, in one colour throughout: off
+            // is the layer's colour as an outline and glyph on white, on is that colour filled with a
+            // white glyph. So the button only ever changes which side of itself is tinted, and the
+            // rider never has to learn that grey means anything.
+            //
+            // The unselected fill is opaque white rather than transparent, unlike the mode toggles:
+            // with rentals off there is no panel behind the master, so a see-through button would sit
+            // directly on the basemap and lose both its shape and its glyph over dark ground.
+            val rentalColor = colorResource(R.color.layer_bikeshare_color)
+            val fabShape = FloatingActionButtonDefaults.shape
+            val fabContainer by animateColorAsState(
+                if (active) rentalColor else Color.White,
+                label = "rentalFabContainer"
+            )
+            val fabContent by animateColorAsState(
+                if (active) Color.White else rentalColor,
+                label = "rentalFabContent"
+            )
+            val fabOutline by animateDpAsState(
+                if (active) 0.dp else MODE_TOGGLE_OUTLINE,
+                label = "rentalFabOutline"
+            )
+            FloatingActionButton(
+                onClick = onToggle,
+                shape = fabShape,
+                containerColor = fabContainer,
+                contentColor = fabContent,
+                // Border on the FAB's own shape, so the outline follows it rather than tracing a
+                // circle over a rounded square.
+                modifier = if (fabOutline > 0.dp) {
+                    Modifier.border(fabOutline, rentalColor, fabShape)
+                } else {
+                    Modifier
+                }
+            ) {
+                // The spinner replaces the glyph rather than sitting beside or around it: the button is
+                // 56dp and already carries the layer's colour, so a ring around the mark would read as
+                // a second, meaningless charge ring next to the ones on the markers.
+                if (loading) {
+                    val loadingLabel = stringResource(R.string.layers_rentals_loading)
+                    CircularProgressIndicator(
+                        // Follows the button's own content colour, so a load that somehow starts while
+                        // rentals are off doesn't paint white on white.
+                        color = fabContent,
+                        strokeWidth = RENTAL_SPINNER_STROKE,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .semantics { contentDescription = loadingLabel }
+                    )
+                } else {
+                    Icon(
+                        painterResource(R.drawable.ic_bike_rental),
+                        contentDescription = stringResource(
+                            if (active) R.string.layers_rentals_hide else R.string.layers_rentals_show
+                        ),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+        }
     }
 }
 
-// The my-location FAB uses @dimen/fab_margin_*; the layers FAB sits a fixed amount above it (the
-// legacy layout hardcoded this 80dp, with no dimen).
-private val LAYERS_MARGIN_BOTTOM = 80.dp
+/**
+ * One mode toggle: an outline when the mode is off, filling with the layer's own colour when it is on.
+ *
+ * The two states differ in *form*, not just tint — an unselected button is an untinted outline and a
+ * selected one is a solid disc with a white glyph — so the pair reads as "one of these is on" at a
+ * glance, rather than as two buttons in slightly different shades of the same thing. Every property
+ * animates, so the tap is a fill rather than a swap.
+ *
+ * No visible label: the buttons stack on a surface directly under the master they qualify, where the
+ * glyph carries it. [label] is still required and becomes the button's content description, and the
+ * control is [toggleable] rather than merely clickable, so a screen reader announces the mode *and*
+ * whether it is currently on.
+ */
+@Composable
+private fun ModeToggle(
+    label: String,
+    @DrawableRes iconRes: Int,
+    selectedColor: Color,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val unselected = colorResource(R.color.layer_disabled)
+    val container by animateColorAsState(
+        if (selected) selectedColor else Color.Transparent,
+        label = "modeToggleContainer"
+    )
+    val content by animateColorAsState(
+        if (selected) Color.White else unselected,
+        label = "modeToggleContent"
+    )
+    val outline by animateDpAsState(
+        if (selected) 0.dp else MODE_TOGGLE_OUTLINE,
+        label = "modeToggleOutline"
+    )
+    Surface(
+        modifier = Modifier
+            .size(MODE_TOGGLE_SIZE)
+            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() }),
+        shape = CircleShape,
+        color = container,
+        // Null rather than a zero-width stroke: a 0.dp border still paints a hairline on some
+        // densities, which would leave a ring around the filled state.
+        border = if (outline > 0.dp) BorderStroke(outline, unselected) else null
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Icon(
+                painterResource(iconRes),
+                contentDescription = label,
+                tint = content,
+                modifier = Modifier.size(MODE_TOGGLE_GLYPH)
+            )
+        }
+    }
+}
+
+/** The mode toggle's diameter, its glyph, and the outline it wears when off. */
+private val MODE_TOGGLE_SIZE = 40.dp
+private val MODE_TOGGLE_GLYPH = 20.dp
+private val MODE_TOGGLE_OUTLINE = 1.5.dp
+
+/** The rental button's spinner stroke — thin enough to read as progress at 24dp, not as a ring. */
+private val RENTAL_SPINNER_STROKE = 2.dp
+
+/** The rental panel's corner radius, inner padding, and raised elevation. */
+private val RENTAL_SURFACE_CORNER = 28.dp
+private val RENTAL_SURFACE_PADDING = 8.dp
+private val RENTAL_SURFACE_ELEVATION = 6.dp
+
+// The my-location FAB uses @dimen/fab_margin_*; the rental control stacks above it, clearing it by
+// RENTAL_FAB_GAP. The legacy layout hardcoded the whole distance as 80dp with no dimen, which left the
+// two buttons flush once the rental panel gained its own padding — hence deriving it instead.
+
+/** M3's standard FAB diameter, which the my-location button is. Not exposed as a token by Material 3. */
+private val FAB_SIZE = 56.dp
+
+/** Clear air between the rental control and the my-location FAB beneath it. */
+private val RENTAL_FAB_GAP = 16.dp

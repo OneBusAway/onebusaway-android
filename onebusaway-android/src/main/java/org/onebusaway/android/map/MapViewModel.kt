@@ -41,6 +41,7 @@ import org.onebusaway.android.map.render.MapViewport
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
+import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlacesRepository
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -209,8 +210,14 @@ class MapViewModel @Inject constructor(
     /** Whether the rental layer refused this viewport (see `RentalGuardrails`) — drives the map's pill. */
     val rentalsNeedCloserZoom: StateFlow<Boolean> get() = mapHost.rentalsNeedCloserZoom
 
-    /** Show/hide the rental layers (the host syncs the pref on resume; the button persists the tap). */
-    fun setRentalsVisible(visible: Boolean, persist: Boolean = false) = rentalController.setRentalsVisible(visible, persist)
+    /** Whether a rental load the rider tapped for is in flight — the rental button's spinner. */
+    val rentalsLoading: StateFlow<Boolean> get() = rentalController.loading
+
+    /** Show/hide rentals entirely — the map's master rental button. */
+    fun setRentalsVisible(visible: Boolean) = rentalController.setRentalsVisible(visible)
+
+    /** Show/hide one rental mode, under the master button. */
+    fun setRentalLayerVisible(layer: RentalLayer, visible: Boolean) = rentalController.setLayerVisible(layer, visible)
 
     // The single-route use case (route shape + stops + header + the real-time vehicle poll). Feeds its
     // stops into stopsController so they accumulate + focus like nearby stops. (Explicit type so the

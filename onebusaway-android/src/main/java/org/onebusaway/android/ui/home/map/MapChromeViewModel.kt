@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
+import org.onebusaway.android.map.rental.RentalLayer
+import org.onebusaway.android.map.rental.defaultVisible
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BikeshareAvailability
@@ -35,7 +37,10 @@ data class MapChromeState(
     val zoomControls: Boolean = false,
     val leftHand: Boolean = false,
     val layersFab: Boolean = false,
-    val rentalsActive: Boolean = false
+    val rentalsActive: Boolean = false,
+    /** The two mode toggles, shown only while [rentalsActive]. */
+    val bikesActive: Boolean = false,
+    val scootersActive: Boolean = false
 )
 
 /**
@@ -59,25 +64,41 @@ class MapChromeViewModel @Inject constructor(
         // Self-collect the chrome-gate inputs from their reactive sources. All writers go through the
         // DataStore-backed PreferencesRepository, so a pref change re-derives the gates with no host push.
         viewModelScope.launch {
+            // The three rental preferences are combined first so the outer combine stays inside the
+            // typed five-flow overload — seven inputs would fall back to the untyped vararg form.
+            val rentals = combine(
+                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
+                prefsRepo.observeBoolean(
+                    R.string.preference_key_layer_bikes_visible,
+                    RentalLayer.BIKES.defaultVisible
+                ),
+                prefsRepo.observeBoolean(
+                    R.string.preference_key_layer_scooters_visible,
+                    RentalLayer.SCOOTERS.defaultVisible
+                )
+            ) { master, bikes, scooters -> Triple(master, bikes, scooters) }
             combine(
                 prefsRepo.observeBoolean(R.string.preference_key_show_zoom_controls, false),
                 prefsRepo.observeBoolean(R.string.preference_key_left_hand_mode, false),
-                // One preference for both rental layers: they come off one fetch and one map button
-                // (#2168), and it keeps the legacy bikeshare key so an upgrade carries the choice.
-                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
+                rentals,
                 regionRepo.region,
                 prefsRepo.observeString(R.string.preference_key_otp_api_url, null)
-            ) { zoomControls, leftHand, rentalsVisible, region, otpUrl ->
+            ) { zoomControls, leftHand, (master, bikes, scooters), region, otpUrl ->
                 // Reactive re-derivation of rental availability for this consumer, tracking region +
                 // the OTP-URL pref, so this stays a live flow while the trip-planning call sites
                 // resolve theirs per-call from a Context. This chrome drives the rental *map layer*
-                // (its toggle), hence the station-layer question rather than the trip-planning one.
+                // (its buttons), hence the station-layer question rather than the trip-planning one.
                 val rentalsEnabled = BikeshareAvailability.isStationLayerEnabled(region, otpUrl)
+                val rentalsOn = rentalsEnabled && master
                 MapChromeState(
                     zoomControls = zoomControls,
                     leftHand = leftHand,
                     layersFab = rentalsEnabled,
-                    rentalsActive = rentalsEnabled && rentalsVisible
+                    rentalsActive = rentalsOn,
+                    // Only meaningful while the master is on, which is also the only time the mode
+                    // toggles are drawn — so their tint can't advertise a state that isn't in effect.
+                    bikesActive = rentalsOn && bikes,
+                    scootersActive = rentalsOn && scooters
                 )
             }.distinctUntilChanged().collect { _state.value = it }
         }

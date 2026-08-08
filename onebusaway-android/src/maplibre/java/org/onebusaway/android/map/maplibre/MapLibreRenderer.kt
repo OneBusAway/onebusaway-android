@@ -197,7 +197,6 @@ class MapLibreRenderer(
 
     // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
     // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
-    private val vehicleIconDirection = HashMap<String, Int>()
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
@@ -417,7 +416,6 @@ class MapLibreRenderer(
         pinnedTripByMarker = null
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
-        vehicleIconDirection.clear()
         mostRecentDataMarker = null
         lastVehicleResponse = null
     }
@@ -491,22 +489,16 @@ class MapLibreRenderer(
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
     // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
     // Markers not yet reconciled are skipped.
+    //
+    // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
+    // since #2194 removed that arrow, nothing about the icon varies between polls (see
+    // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
     private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
-        val response = vehicles?.response
-        val markers = vehicles?.markers.orEmpty()
-        for (vehicle in markers) {
+        for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(
                 vehicleSmoother.displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs).toLatLng()
             )
-            // Re-stamp the direction arrow as the vehicle glides, but only when its heading octant flips
-            // (the only thing that changes the icon between polls) — keeping icon work off the every-frame path.
-            if (response != null) {
-                val direction = VehicleBitmaps.directionIndex(vehicle)
-                if (vehicleIconDirection.put(vehicle.activeTripId, direction) != direction) {
-                    marker.icon = vehicleIcon(vehicle, response)
-                }
-            }
         }
         updateMostRecentDataDot(nowMs)
     }
@@ -576,7 +568,6 @@ class MapLibreRenderer(
     private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
-        vehicleIconDirection.keys.retainAll(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
         while (gone.hasNext()) {
             val entry = gone.next()
@@ -602,14 +593,14 @@ class MapLibreRenderer(
                 existing.title = vehicleTitle(context, vehicle, response)
                 vehicleByMarker[existing] = vehicle
             }
-            // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
-            // doesn't redundantly re-stamp it this frame.
-            vehicleIconDirection[vehicle.activeTripId] = VehicleBitmaps.directionIndex(vehicle)
         }
     }
 
     // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
-    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
+    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752). That
+    // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
+    // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
+    // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
         VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
     )

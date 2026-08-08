@@ -16,6 +16,7 @@
 package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTrip
@@ -102,21 +103,32 @@ class VehicleBitmapsTest {
     }
 
     /**
-     * The whole GTFS-realtime occupancy enum, bucketed onto the marker's 0..3 pips. Pinned exhaustively
-     * because this is the only thing standing between a rider and a wrong crowding reading, and because
-     * a new enum value must be assigned a bucket deliberately rather than falling into one.
+     * The whole GTFS-realtime occupancy enum, bucketed onto the tab's 0..3 inked pips. Pinned
+     * exhaustively because this is the only thing standing between a rider and a wrong crowding reading,
+     * and because a new enum value must be assigned a bucket deliberately rather than falling into one.
      */
     @Test
     fun occupancyBucketsOntoPips() {
         val full = VehicleBitmaps.MAX_PIPS
-        assertEquals("absent occupancy draws nothing", 0, VehicleBitmaps.occupancyPips(null))
-        assertEquals(0, VehicleBitmaps.occupancyPips(Occupancy.EMPTY))
-        assertEquals(1, VehicleBitmaps.occupancyPips(Occupancy.MANY_SEATS_AVAILABLE))
-        assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.FEW_SEATS_AVAILABLE))
-        assertEquals(2, VehicleBitmaps.occupancyPips(Occupancy.STANDING_ROOM_ONLY))
-        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
-        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.FULL))
-        assertEquals(full, VehicleBitmaps.occupancyPips(Occupancy.NOT_ACCEPTING_PASSENGERS))
+        assertEquals(0, VehicleBitmaps.occupancyFill(Occupancy.EMPTY))
+        assertEquals(1, VehicleBitmaps.occupancyFill(Occupancy.MANY_SEATS_AVAILABLE))
+        assertEquals(2, VehicleBitmaps.occupancyFill(Occupancy.FEW_SEATS_AVAILABLE))
+        assertEquals(2, VehicleBitmaps.occupancyFill(Occupancy.STANDING_ROOM_ONLY))
+        assertEquals(full, VehicleBitmaps.occupancyFill(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
+        assertEquals(full, VehicleBitmaps.occupancyFill(Occupancy.FULL))
+        assertEquals(full, VehicleBitmaps.occupancyFill(Occupancy.NOT_ACCEPTING_PASSENGERS))
+    }
+
+    /**
+     * The distinction the tab exists to draw: a vehicle that reports **no** occupancy gets no tab (null),
+     * while one that reports [Occupancy.EMPTY] gets a tab with nothing inked (0). Asserted as its own
+     * test because the two used to be the same value, and collapsing them again would silently turn "we
+     * don't know" back into "it's empty".
+     */
+    @Test
+    fun absentOccupancyIsNotTheSameAsEmpty() {
+        assertNull("a vehicle reporting no occupancy must draw no tab", VehicleBitmaps.occupancyFill(null))
+        assertEquals("a vehicle reporting EMPTY must draw a tab with no pips inked", 0, VehicleBitmaps.occupancyFill(Occupancy.EMPTY))
     }
 
     /** A [RouteTrips] whose references pool holds at most the given trip/route. */

@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.ColorUtils
@@ -137,20 +138,6 @@ object MarkerRendering {
         glyphSize: Float,
         outline: Float
     ) {
-        drawDisc(canvas, contentPx, fillColor, outline)
-        // Glyph centered on the disc.
-        val center = contentPx / 2f
-        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
-    }
-
-    /**
-     * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], ringed with a black
-     * hairline [outline] wide when that is > 0. The circular counterpart of [drawPinAndGlyph]'s teardrop:
-     * the route/trip maps center a vehicle badge on the route line rather than floating a pin off it
-     * (#1752). What goes *on* the disc — glyph, occupancy pips, heading arrow — the caller layers itself
-     * with [drawGlyph], since only it knows how those stack.
-     */
-    fun drawDisc(canvas: Canvas, contentPx: Int, fillColor: Int, outline: Float) {
         val center = contentPx / 2f
         val radius = center - outline
         // One Paint, filled (the default style); recolored between the ring and the fill.
@@ -162,6 +149,31 @@ object MarkerRendering {
         }
         paint.color = fillColor
         canvas.drawCircle(center, center, radius - outline, paint)
+
+        // Glyph centered on the disc.
+        drawGlyph(canvas, context, glyphRes, center, center, glyphSize / 2f * scale, outline, glyphColor)
+    }
+
+    /**
+     * Fills [path] with [fillColor] on [canvas] and rims it with a black hairline [outline] wide (when
+     * that is > 0), stroked **centered on the path**, so a compound silhouette is outlined once around
+     * its union rather than once per part.
+     *
+     * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
+     * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
+     * optionally unioned with an occupancy tab. What goes *on* the body — glyph, occupancy pips — the
+     * caller layers itself with [drawGlyph] / [drawOutlined], since only it knows how those stack.
+     */
+    fun drawOutlinedPath(canvas: Canvas, path: Path, fillColor: Int, outline: Float) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = fillColor
+        canvas.drawPath(path, paint)
+        if (outline > 0f) {
+            paint.color = Color.BLACK
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = outline
+            canvas.drawPath(path, paint)
+        }
     }
 
     /**

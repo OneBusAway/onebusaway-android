@@ -115,6 +115,24 @@ class VehicleMarkerTextTest {
         )
     }
 
+    /**
+     * The marker draws three hollow pips for a vehicle that reports itself EMPTY, and a screen-reader
+     * user has to hear that as "Empty" — not as silence, which is what a vehicle reporting *nothing*
+     * gets. This is the audible half of the null-vs-EMPTY split the tab exists to draw.
+     */
+    @Test
+    fun anEmptyVehicleSaysSoAndAnUnreportedOneStaysSilent() {
+        val response = routeTrips(trip = FakeTrip(headsign = "Ballard"), route = FakeRoute(shortName = "44"))
+        assertEquals(
+            "44 - Ballard - " + context.getString(R.string.realtime_empty),
+            vehicleTitle(context, vehicle(Occupancy.EMPTY), response)
+        )
+        assertEquals(
+            "44 - Ballard",
+            vehicleTitle(context, vehicle(occupancy = null), response)
+        )
+    }
+
     private fun vehicle(occupancy: Occupancy?, isRealtime: Boolean = true): VehicleMarker = VehicleMarker(
         activeTripId = "trip1",
         point = GeoPoint(47.6, -122.3),

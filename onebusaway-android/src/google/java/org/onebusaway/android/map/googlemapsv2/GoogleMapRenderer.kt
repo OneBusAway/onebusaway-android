@@ -176,7 +176,6 @@ class GoogleMapRenderer(
     // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id. Lets the hot path
     // re-stamp the direction arrow as a vehicle glides (its bearing tracks the route shape) without
     // doing icon work every frame — only when the discrete heading octant actually changes.
-    private val vehicleIconDirection = HashMap<String, Int>()
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom)
 
     // Smooths each moving route vehicle across a fresh-AVL jump (a decaying correction layered on the
@@ -530,7 +529,6 @@ class GoogleMapRenderer(
         vehicleMarkersByTripId.values.forEach { it.remove() }
         vehicleMarkersByTripId.clear()
         vehicleByMarker.clear()
-        vehicleIconDirection.clear()
 
         bandPolylines.forEach { it.remove() }
         bandPolylines.clear()
@@ -629,24 +627,18 @@ class GoogleMapRenderer(
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position (a
-    // decaying correction across a fix change) — no set diffing or icon work on the hot path, only an
-    // icon re-stamp when a vehicle's heading octant flips. Markers not yet reconciled are skipped.
+    // decaying correction across a fix change) — no set diffing and no icon work at all on the hot path.
+    // Markers not yet reconciled are skipped.
+    //
+    // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
+    // since #2194 removed that arrow, nothing about the icon varies between polls (see
+    // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
     private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
-        val response = vehicles?.response
-        val markers = vehicles?.markers.orEmpty()
-        for (vehicle in markers) {
+        for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.position = vehicleSmoother
                 .displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs)
                 .toLatLng()
-            // Re-stamp the direction arrow as the vehicle glides, but only when its heading octant flips
-            // (the only thing that changes the icon between polls) — keeping setIcon off the every-frame path.
-            if (response != null) {
-                val direction = VehicleBitmaps.directionIndex(vehicle)
-                if (vehicleIconDirection.put(vehicle.activeTripId, direction) != direction) {
-                    marker.setIcon(vehicleIcon(vehicle, response))
-                }
-            }
         }
         updateMostRecentDataDot(nowMs)
     }
@@ -724,7 +716,6 @@ class GoogleMapRenderer(
     private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
-        vehicleIconDirection.keys.retainAll(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
         while (gone.hasNext()) {
             val entry = gone.next()
@@ -744,6 +735,9 @@ class GoogleMapRenderer(
                         .icon(vehicleIcon(vehicle, response))
                         // Center the disc badge on the vehicle location, so it sits on the route
                         // centerline like the trip map's estimate marker rather than floating off it (#1752).
+                        // A plain center anchor is right for both marker shapes: the bitmap reserves the
+                        // occupancy tab's depth above the disc as well as below, so its center *is* the
+                        // disc's center whether or not a tab is drawn (see [VehicleBitmaps]).
                         .anchor(0.5f, 0.5f)
                         .title(vehicleTitle(context, vehicle, response))
                         .zIndex(VEHICLE_Z_INDEX)
@@ -755,9 +749,6 @@ class GoogleMapRenderer(
                 existing.title = vehicleTitle(context, vehicle, response)
                 vehicleByMarker[existing] = vehicle
             }
-            // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
-            // doesn't redundantly re-stamp it this frame.
-            vehicleIconDirection[vehicle.activeTripId] = VehicleBitmaps.directionIndex(vehicle)
         }
     }
 

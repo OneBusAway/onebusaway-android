@@ -471,6 +471,7 @@
 
     <!-- Occupancy. The map marker draws these as silhouettes; the text is what a screen reader
          announces for that vehicle, so each names its own crowding level rather than a pip count. -->
+    <string name="realtime_empty">Empty</string>
     <string name="realtime_many_seats_available">Many seats available</string>
     <string name="realtime_standing_room">Standing room</string>
     <string name="realtime_full">Full</string>

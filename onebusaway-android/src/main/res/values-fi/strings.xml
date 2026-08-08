@@ -727,6 +727,7 @@
     <string name="map_option_layers">Karttatasojen painike</string>
 
     <!-- Occupancy -->
+    <string name="realtime_empty">Tyhjä</string>
     <string name="realtime_many_seats_available">Paljon istumapaikkoja vapaana</string>
     <string name="realtime_standing_room">Seisomatilaa</string>
     <string name="realtime_full">Täynnä</string>

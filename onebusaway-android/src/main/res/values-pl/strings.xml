@@ -994,6 +994,7 @@
     <string name="retry">Spróbuj ponownie</string>
     <string name="navigate_up">Przejdź w górę</string>
     <!-- Occupancy -->
+    <string name="realtime_empty">Pusty</string>
     <string name="realtime_many_seats_available">Wiele wolnych miejsc</string>
     <string name="realtime_standing_room">Tylko miejsca stojące</string>
     <string name="realtime_full">Pełny</string>

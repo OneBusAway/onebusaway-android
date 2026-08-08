@@ -334,6 +334,7 @@
     <string name="trip_info_separator">-</string>
 
     <!-- Occupancy -->
+    <string name="realtime_empty">Vuoto</string>
     <string name="realtime_many_seats_available">Molti posti a sedere</string>
     <string name="realtime_standing_room">Spazio in piedi</string>
     <string name="realtime_full">Pieno</string>

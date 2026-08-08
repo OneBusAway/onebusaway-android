@@ -165,10 +165,11 @@ fun TripResultsHeader(
     state: TripResultsUiState,
     onSelectOption: (Int) -> Unit,
     scheduleWinnerMode: ScheduleWinnerMode = ScheduleWinnerMode.BOTH,
-    // The pin gesture (#2053). Defaulted so the render-only harnesses that compose this header directly
-    // keep working: given neither, a card long-press opens nothing, which is the pre-#2053 behaviour.
+    // The pin gesture (#2053). Null — the default — means this header has no pin behind it, and a card
+    // then carries no long press at all: a menu offering "Pin this trip" wired to nothing would be worse
+    // than no menu. That is the pre-#2053 behaviour, and it is what the render-only harnesses get.
     pinnedOptionIndex: Int? = null,
-    onTogglePin: (Int) -> Unit = {}
+    onTogglePin: ((Int) -> Unit)? = null
 ) {
     val success = state as? TripResultsUiState.Success ?: return
     val winners = remember(success.options, scheduleWinnerMode) {
@@ -222,7 +223,7 @@ fun TripResultsHeader(
                     pinned = index == pinnedOptionIndex,
                     summaryHeights = summaryHeights,
                     onClick = { onSelectOption(index) },
-                    onLongClick = { menuForIndex = index }
+                    onLongClick = onTogglePin?.let { { menuForIndex = index } }
                 )
             }
         }
@@ -233,16 +234,19 @@ fun TripResultsHeader(
             onClick = { jump(forward = true) }
         )
     }
-    menuForIndex?.let { index ->
-        CenteredLongPressMenu(expanded = true, onDismissRequest = { menuForIndex = null }) {
-            MenuRow(
-                textRes = if (index == pinnedOptionIndex) R.string.trip_plan_unpin else R.string.trip_plan_pin,
-                icon = ImageVector.vectorResource(
-                    if (index == pinnedOptionIndex) R.drawable.ic_pin_filled else R.drawable.ic_pin
-                )
-            ) {
-                menuForIndex = null
-                onTogglePin(index)
+    val togglePin = onTogglePin
+    if (togglePin != null) {
+        menuForIndex?.let { index ->
+            CenteredLongPressMenu(expanded = true, onDismissRequest = { menuForIndex = null }) {
+                MenuRow(
+                    textRes = if (index == pinnedOptionIndex) R.string.trip_plan_unpin else R.string.trip_plan_pin,
+                    icon = ImageVector.vectorResource(
+                        if (index == pinnedOptionIndex) R.drawable.ic_pin_filled else R.drawable.ic_pin
+                    )
+                ) {
+                    menuForIndex = null
+                    togglePin(index)
+                }
             }
         }
     }
@@ -397,7 +401,7 @@ private fun OptionCard(
     pinned: Boolean,
     summaryHeights: SummaryHeights,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: (() -> Unit)?
 ) {
     val background = colorResource(
         if (selected) R.color.trip_plan_card_background_selected else R.color.trip_plan_card_background
@@ -428,7 +432,8 @@ private fun OptionCard(
             // row — the picker has no width for an overflow button and one here would crowd it.
             .combinedClickable(
                 onClick = onClick,
-                onLongClickLabel = stringResource(R.string.trip_plan_pin_menu_label),
+                // Both null together: a card with no secondary action must not announce one either.
+                onLongClickLabel = onLongClick?.let { stringResource(R.string.trip_plan_pin_menu_label) },
                 onLongClick = onLongClick
             )
             .semantics {
@@ -930,7 +935,7 @@ fun TripResultsList(
     // other action here, so the render-only harnesses that call this directly stay unaffected: a list
     // handed neither of these simply offers no pin affordance, which is the right rendering for them.
     pinnedOptionIndex: Int? = null,
-    onTogglePin: (Int) -> Unit = {},
+    onTogglePin: ((Int) -> Unit)? = null,
     // The full-width action row under the picker: the pin control, and the destination-reminder button
     // once that feature comes back. Named for what the slot *is* rather than for the one control that
     // used to sit in it.
@@ -1165,7 +1170,7 @@ private fun TripLogList(
     onFocusPoint: (GeoPoint) -> Unit,
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     pinnedOptionIndex: Int?,
-    onTogglePin: (Int) -> Unit,
+    onTogglePin: ((Int) -> Unit)?,
     optionActions: @Composable () -> Unit
 ) {
     val entries = state.directions

@@ -25,7 +25,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
@@ -97,19 +96,27 @@ class OptionCardPinLongPressTest {
     }
 
     @Test
-    fun aHeaderGivenNoPinWiringOffersNoPinAction() {
-        // The defaults exist so the render-only harnesses keep working; this is what says they still do.
-        var toggled: Int? = null
+    fun aHeaderGivenNoPinWiringCarriesNoLongPressAtAll() {
+        // The defaults exist so the render-only harnesses keep working. "No pin" has to mean the cards
+        // carry no long press — not a menu that opens and offers an item wired to nothing, which is what
+        // a defaulted no-op callback would have produced. So the assertion is on the action, not the
+        // menu: nothing announces a secondary action a card cannot perform.
         composeRule.setContent {
             ObaTheme {
                 TripResultsHeader(state = successState(), onSelectOption = {})
             }
         }
+        composeRule.waitForIdle()
 
-        longPressCard(index = 0)
-
+        composeRule.onAllNodes(hasPinLongPressAction()).assertCountEquals(0)
         composeRule.onAllNodesWithText(pinLabel).assertCountEquals(0)
-        assertNull(toggled)
+    }
+
+    @Test
+    fun aWiredHeaderGivesEveryCardTheLongPress() {
+        show()
+
+        composeRule.onAllNodes(hasPinLongPressAction()).assertCountEquals(2)
     }
 
     /**
@@ -120,13 +127,17 @@ class OptionCardPinLongPressTest {
      * taught us this).
      */
     private fun longPressCard(index: Int) {
-        val menuLabel = context.getString(R.string.trip_plan_pin_menu_label)
-        composeRule.onAllNodes(
-            SemanticsMatcher("has long-press action labeled \"$menuLabel\"") { node ->
-                node.config.getOrNull(SemanticsActions.OnLongClick)?.label == menuLabel
-            }
-        )[index].performSemanticsAction(SemanticsActions.OnLongClick)
+        composeRule.onAllNodes(hasPinLongPressAction())[index]
+            .performSemanticsAction(SemanticsActions.OnLongClick)
         composeRule.waitForIdle()
+    }
+
+    /** A card that announces the picker's secondary action — the pin menu's own long-press label. */
+    private fun hasPinLongPressAction(): SemanticsMatcher {
+        val menuLabel = context.getString(R.string.trip_plan_pin_menu_label)
+        return SemanticsMatcher("has long-press action labeled \"$menuLabel\"") { node ->
+            node.config.getOrNull(SemanticsActions.OnLongClick)?.label == menuLabel
+        }
     }
 
     private fun show(

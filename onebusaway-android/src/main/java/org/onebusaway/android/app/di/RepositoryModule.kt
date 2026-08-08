@@ -105,6 +105,8 @@ import org.onebusaway.android.ui.tripplan.DefaultGeocodeRepository
 import org.onebusaway.android.ui.tripplan.DefaultTripPlanRepository
 import org.onebusaway.android.ui.tripplan.GeocodeRepository
 import org.onebusaway.android.ui.tripplan.TripPlanRepository
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripStore
+import org.onebusaway.android.ui.tripplan.pinned.RoomPinnedTripStore
 import org.onebusaway.android.ui.tripresults.DefaultTripResultsRepository
 import org.onebusaway.android.ui.tripresults.TripResultsRepository
 
@@ -121,6 +123,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     internal abstract fun bindReminderSessionStore(impl: RoomReminderSessionStore): ReminderSessionStore
+
+    @Binds
+    @Singleton
+    internal abstract fun bindPinnedTripStore(impl: RoomPinnedTripStore): PinnedTripStore
 
     @Binds
     internal abstract fun bindReminderNotificationPresenter(

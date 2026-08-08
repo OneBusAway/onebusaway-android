@@ -375,9 +375,67 @@ class TripPlanViewModel @Inject constructor(
                 arriving = arriving
             ).withWhen(WallTime(dateTimeMillis), departNow = false, now = now)
         }
-        if (itineraries.isNotEmpty()) {
-            _planState.value = PlanResult.Success(itineraries)
+        seedResults(itineraries, params = null, fromSnapshot = false)
+    }
+
+    /**
+     * Redraws a **pinned** trip from its stored snapshot: the form as the rider asked it, and the plan
+     * that answer produced, injected without re-planning (#2053). The action bar's Refresh button is
+     * the fresh-plan path, and it is right there.
+     *
+     * Two things differ from [restoreFrom], which is the notification re-entry and genuinely knows
+     * less:
+     * - The request travels with the results ([PlanResult.Success.params]), because a pin stores the
+     *   whole query. So the drawn trip gets its terminus pins, and a Refresh re-plans the same trip
+     *   rather than whatever the form happens to hold.
+     * - [departNow] is honoured. A trip pinned on the moving "now" anchor comes back on that anchor
+     *   with the clock re-read; only a trip pinned to a stated instant keeps that instant. The stored
+     *   `dateTimeMillis` is the moment the request was *submitted*, so handing it back as the rider's
+     *   starting point is exactly the moving-anchor bug [TripPlanFormState.departNow] exists to
+     *   prevent.
+     *
+     * A "my location" end restores the coordinate the rider was standing at when they pinned, which is
+     * the honest answer until they act: [TripPlanFormState.withDeviceLocationAt] runs at submit, so the
+     * first re-plan moves it to wherever they are then (#2134).
+     */
+    fun restorePinned(
+        params: TripPlanParams,
+        departNow: Boolean,
+        itineraries: List<TripItinerary>
+    ) {
+        val now = WallTime(timeProvider.now())
+        val instant = if (departNow) now else WallTime(params.dateTimeMillis)
+        _formState.update {
+            it.copy(
+                from = params.from,
+                to = params.to,
+                arriving = params.arriving,
+                modes = params.modes,
+                wheelchair = params.wheelchair,
+                optimizeTransfers = params.optimizeTransfers,
+                maxWalkMeters = params.maxWalkMeters,
+                walkPreference = params.walkPreference,
+                cyclingPreference = params.cyclingPreference,
+                bikePreference = params.bikePreference
+            ).withWhen(instant, departNow = departNow, now = now)
         }
+        seedResults(itineraries, params, fromSnapshot = true)
+    }
+
+    /**
+     * Publishes [itineraries] as the surfaced plan without going near [planInputs] — the one way
+     * results reach the screen that isn't a plan the app just made.
+     *
+     * Empty is a no-op rather than a cleared result: a caller with nothing to restore should leave
+     * whatever is on screen alone.
+     */
+    private fun seedResults(
+        itineraries: List<TripItinerary>,
+        params: TripPlanParams?,
+        fromSnapshot: Boolean
+    ) {
+        if (itineraries.isEmpty()) return
+        _planState.value = PlanResult.Success(itineraries, params, fromSnapshot = fromSnapshot)
     }
 
     /**

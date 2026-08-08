@@ -17,8 +17,10 @@ package org.onebusaway.android.map
 
 import org.onebusaway.android.directions.model.InterchangeableRoute
 import org.onebusaway.android.directions.model.Interlines
+import org.onebusaway.android.directions.model.TripItinerary
 import org.onebusaway.android.directions.model.TripLeg
 import org.onebusaway.android.directions.model.TripMode
+import org.onebusaway.android.directions.model.decodedPoints
 import org.onebusaway.android.directions.model.routeDisplayLabel
 import org.onebusaway.android.map.layout.RouteBadgePath
 import org.onebusaway.android.map.layout.RouteBadgeRequest
@@ -134,6 +136,35 @@ internal fun itineraryLegStyle(
     ItineraryLegKind.BIKE -> street(BIKE_HUE_ANCHOR)
     ItineraryLegKind.BIKESHARE -> street(BIKESHARE_HUE_ANCHOR)
     ItineraryLegKind.CAR -> street(CAR_HUE_ANCHOR)
+}
+
+/**
+ * Every leg of [itinerary] that has geometry, as plain styled lines — the shared half of what
+ * [org.onebusaway.android.map.DirectionsMapController] does when it draws a trip, without the labels,
+ * pins, caps or focus the drawn view adds around them.
+ *
+ * Exists because a *pinned* trip has to be drawn by something that is not a directions session (#2053):
+ * the ghost outlives every mode the rider explores through, so it cannot be owned by the controller
+ * whose whole lifetime is one directions view.
+ */
+internal fun itineraryLegLines(
+    itinerary: TripItinerary,
+    palette: RouteLinePalette,
+    routeColorOf: (TripLeg) -> Int?
+): List<RoutePolyline> = itinerary.legs.mapNotNull { leg ->
+    val geometry = leg.legGeometry ?: return@mapNotNull null
+    val points = geometry.decodedPoints()
+    if (points.size < 2) return@mapNotNull null
+    val style = itineraryLegStyle(leg.legKind(), routeColorOf(leg), palette)
+    // No caps, cuts or focus: those are readings of a trip being *followed*, and this builds the shape
+    // of one merely being remembered. The caller restyles what it gets (see `asPinnedTripGhost`).
+    RoutePolyline(
+        style.color,
+        points,
+        widthProfile = style.widthProfile,
+        dash = style.dash,
+        case = style.case
+    )
 }
 
 /**

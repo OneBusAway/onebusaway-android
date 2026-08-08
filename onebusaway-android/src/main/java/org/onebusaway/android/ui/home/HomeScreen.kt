@@ -122,6 +122,9 @@ import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
+import org.onebusaway.android.ui.tripplan.pinned.describesSameTripAs
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -216,6 +219,9 @@ fun HomeScreen(
     // the top chrome and the results sheet + itinerary render over the map.
     tripPlanViewModel: TripPlanViewModel,
     tripResultsViewModel: TripResultsViewModel,
+    // The parked trip plan (#2053): read from the results sheet's pin controls and from the resume card
+    // over the map, so it is one activity-scoped instance rather than a per-destination one.
+    pinnedTripViewModel: PinnedTripViewModel,
     // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
     // the sheet's stop id is runtime-dynamic, so it can't be a plain hiltViewModel). Injected into
     // HomeActivity and threaded down.
@@ -612,6 +618,88 @@ fun HomeScreen(
                             // surfaces a message.
                             val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                             val directionsLoading = tripPlanResult is PlanResult.Loading
+
+                            // ---- The parked trip plan (#2053) ------------------------------------
+                            val pinnedTrip by pinnedTripViewModel.pinned.collectAsStateWithLifecycle()
+                            val pinnedCard by pinnedTripViewModel.card.collectAsStateWithLifecycle()
+                            val pendingResumeIndex by pinnedTripViewModel.pendingResumeIndex
+                                .collectAsStateWithLifecycle()
+                            // Whether the plan on screen is the pinned one — so the controls read Unpin,
+                            // and so a refresh of it can update the snapshot in place.
+                            val pinnedTripIsOnScreen = directionsResults?.params?.let { params ->
+                                pinnedTrip?.describesSameTripAs(params, tripPlanFormState.departNow)
+                            } == true
+                            // A pin is a whole request, so a plan with no request behind it (a monitor
+                            // notification re-entry) is one there is nothing to pin. The results sheet's
+                            // control is *disabled* — it holds its place in a row that is always there —
+                            // while the exit dialog's button is simply absent, since a dialog offering a
+                            // greyed-out answer is worse than one offering two.
+                            val canPin = directionsResults?.params != null
+                            val pinTripOption: (Int) -> Unit = { index ->
+                                val results = directionsResults
+                                val params = results?.params
+                                if (params != null) {
+                                    pinnedTripViewModel.pin(
+                                        params = params,
+                                        departNow = tripPlanFormState.departNow,
+                                        itineraries = results.itineraries,
+                                        selectedIndex = index
+                                    )
+                                }
+                            }
+                            // The option the rider is looking at, which is the one an exit-time pin parks.
+                            val tripResultsState by tripResultsViewModel.state.collectAsStateWithLifecycle()
+                            val selectedOptionIndex =
+                                (tripResultsState as? TripResultsUiState.Success)?.selectedIndex ?: 0
+                            // The toggle the pin control and the card's long-press menu share. The exit
+                            // dialog deliberately does *not* use it: "Pin & leave" must always leave a
+                            // pin behind, and toggling would make it un-pin the very trip it was pressed
+                            // to keep.
+                            val onTogglePinOption: (Int) -> Unit = { index ->
+                                if (pinnedTripIsOnScreen && index == pinnedTrip?.selectedIndex) {
+                                    pinnedTripViewModel.unpin()
+                                } else {
+                                    pinTripOption(index)
+                                }
+                            }
+                            // The parked trip, traced thin under the map the rider is exploring (#2053) —
+                            // withdrawn inside directions, where the real trip is already drawn and a
+                            // ghost of it would only double every line.
+                            LaunchedEffect(pinnedTrip, pinnedCard, directionsActive) {
+                                mapViewModel.setPinnedTripOverlay(
+                                    pinnedTrip?.selectedItinerary,
+                                    pinnedCard,
+                                    // The trace is withheld over a drawn itinerary, where it would only
+                                    // double every line; the marker stands wherever the rider is.
+                                    traceRoute = !directionsActive
+                                )
+                            }
+                            // A pinned trip is one the rider can walk back to, so leaving it costs nothing
+                            // and the #2140 "you'll lose this" confirmation stops being worth asking.
+                            LaunchedEffect(pinnedTripIsOnScreen) {
+                                homeViewModel.setDrawnTripRecoverable(pinnedTripIsOnScreen)
+                            }
+                            // A fresh plan for the trip the rider pinned replaces the pin's snapshot, so
+                            // it stays a bookmark of that trip rather than of the first answer to it.
+                            // Guarded on `fromSnapshot` because a resume *is* the stored plan — adopting
+                            // it would be the pin re-pinning itself once per resume.
+                            LaunchedEffect(directionsResults, pinnedTripIsOnScreen) {
+                                val results = directionsResults ?: return@LaunchedEffect
+                                if (!pinnedTripIsOnScreen || results.fromSnapshot) return@LaunchedEffect
+                                pinnedTripViewModel.resnapshot(results.itineraries)
+                            }
+                            // Resume: seed the form + results *before* entering directions, so the single
+                            // recomposition that turns directions on already sees a plan. Reversed, the
+                            // "planning but no results yet" effect below can fire on the intermediate
+                            // frame and wipe the trip off the map.
+                            val onResumePinnedTrip: () -> Unit = {
+                                pinnedTrip?.let { pin ->
+                                    pinnedTripViewModel.beginResume(pin)
+                                    tripPlanViewModel.restorePinned(pin.params, pin.departNow, pin.itineraries)
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                }
+                            }
+
                             // A long-pressed map point awaiting the "directions from/to here" choice.
                             var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                             // Leaving directions ends any in-progress map pick.
@@ -676,6 +764,7 @@ fun HomeScreen(
                                     homeViewModel = homeViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
+                                    onResumePinnedTrip = onResumePinnedTrip,
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // The floating top chrome + the map overlays draw over the (now edge-to-edge) map.
@@ -813,6 +902,21 @@ fun HomeScreen(
                                             // the first in travel order where one label covers the
                                             // same route ridden twice.
                                             rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
+                                            // A resume opens on the option the rider pinned; every other
+                                            // plan opens on the first, as it always has.
+                                            initialOptionIndex = pendingResumeIndex ?: 0,
+                                            fromSnapshot = directionsResults.fromSnapshot,
+                                            pinnedOptionIndex = pinnedTrip
+                                                ?.selectedIndex
+                                                ?.takeIf { pinnedTripIsOnScreen },
+                                            // A plan with no request behind it has nothing to pin, so
+                                            // its cards carry no long press at all (#2053).
+                                            onTogglePin = onTogglePinOption.takeIf { canPin },
+                                            // Only while this drawer is showing the pinned trip, which
+                                            // is what lets the button say "this trip".
+                                            onUnpinTrip = pinnedTripViewModel::unpin
+                                                .takeIf { pinnedTripIsOnScreen },
+                                            onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                         directionsError != null -> DirectionsErrorSnackbar(
@@ -865,6 +969,18 @@ fun HomeScreen(
                                     .collectAsStateWithLifecycle()
                                 if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
+                                        // Offered only with nothing pinned, where "pin" can mean exactly
+                                        // one thing. With another trip already parked it would be asking
+                                        // the rider to choose between two trips they can't both see, so
+                                        // the offer is withheld rather than made ambiguously.
+                                        onPinAndLeave = if (canPin && pinnedTrip == null) {
+                                            {
+                                                pinTripOption(selectedOptionIndex)
+                                                homeViewModel.confirmExitDirections()
+                                            }
+                                        } else {
+                                            null
+                                        },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
                                     )

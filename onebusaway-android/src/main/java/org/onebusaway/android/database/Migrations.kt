@@ -251,3 +251,20 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
         )
     }
 }
+
+/**
+ * Adds `pinned_trips`, the one parked trip plan the rider can come back to (#2053). Purely additive and
+ * created empty — nothing is pinned until the rider pins something, so there is no existing row to read
+ * back and no column default to keep in step with the entity. Verified by AppDatabaseMigrationTest.
+ */
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pinned_trips` " +
+                "(`pin_id` TEXT NOT NULL, `format_version` INTEGER NOT NULL, " +
+                "`query_json` TEXT NOT NULL, `itineraries_json` TEXT NOT NULL, " +
+                "`selected_index` INTEGER NOT NULL, `pinned_at_ms` INTEGER NOT NULL, " +
+                "PRIMARY KEY(`pin_id`))"
+        )
+    }
+}

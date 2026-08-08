@@ -1011,6 +1011,23 @@
     <string name="directions_exit_confirm_title">Leave these directions?</string>
     <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
     <string name="directions_exit_confirm_discard">Discard</string>
+    <!-- The third answer, offered only when nothing is pinned yet: park this trip on the way out, so
+         leaving costs nothing (#2053). Withheld once something *is* pinned, where it could only be read
+         as ambiguous — see DirectionsExitConfirmDialog. -->
+    <string name="directions_exit_confirm_pin">Pin &amp; leave</string>
+    <!-- The pinned-trip controls. "Pin" parks the chosen trip so the rider can leave directions and
+         come back to it; "Pinned" is the same control once it is. -->
+    <string name="trip_plan_pin">Pin this trip</string>
+    <string name="trip_plan_unpin">Unpin this trip</string>
+    <!-- Announced as what long-pressing an itinerary option card does. -->
+    <string name="trip_plan_pin_menu_label">Trip options</string>
+    <!-- Announced as the state of an option card that is the pinned one. -->
+    <string name="trip_plan_pinned_state">Pinned</string>
+    <!-- The card floating over the map that brings the rider back to their pinned trip. The first is
+         its heading; the second announces what tapping it does; the third is its dismiss button. -->
+    <string name="trip_plan_pinned_trip_title">Pinned trip to %1$s</string>
+    <string name="trip_plan_pinned_resume">Resume this trip</string>
+    <string name="trip_plan_unpin_content_description">Unpin this trip</string>
     <!-- Content descriptions for the chevrons that hint the itinerary-option picker can scroll sideways -->
     <string name="trip_plan_options_scroll_previous">Show previous options</string>
     <string name="trip_plan_options_scroll_more">Show more options</string>

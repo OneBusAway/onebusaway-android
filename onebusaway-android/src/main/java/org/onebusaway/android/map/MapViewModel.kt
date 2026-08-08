@@ -38,6 +38,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
@@ -51,11 +52,13 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
 import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
@@ -534,6 +537,48 @@ class MapViewModel @Inject constructor(
      * trip's own endpoints' claim on their terminus pins — a current-location terminus wears none
      * (#2111).
      */
+
+    /**
+     * Put the rider's parked trip on the map, or take it off with a null [itinerary] (#2053).
+     *
+     * Independent of every mode this map has, and that is the point: the pin is what the rider is
+     * exploring *around*, so it survives focusing a stop, opening a route, and returning to nearby
+     * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slices of the
+     * render state rather than in the route list every transition clears.
+     *
+     * The two halves are gated separately because they answer different questions. The **marker** says
+     * *a trip is parked, and it starts here*, which is worth saying wherever the rider is — including
+     * inside directions, where they may well be reading some other trip. The **trace** says *and it goes
+     * this way*, which is only worth drawing when nothing else is: over a drawn itinerary it would double
+     * every line, so [traceRoute] withholds it there.
+     *
+     * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
+     * being read, so the parked trip is recognisably the one the rider left.
+     */
+    fun setPinnedTripOverlay(
+        itinerary: TripItinerary?,
+        summary: PinnedTripCardState?,
+        traceRoute: Boolean
+    ) {
+        renderState.setPinnedTripPolylines(
+            itinerary?.takeIf { traceRoute }?.let {
+                itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
+                    .asPinnedTripGhost()
+            }.orEmpty()
+        )
+        // The marker needs both a place to stand and something to say, so it appears only once the
+        // summary has been projected — a pin the rider can tap into a blank window would be worse than
+        // one that arrives a frame later.
+        val origin = itinerary?.legs?.firstOrNull()?.from?.let { place ->
+            val lat = place.lat
+            val lon = place.lon
+            if (lat != null && lon != null) GeoPoint(lat, lon) else null
+        }
+        renderState.setPinnedTripMarker(
+            if (origin != null && summary != null) PinnedTripMarker(origin, summary) else null
+        )
+    }
+
     fun showItinerary(itinerary: TripItinerary, pins: ItineraryPins) {
         if (!directionsActive) {
             leaveCurrentView(clearStopFocus = true)

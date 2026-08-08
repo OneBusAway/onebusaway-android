@@ -63,4 +63,11 @@ interface ObaMapCallbacks {
 
     /** The rental info-window tap — the host opens the operator (app, deep link, or site). */
     fun onRentalInfoWindowClick(place: RentalPlace)
+
+    /**
+     * The rider tapped the parked trip's info window, which is the one way back into a pinned trip once
+     * they have left directions (#2053). Carries nothing: there is only ever one pinned trip, and the
+     * host holds it — a payload here would be a second copy of the same fact.
+     */
+    fun onPinnedTripInfoWindowClick()
 }

@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home.directions
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -280,6 +281,17 @@ fun DirectionsResultsSheet(
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
     // would otherwise type-check.
     rideBadgeTaps: Flow<Set<Int>>,
+    // The pinned-trip surface (#2053), required for the same reason as [rideBadgeTaps]: a defaulted 0
+    // for the option to open on is exactly the resume bug the index exists to prevent, and a defaulted
+    // `false` for [fromSnapshot] re-arms the change monitor for a trip that already departed.
+    initialOptionIndex: Int,
+    fromSnapshot: Boolean,
+    pinnedOptionIndex: Int?,
+    // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
+    // item that does nothing — the same rule the unwired picker follows.
+    onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
+    onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
@@ -357,6 +369,12 @@ fun DirectionsResultsSheet(
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
+                initialOptionIndex = initialOptionIndex,
+                fromSnapshot = fromSnapshot,
+                pinnedOptionIndex = pinnedOptionIndex,
+                onTogglePin = onTogglePin,
+                onUnpinTrip = onUnpinTrip,
+                onOptionsSeeded = onOptionsSeeded,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(fullHeight - DRAG_HANDLE_TOUCH_TARGET_HEIGHT)
@@ -642,11 +660,27 @@ fun DirectionsErrorSnackbar(
  * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
  * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
  *
- * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
- * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ * [onPinAndLeave] parks the trip on the way out — offered **only when nothing is pinned yet**, and that
+ * condition is the whole design. An earlier version offered it unconditionally and had to be withdrawn:
+ * a rider who already had a trip pinned could not tell whether the button meant pin this one again,
+ * replace what they had, or something else, because the question is asked at the one moment the pin
+ * state is off screen. With nothing pinned there is exactly one thing it can mean.
+ *
+ * The trip *this* dialog is about is never the pinned one, so the two cases don't overlap: a pinned trip
+ * costs nothing to leave and so never reaches this dialog at all (see
+ * [org.onebusaway.android.ui.home.HomeViewModel.setDrawnTripRecoverable]). What null therefore means here
+ * is "some *other* trip is pinned, or there is no request to pin" — both cases where an offer would be a
+ * worse answer than silence. It is also why the message can still say flatly that the trip is discarded.
+ *
+ * Note the seam: this dialog only *reports* the choice. Leaving is the caller's half of "pin and leave",
+ * and [onPinAndLeave] is expected to do both — nothing here invokes [onConfirm] on the rider's behalf.
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK", and
+ * the constructive answer sits before it; dismissing — cancel, an outside tap, or Back — keeps the trip.
  */
 @Composable
 fun DirectionsExitConfirmDialog(
+    onPinAndLeave: (() -> Unit)?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -654,9 +688,18 @@ fun DirectionsExitConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
         text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        // Material 3 gives a dialog two action slots and this one has up to three answers, so both ways
+        // *out* share the confirm slot; the dismiss slot stays the single way to stay.
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.directions_exit_confirm_discard))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                onPinAndLeave?.let { pinAndLeave ->
+                    TextButton(onClick = pinAndLeave) {
+                        Text(stringResource(R.string.directions_exit_confirm_pin))
+                    }
+                }
+                TextButton(onClick = onConfirm) {
+                    Text(stringResource(R.string.directions_exit_confirm_discard))
+                }
             }
         },
         dismissButton = {

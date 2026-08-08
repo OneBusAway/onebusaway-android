@@ -736,6 +736,97 @@ class TripPlanViewModelTest {
         assertEquals(1_700_000_000_000L, state.dateTimeMillis)
     }
 
+    @Test
+    fun `a resumed pin carries the request that produced it, unlike a notification re-entry`() = runTest {
+        // The difference that makes a resumed trip refreshable: PlanResult.Success.params is what the
+        // change monitor re-plans and what the itinerary's terminus pins are derived from.
+        val vm = viewModel(clock = FakeClock(0L))
+        val params = pinnedParams()
+
+        vm.restorePinned(params, departNow = false, itineraries = listOf(TripItinerary()))
+
+        val success = vm.planState.value as PlanResult.Success
+        assertEquals(params, success.params)
+        assertTrue("a redrawn snapshot must not re-arm the change monitor", success.fromSnapshot)
+    }
+
+    @Test
+    fun `resuming a pin re-plans nothing`() = runTest {
+        // The whole point of the stored snapshot: resume draws it, and the Refresh button is the only
+        // thing that goes to the network.
+        val plan = FakeTripPlanRepository(Result.success(listOf(TripItinerary())))
+        val vm = viewModel(plan = plan)
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+        advanceUntilIdle()
+
+        assertEquals(0, plan.calls)
+    }
+
+    @Test
+    fun `a trip pinned on the now anchor comes back on it, with the clock re-read`() = runTest {
+        // The stored instant is when the request was *submitted*. Handing it back as the rider's
+        // starting point would be the moving-anchor bug departNow exists to prevent.
+        val vm = viewModel(clock = FakeClock(9_000_000L))
+
+        vm.restorePinned(pinnedParams(), departNow = true, itineraries = listOf(TripItinerary()))
+
+        val state = vm.formState.value
+        assertTrue(state.departNow)
+        assertEquals(9_000_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `a trip pinned to a stated instant comes back on that instant`() = runTest {
+        val vm = viewModel(clock = FakeClock(9_000_000L))
+
+        vm.restorePinned(pinnedParams(), departNow = false, itineraries = listOf(TripItinerary()))
+
+        val state = vm.formState.value
+        assertFalse(state.departNow)
+        assertEquals(1_700_000_000_000L, state.dateTimeMillis)
+    }
+
+    @Test
+    fun `a resumed pin restores the options the trip was planned with`() = runTest {
+        // Not just the endpoints: a Refresh has to re-plan the same trip, and it reads these off the
+        // form. restoreFrom, the notification path, genuinely doesn't know them.
+        val vm = viewModel(clock = FakeClock(0L))
+        val params = pinnedParams().copy(
+            modes = TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE),
+            wheelchair = true,
+            maxWalkMeters = 800.0,
+            walkPreference = WalkPreference.MINIMUM,
+            cyclingPreference = CyclingPreference.FLATTEST,
+            bikePreference = BikePreference.MAXIMUM
+        )
+
+        vm.restorePinned(params, departNow = false, itineraries = listOf(TripItinerary()))
+
+        // Every option the request carries, not a sample of them: restorePinned copies each field by
+        // hand, so one left out (or crossed with its neighbour) is exactly the mistake this catches.
+        val state = vm.formState.value
+        assertEquals(TripModeSelection(VehicleMode.RAIL, StreetMode.BICYCLE), state.modes)
+        assertTrue(state.wheelchair)
+        assertEquals(800.0, state.maxWalkMeters!!, 0.0)
+        assertEquals(WalkPreference.MINIMUM, state.walkPreference)
+        assertEquals(CyclingPreference.FLATTEST, state.cyclingPreference)
+        assertEquals(BikePreference.MAXIMUM, state.bikePreference)
+        assertFalse("optimizeTransfers must arrive as the request stated it", state.optimizeTransfers)
+        assertEquals(params.arriving, state.arriving)
+    }
+
+    private fun pinnedParams() = TripPlanParams(
+        from = origin,
+        to = destination,
+        dateTimeMillis = 1_700_000_000_000L,
+        arriving = false,
+        modes = TripModeSelection(),
+        wheelchair = false,
+        optimizeTransfers = false,
+        maxWalkMeters = null
+    )
+
     /**
      * "Arrive by now" asks for a trip that has already finished, so choosing *arriving* leaves the
      * now anchor and pins a concrete instant for the rider to move.

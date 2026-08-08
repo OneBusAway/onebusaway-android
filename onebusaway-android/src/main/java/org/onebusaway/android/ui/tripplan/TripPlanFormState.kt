@@ -310,10 +310,18 @@ sealed interface PlanResult {
      * [params] are the request that produced these [itineraries], carried so the trip-plan-change
      * monitor can re-plan the same request. Null when the results were restored from a notification
      * re-entry (the full request isn't reconstructed there), in which case monitoring isn't re-armed.
+     *
+     * [fromSnapshot] marks results that came off disk rather than off the wire — a pinned trip the
+     * rider just resumed (#2053). It gates the change monitor: a stored plan carries [params], so the
+     * monitor *could* be armed for it, but its departure may be long past and the monitor's start
+     * window (`departure - now <= window`) admits a past departure, which would raise a foreground
+     * service for a bus that has already gone. This states the fact — where these itineraries came
+     * from — rather than inferring staleness from their timestamps. A Refresh re-plans and re-arms.
      */
     data class Success(
         val itineraries: List<TripItinerary>,
-        val params: TripPlanParams? = null
+        val params: TripPlanParams? = null,
+        val fromSnapshot: Boolean = false
     ) : PlanResult
     data class Error(val error: TripPlanError) : PlanResult
 }

@@ -35,4 +35,5 @@ object NoOpObaMapCallbacks : ObaMapCallbacks {
     override fun onVehicleInfoWindowClick(status: ObaTripStatus) {}
 
     override fun onRentalInfoWindowClick(place: RentalPlace) {}
+    override fun onPinnedTripInfoWindowClick() {}
 }

@@ -502,6 +502,40 @@ class HomeViewModelTest {
     fun `back out of a drawn trip asks before discarding it`() = assertConfirmsBeforeDiscardingTrip(HomeViewModel::navigateBackInDirections)
 
     @Test
+    fun `a recoverable trip leaves without being asked`() = runTest {
+        // Pinning is supposed to make leaving cheap (#2053). A dialog that still demanded a decision
+        // would have kept the very toll it was meant to remove, so a trip the rider can walk back to
+        // goes on the first gesture.
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.setDrawnTripRecoverable(true)
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        assertFalse("nothing is lost by leaving, so nothing is worth asking", vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.None, vm.currentFocus.value)
+    }
+
+    @Test
+    fun `a trip that stops being recoverable is guarded again`() = runTest {
+        // The gate reads the flag at the moment of the gesture rather than latching an answer from when
+        // the trip was drawn — so unpinning mid-session puts the confirmation straight back. False is
+        // also the default, which is what keeps the #2140 guard exactly where it was for every trip
+        // that was never pinned at all.
+        val vm = viewModel()
+        vm.enterDirectionsShowing()
+        vm.setDrawnTripRecoverable(true)
+        vm.setDrawnTripRecoverable(false)
+
+        vm.navigateBackInDirections()
+        advanceUntilIdle()
+
+        assertTrue(vm.pendingDirectionsExit.value)
+        assertEquals(CurrentFocus.Directions(), vm.currentFocus.value)
+    }
+
+    @Test
     fun `tapping off a drawn trip asks before discarding it`() = assertConfirmsBeforeDiscardingTrip(HomeViewModel::unfocusMapOneLevel)
 
     /** With no trip drawn there is nothing to lose, so leaving directions costs no dialog. */

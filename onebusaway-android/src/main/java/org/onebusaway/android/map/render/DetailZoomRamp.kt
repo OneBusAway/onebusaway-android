@@ -101,6 +101,20 @@ val ITINERARY_CONTEXT_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
 )
 
 /**
+ * The rider's **parked** trip, drawn under the map they are exploring (#2053). Thinner than every other
+ * itinerary weight, and deliberately so: the ghost is not part of what the rider is reading, it is a
+ * reminder of where they are going, and a trip that competed with the stop they just tapped would make
+ * exploring worse rather than safer. It keeps each leg's own colour, so what it says is still *which*
+ * trip is parked — thin, not mute.
+ *
+ * Its own semantic profile even though it currently shares [ITINERARY_APPROACH_WIDTH_PROFILE]'s value:
+ * the two describe different things and are free to be tuned apart.
+ */
+val PINNED_TRIP_GHOST_WIDTH_PROFILE = ROUTE_LINE_WIDTH_PROFILE.copy(
+    thicknessDp = ROUTE_LINE_WIDTH_DP * 0.35f
+)
+
+/**
  * A trip-plan itinerary's transit legs (#2041). The itinerary is the only thing the directions map is
  * showing — nothing competes with it — so a ride draws at the focused-route weight, and *is* that
  * profile rather than a second copy of its multiplier. It carries its own name because the two are read

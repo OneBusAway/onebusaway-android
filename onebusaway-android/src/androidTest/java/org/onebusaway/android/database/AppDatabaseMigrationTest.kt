@@ -38,7 +38,8 @@ import org.onebusaway.android.SmokeTest
  * [MIGRATION_9_10] adds `regions.custom` as 0, so every region cached before custom regions existed
  * (#2027) reads back as a directory region and survives no differently than before; and that
  * [MIGRATION_11_12] adds `regions.sidecar_region_id` as NULL, so a cached region keeps addressing the
- * sidecar by its own `_id` (#2165).
+ * sidecar by its own `_id` (#2165); and that [MIGRATION_12_13] creates the empty `pinned_trips` table
+ * the parked trip plan lives in (#2053).
  */
 @SmokeTest // API-23 floor smoke subset (#1818): exercises Room migrations + java.time desugaring
 @RunWith(AndroidJUnit4::class)
@@ -311,6 +312,39 @@ class AppDatabaseMigrationTest {
                 "a region cached before #2165 must have NULL sidecar_region_id (addressed by _id)",
                 c.isNull(0)
             )
+        }
+        db.close()
+    }
+
+    @Test
+    fun migrate12To13_addsAnEmptyPinnedTripsTable() {
+        helper.createDatabase(TEST_DB, 12).use { db ->
+            // An unrelated row, to show the new table arrives beside the existing data rather than
+            // through a rebuild of it.
+            db.execSQL(
+                "INSERT INTO routes (_id, short_name, long_name, use_count) VALUES ('r1', '1', 'Route 1', 3)"
+            )
+        }
+
+        // runMigrationsAndValidate asserts the resulting schema matches the exported 13.json.
+        val db = helper.runMigrationsAndValidate(TEST_DB, 13, true, MIGRATION_12_13)
+
+        db.query("SELECT count(*) FROM routes").use { c ->
+            c.moveToFirst()
+            assertEquals("existing rows must survive migration", 1, c.getInt(0))
+        }
+        db.query("SELECT count(*) FROM pinned_trips").use { c ->
+            c.moveToFirst()
+            assertEquals("nothing is pinned until the rider pins something", 0, c.getInt(0))
+        }
+        db.execSQL(
+            "INSERT INTO pinned_trips " +
+                "(pin_id, format_version, query_json, itineraries_json, selected_index, pinned_at_ms) " +
+                "VALUES ('pinned_trip', 1, '{}', '[]', 2, 100)"
+        )
+        db.query("SELECT selected_index FROM pinned_trips WHERE pin_id='pinned_trip'").use { c ->
+            c.moveToFirst()
+            assertEquals(2, c.getInt(0))
         }
         db.close()
     }

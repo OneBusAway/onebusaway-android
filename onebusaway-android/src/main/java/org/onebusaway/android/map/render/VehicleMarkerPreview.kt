@@ -82,17 +82,20 @@ private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
     val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.width(56.dp), fontSize = 12.sp)
-        for (fill in listOf(null, 0, 1, 2, 3)) {
+        for (occupancy in PREVIEW_OCCUPANCIES) {
             // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
             // (not a production render path), so calling it here is intentional.
             @Suppress("VisibleForTests")
-            val bmp = remember(vehicleType, argb, fill) {
-                VehicleBitmaps.previewBitmap(context, vehicleType, argb, fill).asImageBitmap()
+            val bmp = remember(vehicleType, argb, occupancy) {
+                VehicleBitmaps.previewBitmap(context, vehicleType, argb, occupancy).asImageBitmap()
             }
             Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(56.dp))
         }
     }
 }
+
+/** The fullness axis of the grid: no tab, then the tab filling left to right. */
+private val PREVIEW_OCCUPANCIES = listOf(null) + OccupancyBucket.entries
 
 @Preview(showBackground = true, widthDp = 300, heightDp = 340)
 @Composable

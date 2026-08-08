@@ -159,6 +159,10 @@ object MarkerRendering {
      * that is > 0), stroked **centered on the path**, so a compound silhouette is outlined once around
      * its union rather than once per part.
      *
+     * Centered means half the rim falls *inside* [path], so the path is not the drawn silhouette: a
+     * caller that needs the rim to sit within a bound must build the path already inset by half the
+     * outline (see `VehicleBitmaps.PATH_INSET_GRID`, which does exactly that and explains the rest).
+     *
      * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
      * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
      * optionally unioned with an occupancy tab. What goes *on* the body — glyph, occupancy pips — the
@@ -201,8 +205,15 @@ object MarkerRendering {
         drawOutlined(canvas, glyph, outline, glyphColor)
     }
 
-    /** Draws [drawable] tinted [fill], preceded (when [outline] > 0) by a black-outline dilate. */
-    fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
+    /**
+     * Draws [drawable] tinted [fill], preceded (when [outline] > 0) by a black-outline dilate.
+     *
+     * Private on purpose. The dilate stamps the artwork black at eight offsets, which lays solid black
+     * under the whole silhouette rather than only around it — so a *translucent* fill drawn through here
+     * composites over black and comes out grey. That trap cost the vehicle pips a redraw before they
+     * dropped their rim; it is not an extension point worth offering.
+     */
+    private fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
         if (outline > 0f) {
             drawable.setTint(Color.BLACK)
             stampOffsets(canvas, outline) { drawable.draw(canvas) }
@@ -212,7 +223,7 @@ object MarkerRendering {
     }
 
     /** Runs [draw] once per [OUTLINE_OFFSETS] entry, translated by [outline] — the black-outline dilate. */
-    fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
+    private fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
         for (o in OUTLINE_OFFSETS) {
             canvas.withTranslation(o[0] * outline, o[1] * outline) {
                 draw()

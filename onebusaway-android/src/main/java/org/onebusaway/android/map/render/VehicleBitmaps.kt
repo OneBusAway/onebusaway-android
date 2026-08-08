@@ -26,9 +26,9 @@ import androidx.annotation.VisibleForTesting
 import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
+import kotlin.math.sqrt
 import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
-import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.util.ScheduleDeviation
 import org.onebusaway.android.util.requireDrawable
@@ -52,26 +52,30 @@ import org.onebusaway.android.util.requireDrawable
  * reserved zone: its three pips are always all drawn, filling left to right, so the row's length reads
  * as a scale and only the ink inside it varies — a rider sees "1 of 3", not "one pip".
  *
- * Both silhouettes share one bitmap geometry, kept **vertically symmetric about the disc center** by
- * mirroring the tab's depth as transparent padding above the disc. That is what lets every vehicle
- * marker keep a plain center anchor in both flavors — maplibre's classic `Marker` centers an icon on
- * its point with no anchor control at all — while the disc, not the union's centroid, stays on the
- * route centerline. It also means the disc doesn't shift when a feed gaps and a vehicle's fullness
- * comes and goes between polls: the tab appears and disappears beneath a marker that doesn't move.
+ * Whichever it draws, the bitmap is **vertically symmetric about the disc center**: a tabbed marker
+ * mirrors the tab's depth as transparent padding above the disc, and a tabless one reserves neither.
+ * Symmetry, not a shared box, is the property that matters — it puts the disc at the bitmap's center in
+ * both cases, so every vehicle marker keeps a plain center anchor in both flavors (maplibre's classic
+ * `Marker` centers an icon on its point with no anchor control at all) and the disc, not the union's
+ * centroid, stays on the route centerline. It also means the disc doesn't shift when a feed gaps and a
+ * vehicle's fullness comes and goes between polls: the tab appears and disappears beneath a marker that
+ * doesn't move, even though the two bitmaps are different sizes.
  */
 object VehicleBitmaps {
 
     private const val DEFAULT_VEHICLE_TYPE = ObaRoute.TYPE_BUS // fall back on bus
 
-    // Bounded in **bytes**, not entries: one marker is ~62 KiB at xxhdpi but ~113 KiB at xxxhdpi, and a
-    // zoomed-out (half-scale) one is a quarter of that, so an entry count would mean wildly different
-    // memory on different devices for the same nominal size. 4 MiB holds ~64 full-scale markers there.
+    // Bounded in **bytes**, not entries: a tabbed marker is ~100 KiB at xxhdpi and ~180 KiB at xxxhdpi
+    // (a tabless one ~64/~113 KiB, since it reserves no tab depth), and a zoomed-out half-scale one is a
+    // quarter of that — so an entry count would mean wildly different memory on different devices for the
+    // same nominal size. 4 MiB holds ~40 full-scale tabbed markers at xxhdpi.
     //
-    // The working set is 5 fullness states (absent + 0..3 filled) per (mode, disc colour) — a handful for
-    // one route once its scheduled vehicles are counted, and stop-focus/continuation views draw several
-    // routes at once, so this is sized for a few of those rather than one. Overflow only costs a
-    // re-render. The Google flavor has a second-level BitmapDescriptor cache in front of this; maplibre
-    // doesn't, which is why the bound lives here.
+    // Those per-entry figures grew when occupancy moved into the tab, but the working set shrank far more:
+    // it was 8 heading octants x 4 pip levels = 32 icons per (mode, disc colour), and is now 5 fullness
+    // states (absent + 0..3 filled) — a handful for one route once its scheduled vehicles are counted, and
+    // stop-focus/continuation views draw several routes at once, so this is sized for a few of those
+    // rather than one. Overflow only costs a re-render. The Google flavor has a second-level
+    // BitmapDescriptor cache in front of this; maplibre doesn't, which is why the bound lives here.
     private const val MAX_CACHE_BYTES = 4 * 1024 * 1024
 
     /** The composited marker fills a square this many dp on a side (the former raster's size). */
@@ -86,45 +90,77 @@ object VehicleBitmaps {
 
     /**
      * The occupancy tab (grid units): a rounded rectangle centered under the disc, unioned with it.
-     *
-     * [TAB_TOP_GRID] is buried well inside the disc — the disc's half-width there is 10.4, wider than
-     * the tab's 9.3 — so the union is a clean silhouette whose vertical sides emerge from the disc's
-     * lower flanks (around y 19.6) rather than a rectangle stuck onto a circle. Only the *lower* two
-     * corners are ever seen rounded; the upper two are inside the disc, where the union erases them.
-     *
      * [TAB_DEPTH_GRID] is how far it hangs below the disc, and so also the transparent padding mirrored
-     * above the disc that keeps the bitmap symmetric about the disc's center — see the class KDoc.
+     * above the disc that keeps a tabbed bitmap symmetric about the disc's center — see the class KDoc.
      */
     @VisibleForTesting
-    internal const val TAB_DEPTH_GRID = 6.6f
+    internal const val TAB_DEPTH_GRID = 7.6f
 
-    private const val TAB_HALF_WIDTH_GRID = 9.3f
-    private const val TAB_TOP_GRID = 18f
+    private const val TAB_HALF_WIDTH_GRID = 10.7f
     private const val TAB_BOTTOM_GRID = MarkerRendering.GRID + TAB_DEPTH_GRID
-    private const val TAB_CORNER_RADIUS_GRID = 2.4f
-
-    // The pip row: three person silhouettes in the tab, at 4.35 grid units each (~7.3 dp) with the row
-    // spanning 14.25 of the tab's 18.6 width.
-    //
-    // The row sits above the tab's vertical middle. ic_occupancy is drawn to the full height of its own
-    // box and ends in a flat-bottomed body, so its lowest pixels — plus the black dilate under them —
-    // carry far more weight than its top; optically centering it would leave that heavy edge fused with
-    // the tab's bottom rim, which reads as a clipped pip rather than a seated one.
-    private const val PIP_SIZE_GRID = 4.35f
-    private const val PIP_SPACING_GRID = 0.6f
-    private const val PIP_ROW_CY_GRID = 25.8f
-
-    /** The pips in the tab — always all drawn, [occupancyFill] of them inked. */
-    internal const val MAX_PIPS = 3
+    private const val TAB_CORNER_RADIUS_GRID = 2.8f
 
     /** Hairline black outline width, in 24-grid units (scales with the marker); ~1px on screen. */
     private const val OUTLINE_GRID = 0.25f
 
     /**
-     * An empty pip's fill: white at 50%, so the unfilled slots read as present but quiet — the row's
-     * length still states the scale without the empty end shouting louder than the full one.
+     * How far inside its nominal bounds [bodyPath] is built, in grid units.
+     *
+     * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path**, so half of it eats
+     * inward; insetting by 1.5x the outline puts the rim's outer edge exactly where the disc's rim sat
+     * before the tab existed (fill to `r - 2*outline`, black out to `r - outline`). Named rather than
+     * inlined because it shrinks the tab's *effective* half-width too, which the fit rule below has to
+     * account for — that omission is what let the tab's corners drift outside the disc.
      */
-    private const val EMPTY_PIP_FILL = 0x80FFFFFF.toInt()
+    private const val PATH_INSET_GRID = 1.5f * OUTLINE_GRID
+
+    /** The disc's drawn radius: the 24-grid half-width, less what the centered rim takes back. */
+    private const val DISC_RADIUS_GRID = MarkerRendering.GRID / 2f - PATH_INSET_GRID
+
+    /**
+     * The tab's top edge, **derived** so its upper corners stay buried in the disc.
+     *
+     * The tab has to clear the disc by a whole corner radius, not just by its own width: the corner arc
+     * reaches the tab's full half-width [TAB_CORNER_RADIUS_GRID] below the top edge, and the disc narrows
+     * as it descends. Set the top too low and that arc's lower flank pokes out, so the *upper* rounding
+     * shows as a flare on the shoulder instead of the clean tangent the silhouette wants.
+     *
+     * So: find the depth at which the disc has narrowed to the tab's effective half-width, and put the
+     * arc's bottom [TAB_TOP_CLEARANCE_GRID] above it. Everything above that is inside the disc and the
+     * union erases it, which is why lowering the top edge further costs nothing and is not tuned by eye.
+     * Deriving it means a change to the tab's width, depth or corner radius can't silently break the fit
+     * the way hand-recomputed prose did.
+     */
+    private val TAB_TOP_GRID: Float = run {
+        val halfWidth = TAB_HALF_WIDTH_GRID - PATH_INSET_GRID
+        val flankDepth = sqrt(DISC_RADIUS_GRID * DISC_RADIUS_GRID - halfWidth * halfWidth)
+        MarkerRendering.GRID / 2f + flankDepth - TAB_CORNER_RADIUS_GRID - TAB_TOP_CLEARANCE_GRID
+    }
+
+    /** Margin by which the tab's corner arc clears the disc's flank; free, since it is all buried. */
+    private const val TAB_TOP_CLEARANCE_GRID = 0.5f
+
+    // The pip row: three person silhouettes in the tab, at 5 grid units each (~8.3 dp) with the row
+    // spanning 16.4 of the tab's 21.4 width.
+    //
+    // The row is seated a fixed distance off the tab's bottom rather than centered in it. ic_occupancy is
+    // drawn to the full height of its own box and ends in a flat-bottomed body, so its lowest pixels
+    // carry far more weight than its top; centering it optically would leave that heavy edge fused with
+    // the rim, which reads as a clipped pip rather than a seated one. Stating it as a seat off the bottom
+    // means a change to [TAB_DEPTH_GRID] carries the row with it instead of silently unseating it.
+    private const val PIP_SIZE_GRID = 5f
+    private const val PIP_SPACING_GRID = 0.7f
+    private const val PIP_SEAT_GRID = 5.5f
+    private const val PIP_ROW_CY_GRID = TAB_BOTTOM_GRID - PIP_SEAT_GRID
+
+    /** The pips in the tab — always all drawn, [OccupancyBucket.pips] of them inked. */
+    internal const val MAX_PIPS = 3
+
+    /**
+     * An empty pip's fill: white at 80%, so the unfilled slots read as present but a shade quieter than
+     * the full ones — the row's length states the scale, and the black pips still lead it.
+     */
+    private const val EMPTY_PIP_FILL = 0xCCFFFFFF.toInt()
 
     private val sColoredIconCache = object : LruCache<String, Bitmap>(MAX_CACHE_BYTES) {
         override fun sizeOf(key: String, value: Bitmap): Int = value.allocationByteCount
@@ -140,7 +176,7 @@ object VehicleBitmaps {
         context,
         vehicleType(vehicle, response),
         discColor(context, vehicle),
-        occupancyFill(vehicle),
+        occupancyBucket(vehicle),
         sizeScale
     )
 
@@ -170,7 +206,7 @@ object VehicleBitmaps {
         createBitmapCacheKey(
             vehicleType(vehicle, response),
             discColor(context, vehicle),
-            occupancyFill(vehicle),
+            occupancyBucket(vehicle),
             sizeScale
         )
 
@@ -207,35 +243,15 @@ object VehicleBitmaps {
     fun normalizeVehicleType(routeType: Int): Int = if (routeType == ObaRoute.TYPE_CABLECAR) ObaRoute.TYPE_TRAM else routeType
 
     /**
-     * How many of this vehicle's [MAX_PIPS] pips are inked (0..[MAX_PIPS]), or **null when it reports no
-     * fullness at all** — in which case the marker is a plain disc with no tab.
+     * How full this vehicle is, or **null when it reports nothing** — in which case the marker is a plain
+     * disc with no tab. The bucketing itself lives on [OccupancyBucket]; this adds the one rule that is
+     * about the *marker* rather than the data.
      *
-     * Null for a scheduled vehicle too: it has no observed occupancy, and a gray marker that grew a tab
-     * would be reporting data it doesn't have (#959).
-     */
-    internal fun occupancyFill(vehicle: VehicleMarker): Int? = if (vehicle.isRealtime) {
-        occupancyFill(vehicle.status.occupancyStatus)
-    } else {
-        null
-    }
-
-    /**
-     * The GTFS-realtime occupancy bucketed onto the tab's three pips — a coarse empty/some/most/full
-     * scale, since seven named levels can't be told apart at map scale.
-     *
-     * The distinction that earns the tab its own silhouette is **null vs [Occupancy.EMPTY]**: "we have no
-     * fullness data" and "we do, and the vehicle is empty" are different facts, and the old flat pip
-     * count could not tell them apart — both drew nothing, so an unequipped fleet and an empty bus
-     * looked alike. A tab with three hollow pips says "empty" out loud; no tab says "not reported".
+     * That rule: a vehicle without real-time reports nothing, whatever its status field says. It has no
+     * observed occupancy, and a gray marker that grew a tab would be claiming data it doesn't have (#959).
      */
     @VisibleForTesting
-    fun occupancyFill(occupancy: Occupancy?): Int? = when (occupancy) {
-        null -> null
-        Occupancy.EMPTY -> 0
-        Occupancy.MANY_SEATS_AVAILABLE -> 1
-        Occupancy.FEW_SEATS_AVAILABLE, Occupancy.STANDING_ROOM_ONLY -> 2
-        Occupancy.CRUSHED_STANDING_ROOM_ONLY, Occupancy.FULL, Occupancy.NOT_ACCEPTING_PASSENGERS -> MAX_PIPS
-    }
+    internal fun occupancyBucket(vehicle: VehicleMarker): OccupancyBucket? = if (vehicle.isRealtime) OccupancyBucket.of(vehicle.status.occupancyStatus) else null
 
     /**
      * The disc color: the vehicle's **route color** when it's live, gray when it isn't. So the marker
@@ -263,12 +279,12 @@ object VehicleBitmaps {
         context: Context,
         vehicleType: Int,
         color: Int,
-        fill: Int?,
+        occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
-        val key = createBitmapCacheKey(vehicleType, color, fill, sizeScale)
+        val key = createBitmapCacheKey(vehicleType, color, occupancy, sizeScale)
         return sColoredIconCache.get(key)
-            ?: renderMarker(context, vehicleType, color, fill, sizeScale)
+            ?: renderMarker(context, vehicleType, color, occupancy, sizeScale)
                 .also { sColoredIconCache.put(key, it) }
     }
 
@@ -276,13 +292,12 @@ object VehicleBitmaps {
     private fun createBitmapCacheKey(
         vehicleType: Int,
         color: Int,
-        fill: Int?,
+        occupancy: OccupancyBucket?,
         sizeScale: Float
     ): String {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
-        // -1 rather than "null": the tabless marker is its own icon, and a distinct numeric slot keeps
-        // the key a fixed shape.
-        return "$type $color ${fill ?: -1} ${sizeScale.toBits()}"
+        // "none" rather than an empty slot: the tabless marker is its own icon, distinct from an empty one.
+        return "$type $color ${occupancy?.name ?: "none"} ${sizeScale.toBits()}"
     }
 
     /**
@@ -290,21 +305,23 @@ object VehicleBitmaps {
      * grid (and tests); the production path goes through [vehicleBitmap] which caches.
      */
     @VisibleForTesting
-    fun previewBitmap(
+    internal fun previewBitmap(
         context: Context,
         vehicleType: Int,
         color: Int,
-        fill: Int?
-    ): Bitmap = renderMarker(context, vehicleType, color, fill, 1f)
+        occupancy: OccupancyBucket?
+    ): Bitmap = renderMarker(context, vehicleType, color, occupancy, 1f)
 
     /**
-     * Composites the marker body — a disc, unioned with the occupancy tab when [fill] is non-null — then
-     * the mode glyph centered on the disc, then the tab's three pips. Each element carries a hairline
-     * black outline (the body stroked, the glyph and pips given a cheap 8-way dilate at [OUTLINE_GRID]
-     * offsets) so they read distinctly against each other and the map.
+     * Composites the marker body — a disc, unioned with the occupancy tab when [occupancy] is non-null —
+     * then the mode glyph centered on the disc, then the tab's pips. The body is stroked and the glyph
+     * given a cheap 8-way dilate at [OUTLINE_GRID] offsets, so both carry a hairline black outline and
+     * read distinctly against each other and the map; the pips deliberately don't (see the pip loop).
      *
-     * The bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below, so the disc's center is the
-     * bitmap's center whether or not a tab is drawn — see the class KDoc for why that matters.
+     * A tabbed bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below; a tabless one reserves
+     * neither, since with no tab both bands would be empty — 39% of the bitmap, on the marker every
+     * scheduled vehicle and every occupancy-less feed draws. Either way the disc lands at the bitmap's
+     * center, which is the property the anchor depends on — see the class KDoc.
      *
      * The **glyph** takes whichever of black/white reads on [color] rather than a hardcoded white, since
      * a route may be drawn in a shade too pale to carry white. The **pips** deliberately do not: they use
@@ -317,7 +334,7 @@ object VehicleBitmaps {
         context: Context,
         vehicleType: Int,
         color: Int,
-        fill: Int?,
+        occupancy: OccupancyBucket?,
         sizeScale: Float
     ): Bitmap {
         val type = if (supportedVehicleType(vehicleType)) vehicleType else DEFAULT_VEHICLE_TYPE
@@ -326,19 +343,20 @@ object VehicleBitmaps {
             sizeScale /
             MarkerRendering.GRID
         val pad = PAD_GRID * scale
+        val reserve = if (occupancy != null) TAB_DEPTH_GRID * scale else 0f
         val widthPx = (MarkerRendering.GRID * scale + 2f * pad).toInt()
-        val heightPx = ((MarkerRendering.GRID + 2f * TAB_DEPTH_GRID) * scale + 2f * pad).toInt()
+        val heightPx = (MarkerRendering.GRID * scale + 2f * reserve + 2f * pad).toInt()
         val outline = OUTLINE_GRID * scale
         val onColor = MarkerRendering.legibleOn(color)
         val bitmap = createBitmap(widthPx, heightPx)
         val canvas = Canvas(bitmap)
         // Draw inside a [pad] border so the outline has room, and below the mirrored tab depth, so the
         // grid geometry below is the plain 24-unit disc box exactly as it was before the tab existed.
-        canvas.translate(pad, pad + TAB_DEPTH_GRID * scale)
+        canvas.translate(pad, pad + reserve)
 
         // The body: disc ∪ tab, filled with the route's display color (gray when not real-time) and
         // stroked black as one silhouette, so no seam shows where the tab meets the disc.
-        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = fill != null, outline), color, outline)
+        MarkerRendering.drawOutlinedPath(canvas, bodyPath(scale, hasTab = occupancy != null), color, outline)
         MarkerRendering.drawGlyph(
             canvas,
             context,
@@ -350,22 +368,21 @@ object VehicleBitmaps {
             onColor
         )
 
-        // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [fill] of them full and the rest
-        // empty, so the row reads as a filled fraction of a fixed scale rather than as a bare count.
+        // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [OccupancyBucket.pips] of them
+        // full and the rest empty, so the row reads as a filled fraction of a fixed scale rather than as
+        // a bare count.
         //
-        // The polarity is **fixed** — empty is white, full is black, on every disc colour — rather than
-        // following [onColor] as the glyph does. Following it would tie the row's meaning to the route's
-        // colour, and on a dark disc, where onColor is already white, a white "full" pip would be
-        // indistinguishable from a white "empty" one; the row would stop saying anything at all. The
-        // black rim both states share is what keeps the white ones legible on a pale disc.
+        // The polarity is **fixed** — empty takes [EMPTY_PIP_FILL], full takes black, on every disc
+        // colour — rather than following [onColor] as the glyph does. Following it would tie the
+        // row's meaning to the route's colour, and on a dark disc, where onColor is already white, a
+        // white "full" pip would be indistinguishable from a white "empty" one; the row would stop
+        // saying anything at all.
         //
-        // An empty pip is washed to 50% ([EMPTY_PIP_FILL]) so it recedes behind the full ones. It takes
-        // two passes: the tab's own colour first, then the wash. [MarkerRendering.drawOutlined] builds
-        // its rim by stamping the artwork black at eight offsets, which lays solid black under the whole
-        // silhouette, not just around it — so a translucent fill painted straight onto that composites
-        // over black and comes out grey, i.e. heavier than an opaque white pip rather than lighter. The
-        // opaque first pass covers that underlay with the tab colour, leaving the wash to land on the
-        // tab exactly as a 50% white would, with the rim still at full strength.
+        // Unlike the body and the glyph, the pips carry **no black rim**. They sit inside the tab, which
+        // is itself rimmed and holds nothing else, so they have no neighbour to be separated from — and
+        // at this size a rim on a 5-unit silhouette thickens it more than it defines it. Dropping it
+        // also lets the wash go down in one pass: with no dilate laying black under the silhouette, a
+        // translucent fill composites straight onto the tab instead of onto black.
         //
         // The cost, accepted deliberately: on a near-black route colour the black full pips sink into the
         // tab. Reaching for [MarkerRendering.legibleOn] here would fix that and re-introduce the
@@ -374,7 +391,7 @@ object VehicleBitmaps {
         //
         // One drawable, re-bounded and re-tinted per pip — they're the same artwork, so loading it three
         // times would repeat the vector inflate and rasterize for nothing.
-        if (fill != null) {
+        if (occupancy != null) {
             val pitch = PIP_SIZE_GRID + PIP_SPACING_GRID
             val firstCx = (MarkerRendering.GRID - (MAX_PIPS - 1) * pitch) / 2f
             val half = PIP_SIZE_GRID / 2f * scale
@@ -383,13 +400,8 @@ object VehicleBitmaps {
             repeat(MAX_PIPS) { i ->
                 val cx = (firstCx + i * pitch) * scale
                 pip.setBounds((cx - half).toInt(), (cy - half).toInt(), (cx + half).toInt(), (cy + half).toInt())
-                if (i < fill) {
-                    MarkerRendering.drawOutlined(canvas, pip, outline, Color.BLACK)
-                } else {
-                    MarkerRendering.drawOutlined(canvas, pip, outline, color)
-                    pip.setTint(EMPTY_PIP_FILL)
-                    pip.draw(canvas)
-                }
+                pip.setTint(if (i < occupancy.pips) Color.BLACK else EMPTY_PIP_FILL)
+                pip.draw(canvas)
             }
         }
         return bitmap
@@ -397,19 +409,18 @@ object VehicleBitmaps {
 
     /**
      * The marker's silhouette in the translated content space: the disc, unioned with the occupancy tab
-     * when [hasTab]. Inset by 1.5×[outline] so that stroking it [outline] wide puts the black rim's
-     * outer edge exactly where the disc's rim used to sit — the tabless marker is pixel-wise the disc
-     * this replaced.
+     * when [hasTab]. Built inset by [PATH_INSET_GRID] so that stroking it puts the black rim's outer edge
+     * exactly where the disc's rim used to sit — the tabless marker is pixel-wise the disc this replaced.
      */
-    private fun bodyPath(scale: Float, hasTab: Boolean, outline: Float): Path {
+    private fun bodyPath(scale: Float, hasTab: Boolean): Path {
         val center = MarkerRendering.GRID / 2f * scale
-        val inset = 1.5f * outline
-        val path = Path().apply { addCircle(center, center, center - inset, Path.Direction.CW) }
+        val inset = PATH_INSET_GRID * scale
+        val path = Path().apply { addCircle(center, center, DISC_RADIUS_GRID * scale, Path.Direction.CW) }
         if (hasTab) {
             val radius = TAB_CORNER_RADIUS_GRID * scale
             val tab = Path().apply {
                 // Rounded on all four corners, but only the bottom pair survives the union — the top pair
-                // sits inside the disc, which swallows it.
+                // sits inside the disc, which swallows it (guaranteed by [TAB_TOP_GRID]'s derivation).
                 addRoundRect(
                     center - TAB_HALF_WIDTH_GRID * scale + inset,
                     TAB_TOP_GRID * scale,

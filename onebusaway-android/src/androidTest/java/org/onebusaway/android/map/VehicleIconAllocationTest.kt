@@ -92,8 +92,7 @@ class VehicleIconAllocationTest {
                     point = v.point,
                     isRealtime = v.status.isLocationRealtime,
                     status = v.status,
-                    fixTimeMs = v.fixTimeMs,
-                    bearing = v.bearing
+                    fixTimeMs = v.fixTimeMs
                 )
             }
     }
@@ -222,8 +221,8 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * The replay only rotates bearing, leaving the key's color dimension unexercised. Hold a vehicle's
-     * octant fixed and flip only its **liveness**: a live vehicle draws in its route color, one without
+     * The replay only walks fullness, leaving the key's color dimension unexercised. Flip only a
+     * vehicle's **liveness**: a live vehicle draws in its route color, one without
      * real-time draws gray (#2043), so the key must change and the cache must mint a second descriptor.
      *
      * This replaces an equivalent early-vs-late assertion. Schedule deviation no longer reaches the
@@ -249,7 +248,7 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * The other half of the #2043 contract: with liveness and heading held fixed, a wildly different
+     * The other half of the #2043 contract: with liveness held fixed, a wildly different
      * schedule deviation must produce the *same* icon. A marker that still varied by punctuality would
      * both re-introduce the meaning the issue removed and silently multiply the icon working set.
      */
@@ -382,14 +381,13 @@ class VehicleIconAllocationTest {
 
     /**
      * A copy of [vehicle] with only what the caller overrides varying — optionally forcing [isRealtime]
-     * and overriding its [status]. The bearing is pinned too; it no longer reaches the icon (#2194
-     * removed the heading arrow), but holding it fixed keeps these fixtures honest if it ever does again.
+     * and overriding its [status].
      */
     private fun pinned(
         vehicle: VehicleMarker,
         isRealtime: Boolean = true,
         status: ObaTripStatus = vehicle.status
-    ): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f, status = status)
+    ): VehicleMarker = vehicle.copy(isRealtime = isRealtime, status = status)
 
     /** A copy of [vehicle] reporting [occupancy], with everything else held fixed. */
     private fun withOccupancy(

@@ -195,8 +195,6 @@ class MapLibreRenderer(
     private val bandPolylines = mutableListOf<Polyline>()
     private var lastVehicleResponse: RouteTrips? = null
 
-    // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
-    // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
@@ -487,7 +485,7 @@ class MapLibreRenderer(
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
-    // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
+    // diffing or icon work on the hot path, and no icon work at all.
     // Markers not yet reconciled are skipped.
     //
     // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;

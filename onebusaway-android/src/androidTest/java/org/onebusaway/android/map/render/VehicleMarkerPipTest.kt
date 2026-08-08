@@ -45,7 +45,7 @@ class VehicleMarkerPipTest {
     private val disc = 0xFF1050C0.toInt()
 
     // The pips' polarity is fixed rather than derived from the disc: a full pip is black, an empty one a
-    // 50% white wash. Both are asserted, in opposite directions, so a regression that collapsed the two
+    // white wash. Both are asserted, in opposite directions, so a regression that collapsed the two
     // into one colour (which is what following the disc's ink would do on this very disc) fails here
     // rather than silently drawing an unreadable row.
     //
@@ -61,20 +61,21 @@ class VehicleMarkerPipTest {
     }
 
     /**
-     * A vehicle reporting no fullness draws a plain disc: nothing at all below the disc's rim. The
-     * tabless marker is the pre-occupancy circle, so "no data" costs a rider no marker area.
+     * A vehicle reporting no fullness draws a plain disc: the pre-occupancy circle, in a bitmap that
+     * reserves no tab depth at all.
+     *
+     * Asserted as the bitmap's *shape* rather than as an empty band, because with no tab there is no band
+     * — a tabless marker is square, so the rows a tab would occupy don't exist to be counted. That is the
+     * point: "no data" costs a rider no marker area and costs the icon cache no transparent pixels.
      */
     @Test
     fun aVehicleWithoutFullnessDrawsNoTab() {
-        assertEquals(
-            "a marker with no fullness must leave the tab band empty",
-            0,
-            marker(fill = null).opaqueIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID)
-        )
-        assertTrue(
-            "...while a marker that reports fullness fills it",
-            marker(fill = 0).opaqueIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID) > 0
-        )
+        val tabless = marker(null)
+        val tabbed = marker(OccupancyBucket.EMPTY)
+
+        assertEquals("a tabless marker must be the plain square disc badge", tabless.width, tabless.height)
+        assertTrue("a tabbed marker must be taller than it is wide", tabbed.height > tabbed.width)
+        assertTrue("...and must actually put a tab there", tabbed.opaqueInTab() > 0)
     }
 
     /**
@@ -84,11 +85,11 @@ class VehicleMarkerPipTest {
      */
     @Test
     fun theTabIsTheSameSizeAtEveryLevel() {
-        val areas = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).opaqueIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID) }
+        val areas = OccupancyBucket.entries.map { marker(it).opaqueInTab() }
 
-        assertTrue("the tab must have area at all (saw $areas)", areas[0] > 0)
-        for (fill in 1..VehicleBitmaps.MAX_PIPS) {
-            assertEquals("the tab must not change size between fullness levels (saw $areas)", areas[0], areas[fill])
+        assertTrue("the tab must have area at all (saw $areas)", areas.first() > 0)
+        for (area in areas) {
+            assertEquals("the tab must not change size between fullness levels (saw $areas)", areas.first(), area)
         }
     }
 
@@ -103,21 +104,24 @@ class VehicleMarkerPipTest {
      */
     @Test
     fun eachFilledPipInksMoreOfTheTab() {
-        val blacks = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOf(full) }
-        val whites = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOf(empty) }
+        // One render per rung — `marker()` bypasses the bitmap LRU, so building the ladder twice would
+        // pay for eight full composites (bitmap alloc, two vector inflates, the union) for nothing.
+        val ladder = OccupancyBucket.entries.map { marker(it) }
+        val blacks = ladder.map { it.countOf(full) }
+        val whites = ladder.map { it.countOf(empty) }
 
-        for (fill in 1..VehicleBitmaps.MAX_PIPS) {
+        for (rung in 1 until OccupancyBucket.entries.size) {
             assertTrue(
-                "$fill full pips must put more black in the tab than ${fill - 1} (saw $blacks)",
-                blacks[fill] > blacks[fill - 1]
+                "rung $rung must put more black in the tab than ${rung - 1} (saw $blacks)",
+                blacks[rung] > blacks[rung - 1]
             )
             assertTrue(
-                "$fill full pips must leave less white than ${fill - 1} (saw $whites)",
-                whites[fill] < whites[fill - 1]
+                "rung $rung must leave less white than ${rung - 1} (saw $whites)",
+                whites[rung] < whites[rung - 1]
             )
         }
-        assertTrue("an all-empty row must still draw its washed pips (saw $whites)", whites[0] > 0)
-        assertTrue("a full row must leave no washed pips (saw $whites)", whites[VehicleBitmaps.MAX_PIPS] == 0)
+        assertTrue("an all-empty row must still draw its washed pips (saw $whites)", whites.first() > 0)
+        assertTrue("a full row must leave no washed pips (saw $whites)", whites.last() == 0)
     }
 
     /**
@@ -127,21 +131,29 @@ class VehicleMarkerPipTest {
      */
     @Test
     fun pipsFillFromTheLeft() {
-        val left = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOfInThird(full, 0) }
-        val right = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOfInThird(full, 2) }
+        // Only three rungs say anything here, so only three are rendered.
+        val none = marker(OccupancyBucket.EMPTY)
+        val one = marker(OccupancyBucket.MANY_SEATS)
+        val all = marker(OccupancyBucket.FULL)
 
-        assertTrue("one full pip must blacken the tab's left third (saw $left)", left[1] > left[0])
-        assertEquals(
-            "one full pip must leave the tab's right third as it was when empty (saw $right)",
-            right[0],
-            right[1]
+        assertTrue(
+            "one full pip must blacken the tab's left third",
+            one.countOfInThird(full, 0) > none.countOfInThird(full, 0)
         )
-        assertTrue("three full pips must blacken the right third (saw $right)", right[3] > right[0])
+        assertEquals(
+            "one full pip must leave the tab's right third as it was when empty",
+            none.countOfInThird(full, 2),
+            one.countOfInThird(full, 2)
+        )
+        assertTrue(
+            "a full row must blacken the right third",
+            all.countOfInThird(full, 2) > none.countOfInThird(full, 2)
+        )
     }
 
     // previewBitmap is @VisibleForTesting — this is that test.
     @Suppress("VisibleForTests")
-    private fun marker(fill: Int?): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, fill)
+    private fun marker(occupancy: OccupancyBucket?): Bitmap = VehicleBitmaps.previewBitmap(context, ObaRoute.TYPE_BUS, disc, occupancy)
 
     private val scale: Float
         get() = context.resources.displayMetrics.density * VehicleBitmaps.MARKER_SIZE_DP / MarkerRendering.GRID
@@ -153,10 +165,10 @@ class VehicleMarkerPipTest {
      * production constants — it only *locates* the band and is not what's under test; the band bounds
      * below are the independent expectation and stay local.
      */
-    private fun Bitmap.countOf(match: (Int) -> Boolean): Int = countIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID, 0, width, match)
+    private fun Bitmap.countOf(match: (Int) -> Boolean): Int = countInTab(0, width, match)
 
-    /** Any non-transparent pixel between two grid rows — the tab's body, not just what the pips ink. */
-    private fun Bitmap.opaqueIn(topGrid: Float, bottomGrid: Float): Int = countIn(topGrid, bottomGrid, 0, width) { Color.alpha(it) > 0 }
+    /** Any non-transparent pixel in the tab band — the tab's body, not just what the pips ink. */
+    private fun Bitmap.opaqueInTab(): Int = countInTab(0, width) { Color.alpha(it) > 0 }
 
     /** Matching pixels in the pip row, restricted to one of three equal columns of the tab (0, 1 or 2). */
     private fun Bitmap.countOfInThird(match: (Int) -> Boolean, third: Int): Int {
@@ -164,13 +176,17 @@ class VehicleMarkerPipTest {
         val tabWidth = 2f * TAB_HALF_WIDTH_GRID * scale
         val from = (tabLeft + third * tabWidth / 3f).toInt()
         val to = (tabLeft + (third + 1) * tabWidth / 3f).toInt()
-        return countIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID, from, to, match)
+        return countInTab(from, to, match)
     }
 
-    private fun Bitmap.countIn(topGrid: Float, bottomGrid: Float, fromX: Int, toX: Int, match: (Int) -> Boolean): Int {
-        val originGrid = VehicleBitmaps.PAD_GRID + VehicleBitmaps.TAB_DEPTH_GRID
-        val top = ((originGrid + topGrid) * scale).toInt().coerceIn(0, height)
-        val bottom = ((originGrid + bottomGrid) * scale).toInt().coerceIn(top, height)
+    private fun Bitmap.countInTab(fromX: Int, toX: Int, match: (Int) -> Boolean): Int {
+        // Grid row 0 sits below the transparent border and, on a tabbed marker, below the mirrored tab
+        // depth reserved above the disc. A tabless marker reserves none, so its origin is just the border
+        // — which is why this reads the bitmap's own height rather than assuming the taller geometry.
+        val reserved = (height - MarkerRendering.GRID * scale - 2f * VehicleBitmaps.PAD_GRID * scale) / 2f
+        val originPx = VehicleBitmaps.PAD_GRID * scale + reserved
+        val top = (originPx + TAB_BAND_TOP_GRID * scale).toInt().coerceIn(0, height)
+        val bottom = (originPx + TAB_BAND_BOTTOM_GRID * scale).toInt().coerceIn(top, height)
         val left = fromX.coerceIn(0, width)
         val right = toX.coerceIn(left, width)
         assertTrue("the sampled band must be at least a pixel tall", bottom > top)
@@ -189,13 +205,13 @@ class VehicleMarkerPipTest {
         // The band under test, stated independently of VehicleBitmaps' geometry: a test that read the
         // constants it verifies would follow a geometry mistake instead of catching it.
         //
-        // The tab hangs below the disc from grid y 24 to 30.6, holding a pip row centered at 25.8.
+        // The tab hangs below the disc from grid y 24 to 31.6, holding a pip row centered at 26.1.
         // Sampled just inside so a half-pixel of rounding at the edges can't decide the count — and
         // starting below 24 keeps the disc itself, which is opaque everywhere, out of the area counts.
         const val TAB_BAND_TOP_GRID = 24.3f
-        const val TAB_BAND_BOTTOM_GRID = 30.3f
+        const val TAB_BAND_BOTTOM_GRID = 31.3f
 
         /** The tab's half-width, for locating its thirds. Independent of the production constant. */
-        const val TAB_HALF_WIDTH_GRID = 9.3f
+        const val TAB_HALF_WIDTH_GRID = 10.7f
     }
 }

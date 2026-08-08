@@ -213,8 +213,9 @@ data class VehicleMarker(
     // The latest fix's instant — constant between fixes (so [point] is extrapolated forward from it),
     // changing when fresh AVL data arrives. The renderer animates the marker across the fix jump.
     val fixTimeMs: Long = 0L,
-    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N), so the
-    // direction arrow tracks the glide. [Float.NaN] off-shape: the renderer falls back to the orientation.
+    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N).
+    // [Float.NaN] off-shape. Carried by the extrapolation rather than consumed by the renderer: it drove
+    // the marker's direction arrow until #2194 removed it, and nothing draws with it today.
     val bearing: Float = Float.NaN,
     // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
     // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported

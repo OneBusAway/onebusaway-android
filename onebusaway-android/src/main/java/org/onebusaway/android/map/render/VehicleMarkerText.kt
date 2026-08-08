@@ -53,19 +53,14 @@ internal fun vehicleTitle(context: Context, vehicle: VehicleMarker, response: Ro
 /**
  * What the pips in [vehicle]'s occupancy tab say, in words, or null when it has no tab at all.
  *
- * Keyed off the same fill level [VehicleBitmaps.occupancyFill] draws rather than re-bucketing the raw
- * occupancy, so the words and the silhouettes cannot disagree — including the rule that a vehicle
- * without real-time reports no crowding at all (#959).
+ * Read off the very same [OccupancyBucket] the marker draws — including the rule that a vehicle without
+ * real-time reports no crowding at all (#959) — so the words and the silhouettes cannot disagree. The
+ * bucket carries its own label, so this is a lookup rather than a second mapping that could drift: the
+ * title no longer derives meaning from how many pips happen to fit.
  *
- * The zero case is a *label*, not a null: three hollow pips are the marker saying "empty", which a
- * screen-reader user has to hear as "Empty". Only a vehicle that reports no fullness — no tab drawn —
- * leaves the crowding clause off the title entirely.
+ * [OccupancyBucket.EMPTY] is a *label*, not a null: a tab whose pips are all empty is the marker saying
+ * "empty", which a screen-reader user has to hear as "Empty". Only a vehicle that reports no fullness at
+ * all — no tab drawn — leaves the crowding clause off the title entirely.
  */
 @StringRes
-private fun occupancyLabelRes(vehicle: VehicleMarker): Int? = when (VehicleBitmaps.occupancyFill(vehicle)) {
-    0 -> R.string.realtime_empty
-    1 -> R.string.realtime_many_seats_available
-    2 -> R.string.realtime_standing_room
-    VehicleBitmaps.MAX_PIPS -> R.string.realtime_full
-    else -> null
-}
+private fun occupancyLabelRes(vehicle: VehicleMarker): Int? = VehicleBitmaps.occupancyBucket(vehicle)?.labelRes

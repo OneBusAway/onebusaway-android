@@ -173,9 +173,6 @@ class GoogleMapRenderer(
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
 
-    // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id. Lets the hot path
-    // re-stamp the direction arrow as a vehicle glides (its bearing tracks the route shape) without
-    // doing icon work every frame — only when the discrete heading octant actually changes.
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom)
 
     // Smooths each moving route vehicle across a fresh-AVL jump (a decaying correction layered on the

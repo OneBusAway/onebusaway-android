@@ -60,10 +60,7 @@ private fun RentalsByBboxQuery.OnRentalVehicle.toRentalPlace(): RentalPlace? = R
     rangeMeters = fuel?.range,
     fuelPercent = fuel?.percent,
     allowPickupNow = allowPickupNow,
-    operative = operative,
-    // A free-floating vehicle's position *is* its realtime report — OTP only knows about it because a
-    // realtime feed said where it was parked.
-    realTimeData = true
+    operative = operative
 )
 
 /**
@@ -91,8 +88,7 @@ private fun RentalsByBboxQuery.OnVehicleRentalStation.toRentalPlace(): RentalPla
     docksAvailableCount = availableSpaces?.total,
     allowPickupNow = allowPickupNow,
     allowDropoffNow = allowDropoffNow,
-    operative = operative,
-    realTimeData = realtime == true
+    operative = operative
 )
 
 /**
@@ -121,6 +117,5 @@ fun BikeStationDto.toRentalPlace(): RentalPlace = RentalPlace(
     // OTP1's `allowDropoff` is the station's standing policy, not a live "right now" reading — the
     // distinction OTP2 draws with `allowDropoff` vs. `allowDropoffNow`. Mapping it onto the live
     // field would let the detail window say "not accepting returns" on a full-but-open dock.
-    allowDropoffNow = null,
-    realTimeData = realTimeData
+    allowDropoffNow = null
 )

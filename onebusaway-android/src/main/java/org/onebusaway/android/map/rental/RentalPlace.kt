@@ -71,9 +71,7 @@ data class RentalPlace(
     val allowPickupNow: Boolean? = null,
     val allowDropoffNow: Boolean? = null,
     /** False when the operator has taken this vehicle or station out of service. */
-    val operative: Boolean? = null,
-    /** Whether the counts above came from a realtime source rather than nominal capacity. */
-    val realTimeData: Boolean = false
+    val operative: Boolean? = null
 ) {
     /** True when the operator has explicitly taken this out of service — never merely "didn't say". */
     val isOutOfService: Boolean get() = operative == false
@@ -129,3 +127,14 @@ private fun RentalFormFactor.rentalLayer(): RentalLayer? = when (this) {
 
     RentalFormFactor.CAR, RentalFormFactor.OTHER -> null
 }
+
+/**
+ * The single layer a marker is drawn as — its colour and its glyph.
+ *
+ * [rentalLayersOf] answers which layers a place *belongs to*, which can be more than one (a dock
+ * holding both kinds) or none (a rental car). A marker has to pick one, and both flavor renderers were
+ * making that choice independently: first-of-set, falling back to bikes. Stated once here so the two
+ * cannot drift, since "which colour is a mixed dock" is a real decision rather than an implementation
+ * detail of either renderer.
+ */
+fun rentalMarkerLayer(place: RentalPlace): RentalLayer = rentalLayersOf(place).firstOrNull() ?: RentalLayer.BIKES

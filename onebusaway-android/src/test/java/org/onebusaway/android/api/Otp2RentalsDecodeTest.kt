@@ -76,7 +76,6 @@ class Otp2RentalsDecodeTest {
         assertEquals(7, dock.vehiclesAvailableCount)
         assertEquals(5, dock.docksAvailableCount)
         assertEquals(true, dock.allowDropoffNow)
-        assertTrue(dock.realTimeData)
         assertEquals(setOf(RentalFormFactor.BICYCLE), dock.formFactors)
         assertEquals(setOf(RentalLayer.BIKES), rentalLayersOf(dock))
     }
@@ -168,7 +167,6 @@ class Otp2RentalsDecodeTest {
             allowPickupNow = true,
             allowDropoffNow = true,
             operative = true,
-            realtime = true,
             rentalNetwork = RentalsByBboxQuery.RentalNetwork1(
                 __typename = "VehicleRentalNetwork",
                 rentalNetworkFields = RentalNetworkFields(networkId = "bike_seattle", url = null)

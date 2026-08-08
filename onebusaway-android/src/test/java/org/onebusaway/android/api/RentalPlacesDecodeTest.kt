@@ -48,14 +48,14 @@ class RentalPlacesDecodeTest {
                   "id": "bike_1", "name": "Pine & 5th",
                   "x": -122.334, "y": 47.611,
                   "bikesAvailable": 4, "spacesAvailable": 6,
-                  "allowDropoff": true, "isFloatingBike": false, "realTimeData": true,
+                  "allowDropoff": true, "isFloatingBike": false,
                   "networks": ["pronto"]
                 },
                 {
                   "id": "float_2", "name": "Floating bike",
                   "x": -122.30, "y": 47.62,
                   "bikesAvailable": 1, "spacesAvailable": 0,
-                  "allowDropoff": false, "isFloatingBike": true, "realTimeData": false
+                  "allowDropoff": false, "isFloatingBike": true
                 }
               ],
               "errorsByNetwork": {}
@@ -76,7 +76,6 @@ class RentalPlacesDecodeTest {
         assertEquals(4, first.vehiclesAvailableCount)
         assertEquals(6, first.docksAvailableCount)
         assertEquals(RentalKind.STATION, first.kind)
-        assertTrue(first.realTimeData)
 
         // `isFloatingBike` finally has a consumer (#2168): OTP1's free-floating vehicles arrive
         // disguised as one-bike stations, and this is the flag that tells them apart. A vehicle
@@ -108,6 +107,5 @@ class RentalPlacesDecodeTest {
         assertEquals(28.066505, first.latitude, precision)
         assertEquals(RentalKind.VEHICLE, first.kind)
         assertNull(first.vehiclesAvailableCount)
-        assertEquals(true, first.realTimeData)
     }
 }

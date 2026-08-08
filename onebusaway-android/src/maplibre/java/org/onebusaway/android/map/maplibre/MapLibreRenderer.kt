@@ -62,9 +62,8 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
-import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.map.rental.rentalLayersOf
+import org.onebusaway.android.map.rental.rentalMarkerLayer
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -691,7 +690,7 @@ class MapLibreRenderer(
      */
     private fun rentalBitmap(rental: RentalMarker): Bitmap = RentalBitmaps.big(
         context,
-        rentalLayersOf(rental.place).firstOrNull() ?: RentalLayer.BIKES,
+        rentalMarkerLayer(rental.place),
         rental.place.kind,
         rentalChargeFraction(rental.place)
     )

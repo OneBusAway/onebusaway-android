@@ -60,7 +60,6 @@ query RentalsByBbox(
             allowPickupNow
             allowDropoffNow
             operative
-            realtime
             rentalNetwork { ...RentalNetworkFields }
             rentalUris { ...RentalUriFields }
             # The occupancy the detail window shows, plus the per-type breakdown that tells the layer

@@ -147,8 +147,8 @@ private val CHEVRON_LEAN_ALLOWANCE = ROUTE_BADGE_HEIGHT * JOIN_LEAN_RATIO / 2
 /**
  * A small route roundel — the route's short name on a chip tinted from its GTFS color (via
  * [rememberRouteBadgeColors]), or a neutral chip when the route has no color. The compact form used
- * where several routes sit in a row (the stop-focus header's subordinate routes, the trip-plan option
- * cards), as opposed to the large square [LineBadge]. [scale] enlarges the whole chip (text + padding)
+ * where several routes sit in a row (the trip-plan option cards, an arrival row's ETA strip), as
+ * opposed to the large square [LineBadge]. [scale] enlarges the whole chip (text + padding)
  * proportionally — e.g. the directions board badge uses 1.5×.
  *
  * The chip is never narrower than it is tall ([ROUTE_BADGE_HEIGHT] at the default font scale), so a

@@ -503,13 +503,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Clear only the route selected inside the current stop. */
-    fun clearStopRouteSelection() {
-        val stopFocus = _currentFocus.value as? CurrentFocus.Stop ?: return
-        if (stopFocus.selectedRoute == null) return
-        unfocusMapOneLevel()
-    }
-
     /**
      * A focused-stop route badge behaves like its arrivals-drawer row: carry the focused stop as the
      * direction anchor so route mode preserves adjacency focus underneath it. The badge additionally

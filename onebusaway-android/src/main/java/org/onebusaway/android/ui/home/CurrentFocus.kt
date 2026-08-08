@@ -119,10 +119,10 @@ data class RouteLeg(
 /** A route selected inside stop focus, anchored to its original arrivals row across continuations. */
 data class StopRouteSelection(
     // Row *identity*, never display: with [originLeg]'s route + directionId it forms the row key
-    // ([selectedArrivalRowKey]) fed to `resolveSelectedRouteGroup`, disambiguating the legacy case where
-    // a response omits directionId and only the headsign string tells two directions apart. The headsign
-    // the banner *shows* is read back from the resolved arrivals row, not from here — so don't render
-    // this and don't duplicate the rest of the row onto the selection.
+    // ([selectedArrivalRowKey]) fed to `resolveSelectedRouteGroupKey`, disambiguating the legacy case
+    // where a response omits directionId and only the headsign string tells two directions apart. What
+    // the user sees is the resolved arrivals row itself, drawn as the drawer's focus outline — so don't
+    // render this and don't duplicate the rest of the row onto the selection.
     val originHeadsign: String?,
     val legs: List<RouteLeg>
 ) {

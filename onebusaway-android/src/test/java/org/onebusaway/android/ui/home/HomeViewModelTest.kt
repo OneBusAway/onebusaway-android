@@ -1028,24 +1028,6 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `clearing a subordinate route retains stop focus`() = runTest {
-        val vm = viewModel()
-        val map = MapDirectiveRecorder(vm)
-        val mapJob = launch { map.collect() }
-        advanceUntilIdle()
-        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
-        vm.onStopFocused(stop)
-        vm.requestShowFocusedStopRouteOnMap("65", null, "65")
-
-        vm.clearStopRouteSelection()
-        advanceUntilIdle()
-
-        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
-        assertEquals(1, map.sent.count { it is MapDirective.ClearSelectedRoute })
-        mapJob.cancel()
-    }
-
-    @Test
     fun `focus undo returns from stop route to stop to none`() = runTest {
         val vm = viewModel()
         val map = MapDirectiveRecorder(vm)
@@ -1205,6 +1187,7 @@ class HomeViewModelTest {
         vm.unfocusMapOneLevel()
         advanceUntilIdle()
         assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        assertEquals(1, map.sent.count { it is MapDirective.ClearSelectedRoute })
         map.sent.clear()
 
         assertTrue(vm.navigateBackFocus())

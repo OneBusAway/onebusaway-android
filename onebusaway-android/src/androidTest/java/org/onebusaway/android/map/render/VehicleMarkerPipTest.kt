@@ -167,13 +167,13 @@ class VehicleMarkerPipTest {
         // The band under test, stated independently of VehicleBitmaps' geometry: a test that read the
         // constants it verifies would follow a geometry mistake instead of catching it.
         //
-        // The tab hangs below the disc from grid y 24 to 29.6, holding a pip row centered at 26.4.
+        // The tab hangs below the disc from grid y 24 to 30.6, holding a pip row centered at 25.8.
         // Sampled just inside so a half-pixel of rounding at the edges can't decide the count — and
         // starting below 24 keeps the disc itself, which is opaque everywhere, out of the area counts.
         const val TAB_BAND_TOP_GRID = 24.3f
-        const val TAB_BAND_BOTTOM_GRID = 29.3f
+        const val TAB_BAND_BOTTOM_GRID = 30.3f
 
         /** The tab's half-width, for locating its thirds. Independent of the production constant. */
-        const val TAB_HALF_WIDTH_GRID = 6.2f
+        const val TAB_HALF_WIDTH_GRID = 9.3f
     }
 }

@@ -84,33 +84,34 @@ object VehicleBitmaps {
     private const val GLYPH_SIZE = 10.8f // the glyph's 24-grid box (its artwork fills ~70% of this)
 
     /**
-     * The occupancy tab (grid units): a rectangle centered under the disc, unioned with it.
+     * The occupancy tab (grid units): a rounded rectangle centered under the disc, unioned with it.
      *
-     * [TAB_TOP_GRID] is buried well inside the disc — the disc's half-width there is 7.9, comfortably
-     * wider than the tab's 6.2 — so the union is a clean silhouette with vertical sides emerging from
-     * the disc's lower flanks (around y 21.9) rather than a rectangle stuck onto a circle.
+     * [TAB_TOP_GRID] is buried well inside the disc — the disc's half-width there is 10.4, wider than
+     * the tab's 9.3 — so the union is a clean silhouette whose vertical sides emerge from the disc's
+     * lower flanks (around y 19.6) rather than a rectangle stuck onto a circle. Only the *lower* two
+     * corners are ever seen rounded; the upper two are inside the disc, where the union erases them.
      *
      * [TAB_DEPTH_GRID] is how far it hangs below the disc, and so also the transparent padding mirrored
      * above the disc that keeps the bitmap symmetric about the disc's center — see the class KDoc.
      */
     @VisibleForTesting
-    internal const val TAB_DEPTH_GRID = 5.6f
+    internal const val TAB_DEPTH_GRID = 6.6f
 
-    private const val TAB_HALF_WIDTH_GRID = 6.2f
-    private const val TAB_TOP_GRID = 21f
+    private const val TAB_HALF_WIDTH_GRID = 9.3f
+    private const val TAB_TOP_GRID = 18f
     private const val TAB_BOTTOM_GRID = MarkerRendering.GRID + TAB_DEPTH_GRID
+    private const val TAB_CORNER_RADIUS_GRID = 2.4f
 
-    // The pip row: three person silhouettes in the tab's exposed depth (y 24..29.6). At 2.9 grid units
-    // each they are a legible ~4.8 dp, and the row spans 9.5 of the tab's 12.4 width.
+    // The pip row: three person silhouettes in the tab, at 4.35 grid units each (~7.3 dp) with the row
+    // spanning 14.25 of the tab's 18.6 width.
     //
-    // The row sits slightly *above* the tab's vertical middle. ic_occupancy is drawn to the full height
-    // of its own box and ends in a flat-bottomed body, so its lowest pixels — plus the black dilate under
-    // them — carry far more weight than its top; optically centering it would leave that heavy edge
-    // fused with the tab's bottom rim, which reads as a clipped pip rather than a seated one. As set,
-    // roughly a grid unit of tab shows below the dilate, matching the ~1 unit clear at each side.
-    private const val PIP_SIZE_GRID = 2.9f
-    private const val PIP_SPACING_GRID = 0.4f
-    private const val PIP_ROW_CY_GRID = 26.4f
+    // The row sits above the tab's vertical middle. ic_occupancy is drawn to the full height of its own
+    // box and ends in a flat-bottomed body, so its lowest pixels — plus the black dilate under them —
+    // carry far more weight than its top; optically centering it would leave that heavy edge fused with
+    // the tab's bottom rim, which reads as a clipped pip rather than a seated one.
+    private const val PIP_SIZE_GRID = 4.35f
+    private const val PIP_SPACING_GRID = 0.6f
+    private const val PIP_ROW_CY_GRID = 25.8f
 
     /** The pips in the tab — always all drawn, [occupancyFill] of them inked. */
     internal const val MAX_PIPS = 3
@@ -370,12 +371,17 @@ object VehicleBitmaps {
         val inset = 1.5f * outline
         val path = Path().apply { addCircle(center, center, center - inset, Path.Direction.CW) }
         if (hasTab) {
+            val radius = TAB_CORNER_RADIUS_GRID * scale
             val tab = Path().apply {
-                addRect(
+                // Rounded on all four corners, but only the bottom pair survives the union — the top pair
+                // sits inside the disc, which swallows it.
+                addRoundRect(
                     center - TAB_HALF_WIDTH_GRID * scale + inset,
                     TAB_TOP_GRID * scale,
                     center + TAB_HALF_WIDTH_GRID * scale - inset,
                     TAB_BOTTOM_GRID * scale - inset,
+                    radius,
+                    radius,
                     Path.Direction.CW
                 )
             }

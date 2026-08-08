@@ -39,7 +39,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -132,7 +131,10 @@ fun MapChrome(
                     // rental button standing off the edge further than the my-location FAB below it.
                     // Taking that padding back out of the margin puts the two buttons on one vertical
                     // line — and works in left-hand mode unchanged, since both hug the same edge.
-                    .padding(horizontal = (marginHorizontal - RENTAL_SURFACE_PADDING).coerceAtLeast(0.dp))
+                    .padding(
+                        horizontal = (marginHorizontal - RENTAL_SURFACE_PADDING_HORIZONTAL)
+                            .coerceAtLeast(0.dp)
+                    )
                     // Clear the my-location FAB below rather than guess a margin: it occupies
                     // marginBottom..marginBottom+FAB_SIZE, and the panel's own padding drops its button
                     // that much lower again, so both are subtracted back out to leave exactly
@@ -240,7 +242,10 @@ private fun RentalsFab(
         shadowElevation = surfaceElevation
     ) {
         Column(
-            modifier = Modifier.padding(RENTAL_SURFACE_PADDING),
+            modifier = Modifier.padding(
+                horizontal = RENTAL_SURFACE_PADDING_HORIZONTAL,
+                vertical = RENTAL_SURFACE_PADDING
+            ),
             // Centred rather than edge-aligned: the mode toggles are narrower than the master, so
             // centring stacks them on its axis instead of flushing them to one side of it. Which
             // screen edge the whole control hugs is [MapChrome]'s business, not this column's — which
@@ -278,7 +283,6 @@ private fun RentalsFab(
             // with rentals off there is no panel behind the master, so a see-through button would sit
             // directly on the basemap and lose both its shape and its glyph over dark ground.
             val rentalColor = colorResource(R.color.layer_bikeshare_color)
-            val fabShape = FloatingActionButtonDefaults.shape
             val fabContainer by animateColorAsState(
                 if (active) rentalColor else Color.White,
                 label = "rentalFabContainer"
@@ -293,13 +297,13 @@ private fun RentalsFab(
             )
             FloatingActionButton(
                 onClick = onToggle,
-                shape = fabShape,
+                shape = RENTAL_FAB_SHAPE,
                 containerColor = fabContainer,
                 contentColor = fabContent,
                 // Border on the FAB's own shape, so the outline follows it rather than tracing a
                 // circle over a rounded square.
                 modifier = if (fabOutline > 0.dp) {
-                    Modifier.border(fabOutline, rentalColor, fabShape)
+                    Modifier.border(fabOutline, rentalColor, RENTAL_FAB_SHAPE)
                 } else {
                     Modifier
                 }
@@ -395,9 +399,40 @@ private val MODE_TOGGLE_OUTLINE = 1.5.dp
 /** The rental button's spinner stroke — thin enough to read as progress at 24dp, not as a ring. */
 private val RENTAL_SPINNER_STROKE = 2.dp
 
-/** The rental panel's corner radius, inner padding, and raised elevation. */
-private val RENTAL_SURFACE_CORNER = 28.dp
+/**
+ * The master FAB's corner radius, and the shape built from it.
+ *
+ * Restated rather than read from `FloatingActionButtonDefaults.shape` because the panel's own radius
+ * is derived from it ([RENTAL_SURFACE_CORNER]) and a `Shape` can't be measured back into dp without a
+ * density. Both the button and the panel resolve from this one value, so they cannot drift apart —
+ * the cost is that it mirrors M3's `CornerLarge` by hand, and would need updating if that token moved.
+ */
+private val RENTAL_FAB_CORNER = 16.dp
+private val RENTAL_FAB_SHAPE = RoundedCornerShape(RENTAL_FAB_CORNER)
+
+/**
+ * The panel's vertical inset, and the gap between the buttons it stacks.
+ *
+ * The sides are tighter ([RENTAL_SURFACE_PADDING_HORIZONTAL]): the buttons are round and the panel is
+ * nearly a capsule, so equal padding all round leaves the sides *looking* slacker than the ends even
+ * when it measures the same.
+ */
 private val RENTAL_SURFACE_PADDING = 8.dp
+
+/** The panel's side inset. Also what [MapChrome] takes back out of the margin to align the two FABs. */
+private val RENTAL_SURFACE_PADDING_HORIZONTAL = 6.dp
+
+/**
+ * The panel's corner radius, concentric with the FAB inside it: the button's radius plus the gap
+ * between them, so the two curves stay parallel instead of the outer one running tighter or slacker
+ * than the shape it wraps.
+ *
+ * Concentric with the FAB's **side** gap specifically. The vertical inset is 2dp larger, so the panel's
+ * bottom corners are strictly parallel only along the sides — equalising the two paddings is what it
+ * would take to make that exact, and the asymmetry is deliberate (see [RENTAL_SURFACE_PADDING]).
+ */
+private val RENTAL_SURFACE_CORNER = RENTAL_FAB_CORNER + RENTAL_SURFACE_PADDING_HORIZONTAL
+
 private val RENTAL_SURFACE_ELEVATION = 6.dp
 
 // The my-location FAB uses @dimen/fab_margin_*; the rental control stacks above it, clearing it by

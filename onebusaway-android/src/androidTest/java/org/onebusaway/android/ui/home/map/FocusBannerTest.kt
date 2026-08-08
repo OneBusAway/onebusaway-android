@@ -50,28 +50,23 @@ class FocusBannerTest {
 
     private fun setStopBanner(
         hasAlerts: Boolean = true,
-        onClearSubordinateRoute: () -> Unit = {}
+        favoriteEnabled: Boolean = true,
+        direction: String? = "N",
+        stopCode: String? = "12345"
     ) {
         composeRule.setContent {
             FocusBanner(
                 state = FocusBannerState.Stop(
                     title = "Pine St & 3rd Ave",
-                    direction = "N",
-                    stopCode = "12345",
+                    direction = direction,
+                    stopCode = stopCode,
                     isFavorite = false,
-                    favoriteEnabled = true,
-                    hasAlerts = hasAlerts,
-                    subordinateRoutes = listOf(
-                        FocusBannerState.SubordinateRoute("65"),
-                        FocusBannerState.SubordinateRoute("75"),
-                        FocusBannerState.SubordinateRoute("40")
-                    ),
-                    subordinateHeadsign = "Downtown"
+                    favoriteEnabled = favoriteEnabled,
+                    hasAlerts = hasAlerts
                 ),
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onClearSubordinateRoute = onClearSubordinateRoute,
                 onRecenterStop = {},
                 onSelectDirection = {},
                 onFrameRoute = {},
@@ -126,7 +121,6 @@ class FocusBannerTest {
                 onClose = {},
                 onToggleFavorite = {},
                 onShowAlerts = {},
-                onClearSubordinateRoute = {},
                 onRecenterStop = {},
                 onSelectDirection = onSelectDirection,
                 onFrameRoute = onFrameRoute,
@@ -234,55 +228,22 @@ class FocusBannerTest {
     }
 
     @Test
-    fun stopBannerShowsIdentityAndFullSubordinateRouteChain() {
+    fun stopBannerShowsStopIdentity() {
         setStopBanner()
         composeRule.onNodeWithText("Pine St & 3rd Ave").assertIsDisplayed()
         val expectedSubtitle = "${context.getString(R.string.stop_details_code, "12345")} · " +
             context.getString(R.string.direction_n)
         composeRule.onNodeWithText(expectedSubtitle).assertIsDisplayed()
-        listOf("65", "75", "40", "Downtown").forEach {
-            composeRule.onNodeWithText(it).assertIsDisplayed()
-        }
-    }
-
-    @Test
-    fun subordinateRouteDismissIsACompactExactSizeTarget() {
-        var cleared = false
-        setStopBanner(onClearSubordinateRoute = { cleared = true })
-
-        val dismiss = composeRule.onNodeWithContentDescription(
-            context.getString(R.string.stop_info_unselect_route)
-        ).assertIsDisplayed().assertHasClickAction()
-        val bounds = dismiss.getUnclippedBoundsInRoot()
-        assertTrue((bounds.right - bounds.left).value in 21.5f..22.5f)
-        assertTrue((bounds.bottom - bounds.top).value in 21.5f..22.5f)
-        dismiss.performClick()
-        assertTrue(cleared)
     }
 
     @Test
     fun loadingStopBannerReservesTheFavoriteStar() {
-        composeRule.setContent {
-            FocusBanner(
-                state = FocusBannerState.Stop(
-                    title = "Pine St & 3rd Ave",
-                    direction = null,
-                    stopCode = null,
-                    isFavorite = false,
-                    favoriteEnabled = false,
-                    hasAlerts = false
-                ),
-                onClose = {},
-                onToggleFavorite = {},
-                onShowAlerts = {},
-                onClearSubordinateRoute = {},
-                onRecenterStop = {},
-                onSelectDirection = {},
-                onFrameRoute = {},
-                onShowSchedule = {},
-                onHeight = {}
-            )
-        }
+        setStopBanner(
+            hasAlerts = false,
+            favoriteEnabled = false,
+            direction = null,
+            stopCode = null
+        )
 
         val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)

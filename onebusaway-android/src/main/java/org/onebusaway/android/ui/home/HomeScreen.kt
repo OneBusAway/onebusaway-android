@@ -74,7 +74,6 @@ import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
 import org.onebusaway.android.ui.arrivals.ArrivalsViewModel
-import org.onebusaway.android.ui.arrivals.resolveSelectedRouteGroup
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_HEIGHT
 import org.onebusaway.android.ui.compose.components.DRAG_HANDLE_VERTICAL_PADDING
@@ -85,7 +84,6 @@ import org.onebusaway.android.ui.compose.theme.ObaTheme
 import org.onebusaway.android.ui.home.arrivals.ArrivalsSheetHost
 import org.onebusaway.android.ui.home.arrivals.ServiceAlertsDialog
 import org.onebusaway.android.ui.home.arrivals.rememberArrivalsSession
-import org.onebusaway.android.ui.home.arrivals.selectedArrivalRowKey
 import org.onebusaway.android.ui.home.chrome.MAP_TOP_CHROME_CLEARANCE
 import org.onebusaway.android.ui.home.chrome.MapTopChrome
 import org.onebusaway.android.ui.home.chrome.mapTopChromeOverlayInset
@@ -456,25 +454,7 @@ fun HomeScreen(
                         // without the arrivals source the glyph would be missing on most entry points.
                         wheelchairBoarding = arrivalsContent?.header?.wheelchairBoarding
                             ?.takeIf { it != WheelchairBoarding.UNKNOWN }
-                            ?: currentFocus.stop.wheelchairBoarding,
-                        subordinateRoutes = currentFocus.selectedRoute?.legs?.map { leg ->
-                            FocusBannerState.SubordinateRoute(
-                                shortName = leg.shortName,
-                                color = arrivalsContent?.actions?.values
-                                    ?.firstOrNull { it.routeId == leg.routeId }
-                                    ?.routeColor
-                            )
-                        }.orEmpty(),
-                        subordinateHeadsign = currentFocus.selectedRoute?.let { selection ->
-                            // Resolve the shown headsign from the loaded arrivals via the same row resolver the
-                            // drawer highlight uses, so every entry point (arrivals row, map route-label tap)
-                            // projects it identically instead of each carrying its own copy.
-                            resolveSelectedRouteGroup(
-                                arrivalsContent?.routeGroups.orEmpty(),
-                                selection.selectedArrivalRowKey(),
-                                selection.originLeg.routeId
-                            )?.headsign
-                        }
+                            ?: currentFocus.stop.wheelchairBoarding
                     )
                     is CurrentFocus.Route -> routeHeader?.let { header ->
                         FocusBannerState.Route(
@@ -726,7 +706,6 @@ fun HomeScreen(
                                                 }
                                             },
                                             onShowAlerts = { serviceAlertsVisible = true },
-                                            onClearSubordinateRoute = homeViewModel::clearStopRouteSelection,
                                             onRecenterStop = {
                                                 homeViewModel.recenterOnFocusedStop(mapViewModel.viewport)
                                             },
@@ -1029,7 +1008,6 @@ private fun BoxScope.HomeMapOverlays(
     onCloseFocus: () -> Unit,
     onToggleFavorite: () -> Unit,
     onShowAlerts: () -> Unit,
-    onClearSubordinateRoute: () -> Unit,
     onRecenterStop: () -> Unit,
     onSelectRouteDirection: (Int?) -> Unit,
     onFrameRoute: () -> Unit,
@@ -1076,7 +1054,6 @@ private fun BoxScope.HomeMapOverlays(
             onClose = onCloseFocus,
             onToggleFavorite = onToggleFavorite,
             onShowAlerts = onShowAlerts,
-            onClearSubordinateRoute = onClearSubordinateRoute,
             onRecenterStop = onRecenterStop,
             onSelectDirection = onSelectRouteDirection,
             onFrameRoute = onFrameRoute,

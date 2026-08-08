@@ -171,9 +171,13 @@ internal fun promoteSelectedRouteGroup(
 }
 
 /**
- * Resolve a map selection against the rows the arrivals response actually contains. Direction labels
- * can differ between the route response and arrivals feed; in that case a sole row for the route is
- * unambiguous. Multiple rows still require an exact direction match rather than guessing.
+ * Resolve a map selection against the rows the arrivals response actually contains — the single
+ * identity→row resolution every stop-focus surface shares, so a map route-label tap and an
+ * arrivals-row tap that name the same (route, direction) can never disagree on the row they select.
+ *
+ * Direction labels can differ between the route response and arrivals feed; in that case a sole row
+ * for the route is unambiguous. Multiple rows still require an exact direction match rather than
+ * guessing.
  */
 internal fun resolveSelectedRouteGroupKey(
     groups: List<RouteRowGroup>,
@@ -183,20 +187,4 @@ internal fun resolveSelectedRouteGroupKey(
     groups.firstOrNull { it.key == requestedKey }?.let { return it.key }
     if (routeId == null) return null
     return groups.filter { it.routeId == routeId }.singleOrNull()?.key
-}
-
-/**
- * The selected row's *group* (not just its key) — the single identity→row resolution every stop-focus
- * surface shares. The drawer promotes this row and the focus banner reads its shown headsign from the
- * same resolver, so a map route-label tap and an arrivals-row tap that name the same (route, direction)
- * can never disagree on the headsign shown: it's projected from the resolved row, never carried on the
- * selection. Null when the selection resolves to no row (see [resolveSelectedRouteGroupKey]).
- */
-internal fun resolveSelectedRouteGroup(
-    groups: List<RouteRowGroup>,
-    requestedKey: String?,
-    routeId: String?
-): RouteRowGroup? {
-    val key = resolveSelectedRouteGroupKey(groups, requestedKey, routeId) ?: return null
-    return groups.firstOrNull { it.key == key }
 }

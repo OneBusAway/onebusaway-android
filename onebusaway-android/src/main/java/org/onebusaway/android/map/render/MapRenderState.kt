@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.onebusaway.android.map.rental.RentalLayer
 import org.onebusaway.android.map.rental.RentalPlace
 import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
@@ -227,7 +228,13 @@ data class VehicleMarker(
 data class RentalMarker(
     val id: String,
     val point: GeoPoint,
-    val place: RentalPlace
+    val place: RentalPlace,
+    /**
+     * Which layer this marker wears — its colour and glyph. Resolved by the controller against the
+     * enabled layers (see `rentalMarkerLayer`), not re-derived per flavor, so a dock holding both kinds
+     * draws as the kind the rider asked to see rather than whichever sorts first.
+     */
+    val layer: RentalLayer
 )
 
 /**

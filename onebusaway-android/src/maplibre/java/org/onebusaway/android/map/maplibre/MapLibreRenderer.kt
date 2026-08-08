@@ -63,7 +63,6 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.map.rental.rentalMarkerLayer
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -122,6 +121,10 @@ class MapLibreRenderer(
         caseColorOf = caseColorOf
     )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
+
+    // Native sprites for the rental markers, keyed by everything that varies the artwork. Bounded by
+    // (layers x kinds x charge buckets) + 1, so a plain map rather than an LruCache.
+    private val rentalIcons = HashMap<String, Icon>()
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -242,6 +245,7 @@ class MapLibreRenderer(
         // Stop markers are reconciled in place (not in staticAnnotations), so they survive this; only
         // the bike / route-badge tap maps are cleared here.
         rentalByMarker.clear()
+        rentalIcons.clear()
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
@@ -257,7 +261,7 @@ class MapLibreRenderer(
             if (band != RentalBand.HIDDEN) {
                 val metric = PreferenceUtils.getUnitsAreMetricFromPreferences(context)
                 for (rental in snapshot.rentals) {
-                    val bitmap = if (band == RentalBand.BIG) rentalBitmap(rental) else RentalBitmaps.small(context)
+                    val icon = rentalIcon(rental, band)
                     // Title is kept only so a marker tap opens the info window (the InfoWindowAdapter
                     // renders the shared RentalInfoWindow composable instead of the title/snippet); the
                     // snippet is the marker's content description, so a rider using TalkBack hears the
@@ -265,7 +269,7 @@ class MapLibreRenderer(
                     val marker = map.addMarker(
                         MarkerOptions()
                             .position(rental.point.toLatLng())
-                            .icon(iconFactory.fromBitmap(bitmap))
+                            .icon(icon)
                             .title(rental.place.name)
                             .snippet(rentalContentDescription(context, rental.place, metric))
                     )
@@ -389,6 +393,7 @@ class MapLibreRenderer(
         bandPolylines.clear()
         vehicleByMarker.clear()
         rentalByMarker.clear()
+        rentalIcons.clear()
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         vehicleIconDirection.clear()
@@ -683,17 +688,29 @@ class MapLibreRenderer(
     fun routeStopAt(point: LatLng): StopMarker? = routeStopCircleLayer.stopAt(point)
 
     /**
-     * The big badge for [rental] — the layer's colour and glyph, filled by its charge ring.
+     * The [Icon] for [rental] at [band] — the layer's colour and glyph, filled by its charge ring.
      *
-     * maplibre centres every marker icon on its point, which is exactly where a badge belongs, so
-     * there is no per-marker anchor to set here, unlike the Google flavor.
+     * Cached, because `renderStatic` rebuilds every annotation on every snapshot and each
+     * `iconFactory.fromBitmap` mints a fresh native sprite id: minting per marker per redraw would
+     * accumulate native textures for icons that are, at most, `bands x layers x kinds x charge buckets`
+     * distinct. The key mirrors what actually varies the artwork — `RentalBitmaps` quantizes the charge
+     * itself, so the bucket, not the raw reading, is what belongs in the key.
+     *
+     * maplibre centres every marker icon on its point, which is exactly where a badge belongs, so there
+     * is no per-marker anchor to set here, unlike the Google flavor.
      */
-    private fun rentalBitmap(rental: RentalMarker): Bitmap = RentalBitmaps.big(
-        context,
-        rentalMarkerLayer(rental.place),
-        rental.place.kind,
-        rentalChargeFraction(rental.place)
-    )
+    private fun rentalIcon(rental: RentalMarker, band: RentalBand): Icon {
+        if (band != RentalBand.BIG) {
+            return rentalIcons.get(SMALL_RENTAL_ICON_KEY)
+                ?: iconFactory.fromBitmap(RentalBitmaps.small(context))
+                    .also { rentalIcons.put(SMALL_RENTAL_ICON_KEY, it) }
+        }
+        val charge = rentalChargeFraction(rental.place)
+        val key = "${rental.layer}/${rental.place.kind}/${RentalBitmaps.chargeBucket(charge)}"
+        return rentalIcons.get(key)
+            ?: iconFactory.fromBitmap(RentalBitmaps.big(context, rental.layer, rental.place.kind, charge))
+                .also { rentalIcons.put(key, it) }
+    }
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
 
@@ -730,3 +747,6 @@ class MapLibreRenderer(
 }
 
 internal fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+
+/** Cache key for the band-independent small rental dot — see MapLibreRenderer.rentalIcon. */
+private const val SMALL_RENTAL_ICON_KEY = "small"

@@ -73,18 +73,25 @@ fun RentalInfoWindow(place: RentalPlace) {
             fontWeight = FontWeight.Bold,
             fontSize = 14.sp
         )
-        detail.pickup?.operator?.let { operator ->
+        // Operator and charge are independent facts, and the row shows whichever it has. Nesting the
+        // charge inside the operator hid a published range from any place naming no network — the whole
+        // OTP1 path, and any feed whose networkId is blank.
+        val operator = detail.pickup?.operator
+        val chargeLine = rentalChargeLine(detail, context, metric)
+        if (operator != null || chargeLine != null) {
             Row(
                 modifier = Modifier.padding(top = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RouteBadgeChip(
-                    shortName = operator.displayName,
-                    routeColor = operator.brandColor,
-                    scale = OPERATOR_CHIP_SCALE
-                )
-                rentalChargeLine(detail, context, metric)?.let {
+                operator?.let {
+                    RouteBadgeChip(
+                        shortName = it.displayName,
+                        routeColor = it.brandColor,
+                        scale = OPERATOR_CHIP_SCALE
+                    )
+                }
+                chargeLine?.let {
                     Text(text = it, color = RentalSecondary, fontSize = 12.sp)
                 }
             }

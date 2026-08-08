@@ -25,8 +25,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.render.CameraSnapshot
@@ -40,6 +42,8 @@ import org.onebusaway.android.map.rental.preferenceKey
 import org.onebusaway.android.map.rental.rentalDensity
 import org.onebusaway.android.map.rental.rentalLayersFromPreferences
 import org.onebusaway.android.map.rental.rentalLayersOf
+import org.onebusaway.android.map.rental.rentalMarkerLayer
+import org.onebusaway.android.map.rental.rentalSource
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.BikeshareAvailability
@@ -75,6 +79,7 @@ class RentalLayerController(
     // The last response and the viewport that produced it — see [placesFor]. Confined to the loader
     // coroutine and the main-thread setters, so no synchronization.
     private var cachedViewport: CameraSnapshot? = null
+    private var cachedSource: String? = null
     private var cachedPlaces: List<RentalPlace>? = null
 
     private val _loading = MutableStateFlow(false)
@@ -146,15 +151,19 @@ class RentalLayerController(
                 // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
                 host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS)
                     .filter { !host.cameraInteracting.value },
-                visibleLayers
-            ) { camera, layers -> camera to layers }
+                visibleLayers,
+                // The rental server itself is an input, not a fact read once inside the collector: a
+                // region switch changes which endpoint answers, and neither the camera nor the toggles
+                // need move for that to happen. Distinct so an unrelated region field can't re-fire it.
+                regionRepository.region.map { rentalSourceKey() }.distinctUntilChanged()
+            ) { camera, layers, source -> Triple(camera, layers, source) }
                 // collectLatest so a newer viewport cancels an in-flight load (the old loadJob?.cancel()).
-                .collectLatest { (camera, layers) ->
-                    if (!BikeshareAvailability.isStationLayerEnabled(
-                            regionRepository.currentRegion(),
-                            prefsRepository.getString(R.string.preference_key_otp_api_url, null)
-                        )
-                    ) {
+                .collectLatest { (camera, layers, source) ->
+                    if (source == null) {
+                        // No server to ask. Clear rather than return: the markers on screen belong to
+                        // whatever server answered last, and leaving them would show a region's
+                        // vehicles over a region that has none.
+                        clearRentals()
                         return@collectLatest
                     }
                     if (layers.isEmpty()) {
@@ -171,11 +180,29 @@ class RentalLayerController(
                             host.setRentalsNeedCloserZoom(true)
                             return@collectLatest
                         }
-                        val places = placesFor(camera) ?: return@collectLatest
-                        showRentals(places.forLayers(layers), rentalsVisible = true)
+                        val places = placesFor(camera, source) ?: return@collectLatest
+                        showRentals(places.forLayers(layers), layers, rentalsVisible = true)
                     }
                 }
         }
+    }
+
+    /**
+     * Which rental server this device would ask right now, as a cache/reload key — or null when it has
+     * none, which is also the app's "no rental layer here" answer.
+     *
+     * A string rather than the [org.onebusaway.android.map.rental.RentalSource] itself so that both
+     * halves of the question — is there a server, and *which* one — collapse into one comparable value
+     * the flow can be distinct on.
+     */
+    private fun rentalSourceKey(): String? {
+        val customUrl = prefsRepository.getString(R.string.preference_key_otp_api_url, null)
+        if (!BikeshareAvailability.isStationLayerEnabled(regionRepository.currentRegion(), customUrl)) return null
+        return rentalSource(
+            customOtpApiUrl = customUrl,
+            customUrlUsesGraphQl = prefsRepository.getBoolean(R.string.preference_key_otp_api_url_is_graphql, false),
+            region = regionRepository.region.value
+        )?.toString()
     }
 
     /** Leave the map with no rentals on it and the loader off — what directions mode does. */
@@ -193,6 +220,7 @@ class RentalLayerController(
         // rental server, and a viewport that merely *compares* equal to the cached one would then
         // redraw the old server's vehicles.
         cachedViewport = null
+        cachedSource = null
         cachedPlaces = null
     }
 
@@ -210,9 +238,12 @@ class RentalLayerController(
      * Keyed on the whole [CameraSnapshot] rather than a rounded centre: it is a data class, so an
      * unmoved camera compares equal, and any real movement misses and refetches — which is what should
      * happen, since the box changed.
+     *
+     * **And on [source]**, because a viewport comparing equal across a region switch would otherwise
+     * redraw the previous server's vehicles: the box is the same, the answer is not.
      */
-    private suspend fun placesFor(camera: CameraSnapshot): List<RentalPlace>? {
-        cachedPlaces?.takeIf { cachedViewport == camera }?.let { return it }
+    private suspend fun placesFor(camera: CameraSnapshot, source: String): List<RentalPlace>? {
+        cachedPlaces?.takeIf { cachedViewport == camera && cachedSource == source }?.let { return it }
         // Only a real request lights the button — the cache hit above returns without touching it.
         _loading.value = true
         val result = try {
@@ -224,6 +255,7 @@ class RentalLayerController(
         }
         val places = result.getOrNull() ?: return null
         cachedViewport = camera
+        cachedSource = source
         cachedPlaces = places
         return places
     }
@@ -234,7 +266,7 @@ class RentalLayerController(
      */
     private fun List<RentalPlace>.forLayers(layers: Set<RentalLayer>): List<RentalPlace> = filter { place -> rentalLayersOf(place).any { it in layers } }
 
-    private fun showRentals(places: List<RentalPlace>, rentalsVisible: Boolean) {
+    private fun showRentals(places: List<RentalPlace>, enabled: Set<RentalLayer>, rentalsVisible: Boolean) {
         when (val density = rentalDensity(places)) {
             is RentalDensity.TooMany -> {
                 // Too dense to draw honestly (see RentalGuardrails): show none and ask for a tighter
@@ -246,7 +278,7 @@ class RentalLayerController(
             is RentalDensity.Draw -> {
                 host.setRentalsNeedCloserZoom(false)
                 val markers = density.places.map {
-                    RentalMarker(it.id, GeoPoint(it.latitude, it.longitude), it)
+                    RentalMarker(it.id, GeoPoint(it.latitude, it.longitude), it, rentalMarkerLayer(it, enabled))
                 }
                 // A refresh that found the same fleet in the same state produces an *equal* snapshot,
                 // and a StateFlow doesn't re-emit an equal value — so the static layer isn't torn down

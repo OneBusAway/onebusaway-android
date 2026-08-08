@@ -69,4 +69,33 @@ class RentalLayerSplitTest {
         assertEquals(emptySet<RentalLayer>(), rentalLayersOf(place(RentalFormFactor.CAR)))
         assertEquals(emptySet<RentalLayer>(), rentalLayersOf(place(RentalFormFactor.OTHER)))
     }
+
+    // --- rentalMarkerLayer: which single layer a marker wears ---
+
+    /**
+     * A mixed dock must wear the kind the rider asked to see. Picking blind from the place's own set
+     * drew it as a bike whenever bikes sorted first, even with only Scooters enabled.
+     */
+    @Test
+    fun `a mixed dock wears whichever layer is enabled`() {
+        val mixed = place(RentalFormFactor.BICYCLE, RentalFormFactor.SCOOTER, kind = RentalKind.STATION)
+        assertEquals(RentalLayer.SCOOTERS, rentalMarkerLayer(mixed, setOf(RentalLayer.SCOOTERS)))
+        assertEquals(RentalLayer.BIKES, rentalMarkerLayer(mixed, setOf(RentalLayer.BIKES)))
+    }
+
+    /** With both on, a mixed dock settles on its own first layer rather than flickering between them. */
+    @Test
+    fun `a mixed dock is stable when both layers are enabled`() {
+        val mixed = place(RentalFormFactor.BICYCLE, RentalFormFactor.SCOOTER, kind = RentalKind.STATION)
+        val both = setOf(RentalLayer.BIKES, RentalLayer.SCOOTERS)
+        assertEquals(rentalMarkerLayer(mixed, both), rentalMarkerLayer(mixed, both))
+    }
+
+    @Test
+    fun `a single-kind place wears its own layer whatever is enabled`() {
+        val scooter = place(RentalFormFactor.SCOOTER)
+        assertEquals(RentalLayer.SCOOTERS, rentalMarkerLayer(scooter, setOf(RentalLayer.SCOOTERS)))
+        // The controller filters this out before it can be drawn; the fallback keeps the function total.
+        assertEquals(RentalLayer.SCOOTERS, rentalMarkerLayer(scooter, emptySet()))
+    }
 }

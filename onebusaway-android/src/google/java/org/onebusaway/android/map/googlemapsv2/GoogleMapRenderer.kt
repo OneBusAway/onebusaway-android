@@ -77,7 +77,6 @@ import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
 import org.onebusaway.android.map.rental.rentalChargeFraction
-import org.onebusaway.android.map.rental.rentalMarkerLayer
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.GeoPoint
@@ -867,7 +866,7 @@ class GoogleMapRenderer(
 
     /** The big badge for [rental] — the layer's colour and glyph, filled by its charge ring. */
     private fun rentalIcon(rental: RentalMarker): BitmapDescriptor = rentalIcons.big(
-        rentalMarkerLayer(rental.place),
+        rental.layer,
         rental.place.kind,
         rentalChargeFraction(rental.place)
     )

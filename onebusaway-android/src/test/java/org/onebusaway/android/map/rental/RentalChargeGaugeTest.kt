@@ -87,6 +87,21 @@ class RentalChargeGaugeTest {
         assertNull(rentalChargeFraction(vehicle(RentalFormFactor.MOPED, 20_000)))
         assertNull(rentalChargeFraction(vehicle(RentalFormFactor.CAR, 20_000)))
         assertNull(rentalChargeFraction(vehicle(RentalFormFactor.OTHER, 20_000)))
+        // A cargo bike hauls a load on a bigger battery — the case where borrowing the plain bicycle's
+        // denominator would be most wrong, so it gets no gauge rather than an analogy.
+        assertNull(rentalChargeFraction(vehicle(RentalFormFactor.CARGO_BICYCLE, 20_000)))
+    }
+
+    /** GBFS spells one kick-scooter class three ways; all three share the measured denominator. */
+    @Test
+    fun `every scooter spelling uses the measured scooter maximum`() {
+        for (factor in listOf(
+            RentalFormFactor.SCOOTER,
+            RentalFormFactor.SCOOTER_SEATED,
+            RentalFormFactor.SCOOTER_STANDING
+        )) {
+            assertEquals(0.5f, rentalChargeFraction(vehicle(factor, 19_000))!!, 1e-6f)
+        }
     }
 
     @Test

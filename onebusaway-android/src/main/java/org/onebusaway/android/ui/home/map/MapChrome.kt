@@ -45,6 +45,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -395,6 +396,10 @@ private fun ModeToggle(
     )
     Surface(
         modifier = Modifier
+            // Reserves the 48dp interactive minimum in *layout*, so a neighbour cannot be placed inside
+            // it, while the disc itself stays 40dp. Material's own components apply this; a hand-rolled
+            // Surface has to ask for it.
+            .minimumInteractiveComponentSize()
             .size(MODE_TOGGLE_SIZE)
             .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() }),
         shape = CircleShape,

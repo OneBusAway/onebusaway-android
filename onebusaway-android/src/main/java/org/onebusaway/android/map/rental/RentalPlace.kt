@@ -87,14 +87,13 @@ enum class RentalKind {
 }
 
 /**
- * The two kinds of rental the fetch feeds, which decide a marker's colour and glyph.
+ * The two kinds of rental the fetch feeds. Each decides a marker's colour and glyph, and each has its
+ * own toggle under the map's master rentals button (#2168).
  *
- * They are **not** two user-facing toggles: one map button shows and hides both together (#2168),
- * because both come out of a single `vehicleRentalsByBbox` response, so separating them cost a rider
- * two taps to see one request's results. The sibling iOS app does split them, defaulting scooters off
- * on the grounds that they are the large majority of a dockless fleet and would bury the transit map —
- * worth knowing before anyone re-opens this, since the density budget in `RentalGuardrails` is what
- * this app leans on for that problem instead.
+ * **Both come out of a single `vehicleRentalsByBbox` response**, which is why the toggles cost no
+ * request: flipping one filters places the app already holds (see `RentalLayerController`). Scooters
+ * start off, following the sibling iOS app's default and its reasoning — they are the large majority
+ * of a dockless fleet, so defaulting them on buries the transit map the app is for.
  */
 enum class RentalLayer { BIKES, SCOOTERS }
 
@@ -132,9 +131,16 @@ private fun RentalFormFactor.rentalLayer(): RentalLayer? = when (this) {
  * The single layer a marker is drawn as — its colour and its glyph.
  *
  * [rentalLayersOf] answers which layers a place *belongs to*, which can be more than one (a dock
- * holding both kinds) or none (a rental car). A marker has to pick one, and both flavor renderers were
- * making that choice independently: first-of-set, falling back to bikes. Stated once here so the two
- * cannot drift, since "which colour is a mixed dock" is a real decision rather than an implementation
- * detail of either renderer.
+ * holding both kinds) or none (a rental car). A marker has to pick exactly one, and the choice must be
+ * made against what the rider actually has **enabled**: a dock of bikes and scooters shown while only
+ * Scooters is on has to wear the scooter colour and glyph, or the map answers a question nobody asked.
+ * Picking blind from the place's own set drew it as a bike there, because bikes sort first.
+ *
+ * Falls back to the place's own first layer, then to bikes, for a place enabled by nothing — which
+ * `RentalLayerController` filters out before it ever gets here, so the fallback is a total-function
+ * formality rather than a case the map reaches.
  */
-fun rentalMarkerLayer(place: RentalPlace): RentalLayer = rentalLayersOf(place).firstOrNull() ?: RentalLayer.BIKES
+fun rentalMarkerLayer(place: RentalPlace, enabled: Set<RentalLayer>): RentalLayer {
+    val belongsTo = rentalLayersOf(place)
+    return belongsTo.firstOrNull { it in enabled } ?: belongsTo.firstOrNull() ?: RentalLayer.BIKES
+}

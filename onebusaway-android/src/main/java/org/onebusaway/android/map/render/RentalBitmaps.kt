@@ -114,11 +114,21 @@ object RentalBitmaps {
      * publish is stated by the marker's detail window rather than on the marker itself.
      */
     fun big(context: Context, layer: RentalLayer, kind: RentalKind, chargeFraction: Float? = null): Bitmap {
-        val step = chargeFraction?.let { (it.coerceIn(0f, 1f) * CHARGE_STEPS).toInt() }
+        val step = chargeBucket(chargeFraction)
         return bigCache.getOrPut("$layer/$kind/$step") {
             discMarker(context, layer, kind, step?.let { it.toFloat() / CHARGE_STEPS })
         }
     }
+
+    /**
+     * The bucket [chargeFraction] renders as — the identity of the artwork, and the only part of a
+     * charge reading that belongs in any icon cache key.
+     *
+     * Public because a caller wrapping these bitmaps in a platform icon has to key its own cache the
+     * same way. Keying on the raw fraction instead mints one wrapper per distinct reading over a single
+     * shared bitmap, which grows without bound as vehicles report new charge levels.
+     */
+    fun chargeBucket(chargeFraction: Float?): Int? = chargeFraction?.let { (it.coerceIn(0f, 1f) * CHARGE_STEPS).toInt() }
 
     /** The layer-coloured badge, its white glyph, and the charge ring around it. */
     private fun discMarker(

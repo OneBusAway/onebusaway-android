@@ -77,17 +77,21 @@ import org.onebusaway.android.directions.model.RentalFormFactor
  * The range a full battery is assumed to give, per form factor — the inferred denominator this file's
  * header documents and signs off.
  *
- * Deliberately covers **only the two form factors actually measured**. A moped, a car or a cargo bike
- * gets no entry and therefore no gauge, rather than borrowing a scooter's number: the point of a
- * measured constant is that it was measured, and extending it by analogy to a vehicle class nobody
- * looked at would be a second, unsigned guess stacked on the first.
+ * Deliberately covers **only the two vehicle classes actually measured** — a kick scooter and a
+ * pedal-assist bicycle. A moped, a car or a *cargo* bike gets no entry and therefore no gauge, rather
+ * than borrowing a number measured from something else: the point of a measured constant is that it
+ * was measured, and extending it by analogy to a class nobody looked at would be a second, unsigned
+ * guess stacked on the first. A cargo bike hauls a load on a bigger battery and is exactly the case
+ * where the analogy would be wrong.
+ *
+ * The three `SCOOTER*` entries are not three guesses but one: GBFS spells a single vehicle class three
+ * ways (seated / standing / the pre-3.0 catch-all), and the fleet measured reports the catch-all.
  */
 private val ASSUMED_MAX_RANGE_METERS = mapOf(
     RentalFormFactor.SCOOTER to 38_000,
     RentalFormFactor.SCOOTER_SEATED to 38_000,
     RentalFormFactor.SCOOTER_STANDING to 38_000,
-    RentalFormFactor.BICYCLE to 62_000,
-    RentalFormFactor.CARGO_BICYCLE to 62_000
+    RentalFormFactor.BICYCLE to 62_000
 )
 
 /**

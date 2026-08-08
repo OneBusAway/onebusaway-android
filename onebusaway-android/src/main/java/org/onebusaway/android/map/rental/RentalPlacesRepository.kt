@@ -158,7 +158,10 @@ fun rentalSource(
     // drawing the layer it has always drawn.
     val graphqlBase = region.otpBaseGraphqlUrl?.takeIf { it.isNotBlank() && region.supportsOtpGraphqlBikeshare }
     if (graphqlBase != null) return RentalSource.Otp2(graphqlBase)
-    val otp1Base = region.otpBaseUrl?.takeIf { it.isNotEmpty() && region.supportsOtpBikeshare } ?: return null
+    // isNotBlank, not isNotEmpty: these values come from the regions directory, and a whitespace-only
+    // otpBaseUrl would otherwise resolve to a source whose every request URL is malformed rather than
+    // reporting no source at all. Matches the GraphQL branch above.
+    val otp1Base = region.otpBaseUrl?.takeIf { it.isNotBlank() && region.supportsOtpBikeshare } ?: return null
     return RentalSource.Otp1(RegionUtils.formatOtpBaseUrl(otp1Base))
 }
 

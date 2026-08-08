@@ -666,10 +666,12 @@ fun HomeScreen(
                             // withdrawn inside directions, where the real trip is already drawn and a
                             // ghost of it would only double every line.
                             LaunchedEffect(pinnedTrip, pinnedCard, directionsActive) {
-                                val parked = pinnedTrip?.takeIf { !directionsActive }
                                 mapViewModel.setPinnedTripOverlay(
-                                    parked?.selectedItinerary,
-                                    pinnedCard.takeIf { parked != null }
+                                    pinnedTrip?.selectedItinerary,
+                                    pinnedCard,
+                                    // The trace is withheld over a drawn itinerary, where it would only
+                                    // double every line; the marker stands wherever the rider is.
+                                    traceRoute = !directionsActive
                                 )
                             }
                             // A pinned trip is one the rider can walk back to, so leaving it costs nothing

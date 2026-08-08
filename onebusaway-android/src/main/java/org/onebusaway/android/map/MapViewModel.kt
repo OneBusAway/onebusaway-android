@@ -539,20 +539,29 @@ class MapViewModel @Inject constructor(
      */
 
     /**
-     * Draw [itinerary] as the thin ghost of the rider's parked trip, or clear it with null (#2053).
+     * Put the rider's parked trip on the map, or take it off with a null [itinerary] (#2053).
      *
-     * Independent of every mode this map has, and that is the point: the ghost is what the rider is
+     * Independent of every mode this map has, and that is the point: the pin is what the rider is
      * exploring *around*, so it survives focusing a stop, opening a route, and returning to nearby
-     * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slice of the
-     * render state ([MapRenderState.setPinnedTripPolylines]) rather than in the route list every
-     * transition clears.
+     * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slices of the
+     * render state rather than in the route list every transition clears.
+     *
+     * The two halves are gated separately because they answer different questions. The **marker** says
+     * *a trip is parked, and it starts here*, which is worth saying wherever the rider is — including
+     * inside directions, where they may well be reading some other trip. The **trace** says *and it goes
+     * this way*, which is only worth drawing when nothing else is: over a drawn itinerary it would double
+     * every line, so [traceRoute] withholds it there.
      *
      * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
      * being read, so the parked trip is recognisably the one the rider left.
      */
-    fun setPinnedTripOverlay(itinerary: TripItinerary?, summary: PinnedTripCardState?) {
+    fun setPinnedTripOverlay(
+        itinerary: TripItinerary?,
+        summary: PinnedTripCardState?,
+        traceRoute: Boolean
+    ) {
         renderState.setPinnedTripPolylines(
-            itinerary?.let {
+            itinerary?.takeIf { traceRoute }?.let {
                 itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
                     .asPinnedTripGhost()
             }.orEmpty()

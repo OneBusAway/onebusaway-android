@@ -17,6 +17,7 @@ package org.onebusaway.android.ui.home.directions
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -280,6 +281,15 @@ fun DirectionsResultsSheet(
     // defaulted to an empty flow: omitting it leaves the map's labels dead, which is a wiring bug that
     // would otherwise type-check.
     rideBadgeTaps: Flow<Set<Int>>,
+    // The pinned-trip surface (#2053), required for the same reason as [rideBadgeTaps]: a defaulted 0
+    // for the option to open on is exactly the resume bug the index exists to prevent, and a defaulted
+    // `false` for [fromSnapshot] re-arms the change monitor for a trip that already departed.
+    initialOptionIndex: Int,
+    fromSnapshot: Boolean,
+    pinControl: @Composable (selectedIndex: Int) -> Unit,
+    pinnedOptionIndex: Int?,
+    onTogglePin: (Int) -> Unit,
+    onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // The system nav-bar inset: the sheet reaches the bottom edge (continuous background), but its
@@ -357,6 +367,12 @@ fun DirectionsResultsSheet(
                 onFocusLeg = onFocusLeg,
                 onFocusPoint = onFocusPoint,
                 stopEtaStrip = stopEtaStrip,
+                initialOptionIndex = initialOptionIndex,
+                fromSnapshot = fromSnapshot,
+                pinControl = pinControl,
+                pinnedOptionIndex = pinnedOptionIndex,
+                onTogglePin = onTogglePin,
+                onOptionsSeeded = onOptionsSeeded,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(fullHeight - DRAG_HANDLE_TOUCH_TARGET_HEIGHT)
@@ -642,11 +658,18 @@ fun DirectionsErrorSnackbar(
  * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
  * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
  *
- * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
- * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ * Three answers, not two, since #2053: [onPinAndLeave] parks the trip on the way out, which is the
+ * whole point of pinning — leaving to look at something else was previously only possible by spending
+ * the plan. Note this does not contradict the latch's "there is only one answer to give": that is
+ * about the *inbound* side, and Back and a background tap still want the identical exit.
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK"; the
+ * constructive answer sits before it. Dismissing — the cancel button, an outside tap, or Back — keeps
+ * the trip.
  */
 @Composable
 fun DirectionsExitConfirmDialog(
+    onPinAndLeave: (() -> Unit)?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -654,9 +677,20 @@ fun DirectionsExitConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
         text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        // Material 3's AlertDialog has two action slots and this dialog now offers three answers, so
+        // both ways *out* share the confirm slot; the dismiss slot stays the one way to stay.
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.directions_exit_confirm_discard))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Absent, not disabled, when there is nothing to pin — a plan restored from a trip-update
+                // notification carries no request, so there is no trip to park (see PlanResult.Success).
+                onPinAndLeave?.let { pinAndLeave ->
+                    TextButton(onClick = pinAndLeave) {
+                        Text(stringResource(R.string.directions_exit_confirm_pin))
+                    }
+                }
+                TextButton(onClick = onConfirm) {
+                    Text(stringResource(R.string.directions_exit_confirm_discard))
+                }
             }
         },
         dismissButton = {

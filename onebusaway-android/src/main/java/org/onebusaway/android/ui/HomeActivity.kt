@@ -70,6 +70,7 @@ import org.onebusaway.android.ui.nav.readRouteReveal
 import org.onebusaway.android.ui.report.ReportLauncher
 import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.toGeocoded
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.TutorialPrefs
@@ -126,6 +127,11 @@ class HomeActivity : AppCompatActivity() {
     private val tripPlanViewModel: TripPlanViewModel by viewModels()
     private val tripResultsViewModel: TripResultsViewModel by viewModels()
 
+    // The parked trip plan (#2053). Activity-scoped for the same reason as the two above, and for one
+    // more: the pin is read from inside the results sheet *and* from the resume card over the map, and
+    // those two must never be looking at separate copies of it.
+    private val pinnedTripViewModel: PinnedTripViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -164,6 +170,7 @@ class HomeActivity : AppCompatActivity() {
                         helpViewModel = helpViewModel,
                         tripPlanViewModel = tripPlanViewModel,
                         tripResultsViewModel = tripResultsViewModel,
+                        pinnedTripViewModel = pinnedTripViewModel,
                         arrivalsViewModelFactory = arrivalsViewModelFactory,
                         activityActions = activityActions
                     )

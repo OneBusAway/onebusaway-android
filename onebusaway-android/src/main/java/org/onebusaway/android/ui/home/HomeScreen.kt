@@ -18,8 +18,10 @@ package org.onebusaway.android.ui.home
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
@@ -94,6 +97,8 @@ import org.onebusaway.android.ui.home.directions.DirectionsFormCard
 import org.onebusaway.android.ui.home.directions.DirectionsLongPressMenu
 import org.onebusaway.android.ui.home.directions.DirectionsPickOverlay
 import org.onebusaway.android.ui.home.directions.DirectionsResultsSheet
+import org.onebusaway.android.ui.home.directions.PinTripControl
+import org.onebusaway.android.ui.home.directions.PinnedTripCard
 import org.onebusaway.android.ui.home.directions.itineraryPins
 import org.onebusaway.android.ui.home.directions.pinPoint
 import org.onebusaway.android.ui.home.donation.DonationFeature
@@ -122,6 +127,10 @@ import org.onebusaway.android.ui.tripplan.PlanResult
 import org.onebusaway.android.ui.tripplan.TripEndpoint
 import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
+import org.onebusaway.android.ui.tripplan.pinned.describesSameTripAs
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -216,6 +225,9 @@ fun HomeScreen(
     // the top chrome and the results sheet + itinerary render over the map.
     tripPlanViewModel: TripPlanViewModel,
     tripResultsViewModel: TripResultsViewModel,
+    // The parked trip plan (#2053): read from the results sheet's pin controls and from the resume card
+    // over the map, so it is one activity-scoped instance rather than a per-destination one.
+    pinnedTripViewModel: PinnedTripViewModel,
     // Builds the per-focused-stop ArrivalsViewModel for the bottom-sheet host (assisted-injected;
     // the sheet's stop id is runtime-dynamic, so it can't be a plain hiltViewModel). Injected into
     // HomeActivity and threaded down.
@@ -612,6 +624,70 @@ fun HomeScreen(
                             // surfaces a message.
                             val directionsError = (tripPlanResult as? PlanResult.Error)?.error
                             val directionsLoading = tripPlanResult is PlanResult.Loading
+
+                            // ---- The parked trip plan (#2053) ------------------------------------
+                            val pinnedTrip by pinnedTripViewModel.pinned.collectAsStateWithLifecycle()
+                            val pinnedCard by pinnedTripViewModel.card.collectAsStateWithLifecycle()
+                            val pendingResumeIndex by pinnedTripViewModel.pendingResumeIndex
+                                .collectAsStateWithLifecycle()
+                            val tripResultsState by tripResultsViewModel.state.collectAsStateWithLifecycle()
+                            val selectedOptionIndex =
+                                (tripResultsState as? TripResultsUiState.Success)?.selectedIndex ?: 0
+                            // Whether the plan on screen is the pinned one — so the controls read Unpin,
+                            // and so a refresh of it can update the snapshot in place.
+                            val pinnedTripIsOnScreen = directionsResults?.params?.let { params ->
+                                pinnedTrip?.describesSameTripAs(params, tripPlanFormState.departNow)
+                            } == true
+                            // A pin is a whole request, so a plan with no request behind it (a monitor
+                            // notification re-entry) is one there is nothing to pin. The results sheet's
+                            // control is *disabled* — it holds its place in a row that is always there —
+                            // while the exit dialog's button is simply absent, since a dialog offering a
+                            // greyed-out answer is worse than one offering two.
+                            val canPin = directionsResults?.params != null
+                            val pinTripOption: (Int) -> Unit = { index ->
+                                val results = directionsResults
+                                val params = results?.params
+                                if (params != null) {
+                                    pinnedTripViewModel.pin(
+                                        params = params,
+                                        departNow = tripPlanFormState.departNow,
+                                        itineraries = results.itineraries,
+                                        selectedIndex = index
+                                    )
+                                }
+                            }
+                            // The toggle the pin control and the card's long-press menu share. The exit
+                            // dialog deliberately does *not* use it: "Pin & leave" must always leave a
+                            // pin behind, and toggling would make it un-pin the very trip it was pressed
+                            // to keep.
+                            val onTogglePinOption: (Int) -> Unit = { index ->
+                                if (pinnedTripIsOnScreen && index == pinnedTrip?.selectedIndex) {
+                                    pinnedTripViewModel.unpin()
+                                } else {
+                                    pinTripOption(index)
+                                }
+                            }
+                            // A fresh plan for the trip the rider pinned replaces the pin's snapshot, so
+                            // it stays a bookmark of that trip rather than of the first answer to it.
+                            // Guarded on `fromSnapshot` because a resume *is* the stored plan — adopting
+                            // it would be the pin re-pinning itself once per resume.
+                            LaunchedEffect(directionsResults, pinnedTripIsOnScreen) {
+                                val results = directionsResults ?: return@LaunchedEffect
+                                if (!pinnedTripIsOnScreen || results.fromSnapshot) return@LaunchedEffect
+                                pinnedTripViewModel.resnapshot(results.itineraries)
+                            }
+                            // Resume: seed the form + results *before* entering directions, so the single
+                            // recomposition that turns directions on already sees a plan. Reversed, the
+                            // "planning but no results yet" effect below can fire on the intermediate
+                            // frame and wipe the trip off the map.
+                            val onResumePinnedTrip: () -> Unit = {
+                                pinnedTrip?.let { pin ->
+                                    pinnedTripViewModel.beginResume(pin)
+                                    tripPlanViewModel.restorePinned(pin.params, pin.departNow, pin.itineraries)
+                                    homeViewModel.enterDirections(mapViewModel.viewport)
+                                }
+                            }
+
                             // A long-pressed map point awaiting the "directions from/to here" choice.
                             var longPressPoint by remember { mutableStateOf<GeoPoint?>(null) }
                             // Leaving directions ends any in-progress map pick.
@@ -722,6 +798,10 @@ fun HomeScreen(
                                             },
                                             onLearnMore = onLearnMore,
                                             onOpenSurvey = onOpenSurvey,
+                                            pinnedCard = pinnedCard,
+                                            showPinnedCard = !directionsActive,
+                                            onResumePinnedTrip = onResumePinnedTrip,
+                                            onUnpinTrip = pinnedTripViewModel::unpin,
                                             focusBannerTopPx = focusBannerTopPx,
                                             // This layer converts measured card height to its map-space bottom edge;
                                             // the map VM adds marker clearance and owns the resulting content padding.
@@ -813,6 +893,24 @@ fun HomeScreen(
                                             // the first in travel order where one label covers the
                                             // same route ridden twice.
                                             rideBadgeTaps = homeViewModel.itineraryRideBadgeTaps,
+                                            // A resume opens on the option the rider pinned; every other
+                                            // plan opens on the first, as it always has.
+                                            initialOptionIndex = pendingResumeIndex ?: 0,
+                                            fromSnapshot = directionsResults.fromSnapshot,
+                                            pinControl = { index ->
+                                                PinTripControl(
+                                                    pinned = pinnedTripIsOnScreen &&
+                                                        index == pinnedTrip?.selectedIndex,
+                                                    enabled = canPin,
+                                                    onToggle = { onTogglePinOption(index) },
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            },
+                                            pinnedOptionIndex = pinnedTrip
+                                                ?.selectedIndex
+                                                ?.takeIf { pinnedTripIsOnScreen },
+                                            onTogglePin = onTogglePinOption,
+                                            onOptionsSeeded = pinnedTripViewModel::onResumeConsumed,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                         directionsError != null -> DirectionsErrorSnackbar(
@@ -865,6 +963,17 @@ fun HomeScreen(
                                     .collectAsStateWithLifecycle()
                                 if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
+                                        // The pin is taken here rather than inside the VM: HomeViewModel
+                                        // knows nothing about pins, and the exit it performs is the same
+                                        // one either button asks for.
+                                        onPinAndLeave = if (canPin) {
+                                            {
+                                                pinTripOption(selectedOptionIndex)
+                                                homeViewModel.confirmExitDirections()
+                                            }
+                                        } else {
+                                            null
+                                        },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
                                     )
@@ -1013,6 +1122,12 @@ private fun BoxScope.HomeMapOverlays(
     onFrameRoute: () -> Unit,
     onLearnMore: () -> Unit,
     onOpenSurvey: (url: String) -> Unit,
+    // The parked trip plan (#2053): its card, and whether this focus is one to show it in. A boolean
+    // rather than the focus object, since this layer takes states and flags and not the focus authority.
+    pinnedCard: PinnedTripCardState?,
+    showPinnedCard: Boolean,
+    onResumePinnedTrip: () -> Unit,
+    onUnpinTrip: () -> Unit,
     focusBannerTopPx: Int,
     onFocusBannerBottom: (Int) -> Unit
 ) {
@@ -1043,31 +1158,54 @@ private fun BoxScope.HomeMapOverlays(
         onOpenSurvey = onOpenSurvey,
         modifier = Modifier.align(Alignment.TopCenter)
     )
-    // The focus banner is a floating card centered below the top chrome. Drawn last so it sits above
-    // weather / donation / survey cards while a stop or route is focused. The layer is already offset by the
-    // clearance, but the map's top-padding derivation needs the card's bottom edge in map coordinates,
-    // so add both the status-bar inset and chrome clearance back onto its reported height.
-    if (focusBannerState != null) {
-        val context = LocalContext.current
-        FocusBanner(
-            state = focusBannerState,
-            onClose = onCloseFocus,
-            onToggleFavorite = onToggleFavorite,
-            onShowAlerts = onShowAlerts,
-            onRecenterStop = onRecenterStop,
-            onSelectDirection = onSelectRouteDirection,
-            onFrameRoute = onFrameRoute,
-            // Same destination as the arrivals drawer's route menu, wired locally rather than through
-            // HomeActivityActions — the browser hand-off needs nothing but a Context.
-            onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
-            onHeight = { h -> onFocusBannerBottom(h + focusBannerTopPx) },
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 16.dp)
-        )
-    } else {
-        LaunchedEffect(Unit) { onFocusBannerBottom(0) }
+    // The focus banner and the pinned-trip card are one stack of floating cards centered below the top
+    // chrome, drawn last so they sit above the weather / donation / survey cards. They stack rather than
+    // compete for the slot because exploring stops and routes is exactly what a pin is *for*: a resume
+    // card that vanished the moment a stop was focused would be unreachable during the one activity it
+    // exists to support.
+    //
+    // The height is reported from the column, not from either card, so the map's top padding clears the
+    // whole stack. The layer is already offset by the chrome clearance, but the map's top-padding
+    // derivation needs the bottom edge in map coordinates, so the status-bar inset and clearance are
+    // added back on. An empty column measures zero and reports it — which is why the old "no banner"
+    // branch, which had to reset the edge by hand, is gone.
+    val context = LocalContext.current
+    Column(
+        modifier = Modifier
+            .align(Alignment.TopCenter)
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp)
+            .onSizeChanged { onFocusBannerBottom(if (it.height == 0) 0 else it.height + focusBannerTopPx) },
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (focusBannerState != null) {
+            FocusBanner(
+                state = focusBannerState,
+                onClose = onCloseFocus,
+                onToggleFavorite = onToggleFavorite,
+                onShowAlerts = onShowAlerts,
+                onRecenterStop = onRecenterStop,
+                onSelectDirection = onSelectRouteDirection,
+                onFrameRoute = onFrameRoute,
+                // Same destination as the arrivals drawer's route menu, wired locally rather than through
+                // HomeActivityActions — the browser hand-off needs nothing but a Context.
+                onShowSchedule = { url -> ExternalIntents.goToUrl(context, url) },
+                // The column measures the stack; a card measuring itself as well would be a second
+                // answer to the same question.
+                onHeight = {},
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        // Hidden inside directions: the trip is already on screen there, and the results sheet's own pin
+        // control is the affordance that belongs to it.
+        if (pinnedCard != null && showPinnedCard) {
+            PinnedTripCard(
+                state = pinnedCard,
+                onResume = onResumePinnedTrip,
+                onUnpin = onUnpinTrip,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
     }
 }
 

@@ -977,10 +977,19 @@ private fun SegmentButton(
 
 /** The user-visible label for an endpoint; fixed kinds resolve a string resource. */
 @Composable
-private fun endpointLabel(endpoint: TripEndpoint): String = endpoint.displayText ?: when (endpoint) {
-    is TripEndpoint.MapPoint -> stringResource(R.string.trip_plan_map_location)
+private fun endpointLabel(endpoint: TripEndpoint): String = endpoint.displayText ?: stringResource(endpoint.fixedLabelRes())
+
+/**
+ * The string resource naming an endpoint that carries no text of its own — the two fixed-label kinds.
+ * A pure rule rather than a `when` inside a composable, so the pinned-trip card
+ * ([org.onebusaway.android.ui.tripplan.pinned.pinnedDestinationLabel]) names the same place the form
+ * does without either restating it.
+ */
+@StringRes
+internal fun TripEndpoint.fixedLabelRes(): Int = when (this) {
+    is TripEndpoint.MapPoint -> R.string.trip_plan_map_location
     // Only the fixed-label kinds (CurrentLocation/MapPoint) have a null displayText.
-    else -> stringResource(R.string.tripplanner_current_location)
+    else -> R.string.tripplanner_current_location
 }
 
 @Composable

@@ -82,6 +82,7 @@ import org.onebusaway.android.ui.survey.SurveyViewModel
 import org.onebusaway.android.ui.tripdetails.TripDetailsLauncher
 import org.onebusaway.android.ui.tripdetails.tripGraph
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.tripPlanGraph
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
@@ -107,6 +108,7 @@ class HomeDestinationDeps(
     val helpViewModel: HelpViewModel,
     val tripPlanViewModel: TripPlanViewModel,
     val tripResultsViewModel: TripResultsViewModel,
+    val pinnedTripViewModel: PinnedTripViewModel,
     val arrivalsViewModelFactory: ArrivalsViewModel.Factory,
     val activityActions: HomeActivityActions
 )
@@ -228,6 +230,7 @@ fun HomeNavHost(
                 helpViewModel = home.helpViewModel,
                 tripPlanViewModel = home.tripPlanViewModel,
                 tripResultsViewModel = home.tripResultsViewModel,
+                pinnedTripViewModel = home.pinnedTripViewModel,
                 arrivalsViewModelFactory = home.arrivalsViewModelFactory,
                 callbacks = callbacks
             )

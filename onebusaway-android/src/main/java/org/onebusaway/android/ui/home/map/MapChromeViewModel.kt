@@ -67,7 +67,9 @@ class MapChromeViewModel @Inject constructor(
             // The three rental preferences are combined first so the outer combine stays inside the
             // typed five-flow overload — seven inputs would fall back to the untyped vararg form.
             val rentals = combine(
-                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, true),
+                // Off by default — see RENTALS_VISIBLE_BY_DEFAULT; this must agree with it, or the
+                // button's tint and the drawn map disagree on a fresh install.
+                prefsRepo.observeBoolean(R.string.preference_key_layer_bikeshare_visible, false),
                 prefsRepo.observeBoolean(
                     R.string.preference_key_layer_bikes_visible,
                     RentalLayer.BIKES.defaultVisible

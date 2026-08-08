@@ -52,7 +52,6 @@ import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
 import org.onebusaway.android.util.GeoPoint
-import org.onebusaway.android.util.LayerUtils
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
@@ -683,7 +682,7 @@ class MapViewModel @Inject constructor(
 
     /** Refresh prefs-backed state and restart the vehicle poll if in route mode (the host's onResume). */
     fun onResume() {
-        rentalController.setVisibleLayers(LayerUtils.visibleRentalLayers(context))
+        rentalController.syncFromPreferences()
         mapHost.refreshMyLocationEnabled()
         // Begin the live location feed for as long as the map is shown (permission-gated; a no-op until
         // granted). This is what makes `location` a live stream — the legacy host's LocationHelper feed.

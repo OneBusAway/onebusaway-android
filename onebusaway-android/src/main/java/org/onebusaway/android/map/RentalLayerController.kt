@@ -66,8 +66,8 @@ class RentalLayerController(
     private val scope: CoroutineScope
 ) {
 
-    // Defaults to nothing visible; the host pushes the real `LayerUtils.visibleRentalLayers()` value on
-    // resume (kept off the construction path so the model stays JVM-constructible, like WeatherViewModel).
+    // Defaults to nothing visible; the owner calls [syncFromPreferences] on resume (kept off the
+    // construction path so the model stays JVM-constructible, like WeatherViewModel).
     private val visibleLayers = MutableStateFlow(emptySet<RentalLayer>())
 
     private var loadJob: Job? = null
@@ -113,18 +113,21 @@ class RentalLayerController(
     }
 
     /**
-     * Re-read what is on. Both setters write their preference and then come back through here rather
-     * than computing the new set themselves, so the drawn layers always match what
-     * [rentalLayersFromPreferences] says — one definition, no chance of the button and the map
-     * disagreeing.
+     * Re-read what is on — after a toggle, and on resume.
+     *
+     * Both setters write their preference and come back through here rather than computing the new set
+     * themselves, so the drawn layers always match what [rentalLayersFromPreferences] says: one
+     * definition, no chance of the buttons and the map disagreeing.
+     *
+     * The owner calls this on resume rather than pushing a set in. It used to push one, computed by a
+     * `LayerUtils` helper that answered *empty while no region was selected* — which on a fresh install
+     * ran before region discovery landed and seeded this controller with nothing, permanently, while
+     * the buttons (reading the preferences directly) drew themselves lit over a map that never loaded.
+     * Whether there is a rental server to ask is this loader's question and it asks it on every
+     * emission; a second, region-gated copy of the answer at seed time could only ever go stale.
      */
-    private fun syncFromPreferences() {
+    fun syncFromPreferences() {
         visibleLayers.value = rentalLayersFromPreferences(prefsRepository)
-    }
-
-    /** Apply the layer set directly — the resume-time sync from preferences. */
-    fun setVisibleLayers(layers: Set<RentalLayer>) {
-        visibleLayers.value = layers
     }
 
     /**

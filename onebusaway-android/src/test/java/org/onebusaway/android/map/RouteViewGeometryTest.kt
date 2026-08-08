@@ -9,6 +9,7 @@ import org.onebusaway.android.map.render.ADJACENT_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.DEEMPHASIZED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
+import org.onebusaway.android.map.render.ROUTE_BADGE_SCALE_PROFILE
 import org.onebusaway.android.map.render.ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
@@ -304,6 +305,20 @@ class RouteViewGeometryTest {
         )
 
         assertEquals(listOf("known-route"), badges.map { it.showRouteTap?.routeId })
+    }
+
+    @Test
+    fun `an adjacency label recedes with the map rather than holding a fixed size`() {
+        // A focused stop's routes all leave one point, so their labels are packed tightest exactly where a
+        // fixed-size label is largest against the lines it names — the overview zoom the rider opens the
+        // stop at (#2195). Asserted here, on the badges this view actually produces, rather than left to
+        // the RouteBadge default that supplies it: what the rider gets is the thing worth pinning.
+        val points = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 1.0))
+        val geometry = FocusedTripGeometry(listOf(FocusedTripShape("shape", "route", null, points)))
+
+        val badge = geometry.toRouteBadges(listOf(route("route", "A"))).single()
+
+        assertEquals(ROUTE_BADGE_SCALE_PROFILE, badge.scale)
     }
 
     /** The route-direction an adjacency label opens; null if the label leads elsewhere or nowhere. */

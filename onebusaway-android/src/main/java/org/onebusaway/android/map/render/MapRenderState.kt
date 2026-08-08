@@ -399,8 +399,9 @@ data class RouteBadge(
      */
     val tap: RouteBadgeTap? = null,
     /**
-     * How this label's drawn size answers the camera (#2102) — see [RouteBadgeScaleProfile]. Fixed by
-     * default, so a producer opts its labels into a schedule rather than inheriting one.
+     * How this label's drawn size answers the camera (#2102, #2195) — see [RouteBadgeScaleProfile]. It
+     * defaults to what every label on the map does ([ROUTE_BADGE_SCALE_PROFILE]), so a new kind of label
+     * recedes with its line without having to know to ask; a producer that wants otherwise names its own.
      *
      * Carried as an unresolved *profile*, exactly as [RoutePolyline.widthProfile] is, with the renderer
      * resolving it against the live camera. That's the pattern for a **continuous** zoom response;
@@ -411,7 +412,7 @@ data class RouteBadge(
      * which tears down and rebuilds the whole static layer — bikes, generic pins, the continuation
      * overlay, every tap map. Resizing a label is not worth that, so the resolution stays in the renderer.
      */
-    val scale: RouteBadgeScaleProfile = FIXED_ROUTE_BADGE_SCALE_PROFILE
+    val scale: RouteBadgeScaleProfile = ROUTE_BADGE_SCALE_PROFILE
 ) {
     init {
         // Both stated rather than trusted: a label with nothing to read is a marker the rider can't

@@ -174,6 +174,10 @@ internal fun FocusedTripGeometry.toTripFocusedRoutePolylines(
  * One badge model per successfully drawn route-direction, preserving the focused-trip order that
  * mirrors the arrivals drawer. The shared layout chooses stable geographic line-center anchors;
  * flavor renderers only draw them.
+ *
+ * These take the map's label schedule ([RouteBadge.scale]) rather than a fixed pixel size (#2195): a
+ * focused stop's routes fan out from one point, so at an overview zoom their labels are both oversized
+ * against the lines they name and packed tightly enough to hide them.
  */
 internal fun FocusedTripGeometry.toRouteBadges(
     routes: List<ObaRoute>,

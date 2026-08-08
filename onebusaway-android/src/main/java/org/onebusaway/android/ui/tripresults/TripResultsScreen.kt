@@ -52,11 +52,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -97,6 +99,7 @@ import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -936,6 +939,8 @@ fun TripResultsList(
     // handed neither of these simply offers no pin affordance, which is the right rendering for them.
     pinnedOptionIndex: Int? = null,
     onTogglePin: ((Int) -> Unit)? = null,
+    // Non-null exactly while the trip on screen is the pinned one (#2053) — see [UnpinTripButton].
+    onUnpinTrip: (() -> Unit)? = null,
     reminderControl: @Composable () -> Unit = {}
 ) {
     // Resolved once for the whole drawer rather than by each distance row: the rows below run one per
@@ -970,6 +975,7 @@ fun TripResultsList(
                     stopEtaStrip = stopEtaStrip,
                     pinnedOptionIndex = pinnedOptionIndex,
                     onTogglePin = onTogglePin,
+                    onUnpinTrip = onUnpinTrip,
                     reminderControl = reminderControl
                 )
             }
@@ -1009,6 +1015,7 @@ fun TripResultsSheet(
     // press and nothing else — see [TripResultsHeader].
     pinnedOptionIndex: Int?,
     onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
     onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier,
     listBottomInset: Dp = 0.dp
@@ -1067,6 +1074,7 @@ fun TripResultsSheet(
         stopEtaStrip = stopEtaStrip,
         pinnedOptionIndex = pinnedOptionIndex,
         onTogglePin = onTogglePin,
+        onUnpinTrip = onUnpinTrip,
         reminderControl = {
             // Destination reminders are off pending the navigation-mode rework; leaving the slot
             // empty removes the affordance rather than offering one that starts nothing.
@@ -1119,6 +1127,40 @@ private val BAND_RADIUS = 13.dp
 private val BAND_INSET = 2.dp
 private val BAND_END = 4.dp
 
+/**
+ * "Unpin this trip" at the head of the directions drawer (#2053).
+ *
+ * The one obvious way out of a pin. Pinning is a long press on an option card — a gesture worth keeping
+ * quiet, since it is occasional and the map's marker already says a trip is parked — but *un*pinning had
+ * inherited that quietness and had no business doing so: a rider who wants rid of the pin is looking for
+ * a way to say so, and asking them to guess a hidden gesture makes the feature feel like a trap.
+ *
+ * Drawn only while the drawer is showing the pinned trip, which is what earns the word "this".
+ */
+@Composable
+private fun UnpinTripButton(onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .testTag(UNPIN_TRIP_TEST_TAG)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_pin_filled),
+            contentDescription = null,
+            modifier = Modifier.size(ButtonDefaults.IconSize)
+        )
+        Text(
+            text = stringResource(R.string.trip_plan_unpin),
+            modifier = Modifier.padding(start = ButtonDefaults.IconSpacing)
+        )
+    }
+}
+
+/** The tag the unpin button is driven by in instrumented tests. */
+const val UNPIN_TRIP_TEST_TAG = "unpinTrip"
+
 /** The minimum height of a row's content — the platform's 48dp target when the row is a tap target. */
 private val ROW_MIN_HEIGHT = 36.dp
 private val ROW_MIN_TOUCH_HEIGHT = 48.dp
@@ -1161,6 +1203,7 @@ private fun TripLogList(
     stopEtaStrip: @Composable (TripLogEntry.Transit, RouteStopRef) -> Unit,
     pinnedOptionIndex: Int?,
     onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
     reminderControl: @Composable () -> Unit
 ) {
     val entries = state.directions
@@ -1178,6 +1221,10 @@ private fun TripLogList(
     ) {
         // The picker scrolls with the steps (not pinned), so it recedes as you read down the list.
         item {
+            // Above the picker rather than below it: the pin is a fact about the whole trip the drawer is
+            // showing, not about the option the rider is currently comparing, so it reads before them.
+            // Present only while that trip *is* the pinned one, which is what lets it say "this trip".
+            onUnpinTrip?.let { unpin -> UnpinTripButton(onClick = unpin) }
             TripResultsHeader(
                 state = state,
                 onSelectOption = onSelectOption,

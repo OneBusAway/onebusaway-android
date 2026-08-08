@@ -290,6 +290,7 @@ fun DirectionsResultsSheet(
     // Null when this plan carries no request to pin, so a card offers no long press rather than a menu
     // item that does nothing — the same rule the unwired picker follows.
     onTogglePin: ((Int) -> Unit)?,
+    onUnpinTrip: (() -> Unit)?,
     onOptionsSeeded: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -372,6 +373,7 @@ fun DirectionsResultsSheet(
                 fromSnapshot = fromSnapshot,
                 pinnedOptionIndex = pinnedOptionIndex,
                 onTogglePin = onTogglePin,
+                onUnpinTrip = onUnpinTrip,
                 onOptionsSeeded = onOptionsSeeded,
                 modifier = Modifier
                     .fillMaxWidth()

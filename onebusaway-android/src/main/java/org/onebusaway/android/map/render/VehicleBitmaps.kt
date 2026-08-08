@@ -18,6 +18,7 @@ package org.onebusaway.android.map.render
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Path
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -299,10 +300,12 @@ object VehicleBitmaps {
      * The bitmap reserves [TAB_DEPTH_GRID] above the disc as well as below, so the disc's center is the
      * bitmap's center whether or not a tab is drawn — see the class KDoc for why that matters.
      *
-     * The glyph and pips take whichever of black/white reads on [color] rather than a hardcoded white,
-     * since a route may be drawn in a shade too pale to carry white. Occupancy rides that same ink
-     * rather than a color ramp of its own: the disc's color already means route identity (#2043), and a
-     * second color scale on a 40 dp icon would compete with it (#1079).
+     * The **glyph** takes whichever of black/white reads on [color] rather than a hardcoded white, since
+     * a route may be drawn in a shade too pale to carry white. The **pips** deliberately do not: they use
+     * a fixed white-empty / black-full polarity (see the pip loop), so a rider learns one reading of the
+     * row rather than one per route colour. Neither uses a colour ramp of its own — the disc's colour
+     * already means route identity (#2043), and a second colour scale on a 40 dp icon would compete with
+     * it (#1079).
      */
     private fun renderMarker(
         context: Context,
@@ -341,10 +344,22 @@ object VehicleBitmaps {
             onColor
         )
 
-        // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [fill] of them inked and the
-        // rest left the tab's own color, so the row reads as a filled fraction of a fixed scale rather
-        // than as a bare count. One drawable, re-bounded and re-tinted per pip — they're the same
-        // artwork, so loading it three times would repeat the vector inflate and rasterize for nothing.
+        // The pip row: all [MAX_PIPS] silhouettes always drawn, the first [fill] of them full and the rest
+        // empty, so the row reads as a filled fraction of a fixed scale rather than as a bare count.
+        //
+        // The polarity is **fixed** — empty is white, full is black, on every disc colour — rather than
+        // following [onColor] as the glyph does. Following it would tie the row's meaning to the route's
+        // colour, and on a dark disc, where onColor is already white, a white "full" pip would be
+        // indistinguishable from a white "empty" one; the row would stop saying anything at all. The
+        // black rim both states share is what keeps the white ones legible on a pale disc.
+        //
+        // The cost, accepted deliberately: on a near-black route colour the black full pips sink into the
+        // tab. Reaching for [MarkerRendering.legibleOn] here would fix that and re-introduce the
+        // collision, so the fix — if that turns out to matter — is a tab that carries its own surface
+        // colour, not a per-route pip polarity.
+        //
+        // One drawable, re-bounded and re-tinted per pip — they're the same artwork, so loading it three
+        // times would repeat the vector inflate and rasterize for nothing.
         if (fill != null) {
             val pitch = PIP_SIZE_GRID + PIP_SPACING_GRID
             val firstCx = (MarkerRendering.GRID - (MAX_PIPS - 1) * pitch) / 2f
@@ -354,7 +369,7 @@ object VehicleBitmaps {
             repeat(MAX_PIPS) { i ->
                 val cx = (firstCx + i * pitch) * scale
                 pip.setBounds((cx - half).toInt(), (cy - half).toInt(), (cx + half).toInt(), (cy + half).toInt())
-                MarkerRendering.drawOutlined(canvas, pip, outline, if (i < fill) onColor else color)
+                MarkerRendering.drawOutlined(canvas, pip, outline, if (i < fill) Color.BLACK else Color.WHITE)
             }
         }
         return bitmap

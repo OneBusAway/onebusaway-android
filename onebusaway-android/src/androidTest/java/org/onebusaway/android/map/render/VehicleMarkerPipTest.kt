@@ -41,10 +41,15 @@ class VehicleMarkerPipTest {
 
     private val context: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
-    /** A disc dark enough that [MarkerRendering.legibleOn] inks the glyph and pips white. */
+    /** A disc dark enough that [MarkerRendering.legibleOn] inks the *glyph* white. */
     private val disc = 0xFF1050C0.toInt()
 
-    private val ink = Color.WHITE
+    // The pips' polarity is fixed rather than derived from the disc: a full pip is black, an empty one
+    // white, on every disc colour. Both are asserted, in opposite directions, so a regression that
+    // collapsed the two into one colour (which is what following the disc's ink would do on this very
+    // disc) fails here rather than silently drawing an unreadable row.
+    private val full = Color.BLACK
+    private val empty = Color.WHITE
 
     /**
      * A vehicle reporting no fullness draws a plain disc: nothing at all below the disc's rim. The
@@ -79,23 +84,31 @@ class VehicleMarkerPipTest {
     }
 
     /**
-     * Each additional filled pip inks more of the tab, and the empty marker inks least — so the row
-     * reads as a rising scale. Stated as a strict ordering rather than absolute counts because the exact
-     * pixel count depends on the person artwork's extent, which isn't what's under test.
+     * Each additional filled pip puts more black in the tab and less white — the row reads as a rising
+     * scale in one colour and a falling one in the other. Stated as strict orderings rather than absolute
+     * counts because the exact pixel count depends on the person artwork's extent, which isn't what's
+     * under test.
      *
-     * The `0` end matters most: three hollow pips must put *some* ink in the tab (their outlines) yet
-     * strictly less than one filled pip, which is the whole difference between "empty" and "1 of 3".
+     * Asserting *both* directions is the point: a single "more black" check would still pass if empty
+     * pips stopped being drawn at all, which would turn the reserved row back into a bare count.
      */
     @Test
     fun eachFilledPipInksMoreOfTheTab() {
-        val counts = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).inkIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID) }
+        val blacks = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOf(full) }
+        val whites = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOf(empty) }
 
         for (fill in 1..VehicleBitmaps.MAX_PIPS) {
             assertTrue(
-                "$fill filled pips must ink more of the tab than ${fill - 1} (saw $counts)",
-                counts[fill] > counts[fill - 1]
+                "$fill full pips must put more black in the tab than ${fill - 1} (saw $blacks)",
+                blacks[fill] > blacks[fill - 1]
+            )
+            assertTrue(
+                "$fill full pips must leave less white than ${fill - 1} (saw $whites)",
+                whites[fill] < whites[fill - 1]
             )
         }
+        assertTrue("an all-empty row must still draw white pips (saw $whites)", whites[0] > 0)
+        assertTrue("a full row must leave no white pips (saw $whites)", whites[VehicleBitmaps.MAX_PIPS] == 0)
     }
 
     /**
@@ -105,16 +118,16 @@ class VehicleMarkerPipTest {
      */
     @Test
     fun pipsFillFromTheLeft() {
-        val left = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).inkInThird(0) }
-        val right = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).inkInThird(2) }
+        val left = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOfInThird(full, 0) }
+        val right = (0..VehicleBitmaps.MAX_PIPS).map { marker(fill = it).countOfInThird(full, 2) }
 
-        assertTrue("one filled pip must ink the tab's left third (saw $left)", left[1] > left[0])
+        assertTrue("one full pip must blacken the tab's left third (saw $left)", left[1] > left[0])
         assertEquals(
-            "one filled pip must leave the tab's right third as it was when empty (saw $right)",
+            "one full pip must leave the tab's right third as it was when empty (saw $right)",
             right[0],
             right[1]
         )
-        assertTrue("three filled pips must ink the right third (saw $right)", right[3] > right[0])
+        assertTrue("three full pips must blacken the right third (saw $right)", right[3] > right[0])
     }
 
     // previewBitmap is @VisibleForTesting — this is that test.
@@ -125,24 +138,24 @@ class VehicleMarkerPipTest {
         get() = context.resources.displayMetrics.density * VehicleBitmaps.MARKER_SIZE_DP / MarkerRendering.GRID
 
     /**
-     * Counts [ink]-colored pixels between two grid-unit rows. The bitmap carries a transparent border of
+     * Counts [color]-colored pixels across the tab band. The bitmap carries a transparent border of
      * [VehicleBitmaps.PAD_GRID] *and* reserves [VehicleBitmaps.TAB_DEPTH_GRID] above the disc, so grid
      * row `g` sits at `(PAD_GRID + TAB_DEPTH_GRID + g) * scale` pixels down. The transform reads the
      * production constants — it only *locates* the band and is not what's under test; the band bounds
      * below are the independent expectation and stay local.
      */
-    private fun Bitmap.inkIn(topGrid: Float, bottomGrid: Float): Int = countIn(topGrid, bottomGrid, 0, width) { it == ink }
+    private fun Bitmap.countOf(color: Int): Int = countIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID, 0, width) { it == color }
 
-    /** As [inkIn], but any non-transparent pixel — the tab's body, not just what the pips ink. */
+    /** Any non-transparent pixel between two grid rows — the tab's body, not just what the pips ink. */
     private fun Bitmap.opaqueIn(topGrid: Float, bottomGrid: Float): Int = countIn(topGrid, bottomGrid, 0, width) { Color.alpha(it) > 0 }
 
-    /** [ink] pixels in the pip row, restricted to one of three equal columns of the tab (0, 1 or 2). */
-    private fun Bitmap.inkInThird(third: Int): Int {
+    /** [color] pixels in the pip row, restricted to one of three equal columns of the tab (0, 1 or 2). */
+    private fun Bitmap.countOfInThird(color: Int, third: Int): Int {
         val tabLeft = (VehicleBitmaps.PAD_GRID + MarkerRendering.GRID / 2f - TAB_HALF_WIDTH_GRID) * scale
         val tabWidth = 2f * TAB_HALF_WIDTH_GRID * scale
         val from = (tabLeft + third * tabWidth / 3f).toInt()
         val to = (tabLeft + (third + 1) * tabWidth / 3f).toInt()
-        return countIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID, from, to) { it == ink }
+        return countIn(TAB_BAND_TOP_GRID, TAB_BAND_BOTTOM_GRID, from, to) { it == color }
     }
 
     private fun Bitmap.countIn(topGrid: Float, bottomGrid: Float, fromX: Int, toX: Int, match: (Int) -> Boolean): Int {

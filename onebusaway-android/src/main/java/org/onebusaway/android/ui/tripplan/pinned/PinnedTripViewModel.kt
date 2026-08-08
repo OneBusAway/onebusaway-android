@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.tripplan.pinned
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,6 +37,7 @@ import org.onebusaway.android.ui.tripplan.fixedLabelRes
 import org.onebusaway.android.ui.tripresults.ModeSymbol
 import org.onebusaway.android.ui.tripresults.TripResultsRepository
 import org.onebusaway.android.util.TimeProvider
+import org.onebusaway.android.util.runCatchingCancellable
 
 /** A name for a pinned trip's destination, resolved by whoever can reach resources. */
 sealed interface PinnedLabel {
@@ -109,7 +111,15 @@ class PinnedTripViewModel @Inject constructor(
      */
     val pendingResumeIndex: StateFlow<Int?> = _pendingResumeIndex.asStateFlow()
 
-    /** The rider parked [itineraries], having chosen [selectedIndex]. Replaces any previous pin. */
+    /**
+     * The rider parked [itineraries], having chosen [selectedIndex]. Replaces any previous pin.
+     *
+     * A failed write leaves the previous pin standing rather than taking the process down with it. Both
+     * of these are fire-and-forget from a gesture, so an escaping `SQLiteException` — a full disk, a
+     * corrupt database — would reach `viewModelScope`'s handler and crash the app for the sake of a
+     * bookmark. The rider loses the pin they just took, which the absent card says plainly, and can take
+     * it again.
+     */
     fun pin(
         params: TripPlanParams,
         departNow: Boolean,
@@ -117,7 +127,9 @@ class PinnedTripViewModel @Inject constructor(
         selectedIndex: Int
     ) {
         viewModelScope.launch {
-            store.pin(params, departNow, itineraries, selectedIndex, WallTime(timeProvider.now()))
+            runCatchingCancellable {
+                store.pin(params, departNow, itineraries, selectedIndex, WallTime(timeProvider.now()))
+            }.onFailure { Log.w(TAG, "Could not pin the trip", it) }
         }
     }
 
@@ -149,8 +161,12 @@ class PinnedTripViewModel @Inject constructor(
         pin(current.params, current.departNow, itineraries, match.index)
     }
 
+    /** The rider cleared the pin. Guarded like [pin], and for the same reason. */
     fun unpin() {
-        viewModelScope.launch { store.unpin() }
+        viewModelScope.launch {
+            runCatchingCancellable { store.unpin() }
+                .onFailure { Log.w(TAG, "Could not unpin the trip", it) }
+        }
     }
 
     /** The rider tapped the resume card: replay [pin], landing on the option they chose. */
@@ -179,5 +195,7 @@ class PinnedTripViewModel @Inject constructor(
          * the card doesn't have to re-summarize a trip nothing changed.
          */
         const val STOP_TIMEOUT_MS = 5_000L
+
+        const val TAG = "PinnedTripViewModel"
     }
 }

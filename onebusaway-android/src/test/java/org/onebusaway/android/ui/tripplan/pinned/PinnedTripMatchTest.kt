@@ -58,6 +58,15 @@ class PinnedTripMatchTest {
     }
 
     @Test
+    fun `two leave-now requests to different places are still different trips`() {
+        // The companion to the exception above: the leave-now branch substitutes one field, not the whole
+        // request. Without this, a match that returned true for any two leave-now plans would still pass.
+        val elsewhere = params(to = "Ballard").copy(dateTimeMillis = params().dateTimeMillis + 5 * 60_000L)
+
+        assertFalse(pin(departNow = true).describesSameTripAs(elsewhere, currentDepartNow = true))
+    }
+
+    @Test
     fun `a trip pinned to an instant is judged on that instant`() {
         val later = params().copy(dateTimeMillis = params().dateTimeMillis + 5 * 60_000L)
 

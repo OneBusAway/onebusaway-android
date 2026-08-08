@@ -264,6 +264,14 @@ internal fun EtaStrip(
                             actions = actionsFor(trip),
                             callbacks = callbacks,
                             routeBadge = routeBadgeFor(trip),
+                            // Matched on trip id alone, deliberately narrower than this LazyRow's
+                            // (route, trip, serviceDate, stopSequence) key: the focus names a *vehicle*,
+                            // not one arrival instance. A loop route's two visits share a trip id
+                            // because they are the same bus coming round again — one vehicle, one
+                            // confidence band on the map — so outlining both pills is what the focus
+                            // actually means. There is also no instance to match on when the level was
+                            // entered by tapping that vehicle: ObaTripStatus carries an activeTripId
+                            // and no stop sequence, so a 4-part identity could only be guessed.
                             outline = focus?.takeIf { it.tripId == trip.tripId }?.outline,
                             modifier = pillModifier.passedByMarker(marker, isPassed = index < (markerIndex ?: 0))
                         )
@@ -293,6 +301,9 @@ internal fun EtaStrip(
  * without also being told what to draw for it. [outline] is literally the row card's own selection
  * border — the same object, built once by [RouteArrivalRow] — so the pill reads as belonging to the
  * outlined row and the two can't drift in width or colour.
+ *
+ * [tripId] is a vehicle, not one arrival instance — see the match site in [EtaStrip] for why that is
+ * narrower than the strip's own item key, and why it has to be.
  */
 internal data class EtaPillFocus(val tripId: String, val outline: BorderStroke)
 

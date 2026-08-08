@@ -34,11 +34,20 @@ import org.onebusaway.android.util.getRouteDisplayName
  * *Google* variant runs in the routine test grid, so a maplibre-side divergence would be invisible).
  */
 internal fun vehicleTitle(context: Context, vehicle: VehicleMarker, response: RouteTrips): String {
-    val trip = response.trip(vehicle.status.activeTripId) ?: return ""
-    val route = response.route(trip.routeId) ?: return ""
-    val name = getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
-    val occupancy = occupancyLabelRes(vehicle) ?: return name
-    return name + " - " + context.getString(occupancy)
+    val trip = response.trip(vehicle.status.activeTripId)
+    val route = trip?.let { response.route(it.routeId) }
+    // Assembled from whatever resolved rather than bailing on the first null, because the marker is
+    // drawn either way: a vehicle mid-block-interline reports an activeTripId this route's poll never
+    // fetched (#2020), and it still gets a default-glyph marker with its pips. Returning "" there left
+    // that marker with no accessible name at all, so its crowding — the thing the pips exist to say —
+    // was readable only by sighted riders. A partial name beats none, and `vehicle_marker_unidentified`
+    // carries the case where nothing at all resolved, so the occupancy always has something to hang off.
+    val identity = listOfNotNull(
+        route?.let { getRouteDisplayName(it) },
+        MyTextUtils.formatDisplayText(trip?.headsign)
+    ).filter { it.isNotEmpty() }.ifEmpty { listOf(context.getString(R.string.vehicle_marker_unidentified)) }
+    val occupancy = occupancyLabelRes(vehicle)?.let { context.getString(it) }
+    return (identity + listOfNotNull(occupancy)).joinToString(" - ")
 }
 
 /**

@@ -475,6 +475,10 @@
     <string name="realtime_standing_room">Standing room</string>
     <string name="realtime_full">Full</string>
 
+    <!-- Screen-reader name for a vehicle marker whose route and destination the poll couldn't
+         resolve, so the marker draws the default glyph and has nothing else to be called. -->
+    <string name="vehicle_marker_unidentified">Vehicle</string>
+
     <!--  Trip list -->
     <string name="trip_list_notrips">You don’t have any reminders.\n\nYou can create reminders by
         tapping on an arriving bus at your stop.

@@ -168,6 +168,7 @@ internal fun ArrivalsSheetHost(
             selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),
+            selectedTripId = selectedRoute?.selectedTripId,
             onContentHeight = onContentHeight,
             etaAnchor = Modifier.tutorialAnchor(tutorialState, ArrivalTutorial.KEY_ETA)
         )

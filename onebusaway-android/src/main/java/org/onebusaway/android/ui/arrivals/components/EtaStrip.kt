@@ -15,6 +15,7 @@
  */
 package org.onebusaway.android.ui.arrivals.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -62,6 +63,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.SpanStyle
@@ -149,6 +151,8 @@ internal fun EtaStrip(
     firstPillModifier: Modifier = Modifier,
     routeBadgeFor: (ArrivalInfo) -> RouteBadge? = { null },
     marker: EtaStripMarker? = null,
+    /** The trip this strip's row is drilled into, if any — see [EtaPillFocus]. */
+    focus: EtaPillFocus? = null,
     // Hoisted for previews/tests ONLY (both real call sites use the default) so a caller can start
     // the strip mid-scroll.
     state: LazyListState = rememberLazyListState()
@@ -260,6 +264,15 @@ internal fun EtaStrip(
                             actions = actionsFor(trip),
                             callbacks = callbacks,
                             routeBadge = routeBadgeFor(trip),
+                            // Matched on trip id alone, deliberately narrower than this LazyRow's
+                            // (route, trip, serviceDate, stopSequence) key: the focus names a *vehicle*,
+                            // not one arrival instance. A loop route's two visits share a trip id
+                            // because they are the same bus coming round again — one vehicle, one
+                            // confidence band on the map — so outlining both pills is what the focus
+                            // actually means. There is also no instance to match on when the level was
+                            // entered by tapping that vehicle: ObaTripStatus carries an activeTripId
+                            // and no stop sequence, so a 4-part identity could only be guessed.
+                            outline = focus?.takeIf { it.tripId == trip.tripId }?.outline,
                             modifier = pillModifier.passedByMarker(marker, isPassed = index < (markerIndex ?: 0))
                         )
                     }
@@ -281,6 +294,26 @@ internal fun EtaStrip(
         )
     }
 }
+
+/**
+ * The trip a row is drilled into (the stop→route→trip focus, #2205) and the stroke to outline its pill
+ * with. One value rather than two loose parameters, so a pill can never be told which trip is focused
+ * without also being told what to draw for it. [outline] is literally the row card's own selection
+ * border — the same object, built once by [RouteArrivalRow] — so the pill reads as belonging to the
+ * outlined row and the two can't drift in width or colour.
+ *
+ * [tripId] is a vehicle, not one arrival instance — see the match site in [EtaStrip] for why that is
+ * narrower than the strip's own item key, and why it has to be.
+ */
+internal data class EtaPillFocus(val tripId: String, val outline: BorderStroke)
+
+/**
+ * Announces the focused pill as selected, so the outline reaches accessibility services (and UI tests)
+ * as more than a colour. Applied only to that pill — marking every other one "not selected" would have
+ * TalkBack narrate a selection state on strips that have none. Hoisted because it captures nothing and
+ * a pill recomposes every second off the strip's live clock.
+ */
+private val FOCUSED_PILL_SEMANTICS = Modifier.semantics { selected = true }
 
 /** The gap between adjacent ETA pills, for the LazyRow's [Arrangement.spacedBy]. */
 private val PILL_SPACING = 6.dp
@@ -423,7 +456,8 @@ private fun EtaPillWithMenu(
     actions: ArrivalActions?,
     callbacks: ArrivalRowCallbacks,
     modifier: Modifier = Modifier,
-    routeBadge: RouteBadge? = null
+    routeBadge: RouteBadge? = null,
+    outline: BorderStroke? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     // fillMaxHeight here and on the pill so the colored Surface stretches to the strip's tallest pill
@@ -441,6 +475,7 @@ private fun EtaPillWithMenu(
             canceled = trip.status == Status.CANCELED,
             clock = clock,
             routeBadge = routeBadge,
+            outline = outline,
             onClick = { callbacks.onEtaClick(trip) },
             onLongClick = { expanded = true }
         )
@@ -513,6 +548,9 @@ internal fun EtaPill(
     onMap: Boolean = false,
     canceled: Boolean = false,
     clock: ArrivalClock? = null,
+    // The row is drilled into this pill's trip (#2205): its card's selection border, drawn on the pill
+    // too. Null is the ordinary unfocused pill.
+    outline: BorderStroke? = null,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null
 ) {
@@ -546,7 +584,12 @@ internal fun EtaPill(
     // See tightLineStyle's doc: keyed to each Text's own (dominant) size, so the padding/gap values
     // below are the actual on-screen spacing rather than a guess fighting Android's hidden font padding.
     val baseTextStyle = LocalTextStyle.current
-    Surface(modifier = modifier.then(interaction), shape = shape, color = color) {
+    Surface(
+        modifier = modifier.then(if (outline == null) Modifier else FOCUSED_PILL_SEMANTICS).then(interaction),
+        shape = shape,
+        color = color,
+        border = outline
+    ) {
         // A Box so the live indicator can overlay the pill (below) instead of reserving layout width:
         // live and scheduled pills stay identical widths, and the glyph is free to overlap the ETA
         // text at the top-trailing corner rather than widening the pill.

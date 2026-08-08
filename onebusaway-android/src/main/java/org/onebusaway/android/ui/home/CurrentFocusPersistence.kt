@@ -37,6 +37,7 @@ internal object CurrentFocusPersistence {
     private const val KEY_ROUTE_LEG_IDS = "home.currentFocus.route.legIds"
     private const val KEY_ROUTE_LEG_NAMES = "home.currentFocus.route.legNames"
     private const val KEY_ROUTE_LEG_DIRECTIONS = "home.currentFocus.route.legDirections"
+    private const val KEY_ROUTE_SELECTED_TRIP = "home.currentFocus.route.selectedTripId"
 
     private const val FOCUS_NONE = "none"
     private const val FOCUS_STOP = "stop"
@@ -90,6 +91,7 @@ internal object CurrentFocusPersistence {
         state[KEY_ROUTE_LEG_DIRECTIONS] = selected?.legs
             ?.map { it.directionId ?: NO_DIRECTION }
             ?.toIntArray()
+        state[KEY_ROUTE_SELECTED_TRIP] = selected?.selectedTripId
     }
 
     private fun readLegacyFocus(state: SavedStateHandle, stop: FocusedStop?): CurrentFocus {
@@ -135,7 +137,8 @@ internal object CurrentFocusPersistence {
         if (legs.isEmpty()) return null
         return StopRouteSelection(
             originHeadsign = state[KEY_ROUTE_ORIGIN_HEADSIGN],
-            legs = legs
+            legs = legs,
+            selectedTripId = state[KEY_ROUTE_SELECTED_TRIP]
         )
     }
 

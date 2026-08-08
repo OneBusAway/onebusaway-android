@@ -105,19 +105,16 @@ class HomeViewModel @Inject constructor(
         val viewport: MapViewport? = null
     )
 
-    private val mapUndoHistory = ArrayDeque<MapUndoEntry>().apply {
-        when (val restored = _currentFocus.value) {
-            CurrentFocus.None -> Unit
-            is CurrentFocus.Stop -> {
-                addLast(MapUndoEntry(CurrentFocus.None))
-                if (restored.selectedRoute != null) {
-                    addLast(MapUndoEntry(CurrentFocus.Stop(restored.stop)))
-                }
-            }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation, is CurrentFocus.Directions ->
-                addLast(MapUndoEntry(CurrentFocus.None))
-        }
-    }
+    private val mapUndoHistory = ArrayDeque(
+        // Walk the restored focus down to the root ([peeledOneLevel] — the same ladder a background tap
+        // descends), drop the focus itself, and push the ancestors outermost-first. Viewports aren't
+        // persisted, so the reconstructed entries carry none.
+        generateSequence(_currentFocus.value) { it.peeledOneLevel() }
+            .drop(1)
+            .map { MapUndoEntry(it) }
+            .toList()
+            .asReversed()
+    )
     private val _canUndoMapAction = MutableStateFlow(mapUndoHistory.isNotEmpty())
     val canUndoMapAction: StateFlow<Boolean> = _canUndoMapAction.asStateFlow()
 
@@ -420,15 +417,30 @@ class HomeViewModel @Inject constructor(
                 trips = focusedTrips
             )
         )
-        focus.selectedRoute?.let {
-            emitMapDirective(
-                MapDirective.ShowRoute(
-                    it.target(focus.stop.id).toRequest(),
-                    stopScoped = true,
-                    frameRoute = frameSelectedRoute
-                )
-            )
-        }
+        focus.selectedRoute?.let { showStopRoute(focus.stop.id, it, frameRoute = frameSelectedRoute) }
+    }
+
+    /**
+     * Show a stop-scoped route on the map together with its trip level (#2205): every entry into — or
+     * replay of — a stop's route selection goes through here, so the route directive can never be sent
+     * without the [MapDirective.SelectVehicle] that makes the map's vehicle selection (what draws the
+     * extrapolation band) a projection of the focus. The selection is emitted after the route directive
+     * so it survives the teardown a route change performs, and unconditionally (null included) so no
+     * path can leave a previous trip selected on the map.
+     *
+     * [request] defaults to the selection's own, which carries no `focusTripId` even when a trip *is*
+     * focused: that field is a one-shot camera instruction (fit the vehicle with the stop, and ping it),
+     * and the replaying callers run on every arrivals poll. Only the gesture that entered the trip level
+     * passes a request asking for that fit — the same reason a poll must not reframe the route (#1895).
+     */
+    private fun showStopRoute(
+        stopId: String,
+        selection: StopRouteSelection,
+        request: ShowRouteRequest = selection.target(stopId).toRequest(),
+        frameRoute: Boolean = true
+    ) {
+        emitMapDirective(MapDirective.ShowRoute(request, stopScoped = true, frameRoute = frameRoute))
+        emitMapDirective(MapDirective.SelectVehicle(selection.selectedTripId))
     }
 
     /** Animate the map's camera back onto the focused stop, if one is focused (else a no-op). */
@@ -490,9 +502,7 @@ class HomeViewModel @Inject constructor(
                 val selected = focus.selectedRoute ?: return
                 val next = selected.continueTo(RouteLeg(routeId, shortName, directionId))
                 pushFocus(focus.copy(selectedRoute = next), undoViewport)
-                emitMapDirective(
-                    MapDirective.ShowRoute(next.target(focus.stop.id).toRequest(), stopScoped = true)
-                )
+                showStopRoute(focus.stop.id, next)
             }
             is CurrentFocus.Route -> {
                 val target = RouteTarget(routeId, directionId = directionId)
@@ -535,49 +545,60 @@ class HomeViewModel @Inject constructor(
         originHeadsign: String?,
         undoViewport: MapViewport?
     ) {
-        val next = stopFocus.copy(
-            selectedRoute = StopRouteSelection(
-                originHeadsign = originHeadsign,
-                legs = listOf(firstLeg)
-            )
+        val selection = StopRouteSelection(
+            originHeadsign = originHeadsign,
+            legs = listOf(firstLeg),
+            // An ETA-pill tap names the trip it belongs to, and that *is* the trip level (#2205): the
+            // pill lands one level deeper than the row body, which names no trip and stops at the route.
+            selectedTripId = request.focusTripId
         )
-        pushFocus(next, undoViewport)
-        emitMapDirective(
-            MapDirective.ShowRoute(
-                request.copy(directionStopId = stopFocus.stop.id),
-                stopScoped = true
-            )
+        pushFocus(stopFocus.copy(selectedRoute = selection), undoViewport)
+        // The caller's own request, not the selection's: this is the drill-in gesture, so it keeps the
+        // focusTripId that fits the camera to the vehicle.
+        showStopRoute(
+            stopFocus.stop.id,
+            selection,
+            request = request.copy(directionStopId = stopFocus.stop.id)
         )
     }
 
     /**
-     * A background-map tap drops one attention layer: route-over-stop becomes the plain stop; a focused
-     * itinerary leg becomes the plain itinerary overview; any plain stop, standalone route, or bike focus
-     * returns to the unfocused root.
+     * A vehicle tapped on the map enters the stop→route→trip level (#2205) — the same state its ETA pill
+     * reaches — so the band it raises can be unwound by a background tap instead of lingering as a
+     * render-only selection. Returns false when there is no stop→route focus to deepen (standalone route
+     * focus, directions), leaving the tap to the map's own vehicle selection — so the same two gestures
+     * unwind differently by how the route was reached: over a focused stop a background tap gives up
+     * just the band, while in standalone route focus it still gives up the whole route.
+     *
+     * [tripId] is the tapped vehicle's active trip, which the wire leaves nullable: a vehicle running no
+     * identifiable trip has nothing to drill into, so it lands back at the plain route level rather than
+     * letting the focus and the map's selection drift apart.
+     */
+    fun selectFocusedRouteTrip(tripId: String?): Boolean {
+        val focus = _currentFocus.value as? CurrentFocus.Stop ?: return false
+        val selected = focus.selectedRoute ?: return false
+        pushFocus(focus.copy(selectedRoute = selected.copy(selectedTripId = tripId)))
+        emitMapDirective(MapDirective.SelectVehicle(tripId))
+        return true
+    }
+
+    /**
+     * A background-map tap drops one attention layer: trip-over-route-over-stop becomes the plain
+     * route-over-stop; route-over-stop becomes the plain stop; a focused itinerary leg becomes the plain
+     * itinerary overview; any plain stop, standalone route, or bike focus returns to the unfocused root.
      */
     fun unfocusMapOneLevel() {
         val focus = _currentFocus.value
-        val target = when (focus) {
-            is CurrentFocus.Stop -> if (focus.selectedRoute == null) {
-                CurrentFocus.None
-            } else {
-                CurrentFocus.Stop(focus.stop)
-            }
-            // A focused leg — its route, or an on-street leg framed on its own — becomes the plain
-            // itinerary overview; a plain overview exits.
-            is CurrentFocus.Directions -> if (focus.subFocus == null) {
-                CurrentFocus.None
-            } else {
-                CurrentFocus.Directions()
-            }
-            is CurrentFocus.Route, is CurrentFocus.BikeStation -> CurrentFocus.None
-            CurrentFocus.None -> return
-        }
+        val target = focus.peeledOneLevel() ?: return
         // A stray background tap is the cheapest gesture on the map; where it would take a planned trip
         // off it, it asks first (#2140) — judged on the transition the `when` above just decided.
         if (stageDirectionsExitConfirmation(focus, target)) return
         pushFocus(target)
         when {
+            // Peeled the trip only: the route is still focused, so drop the vehicle selection (and with
+            // it the band) rather than tearing route mode down.
+            target is CurrentFocus.Stop && target.selectedRoute != null ->
+                emitMapDirective(MapDirective.SelectVehicle(null))
             target is CurrentFocus.Stop -> emitMapDirective(MapDirective.ClearSelectedRoute)
             // Popped a leg sub-focus back to the whole trip.
             target is CurrentFocus.Directions -> emitMapDirective(itineraryOverviewDirective(focus))
@@ -1111,17 +1132,14 @@ class HomeViewModel @Inject constructor(
             from.stop.id == target.stop.id
         if (returnsToSameStop) {
             val selected = target.selectedRoute
-            emitMapDirective(
-                if (selected == null) {
-                    MapDirective.ClearSelectedRoute
-                } else {
-                    MapDirective.ShowRoute(
-                        selected.target(target.stop.id).toRequest(),
-                        stopScoped = true,
-                        frameRoute = frameFocus
-                    )
-                }
-            )
+            when {
+                selected == null -> emitMapDirective(MapDirective.ClearSelectedRoute)
+                // Only the trip level moved (#2205): the same route is already drawn, so just move the
+                // vehicle selection rather than reloading and reframing the route beneath it.
+                from.selectedRoute?.legs == selected.legs ->
+                    emitMapDirective(MapDirective.SelectVehicle(selected.selectedTripId))
+                else -> showStopRoute(target.stop.id, selected, frameRoute = frameFocus)
+            }
         } else {
             when (target) {
                 is CurrentFocus.Stop -> {
@@ -1274,6 +1292,13 @@ sealed interface MapDirective {
 
     /** Leave route mode while retaining the focused stop's adjacency session. */
     data object ClearSelectedRoute : MapDirective
+
+    /**
+     * Select the vehicle running [tripId] — what draws its extrapolation confidence band — or clear the
+     * selection with null. The stop→route→trip focus level (#2205) is the authority here, so this rides
+     * alongside every stop-scoped [ShowRoute] rather than the map setting it alone from a vehicle tap.
+     */
+    data class SelectVehicle(val tripId: String?) : MapDirective
 
     /** Clear the map's render focus (back-press from a peeking arrivals sheet). */
     object ClearFocus : MapDirective

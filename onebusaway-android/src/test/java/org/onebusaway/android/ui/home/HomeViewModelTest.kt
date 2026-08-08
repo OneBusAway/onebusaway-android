@@ -77,12 +77,16 @@ private class MapDirectiveRecorder(private val vm: HomeViewModel) {
     val clearFocusCount get() = sent.count { it is MapDirective.ClearFocus }
     val focusStops get() = sent.filterIsInstance<MapDirective.FocusStop>()
     val viewportRestores get() = sent.filterIsInstance<MapDirective.RestoreViewport>()
+    val vehicleSelections get() = sent.filterIsInstance<MapDirective.SelectVehicle>().map { it.tripId }
     val lastBottomPadding get() = vm.mapBottomPadding.value
 
     suspend fun collect() {
         vm.mapDirectives.collect { sent.add(it) }
     }
 }
+
+/** The route selection under the current stop focus, or null when nothing is focused that deeply. */
+private fun HomeViewModel.stopRouteSelection(): StopRouteSelection? = (currentFocus.value as? CurrentFocus.Stop)?.selectedRoute
 
 /**
  * Unit tests for [HomeViewModel]: focus coordination, the arrivals-sheet → map effects, and region resolution.
@@ -1245,6 +1249,147 @@ class HomeViewModelTest {
 
         assertEquals(CurrentFocus.None, vm.currentFocus.value)
         assertTrue(vm.canUndoMapAction.value)
+    }
+
+    @Test
+    fun `an eta pill tap enters the trip level and a map tap peels it back to the route`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        // The ETA pill's request — the row body's differs only in carrying no focusTripId.
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", "stop", focusTripId = "trip", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+        advanceUntilIdle()
+        assertEquals("trip", vm.stopRouteSelection()?.selectedTripId)
+        assertEquals(listOf("trip"), map.vehicleSelections)
+        map.sent.clear()
+
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        // The route survives — only its trip level went, so route mode is not torn down.
+        assertEquals("65", vm.stopRouteSelection()?.currentLeg?.routeId)
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+        assertEquals(listOf(null), map.vehicleSelections)
+        assertEquals(0, map.sent.count { it is MapDirective.ClearSelectedRoute })
+        map.sent.clear()
+
+        vm.unfocusMapOneLevel()
+        advanceUntilIdle()
+        assertEquals(CurrentFocus.Stop(stop), vm.currentFocus.value)
+        assertEquals(1, map.sent.count { it is MapDirective.ClearSelectedRoute })
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `a row-body tap stops at the route level`() = runTest {
+        val vm = viewModel()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", "stop", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+    }
+
+    @Test
+    fun `a tapped vehicle enters the trip level only under a focused route`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        vm.onStopFocused(stop)
+        // Plain stop focus: there is no route to deepen, so the map keeps its own selection.
+        assertEquals(false, vm.selectFocusedRouteTrip("trip"))
+
+        vm.requestShowFocusedStopRouteOnMap("65", directionId = 0)
+        advanceUntilIdle()
+        map.sent.clear()
+
+        assertEquals(true, vm.selectFocusedRouteTrip("trip"))
+        advanceUntilIdle()
+        assertEquals("trip", vm.stopRouteSelection()?.selectedTripId)
+        assertEquals(listOf("trip"), map.vehicleSelections)
+
+        // Back reverses the drill-in without reloading the route it is drawn over.
+        map.sent.clear()
+        assertTrue(vm.navigateBackFocus())
+        advanceUntilIdle()
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+        assertEquals(listOf(null), map.vehicleSelections)
+        assertEquals(emptyList<String>(), map.routesShown)
+        mapJob.cancel()
+    }
+
+    @Test
+    fun `a block continuation drops the trip level it was followed from`() = runTest {
+        val vm = viewModel()
+        vm.onStopFocused(FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3)))
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", "stop", focusTripId = "trip", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+
+        vm.advanceRouteContinuation("75", "75", directionId = 1)
+
+        assertEquals("75", vm.stopRouteSelection()?.currentLeg?.routeId)
+        assertEquals(null, vm.stopRouteSelection()?.selectedTripId)
+    }
+
+    @Test
+    fun `a restored trip level reconstructs its route, stop and root parents`() = runTest {
+        val state = SavedStateHandle()
+        val stop = FocusedStop("stop", "Main St", "100", GeoPoint(47.6, -122.3))
+        viewModel(savedState = state).apply {
+            onStopFocused(stop)
+            requestShowFocusedStopRouteOnMap("65", directionId = 0)
+            selectFocusedRouteTrip("trip")
+        }
+        val restored = viewModel(savedState = state)
+        assertEquals("trip", restored.stopRouteSelection()?.selectedTripId)
+
+        assertTrue(restored.navigateBackFocus())
+        assertEquals(null, restored.stopRouteSelection()?.selectedTripId)
+        assertEquals("65", restored.stopRouteSelection()?.currentLeg?.routeId)
+        assertTrue(restored.navigateBackFocus())
+        assertEquals(CurrentFocus.Stop(stop), restored.currentFocus.value)
+        assertTrue(restored.navigateBackFocus())
+        assertEquals(CurrentFocus.None, restored.currentFocus.value)
+    }
+
+    @Test
+    fun `an arrivals poll replays the focused trip without refitting its vehicle`() = runTest {
+        val vm = viewModel()
+        val map = MapDirectiveRecorder(vm)
+        val mapJob = launch { map.collect() }
+        advanceUntilIdle()
+        vm.onStopFocused(FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3)))
+        vm.selectArrivalRoute(
+            request = ShowRouteRequest("65", "1", focusTripId = "trip", initialDirectionId = 0),
+            shortName = "65",
+            headsign = "Downtown"
+        )
+        advanceUntilIdle()
+        map.sent.clear()
+
+        vm.onArrivalsLoaded(obaStop, null, emptySet())
+        advanceUntilIdle()
+
+        // The band keeps following the focused trip, but the poll must not re-fit the camera onto its
+        // vehicle — focusTripId is the drill-in gesture's one-shot instruction, not replayable state.
+        assertEquals(listOf("trip"), map.vehicleSelections)
+        assertEquals(null, map.routeRequests.single().focusTripId)
+        assertEquals(false, map.routeCommands.single().frameRoute)
+        mapJob.cancel()
     }
 
     @Test

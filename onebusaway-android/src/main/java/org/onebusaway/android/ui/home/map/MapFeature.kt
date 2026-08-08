@@ -240,7 +240,15 @@ fun MapFeature(
             }
 
             override fun onVehicleClick(status: ObaTripStatus) {
-                mapViewModel.onVehicleTapped(status)
+                // Over a stop's focused route the tapped vehicle is a focus level of its own (#2205), so
+                // HOME owns the transition and the selection arrives as its directive; a background tap
+                // then unwinds it. Anywhere else (standalone route focus, directions) the tap stays what
+                // it has always been: a bare render selection with nothing to unwind. Same ask-HOME-then-
+                // render shape as the stop and bike taps above.
+                val tripId = status.activeTripId
+                if (!homeViewModel.selectFocusedRouteTrip(tripId)) {
+                    mapViewModel.selectVehicleTrip(tripId)
+                }
             }
 
             override fun onRouteContinuationClick(
@@ -340,6 +348,7 @@ fun MapFeature(
                     mapViewModel.setRideArrivals(directive.stopId, directive.groups)
                 MapDirective.ClearStopRoutes -> mapViewModel.clearStopRoutes()
                 MapDirective.ClearSelectedRoute -> mapViewModel.clearSelectedRoute()
+                is MapDirective.SelectVehicle -> mapViewModel.selectVehicleTrip(directive.tripId)
                 MapDirective.ClearFocus -> mapViewModel.clearAllFocus()
                 is MapDirective.FocusStop ->
                     mapViewModel.focusStop(

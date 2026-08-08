@@ -416,9 +416,15 @@ class MapViewModel @Inject constructor(
     /** A stop marker was tapped: render-focus it without disturbing the current viewport. */
     fun onStopTapped(stop: ObaStop) = stopsController.onStopTapped(stop)
 
-    /** Selects the tapped vehicle, so the renderer shows its most-recent-data marker. */
-    fun onVehicleTapped(status: ObaTripStatus) {
-        renderState.setSelectedVehicle(status.activeTripId)
+    /**
+     * Select the vehicle running [tripId] (null clears), driving its most-recent-data marker, exact
+     * shape/stops, extrapolation confidence band and block continuation. The map's only vehicle-selection
+     * entry point: over a stop's focused route, Home drives it from its stop→route→trip focus level
+     * (#2205) so the selection is undone by the same background tap that peels that level; elsewhere a
+     * vehicle tap sets it directly.
+     */
+    fun selectVehicleTrip(tripId: String?) {
+        renderState.setSelectedVehicle(tripId)
     }
 
     /** Animate/move the camera to a point with no route-header bias (a general recenter for any screen). */

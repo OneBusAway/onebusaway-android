@@ -163,6 +163,15 @@ enum class RouteLineMark {
  * rider. Marked per end rather than per line so a stay-aboard interline can hide its internal seam while
  * keeping bulbs at the beginning and end of the combined ride.
  *
+ * [stripeColors] are the *other* colours this line is shared by — the routes a rider may board in place of
+ * the one it is drawn for (#2100). A line carrying them is striped: cut into equal runs along its length
+ * that cycle through [color] and then each of these in turn, so a ride the rider may take either of two
+ * routes for shows both, exactly as the badge naming it does, instead of quietly showing whichever route
+ * the planner happened to pick. The runs are cut by [StripeRoutePolylinePass] — a stripe has to hold its
+ * length on the *screen*, so how long one is depends on the camera, which is the render pipeline's to know
+ * and not the producer's. Only the line's own [color] reaches the marks and the case: a bulb, a cut and a
+ * case say where the ride begins, ends and sits, none of which the alternatives change.
+ *
  * [transforms] opts this line into renderer-bound geometry processing. Canonical [points] stay intact in
  * [MapRenderState] for framing and other consumers; both native adapters apply the requested transforms
  * only to the list they render. An empty set is a strict pass-through.
@@ -170,6 +179,7 @@ enum class RouteLineMark {
 data class RoutePolyline(
     val color: Int?,
     val points: List<GeoPoint>,
+    val stripeColors: List<Int> = emptyList(),
     val widthProfile: RouteLineWidthProfile? = null,
     val directional: Boolean = false,
     val dash: RouteLineDash = RouteLineDash.NONE,

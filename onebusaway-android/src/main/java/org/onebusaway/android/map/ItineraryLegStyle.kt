@@ -312,6 +312,28 @@ internal fun itineraryRouteBadges(
     )
 }
 
+/**
+ * The colours a ride's line is striped with (#2100): the routes the rider may board in its place, each in
+ * the colour this map gives *that* route's line, and never the planned route's own colour, which the line
+ * is already stroked in ([RoutePolyline.stripeColors] cycles through that first).
+ *
+ * In the label's own order among themselves ([inInterchangeableOrder]), the planned route leading because the
+ * line is stroked in it — so the colours a rider reads along the line are the colours of the badge sitting on
+ * it, arrived at from the route the plan picked. Deduplicated by **colour**, rather than by the name a badge
+ * dedupes on ([itineraryRouteBadges]): a stripe carries no name, so two routes an agency publishes one colour for
+ * — including the two that publish none at all, and share the colourless hue — have one stripe between them
+ * rather than two the rider can't tell apart. That is also why a substitute matching the planned route's
+ * colour drops out entirely: it would stripe the line with the colour it already is.
+ */
+internal fun ItineraryDrawableLeg.stripeColors(palette: RouteLinePalette): List<Int> = interchangeable
+    .inInterchangeableOrder { it.route.displayName }
+    .map { it.lineColor(palette) }
+    .distinct()
+    .filterNot { it == style.color }
+
+/** The colour this map draws [ItinerarySubstitute]'s own line in, were the rider to drill into it (#2063). */
+private fun ItinerarySubstitute.lineColor(palette: RouteLinePalette): Int = itineraryLegStyle(ItineraryLegKind.TRANSIT, routeColor, palette).color
+
 private data class RideIdentity(val route: String, val interchangeableRouteIds: Set<String>)
 
 private data class Ride(val identity: RideIdentity, val name: String, val drawable: ItineraryDrawableLeg) {
@@ -324,10 +346,7 @@ private data class Ride(val identity: RideIdentity, val name: String, val drawab
     fun badgedRoutes(palette: RouteLinePalette): List<BadgedRoute> = (
         listOf(BadgedRoute(name, drawable.style.color)) +
             drawable.interchangeable.map { substitute ->
-                BadgedRoute(
-                    substitute.route.displayName,
-                    itineraryLegStyle(ItineraryLegKind.TRANSIT, substitute.routeColor, palette).color
-                )
+                BadgedRoute(substitute.route.displayName, substitute.lineColor(palette))
             }
         ).inInterchangeableOrder(BadgedRoute::routeShortName)
 }

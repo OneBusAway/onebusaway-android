@@ -52,6 +52,11 @@ internal fun rememberNearbyRowCallbacks(
     val context = LocalContext.current
     val currentRows = rememberUpdatedState(rows)
     val currentOnShowTrip = rememberUpdatedState(onShowTrip)
+    // Read through the latest lambda, like the two above: this object outlives recomposition (it is
+    // keyed only on the view model), so capturing the one passed at first composition would pin a
+    // caller whose lambda closes over a viewport *value* to the viewport it had then — and Back would
+    // restore a camera position the rider had long since panned away from.
+    val currentUndoViewport = rememberUpdatedState(undoViewport)
     return remember(homeViewModel, context) {
         fun bayOf(arrival: ArrivalInfo): NearbyBay? = currentRows.value
             .firstOrNull { it.bay.id == arrival.stopId }
@@ -68,7 +73,7 @@ internal fun rememberNearbyRowCallbacks(
                 shortName = arrival.shortName.orEmpty().ifBlank { arrival.routeId },
                 directionId = arrival.directionId,
                 headsign = arrival.headsign,
-                undoViewport = undoViewport()
+                undoViewport = currentUndoViewport.value()
             )
         }
 
@@ -86,7 +91,7 @@ internal fun rememberNearbyRowCallbacks(
             onShowRouteOnMap = { arrival ->
                 homeViewModel.focusStandaloneRoute(
                     ShowRouteRequest(routeId = arrival.routeId),
-                    undoViewport = undoViewport()
+                    undoViewport = currentUndoViewport.value()
                 )
             },
             onShowTripStatus = { arrival ->

@@ -65,14 +65,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
 import org.onebusaway.android.map.MapViewModel
 import org.onebusaway.android.map.RideRouteGroup
 import org.onebusaway.android.map.RouteHeader
-import org.onebusaway.android.map.render.StopBand
 import org.onebusaway.android.models.WheelchairBoarding
 import org.onebusaway.android.ui.arrivals.ArrivalsLoaded
 import org.onebusaway.android.ui.arrivals.ArrivalsUiState
@@ -250,11 +247,10 @@ fun HomeScreen(
                 // — and fed the settled viewport + zoom band by MapFeature, which holds the map VM.
                 val nearbyArrivalsViewModel = hiltViewModel<NearbyArrivalsViewModel>()
                 val nearbyArrivalsState by nearbyArrivalsViewModel.state.collectAsStateWithLifecycle()
-                // The map's zoom band, read off the render snapshot rather than recomputed — the stop
-                // loader already derives and dedups it there.
-                val stopBand by remember(mapViewModel) {
-                    mapViewModel.renderState.snapshot.map { it.stopBand }.distinctUntilChanged()
-                }.collectAsStateWithLifecycle(StopBand.FULL)
+                // The map's zoom band, read back off the nearby query rather than derived a second time
+                // here: MapFeature holds the map VM and is the single producer, pushing the band into
+                // the query — so the sheet decision and the query it gates can't drift.
+                val stopBand by nearbyArrivalsViewModel.stopBand.collectAsStateWithLifecycle()
                 val favoriteRouteIds by focusBannerViewModel.favoriteRouteIds.collectAsStateWithLifecycle()
                 val favoriteStopIds by focusBannerViewModel.favoriteStopIds.collectAsStateWithLifecycle()
                 val stopFavoritesReady by focusBannerViewModel.stopFavoritesReady.collectAsStateWithLifecycle()

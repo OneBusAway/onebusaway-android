@@ -95,10 +95,16 @@ class NearbyArrivalsViewModelTest {
         }
     }
 
+    /** The OBA deployment every test below is pointed at — the key the support verdict is held under. */
+    private val endpoint = "https://api.pugetsound.onebusaway.org/"
+
+    private fun regions(obaBaseUrl: String? = endpoint) = FakeRegionRepository(region(id = 1, obaBaseUrl = obaBaseUrl))
+
     private fun viewModel(
         dataSource: NearbyArrivalsDataSource,
-        support: NearbyArrivalsSupport = NearbyArrivalsSupport()
-    ) = NearbyArrivalsViewModel(dataSource, FakeRegionRepository(region(id = 1)), support)
+        support: NearbyArrivalsSupport = NearbyArrivalsSupport(),
+        regionRepo: FakeRegionRepository = regions()
+    ) = NearbyArrivalsViewModel(dataSource, regionRepo, support)
 
     private fun http(code: Int) = HttpException(
         Response.error<Unit>(code, "".toResponseBody("text/html".toMediaType()))
@@ -269,7 +275,7 @@ class NearbyArrivalsViewModelTest {
         advanceTimeBy(1)
 
         assertEquals(NearbyArrivalsUiState.Unsupported, vm.state.value)
-        assertTrue(support.isKnownUnsupported(1L))
+        assertTrue(support.isKnownUnsupported(endpoint))
 
         advanceTimeBy(NEARBY_REFRESH_PERIOD_MS * 3)
         assertEquals(1, source.requests.size)
@@ -279,7 +285,7 @@ class NearbyArrivalsViewModelTest {
     /** Once recorded, a later viewport in the same region doesn't re-probe within the process. */
     @Test
     fun `a region already known unsupported is not queried again`() = runTest(scheduler) {
-        val support = NearbyArrivalsSupport().apply { recordAbsent(1L) }
+        val support = NearbyArrivalsSupport().apply { recordAbsent(endpoint) }
         val source = FakeDataSource()
         val vm = viewModel(source, support)
         val collector = launchCollect(vm)
@@ -309,7 +315,7 @@ class NearbyArrivalsViewModelTest {
         advanceTimeBy(NEARBY_REFRESH_PERIOD_MS + 1)
 
         assertEquals(2, source.requests.size)
-        assertFalse(support.isKnownUnsupported(1L))
+        assertFalse(support.isKnownUnsupported(endpoint))
         collector.cancel()
     }
 
@@ -329,13 +335,76 @@ class NearbyArrivalsViewModelTest {
         assertFalse(isEndpointAbsent(SocketTimeoutException("slow")))
     }
 
-    /** The verdict is per deployment, so one region's 404 must not silence another. */
+    /**
+     * The verdict is about the *server*, so it is keyed by the OBA base URL rather than by
+     * `Region.id`: a directory refresh can repoint an existing region at another deployment, and a
+     * deep-link-added region is a host the directory never named — either would inherit the other's
+     * 404 under an id key and lose the drawer where it in fact works.
+     */
     @Test
-    fun `the unsupported verdict is scoped to its region`() {
+    fun `the unsupported verdict is scoped to the deployment that answered`() {
         val support = NearbyArrivalsSupport()
-        support.recordAbsent(1L)
-        assertTrue(support.isKnownUnsupported(1L))
-        assertFalse(support.isKnownUnsupported(2L))
+        support.recordAbsent(endpoint)
+        assertTrue(support.isKnownUnsupported(endpoint))
+        assertFalse(support.isKnownUnsupported("https://api.tampa.onebusaway.org/"))
         assertFalse(support.isKnownUnsupported(null))
+    }
+
+    // --- switching regions ------------------------------------------------------------------------
+
+    /**
+     * The server is a query input, not a fact read once: switching regions must re-ask, even though
+     * neither the camera nor the sheet moved. Keyed on the endpoint alone, so an unrelated region
+     * field can't re-fire it.
+     */
+    @Test
+    fun `switching regions re-queries the new deployment`() = runTest(scheduler) {
+        val source = FakeDataSource(NearbyArrivalsResult.Loaded(nearbyArrivals()))
+        val regionRepo = regions()
+        val vm = viewModel(source, regionRepo = regionRepo)
+        val collector = launchCollect(vm)
+
+        vm.setActive(true)
+        vm.onStopBand(StopBand.ROUTES)
+        vm.onViewportSettled(viewport)
+        advanceTimeBy(1)
+        assertEquals(1, source.requests.size)
+
+        // A field that isn't the endpoint: same deployment, so nothing to re-ask.
+        regionRepo.emit(region(id = 1, obaBaseUrl = endpoint, twitterUrl = "https://example.test"))
+        advanceTimeBy(1)
+        assertEquals(1, source.requests.size)
+
+        regionRepo.emit(region(id = 2, obaBaseUrl = "https://api.tampa.onebusaway.org/"))
+        advanceTimeBy(1)
+        assertEquals(2, source.requests.size)
+        collector.cancel()
+    }
+
+    /**
+     * Rows are held across a *pan* so the drawer updates in place — but rows from another deployment
+     * describe another city, so a region switch starts from Loading rather than showing the previous
+     * region's bays over the new one.
+     */
+    @Test
+    fun `a region switch drops the held rows instead of holding them through the load`() = runTest(scheduler) {
+        val source = FakeDataSource(NearbyArrivalsResult.Loaded(nearbyArrivals()))
+        val regionRepo = regions()
+        val vm = viewModel(source, regionRepo = regionRepo)
+        val collector = launchCollect(vm)
+
+        vm.setActive(true)
+        vm.onStopBand(StopBand.ROUTES)
+        vm.onViewportSettled(viewport)
+        advanceTimeBy(1)
+        assertTrue(vm.state.value is NearbyArrivalsUiState.Loaded)
+
+        // Never answers, so whatever the switch emitted first is what stays observable.
+        source.result = NearbyArrivalsResult.Failed(SocketTimeoutException("slow"))
+        regionRepo.emit(region(id = 2, obaBaseUrl = "https://api.tampa.onebusaway.org/"))
+        advanceTimeBy(1)
+
+        assertEquals(NearbyArrivalsUiState.Loading, vm.state.value)
+        collector.cancel()
     }
 }

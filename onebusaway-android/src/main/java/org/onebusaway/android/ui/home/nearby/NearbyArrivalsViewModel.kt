@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import org.onebusaway.android.api.data.NearbyArrivals
@@ -38,6 +39,7 @@ import org.onebusaway.android.api.data.NearbyArrivalsResult
 import org.onebusaway.android.api.data.NearbyArrivalsSupport
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.showsNearbyArrivals
 import org.onebusaway.android.region.RegionRepository
 
 /**
@@ -102,10 +104,19 @@ class NearbyArrivalsViewModel @Inject constructor(
     // arrivals session, so this query stops rather than polling a list nobody can see.
     private val active = MutableStateFlow(false)
 
+    /** The map's current stop zoom band, republished for the sheet decision — see [onStopBand]. */
+    val stopBand: StateFlow<StopBand> = band
+
+    // What to ask, or null when nothing should be asked at all. A data class so `distinctUntilChanged`
+    // compares every input: an unchanged viewport on a *different* endpoint is a different query.
+    private data class NearbyQuery(val viewport: CameraSnapshot, val obaBaseUrl: String?)
+
     // The last response, held across a viewport change so a pan updates the list in place instead of
-    // emptying it (see [poll]). Written and read only from the single collector `state` builds below,
-    // which flatMapLatest serializes, so a plain field needs no synchronization.
+    // emptying it (see [poll]) — tagged with the endpoint that produced it, so a region switch can't
+    // hold one city's bays over another's. Written and read only from the single collector `state`
+    // builds below, which flatMapLatest serializes, so a plain field needs no synchronization.
     private var lastLoaded: NearbyArrivalsUiState.Loaded? = null
+    private var lastLoadedEndpoint: String? = null
 
     /**
      * The viewport's arrivals, re-queried on every settled camera inside the band and polled at
@@ -116,24 +127,35 @@ class NearbyArrivalsViewModel @Inject constructor(
      * the same effect `ArrivalsPolling` gets from `repeatOnLifecycle`, without a composable.
      */
     val state: StateFlow<NearbyArrivalsUiState> =
-        combine(viewport, band, active) { viewport, band, active ->
-            // Only the transit-centre band asks. Read as an ordering, not equality, so a band added
-            // above ROUTES keeps the drawer rather than silently switching it off (the same rule
-            // stopRouteLabel follows).
-            if (active && band >= StopBand.ROUTES) viewport else null
+        combine(
+            viewport,
+            band,
+            active,
+            // The server that answers is an input, not a fact read once inside the poll loop: switching
+            // regions changes which deployment is asked — and whether it serves this endpoint at all —
+            // without the camera or the sheet moving, and the standing query would otherwise keep
+            // polling the old host. Distinct on the endpoint alone so an unrelated region field can't
+            // re-fire it (the discipline `RentalLayerController` follows for its own source).
+            regionRepo.region.map { it?.obaBaseUrl }.distinctUntilChanged()
+        ) { viewport, band, active, obaBaseUrl ->
+            if (active && band.showsNearbyArrivals && viewport != null) {
+                NearbyQuery(viewport, obaBaseUrl)
+            } else {
+                null
+            }
         }
             .distinctUntilChanged()
-            .flatMapLatest { viewport ->
+            .flatMapLatest { query ->
                 // flatMapLatest cancels an in-flight query when a newer viewport arrives, matching the
                 // stop loader's discipline; the data source is suspend + runCatchingCancellable, so the
                 // cancellation propagates rather than being swallowed (#1908).
-                if (viewport == null) {
+                if (query == null) {
                     // The gate closed (zoomed out, or another surface took the sheet). Drop the held
                     // rows so re-entering the band somewhere else doesn't flash the last centre's bays.
-                    lastLoaded = null
+                    clearHeldRows()
                     flowOf(NearbyArrivalsUiState.Idle)
                 } else {
-                    poll(viewport)
+                    poll(query)
                 }
             }
             .stateIn(
@@ -157,27 +179,35 @@ class NearbyArrivalsViewModel @Inject constructor(
         active.value = value
     }
 
-    private fun poll(viewport: CameraSnapshot) = flow {
+    private fun clearHeldRows() {
+        lastLoaded = null
+        lastLoadedEndpoint = null
+    }
+
+    private fun poll(query: NearbyQuery) = flow {
+        // Rows fetched from a different deployment describe a different place entirely, so a region
+        // switch starts from Loading rather than holding them the way a pan does.
+        if (query.obaBaseUrl != lastLoadedEndpoint) clearHeldRows()
         // Keep showing what's already on screen while the new viewport loads. Re-emitting Loading here
         // would empty the drawer's rows, and the sheet gates its visibility on having rows — so every
         // pan would retract the drawer and slide it back up a request later. The held rows are at most
         // one viewport stale, and a pan inside a transit centre mostly re-reads the same bays.
         emit(lastLoaded ?: NearbyArrivalsUiState.Loading)
         while (coroutineContext.isActive) {
-            val regionId = regionRepo.region.value?.id
-            if (support.isKnownUnsupported(regionId)) {
+            if (support.isKnownUnsupported(query.obaBaseUrl)) {
                 emit(NearbyArrivalsUiState.Unsupported)
                 return@flow
             }
-            when (val result = dataSource.arrivals(viewport, NEARBY_MINUTES_AFTER)) {
+            when (val result = dataSource.arrivals(query.viewport, NEARBY_MINUTES_AFTER)) {
                 is NearbyArrivalsResult.Loaded -> {
                     NearbyArrivalsUiState.Loaded(result.arrivals).also {
                         lastLoaded = it
+                        lastLoadedEndpoint = query.obaBaseUrl
                         emit(it)
                     }
                 }
                 NearbyArrivalsResult.Unsupported -> {
-                    support.recordAbsent(regionId)
+                    support.recordAbsent(query.obaBaseUrl)
                     emit(NearbyArrivalsUiState.Unsupported)
                     return@flow
                 }

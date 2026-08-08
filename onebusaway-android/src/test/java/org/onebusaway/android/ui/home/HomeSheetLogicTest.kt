@@ -22,6 +22,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.showsNearbyArrivals
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -99,10 +100,22 @@ class HomeSheetLogicTest {
      */
     @Test
     fun `the nearby key is stable while the stop key is per stop`() {
-        assertEquals(HomeSheetContent.NearbyRoutes.sheetKey, HomeSheetContent.NearbyRoutes.sheetKey)
+        assertEquals("nearby", HomeSheetContent.NearbyRoutes.sheetKey)
         assertEquals("stop:1", HomeSheetContent.Stop("1").sheetKey)
         assertEquals("stop:2", HomeSheetContent.Stop("2").sheetKey)
         assertNull(HomeSheetContent.None.sheetKey)
+    }
+
+    /**
+     * The sheet decision and `NearbyArrivalsViewModel`'s query gate must read the same predicate, or
+     * the drawer can engage on a band the query never asked for — so pin the predicate itself, not
+     * each caller's copy of `>= ROUTES`.
+     */
+    @Test
+    fun `only the transit-centre band shows nearby arrivals`() {
+        assertFalse(StopBand.DOT.showsNearbyArrivals)
+        assertFalse(StopBand.FULL.showsNearbyArrivals)
+        assertTrue(StopBand.ROUTES.showsNearbyArrivals)
     }
 
     @Test

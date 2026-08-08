@@ -18,6 +18,7 @@ package org.onebusaway.android.ui.home
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.showsNearbyArrivals
 
 /**
  * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
@@ -60,9 +61,9 @@ sealed interface HomeSheetContent {
  * show ([nearbyRowsReady]).
  *
  * A focused stop always wins: it is a deliberate choice about one bay, and the map is already showing
- * it selected. Otherwise the transit-centre band engages the nearby list — read as an ordering rather
- * than equality, so a band added above `ROUTES` keeps the drawer instead of silently switching it off
- * at the zoom that wants it most (the rule `stopRouteLabel` follows for the same reason).
+ * it selected. Otherwise the transit-centre band engages the nearby list, through the same
+ * [showsNearbyArrivals] predicate `NearbyArrivalsViewModel` gates its query on — one definition, so
+ * the sheet cannot decide to show a band the query never asked for.
  *
  * Gating on rows rather than on the query's state is what keeps the drawer honest: it never opens
  * empty while loading, never opens over a viewport with no departures, and never opens at all on a
@@ -74,7 +75,7 @@ internal fun homeSheetContent(
     nearbyRowsReady: Boolean
 ): HomeSheetContent = when {
     focus is CurrentFocus.Stop -> HomeSheetContent.Stop(focus.stop.id)
-    focus is CurrentFocus.None && band >= StopBand.ROUTES && nearbyRowsReady ->
+    focus is CurrentFocus.None && band.showsNearbyArrivals && nearbyRowsReady ->
         HomeSheetContent.NearbyRoutes
     else -> HomeSheetContent.None
 }

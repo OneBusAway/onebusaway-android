@@ -547,6 +547,12 @@ class HomeViewModel @Inject constructor(
         undoViewport: MapViewport? = null
     ) {
         presentedRoutes = emptySet()
+        // Drop any restore/deep-link latch first, the way [clearMapFocus] and [enterDirections] do. A
+        // restore that set one and then had its stop unfocused before the arrivals landed leaves it
+        // armed with no focus — which is exactly the state that puts this list on screen — and this
+        // bay's own load would consume it and recenter on a focus the rider never asked to return to.
+        // The map is told what to show here explicitly, so nothing needs the latch.
+        pendingFocus = null
         pushFocus(
             CurrentFocus.Stop(
                 stop = bay,

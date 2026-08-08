@@ -92,6 +92,7 @@ internal class FakeRegionRepository(initial: Region? = null) : RegionRepository 
 /** Minimal [Region] fixture — only the id matters to the selection logic (compared by id). */
 internal fun region(
     id: Long,
+    obaBaseUrl: String? = null,
     supportsOtpBikeshare: Boolean = false,
     twitterUrl: String? = null,
     otpContactEmail: String? = null,
@@ -102,7 +103,7 @@ internal fun region(
     id = id,
     name = "Region $id",
     active = true,
-    obaBaseUrl = null,
+    obaBaseUrl = obaBaseUrl,
     siriBaseUrl = null,
     bounds = emptyArray(),
     open311Servers = emptyArray(),

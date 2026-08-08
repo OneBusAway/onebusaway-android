@@ -1009,11 +1009,8 @@
     <!-- Confirmation shown when a gesture (Back, or a tap on the map background) would close directions
          while a planned trip is drawn on the map, since that discards the whole plan. -->
     <string name="directions_exit_confirm_title">Leave these directions?</string>
-    <string name="directions_exit_confirm_message">Discard this trip, or pin it and come back to it later.</string>
+    <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
     <string name="directions_exit_confirm_discard">Discard</string>
-    <!-- The third action on that confirmation: park the trip and leave, so exploring the map doesn't
-         cost the plan (#2053). -->
-    <string name="directions_exit_confirm_pin">Pin &amp; leave</string>
     <!-- The pinned-trip controls. "Pin" parks the chosen trip so the rider can leave directions and
          come back to it; "Pinned" is the same control once it is. -->
     <string name="trip_plan_pin">Pin this trip</string>

@@ -15,9 +15,7 @@
  */
 package org.onebusaway.android.ui.home.directions
 
-import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
@@ -42,7 +40,6 @@ class DirectionsExitConfirmDialogTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val discardLabel = context.getString(R.string.directions_exit_confirm_discard)
-    private val pinLabel = context.getString(R.string.directions_exit_confirm_pin)
     private val cancelLabel = context.getString(R.string.cancel)
 
     @Test
@@ -65,59 +62,13 @@ class DirectionsExitConfirmDialogTest {
         assertEquals(1, dismissed)
     }
 
-    @Test
-    fun pinAndLeavePinsTheTripAndStillLeaves() {
-        // Both halves matter: a "Pin & leave" that pinned without leaving would strand the rider on the
-        // trip they asked to leave, and one that left without pinning is the erasure it exists to avoid.
-        var pinned = 0
-        var confirmed = 0
-        var dismissed = 0
-        renderDialog(
-            onPinAndLeave = { pinned++ },
-            onConfirm = { confirmed++ },
-            onDismiss = { dismissed++ }
-        )
-
-        composeRule.onNodeWithText(pinLabel).performClick()
-
-        assertEquals(1, pinned)
-        assertEquals("pinning must still perform the exit it was pressed to survive", 1, confirmed)
-        assertEquals(0, dismissed)
-    }
-
-    @Test
-    fun discardAndCancelDoNotPin() {
-        var pinned = 0
-        renderDialog(onPinAndLeave = { pinned++ })
-
-        composeRule.onNodeWithText(cancelLabel).performClick()
-        composeRule.onNodeWithText(discardLabel).performClick()
-
-        assertEquals(0, pinned)
-    }
-
-    @Test
-    fun aTripWithNoRequestBehindItOffersNoPin() {
-        // A plan restored from a trip-update notification carries no request, so there is no trip to
-        // park; the button is absent rather than present-and-inert.
-        renderDialog(onPinAndLeave = null)
-
-        composeRule.onAllNodesWithText(pinLabel).assertCountEquals(0)
-        composeRule.onNodeWithText(discardLabel).assertIsDisplayed()
-    }
-
     private fun renderDialog(
-        onPinAndLeave: (() -> Unit)? = {},
         onConfirm: () -> Unit = {},
         onDismiss: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
-                DirectionsExitConfirmDialog(
-                    onPinAndLeave = onPinAndLeave,
-                    onConfirm = onConfirm,
-                    onDismiss = onDismiss
-                )
+                DirectionsExitConfirmDialog(onConfirm = onConfirm, onDismiss = onDismiss)
             }
         }
     }

@@ -974,15 +974,37 @@ class HomeViewModel @Inject constructor(
      * where its gesture lands, so reading that decision keeps this from re-deriving — and later drifting
      * from — the level rules they encode. Any move out of directions while a trip is drawn costs the
      * rider their whole plan; every move that stays inside it, such as stepping back out of a
-     * drilled-into leg, costs them nothing. An unplanned form has no trip to lose, so it leaves free.
+     * drilled-into leg, costs them nothing. An unplanned form has no trip to lose, so it leaves free —
+     * and so does a *recoverable* one, which is what pinning makes a trip ([setDrawnTripRecoverable]).
      */
     private fun stageDirectionsExitConfirmation(from: CurrentFocus, to: CurrentFocus): Boolean {
         val leavesDrawnTrip = from is CurrentFocus.Directions &&
             to !is CurrentFocus.Directions &&
             shownItinerary != null
-        if (!leavesDrawnTrip) return false
+        if (!leavesDrawnTrip || drawnTripRecoverable) return false
         _pendingDirectionsExit.value = true
         return true
+    }
+
+    // Whether the drawn trip can be got back after leaving, which is the whole question #2140's dialog
+    // asks. False by default, so the confirmation stands exactly where it did before.
+    private var drawnTripRecoverable = false
+
+    /**
+     * States whether the trip currently drawn can be recovered after leaving directions — today, whether
+     * it is the pinned one (#2053).
+     *
+     * The gesture the confirmation guards costs the rider nothing when the answer is yes, so the question
+     * stops being worth asking and the exit goes through on the first Back or background tap. That is the
+     * point of pinning: it is supposed to make leaving *cheap*, and a dialog that still demanded a
+     * decision would have kept the toll it was meant to remove.
+     *
+     * Deliberately a boolean rather than the pin itself. This ViewModel has no business knowing what a
+     * pinned trip is — only whether what it drew is safe to walk away from — so the one fact it needs
+     * arrives as that fact, and pinning stays free to change shape without reaching in here.
+     */
+    fun setDrawnTripRecoverable(recoverable: Boolean) {
+        drawnTripRecoverable = recoverable
     }
 
     /**

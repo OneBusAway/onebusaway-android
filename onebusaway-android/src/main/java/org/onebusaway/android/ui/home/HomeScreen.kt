@@ -130,7 +130,6 @@ import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.pinned.describesSameTripAs
-import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -630,9 +629,6 @@ fun HomeScreen(
                             val pinnedCard by pinnedTripViewModel.card.collectAsStateWithLifecycle()
                             val pendingResumeIndex by pinnedTripViewModel.pendingResumeIndex
                                 .collectAsStateWithLifecycle()
-                            val tripResultsState by tripResultsViewModel.state.collectAsStateWithLifecycle()
-                            val selectedOptionIndex =
-                                (tripResultsState as? TripResultsUiState.Success)?.selectedIndex ?: 0
                             // Whether the plan on screen is the pinned one — so the controls read Unpin,
                             // and so a refresh of it can update the snapshot in place.
                             val pinnedTripIsOnScreen = directionsResults?.params?.let { params ->
@@ -666,6 +662,19 @@ fun HomeScreen(
                                 } else {
                                     pinTripOption(index)
                                 }
+                            }
+                            // The parked trip, traced thin under the map the rider is exploring (#2053) —
+                            // withdrawn inside directions, where the real trip is already drawn and a
+                            // ghost of it would only double every line.
+                            LaunchedEffect(pinnedTrip, directionsActive) {
+                                mapViewModel.setPinnedTripOverlay(
+                                    pinnedTrip?.selectedItinerary?.takeIf { !directionsActive }
+                                )
+                            }
+                            // A pinned trip is one the rider can walk back to, so leaving it costs nothing
+                            // and the #2140 "you'll lose this" confirmation stops being worth asking.
+                            LaunchedEffect(pinnedTripIsOnScreen) {
+                                homeViewModel.setDrawnTripRecoverable(pinnedTripIsOnScreen)
                             }
                             // A fresh plan for the trip the rider pinned replaces the pin's snapshot, so
                             // it stays a bookmark of that trip rather than of the first answer to it.
@@ -965,17 +974,6 @@ fun HomeScreen(
                                     .collectAsStateWithLifecycle()
                                 if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
-                                        // The pin is taken here rather than inside the VM: HomeViewModel
-                                        // knows nothing about pins, and the exit it performs is the same
-                                        // one either button asks for.
-                                        onPinAndLeave = if (canPin) {
-                                            {
-                                                pinTripOption(selectedOptionIndex)
-                                                homeViewModel.confirmExitDirections()
-                                            }
-                                        } else {
-                                            null
-                                        },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
                                     )

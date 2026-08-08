@@ -660,18 +660,21 @@ fun DirectionsErrorSnackbar(
  * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
  * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
  *
- * Three answers, not two, since #2053: [onPinAndLeave] parks the trip on the way out, which is the
- * whole point of pinning — leaving to look at something else was previously only possible by spending
- * the plan. Note this does not contradict the latch's "there is only one answer to give": that is
- * about the *inbound* side, and Back and a background tap still want the identical exit.
+ * Deliberately still **two** answers after #2053. A "Pin & leave" button was tried here and removed: a
+ * rider who had already pinned this trip could not tell whether it offered to pin it again, to pin some
+ * newer one, or to replace what they had — the question is asked at a moment when the pin state is off
+ * screen, so a pin action here can only be ambiguous. Pinning belongs where the trip is visible, on the
+ * results sheet, and this dialog goes back to asking one thing.
  *
- * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK"; the
- * constructive answer sits before it. Dismissing — the cancel button, an outside tap, or Back — keeps
- * the trip.
+ * A pinned trip doesn't reach this dialog at all: leaving costs nothing when the trip is parked, so the
+ * question isn't worth asking — see [org.onebusaway.android.ui.home.HomeViewModel.setDrawnTripRecoverable].
+ * That is why the message can still say flatly that the trip will be discarded.
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
+ * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
  */
 @Composable
 fun DirectionsExitConfirmDialog(
-    onPinAndLeave: (() -> Unit)?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -679,20 +682,9 @@ fun DirectionsExitConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
         text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
-        // Material 3's AlertDialog has two action slots and this dialog now offers three answers, so
-        // both ways *out* share the confirm slot; the dismiss slot stays the one way to stay.
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                // Absent, not disabled, when there is nothing to pin — a plan restored from a trip-update
-                // notification carries no request, so there is no trip to park (see PlanResult.Success).
-                onPinAndLeave?.let { pinAndLeave ->
-                    TextButton(onClick = pinAndLeave) {
-                        Text(stringResource(R.string.directions_exit_confirm_pin))
-                    }
-                }
-                TextButton(onClick = onConfirm) {
-                    Text(stringResource(R.string.directions_exit_confirm_discard))
-                }
+            TextButton(onClick = onConfirm) {
+                Text(stringResource(R.string.directions_exit_confirm_discard))
             }
         },
         dismissButton = {

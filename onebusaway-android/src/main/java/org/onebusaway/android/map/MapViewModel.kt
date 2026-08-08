@@ -56,6 +56,7 @@ import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
 import org.onebusaway.android.util.getRouteDescription
 import org.onebusaway.android.util.getRouteDisplayName
+import org.onebusaway.android.util.parseObaHexColor
 
 /**
  * The route-mode header content (the old `R.id.route_info` overlay): the route's short/long name +
@@ -534,6 +535,28 @@ class MapViewModel @Inject constructor(
      * trip's own endpoints' claim on their terminus pins — a current-location terminus wears none
      * (#2111).
      */
+
+    /**
+     * Draw [itinerary] as the thin ghost of the rider's parked trip, or clear it with null (#2053).
+     *
+     * Independent of every mode this map has, and that is the point: the ghost is what the rider is
+     * exploring *around*, so it survives focusing a stop, opening a route, and returning to nearby
+     * stops — none of which [leaveCurrentView] can tear down, because it lives in its own slice of the
+     * render state ([MapRenderState.setPinnedTripPolylines]) rather than in the route list every
+     * transition clears.
+     *
+     * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
+     * being read, so the parked trip is recognisably the one the rider left.
+     */
+    fun setPinnedTripOverlay(itinerary: TripItinerary?) {
+        renderState.setPinnedTripPolylines(
+            itinerary?.let {
+                itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
+                    .asPinnedTripGhost()
+            }.orEmpty()
+        )
+    }
+
     fun showItinerary(itinerary: TripItinerary, pins: ItineraryPins) {
         if (!directionsActive) {
             leaveCurrentView(clearStopFocus = true)

@@ -431,6 +431,16 @@ data class RouteContinuation(val polyline: RoutePolyline, val arrow: Continuatio
 /** Immutable snapshot of everything the map should render. Grows one overlay per phase. */
 data class MapRenderSnapshot(
     val routePolylines: List<RoutePolyline> = emptyList(),
+    /**
+     * The rider's parked trip plan, drawn thin beneath everything else while they explore (#2053).
+     *
+     * Its own slice rather than part of [routePolylines] because the two have opposite lifetimes: the
+     * route list is the *current view's* content and is cleared wholesale on every mode transition,
+     * while a pinned trip is exactly the thing that has to survive those transitions — that is what
+     * being pinned means. Merging them would make the ghost vanish on the first stop the rider taps.
+     * The two are concatenated, ghost first, only at the render seam.
+     */
+    val pinnedTripPolylines: List<RoutePolyline> = emptyList(),
     val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val rentals: List<RentalMarker> = emptyList(),
@@ -668,6 +678,16 @@ class MapRenderState {
     }
 
     fun clearRoutePolylines() = setRoutePolylines(emptyList())
+
+    /**
+     * The parked trip's ghost geometry, or empty for none (#2053).
+     *
+     * Deliberately does **not** touch [routeFramingPolylines]: the ghost is context the rider explores
+     * *around*, so it must never widen the camera box of whatever they actually focused.
+     */
+    fun setPinnedTripPolylines(polylines: List<RoutePolyline>) {
+        _snapshot.update { it.copy(pinnedTripPolylines = polylines) }
+    }
 
     /** Sets the adjacency route badges (#1827), rendered by both flavors (#1913). */
     fun setRouteBadges(badges: List<RouteBadge>) {

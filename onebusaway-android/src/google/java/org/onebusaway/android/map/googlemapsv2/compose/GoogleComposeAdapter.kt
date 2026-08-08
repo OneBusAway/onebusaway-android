@@ -199,7 +199,9 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             // stop-only emissions still cannot touch the independently collected route layer below.
             LaunchedEffect(activeRenderer) {
                 renderState.snapshot
-                    .map { it.copy(routePolylines = emptyList()) }
+                    // Both polyline slices are dropped here: they have their own change boundary below,
+                    // and leaving either in would re-run the whole static render on every line update.
+                    .map { it.copy(routePolylines = emptyList(), pinnedTripPolylines = emptyList()) }
                     .distinctUntilChanged()
                     .collect { activeRenderer.renderStatic(it) }
             }

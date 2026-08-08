@@ -72,7 +72,11 @@ internal fun routePolylineRenderFlow(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     pipeline: RoutePolylineRenderPipeline = DEFAULT_ROUTE_POLYLINE_PIPELINE
 ): Flow<List<RoutePolyline>> = combine(
-    snapshot.map { it.routePolylines }.distinctUntilChanged(),
+    // Ghost first, so the parked trip draws *beneath* whatever the rider is actually looking at (#2053).
+    // Concatenated here rather than in the render state so the two keep their independent lifetimes —
+    // see MapRenderSnapshot.pinnedTripPolylines — and so both flavors get the layer for free: each
+    // renderer reconciles whatever list this flow hands it, and neither has to learn a second one.
+    snapshot.map { it.pinnedTripPolylines + it.routePolylines }.distinctUntilChanged(),
     camera
 ) { polylines, viewport -> polylines to viewport }
     .mapLatest { (polylines, viewport) ->

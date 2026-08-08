@@ -15,10 +15,12 @@ import org.onebusaway.android.map.render.DEFAULT_ROUTE_LINE_COLOR
 import org.onebusaway.android.map.render.FOCUSED_ROUTE_LINE_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_APPROACH_WIDTH_PROFILE
 import org.onebusaway.android.map.render.ITINERARY_CONTEXT_WIDTH_PROFILE
+import org.onebusaway.android.map.render.PINNED_TRIP_GHOST_WIDTH_PROFILE
 import org.onebusaway.android.map.render.RouteBadge
 import org.onebusaway.android.map.render.RouteBadgeTap
 import org.onebusaway.android.map.render.RouteLineCase
 import org.onebusaway.android.map.render.RouteLineDash
+import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineTransform
 import org.onebusaway.android.models.FocusedTrip
@@ -92,6 +94,24 @@ internal fun List<RoutePolyline>.asItineraryContext(): List<RoutePolyline> = map
     line.copy(
         widthProfile = ITINERARY_CONTEXT_WIDTH_PROFILE,
         directional = false
+    )
+}
+
+/**
+ * The rider's parked trip as the thin ghost drawn under an exploring map (#2053).
+ *
+ * Keeps each leg's colour — the one thing the ghost is *for* is saying which trip is waiting — and drops
+ * everything that competes for attention: the case that would halo it above the basemap, the terminus
+ * bulbs and interline cuts that are details of a trip being read, and any chevrons. What is left is a
+ * thin coloured trace of the journey.
+ */
+internal fun List<RoutePolyline>.asPinnedTripGhost(): List<RoutePolyline> = map { line ->
+    line.copy(
+        widthProfile = PINNED_TRIP_GHOST_WIDTH_PROFILE,
+        directional = false,
+        case = RouteLineCase.NONE,
+        startMark = RouteLineMark.NONE,
+        endMark = RouteLineMark.NONE
     )
 }
 

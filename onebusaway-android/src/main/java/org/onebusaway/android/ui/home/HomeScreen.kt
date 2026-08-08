@@ -124,6 +124,7 @@ import org.onebusaway.android.ui.tripplan.TripEndpointSlot
 import org.onebusaway.android.ui.tripplan.TripPlanViewModel
 import org.onebusaway.android.ui.tripplan.pinned.PinnedTripViewModel
 import org.onebusaway.android.ui.tripplan.pinned.describesSameTripAs
+import org.onebusaway.android.ui.tripresults.TripResultsUiState
 import org.onebusaway.android.ui.tripresults.TripResultsViewModel
 import org.onebusaway.android.ui.tutorial.ArrivalTutorial
 import org.onebusaway.android.ui.tutorial.LocalTutorialState
@@ -646,6 +647,10 @@ fun HomeScreen(
                                     )
                                 }
                             }
+                            // The option the rider is looking at, which is the one an exit-time pin parks.
+                            val tripResultsState by tripResultsViewModel.state.collectAsStateWithLifecycle()
+                            val selectedOptionIndex =
+                                (tripResultsState as? TripResultsUiState.Success)?.selectedIndex ?: 0
                             // The toggle the pin control and the card's long-press menu share. The exit
                             // dialog deliberately does *not* use it: "Pin & leave" must always leave a
                             // pin behind, and toggling would make it un-pin the very trip it was pressed
@@ -958,6 +963,18 @@ fun HomeScreen(
                                     .collectAsStateWithLifecycle()
                                 if (showExitConfirm) {
                                     DirectionsExitConfirmDialog(
+                                        // Offered only with nothing pinned, where "pin" can mean exactly
+                                        // one thing. With another trip already parked it would be asking
+                                        // the rider to choose between two trips they can't both see, so
+                                        // the offer is withheld rather than made ambiguously.
+                                        onPinAndLeave = if (canPin && pinnedTrip == null) {
+                                            {
+                                                pinTripOption(selectedOptionIndex)
+                                                homeViewModel.confirmExitDirections()
+                                            }
+                                        } else {
+                                            null
+                                        },
                                         onConfirm = homeViewModel::confirmExitDirections,
                                         onDismiss = homeViewModel::dismissDirectionsExit
                                     )

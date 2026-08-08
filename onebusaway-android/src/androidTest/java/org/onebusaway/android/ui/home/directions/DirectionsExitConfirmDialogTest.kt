@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.ui.home.directions
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
@@ -41,6 +43,7 @@ class DirectionsExitConfirmDialogTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private val discardLabel = context.getString(R.string.directions_exit_confirm_discard)
     private val cancelLabel = context.getString(R.string.cancel)
+    private val pinLabel = context.getString(R.string.directions_exit_confirm_pin)
 
     @Test
     fun itNamesTheTripAndOnlyDiscardConfirmsTheExit() {
@@ -62,13 +65,62 @@ class DirectionsExitConfirmDialogTest {
         assertEquals(1, dismissed)
     }
 
+    @Test
+    fun pinAndLeaveReportsTheChoiceAndNothingElse() {
+        // Deliberately does *not* assert onConfirm: this dialog only reports the answer, and "pin and
+        // leave" is one answer delivered through one callback — the caller does both halves. An earlier
+        // version of this test asserted onConfirm here and failed on CI, which is what taught us where
+        // the seam actually is.
+        var pinned = 0
+        var confirmed = 0
+        var dismissed = 0
+        renderDialog(
+            onPinAndLeave = { pinned++ },
+            onConfirm = { confirmed++ },
+            onDismiss = { dismissed++ }
+        )
+
+        composeRule.onNodeWithText(pinLabel).performClick()
+
+        assertEquals(1, pinned)
+        assertEquals("the pin answer must not also fire the discard answer", 0, confirmed)
+        assertEquals(0, dismissed)
+    }
+
+    @Test
+    fun discardAndCancelDoNotPin() {
+        var pinned = 0
+        renderDialog(onPinAndLeave = { pinned++ })
+
+        composeRule.onNodeWithText(cancelLabel).performClick()
+        composeRule.onNodeWithText(discardLabel).performClick()
+
+        assertEquals(0, pinned)
+    }
+
+    @Test
+    fun withSomethingAlreadyPinnedTheOfferIsWithheld() {
+        // The condition the whole affordance rests on: with another trip parked, "pin" would be asking
+        // the rider to choose between two trips they cannot both see.
+        renderDialog(onPinAndLeave = null)
+
+        composeRule.onAllNodesWithText(pinLabel).assertCountEquals(0)
+        composeRule.onNodeWithText(discardLabel).assertIsDisplayed()
+        composeRule.onNodeWithText(cancelLabel).assertIsDisplayed()
+    }
+
     private fun renderDialog(
+        onPinAndLeave: (() -> Unit)? = null,
         onConfirm: () -> Unit = {},
         onDismiss: () -> Unit = {}
     ) {
         composeRule.setContent {
             ObaTheme {
-                DirectionsExitConfirmDialog(onConfirm = onConfirm, onDismiss = onDismiss)
+                DirectionsExitConfirmDialog(
+                    onPinAndLeave = onPinAndLeave,
+                    onConfirm = onConfirm,
+                    onDismiss = onDismiss
+                )
             }
         }
     }

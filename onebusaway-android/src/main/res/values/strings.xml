@@ -1011,6 +1011,10 @@
     <string name="directions_exit_confirm_title">Leave these directions?</string>
     <string name="directions_exit_confirm_message">Your planned trip will be discarded.</string>
     <string name="directions_exit_confirm_discard">Discard</string>
+    <!-- The third answer, offered only when nothing is pinned yet: park this trip on the way out, so
+         leaving costs nothing (#2053). Withheld once something *is* pinned, where it could only be read
+         as ambiguous — see DirectionsExitConfirmDialog. -->
+    <string name="directions_exit_confirm_pin">Pin &amp; leave</string>
     <!-- The pinned-trip controls. "Pin" parks the chosen trip so the rider can leave directions and
          come back to it; "Pinned" is the same control once it is. -->
     <string name="trip_plan_pin">Pin this trip</string>

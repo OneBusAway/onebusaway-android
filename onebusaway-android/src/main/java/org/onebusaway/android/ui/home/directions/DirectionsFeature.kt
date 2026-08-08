@@ -658,21 +658,27 @@ fun DirectionsErrorSnackbar(
  * whole plan by accident. Only a drawn trip is worth the interruption: an unplanned form still leaves
  * on the first gesture (see [org.onebusaway.android.ui.home.HomeViewModel.pendingDirectionsExit]).
  *
- * Deliberately still **two** answers after #2053. A "Pin & leave" button was tried here and removed: a
- * rider who had already pinned this trip could not tell whether it offered to pin it again, to pin some
- * newer one, or to replace what they had — the question is asked at a moment when the pin state is off
- * screen, so a pin action here can only be ambiguous. Pinning belongs where the trip is visible, on the
- * results sheet, and this dialog goes back to asking one thing.
+ * [onPinAndLeave] parks the trip on the way out — offered **only when nothing is pinned yet**, and that
+ * condition is the whole design. An earlier version offered it unconditionally and had to be withdrawn:
+ * a rider who already had a trip pinned could not tell whether the button meant pin this one again,
+ * replace what they had, or something else, because the question is asked at the one moment the pin
+ * state is off screen. With nothing pinned there is exactly one thing it can mean.
  *
- * A pinned trip doesn't reach this dialog at all: leaving costs nothing when the trip is parked, so the
- * question isn't worth asking — see [org.onebusaway.android.ui.home.HomeViewModel.setDrawnTripRecoverable].
- * That is why the message can still say flatly that the trip will be discarded.
+ * The trip *this* dialog is about is never the pinned one, so the two cases don't overlap: a pinned trip
+ * costs nothing to leave and so never reaches this dialog at all (see
+ * [org.onebusaway.android.ui.home.HomeViewModel.setDrawnTripRecoverable]). What null therefore means here
+ * is "some *other* trip is pinned, or there is no request to pin" — both cases where an offer would be a
+ * worse answer than silence. It is also why the message can still say flatly that the trip is discarded.
  *
- * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK";
- * dismissing — the cancel button, an outside tap, or Back — keeps the trip.
+ * Note the seam: this dialog only *reports* the choice. Leaving is the caller's half of "pin and leave",
+ * and [onPinAndLeave] is expected to do both — nothing here invokes [onConfirm] on the rider's behalf.
+ *
+ * The confirm button is the destructive one, so it names what it does ("Discard") rather than "OK", and
+ * the constructive answer sits before it; dismissing — cancel, an outside tap, or Back — keeps the trip.
  */
 @Composable
 fun DirectionsExitConfirmDialog(
+    onPinAndLeave: (() -> Unit)?,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -680,9 +686,18 @@ fun DirectionsExitConfirmDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.directions_exit_confirm_title)) },
         text = { Text(stringResource(R.string.directions_exit_confirm_message)) },
+        // Material 3 gives a dialog two action slots and this one has up to three answers, so both ways
+        // *out* share the confirm slot; the dismiss slot stays the single way to stay.
         confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(R.string.directions_exit_confirm_discard))
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                onPinAndLeave?.let { pinAndLeave ->
+                    TextButton(onClick = pinAndLeave) {
+                        Text(stringResource(R.string.directions_exit_confirm_pin))
+                    }
+                }
+                TextButton(onClick = onConfirm) {
+                    Text(stringResource(R.string.directions_exit_confirm_discard))
+                }
             }
         },
         dismissButton = {

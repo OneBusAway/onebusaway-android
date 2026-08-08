@@ -283,20 +283,6 @@ class MapLibreRenderer(
             }
         }
 
-        // The parked trip's head (#2053) — see the Google renderer for why it rides with the static
-        // markers. Its title exists only so a tap opens the window; the InfoWindowAdapter draws
-        // PinnedTripInfoWindow in place of it.
-        snapshot.pinnedTripMarker?.let { pinned ->
-            val marker = map.addMarker(
-                MarkerOptions()
-                    .position(pinned.point.toLatLng())
-                    .icon(iconFactory.fromBitmap(PinnedTripBitmaps.pin(context)))
-                    .title(context.getString(R.string.trip_plan_pinned_resume))
-            )
-            staticAnnotations.add(marker)
-            pinnedTripByMarker = marker to pinned
-        }
-
         for ((_, generic) in snapshot.genericMarkers) {
             // The classic default marker has no hue, so the green/red start/end distinction is lost
             // on maplibre (a minor flavor gap vs. the Google pins).
@@ -308,6 +294,22 @@ class MapLibreRenderer(
         }
 
         renderRouteBadges(snapshot.routeBadges)
+
+        // The parked trip's head (#2053), added dead last — which on this flavor is the *only* way to
+        // say "on top". The classic annotation API carries no z-index (contrast the Google renderer,
+        // which asks for one explicitly), so draw and hit order are add order, and a stop under the pin
+        // would otherwise take every tap meant for it. Trips start at stops, so that is the ordinary
+        // case rather than a corner one.
+        snapshot.pinnedTripMarker?.let { pinned ->
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(pinned.point.toLatLng())
+                    .icon(iconFactory.fromBitmap(PinnedTripBitmaps.pin(context)))
+                    .title(context.getString(R.string.trip_plan_pinned_resume))
+            )
+            staticAnnotations.add(marker)
+            pinnedTripByMarker = marker to pinned
+        }
     }
 
     // Parity with the Google flavor's renderRouteBadges (#1827/#1913): the classic Marker centers its

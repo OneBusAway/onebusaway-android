@@ -29,6 +29,7 @@ import org.onebusaway.android.models.ObaStop
 import org.onebusaway.android.models.ObaTripStatus
 import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteTrips
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.util.GeoPoint
 
 /** A screen pixel position in the composition's root coordinate space (flavor-neutral). */
@@ -238,6 +239,23 @@ data class RentalMarker(
 )
 
 /**
+ * The head of the rider's parked trip plan, marking where that journey starts (#2053).
+ *
+ * The only handle on a pinned trip once the rider has left directions: tapping it opens [summary] as the
+ * marker's info window, and tapping the window resumes the trip. That is the whole reason a pin costs no
+ * screen: the map already has somewhere to put it.
+ *
+ * [summary] is the same projection the trip's own option card was chosen from, carried here rather than
+ * re-derived, because deriving a second description of one trip is how two descriptions come to disagree.
+ * It is a UI type on a render model for the same reason [BikeMarker] carries a whole [BikeStation]: what
+ * the window draws travels with the marker that opens it.
+ */
+data class PinnedTripMarker(
+    val point: GeoPoint,
+    val summary: PinnedTripCardState
+)
+
+/**
  * One bus-stop marker. [direction]/[routeType] choose the icon + anchor; [stop] is the raw pojo
  * couriered so a tap can notify focus listeners. Whether this stop renders focused (the 1.5x icon) is
  * decided by [MapRenderSnapshot.focusedStopId], not stored here, so focusing is a one-field change.
@@ -441,6 +459,8 @@ data class MapRenderSnapshot(
      * The two are concatenated, ghost first, only at the render seam.
      */
     val pinnedTripPolylines: List<RoutePolyline> = emptyList(),
+    /** Where the parked trip begins, or null when nothing is pinned — see [PinnedTripMarker]. */
+    val pinnedTripMarker: PinnedTripMarker? = null,
     val routeBadges: List<RouteBadge> = emptyList(),
     val genericMarkers: Map<Int, GenericMarker> = emptyMap(),
     val rentals: List<RentalMarker> = emptyList(),
@@ -687,6 +707,11 @@ class MapRenderState {
      */
     fun setPinnedTripPolylines(polylines: List<RoutePolyline>) {
         _snapshot.update { it.copy(pinnedTripPolylines = polylines) }
+    }
+
+    /** The marker at the head of the parked trip, or null to take it off the map (#2053). */
+    fun setPinnedTripMarker(marker: PinnedTripMarker?) {
+        _snapshot.update { it.copy(pinnedTripMarker = marker) }
     }
 
     /** Sets the adjacency route badges (#1827), rendered by both flavors (#1913). */

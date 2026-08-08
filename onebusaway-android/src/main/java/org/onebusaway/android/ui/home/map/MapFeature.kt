@@ -140,12 +140,16 @@ fun MapFeature(
     fabBottomInset: Dp,
     modifier: Modifier = Modifier,
     // A long-press on the map surfaces the "directions from/to here" menu; HomeScreen owns that state.
-    onMapLongPress: (GeoPoint) -> Unit = {}
+    onMapLongPress: (GeoPoint) -> Unit = {},
+    // Tapping the parked trip's info window takes the rider back into it (#2053). HomeScreen owns the
+    // pin, so the map only reports the tap.
+    onResumePinnedTrip: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
     // Keep the remembered ObaMapCallbacks calling HomeScreen's latest long-press handler.
     val currentOnMapLongPress by rememberUpdatedState(onMapLongPress)
+    val currentOnResumePinnedTrip by rememberUpdatedState(onResumePinnedTrip)
     // Whether the soft keyboard is up. Read through derivedStateOf rather than in composition: the
     // inset updates on every frame of the keyboard animation, and reading it here directly would
     // re-run this whole composable each time for a boolean that flips twice. Same reasoning as the
@@ -282,6 +286,10 @@ fun MapFeature(
 
             override fun onRentalInfoWindowClick(place: RentalPlace) {
                 MapNavigation.openRentalLink(context, place)
+            }
+
+            override fun onPinnedTripInfoWindowClick() {
+                currentOnResumePinnedTrip()
             }
         }
     }

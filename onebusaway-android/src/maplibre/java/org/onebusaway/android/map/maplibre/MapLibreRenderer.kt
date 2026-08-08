@@ -49,6 +49,8 @@ import org.onebusaway.android.map.render.MapRenderSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.PinnedTripBitmaps
+import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RentalBand
 import org.onebusaway.android.map.render.RentalBitmaps
 import org.onebusaway.android.map.render.RentalMarker
@@ -125,6 +127,7 @@ class MapLibreRenderer(
     // Native sprites for the rental markers, keyed by everything that varies the artwork. Bounded by
     // (layers x kinds x charge buckets) + 1, so a plain map rather than an LruCache.
     private val rentalIcons = HashMap<String, Icon>()
+    private var pinnedTripByMarker: Pair<Marker, PinnedTripMarker>? = null
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -246,6 +249,7 @@ class MapLibreRenderer(
         // the bike / route-badge tap maps are cleared here.
         rentalByMarker.clear()
         rentalIcons.clear()
+        pinnedTripByMarker = null
         routeBadgeByMarker.clear()
 
         stopMarkerLayer.render(snapshot.stops, snapshot.focusedStopId, snapshot.stopBand)
@@ -277,6 +281,20 @@ class MapLibreRenderer(
                     rentalByMarker[marker] = rental
                 }
             }
+        }
+
+        // The parked trip's head (#2053) — see the Google renderer for why it rides with the static
+        // markers. Its title exists only so a tap opens the window; the InfoWindowAdapter draws
+        // PinnedTripInfoWindow in place of it.
+        snapshot.pinnedTripMarker?.let { pinned ->
+            val marker = map.addMarker(
+                MarkerOptions()
+                    .position(pinned.point.toLatLng())
+                    .icon(iconFactory.fromBitmap(PinnedTripBitmaps.pin(context)))
+                    .title(context.getString(R.string.trip_plan_pinned_resume))
+            )
+            staticAnnotations.add(marker)
+            pinnedTripByMarker = marker to pinned
         }
 
         for ((_, generic) in snapshot.genericMarkers) {
@@ -394,6 +412,7 @@ class MapLibreRenderer(
         vehicleByMarker.clear()
         rentalByMarker.clear()
         rentalIcons.clear()
+        pinnedTripByMarker = null
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
         vehicleIconDirection.clear()
@@ -713,6 +732,8 @@ class MapLibreRenderer(
     }
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
+
+    fun pinnedTripForMarker(marker: Marker): PinnedTripMarker? = pinnedTripByMarker?.takeIf { it.first == marker }?.second
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

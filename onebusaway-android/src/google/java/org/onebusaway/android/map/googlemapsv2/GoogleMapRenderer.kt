@@ -61,6 +61,8 @@ import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapVehicles
 import org.onebusaway.android.map.render.MarkerRendering
 import org.onebusaway.android.map.render.PingTarget
+import org.onebusaway.android.map.render.PinnedTripBitmaps
+import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RentalBand
 import org.onebusaway.android.map.render.RentalMarker
 import org.onebusaway.android.map.render.RouteBadge
@@ -122,6 +124,7 @@ class GoogleMapRenderer(
             ContextCompat.getColor(context, R.color.route_stop_outline)
         )
     private val rentalByMarker = HashMap<Marker, RentalMarker>()
+    private var pinnedTripByMarker: Pair<Marker, PinnedTripMarker>? = null
 
     private val vehicleByMarker = HashMap<Marker, VehicleMarker>()
 
@@ -271,6 +274,7 @@ class GoogleMapRenderer(
         staticPolylines.forEach { it.remove() }
         staticPolylines.clear()
         rentalByMarker.clear()
+        pinnedTripByMarker = null
         continuationBadgeByMarker.clear()
         routeBadgeByMarker.clear()
     }
@@ -310,6 +314,20 @@ class GoogleMapRenderer(
                     rentalByMarker[marker] = rental
                 }
             }
+        }
+
+        // The parked trip's head (#2053). Drawn with the static markers so it survives every mode the
+        // rider explores through, which is the whole point of a pin. Its title exists only so a tap opens
+        // the window; the InfoWindowAdapter draws PinnedTripInfoWindow in place of the title text.
+        snapshot.pinnedTripMarker?.let { pinned ->
+            val marker = map.addMarkerOrFail(
+                MarkerOptions()
+                    .position(pinned.point.toLatLng())
+                    .icon(descriptorCache.get("pinned-trip") { PinnedTripBitmaps.pin(context) })
+                    .title(context.getString(R.string.trip_plan_pinned_resume))
+            )
+            staticMarkers.add(marker)
+            pinnedTripByMarker = marker to pinned
         }
 
         for ((_, generic) in snapshot.genericMarkers) {
@@ -872,6 +890,8 @@ class GoogleMapRenderer(
     )
 
     fun rentalForMarker(marker: Marker): RentalMarker? = rentalByMarker[marker]
+
+    fun pinnedTripForMarker(marker: Marker): PinnedTripMarker? = pinnedTripByMarker?.takeIf { it.first == marker }?.second
 
     fun vehicleForMarker(marker: Marker): VehicleMarker? = vehicleByMarker[marker]
 

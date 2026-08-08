@@ -55,6 +55,7 @@ import org.onebusaway.android.R
 import org.onebusaway.android.map.MapHost
 import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
+import org.onebusaway.android.map.compose.PinnedTripInfoWindow
 import org.onebusaway.android.map.compose.RentalInfoWindow
 import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
@@ -341,7 +342,12 @@ private fun wireClicks(
             cb.onVehicleInfoWindowClick(vehicle.status)
             return@setOnInfoWindowClickListener
         }
-        renderer.rentalForMarker(marker)?.let { cb.onRentalInfoWindowClick(it.place) }
+        renderer.rentalForMarker(marker)?.let {
+            cb.onRentalInfoWindowClick(it.place)
+            return@setOnInfoWindowClickListener
+        }
+        // The parked trip's window is one tap target and its tap means one thing: take me back (#2053).
+        renderer.pinnedTripForMarker(marker)?.let { cb.onPinnedTripInfoWindowClick() }
     }
 }
 
@@ -374,6 +380,15 @@ private fun routeMarkerTap(
         infoWindows.open(marker) {
             Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
                 RentalInfoWindow(rental.place)
+            }
+        }
+        return true
+    }
+    val pinnedTrip = renderer.pinnedTripForMarker(marker)
+    if (pinnedTrip != null) {
+        infoWindows.open(marker) {
+            Surface(color = Color.White, shape = RoundedCornerShape(8.dp), shadowElevation = 2.dp) {
+                PinnedTripInfoWindow(pinnedTrip.summary)
             }
         }
         return true

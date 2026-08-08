@@ -38,6 +38,7 @@ import org.onebusaway.android.map.render.CameraCommand
 import org.onebusaway.android.map.render.CameraSnapshot
 import org.onebusaway.android.map.render.MapRenderState
 import org.onebusaway.android.map.render.MapViewport
+import org.onebusaway.android.map.render.PinnedTripMarker
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.WALK_LEG_MIN_FRAMING_SPAN_DEG
 import org.onebusaway.android.map.render.viewport
@@ -51,6 +52,7 @@ import org.onebusaway.android.models.RouteDirectionKey
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.preferences.PreferencesRepository
 import org.onebusaway.android.region.RegionRepository
+import org.onebusaway.android.ui.tripplan.pinned.PinnedTripCardState
 import org.onebusaway.android.util.GeoPoint
 import org.onebusaway.android.util.MyTextUtils
 import org.onebusaway.android.util.ThemeUtils
@@ -548,12 +550,23 @@ class MapViewModel @Inject constructor(
      * Drawn in the directions palette, the same deliberately-faded colours the trip wore while it was
      * being read, so the parked trip is recognisably the one the rider left.
      */
-    fun setPinnedTripOverlay(itinerary: TripItinerary?) {
+    fun setPinnedTripOverlay(itinerary: TripItinerary?, summary: PinnedTripCardState?) {
         renderState.setPinnedTripPolylines(
             itinerary?.let {
                 itineraryLegLines(it, directionsPalette()) { leg -> parseObaHexColor(leg.routeColor) }
                     .asPinnedTripGhost()
             }.orEmpty()
+        )
+        // The marker needs both a place to stand and something to say, so it appears only once the
+        // summary has been projected — a pin the rider can tap into a blank window would be worse than
+        // one that arrives a frame later.
+        val origin = itinerary?.legs?.firstOrNull()?.from?.let { place ->
+            val lat = place.lat
+            val lon = place.lon
+            if (lat != null && lon != null) GeoPoint(lat, lon) else null
+        }
+        renderState.setPinnedTripMarker(
+            if (origin != null && summary != null) PinnedTripMarker(origin, summary) else null
         )
     }
 

@@ -104,7 +104,8 @@ fun ObaTripSchedule.scheduleTimeAt(distanceAlongTrip: Double): ScheduleTime? {
  * needs the mapping in both directions with its own plateau conventions, so a lookup here would be
  * a second copy of the same interpolation rather than a service to anyone.
  *
- * @property scheduleSeconds cumulative scheduled seconds from the anchor; starts at 0, non-decreasing
+ * @property scheduleSeconds cumulative scheduled seconds from the anchor; non-decreasing. Starts
+ *   at 0 as built here; a pace-warped profile ([warpedBy]) starts at the warp's fixed lump instead
  * @property distances distance along the trip in meters at each knot; starts at the anchor's own
  *   distance, non-decreasing
  */

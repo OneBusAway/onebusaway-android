@@ -122,9 +122,10 @@ class PaceModelTest {
         }
     )
 
-    private fun status(distance: Double?, fixMs: Long) = testTripStatus(
+    private fun status(distance: Double?, fixMs: Long, phase: String? = "in_progress") = testTripStatus(
         distanceAlongTrip = distance,
-        lastLocationUpdateTime = fixMs
+        lastLocationUpdateTime = fixMs,
+        phase = phase
     )
 
     @Test
@@ -182,10 +183,51 @@ class PaceModelTest {
     }
 
     @Test
-    fun `null when the lookback position is off the schedule`() {
+    fun `an off-schedule lookback position falls through to the next candidate`() {
         val anchor = status(6000.0, 700_000L)
-        val history = listOf(status(20_000.0, 300_000L), anchor)
-        assertNull(PaceModel.lookbackFor(history, anchor, schedule))
+        val history = listOf(status(20_000.0, 200_000L), status(2000.0, 300_000L), anchor)
+        val lookback = PaceModel.lookbackFor(history, anchor, schedule)!!
+        assertEquals(400.0, lookback.elapsedSeconds, 1e-9)
+    }
+
+    @Test
+    fun `skips fixes from a vehicle not running its trip — the fit never saw them`() {
+        // Parked at the terminal (layover phase), then departs on time: without the phase filter
+        // this window would read as deep-slow for the next ten minutes.
+        val anchor = status(2000.0, 700_000L)
+        val history = listOf(
+            status(0.0, 100_000L, phase = "layover_before"),
+            status(0.0, 500_000L, phase = "layover_before"),
+            status(1000.0, 600_000L),
+            anchor
+        )
+        val lookback = PaceModel.lookbackFor(history, anchor, schedule)!!
+        assertEquals(100.0, lookback.elapsedSeconds, 1e-9)
+    }
+
+    @Test
+    fun `skips in-progress fixes parked within the terminal margin`() {
+        // phase says in_progress but the vehicle sits at the start, not late: terminal idling.
+        val anchor = status(2000.0, 700_000L)
+        val history = listOf(
+            status(100.0, 200_000L),
+            status(1000.0, 600_000L),
+            anchor
+        )
+        val lookback = PaceModel.lookbackFor(history, anchor, schedule)!!
+        assertEquals(100.0, lookback.elapsedSeconds, 1e-9)
+    }
+
+    @Test
+    fun `null when the anchor itself is not running its trip`() {
+        val anchor = status(6000.0, 700_000L, phase = "layover_during")
+        assertNull(PaceModel.lookbackFor(listOf(status(1000.0, 100_000L), anchor), anchor, schedule))
+    }
+
+    @Test
+    fun `null when the phase is unreported — identity beats conditioning on unvetted windows`() {
+        val anchor = status(6000.0, 700_000L, phase = null)
+        assertNull(PaceModel.lookbackFor(listOf(status(1000.0, 100_000L, phase = null), anchor), anchor, schedule))
     }
 
     // ================================================================

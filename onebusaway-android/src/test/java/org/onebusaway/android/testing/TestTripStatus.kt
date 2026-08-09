@@ -37,7 +37,8 @@ fun testTripStatus(
     activeTripId: String? = null,
     predicted: Boolean = false,
     hasLastKnownLocation: Boolean = false,
-    hasPosition: Boolean = false
+    hasPosition: Boolean = false,
+    phase: String? = null
 ): ObaTripStatus = TestTripStatus(
     distanceAlongTrip = distanceAlongTrip,
     totalDistanceAlongTrip = totalDistanceAlongTrip,
@@ -47,7 +48,8 @@ fun testTripStatus(
     activeTripId = activeTripId,
     predicted = predicted,
     hasLastKnownLocation = hasLastKnownLocation,
-    hasPosition = hasPosition
+    hasPosition = hasPosition,
+    phase = phase
 )
 
 private class TestTripStatus(
@@ -59,7 +61,8 @@ private class TestTripStatus(
     activeTripId: String?,
     predicted: Boolean,
     private val hasLastKnownLocation: Boolean,
-    private val hasPosition: Boolean
+    private val hasPosition: Boolean,
+    phase: String?
 ) : ObaTripStatus {
     override val serviceDate: Long = 0L
     override val isPredicted: Boolean = predicted
@@ -76,7 +79,7 @@ private class TestTripStatus(
     override val orientation: Double? = null
     override val nextStop: String? = null
     override val nextStopTimeOffset: Long? = null
-    override val phase: String? = null
+    override val phase: String? = phase
     override val status: Status? = null
     override val lastUpdateTime: Long = lastUpdateTime
     override val lastKnownLocation: Location?

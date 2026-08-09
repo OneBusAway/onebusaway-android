@@ -65,9 +65,11 @@ class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
      */
     private val fit: Fit? by lazy(LazyThreadSafetyMode.NONE) {
         val anchor = state.anchor ?: return@lazy null
-        val profile = state.schedule?.passageProfileFrom(anchor.distanceAlongTrip ?: return@lazy null)
+        val profile =
+            state.schedule?.passageProfileFrom(anchor.distanceAlongTrip ?: return@lazy null)
+                ?: return@lazy null
         val pace = PaceModel.adjustmentFor(PaceModel.lookbackFor(state))
-        profile?.let { Fit(it.warpedBy(pace), anchor.scheduleDeviation, pace.dispersionMultiplier) }
+        Fit(profile.warpedBy(pace), anchor.scheduleDeviation, pace.dispersionMultiplier)
     }
 
     private class Fit(

@@ -59,7 +59,8 @@ class FirstPassageExtrapolatorTest {
                 testTripStatus(
                     distanceAlongTrip = distance,
                     lastUpdateTime = fixMs,
-                    lastLocationUpdateTime = fixMs
+                    lastLocationUpdateTime = fixMs,
+                    phase = "in_progress"
                 ),
                 serverTimeMs = ServerTime(fixMs),
                 localTimeMs = WallTime(fixMs)

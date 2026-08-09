@@ -16,6 +16,7 @@
 package org.onebusaway.android.extrapolation
 
 import kotlin.math.exp
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import org.onebusaway.android.extrapolation.data.TripState
@@ -110,34 +111,61 @@ internal object PaceModel {
         )
     }
 
+    /** The one phase in which a vehicle's movement says anything about its travel state. */
+    private const val PHASE_IN_PROGRESS = "in_progress"
+
+    /**
+     * Distance from either end of the trip within which a stationary vehicle is assumed to be
+     * waiting rather than running. Same margin as the research pipeline's `drop_terminal_idling`.
+     */
+    private const val TERMINAL_MARGIN_METERS = 200.0
+
+    /**
+     * Whether this fix is usable as a pace observation: the vehicle is actually running its trip.
+     * The curves were fitted on fixes filtered exactly this way (`phase == "in_progress"`, terminal
+     * idling dropped); without the same filter here, a bus that sat at its terminal with AVL live
+     * and then departed on time would read as deep-slow for the next ten minutes — a population the
+     * held-out validation never scored. A null phase also fails: better to leave the adjustment at
+     * identity than to condition on windows the fit never saw.
+     */
+    private fun ObaTripStatus.isMidRoute(): Boolean {
+        if (phase != PHASE_IN_PROGRESS) return false
+        val dist = distanceAlongTrip ?: return false
+        if (dist < TERMINAL_MARGIN_METERS && scheduleDeviation <= Duration.ZERO) return false
+        val total = totalDistanceAlongTrip
+        return total == null || total <= 0 || total - dist >= TERMINAL_MARGIN_METERS
+    }
+
     /**
      * The ground the vehicle covered — in schedule terms — over the window ending at [anchor]'s
-     * GPS fix, read from the oldest fix within [MAX_LOOKBACK_SECONDS] of it, or null when no such
-     * window exists: no GPS fix on the anchor, no earlier GPS-fixed entry in range, or a position
-     * the schedule cannot place. Mirrors the research instrument exactly: fix times are
-     * `lastLocationUpdateTime` (GPS, so poll jitter doesn't leak into the elapsed time) and only
-     * real fixes participate.
+     * GPS fix, read from the oldest usable fix within [MAX_LOOKBACK_SECONDS] of it, or null when
+     * no such window exists: no GPS fix on the anchor, the anchor not mid-route, no earlier usable
+     * entry in range, or a position the schedule cannot place. Mirrors the research instrument:
+     * fix times are `lastLocationUpdateTime` (GPS, so poll jitter doesn't leak into the elapsed
+     * time), only real fixes participate, and only [isMidRoute] fixes count — with the one known
+     * divergence that the anchor's distance is the poll-time (server-extrapolated) value the whole
+     * extrapolation anchors on, where the research pipeline kept each fix's first report.
      */
     fun lookbackFor(
         history: List<ObaTripStatus>,
         anchor: ObaTripStatus,
         schedule: ObaTripSchedule
     ): PaceLookback? {
-        if (anchor.lastLocationUpdateTime <= 0) return null
+        if (anchor.lastLocationUpdateTime <= 0 || !anchor.isMidRoute()) return null
         val anchorDist = anchor.distanceAlongTrip ?: return null
+        val anchorSchedule = schedule.scheduleTimeAt(anchorDist) ?: return null
         val anchorFix = ServerTime(anchor.lastLocationUpdateTime)
         val windowStart = anchorFix - MAX_LOOKBACK_SECONDS.seconds
-        // Oldest-first, so the first entry inside the window is the longest available lookback.
+        // Oldest-first, so the first usable entry inside the window is the longest available
+        // lookback; an unusable one falls through to the next rather than giving up.
         for (entry in history) {
-            if (entry.lastLocationUpdateTime <= 0) continue
+            if (entry.lastLocationUpdateTime <= 0 || !entry.isMidRoute()) continue
             val entryFix = ServerTime(entry.lastLocationUpdateTime)
             if (entryFix < windowStart || entryFix >= anchorFix) continue
             val entryDist = entry.distanceAlongTrip ?: continue
-            val achieved =
-                (schedule.scheduleTimeAt(anchorDist) ?: return null) -
-                    (schedule.scheduleTimeAt(entryDist) ?: return null)
+            val entrySchedule = schedule.scheduleTimeAt(entryDist) ?: continue
             return PaceLookback(
-                achievedSeconds = achieved.toDouble(DurationUnit.SECONDS),
+                achievedSeconds = (anchorSchedule - entrySchedule).toDouble(DurationUnit.SECONDS),
                 elapsedSeconds = (anchorFix - entryFix).toDouble(DurationUnit.SECONDS)
             )
         }
@@ -171,6 +199,12 @@ internal data class PaceAdjustment(
  * piecewise-linear warp, so the profile stays a valid profile and the closed-form quantile
  * machinery is untouched; identity returns the same instance so the no-lookback path costs
  * nothing. The dispersion multiplier rides separately, on theta.
+ *
+ * The first knot is deliberately lifted with the rest: a warped profile starts at `extraSeconds`
+ * rather than 0, which is the model saying the vehicle may not have left the anchor yet — the
+ * lump puts an atom of probability at the anchor position. [FirstPassageDistribution] handles a
+ * non-zero first knot throughout (its cdf short-circuits at the anchor, and quantiles below the
+ * atom clamp to it).
  */
 internal fun PassageProfile.warpedBy(adjustment: PaceAdjustment): PassageProfile {
     if (adjustment == PaceModel.IDENTITY) return this

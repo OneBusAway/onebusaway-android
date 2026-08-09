@@ -45,7 +45,8 @@ private const val MEAN_SAMPLES = 64
  * band here widens with the *square root* of elapsed time.
  *
  * @param elapsedSeconds seconds since the anchoring fix
- * @param scheduleSeconds scheduled seconds from the anchor to each knot; non-decreasing, starts at 0
+ * @param scheduleSeconds scheduled seconds from the anchor to each knot; non-decreasing. Usually
+ *   starts at 0; a pace-warped profile starts above it, an atom of probability at the anchor
  * @param distances distance in meters at each knot; non-decreasing, starts at the anchor's position
  * @param theta gamma-process dispersion in seconds; the travel time to `tau` has variance `tau*theta`
  * @param meanTravelMultiplier how long a vehicle really takes relative to the schedule, in the mean

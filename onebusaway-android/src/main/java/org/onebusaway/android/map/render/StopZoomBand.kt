@@ -65,6 +65,20 @@ const val STOP_ROUTE_LABEL_Z_INDEX = 1f
 enum class StopBand { DOT, FULL, ROUTES }
 
 /**
+ * Whether this band is close enough in for the transit-centre arrivals drawer (#2107) — the zoom at
+ * which route *labels* appear is the zoom at which their *departures* are worth listing.
+ *
+ * One definition, read by both the query that asks and the sheet decision that shows the answer: if
+ * they disagreed, the drawer could gate on a band the query does not serve (an empty drawer) or the
+ * query could poll a band nothing displays (wasted requests every minute).
+ *
+ * An ordering rather than equality, so a band added above [StopBand.ROUTES] keeps the drawer instead
+ * of silently switching it off at the zoom that wants it most — the rule `stopRouteLabel` follows for
+ * the same reason.
+ */
+val StopBand.showsNearbyArrivals: Boolean get() = this >= StopBand.ROUTES
+
+/**
  * The [StopBand] a stop falls in at [zoom]: a dot below [STOP_DOT_ZOOM_THRESHOLD], its full icon from
  * there, and from [STOP_ROUTES_ZOOM_THRESHOLD] that icon plus its route label.
  */

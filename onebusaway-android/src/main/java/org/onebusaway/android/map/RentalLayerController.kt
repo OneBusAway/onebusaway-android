@@ -17,17 +17,13 @@ package org.onebusaway.android.map
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.onebusaway.android.R
@@ -61,7 +57,7 @@ import org.onebusaway.android.util.toLocation
  * so turning both on costs exactly one request; the split happens in [rentalLayersOf] after the
  * response lands.
  */
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class RentalLayerController(
     private val host: MapHost,
     private val rentalPlacesRepository: RentalPlacesRepository,
@@ -149,8 +145,7 @@ class RentalLayerController(
             combine(
                 // Settle on drag-end, matching the stop loader: hold the load until the gesture
                 // settles so a pan fires one load at drag-end, not one per intermediate camera-idle.
-                host.camera.filterNotNull().debounce(STOP_LOAD_DEBOUNCE_MS)
-                    .filter { !host.cameraInteracting.value },
+                host.settledCamera(),
                 visibleLayers,
                 // The rental server itself is an input, not a fact read once inside the collector: a
                 // region switch changes which endpoint answers, and neither the camera nor the toggles

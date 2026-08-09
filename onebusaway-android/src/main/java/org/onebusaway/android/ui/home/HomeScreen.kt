@@ -108,6 +108,12 @@ import org.onebusaway.android.ui.home.map.FocusBannerState
 import org.onebusaway.android.ui.home.map.FocusBannerViewModel
 import org.onebusaway.android.ui.home.map.MapChrome
 import org.onebusaway.android.ui.home.map.MapFeature
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsSheetHost
+import org.onebusaway.android.ui.home.nearby.NearbyArrivalsViewModel
+import org.onebusaway.android.ui.home.nearby.limitExceeded
+import org.onebusaway.android.ui.home.nearby.rememberNearbyActionsFor
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRouteRows
+import org.onebusaway.android.ui.home.nearby.rememberNearbyRowCallbacks
 import org.onebusaway.android.ui.home.weather.WeatherFeature
 import org.onebusaway.android.ui.home.weather.WeatherViewModel
 import org.onebusaway.android.ui.home.widealert.WideAlertDialog
@@ -237,6 +243,14 @@ fun HomeScreen(
                 val canUndoMapAction by homeViewModel.canUndoMapAction.collectAsStateWithLifecycle()
                 val mapRouteColors by mapViewModel.focusedRouteColors.collectAsStateWithLifecycle()
                 val focusBannerViewModel = hiltViewModel<FocusBannerViewModel>()
+                // The transit-centre drawer's query (#2107). Created here — the sheet is this screen's
+                // — and fed the settled viewport + zoom band by MapFeature, which holds the map VM.
+                val nearbyArrivalsViewModel = hiltViewModel<NearbyArrivalsViewModel>()
+                val nearbyArrivalsState by nearbyArrivalsViewModel.state.collectAsStateWithLifecycle()
+                // The map's zoom band, read back off the nearby query rather than derived a second time
+                // here: MapFeature holds the map VM and is the single producer, pushing the band into
+                // the query — so the sheet decision and the query it gates can't drift.
+                val stopBand by nearbyArrivalsViewModel.stopBand.collectAsStateWithLifecycle()
                 val favoriteRouteIds by focusBannerViewModel.favoriteRouteIds.collectAsStateWithLifecycle()
                 val favoriteStopIds by focusBannerViewModel.favoriteStopIds.collectAsStateWithLifecycle()
                 val stopFavoritesReady by focusBannerViewModel.stopFavoritesReady.collectAsStateWithLifecycle()
@@ -345,13 +359,27 @@ fun HomeScreen(
                 // above it and the nav-bar inset below (matching what the collapsed sheet actually shows).
                 val contentPeekDp = with(density) { contentPx.toDp() } + DRAG_HANDLE_HEIGHT + peekBottomPadding
 
-                // Visibility is business state: the sheet is shown (its peek slid up) iff a stop is focused.
-                // Because there's no `Hidden` drag anchor, "shown" is a plain flag that drives the animated peek
-                // height rather than a sheet drag state. The key is the focused stop id while shown (else null),
-                // so the effect reacts to focus/tab changes but NOT to a user drag (same stop -> same key).
+                // The transit-centre drawer's rows, built from the query's last response (#2107). Needed
+                // before the sheet decision below, which gates on there being rows to show.
+                val nearbyRows = rememberNearbyRouteRows(nearbyArrivalsState)
+                val nearbyActionsFor = rememberNearbyActionsFor(nearbyArrivalsState)
+                val nearbyLimitExceeded = nearbyArrivalsState.limitExceeded
+                val nearbyRowCallbacks = rememberNearbyRowCallbacks(
+                    homeViewModel = homeViewModel,
+                    rows = nearbyRows,
+                    undoViewport = { mapViewModel.viewport },
+                    onShowTrip = onShowTrip
+                )
+
+                // Visibility is business state: the sheet is shown (its peek slid up) iff it has something
+                // to show — a focused stop, or (since #2107) the routes leaving every bay in view at
+                // transit-centre zoom. Because there's no `Hidden` drag anchor, "shown" is a plain flag that
+                // drives the animated peek height rather than a sheet drag state. The key is the *identity*
+                // of what's shown, so the effect reacts to focus/mode changes but NOT to a user drag, and
+                // not to a pan that re-queries the same nearby list.
                 var sheetShown by remember { mutableStateOf(false) }
-                val showSheet = shouldShowSheet(currentFocus)
-                val sheetKey = if (showSheet) stopFocus?.stop?.id else null
+                val sheetContent = homeSheetContent(currentFocus, stopBand, nearbyRows.isNotEmpty())
+                val sheetKey = sheetContent.sheetKey
                 LaunchedEffect(sheetKey) {
                     if (sheetKey == null) {
                         // Hide: an expanded sheet is first collapsed to peek (so it then slides straight down as
@@ -362,10 +390,25 @@ fun HomeScreen(
                         }
                         sheetShown = false
                     } else {
-                        // Show immediately on focus — a fixed-fraction peek can't strand the drag, so there's no
-                        // need to wait for arrivals; the peek shows a loading spinner until they land.
+                        // Show immediately — a fixed-fraction peek can't strand the drag, so there's no need to
+                        // wait for arrivals; the peek shows a loading spinner until they land. Collapse to peek
+                        // on the way in, so switching *between* modes (a stop tapped out of the nearby list, or
+                        // back again) doesn't silently hand a full-height sheet to entirely different content.
+                        runCatching {
+                            if (sheetShown && sheetState.currentValue == SheetValue.Expanded) {
+                                sheetState.partialExpand()
+                            }
+                        }
                         sheetShown = true
                     }
+                }
+
+                // Tell the query whether the drawer is the sheet's subject: focusing a stop hands the sheet
+                // to that stop's own arrivals session, so this stops polling a list nobody can see.
+                // Keyed on the focus, not on sheetContent: the drawer's own rows feed sheetContent, so
+                // keying on that would make this effect depend on its own output.
+                LaunchedEffect(currentFocus, nearbyArrivalsViewModel) {
+                    nearbyArrivalsViewModel.setActive(currentFocus is CurrentFocus.None)
                 }
 
                 // One keyed arrivals session feeds the focus banner, alert modal, and drawer body. Keeping it
@@ -544,9 +587,16 @@ fun HomeScreen(
 
                 // Semantic map actions have HOME-local undo history. An expanded arrivals sheet still
                 // collapses first; every other back gesture restores the preceding focus and viewport.
-                BackHandler(enabled = canUndoMapAction) {
-                    val sheetAction = if (currentFocus is CurrentFocus.Stop && sheetShown) {
-                        sheetBackAction(sheetState.currentValue.toArrivalsSheetState())
+                //
+                // The expansion term is what makes this work for the nearby drawer (#2107), which shows
+                // with *no* focus and so usually has no undo history behind it: without it, back from a
+                // full-height nearby list would leave the app instead of collapsing it. At peek that
+                // drawer consumes nothing — it's ambient, with nothing behind it to go back to — so back
+                // falls through to the system (see [sheetBackAction]).
+                val sheetExpanded = sheetShown && sheetState.currentValue == SheetValue.Expanded
+                BackHandler(enabled = canUndoMapAction || sheetExpanded) {
+                    val sheetAction = if (sheetShown) {
+                        sheetBackAction(sheetState.currentValue.toArrivalsSheetState(), sheetContent)
                     } else {
                         SheetBackAction.NONE
                     }
@@ -594,13 +644,27 @@ fun HomeScreen(
                                 )
                             },
                             sheetContent = {
-                                ArrivalsSheetHost(
-                                    session = arrivalsSession,
-                                    state = arrivalsState,
-                                    selectedRoute = stopFocus?.selectedRoute,
-                                    mapRouteColors = mapRouteColors,
-                                    onContentHeight = { px -> contentPx = px }
-                                )
+                                // The nearby list only while it *is* the sheet's subject; otherwise the
+                                // per-stop panel, which stays composed through the hide animation (it
+                                // returns early on a null session) so the sheet doesn't blank mid-slide.
+                                if (sheetContent == HomeSheetContent.NearbyRoutes) {
+                                    NearbyArrivalsSheetHost(
+                                        rows = nearbyRows,
+                                        actionsFor = nearbyActionsFor,
+                                        favoriteRouteIds = favoriteRouteIds,
+                                        callbacks = nearbyRowCallbacks,
+                                        limitExceeded = nearbyLimitExceeded,
+                                        onContentHeight = { px -> contentPx = px }
+                                    )
+                                } else {
+                                    ArrivalsSheetHost(
+                                        session = arrivalsSession,
+                                        state = arrivalsState,
+                                        selectedRoute = stopFocus?.selectedRoute,
+                                        mapRouteColors = mapRouteColors,
+                                        onContentHeight = { px -> contentPx = px }
+                                    )
+                                }
                             }
                         ) {
                             // Trip-plan directions focus: the compact form replaces the top-chrome search field and
@@ -762,6 +826,7 @@ fun HomeScreen(
                                 MapFeature(
                                     mapViewModel = mapViewModel,
                                     homeViewModel = homeViewModel,
+                                    nearbyArrivalsViewModel = nearbyArrivalsViewModel,
                                     fabBottomInset = fabInsetTarget,
                                     onMapLongPress = { longPressPoint = it },
                                     onResumePinnedTrip = onResumePinnedTrip,

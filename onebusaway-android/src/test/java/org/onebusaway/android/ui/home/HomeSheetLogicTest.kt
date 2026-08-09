@@ -18,8 +18,11 @@ package org.onebusaway.android.ui.home
 import androidx.compose.ui.unit.dp
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.showsNearbyArrivals
 import org.onebusaway.android.util.GeoPoint
 
 /**
@@ -32,14 +35,87 @@ class HomeSheetLogicTest {
 
     private val stop = FocusedStop("1", "Main St", "100", GeoPoint(47.6, -122.3))
 
-    // --- shouldShowSheet ---
+    // --- homeSheetContent ---
+
+    /** The nearby drawer's preconditions, so each test below varies one thing away from them. */
+    private fun content(
+        focus: CurrentFocus = CurrentFocus.None,
+        band: StopBand = StopBand.ROUTES,
+        nearbyRowsReady: Boolean = true
+    ) = homeSheetContent(focus, band, nearbyRowsReady)
 
     @Test
-    fun `sheet shows only with a focused stop`() {
-        assertTrue(shouldShowSheet(CurrentFocus.Stop(stop)))
-        assertFalse(shouldShowSheet(CurrentFocus.Route(RouteTarget("route"))))
-        assertFalse(shouldShowSheet(CurrentFocus.BikeStation("bike")))
-        assertFalse(shouldShowSheet(CurrentFocus.None))
+    fun `a focused stop shows its own panel at any zoom`() {
+        assertEquals(HomeSheetContent.Stop("1"), content(CurrentFocus.Stop(stop), StopBand.ROUTES))
+        assertEquals(HomeSheetContent.Stop("1"), content(CurrentFocus.Stop(stop), StopBand.DOT))
+    }
+
+    /** A focused stop is a deliberate choice about one bay; it outranks the ambient nearby list. */
+    @Test
+    fun `a focused stop wins over the nearby list`() {
+        assertEquals(
+            HomeSheetContent.Stop("1"),
+            content(focus = CurrentFocus.Stop(stop), nearbyRowsReady = true)
+        )
+    }
+
+    @Test
+    fun `nearby routes show unfocused at transit-centre zoom with rows`() {
+        assertEquals(HomeSheetContent.NearbyRoutes, content())
+    }
+
+    /** Widening bands: a band added above ROUTES must keep the drawer, not switch it off. */
+    @Test
+    fun `nearby routes read the band as an ordering`() {
+        assertEquals(
+            HomeSheetContent.NearbyRoutes,
+            content(band = StopBand.entries.last())
+        )
+    }
+
+    @Test
+    fun `nothing shows below the transit-centre band`() {
+        assertEquals(HomeSheetContent.None, content(band = StopBand.FULL))
+        assertEquals(HomeSheetContent.None, content(band = StopBand.DOT))
+    }
+
+    /** Never open an empty drawer: no rows means no sheet, whatever the zoom. */
+    @Test
+    fun `nothing shows without nearby rows`() {
+        assertEquals(HomeSheetContent.None, content(nearbyRowsReady = false))
+    }
+
+    @Test
+    fun `route, bike, and directions focus show no sheet`() {
+        assertEquals(HomeSheetContent.None, content(focus = CurrentFocus.Route(RouteTarget("route"))))
+        assertEquals(HomeSheetContent.None, content(focus = CurrentFocus.BikeStation("bike")))
+        assertEquals(HomeSheetContent.None, content(focus = CurrentFocus.Directions()))
+    }
+
+    // --- sheetKey ---
+
+    /**
+     * The reveal effect keys off this, so it must NOT change as the rider pans within the nearby mode
+     * — otherwise every settled camera would re-run the reveal and fight a drag in progress.
+     */
+    @Test
+    fun `the nearby key is stable while the stop key is per stop`() {
+        assertEquals("nearby", HomeSheetContent.NearbyRoutes.sheetKey)
+        assertEquals("stop:1", HomeSheetContent.Stop("1").sheetKey)
+        assertEquals("stop:2", HomeSheetContent.Stop("2").sheetKey)
+        assertNull(HomeSheetContent.None.sheetKey)
+    }
+
+    /**
+     * The sheet decision and `NearbyArrivalsViewModel`'s query gate must read the same predicate, or
+     * the drawer can engage on a band the query never asked for — so pin the predicate itself, not
+     * each caller's copy of `>= ROUTES`.
+     */
+    @Test
+    fun `only the transit-centre band shows nearby arrivals`() {
+        assertFalse(StopBand.DOT.showsNearbyArrivals)
+        assertFalse(StopBand.FULL.showsNearbyArrivals)
+        assertTrue(StopBand.ROUTES.showsNearbyArrivals)
     }
 
     @Test
@@ -126,5 +202,30 @@ class HomeSheetLogicTest {
         assertEquals(SheetBackAction.COLLAPSE, sheetBackAction(ArrivalsSheetState.Expanded))
         assertEquals(SheetBackAction.NAVIGATE_BACK, sheetBackAction(ArrivalsSheetState.Collapsed))
         assertEquals(SheetBackAction.NONE, sheetBackAction(ArrivalsSheetState.Hidden))
+    }
+
+    /** An expanded sheet collapses to peek whatever it holds — including the nearby list. */
+    @Test
+    fun `back collapses an expanded nearby list`() {
+        assertEquals(
+            SheetBackAction.COLLAPSE,
+            sheetBackAction(ArrivalsSheetState.Expanded, HomeSheetContent.NearbyRoutes)
+        )
+    }
+
+    /**
+     * The nearby drawer is ambient, not a focus: at peek there is nothing behind it to go back to, so
+     * back must reach the system rather than being swallowed into a focus pop.
+     */
+    @Test
+    fun `back at peek passes through for the nearby list but pops a focused stop`() {
+        assertEquals(
+            SheetBackAction.NONE,
+            sheetBackAction(ArrivalsSheetState.Collapsed, HomeSheetContent.NearbyRoutes)
+        )
+        assertEquals(
+            SheetBackAction.NAVIGATE_BACK,
+            sheetBackAction(ArrivalsSheetState.Collapsed, HomeSheetContent.Stop("1"))
+        )
     }
 }

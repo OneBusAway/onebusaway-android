@@ -17,6 +17,8 @@ package org.onebusaway.android.ui.home
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.onebusaway.android.map.render.StopBand
+import org.onebusaway.android.map.render.showsNearbyArrivals
 
 /**
  * Pure decision logic for the arrivals bottom sheet, lifted out of [HomeScreen]'s `LaunchedEffect`
@@ -32,10 +34,63 @@ import androidx.compose.ui.unit.dp
  *  the toggle/back decisions below operate on. */
 enum class ArrivalsSheetState { Hidden, Collapsed, Expanded }
 
-/** The sheet is shown (peeking or full) iff a stop is focused. (HOME is always the map now — the
- *  list screens are their own destinations — so a focused stop is the only condition.) [HomeScreen]
- *  translates this into an animated peek height (the sheet has no `Hidden` drag anchor). */
-internal fun shouldShowSheet(focus: CurrentFocus): Boolean = focus is CurrentFocus.Stop
+/**
+ * What the bottom sheet is showing. Three states, not two, since #2107: at transit-centre zoom the
+ * sheet also engages with **no** stop focused, listing every route leaving every bay in view.
+ *
+ * Derived, never stored — deliberately not a [CurrentFocus] variant. `CurrentFocus` is the map's
+ * mutually-exclusive *subject*: it is persisted across process death and it drives the undo stack. The
+ * nearby list has no subject — it is precisely what shows when there is none — so a variant for it
+ * would push a state onto the back stack that Back has no meaning for, and force every `when (focus)`
+ * in the view model to grow a branch the map never renders.
+ */
+sealed interface HomeSheetContent {
+
+    /** Nothing shown; the peek is retracted. */
+    data object None : HomeSheetContent
+
+    /** One focused stop's arrivals — the original drawer. */
+    data class Stop(val stopId: String) : HomeSheetContent
+
+    /** Every route leaving every bay in view, at transit-centre zoom (#2107). */
+    data object NearbyRoutes : HomeSheetContent
+}
+
+/**
+ * The sheet's content for the current [focus], zoom [band], and whether the nearby query has rows to
+ * show ([nearbyRowsReady]).
+ *
+ * A focused stop always wins: it is a deliberate choice about one bay, and the map is already showing
+ * it selected. Otherwise the transit-centre band engages the nearby list, through the same
+ * [showsNearbyArrivals] predicate `NearbyArrivalsViewModel` gates its query on — one definition, so
+ * the sheet cannot decide to show a band the query never asked for.
+ *
+ * Gating on rows rather than on the query's state is what keeps the drawer honest: it never opens
+ * empty while loading, never opens over a viewport with no departures, and never opens at all on a
+ * region whose server can't answer the query.
+ */
+internal fun homeSheetContent(
+    focus: CurrentFocus,
+    band: StopBand,
+    nearbyRowsReady: Boolean
+): HomeSheetContent = when {
+    focus is CurrentFocus.Stop -> HomeSheetContent.Stop(focus.stop.id)
+    focus is CurrentFocus.None && band.showsNearbyArrivals && nearbyRowsReady ->
+        HomeSheetContent.NearbyRoutes
+    else -> HomeSheetContent.None
+}
+
+/**
+ * The reveal effect's key: the identity of what is shown, or null when nothing is. Stable across a pan
+ * or zoom *within* the nearby mode, so re-querying a new viewport updates the list in place instead of
+ * re-running the reveal or fighting a drag the rider is in the middle of.
+ */
+internal val HomeSheetContent.sheetKey: String?
+    get() = when (this) {
+        HomeSheetContent.None -> null
+        is HomeSheetContent.Stop -> "stop:$stopId"
+        HomeSheetContent.NearbyRoutes -> "nearby"
+    }
 
 /**
  * Bottom edge used to keep map content below the active top chrome: the stop/route focus banner, or —
@@ -78,8 +133,24 @@ internal fun toggleSheetTarget(current: ArrivalsSheetState): ArrivalsSheetState 
 /** Whether the sheet consumes back by collapsing before focus navigation proceeds. */
 enum class SheetBackAction { COLLAPSE, NAVIGATE_BACK, NONE }
 
-internal fun sheetBackAction(current: ArrivalsSheetState): SheetBackAction = when (current) {
+/**
+ * Back's effect given the sheet's resting position and what it is showing.
+ *
+ * An expanded sheet always collapses to peek first, whatever it holds. From peek it depends: a focused
+ * stop is a focus to step out of, but the **nearby list is not** — it is ambient, the thing that shows
+ * when nothing is focused, and there is nothing behind it to go back to. Swallowing Back there would
+ * strand the rider on a screen they can't leave, so it passes to the system.
+ */
+internal fun sheetBackAction(
+    current: ArrivalsSheetState,
+    content: HomeSheetContent = HomeSheetContent.None
+): SheetBackAction = when (current) {
     ArrivalsSheetState.Expanded -> SheetBackAction.COLLAPSE // full -> peek
-    ArrivalsSheetState.Collapsed -> SheetBackAction.NAVIGATE_BACK
+    ArrivalsSheetState.Collapsed ->
+        if (content == HomeSheetContent.NearbyRoutes) {
+            SheetBackAction.NONE
+        } else {
+            SheetBackAction.NAVIGATE_BACK
+        }
     ArrivalsSheetState.Hidden -> SheetBackAction.NONE // let the system handle back
 }

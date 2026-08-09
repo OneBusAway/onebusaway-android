@@ -20,12 +20,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
@@ -68,7 +65,7 @@ import org.onebusaway.android.util.toGeoPoint
  * route-header camera bias on programmatic focus is supplied by [routeActive] (the home map passes a
  * route-mode predicate; standalone stop maps leave it false).
  */
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 class StopsMapController(
     private val host: MapHost,
     private val mapDataSource: MapDataSource,
@@ -184,15 +181,7 @@ class StopsMapController(
         var lastHadResponse = false
         var lastLimitExceeded = false
 
-        host.camera
-            .filterNotNull()
-            .debounce(STOP_LOAD_DEBOUNCE_MS)
-            // Settle on drag-end: if the debounce elapses while a gesture is still in flight (the user is
-            // mid-pan, or a fling that emitted an intermediate idle is still going), drop this viewport —
-            // the gesture's terminating camera-idle re-arms the debounce and fires one load at the true
-            // drag-end. Combined with the debounce this keeps a whole pan to a single load + redraw
-            // instead of one per intermediate settle, killing the mid-pan jank.
-            .filter { !host.cameraInteracting.value }
+        host.settledCamera()
             .filterNot { next -> stopRequestFulfilled(lastLoad, lastHadResponse, lastLimitExceeded, next) }
             .flatMapLatest { snapshot ->
                 // flatMapLatest cancels an in-flight load when a newer viewport arrives, matching the

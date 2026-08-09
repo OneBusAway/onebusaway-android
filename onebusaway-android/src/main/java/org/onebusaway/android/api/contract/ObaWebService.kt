@@ -133,6 +133,32 @@ interface ObaWebService {
     ): ObaEnvelope<EntryWithReferences<ArrivalsForStop>>
 
     /**
+     * arrivals-and-departures-for-location — real-time arrivals at **every** stop in the [latSpan] /
+     * [lonSpan] box around [lat]/[lon], in one request, with the stops/routes/trips/situations in the
+     * references. The transit-centre drawer (#2107) reads a whole viewport with this instead of one
+     * request per bay.
+     *
+     * Not on developer.onebusaway.org (docs PR OneBusAway/onebusaway-docs#166 is open to add it), but
+     * implemented in onebusaway-application-modules since 2022 as
+     * `ArrivalsAndDeparturesForLocationAction` and documented in that repo's own
+     * `src/site/markdown/api/where/methods/arrivals-and-departures-for-location.md`. **Older and
+     * forked deployments answer HTTP 404** — see [org.onebusaway.android.api.data.NearbyArrivalsDataSource]
+     * for how that is read as "this region doesn't serve it".
+     *
+     * No `maxCount`: the server truncates the *arrivals* list rather than the stop list, so capping it
+     * drops whole bays out of the response instead of trimming each one. The window ([minutesAfter])
+     * is the response-size lever instead.
+     */
+    @GET("api/where/arrivals-and-departures-for-location.json")
+    suspend fun arrivalsAndDeparturesForLocation(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("latSpan") latSpan: Double,
+        @Query("lonSpan") lonSpan: Double,
+        @Query("minutesAfter") minutesAfter: Int? = null
+    ): ObaEnvelope<ArrivalsForLocationData>
+
+    /**
      * current-time — the OBA server's current time, used to sync the client clock to the server.
      * {http://developer.onebusaway.org/.../api/where/methods/current-time.html}
      */

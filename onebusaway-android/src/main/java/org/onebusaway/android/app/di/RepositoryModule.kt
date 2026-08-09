@@ -32,6 +32,7 @@ import org.onebusaway.android.api.data.DefaultStopsForRouteRepository
 import org.onebusaway.android.api.data.DefaultSurveyDataSource
 import org.onebusaway.android.api.data.DefaultTripDetailsDataSource
 import org.onebusaway.android.api.data.DefaultTripVehiclesDataSource
+import org.onebusaway.android.api.data.DefaultVehicleSearchDataSource
 import org.onebusaway.android.api.data.LocationSearchDataSource
 import org.onebusaway.android.api.data.MapDataSource
 import org.onebusaway.android.api.data.NearbyArrivalsDataSource
@@ -42,6 +43,7 @@ import org.onebusaway.android.api.data.StopsForRouteRepository
 import org.onebusaway.android.api.data.SurveyDataSource
 import org.onebusaway.android.api.data.TripDetailsDataSource
 import org.onebusaway.android.api.data.TripVehiclesDataSource
+import org.onebusaway.android.api.data.VehicleSearchDataSource
 import org.onebusaway.android.database.oba.RouteFavorites
 import org.onebusaway.android.database.oba.RouteFavoritesRepository
 import org.onebusaway.android.extrapolation.data.DefaultTripObservationFetcher
@@ -183,6 +185,11 @@ abstract class RepositoryModule {
     abstract fun bindTripVehiclesDataSource(
         impl: DefaultTripVehiclesDataSource
     ): TripVehiclesDataSource
+
+    @Binds
+    abstract fun bindVehicleSearchDataSource(
+        impl: DefaultVehicleSearchDataSource
+    ): VehicleSearchDataSource
 
     @Binds
     abstract fun bindSearchResultsRepository(impl: DefaultSearchResultsRepository): SearchResultsRepository

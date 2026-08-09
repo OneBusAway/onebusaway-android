@@ -122,6 +122,20 @@ interface ObaWebService {
     ): ObaEnvelope<EntryWithReferences<TripDetailsEntry>>
 
     /**
+     * trip-for-vehicle — the trip a vehicle is currently running, in the same shape as [tripDetails].
+     * [vehicleId] is the fully agency-prefixed id (`1_4531`); the coach number alone won't resolve.
+     * [includeTrip] puts the trip itself in the references (route id + headsign), which the plain
+     * status entry doesn't carry. A vehicle that isn't running a trip is answered with a 404 (status
+     * and envelope code alike), which is how that case is told apart from a lookup that simply failed.
+     * {http://developer.onebusaway.org/.../api/where/methods/trip-for-vehicle.html}
+     */
+    @GET("api/where/trip-for-vehicle/{vehicleId}.json")
+    suspend fun tripForVehicle(
+        @Path("vehicleId") vehicleId: String,
+        @Query("includeTrip") includeTrip: Boolean = true
+    ): ObaEnvelope<EntryWithReferences<TripDetailsEntry>>
+
+    /**
      * arrivals-and-departures-for-stop — real-time arrivals at a stop within the next
      * [minutesAfter] minutes, with the stop/routes/trips/situations in the references.
      * {http://developer.onebusaway.org/.../api/where/methods/arrivals-and-departures-for-stop.html}

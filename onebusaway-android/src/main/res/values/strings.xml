@@ -449,6 +449,16 @@
     <string name="search_route_hint">Enter a route name/number</string>
     <string name="route_shortcut">Route</string>
     <string name="stop_shortcut">Stop</string>
+    <!-- A coach-number search hit. %1$s is the number painted on the vehicle, e.g. "Coach 4531". -->
+    <string name="search_result_coach">Coach %1$s</string>
+    <!-- Names the leading glyph on a coach-number search result, for screen readers. -->
+    <string name="search_result_coach_icon">Vehicle</string>
+    <!-- Shown under a matched coach number when the server says the vehicle isn't running a trip
+         right now, so there is no ride to open. -->
+    <string name="search_result_coach_not_in_service">Not in service</string>
+    <!-- Shown under a matched coach number when looking up what the vehicle is running failed, so
+         the app can't say whether it is in service. -->
+    <string name="search_result_coach_status_unavailable">Status unavailable</string>
     <string name="recent_stops_shortcut">Recent Stops</string>
     <string name="recent_routes_shortcut">Recent Routes</string>
     <string name="starred_stops_shortcut">Starred Stops</string>

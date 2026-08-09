@@ -20,6 +20,7 @@ import javax.inject.Inject
 import org.onebusaway.android.api.adapters.DtoRoute
 import org.onebusaway.android.api.adapters.DtoTrip
 import org.onebusaway.android.api.adapters.DtoTripDetails
+import org.onebusaway.android.api.adapters.activeOrOwnTripId
 import org.onebusaway.android.api.adapters.colorArgb
 import org.onebusaway.android.api.adapters.toObaTripSchedule
 import org.onebusaway.android.api.contract.EntryWithReferences
@@ -68,7 +69,7 @@ private fun List<TripDetailsEntry>.dedupeByActiveTripKeepingBestFix(): List<Trip
     if (size < 2) return this
     val byKey = LinkedHashMap<String, TripDetailsEntry>(size)
     for (entry in this) {
-        val key = entry.status?.activeTripId?.ifBlank { null } ?: entry.tripId
+        val key = entry.activeOrOwnTripId
         val kept = byKey[key]
         if (kept == null || entry.fixRank() > kept.fixRank()) byKey[key] = entry
     }

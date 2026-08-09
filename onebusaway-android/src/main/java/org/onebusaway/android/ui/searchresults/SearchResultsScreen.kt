@@ -40,6 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onebusaway.android.R
+import org.onebusaway.android.api.data.VehicleAssignment
+import org.onebusaway.android.api.data.VehicleTrip
 import org.onebusaway.android.ui.compose.ListUiState
 import org.onebusaway.android.ui.compose.components.ListScreenScaffold
 import org.onebusaway.android.ui.compose.components.RouteRowContent
@@ -55,7 +57,8 @@ fun SearchResultsRoute(
     viewModel: SearchResultsViewModel,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit
+    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SearchResultsScreen(
@@ -64,7 +67,8 @@ fun SearchResultsRoute(
         onRetry = viewModel::retry,
         onBack = onBack,
         onRouteShowOnMap = onRouteShowOnMap,
-        onStopShowOnMap = onStopShowOnMap
+        onStopShowOnMap = onStopShowOnMap,
+        onVehicleShowOnMap = onVehicleShowOnMap
     )
 }
 
@@ -76,18 +80,20 @@ fun SearchResultsScreen(
     onRetry: () -> Unit,
     onBack: () -> Unit,
     onRouteShowOnMap: (SearchResultItem.Route) -> Unit,
-    onStopShowOnMap: (SearchResultItem.Stop) -> Unit
+    onStopShowOnMap: (SearchResultItem.Stop) -> Unit,
+    onVehicleShowOnMap: (VehicleTrip) -> Unit
 ) {
     ListScreenScaffold(
         title = title,
         onBack = onBack,
         state = state,
         onRetry = onRetry,
-        // Route and stop ids share no namespace, so prefix to keep keys unique
+        // Route, stop and vehicle ids share no namespace, so prefix to keep keys unique
         itemKey = { item ->
             when (item) {
                 is SearchResultItem.Route -> "r:${item.id}"
                 is SearchResultItem.Stop -> "s:${item.id}"
+                is SearchResultItem.Vehicle -> "v:${item.id}"
             }
         },
         emptyContent = {
@@ -104,6 +110,7 @@ fun SearchResultsScreen(
         when (item) {
             is SearchResultItem.Route -> RouteResultRow(item, onRouteShowOnMap)
             is SearchResultItem.Stop -> StopResultRow(item, onStopShowOnMap)
+            is SearchResultItem.Vehicle -> VehicleResultRow(item, onVehicleShowOnMap)
         }
     }
 }
@@ -148,22 +155,80 @@ private fun StopResultRow(
 }
 
 /**
- * A combined-search list row: a leading result-type glyph (a route or stop marker in a consistent
- * tinted column, so the two are distinguishable at a glance), the type-specific [content], and a
- * trailing divider. The whole row is clickable via [onClick].
+ * A matched vehicle: its coach number as the title, with the ride it is running (route badge +
+ * headsign) beneath, or — when there is no ride to show — why not, over the operating agency. Only a
+ * ride is something to open, so the other two rows report the match without being clickable, and they
+ * caption differently: "not in service" is the server's answer, and is not claimed for a status we
+ * couldn't look up.
+ */
+@Composable
+private fun VehicleResultRow(
+    vehicle: SearchResultItem.Vehicle,
+    onShowOnMap: (VehicleTrip) -> Unit
+) {
+    val assignment = vehicle.assignment
+    val ride = (assignment as? VehicleAssignment.OnTrip)?.trip
+    ResultRow(
+        painter = painterResource(R.drawable.ic_bus),
+        contentDescription = stringResource(R.string.search_result_coach_icon),
+        onClick = ride?.let { { onShowOnMap(it) } }
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = stringResource(R.string.search_result_coach, vehicle.coachNumber),
+                style = MaterialTheme.typography.bodyLarge
+            )
+            if (ride != null) {
+                // The route badge reads the same here as on an arrivals row, so a rider recognizes the
+                // ride before tapping into it; the headsign line is dropped when the feed omits it.
+                RouteRowContent(
+                    shortName = ride.routeShortName.orEmpty(),
+                    longName = ride.headsign,
+                    routeColor = ride.routeColor,
+                    agency = vehicle.agency
+                )
+            } else {
+                Text(
+                    text = stringResource(
+                        if (assignment == VehicleAssignment.NotInService) {
+                            R.string.search_result_coach_not_in_service
+                        } else {
+                            R.string.search_result_coach_status_unavailable
+                        }
+                    ),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = vehicle.agency,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * A combined-search list row: a leading result-type glyph (a route, stop or vehicle marker in a
+ * consistent tinted column, so they're distinguishable at a glance), the type-specific [content], and
+ * a trailing divider. The whole row is clickable via [onClick]; a null [onClick] is a row with
+ * nothing to open (a matched vehicle with no ride behind it) — kept `clickable(enabled = false)`
+ * rather than un-clickable, so it still merges its glyph, title and caption into one focusable node
+ * like every neighbouring row, and announces itself as disabled instead of as four loose fragments.
  */
 @Composable
 private fun ResultRow(
     painter: Painter,
     contentDescription: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     content: @Composable RowScope.() -> Unit
 ) {
     Column {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(enabled = onClick != null) { onClick?.invoke() }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -198,13 +263,40 @@ private fun SearchResultsScreenSuccessPreview() {
                     ),
                     SearchResultItem.Route("1_40", "40", "Downtown - Northgate", null),
                     SearchResultItem.Stop("1_100", "Broadway & E Denny Way", "S", true, 47.6, -122.3),
-                    SearchResultItem.Stop("1_101", "Stop with no direction", "", false, 47.6, -122.3)
+                    SearchResultItem.Stop("1_101", "Stop with no direction", "", false, 47.6, -122.3),
+                    SearchResultItem.Vehicle(
+                        id = "1_4531",
+                        coachNumber = "4531",
+                        agency = "King County Metro",
+                        assignment = VehicleAssignment.OnTrip(
+                            VehicleTrip(
+                                tripId = "1_800587510",
+                                routeId = "1_100263",
+                                routeShortName = "7",
+                                routeColor = 0xFDB71A.toInt(),
+                                headsign = "Prentice St Via Rainier Ave S"
+                            )
+                        )
+                    ),
+                    SearchResultItem.Vehicle(
+                        id = "1_4532",
+                        coachNumber = "4532",
+                        agency = "King County Metro",
+                        assignment = VehicleAssignment.NotInService
+                    ),
+                    SearchResultItem.Vehicle(
+                        id = "1_4533",
+                        coachNumber = "4533",
+                        agency = "King County Metro",
+                        assignment = VehicleAssignment.Unknown
+                    )
                 )
             ),
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }
@@ -219,7 +311,8 @@ private fun SearchResultsScreenEmptyPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }
@@ -234,7 +327,8 @@ private fun SearchResultsScreenLoadingPreview() {
             onRetry = {},
             onBack = {},
             onRouteShowOnMap = {},
-            onStopShowOnMap = {}
+            onStopShowOnMap = {},
+            onVehicleShowOnMap = {}
         )
     }
 }

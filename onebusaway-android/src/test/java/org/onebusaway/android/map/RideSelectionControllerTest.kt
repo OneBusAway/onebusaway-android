@@ -370,10 +370,10 @@ class RideSelectionControllerTest {
 
     @Test
     fun `the walk settles against a poll the continuation has not entered yet`() {
-        // #2206: the walk used to be seeded from `admitted`, which carries its own previous answer, so
-        // for a continuation the poll had yet to report the answer alternated — {t2}, then {} because t2
-        // now suppressed itself through the visited guard, then {t2} again — and every alternation
-        // republished back into the pass that launched it. On device that spun the main thread to an ANR.
+        // The controller-side half of #2206 (`rideContinuations`' KDoc has the mechanism, and
+        // RideQueueTest pins it): the walk is seeded from `admitted`, which carries its own previous
+        // answer, so an answer that changed every pass republished back into the pass that launched it.
+        // On device that spun the main thread to an ANR.
         val h = harness("t1" to schedule("board" to 100.0, nextTripId = "t2"), "t2" to ridden)
         h.neighbourRoutes["t2"] = "route_b"
         val interlined = ride(continuation("route_b"))

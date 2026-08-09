@@ -134,11 +134,9 @@ internal class RideSelectionController(
     fun rideChanged() {
         queue = RideQueue.Pending
         admitted = emptySet()
-        continuations = emptySet()
         visibleTrips = emptyList()
         lastInputs = null
-        continuationJob?.cancel()
-        continuationJob = null
+        clearContinuations()
     }
 
     /** Leave route mode: forget the ride entirely and stop drawing a selection. */
@@ -147,13 +145,11 @@ internal class RideSelectionController(
     private fun reset() {
         queue = RideQueue.Pending
         admitted = emptySet()
-        continuations = emptySet()
         seed = emptySet()
         visibility = RideVisibility.All
         visibleTrips = emptyList()
         lastInputs = null
-        continuationJob?.cancel()
-        continuationJob = null
+        clearContinuations()
     }
 
     /** Fresh arrivals for the ride's boarding stop: re-derive the queue against [ride]. */
@@ -233,33 +229,23 @@ internal class RideSelectionController(
      * harmless — a continuation only matters once the vehicle reaches the seam, minutes in, by which
      * time many polls have landed.
      *
-     * **The walk is seeded only from trips this poll reports** (#2206). The seam of the cycle that
-     * wedged the app is that [admitted] carries the *previous* walk's continuations forward
-     * ([admitRideTrips] deliberately doesn't intersect them with the poll, so a continuation is drawn
-     * the moment its first poll lands), so seeding from [admitted] wholesale fed each answer back in as
-     * the next question. A trip the poll is silent about — which a continuation is by definition, until
-     * the vehicle rolls onto it — has no schedule in [schedules] and so can never *extend* the walk; all
-     * it can do is suppress a result through `rideContinuations`' visited guard. That made the answer
-     * alternate (`{t2}`, then `{}` because `t2` now suppressed itself, then `{t2}` again once it fell
-     * out of the poll intersection), and since every alternation is a change, each one republished and
-     * re-entered this pass — an unbounded synchronous cycle on the main thread.
-     *
-     * Intersecting with the poll makes the seed a function of the queue and the poll alone. While one
-     * poll stands the seed can only *grow* (each pass unions the previous admitted set with the queue),
-     * and it is bounded by the trips that poll reports — so the walk reaches its fixed point in at most
-     * that many passes and the republish chain ends. Multi-hop rides are unaffected: `rideContinuations`
-     * walks its own frontier up to [RideFocus.stayAboardHops], so a chain is resolved inside one call
-     * rather than across republishes.
+     * The walk is seeded from [admitted], which carries the *previous* walk's continuations forward, so
+     * what keeps it from feeding on itself is that `rideContinuations` walks only the trips [schedules]
+     * — this poll — can answer for (#2206). Since [schedules] is the poll's own, the resolved set is a
+     * function of the queue and the poll; while one poll stands the seed can only *grow* (each pass
+     * unions the previous admitted set with the queue) and is bounded by the trips that poll reports, so
+     * the walk reaches its fixed point in at most that many passes and the republish chain below ends.
      */
     private fun refreshContinuations(ride: RideFocus, pollTrips: List<RideTrip>) {
-        if (ride.stayAboardHops == 0) return clearContinuations()
+        if (ride.stayAboardHops == 0 || admitted.isEmpty()) {
+            clearContinuations()
+            return
+        }
         val schedules = pollTrips.associate { it.tripId to it.schedule }
-        val seed = admitted.filterTo(LinkedHashSet()) { it in schedules }
-        if (seed.isEmpty()) return clearContinuations()
         continuationJob?.cancel()
         continuationJob = scope.launch {
             val resolved = rideContinuations(
-                seed = seed,
+                seed = admitted,
                 ride = ride,
                 scheduleOf = { schedules[it] },
                 neighbourRouteOf = neighbourRouteOf
@@ -278,8 +264,8 @@ internal class RideSelectionController(
     }
 
     /**
-     * Nothing to walk from. The in-flight walk is cancelled as well as the answer cleared: it belongs to
-     * a state this pass has just answered for, and letting it report would reinstate continuations
+     * Forget the continuations. The in-flight walk is cancelled as well as the answer cleared: it
+     * belongs to a state that no longer holds, and letting it report would reinstate continuations
      * nothing is riding on.
      */
     private fun clearContinuations() {

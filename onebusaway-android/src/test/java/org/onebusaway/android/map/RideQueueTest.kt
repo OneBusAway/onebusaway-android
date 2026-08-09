@@ -229,6 +229,21 @@ class RideQueueTest {
     }
 
     @Test
+    fun aSeedTripTheCallerCannotAnswerForDoesNotSuppressItsOwnContinuation() = runTest {
+        // #2206: `t2` is seeded (the caller carries its last answer forward) but this poll doesn't
+        // report it, so it can't be walked from — and a trip that can't loop has no business in the
+        // visited set. Left there it deleted the continuation `t1` legitimately resolves to, which is
+        // what let each answer decide the next question and spun the walk against one poll forever.
+        val found = continuations(
+            seed = setOf("t1", "t2"),
+            hops = 1,
+            schedules = mapOf("t1" to schedule("board" to 0.0, nextTripId = "t2")),
+            routes = mapOf("t2" to "route_b")
+        )
+        assertEquals(setOf("t2"), found)
+    }
+
+    @Test
     fun aBlockThatLinksBackOnItselfCannotLoopForever() = runTest {
         val found = continuations(
             seed = setOf("t1"),

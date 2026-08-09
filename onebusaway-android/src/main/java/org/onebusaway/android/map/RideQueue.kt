@@ -212,6 +212,16 @@ internal fun rideQueueFrom(groups: List<RideRouteGroup>, ride: RideFocus): RideQ
  * [neighbourRouteOf] resolves the neighbour trip's route (a cached lookup); a trip that resolves to
  * none terminates the walk, as does a schedule with no next trip — OBA's block-end sentinel is blanked
  * to null at the wire boundary (#2003), so it arrives here simply as "no next trip".
+ *
+ * **[seed] is narrowed to the trips [scheduleOf] can actually answer for** (#2206). It plays two roles
+ * — the walk's first frontier, and the visited set that stops a self-linking block looping — and a
+ * member with no schedule is inert as a frontier but was still live as a suppressor: it silently
+ * deleted a continuation the walk had every right to report. That is what let the answer feed back into
+ * the next question, since the caller seeds from a set that carries the *previous* answer forward
+ * (`admitRideTrips` deliberately doesn't intersect continuations with the poll, so a continuation is
+ * drawn the moment its first poll lands). A trip you cannot walk from cannot loop, so it has no
+ * business in the visited set, and dropping it makes the result a function of what the caller can
+ * currently see rather than of what it last concluded.
  */
 internal suspend fun rideContinuations(
     seed: Set<String>,
@@ -222,8 +232,10 @@ internal suspend fun rideContinuations(
     val hops = ride.stayAboardHops
     val rideRouteIds = ride.routeIds
     if (hops <= 0 || seed.isEmpty()) return emptySet()
+    val walkable = seed.filterTo(LinkedHashSet()) { scheduleOf(it) != null }
+    if (walkable.isEmpty()) return emptySet()
     val found = LinkedHashSet<String>()
-    var frontier: Set<String> = seed
+    var frontier: Set<String> = walkable
     repeat(hops) {
         // Collect the hop's candidates with the cheap synchronous guards first, then resolve them
         // together: each neighbour lookup can miss its cache and cost a round trip, and they are
@@ -231,7 +243,7 @@ internal suspend fun rideContinuations(
         val candidates = frontier.mapNotNullTo(LinkedHashSet()) { tripId ->
             scheduleOf(tripId)?.nextTripId
                 // Visited guard: a feed that links a block back on itself must not loop forever.
-                ?.takeIf { it !in seed && it !in found }
+                ?.takeIf { it !in walkable && it !in found }
         }
         val next = coroutineScope {
             candidates.map { async { it to neighbourRouteOf(it) } }

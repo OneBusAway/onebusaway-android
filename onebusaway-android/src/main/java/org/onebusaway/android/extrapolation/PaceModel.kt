@@ -15,7 +15,9 @@
  */
 package org.onebusaway.android.extrapolation
 
+import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -31,33 +33,47 @@ import org.onebusaway.android.time.ServerTime
  * schedule speed for a whole route while the extrapolated marker sails ahead and snaps back on
  * every fix.
  *
- * Measured over the same day of King County Metro AVL as the deviation curves, a vehicle's pace
- * over the last ten minutes predicts its next few minutes *beyond* what deviation says, and the
- * signal is not what a "slow bus stays slow" multiplier would suggest. The median mostly recovers;
- * what distinguishes a slow-running vehicle is that it is disproportionately likely to be losing a
- * lump of time **right now** (mid-dwell, held at a timepoint, stuck at a light) and that a sizable
- * minority stay stuck. And the effect is U-shaped: a vehicle running well *ahead* of schedule pace
- * is about to pay its holds and padding back. So the model output is three factors:
+ * **This widens the band; it does not move it.** Measured over the same day of King County Metro
+ * AVL as the deviation curves, a vehicle's own pace history carries essentially no information
+ * about its future *rate*: the rank correlation between pace over the last ten minutes and pace
+ * over the next ten is −0.06, and over the whole trip −0.004 — slightly negative, i.e. mild mean
+ * reversion. Even a bus that has run under 0.6 of schedule pace for half an hour has a median
+ * forward pace of 1.00. So no amount of conditioning on this covariate will stop an extrapolated
+ * marker running ahead of a bunched coach; what it can do is make the interval around that marker
+ * honest, which is what this does.
  *
- *  - [PaceAdjustment.extraSeconds] — a fixed lump added to the scheduled time ahead (+22s for a
- *    sustained-slow vehicle, +19s for a sustained-fast one, 0 on pace);
- *  - [PaceAdjustment.dispersionMultiplier] — the "quarter stay stuck" fat tail, entering as
- *    dispersion (×1.7 for the slow band) rather than as a mean crawl;
- *  - [PaceAdjustment.paceMultiplier] — the ongoing rate, which barely moves (0.92–1.0).
+ * What the pace of a recent window *does* say is that the vehicle is disproportionately likely to
+ * be part-way through losing a chunk of time right now — mid-dwell, held at a timepoint, stuck at
+ * a light — and that its next few minutes are less predictable than usual. Both effects are
+ * U-shaped, since a vehicle running well *ahead* of schedule pace is about to pay its holds and
+ * padding back. So the model output is two factors:
+ *
+ *  - [PaceAdjustment.extraSeconds] — a lump added to the scheduled time ahead (+17s for a
+ *    sustained-slow vehicle, +16s for a sustained-fast one, 0 on pace);
+ *  - [PaceAdjustment.dispersionMultiplier] — widened dispersion, `exp(c·|ln rho|)`, up to ×1.76.
+ *
+ * There is deliberately no rate multiplier. An earlier nine-parameter fit had one, and its fitted
+ * value sat *below* 1 — speeding a slow bus up, partly cancelling its own lump. Dropping it costs
+ * 26% of the held-out calibration gain and nothing at all in worst-cell error, and it makes the
+ * profile warp a pure translation. Neither surviving term works alone: the lump by itself makes
+ * the slow band's distribution shape worse, and dispersion by itself recovers only a seventh of
+ * the gain.
  *
  * **The conditioning variable is deliberately hard to excite.** The pace ratio is shrunk toward 1
- * by a pseudo-count (`rho = (achieved + c) / (elapsed + c)`), and below [MIN_LOOKBACK] of observed
- * window it is exactly 1 — a vehicle without a sustained observation window reproduces the
- * deviation-only model to the bit, so cold start needs no special case. Both guards are structural
- * lessons from the fit: unconstrained, the optimiser turned short lookbacks into a
- * stopped-right-now detector keyed to the dataset's 30-second polling cadence (a different defect,
- * and one that would not survive a different polling schedule).
+ * by a pseudo-count (`rho = (achieved + c) / (elapsed + c)`), clamped to the knot range so a
+ * vehicle that covered no ground at all cannot send dispersion to the moon, and below
+ * [MIN_LOOKBACK_SECONDS] of observed window it is exactly 1 — a vehicle without a sustained
+ * observation window reproduces the deviation-only model to the bit, so cold start needs no
+ * special case. The gate is a structural lesson from the fit: unconstrained, the optimiser turned
+ * short lookbacks into a stopped-right-now detector keyed to the dataset's 30-second polling
+ * cadence (a different defect, and one that would not survive a different polling schedule).
  *
- * Fitted and validated in the companion research repo (extrapolation-science, H39) against the
- * exact deviation curves this multiplies, per (horizon × deviation × pace) cell on held-out trips:
- * the slow band's 80% coverage rises from 0.61–0.69 to 0.72–0.88 across horizons, full-shape
- * calibration improves in every pace band, and the no-lookback population is unchanged by
- * construction.
+ * Fitted and validated in the companion research repo (extrapolation-science, H39 rung G) against
+ * the exact deviation curves this multiplies, scored per (horizon × deviation × pace) cell on
+ * held-out trips: the worst cell's coverage error falls from 0.478 to 0.344, and the slow band's
+ * 80% band — the bunched vehicle a user is most likely to be staring at — goes from covering
+ * 0.61–0.69 of its nominal 0.80 across horizons to 0.71–0.87. The no-lookback population is
+ * unchanged by construction.
  */
 internal object PaceModel {
 
@@ -77,24 +93,21 @@ internal object PaceModel {
     /** Shrunken pace ratio at each knot; 1.0 is on pace, below is slow. */
     private val KNOT_PACE = doubleArrayOf(0.55, 0.80, 1.00, 1.40)
 
-    /** log of the ongoing-rate multiplier at each knot; the rate itself barely moves. */
-    private val LOG_PACE_MULTIPLIER =
-        doubleArrayOf(-0.0395446208412077, -0.08060466991102952, 0.0, -0.06754487223552258)
-
-    /** log of the dispersion multiplier at each knot: the slow band's stuck minority. */
-    private val LOG_DISPERSION_MULTIPLIER =
-        doubleArrayOf(0.5275166183847799, -0.051491911099296225, 0.0, -0.007486369110162433)
-
     /** The lump of time a vehicle off its pace is likely mid-way through losing, in seconds. */
-    private val EXTRA_SECONDS =
-        doubleArrayOf(21.973541744065756, 8.536753997571957, 0.0, 19.32545235621823)
+    private val LUMP_SECONDS =
+        doubleArrayOf(17.120664749783757, 1.3239884700243196, 0.0, 15.882221328828477)
 
-    private val paceMultiplierCurve = MonotoneSpline(KNOT_PACE, LOG_PACE_MULTIPLIER)
-    private val dispersionMultiplierCurve = MonotoneSpline(KNOT_PACE, LOG_DISPERSION_MULTIPLIER)
-    private val extraSecondsCurve = MonotoneSpline(KNOT_PACE, EXTRA_SECONDS)
+    /**
+     * Dispersion widens as `exp(c·|ln rho|)` — symmetric in log pace, so one number covers both
+     * tails, and bounded at ×1.76 by the clamp on `rho`. A spline here was tried and bought
+     * nothing over this single coefficient.
+     */
+    private const val DISPERSION_COEFFICIENT = 0.9460370830512719
+
+    private val lumpCurve = MonotoneSpline(KNOT_PACE, LUMP_SECONDS)
 
     /** No adjustment: the deviation-only model, exactly. */
-    val IDENTITY = PaceAdjustment(1.0, 1.0, 0.0)
+    val IDENTITY = PaceAdjustment(1.0, 0.0)
 
     /**
      * The adjustment for a vehicle whose recent window covered [lookback], or [IDENTITY] when
@@ -102,12 +115,16 @@ internal object PaceModel {
      */
     fun adjustmentFor(lookback: PaceLookback?): PaceAdjustment {
         if (lookback == null || lookback.elapsedSeconds < MIN_LOOKBACK_SECONDS) return IDENTITY
-        val rho = (lookback.achievedSeconds.coerceAtLeast(0.0) + PSEUDO_COUNT_SECONDS) /
-            (lookback.elapsedSeconds + PSEUDO_COUNT_SECONDS)
+        // Clamped before either term is read, so a vehicle that covered no ground at all lands on
+        // the end knot rather than driving |ln rho| — and with it the dispersion — without bound.
+        val rho = (
+            (lookback.achievedSeconds.coerceAtLeast(0.0) + PSEUDO_COUNT_SECONDS) /
+                (lookback.elapsedSeconds + PSEUDO_COUNT_SECONDS)
+            )
+            .coerceIn(KNOT_PACE.first(), KNOT_PACE.last())
         return PaceAdjustment(
-            paceMultiplier = exp(paceMultiplierCurve.valueAt(rho)),
-            dispersionMultiplier = exp(dispersionMultiplierCurve.valueAt(rho)),
-            extraSeconds = extraSecondsCurve.valueAt(rho)
+            dispersionMultiplier = exp(DISPERSION_COEFFICIENT * abs(ln(rho))),
+            extraSeconds = lumpCurve.valueAt(rho)
         )
     }
 
@@ -183,10 +200,8 @@ internal object PaceModel {
 /** A recent observation window: the vehicle covered [achievedSeconds] of schedule in [elapsedSeconds]. */
 internal data class PaceLookback(val achievedSeconds: Double, val elapsedSeconds: Double)
 
-/** The three pace factors [PaceModel] reads off a vehicle's recent window. */
+/** The two pace factors [PaceModel] reads off a vehicle's recent window. */
 internal data class PaceAdjustment(
-    /** Multiplier on the scheduled time ahead — the ongoing rate. */
-    val paceMultiplier: Double,
     /** Multiplier on the gamma-process dispersion theta. */
     val dispersionMultiplier: Double,
     /** Fixed lump added to the scheduled time ahead, in seconds. */
@@ -194,24 +209,21 @@ internal data class PaceAdjustment(
 )
 
 /**
- * Applies the adjustment's mean effects to the profile: every scheduled second ahead is scaled by
- * the rate and shifted by the lump, `tau → paceMultiplier*tau + extraSeconds`. A monotone
- * piecewise-linear warp, so the profile stays a valid profile and the closed-form quantile
- * machinery is untouched; identity returns the same instance so the no-lookback path costs
- * nothing. The dispersion multiplier rides separately, on theta.
+ * Applies the adjustment's mean effect to the profile: every scheduled second ahead is pushed
+ * back by the lump, `tau → tau + extraSeconds`. A pure translation, so the profile stays a valid
+ * profile — spacing and monotonicity are untouched — and the closed-form quantile machinery needs
+ * no changes; identity returns the same instance so the no-lookback path costs nothing. The
+ * dispersion multiplier rides separately, on theta.
  *
- * The first knot is deliberately lifted with the rest: a warped profile starts at `extraSeconds`
- * rather than 0, which is the model saying the vehicle may not have left the anchor yet — the
- * lump puts an atom of probability at the anchor position. [FirstPassageDistribution] handles a
- * non-zero first knot throughout (its cdf short-circuits at the anchor, and quantiles below the
- * atom clamp to it).
+ * The first knot translates with the rest, so a warped profile starts at `extraSeconds` rather
+ * than 0. That is the model saying the vehicle may not have left the anchor yet: the lump puts an
+ * atom of probability at the anchor position. [FirstPassageDistribution] handles a non-zero first
+ * knot throughout (its cdf short-circuits at the anchor, and quantiles below the atom clamp to it).
  */
 internal fun PassageProfile.warpedBy(adjustment: PaceAdjustment): PassageProfile {
     if (adjustment == PaceModel.IDENTITY) return this
     return PassageProfile(
-        DoubleArray(scheduleSeconds.size) {
-            adjustment.paceMultiplier * scheduleSeconds[it] + adjustment.extraSeconds
-        },
+        DoubleArray(scheduleSeconds.size) { scheduleSeconds[it] + adjustment.extraSeconds },
         distances
     )
 }

@@ -15,7 +15,6 @@
  */
 package org.onebusaway.android.extrapolation
 
-import kotlin.math.ln
 import kotlin.time.Duration.Companion.seconds
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -48,24 +47,23 @@ class PaceModelTest {
     @Test
     fun `on-pace lookback is exactly identity — the rho = 1 knot is pinned`() {
         val adjustment = PaceModel.adjustmentFor(PaceLookback(600.0, 600.0))
-        assertEquals(1.0, adjustment.paceMultiplier, 0.0)
         assertEquals(1.0, adjustment.dispersionMultiplier, 0.0)
         assertEquals(0.0, adjustment.extraSeconds, 0.0)
     }
 
     @Test
-    fun `sustained slow pace costs a lump, wider dispersion, near-unit rate`() {
+    fun `sustained slow pace costs a lump and wider dispersion`() {
         // rho = (120 + c) / (600 + c): deep in the slow band.
         val adjustment = PaceModel.adjustmentFor(PaceLookback(120.0, 600.0))
         assertTrue("extra seconds, was ${adjustment.extraSeconds}", adjustment.extraSeconds > 10.0)
         assertTrue("dispersion, was ${adjustment.dispersionMultiplier}", adjustment.dispersionMultiplier > 1.3)
-        assertEquals(1.0, adjustment.paceMultiplier, 0.15)
     }
 
     @Test
     fun `sustained fast pace also costs a lump — the U shape`() {
         val adjustment = PaceModel.adjustmentFor(PaceLookback(1200.0, 600.0))
         assertTrue("extra seconds, was ${adjustment.extraSeconds}", adjustment.extraSeconds > 10.0)
+        assertTrue("dispersion, was ${adjustment.dispersionMultiplier}", adjustment.dispersionMultiplier > 1.0)
     }
 
     @Test
@@ -76,33 +74,40 @@ class PaceModelTest {
     }
 
     @Test
-    fun `adjustment matches the scipy fit for a deep-slow lookback — clamped at the first knot`() {
-        // rho = (120 + c)/(600 + c) = 0.204, below the 0.55 knot, so the curves read their
-        // first-knot values exactly. References generated with scipy from h39_params_shipped.json.
-        val adjustment = PaceModel.adjustmentFor(PaceLookback(120.0, 600.0))
-        assertEquals(0.9612270622735628, adjustment.paceMultiplier, 1e-12)
-        assertEquals(1.6947184458381417, adjustment.dispersionMultiplier, 1e-12)
-        assertEquals(21.973541744065756, adjustment.extraSeconds, 1e-12)
+    fun `a vehicle that covered no ground at all is bounded, not sent to the moon`() {
+        // rho would be 0.005 unclamped, and exp(0.946*|ln 0.005|) is ~180x. The clamp to the
+        // first knot is what keeps the dispersion finite and equal to the deep-slow case.
+        val stalled = PaceModel.adjustmentFor(PaceLookback(0.0, 600.0))
+        assertEquals(1.7604614678687607, stalled.dispersionMultiplier, 1e-12)
+        assertEquals(PaceModel.adjustmentFor(PaceLookback(120.0, 600.0)), stalled)
     }
 
     @Test
-    fun `spline interior matches scipy PCHIP — generated, not fabricated`() {
-        // rho values chosen between knots; expected values from scipy.interpolate.PchipInterpolator
-        // on the same knots (see extrapolation-science h39_params_shipped.json).
+    fun `adjustment matches the scipy fit for a deep-slow lookback — clamped at the first knot`() {
+        // rho = (120 + c)/(600 + c) = 0.204, below the 0.55 knot, so both terms read their
+        // first-knot values. References generated with scipy from h39_g_shipped_params.json.
+        val adjustment = PaceModel.adjustmentFor(PaceLookback(120.0, 600.0))
+        assertEquals(1.7604614678687607, adjustment.dispersionMultiplier, 1e-12)
+        assertEquals(17.120664749783757, adjustment.extraSeconds, 1e-12)
+    }
+
+    @Test
+    fun `curve interior matches scipy — generated, not fabricated`() {
+        // rho values chosen between knots; expected values from scipy (PchipInterpolator for the
+        // lump, exp(c*|ln rho|) for dispersion) — see extrapolation-science fit_h39_g_shipped.py.
         val cases = mapOf(
-            0.62 to Triple(-0.064795225, 0.280828724, 17.898343016),
-            0.70 to Triple(-0.077656811, 0.062421023, 13.534721639),
-            0.90 to Triple(-0.040302335, -0.025745956, 3.08388969),
-            1.20 to Triple(-0.008443109, -0.000935796, 4.213797938)
+            0.62 to Pair(10.829713413, 1.571828505),
+            0.70 to Pair(5.032578231, 1.401338321),
+            0.90 to Pair(0.371116362, 1.104811746),
+            1.20 to Pair(4.411649809, 1.188251565)
         )
         for ((rho, expected) in cases) {
             // Invert the shrinkage so adjustmentFor sees exactly this rho: with elapsed fixed at
             // 600s, achieved = rho*(600 + c) - c.
             val c = 3.005739011224008
             val adjustment = PaceModel.adjustmentFor(PaceLookback(rho * (600.0 + c) - c, 600.0))
-            assertEquals("log gk at $rho", expected.first, ln(adjustment.paceMultiplier), 1e-8)
-            assertEquals("log gtheta at $rho", expected.second, ln(adjustment.dispersionMultiplier), 1e-8)
-            assertEquals("delta at $rho", expected.third, adjustment.extraSeconds, 1e-8)
+            assertEquals("lump at $rho", expected.first, adjustment.extraSeconds, 1e-8)
+            assertEquals("dispersion at $rho", expected.second, adjustment.dispersionMultiplier, 1e-8)
         }
     }
 
@@ -241,12 +246,17 @@ class PaceModelTest {
     }
 
     @Test
-    fun `warp scales and shifts every schedule knot, distances untouched`() {
+    fun `warp translates every schedule knot, distances and spacing untouched`() {
         val profile = schedule.passageProfileFrom(500.0)!!
-        val warped = profile.warpedBy(PaceAdjustment(paceMultiplier = 0.9, dispersionMultiplier = 2.0, extraSeconds = 30.0))
+        val warped = profile.warpedBy(PaceAdjustment(dispersionMultiplier = 2.0, extraSeconds = 30.0))
         for (i in profile.scheduleSeconds.indices) {
-            assertEquals(0.9 * profile.scheduleSeconds[i] + 30.0, warped.scheduleSeconds[i], 1e-9)
+            assertEquals(profile.scheduleSeconds[i] + 30.0, warped.scheduleSeconds[i], 1e-9)
             assertEquals(profile.distances[i], warped.distances[i], 0.0)
+        }
+        // A translation cannot reorder or compress the profile — the property the closed-form
+        // quantile path depends on.
+        for (i in 1 until warped.scheduleSeconds.size) {
+            assertTrue(warped.scheduleSeconds[i] >= warped.scheduleSeconds[i - 1])
         }
     }
 }

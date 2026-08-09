@@ -41,10 +41,12 @@ import org.onebusaway.android.time.WallTime
  * worst (horizon x deviation) cell's coverage error from 0.278 to 0.089, and the early-vehicle band
  * from 0.602 to 0.799 against a nominal 0.800.
  *
- * On top of that, a vehicle observed holding an unusual pace over a sustained recent window — the
- * death-spiral bus of issue #2202 — gets [PaceModel]'s adjustment: a lump of scheduled time and a
- * dispersion factor, baked into the profile and theta once per snapshot. Without a long enough
- * window the adjustment is identity, so this changes nothing for a freshly opened trip.
+ * On top of that, a vehicle observed holding an unusual pace over a sustained recent window gets
+ * [PaceModel]'s adjustment — a lump of scheduled time and a widened dispersion, baked into the
+ * profile and theta once per snapshot. That widens the interval rather than moving it, which is
+ * all the covariate supports: a vehicle's own pace history does not predict its future rate (see
+ * [PaceModel]). Without a long enough window the adjustment is identity, so this changes nothing
+ * for a freshly opened trip.
  *
  * Known residual, measured and left in deliberately: the left tail is a few points heavier than the
  * model at every horizon — trips that fall badly behind are more common than a single gamma process
@@ -60,8 +62,8 @@ class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
      *
      * The profile starts from where the vehicle **actually is**, not its `scheduledDistanceAlongTrip`:
      * the model asks how long the road ahead should take, which is a property of that road, so a late
-     * bus is still governed by the stretch it currently occupies. The pace adjustment's mean effects
-     * are baked into the profile here ([warpedBy]); its dispersion factor rides on theta below.
+     * bus is still governed by the stretch it currently occupies. The pace adjustment's lump is baked
+     * into the profile here ([warpedBy]); its dispersion factor rides on theta below.
      */
     private val fit: Fit? by lazy(LazyThreadSafetyMode.NONE) {
         val anchor = state.anchor ?: return@lazy null

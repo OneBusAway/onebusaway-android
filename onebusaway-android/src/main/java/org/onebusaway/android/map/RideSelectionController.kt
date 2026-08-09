@@ -229,12 +229,12 @@ internal class RideSelectionController(
      * harmless — a continuation only matters once the vehicle reaches the seam, minutes in, by which
      * time many polls have landed.
      *
-     * The walk is seeded from [admitted], which carries the *previous* walk's continuations forward, so
-     * what keeps it from feeding on itself is that `rideContinuations` walks only the trips [schedules]
-     * — this poll — can answer for (#2206). Since [schedules] is the poll's own, the resolved set is a
-     * function of the queue and the poll; while one poll stands the seed can only *grow* (each pass
-     * unions the previous admitted set with the queue) and is bounded by the trips that poll reports, so
-     * the walk reaches its fixed point in at most that many passes and the republish chain below ends.
+     * The walk is seeded from [admitted], which carries its own previous answer forward; what keeps that
+     * from feeding on itself is that `rideContinuations` narrows the seed to what [schedules] can answer
+     * for — see its KDoc for why (#2206). What follows from it *here* is the bound on the republish
+     * chain below: [schedules] is this poll's own, so while one poll stands the seed can only *grow*
+     * (each pass unions the previous admitted set with the queue) and is bounded by the trips that poll
+     * reports — the walk reaches its fixed point in at most that many passes.
      */
     private fun refreshContinuations(ride: RideFocus, pollTrips: List<RideTrip>) {
         if (ride.stayAboardHops == 0 || admitted.isEmpty()) {

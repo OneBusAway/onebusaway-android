@@ -233,7 +233,6 @@ internal suspend fun rideContinuations(
     val rideRouteIds = ride.routeIds
     if (hops <= 0 || seed.isEmpty()) return emptySet()
     val walkable = seed.filterTo(LinkedHashSet()) { scheduleOf(it) != null }
-    if (walkable.isEmpty()) return emptySet()
     val found = LinkedHashSet<String>()
     var frontier: Set<String> = walkable
     repeat(hops) {

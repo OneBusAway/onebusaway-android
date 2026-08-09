@@ -54,6 +54,8 @@ fun ArrivalsPanel(
     listState: LazyListState,
     handler: ArrivalActionHandler,
     mapRouteColors: Map<RouteDirectionKey, Int> = emptyMap(),
+    // The selected trip's band tint (#1990), or null when no vehicle is selected.
+    selectedTripBandColor: Int? = null,
     selectedRowKey: String? = null,
     selectedRouteId: String? = null,
     selectedRouteNames: List<String> = emptyList(),
@@ -89,6 +91,7 @@ fun ArrivalsPanel(
                     // only recompose that one item, not this whole panel.
                     loadingMore = viewModel.loadingMore,
                     mapRouteColors = mapRouteColors,
+                    selectedTripBandColor = selectedTripBandColor,
                     selectedRowKey = selectedRowKey,
                     selectedRouteId = selectedRouteId,
                     selectedRouteNames = selectedRouteNames,

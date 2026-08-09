@@ -192,6 +192,10 @@ class MapLibreRenderer(
     // each vehicle-set reconcile, so a scale change can re-stamp the retained markers' icons.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
+
+    // The fill each trip marker's icon is currently stamped with, so a role is re-stamped only when its
+    // band colour changes (#1990); dropped with the marker.
+    private val tripMarkerFills = HashMap<String, Int>()
     private val bandPolylines = mutableListOf<Polyline>()
     private var lastVehicleResponse: RouteTrips? = null
 
@@ -211,7 +215,22 @@ class MapLibreRenderer(
     private var dotFixTimeMs: Long = 0L
     private var dotAgeSeconds: Long = -1L
 
+    // The fill the dot's icon is currently stamped with (the band's colour, #1990), so it's re-stamped
+    // only when that colour actually changes. 0 whenever there is no dot — not a colour any fill can be.
+    private var dotFillColor: Int = 0
+
     private val iconFactory = IconFactory.getInstance(context)
+
+    // Trip-marker icons by (drawable, fill). Cached because every `iconFactory.fromBitmap` carries a full
+    // ARGB copy of its bitmap and mints a fresh native sprite id, and these sit on the per-frame path.
+    //
+    // An LRU rather than a plain map, for the same reason [routeBadgeIcons] is one: the fill dimension of
+    // the key is the band's colour, which turns over with every route and every stop-focus adjacency slot
+    // the session shows, so unbounded this retains a bitmap and a sprite per colour it ever drew. Only one
+    // selection exists at a time, so the live working set is two entries — the slack is what keeps
+    // flipping between recently-visited selections off the render path. Evicting is safe for the reason it
+    // is there: a marker holds its own reference to the Icon it was given. Freed in [dispose].
+    private val tripCircleIcons = LruCache<Pair<Int, Int>, Icon>(TRIP_ICON_CACHE_SIZE)
 
     // The one-shot "ping" ripple (#1764): a ring-bitmap marker grown + faded over [MapPing.DURATION],
     // recentered each frame on trip [pingTripId]'s vehicle marker so it follows the icon as it settles (the
@@ -386,7 +405,10 @@ class MapLibreRenderer(
      * across a fresh fix via [nowMs]); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
-        moveVehicles(vehicles, nowMs)
+        // The dot is the band's origin marker, so it is filled with the band's colour (#1990) — carried on
+        // the overlay even when that frame has no band to draw. Only a selection with no overlay at all
+        // (nothing selected, so no dot either) reaches the default.
+        moveVehicles(vehicles, overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR, nowMs)
         updateTripOverlay(overlay, nowMs)
     }
 
@@ -407,6 +429,8 @@ class MapLibreRenderer(
         staticAnnotations.clear()
         vehicleMarkersByTripId.clear()
         tripMarkersByRole.clear()
+        tripMarkerFills.clear()
+        tripCircleIcons.evictAll()
         bandPolylines.clear()
         vehicleByMarker.clear()
         rentalByMarker.clear()
@@ -491,14 +515,14 @@ class MapLibreRenderer(
     // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
     // since #2194 removed that arrow, nothing about the icon varies between polls (see
     // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
-    private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
+    private fun moveVehicles(vehicles: MapVehicles?, dotFill: Int, nowMs: Long) {
         for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(
                 vehicleSmoother.displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs).toLatLng()
             )
         }
-        updateMostRecentDataDot(nowMs)
+        updateMostRecentDataDot(dotFill, nowMs)
     }
 
     /**
@@ -511,8 +535,12 @@ class MapLibreRenderer(
      * As on Google, the marker is touched only on an actual change or while a fix correction is still
      * settling — never an unconditional per-tick set, which would redraw an open bubble; the age is
      * refreshed only while the bubble is closed.
+     *
+     * [fillColor] is the uncertainty band's colour: the dot marks the band's origin, so it is filled with
+     * it (#1990), and re-stamped whenever that colour changes — which is only when the selected trip's
+     * line recolours, not per tick.
      */
-    private fun updateMostRecentDataDot(nowMs: Long) {
+    private fun updateMostRecentDataDot(fillColor: Int, nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
         // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
         // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
@@ -529,6 +557,7 @@ class MapLibreRenderer(
             dotSmoother.retainOnly(emptySet())
             dotSelectedId = null
             dotAgeSeconds = -1L
+            dotFillColor = 0
             return
         }
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
@@ -537,11 +566,12 @@ class MapLibreRenderer(
             mostRecentDataMarker = map.addMarker(
                 MarkerOptions()
                     .position(target.toLatLng())
-                    .icon(dataAgeIcon)
+                    .icon(dataAgeIcon(fillColor))
                     .title(context.getString(R.string.marker_most_recent_data))
                     .snippet(formatDataAge(context.resources, ageSeconds))
             )
             dotAgeSeconds = ageSeconds
+            dotFillColor = fillColor
             // The dot is created only after a no-selection gap cleared the smoother, so just prime it
             // (records the shown position; no correction).
             dotSmoother.prime(selectedId, target, selected.fixTimeMs)
@@ -556,6 +586,10 @@ class MapLibreRenderer(
             if (ageSeconds != dotAgeSeconds && !existing.isInfoWindowShown) {
                 existing.snippet = formatDataAge(context.resources, ageSeconds)
                 dotAgeSeconds = ageSeconds
+            }
+            if (fillColor != dotFillColor) {
+                existing.icon = dataAgeIcon(fillColor)
+                dotFillColor = fillColor
             }
         }
         dotSelectedId = selectedId
@@ -645,16 +679,29 @@ class MapLibreRenderer(
             map.removeAnnotation(bandPolylines.removeAt(bandPolylines.size - 1))
         }
         // The fast-estimate marker moves in place (keeping any open info window); the fix instant drives
-        // the smoother's correction.
-        updateTripMarker("fast", overlay?.fastEstimatePoint, fastEstimateIcon, "Fast estimate", overlay?.fixTimeMs ?: 0L, nowMs)
+        // the smoother's correction. Its disc is filled with the band's own colour (#1990).
+        updateTripMarker(
+            "fast",
+            overlay?.fastEstimatePoint,
+            ::fastEstimateIcon,
+            overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
+            "Fast estimate",
+            overlay?.fixTimeMs ?: 0L,
+            nowMs
+        )
         // Drop smoother state for the marker's role once it's gone (overlay went null on deselect).
         tripSmoother.retainOnly(tripMarkersByRole.keys)
     }
 
+    /**
+     * [icon] resolves lazily from [fillColor] so no icon is built for a role with nothing to draw, and
+     * the marker is re-stamped only when its fill actually changes (#1990) — never per frame.
+     */
     private fun updateTripMarker(
         role: String,
         point: GeoPoint?,
-        icon: Icon,
+        icon: (Int) -> Icon,
+        fillColor: Int,
         title: String,
         fixTimeMs: Long,
         nowMs: Long
@@ -664,28 +711,37 @@ class MapLibreRenderer(
             existing?.let {
                 map.removeAnnotation(it)
                 tripMarkersByRole.remove(role)
+                tripMarkerFills.remove(role)
             }
             return
         }
         if (existing == null) {
             tripMarkersByRole[role] =
-                map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon).title(title))
+                map.addMarker(MarkerOptions().position(point.toLatLng()).icon(icon(fillColor)).title(title))
+            tripMarkerFills[role] = fillColor
             tripSmoother.prime(role, point, fixTimeMs)
         } else {
+            if (tripMarkerFills[role] != fillColor) {
+                existing.icon = icon(fillColor)
+                tripMarkerFills[role] = fillColor
+            }
             existing.moveTo(tripSmoother.displayPosition(role, point, fixTimeMs, nowMs).toLatLng())
             if (existing.title != title) existing.title = title
         }
     }
 
-    private val fastEstimateIcon: Icon by lazy {
-        iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate))
-    }
+    // Both trip-marker discs are filled with the band's colour, and both glyphs are tinted to read on it
+    // by the shared bitmap factory — so the band, its origin and its leading end are visibly one object
+    // (#1990). Each distinct fill mints a native sprite id, so they're cached rather than rebuilt.
+    private fun fastEstimateIcon(fillColor: Int): Icon = tripCircleIcon(R.drawable.ic_fast_estimate, fillColor)
 
-    // The signal glyph is light, so tint it gray to read on the white disc (the most-recent-data dot).
-    private val dataAgeIcon: Icon by lazy {
-        iconFactory.fromBitmap(
-            TripMarkerBitmaps.circle(context, R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
-        )
+    private fun dataAgeIcon(fillColor: Int): Icon = tripCircleIcon(R.drawable.ic_signal_indicator, fillColor)
+
+    private fun tripCircleIcon(drawableRes: Int, fillColor: Int): Icon {
+        val key = drawableRes to fillColor
+        return tripCircleIcons.get(key)
+            ?: iconFactory.fromBitmap(TripMarkerBitmaps.circle(context, drawableRes, fillColor))
+                .also { tripCircleIcons.put(key, it) }
     }
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker)
 
@@ -747,6 +803,11 @@ class MapLibreRenderer(
         // either theme. Matches the Google flavor's DESCRIPTOR_CACHE_SIZE, which covers the same badges
         // alongside its other icons.
         private const val BADGE_ICON_CACHE_SIZE = 256
+
+        // Two glyphs (the fast estimate, the most-recent-data dot) across the last several band colours.
+        // Far smaller than the badge cache because only one vehicle is selected at a time, so exactly two
+        // of these are ever on the map at once; this is reuse across selections, not a working set.
+        private const val TRIP_ICON_CACHE_SIZE = 16
     }
 }
 

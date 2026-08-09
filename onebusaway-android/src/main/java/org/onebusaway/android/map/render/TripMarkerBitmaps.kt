@@ -19,46 +19,74 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import androidx.annotation.VisibleForTesting
+import androidx.collection.LruCache
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 
 /**
- * Circular trip-marker bitmaps: a dark-stroked, opaque-white-filled disc with a drawable centered
- * inside (ported from the feature's Google-only MapIconUtils.createCircleIcon, lifted to `src/main` so
- * both flavors share it — the Google adapter wraps the Bitmap in a `BitmapDescriptor`, maplibre in an
- * `Icon`). Used for the trip map's extrapolated-vehicle / fast-estimate / last-fix markers. The fill is
- * fully opaque: these markers overlap and move every frame, so a translucent fill makes the blended
- * overlap shimmer. Cached per (drawable, tint).
+ * Circular trip-marker bitmaps: a ringed, opaque-filled disc with a drawable centered inside (ported
+ * from the feature's Google-only MapIconUtils.createCircleIcon, lifted to `src/main` so both flavors
+ * share it — the Google adapter wraps the Bitmap in a `BitmapDescriptor`, maplibre in an `Icon`). Used
+ * for the trip map's extrapolated-vehicle / fast-estimate / last-fix markers. The fill is fully opaque:
+ * these markers overlap and move every frame, so a translucent fill makes the blended overlap shimmer.
+ * Cached per (drawable, fill).
+ *
+ * The **fill is the caller's** — the selected trip's markers take the uncertainty band's own colour, so
+ * a rider reads the band, the fix it starts at and the fast estimate it ends at as one data object
+ * rather than three unrelated map decorations (#1990). Everything drawn *on* the disc (the ring and the
+ * glyph) is then whichever of black/white reads against that fill ([MarkerRendering.legibleOn]), the
+ * same call every other route-coloured map element makes — so no fill can render a marker's own ring or
+ * glyph invisible, as a fixed gray pair chosen for a white disc could.
  */
 object TripMarkerBitmaps {
 
-    /** The stroke + tint color (gray); callers tint a light glyph (e.g. the signal indicator) with it. */
-    const val STROKE_COLOR = 0xFF616161.toInt()
+    /** The default disc fill, for a marker with no data colour of its own to take. */
+    const val DEFAULT_FILL_COLOR = 0xFFFFFFFF.toInt()
+
+    private const val OPAQUE_ALPHA = 0xFF000000.toInt()
 
     private const val ICON_SIZE_DP = 28
-    private const val ICON_PADDING_DP = 4
-    private const val STROKE_WIDTH_DP = 2f
 
-    // Fully opaque: overlapping, per-frame-moving estimate markers blend visibly with a translucent fill.
-    private const val FILL_COLOR = 0xFFFFFFFF.toInt()
+    @VisibleForTesting
+    internal const val ICON_PADDING_DP = 4
 
-    private val cache = HashMap<Long, Bitmap>()
+    @VisibleForTesting
+    internal const val STROKE_WIDTH_DP = 2f
 
     /**
-     * A circular marker for [drawableRes] centered on the disc. [tintColor] tints the glyph when
-     * non-zero (use it for light/white glyphs like the signal indicator); 0 keeps its intrinsic color.
+     * Bounded in **bytes**, not entries, for the reason [VehicleBitmaps]' cache is: a disc is ~28 KiB at
+     * xxhdpi and ~50 KiB at xxxhdpi, so an entry count would mean wildly different memory on different
+     * devices for the same nominal size.
+     *
+     * An LRU rather than the plain map this was, because taking the caller's fill turned a fixed key
+     * space into an open one: it used to be two drawables x two tints — four bitmaps, for the life of the
+     * process — and is now two drawables x however many band colours a session ever shows, which is a
+     * fresh hue per route and per stop-focus adjacency slot. This is an `object`, so unbounded it would
+     * outlive every renderer that filled it. 512 KiB holds ~18 discs at xxhdpi, against a working set of
+     * exactly two (one selection's dot + fast estimate); the slack is what keeps flipping between
+     * recently-visited selections off the render path. Overflow only costs a re-render.
      */
-    fun circle(context: Context, drawableRes: Int, tintColor: Int = 0): Bitmap {
-        val key = (drawableRes.toLong() shl 32) or (tintColor.toLong() and 0xFFFFFFFFL)
-        return cache.getOrPut(key) { draw(context, drawableRes, tintColor) }
+    private val cache = object : LruCache<Long, Bitmap>(MAX_CACHE_BYTES) {
+        override fun sizeOf(key: Long, value: Bitmap): Int = value.allocationByteCount
     }
 
-    private fun draw(context: Context, drawableRes: Int, tintColor: Int): Bitmap {
+    private const val MAX_CACHE_BYTES = 512 * 1024
+
+    /** A circular marker for [drawableRes] centered on a disc filled [fillColor] (forced opaque). */
+    fun circle(context: Context, drawableRes: Int, fillColor: Int = DEFAULT_FILL_COLOR): Bitmap {
+        val opaqueFill = fillColor or OPAQUE_ALPHA
+        val key = (drawableRes.toLong() shl 32) or (opaqueFill.toLong() and 0xFFFFFFFFL)
+        return cache.get(key) ?: draw(context, drawableRes, opaqueFill).also { cache.put(key, it) }
+    }
+
+    private fun draw(context: Context, drawableRes: Int, fillColor: Int): Bitmap {
         val density = context.resources.displayMetrics.density
         val sizePx = (ICON_SIZE_DP * density).toInt()
         val padding = (ICON_PADDING_DP * density).toInt()
         val strokeWidth = STROKE_WIDTH_DP * density
         val center = sizePx / 2f
+        val onFill = MarkerRendering.legibleOn(fillColor)
 
         val bitmap = createBitmap(sizePx, sizePx)
         val canvas = Canvas(bitmap)
@@ -68,7 +96,7 @@ object TripMarkerBitmaps {
             center,
             center - strokeWidth / 2f,
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = STROKE_COLOR
+                color = onFill
                 style = Paint.Style.STROKE
                 this.strokeWidth = strokeWidth
             }
@@ -78,13 +106,15 @@ object TripMarkerBitmaps {
             center,
             center - strokeWidth,
             Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = FILL_COLOR
+                color = fillColor
                 style = Paint.Style.FILL
             }
         )
 
-        ContextCompat.getDrawable(context, drawableRes)?.apply {
-            if (tintColor != 0) setTint(tintColor)
+        // mutate(), because the glyph is now tinted per fill colour: without it the tint would be written
+        // into the shared ConstantState and recolour every other use of the same drawable.
+        ContextCompat.getDrawable(context, drawableRes)?.mutate()?.apply {
+            setTint(onFill)
             setBounds(padding, padding, sizePx - padding, sizePx - padding)
             draw(canvas)
         }

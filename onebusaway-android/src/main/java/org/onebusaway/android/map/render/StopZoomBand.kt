@@ -40,8 +40,11 @@ const val STOP_ROUTES_ZOOM_THRESHOLD = 17.5f
 const val STOP_FOCUS_ROUTE_MIN_SCALE = 0.3f
 
 /**
- * Marker-group ordering. Native map SDKs always place markers above route polylines, but adjacent
- * route stops must still win every marker overlap; favorites remain above ordinary nearby stops.
+ * Marker-group ordering **within the stop group**. Native map SDKs always place markers above route
+ * polylines, but adjacent route stops must still win every overlap with another *stop*; favorites remain
+ * above ordinary nearby stops. Vehicles and the selected trip's estimate markers deliberately outrank the
+ * whole group — see the Google renderer's `VEHICLE_Z_INDEX`, which derives from
+ * [STOP_ROUTE_LABEL_Z_INDEX] for exactly that reason.
  */
 fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
     routeStop -> 0.75f
@@ -53,6 +56,11 @@ fun stopZIndex(routeStop: Boolean, favorite: Boolean): Float = when {
  * A stop's route label (#2107) draws above every stop marker — including the enlarged focused one, whose
  * icon would otherwise cover the label of the stop behind it. Below the route labels a selected line
  * carries (`ROUTE_BADGE_Z_INDEX`), which name the map's current subject rather than what's merely nearby.
+ *
+ * Being the highest thing the stop group draws, this is also the group's **ceiling** for anything that has
+ * to stay tappable over a stop: the label is a wide pill floating above its point and is itself a tap
+ * target for that stop, so clearing [stopZIndex] alone doesn't clear the group. The renderers place the
+ * vehicle + trip-estimate markers relative to this constant rather than to a literal.
  */
 const val STOP_ROUTE_LABEL_Z_INDEX = 1f
 

@@ -273,6 +273,13 @@ class MapViewModel @Inject constructor(
     val focusedRouteColors: StateFlow<Map<RouteDirectionKey, Int>> get() = routeController.focusedRouteColors
 
     /**
+     * The selected trip's uncertainty-band tint, or null when no vehicle is selected — see
+     * [RouteMapController.selectedTripBandColor]. The arrivals list outlines the focused trip's ETA pill
+     * in it, so the pill and the band on the map read as one object (#1990).
+     */
+    val selectedTripBandColor: StateFlow<Int?> get() = routeController.selectedTripBandColor
+
+    /**
      * Suspend map content padding while the rider aims the centre crosshair at a From/To point. The
      * captured point is the camera target, which padding would move off the crosshair — see
      * [org.onebusaway.android.map.render.MapRenderState.setCenterPickActive].

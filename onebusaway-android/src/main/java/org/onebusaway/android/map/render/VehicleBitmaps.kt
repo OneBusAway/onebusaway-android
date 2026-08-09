@@ -267,10 +267,17 @@ object VehicleBitmaps {
      * line with, which is *not* always its GTFS color; see there — under the same
      * [DEFAULT_ROUTE_LINE_COLOR] fallback [RoutePolyline.resolvedColor] applies, so a vehicle and its
      * line always match.
+     *
+     * The one exception is the **selected** vehicle, which takes [VehicleMarker.bandColor] instead: it is
+     * the median estimate at the middle of its own uncertainty band, and drawing it in the band's colour
+     * (as the two markers bounding that band are) says so (#1990). Identity is not lost with it — the
+     * selected vehicle is the one the rider just picked out, and the band beneath it is drawn along its
+     * line. Liveness still wins over both: a scheduled vehicle stays gray, which is also why a selection
+     * can only reach this branch while it is live, exactly as the band itself can.
      */
     @VisibleForTesting
     internal fun discColor(context: Context, vehicle: VehicleMarker): Int = if (vehicle.isRealtime) {
-        vehicle.routeColor ?: DEFAULT_ROUTE_LINE_COLOR
+        vehicle.bandColor ?: vehicle.routeColor ?: DEFAULT_ROUTE_LINE_COLOR
     } else {
         ContextCompat.getColor(context, ScheduleDeviation.Status.SCHEDULED.displayColorRes)
     }

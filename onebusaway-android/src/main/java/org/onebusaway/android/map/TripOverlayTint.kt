@@ -27,10 +27,13 @@ import org.onebusaway.android.map.render.TripOverlay
 // map's selected-vehicle overlay ([RouteMapController]).
 
 /**
- * Produces a color that contrasts with [color] (the route line's color), so the uncertainty band reads
- * against the shape it's drawn over. Rotating the hue 180° works for a saturated line, but a
- * near-grayscale line (gray/black/white) has no meaningful hue to rotate — there we flip the value
- * (dark→white, light→black) instead so the band still stands out.
+ * Produces a color that contrasts with [color] — the color the line is **drawn** in, not the agency's
+ * raw GTFS color (#1990): the band is drawn over that line, and the map puts every route color through
+ * its own line policy ([mapRouteLineColor]) or a stop-focus adjacency hue before drawing it, so
+ * contrasting the wire color contrasts something that isn't on screen. Rotating
+ * the hue 180° works for a saturated line, but a near-grayscale line (gray/black/white) has no
+ * meaningful hue to rotate — there we flip the value (dark→white, light→black) instead so the band
+ * still stands out.
  */
 internal fun contrastingColor(color: Int): Int {
     val hsv = FloatArray(3)
@@ -47,6 +50,9 @@ internal fun contrastingColor(color: Int): Int {
  * Composites the display [bandColorArgb] onto this color-free [TripExtrapolation] to produce the render
  * [TripOverlay]: each band slice's model weight becomes the hue's alpha. Only the band + fast-estimate
  * marker are carried — the route map draws the live vehicle disc and the most-recent-data dot itself (#1752).
+ *
+ * The undimmed color rides along as [TripOverlay.markerColorArgb], because the markers that bound the
+ * band are filled with it (#1990) and a marker takes the band's *color*, not one slice's weight.
  */
 internal fun TripExtrapolation.toTripOverlay(bandColorArgb: Int): TripOverlay {
     val baseRgb = bandColorArgb and 0x00FFFFFF
@@ -56,6 +62,7 @@ internal fun TripExtrapolation.toTripOverlay(bandColorArgb: Int): TripOverlay {
             val alpha = (slice.weight.coerceIn(0f, 1f) * 255f).roundToInt()
             BandSegment(slice.points, (alpha shl 24) or baseRgb)
         },
-        fixTimeMs = fixTimeMs
+        fixTimeMs = fixTimeMs,
+        markerColorArgb = bandColorArgb or 0xFF000000.toInt()
     )
 }

@@ -43,6 +43,7 @@ import org.onebusaway.android.map.render.RouteContinuation
 import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineWidthProfile
 import org.onebusaway.android.map.render.RoutePolyline
+import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.models.FocusedTrip
 import org.onebusaway.android.models.ObaRoute
@@ -353,6 +354,28 @@ class RouteMapController(
     // by collectLatest either way. Cancelled with the route session in [stop].
     private var selectionJob: Job? = null
 
+    // The colour the last publish drew the selected trip's line in — the uncertainty band's contrast
+    // basis, so the band contrasts the line that is on screen rather than the route's wire colour
+    // (#1990). Recorded from the plan ([RouteMapPresentation.selectedTripColor]) rather than re-derived,
+    // and falling back to the shown route's colour on a publish that drew no selected-trip line, since
+    // the band then lies over the base route instead. Read per frame by [showSelectionOverlay]'s sampler,
+    // so a republish that recolours the line recolours the band with it.
+    private var selectedTripLineColor: Int = DEFAULT_ROUTE_LINE_COLOR
+
+    private val _selectedTripBandColor = MutableStateFlow<Int?>(null)
+
+    /**
+     * The selected trip's uncertainty-band tint — the contrast of the line as drawn ([contrastingColor])
+     * — or null when no vehicle is selected.
+     *
+     * Published because the band's colour is no longer only the map's: the arrivals row outlines the
+     * focused trip's ETA pill in it (#1990), so the pill and the band it names are one object. Exposed as
+     * the resolved tint rather than as the line colour it derives from, so there is exactly one place
+     * that decides what contrasts what — a second caller applying [contrastingColor] itself would be free
+     * to apply it to a different basis, which is the bug this issue started as.
+     */
+    val selectedTripBandColor: StateFlow<Int?> = _selectedTripBandColor.asStateFlow()
+
     // A pending arrivals ETA-pill focus: the trip id whose live vehicle should be fit together with the
     // originating stop once it appears. Held until the first vehicle set arrives, then resolved once by
     // [tryFocusVehicle]: if a marker for the trip is on the map the camera fits the vehicle↔stop box;
@@ -433,6 +456,10 @@ class RouteMapController(
             renderState.selectedVehicleTripId.collectLatest { tripId ->
                 showSelectionOverlay(tripId)
                 showSelectionPresentation(tripId)
+                // Re-stamp the vehicle discs: the newly selected one takes the band's colour and the
+                // previously selected one gives it back (#1990). After the presentation, because that is
+                // what settles [selectedTripLineColor] — the tint's basis — for this selection.
+                publishVehicleSet()
                 showContinuation(tripId)
             }
         }
@@ -595,8 +622,12 @@ class RouteMapController(
         // other (#2149).
         val colors = RouteColorInputs(poll, extraPolls, stopFocus.routeColors.value, palette)
         refreshRouteColorMemo(colors)
+        // Resolved once per sample, not per vehicle: at most one vehicle is selected, and the tint is an
+        // HSV round trip we'd otherwise repeat for every marker on the 20 Hz sampler.
+        val selectedId = renderState.selectedVehicleTripId.value
+        val bandColor = selectedId?.let { contrastingColor(selectedTripLineColor) }
         return MapVehicles(
-            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors) },
+            markers = vehicles.map { (vehicle, source) -> vehicle.toMarker(source, colors, selectedId, bandColor) },
             response = poll.response
         )
     }
@@ -647,7 +678,8 @@ class RouteMapController(
     /**
      * Install (or clear) the selected vehicle's trip overlay. When a vehicle is selected ([tripId]
      * non-null), drive a per-frame sampler that extrapolates its trip and draws the uncertainty band +
-     * fast-estimate marker, tinted to contrast the route line. The live vehicle disc is already the
+     * fast-estimate marker, tinted to contrast the trip line as drawn ([selectedTripLineColor], #1990) —
+     * a tint the band's own bounding markers are then filled with. The live vehicle disc is already the
      * best (median) estimate and route mode already shows the most-recent-data dot on selection, so the
      * overlay's own vehicle-point and data-age markers are suppressed — a focused vehicle gains only the
      * band + fast marker (#1752). Null (a deselect) clears the sampler.
@@ -657,10 +689,18 @@ class RouteMapController(
             renderState.setTripOverlaySampler(null)
             return
         }
-        val bandColor = contrastingColor(currentRouteColor())
         renderState.setTripOverlaySampler { nowMs ->
-            extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs), includeMarkers = false)
-                ?.toTripOverlay(bandColor)
+            // Derived per frame off [selectedTripLineColor], not captured once here: the line the band
+            // lies over recolours under the selection (the route's own load landing, a stop-focus
+            // session opening or closing reassigning its adjacency hue), and a colour snapshotted at
+            // selection would stay contrasting the line that was drawn then (#1990).
+            val bandColor = contrastingColor(selectedTripLineColor)
+            val extrapolation =
+                extrapolationFromState(tripObservationRepository.lookupTripState(tripId), WallTime(nowMs), includeMarkers = false)
+            // A frame with no extrapolation at all (no shape, or no fix yet) still publishes the colour:
+            // the most-recent-data dot is drawn from the selection rather than from the band, and takes
+            // the band's colour whether or not there is a band to draw beside it.
+            extrapolation?.toTripOverlay(bandColor) ?: TripOverlay(markerColorArgb = bandColor)
         }
     }
 
@@ -861,8 +901,12 @@ class RouteMapController(
         renderState.setVehicleSet(null)
         renderState.setVehiclesSampler(null)
         renderState.setSelectedVehicle(null)
-        // The selection collector is cancelled above, so clear its overlays explicitly.
+        // The selection collector is cancelled above, so clear its overlays explicitly. The band's
+        // contrast basis goes back to the default with them — the publish above set it from the route
+        // this session is leaving, and the next session's first publish is what should decide it.
         renderState.setTripOverlaySampler(null)
+        selectedTripLineColor = DEFAULT_ROUTE_LINE_COLOR
+        _selectedTripBandColor.value = null
         renderState.setRouteContinuation(null)
         _loadedRoute.value = null
     }
@@ -903,6 +947,12 @@ class RouteMapController(
             selected = selectedTripRenderInput(routeColor),
             projectedFocusStops = focus::projectedStops
         )
+        val recoloured = selectedTripLineColor != (plan.selectedTripColor ?: routeColor)
+        selectedTripLineColor = plan.selectedTripColor ?: routeColor
+        // Republished here rather than from the selection collector alone, because both of its inputs land
+        // here: this publish is what settles the line's colour, and it is also what every selection change
+        // runs through ([showSelectionPresentation]). A deselect passes through it too and clears this.
+        _selectedTripBandColor.value = renderState.selectedVehicleTripId.value?.let { contrastingColor(selectedTripLineColor) }
         renderState.setRoutePolylines(
             // Over a highlighted leg segment: the route's approach to the boarding point first, the rider's
             // remaining itinerary at a middle weight, then the ridden span(s) cased on top (#2048, #2082).
@@ -918,6 +968,12 @@ class RouteMapController(
         )
         renderState.setRouteBadges(plan.badges)
         stopsController.setRoutePresentation(plan.stopPresentation)
+        // The band's tint is derived from the colour just settled above, and the selected vehicle's disc
+        // is drawn in it (#1990) — so a publish that recolours the trip's line has to re-stamp that disc
+        // too, or the vehicle keeps a tint of the line it *used* to be drawn over. Gated on an actual
+        // change (and on there being a selection to re-stamp), which is also what keeps this from
+        // bouncing: the republish reaches [publishVehicleSet], never back here.
+        if (recoloured && renderState.selectedVehicleTripId.value != null) publishVehicleSet()
     }
 
     /**
@@ -1261,8 +1317,17 @@ class RouteMapController(
      *
      * [response] is the poll this vehicle came out of — one of [colors]' own polls, since that pairing is
      * what [sampleVehicles] builds the vehicle list from.
+     *
+     * [bandColor] is the uncertainty band's tint, and reaches only the vehicle running [selectedTripId] —
+     * the one vehicle that has a band — so its disc joins the band's colour rather than its route's
+     * (#1990). Both are resolved once by [sampleVehicles] rather than per vehicle here.
      */
-    private fun ExtrapolatedVehicle.toMarker(response: RouteTrips, colors: RouteColorInputs): VehicleMarker = VehicleMarker(
+    private fun ExtrapolatedVehicle.toMarker(
+        response: RouteTrips,
+        colors: RouteColorInputs,
+        selectedTripId: String?,
+        bandColor: Int?
+    ): VehicleMarker = VehicleMarker(
         // Vehicles are only built for trips with a resolvable active id, so this is non-null here.
         activeTripId = status.activeTripId.orEmpty(),
         point = point,
@@ -1271,7 +1336,8 @@ class RouteMapController(
         fixTimeMs = fixTimeMs,
         bearing = bearing,
         dataFixPoint = dataFixPoint,
-        routeColor = displayedRouteColor(colors, response, status.activeTripId)
+        routeColor = displayedRouteColor(colors, response, status.activeTripId),
+        bandColor = bandColor?.takeIf { status.activeTripId == selectedTripId }
     )
 
     /**

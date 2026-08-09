@@ -154,6 +154,8 @@ internal fun ArrivalsSheetHost(
     state: ArrivalsUiState,
     selectedRoute: StopRouteSelection?,
     mapRouteColors: Map<RouteDirectionKey, Int>,
+    // The selected trip's band tint (#1990), or null when no vehicle is selected.
+    selectedTripBandColor: Int?,
     onContentHeight: (heightPx: Int) -> Unit
 ) {
     session ?: return
@@ -165,6 +167,7 @@ internal fun ArrivalsSheetHost(
             listState = session.listState,
             handler = session.handler,
             mapRouteColors = mapRouteColors,
+            selectedTripBandColor = selectedTripBandColor,
             selectedRowKey = selectedRoute?.selectedArrivalRowKey(),
             selectedRouteId = selectedRoute?.originLeg?.routeId,
             selectedRouteNames = selectedRoute?.legs?.map { it.shortName }.orEmpty(),

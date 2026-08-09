@@ -64,6 +64,7 @@ import org.onebusaway.android.map.render.RouteLineDash
 import org.onebusaway.android.map.render.RouteLineMark
 import org.onebusaway.android.map.render.RoutePolyline
 import org.onebusaway.android.map.render.RoutePolylineReconciler
+import org.onebusaway.android.map.render.STOP_ROUTE_LABEL_Z_INDEX
 import org.onebusaway.android.map.render.StopMarker
 import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
@@ -181,8 +182,8 @@ class GoogleMapRenderer(
 
     // The selected vehicle's fast-estimate marker: it owns its native marker + ease state, a fixed
     // info-window title, and a z-index above the band, and glides to a fresh fix. Icon resolves lazily
-    // on first show.
-    private val fastEstimate = TripEstimateMarker({ fastEstimateIcon() }, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
+    // on first show, in the band's own colour (#1990), and is re-stamped when that colour changes.
+    private val fastEstimate = TripEstimateMarker(::fastEstimateIcon, "Fast estimate", FAST_ESTIMATE_Z_INDEX)
 
     // Smooths the most-recent-data dot to a fresh fix (it's static between fixes). Tracks the dot's current
     // selection + fix so we only move / refresh on an actual change or while settling — never while its
@@ -191,6 +192,10 @@ class GoogleMapRenderer(
     private var dotSelectedId: String? = null
     private var dotFixTimeMs: Long = 0L
     private var dotAgeSeconds: Long = -1L
+
+    // The fill the dot's icon is currently stamped with (the band's colour, #1990), so it's re-stamped
+    // only when that colour actually changes. 0 whenever there is no dot — not a colour any fill can be.
+    private var dotFillColor: Int = 0
 
     // The selected vehicle's most-recent-data dot: a static marker at its last actual AVL fix (where the
     // live estimate was last corrected from), shown while a vehicle is selected, with a "Most recent
@@ -549,7 +554,10 @@ class GoogleMapRenderer(
      * fresh fix (a decaying correction on the dead-reckon glide); the band is re-added.
      */
     fun renderDynamic(overlay: TripOverlay?, vehicles: MapVehicles?, nowMs: Long) {
-        moveVehicles(vehicles, nowMs)
+        // The dot is the band's origin marker, so it is filled with the band's colour (#1990) — carried on
+        // the overlay even when that frame has no band to draw. Only a selection with no overlay at all
+        // (nothing selected, so no dot either) reaches the default.
+        moveVehicles(vehicles, overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR, nowMs)
         updateTripOverlay(overlay, nowMs)
     }
 
@@ -630,14 +638,14 @@ class GoogleMapRenderer(
     // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
     // since #2194 removed that arrow, nothing about the icon varies between polls (see
     // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
-    private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
+    private fun moveVehicles(vehicles: MapVehicles?, dotFill: Int, nowMs: Long) {
         for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.position = vehicleSmoother
                 .displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs)
                 .toLatLng()
         }
-        updateMostRecentDataDot(nowMs)
+        updateMostRecentDataDot(dotFill, nowMs)
     }
 
     /**
@@ -652,8 +660,14 @@ class GoogleMapRenderer(
      * the flicker. So we move it only on an actual change or while a fix correction is still settling,
      * and refresh the age only while closed (it's current when reopened, frozen while open — like every
      * other info window here).
+     *
+     * [fillColor] is the uncertainty band's colour: the dot marks the band's origin, so it is filled with
+     * it (#1990). It is re-stamped whenever it changes — unconditionally, unlike the per-second age,
+     * because it changes only when the selected trip's line recolours (its route loading, a stop-focus
+     * session opening), and a dot left in the old colour would be a data marker that disagrees with its
+     * own band.
      */
-    private fun updateMostRecentDataDot(nowMs: Long) {
+    private fun updateMostRecentDataDot(fillColor: Int, nowMs: Long) {
         val selectedId = renderState.selectedVehicleTripId.value
         // Read the dot's inputs from the reconciled (per-poll) set, not the per-frame motion samples:
         // the fix point + age are discrete, changing only when a new poll lands, and the set is where the
@@ -670,6 +684,7 @@ class GoogleMapRenderer(
             dotSmoother.retainOnly(emptySet())
             dotSelectedId = null
             dotAgeSeconds = -1L
+            dotFillColor = 0
             return
         }
         val ageSeconds = TimeUnit.MILLISECONDS.toSeconds(nowMs - selected.fixTimeMs)
@@ -678,14 +693,15 @@ class GoogleMapRenderer(
             val marker = map.addMarkerOrFail(
                 MarkerOptions()
                     .position(target.toLatLng())
-                    .icon(dataAgeIcon())
+                    .icon(dataAgeIcon(fillColor))
                     .anchor(0.5f, 0.5f)
-                    .zIndex(0.5f)
+                    .zIndex(DATA_AGE_Z_INDEX)
                     .title(MOST_RECENT_DATA_TITLE)
                     .snippet(formatDataAge(context.resources, ageSeconds))
             )
             mostRecentDataMarker = marker
             dotAgeSeconds = ageSeconds
+            dotFillColor = fillColor
             // The dot is created only after a no-selection gap cleared the smoother, so just prime it
             // (records the shown position; no correction).
             dotSmoother.prime(selectedId, target, selected.fixTimeMs)
@@ -703,6 +719,10 @@ class GoogleMapRenderer(
             if (ageSeconds != dotAgeSeconds && !existing.isInfoWindowShown) {
                 existing.snippet = formatDataAge(context.resources, ageSeconds)
                 dotAgeSeconds = ageSeconds
+            }
+            if (fillColor != dotFillColor) {
+                existing.setIcon(dataAgeIcon(fillColor))
+                dotFillColor = fillColor
             }
         }
         dotSelectedId = selectedId
@@ -785,30 +805,41 @@ class GoogleMapRenderer(
         while (bandPolylines.size > band.size) {
             bandPolylines.removeAt(bandPolylines.size - 1).remove()
         }
-        // The fast-estimate marker owns its smoothing + fixed title; hand it the fresh fix + tick clock.
-        fastEstimate.update(overlay?.fastEstimatePoint, overlay?.fixTimeMs ?: 0L, nowMs)
+        // The fast-estimate marker owns its smoothing + fixed title; hand it the fresh fix + tick clock,
+        // and the band's colour to fill its disc with. A frame with no overlay leaves the marker gone.
+        fastEstimate.update(
+            overlay?.fastEstimatePoint,
+            overlay?.markerColorArgb ?: TripMarkerBitmaps.DEFAULT_FILL_COLOR,
+            overlay?.fixTimeMs ?: 0L,
+            nowMs
+        )
     }
 
     /**
      * The selected vehicle's fast-estimate marker: owns its native [Marker] and its own
      * [CorrectionSmoother], with a fixed info-window [title] set at creation. [update] creates it on the
      * first non-null point, removes it on null, and smooths it across a fresh fix. The icon resolves lazily
-     * on first show via [iconProvider] (so it isn't built until a vehicle is selected). Driven every tick
-     * (the overlay sampler runs each frame), so the decay just progresses.
+     * on first show via [iconProvider] (so it isn't built until a vehicle is selected), filled with the
+     * band's colour and re-stamped when that colour changes (#1990). Driven every tick (the overlay
+     * sampler runs each frame), so the decay just progresses.
      */
     private inner class TripEstimateMarker(
-        private val iconProvider: () -> BitmapDescriptor,
+        private val iconProvider: (Int) -> BitmapDescriptor,
         private val title: String,
         private val zIndex: Float
     ) {
         private var marker: Marker? = null
         private val smoother = CorrectionSmoother()
 
-        fun update(point: GeoPoint?, fixTimeMs: Long, nowMs: Long) {
+        // The fill the current icon was stamped with; 0 whenever there is no marker.
+        private var iconFillColor: Int = 0
+
+        fun update(point: GeoPoint?, fillColor: Int, fixTimeMs: Long, nowMs: Long) {
             val existing = marker
             if (point == null) {
                 existing?.remove()
                 marker = null
+                iconFillColor = 0
                 smoother.retainOnly(emptySet()) // drop any in-flight correction + forget
                 return
             }
@@ -816,31 +847,37 @@ class GoogleMapRenderer(
                 marker = map.addMarkerOrFail(
                     MarkerOptions()
                         .position(point.toLatLng())
-                        .icon(iconProvider())
+                        .icon(iconProvider(fillColor))
                         .title(title)
                         .anchor(0.5f, 0.5f)
                         .zIndex(zIndex)
                 )
+                iconFillColor = fillColor
                 smoother.prime(ESTIMATE_EASE_KEY, point, fixTimeMs)
                 return
+            }
+            if (fillColor != iconFillColor) {
+                existing.setIcon(iconProvider(fillColor))
+                iconFillColor = fillColor
             }
             existing.position =
                 smoother.displayPosition(ESTIMATE_EASE_KEY, point, fixTimeMs, nowMs).toLatLng()
         }
 
         /** Remove the marker and drop any in-flight correction — the null-point branch of [update]. */
-        fun dispose() = update(null, 0L, 0L)
+        fun dispose() = update(null, TripMarkerBitmaps.DEFAULT_FILL_COLOR, 0L, 0L)
     }
 
     // The overlay/dot icons, cached through [descriptorCache] by a stable per-icon key so each resolves
     // lazily on first show and reuses one descriptor thereafter (released, with the rest, in [dispose]).
-    private fun fastEstimateIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate)
+    // Both are filled with the band's colour, and both glyphs are tinted to read on it by the shared
+    // bitmap factory — so the band, its origin and its leading end are visibly one object (#1990).
+    private fun fastEstimateIcon(fillColor: Int): BitmapDescriptor = tripCircleIcon(R.drawable.ic_fast_estimate, fillColor)
 
-    // The signal glyph is light, so tint it gray to read on the white disc (used by the most-recent-data dot).
-    private fun dataAgeIcon(): BitmapDescriptor = tripCircleIcon(R.drawable.ic_signal_indicator, TripMarkerBitmaps.STROKE_COLOR)
+    private fun dataAgeIcon(fillColor: Int): BitmapDescriptor = tripCircleIcon(R.drawable.ic_signal_indicator, fillColor)
 
-    private fun tripCircleIcon(drawableRes: Int, tintColor: Int = 0): BitmapDescriptor = descriptorCache.get("circle:$drawableRes:$tintColor") {
-        TripMarkerBitmaps.circle(context, drawableRes, tintColor)
+    private fun tripCircleIcon(drawableRes: Int, fillColor: Int): BitmapDescriptor = descriptorCache.get("circle:$drawableRes:$fillColor") {
+        TripMarkerBitmaps.circle(context, drawableRes, fillColor)
     }
 
     fun stopForMarker(marker: Marker): StopMarker? = stopMarkerLayer.stopForMarker(marker) ?: routeStopLayer.stopForMarker(marker)
@@ -885,10 +922,32 @@ class GoogleMapRenderer(
         private const val DEFAULT_ROUTE_WIDTH_PX = 10f
         private const val TRIP_BAND_WIDTH_PX = 44f
 
-        // z-index used to show vehicle markers on top of stop markers (default marker z-index is 0).
-        private const val VEHICLE_Z_INDEX = 1f
+        /**
+         * The vehicle and the two markers of its estimate sit above the **whole** stop group, and this is
+         * a tappability decision before it is a drawing one: gms delivers a tap to the topmost marker
+         * under the finger and [routeMarkerTap] then asks what that marker is, so a stop drawn over one of
+         * these doesn't merely cover it — it answers for it, and the tap focuses the stop instead.
+         *
+         * The stop group's ceiling is [STOP_ROUTE_LABEL_Z_INDEX], not [stopZIndex]: a stop's route label
+         * (#2107) is a wide pill floating above its point, registered as a tap target for that stop, and
+         * it is the highest thing the group draws. Both of these are therefore expressed relative to it
+         * rather than as literals, so a change to the stop scale can't silently sink them back under it —
+         * which is what each had done:
+         *
+         *  - the vehicle sat exactly *on* [STOP_ROUTE_LABEL_Z_INDEX], and gms leaves ties undefined, so a
+         *    label overlapping a vehicle took its taps unpredictably;
+         *  - the most-recent-data dot sat at 0.5, under every route stop (0.75) and tied with favourites,
+         *    so a stop anywhere near the last fix swallowed the dot outright.
+         *
+         * The vehicle outranks the dot where the two coincide (a just-fixed vehicle sits on its own last
+         * fix): the vehicle's tap selects the trip and opens its details, the dot's only shows a bubble.
+         */
+        private const val DATA_AGE_Z_INDEX = STOP_ROUTE_LABEL_Z_INDEX + 0.1f
+        private const val VEHICLE_Z_INDEX = STOP_ROUTE_LABEL_Z_INDEX + 0.2f
 
         // The uncertainty band draws above the static route line; the fast-estimate marker above the band.
+        // The fast estimate was already clear of the stop group and stays where it is — it is the one of
+        // the three that never needed lifting.
         private const val TRIP_BAND_Z_INDEX = 2f
         private const val FAST_ESTIMATE_Z_INDEX = 4f
 

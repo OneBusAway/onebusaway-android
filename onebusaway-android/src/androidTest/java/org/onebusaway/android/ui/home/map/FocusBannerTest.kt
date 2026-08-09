@@ -89,8 +89,8 @@ class FocusBannerTest {
             context.getString(R.string.bus_options_menu_add_star)
         ).assertHasClickAction()
         val starBounds = star.getUnclippedBoundsInRoot()
-        assertTrue((starBounds.right - starBounds.left).value in 23.5f..24.5f)
-        assertTrue((starBounds.bottom - starBounds.top).value in 23.5f..24.5f)
+        assertTrue((starBounds.right - starBounds.left).value in 25.9f..26.9f)
+        assertTrue((starBounds.bottom - starBounds.top).value in 25.9f..26.9f)
 
         val starTouch = star.fetchSemanticsNode().touchBoundsInRoot
         with(composeRule.density) {
@@ -236,6 +236,32 @@ class FocusBannerTest {
         row.assert(SemanticsMatcher.keyNotDefined(SemanticsActions.OnLongClick))
         row.performClick()
         assertTrue(framed)
+    }
+
+    /**
+     * The star is inset from the card edge by the rail and separated from the stop name by the
+     * content's own start padding — nothing else. The rail used to center the star in a fixed-width
+     * column, adding a trailing gutter on top of that padding and leaving the right-hand gap about
+     * twice the left inset (#2216). Pinning the two against each other states the intent (balanced,
+     * with the text side no looser than the edge side) without hardcoding either dp.
+     */
+    @Test
+    fun starIsNoFurtherFromTheStopNameThanFromTheCardEdge() {
+        setStopBanner()
+        val star = composeRule.onNodeWithContentDescription(
+            context.getString(R.string.bus_options_menu_add_star)
+        ).getUnclippedBoundsInRoot()
+        val stopName = composeRule.onNodeWithText("Pine St & 3rd Ave").getUnclippedBoundsInRoot()
+
+        val leadingInset = star.left.value
+        val gapToStopName = stopName.left.value - star.right.value
+        assertTrue("star should be inset from the card edge", leadingInset > 4f)
+        assertTrue(
+            "gap to the stop name ($gapToStopName) should not exceed the leading inset " +
+                "($leadingInset)",
+            gapToStopName <= leadingInset + 0.5f
+        )
+        assertTrue("star and stop name should not collide", gapToStopName > 4f)
     }
 
     @Test

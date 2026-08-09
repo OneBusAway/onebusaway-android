@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -90,12 +89,12 @@ import org.onebusaway.android.util.DisplayFormat
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 
-// The favorite star and the rail it sits in, on the banner's leading edge. The star sat at 26.4dp
-// (a 10% bump over the Material default) to hold its own beside the focus-type glyph stacked above
-// it; with that partner gone (#2216) it returns to the default and the rail narrows with it, giving
-// the width back to the stop name / route roundel.
-private val FAVORITE_ICON_SIZE = 24.dp
-private val FAVORITE_RAIL_WIDTH = 40.dp
+// The favorite star and the rail it sits in, on the banner's leading edge. The rail insets the star
+// from the card edge and takes its width from that inset plus the star — it deliberately has no
+// trailing gutter of its own, because the banner content already pads its own leading edge and the
+// two used to stack into a right-hand gap about twice the left inset (#2216).
+private val FAVORITE_ICON_SIZE = 26.4.dp
+private val FAVORITE_RAIL_LEADING_INSET = 10.8.dp
 private val BANNER_MIN_HEIGHT = 64.dp
 
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
@@ -185,12 +184,18 @@ fun FocusBanner(
 }
 
 /**
- * The banner's leading rail: just the favorite star, centered. It carried a focus-type glyph (stop
- * flag / route icon) above the star and a divider beside it until #2216 — orientation the banner's
- * own content already gives, since a stop shows a stop name and a route shows a route roundel.
+ * The banner's leading rail: just the favorite star, vertically centered. It carried a focus-type
+ * glyph (stop flag / route icon) above the star and a divider beside it until #2216 — orientation
+ * the banner's own content already gives, since a stop shows a stop name and a route shows a route
+ * roundel.
  *
- * It keeps a fixed width so both focus kinds start their content at the same inset, and sets the
- * banner's minimum height so a still-loading stop doesn't collapse to a sliver.
+ * The rail wraps the star rather than centering it in a fixed-width column: it pads only its
+ * leading edge, so the gap on the star's right is exactly the banner content's own start padding.
+ * Centering in a fixed width added a trailing gutter *on top of* that padding, which is why the
+ * right-hand gap used to read as roughly double the left inset. Its width is still identical for
+ * both focus kinds (the star is a fixed size), so stop and route content start at the same x.
+ *
+ * It also sets the banner's minimum height so a still-loading stop doesn't collapse to a sliver.
  */
 @Composable
 private fun FavoriteRail(
@@ -201,8 +206,8 @@ private fun FavoriteRail(
     Box(
         modifier = Modifier
             .fillMaxHeight()
-            .width(FAVORITE_RAIL_WIDTH)
-            .heightIn(min = BANNER_MIN_HEIGHT),
+            .heightIn(min = BANNER_MIN_HEIGHT)
+            .padding(start = FAVORITE_RAIL_LEADING_INSET),
         contentAlignment = Alignment.Center
     ) {
         BannerFavoriteAction(

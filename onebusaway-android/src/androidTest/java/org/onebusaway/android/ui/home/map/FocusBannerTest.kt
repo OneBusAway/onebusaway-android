@@ -76,14 +76,27 @@ class FocusBannerTest {
         }
     }
 
+    /**
+     * The star draws small but must still be tappable: it's laid out at the icon's own size so it
+     * doesn't bloat the rail, and relies on touch-target expansion for the accessible target. This
+     * pins both halves — the drawn size *and* the touch bounds — so a layout change can't quietly
+     * shrink the thing you actually have to hit.
+     */
     @Test
     fun stopChromeUsesCompactStarAndAccessibleAlertTarget() {
         setStopBanner()
-        val starBounds = composeRule.onNodeWithContentDescription(
+        val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
-        ).assertHasClickAction().getUnclippedBoundsInRoot()
-        assertTrue((starBounds.right - starBounds.left).value in 25.9f..26.9f)
-        assertTrue((starBounds.bottom - starBounds.top).value in 25.9f..26.9f)
+        ).assertHasClickAction()
+        val starBounds = star.getUnclippedBoundsInRoot()
+        assertTrue((starBounds.right - starBounds.left).value in 23.5f..24.5f)
+        assertTrue((starBounds.bottom - starBounds.top).value in 23.5f..24.5f)
+
+        val starTouch = star.fetchSemanticsNode().touchBoundsInRoot
+        with(composeRule.density) {
+            assertTrue(starTouch.width.toDp().value >= 47.5f)
+            assertTrue(starTouch.height.toDp().value >= 47.5f)
+        }
 
         val alertBounds = composeRule.onNodeWithContentDescription(
             context.getString(R.string.stop_info_show_alerts)

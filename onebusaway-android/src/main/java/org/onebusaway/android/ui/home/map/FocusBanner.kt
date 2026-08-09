@@ -90,9 +90,12 @@ import org.onebusaway.android.util.DisplayFormat
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 
-// The favorite star and the rail it sits in, on the banner's leading edge.
-private val FAVORITE_ICON_SIZE = 26.4.dp
-private val FAVORITE_RAIL_WIDTH = 48.dp
+// The favorite star and the rail it sits in, on the banner's leading edge. The star sat at 26.4dp
+// (a 10% bump over the Material default) to hold its own beside the focus-type glyph stacked above
+// it; with that partner gone (#2216) it returns to the default and the rail narrows with it, giving
+// the width back to the stop name / route roundel.
+private val FAVORITE_ICON_SIZE = 24.dp
+private val FAVORITE_RAIL_WIDTH = 40.dp
 private val BANNER_MIN_HEIGHT = 64.dp
 
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.

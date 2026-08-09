@@ -68,6 +68,31 @@ fun ObaTripSchedule.findSegmentStartIndex(distanceAlongTrip: Double): Int {
 }
 
 /**
+ * The schedule clock read at a single distance along the trip, interpolated across the travel
+ * segment the distance sits in (`departure[i]` → `arrival[i+1]`, so crossing a stop picks up its
+ * whole dwell) — or null when the schedule cannot place it: fewer than two stops, a distance
+ * outside the scheduled range, or a degenerate segment. The scheduled interval between two
+ * distances is then a same-domain [ScheduleTime] subtraction; [PaceModel]'s lookback reads the
+ * ground a vehicle actually covered in schedule terms this way.
+ */
+fun ObaTripSchedule.scheduleTimeAt(distanceAlongTrip: Double): ScheduleTime? {
+    if (stopTimes.size < 2) return null
+    val segIdx =
+        try {
+            findSegmentStartIndex(distanceAlongTrip)
+        } catch (e: IndexOutOfBoundsException) {
+            return null
+        }
+    val segStart = stopTimes[segIdx]
+    val segEnd = stopTimes[segIdx + 1]
+    val segDist = segEnd.distanceAlongTrip - segStart.distanceAlongTrip
+    val segTravel: Duration = segEnd.arrivalTime - segStart.departureTime
+    if (segDist <= 0 || segTravel <= Duration.ZERO) return null
+    val fraction = (distanceAlongTrip - segStart.distanceAlongTrip) / segDist
+    return segStart.departureTime + segTravel * fraction
+}
+
+/**
  * A trip's scheduled clock, read forward from a vehicle's current position: how long the schedule
  * says it should take to *first reach* each point ahead.
  *
@@ -95,24 +120,11 @@ internal constructor(
  * segment under the vehicle, or nothing left ahead of it.
  */
 fun ObaTripSchedule.passageProfileFrom(startDist: Double): PassageProfile? {
-    if (stopTimes.size < 2) return null
-    val segIdx =
-        try {
-            findSegmentStartIndex(startDist)
-        } catch (e: IndexOutOfBoundsException) {
-            return null
-        }
-
-    val segStart = stopTimes[segIdx]
-    val segEnd = stopTimes[segIdx + 1]
-    val segDist = segEnd.distanceAlongTrip - segStart.distanceAlongTrip
-    val segTravel: Duration = segEnd.arrivalTime - segStart.departureTime
-    if (segDist <= 0 || segTravel <= Duration.ZERO) return null
-
-    // The anchor's own place on the schedule clock, interpolated across the segment it sits in —
-    // the same construction replaySchedule uses to put a distance on the schedule timeline.
-    val fraction = (startDist - segStart.distanceAlongTrip) / segDist
-    val origin: ScheduleTime = segStart.departureTime + segTravel * fraction
+    // The anchor's own place on the schedule clock — the same construction replaySchedule uses to
+    // put a distance on the schedule timeline. Also rejects everything a profile can't be built
+    // from: too few stops, a distance out of range, a degenerate segment under the vehicle.
+    val origin: ScheduleTime = scheduleTimeAt(startDist) ?: return null
+    val segIdx = findSegmentStartIndex(startDist)
 
     val seconds = ArrayList<Double>(2 * (stopTimes.size - segIdx))
     val distances = ArrayList<Double>(2 * (stopTimes.size - segIdx))

@@ -32,6 +32,7 @@ fun testTripStatus(
     distanceAlongTrip: Double? = null,
     totalDistanceAlongTrip: Double? = null,
     lastUpdateTime: Long = 0L,
+    lastLocationUpdateTime: Long = 0L,
     vehicleId: String? = null,
     activeTripId: String? = null,
     predicted: Boolean = false,
@@ -41,6 +42,7 @@ fun testTripStatus(
     distanceAlongTrip = distanceAlongTrip,
     totalDistanceAlongTrip = totalDistanceAlongTrip,
     lastUpdateTime = lastUpdateTime,
+    lastLocationUpdateTime = lastLocationUpdateTime,
     vehicleId = vehicleId,
     activeTripId = activeTripId,
     predicted = predicted,
@@ -52,6 +54,7 @@ private class TestTripStatus(
     distanceAlongTrip: Double?,
     totalDistanceAlongTrip: Double?,
     lastUpdateTime: Long,
+    lastLocationUpdateTime: Long,
     vehicleId: String?,
     activeTripId: String?,
     predicted: Boolean,
@@ -78,7 +81,7 @@ private class TestTripStatus(
     override val lastUpdateTime: Long = lastUpdateTime
     override val lastKnownLocation: Location?
         get() = if (hasLastKnownLocation) FAKE_LOCATION else null
-    override val lastLocationUpdateTime: Long = 0L
+    override val lastLocationUpdateTime: Long = lastLocationUpdateTime
     override val lastKnownDistanceAlongTrip: Double? = null
     override val lastKnownOrientation: Double? = null
     override val blockTripSequence: Int = 0

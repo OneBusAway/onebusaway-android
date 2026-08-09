@@ -41,6 +41,11 @@ import org.onebusaway.android.time.WallTime
  * worst (horizon x deviation) cell's coverage error from 0.278 to 0.089, and the early-vehicle band
  * from 0.602 to 0.799 against a nominal 0.800.
  *
+ * On top of that, a vehicle observed holding an unusual pace over a sustained recent window — the
+ * death-spiral bus of issue #2202 — gets [PaceModel]'s adjustment: a lump of scheduled time and a
+ * dispersion factor, baked into the profile and theta once per snapshot. Without a long enough
+ * window the adjustment is identity, so this changes nothing for a freshly opened trip.
+ *
  * Known residual, measured and left in deliberately: the left tail is a few points heavier than the
  * model at every horizon — trips that fall badly behind are more common than a single gamma process
  * allows. It is not simply stalled buses, whose frequency decays with the horizon as expected, and
@@ -49,20 +54,27 @@ import org.onebusaway.android.time.WallTime
 class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
 
     /**
-     * The schedule ahead of the vehicle, and how far off schedule it is — both fixed for the life of
-     * this extrapolator, since [Extrapolator] is built per immutable snapshot.
+     * The schedule ahead of the vehicle, how far off schedule it is, and the pace it was recently
+     * observed holding — all fixed for the life of this extrapolator, since [Extrapolator] is built
+     * per immutable snapshot, so the pace lookback is read from the history once, never per frame.
      *
      * The profile starts from where the vehicle **actually is**, not its `scheduledDistanceAlongTrip`:
      * the model asks how long the road ahead should take, which is a property of that road, so a late
-     * bus is still governed by the stretch it currently occupies.
+     * bus is still governed by the stretch it currently occupies. The pace adjustment's mean effects
+     * are baked into the profile here ([warpedBy]); its dispersion factor rides on theta below.
      */
     private val fit: Fit? by lazy(LazyThreadSafetyMode.NONE) {
         val anchor = state.anchor ?: return@lazy null
         val profile = state.schedule?.passageProfileFrom(anchor.distanceAlongTrip ?: return@lazy null)
-        profile?.let { Fit(it, anchor.scheduleDeviation) }
+        val pace = PaceModel.adjustmentFor(PaceModel.lookbackFor(state))
+        profile?.let { Fit(it.warpedBy(pace), anchor.scheduleDeviation, pace.dispersionMultiplier) }
     }
 
-    private class Fit(val profile: PassageProfile, val deviation: Duration)
+    private class Fit(
+        val profile: PassageProfile,
+        val deviation: Duration,
+        val dispersionMultiplier: Double
+    )
 
     override fun doExtrapolate(
         lastDist: Double,
@@ -79,7 +91,7 @@ class FirstPassageExtrapolator(state: TripState) : Extrapolator(state) {
                 dtSec,
                 current.profile.scheduleSeconds,
                 current.profile.distances,
-                DeviationModel.dispersionFor(current.deviation),
+                DeviationModel.dispersionFor(current.deviation) * current.dispersionMultiplier,
                 DeviationModel.travelMultiplierFor(current.deviation)
             )
         )

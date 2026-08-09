@@ -76,7 +76,7 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
         Column(Modifier.background(ground).padding(8.dp)) {
             FullnessHeader()
             modes.forEach { (type, name) ->
-                MarkerRow(label = name, vehicleType = type, argb = argb)
+                MarkerRow(label = name, vehicleType = type, argb = argb, dark = dark)
             }
         }
     }
@@ -92,8 +92,14 @@ private fun FullnessHeader() {
     }
 }
 
+/**
+ * One mode's row of markers. [dark] is passed in rather than read here, and is a `remember` key: the
+ * bitmap's rim color comes from [context]'s mode (#2055), so a composition that survives a mode change
+ * instead of being disposed — an interactive preview toggling the theme — would otherwise keep showing
+ * the rim it was first drawn with.
+ */
 @Composable
-private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
+private fun MarkerRow(label: String, vehicleType: Int, argb: Int, dark: Boolean) {
     val context = LocalContext.current
     Row(verticalAlignment = Alignment.CenterVertically) {
         Text(label, Modifier.width(56.dp), fontSize = 12.sp)
@@ -101,7 +107,7 @@ private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
             // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
             // (not a production render path), so calling it here is intentional.
             @Suppress("VisibleForTests")
-            val bmp = remember(vehicleType, argb, occupancy) {
+            val bmp = remember(vehicleType, argb, occupancy, dark) {
                 VehicleBitmaps.previewBitmap(context, vehicleType, argb, occupancy).asImageBitmap()
             }
             Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(56.dp))

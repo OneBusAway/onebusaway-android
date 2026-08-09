@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("VisibleForTests") // MARKER_SIZE_DP / PAD_GRID are @VisibleForTesting; this is that use.
-
 package org.onebusaway.android.map.render
 
 import android.content.Context
@@ -74,4 +72,6 @@ private fun modeContext(nightMode: Int): Context {
  * expression locates the geometry in either shape, and neither test has to reach for a Context to do it.
  */
 internal val Bitmap.markerScale: Float
+    // PAD_GRID is @VisibleForTesting — this is that use.
+    @Suppress("VisibleForTests")
     get() = width / (MarkerRendering.GRID + 2f * VehicleBitmaps.PAD_GRID)

@@ -16,22 +16,30 @@
 package org.onebusaway.android.ui.home.map
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTouchHeightIsEqualTo
+import androidx.compose.ui.test.assertTouchWidthIsEqualTo
+import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.assertWidthIsEqualTo
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.unit.dp
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
@@ -40,6 +48,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.onebusaway.android.R
+import org.onebusaway.android.map.RouteHeader
 import org.onebusaway.android.models.RouteMapDirection
 import org.onebusaway.android.ui.compose.createUnconfinedComposeRule
 
@@ -51,32 +60,44 @@ class FocusBannerTest {
 
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
 
+    /**
+     * The stop banner, as a composable so tests that need it alongside another banner can compose
+     * both in one [androidx.compose.ui.test.junit4.ComposeContentTestRule.setContent].
+     */
+    @Composable
+    private fun StopBanner(
+        hasAlerts: Boolean = true,
+        favoriteEnabled: Boolean = true,
+        direction: String? = "N",
+        stopCode: String? = "12345"
+    ) {
+        FocusBanner(
+            state = FocusBannerState.Stop(
+                title = STOP_NAME,
+                direction = direction,
+                stopCode = stopCode,
+                isFavorite = false,
+                favoriteEnabled = favoriteEnabled,
+                hasAlerts = hasAlerts
+            ),
+            onClose = {},
+            onToggleFavorite = {},
+            onShowAlerts = {},
+            onRecenterStop = {},
+            onSelectDirection = {},
+            onFrameRoute = {},
+            onShowSchedule = {},
+            onHeight = {}
+        )
+    }
+
     private fun setStopBanner(
         hasAlerts: Boolean = true,
         favoriteEnabled: Boolean = true,
         direction: String? = "N",
         stopCode: String? = "12345"
     ) {
-        composeRule.setContent {
-            FocusBanner(
-                state = FocusBannerState.Stop(
-                    title = STOP_NAME,
-                    direction = direction,
-                    stopCode = stopCode,
-                    isFavorite = false,
-                    favoriteEnabled = favoriteEnabled,
-                    hasAlerts = hasAlerts
-                ),
-                onClose = {},
-                onToggleFavorite = {},
-                onShowAlerts = {},
-                onRecenterStop = {},
-                onSelectDirection = {},
-                onFrameRoute = {},
-                onShowSchedule = {},
-                onHeight = {}
-            )
-        }
+        composeRule.setContent { StopBanner(hasAlerts, favoriteEnabled, direction, stopCode) }
     }
 
     /**
@@ -91,21 +112,51 @@ class FocusBannerTest {
         val star = composeRule.onNodeWithContentDescription(
             context.getString(R.string.bus_options_menu_add_star)
         ).assertHasClickAction()
-        val starBounds = star.getUnclippedBoundsInRoot()
-        assertTrue((starBounds.right - starBounds.left).value in 25.9f..26.9f)
-        assertTrue((starBounds.bottom - starBounds.top).value in 25.9f..26.9f)
+        star.assertWidthIsEqualTo(STAR_SIZE).assertHeightIsEqualTo(STAR_SIZE)
+        // Drawn small, but expanded to the platform's minimum target for the tap.
+        star.assertTouchWidthIsEqualTo(MIN_TOUCH_TARGET)
+            .assertTouchHeightIsEqualTo(MIN_TOUCH_TARGET)
 
-        val starTouch = star.fetchSemanticsNode().touchBoundsInRoot
-        with(composeRule.density) {
-            assertTrue(starTouch.width.toDp().value >= 47.5f)
-            assertTrue(starTouch.height.toDp().value >= 47.5f)
-        }
-
-        val alertBounds = composeRule.onNodeWithContentDescription(
+        composeRule.onNodeWithContentDescription(
             context.getString(R.string.stop_info_show_alerts)
-        ).assertHasClickAction().getUnclippedBoundsInRoot()
-        assertTrue((alertBounds.right - alertBounds.left).value >= 47.5f)
-        assertTrue((alertBounds.bottom - alertBounds.top).value >= 47.5f)
+        ).assertHasClickAction()
+            .assertWidthIsAtLeast(MIN_TOUCH_TARGET)
+            .assertHeightIsAtLeast(MIN_TOUCH_TARGET)
+    }
+
+    /** The route banner; see [StopBanner] for why this is split from its `setContent` wrapper. */
+    @Composable
+    private fun RouteBanner(
+        scheduleUrl: String? = null,
+        onShowSchedule: (String) -> Unit = {},
+        onFrameRoute: () -> Unit = {},
+        directions: List<RouteMapDirection> = emptyList(),
+        currentDirectionId: Int? = null,
+        onSelectDirection: (Int?) -> Unit = {}
+    ) {
+        FocusBanner(
+            state = FocusBannerState.Route(
+                header = RouteHeader(
+                    loading = false,
+                    shortName = ROUTE_SHORT_NAME,
+                    longName = ROUTE_LONG_NAME,
+                    agency = "Metro",
+                    routeId = "1_40",
+                    scheduleUrl = scheduleUrl,
+                    directions = directions,
+                    currentDirectionId = currentDirectionId
+                ),
+                isFavorite = false
+            ),
+            onClose = {},
+            onToggleFavorite = {},
+            onShowAlerts = {},
+            onRecenterStop = {},
+            onSelectDirection = onSelectDirection,
+            onFrameRoute = onFrameRoute,
+            onShowSchedule = onShowSchedule,
+            onHeight = {}
+        )
     }
 
     private fun setRouteBanner(
@@ -117,28 +168,13 @@ class FocusBannerTest {
         onSelectDirection: (Int?) -> Unit = {}
     ) {
         composeRule.setContent {
-            FocusBanner(
-                state = FocusBannerState.Route(
-                    header = org.onebusaway.android.map.RouteHeader(
-                        loading = false,
-                        shortName = "40",
-                        longName = ROUTE_LONG_NAME,
-                        agency = "Metro",
-                        routeId = "1_40",
-                        scheduleUrl = scheduleUrl,
-                        directions = directions,
-                        currentDirectionId = currentDirectionId
-                    ),
-                    isFavorite = false
-                ),
-                onClose = {},
-                onToggleFavorite = {},
-                onShowAlerts = {},
-                onRecenterStop = {},
-                onSelectDirection = onSelectDirection,
-                onFrameRoute = onFrameRoute,
-                onShowSchedule = onShowSchedule,
-                onHeight = {}
+            RouteBanner(
+                scheduleUrl,
+                onShowSchedule,
+                onFrameRoute,
+                directions,
+                currentDirectionId,
+                onSelectDirection
             )
         }
     }
@@ -251,8 +287,14 @@ class FocusBannerTest {
     @Test
     fun starIsNoFurtherFromTheStopNameThanFromTheCardEdge() {
         setStopBanner()
-        val leadingInset = starBounds().left.value
-        val gap = gapFromStarTo(composeRule.onNodeWithText(STOP_NAME))
+        val star = composeRule.onNodeWithContentDescription(
+            context.getString(R.string.bus_options_menu_add_star)
+        ).getUnclippedBoundsInRoot()
+        val leadingInset = star.left.value
+        val gap = composeRule.onNodeWithText(STOP_NAME)
+            .getUnclippedBoundsInRoot().left.value -
+            star.right.value
+
         assertTrue("star should be inset from the card edge", leadingInset > 4f)
         assertTrue(
             "gap to the stop name ($gap) should not exceed the leading inset ($leadingInset)",
@@ -266,53 +308,16 @@ class FocusBannerTest {
      * roundel used to sit 14dp out — the row's start padding plus the roundel's own `horizontal`
      * padding — against the stop name's 8dp (#2216).
      *
-     * The route side is measured to the roundel *tile*, derived from its centered label and the
-     * tile's known width, rather than to the clickable row that wraps it. The row's edge would miss
-     * exactly the regression this guards: padding re-added to the roundel's leading side moves the
-     * tile the user sees while the row stays put.
+     * The route side is measured to the tagged roundel itself, not to the clickable row wrapping
+     * it: padding re-added to the roundel's leading side moves the tile the user sees while leaving
+     * the row where it was, so a row-edge assertion would sail straight past the regression.
      */
     @Test
     fun stopAndRouteBannersShareTheGapAfterTheStar() {
         composeRule.setContent {
             Column {
-                FocusBanner(
-                    state = FocusBannerState.Stop(
-                        title = STOP_NAME,
-                        direction = "N",
-                        stopCode = "12345",
-                        isFavorite = false,
-                        favoriteEnabled = true,
-                        hasAlerts = false
-                    ),
-                    onClose = {},
-                    onToggleFavorite = {},
-                    onShowAlerts = {},
-                    onRecenterStop = {},
-                    onSelectDirection = {},
-                    onFrameRoute = {},
-                    onShowSchedule = {},
-                    onHeight = {}
-                )
-                FocusBanner(
-                    state = FocusBannerState.Route(
-                        header = org.onebusaway.android.map.RouteHeader(
-                            loading = false,
-                            shortName = "40",
-                            longName = ROUTE_LONG_NAME,
-                            agency = "Metro",
-                            routeId = "1_40"
-                        ),
-                        isFavorite = false
-                    ),
-                    onClose = {},
-                    onToggleFavorite = {},
-                    onShowAlerts = {},
-                    onRecenterStop = {},
-                    onSelectDirection = {},
-                    onFrameRoute = {},
-                    onShowSchedule = {},
-                    onHeight = {}
-                )
+                StopBanner(hasAlerts = false)
+                RouteBanner()
             }
         }
 
@@ -322,24 +327,13 @@ class FocusBannerTest {
         stars.assertCountEquals(2)
         val stopGap = composeRule.onNodeWithText(STOP_NAME).getUnclippedBoundsInRoot().left.value -
             stars[0].getUnclippedBoundsInRoot().right.value
-        // The roundel's label is centered in a ROUTE_BADGE_WIDTH-wide square, so the tile's leading
-        // edge is half a tile left of the label's center. Unmerged, or the label resolves to the
-        // clickable row that merges it.
-        val badgeLabel = composeRule.onNodeWithText("40", useUnmergedTree = true)
-            .getUnclippedBoundsInRoot()
-        val badgeTileLeft =
-            (badgeLabel.left.value + badgeLabel.right.value) / 2f - ROUTE_BADGE_WIDTH.value / 2f
-        val routeGap = badgeTileLeft - stars[1].getUnclippedBoundsInRoot().right.value
+        // Unmerged: the roundel's semantics are merged into the clickable row that wraps it.
+        val routeGap = composeRule.onNodeWithTag(FocusBannerTestTags.ROUTE_BADGE, useUnmergedTree = true)
+            .getUnclippedBoundsInRoot().left.value -
+            stars[1].getUnclippedBoundsInRoot().right.value
 
         assertEquals(stopGap, routeGap, 0.5f)
     }
-
-    private fun starBounds() = composeRule.onNodeWithContentDescription(
-        context.getString(R.string.bus_options_menu_add_star)
-    ).getUnclippedBoundsInRoot()
-
-    /** Horizontal distance from the star's trailing edge to [content]'s leading edge, in dp. */
-    private fun gapFromStarTo(content: SemanticsNodeInteraction): Float = content.getUnclippedBoundsInRoot().left.value - starBounds().right.value
 
     @Test
     fun stopBannerShowsStopIdentity() {
@@ -378,6 +372,9 @@ class FocusBannerTest {
     }
 
     private companion object {
+        val STAR_SIZE = 26.4.dp
+        val MIN_TOUCH_TARGET = 48.dp
+        const val ROUTE_SHORT_NAME = "40"
         const val STOP_NAME = "Pine St & 3rd Ave"
         const val ROUTE_LONG_NAME = "Downtown - Northgate"
         const val SCHEDULE_URL = "https://example.org/route/40/schedule"

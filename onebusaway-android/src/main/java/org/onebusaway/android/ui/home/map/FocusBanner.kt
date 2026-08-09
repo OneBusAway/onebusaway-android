@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -89,27 +90,20 @@ import org.onebusaway.android.util.DisplayFormat
 private val HEADER_ICON_SIZE = 36.dp
 private val HEADER_ICON_BUTTON_SIZE = 40.dp
 
-// The favorite star and the rail it sits in, on the banner's leading edge. The rail insets the star
-// from the card edge and takes its width from that inset plus the star — it deliberately has no
-// trailing gutter of its own, because the banner content already pads its own leading edge and the
-// two used to stack into a right-hand gap about twice the left inset (#2216).
+// The favorite star and the inset that holds it off the card's leading edge; see FavoriteRail.
 private val FAVORITE_ICON_SIZE = 26.4.dp
 private val FAVORITE_RAIL_LEADING_INSET = 10.8.dp
+
+// A floor for the card, so a stop that hasn't loaded its details can't collapse to a sliver.
 private val BANNER_MIN_HEIGHT = 64.dp
 
-// The gap between the rail's star and whatever the banner body leads with — the stop name, or the
-// route roundel. Shared so the two focus kinds can't drift apart; the rail contributes nothing to
-// it (see FavoriteRail), so this is the whole gap.
+// The gap between the rail's star and whatever the body leads with. Owned by the parent rather than
+// applied per focus kind, so a new kind inherits it and none of them can drift (#2216).
 private val BANNER_CONTENT_START_PADDING = 8.dp
 
-// The route roundel's gap to the name/direction column beside it. Trailing-only: the roundel's
-// leading gap is BANNER_CONTENT_START_PADDING's job, and when this was `horizontal` the two stacked
-// into a 14dp leading gap against the stop's 8dp (#2216).
+// The route roundel's gap to the name/direction column beside it, spaced by the row so it can't be
+// mistaken for part of the roundel's own leading inset (#2216).
 private val ROUTE_BADGE_TEXT_GAP = 10.dp
-
-// The route roundel's square tile. Internal so FocusBannerTest can locate the tile's leading edge
-// from its centered label — the roundel carries no semantics of its own to measure.
-internal val ROUTE_BADGE_WIDTH = 64.dp
 
 // Sized to sit on the stop's subtitle line without outgrowing its bodySmall text.
 private val SUBTITLE_ICON_SIZE = 16.dp
@@ -117,6 +111,14 @@ private val SUBTITLE_ICON_OPTICAL_LIFT = 1.dp
 
 // The stop name shrinks to fit within this many lines before ellipsizing; see ShrinkToFitStopTitle.
 private const val MAX_TITLE_LINES = 2
+
+/**
+ * A stable handle for the route roundel, so a render can measure the tile itself rather than
+ * deriving its edge from where the label happens to sit inside it.
+ */
+object FocusBannerTestTags {
+    const val ROUTE_BADGE = "focusBannerRouteBadge"
+}
 
 /**
  * Presentation state for the map's shared focus banner.
@@ -161,7 +163,9 @@ fun FocusBanner(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier.onSizeChanged { onHeight(it.height) },
+        modifier = modifier
+            .heightIn(min = BANNER_MIN_HEIGHT)
+            .onSizeChanged { onHeight(it.height) },
         // A floating rounded card (below the top chrome), rather than a full-width edge-to-edge bar.
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -176,7 +180,7 @@ fun FocusBanner(
                 favoriteEnabled = state.favoriteEnabled,
                 onToggleFavorite = onToggleFavorite
             )
-            Box(Modifier.weight(1f)) {
+            Box(Modifier.weight(1f).padding(start = BANNER_CONTENT_START_PADDING)) {
                 when (state) {
                     is FocusBannerState.Stop -> StopFocusBanner(
                         state = state,
@@ -203,13 +207,10 @@ fun FocusBanner(
  * the banner's own content already gives, since a stop shows a stop name and a route shows a route
  * roundel.
  *
- * The rail wraps the star rather than centering it in a fixed-width column: it pads only its
- * leading edge, so the gap on the star's right is exactly the banner content's own start padding.
- * Centering in a fixed width added a trailing gutter *on top of* that padding, which is why the
- * right-hand gap used to read as roughly double the left inset. Its width is still identical for
- * both focus kinds (the star is a fixed size), so stop and route content start at the same x.
- *
- * It also sets the banner's minimum height so a still-loading stop doesn't collapse to a sliver.
+ * The rail wraps the star rather than centering it in a fixed-width column, and pads only its
+ * leading edge — the gap on the star's right belongs to the parent. Centering in a fixed width put
+ * a trailing gutter *on top of* that gap, which is why the right side used to read as roughly
+ * double the left inset.
  */
 @Composable
 private fun FavoriteRail(
@@ -220,7 +221,6 @@ private fun FavoriteRail(
     Box(
         modifier = Modifier
             .fillMaxHeight()
-            .heightIn(min = BANNER_MIN_HEIGHT)
             .padding(start = FAVORITE_RAIL_LEADING_INSET),
         contentAlignment = Alignment.Center
     ) {
@@ -242,12 +242,7 @@ private fun StopFocusBanner(
     Row(
         Modifier
             .fillMaxSize()
-            .padding(
-                start = BANNER_CONTENT_START_PADDING,
-                top = 4.dp,
-                end = 4.dp,
-                bottom = 4.dp
-            ),
+            .padding(top = 4.dp, end = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val subtitle = stopSubtitleText(state.stopCode, state.direction)
@@ -366,16 +361,10 @@ private fun RouteFocusBanner(
     val scheduleUrl = header.scheduleUrl
     var menuExpanded by remember { mutableStateOf(false) }
     val scheduleLabel = stringResource(R.string.bus_options_menu_show_route_schedule)
-    // The loading spinner needs more breathing room from the card edges than the laid-out header
-    // does, but the leading gap is the star's and stays fixed either way.
+    // The loading spinner needs more breathing room from the card edges than the laid-out header does.
     val edgePadding = if (header.loading) 8.dp else 4.dp
     Row(
-        Modifier.fillMaxWidth().padding(
-            start = BANNER_CONTENT_START_PADDING,
-            top = edgePadding,
-            end = edgePadding,
-            bottom = edgePadding
-        ),
+        Modifier.fillMaxWidth().padding(top = edgePadding, end = edgePadding, bottom = edgePadding),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (header.loading) {
@@ -402,6 +391,7 @@ private fun RouteFocusBanner(
                         onLongClick = if (scheduleUrl != null) ({ menuExpanded = true }) else null,
                         onClick = onFrameRoute
                     ),
+                horizontalArrangement = Arrangement.spacedBy(ROUTE_BADGE_TEXT_GAP),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // The badge + name column is one tap target that reframes the map to the route's extent.
@@ -411,11 +401,11 @@ private fun RouteFocusBanner(
                 LineBadge(
                     text = header.shortName,
                     maxFontSize = 45.sp,
-                    width = ROUTE_BADGE_WIDTH,
+                    width = 64.dp,
                     square = true,
                     color = badgeContent,
                     containerColor = badgeContainer,
-                    modifier = Modifier.padding(end = ROUTE_BADGE_TEXT_GAP)
+                    modifier = Modifier.testTag(FocusBannerTestTags.ROUTE_BADGE)
                 )
                 Column(Modifier.weight(1f)) {
                     if (header.longName.isNotEmpty()) {

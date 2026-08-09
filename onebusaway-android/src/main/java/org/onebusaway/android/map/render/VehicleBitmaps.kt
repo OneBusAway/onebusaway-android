@@ -98,22 +98,45 @@ object VehicleBitmaps {
     private const val TAB_BOTTOM_GRID = MarkerRendering.GRID + TAB_DEPTH_GRID
     private const val TAB_CORNER_RADIUS_GRID = 2.8f
 
-    /** Hairline outline width, in 24-grid units (scales with the marker); ~1px on screen. */
-    private const val OUTLINE_GRID = 0.25f
+    /**
+     * The rim's width in grid units, converted from the shared [MarkerRendering.MARKER_STROKE_DP] through
+     * this marker's own size — so a vehicle badge and the fast-estimate / last-fix markers beside it on
+     * the trip map carry the same drawn rim, rather than this one's hairline against their 2 dp.
+     *
+     * Derived rather than written out so the two can't drift apart when either size moves.
+     */
+    private const val OUTLINE_GRID = MarkerRendering.MARKER_STROKE_DP * MarkerRendering.GRID / MARKER_SIZE_DP
+
+    /**
+     * The margin between the drawn silhouette and the nominal 24-grid box — enough that the antialiased
+     * rim isn't flush with the bounds.
+     *
+     * Deliberately **independent of [OUTLINE_GRID]**, which is the whole point of naming it. The geometry
+     * used to hang off the rim's width (the path was inset 1.5x the outline, putting the drawn edge at
+     * `12 - outline`), a rule inherited from when the rim was a hairline and the difference didn't show.
+     * Widening the rim under that rule would have pulled the entire silhouette inward — an 8% smaller
+     * marker as a side effect of a stroke change. Anchoring the outer edge instead lets the rim thicken
+     * *inward*, which is what "make the rim wider" means.
+     */
+    private const val SILHOUETTE_MARGIN_GRID = 0.25f
+
+    /** Where the rim's outer edge lands: the marker's drawn radius, whatever the rim's width. */
+    private const val SILHOUETTE_RADIUS_GRID = MarkerRendering.GRID / 2f - SILHOUETTE_MARGIN_GRID
+
+    /**
+     * The radius [bodyPath] is built at: half a stroke inside the silhouette, since
+     * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path** — so half of it falls
+     * outside, and the outer half is what has to land on [SILHOUETTE_RADIUS_GRID].
+     */
+    private const val DISC_RADIUS_GRID = SILHOUETTE_RADIUS_GRID - OUTLINE_GRID / 2f
 
     /**
      * How far inside its nominal bounds [bodyPath] is built, in grid units.
      *
-     * [MarkerRendering.drawOutlinedPath] strokes the rim **centered on the path**, so half of it eats
-     * inward; insetting by 1.5x the outline puts the rim's outer edge exactly where the disc's rim sat
-     * before the tab existed (fill to `r - 2*outline`, rim out to `r - outline`). Named rather than
-     * inlined because it shrinks the tab's *effective* half-width too, which the fit rule below has to
-     * account for — that omission is what let the tab's corners drift outside the disc.
+     * Named rather than inlined because it shrinks the tab's *effective* half-width too, which the fit
+     * rule below has to account for — that omission is what let the tab's corners drift outside the disc.
      */
-    private const val PATH_INSET_GRID = 1.5f * OUTLINE_GRID
-
-    /** The disc's drawn radius: the 24-grid half-width, less what the centered rim takes back. */
-    private const val DISC_RADIUS_GRID = MarkerRendering.GRID / 2f - PATH_INSET_GRID
+    private const val PATH_INSET_GRID = MarkerRendering.GRID / 2f - DISC_RADIUS_GRID
 
     /**
      * The mode glyph's box, **derived** as the largest square that fits inside the rim.
@@ -123,14 +146,16 @@ object VehicleBitmaps {
      * their viewport). Fitting the box means a glyph drawn edge to edge would still land on the fill
      * rather than lap the rim, so this holds for artwork that doesn't exist yet.
      *
-     * Derived for the same reason [TAB_TOP_GRID] is: the fit depends on [OUTLINE_GRID] and
-     * [PATH_INSET_GRID] through [DISC_RADIUS_GRID], and a literal with the arithmetic in prose beside it
-     * goes quietly wrong the next time one of those moves. The square's half-diagonal is
-     * `GLYPH_SIZE/2 * √2`, so setting that equal to the rim's *inner* edge — the radius less the half of
-     * the centered stroke that eats inward — and solving gives the expression below (~16.3 units, half
-     * again the 10.8 the glyph sat at before #2055).
+     * Derived for the same reason [TAB_TOP_GRID] is: the fit depends on [SILHOUETTE_RADIUS_GRID] and
+     * [OUTLINE_GRID], and a literal with the arithmetic in prose beside it goes quietly wrong the next
+     * time one of those moves. The square's half-diagonal is `GLYPH_SIZE/2 * √2`, so setting that equal
+     * to the rim's inner edge and solving gives the expression below.
+     *
+     * It therefore *falls* when the rim widens — the rim eats its room from the inside. Matching the rim
+     * to the trip markers' 2 dp cost the glyph about 8%, leaving it ~14.9 units against the 10.8 it sat
+     * at before #2055.
      */
-    private val GLYPH_SIZE: Float = (DISC_RADIUS_GRID - OUTLINE_GRID / 2f) * 2f / sqrt(2f)
+    private val GLYPH_SIZE: Float = (SILHOUETTE_RADIUS_GRID - OUTLINE_GRID) * 2f / sqrt(2f)
 
     /**
      * The tab's top edge, **derived** so its upper corners stay buried in the disc.
@@ -301,20 +326,27 @@ object VehicleBitmaps {
     }
 
     /**
-     * The rim drawn around the marker's silhouette: black in light mode, white in dark (#2055).
+     * The rim drawn around the marker's silhouette: gray in light mode, white in dark (#2055).
      *
      * The rim's job is to hold the marker apart from what's *behind* it, and what's behind it is a base
-     * map the app restyles by mode (`R.raw.light_map` / `R.raw.dark_map`) — so a rim fixed at black
-     * separated the marker from a pale basemap and then dissolved into the dark one, taking the disc's
-     * edge with it on any route color dark enough to sit close to the night basemap. It resolves from a
-     * qualified resource rather than branching on `ThemeUtils.isInDarkMode` so it flips the same way, in
-     * the same place, as the route-stop circles' `route_stop_outline` next to it on the same map.
+     * map the app restyles by mode (`R.raw.light_map` / `R.raw.dark_map`) — so a rim fixed at one dark
+     * value separated the marker from a pale basemap and then dissolved into the dark one, taking the
+     * disc's edge with it on any route color close to the night basemap. It resolves from a qualified
+     * resource rather than branching on `ThemeUtils.isInDarkMode`, so it flips in the same place as the
+     * other rims on the same map.
+     *
+     * The gray is the one the route-stop circles beside it already use (`route_stop_outline` carries the
+     * same pair), so the two rims a rider sees over the base map agree. It is deliberately *not* shared
+     * with [TripMarkerBitmaps]: those discs take the uncertainty band's colour as their fill (#1990), so
+     * their ring answers to that fill via [MarkerRendering.legibleOn] rather than to the base map, and a
+     * rim that went white in dark mode would vanish on a pale band. What the two families do share is the
+     * width, [MarkerRendering.MARKER_STROKE_DP].
      *
      * Nothing *on* the marker follows the mode: the glyph and pips sit on the disc, whose color comes off
      * the wire and doesn't move with the theme, so they keep taking their ink from it — see [renderMarker].
      */
     @VisibleForTesting
-    internal fun outlineColor(context: Context): Int = ContextCompat.getColor(context, R.color.vehicle_marker_outline)
+    internal fun outlineColor(context: Context): Int = ContextCompat.getColor(context, R.color.map_marker_outline)
 
     private fun getBitmap(
         context: Context,

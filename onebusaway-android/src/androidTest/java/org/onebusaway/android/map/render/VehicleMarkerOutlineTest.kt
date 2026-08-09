@@ -24,16 +24,18 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onebusaway.android.R
 import org.onebusaway.android.models.ObaRoute
 
 /**
- * Which parts of the vehicle marker are rimmed, and in what color (#2055).
+ * Which parts of the vehicle marker are rimmed, in what color, and how wide (#2055).
  *
- * **The body is**, and its rim follows the mode — black over the light base map, white over the dark one
+ * **The body is**, and its rim follows the mode — gray over the light base map, white over the dark one
  * — so the marker's edge survives a restyled map instead of dissolving into it. Both halves of that are
  * checked, because either alone can pass while the marker stays broken: the resolved color can flip
- * while the renderer keeps stamping black, and the rendered rim can differ between the two modes for
- * some reason other than the color the app asked for.
+ * while the renderer keeps stamping one value, and the rendered rim can differ between the two modes for
+ * some reason other than the color the app asked for. Its *width* is checked against the trip map's
+ * estimate markers, the family it shares a screen with.
  *
  * **The glyph is not.** It sits on a disc already chosen to contrast with it, so the rim it used to carry
  * separated it from nothing and thickened it into a blot on a light route color.
@@ -46,32 +48,57 @@ class VehicleMarkerOutlineTest {
     /** The resolved color: what the renderer is handed, before any drawing can misuse it. */
     @Test
     fun theRimColorFlipsWithTheMode() {
-        assertEquals("a light-mode rim is black", Color.BLACK, VehicleBitmaps.outlineColor(lightContext()))
+        assertEquals("a light-mode rim is the shared gray", LIGHT_RIM, VehicleBitmaps.outlineColor(lightContext()))
         assertEquals("a dark-mode rim is white", Color.WHITE, VehicleBitmaps.outlineColor(darkContext()))
     }
 
     /**
-     * The rim as drawn. Read as the marker's **topmost non-transparent pixel** down its center column —
-     * whatever its antialiased coverage, the first ink the map sees above the disc is the rim's outer
-     * edge, and nothing else is up there on a tabless marker.
+     * The rim as drawn, in each mode, matched **exactly** against the color the renderer resolved.
      *
-     * Asserted structurally against [SAMPLE_DISC] (strictly darker / strictly lighter in every channel) rather
-     * than as an exact black and white: that edge pixel may be partly blended with the fill beneath it,
-     * and pinning the blend would restate production's arithmetic. Blending cannot cross the disc, so
-     * the direction is the whole claim and needs no tolerance.
+     * An exact match is available because the rim is [MarkerRendering.MARKER_STROKE_DP] wide — several
+     * pixels at any real density — so it has a solid interior that no antialiasing touches. (While it
+     * was a hairline this had to be a structural "darker/lighter than the disc" comparison, which a gray
+     * rim on a mid-tone disc would no longer satisfy in either direction.)
      */
     @Test
     fun theDrawnRimFlipsWithTheMode() {
-        val light = marker(lightContext()).topmostInk()
-        val dark = marker(darkContext()).topmostInk()
+        for (context in listOf(lightContext(), darkContext())) {
+            val expected = VehicleBitmaps.outlineColor(context)
+            assertEquals(
+                "the drawn rim must be the resolved rim color",
+                expected.hex(),
+                marker(context).solidRimPixel().hex()
+            )
+        }
+    }
 
+    /**
+     * The rim is the same width as the one on the fast-estimate / last-fix markers that accompany a
+     * vehicle on the trip map — the thing a rider actually compares when both are on screen.
+     *
+     * Measured off **both bitmaps** and compared, rather than checked against
+     * [MarkerRendering.MARKER_STROKE_DP]: the two convert that dp through different geometry (a 40 dp
+     * marker over a 24-unit grid here, 28 dp of raw pixels there), and it was precisely that conversion
+     * that had them 5x apart while both "used 2 dp". Comparing the artifacts tests the conversion;
+     * comparing each to the constant would not.
+     *
+     * Each is measured in **its own rim colour**, which is the point of the two families being separate:
+     * the vehicle's answers to the base map and flips with the mode, while a trip marker's answers to the
+     * band colour filling its disc ([MarkerRendering.legibleOn], #1990). Only the width is shared.
+     *
+     * One pixel of tolerance, for the rounding each geometry does independently on the way to integers.
+     */
+    @Test
+    fun theRimMatchesTheTripMarkersWidth() {
+        val context = lightContext()
+        val vehicle = marker(context).rimThickness(VehicleBitmaps.outlineColor(context))
+        val estimate = TripMarkerBitmaps.circle(context, R.drawable.ic_fast_estimate)
+            .rimThickness(MarkerRendering.legibleOn(TripMarkerBitmaps.DEFAULT_FILL_COLOR))
+
+        assertTrue("the estimate marker must have a measurable rim (saw $estimate px)", estimate > 0)
         assertTrue(
-            "a light-mode rim must be darker than the disc in every channel (saw ${light.hex()})",
-            light.darkerThanDiscEverywhere()
-        )
-        assertTrue(
-            "a dark-mode rim must be lighter than the disc in every channel (saw ${dark.hex()})",
-            dark.lighterThanDiscEverywhere()
+            "vehicle rim ${vehicle}px must match the trip markers' ${estimate}px",
+            kotlin.math.abs(vehicle - estimate) <= 1
         )
     }
 
@@ -120,21 +147,39 @@ class VehicleMarkerOutlineTest {
         return IntArray(side * side).also { getPixels(it, 0, side, from, from, side, side) }
     }
 
-    /** The first non-transparent pixel scanning down the bitmap's center column. */
-    private fun Bitmap.topmostInk(): Int {
+    /**
+     * The first fully-opaque pixel scanning down the bitmap's center column — a point inside the rim's
+     * solid interior, past the antialiased outer edge and well above the fill.
+     */
+    private fun Bitmap.solidRimPixel(): Int {
         val x = width / 2
         for (y in 0 until height) {
             val pixel = getPixel(x, y)
-            // Above a threshold rather than > 0, so a single near-empty antialiasing sample — whose
-            // un-premultiplied color is the least trustworthy of the edge — can't be what's read.
-            if (Color.alpha(pixel) > MIN_INK_ALPHA) return pixel
+            if (Color.alpha(pixel) == OPAQUE) return pixel
         }
-        throw AssertionError("the marker's center column carried no ink at all")
+        throw AssertionError("the marker's center column carried no solid ink at all")
     }
 
-    private fun Int.darkerThanDiscEverywhere(): Boolean = Color.red(this) < Color.red(SAMPLE_DISC) &&
-        Color.green(this) < Color.green(SAMPLE_DISC) &&
-        Color.blue(this) < Color.blue(SAMPLE_DISC)
+    /**
+     * How many pixels deep the rim runs at the top of the center column: the contiguous run of pixels
+     * exactly equal to [rim], starting where that run begins.
+     *
+     * Exact matches only, so the count is of the rim's *solid* body and both markers give up their
+     * antialiased edges the same way — which is what makes the two counts comparable. Reading down the
+     * center column measures the rim across, since both silhouettes are locally flat at their top.
+     */
+    private fun Bitmap.rimThickness(rim: Int): Int {
+        val x = width / 2
+        var count = 0
+        for (y in 0 until height) {
+            if (getPixel(x, y) == rim) {
+                count++
+            } else if (count > 0) {
+                break
+            }
+        }
+        return count
+    }
 
     private fun Int.lighterThanDiscEverywhere(): Boolean = Color.red(this) > Color.red(SAMPLE_DISC) &&
         Color.green(this) > Color.green(SAMPLE_DISC) &&
@@ -143,17 +188,20 @@ class VehicleMarkerOutlineTest {
     private fun Int.hex(): String = "#%08X".format(this)
 
     private companion object {
-        const val MIN_INK_ALPHA = 32
+        const val OPAQUE = 255
+
+        /** The light-mode rim, stated here rather than read from resources — that value is the claim. */
+        val LIGHT_RIM = 0xFF616161.toInt()
 
         /**
          * Half the side of the square sampled inside the disc, in grid units — chosen to sit between two
          * bounds rather than to frame the glyph exactly.
          *
-         * Its corners land 10.6 units from the center, clear of the rim's inner edge at 11.5, so nothing
+         * Its corners land 10.2 units from the center, clear of the rim's inner edge at 10.55, so nothing
          * the *body* draws is in the sample. And it is wide enough to hold the glyph's edges, which is
          * where a dilate would put its black — a square that held only the glyph's interior could pass
          * while the halo sat just outside it.
          */
-        const val INSCRIBED_HALF_GRID = 7.5f
+        const val INSCRIBED_HALF_GRID = 7.2f
     }
 }

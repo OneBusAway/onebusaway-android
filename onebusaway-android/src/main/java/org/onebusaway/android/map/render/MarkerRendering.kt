@@ -37,6 +37,17 @@ object MarkerRendering {
     /** pin_base is authored on a 24-unit grid; marker geometry is in those units. */
     const val GRID = 24f
 
+    /**
+     * The width, in **dp**, of the rim a map marker draws around itself to hold its silhouette off the
+     * base map. One number for every family, so two markers sharing a screen are rimmed alike.
+     *
+     * In dp rather than grid units because that is the thing a rider compares: the families are drawn on
+     * different grids at different sizes ([VehicleBitmaps]' 40 dp over a 24-unit grid, [TripMarkerBitmaps]'
+     * 28 dp of raw pixels), so only the drawn width is common ground. Each converts it into its own
+     * geometry. A marker rendered below full scale thins with everything else on it.
+     */
+    const val MARKER_STROKE_DP = 2f
+
     /** The pin_base head center (grid units) — where the mode/vehicle glyph is centered. */
     const val HEAD_CX = 12f
     const val HEAD_CY = 8f

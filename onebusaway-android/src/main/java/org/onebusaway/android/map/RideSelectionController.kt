@@ -18,6 +18,7 @@ package org.onebusaway.android.map
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.onebusaway.android.extrapolation.data.TripState
 import org.onebusaway.android.extrapolation.data.forEachActiveTrip
 import org.onebusaway.android.models.RouteTrips
@@ -231,25 +232,59 @@ internal class RideSelectionController(
      * selection; the result lands in [continuations] and is picked up by the next pass. That lag is
      * harmless — a continuation only matters once the vehicle reaches the seam, minutes in, by which
      * time many polls have landed.
+     *
+     * **The walk is seeded only from trips this poll reports** (#2206). The seam of the cycle that
+     * wedged the app is that [admitted] carries the *previous* walk's continuations forward
+     * ([admitRideTrips] deliberately doesn't intersect them with the poll, so a continuation is drawn
+     * the moment its first poll lands), so seeding from [admitted] wholesale fed each answer back in as
+     * the next question. A trip the poll is silent about — which a continuation is by definition, until
+     * the vehicle rolls onto it — has no schedule in [schedules] and so can never *extend* the walk; all
+     * it can do is suppress a result through `rideContinuations`' visited guard. That made the answer
+     * alternate (`{t2}`, then `{}` because `t2` now suppressed itself, then `{t2}` again once it fell
+     * out of the poll intersection), and since every alternation is a change, each one republished and
+     * re-entered this pass — an unbounded synchronous cycle on the main thread.
+     *
+     * Intersecting with the poll makes the seed a function of the queue and the poll alone. While one
+     * poll stands the seed can only *grow* (each pass unions the previous admitted set with the queue),
+     * and it is bounded by the trips that poll reports — so the walk reaches its fixed point in at most
+     * that many passes and the republish chain ends. Multi-hop rides are unaffected: `rideContinuations`
+     * walks its own frontier up to [RideFocus.stayAboardHops], so a chain is resolved inside one call
+     * rather than across republishes.
      */
     private fun refreshContinuations(ride: RideFocus, pollTrips: List<RideTrip>) {
-        if (ride.stayAboardHops == 0 || admitted.isEmpty()) {
-            continuations = emptySet()
-            return
-        }
+        if (ride.stayAboardHops == 0) return clearContinuations()
         val schedules = pollTrips.associate { it.tripId to it.schedule }
+        val seed = admitted.filterTo(LinkedHashSet()) { it in schedules }
+        if (seed.isEmpty()) return clearContinuations()
         continuationJob?.cancel()
         continuationJob = scope.launch {
             val resolved = rideContinuations(
-                seed = admitted,
+                seed = seed,
                 ride = ride,
                 scheduleOf = { schedules[it] },
                 neighbourRouteOf = neighbourRouteOf
             )
             if (resolved != continuations) {
+                // Hand the republish back to the event loop before making it. The scope is
+                // `Main.immediate`, and `onSelectionChanged` lands back in `refresh` (the renderer must
+                // see a resolved continuation without waiting a poll, #2149) — so without this the whole
+                // cycle runs as one synchronous stack, and a non-convergent pair of inputs spins the main
+                // thread to an ANR rather than merely flickering (#2206).
+                yield()
                 continuations = resolved
                 onSelectionChanged()
             }
         }
+    }
+
+    /**
+     * Nothing to walk from. The in-flight walk is cancelled as well as the answer cleared: it belongs to
+     * a state this pass has just answered for, and letting it report would reinstate continuations
+     * nothing is riding on.
+     */
+    private fun clearContinuations() {
+        continuationJob?.cancel()
+        continuationJob = null
+        continuations = emptySet()
     }
 }

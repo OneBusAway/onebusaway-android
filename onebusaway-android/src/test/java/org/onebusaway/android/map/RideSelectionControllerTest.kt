@@ -36,14 +36,21 @@ import org.onebusaway.android.testing.testTripStatus
 import org.onebusaway.android.time.ElapsedTime
 
 /**
+ * How many times one poll may republish before the selection is declared not to settle. Any real pass
+ * republishes at most a handful of times — the walk's seed can only grow while a poll stands — so this
+ * is far above the useful range and exists only so a livelock reports instead of hanging the runner.
+ */
+private const val REPUBLISH_LIMIT = 50
+
+/**
  * Unit tests for [RideSelectionController] — the wiring between the boarding stop's arrivals and the
  * vehicle set, which the pure rules in [RideQueueTest] don't reach: the identity guard that keeps the
  * decision off the 20 Hz sampler, the admitted set carried across polls, the continuation walk it
  * launches, and the resets each focus transition owes.
  *
  * The trip-observation cache enters as the two lambdas the controller calls, so no repository or map
- * host is needed. The continuation coroutine runs on an unconfined test dispatcher, so launching it
- * completes before the test body resumes and every assertion sees a settled state.
+ * host is needed. The continuation coroutine runs on an unconfined test dispatcher and [Harness.refresh]
+ * drains it, so every assertion sees a settled state.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RideSelectionControllerTest {
@@ -78,12 +85,26 @@ class RideSelectionControllerTest {
         loadTime = ElapsedTime(0L)
     )
 
+    /**
+     * The controller wired the way `RouteMapController` wires it: `onSelectionChanged` is
+     * `publishVehicleSet`, which re-samples and so lands back in [RideSelectionController.refresh]
+     * against the poll already in hand (#2149). A counter-only callback cannot see a selection that
+     * fails to *settle*, which is how #2206 — the continuation walk and the republish feeding each other
+     * forever — shipped: the cycle closed across two files, and neither file's tests re-entered.
+     *
+     * So re-entry is the default here, and [refresh] bounds it: a selection that does not settle against
+     * one poll fails the test that ran it instead of hanging the runner.
+     */
     private class Harness {
         val states = mutableMapOf<String, TripState>()
         val neighbourRoutes = mutableMapOf<String, String>()
         var neighbourLookups = 0
         var republishes = 0
         val scope = TestScope(UnconfinedTestDispatcher())
+
+        /** The pass a republish replays, the way `publishVehicleSet` re-samples the poll it holds. */
+        private var lastPass: (() -> Unit)? = null
+        private var passes = 0
 
         val controller = RideSelectionController(
             lookupTripState = { states[it] },
@@ -92,8 +113,35 @@ class RideSelectionControllerTest {
                 neighbourRoutes[it]
             },
             scope = scope,
-            onSelectionChanged = { republishes++ }
+            onSelectionChanged = {
+                republishes++
+                // Stop *inside* the loop rather than assert here: this runs on the walk's coroutine,
+                // where a thrown AssertionError would be routed to the scope's handler instead of
+                // failing the test. [refresh] asserts on the test thread once the pass has settled.
+                if (++passes < REPUBLISH_LIMIT) lastPass?.invoke()
+            }
         )
+
+        /**
+         * One selection pass, then settle the walk it launched: the walk hands its republish back to the
+         * event loop before reporting, so the scheduler is drained here rather than leaving a test to
+         * assert against a half-resolved state.
+         */
+        fun refresh(
+            ride: RideFocus?,
+            poll: VehiclePoll,
+            extras: Map<String, VehiclePoll> = emptyMap()
+        ) {
+            val pass = { controller.refresh(ride, "route_a", poll, extras) }
+            lastPass = pass
+            passes = 0
+            pass()
+            scope.testScheduler.runCurrent()
+            assertTrue(
+                "the selection republished $passes times against one poll without settling",
+                passes < REPUBLISH_LIMIT
+            )
+        }
 
         fun visibleTripIds() = (controller.visibility as RideVisibility.Only).tripIds
     }
@@ -110,7 +158,7 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
 
-        h.controller.refresh(ride(), "route_a", poll("t1", "t2"), emptyMap())
+        h.refresh(ride(), poll("t1", "t2"))
 
         assertEquals(setOf("t1"), h.visibleTripIds())
     }
@@ -122,7 +170,7 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
 
-        h.controller.refresh(ride = null, "route_a", poll("t1", "t2"), emptyMap())
+        h.refresh(ride = null, poll("t1", "t2"))
 
         assertEquals(RideVisibility.All, h.controller.visibility)
     }
@@ -132,7 +180,7 @@ class RideSelectionControllerTest {
         val h = harness("tapped" to ridden)
         h.controller.start(focusTripId = "tapped")
 
-        h.controller.refresh(ride(), "route_a", poll("tapped", "other"), emptyMap())
+        h.refresh(ride(), poll("tapped", "other"))
 
         assertEquals(setOf("tapped"), h.visibleTripIds())
     }
@@ -143,7 +191,7 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(listOf(RideRouteGroup("route_z", "Elsewhere", listOf("zz"))), ride())
 
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         assertEquals(RideVisibility.All, h.controller.visibility)
     }
@@ -155,16 +203,16 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         // The vehicle passed the boarding stop, so its arrival left the list — but the rider is aboard.
         h.controller.setArrivals(groups(), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1", progress = 500.0), emptyMap())
+        h.refresh(ride(), poll("t1", progress = 500.0))
         assertEquals(setOf("t1"), h.visibleTripIds())
 
         // Past the alighting stop: the ride is provably over.
         h.controller.setArrivals(groups(), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1", progress = 1500.0), emptyMap())
+        h.refresh(ride(), poll("t1", progress = 1500.0))
         assertTrue(h.visibleTripIds().isEmpty())
     }
 
@@ -173,10 +221,10 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         h.controller.setArrivals(groups(), ride())
-        h.controller.refresh(ride(), "route_a", poll(), emptyMap())
+        h.refresh(ride(), poll())
 
         assertTrue(h.visibleTripIds().isEmpty())
     }
@@ -190,11 +238,11 @@ class RideSelectionControllerTest {
         h.controller.setArrivals(groups("t1"), ride(continuation("route_b")))
         val samePoll = poll("t1")
 
-        h.controller.refresh(ride(continuation("route_b")), "route_a", samePoll, emptyMap())
+        h.refresh(ride(continuation("route_b")), samePoll)
         val afterFirst = h.controller.visibleTrips
         val lookupsAfterFirst = h.neighbourLookups
 
-        repeat(20) { h.controller.refresh(ride(continuation("route_b")), "route_a", samePoll, emptyMap()) }
+        repeat(20) { h.refresh(ride(continuation("route_b")), samePoll) }
 
         // Same instance, not merely an equal one: the guard returned before rebuilding anything.
         assertSame(afterFirst, h.controller.visibleTrips)
@@ -212,11 +260,11 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
         val landed = poll("t1", "tapped")
-        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        h.refresh(ride(), landed)
         assertEquals(setOf("t1"), h.visibleTripIds())
 
         h.controller.seed("tapped")
-        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        h.refresh(ride(), landed)
 
         assertTrue("tapped" in h.visibleTripIds())
     }
@@ -226,11 +274,11 @@ class RideSelectionControllerTest {
         val h = harness("tapped" to ridden)
         h.controller.start(focusTripId = "tapped")
         val landed = poll("tapped")
-        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        h.refresh(ride(), landed)
         assertEquals(setOf("tapped"), h.visibleTripIds())
 
         h.controller.clearSeed()
-        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        h.refresh(ride(), landed)
 
         assertTrue(h.visibleTripIds().isEmpty())
     }
@@ -265,11 +313,11 @@ class RideSelectionControllerTest {
         h.controller.setArrivals(groups("t1"), interlined)
         val landed = poll("t1", "t2")
 
-        h.controller.refresh(interlined, "route_a", landed, emptyMap())
+        h.refresh(interlined, landed)
 
         // The walk ran during that pass and republished; the republish re-enters refresh against the
         // same poll, and must not be turned away.
-        h.controller.refresh(interlined, "route_a", landed, emptyMap())
+        h.refresh(interlined, landed)
         assertTrue(h.visibleTripIds().containsAll(setOf("t1", "t2")))
     }
 
@@ -279,11 +327,11 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
         val landed = poll("t1")
-        h.controller.refresh(ride(), "route_a", landed, emptyMap())
+        h.refresh(ride(), landed)
         assertEquals(setOf("t1"), h.visibleTripIds())
 
         // Same poll and queue, but the rider now alights where this trip has already passed.
-        h.controller.refresh(ride(alightStopId = "board"), "route_a", poll("t1", progress = 500.0), emptyMap())
+        h.refresh(ride(alightStopId = "board"), poll("t1", progress = 500.0))
 
         assertTrue(h.visibleTripIds().isEmpty())
     }
@@ -293,10 +341,10 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
         val afterFirst = h.controller.visibleTrips
 
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         assertEquals(setOf("t1"), h.visibleTripIds())
         assertTrue(afterFirst !== h.controller.visibleTrips)
@@ -312,12 +360,33 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), interlined)
 
-        h.controller.refresh(interlined, "route_a", poll("t1"), emptyMap())
+        h.refresh(interlined, poll("t1"))
 
         assertTrue("t2" in h.visibleTripIds() || h.republishes > 0)
         // The walk republishes so the newly-admitted continuation reaches the renderer.
-        h.controller.refresh(interlined, "route_a", poll("t1", "t2"), emptyMap())
+        h.refresh(interlined, poll("t1", "t2"))
         assertTrue(h.visibleTripIds().containsAll(setOf("t1", "t2")))
+    }
+
+    @Test
+    fun `the walk settles against a poll the continuation has not entered yet`() {
+        // #2206: the walk used to be seeded from `admitted`, which carries its own previous answer, so
+        // for a continuation the poll had yet to report the answer alternated — {t2}, then {} because t2
+        // now suppressed itself through the visited guard, then {t2} again — and every alternation
+        // republished back into the pass that launched it. On device that spun the main thread to an ANR.
+        val h = harness("t1" to schedule("board" to 100.0, nextTripId = "t2"), "t2" to ridden)
+        h.neighbourRoutes["t2"] = "route_b"
+        val interlined = ride(continuation("route_b"))
+        h.controller.start(focusTripId = null)
+        h.controller.setArrivals(groups("t1"), interlined)
+
+        // The continuation is the trip the vehicle rolls onto *next*, so the poll in hand is silent
+        // about it — the ordinary case, not an edge one.
+        h.refresh(interlined, poll("t1"))
+
+        // Settled (Harness.refresh would have failed otherwise), and settled on the right answer: the
+        // continuation stays admitted rather than being walked back off by the next pass.
+        assertEquals(setOf("t1", "t2"), h.visibleTripIds())
     }
 
     @Test
@@ -329,7 +398,7 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
 
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         assertEquals(0, h.neighbourLookups)
         assertEquals(setOf("t1"), h.visibleTripIds())
@@ -342,14 +411,14 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
         assertEquals(setOf("t1"), h.visibleTripIds())
 
         h.controller.rideChanged()
         // The route redraw happens before the next selection pass. Its approach must not read trips
         // derived from the ride that just ended during that window.
         assertTrue(h.controller.visibleTrips.isEmpty())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         // Back to Pending with no seed: nothing is admitted until the new stop's arrivals land.
         assertTrue(h.visibleTripIds().isEmpty())
@@ -361,7 +430,7 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = "tapped")
         h.controller.clearSeed()
 
-        h.controller.refresh(ride(), "route_a", poll("tapped"), emptyMap())
+        h.refresh(ride(), poll("tapped"))
 
         assertTrue(h.visibleTripIds().isEmpty())
     }
@@ -371,7 +440,7 @@ class RideSelectionControllerTest {
         val h = harness("t1" to ridden)
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
-        h.controller.refresh(ride(), "route_a", poll("t1"), emptyMap())
+        h.refresh(ride(), poll("t1"))
 
         h.controller.stop()
 
@@ -387,7 +456,7 @@ class RideSelectionControllerTest {
         h.controller.start(focusTripId = null)
         h.controller.setArrivals(groups("t1"), ride())
 
-        h.controller.refresh(ride(), "route_a", poll("t1", "t2"), emptyMap())
+        h.refresh(ride(), poll("t1", "t2"))
 
         assertEquals(listOf("t1"), h.controller.visibleTrips.map { it.tripId })
         assertSame(ridden, h.controller.visibleTrips.single().schedule)

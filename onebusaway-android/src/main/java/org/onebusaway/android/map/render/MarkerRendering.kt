@@ -20,6 +20,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.drawable.Drawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.ColorUtils
@@ -120,9 +121,11 @@ object MarkerRendering {
     /**
      * Draws a filled disc tinted [fillColor] centered in `[0,contentPx]` on [canvas], then a [glyphRes]
      * glyph tinted [glyphColor] centered on it at [glyphSize] grid units. When [outline] > 0 the disc
-     * gets a black hairline ring of that width and the glyph a matching outline. The circular counterpart
-     * of [drawPinAndGlyph]: the route/trip maps center a vehicle badge on the route line rather than
-     * floating a teardrop pin off it (#1752). The heading arrow (vehicles) is layered on top by the caller.
+     * gets a black hairline ring of that width and the glyph a matching outline.
+     *
+     * The circular counterpart of [drawPinAndGlyph]'s teardrop, drawn for the rental badge that sits
+     * inside its charge ring ([RentalBitmaps]). The vehicle badge is a disc too, but it stacks occupancy
+     * on its own body, so it composes the parts itself rather than coming through here.
      */
     fun drawCircleAndGlyph(
         canvas: Canvas,
@@ -152,10 +155,37 @@ object MarkerRendering {
     }
 
     /**
-     * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
-     * in pixels), outlined when [outline] > 0. The shared tail of [drawPinAndGlyph] and [drawCircleAndGlyph].
+     * Fills [path] with [fillColor] on [canvas] and rims it with a black hairline [outline] wide (when
+     * that is > 0), stroked **centered on the path**, so a compound silhouette is outlined once around
+     * its union rather than once per part.
+     *
+     * Centered means half the rim falls *inside* [path], so the path is not the drawn silhouette: a
+     * caller that needs the rim to sit within a bound must build the path already inset by half the
+     * outline (see `VehicleBitmaps.PATH_INSET_GRID`, which does exactly that and explains the rest).
+     *
+     * The path counterpart of [drawPinAndGlyph]'s teardrop: the route/trip maps center a vehicle badge
+     * on the route line rather than floating a pin off it (#1752), and since #2194 that badge is a disc
+     * optionally unioned with an occupancy tab. What goes *on* the body — glyph, occupancy pips — the
+     * caller layers itself with [drawGlyph] / [drawOutlined], since only it knows how those stack.
      */
-    private fun drawGlyph(
+    fun drawOutlinedPath(canvas: Canvas, path: Path, fillColor: Int, outline: Float) {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = fillColor
+        canvas.drawPath(path, paint)
+        if (outline > 0f) {
+            paint.color = Color.BLACK
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = outline
+            canvas.drawPath(path, paint)
+        }
+    }
+
+    /**
+     * Draws [glyphRes] tinted [glyphColor], centered at ([cxPx], [cyPx]) with half-extent [halfPx] (all
+     * in pixels), outlined when [outline] > 0. The shared stamp behind [drawPinAndGlyph]'s glyph and the
+     * vehicle marker's mode glyph.
+     */
+    internal fun drawGlyph(
         canvas: Canvas,
         context: Context,
         @DrawableRes glyphRes: Int,
@@ -175,8 +205,15 @@ object MarkerRendering {
         drawOutlined(canvas, glyph, outline, glyphColor)
     }
 
-    /** Draws [drawable] tinted [fill], preceded (when [outline] > 0) by a black-outline dilate. */
-    fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
+    /**
+     * Draws [drawable] tinted [fill], preceded (when [outline] > 0) by a black-outline dilate.
+     *
+     * Private on purpose. The dilate stamps the artwork black at eight offsets, which lays solid black
+     * under the whole silhouette rather than only around it — so a *translucent* fill drawn through here
+     * composites over black and comes out grey. That trap cost the vehicle pips a redraw before they
+     * dropped their rim; it is not an extension point worth offering.
+     */
+    private fun drawOutlined(canvas: Canvas, drawable: Drawable, outline: Float, fill: Int) {
         if (outline > 0f) {
             drawable.setTint(Color.BLACK)
             stampOffsets(canvas, outline) { drawable.draw(canvas) }
@@ -186,7 +223,7 @@ object MarkerRendering {
     }
 
     /** Runs [draw] once per [OUTLINE_OFFSETS] entry, translated by [outline] — the black-outline dilate. */
-    fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
+    private fun stampOffsets(canvas: Canvas, outline: Float, draw: () -> Unit) {
         for (o in OUTLINE_OFFSETS) {
             canvas.withTranslation(o[0] * outline, o[1] * outline) {
                 draw()

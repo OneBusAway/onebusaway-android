@@ -59,7 +59,6 @@ import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.PinnedTripInfoWindow
 import org.onebusaway.android.map.compose.RentalInfoWindow
-import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.maplibre.MapLibreRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
@@ -279,10 +278,11 @@ class MapLibreComposeAdapter : ObaComposeMapAdapter {
 
 /**
  * Wires map/marker/info-window taps to [callbacks] (the home-screen tap policy the host used to
- * install): a stop tap focuses + recenters via [callbacks]; a tap on empty map clears focus; a
- * vehicle/rental tap pre-renders its shared info window (via [infoWindows]) and opens it; a tap on the
- * open window deep links. The rental content is wrapped in a white bubble ([VehicleInfoWindow] draws its
- * own card, [RentalInfoWindow] is background-free), matching the Google flavor.
+ * install): a stop tap focuses + recenters via [callbacks]; a tap on empty map clears focus; a vehicle
+ * tap reports through to the host, which selects it and opens its trip details on a second tap (#2194);
+ * a rental tap pre-renders its shared info window (via [infoWindows]) and opens it, and a tap on that
+ * window deep links. The rental content is wrapped in a white bubble ([RentalInfoWindow] is
+ * background-free), matching the Google flavor.
  */
 @Suppress("DEPRECATION") // classic Marker/InfoWindow click API; migration tracked in #1728
 private fun wireClicks(
@@ -316,10 +316,9 @@ private fun wireClicks(
             return@setOnMarkerClickListener true
         }
         val vehicle = renderer.vehicleForMarker(marker)
-        val response = renderer.vehicleResponse()
-        if (vehicle != null && response != null) {
+        if (vehicle != null) {
+            infoWindows.clear() // dismisses any open bubble (a rental's, a dot's), as a stop tap does
             callbacks.onVehicleClick(vehicle.status) // selects it -> renderer shows the most-recent-data dot
-            infoWindows.open(marker) { VehicleInfoWindow(vehicle.status, vehicle.isRealtime, response) }
             return@setOnMarkerClickListener true
         }
         val rental = renderer.rentalForMarker(marker)
@@ -353,11 +352,6 @@ private fun wireClicks(
         marker.title.isNullOrEmpty()
     }
     map.setOnInfoWindowClickListener { marker ->
-        val vehicle = renderer.vehicleForMarker(marker)
-        if (vehicle != null) {
-            callbacks.onVehicleInfoWindowClick(vehicle.status)
-            return@setOnInfoWindowClickListener true
-        }
         val rental = renderer.rentalForMarker(marker)
         if (rental != null) {
             callbacks.onRentalInfoWindowClick(rental.place)

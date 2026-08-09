@@ -174,8 +174,8 @@ object RentalBitmaps {
             )
         }
 
-        // The badge, drawn by the shared circle-and-glyph routine the trip map's vehicle badges use —
-        // inset by the ring's *visible* width, so it laps over the ring's hidden inner edge.
+        // The badge, drawn by the shared circle-and-glyph routine — inset by the ring's *visible* width,
+        // so it laps over the ring's hidden inner edge.
         val inset = visibleRing
         val discPx = sizePx - 2 * inset
         canvas.withTranslation(inset, inset) {

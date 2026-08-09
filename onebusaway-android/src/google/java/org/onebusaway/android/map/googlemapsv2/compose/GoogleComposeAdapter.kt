@@ -57,7 +57,6 @@ import org.onebusaway.android.map.compose.ObaComposeMapAdapter
 import org.onebusaway.android.map.compose.ObaMapCallbacks
 import org.onebusaway.android.map.compose.PinnedTripInfoWindow
 import org.onebusaway.android.map.compose.RentalInfoWindow
-import org.onebusaway.android.map.compose.VehicleInfoWindow
 import org.onebusaway.android.map.compose.drivePings
 import org.onebusaway.android.map.googlemapsv2.GoogleMapRenderer
 import org.onebusaway.android.map.render.CameraSnapshot
@@ -220,25 +219,6 @@ class GoogleComposeAdapter : ObaComposeMapAdapter {
             LaunchedEffect(activeRenderer) {
                 renderState.vehicleSet.collect { activeRenderer.reconcileVehicles(it) }
             }
-            // Each fresh vehicle poll re-renders an open info window from the now-current live state, so a
-            // shown bubble reflects the latest data instead of a tap-time snapshot.
-            LaunchedEffect(activeRenderer, activeInfoWindows) {
-                activeRenderer.vehicleResponse.collect { activeInfoWindows.refresh() }
-            }
-            // The persisted vehicle selection owns the bubble: re-open it whenever the selected vehicle's
-            // marker exists but its bubble isn't already showing — e.g. on return from the trip list, where
-            // the selection (and its data dot) survive the marker rebuild but the native info-window state
-            // doesn't (issue #32). The vehicleResponse signal re-checks after each poll's marker reconcile,
-            // so the bubble re-opens as soon as the marker is (re)created.
-            LaunchedEffect(activeRenderer, activeInfoWindows) {
-                combine(renderState.selectedVehicleTripId, activeRenderer.vehicleResponse) { id, _ -> id }
-                    .collect { tripId ->
-                        val marker = tripId?.let { activeRenderer.vehicleMarkerForTripId(it) } ?: return@collect
-                        if (!activeInfoWindows.isShowing(marker)) {
-                            activeInfoWindows.openVehicleWindow(activeRenderer, marker)
-                        }
-                    }
-            }
             // Dynamic layer (the live vehicles + the trip-focus band/markers): while either sampler is
             // installed, pull a fresh frame each display frame and move the native markers in place.
             // withFrameNanos paces us to the display refresh and idles when nothing's drawing.
@@ -337,11 +317,6 @@ private fun wireClicks(
     map.setOnMarkerClickListener { marker -> routeMarkerTap(marker, renderer, infoWindows, cb) }
 
     map.setOnInfoWindowClickListener { marker ->
-        val vehicle = renderer.vehicleForMarker(marker)
-        if (vehicle != null) {
-            cb.onVehicleInfoWindowClick(vehicle.status)
-            return@setOnInfoWindowClickListener
-        }
         renderer.rentalForMarker(marker)?.let {
             cb.onRentalInfoWindowClick(it.place)
             return@setOnInfoWindowClickListener
@@ -352,9 +327,10 @@ private fun wireClicks(
 }
 
 /**
- * Routes a native marker tap: a stop focuses + recenters; a vehicle/rental pre-renders its shared info
- * window (via [GoogleInfoWindows]) and opens it without recentering; a trip-focus estimate marker opens
- * the SDK's default title window. Always returns true (handled, no default camera recenter).
+ * Routes a native marker tap: a stop focuses + recenters; a vehicle reports the tap (the host selects
+ * it, and opens its trip details on a second tap — #2194); a rental pre-renders its shared info window
+ * (via [GoogleInfoWindows]) and opens it without recentering; a trip-focus estimate marker opens the
+ * SDK's default title window. Always returns true (handled, no default camera recenter).
  */
 private fun routeMarkerTap(
     marker: Marker,
@@ -370,8 +346,8 @@ private fun routeMarkerTap(
     }
     val vehicle = renderer.vehicleForMarker(marker)
     if (vehicle != null) {
+        infoWindows.clear() // a vehicle tap dismisses any open bubble (a rental's, a dot's) as a stop does
         cb.onVehicleClick(vehicle.status)
-        infoWindows.openVehicleWindow(renderer, marker)
         return true
     }
     val rental = renderer.rentalForMarker(marker)
@@ -414,24 +390,6 @@ private fun routeMarkerTap(
     infoWindows.clear()
     marker.showInfoWindow()
     return true
-}
-
-/**
- * Open [marker]'s vehicle info window. The content lambda re-reads the marker's live state on each
- * render, so the bubble reflects the latest poll (re-rendered via [GoogleInfoWindows.refresh]), not a
- * tap-time snapshot.
- */
-private fun GoogleInfoWindows.openVehicleWindow(renderer: GoogleMapRenderer, marker: Marker) {
-    open(marker) {
-        val live = renderer.vehicleForMarker(marker)
-
-        // Deliberate snapshot read, not a reactive subscription: this content is rendered to a bitmap on
-        // each GoogleInfoWindows.refresh (the window is a detached bitmap, not a live composition), so we
-        // want the latest poll at render time rather than a collectAsState that would never recompose here.
-        @Suppress("StateFlowValueCalledInComposition")
-        val response = renderer.vehicleResponse.value
-        if (live != null && response != null) VehicleInfoWindow(live.status, live.isRealtime, response)
-    }
 }
 
 /** Builds a [CameraSnapshot] from the Google map's current camera + visible region. */

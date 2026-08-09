@@ -40,7 +40,13 @@ interface ObaMapCallbacks {
 
     fun onRentalClick(place: RentalPlace)
 
-    /** A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker). */
+    /**
+     * A vehicle marker tap — the host selects it (e.g. to show its most-recent-data marker), and opens
+     * its trip details when the same vehicle is tapped again (#2194).
+     *
+     * Every tap arrives here; whether one is a re-tap is the host's to know, since the host owns the
+     * selection. The flavors report taps, they don't interpret them.
+     */
     fun onVehicleClick(status: ObaTripStatus) {}
 
     /** The route-continuation badge tap (#1691) — the host navigates the map to [routeId]'s [directionId]. */
@@ -57,9 +63,6 @@ interface ObaMapCallbacks {
      * was missed. Same shape as [onStopClick], which likewise hands over the render model.
      */
     fun onRouteBadgeClick(badge: RouteBadge) {}
-
-    /** The vehicle info-window "more info" tap — the host navigates (e.g. to TripDetails). */
-    fun onVehicleInfoWindowClick(status: ObaTripStatus)
 
     /** The rental info-window tap — the host opens the operator (app, deep link, or site). */
     fun onRentalInfoWindowClick(place: RentalPlace)

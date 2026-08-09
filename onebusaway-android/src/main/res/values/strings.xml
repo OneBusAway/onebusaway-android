@@ -469,10 +469,16 @@
     <string name="trip_info_option_showstop">Show Stop</string>
     <string name="trip_info_separator">-</string>
 
-    <!-- Occupancy -->
+    <!-- Occupancy. The map marker draws these as silhouettes; the text is what a screen reader
+         announces for that vehicle, so each names its own crowding level rather than a pip count. -->
+    <string name="realtime_empty">Empty</string>
+    <string name="realtime_many_seats_available">Many seats available</string>
+    <string name="realtime_standing_room">Standing room</string>
+    <string name="realtime_full">Full</string>
 
-
-
+    <!-- Screen-reader name for a vehicle marker whose route and destination the poll couldn't
+         resolve, so the marker draws the default glyph and has nothing else to be called. -->
+    <string name="vehicle_marker_unidentified">Vehicle</string>
 
     <!--  Trip list -->
     <string name="trip_list_notrips">You don’t have any reminders.\n\nYou can create reminders by
@@ -836,15 +842,6 @@
         <item quantity="one">Data updated %1$d min %2$d sec ago</item>
         <item quantity="other">Data updated %1$d min %2$d sec ago</item>
     </plurals>
-    <plurals name="vehicle_estimate_from_update_sec">
-        <item quantity="one">Estimate from data updated %1$d sec ago</item>
-        <item quantity="other">Estimate from data updated %1$d sec ago</item>
-    </plurals>
-    <plurals name="vehicle_estimate_from_update_min_and_sec">
-        <item quantity="one">Estimate from data updated %1$d min %2$d sec ago</item>
-        <item quantity="other">Estimate from data updated %1$d min %2$d sec ago</item>
-    </plurals>
-    <string name="vehicle_last_updated_scheduled">Position calculated from schedule</string>
 
     <!-- Night Light -->
     <string name="night_light_dialog_title">Never miss the bus at night again!</string>

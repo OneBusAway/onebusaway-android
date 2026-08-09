@@ -38,7 +38,6 @@ import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.onebusaway.android.R
-import org.onebusaway.android.map.compose.formatDataAge
 import org.onebusaway.android.map.compose.rentalContentDescription
 import org.onebusaway.android.map.mapRouteLineCaseColor
 import org.onebusaway.android.map.render.BadgedRoute
@@ -62,8 +61,10 @@ import org.onebusaway.android.map.render.TripMarkerBitmaps
 import org.onebusaway.android.map.render.TripOverlay
 import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
+import org.onebusaway.android.map.render.formatDataAge
 import org.onebusaway.android.map.render.rentalZoomBand
 import org.onebusaway.android.map.render.routeLineWidthScale
+import org.onebusaway.android.map.render.vehicleTitle
 import org.onebusaway.android.map.rental.rentalChargeFraction
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
@@ -90,8 +91,8 @@ import org.onebusaway.android.util.getRouteDisplayName
  *    info window survives and there's no per-frame flicker) and only adds/removes annotations as the
  *    identity set changes; the band's polylines, which carry no interaction state, are remove+re-added.
  *
- * maplibre markers have no per-marker anchor and the classic info window is title/snippet, so the rich
- * Google Compose info windows degrade to a title + snippet here (a deliberate flavor gap).
+ * maplibre markers have no per-marker anchor, so what the Google flavor anchors precisely sits by
+ * maplibre's own convention here (a deliberate flavor gap).
  *
  * The classic annotation API (Marker/Polyline/Icon/IconFactory) is deprecated in maplibre 11.x but
  * still fully functional. This whole renderer — and the tap/info-window layer it feeds — is built on
@@ -188,15 +189,12 @@ class MapLibreRenderer(
     // The dynamic layer, tracked by identity so [renderDynamic] can move markers in place: route
     // vehicles keyed by active trip id, the trip-focus estimate markers keyed by role, and the band's
     // (interaction-free) polylines re-added each frame. [lastVehicleResponse] is the current poll, set on
-    // each vehicle-set reconcile and read by [vehicleResponse].
+    // each vehicle-set reconcile, so a scale change can re-stamp the retained markers' icons.
     private val vehicleMarkersByTripId = HashMap<String, Marker>()
     private val tripMarkersByRole = HashMap<String, Marker>()
     private val bandPolylines = mutableListOf<Polyline>()
     private var lastVehicleResponse: RouteTrips? = null
 
-    // The 8-way heading slot last stamped on each vehicle's icon, keyed by trip id, so the hot path can
-    // re-stamp the direction arrow as a vehicle glides — only when its heading octant flips, not every frame.
-    private val vehicleIconDirection = HashMap<String, Int>()
     private var renderedVehicleScale = routeLineWidthScale(map.cameraPosition.zoom.toFloat())
 
     // Smooth markers across a fresh-AVL jump (a decaying correction on the dead-reckon glide) so a fix
@@ -416,7 +414,6 @@ class MapLibreRenderer(
         pinnedTripByMarker = null
         routeBadgeByMarker.clear()
         routeBadgeIcons.evictAll()
-        vehicleIconDirection.clear()
         mostRecentDataMarker = null
         lastVehicleResponse = null
     }
@@ -488,24 +485,18 @@ class MapLibreRenderer(
     }
 
     // Per-frame motion: move each already-reconciled marker to its smoothed extrapolated position — no set
-    // diffing or icon work on the hot path, only an icon re-stamp when a vehicle's heading octant flips.
+    // diffing or icon work on the hot path, and no icon work at all.
     // Markers not yet reconciled are skipped.
+    //
+    // A gliding vehicle used to need its direction arrow re-stamped whenever its heading octant flipped;
+    // since #2194 removed that arrow, nothing about the icon varies between polls (see
+    // [VehicleBitmaps.iconKey]), so the whole per-frame icon path is gone.
     private fun moveVehicles(vehicles: MapVehicles?, nowMs: Long) {
-        val response = vehicles?.response
-        val markers = vehicles?.markers.orEmpty()
-        for (vehicle in markers) {
+        for (vehicle in vehicles?.markers.orEmpty()) {
             val marker = vehicleMarkersByTripId[vehicle.activeTripId] ?: continue
             marker.moveTo(
                 vehicleSmoother.displayPosition(vehicle.activeTripId, vehicle.point, vehicle.fixTimeMs, nowMs).toLatLng()
             )
-            // Re-stamp the direction arrow as the vehicle glides, but only when its heading octant flips
-            // (the only thing that changes the icon between polls) — keeping icon work off the every-frame path.
-            if (response != null) {
-                val direction = VehicleBitmaps.directionIndex(vehicle)
-                if (vehicleIconDirection.put(vehicle.activeTripId, direction) != direction) {
-                    marker.icon = vehicleIcon(vehicle, response)
-                }
-            }
         }
         updateMostRecentDataDot(nowMs)
     }
@@ -575,7 +566,6 @@ class MapLibreRenderer(
     private fun reconcileVehicleMarkers(markers: List<VehicleMarker>, response: RouteTrips?) {
         val liveIds = markers.mapTo(HashSet()) { it.activeTripId }
         vehicleSmoother.retainOnly(liveIds)
-        vehicleIconDirection.keys.retainAll(liveIds)
         val gone = vehicleMarkersByTripId.iterator()
         while (gone.hasNext()) {
             val entry = gone.next()
@@ -592,23 +582,23 @@ class MapLibreRenderer(
                 val marker = map.addMarker(
                     MarkerOptions().position(vehicle.point.toLatLng())
                         .icon(vehicleIcon(vehicle, response))
-                        .title(vehicleTitle(vehicle, response))
+                        .title(vehicleTitle(context, vehicle, response))
                 )
                 vehicleMarkersByTripId[vehicle.activeTripId] = marker
                 vehicleByMarker[marker] = vehicle
             } else {
                 existing.icon = vehicleIcon(vehicle, response)
-                existing.title = vehicleTitle(vehicle, response)
+                existing.title = vehicleTitle(context, vehicle, response)
                 vehicleByMarker[existing] = vehicle
             }
-            // The poll refreshes the icon (color + heading); record the stamped octant so the hot path
-            // doesn't redundantly re-stamp it this frame.
-            vehicleIconDirection[vehicle.activeTripId] = VehicleBitmaps.directionIndex(vehicle)
         }
     }
 
     // The vehicle disc badge is centered in its bitmap, and maplibre's classic Marker centers an icon on
-    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752).
+    // the point, so the badge lands on the route centerline with no anchor adjustment (#1752). That
+    // no-adjustment-available constraint is why the bitmap reserves the occupancy tab's depth above the
+    // disc as well as below: it keeps the disc on the bitmap's center even for a marker whose tab hangs
+    // off the bottom, so this flavor needs no anchor it cannot express (see [VehicleBitmaps]).
     private fun vehicleIcon(vehicle: VehicleMarker, response: RouteTrips): Icon = iconFactory.fromBitmap(
         VehicleBitmaps.vehicleBitmap(context, vehicle, response, renderedVehicleScale)
     )
@@ -629,12 +619,6 @@ class MapLibreRenderer(
     private fun Marker.moveTo(latLng: LatLng) {
         position = latLng
         if (isInfoWindowShown) getInfoWindow()?.update()
-    }
-
-    private fun vehicleTitle(vehicle: VehicleMarker, response: RouteTrips): String {
-        val trip = response.trip(vehicle.status.activeTripId) ?: return ""
-        val route = response.route(trip.routeId) ?: return ""
-        return getRouteDisplayName(route) + " - " + MyTextUtils.formatDisplayText(trip.headsign)
     }
 
     private fun updateTripOverlay(overlay: TripOverlay?, nowMs: Long) {
@@ -751,9 +735,6 @@ class MapLibreRenderer(
      * ping tap through to its vehicle via this (#1764).
      */
     fun vehicleMarkerUnderPing(marker: Marker): Marker? = if (marker == pingMarker) pingTripId?.let { vehicleMarkersByTripId[it] } else null
-
-    /** The current trips-for-route response, needed to render a vehicle's info window. */
-    fun vehicleResponse(): RouteTrips? = lastVehicleResponse
 
     companion object {
         private const val ROUTE_WIDTH_DP = 3f

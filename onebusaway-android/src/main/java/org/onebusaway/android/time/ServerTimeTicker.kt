@@ -26,7 +26,7 @@ import kotlinx.coroutines.delay
 /**
  * A live "now" in the **server** clock domain, anchored on [serverTime] (a poll's server-clock
  * reading) and advanced by the device's elapsed time since that reading was captured — the same
- * skew-free extrapolation `VehicleInfoWindow`'s "…ago" age text uses (#1612), generalized to the
+ * skew-free extrapolation the map's "…ago" data-age text uses (#1612), generalized to the
  * typed [ServerTime]/[ElapsedTime] domains so a live countdown (e.g. an ETA pill, issue #1781) never
  * measures against a bare device clock.
  *

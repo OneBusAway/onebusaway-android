@@ -26,16 +26,17 @@ import com.google.android.gms.maps.model.Marker
 import org.onebusaway.android.map.compose.ComposeBitmapRenderer
 
 /**
- * Renders the shared vehicle/bike info-window composables as the Google Maps info window.
+ * Renders the shared rental / pinned-trip info-window composables as the Google Maps info window.
  *
  * Google's `InfoWindowAdapter` draws the returned View into a **static bitmap of a detached view**, so
  * a bare ComposeView returned directly would render blank (composition is async and only runs while
- * attached). So a window is described by a **live content provider** (`@Composable () -> Unit` that
- * reads the current marker state): [open] stores it and pre-renders it to a bitmap (via
- * [ComposeBitmapRenderer]); [refresh] re-renders it from the same provider (e.g. after a poll, so an
- * open bubble reflects fresh data); and the adapter calls [clear] when the window is dismissed (a tap
- * away, or another marker). Markers with no provider (the trip-focus / most-recent-data markers) fall
- * through to the SDK's default title/snippet window.
+ * attached). So a window is described by a content provider (`@Composable () -> Unit`): [open] stores
+ * it and pre-renders it to a bitmap (via [ComposeBitmapRenderer]), and the adapter calls [clear] when
+ * the window is dismissed (a tap away, or another marker). Markers with no provider (the trip-focus /
+ * most-recent-data markers) fall through to the SDK's default title/snippet window.
+ *
+ * The provider was once re-read on each poll to keep the vehicle bubble current; nothing needs that
+ * now that the vehicle marker says its own piece (#2194) and the remaining windows' content is static.
  */
 class GoogleInfoWindows(
     private val activity: Activity,
@@ -44,45 +45,15 @@ class GoogleInfoWindows(
 
     private val preRenderer = ComposeBitmapRenderer(activity, container)
     private var shownMarker: Marker? = null
-    private var content: (@Composable () -> Unit)? = null
     private var bitmap: Bitmap? = null
 
-    /** Open [marker]'s info window, rendering [content] (re-read live on every render). */
+    /** Open [marker]'s info window, pre-rendering [content] to a bitmap and showing it once captured. */
     fun open(marker: Marker, content: @Composable () -> Unit) {
         shownMarker = marker
-        this.content = content
-        render()
-    }
-
-    /** Re-render the currently open window from its (live) provider — call when its data changes. */
-    fun refresh() {
-        if (shownMarker != null && content != null) render()
-    }
-
-    /** Whether [marker]'s info window is the one currently tracked/open (so callers don't re-[open] it). */
-    fun isShowing(marker: Marker): Boolean = shownMarker === marker
-
-    /** Forget the tracked window (the SDK window was dismissed by a tap away / another marker). */
-    fun clear() {
-        preRenderer.cancel()
-        shownMarker = null
-        content = null
-        // Safe to recycle: clear() runs when the window is dismissed, so the SDK (which already has its
-        // own snapshot) no longer references our bitmap.
-        bitmap?.recycle()
-        bitmap = null
-    }
-
-    /** Pre-render the live provider to a bitmap, then (re)show the window once it's captured. */
-    private fun render() {
-        val marker = shownMarker ?: return
-        val provider = content ?: return
-        preRenderer.render(provider) { captured ->
+        preRenderer.render(content) { captured ->
             if (shownMarker === marker) {
-                // Recycle the prior capture before replacing it: the SDK snapshots our view into its
-                // own static bitmap when the window shows, so the previous bitmap (from an earlier
-                // render cycle, already snapshotted) is no longer referenced. Without this, each
-                // refresh while a bubble is open leaks a full-view bitmap until GC.
+                // Recycle any prior capture before replacing it: the SDK snapshots our view into its own
+                // static bitmap when the window shows, so an earlier capture is no longer referenced.
                 bitmap?.recycle()
                 bitmap = captured
                 marker.showInfoWindow()
@@ -90,6 +61,16 @@ class GoogleInfoWindows(
                 captured.recycle() // selection changed mid-render; this capture is never shown
             }
         }
+    }
+
+    /** Forget the tracked window (the SDK window was dismissed by a tap away / another marker). */
+    fun clear() {
+        preRenderer.cancel()
+        shownMarker = null
+        // Safe to recycle: clear() runs when the window is dismissed, so the SDK (which already has its
+        // own snapshot) no longer references our bitmap.
+        bitmap?.recycle()
+        bitmap = null
     }
 
     override fun getInfoWindow(marker: Marker): View? {

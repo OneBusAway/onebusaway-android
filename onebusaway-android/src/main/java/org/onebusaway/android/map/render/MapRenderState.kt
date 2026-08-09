@@ -200,7 +200,7 @@ data class GenericMarker(val point: GeoPoint, val hue: Float?)
 
 /**
  * One real-time vehicle marker. [status] is the raw io/elements status (the renderer derives the
- * icon, color, and info-window text from it, paired with the shared [MapVehicles.response]);
+ * icon, color, occupancy pips, and title from it, paired with the shared [MapVehicles.response]);
  * [activeTripId] is the stable key used for marker identity + animation; [isRealtime] is the
  * draw-time decision (from whatever produced the drawn point — the extrapolation anchor or the current
  * status) that selects the live-vs-scheduled icon.
@@ -213,8 +213,9 @@ data class VehicleMarker(
     // The latest fix's instant — constant between fixes (so [point] is extrapolated forward from it),
     // changing when fresh AVL data arrives. The renderer animates the marker across the fix jump.
     val fixTimeMs: Long = 0L,
-    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N), so the
-    // direction arrow tracks the glide. [Float.NaN] off-shape: the renderer falls back to the orientation.
+    // The vehicle's movement bearing along the route shape at [point] (compass degrees, 0°=N).
+    // [Float.NaN] off-shape. Carried by the extrapolation rather than consumed by the renderer: it drove
+    // the marker's direction arrow until #2194 removed it, and nothing draws with it today.
     val bearing: Float = Float.NaN,
     // The last real fix's position on the route shape (the glide's seed), where the selected vehicle's
     // most-recent-data dot is drawn — so the dot sits at the band's origin, not the raw off-shape reported
@@ -480,8 +481,8 @@ data class MapRenderSnapshot(
     // True when route mode asks stop circles to follow the focused-route zoom ramp even without an
     // individually focused stop.
     val routeModeScalesStopsWithZoom: Boolean = false,
-    // The currently focused stop id, couriered so the vehicle info-window's "more info" tap can deep
-    // link into TripDetails scoped to that stop (the legacy VehicleOverlay.Controller hook).
+    // The focused stop, named rather than flagged on each [StopMarker] so focusing is a one-field change
+    // (see [stops]). The stop layers style it — the enlarged icon, the route-stop highlight.
     val focusedStopId: String? = null,
     // The zoom band the stops render in (full directional icon vs small dot). Derived from the camera
     // by StopsMapController and carried here so a pure zoom re-fires the renderer like any other
@@ -510,7 +511,7 @@ data class MapRenderSnapshot(
 }
 
 /**
- * The route-mode vehicle **set**: which vehicles exist and the [response] their icons/info-windows
+ * The route-mode vehicle **set**: which vehicles exist and the [response] their icons and titles
  * derive from. This is discrete state — it changes only at events (a new poll, a direction switch,
  * leaving route mode), so it's *pushed* (see [MapRenderState.vehicleSet]) and the renderer reconciles
  * markers from each emission. Per-frame *motion* is a separate concern (see

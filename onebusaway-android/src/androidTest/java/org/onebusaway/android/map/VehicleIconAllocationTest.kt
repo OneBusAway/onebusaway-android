@@ -42,20 +42,22 @@ import org.onebusaway.android.map.render.VehicleBitmaps
 import org.onebusaway.android.map.render.VehicleMarker
 import org.onebusaway.android.mock.Resources
 import org.onebusaway.android.models.ObaTripStatus
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 import org.onebusaway.android.time.WallTime
 import org.onebusaway.android.util.ScheduleDeviation
 
 /**
- * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps a gliding vehicle's icon on
- * every heading-octant change (the ~20Hz reconcile path), so before [BitmapDescriptorCache] it minted a
- * fresh `BitmapDescriptor` + native texture per flip — hundreds/sec on a busy route.
+ * The before/after allocation guard for #1580. `GoogleMapRenderer` re-stamps every vehicle's icon on
+ * every poll, so before [BitmapDescriptorCache] it minted a fresh `BitmapDescriptor` + native texture per
+ * marker per poll — and did so far more often still when the marker carried a heading arrow that also
+ * had to be re-stamped mid-glide on every octant flip.
  *
  * This drives the *real* icon path (the cached [VehicleBitmaps.vehicleBitmap] feeding the descriptor
  * cache) over a simulated route session and asserts the property the fix introduces: the number of wrapper
- * allocations is bounded by the distinct icons and is **independent of how many frames run** — whereas the
- * naive per-flip allocation count grows with the session. The descriptor factory is a counting fake (the
- * cache's only allocator), so this needs no real `GoogleMap`.
+ * allocations is bounded by the distinct icons and is **independent of how many polls run** — whereas the
+ * naive per-re-stamp allocation count grows with the session. The descriptor factory is a counting fake
+ * (the cache's only allocator), so this needs no real `GoogleMap`.
  */
 @RunWith(AndroidJUnit4::class)
 class VehicleIconAllocationTest {
@@ -90,8 +92,7 @@ class VehicleIconAllocationTest {
                     point = v.point,
                     isRealtime = v.status.isLocationRealtime,
                     status = v.status,
-                    fixTimeMs = v.fixTimeMs,
-                    bearing = v.bearing
+                    fixTimeMs = v.fixTimeMs
                 )
             }
     }
@@ -105,31 +106,33 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * Replay [frames] of the renderer's icon hot path: each frame every vehicle's bearing rotates, and —
-     * exactly like `GoogleMapRenderer` — an icon is (re)requested only when its heading octant flips. Each
-     * request goes through a fresh [BitmapDescriptorCache] keyed by the real [VehicleBitmaps.iconKey]; the
-     * descriptor `wrap` and the bitmap supplier each bump a counter so the test can see how many actually ran.
+     * Replay [polls] of the renderer's icon path: `reconcileVehicleMarkers` re-stamps **every** marker on
+     * **every** poll unconditionally, so that's what this drives — one icon request per vehicle per poll,
+     * with each vehicle's reported fullness advancing a step so the keys genuinely vary the way a
+     * filling-up bus does. Each request goes through a fresh [BitmapDescriptorCache] keyed by the real
+     * [VehicleBitmaps.iconKey]; the descriptor `wrap` and the bitmap supplier each bump a counter so the
+     * test can see how many actually ran.
+     *
+     * This used to replay ~20 Hz *frames* and re-stamp on heading-octant flips. #2194 removed the
+     * heading arrow, so the icon no longer varies with bearing and nothing re-stamps between polls at
+     * all — but the property the cache exists for is unchanged, and the poll path is now where it bites.
      */
     private fun replay(
         vehicles: List<VehicleMarker>,
         response: RouteTrips,
-        frames: Int
+        polls: Int
     ): Counts {
         val counts = Counts()
         val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
-        val lastOctant = HashMap<String, Int>()
-        for (frame in 0 until frames) {
-            for (vehicle in vehicles) {
-                val moved = vehicle.copy(bearing = (frame * BEARING_STEP_DEG) % 360f)
-                val octant = VehicleBitmaps.directionIndex(moved)
-                if (lastOctant.put(moved.activeTripId, octant) != octant) {
-                    counts.requests++
-                    val key = VehicleBitmaps.iconKey(context, moved, response)
-                    counts.keys.add(key)
-                    cache.get(key) {
-                        counts.bitmapDecodes++
-                        VehicleBitmaps.vehicleBitmap(context, moved, response)
-                    }
+        for (poll in 0 until polls) {
+            for ((index, vehicle) in vehicles.withIndex()) {
+                val filling = withOccupancy(vehicle, OCCUPANCY_CYCLE[(poll + index) % OCCUPANCY_CYCLE.size])
+                counts.requests++
+                val key = VehicleBitmaps.iconKey(context, filling, response)
+                counts.keys.add(key)
+                cache.get(key) {
+                    counts.bitmapDecodes++
+                    VehicleBitmaps.vehicleBitmap(context, filling, response)
                 }
             }
         }
@@ -137,13 +140,13 @@ class VehicleIconAllocationTest {
     }
 
     @Test
-    fun descriptorAllocationsAreBoundedAndIndependentOfFrameCount() {
+    fun descriptorAllocationsAreBoundedAndIndependentOfPollCount() {
         val response = response()
         val vehicles = vehicles(response)
         assertTrue("fixture must yield at least one vehicle", vehicles.isNotEmpty())
 
-        val shortRun = replay(vehicles, response, SHORT_FRAMES)
-        val longRun = replay(vehicles, response, LONG_FRAMES)
+        val shortRun = replay(vehicles, response, SHORT_POLLS)
+        val longRun = replay(vehicles, response, LONG_POLLS)
 
         // Headline before/after for #1580: requests = uncached fromBitmap allocs; allocations = cached.
         Log.i(
@@ -152,11 +155,11 @@ class VehicleIconAllocationTest {
                 "${longRun.allocations} allocs, ${longRun.bitmapDecodes} bitmap decodes"
         )
 
-        // Naive work — a fromBitmap per octant flip — grows with the session length...
+        // Naive work — a fromBitmap per re-stamp — grows with the session length...
         assertTrue("a longer session must issue more icon requests", longRun.requests > shortRun.requests)
         // ...but the cache mints the same descriptors regardless: a 4x-longer session allocates no more.
         assertEquals(
-            "descriptor allocations must not grow with frame count",
+            "descriptor allocations must not grow with poll count",
             shortRun.allocations,
             longRun.allocations
         )
@@ -185,9 +188,9 @@ class VehicleIconAllocationTest {
      * The cache's correctness contract: equal [VehicleBitmaps.iconKey] ⟺ equal bitmap (they share
      * `createBitmapCacheKey`). A key *collision* — two vehicles that should show different icons resolving
      * to one key — would only *lower* the allocation count, so the bound tests above would still pass while
-     * the wrong icon was served. Sampling every vehicle across all 8 octants and grouping by `iconKey`, each
-     * group must therefore resolve to a single bitmap; a dropped key dimension (e.g. forgetting color) would
-     * merge differing bitmaps into one group and fail here.
+     * the wrong icon was served. Sampling every vehicle across every fullness state and grouping by
+     * `iconKey`, each group must therefore resolve to a single bitmap; a dropped key dimension (e.g.
+     * forgetting color) would merge differing bitmaps into one group and fail here.
      */
     @Test
     fun equalIconKeysResolveToEqualBitmaps() {
@@ -195,12 +198,12 @@ class VehicleIconAllocationTest {
         val vehicles = vehicles(response)
         assertTrue("fixture must yield at least one vehicle", vehicles.isNotEmpty())
 
-        // bearing = octant * 45° lands at each octant's center, so the sample spans all 8 directions.
+        // Every fullness state, including the tabless "no data" one, across every vehicle in the snapshot.
         val samples = vehicles.flatMap { vehicle ->
-            (0 until 8).map { octant ->
-                val moved = vehicle.copy(bearing = octant * 45f)
-                VehicleBitmaps.iconKey(context, moved, response) to
-                    VehicleBitmaps.vehicleBitmap(context, moved, response)
+            OCCUPANCY_CYCLE.map { occupancy ->
+                val reporting = withOccupancy(vehicle, occupancy)
+                VehicleBitmaps.iconKey(context, reporting, response) to
+                    VehicleBitmaps.vehicleBitmap(context, reporting, response)
             }
         }
         val byKey = samples.groupBy({ it.first }, { it.second })
@@ -218,8 +221,8 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * The replay only rotates bearing, leaving the key's color dimension unexercised. Hold a vehicle's
-     * octant fixed and flip only its **liveness**: a live vehicle draws in its route color, one without
+     * The replay only walks fullness, leaving the key's color dimension unexercised. Flip only a
+     * vehicle's **liveness**: a live vehicle draws in its route color, one without
      * real-time draws gray (#2043), so the key must change and the cache must mint a second descriptor.
      *
      * This replaces an equivalent early-vs-late assertion. Schedule deviation no longer reaches the
@@ -229,11 +232,8 @@ class VehicleIconAllocationTest {
      */
     @Test
     fun changedLivenessMintsANewDescriptor() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val live = withLiveness(vehicle!!, isRealtime = true)
+        val (response, vehicle) = fixture()
+        val live = withLiveness(vehicle, isRealtime = true)
         val stale = withLiveness(vehicle, isRealtime = false)
 
         val liveKey = VehicleBitmaps.iconKey(context, live, response)
@@ -248,17 +248,14 @@ class VehicleIconAllocationTest {
     }
 
     /**
-     * The other half of the #2043 contract: with liveness and heading held fixed, a wildly different
+     * The other half of the #2043 contract: with liveness held fixed, a wildly different
      * schedule deviation must produce the *same* icon. A marker that still varied by punctuality would
      * both re-introduce the meaning the issue removed and silently multiply the icon working set.
      */
     @Test
     fun scheduleDeviationDoesNotAffectTheIcon() {
-        val response = response()
-        val vehicle = vehicles(response).firstOrNull()
-        assertTrue("fixture must yield at least one vehicle", vehicle != null)
-
-        val early = withRealtimeDeviation(vehicle!!, TimeUnit.MINUTES.toSeconds(-10))
+        val (response, vehicle) = fixture()
+        val early = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(-10))
         val late = withRealtimeDeviation(vehicle, TimeUnit.MINUTES.toSeconds(10))
 
         assertEquals(
@@ -304,20 +301,117 @@ class VehicleIconAllocationTest {
         assertEquals("get after clear must re-invoke the supplier", 5, supplied)
     }
 
+    // --- Occupancy pips on the disc (#2194) ------------------------------------------------------
+
     /**
-     * Force the realtime path and stamp [deviationSeconds] onto a copy of [vehicle], pinning the bearing
-     * so the heading octant is fixed — only the schedule deviation varies between the variants.
+     * Occupancy is drawn on the marker, so it has to be part of the key: a vehicle that fills up between
+     * polls must get a new icon rather than the cached emptier one. Held at one liveness, so only the
+     * fullness varies.
      */
-    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = vehicle.copy(
-        isRealtime = true,
-        bearing = 0f,
+    @Test
+    fun changedOccupancyMintsANewDescriptor() {
+        val (response, vehicle) = fixture()
+        val empty = withOccupancy(vehicle, Occupancy.EMPTY)
+        val full = withOccupancy(vehicle, Occupancy.FULL)
+
+        val emptyKey = VehicleBitmaps.iconKey(context, empty, response)
+        val fullKey = VehicleBitmaps.iconKey(context, full, response)
+        assertNotEquals("occupancy must be part of the icon key", emptyKey, fullKey)
+
+        val counts = Counts()
+        val cache = BitmapDescriptorCache(CACHE_SIZE) { counts.allocations++ }
+        cache.get(emptyKey) { VehicleBitmaps.vehicleBitmap(context, empty, response) }
+        cache.get(fullKey) { VehicleBitmaps.vehicleBitmap(context, full, response) }
+        assertEquals("a changed fill level must mint a second descriptor", 2, counts.allocations)
+    }
+
+    /**
+     * The tab's own reason for existing, at the key level: "reports nothing" and "reports EMPTY" are
+     * different markers — no tab versus a tab with three hollow pips — so they must not share an icon.
+     * These two were the same bitmap before this refinement, which is exactly the confusion it removes.
+     */
+    @Test
+    fun absentOccupancyAndEmptyAreDifferentIcons() {
+        val (response, vehicle) = fixture()
+        val unreported = withOccupancy(vehicle, null)
+        val empty = withOccupancy(vehicle, Occupancy.EMPTY)
+
+        assertNotEquals(
+            "a vehicle reporting no occupancy must not share an icon with an empty one",
+            VehicleBitmaps.iconKey(context, unreported, response),
+            VehicleBitmaps.iconKey(context, empty, response)
+        )
+        assertTrue(
+            "...and must not render the same bitmap either",
+            !VehicleBitmaps.vehicleBitmap(context, unreported, response)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, empty, response))
+        )
+    }
+
+    /**
+     * A vehicle without real-time has no observed occupancy, so its gray marker must never grow a tab
+     * however the status is populated (#959 — the old bubble showed occupancy on scheduled vehicles).
+     * The realtime gate is the half of the bucketing the JVM test can't reach, which is why it's here.
+     */
+    @Test
+    fun withoutRealtimeOccupancyDoesNotReachTheIcon() {
+        val (response, vehicle) = fixture()
+        val plain = withOccupancy(vehicle, null, isRealtime = false)
+        val crowded = withOccupancy(vehicle, Occupancy.FULL, isRealtime = false)
+
+        assertEquals(
+            "occupancy must not reach a scheduled vehicle's icon",
+            VehicleBitmaps.iconKey(context, plain, response),
+            VehicleBitmaps.iconKey(context, crowded, response)
+        )
+        assertTrue(
+            "a scheduled vehicle renders the identical tabless disc whatever occupancy says",
+            VehicleBitmaps.vehicleBitmap(context, plain, response)
+                .sameAs(VehicleBitmaps.vehicleBitmap(context, crowded, response))
+        )
+    }
+
+    /** The snapshot plus its first vehicle — the prelude every icon-contract test below opens with. */
+    private fun fixture(): Pair<RouteTrips, VehicleMarker> {
+        val response = response()
+        val vehicle = vehicles(response).firstOrNull()
+        assertTrue("fixture must yield at least one vehicle", vehicle != null)
+        return response to vehicle!!
+    }
+
+    /**
+     * A copy of [vehicle] with only what the caller overrides varying — optionally forcing [isRealtime]
+     * and overriding its [status].
+     */
+    private fun pinned(
+        vehicle: VehicleMarker,
+        isRealtime: Boolean = true,
+        status: ObaTripStatus = vehicle.status
+    ): VehicleMarker = vehicle.copy(isRealtime = isRealtime, status = status)
+
+    /** A copy of [vehicle] reporting [occupancy], with everything else held fixed. */
+    private fun withOccupancy(
+        vehicle: VehicleMarker,
+        occupancy: Occupancy?,
+        isRealtime: Boolean = true
+    ): VehicleMarker = pinned(
+        vehicle,
+        isRealtime,
+        object : ObaTripStatus by vehicle.status {
+            override val occupancyStatus: Occupancy? = occupancy
+        }
+    )
+
+    /** A copy of [vehicle] running [deviationSeconds] off schedule, with everything else held fixed. */
+    private fun withRealtimeDeviation(vehicle: VehicleMarker, deviationSeconds: Long): VehicleMarker = pinned(
+        vehicle,
         status = object : ObaTripStatus by vehicle.status {
             override val scheduleDeviation: Duration = deviationSeconds.seconds
         }
     )
 
-    /** A copy of [vehicle] with [isRealtime] forced and the bearing pinned, so only liveness varies. */
-    private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = vehicle.copy(isRealtime = isRealtime, bearing = 0f)
+    /** A copy of [vehicle] with [isRealtime] forced, so only liveness varies. */
+    private fun withLiveness(vehicle: VehicleMarker, isRealtime: Boolean): VehicleMarker = pinned(vehicle, isRealtime)
 
     // --- The route display color on the disc (#2043) ---------------------------------------------
 
@@ -377,14 +471,22 @@ class VehicleIconAllocationTest {
     private fun staleVehicle(): VehicleMarker = withLiveness(vehicles(response()).first(), isRealtime = false)
 
     companion object {
-        // Sweep the bearing through all 8 octants within a few frames, then revisit them (no new icons) —
-        // which is the property under test (revisited octants reuse the cached descriptor).
-        private const val BEARING_STEP_DEG = 25f
-        private const val SHORT_FRAMES = 60
-        private const val LONG_FRAMES = 240
+        // Every fullness state a marker can be in, tabless "not reported" included. The replay walks a
+        // vehicle around this cycle so each poll can change its icon, then revisits states (no new icons)
+        // — which is the property under test: a revisited state reuses the cached descriptor.
+        private val OCCUPANCY_CYCLE = listOf(
+            null,
+            Occupancy.EMPTY,
+            Occupancy.MANY_SEATS_AVAILABLE,
+            Occupancy.STANDING_ROOM_ONLY,
+            Occupancy.FULL
+        )
 
-        // Far larger than the snapshot's distinct icons (8 octants x a handful of type/route-color
-        // combos), so eviction never confounds the "allocations independent of frame count" invariant. The
+        private const val SHORT_POLLS = 60
+        private const val LONG_POLLS = 240
+
+        // Far larger than the snapshot's distinct icons (5 fullness states x a handful of type/route-color
+        // combos), so eviction never confounds the "allocations independent of poll count" invariant. The
         // production cap is deliberately smaller — it only needs to cover the live working set, not history.
         private const val CACHE_SIZE = 1024
     }

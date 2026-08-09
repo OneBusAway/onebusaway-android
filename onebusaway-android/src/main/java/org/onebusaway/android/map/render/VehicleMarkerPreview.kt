@@ -39,13 +39,17 @@ import androidx.compose.ui.unit.sp
 import org.onebusaway.android.models.ObaRoute
 
 /**
- * A grid of every vehicle marker [VehicleBitmaps] can render — the five modes down, the nine heading
- * octants across — so the composited pin/glyph/arrow can be eyeballed without live vehicles on the map.
- * The [color] would normally be the schedule-deviation color; a fixed sample is used here.
+ * A grid of every vehicle marker [VehicleBitmaps] can render — the five modes down, the five fullness
+ * states across — so the composited disc/tab/glyph/pips can be eyeballed without live vehicles on the
+ * map. The [color] would normally be the schedule-deviation color; a fixed sample is used here.
+ *
+ * The leftmost column is the marker for a vehicle that reports no fullness: a plain disc with no tab,
+ * which is the shape to check a disc-geometry change against. The rest are the tab, filling left to
+ * right, and the pair to look hardest at is "empty" vs "1 of 3" — an all-hollow row and a row with one
+ * inked pip are the closest two readings on the scale.
  */
 @Composable
 fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
-    val context = LocalContext.current
     val argb = color.toArgb()
     val modes = listOf(
         ObaRoute.TYPE_BUS to "bus",
@@ -54,33 +58,46 @@ fun VehicleMarkerGrid(color: Color = Color(0xFF2266CC)) {
         ObaRoute.TYPE_TRAM to "tram",
         ObaRoute.TYPE_FERRY to "ferry"
     )
-    val dirLabels = listOf("N", "NE", "E", "SE", "S", "SW", "W", "NW", "—")
 
     Column(Modifier.background(Color.White).padding(8.dp)) {
-        Row {
-            Spacer(Modifier.width(56.dp))
-            dirLabels.forEach {
-                Text(it, Modifier.width(44.dp), fontSize = 10.sp, textAlign = TextAlign.Center)
-            }
-        }
+        FullnessHeader()
         modes.forEach { (type, name) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(name, Modifier.width(56.dp), fontSize = 12.sp)
-                for (dir in 0..8) {
-                    // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
-                    // (not a production render path), so calling it here is intentional.
-                    @Suppress("VisibleForTests")
-                    val bmp = remember(type, dir, argb) {
-                        VehicleBitmaps.previewBitmap(context, type, dir, argb).asImageBitmap()
-                    }
-                    Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(48.dp))
-                }
-            }
+            MarkerRow(label = name, vehicleType = type, argb = argb)
         }
     }
 }
 
-@Preview(showBackground = true, widthDp = 460, heightDp = 320)
+@Composable
+private fun FullnessHeader() {
+    Row {
+        Spacer(Modifier.width(56.dp))
+        listOf("none", "empty", "1 of 3", "2 of 3", "full").forEach {
+            Text(it, Modifier.width(44.dp), fontSize = 10.sp, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+@Composable
+private fun MarkerRow(label: String, vehicleType: Int, argb: Int) {
+    val context = LocalContext.current
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(label, Modifier.width(56.dp), fontSize = 12.sp)
+        for (occupancy in PREVIEW_OCCUPANCIES) {
+            // previewBitmap is @VisibleForTesting; this @Preview catalog is dev-only tooling
+            // (not a production render path), so calling it here is intentional.
+            @Suppress("VisibleForTests")
+            val bmp = remember(vehicleType, argb, occupancy) {
+                VehicleBitmaps.previewBitmap(context, vehicleType, argb, occupancy).asImageBitmap()
+            }
+            Image(bmp, contentDescription = null, modifier = Modifier.width(44.dp).height(56.dp))
+        }
+    }
+}
+
+/** The fullness axis of the grid: no tab, then the tab filling left to right. */
+private val PREVIEW_OCCUPANCIES = listOf(null) + OccupancyBucket.entries
+
+@Preview(showBackground = true, widthDp = 300, heightDp = 340)
 @Composable
 private fun VehicleMarkerGridPreview() {
     VehicleMarkerGrid()

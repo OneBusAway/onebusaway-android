@@ -16,15 +16,19 @@
 package org.onebusaway.android.map.render
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onebusaway.android.models.ObaRoute
 import org.onebusaway.android.models.ObaTrip
 import org.onebusaway.android.models.ObaTripDetails
+import org.onebusaway.android.models.Occupancy
 import org.onebusaway.android.models.RouteTrips
 
 /**
- * Pure-logic guards for [VehicleBitmaps]'s route-type resolution: the cablecar→tram promise, and the
- * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020).
+ * Pure-logic guards for [VehicleBitmaps]'s route-type resolution — the cablecar→tram promise and the
+ * unresolvable-trip/route fallback that replaced the crashing `!!` chain (#2020) — plus the occupancy
+ * bucketing the marker's pips read (#2194).
  */
 class VehicleBitmapsTest {
 
@@ -97,6 +101,48 @@ class VehicleBitmapsTest {
     fun resolvedCablecarStillNormalizesToTram() {
         val response = routeTrips(trip = FakeTrip("trip1", "routeA"), route = FakeRoute(ObaRoute.TYPE_CABLECAR))
         assertEquals(ObaRoute.TYPE_TRAM, VehicleBitmaps.routeTypeFor(response, "trip1"))
+    }
+
+    /**
+     * The whole GTFS-realtime occupancy enum, bucketed. Pinned exhaustively because this is the only
+     * thing standing between a rider and a wrong crowding reading, and because a new enum value must be
+     * assigned a bucket deliberately rather than falling into one.
+     */
+    @Test
+    fun occupancyBucketsOntoPips() {
+        assertEquals(OccupancyBucket.EMPTY, OccupancyBucket.of(Occupancy.EMPTY))
+        assertEquals(OccupancyBucket.MANY_SEATS, OccupancyBucket.of(Occupancy.MANY_SEATS_AVAILABLE))
+        assertEquals(OccupancyBucket.STANDING_ROOM, OccupancyBucket.of(Occupancy.FEW_SEATS_AVAILABLE))
+        assertEquals(OccupancyBucket.STANDING_ROOM, OccupancyBucket.of(Occupancy.STANDING_ROOM_ONLY))
+        assertEquals(OccupancyBucket.FULL, OccupancyBucket.of(Occupancy.CRUSHED_STANDING_ROOM_ONLY))
+        assertEquals(OccupancyBucket.FULL, OccupancyBucket.of(Occupancy.FULL))
+        assertEquals(OccupancyBucket.FULL, OccupancyBucket.of(Occupancy.NOT_ACCEPTING_PASSENGERS))
+    }
+
+    /**
+     * The distinction the tab exists to draw: a vehicle that reports **no** occupancy gets no tab (null),
+     * while one that reports [Occupancy.EMPTY] gets a tab with nothing inked. Asserted as its own test
+     * because the two used to be the same value, and collapsing them again would silently turn "we don't
+     * know" back into "it's empty".
+     */
+    @Test
+    fun absentOccupancyIsNotTheSameAsEmpty() {
+        assertNull("a vehicle reporting no occupancy must draw no tab", OccupancyBucket.of(null))
+        assertEquals("a vehicle reporting EMPTY must draw a tab", OccupancyBucket.EMPTY, OccupancyBucket.of(Occupancy.EMPTY))
+        assertEquals("...with none of its pips inked", 0, OccupancyBucket.EMPTY.pips)
+    }
+
+    /**
+     * The row the marker draws has to have room for the fullest bucket. [VehicleBitmaps.MAX_PIPS] and
+     * [OccupancyBucket.FULL] are declared apart — one is a drawing constant, the other a data one — so
+     * this is the seam where raising a bucket past the row's width would otherwise go unnoticed.
+     */
+    @Test
+    fun everyBucketFitsThePipRow() {
+        for (bucket in OccupancyBucket.entries) {
+            assertTrue("$bucket needs ${bucket.pips} pips, row draws ${VehicleBitmaps.MAX_PIPS}", bucket.pips <= VehicleBitmaps.MAX_PIPS)
+        }
+        assertEquals("the fullest bucket must fill the row", VehicleBitmaps.MAX_PIPS, OccupancyBucket.FULL.pips)
     }
 
     /** A [RouteTrips] whose references pool holds at most the given trip/route. */
